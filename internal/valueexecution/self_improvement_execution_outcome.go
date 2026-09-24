@@ -15,13 +15,13 @@ const SelfImprovementExecutionOutcomeStatusRejected SelfImprovementExecutionOutc
 const SelfImprovementExecutionOutcomeStatusUnknown SelfImprovementExecutionOutcomeStatus = "UNKNOWN"
 
 type SelfImprovementExecutionOutcomeObservation struct {
-	Schema        string                              `json:"schema"`
-	RequestDigest string                              `json:"request_digest"`
-	ReceiptDigest string                              `json:"receipt_digest"`
-	Status        SelfImprovementExecutionOutcomeStatus `json:"status"`
-	Reason        string                              `json:"reason"`
-	NonAuthorizing bool                               `json:"non_authorizing"`
-	Digest        string                              `json:"digest"`
+	Schema         string                                `json:"schema"`
+	RequestDigest  string                                `json:"request_digest"`
+	ReceiptDigest  string                                `json:"receipt_digest"`
+	Status         SelfImprovementExecutionOutcomeStatus `json:"status"`
+	Reason         string                                `json:"reason"`
+	NonAuthorizing bool                                  `json:"non_authorizing"`
+	Digest         string                                `json:"digest"`
 }
 
 // ObserveSelfImprovementExecutionOutcome closes a READY request with runtime

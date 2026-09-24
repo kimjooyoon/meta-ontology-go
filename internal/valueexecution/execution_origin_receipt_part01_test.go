@@ -49,7 +49,7 @@ func TestObserveExecutionOriginBindsPhaseWithoutGrantingAuthority(t *testing.T) 
 
 func TestObserveExecutionOriginKeepsIncompleteEvidenceUnknown(t *testing.T) {
 	partial := provenance.ObserveOriginChain(provenance.OriginChain{
-		DeclarationURI:   "examples/language-runtime-binding/typed-chain.gooo",
+		DeclarationURI:    "examples/language-runtime-binding/typed-chain.gooo",
 		DeclarationSymbol: "activity TypedChain",
 	})
 	receipt := ObserveExecutionOrigin(partial, Execution{

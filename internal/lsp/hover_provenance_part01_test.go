@@ -8,10 +8,10 @@ import (
 func TestHoverSymbolDetailIncludesExactDocumentProvenance(t *testing.T) {
 	document := document{
 		cacheKey: documentCacheKey{
-			sourceDigest:   "source-digest",
-			profileDigest:  "profile-digest",
+			sourceDigest:    "source-digest",
+			profileDigest:   "profile-digest",
 			toolchainDigest: "toolchain-digest",
-			contractDigest: "contract-digest",
+			contractDigest:  "contract-digest",
 		},
 		result: ParseResult{semanticDigest: "semantic-digest"},
 	}
@@ -24,8 +24,8 @@ func TestHoverSymbolDetailIncludesExactDocumentProvenance(t *testing.T) {
 		ProfileDigest:   "profile-digest",
 		ToolchainDigest: "toolchain-digest",
 		ContractDigest:  "contract-digest",
-		Symbols:          documentProvenanceSymbols(document.result),
-		References:       documentProvenanceReferences(document.result),
+		Symbols:         documentProvenanceSymbols(document.result),
+		References:      documentProvenanceReferences(document.result),
 	}
 	expected.SymbolMapDigest = documentProvenanceSymbolMapDigest(expected.Symbols)
 	expected.ReferenceMapDigest = documentProvenanceReferenceMapDigest(expected.References)

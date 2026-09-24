@@ -32,7 +32,7 @@ func projectUpstreamCause(target *Report, receipt generation.ReceiptReport) {
 			ActionIndicatorID:   unknown.ActionIndicatorID,
 			RequiredIndicatorID: unknown.RequiredIndicatorID,
 			Stage:               unknown.Stage,
-			Step:               unknown.Step,
+			Step:                unknown.Step,
 			Reason:              string(unknown.Reason),
 			UnknownClass:        unknown.UnknownClass,
 			NextOperation:       unknown.NextOperation,

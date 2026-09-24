@@ -5,7 +5,7 @@ import "testing"
 func TestObserveOriginChainTracksCompleteRuntimeBoundary(t *testing.T) {
 	chain := OriginChain{
 		DeclarationURI:        " examples/language-runtime-binding/typed-chain.gooo ",
-		DeclarationSymbol:      "activity TypedChain",
+		DeclarationSymbol:     "activity TypedChain",
 		IRNode:                "activity:TypedChain",
 		GeneratedURI:          "cmd/gooo/run_source_typed_chain_part01_test.go",
 		GeneratedSymbol:       "TestTypedChain",
@@ -19,7 +19,7 @@ func TestObserveOriginChainTracksCompleteRuntimeBoundary(t *testing.T) {
 	first := ObserveOriginChain(chain)
 	second := ObserveOriginChain(OriginChain{
 		DeclarationURI:        "examples/language-runtime-binding/typed-chain.gooo",
-		DeclarationSymbol:      " activity TypedChain ",
+		DeclarationSymbol:     " activity TypedChain ",
 		IRNode:                " activity:TypedChain ",
 		GeneratedURI:          "cmd/gooo/run_source_typed_chain_part01_test.go",
 		GeneratedSymbol:       "TestTypedChain",
@@ -42,14 +42,14 @@ func TestObserveOriginChainTracksCompleteRuntimeBoundary(t *testing.T) {
 
 func TestObserveOriginChainDoesNotPromotePartialEvidence(t *testing.T) {
 	partial := ObserveOriginChain(OriginChain{
-		DeclarationURI:   "examples/language-runtime-binding/typed-chain.gooo",
+		DeclarationURI:    "examples/language-runtime-binding/typed-chain.gooo",
 		DeclarationSymbol: "activity TypedChain",
-		IRNode:           "activity:TypedChain",
-		MetricName:       "gooo.provenance.origin-chain.v1",
+		IRNode:            "activity:TypedChain",
+		MetricName:        "gooo.provenance.origin-chain.v1",
 	})
 	complete := ObserveOriginChain(OriginChain{
 		DeclarationURI:        "examples/language-runtime-binding/typed-chain.gooo",
-		DeclarationSymbol:      "activity TypedChain",
+		DeclarationSymbol:     "activity TypedChain",
 		IRNode:                "activity:TypedChain",
 		GeneratedURI:          "cmd/gooo/run_source_typed_chain_part01_test.go",
 		GeneratedSymbol:       "TestTypedChain",
@@ -67,7 +67,7 @@ func TestObserveOriginChainDoesNotPromotePartialEvidence(t *testing.T) {
 	}
 	if got := CompareOriginChains(complete, ObserveOriginChain(OriginChain{
 		DeclarationURI:        "examples/language-runtime-binding/typed-chain.gooo",
-		DeclarationSymbol:      "activity TypedChain",
+		DeclarationSymbol:     "activity TypedChain",
 		IRNode:                "activity:TypedChain",
 		GeneratedURI:          "cmd/gooo/run_source_typed_chain_part01_test.go",
 		GeneratedSymbol:       "TestTypedChain",

@@ -20,7 +20,7 @@ func TestGenerateWithBindingReplaysAndBinds(t *testing.T) {
 		Schema: projectionBindingSchemaV1, SourceDigest: base.Metadata.SourceDigest,
 		SemanticIRDigest: base.Metadata.SemanticIRDigest, SourceMapDigest: base.Metadata.SourceMapDigest,
 		EvidenceDigest: digestBytes([]byte("evidence")), AnalysisProvenance: analysis,
-		Toolchain: ToolchainIdentity{Status: "BOUND", Value: "go1.26.5"},
+		Toolchain:        ToolchainIdentity{Status: "BOUND", Value: "go1.26.5"},
 		ProvenanceDigest: analysisProvenanceDigest(*analysis),
 	}
 	bound, err := GenerateWithBinding(ir, nil, binding)

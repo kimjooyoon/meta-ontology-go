@@ -9,10 +9,10 @@ import (
 // ImprovementMetric is an evidence-backed measurement used for one candidate
 // comparison. The value is descriptive data, not an authorization decision.
 type ImprovementMetric struct {
-	Name          string `json:"name"`
-	Value         int64  `json:"value"`
+	Name           string `json:"name"`
+	Value          int64  `json:"value"`
 	EvidenceDigest string `json:"evidence_digest"`
-	LowerIsBetter bool   `json:"lower_is_better"`
+	LowerIsBetter  bool   `json:"lower_is_better"`
 }
 
 // SelfImprovementStatus describes the measured direction of one comparison.
@@ -29,21 +29,21 @@ const (
 // an unchanged environment, and two supplied metric evidence records. It does
 // not infer causality, authorize a candidate, or hide a regression.
 type SelfImprovementObservation struct {
-	Schema                      string                              `json:"schema"`
-	OriginTransition            provenance.OriginChainTransition   `json:"origin_transition"`
-	EnvironmentTransition       EnvironmentTransition              `json:"environment_transition"`
-	BeforeOriginDigest          string                              `json:"before_origin_digest,omitempty"`
-	AfterOriginDigest           string                              `json:"after_origin_digest,omitempty"`
-	EnvironmentDigest           string                              `json:"environment_digest,omitempty"`
-	MetricName                  string                              `json:"metric_name,omitempty"`
-	BeforeMetricValue           int64                               `json:"before_metric_value"`
-	AfterMetricValue            int64                               `json:"after_metric_value"`
-	BeforeMetricEvidenceDigest  string                              `json:"before_metric_evidence_digest,omitempty"`
-	AfterMetricEvidenceDigest   string                              `json:"after_metric_evidence_digest,omitempty"`
-	Status                      SelfImprovementStatus               `json:"status"`
-	Reason                      string                              `json:"reason"`
-	NonAuthorizing              bool                                `json:"non_authorizing"`
-	Digest                      string                              `json:"digest"`
+	Schema                     string                           `json:"schema"`
+	OriginTransition           provenance.OriginChainTransition `json:"origin_transition"`
+	EnvironmentTransition      EnvironmentTransition            `json:"environment_transition"`
+	BeforeOriginDigest         string                           `json:"before_origin_digest,omitempty"`
+	AfterOriginDigest          string                           `json:"after_origin_digest,omitempty"`
+	EnvironmentDigest          string                           `json:"environment_digest,omitempty"`
+	MetricName                 string                           `json:"metric_name,omitempty"`
+	BeforeMetricValue          int64                            `json:"before_metric_value"`
+	AfterMetricValue           int64                            `json:"after_metric_value"`
+	BeforeMetricEvidenceDigest string                           `json:"before_metric_evidence_digest,omitempty"`
+	AfterMetricEvidenceDigest  string                           `json:"after_metric_evidence_digest,omitempty"`
+	Status                     SelfImprovementStatus            `json:"status"`
+	Reason                     string                           `json:"reason"`
+	NonAuthorizing             bool                             `json:"non_authorizing"`
+	Digest                     string                           `json:"digest"`
 }
 
 const SelfImprovementObservationSchema = "gooo/self-improvement-observation/v1"

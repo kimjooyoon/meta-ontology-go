@@ -15,17 +15,17 @@ const SelfImprovementCounterexampleStatusUnknown SelfImprovementCounterexampleSt
 const SelfImprovementCounterexampleStatusNone SelfImprovementCounterexampleStatus = "NONE"
 
 type SelfImprovementCounterexampleObservation struct {
-	Schema             string                             `json:"schema"`
-	SourceURI          string                             `json:"source_uri"`
-	InputDigest        string                             `json:"input_digest"`
-	CandidateDigest    string                             `json:"candidate_digest"`
-	BeforeReceiptDigest string                            `json:"before_receipt_digest"`
-	AfterReceiptDigest  string                            `json:"after_receipt_digest"`
-	ObservedReason     string                             `json:"observed_reason"`
-	Status             SelfImprovementCounterexampleStatus `json:"status"`
-	Reason             string                             `json:"reason"`
-	NonAuthorizing     bool                               `json:"non_authorizing"`
-	Digest             string                             `json:"digest"`
+	Schema              string                              `json:"schema"`
+	SourceURI           string                              `json:"source_uri"`
+	InputDigest         string                              `json:"input_digest"`
+	CandidateDigest     string                              `json:"candidate_digest"`
+	BeforeReceiptDigest string                              `json:"before_receipt_digest"`
+	AfterReceiptDigest  string                              `json:"after_receipt_digest"`
+	ObservedReason      string                              `json:"observed_reason"`
+	Status              SelfImprovementCounterexampleStatus `json:"status"`
+	Reason              string                              `json:"reason"`
+	NonAuthorizing      bool                                `json:"non_authorizing"`
+	Digest              string                              `json:"digest"`
 }
 
 // ObserveSelfImprovementCounterexample retains replayable regression evidence

@@ -20,20 +20,20 @@ const (
 )
 
 type StoryEvidenceReference struct {
-	ID             string                   `json:"id"`
-	SemanticID     string                   `json:"semantic_id"`
-	Producer       string                   `json:"producer"`
-	Kind           provenance.EvidenceKind  `json:"kind"`
+	ID             string                    `json:"id"`
+	SemanticID     string                    `json:"semantic_id"`
+	Producer       string                    `json:"producer"`
+	Kind           provenance.EvidenceKind   `json:"kind"`
 	Status         provenance.EvidenceStatus `json:"status"`
-	SourceSpan     provenance.SourceSpan    `json:"source_span"`
-	SourceDigest   string                   `json:"source_digest"`
-	SemanticDigest string                   `json:"semantic_digest"`
-	GraphDigest    string                   `json:"graph_digest"`
-	Sequence       uint64                   `json:"sequence"`
-	Predecessor    *provenance.DigestLink   `json:"predecessor,omitempty"`
-	Attributes     map[string]string        `json:"attributes,omitempty"`
-	Freshness      provenance.Freshness     `json:"freshness"`
-	Hash           string                   `json:"hash"`
+	SourceSpan     provenance.SourceSpan     `json:"source_span"`
+	SourceDigest   string                    `json:"source_digest"`
+	SemanticDigest string                    `json:"semantic_digest"`
+	GraphDigest    string                    `json:"graph_digest"`
+	Sequence       uint64                    `json:"sequence"`
+	Predecessor    *provenance.DigestLink    `json:"predecessor,omitempty"`
+	Attributes     map[string]string         `json:"attributes,omitempty"`
+	Freshness      provenance.Freshness      `json:"freshness"`
+	Hash           string                    `json:"hash"`
 }
 
 type StoryResponse struct {
@@ -179,4 +179,3 @@ func copyAttributes(value map[string]string) map[string]string {
 	maps.Copy(result, value)
 	return result
 }
-

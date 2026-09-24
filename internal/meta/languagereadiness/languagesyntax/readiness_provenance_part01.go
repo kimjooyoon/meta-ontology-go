@@ -13,18 +13,18 @@ const (
 )
 
 type LanguageSyntaxReadinessProvenanceObservation struct {
-	Schema                     string
-	Decision                   string
-	Reason                     string
-	ReportDecision             string
-	ReportReason               string
-	DeclarationDecision        string
-	DeclarationReason          string
-	ReportObservationDigest    string
+	Schema                       string
+	Decision                     string
+	Reason                       string
+	ReportDecision               string
+	ReportReason                 string
+	DeclarationDecision          string
+	DeclarationReason            string
+	ReportObservationDigest      string
 	DeclarationObservationDigest string
-	ReverseObservationDigest   string
-	NonAuthorizing             bool
-	ObservationDigest          string
+	ReverseObservationDigest     string
+	NonAuthorizing               bool
+	ObservationDigest            string
 }
 
 func ObserveLanguageSyntaxReadinessProvenance(report Report) LanguageSyntaxReadinessProvenanceObservation {

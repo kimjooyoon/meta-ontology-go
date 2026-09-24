@@ -9,10 +9,10 @@ import (
 const SelfImprovementExecutionHistorySchema = "gooo.self-improvement.execution-history.v1"
 
 type SelfImprovementExecutionHistory struct {
-	Schema         string                                  `json:"schema"`
+	Schema         string                                       `json:"schema"`
 	Outcomes       []SelfImprovementExecutionOutcomeObservation `json:"outcomes"`
-	NonAuthorizing bool                                    `json:"non_authorizing"`
-	Digest         string                                  `json:"digest"`
+	NonAuthorizing bool                                         `json:"non_authorizing"`
+	Digest         string                                       `json:"digest"`
 }
 
 type SelfImprovementExecutionHistoryDecision string

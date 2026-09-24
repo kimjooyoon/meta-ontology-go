@@ -15,21 +15,21 @@ const SelfImprovementExecutionRequestStatusRejected SelfImprovementExecutionRequ
 const SelfImprovementExecutionRequestStatusUnknown SelfImprovementExecutionRequestStatus = "UNKNOWN"
 
 type SelfImprovementExecutionRequestContext struct {
-	RequestID             string `json:"request_id"`
-	SourceURI             string `json:"source_uri"`
-	EnvironmentDigest     string `json:"environment_digest"`
+	RequestID              string `json:"request_id"`
+	SourceURI              string `json:"source_uri"`
+	EnvironmentDigest      string `json:"environment_digest"`
 	WorkloadIdentityDigest string `json:"workload_identity_digest"`
-	GatewayPolicyDigest   string `json:"gateway_policy_digest"`
+	GatewayPolicyDigest    string `json:"gateway_policy_digest"`
 }
 
 type SelfImprovementExecutionRequestObservation struct {
-	Schema          string                              `json:"schema"`
-	SelectionDigest string                              `json:"selection_digest"`
+	Schema          string                                 `json:"schema"`
+	SelectionDigest string                                 `json:"selection_digest"`
 	Request         SelfImprovementExecutionRequestContext `json:"request"`
-	Status          SelfImprovementExecutionRequestStatus `json:"status"`
-	Reason          string                              `json:"reason"`
-	NonAuthorizing  bool                                `json:"non_authorizing"`
-	Digest          string                              `json:"digest"`
+	Status          SelfImprovementExecutionRequestStatus  `json:"status"`
+	Reason          string                                 `json:"reason"`
+	NonAuthorizing  bool                                   `json:"non_authorizing"`
+	Digest          string                                 `json:"digest"`
 }
 
 // ObserveSelfImprovementExecutionRequest validates the evidence envelope for

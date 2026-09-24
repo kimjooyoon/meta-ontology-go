@@ -36,7 +36,7 @@ func TestDiagnosticProvenanceBindsDocumentAndDiagnostics(t *testing.T) {
 	}
 	changedSource := "package diagnostics\nnamespace changed\n"
 	changeParams, err := json.Marshal(map[string]any{
-		"textDocument": map[string]any{"uri": uri, "version": 2},
+		"textDocument":   map[string]any{"uri": uri, "version": 2},
 		"contentChanges": []any{map[string]any{"text": changedSource}},
 	})
 	if err != nil {

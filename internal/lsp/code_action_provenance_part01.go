@@ -19,27 +19,27 @@ const (
 // CodeActionProvenanceEdit binds one proposed edit to the document snapshot
 // from which it was derived. It is evidence, not an authorization grant.
 type CodeActionProvenanceEdit struct {
-	URI        string  `json:"uri"`
-	Version    int     `json:"version"`
+	URI        string   `json:"uri"`
+	Version    int      `json:"version"`
 	Edit       TextEdit `json:"edit"`
-	EditDigest string  `json:"edit_digest"`
+	EditDigest string   `json:"edit_digest"`
 }
 
 // CodeActionProvenanceObservation describes a safe-to-present edit surface.
 // The edit is never applied by this package.
 type CodeActionProvenanceObservation struct {
-	Schema            string                       `json:"schema"`
-	URI               string                       `json:"uri"`
-	Version           int                          `json:"version"`
-	SourceDigest      string                       `json:"source_digest,omitempty"`
-	OriginDigest      string                       `json:"origin_digest,omitempty"`
-	EnvironmentDigest string                       `json:"environment_digest,omitempty"`
-	Edits             []CodeActionProvenanceEdit   `json:"edits"`
-	EditMapDigest     string                       `json:"edit_map_digest"`
-	Decision          string                       `json:"decision"`
-	Reason            string                       `json:"reason"`
-	NonAuthorizing    bool                         `json:"non_authorizing"`
-	ObservationDigest string                       `json:"observation_digest"`
+	Schema            string                     `json:"schema"`
+	URI               string                     `json:"uri"`
+	Version           int                        `json:"version"`
+	SourceDigest      string                     `json:"source_digest,omitempty"`
+	OriginDigest      string                     `json:"origin_digest,omitempty"`
+	EnvironmentDigest string                     `json:"environment_digest,omitempty"`
+	Edits             []CodeActionProvenanceEdit `json:"edits"`
+	EditMapDigest     string                     `json:"edit_map_digest"`
+	Decision          string                     `json:"decision"`
+	Reason            string                     `json:"reason"`
+	NonAuthorizing    bool                       `json:"non_authorizing"`
+	ObservationDigest string                     `json:"observation_digest"`
 }
 
 // ObserveCodeActionProvenance records a deterministic edit proposal without
@@ -134,8 +134,12 @@ func codeActionProvenanceEdits(uri string, version int, values []TextEdit) []Cod
 	}
 	sort.SliceStable(result, func(left, right int) bool {
 		first, second := result[left], result[right]
-		if first.Edit.Range.Start != second.Edit.Range.Start { return positionLess(first.Edit.Range.Start, second.Edit.Range.Start) }
-		if first.Edit.Range.End != second.Edit.Range.End { return positionLess(first.Edit.Range.End, second.Edit.Range.End) }
+		if first.Edit.Range.Start != second.Edit.Range.Start {
+			return positionLess(first.Edit.Range.Start, second.Edit.Range.Start)
+		}
+		if first.Edit.Range.End != second.Edit.Range.End {
+			return positionLess(first.Edit.Range.End, second.Edit.Range.End)
+		}
 		return first.Edit.NewText < second.Edit.NewText
 	})
 	return result

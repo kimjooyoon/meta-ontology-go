@@ -4,16 +4,16 @@ package valueexecution
 // measured execution environment. An environment change is UNKNOWN rather
 // than REFUTED because it cannot establish a semantic counterexample.
 type EnvironmentReplayComparison struct {
-	Schema                    string                 `json:"schema"`
-	State                     ReplayState            `json:"state"`
-	Reason                    string                 `json:"reason"`
-	NextOperation             string                 `json:"next_operation"`
-	BlockedBy                 []string               `json:"blocked_by"`
-	EnvironmentState          EnvironmentTransition  `json:"environment_state"`
-	SameEnvironment           bool                   `json:"same_environment"`
-	BaselineEnvironmentDigest string                 `json:"baseline_environment_digest"`
+	Schema                     string                `json:"schema"`
+	State                      ReplayState           `json:"state"`
+	Reason                     string                `json:"reason"`
+	NextOperation              string                `json:"next_operation"`
+	BlockedBy                  []string              `json:"blocked_by"`
+	EnvironmentState           EnvironmentTransition `json:"environment_state"`
+	SameEnvironment            bool                  `json:"same_environment"`
+	BaselineEnvironmentDigest  string                `json:"baseline_environment_digest"`
 	CandidateEnvironmentDigest string                `json:"candidate_environment_digest"`
-	Replay                    ReplayComparison       `json:"replay"`
+	Replay                     ReplayComparison      `json:"replay"`
 }
 
 const EnvironmentReplayComparisonSchema = "gooo/value-execution-environment-replay/v1"

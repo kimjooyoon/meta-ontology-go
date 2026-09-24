@@ -76,11 +76,11 @@ func dogfoodSelfImprovementContext(plan valueexecution.Plan) valueexecution.Impr
 		Inputs: valueexecution.EnvironmentInputs{
 			SourceDigest:        plan.SourceDigest,
 			SemanticFingerprint: plan.SemanticFingerprint,
-			ToolchainDigest:     cache.HashBytes([]byte("go-toolchain")).String(),
-			ContractDigest:      cache.HashBytes([]byte("gooo-contract-v1")).String(),
-			ModelDigest:         cache.HashBytes([]byte("gooo-model-v1")).String(),
-			SkillDigest:         cache.HashBytes([]byte("gooo-skill-v1")).String(),
-			GatewayPolicyDigest: cache.HashBytes([]byte("gooo-gateway-policy-v1")).String(),
+			ToolchainDigest:     "sha256:" + cache.HashBytes([]byte("go-toolchain")).String(),
+			ContractDigest:      "sha256:" + cache.HashBytes([]byte("gooo-contract-v1")).String(),
+			ModelDigest:         "sha256:" + cache.HashBytes([]byte("gooo-model-v1")).String(),
+			SkillDigest:         "sha256:" + cache.HashBytes([]byte("gooo-skill-v1")).String(),
+			GatewayPolicyDigest: "sha256:" + cache.HashBytes([]byte("gooo-gateway-policy-v1")).String(),
 		},
 	})
 }
@@ -97,7 +97,7 @@ func dogfoodSelfImprovementOrigin(execution valueexecution.Execution, label stri
 		ReverseObservation:    "execution.completed",
 		MetricName:            "gooo.self-improvement.metric.v1",
 		MetricValue:           fmt.Sprintf("%s=%d", label, execution.Results["CommitCandidate"].Value),
-		EvidenceDigest:        cache.HashBytes(encoded).String(),
+		EvidenceDigest:        "sha256:" + cache.HashBytes(encoded).String(),
 	})
 }
 
@@ -106,7 +106,7 @@ func dogfoodSelfImprovementMetric(execution valueexecution.Execution, label stri
 	return valueexecution.ImprovementMetric{
 		Name:           "commit_candidate_value",
 		Value:          execution.Results["CommitCandidate"].Value,
-		EvidenceDigest: cache.HashBytes(append([]byte(label+":"), encoded...)).String(),
+		EvidenceDigest: "sha256:" + cache.HashBytes(append([]byte(label+":"), encoded...)).String(),
 		LowerIsBetter:  false,
 	}
 }

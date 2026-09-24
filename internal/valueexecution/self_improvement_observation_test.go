@@ -9,7 +9,7 @@ import (
 func selfImprovementOrigin(evidence string) provenance.OriginChainObservation {
 	return provenance.ObserveOriginChain(provenance.OriginChain{
 		DeclarationURI:        "examples/language-runtime-binding/typed-chain.gooo",
-		DeclarationSymbol:      "activity CommitCandidate",
+		DeclarationSymbol:     "activity CommitCandidate",
 		IRNode:                "activity:CommitCandidate",
 		GeneratedURI:          "cmd/gooo/run_source_typed_chain_part01_test.go",
 		GeneratedSymbol:       "TestTypedChain",
@@ -35,9 +35,9 @@ func selfImprovementEnvironment(source string) EnvironmentObservation {
 
 func selfImprovementMetric(value int64, lowerIsBetter bool, evidence string) ImprovementMetric {
 	return ImprovementMetric{
-		Name:          "runtime.steps",
-		Value:         value,
-		LowerIsBetter: lowerIsBetter,
+		Name:           "runtime.steps",
+		Value:          value,
+		LowerIsBetter:  lowerIsBetter,
 		EvidenceDigest: digestValue(evidence),
 	}
 }

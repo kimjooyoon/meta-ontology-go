@@ -20,13 +20,13 @@ const (
 // grant. Keeping authority out of this value prevents identity observation
 // from becoming an implicit permission escalation.
 type PrincipalBinding struct {
-	Schema       string `json:"schema"`
-	SourcePath   string `json:"source_path"`
-	SourceDigest string `json:"source_digest"`
-	Issuer       string `json:"issuer"`
-	Subject      string `json:"subject"`
-	Scope        string `json:"scope"`
-	Nonce        string `json:"nonce"`
+	Schema         string `json:"schema"`
+	SourcePath     string `json:"source_path"`
+	SourceDigest   string `json:"source_digest"`
+	Issuer         string `json:"issuer"`
+	Subject        string `json:"subject"`
+	Scope          string `json:"scope"`
+	Nonce          string `json:"nonce"`
 	IdentityDigest string `json:"identity_digest"`
 }
 

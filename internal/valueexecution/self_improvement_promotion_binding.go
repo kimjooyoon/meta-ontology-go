@@ -15,13 +15,13 @@ const SelfImprovementPromotionBindingStatusBlocked SelfImprovementPromotionBindi
 const SelfImprovementPromotionBindingStatusUnknown SelfImprovementPromotionBindingStatus = "UNKNOWN"
 
 type SelfImprovementPromotionBindingObservation struct {
-	Schema         string                              `json:"schema"`
-	PromotionDigest string                              `json:"promotion_digest"`
-	ReceiptDigest  string                              `json:"receipt_digest"`
-	Status         SelfImprovementPromotionBindingStatus `json:"status"`
-	Reason         string                              `json:"reason"`
-	NonAuthorizing bool                                `json:"non_authorizing"`
-	Digest         string                              `json:"digest"`
+	Schema          string                                `json:"schema"`
+	PromotionDigest string                                `json:"promotion_digest"`
+	ReceiptDigest   string                                `json:"receipt_digest"`
+	Status          SelfImprovementPromotionBindingStatus `json:"status"`
+	Reason          string                                `json:"reason"`
+	NonAuthorizing  bool                                  `json:"non_authorizing"`
+	Digest          string                                `json:"digest"`
 }
 
 // ObserveSelfImprovementPromotionBinding closes the evidence boundary between
@@ -32,15 +32,15 @@ func ObserveSelfImprovementPromotionBinding(
 	receipt ExecutionOriginReceipt,
 ) SelfImprovementPromotionBindingObservation {
 	observation := SelfImprovementPromotionBindingObservation{
-		Schema:         SelfImprovementPromotionBindingObservationSchema,
+		Schema:          SelfImprovementPromotionBindingObservationSchema,
 		PromotionDigest: promotion.Digest,
-		ReceiptDigest:  receipt.ReceiptDigest,
-		Status:         SelfImprovementPromotionBindingStatusUnknown,
-		Reason:         "PROMOTION_EVIDENCE_UNKNOWN",
-		NonAuthorizing: true,
+		ReceiptDigest:   receipt.ReceiptDigest,
+		Status:          SelfImprovementPromotionBindingStatusUnknown,
+		Reason:          "PROMOTION_EVIDENCE_UNKNOWN",
+		NonAuthorizing:  true,
 	}
 	switch {
-	case promotion.Status == SelfImprovementPromotionStatusUnknown:
+	case promotion.Status == SelfImprovementPromotionStatusUnknown || promotion.Status == "":
 		observation.Reason = "PROMOTION_STATUS_UNKNOWN"
 	case promotion.Status != SelfImprovementPromotionStatusEligible:
 		observation.Status = SelfImprovementPromotionBindingStatusBlocked

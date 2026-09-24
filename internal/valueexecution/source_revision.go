@@ -14,11 +14,11 @@ const SourceRevisionEvaluationSchema = "gooo/value-execution-source-revision-eva
 const SourceRevisionContractScope = "EXPLICIT_INPUT_SET"
 
 type SourceRevisionRequest struct {
-	SourceDigest       string `json:"source_digest"`
-	Activity           string `json:"activity"`
-	ExpectedProgram    string `json:"expected_program"`
-	ReplacementProgram string `json:"replacement_program"`
-	TriggerReason      string `json:"trigger_reason"`
+	SourceDigest       string              `json:"source_digest"`
+	Activity           string              `json:"activity"`
+	ExpectedProgram    string              `json:"expected_program"`
+	ReplacementProgram string              `json:"replacement_program"`
+	TriggerReason      string              `json:"trigger_reason"`
 	AnalysisProvenance *AnalysisProvenance `json:"analysis_provenance,omitempty"`
 }
 
