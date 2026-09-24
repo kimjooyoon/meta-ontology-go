@@ -10,12 +10,10 @@ const SelfImprovementPromotionObservationSchema = "gooo.self-improvement.promoti
 
 type SelfImprovementPromotionStatus string
 
-const (
-	SelfImprovementPromotionStatusEligible           SelfImprovementPromotionStatus = "ELIGIBLE"
-	SelfImprovementPromotionStatusBlocked            SelfImprovementPromotionStatus = "BLOCKED"
-	SelfImprovementPromotionStatusUnknown            SelfImprovementPromotionStatus = "UNKNOWN"
-	SelfImprovementPromotionStatusInsufficientEvidence SelfImprovementPromotionStatus = "INSUFFICIENT_EVIDENCE"
-)
+const SelfImprovementPromotionStatusEligible SelfImprovementPromotionStatus = "ELIGIBLE"
+const SelfImprovementPromotionStatusBlocked SelfImprovementPromotionStatus = "BLOCKED"
+const SelfImprovementPromotionStatusUnknown SelfImprovementPromotionStatus = "UNKNOWN"
+const SelfImprovementPromotionStatusInsufficientEvidence SelfImprovementPromotionStatus = "INSUFFICIENT_EVIDENCE"
 
 type SelfImprovementPromotionObservation struct {
 	Schema         string                         `json:"schema"`
@@ -31,10 +29,15 @@ type SelfImprovementPromotionObservation struct {
 // It never authorizes a release, merge, or execution by itself.
 func ObserveSelfImprovementPromotion(ledger SelfImprovementEvidenceLedger) SelfImprovementPromotionObservation {
 	encoded, _ := json.Marshal(ledger)
-	decision := string(ledger.Decision)
+	ledgerObservation := ledger.Observe()
+	decision := string(ledgerObservation.Decision)
+	ledgerDigest := ledger.Digest
+	if ledgerDigest == "" {
+		ledgerDigest = cache.HashBytes(encoded).String()
+	}
 	observation := SelfImprovementPromotionObservation{
 		Schema:         SelfImprovementPromotionObservationSchema,
-		LedgerDigest:   cache.HashBytes(encoded).String(),
+		LedgerDigest:   ledgerDigest,
 		Decision:       decision,
 		Status:         SelfImprovementPromotionStatusInsufficientEvidence,
 		Reason:         "LEDGER_NOT_PROMOTION_ELIGIBLE",
