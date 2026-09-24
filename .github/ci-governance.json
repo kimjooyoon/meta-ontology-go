@@ -5552,6 +5552,9 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
         "internal/meta/generation/experience_memory_receipt_contract.gooo",
         "internal/meta/generation/experience_memory_receipt_part01.go",
         "internal/meta/generation/experience_memory_receipt_part01_test.go",
