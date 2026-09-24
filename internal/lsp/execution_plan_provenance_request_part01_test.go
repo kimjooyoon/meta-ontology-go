@@ -44,12 +44,12 @@ bind RecordIndependentReview.result -> CommitCandidate.input
 		t.Fatalf("didOpen() error = %v", err)
 	}
 	params, err := json.Marshal(ExecutionPlanProvenanceParamsPart01{
-		TextDocument:    TextDocumentIdentifier{URI: uri},
+		TextDocument:     TextDocumentIdentifier{URI: uri},
 		Task:            "task-typed-plan",
-		WorkspaceDigest: cache.HashBytes([]byte("workspace-typed-plan")).String(),
-		Model:           "model-1",
-		GatewayPolicy:   provenance.GatewayPolicy{},
-		Lifecycle:       provenance.ExecutionPlanLifecyclePlanned,
+		WorkspaceDigest:  cache.HashBytes([]byte("workspace-typed-plan")).String(),
+		Model:            "model-1",
+		GatewayPolicy:    provenance.GatewayPolicy{},
+		Lifecycle:        provenance.ExecutionPlanLifecyclePlanned,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -120,12 +120,12 @@ func TestExecutionPlanProvenancePreservesUnknownWithoutFullChain(t *testing.T) {
 		t.Fatalf("didOpen() error = %v", err)
 	}
 	params, err := json.Marshal(ExecutionPlanProvenanceParamsPart01{
-		TextDocument:    TextDocumentIdentifier{URI: uri},
-		Task:            "task-1",
-		WorkspaceDigest: cache.HashBytes([]byte("workspace-1")).String(),
-		Model:           "model-1",
-		GatewayPolicy:   provenance.GatewayPolicy{AllowedHosts: []string{"api.example.invalid"}},
-		Lifecycle:       provenance.ExecutionPlanLifecyclePlanned,
+		TextDocument:     TextDocumentIdentifier{URI: uri},
+		Task:             "task-1",
+		WorkspaceDigest:  cache.HashBytes([]byte("workspace-1")).String(),
+		Model:            "model-1",
+		GatewayPolicy:    provenance.GatewayPolicy{AllowedHosts: []string{"api.example.invalid"}},
+		Lifecycle:        provenance.ExecutionPlanLifecyclePlanned,
 		WorkloadIdentity: &provenance.WorkloadIdentityProvenanceBinding{},
 	})
 	if err != nil {

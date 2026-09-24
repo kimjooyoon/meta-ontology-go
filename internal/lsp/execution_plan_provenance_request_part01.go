@@ -12,12 +12,12 @@ import (
 const ExecutionPlanProvenanceSchemaPart01 = provenance.ExecutionPlanProvenanceBindingSchemaPart01
 
 type ExecutionPlanProvenanceParamsPart01 struct {
-	TextDocument    TextDocumentIdentifier                  `json:"textDocument"`
-	Task            string                                  `json:"task"`
-	WorkspaceDigest string                                  `json:"workspace_digest"`
-	Model           string                                  `json:"model"`
-	GatewayPolicy   provenance.GatewayPolicy                `json:"gateway_policy"`
-	Lifecycle       provenance.ExecutionPlanLifecyclePart01 `json:"lifecycle"`
+	TextDocument     TextDocumentIdentifier                  `json:"textDocument"`
+	Task             string                                  `json:"task"`
+	WorkspaceDigest  string                                  `json:"workspace_digest"`
+	Model            string                                  `json:"model"`
+	GatewayPolicy    provenance.GatewayPolicy                `json:"gateway_policy"`
+	Lifecycle        provenance.ExecutionPlanLifecyclePart01 `json:"lifecycle"`
 	WorkloadIdentity *provenance.WorkloadIdentityProvenanceBinding `json:"workload_identity,omitempty"`
 }
 
