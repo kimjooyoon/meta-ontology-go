@@ -21,7 +21,7 @@ const (
 // SPIFFEExecutionBoundaryMetricsPart01 records evidence counts only. It never
 // grants workload authority or changes the decision made by the envelope.
 type SPIFFEExecutionBoundaryMetricsPart01 struct {
-	GeneratedArtifactCount   int `json:"generated_artifact_count"`
+	GeneratedArtifactCount  int `json:"generated_artifact_count"`
 	ReverseObservationCount int `json:"reverse_observation_count"`
 	EvidenceStageCount      int `json:"evidence_stage_count"`
 }
@@ -29,37 +29,37 @@ type SPIFFEExecutionBoundaryMetricsPart01 struct {
 // SPIFFEExecutionBoundaryInputPart01 is the input to the generated envelope.
 // Every digest is an identity of an already-observed stage, not an authority.
 type SPIFFEExecutionBoundaryInputPart01 struct {
-	WorkloadIdentity           string
-	WorkloadAttestationDigest  string
-	TrustBundleDigest          string
-	NonAuthorizing             bool
-	GoooDeclarationDigest      string
-	IRDigest                   string
-	GeneratedArtifactDigest    string
-	ReverseObservationDigest   string
-	ExecutionPlanDigest        string
-	Metrics                    SPIFFEExecutionBoundaryMetricsPart01
+	WorkloadIdentity          string
+	WorkloadAttestationDigest string
+	TrustBundleDigest         string
+	NonAuthorizing            bool
+	GoooDeclarationDigest     string
+	IRDigest                  string
+	GeneratedArtifactDigest   string
+	ReverseObservationDigest  string
+	ExecutionPlanDigest       string
+	Metrics                   SPIFFEExecutionBoundaryMetricsPart01
 }
 
 // SPIFFEExecutionBoundaryEnvelopePart01 binds declaration, IR, generation,
 // reverse observation, execution planning, and workload evidence while
 // remaining explicitly non-authorizing.
 type SPIFFEExecutionBoundaryEnvelopePart01 struct {
-	Schema                    string                                  `json:"schema"`
-	WorkloadIdentity          string                                  `json:"workload_identity"`
-	WorkloadAttestationDigest string                                  `json:"workload_attestation_digest"`
-	TrustBundleDigest         string                                  `json:"trust_bundle_digest"`
-	GoooDeclarationDigest     string                                  `json:"gooo_declaration_digest"`
-	IRDigest                  string                                  `json:"ir_digest"`
-	GeneratedArtifactDigest   string                                  `json:"generated_artifact_digest"`
-	ReverseObservationDigest  string                                  `json:"reverse_observation_digest"`
-	ExecutionPlanDigest       string                                  `json:"execution_plan_digest"`
-	Status                    SPIFFEExecutionBoundaryStatusPart01    `json:"status"`
-	Reason                    string                                  `json:"reason"`
-	MissingStageIndex         int                                     `json:"missing_stage_index"`
-	NonAuthorizing            bool                                    `json:"non_authorizing"`
-	Metrics                   SPIFFEExecutionBoundaryMetricsPart01    `json:"metrics"`
-	ObservationDigest         string                                  `json:"observation_digest"`
+	Schema                    string                               `json:"schema"`
+	WorkloadIdentity          string                               `json:"workload_identity"`
+	WorkloadAttestationDigest string                               `json:"workload_attestation_digest"`
+	TrustBundleDigest         string                               `json:"trust_bundle_digest"`
+	GoooDeclarationDigest     string                               `json:"gooo_declaration_digest"`
+	IRDigest                  string                               `json:"ir_digest"`
+	GeneratedArtifactDigest   string                               `json:"generated_artifact_digest"`
+	ReverseObservationDigest  string                               `json:"reverse_observation_digest"`
+	ExecutionPlanDigest       string                               `json:"execution_plan_digest"`
+	Status                    SPIFFEExecutionBoundaryStatusPart01  `json:"status"`
+	Reason                    string                               `json:"reason"`
+	MissingStageIndex         int                                  `json:"missing_stage_index"`
+	NonAuthorizing            bool                                 `json:"non_authorizing"`
+	Metrics                   SPIFFEExecutionBoundaryMetricsPart01 `json:"metrics"`
+	ObservationDigest         string                               `json:"observation_digest"`
 }
 
 // SPIFFEExecutionBoundaryReverseObservationPart01 is the independently
