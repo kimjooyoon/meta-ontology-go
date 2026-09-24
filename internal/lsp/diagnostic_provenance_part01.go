@@ -126,11 +126,11 @@ func diagnosticProvenanceItems(values []Diagnostic, documentProvenanceDigest str
 	result := make([]diagnosticProvenanceItem, 0, len(values))
 	for _, value := range values {
 		item := diagnosticProvenanceItem{
-			Range:    value.Range,
-			Severity: value.Severity,
-			Code:     value.Code,
-			Source:   value.Source,
-			Message:  value.Message,
+			Range:                    value.Range,
+			Severity:                 value.Severity,
+			Code:                     value.Code,
+			Source:                   value.Source,
+			Message:                  value.Message,
 			DocumentProvenanceDigest: documentProvenanceDigest,
 		}
 		item.OriginDigest = diagnosticProvenanceItemDigest(item)
