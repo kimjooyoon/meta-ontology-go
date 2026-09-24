@@ -13,6 +13,9 @@ const hoverSelfImprovementEvidenceSchemaPart01 = "gooo/lsp-hover-self-improvemen
 // provenance chain. An incomplete chain is observable as UNKNOWN through its
 // first missing stage instead of being presented as a successful hover.
 func hoverSelfImprovementEvidenceDetail(document document) string {
+	if document.cacheKey.sourceDigest == "" {
+		return ""
+	}
 	stages := []string{
 		document.cacheKey.sourceDigest,
 		document.result.semanticDigest,
