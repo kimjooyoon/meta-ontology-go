@@ -77,6 +77,9 @@ bind RecordIndependentReview.result -> CommitCandidate.input
 	if err != nil {
 		t.Fatal(err)
 	}
+	if binding.ProvenanceStages[3].Digest != typedPlan.Digest() {
+		t.Fatalf("graph provenance digest = %q, want %q", binding.ProvenanceStages[3].Digest, typedPlan.Digest())
+	}
 	if binding.Plan.TypedPlanDigest != typedPlan.Digest() || binding.Plan.RuntimeBindingCount != len(typedPlan.Edges) ||
 		len(binding.Plan.ActivityOrder) != len(typedPlan.Activities) || len(binding.Plan.BindingEdgeOrder) != len(typedPlan.Edges) {
 		t.Fatalf("typed plan provenance = %#v, want digest %s, edges %d, activities %d", binding.Plan, typedPlan.Digest(), len(typedPlan.Edges), len(typedPlan.Activities))

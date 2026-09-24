@@ -82,15 +82,19 @@ func (server *Server) executionPlanProvenanceRequest(
 	if exists && stored.cacheKey.sourceDigest != "" {
 		symbols := documentProvenanceSymbols(stored.result)
 		references := documentProvenanceReferences(stored.result)
+		typedPlanDigest, activityOrder, bindingEdgeOrder, runtimeBindingCount = executionPlanTypedMetadataPart01(stored.text)
+		graphDigest := documentProvenanceReferenceMapDigest(references)
+		if typedPlanDigest != "" {
+			graphDigest = typedPlanDigest
+		}
 		chain = provenance.BuildSelfImprovementProvenanceChainPart01(
 			documentProvenanceSymbolMapDigest(symbols),
 			stored.cacheKey.sourceDigest,
 			stored.result.semanticDigest,
-			documentProvenanceReferenceMapDigest(references),
+			graphDigest,
 			"",
 			"",
 		)
-		typedPlanDigest, activityOrder, bindingEdgeOrder, runtimeBindingCount = executionPlanTypedMetadataPart01(stored.text)
 	}
 
 	binding := provenance.BindExecutionPlanToProvenanceWithTypedPlanEdgesPart01(
