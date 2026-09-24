@@ -29,16 +29,16 @@ const (
 // ExecutionPlanPart01 separates declarative task, workspace, gateway, model,
 // and lifecycle identities without granting any execution or adoption power.
 type ExecutionPlanPart01 struct {
-	Task                string                       `json:"task"`
-	WorkspaceDigest     string                       `json:"workspace_digest"`
-	GatewayPolicyDigest string                       `json:"gateway_policy_digest"`
-	Model               string                       `json:"model"`
-	Lifecycle           ExecutionPlanLifecyclePart01 `json:"lifecycle"`
-	TypedPlanDigest     string                       `json:"typed_plan_digest,omitempty"`
-	ActivityOrder       []string                     `json:"activity_order,omitempty"`
-	BindingEdgeOrder    []string                     `json:"binding_edge_order,omitempty"`
-	RuntimeBindingCount int                          `json:"runtime_binding_count,omitempty"`
-	WorkloadIdentityBindingDigest string `json:"workload_identity_binding_digest,omitempty"`
+	Task                          string                       `json:"task"`
+	WorkspaceDigest               string                       `json:"workspace_digest"`
+	GatewayPolicyDigest           string                       `json:"gateway_policy_digest"`
+	Model                         string                       `json:"model"`
+	Lifecycle                     ExecutionPlanLifecyclePart01 `json:"lifecycle"`
+	TypedPlanDigest               string                       `json:"typed_plan_digest,omitempty"`
+	ActivityOrder                 []string                     `json:"activity_order,omitempty"`
+	BindingEdgeOrder              []string                     `json:"binding_edge_order,omitempty"`
+	RuntimeBindingCount           int                          `json:"runtime_binding_count,omitempty"`
+	WorkloadIdentityBindingDigest string                       `json:"workload_identity_binding_digest,omitempty"`
 }
 
 // ExecutionPlanProvenanceBindingPart01 binds an execution-plan observation to
@@ -181,7 +181,6 @@ func BindExecutionPlanToProvenanceWithTypedPlanEdgesPart01(
 	binding.BindingDigest = hashExecutionPlanProvenanceBindingPart01(binding)
 	return binding
 }
-
 
 func BindExecutionPlanToProvenanceWithWorkloadIdentityPart01(
 	task, workspaceDigest, model string,
