@@ -231,6 +231,10 @@ jobs:
     if: always()
     needs: [platform, aggregate]
     runs-on: ubuntu-24.04
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PLATFORM_RESULT: ${{ needs.platform.result }}
+      AGGREGATE_RESULT: ${{ needs.aggregate.result }}
     steps:
       - name: Check out exact candidate
         uses: actions/checkout@v7
@@ -238,11 +242,6 @@ jobs:
           ref: ${{ env.EXACT_SHA }}
           fetch-depth: 1
           persist-credentials: false
-    env:
-      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      PLATFORM_RESULT: ${{ needs.platform.result }}
-      AGGREGATE_RESULT: ${{ needs.aggregate.result }}
-    steps:
       - name: Prepare fail-closed eligibility paths
         shell: bash
         run: |
