@@ -64,7 +64,7 @@ func (server *Server) selfImprovementProvenanceChainRequest(
 		return featureErrorResponse(request.ID, err, ctx)
 	}
 	response := SelfImprovementProvenanceChainResponsePart01{
-		Schema:                                             SelfImprovementProvenanceChainSchemaPart01,
+		Schema: SelfImprovementProvenanceChainSchemaPart01,
 		SelfImprovementProvenanceChainProjectionPart01: projection,
 	}
 	if err := response.Validate(); err != nil {
