@@ -101,6 +101,9 @@ func (r ExperienceMemoryReceipt) Validate() error {
 	default:
 		return fmt.Errorf("invalid experience memory status %q", r.Status)
 	}
+	if r.Status == ExperienceMemoryClosed && strings.TrimSpace(r.OutcomeDigest) == "" {
+		return fmt.Errorf("CLOSED experience memory requires immutable outcome receipt")
+	}
 	if r.Status == ExperienceMemoryUnknown {
 		if r.MissingStageIndex < 0 || strings.TrimSpace(r.MissingStage) == "" || strings.TrimSpace(r.UnknownReason) == "" {
 			return fmt.Errorf("UNKNOWN experience memory requires first missing stage coordinates")
