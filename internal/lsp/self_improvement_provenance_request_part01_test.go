@@ -11,10 +11,7 @@ import (
 func TestSelfImprovementProvenanceChainRequestReportsNextMissingStage(t *testing.T) {
 	server := NewServer()
 	uri := "file:///self-improvement.gooo"
-	source := "package selfimprovement
-namespace selfimprovement
-entity Candidate id "gooo://candidate"
-"
+	source := "package selfimprovement\nnamespace selfimprovement\nentity Candidate id \"gooo://candidate\"\n"
 	server.documents[uri] = &document{text: source}
 	params, err := json.Marshal(DocumentProvenanceParams{
 		TextDocument: TextDocumentIdentifier{URI: uri},

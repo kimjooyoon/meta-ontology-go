@@ -33,17 +33,17 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 	}
 	want := lsp.ServerCapabilities{
 		TextDocumentSync:       lsp.TextDocumentSyncOptions{OpenClose: true, Change: 2},
-		HoverProvider:          true,
+		HoverProvider:           true,
 		CompletionProvider:      &lsp.CompletionOptions{},
 		DefinitionProvider:      true,
-		DocumentSymbolProvider: true,
+		DocumentSymbolProvider:  true,
 		ReferencesProvider:     true,
 		RenameProvider:         true,
 		WorkspaceSymbolProvider: &lsp.WorkspaceSymbolOptions{
 			Schema: lsp.WorkspaceSymbolProtocolSchema,
 		},
 		SemanticTokensProvider: &lsp.SemanticTokensOptions{
-			Schema: SemanticTokensProtocolSchema,
+			Schema: lsp.SemanticTokensProtocolSchema,
 			Legend: lsp.SemanticTokensLegend{
 				TokenTypes:     []string{"entity", "activity", "reference", "symbol"},
 				TokenModifiers: []string{},
