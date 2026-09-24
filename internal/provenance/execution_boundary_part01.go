@@ -26,6 +26,7 @@ const (
 
 type ExecutionBoundaryInput struct {
 	DeclarationDigest        string
+	ContractDigest           string
 	IRDigest                 string
 	GeneratedDigest          string
 	ReverseObservationDigest string
@@ -58,6 +59,7 @@ func ObserveExecutionBoundary(input ExecutionBoundaryInput, lifecycle ExecutionB
 	value := ExecutionBoundaryObservation{
 		Schema:                   ExecutionBoundaryObservationSchema,
 		DeclarationDigest:        strings.TrimSpace(input.DeclarationDigest),
+		ContractDigest:           strings.TrimSpace(input.ContractDigest),
 		IRDigest:                 strings.TrimSpace(input.IRDigest),
 		GeneratedDigest:          strings.TrimSpace(input.GeneratedDigest),
 		ReverseObservationDigest: strings.TrimSpace(input.ReverseObservationDigest),
@@ -132,6 +134,7 @@ func ValidateExecutionBoundaryObservation(value ExecutionBoundaryObservation) er
 func executionBoundaryStages(value ExecutionBoundaryObservation) []string {
 	return []string{
 		value.DeclarationDigest,
+		value.ContractDigest,
 		value.IRDigest,
 		value.GeneratedDigest,
 		value.ReverseObservationDigest,

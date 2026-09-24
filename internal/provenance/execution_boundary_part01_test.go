@@ -12,6 +12,7 @@ func executionBoundaryTestDigest(value byte) string {
 func TestExecutionBoundaryBindsPipelineAndAXLifecycle(t *testing.T) {
 	value := ObserveExecutionBoundary(ExecutionBoundaryInput{
 		DeclarationDigest:        executionBoundaryTestDigest('a'),
+		ContractDigest:           executionBoundaryTestDigest('0'),
 		IRDigest:                 executionBoundaryTestDigest('b'),
 		GeneratedDigest:          executionBoundaryTestDigest('c'),
 		ReverseObservationDigest: executionBoundaryTestDigest('d'),
@@ -50,12 +51,13 @@ func TestExecutionBoundaryBindsPipelineAndAXLifecycle(t *testing.T) {
 func TestExecutionBoundaryPreservesFirstUnknownStage(t *testing.T) {
 	value := ObserveExecutionBoundary(ExecutionBoundaryInput{
 		DeclarationDigest: executionBoundaryTestDigest('a'),
+		ContractDigest:           executionBoundaryTestDigest('0'),
 		IRDigest:          executionBoundaryTestDigest('b'),
 		TaskDigest:        executionBoundaryTestDigest('e'),
 		WorkspaceDigest:   executionBoundaryTestDigest('f'),
 	}, ExecutionBoundaryRunning)
 	if value.Decision != ExecutionBoundaryDecisionUnknown || value.Reason != "EXECUTION_BOUNDARY_DIGEST_INCOMPLETE" ||
-		value.MissingStageIndex != 2 || value.EvidencePrefixDigest == "" {
+		value.MissingStageIndex != 3 || value.EvidencePrefixDigest == "" {
 		t.Fatalf("unexpected first unresolved execution stage: %#v", value)
 	}
 	if err := ValidateExecutionBoundaryObservation(value); err != nil {
