@@ -98,4 +98,3 @@ func validateRuntimePlanContract(source []byte, plan valueexecution.Plan, raw []
 
 	return "sha256:" + cache.HashBytes(raw).String(), nil
 }
-
