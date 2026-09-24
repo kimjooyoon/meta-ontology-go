@@ -91,4 +91,6 @@ const (
 	projectedOperating   = 11
 	beforeCoverageBPS    = 8333
 	projectedCoverageBPS = 9166
+	// DenominatorMigrationV46Digest binds the capability-79 denominator snapshot.
+	DenominatorMigrationV46Digest = "sha256:e4e6a4a603c035a1fded313beed3b0ed121a0fe93a80541f691845f44135e2a0"
 )

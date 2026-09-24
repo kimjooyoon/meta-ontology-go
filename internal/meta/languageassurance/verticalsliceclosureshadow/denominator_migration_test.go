@@ -8,8 +8,8 @@ import (
 
 func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 	raw := activeDenominator()
-	if digestBytes(raw) != DenominatorMigrationV45Digest || activeDenominatorDigest() != DenominatorMigrationV45Digest {
-		t.Fatal("active denominator is not the pinned v45 migration")
+	if digestBytes(raw) != DenominatorMigrationV46Digest || activeDenominatorDigest() != DenominatorMigrationV46Digest {
+		t.Fatal("active denominator is not the pinned v46 migration")
 	}
 	var observed struct {
 		Version    int `json:"version"`
@@ -22,8 +22,8 @@ func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 	if err := json.Unmarshal(raw, &observed); err != nil {
 		t.Fatal(err)
 	}
-	if observed.Version != 45 || len(observed.Boundaries) != 6 ||
-		observed.Boundaries[0].ID != "syntax" || observed.Boundaries[0].Target != 77 ||
+	if observed.Version != 46 || len(observed.Boundaries) != 6 ||
+		observed.Boundaries[0].ID != "syntax" || observed.Boundaries[0].Target != 79 ||
 		observed.Boundaries[1].ID != "semantics" || observed.Boundaries[1].Target != 46 {
 		t.Fatalf("migration changed the declared capability boundary: %#v", observed)
 	}
@@ -41,7 +41,7 @@ func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 
 func TestCurrentDenominatorRejectsLoweredTarget(t *testing.T) {
 	raw := activeDenominator()
-	lowered := bytes.Replace(raw, []byte(`"target": 77`), []byte(`"target": 76`), 1)
+	lowered := bytes.Replace(raw, []byte(`"target": 79`), []byte(`"target": 78`), 1)
 	if bytes.Equal(raw, lowered) {
 		t.Fatal("counterexample did not change the syntax target")
 	}
@@ -81,7 +81,7 @@ func TestRecordMigrationPreservesPreviousBoundaryEvidence(t *testing.T) {
 	if err := json.Unmarshal(embeddedDenominatorV44, &prior); err != nil {
 		t.Fatal(err)
 	}
-	if previous.Version != 43 || prior.Version != 44 || current.Version != 45 ||
+	if previous.Version != 43 || prior.Version != 44 || current.Version != 46 ||
 		len(previous.Boundaries) != 6 || len(prior.Boundaries) != 6 || len(current.Boundaries) != 6 {
 		t.Fatal("migration changed the boundary inventory")
 	}
@@ -94,7 +94,7 @@ func TestRecordMigrationPreservesPreviousBoundaryEvidence(t *testing.T) {
 		}
 	}
 	for index, expected := range prior.Boundaries {
-		if index == 1 {
+		if index == "0 || index == 1" {
 			expected.Target += 2
 		}
 		if current.Boundaries[index] != expected {
