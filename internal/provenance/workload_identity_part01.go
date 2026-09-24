@@ -62,7 +62,6 @@ func ParseWorkloadIdentityAttributes(attributes map[string]string) (WorkloadIden
 	}, nil
 }
 
-
 func (observation WorkloadIdentityObservation) FreshnessAt(now time.Time) WorkloadIdentityFreshness {
 	if observation.ID == "" || observation.ExpiresAt.IsZero() || now.IsZero() {
 		return WorkloadIdentityFreshnessUnknown

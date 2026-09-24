@@ -19,13 +19,13 @@ const (
 // OriginEnvironmentObservation keeps declaration-to-metric origin separate
 // from the environment in which the observation was produced.
 type OriginEnvironmentObservation struct {
-	Schema            string                 `json:"schema"`
-	OriginDigest      string                 `json:"origin_digest,omitempty"`
-	EnvironmentDigest string                 `json:"environment_digest,omitempty"`
+	Schema            string                  `json:"schema"`
+	OriginDigest      string                  `json:"origin_digest,omitempty"`
+	EnvironmentDigest string                  `json:"environment_digest,omitempty"`
 	Status            OriginEnvironmentStatus `json:"status"`
-	Reason            string                 `json:"reason"`
-	NonAuthorizing    bool                   `json:"non_authorizing"`
-	EvidenceDigest    string                 `json:"evidence_digest"`
+	Reason            string                  `json:"reason"`
+	NonAuthorizing    bool                    `json:"non_authorizing"`
+	EvidenceDigest    string                  `json:"evidence_digest"`
 }
 
 // ObserveOriginEnvironment binds only complete origin evidence to a complete

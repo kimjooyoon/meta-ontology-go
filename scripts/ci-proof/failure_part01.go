@@ -19,21 +19,21 @@ type terminalFailureEvidence struct {
 	Reason         string     `json:"reason"`
 }
 type failureInput struct {
-	Code                 string          `json:"code"`
-	FailureCodes         []string        `json:"failure_codes"`
-	Message              string          `json:"message"`
-	Remediation          string          `json:"remediation"`
-	OwnerBranch          string          `json:"owner_branch"`
-	Rejections           []string        `json:"rejections"`
-	MissingReasons       missingReasons  `json:"missing_reasons"`
-	Artifacts            []artifactInput `json:"artifacts"`
-	ProofArtifact        *artifactInput  `json:"proof_artifact"`
-	ArtifactStatus       string          `json:"artifact_status"`
-	ArtifactReason       string          `json:"artifact_reason"`
-	TerminalFailures     []failureJob    `json:"terminal_failures"`
-	TerminalFailureCodes    []string                   `json:"terminal_failure_codes"`
+	Code                    string                    `json:"code"`
+	FailureCodes            []string                  `json:"failure_codes"`
+	Message                 string                    `json:"message"`
+	Remediation             string                    `json:"remediation"`
+	OwnerBranch             string                    `json:"owner_branch"`
+	Rejections              []string                  `json:"rejections"`
+	MissingReasons          missingReasons            `json:"missing_reasons"`
+	Artifacts               []artifactInput           `json:"artifacts"`
+	ProofArtifact           *artifactInput            `json:"proof_artifact"`
+	ArtifactStatus          string                    `json:"artifact_status"`
+	ArtifactReason          string                    `json:"artifact_reason"`
+	TerminalFailures        []failureJob              `json:"terminal_failures"`
+	TerminalFailureCodes    []string                  `json:"terminal_failure_codes"`
 	TerminalFailureEvidence []terminalFailureEvidence `json:"terminal_failure_evidence"`
-	Job                     failureJob                 `json:"job"`
+	Job                     failureJob                `json:"job"`
 }
 type failureBinding struct {
 	Repository  string

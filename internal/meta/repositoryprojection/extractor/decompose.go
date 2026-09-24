@@ -659,7 +659,7 @@ func suffixFreeObjects(statements []ast.Stmt, function *ast.FuncDecl, inside map
 func renderSuffixBindings(objects map[types.Object]bool, fset *token.FileSet, info *types.Info, current *types.Package) ([]suffixBinding, error) {
 	result := make([]suffixBinding, 0, len(objects))
 	for object := range objects {
-		text := types.TypeString(object.Type(), func(imported *types.Package) string {
+		text := types.TypeString(types.Default(object.Type()), func(imported *types.Package) string {
 			if imported == current {
 				return ""
 			}

@@ -15,17 +15,17 @@ const SelfImprovementCycleResultStatusNotApplied SelfImprovementCycleResultStatu
 const SelfImprovementCycleResultStatusUnknown SelfImprovementCycleResultStatus = "UNKNOWN"
 
 type SelfImprovementCycleResultObservation struct {
-	Schema             string                              `json:"schema"`
-	CycleDigest        string                              `json:"cycle_digest"`
-	OutcomeDigest      string                              `json:"outcome_digest"`
-	RequestDigest      string                              `json:"request_digest"`
-	ReceiptDigest      string                              `json:"receipt_digest"`
-	Status             SelfImprovementCycleResultStatus    `json:"status"`
-	Reason             string                              `json:"reason"`
-	NonAuthorizing     bool                                `json:"non_authorizing"`
-	ReverseObservation bool                                `json:"reverse_observation"`
-	EvidenceCount      int                                 `json:"evidence_count"`
-	Digest             string                              `json:"digest"`
+	Schema             string                           `json:"schema"`
+	CycleDigest        string                           `json:"cycle_digest"`
+	OutcomeDigest      string                           `json:"outcome_digest"`
+	RequestDigest      string                           `json:"request_digest"`
+	ReceiptDigest      string                           `json:"receipt_digest"`
+	Status             SelfImprovementCycleResultStatus `json:"status"`
+	Reason             string                           `json:"reason"`
+	NonAuthorizing     bool                             `json:"non_authorizing"`
+	ReverseObservation bool                             `json:"reverse_observation"`
+	EvidenceCount      int                              `json:"evidence_count"`
+	Digest             string                           `json:"digest"`
 }
 
 // ObserveSelfImprovementCycleResult closes the cycle's forward observation

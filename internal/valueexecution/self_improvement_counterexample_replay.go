@@ -15,13 +15,13 @@ const SelfImprovementCounterexampleReplayStatusMismatch SelfImprovementCounterex
 const SelfImprovementCounterexampleReplayStatusUnknown SelfImprovementCounterexampleReplayStatus = "UNKNOWN"
 
 type SelfImprovementCounterexampleReplayObservation struct {
-	Schema              string                                  `json:"schema"`
-	ExpectedDigest      string                                  `json:"expected_digest"`
-	ReplayDigest        string                                  `json:"replay_digest"`
-	Status              SelfImprovementCounterexampleReplayStatus `json:"status"`
-	Reason              string                                  `json:"reason"`
-	NonAuthorizing      bool                                    `json:"non_authorizing"`
-	Digest              string                                  `json:"digest"`
+	Schema         string                                    `json:"schema"`
+	ExpectedDigest string                                    `json:"expected_digest"`
+	ReplayDigest   string                                    `json:"replay_digest"`
+	Status         SelfImprovementCounterexampleReplayStatus `json:"status"`
+	Reason         string                                    `json:"reason"`
+	NonAuthorizing bool                                      `json:"non_authorizing"`
+	Digest         string                                    `json:"digest"`
 }
 
 // ObserveSelfImprovementCounterexampleReplay verifies that a retained

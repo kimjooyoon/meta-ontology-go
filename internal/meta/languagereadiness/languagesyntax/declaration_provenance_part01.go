@@ -32,15 +32,15 @@ type LanguageSyntaxDeclarationProvenanceObservation struct {
 
 func ObserveLanguageSyntaxDeclarationProvenance(source Source) LanguageSyntaxDeclarationProvenanceObservation {
 	observation := LanguageSyntaxDeclarationProvenanceObservation{
-		Schema:                  LanguageSyntaxDeclarationProvenanceSchema,
-		Decision:                LanguageSyntaxDeclarationProvenanceUnknown,
-		Reason:                  "LANGUAGE_SYNTAX_DECLARATION_PROVENANCE_UNKNOWN",
-		RegistryDigest:          source.RegistryDigest,
-		CorpusDigest:            source.CorpusDigest,
-		RegisteredCount:         len(source.GoooFiles),
-		MissingCount:            len(source.MissingRegistered),
-		UnregisteredCount:       len(source.UnregisteredGooo),
-		NonAuthorizing:          true,
+		Schema:            LanguageSyntaxDeclarationProvenanceSchema,
+		Decision:          LanguageSyntaxDeclarationProvenanceUnknown,
+		Reason:            "LANGUAGE_SYNTAX_DECLARATION_PROVENANCE_UNKNOWN",
+		RegistryDigest:    source.RegistryDigest,
+		CorpusDigest:      source.CorpusDigest,
+		RegisteredCount:   len(source.GoooFiles),
+		MissingCount:      len(source.MissingRegistered),
+		UnregisteredCount: len(source.UnregisteredGooo),
+		NonAuthorizing:    true,
 	}
 	if source.RegistryDigest == "" {
 		return finalizeLanguageSyntaxDeclarationProvenance(observation, LanguageSyntaxDeclarationProvenanceUnknown, "MISSING_DECLARATION_REGISTRY_DIGEST")

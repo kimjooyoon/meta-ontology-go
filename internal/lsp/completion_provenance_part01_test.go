@@ -46,4 +46,3 @@ func TestCompletionProvenanceBindsCandidatesAndRejectsTampering(t *testing.T) {
 		t.Fatal("tampered completion provenance was accepted")
 	}
 }
-

@@ -15,13 +15,13 @@ const SelfImprovementCycleStatusPaused SelfImprovementCycleStatus = "PAUSED"
 const SelfImprovementCycleStatusUnknown SelfImprovementCycleStatus = "UNKNOWN"
 
 type SelfImprovementCycleObservation struct {
-	Schema             string                       `json:"schema"`
-	ContinuationDigest  string                       `json:"continuation_digest"`
-	RequestDigest       string                       `json:"request_digest"`
-	Status             SelfImprovementCycleStatus  `json:"status"`
-	Reason             string                       `json:"reason"`
-	NonAuthorizing     bool                         `json:"non_authorizing"`
-	Digest             string                       `json:"digest"`
+	Schema             string                     `json:"schema"`
+	ContinuationDigest string                     `json:"continuation_digest"`
+	RequestDigest      string                     `json:"request_digest"`
+	Status             SelfImprovementCycleStatus `json:"status"`
+	Reason             string                     `json:"reason"`
+	NonAuthorizing     bool                       `json:"non_authorizing"`
+	Digest             string                     `json:"digest"`
 }
 
 // ObserveSelfImprovementCycle closes one evidence-driven cycle boundary. READY
@@ -31,7 +31,7 @@ func ObserveSelfImprovementCycle(
 	request SelfImprovementExecutionRequestObservation,
 ) SelfImprovementCycleObservation {
 	cycle := SelfImprovementCycleObservation{
-		Schema:            SelfImprovementCycleObservationSchema,
+		Schema:             SelfImprovementCycleObservationSchema,
 		ContinuationDigest: continuation.Digest,
 		RequestDigest:      request.Digest,
 		Status:             SelfImprovementCycleStatusUnknown,

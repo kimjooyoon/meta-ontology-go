@@ -41,7 +41,6 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 					"method": "gooo/storyProvenance",
 
 					"schema": storyProvenanceSchema,
-
 				},
 				"goooCompletionProvenance": map[string]string{
 					"method": "gooo/completionProvenance", "schema": completionProvenanceSchema,

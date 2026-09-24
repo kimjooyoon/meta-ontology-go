@@ -27,7 +27,7 @@ func testUpstreamReport() publicorchestration.Report {
 		CaseID: publicorchestration.CaseAuthorizedOrchestration, PolicySourceDigest: digest,
 		PolicySemanticDigest: digest, PolicyEvaluatorDigest: digest, Operation: publicorchestration.Operation,
 		StatePath: []string{"AUTHORIZE", "CERTIFY", "GENERATE", "VALIDATE", "REUSE", "EVIDENCE"},
-		Boundary: "AUTHORIZE", CandidateDigest: digest, CandidateID: "candidate-1",
+		Boundary:  "AUTHORIZE", CandidateDigest: digest, CandidateID: "candidate-1",
 		HandoffDigest: digest, AuthorizationDigest: digest, CertificateDigest: digest, ReceiptDigest: digest,
 		CaseDenominator: 6, ArtifactDenominator: publicorchestration.ArtifactDenominator,
 		RepositoryWrites: 0, LocalTestExecutions: 0, RuntimeComparable: false,

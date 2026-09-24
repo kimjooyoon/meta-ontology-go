@@ -8,7 +8,7 @@ const (
 	SelfImprovementLedgerDecisionUnknown              SelfImprovementLedgerDecision = "UNKNOWN"
 	SelfImprovementLedgerDecisionInsufficientEvidence SelfImprovementLedgerDecision = "INSUFFICIENT_EVIDENCE"
 	SelfImprovementLedgerDecisionBlockedRegression    SelfImprovementLedgerDecision = "BLOCKED_REGRESSION"
-	SelfImprovementLedgerDecisionPromotionEligible   SelfImprovementLedgerDecision = "PROMOTION_ELIGIBLE"
+	SelfImprovementLedgerDecisionPromotionEligible    SelfImprovementLedgerDecision = "PROMOTION_ELIGIBLE"
 )
 
 const SelfImprovementEvidenceLedgerSchema = "gooo/self-improvement-evidence-ledger/v1"
@@ -17,27 +17,27 @@ const SelfImprovementEvidenceLedgerSchema = "gooo/self-improvement-evidence-ledg
 // Earlier UNKNOWN and regression observations remain in the digest and cannot
 // be erased by a later improvement observation.
 type SelfImprovementEvidenceLedger struct {
-	Schema               string                                  `json:"schema"`
-	RequiredObservations int                                     `json:"required_observations"`
-	Observations         []ExecutedSelfImprovementObservation    `json:"observations"`
-	NonAuthorizing       bool                                    `json:"non_authorizing"`
-	Digest               string                                  `json:"digest"`
+	Schema               string                               `json:"schema"`
+	RequiredObservations int                                  `json:"required_observations"`
+	Observations         []ExecutedSelfImprovementObservation `json:"observations"`
+	NonAuthorizing       bool                                 `json:"non_authorizing"`
+	Digest               string                               `json:"digest"`
 }
 
 // SelfImprovementLedgerObservation summarizes the complete ledger while
 // retaining counts for audit and future counterexample analysis.
 type SelfImprovementLedgerObservation struct {
-	Schema               string                       `json:"schema"`
-	RequiredObservations int                          `json:"required_observations"`
-	Observed             int                          `json:"observed"`
-	Improved             int                          `json:"improved"`
-	Regressed            int                          `json:"regressed"`
-	Unchanged            int                          `json:"unchanged"`
-	Unknown              int                          `json:"unknown"`
+	Schema               string                        `json:"schema"`
+	RequiredObservations int                           `json:"required_observations"`
+	Observed             int                           `json:"observed"`
+	Improved             int                           `json:"improved"`
+	Regressed            int                           `json:"regressed"`
+	Unchanged            int                           `json:"unchanged"`
+	Unknown              int                           `json:"unknown"`
 	Decision             SelfImprovementLedgerDecision `json:"decision"`
-	Reason               string                       `json:"reason"`
-	NonAuthorizing       bool                         `json:"non_authorizing"`
-	Digest               string                       `json:"digest"`
+	Reason               string                        `json:"reason"`
+	NonAuthorizing       bool                          `json:"non_authorizing"`
+	Digest               string                        `json:"digest"`
 }
 
 // NewSelfImprovementEvidenceLedger starts a ledger with a minimum repeated

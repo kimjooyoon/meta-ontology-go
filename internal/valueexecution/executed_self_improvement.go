@@ -6,15 +6,15 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/provenance"
 // a metric comparison. It keeps in-flight and failed receipts visible without
 // treating either one as evidence of improvement.
 type ExecutedSelfImprovementObservation struct {
-	Schema              string                       `json:"schema"`
-	Candidate           SelfImprovementObservation  `json:"candidate"`
-	CandidateDigest     string                       `json:"candidate_digest,omitempty"`
-	BeforeReceiptDigest string                       `json:"before_receipt_digest,omitempty"`
-	AfterReceiptDigest  string                       `json:"after_receipt_digest,omitempty"`
-	Status              SelfImprovementStatus        `json:"status"`
-	Reason              string                       `json:"reason"`
-	NonAuthorizing      bool                         `json:"non_authorizing"`
-	Digest              string                       `json:"digest"`
+	Schema              string                     `json:"schema"`
+	Candidate           SelfImprovementObservation `json:"candidate"`
+	CandidateDigest     string                     `json:"candidate_digest,omitempty"`
+	BeforeReceiptDigest string                     `json:"before_receipt_digest,omitempty"`
+	AfterReceiptDigest  string                     `json:"after_receipt_digest,omitempty"`
+	Status              SelfImprovementStatus      `json:"status"`
+	Reason              string                     `json:"reason"`
+	NonAuthorizing      bool                       `json:"non_authorizing"`
+	Digest              string                     `json:"digest"`
 }
 
 const ExecutedSelfImprovementObservationSchema = "gooo/self-improvement-executed/v1"

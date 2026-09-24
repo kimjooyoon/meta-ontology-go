@@ -15,13 +15,13 @@ const SelfImprovementCandidateSelectionStatusRejected SelfImprovementCandidateSe
 const SelfImprovementCandidateSelectionStatusUnknown SelfImprovementCandidateSelectionStatus = "UNKNOWN"
 
 type SelfImprovementCandidateSelectionObservation struct {
-	Schema          string                              `json:"schema"`
-	PromotionDigest string                              `json:"promotion_digest"`
-	ReplayDigest    string                              `json:"replay_digest"`
+	Schema          string                                  `json:"schema"`
+	PromotionDigest string                                  `json:"promotion_digest"`
+	ReplayDigest    string                                  `json:"replay_digest"`
 	Status          SelfImprovementCandidateSelectionStatus `json:"status"`
-	Reason          string                              `json:"reason"`
-	NonAuthorizing  bool                                `json:"non_authorizing"`
-	Digest          string                              `json:"digest"`
+	Reason          string                                  `json:"reason"`
+	NonAuthorizing  bool                                    `json:"non_authorizing"`
+	Digest          string                                  `json:"digest"`
 }
 
 // ObserveSelfImprovementCandidateSelection records a candidate selection

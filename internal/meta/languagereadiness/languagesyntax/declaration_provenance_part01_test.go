@@ -1,8 +1,8 @@
 package languagesyntax
 
 import (
-	"testing"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
+	"testing"
 )
 
 func TestLanguageSyntaxDeclarationProvenanceBindsGoooInventory(t *testing.T) {

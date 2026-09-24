@@ -34,7 +34,7 @@ func TestNewOriginChainReferencePreservesComparableEvidence(t *testing.T) {
 
 func TestNewOriginChainReferenceDoesNotPromoteUnknownEvidence(t *testing.T) {
 	observation := provenance.ObserveOriginChain(provenance.OriginChain{
-		DeclarationURI:   "examples/language-runtime-binding/typed-chain.gooo",
+		DeclarationURI:    "examples/language-runtime-binding/typed-chain.gooo",
 		DeclarationSymbol: "activity TypedChain",
 	})
 

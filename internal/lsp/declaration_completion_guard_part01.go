@@ -15,13 +15,13 @@ const DeclarationCompletionGuardStatusStale DeclarationCompletionGuardStatus = "
 const DeclarationCompletionGuardStatusUnknown DeclarationCompletionGuardStatus = "UNKNOWN"
 
 type DeclarationCompletionGuardObservation struct {
-	Schema         string                         `json:"schema"`
-	ProposedDigest string                         `json:"proposed_digest"`
-	CurrentDigest  string                         `json:"current_digest"`
+	Schema         string                           `json:"schema"`
+	ProposedDigest string                           `json:"proposed_digest"`
+	CurrentDigest  string                           `json:"current_digest"`
 	Status         DeclarationCompletionGuardStatus `json:"status"`
-	Reason         string                         `json:"reason"`
-	NonAuthorizing bool                           `json:"non_authorizing"`
-	Digest         string                         `json:"digest"`
+	Reason         string                           `json:"reason"`
+	NonAuthorizing bool                             `json:"non_authorizing"`
+	Digest         string                           `json:"digest"`
 }
 
 // ObserveDeclarationCompletionGuard checks freshness before a client uses a
