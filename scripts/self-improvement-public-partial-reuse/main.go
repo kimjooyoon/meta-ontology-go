@@ -12,6 +12,7 @@ func main() {
 	source := flag.String("source", "", "canonical partial-reuse .gooo source")
 	testContract := flag.String("test-contract", "", "canonical generated project test contract")
 	gooo := flag.String("gooo", "", "compiled public gooo command")
+	orchestrationSource := flag.String("orchestration-source", "", "canonical public orchestration .gooo source")
 	orchestration := flag.String("orchestration-report", "", "closed v14 orchestration report")
 	repoRoot := flag.String("repo-root", "", "repository root")
 	out := flag.String("out", "", "caller-owned evidence directory")
@@ -22,7 +23,7 @@ func main() {
 	var err error
 	switch *mode {
 	case "run":
-		err = run(runInput{Source: *source, TestContract: *testContract, Gooo: *gooo, OrchestrationSource: *orchestration, OrchestrationReport: *orchestration, RepoRoot: *repoRoot, Out: *out})
+		err = run(runInput{Source: *source, TestContract: *testContract, Gooo: *gooo, OrchestrationSource: *orchestrationSource, OrchestrationReport: *orchestration, RepoRoot: *repoRoot, Out: *out})
 	case "verify":
 		err = verify(*reportPath, *humanOutput)
 	default:
