@@ -39,20 +39,20 @@ type ExecutionPlanPart01 struct {
 // ExecutionPlanProvenanceBindingPart01 binds an execution-plan observation to
 // the six-stage provenance chain. It is evidence only, never authorization.
 type ExecutionPlanProvenanceBindingPart01 struct {
-	Schema                string                                          `json:"schema"`
-	Plan                  ExecutionPlanPart01                             `json:"plan"`
-	ProvenanceChainDigest string                                          `json:"provenance_chain_digest"`
-	ProvenanceStages      []SelfImprovementProvenanceStagePart01           `json:"provenance_stages"`
-	BoundStages           int                                             `json:"bound_stages"`
-	TotalStages           int                                             `json:"total_stages"`
-	NextRequiredStage     string                                          `json:"next_required_stage"`
-	EvidencePrefixDigest  string                                          `json:"evidence_prefix_digest"`
-	MissingStageIndex     int                                             `json:"missing_stage_index"`
-	Status                ExecutionPlanBindingStatusPart01                `json:"status"`
-	CausalReason          string                                          `json:"causal_reason"`
-	AdoptionAuthorized    bool                                            `json:"adoption_authorized"`
-	NonAuthorizing        bool                                            `json:"non_authorizing"`
-	BindingDigest         string                                          `json:"binding_digest"`
+	Schema                string                                 `json:"schema"`
+	Plan                  ExecutionPlanPart01                    `json:"plan"`
+	ProvenanceChainDigest string                                 `json:"provenance_chain_digest"`
+	ProvenanceStages      []SelfImprovementProvenanceStagePart01 `json:"provenance_stages"`
+	BoundStages           int                                    `json:"bound_stages"`
+	TotalStages           int                                    `json:"total_stages"`
+	NextRequiredStage     string                                 `json:"next_required_stage"`
+	EvidencePrefixDigest  string                                 `json:"evidence_prefix_digest"`
+	MissingStageIndex     int                                    `json:"missing_stage_index"`
+	Status                ExecutionPlanBindingStatusPart01       `json:"status"`
+	CausalReason          string                                 `json:"causal_reason"`
+	AdoptionAuthorized    bool                                   `json:"adoption_authorized"`
+	NonAuthorizing        bool                                   `json:"non_authorizing"`
+	BindingDigest         string                                 `json:"binding_digest"`
 }
 
 // BindExecutionPlanToProvenancePart01 records an AX-shaped declarative
@@ -89,8 +89,8 @@ func BindExecutionPlanToProvenancePart01(
 		CausalReason:          "EXECUTION_PLAN_INPUT_INCOMPLETE",
 		AdoptionAuthorized:    false,
 		NonAuthorizing:        true,
+		NextRequiredStage:    nextExecutionPlanStagePart01(stages)}
 	}
-	binding.NextRequiredStage = nextExecutionPlanStagePart01(stages)
 	switch {
 	case plan.Task == "" || plan.WorkspaceDigest == "" || plan.Model == "":
 		binding.CausalReason = "EXECUTION_PLAN_INPUT_INCOMPLETE"
