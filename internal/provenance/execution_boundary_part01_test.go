@@ -51,7 +51,7 @@ func TestExecutionBoundaryBindsPipelineAndAXLifecycle(t *testing.T) {
 func TestExecutionBoundaryPreservesFirstUnknownStage(t *testing.T) {
 	value := ObserveExecutionBoundary(ExecutionBoundaryInput{
 		DeclarationDigest: executionBoundaryTestDigest('a'),
-		ContractDigest:           executionBoundaryTestDigest('0'),
+		ContractDigest:    executionBoundaryTestDigest('0'),
 		IRDigest:          executionBoundaryTestDigest('b'),
 		TaskDigest:        executionBoundaryTestDigest('e'),
 		WorkspaceDigest:   executionBoundaryTestDigest('f'),
