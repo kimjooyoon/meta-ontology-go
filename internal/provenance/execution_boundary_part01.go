@@ -39,6 +39,7 @@ type ExecutionBoundaryInput struct {
 type ExecutionBoundaryObservation struct {
 	Schema                   string                     `json:"schema"`
 	DeclarationDigest        string                     `json:"declaration_digest,omitempty"`
+	ContractDigest           string                     `json:"contract_digest,omitempty"`
 	IRDigest                 string                     `json:"ir_digest,omitempty"`
 	GeneratedDigest          string                     `json:"generated_digest,omitempty"`
 	ReverseObservationDigest string                     `json:"reverse_observation_digest,omitempty"`
