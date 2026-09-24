@@ -279,9 +279,9 @@ jobs:
             local expected_blocked="$6"
             local output="$root/$id.json"
             bash "$helper" "$EXACT_SHA" "$platform" "$aggregate"               "$root/$id-fallback.json" "$root/$id-missing.json" "$output"
-            jq -e               --arg reason "$expected_reason"               --arg unknown_class "$expected_class"               --argjson blocked_by "$expected_blocked" '
+            jq -e               --arg reason "$expected_reason"               --arg unknown_class "$expected_class"               --arg sha "$EXACT_SHA"               --argjson blocked_by "$expected_blocked" '
                 .schema == "gooo/release-eligibility/v1" and
-                .head_sha == $EXACT_SHA and
+                .head_sha == $sha and
                 .decision == "FAIL_CLOSED" and
                 .resolution == "OPERATION_CLASS" and
                 .claim.state == "UNKNOWN" and
