@@ -11,15 +11,15 @@ import (
 )
 
 type SelfImprovementProvenanceChainProjectionPart01 struct {
-	URI                string                                      `json:"uri"`
-	Version            int                                         `json:"version"`
-	Status             string                                      `json:"status"`
-	CausalReason       string                                      `json:"causal_reason"`
-	ChainDigest        string                                      `json:"chain_digest"`
+	URI                string                                            `json:"uri"`
+	Version            int                                               `json:"version"`
+	Status             string                                            `json:"status"`
+	CausalReason       string                                            `json:"causal_reason"`
+	ChainDigest        string                                            `json:"chain_digest"`
 	Stages             []provenance.SelfImprovementProvenanceStagePart01 `json:"stages"`
-	AdoptionAuthorized bool                                        `json:"adoption_authorized"`
-	NonAuthorizing     bool                                        `json:"non_authorizing"`
-	Digest             string                                      `json:"digest"`
+	AdoptionAuthorized bool                                              `json:"adoption_authorized"`
+	NonAuthorizing     bool                                              `json:"non_authorizing"`
+	Digest             string                                            `json:"digest"`
 }
 
 func ProjectSelfImprovementProvenanceChainPart01(
