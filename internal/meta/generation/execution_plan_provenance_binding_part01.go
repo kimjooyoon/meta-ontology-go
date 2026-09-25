@@ -19,4 +19,4 @@ func BindExecutionPlanProvenancePart01(
 	chain provenance.SelfImprovementProvenanceChainPart01,
 ) ExecutionPlanProvenanceBinding {
 	return provenance.BindExecutionPlanToProvenancePart01(task, workspaceDigest, model, gatewayPolicy, lifecycle, chain)
-}\n
+}

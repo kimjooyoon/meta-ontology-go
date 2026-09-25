@@ -17,4 +17,4 @@ func TestBindExecutionPlanProvenancePart01KeepsEvidenceNonAuthorizing(t *testing
 	if err := binding.Validate(); err != nil {
 		t.Fatalf("binding validation failed: %v", err)
 	}
-}\n
+}
