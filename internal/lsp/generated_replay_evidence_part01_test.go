@@ -8,22 +8,22 @@ import (
 
 func generatedReplayReceiptPart01() valueexecution.ExecutionOriginReceipt {
 	return valueexecution.ExecutionOriginReceipt{
-		ExecutionDigest: "sha256:execution",
+		ExecutionDigest:   "sha256:execution",
 		RuntimePlanDigest: "sha256:runtime-plan",
-		Phase:           valueexecution.ExecutionPhaseCompleted,
-		Status:          valueexecution.ExecutionOriginStatusBound,
-		NonAuthorizing:  true,
-		ReceiptDigest:   "sha256:receipt",
+		Phase:             valueexecution.ExecutionPhaseCompleted,
+		Status:            valueexecution.ExecutionOriginStatusBound,
+		NonAuthorizing:    true,
+		ReceiptDigest:     "sha256:receipt",
 	}
 }
 
 func completeGeneratedReplayEvidencePart01() GeneratedReplayEvidencePart01 {
 	return GeneratedReplayEvidencePart01{
-		SourceDigest:              "sha256:source",
-		SemanticDigest:            "sha256:semantic",
-		TypedPlanDigest:           "sha256:typed-plan",
-		RuntimePlanDigest:         "sha256:runtime-plan",
-		GeneratedArtifactDigest:   "sha256:generated",
+		SourceDigest:             "sha256:source",
+		SemanticDigest:           "sha256:semantic",
+		TypedPlanDigest:          "sha256:typed-plan",
+		RuntimePlanDigest:        "sha256:runtime-plan",
+		GeneratedArtifactDigest:  "sha256:generated",
 		ReverseObservationDigest: "sha256:reverse",
 	}
 }
