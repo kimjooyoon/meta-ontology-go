@@ -84,7 +84,7 @@ func TestGeneratedReplayEvidencePart01KeepsFixedStageOrder(t *testing.T) {
 	}
 	for index := range want {
 		if got[index] != want[index] {
-			t.Fatalf("stage %d=%q, want %q", index, got[index])
+			t.Fatalf("stage %d=%q, want %q", index, got[index], want[index])
 		}
 	}
 }
