@@ -1,0 +1,42 @@
+{
+  "schema": "gooo/source-backed-authority-evidence/v1",
+  "subject_sha": "0000000000000000000000000000000000000000",
+  "contract_digest": "sha256:f104899b82f17db2201dd80edba62efd5424e837e1a4167c58417f42197cdc43",
+  "sources": [
+    {
+      "id": "gomacro-readme-title",
+      "uri": "https://github.com/cosmos72/gomacro/blob/cf0d4bf32da393dbda97e3572f216731013ffa55/README.md#L1",
+      "snapshot_digest": "sha256:29362aa311de0f24c66f41cc65a8b6ffd996baf37e048b5a72db63172aae5bf2",
+      "bytes": "IyMgZ29tYWNybyAtIGludGVyYWN0aXZlIEdvIGludGVycHJldGVyIGFuZCBkZWJ1Z2dlciB3aXRoIGdlbmVyaWNzIGFuZCBtYWNyb3M="
+    }
+  ],
+  "authorities": [
+    {
+      "id": "gomacro-readme-title-authority",
+      "source_ref": "gomacro-readme-title",
+      "snapshot_digest": "sha256:29362aa311de0f24c66f41cc65a8b6ffd996baf37e048b5a72db63172aae5bf2",
+      "start": 0,
+      "end": 77
+    }
+  ],
+  "facts": [
+    {
+      "id": "gomacro-readme-title-accepted",
+      "state": "ACCEPTED",
+      "claim": "IyMgZ29tYWNybyAtIGludGVyYWN0aXZlIEdvIGludGVycHJldGVyIGFuZCBkZWJ1Z2dlciB3aXRoIGdlbmVyaWNzIGFuZCBtYWNyb3M=",
+      "claim_digest": "sha256:29362aa311de0f24c66f41cc65a8b6ffd996baf37e048b5a72db63172aae5bf2",
+      "source_ref": "gomacro-readme-title",
+      "source_snapshot_digest": "sha256:29362aa311de0f24c66f41cc65a8b6ffd996baf37e048b5a72db63172aae5bf2",
+      "span": {
+        "start": 0,
+        "end": 77,
+        "digest": "sha256:29362aa311de0f24c66f41cc65a8b6ffd996baf37e048b5a72db63172aae5bf2"
+      },
+      "authority_ref": "gomacro-readme-title-authority"
+    },
+    {
+      "id": "unverified-candidate-excluded",
+      "state": "CANDIDATE"
+    }
+  ]
+}

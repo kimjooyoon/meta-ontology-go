@@ -1,0 +1,20 @@
+{
+  "schema": "gooo/language-source-binding-promotion-contract/v1",
+  "scope": "SOURCE_EXECUTION_RECEIPT_BINDING_ONLY",
+  "claims": [
+    {"id": "structural-source-execution", "proof_choice": "FOUNDATION", "meta_operation": "bind-structural-execution-receipt"},
+    {"id": "independent-source-binding", "proof_choice": "COHERENCE", "meta_operation": "bind-independent-artifact-oracle"},
+    {"id": "source-binding-promotion", "proof_choice": "REGRESSION", "meta_operation": "promote-source-binding-claim"}
+  ],
+  "edges": [
+    {"from": "structural-source-execution", "to": "source-binding-promotion"},
+    {"from": "independent-source-binding", "to": "source-binding-promotion"}
+  ],
+  "cases": [
+    {"id": "exact-promotion", "expected_decision": "PASS", "expected_resolution": "EXACT", "expected_reason": "SOURCE_BINDING_CLAIM_DISCHARGED", "expected_promotion_status": "DISCHARGED"},
+    {"id": "missing-oracle", "expected_decision": "FAIL_CLOSED", "expected_resolution": "LOWER_RESOLUTION", "expected_reason": "ARTIFACT_ORACLE_EVIDENCE_MISSING", "expected_promotion_status": "OPEN"},
+    {"id": "unknown-oracle", "expected_decision": "FAIL_CLOSED", "expected_resolution": "LOWER_RESOLUTION", "expected_reason": "ARTIFACT_ORACLE_DECISION_UNKNOWN", "expected_promotion_status": "OPEN"},
+    {"id": "link-mismatch", "expected_decision": "FAIL_CLOSED", "expected_resolution": "INVARIANT_ONLY", "expected_reason": "SOURCE_BINDING_EVIDENCE_LINK_MISMATCH", "expected_promotion_status": "REFUTED"},
+    {"id": "unknown-producer", "expected_decision": "FAIL_CLOSED", "expected_resolution": "LOWER_RESOLUTION", "expected_reason": "SOURCE_EXECUTION_DECISION_UNKNOWN", "expected_promotion_status": "OPEN"}
+  ]
+}

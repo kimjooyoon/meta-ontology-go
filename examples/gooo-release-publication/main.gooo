@@ -1,0 +1,21 @@
+package releasepublication
+namespace releasepublication
+
+entity ReleaseCandidate id "release://entity/candidate"
+entity ValidatedMergeEvidence id "release://entity/validated-merge-evidence"
+entity ReleaseIdentity id "release://entity/identity"
+entity ReleasePayload id "release://entity/payload"
+entity ChecksumEvidence id "release://entity/checksum-evidence"
+entity AnnotatedTag id "release://entity/annotated-tag"
+entity DraftPrerelease id "release://entity/draft-prerelease"
+entity AssetSetEvidence id "release://entity/asset-set-evidence"
+entity PublishedPrerelease id "release://entity/published-prerelease"
+
+activity ObserveValidatedMergeEvidence(ReleaseCandidate) -> ValidatedMergeEvidence
+activity BindExperimentalReleaseIdentity(ValidatedMergeEvidence) -> ReleaseIdentity
+activity AssembleReleasePayload(ValidatedMergeEvidence, ReleaseIdentity) -> ReleasePayload
+activity VerifyReleasePayloadChecksums(ReleasePayload) -> ChecksumEvidence
+activity CreateAnnotatedReleaseTag(ReleaseIdentity, ChecksumEvidence) -> AnnotatedTag
+activity StageDraftPrerelease(AnnotatedTag, ReleasePayload) -> DraftPrerelease
+activity VerifyDraftReleaseAssets(DraftPrerelease, ChecksumEvidence) -> AssetSetEvidence
+activity PublishVerifiedPrerelease(DraftPrerelease, AssetSetEvidence) -> PublishedPrerelease

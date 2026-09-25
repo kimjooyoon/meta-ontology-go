@@ -1,0 +1,22 @@
+{
+  "allowed": false,
+  "violations": [
+    {
+      "operation": "remove",
+      "change": "node",
+      "id": "fraud://entity/archive",
+      "kind": "Entity",
+      "endpoint": "node",
+      "reason": "node identity is outside allowed scope"
+    },
+    {
+      "operation": "remove",
+      "change": "fact",
+      "subject": "billing://activity/pay-order",
+      "predicate": "prov:used",
+      "object": "fraud://entity/archive",
+      "endpoint": "object",
+      "reason": "fact object is outside allowed scope"
+    }
+  ]
+}

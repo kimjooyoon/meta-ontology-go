@@ -1,0 +1,31 @@
+{
+  "schema": "gooo/native-journal-capture/v1",
+  "repository": "kimjooyoon/meta-ontology-go",
+  "head_sha": "d7635e11a2e1c70cf9cd1ac1fe38436cc51802ad",
+  "run_id": 34510267647,
+  "run_attempt": 1,
+  "job_id": 102985404638,
+  "artifact_id": 10167275876,
+  "artifact_name": "meta-boundary-journals-34510267647-1",
+  "source_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/34510267647",
+  "replay_terminal": "cancelled",
+  "replay_completed_at": "2026-09-10T18:32:14Z",
+  "preservation_completed_at": "2026-09-10T18:32:25Z",
+  "external_cause": "UNPROVEN",
+  "source_authenticity": "UNVERIFIED",
+  "scope": "NATIVE_CAPTURE_RECONSTRUCTION_NOT_CANCELLATION_INJECTION_OR_RESUME",
+  "files": {
+    "first.ndjson": {
+      "original_path": "self-improvement-execution.json.trace.ndjson",
+      "invocation_id": "meta-execution-4721-1789062996287175912",
+      "sha256": "9b3152073cc828a8482d51b2c6c787b4a6ad39abe0f8b3b00c8ad7e04e2e5984",
+      "records": 24
+    },
+    "replay.ndjson": {
+      "original_path": "self-improvement-execution-replay.json.trace.ndjson",
+      "invocation_id": "meta-execution-234709-1789064231986966238",
+      "sha256": "a8ec8697f262ff7fbb67528035aae3477cc74b2cf14c519004ca80fa96c9f412",
+      "records": 16
+    }
+  }
+}

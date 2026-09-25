@@ -155,4 +155,4 @@ func TestRemovingRecordBindingCannotLowerCorpusDenominator(t *testing.T) {
 		report.Summary.Total != 81 || report.Summary.Executed != 0 || report.Summary.Unresolved != 81 {
 		t.Fatalf("removing a case reduced proof obligations: %#v", report.Summary)
 	}
-}
+}\n

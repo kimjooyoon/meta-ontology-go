@@ -1,0 +1,39 @@
+{
+  "schema": "gooo/receipt-schema-migration/generated-validator/v1",
+  "version": "v1",
+  "supported_schemas": [
+    "gooo/receipt/parent/v2",
+    "gooo/receipt/child/v3"
+  ],
+  "precedence": [
+    "REFUTED",
+    "UNKNOWN",
+    "CLOSED"
+  ],
+  "unknown_fields": [
+    "stage",
+    "step",
+    "reason",
+    "unknown_class",
+    "next_operation",
+    "blocked_by"
+  ],
+  "operations": [
+    "VALIDATE_VERSION_DISPATCH",
+    "VALIDATE_V2_OWNERSHIP",
+    "VALIDATE_V3_OWNERSHIP",
+    "VALIDATE_APPEND_ONLY_LINEAGE",
+    "VALIDATE_DIGESTS",
+    "VALIDATE_CARDINALITY",
+    "VALIDATE_DENOMINATOR",
+    "RESOLVE_PRECEDENCE",
+    "VALIDATE_FOUNDATION_AUTHORIZATION",
+    "VALIDATE_FOUNDATION_RECEIPT",
+    "VALIDATE_CHANGED_PATH_TUPLES",
+    "VALIDATE_PROTECTED_INTERSECTION",
+    "VALIDATE_FOUNDATION_CARDINALITY",
+    "VALIDATE_GUARDIAN_PRECEDENCE"
+  ],
+  "ir_digest": "sha256:66e5f20cb162fdfa9cefdad8b0509eaa1963c62536f7fb618f2a50bc594e32d9",
+  "artifact_digest": "sha256:0f70b1cbc0cb144db6bab4ebe2fa79c805d7dc0729bd0fa719cd4f105752abdf"
+}

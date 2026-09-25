@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/upstream-source-request/v1",
+  "subject_sha": "1111111111111111111111111111111111111111",
+  "source_ref": "gomacro-readme-title",
+  "authority_ref": "gomacro-readme-title-authority",
+  "url": "https://raw.githubusercontent.com/cosmos72/gomacro/cf0d4bf32da393dbda97e3572f216731013ffa55/README.md",
+  "authority": {
+    "repository": "cosmos72/gomacro",
+    "revision": "cf0d4bf32da393dbda97e3572f216731013ffa55",
+    "path": "README.md"
+  },
+  "selection": {
+    "start_line": 1,
+    "end_line": 1
+  }
+}

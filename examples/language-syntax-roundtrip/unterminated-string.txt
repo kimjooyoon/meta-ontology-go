@@ -1,0 +1,4 @@
+package invalid
+namespace invalid
+
+entity Thing id "unterminated

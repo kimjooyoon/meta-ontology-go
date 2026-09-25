@@ -1,0 +1,28 @@
+{
+  "schema": "gooo/source-authority-activation-provenance/v1",
+  "predecessor_sha": "240bb8019af2f5488701cd00797a4d3598bda213",
+  "workflow_run_id": 32690002336,
+  "artifacts": [
+    {
+      "id": 9506929857,
+      "name": "language-assurance-240bb8019af2f5488701cd00797a4d3598bda213",
+      "digest": "sha256:3cb628f79e51d034f923c182dbf821acd8b8e705cd8ee573e877a92077071579",
+      "capsule": "internal/meta/languageassurance/sourceauthorityactivation/evidence/assurance.json",
+      "capsule_digest": "sha256:eb2196cffb17287c9dcda27ff2593b484265d326f998fbafff388513b66db9a9"
+    },
+    {
+      "id": 9506932581,
+      "name": "source-authority-upstream-240bb8019af2f5488701cd00797a4d3598bda213",
+      "digest": "sha256:fdf911ebaee84c3d3e5c27f12e72e48d1f359fcdd78f6d34cce61cb96078501d",
+      "capsule": "internal/meta/languageassurance/sourceauthorityactivation/evidence/upstream.json",
+      "capsule_digest": "sha256:a9b4851d3c127d37af99a63ef5be6be649e6d9daa29abd1f29a8c096f1c3ab44"
+    },
+    {
+      "id": 9506943519,
+      "name": "source-authority-promotion-eligibility-240bb8019af2f5488701cd00797a4d3598bda213",
+      "digest": "sha256:ad65e902ff07ddd3e30c48e0155769806b59bf37c12e66882b9a1ea3358d0068",
+      "capsule": "internal/meta/languageassurance/sourceauthorityactivation/evidence/eligibility.json",
+      "capsule_digest": "sha256:fcc0a54917796f94a8c1650704fc66f17f629023182e551f0f6cd253c863954c"
+    }
+  ]
+}

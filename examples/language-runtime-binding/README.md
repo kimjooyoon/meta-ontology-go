@@ -1,0 +1,31 @@
+# Language runtime binding execution
+
+This fixture is the minimal value-plan execution example. The `Produce`
+activity receives an explicit integer root input, applies the registered
+`int.add:1` implementation once, and the two explicit `bind` edges deliver
+that sealed result to `ConsumeA` and `ConsumeB`. Each consumer applies the
+same registered operation once, yielding `43` from an input of `41`.
+
+The plan records three real `Apply` calls and two real token deliveries. Its
+execution and result evidence carry scope `REGISTERED_VALUE_OPERATION`.
+The generated-Go and source-execution boundaries remain unsupported for
+runtime bindings; this example exercises only the native value plan path.
+
+Run it through the native CLI with an explicit root value:
+
+```sh
+go run ./cmd/gooo run --json --entry Produce --input input.json examples/language-runtime-binding/main.gooo
+```
+
+where `input.json` contains `{"value":41}` (an integer literal is also
+accepted).
+
+## Typed Boolean plan composition
+
+`boolean-and.gooo` extends the same native plan boundary with a typed
+Boolean chain: `IsZero.result -> Not.input -> And.input`. The plan preserves
+the declared `Boolean` entity at both deliveries, applies three registered
+pure operations, and records two deliveries. The final `bool.and:1` step is
+deliberately observed through the plan rather than treated as a registry-only
+capability; its source, semantic, plan, and result identities remain part of
+the replayable receipt.

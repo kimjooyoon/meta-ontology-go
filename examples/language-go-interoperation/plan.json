@@ -1,0 +1,29 @@
+{
+  "schema": "gooo/language-go-interoperation-example/v1",
+  "registry_version": "2026-08-23",
+  "total": 24,
+  "partitions": {
+    "generator": 8,
+    "go_1_27": 8,
+    "guardrail": 8
+  },
+  "indicators": {
+    "total": 18,
+    "outcome": 3,
+    "driver": 8,
+    "guardrail": 7
+  },
+  "use_cases": [
+    "project-gooo-to-go-api",
+    "consume-go-1.27-boundary",
+    "reject-go-boundary-unknowns"
+  ],
+  "expected": {
+    "satisfied": 24,
+    "generic_methods": 5,
+    "alias_nodes": 2,
+    "unresolved": 0,
+    "repository_writes": 0,
+    "mutation_authorities": 0
+  }
+}

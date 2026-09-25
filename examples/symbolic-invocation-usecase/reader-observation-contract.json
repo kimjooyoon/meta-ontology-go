@@ -1,0 +1,48 @@
+{
+  "schema": "gooo/symbolic-reader-request-user-observation/v1",
+  "metric_id": "gooo.metric.user.symbolic-reader-request-observation.v1",
+  "input_schema": "gooo/symbolic-reader-request-result/v1",
+  "success_resolution": "USER_OBSERVATION_ONLY",
+  "failure_resolution": "FAIL_CLOSED",
+  "denominator": {
+    "total": 10,
+    "classes": {
+      "OUTCOME": 3,
+      "DRIVER": 3,
+      "GUARDRAIL": 4
+    },
+    "proof_choices": {
+      "FOUNDATION": 4,
+      "COHERENCE": 3,
+      "REGRESSION": 3
+    }
+  },
+  "accepted_source": {
+    "decision": "PASS",
+    "resolution": "GOOO_REQUEST_BOUND_ONLY",
+    "audience": "USER",
+    "source_resolution": "USER_VISIBLE",
+    "repository_writes": 0,
+    "mutation_authority": false,
+    "promotion_credit_bps": 0
+  },
+  "fail_closed_cases": [
+    "invalid input",
+    "unknown schema or metric",
+    "subject SHA mismatch",
+    "decision other than explicit PASS",
+    "unknown or mismatched audience",
+    "resolution mismatch",
+    "selection count mismatch",
+    "non-read-only effects",
+    "unknown compiler-result semantics"
+  ],
+  "not_claimed": [
+    "human comprehension",
+    "authorization enforcement",
+    "arbitrary Gooo value-program execution",
+    "exact-head cross-job artifact transport",
+    "performance determinism",
+    "production readiness"
+  ]
+}

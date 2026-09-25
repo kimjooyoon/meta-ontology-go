@@ -1,0 +1,16 @@
+{
+  "status": "accepted",
+  "canonical": "bind|billing://entity/order",
+  "records": [
+    {
+      "directive": "bind",
+      "name": "Order",
+      "id": "billing://entity/order",
+      "location": {
+        "filename": "valid_bind.go",
+        "start": {"offset": 81, "line": 4, "column": 1},
+        "end": {"offset": 100, "line": 4, "column": 20}
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"schema":"gooo/ci-plan-golden/v1","case_id":"pass-yaml","checks":[{"id":"yaml-check","command":"gooo check yaml","files":[".github/workflows/ci.yml"],"reasons":[{"operation":"ci.rule:yaml:v1","file":".github/workflows/ci.yml","source_path":"examples/ci-plan/main.gooo","source_line":10}]}]}

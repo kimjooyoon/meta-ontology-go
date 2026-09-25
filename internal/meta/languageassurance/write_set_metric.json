@@ -1,0 +1,12 @@
+{
+  "schema": "gooo/language-assurance-metric-spec/v1",
+  "metric_id": "gooo.metric.effects.write-set-exactness.v1",
+  "class": "GUARDRAIL",
+  "proof_choice": "REGRESSION",
+  "meta_operation": "observe-exact-write-set",
+  "activity": "ObserveExactWriteSet",
+  "producer": "internal/meta/languageassurance/writeset.Compare",
+  "consumer": "language-assurance-gate",
+  "unit": "paths",
+  "relation": "LESS_OR_EQUAL"
+}

@@ -1,0 +1,156 @@
+name: Compiler self-improvement adoption
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/self-improvement-adoption.yml
+      - cmd/gooo/main_part01.go
+      - cmd/gooo/self_adoption_*.go
+      - examples/self-improvement-observation/**
+      - internal/meta/generation/semantic_adoption.go
+      - internal/meta/generation/semantic_observation_public.go
+      - internal/meta/generation/semantic_observation_verify.go
+      - internal/meta/generation/semantic_operation_envelope_types.go
+      - scripts/self-improvement-adoption/**
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/self-improvement-adoption.yml
+      - cmd/gooo/main_part01.go
+      - cmd/gooo/self_adoption_*.go
+      - examples/self-improvement-observation/**
+      - internal/meta/generation/semantic_adoption.go
+      - internal/meta/generation/semantic_observation_public.go
+      - internal/meta/generation/semantic_observation_verify.go
+      - internal/meta/generation/semantic_operation_envelope_types.go
+      - scripts/self-improvement-adoption/**
+
+permissions:
+  contents: read
+
+jobs:
+  adoption:
+    name: bounded proposal to authorized adoption
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - name: Install exact toolchain
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Require exact toolchain and clean source worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(git rev-parse HEAD)" = "$HEAD_SHA"
+          test "$(git status --porcelain)" = ""
+
+      - name: Observe the real semantic operation
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-adoption"
+          mkdir -p "$work"
+          go run ./cmd/gooo check --semantic examples/self-improvement-observation/observation.gooo
+          go run ./cmd/gooo observe examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --out "$work/observation"
+          jq -e '.decision == "CLOSED" and .candidates_emitted == 1 and (.candidates | length) == 1 and .pair_evidence.evidence_available and (.pair_evidence.change_adopted | not)' \
+            "$work/observation/compiler-observation.json" >/dev/null
+
+      - name: Derive proposal from the machine-readable candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-adoption"
+          go run ./cmd/gooo propose "$work/observation/compiler-observation.json" --out "$work/proposal"
+          jq -e '.schema == "gooo/semantic-self-adoption-proposal/v1" and .execution_allowed == false and .repository_writes == 0 and .mode == "bounded-in-memory-reuse" and .candidate.expected_reducible_count == 1 and .candidate.safety_assessment == "UNKNOWN_NOT_INFERRED" and .candidate.benefit_assessment == "UNKNOWN_NOT_INFERRED"' \
+            "$work/proposal/adoption-proposal.json" >/dev/null
+
+      - name: Materialize explicit authorization input
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-adoption"
+          proposal="$work/proposal/adoption-proposal.json"
+          observation="$work/observation/compiler-observation.json"
+          jq -S -n \
+            --arg proposal_digest "$(sha256sum "$proposal" | awk '{print $1}')" \
+            --arg candidate_stable_id "$(jq -r '.candidate.stable_id' "$proposal")" \
+            --arg candidate_input_digest "$(jq -r '.candidate.input_digest' "$proposal")" \
+            --arg contract_digest "$(jq -r '.contract_digest' "$observation")" \
+            --arg input_source_digest "$(jq -r '.input_source_digest' "$observation")" \
+            '{schema:"gooo/semantic-self-adoption-authorization/v1",authorization_id:"iteration-5-human-approval-fixture",authorization_mode:"explicit-human-input",proposal_digest:$proposal_digest,candidate_stable_id:$candidate_stable_id,candidate_input_digest:$candidate_input_digest,contract_digest:$contract_digest,input_source_digest:$input_source_digest,authorized:true,repository_writes:0,local_test_executions:0}' \
+            > "$work/authorization.json"
+          jq -e '.authorized == true and .authorization_mode == "explicit-human-input" and .repository_writes == 0 and .local_test_executions == 0' "$work/authorization.json" >/dev/null
+
+      - name: Execute only the explicitly authorized compiler behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-adoption"
+          go run ./cmd/gooo adopt examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/authorization.json" \
+            --out "$work/adoption"
+          jq -e '.independent_decision == "CLOSED" and .lifecycle == "AUTHORIZED_ADOPTION" and .evidence.before_operation_count == 2 and .evidence.after_operation_count == 1 and .evidence.cache_misses == 1 and .evidence.cache_hits == 1 and .evidence.reuse_applied and .evidence.behavior_equal and .evidence.determinism_equal and .evidence.repository_writes == 0 and .evidence.local_test_executions == 0 and .observation.adoption.candidate_stable_id == .evidence.candidate_stable_id and .observation.pair_evidence.change_adopted' \
+            "$work/adoption/adoption-result.json" >/dev/null
+
+      - name: Prove missing authorization remains UNKNOWN without execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-adoption"
+          jq -S '.authorization_id = "iteration-5-missing-human-approval" | .authorized = false' "$work/authorization.json" > "$work/denied-authorization.json"
+          go run ./cmd/gooo adopt examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/denied-authorization.json" \
+            --out "$work/unknown"
+          jq -e '.independent_decision == "UNKNOWN" and .lifecycle == "AUTHORIZATION_REQUIRED" and .evidence.repository_writes == 0 and .evidence.local_test_executions == 0 and (.evidence.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"] and .evidence.unknown.stage == "ADOPTION" and .evidence.unknown.step == "AUTHORIZE_CANDIDATE" and .evidence.unknown.reason == "MISSING_EXPLICIT_AUTHORIZATION" and .evidence.unknown.unknown_class == "INCOMPLETE_EVIDENCE" and .evidence.unknown.next_operation == "PROVIDE_EXPLICIT_AUTHORIZATION" and .evidence.unknown.blocked_by == ["explicit_authorization"] and .observation.decision == "UNKNOWN"' \
+            "$work/unknown/adoption-result.json" >/dev/null
+
+      - name: Independently verify the adoption loop and envelope binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-adoption"
+          go run ./scripts/self-improvement-adoption \
+            -contract examples/self-improvement-observation/observation.gooo \
+            -observation "$work/observation/compiler-observation.json" \
+            -proposal "$work/proposal/adoption-proposal.json" \
+            -authorization "$work/authorization.json" \
+            -unknown "$work/unknown/adoption-result.json" \
+            -unknown-authorization "$work/denied-authorization.json" \
+            -adoption "$work/adoption/adoption-result.json" \
+            -envelope-root "$work/envelopes" \
+            -output "$work/adoption-loop.json"
+          jq -e '.schema == "gooo/semantic-self-adoption-report/v1" and .scenario_denominator == 4 and .counts == {CLOSED:2,UNKNOWN:1,REFUTED:1} and .envelope_scenario_denominator == 6 and .envelope_artifacts_per_adoption_scenario == 36 and .envelope_artifacts_per_operation == 6 and .replay_equal and .repository_writes == 0 and .local_test_executions == 0 and ([.scenarios[].id] | sort) == ["NORMAL","REFUTED","REPLAY","UNKNOWN"]' \
+            "$work/adoption-loop.json" >/dev/null
+          test "$(find "$work/envelopes" -type f | wc -l | tr -d ' ')" -eq 144
+          test "$(git status --porcelain)" = ""
+
+      - name: Upload exact-head adoption evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: compiler-self-improvement-adoption-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/self-improvement-adoption
+          if-no-files-found: error
+          retention-days: 30

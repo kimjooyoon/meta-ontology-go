@@ -1,0 +1,26 @@
+{
+  "schema": "gooo/toolchain-executable-use-case-registry/v1",
+  "cases": [
+    {
+      "id": "canonical-concept-artifact",
+      "proof_choice": "FOUNDATION",
+      "mutation": "NONE",
+      "expected_decision": "PASS",
+      "meta_operation": "consume-canonical-concept-artifact"
+    },
+    {
+      "id": "replay-digest-tamper",
+      "proof_choice": "COHERENCE",
+      "mutation": "REPLAY_DIGEST",
+      "expected_decision": "FAIL_CLOSED",
+      "meta_operation": "reject-replay-digest-tamper"
+    },
+    {
+      "id": "repository-write-tamper",
+      "proof_choice": "REGRESSION",
+      "mutation": "REPOSITORY_WRITE",
+      "expected_decision": "FAIL_CLOSED",
+      "meta_operation": "reject-repository-write-tamper"
+    }
+  ]
+}

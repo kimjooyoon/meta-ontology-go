@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/language-profile-experiment-contract/v1",
+  "contract_id": "billing-language-profile-v1",
+  "profile_schema": "gooo/language-profile-receipt/v1",
+  "profiles": 2,
+  "samples_per_profile": 5,
+  "runner_go_prefix": "go1.27",
+  "indicators": 13,
+  "not_claimed_count": 4
+}

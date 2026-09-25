@@ -1,0 +1,908 @@
+{
+  "schema": "gooo/changed-surface-receipt-conformance/v1",
+  "subject_sha": "25ee2f076d67eafceec4eac3ff4d85a90abb597f",
+  "denominator_id": "gooo/changed-surface-receipt-denominator/v1",
+  "denominator_digest": "sha256:61982bc0b87ba06031219143a0a67e69ea0b297bed75ee626e16077495d28499",
+  "decision": "FIXED_POINT",
+  "resolution": "EXACT",
+  "cases": [
+    {
+      "definition": {
+        "id": "exact",
+        "expected_decision": "FIXED_POINT",
+        "expected_resolution": "EXACT",
+        "expected_reason": "CHANGED_SURFACE_RECEIPTS_TOTAL"
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/changed-surface-receipt-report/v1",
+        "subject_sha": "25ee2f076d67eafceec4eac3ff4d85a90abb597f",
+        "decision": "FIXED_POINT",
+        "resolution": "EXACT",
+        "enforcement_effect": "OBSERVE_ONLY",
+        "reason": "CHANGED_SURFACE_RECEIPTS_TOTAL",
+        "denominator_id": "gooo/changed-surface-receipt-denominator/v1",
+        "denominator_digest": "sha256:61982bc0b87ba06031219143a0a67e69ea0b297bed75ee626e16077495d28499",
+        "summary": {
+          "changed_surfaces": 2,
+          "receipts_observed": 2,
+          "bound_receipts": 2,
+          "missing_receipts": 0,
+          "orphan_receipts": 0,
+          "changed_duplicates": 0,
+          "receipt_duplicates": 0,
+          "unknown_receipts": 0,
+          "malformed_paths": 0,
+          "totality_bps": 10000,
+          "changed_set_bps": 10000,
+          "unique_binding_bps": 10000,
+          "unknown_paths": 0,
+          "blocked_paths": 0
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "totalize-changed-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.changed-surface-set-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-changed-surfaces",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.unique-surface-receipt-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "bind-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.surface-receipt-unknown.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "preserve-receipt-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.semantic.surface-receipt-ambiguity.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "reject-ambiguous-receipts",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.effects.surface-receipt-shadow-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-shadow-writes",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-changed-surface-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-changed-surfaces",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-surface-receipts",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "totalize-changed-surface-receipts",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-receipt-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "observe-shadow-writes",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "repository_writes": 0,
+        "report_digest": "sha256:28125644f29b9529b8d7419d94192afaf92c67257c5b0f4710fa16bccb233ed8"
+      }
+    },
+    {
+      "definition": {
+        "id": "zero-change",
+        "expected_decision": "FIXED_POINT",
+        "expected_resolution": "EXACT",
+        "expected_reason": "CHANGED_SURFACE_RECEIPTS_TOTAL"
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/changed-surface-receipt-report/v1",
+        "subject_sha": "25ee2f076d67eafceec4eac3ff4d85a90abb597f",
+        "decision": "FIXED_POINT",
+        "resolution": "EXACT",
+        "enforcement_effect": "OBSERVE_ONLY",
+        "reason": "CHANGED_SURFACE_RECEIPTS_TOTAL",
+        "denominator_id": "gooo/changed-surface-receipt-denominator/v1",
+        "denominator_digest": "sha256:61982bc0b87ba06031219143a0a67e69ea0b297bed75ee626e16077495d28499",
+        "summary": {
+          "changed_surfaces": 0,
+          "receipts_observed": 0,
+          "bound_receipts": 0,
+          "missing_receipts": 0,
+          "orphan_receipts": 0,
+          "changed_duplicates": 0,
+          "receipt_duplicates": 0,
+          "unknown_receipts": 0,
+          "malformed_paths": 0,
+          "totality_bps": 10000,
+          "changed_set_bps": 10000,
+          "unique_binding_bps": 10000,
+          "unknown_paths": 0,
+          "blocked_paths": 0
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "totalize-changed-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.changed-surface-set-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-changed-surfaces",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.unique-surface-receipt-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "bind-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.surface-receipt-unknown.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "preserve-receipt-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.semantic.surface-receipt-ambiguity.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "reject-ambiguous-receipts",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.effects.surface-receipt-shadow-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-shadow-writes",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-changed-surface-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-changed-surfaces",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-surface-receipts",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "totalize-changed-surface-receipts",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-receipt-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "observe-shadow-writes",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "repository_writes": 0,
+        "report_digest": "sha256:1508cb58b7e06c2f9d51679f059b7bc4afd8c002db6fa99f084312d2ecc0ae0e"
+      }
+    },
+    {
+      "definition": {
+        "id": "missing",
+        "expected_decision": "FAIL_CLOSED",
+        "expected_resolution": "UNKNOWN",
+        "expected_reason": "CHANGED_SURFACE_RECEIPT_MISSING"
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/changed-surface-receipt-report/v1",
+        "subject_sha": "25ee2f076d67eafceec4eac3ff4d85a90abb597f",
+        "decision": "FAIL_CLOSED",
+        "resolution": "UNKNOWN",
+        "enforcement_effect": "BLOCK",
+        "reason": "CHANGED_SURFACE_RECEIPT_MISSING",
+        "denominator_id": "gooo/changed-surface-receipt-denominator/v1",
+        "denominator_digest": "sha256:61982bc0b87ba06031219143a0a67e69ea0b297bed75ee626e16077495d28499",
+        "summary": {
+          "changed_surfaces": 2,
+          "receipts_observed": 1,
+          "bound_receipts": 1,
+          "missing_receipts": 1,
+          "orphan_receipts": 0,
+          "changed_duplicates": 0,
+          "receipt_duplicates": 0,
+          "unknown_receipts": 0,
+          "malformed_paths": 0,
+          "totality_bps": 5000,
+          "changed_set_bps": 10000,
+          "unique_binding_bps": 10000,
+          "unknown_paths": 1,
+          "blocked_paths": 1
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "totalize-changed-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "UNKNOWN",
+            "value": 5000,
+            "target": 10000,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.evidence.changed-surface-set-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-changed-surfaces",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "UNKNOWN",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.unique-surface-receipt-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "bind-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "UNKNOWN",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.surface-receipt-unknown.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "preserve-receipt-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "UNKNOWN",
+            "value": 1,
+            "target": 0,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.semantic.surface-receipt-ambiguity.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "reject-ambiguous-receipts",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "UNKNOWN",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.effects.surface-receipt-shadow-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-shadow-writes",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-changed-surface-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-changed-surfaces",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-surface-receipts",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "totalize-changed-surface-receipts",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-receipt-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "observe-shadow-writes",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "repository_writes": 0,
+        "report_digest": "sha256:2fe73905e52b1fea16880eac810463d44344aee0d64f4509dfd6e27d8d0df42b"
+      }
+    },
+    {
+      "definition": {
+        "id": "orphan",
+        "expected_decision": "FAIL_CLOSED",
+        "expected_resolution": "INVARIANT_ONLY",
+        "expected_reason": "CHANGED_SURFACE_RECEIPT_ORPHAN"
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/changed-surface-receipt-report/v1",
+        "subject_sha": "25ee2f076d67eafceec4eac3ff4d85a90abb597f",
+        "decision": "FAIL_CLOSED",
+        "resolution": "INVARIANT_ONLY",
+        "enforcement_effect": "BLOCK",
+        "reason": "CHANGED_SURFACE_RECEIPT_ORPHAN",
+        "denominator_id": "gooo/changed-surface-receipt-denominator/v1",
+        "denominator_digest": "sha256:61982bc0b87ba06031219143a0a67e69ea0b297bed75ee626e16077495d28499",
+        "summary": {
+          "changed_surfaces": 1,
+          "receipts_observed": 2,
+          "bound_receipts": 1,
+          "missing_receipts": 0,
+          "orphan_receipts": 1,
+          "changed_duplicates": 0,
+          "receipt_duplicates": 0,
+          "unknown_receipts": 0,
+          "malformed_paths": 0,
+          "totality_bps": 10000,
+          "changed_set_bps": 10000,
+          "unique_binding_bps": 10000,
+          "unknown_paths": 0,
+          "blocked_paths": 1
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "totalize-changed-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.changed-surface-set-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-changed-surfaces",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.unique-surface-receipt-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "bind-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.surface-receipt-unknown.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "preserve-receipt-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.semantic.surface-receipt-ambiguity.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "reject-ambiguous-receipts",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 1,
+            "target": 0,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.effects.surface-receipt-shadow-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-shadow-writes",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-changed-surface-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-changed-surfaces",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-surface-receipts",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "totalize-changed-surface-receipts",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-receipt-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "observe-shadow-writes",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "repository_writes": 0,
+        "report_digest": "sha256:bb474c59226a9590e02451504cfab243c168069e37181dd554cc294ad1e0718c"
+      }
+    },
+    {
+      "definition": {
+        "id": "duplicate",
+        "expected_decision": "FAIL_CLOSED",
+        "expected_resolution": "INVARIANT_ONLY",
+        "expected_reason": "CHANGED_SURFACE_RECEIPT_DUPLICATE"
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/changed-surface-receipt-report/v1",
+        "subject_sha": "25ee2f076d67eafceec4eac3ff4d85a90abb597f",
+        "decision": "FAIL_CLOSED",
+        "resolution": "INVARIANT_ONLY",
+        "enforcement_effect": "BLOCK",
+        "reason": "CHANGED_SURFACE_RECEIPT_DUPLICATE",
+        "denominator_id": "gooo/changed-surface-receipt-denominator/v1",
+        "denominator_digest": "sha256:61982bc0b87ba06031219143a0a67e69ea0b297bed75ee626e16077495d28499",
+        "summary": {
+          "changed_surfaces": 1,
+          "receipts_observed": 2,
+          "bound_receipts": 1,
+          "missing_receipts": 0,
+          "orphan_receipts": 0,
+          "changed_duplicates": 0,
+          "receipt_duplicates": 1,
+          "unknown_receipts": 0,
+          "malformed_paths": 0,
+          "totality_bps": 10000,
+          "changed_set_bps": 10000,
+          "unique_binding_bps": 5000,
+          "unknown_paths": 0,
+          "blocked_paths": 1
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "totalize-changed-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.changed-surface-set-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-changed-surfaces",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.unique-surface-receipt-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "bind-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 5000,
+            "target": 10000,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.surface-receipt-unknown.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "preserve-receipt-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.semantic.surface-receipt-ambiguity.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "reject-ambiguous-receipts",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 1,
+            "target": 0,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.effects.surface-receipt-shadow-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-shadow-writes",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-changed-surface-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-changed-surfaces",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-surface-receipts",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "totalize-changed-surface-receipts",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-receipt-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "observe-shadow-writes",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "repository_writes": 0,
+        "report_digest": "sha256:59d854dbf31303d9aaf2261c46b785f076382502fd347fbe2b74fa12f941bd68"
+      }
+    },
+    {
+      "definition": {
+        "id": "unknown-top",
+        "expected_decision": "FAIL_CLOSED",
+        "expected_resolution": "UNKNOWN",
+        "expected_reason": "CHANGED_SURFACE_RECEIPT_DECISION_UNKNOWN"
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/changed-surface-receipt-report/v1",
+        "subject_sha": "25ee2f076d67eafceec4eac3ff4d85a90abb597f",
+        "decision": "FAIL_CLOSED",
+        "resolution": "UNKNOWN",
+        "enforcement_effect": "BLOCK",
+        "reason": "CHANGED_SURFACE_RECEIPT_DECISION_UNKNOWN",
+        "denominator_id": "gooo/changed-surface-receipt-denominator/v1",
+        "denominator_digest": "sha256:61982bc0b87ba06031219143a0a67e69ea0b297bed75ee626e16077495d28499",
+        "summary": {
+          "changed_surfaces": 1,
+          "receipts_observed": 1,
+          "bound_receipts": 0,
+          "missing_receipts": 1,
+          "orphan_receipts": 0,
+          "changed_duplicates": 0,
+          "receipt_duplicates": 0,
+          "unknown_receipts": 1,
+          "malformed_paths": 0,
+          "totality_bps": 0,
+          "changed_set_bps": 10000,
+          "unique_binding_bps": 10000,
+          "unknown_paths": 1,
+          "blocked_paths": 1
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "totalize-changed-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "UNKNOWN",
+            "value": 0,
+            "target": 10000,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.evidence.changed-surface-set-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-changed-surfaces",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "UNKNOWN",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.unique-surface-receipt-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "bind-surface-receipts",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "UNKNOWN",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.surface-receipt-unknown.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "preserve-receipt-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "UNKNOWN",
+            "value": 2,
+            "target": 0,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.semantic.surface-receipt-ambiguity.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "reject-ambiguous-receipts",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "UNKNOWN",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.effects.surface-receipt-shadow-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "changedsurfacereceipt.Evaluate",
+            "consumer": "changed-surface-receipt-shadow-gate",
+            "meta_operation": "observe-shadow-writes",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-changed-surface-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-changed-surfaces",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-surface-receipts",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "totalize-changed-surface-receipts",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-receipt-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "observe-shadow-writes",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "repository_writes": 0,
+        "report_digest": "sha256:fc744249374e7e352f7a45a8a1a2307b3afcb747490114204a61d24620f2ee82"
+      }
+    }
+  ],
+  "cases_total": 6,
+  "cases_passed": 6,
+  "coverage_bps": 10000,
+  "suite_digest": "sha256:b45c016b5c07c34a7f81d40e56495b9b85957487e7e9225337fcc01db6630492"
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "gooo/toolchain-format-fix-cases/v1",
+  "version": "2026-08-23",
+  "cases": [
+    {"id":"positive-format-text","kind":"POSITIVE","operation":"FORMAT_TEXT","expected_exit":0,"proof_choice":"COHERENCE","meta_operation":"emit-canonical-source"},
+    {"id":"positive-format-json","kind":"POSITIVE","operation":"FORMAT_JSON","expected_exit":0,"proof_choice":"COHERENCE","meta_operation":"emit-structured-format"},
+    {"id":"positive-format-check","kind":"POSITIVE","operation":"FORMAT_CHECK","expected_exit":0,"proof_choice":"COHERENCE","meta_operation":"recognize-format-fixed-point"},
+    {"id":"positive-fix-json-change","kind":"POSITIVE","operation":"FIX_JSON_CHANGED","expected_exit":0,"proof_choice":"FOUNDATION","meta_operation":"emit-versioned-fix-plan"},
+    {"id":"positive-fix-json-fixed","kind":"POSITIVE","operation":"FIX_JSON_FIXED","expected_exit":0,"proof_choice":"COHERENCE","meta_operation":"emit-explicit-fixed-point"},
+    {"id":"positive-fix-text","kind":"POSITIVE","operation":"FIX_TEXT","expected_exit":0,"proof_choice":"COHERENCE","meta_operation":"render-fix-plan"},
+    {"id":"guardrail-format-required","kind":"GUARDRAIL","operation":"FORMAT_REQUIRED","expected_exit":2,"proof_choice":"REGRESSION","meta_operation":"reject-missing-format-input"},
+    {"id":"guardrail-format-malformed","kind":"GUARDRAIL","operation":"FORMAT_MALFORMED","expected_exit":1,"proof_choice":"REGRESSION","meta_operation":"lower-malformed-format-resolution"},
+    {"id":"guardrail-fix-malformed","kind":"GUARDRAIL","operation":"FIX_MALFORMED","expected_exit":1,"proof_choice":"REGRESSION","meta_operation":"lower-malformed-fix-resolution"},
+    {"id":"guardrail-format-usage","kind":"GUARDRAIL","operation":"FORMAT_USAGE","expected_exit":2,"proof_choice":"REGRESSION","meta_operation":"reject-unknown-format-flag"},
+    {"id":"guardrail-fix-usage","kind":"GUARDRAIL","operation":"FIX_USAGE","expected_exit":2,"proof_choice":"REGRESSION","meta_operation":"reject-unknown-fix-flag"},
+    {"id":"guardrail-fix-write","kind":"GUARDRAIL","operation":"FIX_FLAG","expected_exit":2,"proof_choice":"REGRESSION","meta_operation":"reject-direct-write-authority"}
+  ]
+}

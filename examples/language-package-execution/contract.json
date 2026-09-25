@@ -1,0 +1,36 @@
+{
+  "schema": "gooo/language-package-execution-contract/v1",
+  "version": 1,
+  "cases": [
+    {
+      "id": "positive-package-execution",
+      "expected_decision": "PASS",
+      "expected_reason": "PACKAGE_EXECUTED",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "deterministic-replay",
+      "expected_decision": "PASS",
+      "expected_reason": "PACKAGE_EXECUTED",
+      "proof_choice": "REGRESSION"
+    },
+    {
+      "id": "header-mismatch-rejection",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_reason": "PACKAGE_HEADER_MISMATCH",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "duplicate-declaration-rejection",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_reason": "PACKAGE_EXECUTION_REJECTED",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "source-count-rejection",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_reason": "PACKAGE_SOURCE_COUNT_INVALID",
+      "proof_choice": "FOUNDATION"
+    }
+  ]
+}

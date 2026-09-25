@@ -1,0 +1,14 @@
+package directorykind
+namespace directorykind
+
+entity SourceMetrics id "gooo://directory-kind/entity/source-metrics"
+entity HomogeneousDirectoryPolicy id "gooo://directory-kind/entity/homogeneous-policy"
+entity MixedDirectoryKinds id "gooo://directory-kind/entity/mixed-kinds"
+entity KindSeparationPlan id "gooo://directory-kind/entity/separation-plan"
+entity ReplayReceipt id "gooo://directory-kind/entity/replay-receipt"
+
+activity BindDirectoryKindFoundation(SourceMetrics) -> HomogeneousDirectoryPolicy
+activity ResolveMixedDirectoryKinds(HomogeneousDirectoryPolicy) -> MixedDirectoryKinds
+activity PlanDirectoryKindSeparation(MixedDirectoryKinds) -> KindSeparationPlan
+activity PreserveProjectRootExemption(KindSeparationPlan) -> KindSeparationPlan
+activity ReplayDirectoryKindSeparation(KindSeparationPlan) -> ReplayReceipt

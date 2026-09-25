@@ -1,0 +1,31 @@
+package sourcesplitterconformance
+namespace sourcesplitterconformance
+
+entity SplitGoRequest id "gooo://source-splitter-conformance/entity/request"
+entity SourceSnapshot id "gooo://source-splitter-conformance/entity/source-snapshot"
+entity BuildContext id "gooo://source-splitter-conformance/entity/build-context"
+entity SplitPlan id "gooo://source-splitter-conformance/entity/split-plan"
+entity CandidateFileSet id "gooo://source-splitter-conformance/entity/candidate-file-set"
+entity AtomicReplacementEvidence id "gooo://source-splitter-conformance/indicator/filesystem.atomic-replacement/v1"
+entity BuildSemanticsEvidence id "gooo://source-splitter-conformance/indicator/go.filename.build-semantics/v1"
+entity HeaderEvidence id "gooo://source-splitter-conformance/indicator/go.header.preserved/v1"
+entity ImportIdentityEvidence id "gooo://source-splitter-conformance/indicator/go.import.identity/v1"
+entity InitializationOrderEvidence id "gooo://source-splitter-conformance/indicator/go.initialization.order/v1"
+entity PackageConformanceEvidence id "gooo://source-splitter-conformance/indicator/go.package.conformance/v1"
+entity SixIndicatorEvidence id "gooo://source-splitter-conformance/entity/six-indicator-evidence"
+entity FailClosedDecision id "gooo://source-splitter-conformance/entity/fail-closed-decision"
+entity ConformanceReceipt id "gooo://source-splitter-conformance/entity/conformance-receipt"
+
+activity CaptureSourceSnapshot(SplitGoRequest) -> SourceSnapshot
+activity BindPinnedBuildContext(SourceSnapshot) -> BuildContext
+activity PlanSplitGo(BuildContext) -> SplitPlan
+activity MaterializeCandidateFileSet(SplitPlan) -> CandidateFileSet
+activity ObserveAtomicReplacement(CandidateFileSet) -> AtomicReplacementEvidence
+activity ObserveBuildSemantics(CandidateFileSet) -> BuildSemanticsEvidence
+activity ObserveHeaderPreservation(CandidateFileSet) -> HeaderEvidence
+activity ObserveImportIdentity(CandidateFileSet) -> ImportIdentityEvidence
+activity ObserveInitializationOrder(CandidateFileSet) -> InitializationOrderEvidence
+activity ObservePackageConformance(CandidateFileSet) -> PackageConformanceEvidence
+activity CollectFixedDenominator(CandidateFileSet) -> SixIndicatorEvidence
+activity PreserveUnknownAndBlock(SixIndicatorEvidence) -> FailClosedDecision
+activity EmitExactHeadReceipt(FailClosedDecision) -> ConformanceReceipt

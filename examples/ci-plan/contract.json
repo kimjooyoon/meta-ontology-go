@@ -1,0 +1,20 @@
+{
+  "schema": "gooo/ci-plan-usecase-contract/v1",
+  "denominator": 12,
+  "cases": [
+    {"id":"pass-combined","expected_decision":"PASS","proof_choice":"COHERENCE"},
+    {"id":"pass-docs","expected_decision":"PASS","proof_choice":"COHERENCE"},
+    {"id":"pass-go","expected_decision":"PASS","proof_choice":"COHERENCE"},
+    {"id":"pass-yaml","expected_decision":"PASS","proof_choice":"COHERENCE"},
+    {"id":"fail-absolute","expected_decision":"FAIL_CLOSED","proof_choice":"REGRESSION"},
+    {"id":"fail-duplicate","expected_decision":"FAIL_CLOSED","proof_choice":"REGRESSION"},
+    {"id":"fail-empty","expected_decision":"FAIL_CLOSED","proof_choice":"REGRESSION"},
+    {"id":"fail-traversal","expected_decision":"FAIL_CLOSED","proof_choice":"REGRESSION"},
+    {"id":"unknown-asset","expected_decision":"UNKNOWN","proof_choice":"FOUNDATION"},
+    {"id":"unknown-license","expected_decision":"UNKNOWN","proof_choice":"FOUNDATION"},
+    {"id":"unknown-python","expected_decision":"UNKNOWN","proof_choice":"FOUNDATION"},
+    {"id":"unknown-toml","expected_decision":"UNKNOWN","proof_choice":"FOUNDATION"}
+  ],
+  "limits": {"max_wall_ms":5000,"max_peak_rss_kib":262144,"max_receipt_bytes":65536},
+  "not_claimed": ["check-execution","full-language-semantic-correctness","general-build-planning","comparative-performance","production-or-external-effects"]
+}

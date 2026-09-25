@@ -1,0 +1,11 @@
+{
+  "schema": "gooo/ci-time-causality/replay/v1",
+  "contract_id": "ci-time-causality-v1",
+  "corpus_digest": "sha256:1ba7b480948be8fe677bd48533467d20f964c3d14c0e6afab249415b6466edca",
+  "first_evaluation_digest": "sha256:633e1668558e97d99827399bcc9f70569f7cdb3ca436aed228cd408e4a7d02d5",
+  "second_evaluation_digest": "sha256:633e1668558e97d99827399bcc9f70569f7cdb3ca436aed228cd408e4a7d02d5",
+  "deterministic": true,
+  "replay_count": 2,
+  "decision": "CLOSED",
+  "reason": "DETERMINISTIC_CASE_REPLAY"
+}

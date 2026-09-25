@@ -1,0 +1,32 @@
+{
+  "schema": "gooo/toolchain-cross-platform-release-corpus/v1",
+  "version": 1,
+  "toolchain": "go1.27.0",
+  "targets": [
+    {"id": "linux-amd64", "runner": "ubuntu-24.04", "goos": "linux", "goarch": "amd64", "archive_format": "tar.gz"},
+    {"id": "darwin-amd64", "runner": "macos-15-intel", "goos": "darwin", "goarch": "amd64", "archive_format": "tar.gz"},
+    {"id": "windows-amd64", "runner": "windows-2025", "goos": "windows", "goarch": "amd64", "archive_format": "zip"}
+  ],
+  "cases": [
+    {"id": "linux-amd64-receipt", "target_id": "linux-amd64", "kind": "RECEIPT", "expected": "EXACT_RECEIPT"},
+    {"id": "linux-amd64-native-runtime", "target_id": "linux-amd64", "kind": "NATIVE_RUNTIME", "expected": "linux/amd64"},
+    {"id": "linux-amd64-go127-toolchain", "target_id": "linux-amd64", "kind": "TOOLCHAIN", "expected": "go1.27.0"},
+    {"id": "linux-amd64-binary-replay", "target_id": "linux-amd64", "kind": "BINARY_REPLAY", "expected": "2_BYTE_EQUAL_BUILDS"},
+    {"id": "linux-amd64-archive-replay", "target_id": "linux-amd64", "kind": "ARCHIVE_REPLAY", "expected": "2_BYTE_EQUAL_ARCHIVES"},
+    {"id": "linux-amd64-version-smoke", "target_id": "linux-amd64", "kind": "VERSION_SMOKE", "expected": "gooo-version/v1"},
+    {"id": "darwin-amd64-receipt", "target_id": "darwin-amd64", "kind": "RECEIPT", "expected": "EXACT_RECEIPT"},
+    {"id": "darwin-amd64-native-runtime", "target_id": "darwin-amd64", "kind": "NATIVE_RUNTIME", "expected": "darwin/amd64"},
+    {"id": "darwin-amd64-go127-toolchain", "target_id": "darwin-amd64", "kind": "TOOLCHAIN", "expected": "go1.27.0"},
+    {"id": "darwin-amd64-binary-replay", "target_id": "darwin-amd64", "kind": "BINARY_REPLAY", "expected": "2_BYTE_EQUAL_BUILDS"},
+    {"id": "darwin-amd64-archive-replay", "target_id": "darwin-amd64", "kind": "ARCHIVE_REPLAY", "expected": "2_BYTE_EQUAL_ARCHIVES"},
+    {"id": "darwin-amd64-version-smoke", "target_id": "darwin-amd64", "kind": "VERSION_SMOKE", "expected": "gooo-version/v1"},
+    {"id": "windows-amd64-receipt", "target_id": "windows-amd64", "kind": "RECEIPT", "expected": "EXACT_RECEIPT"},
+    {"id": "windows-amd64-native-runtime", "target_id": "windows-amd64", "kind": "NATIVE_RUNTIME", "expected": "windows/amd64"},
+    {"id": "windows-amd64-go127-toolchain", "target_id": "windows-amd64", "kind": "TOOLCHAIN", "expected": "go1.27.0"},
+    {"id": "windows-amd64-binary-replay", "target_id": "windows-amd64", "kind": "BINARY_REPLAY", "expected": "2_BYTE_EQUAL_BUILDS"},
+    {"id": "windows-amd64-archive-replay", "target_id": "windows-amd64", "kind": "ARCHIVE_REPLAY", "expected": "2_BYTE_EQUAL_ARCHIVES"},
+    {"id": "windows-amd64-version-smoke", "target_id": "windows-amd64", "kind": "VERSION_SMOKE", "expected": "gooo-version/v1"},
+    {"id": "release-set-completeness", "kind": "RELEASE_SET", "expected": "3_OF_3_TARGETS"},
+    {"id": "release-checksum-manifest", "kind": "CHECKSUM_MANIFEST", "expected": "3_SORTED_SHA256_ENTRIES"}
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/candidate-leakage-usecases/v1",
+  "denominator_id": "gooo/candidate-leakage-denominator/v1",
+  "metric_id": "gooo.metric.semantic.candidate-leakage.v1",
+  "phase": "SHADOW",
+  "official_assurance": {
+    "operating": 7,
+    "total": 12,
+    "coverage_bps": 5833
+  },
+  "cases": [
+    {"id": "isolated-candidate", "decision": "PASS", "resolution": "EXACT", "leakage_paths": 0},
+    {"id": "authorized-transition", "decision": "PASS", "resolution": "EXACT", "leakage_paths": 0},
+    {"id": "denied-fixed-point-leak", "decision": "FAIL_CLOSED", "resolution": "EXACT", "leakage_paths": 1},
+    {"id": "fail-closed-allow-leak", "decision": "FAIL_CLOSED", "resolution": "EXACT", "leakage_paths": 1},
+    {"id": "unknown-promotion", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY", "unknown_paths": 1},
+    {"id": "digest-mismatch", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY", "unknown_paths": 1}
+  ],
+  "repository_writes": 0,
+  "promotion_credit_bps": 0
+}

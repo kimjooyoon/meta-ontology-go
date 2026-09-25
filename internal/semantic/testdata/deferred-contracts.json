@@ -1,0 +1,32 @@
+[
+  {
+    "id": "parser-formatter-crlf",
+    "status": "deferred",
+    "authoritative": false,
+    "reason": "Parser, formatter, and CRLF fixture APIs are outside semantic-ir/v1."
+  },
+  {
+    "id": "authorized-rekey",
+    "status": "deferred",
+    "authoritative": false,
+    "reason": "ID continuity requires an explicit authorized delta contract."
+  },
+  {
+    "id": "analyzer-adapter",
+    "status": "deferred",
+    "authoritative": false,
+    "reason": "Analyzer-local relation mapping belongs to a future adapter contract."
+  },
+  {
+    "id": "qualified-prov-counterpart",
+    "status": "deferred",
+    "authoritative": false,
+    "reason": "Qualified relation and event identity are not represented by the current schema."
+  },
+  {
+    "id": "prov-wasAttributedTo",
+    "status": "unsupported",
+    "authoritative": false,
+    "reason": "The closed vocabulary does not infer attribution from wasAssociatedWith."
+  }
+]

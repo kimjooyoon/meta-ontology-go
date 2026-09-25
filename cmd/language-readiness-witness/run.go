@@ -1,0 +1,68 @@
+package main
+
+import (
+	"fmt"
+	"io"
+)
+
+func run(cfg config, stdout io.Writer) error {
+	if cfg.root == "" || cfg.input == "" || cfg.expectedSHA == "" {
+		return fmt.Errorf("root, input, and expected-sha are required")
+	}
+	if cfg.promotion != "" && (cfg.expectedRepository == "" || cfg.expectedPredecessorSHA == "") {
+		return fmt.Errorf("expected-repository and expected-predecessor-sha are required with proposal promotion")
+	}
+	if (cfg.output == "") == (cfg.check == "") {
+		return fmt.Errorf("exactly one of output or check is required")
+	}
+	target := cfg.output
+	if cfg.check != "" {
+		target = cfg.check
+	}
+	paths := completePaths(cfg, target)
+	if (cfg.guarded == "") != (cfg.useCases == "") ||
+		(cfg.guarded == "") != (cfg.syntax == "") ||
+		(cfg.guarded == "") != (cfg.diagnostic == "") ||
+		(cfg.guarded == "") != (cfg.packageRuntime == "") ||
+		(cfg.guarded == "") != (cfg.toolchainCLI == "") ||
+		(cfg.guarded == "") != (cfg.toolchainFormatFix == "") {
+		return fmt.Errorf("guarded-capability, use-cases, syntax, diagnostic, package-runtime, toolchain-cli, and toolchain-format-fix evidence must be provided together")
+	}
+	if cfg.toolchainConformance != "" && cfg.guarded == "" {
+		return fmt.Errorf("toolchain-conformance requires the complete evidence set")
+	}
+	if cfg.toolchainLSP != "" && cfg.toolchainConformance == "" {
+		return fmt.Errorf("toolchain-lsp requires toolchain-conformance evidence")
+	}
+	if cfg.toolchainRelease != "" && cfg.toolchainLSP == "" {
+		return fmt.Errorf("toolchain cross-platform release requires toolchain-lsp evidence")
+	}
+	conceptOperationFields := 0
+	for _, path := range []string{cfg.conceptOperationBinding, cfg.conceptOperationInputDir, cfg.conceptOperationScratchDir} {
+		if path != "" {
+			conceptOperationFields++
+		}
+	}
+	if conceptOperationFields != 0 && conceptOperationFields != 3 {
+		return fmt.Errorf("concept-operation-binding, concept-operation-input-dir, and concept-operation-scratch-dir must be provided together")
+	}
+	if cfg.guarded != "" && cfg.promotion == "" {
+		return fmt.Errorf("proposal-promotion is required with the complete evidence set")
+	}
+	if cfg.conceptOperationBinding != "" && cfg.promotion != "" && cfg.guarded == "" {
+		return fmt.Errorf("concept-operation evidence with proposal promotion requires the complete evidence set")
+	}
+	if cfg.conceptOperationBinding != "" && cfg.expectedRepository == "" {
+		return fmt.Errorf("expected-repository is required with concept-operation evidence")
+	}
+	if cfg.guarded != "" && (cfg.conceptOperationBinding == "" || cfg.conceptOperationInputDir == "" || cfg.conceptOperationScratchDir == "") {
+		return fmt.Errorf("concept-operation-binding, concept-operation-input-dir, and concept-operation-scratch-dir are required with the complete evidence set")
+	}
+	if err := requireExternal(cfg.root, paths...); err != nil {
+		return err
+	}
+	if cfg.check != "" {
+		return consume(cfg, stdout)
+	}
+	return produce(cfg, stdout)
+}

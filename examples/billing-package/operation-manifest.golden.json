@@ -1,0 +1,20 @@
+{
+  "package": {
+    "path": "billing-package",
+    "name": "billing",
+    "namespace": "billing"
+  },
+  "operation": {
+    "activity": "PayOrder",
+    "inputs": [
+      {
+        "name": "Order",
+        "id": "urn:gooo:billing:order"
+      }
+    ],
+    "output": {
+      "name": "Receipt",
+      "id": "urn:gooo:billing:receipt"
+    }
+  }
+}

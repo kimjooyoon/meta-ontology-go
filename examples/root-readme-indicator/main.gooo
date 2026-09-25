@@ -1,0 +1,9 @@
+package rootreadme
+namespace rootreadme
+
+entity ProjectRoot id "root-readme://entity/project-root"
+entity READMEObservation id "root-readme://entity/readme-observation"
+entity FoundationExemption id "root-readme://entity/foundation-exemption"
+
+activity ObserveProjectRootREADME(ProjectRoot) -> READMEObservation
+activity BindRootREADMEExemption(READMEObservation) -> FoundationExemption

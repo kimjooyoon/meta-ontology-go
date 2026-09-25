@@ -1,0 +1,18 @@
+{
+  "schema": "gooo/toolchain-cli-cases/v1",
+  "version": "2026-08-23",
+  "cases": [
+    {"id":"positive-version-text","kind":"POSITIVE","operation":"VERSION_TEXT","expected_exit":0,"proof_choice":"FOUNDATION","meta_operation":"observe-cli-identity"},
+    {"id":"positive-version-json","kind":"POSITIVE","operation":"VERSION_JSON","expected_exit":0,"proof_choice":"FOUNDATION","meta_operation":"decode-cli-identity"},
+    {"id":"positive-check-text","kind":"POSITIVE","operation":"CHECK_TEXT","expected_exit":0,"proof_choice":"COHERENCE","meta_operation":"execute-syntax-check"},
+    {"id":"positive-check-json","kind":"POSITIVE","operation":"CHECK_JSON","expected_exit":0,"proof_choice":"COHERENCE","meta_operation":"decode-syntax-check"},
+    {"id":"positive-roundtrip-json","kind":"POSITIVE","operation":"ROUNDTRIP_JSON","expected_exit":0,"proof_choice":"COHERENCE","meta_operation":"execute-roundtrip-check"},
+    {"id":"positive-semantic-check","kind":"POSITIVE","operation":"SEMANTIC_CHECK","expected_exit":0,"proof_choice":"COHERENCE","meta_operation":"execute-semantic-check"},
+    {"id":"guardrail-root-usage","kind":"GUARDRAIL","operation":"ROOT_USAGE","expected_exit":2,"proof_choice":"REGRESSION","meta_operation":"reject-missing-command"},
+    {"id":"guardrail-unknown-command","kind":"GUARDRAIL","operation":"UNKNOWN_COMMAND","expected_exit":1,"proof_choice":"REGRESSION","meta_operation":"reject-unknown-command"},
+    {"id":"guardrail-version-usage","kind":"GUARDRAIL","operation":"VERSION_USAGE","expected_exit":2,"proof_choice":"REGRESSION","meta_operation":"reject-version-argument"},
+    {"id":"guardrail-check-usage","kind":"GUARDRAIL","operation":"CHECK_USAGE","expected_exit":2,"proof_choice":"REGRESSION","meta_operation":"reject-missing-check-input"},
+    {"id":"guardrail-roundtrip-usage","kind":"GUARDRAIL","operation":"ROUNDTRIP_USAGE","expected_exit":2,"proof_choice":"REGRESSION","meta_operation":"reject-missing-roundtrip-input"},
+    {"id":"guardrail-lsp-usage","kind":"GUARDRAIL","operation":"LSP_USAGE","expected_exit":2,"proof_choice":"REGRESSION","meta_operation":"reject-lsp-argument"}
+  ]
+}

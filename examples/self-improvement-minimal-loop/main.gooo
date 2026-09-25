@@ -1,0 +1,39 @@
+package selfimprovementloop
+namespace meta
+
+entity BaselineInput id "gooo://meta/self-improvement-loop/entity/baseline-input"
+entity BaselineObservation id "gooo://meta/self-improvement-loop/entity/baseline-observation"
+entity TargetInput id "gooo://meta/self-improvement-loop/entity/target-input"
+entity TargetDeclaration id "gooo://meta/self-improvement-loop/entity/target-declaration"
+entity ScopeInput id "gooo://meta/self-improvement-loop/entity/scope-input"
+entity PinnedScope id "gooo://meta/self-improvement-loop/entity/pinned-scope"
+entity ActivityBindingInput id "gooo://meta/self-improvement-loop/entity/activity-binding-input"
+entity ActivityBinding id "gooo://meta/self-improvement-loop/entity/activity-binding"
+entity TransformationInput id "gooo://meta/self-improvement-loop/entity/transformation-input"
+entity TransformationProposal id "gooo://meta/self-improvement-loop/entity/transformation-proposal"
+entity PredictionInput id "gooo://meta/self-improvement-loop/entity/prediction-input"
+entity EffectPrediction id "gooo://meta/self-improvement-loop/entity/effect-prediction"
+entity CounterexampleInput id "gooo://meta/self-improvement-loop/entity/counterexample-input"
+entity Counterexample id "gooo://meta/self-improvement-loop/entity/counterexample"
+entity CIInput id "gooo://meta/self-improvement-loop/entity/ci-input"
+entity CIExecution id "gooo://meta/self-improvement-loop/entity/ci-execution"
+entity ReceiptInput id "gooo://meta/self-improvement-loop/entity/receipt-input"
+entity Receipt id "gooo://meta/self-improvement-loop/entity/receipt"
+entity PairInput id "gooo://meta/self-improvement-loop/entity/pair-input"
+entity ExactPair id "gooo://meta/self-improvement-loop/entity/exact-pair"
+entity HumanInput id "gooo://meta/self-improvement-loop/entity/human-input"
+entity HumanDecision id "gooo://meta/self-improvement-loop/entity/human-decision"
+entity LoopDecision id "gooo://meta/self-improvement-loop/entity/loop-decision"
+
+activity OBSERVE_BASELINE(BaselineInput) -> BaselineObservation
+activity DECLARE_TARGET(TargetInput) -> TargetDeclaration
+activity PIN_SCOPE(ScopeInput) -> PinnedScope
+activity BIND_META_ACTIVITY(ActivityBindingInput) -> ActivityBinding
+activity PROPOSE_TRANSFORMATION(TransformationInput) -> TransformationProposal
+activity PREDICT_EFFECT(PredictionInput) -> EffectPrediction
+activity BUILD_COUNTEREXAMPLE(CounterexampleInput) -> Counterexample
+activity EXECUTE_CI(CIInput) -> CIExecution
+activity CAPTURE_RECEIPT(ReceiptInput) -> Receipt
+activity COMPARE_EXACT_PAIR(PairInput) -> ExactPair
+activity HUMAN_DECISION(HumanInput) -> HumanDecision
+activity PROPAGATE_OR_REFUTE(LoopDecision) -> LoopDecision

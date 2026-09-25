@@ -1,0 +1,181 @@
+{
+  "schema": "gooo/rollback-integrity-eligibility/v1",
+  "subject_sha": "0908088ab35447098671263ffa7290c0363f7404",
+  "evidence_subject_sha": "1f27d342faf7a435ca4c534e2a816f29befe21a4",
+  "decision": "ELIGIBLE",
+  "resolution": "EXACT",
+  "enforcement_effect": "NO_EFFECT",
+  "reason": "ROLLBACK_INTEGRITY_PROMOTION_ELIGIBLE",
+  "denominator_id": "gooo/rollback-integrity-eligibility-denominator/v1",
+  "denominator_digest": "sha256:de7279775cab0cba55c8331f14969dcd029702d888e3d1f11299eac027871b30",
+  "artifacts": [
+    {
+      "name": "language-assurance",
+      "artifact_id": 9514168645,
+      "artifact_digest": "sha256:22295324edb942b0f910754c2f5ec3651613cc5d1e760d59d40009b98e8bc25b",
+      "capsule_digest": "sha256:5a970af60410c89b7949f0604288a8227e0bbdc53a0999bc8549816ead4841f8",
+      "observed_digest": "sha256:5a970af60410c89b7949f0604288a8227e0bbdc53a0999bc8549816ead4841f8",
+      "exact": true
+    },
+    {
+      "name": "rollback-integrity-shadow-replay-a",
+      "artifact_id": 9514191722,
+      "artifact_digest": "sha256:f2840da5805b7690145be917749f2933af24e050e67059814750e546f5a534ef",
+      "capsule_digest": "sha256:a2fae67f1d4e842b188cd11f2fe87b1647c557ce8a8a07529ac34aa3cbfba105",
+      "observed_digest": "sha256:a2fae67f1d4e842b188cd11f2fe87b1647c557ce8a8a07529ac34aa3cbfba105",
+      "exact": true
+    },
+    {
+      "name": "rollback-integrity-shadow-replay-b",
+      "artifact_id": 9514191722,
+      "artifact_digest": "sha256:f2840da5805b7690145be917749f2933af24e050e67059814750e546f5a534ef",
+      "capsule_digest": "sha256:a2fae67f1d4e842b188cd11f2fe87b1647c557ce8a8a07529ac34aa3cbfba105",
+      "observed_digest": "sha256:a2fae67f1d4e842b188cd11f2fe87b1647c557ce8a8a07529ac34aa3cbfba105",
+      "exact": true
+    }
+  ],
+  "transition": {
+    "metric_id": "gooo.metric.operation.rollback-integrity.v1",
+    "meta_operation": "verify-rollback-integrity",
+    "from_status": "NOT_IMPLEMENTED",
+    "from_resolution": "NONE",
+    "eligible_status": "OPERATING",
+    "eligible_resolution": "EXACT"
+  },
+  "summary": {
+    "denominator_total": 12,
+    "before_operating": 9,
+    "after_operating": 10,
+    "before_coverage_bps": 7500,
+    "after_coverage_bps": 8333,
+    "capsules_total": 3,
+    "capsules_exact": 3,
+    "capsule_coverage_bps": 10000,
+    "shadow_cases_total": 7,
+    "shadow_cases_passed": 7,
+    "shadow_replays_total": 2,
+    "shadow_replays_exact": 2,
+    "shadow_replay_coverage_bps": 10000,
+    "meta_operations_required": 1,
+    "meta_operations_observed": 1,
+    "meta_operation_coverage_bps": 10000,
+    "eligible_paths": 1,
+    "unknown_paths": 0,
+    "blocked_paths": 0
+  },
+  "indicators": [
+    {
+      "metric_id": "gooo.metric.operation.rollback-integrity.eligibility-bps.v1",
+      "class": "OUTCOME",
+      "proof_choice": "COHERENCE",
+      "producer": "rollbackintegrityeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "compare-rollback-shadow-replays",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.rollback-integrity-eligibility-capsule-bps.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "rollbackintegrityeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "consume-rollback-shadow-replay-b",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.meta.rollback-integrity-eligibility-operation-bps.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "rollbackintegrityeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "consume-rollback-shadow-replay-a",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.epistemic.rollback-integrity-eligibility-unknown.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "producer": "rollbackintegrityeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "evaluate-rollback-eligibility",
+      "unit": "paths",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.effects.rollback-integrity-eligibility-writes.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "producer": "rollbackintegrityeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "bind-rollback-assurance-baseline",
+      "unit": "writes",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.operation.rollback-integrity-eligibility-applied.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "COHERENCE",
+      "producer": "rollbackintegrityeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "deny-rollback-promotion-side-effects",
+      "unit": "transitions",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    }
+  ],
+  "meta_operations": [
+    {
+      "id": "bind-rollback-assurance-baseline",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "consume-rollback-shadow-replay-a",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "consume-rollback-shadow-replay-b",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "compare-rollback-shadow-replays",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "deny-rollback-promotion-side-effects",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "evaluate-rollback-eligibility",
+      "proof_choice": "REGRESSION"
+    }
+  ],
+  "repository_writes": 0,
+  "promotion_applied": 0,
+  "report_digest": "sha256:0354624c036750dd84dd1fb2f49969f4cf9e94ab5ea609c1dbf29b8443be12a4"
+}

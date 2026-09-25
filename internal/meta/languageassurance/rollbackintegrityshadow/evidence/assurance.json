@@ -1,0 +1,498 @@
+{
+  "schema": "gooo/language-assurance-report/v1",
+  "subject_sha": "4b8758428951e3e208b42cb568cc208cbe83dea9",
+  "transaction_digest": "sha256:7de6977deab237947868ee0e9b28df8eac9c543977a872ea824aa46079d9b8e3",
+  "denominator_id": "gooo/language-assurance-denominator/v1",
+  "denominator_digest": "sha256:e5b266ceeaeb0757a40096fb661982a263370b1e08945dfedbe34f96eb237a02",
+  "assurance_decision": "PARTIAL",
+  "candidate_decision": "ALLOW_LIMITED",
+  "candidate_reason": "IMPLEMENTED_ASSURANCE_BOUNDARY_CLEAR",
+  "candidate_resolution": "EXACT",
+  "denominator": [
+    {
+      "metric_id": "gooo.metric.governance.self-minting-paths.v1",
+      "priority": "P0",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "required_meta_operation": "detect-self-minting-paths"
+    },
+    {
+      "metric_id": "gooo.metric.governance.role-conflict-paths.v1",
+      "priority": "P0",
+      "class": "GUARDRAIL",
+      "proof_choice": "COHERENCE",
+      "required_meta_operation": "detect-role-conflict-paths"
+    },
+    {
+      "metric_id": "gooo.metric.epistemic.unknown-laundering.v1",
+      "priority": "P0",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "required_meta_operation": "detect-unknown-laundering"
+    },
+    {
+      "metric_id": "gooo.metric.evidence.exact-snapshot-binding.v1",
+      "priority": "P0",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "required_meta_operation": "bind-exact-snapshot"
+    },
+    {
+      "metric_id": "gooo.metric.evidence.raw-reconstruction.v1",
+      "priority": "P0",
+      "class": "DRIVER",
+      "proof_choice": "REGRESSION",
+      "required_meta_operation": "reconstruct-raw-evidence"
+    },
+    {
+      "metric_id": "gooo.metric.effects.write-set-exactness.v1",
+      "priority": "P0",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "required_meta_operation": "observe-exact-write-set"
+    },
+    {
+      "metric_id": "gooo.metric.semantic.source-backed-authority.v1",
+      "priority": "P1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "required_meta_operation": "bind-source-backed-authority"
+    },
+    {
+      "metric_id": "gooo.metric.semantic.candidate-leakage.v1",
+      "priority": "P1",
+      "class": "GUARDRAIL",
+      "proof_choice": "COHERENCE",
+      "required_meta_operation": "detect-candidate-leakage"
+    },
+    {
+      "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+      "priority": "P1",
+      "class": "DRIVER",
+      "proof_choice": "COHERENCE",
+      "required_meta_operation": "totalize-changed-surface-receipts"
+    },
+    {
+      "metric_id": "gooo.metric.operation.rollback-integrity.v1",
+      "priority": "P1",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "required_meta_operation": "verify-rollback-integrity"
+    },
+    {
+      "metric_id": "gooo.metric.capability.vertical-slice-closure.v1",
+      "priority": "P2",
+      "class": "OUTCOME",
+      "proof_choice": "COHERENCE",
+      "required_meta_operation": "close-vertical-slice"
+    },
+    {
+      "metric_id": "gooo.metric.ecosystem.external-conformance.v1",
+      "priority": "P2",
+      "class": "OUTCOME",
+      "proof_choice": "REGRESSION",
+      "required_meta_operation": "verify-external-conformance"
+    }
+  ],
+  "obligations": [
+    {
+      "metric_id": "gooo.metric.governance.self-minting-paths.v1",
+      "status": "OPERATING",
+      "resolution": "EXACT",
+      "meta_operation": "detect-self-minting-paths"
+    },
+    {
+      "metric_id": "gooo.metric.governance.role-conflict-paths.v1",
+      "status": "OPERATING",
+      "resolution": "EXACT",
+      "meta_operation": "detect-role-conflict-paths"
+    },
+    {
+      "metric_id": "gooo.metric.epistemic.unknown-laundering.v1",
+      "status": "OPERATING",
+      "resolution": "EXACT",
+      "meta_operation": "detect-unknown-laundering"
+    },
+    {
+      "metric_id": "gooo.metric.evidence.exact-snapshot-binding.v1",
+      "status": "OPERATING",
+      "resolution": "EXACT",
+      "meta_operation": "bind-exact-snapshot"
+    },
+    {
+      "metric_id": "gooo.metric.evidence.raw-reconstruction.v1",
+      "status": "OPERATING",
+      "resolution": "EXACT",
+      "meta_operation": "reconstruct-raw-evidence"
+    },
+    {
+      "metric_id": "gooo.metric.effects.write-set-exactness.v1",
+      "status": "OPERATING",
+      "resolution": "EXACT",
+      "meta_operation": "observe-exact-write-set"
+    },
+    {
+      "metric_id": "gooo.metric.semantic.source-backed-authority.v1",
+      "status": "OPERATING",
+      "resolution": "EXACT",
+      "meta_operation": "bind-source-backed-authority"
+    },
+    {
+      "metric_id": "gooo.metric.semantic.candidate-leakage.v1",
+      "status": "OPERATING",
+      "resolution": "EXACT",
+      "meta_operation": "detect-candidate-leakage"
+    },
+    {
+      "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+      "status": "OPERATING",
+      "resolution": "EXACT",
+      "meta_operation": "totalize-changed-surface-receipts"
+    },
+    {
+      "metric_id": "gooo.metric.operation.rollback-integrity.v1",
+      "status": "NOT_IMPLEMENTED",
+      "resolution": "NONE"
+    },
+    {
+      "metric_id": "gooo.metric.capability.vertical-slice-closure.v1",
+      "status": "NOT_IMPLEMENTED",
+      "resolution": "NONE"
+    },
+    {
+      "metric_id": "gooo.metric.ecosystem.external-conformance.v1",
+      "status": "NOT_IMPLEMENTED",
+      "resolution": "NONE"
+    }
+  ],
+  "meta_operations": [
+    {
+      "id": "freeze-assurance-denominator",
+      "activity": "FreezeAssuranceDenominator",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "observe-transaction-evidence",
+      "activity": "ObserveTransactionEvidence",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "detect-self-minting-paths",
+      "activity": "DetectSelfMintingPaths",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "detect-role-conflict-paths",
+      "activity": "DetectRoleConflictPaths",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "detect-unknown-laundering",
+      "activity": "DetectUnknownLaundering",
+      "proof_choice": "REGRESSION"
+    },
+    {
+      "id": "bind-exact-snapshot",
+      "activity": "BindExactSnapshot",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "reconstruct-raw-evidence",
+      "activity": "ReconstructRawEvidence",
+      "proof_choice": "REGRESSION"
+    },
+    {
+      "id": "observe-exact-write-set",
+      "activity": "ObserveExactWriteSet",
+      "proof_choice": "REGRESSION"
+    },
+    {
+      "id": "bind-source-backed-authority",
+      "activity": "BindSourceBackedAuthority",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "detect-candidate-leakage",
+      "activity": "DetectCandidateLeakage",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "totalize-changed-surface-receipts",
+      "activity": "TotalizeChangedSurfaceReceipts",
+      "proof_choice": "COHERENCE"
+    }
+  ],
+  "role_conflict_pairs": [
+    {
+      "left": "CONTRACT_AUTHOR",
+      "right": "EVALUATOR_AUTHOR"
+    },
+    {
+      "left": "IMPLEMENTER",
+      "right": "PROMOTER"
+    },
+    {
+      "left": "EVALUATOR_AUTHOR",
+      "right": "AUDITOR"
+    },
+    {
+      "left": "POLICY_ADOPTER",
+      "right": "PROMOTER"
+    },
+    {
+      "left": "ADAPTER_AUTHOR",
+      "right": "AUDITOR"
+    }
+  ],
+  "unknown_laundering_outputs": [
+    "PASS",
+    "FIXED_POINT",
+    "AUTHORIZED",
+    "ALLOW"
+  ],
+  "snapshot_evidence_ids": [
+    "authority_routes",
+    "role_bindings",
+    "decision_transitions"
+  ],
+  "transaction": {
+    "schema": "gooo/language-assurance-transaction/v1",
+    "transaction_id": "independent-promotion",
+    "authority_routes": [
+      {
+        "rule_id": "promotion-policy-v1",
+        "authored_by": "contract-author",
+        "promoted_by": "promoter"
+      }
+    ],
+    "role_bindings": [
+      {
+        "principal": "contract-author",
+        "roles": [
+          "CONTRACT_AUTHOR"
+        ]
+      },
+      {
+        "principal": "implementer",
+        "roles": [
+          "IMPLEMENTER"
+        ]
+      },
+      {
+        "principal": "evaluator-author",
+        "roles": [
+          "EVALUATOR_AUTHOR"
+        ]
+      },
+      {
+        "principal": "adapter-author",
+        "roles": [
+          "ADAPTER_AUTHOR"
+        ]
+      },
+      {
+        "principal": "policy-adopter",
+        "roles": [
+          "POLICY_ADOPTER"
+        ]
+      },
+      {
+        "principal": "promoter",
+        "roles": [
+          "PROMOTER"
+        ]
+      },
+      {
+        "principal": "auditor",
+        "roles": [
+          "AUDITOR"
+        ]
+      }
+    ],
+    "decision_transitions": [
+      {
+        "id": "promotion-decision",
+        "input": "PASS",
+        "output": "AUTHORIZED"
+      }
+    ],
+    "snapshot_bindings": [
+      {
+        "evidence_id": "authority_routes",
+        "subject_sha": "4b8758428951e3e208b42cb568cc208cbe83dea9"
+      },
+      {
+        "evidence_id": "role_bindings",
+        "subject_sha": "4b8758428951e3e208b42cb568cc208cbe83dea9"
+      },
+      {
+        "evidence_id": "decision_transitions",
+        "subject_sha": "4b8758428951e3e208b42cb568cc208cbe83dea9"
+      }
+    ],
+    "raw_reconstructions": [
+      {
+        "schema": "gooo/language-assurance-raw-reconstruction/v1",
+        "verifier_id": "gooo-independent-json-reconstructor-v1",
+        "subject_sha": "4b8758428951e3e208b42cb568cc208cbe83dea9",
+        "denominator_digest": "sha256:e5b266ceeaeb0757a40096fb661982a263370b1e08945dfedbe34f96eb237a02",
+        "raw_transaction_digest": "sha256:34e0946846f4b1a776ed996b6cd5a1e47a72cf6bde8bf7e92c6cbe69d5123b8a",
+        "observation": {
+          "evidence_groups_observed": 3,
+          "evidence_groups_total": 3,
+          "self_minting_paths": 0,
+          "role_conflict_paths": 0,
+          "unknown_laundering_paths": 0,
+          "unknown_top_decisions": 0,
+          "snapshot_bindings_observed": 3,
+          "snapshot_bindings_required": 3,
+          "exact_snapshot_binding_bps": 10000,
+          "snapshot_mismatch_paths": 0,
+          "candidate_decision": "ALLOW_LIMITED",
+          "candidate_reason": "IMPLEMENTED_ASSURANCE_BOUNDARY_CLEAR",
+          "candidate_resolution": "EXACT"
+        }
+      }
+    ]
+  },
+  "findings": null,
+  "indicators": [
+    {
+      "metric_id": "gooo.metric.assurance.implementation-coverage-bps.v1",
+      "class": "OUTCOME",
+      "proof_choice": "COHERENCE",
+      "producer": "internal/meta/languageassurance.Evaluate",
+      "consumer": "language-assurance-gate",
+      "meta_operation": "freeze-assurance-denominator",
+      "value": 7500,
+      "target": 10000,
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "satisfied": false
+    },
+    {
+      "metric_id": "gooo.metric.assurance.transaction-evidence-coverage-bps.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "internal/meta/languageassurance.Evaluate",
+      "consumer": "language-assurance-gate",
+      "meta_operation": "observe-transaction-evidence",
+      "value": 10000,
+      "target": 10000,
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.exact-snapshot-binding.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "internal/meta/languageassurance.Evaluate",
+      "consumer": "language-assurance-gate",
+      "meta_operation": "bind-exact-snapshot",
+      "value": 10000,
+      "target": 10000,
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.raw-reconstruction.v1",
+      "class": "DRIVER",
+      "proof_choice": "REGRESSION",
+      "producer": "internal/meta/languageassurance.Evaluate",
+      "consumer": "language-assurance-gate",
+      "meta_operation": "reconstruct-raw-evidence",
+      "value": 10000,
+      "target": 10000,
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.governance.self-minting-paths.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "producer": "internal/meta/languageassurance.Evaluate",
+      "consumer": "language-assurance-gate",
+      "meta_operation": "detect-self-minting-paths",
+      "value": 0,
+      "target": 0,
+      "unit": "paths",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.governance.role-conflict-paths.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "COHERENCE",
+      "producer": "internal/meta/languageassurance.Evaluate",
+      "consumer": "language-assurance-gate",
+      "meta_operation": "detect-role-conflict-paths",
+      "value": 0,
+      "target": 0,
+      "unit": "paths",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.epistemic.unknown-laundering.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "producer": "internal/meta/languageassurance.Evaluate",
+      "consumer": "language-assurance-gate",
+      "meta_operation": "detect-unknown-laundering",
+      "value": 0,
+      "target": 0,
+      "unit": "paths",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.effects.write-set-exactness.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "producer": "internal/meta/languageassurance/writeset.Compare",
+      "consumer": "language-assurance-gate",
+      "meta_operation": "observe-exact-write-set",
+      "value": 0,
+      "target": 0,
+      "unit": "paths",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "satisfied": true
+    }
+  ],
+  "summary": {
+    "denominator_total": 12,
+    "operating": 9,
+    "not_implemented": 3,
+    "implementation_coverage_bps": 7500,
+    "evidence_groups_observed": 3,
+    "evidence_groups_total": 3,
+    "evidence_coverage_bps": 10000,
+    "self_minting_paths": 0,
+    "role_conflict_paths": 0,
+    "unknown_laundering_paths": 0,
+    "unknown_top_decisions": 0,
+    "snapshot_bindings_observed": 3,
+    "snapshot_bindings_required": 3,
+    "exact_snapshot_binding_bps": 10000,
+    "snapshot_mismatch_paths": 0,
+    "raw_reconstructions_observed": 1,
+    "raw_reconstructions_required": 1,
+    "raw_reconstruction_bps": 10000,
+    "raw_reconstruction_mismatch_paths": 0,
+    "unresolved_indicators": 0,
+    "violated_guardrails": 0,
+    "repository_writes": 0
+  },
+  "report_digest": "sha256:913903e88101af45a5597466582d5a04b553153e6fd067b527584e719ae5af78"
+}

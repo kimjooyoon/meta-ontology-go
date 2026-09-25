@@ -1,0 +1,9 @@
+package bootstrap
+namespace bootstrap
+
+entity Source id "bootstrap://entity/source"
+entity SemanticIR id "bootstrap://entity/semantic-ir"
+entity Evidence id "bootstrap://entity/evidence"
+
+activity ParseAndLower(Source) -> SemanticIR
+activity Verify(SemanticIR) -> Evidence

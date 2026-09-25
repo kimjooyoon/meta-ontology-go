@@ -1,0 +1,31 @@
+{
+  "allowed": false,
+  "violations": [
+    {
+      "operation": "add",
+      "change": "node",
+      "id": "fraud://entity/charge",
+      "kind": "Entity",
+      "endpoint": "node",
+      "reason": "node identity is outside allowed scope"
+    },
+    {
+      "operation": "add",
+      "change": "fact",
+      "subject": "billing://activity/pay-order",
+      "predicate": "gooo:invokes",
+      "object": "fraud://entity/charge",
+      "endpoint": "object",
+      "reason": "fact object is outside allowed scope"
+    },
+    {
+      "operation": "add",
+      "change": "fact",
+      "subject": "billing://activity/pay-order",
+      "predicate": "gooo:invokes",
+      "object": "fraud://entity/charge",
+      "endpoint": "predicate",
+      "reason": "fact predicate is outside allowed scope"
+    }
+  ]
+}

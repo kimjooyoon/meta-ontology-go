@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/main-history-reconciliation/v2",
+  "decision_precedence": ["REFUTED", "UNKNOWN", "CLOSED"],
+  "unknown_fields": ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"],
+  "route": "reconciliation_main",
+  "candidate_branch_prefix": "agent/main-history-reconciliation-",
+  "authorization_candidate_encoding": "COMPACT_TREE_DIGESTS_V1",
+  "source": "dev",
+  "target": "main",
+  "merge_strategy": "squash_linear",
+  "required_checks": ["CI policy", "Semantic conformance", "go test", "go test -race", "go vet", "gofmt", "CI guardian"],
+  "cells": [
+    {"id": "ROUTE_AUTHORITY", "stage": "FOUNDATION", "indicator": "DRIVER", "proof_choice": "FOUNDATION", "step": "ROUTE_AUTHORITY", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "CANDIDATE_TUPLE", "stage": "FOUNDATION", "indicator": "OUTCOME", "proof_choice": "FOUNDATION", "step": "CANDIDATE_TUPLE", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "WORKFLOW_IDENTITY", "stage": "FOUNDATION", "indicator": "GUARDRAIL", "proof_choice": "FOUNDATION", "step": "WORKFLOW_IDENTITY", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "ONE_USE_AUTHORIZATION", "stage": "FOUNDATION", "indicator": "DRIVER", "proof_choice": "FOUNDATION", "step": "ONE_USE_AUTHORIZATION", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "CURRENT_MAIN_REF", "stage": "COHERENCE", "indicator": "DRIVER", "proof_choice": "COHERENCE", "step": "CURRENT_MAIN_REF", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "CURRENT_DEV_REF", "stage": "COHERENCE", "indicator": "OUTCOME", "proof_choice": "COHERENCE", "step": "CURRENT_DEV_REF", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "TREE_EQUIVALENCE", "stage": "COHERENCE", "indicator": "OUTCOME", "proof_choice": "COHERENCE", "step": "TREE_EQUIVALENCE", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "REQUIRED_CHECKS", "stage": "COHERENCE", "indicator": "GUARDRAIL", "proof_choice": "COHERENCE", "step": "REQUIRED_CHECKS", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "CHANGED_PATH_BINDING", "stage": "REGRESSION", "indicator": "DRIVER", "proof_choice": "REGRESSION", "step": "CHANGED_PATH_BINDING", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "PROTECTED_INTERSECTION", "stage": "REGRESSION", "indicator": "OUTCOME", "proof_choice": "REGRESSION", "step": "PROTECTED_INTERSECTION", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "NONCE_REPLAY", "stage": "REGRESSION", "indicator": "GUARDRAIL", "proof_choice": "REGRESSION", "step": "NONCE_REPLAY", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},
+    {"id": "POST_MERGE_CONSUMPTION", "stage": "REGRESSION", "indicator": "GUARDRAIL", "proof_choice": "REGRESSION", "step": "POST_MERGE_CONSUMPTION", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"}
+  ],
+  "safeguards": {"repository_writes": 0, "local_test_executions": 0, "no_protection_mutation": true, "no_check_bypass": true, "no_force_push": true}
+}

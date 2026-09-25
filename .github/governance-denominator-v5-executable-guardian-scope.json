@@ -1,0 +1,131 @@
+{
+  "schema": "gooo/ci-governance-denominator-migration/v5",
+  "foundation_override_success_count": 3,
+  "receipt_path": ".github/governance-denominator-v5-executable-guardian-scope.json",
+  "digest_exclusions": [
+    ".github/governance-denominator-v5-executable-guardian-scope.json"
+  ],
+  "base_sha": "7f45792e3c23100cbb10cca8b229132060982a7b",
+  "merge_parent_sha": "7f45792e3c23100cbb10cca8b229132060982a7b",
+  "parent_receipt": {
+    "schema": "gooo/ci-governance-denominator-migration/v4",
+    "path": ".github/governance-denominator-v4-schema-coherence.json",
+    "sha256": "sha256:13d14a8501938cc244b431d0c1a0b321cb610cfd14a09767f2e28d8c1652b370"
+  },
+  "lineage": [
+    {
+      "version": "v0.2.0",
+      "preserved": true,
+      "adopted": false
+    },
+    {
+      "version": "v0.2.1",
+      "preserved": true,
+      "adopted": false
+    }
+  ],
+  "immutable_release_input": {
+    "schema": "gooo/receipt-schema-migration/v0.2.2",
+    "target_commit": "977e622db99c16fbe37db5912b07f403cd09cdb2",
+    "tag_object_sha": "c090f22191cd79a6d876ed26df084ac1d4720f3f",
+    "protocol": {
+      "rest": {
+        "immutable": true
+      },
+      "graphql": {
+        "immutable": true
+      },
+      "repository_setting": {
+        "enabled": true
+      }
+    },
+    "release_asset": {
+      "name": "gooo-receipt-schema-migration-v0.2.2-conformance.tar.gz",
+      "size_bytes": 28877,
+      "sha256": "sha256:e4a2cb8acd608141bdcdb66db6f6369a9480fc691d8a67b3572dd711d02dadf3"
+    },
+    "main_run": {
+      "run_id": 33357554531,
+      "conclusion": "success",
+      "artifact": {
+        "artifact_id": 9745614408,
+        "size_bytes": 41821,
+        "sha256": "sha256:6e3989aaf21e760f57868a756847dbc9b75824f3b0b8c47ed984e53f12f40146"
+      }
+    },
+    "proposal": {
+      "file_sha256": "sha256:f55a204da6e258f1345a52e5e9f164226eff4b6cafa8ba3a65daf97f2247e451",
+      "declared_sha256": "sha256:54cde81ff704cc6afe10f3dfaf0d2dbca2bb29eb18d61a29efe9c9dc4d6d718e"
+    }
+  },
+  "input_field_count": 6,
+  "missing_stale_future_schema_decision": "UNKNOWN",
+  "acceptance_ids": [
+    "SCOPE_INITIALIZED_BEFORE_POLICY_BRANCH",
+    "SCOPE_REUSED_WITHOUT_REDECLARATION",
+    "WORKFLOW_AUTHORITY_PINNED_TO_GITHUB_WORKFLOW_SHA",
+    "LIVE_PR_CHANGED_PATHS_ATTESTED",
+    "PASS_KERNEL_DIGESTS_NON_NULL_EXACT",
+    "NULL_STALE_MISMATCH_REFUTED",
+    "FUTURE_SCHEMA_UNKNOWN_OVER_6_FIELDS",
+    "REFERENCE_ERROR_REFUTED_SCOPE_CLOSED"
+  ],
+  "protected_files": [
+    ".github/agent-scope-table.md",
+    ".github/branch-policy.md",
+    ".github/ci-governance.json",
+    ".github/conformance-plan.md",
+    ".github/foundation-authorization.json",
+    "go.mod",
+    "go.sum"
+  ],
+  "prior_guardian_failure": {
+    "run_id": 33355380192,
+    "job_id": 99376387819,
+    "code": "CI-ROOT-OF-TRUST-001",
+    "message": "ReferenceError: beforeDigest is not defined"
+  },
+  "changed_paths": [
+    ".github/agent-scope-table.md",
+    ".github/ci-governance.json",
+    ".github/governance-denominator-v5-executable-guardian-scope.json",
+    ".github/workflows/ci-guardian.yml",
+    "internal/verify/scope_executable_guardian_scope_adoption_20260831.go",
+    "scripts/ci-proof/foundation_authorization.js",
+    "scripts/ci-proof/foundation_authorization_test.js",
+    "scripts/ci-proof/guardian.js",
+    "scripts/ci-proof/guardian_test.js"
+  ],
+  "changed_paths_sha256": "sha256:ddd062212ff319a456b93da9783e233b36d5eba5256c4bb68807e894b227da6a",
+  "patch_sha256_excluding_receipt": "sha256:e68dd50c5611f35a13e9b7d33066ea4c16f610be4f727e59b4825922918721ef",
+  "tree_sha256_excluding_receipt": "sha256:29f428f8a4776e5bb422c453fd8b6bb195305ed873d500f8575b41990d99a980",
+  "input_release_digests": {
+    "release_asset": "sha256:e4a2cb8acd608141bdcdb66db6f6369a9480fc691d8a67b3572dd711d02dadf3",
+    "main_artifact": "sha256:6e3989aaf21e760f57868a756847dbc9b75824f3b0b8c47ed984e53f12f40146",
+    "proposal_file": "sha256:f55a204da6e258f1345a52e5e9f164226eff4b6cafa8ba3a65daf97f2247e451",
+    "declared_proposal": "sha256:54cde81ff704cc6afe10f3dfaf0d2dbca2bb29eb18d61a29efe9c9dc4d6d718e"
+  },
+  "repository_gates": 0,
+  "local_go_gates": 0,
+  "cross_project_gates": 0,
+  "replay_second_use": "REFUTED",
+  "cells": [
+    {
+      "id": "EXECUTABLE_GUARDIAN_SCOPE_ADOPTION",
+      "meta_operation": "AdoptExecutableGuardianScope",
+      "proof_choice": "REGRESSION",
+      "indicator": "GUARDRAIL",
+      "parent_outcome": "REFUTED_REFERENCE_ERROR_BEFORE_DIGEST_SCOPE",
+      "outcome": "CLOSED",
+      "causal": "INITIALIZE_DIGESTS_BEFORE_POLICY_BRANCH",
+      "reason": "INITIALIZE_DIGESTS_BEFORE_POLICY_BRANCH",
+      "allowed": 1,
+      "consumed": 1,
+      "replay_decision": "REFUTED",
+      "pull_request": 614,
+      "branch": "agent/executable-guardian-scope-adoption-20260831",
+      "base_sha": "7f45792e3c23100cbb10cca8b229132060982a7b",
+      "merge_parent_sha": "7f45792e3c23100cbb10cca8b229132060982a7b"
+    }
+  ]
+}

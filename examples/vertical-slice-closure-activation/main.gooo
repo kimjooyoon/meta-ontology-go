@@ -1,0 +1,20 @@
+package verticalsliceclosureactivation
+namespace verticalsliceclosureactivation
+
+entity AssuranceCapsule id "gooo://vertical-slice-closure-activation/entity/assurance-capsule"
+entity EligibilityCapsule id "gooo://vertical-slice-closure-activation/entity/eligibility-capsule"
+entity BoundAssurance id "gooo://vertical-slice-closure-activation/entity/bound-assurance"
+entity BoundEligibility id "gooo://vertical-slice-closure-activation/entity/bound-eligibility"
+entity PredecessorSemantics id "gooo://vertical-slice-closure-activation/entity/predecessor-semantics"
+entity EligibilityDecision id "gooo://vertical-slice-closure-activation/entity/eligibility-decision"
+entity ActivationTransition id "gooo://vertical-slice-closure-activation/entity/activation-transition"
+entity BlockedTransition id "gooo://vertical-slice-closure-activation/entity/blocked-transition"
+entity ActivationReceipt id "gooo://vertical-slice-closure-activation/entity/activation-receipt"
+
+activity BindAssuranceCapsule(AssuranceCapsule) -> BoundAssurance
+activity BindEligibilityCapsule(EligibilityCapsule) -> BoundEligibility
+activity ConsumePredecessorSemantics(BoundAssurance) -> PredecessorSemantics
+activity PreserveUnknownResolution(BoundEligibility) -> EligibilityDecision
+activity ApplyVerticalSliceTransition(EligibilityDecision) -> ActivationTransition
+activity DenyActivationWithoutProof(PredecessorSemantics) -> BlockedTransition
+activity EmitReadOnlyActivationReceipt(ActivationTransition) -> ActivationReceipt

@@ -1,0 +1,59 @@
+package semantic
+
+import (
+	"errors"
+	"testing"
+)
+
+func TestGraphValidationRequiresDeclaredNodesAndPROVKinds(t *testing.T) {
+	g := NewGraph()
+	activity := MustIdentity("billing://activity/pay")
+	entity := MustIdentity("billing://entity/order")
+	before := g.Canonical()
+	if err := g.AddFact(NewUsedFact(activity, entity)); !errors.Is(err, ErrNodeNotFound) {
+		t.Fatalf("missing node add error = %v, want ErrNodeNotFound", err)
+	}
+	if g.Canonical() != before {
+		t.Fatal("rejected missing-node fact mutated the graph")
+	}
+	if err := g.Validate(); err != nil {
+		t.Fatalf("empty graph after rejected fact is invalid: %v", err)
+	}
+
+	g = NewGraph()
+	if err := g.AddNode(mustEntity(t, activity, Namespace("billing"), "Pay")); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.AddNode(mustEntity(t, entity, Namespace("billing"), "Order")); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.AddFact(NewUsedFact(activity, entity)); !errors.Is(err, ErrInvalidFact) {
+		t.Fatalf("reversed used edge error = %v, want ErrInvalidFact", err)
+	}
+	if err := g.Validate(); err != nil {
+		t.Fatalf("rejected edge mutated graph: %v", err)
+	}
+}
+func TestGraphValidationRejectsUnknownRelationsAndKeepsCandidateStatus(t *testing.T) {
+	g := NewGraph()
+	activity := mustActivity(t, MustIdentity("billing://activity/pay"), Namespace("billing"), "Pay")
+	entity := mustEntity(t, MustIdentity("billing://entity/order"), Namespace("billing"), "Order")
+	if err := g.AddNode(activity); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.AddNode(entity); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.AddCandidate(Fact{Subject: activity.ID, Predicate: Relation("calls"), Object: entity.ID}); !errors.Is(err, ErrUnknownRelation) {
+		t.Fatalf("unknown relation error = %v, want ErrUnknownRelation", err)
+	}
+	if err := g.AddCandidate(NewCandidateFact(activity.ID, Used, entity.ID, "needs explicit domain assertion")); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.Validate(); err != nil {
+		t.Fatalf("valid candidate graph failed validation: %v", err)
+	}
+	if got := g.Candidates()[0].Status; got != FactCandidate {
+		t.Fatalf("candidate status = %v, want %v", got, FactCandidate)
+	}
+}

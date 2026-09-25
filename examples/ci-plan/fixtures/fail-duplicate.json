@@ -1,0 +1,1 @@
+{"schema":"gooo/ci-plan-input/v1","case_id":"fail-duplicate","files":["internal/metainvocation/model.go","internal/metainvocation/model.go"]}

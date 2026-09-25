@@ -1,0 +1,7 @@
+package conformance
+namespace conformance
+
+entity Input id "conformance://entity/input"
+entity Output id "conformance://entity/output"
+
+activity Transform(Input) -> Output

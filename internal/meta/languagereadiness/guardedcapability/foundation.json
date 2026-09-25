@@ -1,0 +1,244 @@
+{
+  "schema": "gooo/autonomy-guarded-promotion/v1",
+  "decision": "AUTHORIZED",
+  "reason": "MERGED_PUSH_PROMOTION_AUTHORIZED",
+  "resolution": "EXACT",
+  "source": {
+    "requested_repository": "kimjooyoon/meta-ontology-go",
+    "observed_repository": "kimjooyoon/meta-ontology-go",
+    "default_branch": "dev",
+    "current_head_sha": "d9960ae95ffdc66179de0a1be13364aefeab76ea",
+    "predecessor_sha": "8682ea7f3c31aacc415f0c0627c1297f28abd4ed",
+    "workflow": {
+      "run_id": 32670327857,
+      "name": "CI [push full]",
+      "path": ".github/workflows/ci.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "d9960ae95ffdc66179de0a1be13364aefeab76ea",
+      "head_branch": "dev"
+    },
+    "artifact": {
+      "run_id": 32669241973,
+      "run_attempt": 1,
+      "run_event": "push",
+      "artifact_id": 9500915869,
+      "artifact_name": "language-readiness-proposal-promotion-8682ea7f3c31aacc415f0c0627c1297f28abd4ed",
+      "artifact_digest": "sha256:072759f603a9ff22c0a2101ff3480c43996be4a2293b7cece0bc18bdd960f913",
+      "file_sha256": "sha256:00d93d44d1c5e0db31d51eb0f4ff26249b051b146c2d5dc92a83b16977c6a643",
+      "report_schema": "gooo/autonomous-change-proposal-promotion/v1",
+      "report_digest": "sha256:302b14100ff7316b03ec1702c6fec32ed9528ff8cdebe3480982b93014ea22de",
+      "report_current_head_sha": "8682ea7f3c31aacc415f0c0627c1297f28abd4ed",
+      "report_decision": "PASS",
+      "report_satisfied": 8,
+      "report_total": 8,
+      "report_unresolved": 0,
+      "report_repository_writes": 0
+    },
+    "observed_runs": 1,
+    "observed_artifacts": 9,
+    "valid_candidates": 1,
+    "ambiguous_candidates": 0,
+    "unresolved_candidates": 0,
+    "repository_writes": 0,
+    "repository_mutation_authorized": false
+  },
+  "summary": {
+    "satisfied": 12,
+    "total": 12,
+    "not_satisfied": 0,
+    "unresolved": 0,
+    "readiness_bps": 10000,
+    "valid_predecessors": 1,
+    "ambiguous_candidates": 0,
+    "repository_writes": 0,
+    "readiness_promotion_authorized": true,
+    "repository_mutation_authorized": false
+  },
+  "coordinates": [
+    {
+      "id": "repository-identity",
+      "proof_choice": "FOUNDATION",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "current-subject-sha",
+      "proof_choice": "FOUNDATION",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "predecessor-sha",
+      "proof_choice": "FOUNDATION",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "unique-predecessor-artifact",
+      "proof_choice": "FOUNDATION",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "predecessor-promotion-contract",
+      "proof_choice": "FOUNDATION",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "ci-workflow-identity",
+      "proof_choice": "COHERENCE",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "ci-workflow-success",
+      "proof_choice": "COHERENCE",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "ci-subject-link",
+      "proof_choice": "COHERENCE",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "merged-push-event",
+      "proof_choice": "REGRESSION",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "default-branch-boundary",
+      "proof_choice": "REGRESSION",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "observer-write-boundary",
+      "proof_choice": "REGRESSION",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    },
+    {
+      "id": "mutation-authority-boundary",
+      "proof_choice": "REGRESSION",
+      "status": "SATISFIED",
+      "reason": "COORDINATE_EXACTLY_PROVEN"
+    }
+  ],
+  "indicators": [
+    {
+      "metric_id": "gooo.metric.language.autonomy-guarded-promotion-promotion-readiness-bps.v1",
+      "class": "OUTCOME",
+      "proof_choice": "COHERENCE",
+      "producer": "internal/meta/languagereadiness/guardedpromotion",
+      "consumer": "language-readiness",
+      "meta_operation": "guard-readiness-promotion",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.language.autonomy-guarded-promotion-valid-predecessors.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "internal/meta/languagereadiness/guardedpromotion",
+      "consumer": "language-readiness",
+      "meta_operation": "guard-readiness-promotion",
+      "value": 1,
+      "target": 1,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.language.autonomy-guarded-promotion-source-integrity-bps.v1",
+      "class": "DRIVER",
+      "proof_choice": "COHERENCE",
+      "producer": "internal/meta/languagereadiness/guardedpromotion",
+      "consumer": "language-readiness",
+      "meta_operation": "guard-readiness-promotion",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.language.autonomy-guarded-promotion-unmerged-boundary-debt.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "producer": "internal/meta/languagereadiness/guardedpromotion",
+      "consumer": "language-readiness",
+      "meta_operation": "guard-readiness-promotion",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.language.autonomy-guarded-promotion-ambiguous-predecessors.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "producer": "internal/meta/languagereadiness/guardedpromotion",
+      "consumer": "language-readiness",
+      "meta_operation": "guard-readiness-promotion",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.language.autonomy-guarded-promotion-unresolved-evidence.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "producer": "internal/meta/languagereadiness/guardedpromotion",
+      "consumer": "language-readiness",
+      "meta_operation": "guard-readiness-promotion",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.language.autonomy-guarded-promotion-observer-writes.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "producer": "internal/meta/languagereadiness/guardedpromotion",
+      "consumer": "language-readiness",
+      "meta_operation": "guard-readiness-promotion",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.language.autonomy-guarded-promotion-mutation-authority.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "producer": "internal/meta/languagereadiness/guardedpromotion",
+      "consumer": "language-readiness",
+      "meta_operation": "guard-readiness-promotion",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    }
+  ],
+  "proofs": [
+    {
+      "choice": "FOUNDATION",
+      "meta_operation": "bind-predecessor-promotion-foundation",
+      "satisfied": true,
+      "evidence_digest": "sha256:b70be73d724733b9a20cd648358f44dfb79ccc697009db5985e27fc32048246f"
+    },
+    {
+      "choice": "COHERENCE",
+      "meta_operation": "cohere-ci-subject-and-receipt",
+      "satisfied": true,
+      "evidence_digest": "sha256:f2c528bb5dcbb302d6200b00056ab1a4cc7d991f501b44c5cfc7acc9a923fa13"
+    },
+    {
+      "choice": "REGRESSION",
+      "meta_operation": "reject-unmerged-or-writing-promotion",
+      "satisfied": true,
+      "evidence_digest": "sha256:dcce4dc5494dd37b1b3fb1e6dcb62f21953d0fb699fff7fdf1eb81f3bb611361"
+    }
+  ],
+  "report_digest": "sha256:67cdb6610b00f9533c3db462804e67e84d1c037a7625e3bef562a82b515d96bd"
+}

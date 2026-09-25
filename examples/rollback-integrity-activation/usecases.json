@@ -1,0 +1,34 @@
+{
+  "schema": "gooo/rollback-integrity-activation-usecases/v1",
+  "total": 4,
+  "cases": [
+    {
+      "id": "activate-exact-merged-proof",
+      "input": "EXACT_MERGED_ELIGIBILITY",
+      "decision": "APPLIED",
+      "resolution": "EXACT",
+      "effect": "APPLY_TRANSITION"
+    },
+    {
+      "id": "lower-missing-evidence-resolution",
+      "input": "EVIDENCE_UNAVAILABLE",
+      "decision": "FAIL_CLOSED",
+      "resolution": "UNKNOWN",
+      "effect": "BLOCK"
+    },
+    {
+      "id": "block-capsule-mismatch",
+      "input": "CAPSULE_DIGEST_MISMATCH",
+      "decision": "FAIL_CLOSED",
+      "resolution": "INVARIANT_ONLY",
+      "effect": "BLOCK"
+    },
+    {
+      "id": "preserve-unknown-eligibility",
+      "input": "ELIGIBILITY_UNKNOWN",
+      "decision": "FAIL_CLOSED",
+      "resolution": "UNKNOWN",
+      "effect": "BLOCK"
+    }
+  ]
+}

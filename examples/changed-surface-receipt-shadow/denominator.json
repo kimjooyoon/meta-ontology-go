@@ -1,0 +1,11 @@
+{
+  "schema": "gooo/changed-surface-receipt-denominator/v1",
+  "cases": [
+    {"id":"exact","decision":"FIXED_POINT","resolution":"EXACT"},
+    {"id":"zero-change","decision":"FIXED_POINT","resolution":"EXACT"},
+    {"id":"missing","decision":"FAIL_CLOSED","resolution":"UNKNOWN"},
+    {"id":"orphan","decision":"FAIL_CLOSED","resolution":"INVARIANT_ONLY"},
+    {"id":"duplicate","decision":"FAIL_CLOSED","resolution":"INVARIANT_ONLY"},
+    {"id":"unknown-top","decision":"FAIL_CLOSED","resolution":"UNKNOWN"}
+  ]
+}

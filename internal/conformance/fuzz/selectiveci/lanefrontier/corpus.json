@@ -1,0 +1,101 @@
+{
+  "schema": "gooo/lane-frontier/corpus/v1",
+  "cases": [
+    {
+      "name": "unknown-schema",
+      "input": {"schema": "gooo/lane-frontier/v0", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": 0, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "UNKNOWN", "reason": "UNKNOWN_SCHEMA", "canonical_digest": "d095f33f3cb569f62f5d26e91dc4be1b1dd83829df20c39133286bd6a054437f"},
+      "canonical_digest": "d095f33f3cb569f62f5d26e91dc4be1b1dd83829df20c39133286bd6a054437f"
+    },
+    {
+      "name": "missing-input",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": 0, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "UNKNOWN", "reason": "MISSING_INPUT", "canonical_digest": "f7ddb7ac49c774a647bb6642f8470f3453fad511e7b7e7e59f33c9173dd62e98"},
+      "canonical_digest": "f7ddb7ac49c774a647bb6642f8470f3453fad511e7b7e7e59f33c9173dd62e98"
+    },
+    {
+      "name": "invalid-count",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": -1, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "UNKNOWN", "reason": "INVALID_COUNT", "canonical_digest": "7fa9a1f237d637508c8e7c7e83c083d2a081cb7eac80f498ed0576a026711ca6"},
+      "canonical_digest": "7fa9a1f237d637508c8e7c7e83c083d2a081cb7eac80f498ed0576a026711ca6"
+    },
+    {
+      "name": "ambiguous-owner",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg", "pkg/sub"], "changed_paths": ["pkg/file.go"], "ahead_count": 0, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "UNKNOWN", "reason": "AMBIGUOUS_OWNER", "canonical_digest": "4ba6dd8ad5758c35f6dcb3db4b459a0de86e15e066d0b0ef57955cde3fef9816"},
+      "canonical_digest": "4ba6dd8ad5758c35f6dcb3db4b459a0de86e15e066d0b0ef57955cde3fef9816"
+    },
+    {
+      "name": "path-out-of-scope",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["other/file.go"], "ahead_count": 0, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "INELIGIBLE", "reason": "PATH_OUT_OF_SCOPE", "canonical_digest": "3df31be766302dcac95b986902ee7a9fcba91a060dccfb3394dc2b999ce96c56"},
+      "canonical_digest": "3df31be766302dcac95b986902ee7a9fcba91a060dccfb3394dc2b999ce96c56"
+    },
+    {
+      "name": "active-lease",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": 0, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 1},
+      "expected": {"decision": "INELIGIBLE", "reason": "ACTIVE_LEASE", "canonical_digest": "74d02e3a3552068c227d210ff3f42cd15a898fdbd260f17220a374b1be5fed6d"},
+      "canonical_digest": "74d02e3a3552068c227d210ff3f42cd15a898fdbd260f17220a374b1be5fed6d"
+    },
+    {
+      "name": "active-pr",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": 0, "behind_count": 0, "open_pr_count": 1, "active_lease_count": 0},
+      "expected": {"decision": "INELIGIBLE", "reason": "ACTIVE_PR", "canonical_digest": "42d8314aa8ef831b300db17d5bd9d7eb065919ea343fe0d0eb1989de93ed007d"},
+      "canonical_digest": "42d8314aa8ef831b300db17d5bd9d7eb065919ea343fe0d0eb1989de93ed007d"
+    },
+    {
+      "name": "diverged-branch",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": 1, "behind_count": 1, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "INELIGIBLE", "reason": "DIVERGED_BRANCH", "canonical_digest": "6bbe38c73bb45dfe21d1a5dbb415e54de51a7152007d9e427a86bded6938a58e"},
+      "canonical_digest": "6bbe38c73bb45dfe21d1a5dbb415e54de51a7152007d9e427a86bded6938a58e"
+    },
+    {
+      "name": "stale-branch",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": 0, "behind_count": 1, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "INELIGIBLE", "reason": "STALE_BRANCH", "canonical_digest": "85b770fe21259864743122b6942dc029ae337f916824031d64f22b3954dfdc91"},
+      "canonical_digest": "85b770fe21259864743122b6942dc029ae337f916824031d64f22b3954dfdc91"
+    },
+    {
+      "name": "branch-ahead",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": 1, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "INELIGIBLE", "reason": "BRANCH_AHEAD", "canonical_digest": "f73b60e5868c7321ce90d5f576c96f78aa73ea0007b7d58709a6277fd0101431"},
+      "canonical_digest": "f73b60e5868c7321ce90d5f576c96f78aa73ea0007b7d58709a6277fd0101431"
+    },
+    {
+      "name": "clean-zero-zero",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": 0, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "ELIGIBLE", "reason": "CLEAN", "canonical_digest": "51c06b70d4ad057693716b34ebd64d0620cbfa3165af7d7084ee0fd31574ecec"},
+      "canonical_digest": "51c06b70d4ad057693716b34ebd64d0620cbfa3165af7d7084ee0fd31574ecec"
+    },
+    {
+      "name": "observed-91-ahead-1-behind",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": 91, "behind_count": 1, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "INELIGIBLE", "reason": "DIVERGED_BRANCH", "canonical_digest": "0953a836309d1d17fe0a320432dfb3266d5d401ca30081b30300679de25dbd1d"},
+      "canonical_digest": "0953a836309d1d17fe0a320432dfb3266d5d401ca30081b30300679de25dbd1d"
+    },
+    {
+      "name": "observed-55-ahead-30-behind",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["pkg/file.go"], "ahead_count": 55, "behind_count": 30, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "INELIGIBLE", "reason": "DIVERGED_BRANCH", "canonical_digest": "486cd375f48cbb1fc835a69d6fd0f77fdf5fe8082d17fb09d87540d77ef440fe"},
+      "canonical_digest": "486cd375f48cbb1fc835a69d6fd0f77fdf5fe8082d17fb09d87540d77ef440fe"
+    },
+    {
+      "name": "absolute-path-invalid",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["/pkg/file.go"], "ahead_count": 0, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "UNKNOWN", "reason": "MISSING_INPUT", "canonical_digest": "65ed806c7188a4cc0e6eb5cec9023c2453ea5a9a6dee038f538e9b55910af8de"},
+      "canonical_digest": "65ed806c7188a4cc0e6eb5cec9023c2453ea5a9a6dee038f538e9b55910af8de"
+    },
+    {
+      "name": "traversal-path-invalid",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": ["../pkg/file.go"], "ahead_count": 0, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "UNKNOWN", "reason": "MISSING_INPUT", "canonical_digest": "27a3cd54f19864d12867c3ec00466471a4d27ea8e0ff577c1d82649a13b70406"},
+      "canonical_digest": "27a3cd54f19864d12867c3ec00466471a4d27ea8e0ff577c1d82649a13b70406"
+    },
+    {
+      "name": "empty-path-invalid",
+      "input": {"schema": "gooo/lane-frontier/v1", "registry_digest": "registry", "base_sha": "base", "lane_head_sha": "head", "lane_stable_id": "lane", "registered_branch": "agent/fuzz-conformance", "owned_path_prefixes": ["pkg"], "changed_paths": [""], "ahead_count": 0, "behind_count": 0, "open_pr_count": 0, "active_lease_count": 0},
+      "expected": {"decision": "UNKNOWN", "reason": "MISSING_INPUT", "canonical_digest": "a828b1488b69d9d6046d70e04979ee6393b60dfeb3cecee1e1f5f106e04492ce"},
+      "canonical_digest": "a828b1488b69d9d6046d70e04979ee6393b60dfeb3cecee1e1f5f106e04492ce"
+    }
+  ]
+}

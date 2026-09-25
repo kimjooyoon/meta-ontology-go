@@ -1,0 +1,5 @@
+package billing
+namespace billing
+
+entity Order id "urn:gooo:billing:order"
+entity Receipt id "urn:gooo:billing:receipt"

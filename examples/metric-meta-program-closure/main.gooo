@@ -1,0 +1,15 @@
+package metricmetaprogramclosure
+namespace metricmetaprogramclosure
+
+entity ProgramArtifact id "gooo://metric-meta-program-closure/entity/program-artifact"
+entity ArtifactIdentity id "gooo://metric-meta-program-closure/entity/artifact-identity"
+entity ProgramFiles id "gooo://metric-meta-program-closure/entity/program-files"
+entity ProgramEvidence id "gooo://metric-meta-program-closure/entity/program-evidence"
+entity ClosureReceipt id "gooo://metric-meta-program-closure/entity/closure-receipt"
+entity ClosureVerification id "gooo://metric-meta-program-closure/entity/closure-verification"
+
+activity NormalizeArtifactIdentity(ProgramArtifact) -> ArtifactIdentity
+activity RecomputeProgramFiles(ArtifactIdentity) -> ProgramFiles
+activity BindProgramEvidence(ProgramFiles) -> ProgramEvidence
+activity CloseArtifactReceipt(ProgramEvidence) -> ClosureReceipt
+activity VerifyArtifactClosure(ClosureReceipt) -> ClosureVerification

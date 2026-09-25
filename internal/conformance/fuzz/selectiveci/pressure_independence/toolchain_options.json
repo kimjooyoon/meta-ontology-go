@@ -1,0 +1,1 @@
+{"schema":"gooo/pressure-independence/fixture-toolchain-options/v1","fixture_id":"cycle-7-pressure-independence","input_schema":"gooo/pressure-independence/v1","toolchain_kind":"SYNTHETIC_FIXTURE","go_format":"gofmt","json_mode":"strict","set_normalization":"sorted"}

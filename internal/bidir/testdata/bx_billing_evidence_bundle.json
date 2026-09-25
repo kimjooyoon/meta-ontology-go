@@ -1,0 +1,123 @@
+{
+  "schema_version": "bidir-bx-evidence/v1",
+  "bundle_kind": "bx-observer-provenance",
+  "status": "bounded-contract-only",
+  "feature_green": false,
+  "source": {
+    "integration_base": "ddaf3732d8539f95311c061ef33971414f9dbbeb",
+    "parent_head": "a74ee2234b5fde1d6bec20ae043f9b65ee8b1dfa",
+    "fixture": "billing"
+  },
+  "base": {
+    "dsl": {"hash": "6ab01181c5d3848979efcc6325592c2194df666f5b32a16711386ddad6d99ca2", "count": 1},
+    "ir": {"hash": "4574981e05673c826c39ee4100b92ac5a1ee5be8163ab5e9fa9abd5d43100801", "count": 10},
+    "go": {"hash": "9bf3bcf059cf75f6cb9ce6100f6660fb8b84c337ff902126542b33225df926df", "count": 4},
+    "source_map": {"hash": "b795949fced311b7352fd74b601ae91d94c06ecb0b99a31804ebf3b6ac22e73c", "count": 1},
+    "evidence": {"hash": "9bf3bcf059cf75f6cb9ce6100f6660fb8b84c337ff902126542b33225df926df", "count": 4},
+    "provenance": {"hash": "b795949fced311b7352fd74b601ae91d94c06ecb0b99a31804ebf3b6ac22e73c", "count": 1}
+  },
+  "round_trip": {"get_put": true, "put_get": true, "semantic_equivalence": true},
+  "deltas": {
+    "accepted": {
+      "sequence_hash": "654caa3cc3218be48c826209dd225667fe5d88082194377b3826d5b48855be4d",
+      "order_hash": "2db95a5e0ad1530d2169ff5f29043eeb4c46aea19bb90006ae5df6a8bb9beb4b",
+      "port_order_hash": "9f3812bc77718a29e394792f1a4ef8f8e1e12105dccd34ac537420e2249d16c5",
+      "relation_order_hash": "2ff2b3f28ea1ba370fdcde11571240a2e19604039fae7e73cc55f131b49415e7",
+      "port_sequence": [
+        "input|billing://activity/audit-payment|0|billing://entity/payment|0:0,0,0,0,0,0;",
+        "output|billing://activity/audit-payment|0|billing://entity/audit|0:0,0,0,0,0,0;",
+        "input|billing://activity/pay-order|0|billing://entity/order|0:0,0,0,0,0,0;",
+        "output|billing://activity/pay-order|0|billing://entity/payment|0:0,0,0,0,0,0;"
+      ],
+      "relation_sequence": [
+        "gooo:invokes|billing://activity/pay-order|billing://activity/audit-payment|urn:gooo:relation:676f6f6f3a696e766f6b6573:62696c6c696e673a2f2f61637469766974792f7061792d6f72646572:62696c6c696e673a2f2f61637469766974792f61756469742d7061796d656e74|10:payment.go42,58,0,0,0,0;",
+        "prov:used|billing://activity/audit-payment|billing://entity/payment|urn:gooo:relation:70726f763a75736564:62696c6c696e673a2f2f61637469766974792f61756469742d7061796d656e74:62696c6c696e673a2f2f656e746974792f7061796d656e74|0:0,0,0,0,0,0;",
+        "prov:used|billing://activity/pay-order|billing://entity/order|urn:gooo:relation:70726f763a75736564:62696c6c696e673a2f2f61637469766974792f7061792d6f72646572:62696c6c696e673a2f2f656e746974792f6f72646572|0:0,0,0,0,0,0;",
+        "prov:wasGeneratedBy|billing://entity/audit|billing://activity/audit-payment|urn:gooo:relation:70726f763a77617347656e6572617465644279:62696c6c696e673a2f2f656e746974792f6175646974:62696c6c696e673a2f2f61637469766974792f61756469742d7061796d656e74|0:0,0,0,0,0,0;",
+        "prov:wasGeneratedBy|billing://entity/payment|billing://activity/pay-order|urn:gooo:relation:70726f763a77617347656e6572617465644279:62696c6c696e673a2f2f656e746974792f7061796d656e74:62696c6c696e673a2f2f61637469766974792f7061792d6f72646572|0:0,0,0,0,0,0;"
+      ],
+      "candidates": [],
+      "closure": {
+        "touched": ["billing://activity/audit-payment", "billing://activity/pay-order"],
+        "affected": ["billing://activity/audit-payment", "billing://activity/pay-order", "billing://entity/audit", "billing://entity/order", "billing://entity/payment"],
+        "members": ["billing://activity/audit-payment", "billing://activity/pay-order", "billing://entity/audit", "billing://entity/order", "billing://entity/payment"],
+        "hash": "2be250bc4251a5c72a5489f4e794d32df559d4f3ac030bb1340cd2de51c2af8c"
+      },
+      "evidence": {
+        "ids": ["urn:gooo:evidence:546dd5b3285b92624f2e2ecc9efd5fac3a8aa42a86d68453ed2a989125361adf"],
+        "fact_keys": ["2:billing://activity/pay-order:gooo:invokes:billing://activity/audit-payment"],
+        "spans": ["10:payment.go42,58,0,0,0,0;"],
+        "records": [{"evidence_id": "urn:gooo:evidence:546dd5b3285b92624f2e2ecc9efd5fac3a8aa42a86d68453ed2a989125361adf", "fact_key": "2:billing://activity/pay-order:gooo:invokes:billing://activity/audit-payment", "span": "10:payment.go42,58,0,0,0,0;", "has_span": true}],
+        "id_count": 1,
+        "span_count": 1,
+        "hash": "d335b2be119fd38eab19b2afdf1eadd8ab06c5c907f3341e659e724888b58911",
+        "evidence_id_authority": "derived-non-authoritative"
+      },
+      "partial_observation": false
+    },
+    "partial": {
+      "sequence_hash": "5aa9cecc9bc513734da8a70b8bcbc5e0655dc92453a817e4fa146d49d7e048a8",
+      "order_hash": "6d2ea6b544c4a43e67a9f924c6c0b0cef6a023ce8cd76d354b3ff66a8e653eb5",
+      "port_order_hash": "9f3812bc77718a29e394792f1a4ef8f8e1e12105dccd34ac537420e2249d16c5",
+      "relation_order_hash": "6d72afd61bc137614b51af473aee7f6b43cb33fd86e6915f8543cf0a7ca731a7",
+      "port_sequence": [
+        "input|billing://activity/audit-payment|0|billing://entity/payment|0:0,0,0,0,0,0;",
+        "output|billing://activity/audit-payment|0|billing://entity/audit|0:0,0,0,0,0,0;",
+        "input|billing://activity/pay-order|0|billing://entity/order|0:0,0,0,0,0,0;",
+        "output|billing://activity/pay-order|0|billing://entity/payment|0:0,0,0,0,0,0;"
+      ],
+      "relation_sequence": [
+        "prov:used|billing://activity/audit-payment|billing://entity/payment|urn:gooo:relation:70726f763a75736564:62696c6c696e673a2f2f61637469766974792f61756469742d7061796d656e74:62696c6c696e673a2f2f656e746974792f7061796d656e74|0:0,0,0,0,0,0;",
+        "prov:used|billing://activity/pay-order|billing://entity/order|urn:gooo:relation:70726f763a75736564:62696c6c696e673a2f2f61637469766974792f7061792d6f72646572:62696c6c696e673a2f2f656e746974792f6f72646572|0:0,0,0,0,0,0;",
+        "prov:wasGeneratedBy|billing://entity/audit|billing://activity/audit-payment|urn:gooo:relation:70726f763a77617347656e6572617465644279:62696c6c696e673a2f2f656e746974792f6175646974:62696c6c696e673a2f2f61637469766974792f61756469742d7061796d656e74|0:0,0,0,0,0,0;",
+        "prov:wasGeneratedBy|billing://entity/payment|billing://activity/pay-order|urn:gooo:relation:70726f763a77617347656e6572617465644279:62696c6c696e673a2f2f656e746974792f7061796d656e74:62696c6c696e673a2f2f61637469766974792f7061792d6f72646572|0:0,0,0,0,0,0;"
+      ],
+      "candidates": [],
+      "closure": {"touched": [], "affected": [], "members": [], "hash": "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7"},
+      "evidence": {
+        "ids": ["urn:gooo:evidence:e1b0e88e866776c07d5893ac887973bcb421886af7fbf885c23afa78c46bd4f8"],
+        "fact_keys": ["2:billing://activity/pay-order:gooo:invokes:billing://activity/audit-payment"],
+        "spans": [],
+        "records": [{"evidence_id": "urn:gooo:evidence:e1b0e88e866776c07d5893ac887973bcb421886af7fbf885c23afa78c46bd4f8", "fact_key": "2:billing://activity/pay-order:gooo:invokes:billing://activity/audit-payment", "span": "0:0,0,0,0,0,0;", "has_span": false}],
+        "id_count": 1,
+        "span_count": 0,
+        "hash": "c1d6a2ceafe8d58eafd94c47491978b3d06c5347a8ff13cd554ab13176bcc6ea",
+        "evidence_id_authority": "derived-non-authoritative"
+      },
+      "partial_observation": true
+    }
+  },
+  "transactions": {
+    "accepted": {
+      "observer": "accepted-fixture",
+      "observed": true,
+      "atomic": true,
+      "no_write": false,
+      "deferred": false,
+      "before": {"semantic": "4574981e05673c826c39ee4100b92ac5a1ee5be8163ab5e9fa9abd5d43100801", "source": "6ab01181c5d3848979efcc6325592c2194df666f5b32a16711386ddad6d99ca2", "region": "2be250bc4251a5c72a5489f4e794d32df559d4f3ac030bb1340cd2de51c2af8c", "slot": "94b587ee4a9e6095505c2b0e2fbb6a76fef38ac8da9b86a77a3f4e434d911f43", "bytes": "6ab01181c5d3848979efcc6325592c2194df666f5b32a16711386ddad6d99ca2", "lstat": "146a199102ee5cdace078b73e36532ae84d5029c84ba2cd72db6ab36558e9a8a8"},
+      "after": {"semantic": "f4c3e73dc330b71e3b73ba3f491823a985225962e6357ae8a28baf4164138740", "source": "1f7f4579029350462f8b0b24c4c230754f08c7e9f43e42f27ddcaeb570ff333f", "region": "2be250bc4251a5c72a5489f4e794d32df559d4f3ac030bb1340cd2de51c2af8c", "slot": "4c6c3f829dbfc6847a0e0ad5bb8817bb8aba9273109fdc47d761ceedfd9db281", "bytes": "1f7f4579029350462f8b0b24c4c230754f08c7e9f43e42f27ddcaeb570ff333f", "lstat": "1195e781034e17c0df307c5e8e9d70bf8acc8a9774b11d8e1a7563e8b73b9d80"}
+    },
+    "rejected": {
+      "observer": "memory-source",
+      "observed": true,
+      "atomic": true,
+      "no_write": true,
+      "deferred": false,
+      "before": {"semantic": "4574981e05673c826c39ee4100b92ac5a1ee5be8163ab5e9fa9abd5d43100801", "source": "6ab01181c5d3848979efcc6325592c2194df666f5b32a16711386ddad6d99ca2", "region": "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7", "slot": "94b587ee4a9e6095505c2b0e2fbb6a76fef38ac8da9b86a77a3f4e434d911f43", "bytes": "6ab01181c5d3848979efcc6325592c2194df666f5b32a16711386ddad6d99ca2", "lstat": "146a199102ee5cdace078b73e36532ae84d5029c84ba2cd72db6ab36558e9a8a"},
+      "after": {"semantic": "4574981e05673c826c39ee4100b92ac5a1ee5be8163ab5e9fa9abd5d43100801", "source": "6ab01181c5d3848979efcc6325592c2194df666f5b32a16711386ddad6d99ca2", "region": "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7", "slot": "94b587ee4a9e6095505c2b0e2fbb6a76fef38ac8da9b86a77a3f4e434d911f43", "bytes": "6ab01181c5d3848979efcc6325592c2194df666f5b32a16711386ddad6d99ca2", "lstat": "146a199102ee5cdace078b73e36532ae84d5029c84ba2cd72db6ab36558e9a8a"}
+    }
+  },
+  "policy": {
+    "partial_no_delete": true,
+    "candidate_promotion": false,
+    "authoritative_evidence_ids": "deferred",
+    "provenance_mapping": "deferred",
+    "deferred": [
+      "generic gooo:invokes lifting",
+      "PROV-O adapter mapping policy",
+      "Go-lift/CLI delta atomicity",
+      "rejected transaction filesystem/inode observer",
+      "three-way merge"
+    ]
+  }
+}

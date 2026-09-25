@@ -1,0 +1,163 @@
+{
+  "schema": "gooo/candidate-leakage-eligibility/v1",
+  "subject_sha": "308233198b91a47bdfc34016f73e44905e2be582",
+  "evidence_subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+  "decision": "ELIGIBLE",
+  "resolution": "EXACT",
+  "enforcement_effect": "NO_EFFECT",
+  "reason": "CANDIDATE_LEAKAGE_PROMOTION_ELIGIBLE",
+  "denominator_id": "gooo/candidate-leakage-eligibility-denominator/v1",
+  "denominator_digest": "sha256:2f00ef23c7699ca97e77496456a1bbe7937a293d3ab1821733356d36a5e06cbb",
+  "artifacts": [
+    {
+      "name": "language-assurance",
+      "artifact_id": 9508504894,
+      "artifact_digest": "sha256:362d11847f9b10e781a78e990feb650d147935c386851d5d4078c617288af760",
+      "capsule_digest": "sha256:449e4386e921ae33bff97cca4e562527f2ccf33f53d042d43ebe388911fe5cc4",
+      "observed_digest": "sha256:449e4386e921ae33bff97cca4e562527f2ccf33f53d042d43ebe388911fe5cc4",
+      "exact": true
+    },
+    {
+      "name": "candidate-leakage-shadow",
+      "artifact_id": 9508504114,
+      "artifact_digest": "sha256:67d1c38717b4d38c07482ea9fcba45ce0ca9cb3e8a3bf6f4ff4f2e9df5100857",
+      "capsule_digest": "sha256:dc7dbed9a3b89e301c5ed210afd6de23045e7e73f2177f88a2857f362ebbbf70",
+      "observed_digest": "sha256:dc7dbed9a3b89e301c5ed210afd6de23045e7e73f2177f88a2857f362ebbbf70",
+      "exact": true
+    }
+  ],
+  "transition": {
+    "metric_id": "gooo.metric.semantic.candidate-leakage.v1",
+    "meta_operation": "detect-candidate-leakage",
+    "from_status": "NOT_IMPLEMENTED",
+    "from_resolution": "NONE",
+    "eligible_status": "OPERATING",
+    "eligible_resolution": "EXACT"
+  },
+  "summary": {
+    "denominator_total": 12,
+    "before_operating": 7,
+    "after_operating": 8,
+    "before_coverage_bps": 5833,
+    "after_coverage_bps": 6666,
+    "capsules_total": 2,
+    "capsules_exact": 2,
+    "capsule_coverage_bps": 10000,
+    "shadow_cases_total": 6,
+    "shadow_cases_passed": 6,
+    "eligible_paths": 1,
+    "unknown_paths": 0,
+    "blocked_paths": 0
+  },
+  "indicators": [
+    {
+      "metric_id": "gooo.metric.semantic.candidate-leakage-eligibility-bps.v1",
+      "class": "OUTCOME",
+      "proof_choice": "COHERENCE",
+      "producer": "candidateleakageeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "evaluate-candidate-leakage-eligibility",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.candidate-assurance-binding-bps.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "candidateleakageeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "bind-candidate-eligibility-baseline",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.candidate-shadow-binding-bps.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "candidateleakageeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "consume-merged-candidate-shadow",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.epistemic.candidate-eligibility-unknown.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "producer": "candidateleakageeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "preserve-eligibility-unknown",
+      "unit": "paths",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.effects.candidate-eligibility-writes.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "producer": "candidateleakageeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "preserve-eligibility-read-only",
+      "unit": "writes",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.semantic.candidate-eligibility-applied.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "COHERENCE",
+      "producer": "candidateleakageeligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "deny-eligibility-side-effects",
+      "unit": "transitions",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    }
+  ],
+  "meta_operations": [
+    {
+      "id": "consume-merged-candidate-shadow",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "bind-candidate-eligibility-baseline",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "evaluate-candidate-leakage-eligibility",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "preserve-eligibility-unknown",
+      "proof_choice": "REGRESSION"
+    },
+    {
+      "id": "deny-eligibility-side-effects",
+      "proof_choice": "COHERENCE"
+    }
+  ],
+  "repository_writes": 0,
+  "promotion_applied": 0,
+  "report_digest": "sha256:4e9697727a34dae856a77d2b349a0992b1bea888be0cde7db2bcca8b73ddefc9"
+}

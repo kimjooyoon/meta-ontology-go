@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/changed-surface-receipt-usecases/v1",
+  "upstream_contract": "internal/detection/coupling.Evaluate",
+  "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+  "meta_operation": "totalize-changed-surface-receipts",
+  "cases_total": 6,
+  "repository_writes": 0
+}

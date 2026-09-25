@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/language-test-experiment-contract/v1",
+  "id": "gooo-language-test-v1",
+  "expected_receipts": 2,
+  "expected_declared_tests": 2,
+  "expected_executed_tests": 2,
+  "expected_passed_tests": 2,
+  "expected_source_coherence": 2,
+  "expected_receipt_digest_variants": 1,
+  "expected_execution_digest_variants": 1,
+  "expected_go127_runtimes": 2,
+  "expected_assertion_rejections": 1,
+  "expected_missing_test_rejections": 1,
+  "expected_non_claims": 3,
+  "expected_repository_writes": 0,
+  "expected_mutation_authority": false
+}

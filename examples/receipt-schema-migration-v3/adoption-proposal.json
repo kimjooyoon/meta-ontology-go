@@ -1,0 +1,367 @@
+{
+  "schema": "gooo/receipt-schema-migration/adoption-proposal/v3",
+  "proposal_id": "receipt-schema-migration-v3-adoption",
+  "migration_version": "v3",
+  "target_repository": "github.com/kimjooyoon/meta-ontology-go",
+  "repository_writes": 0,
+  "local_test_executions": 0,
+  "cross_project_required_gates": 0,
+  "old_schema_ownership": [
+    {
+      "schema_version": "v2",
+      "owner": "immutable parent",
+      "owns": [
+        "schema",
+        "schema_version",
+        "receipt_id",
+        "kind",
+        "denominator_id",
+        "denominator_cell_count",
+        "denominator_stage_counts",
+        "denominator_role_counts",
+        "immutable",
+        "created_by",
+        "digest"
+      ],
+      "must_not_own": [
+        "outcome",
+        "parent_outcome",
+        "cause_code",
+        "causal_chain",
+        "next_operation",
+        "attestation"
+      ]
+    }
+  ],
+  "new_schema_ownership": [
+    {
+      "schema_version": "v3",
+      "owner": "append-only correction child",
+      "owns": [
+        "schema",
+        "schema_version",
+        "receipt_id",
+        "parent_receipt_id",
+        "parent_digest",
+        "parent_outcome",
+        "outcome",
+        "cause_code",
+        "causal_chain",
+        "next_operation",
+        "denominator_id",
+        "denominator_cell_count",
+        "denominator_stage_counts",
+        "denominator_role_counts",
+        "attestation",
+        "child_ordinal",
+        "digest"
+      ],
+      "must_not_own": [
+        "rewrite_parent"
+      ]
+    }
+  ],
+  "exact_required_semantic_changes": [
+    "Keep every consumed gooo/receipt/parent/v2 REGRESSION_REPAIR byte sequence and digest unchanged.",
+    "Do not add outcome or causal fields to the v2 parent adapter or v2 parent validator requirements.",
+    "Add gooo/receipt/child/v3 as an append-only child edge keyed by parent_receipt_id and exact parent_digest.",
+    "Make the v3 child own parent_outcome=REFUTED_INCOMPLETE_PROPAGATION, outcome, cause_code, causal_chain, and next_operation.",
+    "Reject a child write to an existing parent and enforce parent child cardinality one.",
+    "Resolve REFUTED before UNKNOWN before CLOSED and preserve the six-field UNKNOWN frontier.",
+    "Require the unchanged twelve-cell denominator with Foundation, Coherence, Regression and Driver, Outcome, Guardrail counts of 4/4/4.",
+    "Preserve every v0.1.0 through v0.2.2 release artifact, tag, digest, and immutable-release state; v0.1.0 remains preserved as the historical REFUTED release.",
+    "Preserve the v2 sixteen-cell denominator and publish v3 as exactly twenty cells with ADD=4, RETIRE=0, SPLIT=0.",
+    "Pin the actual dev base e440cbc99f24ceb8385f1b89c70f8cdada10cdbb, PR 609 head 8b47db349315c02933296423b0ae7fa80ffeb1dc, merge base, changed tuples, Foundation blobs, and kernel tree digests.",
+    "Evaluate protected-path authorization, Foundation receipt, changed-path tuple binding, and fail-closed precedence through the actual Guardian workflow extracted from the pinned base blob.",
+    "Require the exact observed live run 33359548617/job 99388126433 artifact and preserve its FAIL_CLOSED/CI-ROOT-OF-TRUST-001 evidence when live authorization is absent."
+  ],
+  "expected_protected_paths": [
+    ".github/ci-governance.json",
+    ".github/agent-scope-table.md",
+    ".github/branch-policy.md",
+    ".github/conformance-plan.md",
+    ".github/foundation-authorization.json",
+    "go.mod",
+    "go.sum"
+  ],
+  "acceptance_cases": [
+    {
+      "id": "NORMAL_V2_PARENT_V3_CHILD",
+      "expected_state": "ACCEPTED",
+      "invariant": "v2 parent without outcome plus v3 child with parent_outcome REFUTED_INCOMPLETE_PROPAGATION validates"
+    },
+    {
+      "id": "NORMAL_REPLAY_DETERMINISTIC",
+      "expected_state": "ACCEPTED",
+      "invariant": "replaying identical source and contract emits identical receipt bytes and digests"
+    },
+    {
+      "id": "UNKNOWN_PARENT_DIGEST_MISSING",
+      "expected_state": "UNKNOWN",
+      "invariant": "missing parent digest remains UNKNOWN with the six required fields"
+    },
+    {
+      "id": "UNKNOWN_CHILD_DIGEST_STALE",
+      "expected_state": "UNKNOWN",
+      "invariant": "stale child digest remains UNKNOWN with the six required fields"
+    },
+    {
+      "id": "UNKNOWN_UNSUPPORTED_FUTURE_SCHEMA",
+      "expected_state": "UNKNOWN",
+      "invariant": "unsupported future schema remains UNKNOWN with the six required fields"
+    },
+    {
+      "id": "REFUTED_CHILD_REWRITES_PARENT",
+      "expected_state": "REFUTED",
+      "invariant": "contradiction resolves REFUTED before any UNKNOWN evidence gap"
+    },
+    {
+      "id": "REFUTED_FUTURE_FIELD_IN_OLD_SCHEMA",
+      "expected_state": "REFUTED",
+      "invariant": "contradiction resolves REFUTED before any UNKNOWN evidence gap"
+    },
+    {
+      "id": "REFUTED_PARENT_DIGEST_MISMATCH",
+      "expected_state": "REFUTED",
+      "invariant": "contradiction resolves REFUTED before any UNKNOWN evidence gap"
+    },
+    {
+      "id": "REFUTED_SECOND_CHILD_CARDINALITY_ONE",
+      "expected_state": "REFUTED",
+      "invariant": "contradiction resolves REFUTED before any UNKNOWN evidence gap"
+    },
+    {
+      "id": "REFUTED_SELF_ATTESTATION",
+      "expected_state": "REFUTED",
+      "invariant": "contradiction resolves REFUTED before any UNKNOWN evidence gap"
+    },
+    {
+      "id": "REFUTED_DENOMINATOR_DOWNGRADE",
+      "expected_state": "REFUTED",
+      "invariant": "contradiction resolves REFUTED before any UNKNOWN evidence gap"
+    },
+    {
+      "id": "REFUTED_UNKNOWN_PROMOTED_FIXED_POINT",
+      "expected_state": "REFUTED",
+      "invariant": "contradiction resolves REFUTED before any UNKNOWN evidence gap"
+    }
+  ],
+  "rollback_conditions": [
+    "Rollback the adoption proposal if any v2 parent digest or byte sequence changes.",
+    "Rollback if v3 child validation makes an old v2 parent outcome field mandatory.",
+    "Rollback if the fixed twelve-cell denominator or any 4/4/4 axis count changes.",
+    "Rollback if required CI checks are absent or if the external release digest cannot be verified.",
+    "Rollback if any v0.1.0 through v0.2.2 immutable release, tag target, artifact digest, or release decision is overwritten.",
+    "Rollback if the pinned #609 tuple count/digest, protected intersection count/digest, Foundation blob SHA, or kernel tree digest differs.",
+    "Rollback if authorization or Foundation receipt evaluation occurs after PASS classification, or if missing/stale/malformed/replayed evidence can close.",
+    "Rollback if PASS kernel before/after digests are null or mismatch the e440/8b47 fixture, or if the live failure code is not retained."
+  ],
+  "refutation_conditions": [
+    "REFUTED on any immutable parent write or child rewrite attempt.",
+    "REFUTED on a future field in the old v2 schema, parent digest mismatch, or second child under cardinality one.",
+    "REFUTED on self-attestation, denominator downgrade, or UNKNOWN promoted to FIXED_POINT.",
+    "UNKNOWN, never CLOSED, for missing parent digest, stale child digest, or unsupported future schema.",
+    "REFUTED on any exact tuple mismatch, extra protected path, absent protected-path authorization, stale or malformed Foundation receipt, exhausted cardinality, or replay.",
+    "REFUTED on null or mismatched kernel digest attestation; UNKNOWN remains available only when the six-field evidence tuple is genuinely unavailable."
+  ],
+  "migration": {
+    "from_version": "v2",
+    "to_version": "v3",
+    "added": 4,
+    "retired": 0,
+    "split": 0,
+    "added_cell_ids": [
+      "PROTECTED_PATH_AUTHORIZATION_DISPATCH",
+      "FOUNDATION_RECEIPT_EVALUATION",
+      "CHANGED_PATH_TUPLE_BINDING",
+      "UNAUTHORIZED_PROTECTED_PATH_FAIL_CLOSED"
+    ],
+    "stage_counts_before": {
+      "COHERENCE": 5,
+      "FOUNDATION": 6,
+      "REGRESSION": 5
+    },
+    "stage_counts_after": {
+      "COHERENCE": 6,
+      "FOUNDATION": 8,
+      "REGRESSION": 6
+    },
+    "stage_delta": {
+      "COHERENCE": 1,
+      "FOUNDATION": 2,
+      "REGRESSION": 1
+    },
+    "role_counts_before": {
+      "DRIVER": 5,
+      "GUARDRAIL": 6,
+      "OUTCOME": 5
+    },
+    "role_counts_after": {
+      "DRIVER": 6,
+      "GUARDRAIL": 8,
+      "OUTCOME": 6
+    },
+    "role_delta": {
+      "DRIVER": 1,
+      "GUARDRAIL": 2,
+      "OUTCOME": 1
+    }
+  },
+  "guardian_fixture_v3": {
+    "repository": "kimjooyoon/meta-ontology-go",
+    "ref": "dev",
+    "base_commit": "e440cbc99f24ceb8385f1b89c70f8cdada10cdbb",
+    "head_commit": "8b47db349315c02933296423b0ae7fa80ffeb1dc",
+    "merge_base": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc",
+    "manifest_path": "fixtures/guardian-v3-pr609.json",
+    "changed_files_count": 92,
+    "changed_paths_sha256": "sha256:7d50d27859d8e755edcce625c2cef34c5902528b19a3a4ebf73bd59dac296cac",
+    "protected_intersection_count": 26,
+    "protected_intersection_sha256": "sha256:204b3569310bffb0d3a6fafaddfec5930e99309281badd768b2c52dfbc07f3bf",
+    "kernel_before_tree_sha": "169fe96d8e1e9b50702b0f2fb2d2cf2e83d467e6",
+    "kernel_after_tree_sha": "d8e8f5b9064c8ef7d14daf9f96c8c1df9156e0a6",
+    "kernel_before_entry_count": 321,
+    "kernel_after_entry_count": 327,
+    "kernel_before_sha256": "sha256:e3b0cd0fd2d95a0113b9a6755ebe318e856225630106fa00ccf24572fdfb69f6",
+    "kernel_after_sha256": "sha256:b1e865e5c2f48735dc693b94807b8a8439819985353503ccffceecedac88d582",
+    "guardian_run_id": 33359548617,
+    "guardian_job_id": 99388126433,
+    "artifact_id": 9746232159,
+    "artifact_name": "ci-guardian-33359548617-1",
+    "artifact_size_bytes": 2144,
+    "artifact_sha256": "sha256:41ae5d2398a001b16ecd72dba937924897234dd748fdcb5374caee7e70f026a8"
+  },
+  "release_lineage": [
+    {
+      "version": "v0.1.0",
+      "preserved": true,
+      "immutable": false,
+      "decision": "REFUTED"
+    },
+    {
+      "version": "v0.1.1",
+      "preserved": true,
+      "immutable": true,
+      "decision": "CLOSED"
+    },
+    {
+      "version": "v0.2.0",
+      "preserved": true,
+      "immutable": true,
+      "decision": "CLOSED"
+    },
+    {
+      "version": "v0.2.1",
+      "preserved": true,
+      "immutable": true,
+      "decision": "CLOSED"
+    },
+    {
+      "version": "v0.2.2",
+      "preserved": true,
+      "immutable": true,
+      "decision": "CLOSED"
+    }
+  ],
+  "variable_lifetime_ownership": [
+    "Keep the base-controlled workflow, live candidate changed-file tuples, Foundation authorization, and Foundation receipt as separate input lifetimes.",
+    "Dispatch protected-path authorization before any kernel digest or PASS classification; a missing, stale, malformed, exhausted, or replayed authorization is REFUTED.",
+    "Bind the exact 92 changed-file tuples and exact 26-path protected intersection to the pinned PR 609 fixture before Foundation receipt evaluation.",
+    "A PASS authorization must carry non-null kernel before/after digests computed from the exact e440 base and 8b47 head tree input digests."
+  ],
+  "harness_acceptance_cases": [
+    {
+      "id": "GUARDIAN_PROTECTED26_VALID_FOUNDATION_AUTH_CLOSED",
+      "expected_state": "CLOSED",
+      "invariant": "the actual base workflow reaches authorization and digest evaluation and closes only with exact valid Foundation evidence"
+    },
+    {
+      "id": "GUARDIAN_MISSING_FOUNDATION_AUTH_REFUTED",
+      "expected_state": "REFUTED",
+      "invariant": "all 26 protected paths fail closed before authorization can be skipped"
+    },
+    {
+      "id": "GUARDIAN_CHANGED_PATH_TUPLE_MISMATCH_REFUTED",
+      "expected_state": "REFUTED",
+      "invariant": "the candidate changed-file tuple digest must equal the pinned PR tuple digest"
+    },
+    {
+      "id": "GUARDIAN_EXTRA_PROTECTED_PATH_REFUTED",
+      "expected_state": "REFUTED",
+      "invariant": "the protected intersection is exact and rejects an extra protected path"
+    },
+    {
+      "id": "GUARDIAN_STALE_FOUNDATION_AUTH_REFUTED",
+      "expected_state": "REFUTED",
+      "invariant": "stale candidate identity or base evidence cannot authorize the feature"
+    },
+    {
+      "id": "GUARDIAN_MALFORMED_FOUNDATION_AUTH_REFUTED",
+      "expected_state": "REFUTED",
+      "invariant": "malformed Foundation authorization cannot close"
+    },
+    {
+      "id": "GUARDIAN_UNPROTECTED_FEATURE_CLOSED",
+      "expected_state": "CLOSED",
+      "invariant": "an unprotected feature path closes without a Foundation authorization receipt"
+    },
+    {
+      "id": "GUARDIAN_PASS_NULL_DIGEST_REFUTED",
+      "expected_state": "REFUTED",
+      "invariant": "a PASS result with null kernel digests is refuted"
+    },
+    {
+      "id": "GUARDIAN_PASS_DIGEST_MISMATCH_REFUTED",
+      "expected_state": "REFUTED",
+      "invariant": "a PASS result with mismatched kernel digests is refuted"
+    },
+    {
+      "id": "GUARDIAN_FOUNDATION_CARDINALITY_EXHAUSTED_REFUTED",
+      "expected_state": "REFUTED",
+      "invariant": "a consumed Foundation authorization receipt cannot be reused"
+    },
+    {
+      "id": "GUARDIAN_FOUNDATION_REPLAY_REFUTED",
+      "expected_state": "REFUTED",
+      "invariant": "a replayed Foundation authorization is refuted before closure"
+    }
+  ],
+  "guardian_harness_artifact": {
+    "path": "guardian-harness-report.json",
+    "digest": "sha256:6e4b391093bcfeea6c80d37eaf2fd3767e02167f02a92dac2719cd625b709250",
+    "size_bytes": 29853
+  },
+  "development_provenance": {
+    "schema": "gooo/receipt-schema-migration/development-provenance/v1",
+    "event_id": "development-provenance-20260831-guardian-v3-001",
+    "development_local_go_commands": {
+      "build": 0,
+      "gofmt": 0,
+      "test": 0,
+      "vet": 0
+    },
+    "development_local_vm_harness_executions": 1,
+    "class": "NODE_VM_GUARDIAN_HARNESS",
+    "purpose": "DEBUG_AUTH_MERGE_VS_BASE_COMMIT_MOCK",
+    "policy_state": "RECORDED_DEVELOPMENT_POLICY_DEVIATION",
+    "event_mutation_policy": "APPEND_ONLY_NO_RESET_DELETE_REWRITE",
+    "development_policy_deviation_count": 1,
+    "product_runtime_authority": {
+      "repository_writes": 0,
+      "local_test_executions": 0,
+      "cross_project_required_gates": 0,
+      "product_generation_authorized": false,
+      "root_readme_policy": "EXCLUDED_FROM_REPOSITORY_INVENTORY"
+    },
+    "remaining_validation_policy": "GITHUB_ACTIONS_ONLY_AFTER_THIS_RECORD",
+    "failed_packaging_attempts": 1,
+    "failed_packaging_reason": "ARCHIVE_RECURSIVE_SELF_INCLUSION_AND_WRONG_TEMP_PATH",
+    "release_asset_used": false,
+    "final_archive_source": "POST_MAIN_ACTIONS_ARTIFACT_ONLY",
+    "final_size_bytes": 35456,
+    "final_sha256": "sha256:ca7c03961c74f10d16d6369e6900b7bc681bfd1cbb04523156d3f372bf2eb39a",
+    "reset_delete_rewrite": false,
+    "provenance_digest": "sha256:3cea44788cd1f952678e18ba948706289a50872781c6d95bd3a8f299d6c72675"
+  },
+  "proposal_digest": "sha256:42ae271ea27226bbbf0086ec1fed230e51787b8f44dc68468eafa5607c5a6c7e"
+}

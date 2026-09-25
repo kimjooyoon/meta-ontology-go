@@ -1,0 +1,1 @@
+{"schema":"gooo/ci-plan-input/v1","case_id":"pass-combined","files":["internal/metainvocation/model.go","docs/language/ci-plan.md",".github/workflows/ci.yml"]}

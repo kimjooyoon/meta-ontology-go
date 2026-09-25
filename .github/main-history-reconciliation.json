@@ -1,0 +1,65 @@
+{
+  "schema": "gooo/main-history-reconciliation/v1",
+  "version": 1,
+  "candidate_merge_sha": "6a95e73a391a114d8a22cdc23251e8a7623d7768",
+  "candidate_first_parent_sha": "3b1647c7aa14558d07f868d649071a2c36e6cc88",
+  "candidate_second_parent_sha": "c557daf1fd6748b2e61afca10fb632792683061f",
+  "dev_sha": "3b1647c7aa14558d07f868d649071a2c36e6cc88",
+  "main_sha": "c557daf1fd6748b2e61afca10fb632792683061f",
+  "merge_base_sha": "0e838bff165dc73ed984ecbdca338d957b8abfa9",
+  "main_only_commits": [
+    {
+      "sha": "a798c8be290fd7f96662edca173cd93cfe270482",
+      "message": "chore: require Go 1.26.6",
+      "resulting_go_mod": {
+        "path": "go.mod",
+        "blob_sha": "f5d57a1b2e3c869aab3427dd11519f81fbcf31f8",
+        "size": 57,
+        "sha256": "609503ca851a755543781fc951f391aff8d2c120aba175d862b1b7aeef14e236",
+        "go_directive": "go 1.26.6"
+      },
+      "transition": "TRANSIENT_GO_1_26_6_BUMP"
+    },
+    {
+      "sha": "c557daf1fd6748b2e61afca10fb632792683061f",
+      "message": "chore: use Go 1.26.5 toolchain",
+      "resulting_go_mod": {
+        "path": "go.mod",
+        "blob_sha": "0eaaa03f3d837fafab8ba1959b70adca21deeacd",
+        "size": 57,
+        "sha256": "a2b49728e00943685ad402def409ffee32e15329a120b831ed58521616bed84b",
+        "go_directive": "go 1.26.5"
+      },
+      "transition": "FINAL_GO_1_26_5_TIP_EQUIVALENT_TO_DEV"
+    }
+  ],
+  "main_only_paths": [
+    "go.mod"
+  ],
+  "merge_base_blob": {
+    "path": "go.mod",
+    "blob_sha": "9b16c0cd3711c2444ebff1a28ad193c31f06be22",
+    "size": 55,
+    "sha256": "af4562214f5d56647f7b953c1a74587286bfb1f97c31d3bd8403eda047186323",
+    "go_directive": "go 1.23"
+  },
+  "blob_equivalence": {
+    "path": "go.mod",
+    "dev_blob_sha": "0eaaa03f3d837fafab8ba1959b70adca21deeacd",
+    "dev_size": 57,
+    "main_blob_sha": "0eaaa03f3d837fafab8ba1959b70adca21deeacd",
+    "main_size": 57,
+    "dev_sha256": "a2b49728e00943685ad402def409ffee32e15329a120b831ed58521616bed84b",
+    "main_sha256": "a2b49728e00943685ad402def409ffee32e15329a120b831ed58521616bed84b",
+    "dev_go_directive": "go 1.26.5",
+    "main_go_directive": "go 1.26.5"
+  },
+  "equivalence_basis": "FINAL_MAIN_TIP_VS_DEV_TIP_TREE_EQUIVALENCE_ONLY",
+  "disposition": "TREE_EQUIVALENT_ALREADY_IN_DEV",
+  "unincorporated_material": false,
+  "target_invariant": {
+    "main_is_ancestor_of_candidate": true,
+    "future_main_promotion": "exact_ci_backed_fast_forward_plus_main_dev_equality"
+  },
+  "canonical_digest": "sha256:8ff94de7736446042f870d4e2c2486c590448e1b7a37384136604814d5e5a477"
+}

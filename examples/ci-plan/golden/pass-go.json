@@ -1,0 +1,1 @@
+{"schema":"gooo/ci-plan-golden/v1","case_id":"pass-go","checks":[{"id":"go-test","command":"go test ./...","files":["internal/metainvocation/model.go"],"reasons":[{"operation":"ci.rule:go:v1","file":"internal/metainvocation/model.go","source_path":"examples/ci-plan/main.gooo","source_line":8}]}]}

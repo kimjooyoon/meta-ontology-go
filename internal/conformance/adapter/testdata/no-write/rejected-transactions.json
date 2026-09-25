@@ -1,0 +1,5 @@
+[
+  {"name":"cancelled-transaction","reason":"cancelled","preserves_state":true},
+  {"name":"closed-transaction","reason":"closed","preserves_state":true},
+  {"name":"invalid-close-rejection","reason":"invalid","preserves_state":true}
+]
