@@ -19,15 +19,16 @@ func TestRefreshObservationPart01TracksExactCacheReuse(t *testing.T) {
 	if _, _, err := server.didOpen(context.Background(), requestEnvelope{Params: params}); err != nil {
 		t.Fatal(err)
 	}
-	if err := server.refresh(context.Background(), uri); err != nil {
+	observation, err := server.ObserveRefreshPart01(context.Background(), uri)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := server.refresh(context.Background(), uri); err != nil {
-		t.Fatal(err)
+	if observation.ParseCalls != 1 || observation.CacheHits != 0 {
+		t.Fatalf("unexpected first refresh counts: %#v", observation)
 	}
-	observation, ok := server.RefreshObservationPart01(uri)
-	if !ok {
-		t.Fatal("refresh observation missing")
+	observation, err = server.ObserveRefreshPart01(context.Background(), uri)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if !observation.ValidPart01() || observation.Decision != refreshObservationPassPart01 {
 		t.Fatalf("invalid refresh observation: %#v", observation)
@@ -48,12 +49,9 @@ func TestRefreshObservationPart01KeepsUnknownFrontier(t *testing.T) {
 	if _, _, err := server.didOpen(context.Background(), requestEnvelope{Params: params}); err != nil {
 		t.Fatal(err)
 	}
-	if err := server.refresh(context.Background(), uri); err != nil {
+	observation, err := server.ObserveRefreshPart01(context.Background(), uri)
+	if err != nil {
 		t.Fatal(err)
-	}
-	observation, ok := server.RefreshObservationPart01(uri)
-	if !ok {
-		t.Fatal("refresh observation missing")
 	}
 	if observation.Decision != refreshObservationUnknownPart01 || observation.MissingStageIndex != 1 || observation.Reason != "MISSING_SEMANTIC_DIGEST" {
 		t.Fatalf("unexpected unknown frontier: %#v", observation)

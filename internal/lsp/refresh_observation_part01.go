@@ -1,6 +1,10 @@
 package lsp
 
-import "strings"
+import (
+	"context"
+	"errors"
+	"strings"
+)
 
 const (
 	refreshObservationSchemaPart01  = "gooo/lsp-refresh-observation/v1"
@@ -25,6 +29,49 @@ type RefreshObservationPart01 struct {
 	CacheHits         int    `json:"cache_hits"`
 	StaleResultCount  int    `json:"stale_result_count"`
 	MissingStageIndex int    `json:"missing_stage_index"`
+}
+
+// ObserveRefreshPart01 exposes an explicit observation boundary without
+// changing the existing LSP refresh path. The returned receipt is evidence
+// only; it never authorizes reuse or promotion.
+func (server *Server) ObserveRefreshPart01(ctx context.Context, uri string) (RefreshObservationPart01, error) {
+	if err := ctx.Err(); err != nil {
+		return RefreshObservationPart01{}, err
+	}
+	server.mu.RLock()
+	document, exists := server.documents[uri]
+	if exists {
+		source, cachedKey, cachedResult := document.text, document.cacheKey, document.result
+		server.mu.RUnlock()
+		expectedKey := server.cacheKey(source)
+		if cachedKey == expectedKey {
+			server.recordRefreshObservationPart01(uri, expectedKey, cachedResult, refreshObservationPassPart01, "EXACT_CACHE_HIT", false, true, false)
+			return server.refreshObservationPart01(uri), nil
+		}
+		if err := server.refresh(ctx, uri); err != nil {
+			reason := "PARSE_FAILED"
+			stale := errors.Is(err, ErrStaleResult)
+			if stale {
+				reason = "STALE_RESULT_SUPPRESSED"
+			}
+			server.recordRefreshObservationPart01(uri, expectedKey, ParseResult{}, refreshObservationUnknownPart01, reason, true, false, stale)
+			return server.refreshObservationPart01(uri), err
+		}
+		server.mu.RLock()
+		current, stillOpen := server.documents[uri]
+		if stillOpen {
+			cachedKey, cachedResult = current.cacheKey, current.result
+		}
+		server.mu.RUnlock()
+		if stillOpen && cachedKey == expectedKey {
+			server.recordRefreshObservationPart01(uri, expectedKey, cachedResult, refreshObservationPassPart01, "PARSE_REFRESH", true, false, false)
+		} else {
+			server.recordRefreshObservationPart01(uri, expectedKey, ParseResult{}, refreshObservationUnknownPart01, "MISSING_REFRESH_EVIDENCE", true, false, false)
+		}
+		return server.refreshObservationPart01(uri), nil
+	}
+	server.mu.RUnlock()
+	return RefreshObservationPart01{}, errors.New("lsp: document is not open")
 }
 
 func (server *Server) recordRefreshObservationPart01(uri string, key documentCacheKey, result ParseResult, decision, reason string, parseCall, cacheHit, stale bool) {
@@ -76,6 +123,11 @@ func (server *Server) RefreshObservationPart01(uri string) (RefreshObservationPa
 	defer server.mu.RUnlock()
 	observation, ok := server.refreshObservations[uri]
 	return observation, ok
+}
+
+func (server *Server) refreshObservationPart01(uri string) RefreshObservationPart01 {
+	observation, _ := server.RefreshObservationPart01(uri)
+	return observation
 }
 
 func (value RefreshObservationPart01) ValidPart01() bool {
