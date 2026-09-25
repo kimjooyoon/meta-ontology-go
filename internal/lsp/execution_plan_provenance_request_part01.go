@@ -17,11 +17,11 @@ type ExecutionPlanProvenanceParamsPart01 struct {
 	Task                    string                                        `json:"task"`
 	WorkspaceDigest         string                                        `json:"workspace_digest"`
 	Model                   string                                        `json:"model"`
-	GatewayPolicy            provenance.GatewayPolicy                      `json:"gateway_policy"`
+	GatewayPolicy           provenance.GatewayPolicy                      `json:"gateway_policy"`
 	Lifecycle               provenance.ExecutionPlanLifecyclePart01       `json:"lifecycle"`
 	WorkloadIdentity        *provenance.WorkloadIdentityProvenanceBinding `json:"workload_identity,omitempty"`
-	GeneratedReplayEvidence *GeneratedReplayEvidencePart01 `json:"generated_replay_evidence,omitempty"`
-	ExecutionOriginReceipt  *valueexecution.ExecutionOriginReceipt `json:"execution_origin_receipt,omitempty"`
+	GeneratedReplayEvidence *GeneratedReplayEvidencePart01                `json:"generated_replay_evidence,omitempty"`
+	ExecutionOriginReceipt  *valueexecution.ExecutionOriginReceipt        `json:"execution_origin_receipt,omitempty"`
 }
 
 func executionPlanBindingEdgeKeyPart01(edge bidir.BindingEdge) string {
