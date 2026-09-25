@@ -17,17 +17,17 @@ const (
 )
 
 type ExecutionPlanLifecycleReceiptPart01 struct {
-	Schema                   string                             `json:"schema"`
+	Schema                   string                            `json:"schema"`
 	State                    ExecutionPlanLifecycleStatePart01 `json:"state"`
-	StageIndex               int                                `json:"stage_index"`
-	MissingStageIndex        int                                `json:"missing_stage_index"`
-	EvidencePrefixDigest     string                             `json:"evidence_prefix_digest"`
-	SourceDigest             string                             `json:"source_digest"`
-	SemanticDigest           string                             `json:"semantic_digest"`
-	TypedPlanDigest          string                             `json:"typed_plan_digest"`
-	RuntimePlanDigest        string                             `json:"runtime_plan_digest"`
-	GeneratedArtifactDigest  string                             `json:"generated_artifact_digest"`
-	ReverseObservationDigest string                             `json:"reverse_observation_digest"`
+	StageIndex               int                               `json:"stage_index"`
+	MissingStageIndex        int                               `json:"missing_stage_index"`
+	EvidencePrefixDigest     string                            `json:"evidence_prefix_digest"`
+	SourceDigest             string                            `json:"source_digest"`
+	SemanticDigest           string                            `json:"semantic_digest"`
+	TypedPlanDigest          string                            `json:"typed_plan_digest"`
+	RuntimePlanDigest        string                            `json:"runtime_plan_digest"`
+	GeneratedArtifactDigest  string                            `json:"generated_artifact_digest"`
+	ReverseObservationDigest string                            `json:"reverse_observation_digest"`
 }
 
 func (r ExecutionPlanLifecycleReceiptPart01) FirstMissingStagePart01() int {
