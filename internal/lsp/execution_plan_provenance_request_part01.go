@@ -13,15 +13,15 @@ import (
 const ExecutionPlanProvenanceSchemaPart01 = provenance.ExecutionPlanProvenanceBindingSchemaPart01
 
 type ExecutionPlanProvenanceParamsPart01 struct {
-	TextDocument     TextDocumentIdentifier                        `json:"textDocument"`
-	Task             string                                        `json:"task"`
-	WorkspaceDigest  string                                        `json:"workspace_digest"`
-	Model            string                                        `json:"model"`
-	GatewayPolicy    provenance.GatewayPolicy                      `json:"gateway_policy"`
-	Lifecycle        provenance.ExecutionPlanLifecyclePart01       `json:"lifecycle"`
-	WorkloadIdentity *provenance.WorkloadIdentityProvenanceBinding `json:"workload_identity,omitempty"`
+	TextDocument            TextDocumentIdentifier                        `json:"textDocument"`
+	Task                    string                                        `json:"task"`
+	WorkspaceDigest         string                                        `json:"workspace_digest"`
+	Model                   string                                        `json:"model"`
+	GatewayPolicy            provenance.GatewayPolicy                      `json:"gateway_policy"`
+	Lifecycle               provenance.ExecutionPlanLifecyclePart01       `json:"lifecycle"`
+	WorkloadIdentity        *provenance.WorkloadIdentityProvenanceBinding `json:"workload_identity,omitempty"`
 	GeneratedReplayEvidence *GeneratedReplayEvidencePart01 `json:"generated_replay_evidence,omitempty"`
-	ExecutionOriginReceipt *valueexecution.ExecutionOriginReceipt `json:"execution_origin_receipt,omitempty"`
+	ExecutionOriginReceipt  *valueexecution.ExecutionOriginReceipt `json:"execution_origin_receipt,omitempty"`
 }
 
 func executionPlanBindingEdgeKeyPart01(edge bidir.BindingEdge) string {
