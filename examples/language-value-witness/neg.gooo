@@ -1,6 +1,0 @@
-package valuewitness
-namespace valuewitness
-
-entity Integer id "gooo://value-witness/entity/integer"
-
-activity Negate(Integer) -> Integer computes "int.neg:0"

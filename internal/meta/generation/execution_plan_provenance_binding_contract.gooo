@@ -1,7 +1,0 @@
-package executionplanprovenancebinding
-namespace executionplanprovenancebinding
-
-entity ExecutionPlanProvenanceBinding id "gooo://meta-ontology/execution-plan/provenance-binding"
-entity ExecutionPlanObservation id "gooo://meta-ontology/execution-plan/observation"
-
-activity BindExecutionPlanProvenance(ExecutionPlanObservation) -> ExecutionPlanProvenanceBinding

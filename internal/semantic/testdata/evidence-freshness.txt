@@ -1,4 +1,0 @@
-go-hosted semantic evidence fixture
-source=examples/bootstrap/main.gooo
-stage=go-baseline
-decision=deferred

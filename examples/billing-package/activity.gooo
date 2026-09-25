@@ -1,4 +1,0 @@
-package billing
-namespace billing
-
-activity PayOrder(Order) -> Receipt
