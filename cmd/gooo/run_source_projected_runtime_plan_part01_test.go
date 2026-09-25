@@ -80,7 +80,7 @@ func TestRunSourceProjectedRuntimePlanArtifactBoundary(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
 			reader := runSourceReaderWithFiles{
-				sourcePath: source,
+				sourcePath:   source,
 				"input.json": []byte(`{"value":41}`),
 			}
 			if testCase.includePlan {
@@ -95,10 +95,10 @@ func TestRunSourceProjectedRuntimePlanArtifactBoundary(t *testing.T) {
 				t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
 			}
 			var report struct {
-				Decision  string                    `json:"decision"`
-				Reason    string                    `json:"reason"`
-				Failure   valueexecution.Failure    `json:"failure"`
-				Execution valueexecution.Execution  `json:"execution"`
+				Decision  string                   `json:"decision"`
+				Reason    string                   `json:"reason"`
+				Failure   valueexecution.Failure   `json:"failure"`
+				Execution valueexecution.Execution `json:"execution"`
 			}
 			if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
 				t.Fatal(err)
