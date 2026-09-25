@@ -49,22 +49,29 @@ func (server *Server) refresh(ctx context.Context, uri string) error {
 	document, exists := server.documents[uri]
 	if exists {
 		version, source, cachedKey := document.version, document.text, document.cacheKey
+		cachedResult := document.result
 		server.mu.RUnlock()
-		if cachedKey == server.cacheKey(source) {
+		expectedKey := server.cacheKey(source)
+		if cachedKey == expectedKey {
+			server.recordRefreshObservationPart01(uri, expectedKey, cachedResult, refreshObservationPassPart01, "EXACT_CACHE_HIT", false, true, false)
 			return nil
 		}
 		result, err := server.parse(ctx, uri, source)
 		if err != nil {
+			server.recordRefreshObservationPart01(uri, expectedKey, ParseResult{}, refreshObservationUnknownPart01, "PARSE_FAILED", true, false, false)
 			return err
 		}
 		server.mu.Lock()
-		defer server.mu.Unlock()
 		current, stillOpen := server.documents[uri]
 		if !stillOpen || current.version != version || current.text != source {
+			server.mu.Unlock()
+			server.recordRefreshObservationPart01(uri, expectedKey, ParseResult{}, refreshObservationUnknownPart01, "STALE_RESULT_SUPPRESSED", true, false, true)
 			return ErrStaleResult
 		}
 		current.result = result
-		current.cacheKey = server.cacheKey(source)
+		current.cacheKey = expectedKey
+		server.mu.Unlock()
+		server.recordRefreshObservationPart01(uri, expectedKey, result, refreshObservationPassPart01, "PARSE_REFRESH", true, false, false)
 		return nil
 	}
 	server.mu.RUnlock()
