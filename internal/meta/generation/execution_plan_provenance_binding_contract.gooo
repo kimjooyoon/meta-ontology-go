@@ -4,6 +4,8 @@ namespace executionplanprovenancebinding
 entity ExecutionPlanProvenanceBinding id "gooo://meta-ontology/execution-plan/provenance-binding"
 entity ExecutionPlanObservation id "gooo://meta-ontology/execution-plan/observation"
 entity GenerationProvenanceReplay id "gooo://meta-ontology/execution-plan/generation-provenance-replay"
+entity GenerationProvenanceAdoption id "gooo://meta-ontology/execution-plan/generation-provenance-adoption"
 
 activity BindExecutionPlanProvenance(ExecutionPlanObservation) -> ExecutionPlanProvenanceBinding
 activity ObserveGenerationProvenanceReplay(ExecutionPlanProvenanceBinding) -> GenerationProvenanceReplay
+activity AdoptGenerationProvenance(GenerationProvenanceReplay) -> GenerationProvenanceAdoption
