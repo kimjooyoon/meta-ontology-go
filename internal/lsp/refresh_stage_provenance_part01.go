@@ -2,7 +2,6 @@ package lsp
 
 import (
     "crypto/sha256"
-    "encoding/encoding"
     "encoding/hex"
     "encoding/json"
     "errors"
