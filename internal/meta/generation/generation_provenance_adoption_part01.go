@@ -11,20 +11,20 @@ import (
 const generationProvenanceAdoptionSchemaPart01 = "gooo/generation-provenance-adoption/v1"
 
 const (
-	generationProvenanceAdoptPart01   = "ADOPT"
+	generationProvenanceAdoptPart01          = "ADOPT"
 	generationProvenanceAdoptionUnknownPart01 = "UNKNOWN"
 )
 
 type GenerationProvenanceAdoptionPart01 struct {
-	Schema                   string `json:"schema"`
-	CandidateDigest          string `json:"candidate_digest"`
-	GeneratedDigest          string `json:"generated_digest,omitempty"`
-	ReverseDigest            string `json:"reverse_digest,omitempty"`
+	Schema                     string `json:"schema"`
+	CandidateDigest            string `json:"candidate_digest"`
+	GeneratedDigest            string `json:"generated_digest,omitempty"`
+	ReverseDigest              string `json:"reverse_digest,omitempty"`
 	ReplayEvidencePrefixDigest string `json:"replay_evidence_prefix_digest"`
-	Decision                 string `json:"decision"`
-	Reason                   string `json:"reason"`
-	MissingStageIndex        int    `json:"missing_stage_index"`
-	EvidenceDigest           string `json:"evidence_digest"`
+	Decision                   string `json:"decision"`
+	Reason                     string `json:"reason"`
+	MissingStageIndex          int    `json:"missing_stage_index"`
+	EvidenceDigest             string `json:"evidence_digest"`
 }
 
 func EvaluateGenerationProvenanceAdoptionPart01(
