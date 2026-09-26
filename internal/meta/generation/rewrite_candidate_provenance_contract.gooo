@@ -1,0 +1,9 @@
+package rewritecandidateprovenance
+namespace rewritecandidateprovenance
+
+entity RewriteCandidateProvenance id "gooo://meta-ontology/generation/rewrite-candidate-provenance"
+entity CounterexampleObservation id "gooo://meta-ontology/generation/counterexample-observation"
+entity RewriteExtractionObservation id "gooo://meta-ontology/generation/rewrite-extraction-observation"
+
+activity ExploreRewriteCandidate(RewriteCandidateProvenance) -> CounterexampleObservation
+activity ExtractRewriteCandidate(CounterexampleObservation) -> RewriteExtractionObservation
