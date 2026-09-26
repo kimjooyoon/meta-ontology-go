@@ -1,0 +1,8 @@
+package jevdecisionboundary
+namespace jevdecisionboundary
+
+entity JEVDecisionBoundary id "gooo://meta-ontology/jev/decision-boundary"
+entity JEVDecisionReceipt id "gooo://meta-ontology/jev/decision-receipt"
+
+activity EvaluateJEVDecision(JEVDecisionBoundary) -> JEVDecisionReceipt
+activity ObserveJEVAction(JEVDecisionReceipt) -> JEVDecisionReceipt
