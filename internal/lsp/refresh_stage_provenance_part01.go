@@ -23,6 +23,10 @@ type RefreshStageProvenancePart01 struct {
     Schema               string `json:"schema"`
     URI                  string `json:"uri"`
     Decision             string `json:"decision"`
+    Reason               string `json:"reason"`
+    ParseCalls           int    `json:"parse_calls"`
+    CacheHits            int    `json:"cache_hits"`
+    StaleResultCount     int    `json:"stale_result_count"`
     MissingStageIndex    int    `json:"missing_stage_index"`
     MissingStageName     string `json:"missing_stage_name"`
     EvidencePrefixDigest string `json:"evidence_prefix_digest"`
@@ -51,6 +55,10 @@ func BuildRefreshStageProvenancePart01(
         Schema:               refreshStageProvenanceSchemaPart01,
         URI:                  observation.URI,
         Decision:             observation.Decision,
+        Reason:               observation.Reason,
+        ParseCalls:           observation.ParseCalls,
+        CacheHits:            observation.CacheHits,
+        StaleResultCount:     observation.StaleResultCount,
         MissingStageIndex:    observation.MissingStageIndex,
         MissingStageName:     stageName,
         EvidencePrefixDigest: prefixDigest,
@@ -69,17 +77,42 @@ func (value RefreshStageProvenancePart01) ValidPart01() bool {
         !refreshObservationDigestPart01(value.ProfileDigest) ||
         !refreshObservationDigestPart01(value.ToolchainDigest) ||
         !refreshObservationDigestPart01(value.ContractDigest) ||
-        !refreshObservationDigestPart01(value.EvidencePrefixDigest) {
+        !refreshObservationDigestPart01(value.EvidencePrefixDigest) ||
+        value.ParseCalls < 0 || value.CacheHits < 0 || value.StaleResultCount < 0 {
         return false
     }
     if value.Decision == refreshObservationPassPart01 {
-        return value.MissingStageIndex == -1 &&
-            value.MissingStageName == "complete" &&
-            strings.TrimSpace(value.SemanticDigest) != ""
+        if value.MissingStageIndex != -1 ||
+            value.MissingStageName != "complete" ||
+            strings.TrimSpace(value.SemanticDigest) == "" {
+            return false
+        }
+    } else if value.Decision != refreshObservationUnknownPart01 ||
+        value.MissingStageIndex < 0 ||
+        strings.TrimSpace(value.MissingStageName) == "" ||
+        strings.TrimSpace(value.Reason) == "" {
+        return false
     }
-    return value.Decision == refreshObservationUnknownPart01 &&
-        value.MissingStageIndex >= 0 &&
-        strings.TrimSpace(value.MissingStageName) != ""
+    expected, err := refreshEvidencePrefixDigestPart01(value.observationPart01())
+    return err == nil && expected == value.EvidencePrefixDigest
+}
+
+func (value RefreshStageProvenancePart01) observationPart01() RefreshObservationPart01 {
+    return RefreshObservationPart01{
+        Schema:            refreshObservationSchemaPart01,
+        URI:               value.URI,
+        Decision:          value.Decision,
+        Reason:            value.Reason,
+        SourceDigest:      value.SourceDigest,
+        SemanticDigest:    value.SemanticDigest,
+        ProfileDigest:     value.ProfileDigest,
+        ToolchainDigest:   value.ToolchainDigest,
+        ContractDigest:    value.ContractDigest,
+        ParseCalls:        value.ParseCalls,
+        CacheHits:         value.CacheHits,
+        StaleResultCount:  value.StaleResultCount,
+        MissingStageIndex: value.MissingStageIndex,
+    }
 }
 
 func refreshStageNamePart01(index int) string {
