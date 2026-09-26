@@ -800,6 +800,7 @@
     "internal/meta/generation/self_improvement_outcome_contract.gooo",
     "internal/meta/policycompilation/revision-operation.gooo",
     "examples/relay-game-contract/main.gooo",
-    "internal/meta/generation/experience_memory_receipt_contract.gooo"
+    "internal/meta/generation/experience_memory_receipt_contract.gooo",
+    "internal/meta/generation/execution_plan_provenance_binding_contract.gooo"
   ]
 }

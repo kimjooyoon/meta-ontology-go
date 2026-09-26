@@ -7,18 +7,21 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
 const ExecutionPlanProvenanceSchemaPart01 = provenance.ExecutionPlanProvenanceBindingSchemaPart01
 
 type ExecutionPlanProvenanceParamsPart01 struct {
-	TextDocument     TextDocumentIdentifier                        `json:"textDocument"`
-	Task             string                                        `json:"task"`
-	WorkspaceDigest  string                                        `json:"workspace_digest"`
-	Model            string                                        `json:"model"`
-	GatewayPolicy    provenance.GatewayPolicy                      `json:"gateway_policy"`
-	Lifecycle        provenance.ExecutionPlanLifecyclePart01       `json:"lifecycle"`
-	WorkloadIdentity *provenance.WorkloadIdentityProvenanceBinding `json:"workload_identity,omitempty"`
+	TextDocument            TextDocumentIdentifier                        `json:"textDocument"`
+	Task                    string                                        `json:"task"`
+	WorkspaceDigest         string                                        `json:"workspace_digest"`
+	Model                   string                                        `json:"model"`
+	GatewayPolicy           provenance.GatewayPolicy                      `json:"gateway_policy"`
+	Lifecycle               provenance.ExecutionPlanLifecyclePart01       `json:"lifecycle"`
+	WorkloadIdentity        *provenance.WorkloadIdentityProvenanceBinding `json:"workload_identity,omitempty"`
+	GeneratedReplayEvidence *GeneratedReplayEvidencePart01                `json:"generated_replay_evidence,omitempty"`
+	ExecutionOriginReceipt  *valueexecution.ExecutionOriginReceipt        `json:"execution_origin_receipt,omitempty"`
 }
 
 func executionPlanBindingEdgeKeyPart01(edge bidir.BindingEdge) string {
@@ -47,6 +50,17 @@ func executionPlanTypedMetadataPart01(text string) (string, []string, []string, 
 		edgeOrder[index] = executionPlanBindingEdgeKeyPart01(edge)
 	}
 	return typedPlan.Digest(), activityOrder, edgeOrder, len(typedPlan.Edges)
+}
+
+func executionPlanGeneratedReplayDigestsPart01(params ExecutionPlanProvenanceParamsPart01) (string, string) {
+	if params.GeneratedReplayEvidence == nil || params.ExecutionOriginReceipt == nil {
+		return "", ""
+	}
+	closure := ObserveGeneratedReplayEvidenceReceiptClosurePart01(*params.GeneratedReplayEvidence, *params.ExecutionOriginReceipt)
+	if closure.Status != ExecutionEvidenceReceiptClosureComplete {
+		return "", ""
+	}
+	return params.GeneratedReplayEvidence.GeneratedArtifactDigest, params.GeneratedReplayEvidence.ReverseObservationDigest
 }
 
 func (server *Server) executionPlanProvenanceRequest(
@@ -88,13 +102,14 @@ func (server *Server) executionPlanProvenanceRequest(
 		if typedPlanDigest != "" {
 			graphDigest = typedPlanDigest
 		}
+		generatedArtifactDigest, reverseObservationDigest := executionPlanGeneratedReplayDigestsPart01(params)
 		chain = provenance.BuildSelfImprovementProvenanceChainPart01(
 			documentProvenanceSymbolMapDigest(symbols),
 			stored.cacheKey.sourceDigest,
 			stored.result.semanticDigest,
 			graphDigest,
-			"",
-			"",
+			generatedArtifactDigest,
+			reverseObservationDigest,
 		)
 	}
 

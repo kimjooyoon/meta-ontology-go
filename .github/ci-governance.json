@@ -5562,6 +5562,27 @@
         "internal/provenance/experience_memory_receipt_part01_test.go",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/execution-plan-provenance-generation-dev-20260925-r1",
+      "paths": [
+      "cmd/gooo/run_source_projected_runtime_plan_part01_test.go",
+      "internal/lsp/execution_plan_generated_replay_part01_test.go",
+      "internal/lsp/execution_plan_lifecycle_receipt_part01.go",
+      "internal/lsp/execution_plan_lifecycle_receipt_part01_test.go",
+      "internal/lsp/execution_plan_provenance_request_part01.go",
+      "internal/lsp/generated_replay_evidence_part01.go",
+      "internal/lsp/generated_replay_evidence_part01_test.go",
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/generation/execution_plan_provenance_binding_contract.gooo",
+        "internal/meta/generation/execution_plan_provenance_binding_part01.go",
+        "internal/meta/generation/execution_plan_provenance_binding_part01_test.go",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
