@@ -1,0 +1,8 @@
+package repairrouteprovenance
+namespace repairrouteprovenance
+
+entity RepairRouteObservation id "gooo://meta-ontology/lsp/repair-route-observation"
+entity RepairRouteDecisionReceipt id "gooo://meta-ontology/lsp/repair-route-decision-receipt"
+
+activity RouteLSPRepair(RepairRouteObservation) -> RepairRouteDecisionReceipt
+activity ObserveLSPRepair(RepairRouteDecisionReceipt) -> RepairRouteDecisionReceipt
