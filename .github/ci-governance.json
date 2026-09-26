@@ -57,6 +57,17 @@
   ],
   "ownership": [
     {
+      "branch": "agent/lsp-refresh-observation-dev-20260925-r1",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/lsp/refresh_observation_part01.go",
+        "internal/lsp/refresh_observation_part01_test.go",
+        "internal/lsp/server_part01.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/spiffe-execution-boundary-provenance-dev-20260925-r1",
       "paths": [
         ".github/agent-scope-table.md",
