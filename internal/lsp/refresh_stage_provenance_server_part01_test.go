@@ -8,9 +8,9 @@ import (
 
 func TestObserveRefreshStageProvenancePart01UsesServerObservation(t *testing.T) {
     uri := "file:///refresh-stage-provenance.gooo"
-    source := "package p
+    source := `package p
 namespace n
-"
+`
     server := NewServer(ParserFunc(func(string, string) ParseResult {
         return ParseResult{semanticDigest: "semantic-digest"}
     }))
@@ -37,9 +37,9 @@ namespace n
 
 func TestObserveRefreshStageProvenancePart01KeepsUnknown(t *testing.T) {
     uri := "file:///refresh-stage-provenance-unknown.gooo"
-    source := "package p
+    source := `package p
 namespace n
-"
+`
     server := NewServer(ParserFunc(func(string, string) ParseResult {
         return ParseResult{}
     }))
