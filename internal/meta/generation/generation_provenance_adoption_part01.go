@@ -11,7 +11,7 @@ import (
 const generationProvenanceAdoptionSchemaPart01 = "gooo/generation-provenance-adoption/v1"
 
 const (
-	generationProvenanceAdoptPart01          = "ADOPT"
+	generationProvenanceAdoptPart01           = "ADOPT"
 	generationProvenanceAdoptionUnknownPart01 = "UNKNOWN"
 )
 
