@@ -1,161 +1,161 @@
 package lsp
 
 import (
-    "crypto/sha256"
-    "encoding/hex"
-    "encoding/json"
-    "errors"
-    "strings"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"strings"
 )
 
 const refreshStageProvenanceSchemaPart01 = "gooo/lsp-refresh-stage-provenance/v1"
 
 var refreshStageNamesPart01 = []string{
-    "source",
-    "parse",
-    "semantic",
-    "profile",
-    "toolchain",
-    "contract",
+	"source",
+	"parse",
+	"semantic",
+	"profile",
+	"toolchain",
+	"contract",
 }
 
 type RefreshStageProvenancePart01 struct {
-    Schema               string `json:"schema"`
-    URI                  string `json:"uri"`
-    Decision             string `json:"decision"`
-    Reason               string `json:"reason"`
-    ParseCalls           int    `json:"parse_calls"`
-    CacheHits            int    `json:"cache_hits"`
-    StaleResultCount     int    `json:"stale_result_count"`
-    MissingStageIndex    int    `json:"missing_stage_index"`
-    MissingStageName     string `json:"missing_stage_name"`
-    EvidencePrefixDigest string `json:"evidence_prefix_digest"`
-    SourceDigest         string `json:"source_digest"`
-    SemanticDigest       string `json:"semantic_digest,omitempty"`
-    ProfileDigest        string `json:"profile_digest"`
-    ToolchainDigest      string `json:"toolchain_digest"`
-    ContractDigest       string `json:"contract_digest"`
+	Schema               string `json:"schema"`
+	URI                  string `json:"uri"`
+	Decision             string `json:"decision"`
+	Reason               string `json:"reason"`
+	ParseCalls           int    `json:"parse_calls"`
+	CacheHits            int    `json:"cache_hits"`
+	StaleResultCount     int    `json:"stale_result_count"`
+	MissingStageIndex    int    `json:"missing_stage_index"`
+	MissingStageName     string `json:"missing_stage_name"`
+	EvidencePrefixDigest string `json:"evidence_prefix_digest"`
+	SourceDigest         string `json:"source_digest"`
+	SemanticDigest       string `json:"semantic_digest,omitempty"`
+	ProfileDigest        string `json:"profile_digest"`
+	ToolchainDigest      string `json:"toolchain_digest"`
+	ContractDigest       string `json:"contract_digest"`
 }
 
 func BuildRefreshStageProvenancePart01(
-    observation RefreshObservationPart01,
+	observation RefreshObservationPart01,
 ) (RefreshStageProvenancePart01, error) {
-    if !observation.ValidPart01() {
-        return RefreshStageProvenancePart01{}, errors.New("lsp: refresh observation is invalid")
-    }
-    stageName := refreshStageNamePart01(observation.MissingStageIndex)
-    if observation.Decision == refreshObservationPassPart01 {
-        stageName = "complete"
-    }
-    prefixDigest, err := refreshEvidencePrefixDigestPart01(observation)
-    if err != nil {
-        return RefreshStageProvenancePart01{}, err
-    }
-    return RefreshStageProvenancePart01{
-        Schema:               refreshStageProvenanceSchemaPart01,
-        URI:                  observation.URI,
-        Decision:             observation.Decision,
-        Reason:               observation.Reason,
-        ParseCalls:           observation.ParseCalls,
-        CacheHits:            observation.CacheHits,
-        StaleResultCount:     observation.StaleResultCount,
-        MissingStageIndex:    observation.MissingStageIndex,
-        MissingStageName:     stageName,
-        EvidencePrefixDigest: prefixDigest,
-        SourceDigest:         observation.SourceDigest,
-        SemanticDigest:       observation.SemanticDigest,
-        ProfileDigest:        observation.ProfileDigest,
-        ToolchainDigest:      observation.ToolchainDigest,
-        ContractDigest:       observation.ContractDigest,
-    }, nil
+	if !observation.ValidPart01() {
+		return RefreshStageProvenancePart01{}, errors.New("lsp: refresh observation is invalid")
+	}
+	stageName := refreshStageNamePart01(observation.MissingStageIndex)
+	if observation.Decision == refreshObservationPassPart01 {
+		stageName = "complete"
+	}
+	prefixDigest, err := refreshEvidencePrefixDigestPart01(observation)
+	if err != nil {
+		return RefreshStageProvenancePart01{}, err
+	}
+	return RefreshStageProvenancePart01{
+		Schema:               refreshStageProvenanceSchemaPart01,
+		URI:                  observation.URI,
+		Decision:             observation.Decision,
+		Reason:               observation.Reason,
+		ParseCalls:           observation.ParseCalls,
+		CacheHits:            observation.CacheHits,
+		StaleResultCount:     observation.StaleResultCount,
+		MissingStageIndex:    observation.MissingStageIndex,
+		MissingStageName:     stageName,
+		EvidencePrefixDigest: prefixDigest,
+		SourceDigest:         observation.SourceDigest,
+		SemanticDigest:       observation.SemanticDigest,
+		ProfileDigest:        observation.ProfileDigest,
+		ToolchainDigest:      observation.ToolchainDigest,
+		ContractDigest:       observation.ContractDigest,
+	}, nil
 }
 
 func (value RefreshStageProvenancePart01) ValidPart01() bool {
-    if value.Schema != refreshStageProvenanceSchemaPart01 ||
-        strings.TrimSpace(value.URI) == "" ||
-        !refreshObservationDigestPart01(value.SourceDigest) ||
-        !refreshObservationDigestPart01(value.ProfileDigest) ||
-        !refreshObservationDigestPart01(value.ToolchainDigest) ||
-        !refreshObservationDigestPart01(value.ContractDigest) ||
-        !refreshObservationDigestPart01(value.EvidencePrefixDigest) ||
-        value.ParseCalls < 0 || value.CacheHits < 0 || value.StaleResultCount < 0 {
-        return false
-    }
-    if value.Decision == refreshObservationPassPart01 {
-        if value.MissingStageIndex != -1 ||
-            value.MissingStageName != "complete" ||
-            strings.TrimSpace(value.SemanticDigest) == "" {
-            return false
-        }
-    } else if value.Decision != refreshObservationUnknownPart01 ||
-        value.MissingStageIndex < 0 ||
-        strings.TrimSpace(value.MissingStageName) == "" ||
-        strings.TrimSpace(value.Reason) == "" {
-        return false
-    }
-    expected, err := refreshEvidencePrefixDigestPart01(value.observationPart01())
-    return err == nil && expected == value.EvidencePrefixDigest
+	if value.Schema != refreshStageProvenanceSchemaPart01 ||
+		strings.TrimSpace(value.URI) == "" ||
+		!refreshObservationDigestPart01(value.SourceDigest) ||
+		!refreshObservationDigestPart01(value.ProfileDigest) ||
+		!refreshObservationDigestPart01(value.ToolchainDigest) ||
+		!refreshObservationDigestPart01(value.ContractDigest) ||
+		!refreshObservationDigestPart01(value.EvidencePrefixDigest) ||
+		value.ParseCalls < 0 || value.CacheHits < 0 || value.StaleResultCount < 0 {
+		return false
+	}
+	if value.Decision == refreshObservationPassPart01 {
+		if value.MissingStageIndex != -1 ||
+			value.MissingStageName != "complete" ||
+			strings.TrimSpace(value.SemanticDigest) == "" {
+			return false
+		}
+	} else if value.Decision != refreshObservationUnknownPart01 ||
+		value.MissingStageIndex < 0 ||
+		strings.TrimSpace(value.MissingStageName) == "" ||
+		strings.TrimSpace(value.Reason) == "" {
+		return false
+	}
+	expected, err := refreshEvidencePrefixDigestPart01(value.observationPart01())
+	return err == nil && expected == value.EvidencePrefixDigest
 }
 
 func (value RefreshStageProvenancePart01) observationPart01() RefreshObservationPart01 {
-    return RefreshObservationPart01{
-        Schema:            refreshObservationSchemaPart01,
-        URI:               value.URI,
-        Decision:          value.Decision,
-        Reason:            value.Reason,
-        SourceDigest:      value.SourceDigest,
-        SemanticDigest:    value.SemanticDigest,
-        ProfileDigest:     value.ProfileDigest,
-        ToolchainDigest:   value.ToolchainDigest,
-        ContractDigest:    value.ContractDigest,
-        ParseCalls:        value.ParseCalls,
-        CacheHits:         value.CacheHits,
-        StaleResultCount:  value.StaleResultCount,
-        MissingStageIndex: value.MissingStageIndex,
-    }
+	return RefreshObservationPart01{
+		Schema:            refreshObservationSchemaPart01,
+		URI:               value.URI,
+		Decision:          value.Decision,
+		Reason:            value.Reason,
+		SourceDigest:      value.SourceDigest,
+		SemanticDigest:    value.SemanticDigest,
+		ProfileDigest:     value.ProfileDigest,
+		ToolchainDigest:   value.ToolchainDigest,
+		ContractDigest:    value.ContractDigest,
+		ParseCalls:        value.ParseCalls,
+		CacheHits:         value.CacheHits,
+		StaleResultCount:  value.StaleResultCount,
+		MissingStageIndex: value.MissingStageIndex,
+	}
 }
 
 func refreshStageNamePart01(index int) string {
-    if index >= 0 && index < len(refreshStageNamesPart01) {
-        return refreshStageNamesPart01[index]
-    }
-    return "unknown-stage"
+	if index >= 0 && index < len(refreshStageNamesPart01) {
+		return refreshStageNamesPart01[index]
+	}
+	return "unknown-stage"
 }
 
 func refreshEvidencePrefixDigestPart01(observation RefreshObservationPart01) (string, error) {
-    prefix := struct {
-        Schema            string `json:"schema"`
-        URI               string `json:"uri"`
-        Decision          string `json:"decision"`
-        Reason            string `json:"reason"`
-        SourceDigest      string `json:"source_digest"`
-        SemanticDigest    string `json:"semantic_digest,omitempty"`
-        ProfileDigest     string `json:"profile_digest"`
-        ToolchainDigest   string `json:"toolchain_digest"`
-        ContractDigest    string `json:"contract_digest"`
-        ParseCalls        int    `json:"parse_calls"`
-        CacheHits         int    `json:"cache_hits"`
-        StaleResultCount  int    `json:"stale_result_count"`
-        MissingStageIndex int    `json:"missing_stage_index"`
-    }{
-        Schema:            observation.Schema,
-        URI:               observation.URI,
-        Decision:          observation.Decision,
-        Reason:            observation.Reason,
-        SourceDigest:      observation.SourceDigest,
-        SemanticDigest:    observation.SemanticDigest,
-        ProfileDigest:     observation.ProfileDigest,
-        ToolchainDigest:   observation.ToolchainDigest,
-        ContractDigest:    observation.ContractDigest,
-        ParseCalls:        observation.ParseCalls,
-        CacheHits:         observation.CacheHits,
-        StaleResultCount:  observation.StaleResultCount,
-        MissingStageIndex: observation.MissingStageIndex,
-    }
-    encoded, err := json.Marshal(prefix)
-    if err != nil {
-        return "", err
-    }
-    digest := sha256.Sum256(encoded)
-    return "sha256:" + hex.EncodeToString(digest[:]), nil
+	prefix := struct {
+		Schema            string `json:"schema"`
+		URI               string `json:"uri"`
+		Decision          string `json:"decision"`
+		Reason            string `json:"reason"`
+		SourceDigest      string `json:"source_digest"`
+		SemanticDigest    string `json:"semantic_digest,omitempty"`
+		ProfileDigest     string `json:"profile_digest"`
+		ToolchainDigest   string `json:"toolchain_digest"`
+		ContractDigest    string `json:"contract_digest"`
+		ParseCalls        int    `json:"parse_calls"`
+		CacheHits         int    `json:"cache_hits"`
+		StaleResultCount  int    `json:"stale_result_count"`
+		MissingStageIndex int    `json:"missing_stage_index"`
+	}{
+		Schema:            observation.Schema,
+		URI:               observation.URI,
+		Decision:          observation.Decision,
+		Reason:            observation.Reason,
+		SourceDigest:      observation.SourceDigest,
+		SemanticDigest:    observation.SemanticDigest,
+		ProfileDigest:     observation.ProfileDigest,
+		ToolchainDigest:   observation.ToolchainDigest,
+		ContractDigest:    observation.ContractDigest,
+		ParseCalls:        observation.ParseCalls,
+		CacheHits:         observation.CacheHits,
+		StaleResultCount:  observation.StaleResultCount,
+		MissingStageIndex: observation.MissingStageIndex,
+	}
+	encoded, err := json.Marshal(prefix)
+	if err != nil {
+		return "", err
+	}
+	digest := sha256.Sum256(encoded)
+	return "sha256:" + hex.EncodeToString(digest[:]), nil
 }
