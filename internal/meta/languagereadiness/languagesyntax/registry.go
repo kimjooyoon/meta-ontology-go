@@ -109,6 +109,7 @@ func expectedRegistry() Registry {
 		valid("domain-observation-incident", "examples/domain-observation/incident.gooo"),
 		valid("domain-observation-repair", "examples/domain-observation/repair.gooo"),
 		valid("repair-handoff", "examples/repair-handoff/main.gooo"),
+		valid("repair-route-provenance", "internal/lsp/repair_route_provenance_contract.gooo"),
 		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
 		governance("self-improvement-ci-continuation", "examples/self-improvement-ci-continuation/continuation.gooo"),
 	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit, selfImprovementObservationUnit, partialReuseUnit}, MetaSources: []string{"internal/meta/syntaxregistration/contract.gooo", "internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo", "internal/meta/generation/operation-input-contract.gooo", "internal/meta/generation/callback-preview-contract.gooo", "internal/meta/generation/callback-extraction-contract.gooo", "internal/meta/generation/self_improvement_outcome_contract.gooo", "internal/meta/policycompilation/revision-operation.gooo", "examples/relay-game-contract/main.gooo", "internal/meta/generation/experience_memory_receipt_contract.gooo"}}

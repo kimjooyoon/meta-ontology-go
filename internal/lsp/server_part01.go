@@ -25,15 +25,16 @@ type document struct {
 // Server implements the supported .gooo text-document LSP surface. Workspace
 // symbols use open documents only; edits and source maps remain unsupported.
 type Server struct {
-	parser        Parser
-	documents     map[string]*document
-	initialized   bool
-	shutdown      bool
-	exited        bool
-	mu            sync.RWMutex
-	parseMu       sync.Mutex
-	inflight      map[string]*inFlightRequest
-	cacheIdentity documentCacheIdentity
+	parser              Parser
+	documents           map[string]*document
+	initialized         bool
+	shutdown            bool
+	exited              bool
+	mu                  sync.RWMutex
+	parseMu             sync.Mutex
+	inflight            map[string]*inFlightRequest
+	cacheIdentity       documentCacheIdentity
+	refreshObservations map[string]RefreshObservationPart01
 }
 
 func NewServer(parsers ...Parser) *Server {
@@ -44,6 +45,7 @@ func NewServer(parsers ...Parser) *Server {
 	return &Server{
 		parser: parser, documents: make(map[string]*document),
 		inflight: make(map[string]*inFlightRequest), cacheIdentity: newDocumentCacheIdentity(parser),
+		refreshObservations: make(map[string]RefreshObservationPart01),
 	}
 }
 func (server *Server) Serve(input io.Reader, output io.Writer) error {

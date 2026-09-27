@@ -710,6 +710,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "repair-route-provenance",
+      "path": "internal/lsp/repair_route_provenance_contract.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "repair-handoff",
       "path": "examples/repair-handoff/main.gooo",
       "kind": "VALID",
