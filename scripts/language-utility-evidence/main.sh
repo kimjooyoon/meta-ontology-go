@@ -138,9 +138,20 @@ github_curl "$baseline_api" > "$out/baseline-retrieval-artifact.json"
 jq -e --arg name "language-utility-evidence-64a6a3d922b5ee3eb351005185d44c19388287e4" \
   '.id==10843978521 and .name==$name and .digest=="sha256:f6df1aab2251b3eb351005185d44c19388287e4" and .size_in_bytes==22114747 and .expired==false' \
   "$out/baseline-retrieval-artifact.json"
-github_curl -L "$baseline_api/zip" -o "$out/baseline-artifact.zip"
+archive_url="$(jq -er '.archive_download_url' "$out/baseline-retrieval-artifact.json")"
+archive_headers=(-H "Accept: application/vnd.github+json")
+if test -n "${GITHUB_TOKEN:-}"; then
+  archive_headers+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+else
+  checkout_header="$(git config --local --get-all http.https://github.com/.extraheader 2>/dev/null | head -n 1 || true)"
+  test -n "$checkout_header"
+  archive_headers+=(-H "$checkout_header")
+fi
+archive_redirect="$(curl -fsS -D - -o /dev/null "${archive_headers[@]}" "$archive_url" | awk 'tolower($1)=="location:" {sub("\r$", "", $2); print $2; exit}')"
+test -n "$archive_redirect"
+curl -fsSL "$archive_redirect" -o "$out/baseline-artifact.zip"
 baseline_zip_digest="$(digest "$out/baseline-artifact.zip")"
-test "$baseline_zip_digest" = "sha256:f6df1aab2251b3eb351005185d44c19388287e4"
+test "$baseline_zip_digest" = "sha256:f6df1aab2251b3eb60b2d9869652329d45c8131ed92a8d676a406c0954e1c3d2"
 baseline_extract="$out/baseline-outer-extract"
 mkdir -p "$baseline_extract"
 unzip -q "$out/baseline-artifact.zip" -d "$baseline_extract"
