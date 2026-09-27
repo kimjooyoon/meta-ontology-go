@@ -133,18 +133,21 @@ phase="ASSERT"
 jq -e '.decision=="PROGRESS_OBSERVED" and .resolution=="EXACT" and .summary.closed_cells==41 and .summary.open_cells==1 and .summary.cells_total==42 and .summary.complete_use_cases==5 and .summary.use_cases_total==6 and .summary.remaining_cells==1 and .summary.unknown_cells==0 and .summary.refuted_cells==0 and .summary.closed_delta_from_floor==2 and .summary.complete_use_case_floor_delta==1' "$out/report.json"
 
 phase="BASELINE_RECEIPT"
-baseline_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9690576734"
-github_curl "$baseline_api" > "$out/baseline-artifact.json"
-jq -e --arg name "language-utility-evidence-57ac9ec486bbca69e447a8eba94e0ce3cd03ced0" \
-  '.id==9690576734 and .name==$name and .digest=="sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5" and .size_in_bytes==6987602' \
-  "$out/baseline-artifact.json"
+baseline_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/10843978521"
+github_curl "$baseline_api" > "$out/baseline-retrieval-artifact.json"
+jq -e --arg name "language-utility-evidence-64a6a3d922b5ee3eb351005185d44c19388287e4" \
+  '.id==10843978521 and .name==$name and .digest=="sha256:f6df1aab2251b3eb351005185d44c19388287e4" and .size_in_bytes==22114747 and .expired==false' \
+  "$out/baseline-retrieval-artifact.json"
 github_curl -L "$baseline_api/zip" -o "$out/baseline-artifact.zip"
 baseline_zip_digest="$(digest "$out/baseline-artifact.zip")"
-test "$baseline_zip_digest" = "sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5"
-baseline_extract="$out/baseline-extract"
+test "$baseline_zip_digest" = "sha256:f6df1aab2251b3eb351005185d44c19388287e4"
+baseline_extract="$out/baseline-outer-extract"
 mkdir -p "$baseline_extract"
 unzip -q "$out/baseline-artifact.zip" -d "$baseline_extract"
-baseline_report="$baseline_extract/report.json"
+jq -e --arg name "language-utility-evidence-57ac9ec486bbca69e447a8eba94e0ce3cd03ced0" \
+  '.id==9690576734 and .name==$name and .digest=="sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5" and .size_in_bytes==6987602' \
+  "$baseline_extract/baseline-artifact.json"
+baseline_report="$baseline_extract/baseline-extract/report.json"
 test -f "$baseline_report"
 jq -e '.summary.closed_cells==39 and .summary.open_cells==3 and .summary.unknown_cells==0 and .summary.refuted_cells==0 and .summary.cells_total==42 and .summary.complete_use_cases==4 and .summary.use_cases_total==6 and .summary.remaining_cells==3' \
   "$baseline_report"
