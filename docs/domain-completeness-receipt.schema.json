@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kimjooyoon/meta-ontology-go/blob/main/docs/domain-completeness-receipt.schema.json",
+  "title": "Domain Completeness Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "domain_id",
+    "domain_version",
+    "correlation_id",
+    "observed_at",
+    "declaration_digest",
+    "source_digest",
+    "catalog_digest",
+    "schema_digest",
+    "evidence_digest",
+    "declared_identifiers",
+    "observations",
+    "metrics",
+    "provenance",
+    "execution",
+    "authorization"
+  ],
+  "properties": {
+    "domain_id": { "type": "string", "minLength": 1 },
+    "domain_version": { "type": "string", "minLength": 1 },
+    "correlation_id": { "type": "string", "minLength": 1 },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "declaration_digest": { "$ref": "#/$defs/digest" },
+    "source_digest": { "$ref": "#/$defs/digest" },
+    "catalog_digest": { "$ref": "#/$defs/digest" },
+    "schema_digest": { "$ref": "#/$defs/digest" },
+    "evidence_digest": { "$ref": "#/$defs/digest" },
+    "toolchain_identity": { "type": "string", "minLength": 1 },
+    "declared_identifiers": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "observations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/observation" }
+    },
+    "metrics": { "$ref": "#/$defs/metrics" },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "execution": { "const": false },
+    "authorization": { "const": false },
+    "investment": { "$ref": "#/$defs/investment" }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{64}$"
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "state"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "state": {
+          "type": "string",
+          "enum": ["AVAILABLE", "DEFERRED", "UNKNOWN", "OUT_OF_SCOPE"]
+        },
+        "reason": { "type": "string" }
+      }
+    },
+    "bounded_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "numerator", "denominator"],
+      "properties": {
+        "value": { "$ref": "#/$defs/bounded_ratio" },
+        "numerator": { "$ref": "#/$defs/count" },
+        "denominator": { "$ref": "#/$defs/count" },
+        "excluded_identifiers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_coverage",
+        "available_coverage",
+        "evidence_completeness",
+        "utility_yield"
+      ],
+      "properties": {
+        "scope_coverage": { "$ref": "#/$defs/metric" },
+        "available_coverage": { "$ref": "#/$defs/metric" },
+        "evidence_completeness": { "$ref": "#/$defs/metric" },
+        "utility_yield": { "$ref": "#/$defs/metric" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["first_missing_stage", "next_operation"],
+      "properties": {
+        "first_missing_stage": {
+          "type": "integer",
+          "minimum": -1
+        },
+        "next_operation": { "type": "string" },
+        "linked_digests": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/digest" }
+        }
+      }
+    },
+    "investment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "engineering_effort": { "type": "number", "minimum": 0 },
+        "ci_duration_seconds": { "type": "number", "minimum": 0 },
+        "ci_attempts": { "$ref": "#/$defs/count" },
+        "resource_cost": { "type": "number", "minimum": 0 },
+        "decision_reason": { "type": "string", "minLength": 1 },
+        "rollback_condition": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
