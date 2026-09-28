@@ -107,8 +107,7 @@ func executeRevisionPolicy(ctx context.Context, policy CompiledPolicy, inputs []
 	for _, input := range inputs {
 		phase.SourceResults = append(phase.SourceResults, EvaluateSourcePolicy(policy, input))
 	}
-	executions := make([]Case, 0, 2*len(inputs))
-	executions = append(executions, inputs...)
+	executions := append([]Case(nil), inputs...)
 	executions = append(executions, inputs...)
 	results, err := ExecuteGeneratedBatch(ctx, judge, executions)
 	phase.WallMilliseconds = time.Since(start).Milliseconds()
