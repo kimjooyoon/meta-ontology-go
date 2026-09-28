@@ -33,6 +33,16 @@
   ],
   "ownership": [
     {
+      "branch": "agent/candidate-source-run-binding-20260929",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/selfimprovementcandidate/authorization.go",
+        "internal/meta/selfimprovementcandidate/authorization_test.go",
+        "internal/verify/scope_candidate_source_run_binding_20260929.go"
+      ]
+    },
+    {
       "branch": "agent/system-derived-eligibility-20260929",
       "paths": [
         ".github/agent-scope-table.md",

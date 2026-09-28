@@ -89,8 +89,11 @@ type CandidateBinding struct {
 }
 
 type ArtifactMetadata struct {
-	Repository    string `json:"repository"`
-	SubjectSHA    string `json:"subject_sha"`
+	Repository string `json:"repository"`
+	SubjectSHA string `json:"subject_sha"`
+	// RunID identifies the workflow run that uploaded this artifact. It is
+	// distinct from CandidateBinding.SourceWorkflowRunID, which identifies the
+	// source observation recorded in the candidate report.
 	RunID         int64  `json:"run_id"`
 	RunAttempt    int    `json:"run_attempt"`
 	ArtifactID    int64  `json:"artifact_id"`
@@ -389,8 +392,8 @@ func BuildAuthorizationRequest(repository fs.FS, contractPath string, candidateR
 	if !validArtifactMetadata(metadata) {
 		return AuthorizationRequest{}, errors.New("candidate artifact metadata is unavailable")
 	}
-	if report.SubjectSHA != metadata.SubjectSHA || report.SourceWorkflowRunID != metadata.RunID {
-		return AuthorizationRequest{}, errors.New("candidate report is not bound to its source run")
+	if report.SubjectSHA != metadata.SubjectSHA {
+		return AuthorizationRequest{}, errors.New("candidate report subject does not match its artifact")
 	}
 	candidate := report.Candidates[0]
 	binding := CandidateBinding{
@@ -650,7 +653,7 @@ func ResolveAuthorization(request AuthorizationRequest) AuthorizationResolution 
 	if !validArtifactMetadata(request.Artifact) {
 		return refutedResolution(request, AuthorizationRefutedReason, nil)
 	}
-	if request.Artifact.SubjectSHA != request.Candidate.SubjectSHA || request.Artifact.RunID != request.Candidate.SourceWorkflowRunID {
+	if request.Artifact.SubjectSHA != request.Candidate.SubjectSHA {
 		return refutedResolution(request, AuthorizationRefutedReason, nil)
 	}
 
@@ -676,7 +679,7 @@ func ValidateAuthorizationRequest(request AuthorizationRequest) error {
 		return errors.New("authorization request identity mismatch")
 	}
 	if !validAuthorizationContract(request.Contract) || !validCandidateBinding(request.Candidate) || !validArtifactMetadata(request.Artifact) ||
-		request.Artifact.SubjectSHA != request.Candidate.SubjectSHA || request.Artifact.RunID != request.Candidate.SourceWorkflowRunID {
+		request.Artifact.SubjectSHA != request.Candidate.SubjectSHA {
 		return errors.New("authorization request binding mismatch")
 	}
 	if request.Metrics.StructuralUnboundEdgesBefore != 1 || request.Metrics.StructuralUnboundEdgesAfter != 0 ||
