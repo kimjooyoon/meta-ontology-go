@@ -158,7 +158,7 @@ func validateRetentionAuthorization(evidence retentionEvidence) error {
 		evidence.authorization.InputSourceDigest != evidence.proposal.InputSourceDigest {
 		return errors.New("authorization is not bound to the exact proposal candidate")
 	}
-	if evidence.authorization != evidence.adoption.Authorization {
+	if !reflect.DeepEqual(evidence.authorization, evidence.adoption.Authorization) {
 		return errors.New("authorization differs from the authorized adoption report")
 	}
 	if cache.HashBytes(evidence.authorizationData).String() != evidence.adoption.AuthorizationDigest {

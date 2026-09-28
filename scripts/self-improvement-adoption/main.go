@@ -110,7 +110,7 @@ func run(contractPath, observationPath, proposalPath, systemDecisionPath, unknow
 	if err := generation.VerifySemanticObservation(adoptedReport.Observation); err != nil {
 		return fmt.Errorf("adopted observation: %w", err)
 	}
-	if unknownReport.Authorization != unknownAuthorization {
+	if !reflect.DeepEqual(unknownReport.Authorization, unknownAuthorization) {
 		return errors.New("unknown adoption report is not bound to its system decision input")
 	}
 	unknownAuthorizationDigest := cache.HashBytes(unknownAuthorizationData).String()
