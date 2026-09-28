@@ -2870,9 +2870,9 @@ jobs:
           result="$RUNNER_TEMP/external-capability-authorization-foundation"
           foundation="examples/external-capability-execution/authorization/foundation.json"
           mkdir -p "$result/prior"
-          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/9631439149" > "$result/metadata.json"
-          jq -e '.id == 9631439149 and .expired == false' "$result/metadata.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/9631439149/zip" > "$result/foundation.zip"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/10942435307" > "$result/metadata.json"
+          jq -e '.id == 10942435307 and .expired == false' "$result/metadata.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/10942435307/zip" > "$result/foundation.zip"
           digest=$(jq -r '.archive_digest | sub("^sha256:"; "")' "$foundation")
           printf '%s  %s\n' "$digest" "$result/foundation.zip" | sha256sum -c -
           unzip -q "$result/foundation.zip" -d "$result/prior"

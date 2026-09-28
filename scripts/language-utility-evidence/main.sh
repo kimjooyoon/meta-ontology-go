@@ -133,28 +133,24 @@ phase="ASSERT"
 jq -e '.decision=="PROGRESS_OBSERVED" and .resolution=="EXACT" and .summary.closed_cells==41 and .summary.open_cells==1 and .summary.cells_total==42 and .summary.complete_use_cases==5 and .summary.use_cases_total==6 and .summary.remaining_cells==1 and .summary.unknown_cells==0 and .summary.refuted_cells==0 and .summary.closed_delta_from_floor==2 and .summary.complete_use_case_floor_delta==1' "$out/report.json"
 
 phase="BASELINE_RECEIPT"
-baseline_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9690576734"
-github_curl "$baseline_api" > "$out/baseline-artifact.json"
+baseline_manifest="$root/scripts/language-utility-evidence/baseline-manifest.json"
+baseline_report="$root/scripts/language-utility-evidence/baseline-report.json"
 jq -e --arg name "language-utility-evidence-57ac9ec486bbca69e447a8eba94e0ce3cd03ced0" \
-  '.id==9690576734 and .name==$name and .digest=="sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5" and .size_in_bytes==6987602' \
-  "$out/baseline-artifact.json"
-github_curl -L "$baseline_api/zip" -o "$out/baseline-artifact.zip"
-baseline_zip_digest="$(digest "$out/baseline-artifact.zip")"
-test "$baseline_zip_digest" = "sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5"
-baseline_extract="$out/baseline-extract"
-mkdir -p "$baseline_extract"
-unzip -q "$out/baseline-artifact.zip" -d "$baseline_extract"
-baseline_report="$baseline_extract/report.json"
+  '.id==9690576734 and .name==$name and .digest=="sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5" and .size_in_bytes==6987602 and .workflow_run.head_sha=="57ac9ec486bbca69e447a8eba94e0ce3cd03ced0"' \
+  "$baseline_manifest"
 test -f "$baseline_report"
+baseline_manifest_digest="$(digest "$baseline_report")"
 jq -e '.summary.closed_cells==39 and .summary.open_cells==3 and .summary.unknown_cells==0 and .summary.refuted_cells==0 and .summary.cells_total==42 and .summary.complete_use_cases==4 and .summary.use_cases_total==6 and .summary.remaining_cells==3' \
   "$baseline_report"
+cp "$baseline_manifest" "$out/baseline-manifest.json"
+cp "$baseline_report" "$out/baseline-report.json"
 jq -n --slurpfile before "$baseline_report" --slurpfile after "$out/report.json" \
   --arg artifact_id "9690576734" --arg artifact_name "language-utility-evidence-57ac9ec486bbca69e447a8eba94e0ce3cd03ced0" \
   --arg artifact_digest "sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5" \
-  --argjson artifact_size 6987602 --arg zip_digest "$baseline_zip_digest" '
+  --argjson artifact_size 6987602 --arg manifest_digest "$baseline_manifest_digest" '
   ($before[0].summary) as $b | ($after[0].summary) as $a |
   {schema:"gooo/language-utility-progress-receipt/v1",
-   baseline_artifact:{id:($artifact_id|tonumber),name:$artifact_name,digest:$artifact_digest,size_bytes:$artifact_size,downloaded_zip_digest:$zip_digest},
+   baseline_artifact:{id:($artifact_id|tonumber),name:$artifact_name,digest:$artifact_digest,size_bytes:$artifact_size,source_kind:"VERSIONED_REPOSITORY_MANIFEST",source_manifest_digest:$manifest_digest},
    contract:{cells_total_before:$b.cells_total,cells_total_after:$a.cells_total},
    before:{closed:$b.closed_cells,open:($b.open_cells+$b.unknown_cells),unknown:$b.unknown_cells,refuted:$b.refuted_cells,complete_use_cases:$b.complete_use_cases,remaining:$b.remaining_cells},
    after:{closed:$a.closed_cells,open:($a.open_cells+$a.unknown_cells),unknown:$a.unknown_cells,refuted:$a.refuted_cells,complete_use_cases:$a.complete_use_cases,remaining:$a.remaining_cells},

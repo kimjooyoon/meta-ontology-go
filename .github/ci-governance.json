@@ -5562,6 +5562,21 @@
         "internal/provenance/experience_memory_receipt_part01_test.go",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/domain-completeness-receipt-dev-20260928",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "docs/domain-completeness-receipt.schema.json",
+        "docs/domain-completeness-rfc.md",
+        "examples/external-capability-execution/authorization/foundation.json",
+        "internal/meta/externalcapabilityexecution/authorizationfoundation/contract.go",
+        "scripts/language-utility-evidence/baseline-manifest.json",
+        "scripts/language-utility-evidence/baseline-report.json",
+        "scripts/language-utility-evidence/main.sh"
+      ]
     }
   ],
   "protected_kernel_paths": [

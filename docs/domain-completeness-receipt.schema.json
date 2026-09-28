@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/domain-completeness-receipt.schema.json",
+  "title": "Domain completeness evidence receipt",
+  "description": "A profile- and snapshot-scoped evidence record. It is not a truth score.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile",
+    "snapshot",
+    "dimensions",
+    "investment"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "domain-completeness-receipt/v1"
+    },
+    "profile": {
+      "$ref": "#/$defs/profile"
+    },
+    "snapshot": {
+      "$ref": "#/$defs/snapshot"
+    },
+    "dimensions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/dimension"
+      }
+    },
+    "investment": {
+      "$ref": "#/$defs/investment"
+    },
+    "receipt_status": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "CLOSED",
+        "UNKNOWN",
+        "REFUTED"
+      ]
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+:[a-f0-9]{16,}$"
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain_id",
+        "version",
+        "scope_manifest_digest",
+        "evaluator_catalog_digest",
+        "boundary_policy_digest",
+        "investment_policy_digest",
+        "required_units",
+        "excluded_units"
+      ],
+      "properties": {
+        "domain_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope_manifest_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "evaluator_catalog_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "boundary_policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "investment_policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "required_units": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "excluded_units": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_digest",
+        "toolchain_digest",
+        "observed_at"
+      ],
+      "properties": {
+        "source_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "toolchain_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ci_run_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "dimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dimension",
+        "numerator",
+        "denominator",
+        "unit",
+        "normalization",
+        "predicate",
+        "evaluation_state",
+        "evidence_refs",
+        "boundary",
+        "cost"
+      ],
+      "properties": {
+        "dimension": {
+          "type": "string",
+          "minLength": 1
+        },
+        "numerator": {
+          "type": "number",
+          "minimum": 0
+        },
+        "denominator": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalization": {
+          "type": "string",
+          "minLength": 1
+        },
+        "predicate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evaluation_state": {
+          "type": "string",
+          "enum": [
+            "UNOBSERVED",
+            "OBSERVED",
+            "EXACT_BOUND",
+            "CLOSED",
+            "UNKNOWN",
+            "REFUTED",
+            "DEFERRED",
+            "NOT_RUN",
+            "ERROR"
+          ]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          },
+          "minItems": 1
+        },
+        "boundary": {
+          "$ref": "#/$defs/boundary"
+        },
+        "cost": {
+          "$ref": "#/$defs/cost"
+        }
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "ref",
+        "digest"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "non_executing",
+        "non_authorizing"
+      ],
+      "properties": {
+        "non_executing": {
+          "type": "boolean"
+        },
+        "non_authorizing": {
+          "type": "boolean"
+        },
+        "excluded_effects": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ci_minutes",
+        "engineer_hours",
+        "cache_is_non_semantic"
+      ],
+      "properties": {
+        "ci_minutes": {
+          "type": "number",
+          "minimum": 0
+        },
+        "engineer_hours": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cache_is_non_semantic": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "investment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_dimensions",
+        "target_units",
+        "hypothesis",
+        "ci_minutes_budget",
+        "engineer_hours_budget",
+        "expected_evidence_gain",
+        "stop_condition",
+        "replan_condition",
+        "planning_only"
+      ],
+      "properties": {
+        "target_dimensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "target_units": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "hypothesis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ci_minutes_budget": {
+          "type": "number",
+          "minimum": 0
+        },
+        "engineer_hours_budget": {
+          "type": "number",
+          "minimum": 0
+        },
+        "expected_evidence_gain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stop_condition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "replan_condition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "result_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        },
+        "planning_only": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}
