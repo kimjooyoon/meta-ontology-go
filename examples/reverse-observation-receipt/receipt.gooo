@@ -1,0 +1,34 @@
+module jev_reverse_observation_receipt
+
+input source_digest
+input declaration_digest
+input ir_digest
+input generated_artifact_digest
+input reverse_observation_digest
+input observed_stage
+input missing_stage
+input evidence_prefix_digest
+
+status OBSERVED source, declaration, IR, generation, and reverse observation are linked
+status DEFERRED a required provenance stage is not yet observed
+status UNKNOWN provenance identity or evidence is missing
+status MISMATCH reverse observation does not match the generated artifact
+
+field status
+field source_digest
+field declaration_digest
+field ir_digest
+field generated_artifact_digest
+field reverse_observation_digest
+field observed_stage
+field missing_stage
+field evidence_prefix_digest
+field receipt_digest
+
+constraint source_generation_reverse_chain
+constraint prefix_evidence_is_immutable
+constraint missing_stage_is_preserved
+constraint mismatch_is_not_success
+constraint no_execution
+constraint no_authorization
+constraint no_catalog_mutation
