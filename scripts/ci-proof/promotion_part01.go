@@ -10,9 +10,12 @@ const (
 )
 
 func validPromotionObservation(observation *promotionObservation, repository string, prNumber int64, baseSHA, headSHA, headRef string) bool {
+	// GitHub's aggregate merge state can be unstable while individual checks are
+	// reported. The required promotion checks are bound separately below.
 	if observation == nil ||
 		observation.Repository != repository || observation.PRNumber != prNumber || observation.Action == "" ||
-		observation.State != "open" || observation.Draft || observation.Merged || !observation.Mergeable || observation.MergeableState != "clean" ||
+		observation.State != "open" || observation.Draft || observation.Merged || !observation.Mergeable ||
+		(observation.MergeableState != "clean" && observation.MergeableState != "unstable") ||
 		observation.BaseRepo != repository || observation.BaseRef != "main" || observation.BaseSHA != baseSHA ||
 		observation.HeadRepo != repository || observation.HeadRef != headRef || observation.HeadSHA != headSHA ||
 		!validSHA(observation.BaseSHA) || !validSHA(observation.HeadSHA) || !validSHA(observation.HeadParentSHA) ||
