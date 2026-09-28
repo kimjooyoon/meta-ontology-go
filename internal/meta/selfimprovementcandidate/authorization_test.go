@@ -53,16 +53,17 @@ func authorizationJSONRoundTrip[T any](t *testing.T, value T) T {
 }
 
 func TestBuildAuthorizationRequestBindsExactCandidateAndLeavesLiveUnknown(t *testing.T) {
-	head, runID := fixtureSHA("e"), int64(45)
-	raw := authorizationCandidateRaw(head, runID)
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, raw, authorizationMetadata(head, runID))
+	head, sourceRunID, artifactRunID := fixtureSHA("e"), int64(45), int64(46)
+	raw := authorizationCandidateRaw(head, sourceRunID)
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, raw, authorizationMetadata(head, artifactRunID))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := ValidateAuthorizationRequest(request); err != nil {
 		t.Fatal(err)
 	}
-	if request.Candidate.SubjectSHA != head || request.Candidate.SourceWorkflowRunID != runID ||
+	if request.Candidate.SubjectSHA != head || request.Candidate.SourceWorkflowRunID != sourceRunID ||
+		request.Artifact.RunID != artifactRunID ||
 		request.Candidate.CandidateDigest == "" || request.Candidate.CandidateReportDigest == "" ||
 		request.Candidate.SourceObservationDigest == "" || request.Candidate.PolicyDigest == "" ||
 		request.Candidate.ContractCanonicalDigest == "" || request.Candidate.ScopeDigest == "" ||
@@ -72,7 +73,7 @@ func TestBuildAuthorizationRequestBindsExactCandidateAndLeavesLiveUnknown(t *tes
 	if request.Metrics.StructuralUnboundEdgesBefore != 1 || request.Metrics.StructuralUnboundEdgesAfter != 0 {
 		t.Fatalf("structural edge transition was not recorded: %+v", request.Metrics)
 	}
-	second, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, raw, authorizationMetadata(head, runID))
+	second, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, raw, authorizationMetadata(head, artifactRunID))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +86,8 @@ func TestBuildAuthorizationRequestBindsExactCandidateAndLeavesLiveUnknown(t *tes
 
 func TestVerifyAuthorizationResolutionAcceptsExactJSONRoundTripValue(t *testing.T) {
 	head := fixtureSHA("a")
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(head, 50), authorizationMetadata(head, 50))
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath,
+		authorizationCandidateRaw(head, 50), authorizationMetadata(head, 500))
 	if err != nil {
 		t.Fatal(err)
 	}
