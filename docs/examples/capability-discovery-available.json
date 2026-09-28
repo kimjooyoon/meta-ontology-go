@@ -1,0 +1,15 @@
+{
+  "schema_version": "capability.discovery.v1",
+  "status": "AVAILABLE",
+  "source_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "declaration_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "query_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "catalog_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "evidence_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+  "toolchain_identity": "gooo-jev/capability-discovery/v1",
+  "capability_ids": ["syntax_completion", "canonical_generation"],
+  "first_missing_stage": null,
+  "next_operation": "inspect_next_non_executing_operation",
+  "non_executing": true,
+  "non_authorizing": true
+}
