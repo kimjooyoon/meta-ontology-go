@@ -3,18 +3,19 @@ package valueexecution
 import (
 	"fmt"
 	"regexp"
+	"slices"
 )
 
 var commitPattern = regexp.MustCompile(`^[0-9a-f]{40}$`)
 
 func Validate(report Report, headSHA string) error {
-	if report.Schema != ReportSchema || report.HeadSHA != headSHA || !commitPattern.MatchString(headSHA) {
+	if report.Schema != ReportSchema || report.Scope != RegisteredValueOperationScope || report.HeadSHA != headSHA || !commitPattern.MatchString(headSHA) {
 		return fmt.Errorf("value witness identity is invalid")
 	}
 	if report.Decision != DecisionProven || report.Reason != ReasonExactWitness || report.Resolution != ResolutionCoreValue {
 		return fmt.Errorf("value witness failed closed: %s / %s / %s / %s", report.Decision, report.Reason, report.Resolution, firstUnsatisfiedIndicator(report.Indicators))
 	}
-	if report.ValueProgram != "int.add:1" || report.Registry.RegisteredOperations != 1 || report.Registry.InvokedOperations != 1 {
+	if report.ValueProgram != "int.add:1" || report.Registry.RegisteredOperations != 14 || report.Registry.InvokedOperations != 1 {
 		return fmt.Errorf("value program registry is not exact")
 	}
 	if !validDigest(report.SourceDigest) || !validDigest(report.ValueProgramDigest) || report.SemanticFingerprint == "" || report.CoreIRFingerprint == "" {
@@ -49,7 +50,7 @@ func Validate(report Report, headSHA string) error {
 			return fmt.Errorf("proof %s is invalid", proof.Choice)
 		}
 	}
-	if len(report.NonClaims) != 5 || report.Summary.RepositoryWrites != 0 || report.Authority.RepositoryMutationAuthorized || report.Authority.PromotionAuthorized || report.Authority.AutomaticAdoptionAuthorized {
+	if !slices.Equal(report.NonClaims, DefaultNonClaims()) || report.Summary.RepositoryWrites != 0 || report.Authority.RepositoryMutationAuthorized || report.Authority.PromotionAuthorized || report.Authority.AutomaticAdoptionAuthorized {
 		return fmt.Errorf("non-claim or authority boundary changed")
 	}
 	if report.Digest != reportDigest(report) {

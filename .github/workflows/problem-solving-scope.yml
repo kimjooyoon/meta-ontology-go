@@ -1,0 +1,111 @@
+name: Problem-solving scope conformance
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths:
+      - .github/agent-scope-table.md
+      - .github/ci-governance.json
+      - .github/workflows/problem-solving-scope.yml
+      - docs/governance/problem-solving-scope.md
+      - docs/governance/problem-solving-scope.json
+  push:
+    branches:
+      - dev
+    paths:
+      - .github/agent-scope-table.md
+      - .github/ci-governance.json
+      - .github/workflows/problem-solving-scope.yml
+      - docs/governance/problem-solving-scope.md
+      - docs/governance/problem-solving-scope.json
+
+permissions:
+  contents: read
+
+jobs:
+  scope-policy:
+    name: problem-solving-scope
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact policy head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - name: Validate machine-readable scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          policy=docs/governance/problem-solving-scope.json
+          jq -e '
+            .schema == "gooo/problem-solving-scope/v1" and
+            .primary_lane.name == "compiler-definition-and-defect-resolution" and
+            (.primary_lane.required_evidence | sort) == ["input_identity", "outcome", "source_head", "toolchain_identity"] and
+            (.resolution_scope.unit | sort) == ["evidence_identity", "registered_lane", "semantic_question"] and
+            .resolution_scope.repository_wide_stop == false and
+            (.resolution_scope.stop_only_when | sort) == ["SCOPE_CONFLICT", "SEMANTIC_DEFECT", "SEMANTIC_UNKNOWN"] and
+            (.resolution_scope.independent_lane_continues_when | sort) == ["ADVISORY_FAILURE", "INFRASTRUCTURE_FAILURE", "QUEUE_OR_STALE_OBSERVATION"] and
+            (.failure_classes | keys) == ["ADVISORY_FAILURE", "INFRASTRUCTURE_FAILURE", "QUEUE_OR_STALE_OBSERVATION", "SCOPE_CONFLICT", "SEMANTIC_DEFECT", "SEMANTIC_UNKNOWN"] and
+            .failure_classes.SEMANTIC_DEFECT.lane_effect == "STOP_AND_REPAIR" and
+            .failure_classes.SEMANTIC_UNKNOWN.lane_effect == "HOLD_SEMANTIC_LANE" and
+            .failure_classes.SCOPE_CONFLICT.lane_effect == "HOLD_CONFLICTING_LANE" and
+            (.failure_classes | to_entries | map(select(.key != "SEMANTIC_DEFECT") | .value.continue_independent_work) | all) and
+            (.continuation.never_relabel | sort) == ["ADVISORY_FAILURE", "INFRASTRUCTURE_FAILURE", "QUEUE_OR_STALE_OBSERVATION"] and
+            (.continuation.required_record_fields | sort) == ["cause", "evidence_identity", "next_operation", "source_head"] and
+            .continuation.blocked_scope == "registered_lane_only" and
+            .continuation.merge_authority == "protected_server_rules" and
+            .merge_boundary.semantic_closure == "COMPILER_REQUIRED" and
+            .merge_boundary.integration_authority == "PROTECTED_MERGE" and
+            (.merge_boundary.must_not_infer_from | sort) == ["DIAGNOSTIC", "PENDING_EXTERNAL", "queued_check", "successful_unrelated_check"] and
+            .decision_order == ["SEMANTIC_DEFECT", "SEMANTIC_UNKNOWN", "SCOPE_CONFLICT", "INFRASTRUCTURE_FAILURE", "QUEUE_OR_STALE_OBSERVATION", "ADVISORY_FAILURE"]
+          ' "$policy"
+
+      - name: Validate human-readable decision protocol
+        shell: bash
+        run: |
+          set -euo pipefail
+          doc=docs/governance/problem-solving-scope.md
+          assert_contains() {
+            local needle="$1"
+            if ! grep -Fq -- "$needle" "$doc"; then
+              echo "missing human-readable scope assertion: $needle" >&2
+              return 1
+            fi
+          }
+          assert_line() {
+            local needle="$1"
+            if ! grep -Fxq -- "$needle" "$doc"; then
+              echo "missing exact human-readable scope heading: $needle" >&2
+              return 1
+            fi
+          }
+          assert_line '## Resolution decision protocol'
+          assert_contains 'The repository is not the default unit of blockage'
+          assert_contains '`STOP_AND_REPAIR`'
+          assert_contains '`KEEP_PENDING_CONTINUE`'
+          assert_contains 'Merge authority is separate'
+          assert_contains '`evidence_identity`'
+          assert_line '## Bounded problem-solving scope'
+          assert_contains 'The default action'
+          assert_contains 'is therefore not'
+          assert_contains 'smallest affected lane'
+          assert_line '### CI is an observation boundary, not a universal authority'
+
+      - name: Publish exact policy observation
+        shell: bash
+        run: |
+          {
+            echo "### Problem-solving scope"
+            echo "- source head: \`${HEAD_SHA}\`"
+            echo "- semantic defect: \`STOP_AND_REPAIR\`"
+            echo "- infrastructure, queue, advisory: continue independently without relabeling"
+            echo "- bounded scope: registered lane + semantic question + evidence identity"
+            echo "- repository-wide stop: \`false\`"
+            echo "- semantic closure: focused \`COMPILER_REQUIRED\` only"
+            echo "- merge authority: protected server rules"
+          } >> "$GITHUB_STEP_SUMMARY"

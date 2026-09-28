@@ -1,14 +1,17 @@
 package feedbackstate
 
-func Evaluate(input Input) Report {
+func Evaluate(input Input) (Report, error) {
 	report := Report{Schema: ReportSchema, Repository: input.Repository, PredecessorSHA: input.PredecessorSHA}
 	observed := observation{writes: input.RepositoryWrites}
 	receipt, err := decode(input.Receipt)
 	if err != nil {
 		report.Decision, report.Reason = decisionClosed, "PREDECESSOR_RECEIPT_MALFORMED"
-		return finish(report, observed)
+		return finish(report, observed), nil
 	}
-	observed.writes += receipt.RepositoryWrites + receipt.Report.RepositoryWrites
+	observed.writes, err = AggregateRepositoryWrites(input.RepositoryWrites, receipt.RepositoryWrites, receipt.Report.RepositoryWrites)
+	if err != nil {
+		return Report{}, err
+	}
 	observed.identity = receipt.Schema == ReceiptSchema && receipt.Report.Schema == ResolutionSchema &&
 		receipt.Report.Feedback.Repository == input.Repository && receipt.Report.Feedback.CommitSHA == input.PredecessorSHA &&
 		input.Selection.ArtifactID > 0 && input.Selection.RunID > 0 && input.Selection.RunAttempt > 0
@@ -21,11 +24,11 @@ func Evaluate(input Input) Report {
 	reason := failureReason(input, receipt, observed, semantic.reason)
 	if reason != "" {
 		report.Decision, report.Reason = decisionClosed, reason
-		return finish(report, observed)
+		return finish(report, observed), nil
 	}
 	report.Decision, report.Reason = "READY", "PREDECESSOR_SEMANTIC_SNAPSHOT_READY"
 	report.Snapshot = &semantic.snapshot
-	return finish(report, observed)
+	return finish(report, observed), nil
 }
 
 func failureReason(input Input, receipt archivedReceipt, observed observation, semanticReason string) string {

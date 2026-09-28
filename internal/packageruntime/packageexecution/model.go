@@ -41,6 +41,7 @@ type Effects struct {
 
 type Receipt struct {
 	Schema               string                   `json:"schema"`
+	Scope                string                   `json:"scope"`
 	Decision             string                   `json:"decision"`
 	Reason               string                   `json:"reason"`
 	Resolution           string                   `json:"resolution"`
@@ -49,6 +50,7 @@ type Receipt struct {
 	Namespace            string                   `json:"namespace,omitempty"`
 	Entry                string                   `json:"entry"`
 	Sources              []SourceEvidence         `json:"sources"`
+	SourceIdentityDigest string                   `json:"source_identity_digest,omitempty"`
 	CombinedSourceDigest string                   `json:"combined_source_digest,omitempty"`
 	SemanticDigest       string                   `json:"semantic_digest,omitempty"`
 	Execution            *sourceexecution.Receipt `json:"execution,omitempty"`

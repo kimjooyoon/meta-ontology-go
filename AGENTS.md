@@ -20,22 +20,15 @@ more consistent. The detailed policy is in [docs/governance.md](docs/governance.
 - Provenance facts and verification evidence are append-only records during a
   build; they cannot silently rewrite source intent.
 - Ontology vocabulary, verifier semantics, and CI policy are protected kernel
-  files. Guardians review them; Builders do not weaken them to make a change pass.
+  files. CI validates exact source scope, semantic IDs, provenance, BX laws,
+  generated markers, and evidence freshness from the submitted revisions.
 
-## Agent roles
+## Machine authority
 
-- **Builder:** changes only the assigned authority view and supplies focused tests
-  or runnable evidence.
-- **Guardian:** inspects scope, IDs, provenance, BX laws, generated markers, and
-  freshness; does not implement the feature under review.
-- **Approver:** records review acceptance after required checks pass. Review
-  roles do not authorize a protected-branch promotion; that decision is made by
-  the CI-only proof and branch-protection contract below.
-- **Docs/example Builder:** owns `docs/**`, `examples/**`, and root `README.md`,
-  `CONTRIBUTING.md`, and `AGENTS.md`; it must not modify core package source.
-
-No single agent should implement a feature, weaken its verification, and approve
-the same change.
+The CI result is derived from the exact source revision and six canonical checks.
+Review identities, last-push approval, and a separate Guardian result are not
+inputs to the proof. Documentation and example ownership remains scoped to
+`docs/**`, `examples/**`, and the root governance files.
 
 ## BX gate
 
@@ -61,21 +54,26 @@ publishing are not current guarantees.
 
 ## CI-only branch flow
 
-Work branches use `agent/* -> dev`. The only promotion route is the exact
-same-repository `dev -> main` route; no intermediary branch participates in the
-current contract. Governance mode is `ci_only`: review roles, approval actors,
-and last-push approval fields are not CI proof inputs.
+Work branches use `agent/* -> dev`. Promotion uses a same-repository PR to
+`main` with either the exact `dev` head or a snapshot branch named
+`agent/main-promotion-snapshot-<dev-sha>`. CI accepts the snapshot only when its
+tree equals the live `dev` tree and its sole parent is the live `main` commit.
+No other main-target head is accepted. Governance mode is `ci_only`: review
+roles, approval actors, and last-push approval fields are not CI proof inputs.
 
 The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
-`Semantic conformance`, and `CI policy`. Protected `dev` requires those six
-contexts plus `CI guardian shadow`; protected `main` requires those six plus
-`CI guardian`. Both are seven-context protections.
+`Semantic conformance`, and `CI policy`. The live `main` protection rule
+requires exactly those six; `dev` has no required status contexts.
 
-For a `dev -> main` promotion, CI emits a digest-bound `promotion_authorization`
-with `source=dev`, `target=main`, and `operation=fast_forward`. It is `PASS`
-only for a current, open, non-draft, unmerged, clean, mergeable same-repository
-PR whose live `dev` ref is ahead of `main`, has `behind=0`, and has `main` as
-its merge base, with exact proof, Guardian, artifact, and protection evidence.
+For a promotion, CI emits a digest-bound `promotion_authorization` with
+`source=dev`, `target=main`, and `operation=fast_forward`. It is `PASS` only for
+a current, open, non-draft, unmerged, clean, mergeable same-repository PR whose
+candidate is either a direct fast-forward `dev` head or a source-bound snapshot
+with the exact live `dev` tree and live `main` parent. Topology must have
+`behind=0` and `main` as its merge base, with the exact proof and artifacts.
+GitHub's native branch
+rules enforce the six required statuses; proof does not make a second app-bound
+policy snapshot.
 The authorization never writes refs or protection. After a final exact reread,
 only a normal compare-and-swap/fast-forward operation may update `main`; force
 pushes and force updates are not permitted. Missing or stale evidence is

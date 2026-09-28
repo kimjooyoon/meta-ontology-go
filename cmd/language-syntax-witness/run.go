@@ -51,7 +51,7 @@ func build(cfg config) (languagesyntax.Report, error) {
 		return report, err
 	}
 	if report.Decision != languagesyntax.DecisionPass {
-		return report, fmt.Errorf("%s: %s", report.Decision, report.Reason)
+		return report, validatedNegativeReportError{decision: report.Decision, reason: report.Reason}
 	}
 	return report, nil
 }

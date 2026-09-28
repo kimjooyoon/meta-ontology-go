@@ -20,14 +20,14 @@ func TestOldProofAndReceiptSchemasFailClosed(t *testing.T) {
 	bundle := validProof()
 	bundle.Schema = "gooo/ci-proof/v3"
 	if err := validateProof(bundle); err == nil {
-		t.Fatal("old proof schema was accepted after GuardianEvidence contract migration")
+		t.Fatal("old proof schema was accepted after the proof contract migration")
 	}
 	bundle = validProof()
 	receipt := makeReceipt(bundle, contextInput{})
 	receipt.Schema = "gooo/provenance-receipt/v3"
 	filename := writeReceiptFixture(t, receipt)
 	if err := verifyReceipt(filename, bundle); err == nil {
-		t.Fatal("old receipt schema was accepted after GuardianEvidence contract migration")
+		t.Fatal("old receipt schema was accepted after the proof contract migration")
 	}
 }
 func TestProofUnknownFieldsFailClosed(t *testing.T) {

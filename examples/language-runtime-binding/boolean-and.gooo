@@ -1,0 +1,12 @@
+package runtimebinding
+namespace runtimebinding
+
+entity Integer id "gooo://runtime-binding/entity/integer"
+entity Boolean id "gooo://runtime-binding/entity/boolean"
+
+activity IsZero(Integer) -> Boolean computes "int.iszero:0"
+activity Not(Boolean) -> Boolean computes "bool.not:0"
+activity And(Boolean) -> Boolean computes "bool.and:1"
+
+bind IsZero.result -> Not.input
+bind Not.result -> And.input

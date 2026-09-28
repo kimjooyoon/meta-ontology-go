@@ -23,6 +23,8 @@ func (receipt *OperationReceipt) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("unsupported operation receipt schema %q", candidate.SchemaVersion)
 	}
 	if candidate.Operation == "" || candidate.Activity == "" || candidate.Output == "" ||
+		candidate.SubjectKind == "" || candidate.InputSubjectKind == "" || candidate.SubjectKind != candidate.InputSubjectKind ||
+		!validDigest(candidate.InputContractSourceDigest) || !validDigest(candidate.InputContractSemanticDigest) ||
 		candidate.Executor == "" || candidate.Evaluator == "" {
 		return fmt.Errorf("operation receipt is missing operation binding")
 	}

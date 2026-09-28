@@ -27,3 +27,16 @@ func countWitnesses(witnesses []subjectWitness) ledgerCounts {
 		SourceIndicatorsApplicable: values["source:applicable"], SourceIndicatorsNotApplicable: values["source:not-applicable"], WorkflowDiscoveryExemptions: values["workflow-discovery"],
 	}
 }
+
+func countSourceIndicatorApplicability(indicators []sourceIndicator) (int, int) {
+	applicable, notApplicable := 0, 0
+	for _, indicator := range indicators {
+		if indicator.Applicability == "APPLICABLE" {
+			applicable++
+		}
+		if indicator.Applicability == "NOT_APPLICABLE" {
+			notApplicable++
+		}
+	}
+	return applicable, notApplicable
+}

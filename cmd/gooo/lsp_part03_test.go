@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/kimjooyoon/meta-ontology-go/internal/lsp"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/lsp"
 )
 
 func TestRunLSPStaleVersionPreservesPriorOverlay(t *testing.T) {
@@ -38,7 +39,7 @@ func TestRunLSPStaleVersionPreservesPriorOverlay(t *testing.T) {
 		Result *lsp.Hover `json:"result"`
 	}
 	decodeLSPJSON(t, frames[3], &hover)
-	if hover.Result == nil || hover.Result.Contents.Value != "entity Order" {
+	if hover.Result == nil || hover.Result.Contents.Value != "entity Order (semantic ID: billing://entity/order)" {
 		t.Fatalf("stale overlay hover = %#v", hover.Result)
 	}
 	assertLSPResponseID(t, frames[4], 6)
@@ -63,8 +64,8 @@ func TestRunLSPUnknownAndMalformedRequestsFailThroughProtocol(t *testing.T) {
 	if got := lspResponseCode(t, frames[1]); got != -32700 {
 		t.Fatalf("malformed JSON code = %d, want -32700", got)
 	}
-	if got := lspResponseCode(t, frames[2]); got != -32601 {
-		t.Fatalf("deferred method code = %d, want -32601", got)
+	if got := lspResponseCode(t, frames[2]); got != -32602 {
+		t.Fatalf("malformed rename code = %d, want -32602", got)
 	}
 	if got := lspResponseCode(t, frames[3]); got != -32601 {
 		t.Fatalf("unknown method code = %d, want -32601", got)

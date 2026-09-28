@@ -15,9 +15,14 @@ func oneLineTokens(data []byte) (string, bool) {
 	var output strings.Builder
 	first := true
 	for {
-		_, symbol, literal := lexer.Scan()
+		position, symbol, literal := lexer.Scan()
 		if symbol == token.EOF {
 			break
+		}
+		// The fragment may continue outside this span. Its synthetic EOF
+		// semicolon is not a separator in the enclosing source expression.
+		if symbol == token.SEMICOLON && literal == "\n" && file.Offset(position) == len(data) {
+			continue
 		}
 		if symbol == token.COMMENT || symbol == token.ILLEGAL {
 			return "", false

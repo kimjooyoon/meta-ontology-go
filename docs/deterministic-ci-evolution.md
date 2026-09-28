@@ -42,9 +42,10 @@ boundaries, not claims that every future observer exists:
   `used` and activity-result `wasGeneratedBy` relations. Domain relations are
   not inferred from ordinary names or helper calls.
 - Current CI and promotion are fail-closed and CI-only. The six canonical proof
-  jobs, route-specific Guardian context, exact ref/topology evidence, and
-  promotion authorization are current governance contracts; richer metric
-  observers and self-hosted promotion are not.
+  jobs, exact ref/topology evidence, and promotion authorization are current
+  governance contracts. The Guardian context and duplicate live protection
+  observer have been retired; richer metric observers and self-hosted promotion
+  are not current capabilities.
 
 ### Retrospective: repeated speculative work
 

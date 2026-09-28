@@ -35,11 +35,16 @@ func bindSemanticInput(input feedbackpredecessor.Input, receipt predecessorRecei
 	if err != nil {
 		return feedbackstate.Input{}, fmt.Errorf("decode selected predecessor payload: %w", err)
 	}
+	repositoryWrites, err := feedbackstate.AggregateRepositoryWrites(
+		receipt.RepositoryWrites, receipt.Report.Summary.RepositoryWrites)
+	if err != nil {
+		return feedbackstate.Input{}, fmt.Errorf("aggregate predecessor repository writes: %w", err)
+	}
 	return feedbackstate.Input{
 		Repository: input.Repository, PredecessorSHA: input.PredecessorSHA,
 		Selection: feedbackstate.Selection{ArtifactID: selected.ArtifactID, RunID: selected.RunID,
 			RunAttempt: selected.RunAttempt, ReceiptDigest: selected.ReceiptDigest},
 		PayloadDigest: candidate.PayloadDigest, Receipt: json.RawMessage(payload),
-		RepositoryWrites: receipt.RepositoryWrites + receipt.Report.Summary.RepositoryWrites,
+		RepositoryWrites: repositoryWrites,
 	}, nil
 }

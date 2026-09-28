@@ -36,11 +36,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out exact subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
       - name: Set up Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           check-latest: true
@@ -126,7 +126,7 @@ jobs:
           sha256sum "$evidence" > "$work/evidence.json.sha256"
           cp "$RUNNER_TEMP/repository-projector-unformatted.txt" "$work/unformatted.txt"
       - name: Upload exact-head diagnostic evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: repository-projection-diagnostics-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/repository-projection-diagnostics

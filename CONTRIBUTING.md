@@ -19,14 +19,12 @@ do not document an API or command that is not implemented and tested.
 See [docs/governance.md](docs/governance.md) for the complete SSOT matrix and
 [docs/spec.md](docs/spec.md) for the current language contract.
 
-## Agent roles
+## Automated validation
 
-The author is the Builder: they change the scoped source view and add evidence.
-A Guardian reviews the semantic diff, provenance, generated-region integrity, and
-checks without weakening the gate. An Approver records review acceptance. These
-review roles are workflow only; they are not CI proof inputs or protected branch
-promotion authority. One person or agent must not implement a feature,
-weaken its verifier, and approve the same change.
+The six canonical CI checks validate semantic scope, provenance,
+generated-region integrity, and the exact source revision. A reviewer's identity,
+last-push approval, or a separate Guardian workflow is not part of the machine
+proof or promotion decision.
 
 For documentation or example work, the allowed ownership is `docs/**`,
 `examples/**`, and the root governance files `README.md`, `CONTRIBUTING.md`, and
@@ -40,24 +38,24 @@ For documentation or example work, the allowed ownership is `docs/**`,
    path; never silently include another agent's changes.
 3. Keep one semantic concern per PR. Explain the authority boundary, affected
    IDs, generated regions, and evidence in the PR body.
-4. Push the named branch and open a draft PR unless the owner explicitly requests
-   a ready-for-review PR. Request a Guardian review before approval.
+4. Push the named branch and open a PR. CI derives its decision from the exact
+   source and check evidence; there is no separate review-role input.
 5. If a generated output needs a structural change, change the DSL or generator
    in its owning PR and regenerate it. Never hand-edit generated regions.
 
 The branch contract is deterministic and CI-only:
 
-- Work branches target `dev`; no intermediary branch is a route, promotion
-  source, or ownership boundary.
+- Work branches target `dev`; no other feature branch is a promotion source or
+  ownership boundary.
 - The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
   `Semantic conformance`, and `CI policy`.
-- Protected `dev` requires those six contexts plus `CI guardian shadow`.
-  Protected `main` requires those six plus `CI guardian`. Each branch therefore
-  requires exactly seven contexts.
-- The only promotion is a same-repository PR with `base=main` and `head=dev`.
-  CI accepts it only when the PR is open, non-draft, unmerged, mergeable, clean,
-  and bound to the current refs with `main` as the merge base, `ahead > 0`, and
-  `behind = 0`.
+- The `main` rule requires all six canonical contexts; the `dev` rule has no
+  required status contexts.
+- Promotion is a same-repository PR to `main` from `dev`, or from the exact
+  snapshot branch `agent/main-promotion-snapshot-<dev-sha>`. CI accepts a
+  snapshot only when its tree equals live `dev` and its sole parent is live
+  `main`. Both routes require a clean, open, non-draft, unmerged PR, current refs,
+  `main` as merge base, `ahead > 0`, and `behind = 0`.
 - The proof contains a digest-bound `promotion_authorization` with
   `operation=fast_forward`, `source=dev`, and `target=main`. It is a pure,
   non-mutating authorization record and is `FAIL_CLOSED` for missing or stale

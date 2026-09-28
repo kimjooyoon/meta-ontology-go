@@ -2,8 +2,9 @@ package main
 
 import (
 	"bytes"
-	"github.com/kimjooyoon/meta-ontology-go/internal/lsp"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/lsp"
 )
 
 func TestRunLSPDocumentLifecycleAndDiagnosticRequestAreProtocolOnly(t *testing.T) {
@@ -44,7 +45,7 @@ func TestRunLSPDocumentLifecycleAndDiagnosticRequestAreProtocolOnly(t *testing.T
 		Result *lsp.Hover `json:"result"`
 	}
 	decodeLSPJSON(t, messages[2], &hover)
-	if hover.Result == nil || hover.Result.Contents.Value != "entity Order" {
+	if hover.Result == nil || hover.Result.Contents.Value != "entity Order (semantic ID: billing://entity/order)" {
 		t.Fatalf("hover result = %#v", hover.Result)
 	}
 	assertLSPResponseID(t, messages[3], 3)

@@ -27,12 +27,16 @@ func expectedRegistry() Registry {
 	ciTimeCausality.ImplicitActivityPorts = true
 	packageUnit := PackageDefinition{ID: "billing-package", Path: "examples/billing-package", Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"}, Entry: "PayOrder", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	symbolicUnit := PackageDefinition{ID: "symbolic-invocation-schema", Path: "examples/symbolic-invocation-schema", Members: []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo", "examples/symbolic-invocation-schema/reader-request.gooo"}, Entry: "Checkout", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
+	selfImprovementObservationUnit := PackageDefinition{ID: "self-improvement-observation", Path: "examples/self-improvement-observation", Members: []string{"examples/self-improvement-observation/observation.gooo"}, Entry: "DeclareOperationIntent", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
+	partialReuseUnit := PackageDefinition{ID: "self-improvement-partial-reuse", Path: "examples/self-improvement-partial-reuse", Members: []string{"examples/self-improvement-partial-reuse/main.gooo"}, Entry: "CreateReceipt", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
 		valid("billing", "examples/billing/main.gooo"),
 		valid("language-test-pass", "examples/language-test/main.gooo"),
 		valid("language-test-failing-assertion", "examples/language-test/failing.gooo"),
 		valid("bootstrap", "examples/bootstrap/main.gooo"),
 		valid("conformance", "examples/conformance/main.gooo"),
+		valid("compiler-self-improvement", "examples/compiler-self-improvement/main.gooo"),
+		valid("compiler-self-improvement-operation-envelope", "examples/compiler-self-improvement/operation-envelope.gooo"),
 		valid("causal-ci-selection", "examples/causal-ci-selection/main.gooo"),
 		valid("causal-ci-selection-semantic-intervention", "examples/causal-ci-selection/semantic-intervention.gooo"),
 		valid("causal-ci-selection-nonsemantic-intervention", "examples/causal-ci-selection/nonsemantic-intervention.gooo"),
@@ -48,9 +52,32 @@ func expectedRegistry() Registry {
 		valid("root-readme-indicator", "examples/root-readme-indicator/main.gooo"),
 		valid("self-improvement", "examples/self-improvement/main.gooo"),
 		valid("self-improvement-minimal-loop", "examples/self-improvement-minimal-loop/main.gooo"),
+		valid("self-improvement-operation-envelope", "examples/self-improvement-minimal-loop/operation-envelope.gooo"),
 		valid("self-improvement-candidate", "examples/self-improvement/candidate.gooo"),
+		valid("self-improvement-candidate-authorization", "examples/self-improvement/authorization.gooo"),
 		valid("self-improvement-transport", "examples/self-improvement/transport.gooo"),
+		valid("self-improvement-execution-contract", "examples/self-improvement-execution-contract/contract.gooo"),
+		valid("self-improvement-execution-grant", "examples/self-improvement-execution-grant/grant.gooo"),
 		valid("language-value-witness", "examples/language-value-witness/main.gooo"),
+		valid("language-value-witness-sign", "examples/language-value-witness/sign.gooo"),
+		valid("language-value-witness-mod", "examples/language-value-witness/mod.gooo"),
+		valid("language-value-witness-neg", "examples/language-value-witness/neg.gooo"),
+		valid("language-value-witness-abs", "examples/language-value-witness/abs.gooo"),
+		valid("language-value-witness-add", "examples/language-value-witness/add.gooo"),
+		valid("language-value-witness-mul", "examples/language-value-witness/mul.gooo"),
+		valid("language-value-witness-div", "examples/language-value-witness/div.gooo"),
+		valid("language-value-witness-max", "examples/language-value-witness/max.gooo"),
+		valid("language-value-witness-min", "examples/language-value-witness/min.gooo"),
+		valid("language-value-witness-iszero", "examples/language-value-witness/iszero.gooo"),
+		valid("language-value-witness-not", "examples/language-value-witness/not.gooo"),
+		valid("language-value-witness-equal", "examples/language-value-witness/equal.gooo"),
+		valid("language-value-witness-and", "examples/language-value-witness/and.gooo"),
+		valid("language-runtime-binding", "examples/language-runtime-binding/main.gooo"),
+		valid("language-runtime-binding-and", "examples/language-runtime-binding/boolean-and.gooo"),
+		valid("language-runtime-binding-typed-chain", "examples/language-runtime-binding/typed-chain.gooo"),
+		valid("language-runtime-binding-suspend-resume", "examples/language-runtime-binding/suspend-resume.gooo"),
+		{ID: "language-record-binding", Path: "examples/language-record-binding/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: true},
+		valid("self-improvement-value-witness-execution-input", "examples/self-improvement-value-witness-execution-input/contract.gooo"),
 		valid("language-operation-catalog", "examples/language-operation-catalog/main.gooo"),
 		valid("language-operation-catalog-unknown", "examples/language-operation-catalog/unknown.gooo"),
 		valid("claim-resolution-tuple", "cmd/gooo/testdata/claim-resolution/main.gooo"),
@@ -60,6 +87,8 @@ func expectedRegistry() Registry {
 		valid("directory-partition-ontology", "internal/meta/directorypartition/ontology.gooo"),
 		valid("repository-projection-repair", "examples/repository-projection-repair/main.gooo"),
 		valid("opentofu-observation", "examples/opentofu-observation/main.gooo"),
+		valid("public-self-observation-discovery-policy", "examples/self-improvement-discovery/discovery.gooo"),
+		valid("public-self-observation-discovery-project", "examples/self-improvement-discovery/project.gooo"),
 		invalid("unknown-keyword", "examples/language-syntax-roundtrip/unknown-keyword.txt", "parse.unexpected-token"),
 		invalid("unterminated-string", "examples/language-syntax-roundtrip/unterminated-string.txt", "lex.unterminated-string"),
 		invalid("source-execution-invalid", "examples/language-source-execution/invalid.gooo", "parse.unexpected-token"),
@@ -75,12 +104,20 @@ func expectedRegistry() Registry {
 		valid("reproducibility-semantics", "examples/reproducibility-semantics/main.gooo"),
 		entityFields,
 		valid("temporal-transition-ticket", "examples/temporal-transition-ticket/main.gooo"),
-		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
-	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit}, MetaSources: []string{"internal/meta/entityfields/entity-fields-meta.gooo"}}
+		valid("domain-observation-definition", "examples/domain-observation/definition.gooo"),
+		valid("domain-observation-runtime-binding", "examples/domain-observation/main.gooo"),
+		valid("domain-observation-incident", "examples/domain-observation/incident.gooo"),
+		valid("domain-observation-repair", "examples/domain-observation/repair.gooo"),
+		valid("repair-handoff", "examples/repair-handoff/main.gooo"),
+		governance("self-improvement-ci-continuation", "examples/self-improvement-ci-continuation/continuation.gooo"),
+	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit, selfImprovementObservationUnit, partialReuseUnit}, MetaSources: []string{"internal/meta/syntaxregistration/contract.gooo", "internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo", "internal/meta/generation/operation-input-contract.gooo", "internal/meta/generation/callback-preview-contract.gooo", "internal/meta/generation/callback-extraction-contract.gooo", "internal/meta/generation/self_improvement_outcome_contract.gooo", "internal/meta/policycompilation/revision-operation.gooo", "examples/relay-game-contract/main.gooo", "internal/meta/generation/experience_memory_receipt_contract.gooo"}}
 }
 
 func decodeRegistry(raw []byte) (Registry, error) {
 	registry := Registry{}
+	if err := validateJSONKeyUniqueness(raw); err != nil {
+		return registry, fmt.Errorf("decode language syntax registry: %w", err)
+	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&registry); err != nil {
@@ -96,6 +133,65 @@ func decodeRegistry(raw []byte) (Registry, error) {
 		return registry, fmt.Errorf("language syntax registry mismatch")
 	}
 	return registry, nil
+}
+
+func validateJSONKeyUniqueness(raw []byte) error {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	if err := walkJSONValue(decoder); err != nil {
+		return err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return fmt.Errorf("trailing JSON value")
+		}
+		return err
+	}
+	return nil
+}
+
+func walkJSONValue(decoder *json.Decoder) error {
+	token, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	delim, ok := token.(json.Delim)
+	if !ok {
+		return nil
+	}
+	switch delim {
+	case '{':
+		seen := map[string]bool{}
+		for decoder.More() {
+			keyToken, err := decoder.Token()
+			if err != nil {
+				return err
+			}
+			key, ok := keyToken.(string)
+			if !ok {
+				return fmt.Errorf("object key is not a string")
+			}
+			if seen[key] {
+				return fmt.Errorf("duplicate JSON object key %q", key)
+			}
+			seen[key] = true
+			if err := walkJSONValue(decoder); err != nil {
+				return err
+			}
+		}
+		_, err := decoder.Token()
+		return err
+	case '[':
+		for decoder.More() {
+			if err := walkJSONValue(decoder); err != nil {
+				return err
+			}
+		}
+		_, err := decoder.Token()
+		return err
+	default:
+		return fmt.Errorf("unexpected JSON delimiter %q", delim)
+	}
 }
 
 func CapabilityCaseTotal() int {
@@ -121,8 +217,8 @@ func validateCaseScopes(registry Registry) error {
 		}
 	}
 	if capability != FixedCapabilityTotal || governance != FixedGovernanceTotal ||
-		len(governanceIDs) != 1 || governanceIDs[0] != "live-governance-snapshot" ||
-		len(governancePaths) != 1 || governancePaths[0] != "examples/live-governance-snapshot/main.gooo" {
+		!reflect.DeepEqual(governanceIDs, []string{"self-improvement-ci-continuation"}) ||
+		!reflect.DeepEqual(governancePaths, []string{"examples/self-improvement-ci-continuation/continuation.gooo"}) {
 		return fmt.Errorf("language syntax scope partition mismatch")
 	}
 	return nil

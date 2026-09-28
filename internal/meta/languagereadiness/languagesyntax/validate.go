@@ -12,9 +12,13 @@ func Validate(report Report, expectedHead string) error {
 		report.HeadSHA != expectedHead || report.Source.ExpectedHeadSHA != expectedHead || !validHead(expectedHead) {
 		return fmt.Errorf("language syntax report identity mismatch")
 	}
+	corpusDigestValid := validDigest(report.Source.CorpusDigest)
+	if !report.Source.ObservationKnown {
+		corpusDigestValid = report.Source.CorpusDigest == invalidDigest
+	}
 	if len(report.Cases) != totalCases || len(report.Indicators) != 16 || len(report.Proofs) != 3 ||
 		!validDigest(report.Source.ConceptArtifactDigest) || !validDigest(report.Source.CatalogDigest) ||
-		!validDigest(report.Source.RegistryDigest) || !validDigest(report.Source.CorpusDigest) {
+		!validDigest(report.Source.RegistryDigest) || !corpusDigestValid {
 		return fmt.Errorf("language syntax report shape mismatch")
 	}
 	if report.Source.ObservationKnown && report.Source.CorpusDigest != digestJSON(report.Source.GoooFiles) {

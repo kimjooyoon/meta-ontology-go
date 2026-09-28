@@ -15,6 +15,10 @@ func parseQueryStringArgument(options queryOptions, arg, value string) (queryOpt
 		target = &options.layer
 	case "--direction":
 		target = &options.direction
+	case "--story":
+		target = &options.storyID
+	case "--provenance-ledger":
+		target = &options.ledgerPath
 	default:
 		options.operation = "invalid"
 		return options, ""

@@ -19,11 +19,12 @@ entity SourceRepacker id "executor://bootstrap/source-repacker"
 entity RefactorMetrics id "executor://scripts/refactor-metrics"
 entity SourceSplitter id "executor://scripts/source-splitter"
 entity FunctionExtractor id "executor://bootstrap/function-extractor"
+entity SyntaxRegistrationWorker id "executor://scripts/meta-execution:registration-worker"
 
 activity Measure(SourceTree) -> SourceMetrics
 activity ChooseProof(Foundation, Coherence, Regression) -> ProofChoice
 activity Plan(SourceMetrics, ProofChoice) -> GenerationPlan
-activity Execute(GenerationPlan, SourceRepacker, RefactorMetrics, SourceSplitter, FunctionExtractor) -> ExecutionManifest
+activity Execute(GenerationPlan, SourceRepacker, RefactorMetrics, SourceSplitter, FunctionExtractor, SyntaxRegistrationWorker) -> ExecutionManifest
 activity Evaluate(ExecutionManifest) -> Receipt
 activity Verify(Receipt) -> Evidence
 activity Observe(LanguageExperimentReceipt) -> ReadOnlyImprovementInput

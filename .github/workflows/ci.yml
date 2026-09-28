@@ -16,9 +16,6 @@ permissions:
   contents: read
   actions: read
   checks: read
-  # Branch protection is intentionally not observed from this pull_request
-  # workflow. Main promotion consumes the base-pinned Guardian envelope.
-  # administration: read must not be added here.
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.run_attempt > 1 && format('replay-{0}', github.run_id) || 'head' }}
@@ -29,12 +26,12 @@ jobs:
     name: gofmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -187,7 +184,8 @@ jobs:
             "$receipt" > /dev/null
           echo "format remediation paths=$path_count replay_equal=$replay_equal fixed_point=$fixed_point source_repository_writes=$source_repository_writes"
       - name: Upload Go format remediation artifact
-        uses: actions/upload-artifact@v6
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
         with:
           name: go-format-remediation-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -227,12 +225,12 @@ jobs:
     name: go vet
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -247,12 +245,12 @@ jobs:
     name: go test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -266,13 +264,14 @@ jobs:
   race:
     name: go test -race
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -287,12 +286,12 @@ jobs:
     name: Semantic conformance
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -312,15 +311,15 @@ jobs:
   policy:
     name: CI policy
     needs: [format, vet, test, race, semantic]
-    if: ${{ always() }}
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -354,7 +353,18 @@ jobs:
           actual_head="$(git rev-parse HEAD)"
           test "$actual_head" = "$EXPECTED_HEAD"
           git rev-parse --verify "$EXPECTED_BASE^{commit}" >/dev/null
+      - name: Preflight exact source identity before meta execution
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev' }}
+        timeout-minutes: 5
+        env:
+          GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}
+          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
+          GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        # Confirm the pinned source identity without consulting branch/path
+        # ownership or making an early PR-route decision.
+        run: go run ./scripts/verify --skip-caps --head= --base=
       - name: Emit source metrics (go/gooo + folders/files)
+        timeout-minutes: 15
         env:
           METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
@@ -384,9 +394,36 @@ jobs:
           cmp -s "$METRICS_DIR/self-improvement-plan.json" "$METRICS_DIR/self-improvement-replay.json"
           bash ./scripts/operation-artifact-ci/build-observations.sh "$METRICS_DIR"
           bash ./scripts/operation-artifact-ci/evaluate.sh "$METRICS_DIR"
+      # Each execution includes native first/replay verification internally.
+      # The exact-head focused run for PR #739 took 23m54s; do not put both
+      # complete executions under the inventory step's 15-minute budget.
+      - name: Build diagnostic boundary cost reporter
+        timeout-minutes: 5
+        run: go build -o "$RUNNER_TEMP/meta-cost-report" ./scripts/meta-cost-report
+      - name: Execute declared meta-operation plan
+        timeout-minutes: 30
+        env:
+          METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: |
           go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution.json"
+      - name: Replay declared meta-operation plan
+        timeout-minutes: 30
+        env:
+          METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: |
           go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution-replay.json"
           cmp -s "$METRICS_DIR/self-improvement-execution.json" "$METRICS_DIR/self-improvement-execution-replay.json"
+      - name: Emit source metric receipts and feedback
+        timeout-minutes: 15
+        env:
+          METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: |
           go run ./scripts/meta-receipts -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-receipts.json"
           go run ./scripts/meta-receipts -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-receipts-replay.json"
           cmp -s "$METRICS_DIR/self-improvement-receipts.json" "$METRICS_DIR/self-improvement-receipts-replay.json"
@@ -421,7 +458,7 @@ jobs:
           cat "$METRICS_DIR/ci-summary.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload source metrics artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: source-line-metrics-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/source-metrics.json
@@ -429,7 +466,7 @@ jobs:
           retention-days: 30
       - name: Upload meta-binding coverage artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: meta-binding-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/meta-binding-report.json
@@ -437,7 +474,7 @@ jobs:
           retention-days: 30
       - name: Upload meta-actionability artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: meta-actionability-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/meta-actionability-report.json
@@ -445,7 +482,7 @@ jobs:
           retention-days: 30
       - name: Upload directory partition plan artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: directory-partition-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/directory-partition-report.json
@@ -453,7 +490,7 @@ jobs:
           retention-days: 30
       - name: Upload directory kind separation plan artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: directory-kind-separation-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/directory-kind-report.json
@@ -461,42 +498,107 @@ jobs:
           retention-days: 30
       - name: Upload self-improvement generation artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-generation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-plan.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload operation artifact coverage
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: operation-artifact-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/operation-artifact
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement execution artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-execution-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-execution.json
           if-no-files-found: error
           retention-days: 30
+      - name: Preserve operation boundary journals
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: meta-boundary-journals-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/source-metrics/*.trace.ndjson
+            ${{ runner.temp }}/source-metrics/*.verifier-package-summaries.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Reconstruct observed boundary costs
+        if: ${{ always() }}
+        timeout-minutes: 2
+        env:
+          OBSERVER_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          JOURNAL_DIR: ${{ runner.temp }}/source-metrics
+          COST_DIR: ${{ runner.temp }}/meta-boundary-cost
+          COST_REPORTER: ${{ runner.temp }}/meta-cost-report
+        run: |
+          mkdir -p "$COST_DIR"
+          unknown() {
+            jq -n --arg head "$OBSERVER_HEAD_SHA" --arg reason "$2" --arg next "$3" \
+              '{schema:"gooo/meta-boundary-cost-publication/v1", state:"UNKNOWN",
+                stage:"CI_DIAGNOSTIC_PUBLICATION", step:"RECONSTRUCT_BOUNDARY_COSTS",
+                reason:$reason, unknown_class:"DIRECT_MISSING", next_operation:$next, blocked_by:[],
+                observer_head_sha:$head, authenticity:"UNVERIFIED",
+                scope:"DIAGNOSTIC_ONLY_NO_SEMANTIC_PERMISSION", improvement:"UNKNOWN"}' > "$1"
+          }
+          shopt -s nullglob
+          journals=("$JOURNAL_DIR"/*.trace.ndjson)
+          if ((${#journals[@]} == 0)); then
+            unknown "$COST_DIR/availability.json" BOUNDARY_JOURNAL_MISSING OBSERVE_NATIVE_DRIVER_INVOCATION
+            exit 0
+          fi
+          if [[ ! -x "$COST_REPORTER" ]]; then
+            unknown "$COST_DIR/availability.json" COST_REPORTER_BINARY_MISSING BUILD_EXACT_HEAD_COST_REPORTER
+            exit 1
+          fi
+          status=0
+          for journal in "${journals[@]}"; do
+            name="$(basename "$journal")"
+            output="$COST_DIR/$name.cost.json"
+            sha256sum "$journal" > "$COST_DIR/$name.input.sha256"
+            if [[ ! -s "$journal" ]]; then
+              unknown "$COST_DIR/$name.availability.json" BOUNDARY_JOURNAL_EMPTY OBSERVE_NATIVE_DRIVER_INVOCATION
+              continue
+            fi
+            if "$COST_REPORTER" < "$journal" > "$output.partial" 2> "$COST_DIR/$name.stderr.txt"; then
+              mv "$output.partial" "$output"
+            else
+              unknown "$COST_DIR/$name.availability.json" COST_REPORT_NOT_PRODUCED INSPECT_BOUNDARY_REPORTER_STDERR
+              status=1
+            fi
+          done
+          exit "$status"
+      - name: Preserve reconstructed boundary costs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: meta-boundary-cost-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/meta-boundary-cost
+            ${{ runner.temp }}/source-metrics/*.trace.ndjson
+          if-no-files-found: warn
+          retention-days: 30
       - name: Upload self-improvement receipt artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-receipts-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-receipts.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement provenance artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-provenance.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload artifact feedback resolution
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: artifact-feedback-resolution-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -505,7 +607,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload CI summary indicator artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-summary-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/ci-summary.json
@@ -516,7 +618,7 @@ jobs:
         env:
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
-      - name: Check changed-file scope and PR target
+      - name: Verify exact PR route and protected target
         if: github.event_name == 'pull_request'
         env:
           GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
@@ -528,7 +630,6 @@ jobs:
           GOOO_REPOSITORY: ${{ github.repository }}
           GOOO_PR_NUMBER: ${{ github.event.pull_request.number || 0 }}
           GOOO_PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-          GOOO_HUMAN_DECISION: "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
           GOOO_NON_ROUTE_RESULTS: "format=${{ needs.format.result }},vet=${{ needs.vet.result }},test=${{ needs.test.result }},race=${{ needs.race.result }},semantic=${{ needs.semantic.result }}"
         run: go run ./scripts/verify --skip-caps
       - name: Validate source metric and meta evidence on protected push
@@ -539,15 +640,15 @@ jobs:
   evidence:
     name: CI evidence
     needs: [format, vet, test, race, semantic, policy]
-    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -557,7 +658,7 @@ jobs:
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Download exact artifact provenance
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ci-meta-provenance
@@ -566,12 +667,9 @@ jobs:
           node scripts/ci-proof/artifacts_test.js
           node scripts/ci-proof/route_test.js
           node scripts/ci-proof/concurrency_test.js
-          node scripts/ci-proof/foundation_authorization_test.js
-          node scripts/ci-proof/guardian_test.js
-          node scripts/ci-proof/source_migration_v3_test.js
           node scripts/ci-proof/time_causality_v011_test.js
       - name: Collect terminal canonical job evidence
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ github.token }}
           script: |
@@ -620,7 +718,7 @@ jobs:
           go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --provenance ci-meta-provenance/self-improvement-provenance.json --output ci-evidence.json
           go run ./scripts/ci-evidence --verify ci-evidence.json
       - name: Write machine-readable domain evidence
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
@@ -640,7 +738,11 @@ jobs:
               base_ref: baseRef, base_sha: baseSha, head_sha: headSha, event_ref: context.ref, checkout_ref: headSha,
               run_id: context.runId, run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1), workflow_sha: process.env.CI_WORKFLOW_SHA,
               cli: {command: 'go run ./cmd/gooo check examples/billing/main.gooo', fixture: 'examples/billing/main.gooo', status: 'verified', available: true, output, output_sha256: crypto.createHash('sha256').update(output).digest('hex')},
-              graph: {command: 'go run ./cmd/gooo graph-dump examples/billing/main.gooo', status: 'deferred', available: false, reason: 'graph-dump is not implemented in the current checkout', output_sha256: crypto.createHash('sha256').update('').digest('hex')},
+              graph: {
+                command: 'go run ./cmd/gooo graph dump examples/billing/main.gooo', status: 'deferred', available: false,
+                reason: 'GRAPH_OBSERVER_NOT_RUN', output_sha256: crypto.createHash('sha256').update('').digest('hex'),
+                observation: {state: 'UNKNOWN', stage: 'DOMAIN_EVIDENCE', step: 'GRAPH_DUMP', reason: 'GRAPH_OBSERVER_NOT_RUN', unknown_class: 'DIRECT_MISSING', next_operation: 'RUN_GRAPH_DUMP_OBSERVER', blocked_by: []},
+              },
               observer_receipt_refs: [], observer_status: 'unavailable', protection_status: 'unavailable', provenance_status: 'not_applicable',
               digests: {source_sha256: evidence.digests.source_sha256, ir_sha256: evidence.digests.ir_sha256, generated_output_sha256: evidence.digests.generated_output_sha256, bundle_sha256: evidence.digests.bundle_sha256, domain_sha256: ''},
               missing_reasons: {protection: 'domain_protection_observer_unavailable'},
@@ -649,7 +751,7 @@ jobs:
             domain.digests.domain_sha256 = crypto.createHash('sha256').update(JSON.stringify(domainPayload)).digest('hex');
             fs.writeFileSync('ci-domain-evidence.json', JSON.stringify(domain, null, 2) + '\n');
       - name: Upload CI evidence bundle
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -661,15 +763,15 @@ jobs:
   proof:
     name: CI proof bundle
     needs: [format, vet, test, race, semantic, policy, evidence, feedback-predecessor]
-    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -680,7 +782,7 @@ jobs:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Resolve CI concurrency lane
         id: concurrency-lane
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_WORKFLOW: ${{ github.workflow }}
@@ -713,7 +815,7 @@ jobs:
             }
       - name: Resolve canonical evidence lineage
         id: evidence-lineage
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
         with:
@@ -746,12 +848,12 @@ jobs:
             }
             core.setOutput('artifact-name', report.selected.name);
       - name: Download canonical evidence
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ${{ steps.evidence-lineage.outputs.artifact-name }}
           path: ci-evidence-input
       - name: Collect terminal canonical jobs
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
         with:
@@ -795,7 +897,7 @@ jobs:
           test -z "$(gofmt -l ci-generated/first/semantic.gooo.go)"
           test -z "$(git diff --name-only)"
       - name: Compile deterministic proof route
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             const fs = require('fs');
@@ -811,187 +913,72 @@ jobs:
               headRef: pull ? pull.head.ref : '',
             });
             fs.writeFileSync('ci-proof-route.json', JSON.stringify(evidence, null, 2) + '\n');
-      - name: Select exact Guardian promotion evidence
-        if: github.event_name == 'pull_request' && github.base_ref == 'main' && (github.event.pull_request.number != 602 || github.head_ref != 'agent/foundation-discovery-recovery-20260830' || github.event.pull_request.base.sha != 'cd9727af80f5118405290d3be96890c18e1529c0')
-        uses: actions/github-script@v8
-        env:
-          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+      - name: Observe exact promotion tuple
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ github.token }}
           script: |
             const fs = require('fs');
             const eventPull = context.payload.pull_request;
-            const pullResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: eventPull.number});
-            const pull = pullResponse.data;
-            if (!pull || pull.base.ref !== 'main' || pull.base.sha !== eventPull.base.sha || pull.head.ref !== eventPull.head.ref || pull.head.sha !== eventPull.head.sha || pull.base.repo.full_name !== context.payload.repository.full_name || pull.head.repo.full_name !== context.payload.repository.full_name) throw new Error('promotion PR changed during Guardian selection');
-            const expectedHead = pull.head.sha;
-            const runs = [];
-            for (let page = 1; page <= 1000; page++) {
-              const response = await github.rest.actions.listWorkflowRuns({owner: context.repo.owner, repo: context.repo.repo, workflow_id: 'ci-guardian.yml', event: 'pull_request_target', per_page: 100, page});
-              if (!response.data || !Array.isArray(response.data.workflow_runs)) throw new Error('Guardian workflow run API returned malformed data');
-              runs.push(...response.data.workflow_runs);
-              if (response.data.workflow_runs.length < 100) break;
-              if (page === 1000) throw new Error('Guardian workflow run pagination exceeded the fail-closed page limit');
-            }
-            const matching = runs.filter(run => run.workflow_id && run.event === 'pull_request_target' && run.head_sha === expectedHead && run.head_branch === pull.head.ref && Array.isArray(run.pull_requests) && run.pull_requests.some(candidate => Number(candidate.number) === pull.number && candidate.base && candidate.base.ref === 'main' && candidate.base.sha === pull.base.sha && candidate.head && candidate.head.ref === pull.head.ref && candidate.head.sha === pull.head.sha));
-            matching.sort((left, right) => Number(right.run_number || 0) - Number(left.run_number || 0) || Number(right.run_attempt || 1) - Number(left.run_attempt || 1) || Number(right.id) - Number(left.id));
-            if (matching.length === 0) throw new Error('no current exact-head Guardian run exists');
-            const selected = matching[0];
-            if (selected.status !== 'completed' || selected.conclusion !== 'success') throw new Error('latest exact-head Guardian run is not successful and terminal');
-            const selectedKey = `${selected.run_number || 0}:${selected.run_attempt || 1}:${selected.id}`;
-            const sameMax = matching.filter(run => `${run.run_number || 0}:${run.run_attempt || 1}:${run.id}` === selectedKey);
-            if (sameMax.length !== 1) throw new Error('Guardian run selection is ambiguous');
-            const workflow = await github.rest.actions.getWorkflow({owner: context.repo.owner, repo: context.repo.repo, workflow_id: selected.workflow_id});
-            if (!workflow.data || workflow.data.id !== selected.workflow_id || workflow.data.path !== '.github/workflows/ci-guardian.yml') throw new Error('selected workflow is not ci-guardian.yml');
-            const jobs = [];
-            for (let page = 1; page <= 1000; page++) {
-              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: selected.id, per_page: 100, page});
-              if (!response.data || !Array.isArray(response.data.jobs)) throw new Error('Guardian job API returned malformed data');
-              jobs.push(...response.data.jobs);
-              if (response.data.jobs.length < 100) break;
-              if (page === 1000) throw new Error('Guardian job pagination exceeded the fail-closed page limit');
-            }
-            const guardianJobs = jobs.filter(job => job.name === 'CI guardian' && job.status === 'completed' && job.conclusion === 'success' && job.head_sha === expectedHead && typeof job.check_run_url === 'string');
-            if (guardianJobs.length !== 1) throw new Error('selected Guardian run does not have exactly one successful exact-head CI guardian job');
-            const checkURL = guardianJobs[0].check_run_url;
-            const checkResponse = await github.request(checkURL);
-            const check = checkResponse.data;
-            if (!check || check.name !== 'CI guardian' || !check.app || check.app.id !== 15368 || check.status !== 'completed' || check.conclusion !== 'success' || check.head_sha !== expectedHead || !check.check_suite || check.check_suite.id <= 0 || !String(check.details_url || '').includes(`/actions/runs/${selected.id}/`)) throw new Error('selected Guardian job check is not app-bound, terminal, or exact-head');
-            const suiteResponse = await github.rest.checks.getSuite({owner: context.repo.owner, repo: context.repo.repo, check_suite_id: check.check_suite.id});
-            const suite = suiteResponse.data;
-            if (!suite || suite.id !== check.check_suite.id || suite.app?.id !== 15368 || suite.status !== 'completed' || suite.conclusion !== 'success' || suite.head_sha !== expectedHead) throw new Error('selected Guardian check suite is not app-bound, terminal, or exact-head');
-            const suiteChecks = [];
-            for (let page = 1; page <= 1000; page++) {
-              const response = await github.rest.checks.listForSuite({owner: context.repo.owner, repo: context.repo.repo, check_suite_id: suite.id, per_page: 100, page});
-              if (!response.data || !Array.isArray(response.data.check_runs)) throw new Error('Guardian check API returned malformed data');
-              suiteChecks.push(...response.data.check_runs);
-              if (response.data.check_runs.length < 100) break;
-              if (page === 1000) throw new Error('Guardian check pagination exceeded the fail-closed page limit');
-            }
-            const suiteGuardianChecks = suiteChecks.filter(candidate => candidate.name === 'CI guardian');
-            if (suiteGuardianChecks.length !== 1 || suiteGuardianChecks[0].id !== check.id || suiteGuardianChecks[0].app?.id !== 15368 || suiteGuardianChecks[0].head_sha !== expectedHead) throw new Error('selected Guardian check suite is ambiguous or not app-bound');
-            const attempt = Number(selected.run_attempt || 1);
-            const expectedName = `ci-guardian-${selected.id}-${attempt}`;
-            const artifacts = [];
-            for (let page = 1; page <= 1000; page++) {
-              const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: selected.id, per_page: 100, page});
-              if (!response.data || !Array.isArray(response.data.artifacts)) throw new Error('Guardian artifact API returned malformed data');
-              artifacts.push(...response.data.artifacts);
-              if (response.data.artifacts.length < 100) break;
-              if (page === 1000) throw new Error('Guardian artifact pagination exceeded the fail-closed page limit');
-            }
-            const sameName = artifacts.filter(artifact => artifact.name === expectedName);
-            if (sameName.length !== 1 || sameName[0].expired || sameName[0].id <= 0 || sameName[0].size_in_bytes <= 0 || !/^sha256:[0-9a-f]{64}$/.test(sameName[0].digest || '')) throw new Error('selected Guardian run does not have exactly one current digest-bound artifact');
-            fs.writeFileSync('ci-guardian-selection.json', JSON.stringify({repository: context.payload.repository.full_name, pr_number: pull.number, action: context.payload.action, base_repo: pull.base.repo.full_name, base_ref: pull.base.ref, base_sha: pull.base.sha, head_repo: pull.head.repo.full_name, head_ref: pull.head.ref, head_sha: pull.head.sha, run_id: selected.id, run_attempt: attempt, workflow_id: selected.workflow_id, workflow_path: workflow.data.path, run_event: selected.event, run_status: selected.status, run_conclusion: selected.conclusion, run_created_at: selected.created_at, run_number: selected.run_number, job: {id: guardianJobs[0].id, name: guardianJobs[0].name, status: guardianJobs[0].status, conclusion: guardianJobs[0].conclusion, head_sha: guardianJobs[0].head_sha}, check: {id: check.id, name: check.name, app_id: check.app.id, status: check.status, conclusion: check.conclusion, head_sha: check.head_sha, suite_id: suite.id, suite_head_sha: suite.head_sha}, artifact: {id: sameName[0].id, name: sameName[0].name, size: sameName[0].size_in_bytes, expired: sameName[0].expired, digest: sameName[0].digest}, expected_head_sha: expectedHead}, null, 2) + '\n');
-      - name: Download selected Guardian artifact
-        if: github.event_name == 'pull_request' && github.base_ref == 'main' && (github.event.pull_request.number != 602 || github.head_ref != 'agent/foundation-discovery-recovery-20260830' || github.event.pull_request.base.sha != 'cd9727af80f5118405290d3be96890c18e1529c0')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          artifact_id="$(jq -r '.artifact.id' ci-guardian-selection.json)"
-          curl --fail --silent --show-error --location \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" \
-            --output ci-guardian-artifact.zip
-          expected_digest="$(jq -r '.artifact.digest' ci-guardian-selection.json | sed 's/^sha256://')"
-          actual_digest="$(sha256sum ci-guardian-artifact.zip | awk '{print $1}')"
-          test -n "$expected_digest" && test "$actual_digest" = "$expected_digest"
-          printf '%s\n' "$actual_digest" > ci-guardian-zip-sha256.txt
-          mkdir -p ci-guardian-input
-          unzip -oq ci-guardian-artifact.zip -d ci-guardian-input
-          test -s ci-guardian-input/ci-guardian.json
-      - name: Validate Guardian promotion evidence
-        if: github.event_name == 'pull_request' && github.base_ref == 'main' && (github.event.pull_request.number != 602 || github.head_ref != 'agent/foundation-discovery-recovery-20260830' || github.event.pull_request.base.sha != 'cd9727af80f5118405290d3be96890c18e1529c0')
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const fs = require('fs');
-            const crypto = require('crypto');
-            const guardian = require('./scripts/ci-proof/guardian');
-            const eventPull = context.payload.pull_request;
-            const currentPullResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: eventPull.number});
-            const pull = currentPullResponse.data;
-            if (!pull || pull.number !== eventPull.number || pull.base?.ref !== eventPull.base?.ref || pull.base?.sha !== eventPull.base?.sha || pull.head?.ref !== eventPull.head?.ref || pull.head?.sha !== eventPull.head?.sha) throw new Error('promotion PR identity drifted before Guardian evidence validation');
-            const selection = JSON.parse(fs.readFileSync('ci-guardian-selection.json', 'utf8'));
-            const manifest = JSON.parse(fs.readFileSync('ci-guardian-input/ci-guardian.json', 'utf8'));
-            const live = await guardian.readLiveTopology({getRef: p => github.rest.git.getRef(p), compareCommits: p => github.rest.repos.compareCommits(p), owner: context.repo.owner, repo: context.repo.repo});
-            fs.writeFileSync('ci-promotion-observation.json', JSON.stringify({repository: pull.base.repo.full_name, pr_number: pull.number, action: context.payload.action, state: pull.state, draft: pull.draft === true, merged: pull.merged === true, mergeable: pull.mergeable === true, mergeable_state: pull.mergeable_state, base_repo: pull.base.repo.full_name, base_ref: pull.base.ref, base_sha: pull.base.sha, head_repo: pull.head.repo.full_name, head_ref: pull.head.ref, head_sha: pull.head.sha, live_dev_sha: live.refs.dev_sha, live_main_sha: live.refs.main_sha, topology: live.topology}, null, 2) + '\n');
-            const expected = {
-              repository: context.payload.repository.full_name, pull_request_number: pull.number, action: context.payload.action,
-              base_repo: pull.base.repo.full_name, base_ref: pull.base.ref, base_sha: pull.base.sha,
-              head_repo: pull.head.repo.full_name, head_ref: pull.head.ref, head_sha: pull.head.sha,
-              default_branch: context.payload.repository.default_branch, workflow_ref: `${context.payload.repository.full_name}/.github/workflows/ci-guardian.yml@refs/heads/dev`, workflow_sha: live.refs.dev_sha,
-              runtime_ref: 'refs/heads/dev', runtime_sha: live.refs.dev_sha, event_ref: 'refs/heads/dev', run_id: selection.run_id, run_attempt: selection.run_attempt,
+            const current = (await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: eventPull.number})).data;
+            const exactPull = current && current.base?.ref === 'main' && current.base?.sha === eventPull.base?.sha &&
+              current.head?.ref === eventPull.head?.ref && current.head?.sha === eventPull.head?.sha &&
+              current.base?.repo?.full_name === context.payload.repository.full_name &&
+              current.head?.repo?.full_name === context.payload.repository.full_name;
+            if (!exactPull) throw new Error('promotion PR tuple changed during CI');
+            const [dev, main] = await Promise.all([
+              github.rest.git.getRef({owner: context.repo.owner, repo: context.repo.repo, ref: 'heads/dev'}),
+              github.rest.git.getRef({owner: context.repo.owner, repo: context.repo.repo, ref: 'heads/main'}),
+            ]);
+            const liveDevSHA = dev.data?.object?.sha;
+            const liveMainSHA = main.data?.object?.sha;
+            if (!/^[0-9a-f]{40}$/.test(liveDevSHA || '') || !/^[0-9a-f]{40}$/.test(liveMainSHA || '')) throw new Error('live source or target ref is unavailable');
+            const [candidate, source] = await Promise.all([
+              github.rest.git.getCommit({owner: context.repo.owner, repo: context.repo.repo, commit_sha: current.head.sha}),
+              github.rest.git.getCommit({owner: context.repo.owner, repo: context.repo.repo, commit_sha: liveDevSHA}),
+            ]);
+            const candidateTreeSHA = candidate.data?.tree?.sha;
+            const sourceTreeSHA = source.data?.tree?.sha;
+            const candidateParents = candidate.data?.parents || [];
+            const directDevHead = current.head.ref === 'dev' && current.head.sha === liveDevSHA;
+            const snapshotRef = `agent/main-promotion-snapshot-${liveDevSHA}`;
+            const exactDevTreeSnapshot = current.head.ref === snapshotRef && candidateParents.length === 1 &&
+              candidateParents[0]?.sha === liveMainSHA && candidateTreeSHA === sourceTreeSHA;
+            if (!directDevHead && !exactDevTreeSnapshot) throw new Error('promotion candidate must be exact dev or a direct-main child with the live dev tree');
+            const compare = (await github.rest.repos.compareCommits({owner: context.repo.owner, repo: context.repo.repo, base: liveMainSHA, head: current.head.sha})).data;
+            const topology = {status: compare.status === 'ahead' && compare.ahead_by > 0 && compare.behind_by === 0 ? 'ahead' : compare.status, ahead_by: compare.ahead_by, behind_by: compare.behind_by, merge_base_sha: compare.merge_base_commit?.sha || ''};
+            const observation = {
+              repository: current.base.repo.full_name,
+              pr_number: current.number,
+              action: context.payload.action,
+              promotion_mode: directDevHead ? 'DIRECT_DEV_HEAD' : 'DEV_TREE_SNAPSHOT',
+              state: current.state,
+              draft: current.draft === true,
+              merged: current.merged === true,
+              mergeable: current.mergeable === true,
+              mergeable_state: current.mergeable_state,
+              base_repo: current.base.repo.full_name,
+              base_ref: current.base.ref,
+              base_sha: current.base.sha,
+              head_repo: current.head.repo.full_name,
+              head_ref: current.head.ref,
+              head_sha: current.head.sha,
+              head_parent_sha: candidateParents[0]?.sha || '',
+              head_tree_sha: candidateTreeSHA || '',
+              live_dev_sha: liveDevSHA,
+              live_dev_tree_sha: sourceTreeSHA || '',
+              live_main_sha: liveMainSHA,
+              topology,
             };
-            guardian.validateGuardianArtifact(manifest, expected);
-            if (manifest.live_refs_before.dev_sha !== live.refs.dev_sha || manifest.live_refs_after.dev_sha !== live.refs.dev_sha || manifest.live_refs_before.main_sha !== live.refs.main_sha || manifest.live_refs_after.main_sha !== live.refs.main_sha || manifest.topology.merge_base_sha !== live.topology.merge_base_sha || manifest.topology.ahead_by !== live.topology.ahead_by || manifest.topology.behind_by !== live.topology.behind_by) throw new Error('Guardian live topology drifted while proof was collecting evidence');
-            const zipDigest = fs.readFileSync('ci-guardian-zip-sha256.txt', 'utf8').trim();
-            if (manifest.decision !== 'PASS' || manifest.code !== null || manifest.check_name !== 'CI guardian' || selection.job.id <= 0 || selection.artifact.id <= 0 || selection.artifact.name !== `ci-guardian-${selection.run_id}-${selection.run_attempt}` || `sha256:${zipDigest}` !== selection.artifact.digest) throw new Error('Guardian promotion evidence is not exact PASS/check/artifact identity');
-            const bundle = {schema: 'gooo/ci-guardian-evidence/v1', route: manifest.route, check_name: manifest.check_name, repository: manifest.repository, pr_number: manifest.pull_request_number, action: manifest.action, base_repo: manifest.base_repo, base_ref: manifest.base_ref, base_sha: manifest.base_sha, head_repo: manifest.head_repo, head_ref: manifest.head_ref, head_sha: manifest.head_sha, workflow_ref: manifest.workflow_ref, workflow_sha: manifest.workflow_sha, runtime_ref: manifest.runtime_ref, runtime_sha: manifest.runtime_sha, event_ref: manifest.event_ref, default_branch: manifest.default_branch, observer_environment: manifest.observer_environment, observer_environment_snapshot: manifest.observer_environment_snapshot, observer_environment_digest: manifest.observer_environment_digest, head_binding_status: manifest.head_binding_status, run_id: selection.run_id, run_attempt: selection.run_attempt, workflow_id: selection.workflow_id, workflow_path: selection.workflow_path, run_event: selection.run_event, run_status: selection.run_status, run_conclusion: selection.run_conclusion, run_created_at: selection.run_created_at, run_number: selection.run_number, live_refs_before: manifest.live_refs_before, live_refs_after: manifest.live_refs_after, topology: manifest.topology, branch_protection: manifest.branch_protection, dev_branch_protection: manifest.dev_branch_protection, artifact_id: selection.artifact.id, artifact_name: selection.artifact.name, artifact_size: selection.artifact.size, artifact_expired: selection.artifact.expired, artifact_digest: selection.artifact.digest, manifest_bundle_sha256: manifest.bundle_sha256, guardian_job_id: selection.job.id, guardian_job_name: selection.job.name, guardian_job_status: selection.job.status, guardian_job_conclusion: selection.job.conclusion, guardian_job_head_sha: selection.job.head_sha, check_run_id: selection.check.id, check_run_name: selection.check.name, check_run_app_id: selection.check.app_id, check_run_status: selection.check.status, check_run_conclusion: selection.check.conclusion, check_run_head_sha: selection.check.head_sha, check_suite_id: selection.check.suite_id, decision: manifest.decision, code: manifest.code, bundle_sha256: manifest.bundle_sha256};
-            fs.writeFileSync('ci-guardian-evidence.json', JSON.stringify(bundle, null, 2) + '\n');
-      - name: Download exact Foundation predecessor artifact
-        if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
-        uses: actions/download-artifact@v7
-        with:
-          name: feedback-predecessor-${{ github.event.pull_request.head.sha }}
-          path: foundation-predecessor
-      - name: Bind exact Foundation promotion evidence
-        if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
-        uses: actions/github-script@v8
-        env:
-          FOUNDATION_HUMAN_DECISION: "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const fs = require('fs');
-            const eventPull = context.payload.pull_request;
-            const input = JSON.parse(fs.readFileSync('foundation-predecessor/predecessor-input-a.json', 'utf8'));
-            const receipt = JSON.parse(fs.readFileSync('foundation-predecessor/predecessor-receipt-a.json', 'utf8'));
-            if (input.repository !== context.payload.repository.full_name || input.predecessor_sha !== 'cd9727af80f5118405290d3be96890c18e1529c0' || input.canonical_branch !== 'main' || input.canonical_workflow !== 'CI [push full]' || receipt.report?.decision !== 'FOUNDATION' || receipt.replay_verified !== true) throw new Error('Foundation predecessor artifact is not the exact confirmed recovery input');
-            const jobsFromAPI = [];
-            for (let page = 1; page <= 1000; page++) {
-              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
-              if (!response.data || !Array.isArray(response.data.jobs)) throw new Error('Foundation job API returned malformed data');
-              jobsFromAPI.push(...response.data.jobs);
-              if (response.data.jobs.length < 100) break;
-              if (page === 1000) throw new Error('Foundation job API pagination exceeded the fail-closed page limit');
-            }
-            const names = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy', 'CI evidence'];
-            const byName = new Map();
-            for (const job of jobsFromAPI) {
-              if (!names.includes(job.name)) continue;
-              if (byName.has(job.name)) throw new Error(`duplicate Foundation non-route job ${job.name}`);
-              byName.set(job.name, job);
-            }
-            const attempt = Number(process.env.GITHUB_RUN_ATTEMPT || 1);
-            const jobs = names.map(name => {
-              const job = byName.get(name);
-              if (!job || job.status !== 'completed' || job.conclusion !== 'success' || job.head_sha !== eventPull.head.sha || job.id <= 0 || job.run_id !== context.runId) throw new Error(`non-route job ${name} is not a successful exact-head result`);
-              return {id: job.id, name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, run_id: context.runId, run_attempt: attempt};
-            });
-            if (new Set(jobs.map(job => job.id)).size !== jobs.length) throw new Error('Foundation non-route job IDs are not unique');
-            const artifacts = [];
-            for (let page = 1; page <= 1000; page++) {
-              const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
-              if (!response.data || !Array.isArray(response.data.artifacts)) throw new Error('Foundation artifact API returned malformed data');
-              artifacts.push(...response.data.artifacts);
-              if (response.data.artifacts.length < 100) break;
-              if (page === 1000) throw new Error('Foundation artifact API pagination exceeded the fail-closed page limit');
-            }
-            const artifactName = `feedback-predecessor-${eventPull.head.sha}`;
-            const matches = artifacts.filter(artifact => artifact.name === artifactName);
-            if (matches.length !== 1 || matches[0].id <= 0 || matches[0].size_in_bytes <= 0 || matches[0].expired || !/^sha256:[0-9a-f]{64}$/.test(matches[0].digest || '')) throw new Error('Foundation predecessor artifact metadata is not unique, current, and digest-bound');
-            fs.writeFileSync('foundation-promotion-evidence.json', JSON.stringify({schema: 'gooo/foundation-promotion-evidence/v1', decision: 'PASS', human_decision: process.env.FOUNDATION_HUMAN_DECISION, repository: context.payload.repository.full_name, pr_number: eventPull.number, base_ref: eventPull.base.ref, base_sha: eventPull.base.sha, head_ref: eventPull.head.ref, head_sha: eventPull.head.sha, artifact_id: matches[0].id, artifact_name: matches[0].name, artifact_size_bytes: matches[0].size_in_bytes, artifact_digest: matches[0].digest, artifact_run_id: context.runId, artifact_run_attempt: attempt, input, receipt, non_route_jobs: jobs}, null, 2) + '\n');
+            fs.writeFileSync('ci-promotion-observation.json', JSON.stringify(observation, null, 2) + '\n');
       - name: Collect proof context
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
           github-token: ${{ github.token }}
           script: |
-            const crypto = require('crypto');
             const fs = require('fs');
             const pull = context.payload.pull_request;
             const {normalizeBaseRef} = require('./scripts/ci-proof/refs');
@@ -1000,69 +987,21 @@ jobs:
             const headSha = pull ? pull.head.sha : context.sha;
             const routePolicy = require('./scripts/ci-proof/route');
             const routeEvidence = JSON.parse(fs.readFileSync('ci-proof-route.json', 'utf8'));
-            const foundationIdentity = {
+            const tupleIdentity = {
               repository: context.payload.repository.full_name, prNumber: pull ? pull.number : 0,
               headRef: pull ? pull.head.ref : '', baseRef, baseSha,
             };
             routePolicy.validateProofRouteEvidence(routeEvidence, {
-              event: context.eventName, eventRef: context.ref, baseRef, baseSha, headSha, ...foundationIdentity,
+              event: context.eventName, eventRef: context.ref, baseRef, baseSha, headSha, ...tupleIdentity,
             });
             const proofRoute = routeEvidence.route;
             const isPromotion = proofRoute === 'promotion_main';
-            const isFoundation = proofRoute === 'foundation_promotion';
             const evidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-evidence.json', 'utf8'));
             const domainEvidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-domain-evidence.json', 'utf8'));
-            let guardianEvidence = null;
             let promotionObservation = null;
             if (isPromotion) {
-              if (!fs.existsSync('ci-guardian-evidence.json')) throw new Error('main promotion proof requires exact Guardian evidence');
-              guardianEvidence = JSON.parse(fs.readFileSync('ci-guardian-evidence.json', 'utf8'));
-              if (fs.existsSync('ci-promotion-observation.json')) promotionObservation = JSON.parse(fs.readFileSync('ci-promotion-observation.json', 'utf8'));
-            }
-            const foundationPromotion = isFoundation ? JSON.parse(fs.readFileSync('foundation-promotion-evidence.json', 'utf8')) : null;
-            let protection = {
-              repository: `${context.repo.owner}/${context.repo.repo}`,
-              branch: baseRef,
-              policy_sha256: evidence.digests.policy_sha256,
-              event_ref: evidence.event_ref,
-              checkout_ref: evidence.checkout_ref,
-              token_source: 'not_observed',
-              app_installation_id: 0,
-              app_slug: '',
-              read_status: 'unavailable',
-              exists: false,
-              strict: false,
-              required_checks: [],
-              required_check_bindings: [],
-              enforce_admins: false,
-              required_reviews: 0,
-              dismiss_stale_reviews: false,
-              require_last_push_approval: false,
-              linear_history: false,
-              allow_force_pushes: false,
-              allow_deletions: false,
-              required_signatures: false,
-              required_conversation_resolution: false,
-              block_creations: false,
-              lock_branch: false,
-              allow_fork_syncing: false,
-              restrictions: null,
-              missing_reason: 'trusted_guardian_required',
-              base_sha: baseSha,
-              head_sha: headSha,
-              run_id: context.runId,
-              run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
-              workflow_sha: process.env.CI_WORKFLOW_SHA,
-              observed_at: null,
-              valid_until: null,
-              digest_sha256: ''
-            };
-            if (isPromotion) {
-              if (!guardianEvidence.branch_protection) throw new Error('Guardian envelope is missing trusted branch protection evidence');
-              protection = guardianEvidence.branch_protection;
-            } else {
-              const protectionPayload = {...protection, digest_sha256: ''};
-              protection.digest_sha256 = crypto.createHash('sha256').update(JSON.stringify(protectionPayload)).digest('hex');
+              if (!fs.existsSync('ci-promotion-observation.json')) throw new Error('main promotion proof requires the exact machine-observed PR tuple');
+              promotionObservation = JSON.parse(fs.readFileSync('ci-promotion-observation.json', 'utf8'));
             }
             const {listWorkflowArtifacts, selectCurrentEvidenceArtifact, selectUniqueArtifact} = require('./scripts/ci-proof/artifacts');
             let artifacts = [];
@@ -1081,13 +1020,13 @@ jobs:
             const checkoutRef = headSha;
             const contextData = {
               repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: eventRef, event_ref: eventRef, checkout_ref: checkoutRef,
-              proof_route: proofRoute, base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
+              proof_route: proofRoute, base_ref: baseRef, base_sha: baseSha, head_sha: headSha, head_ref: pull ? pull.head.ref : '', workflow_sha: process.env.CI_WORKFLOW_SHA,
               pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: runAttempt,
               actor: context.actor, builder: context.actor, gate: 'CI policy',
-              branch_protected: protection.exists, branch_protection: protection, dev_branch_protection: guardianEvidence ? guardianEvidence.dev_branch_protection : null, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
+              scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
               provenance_status: 'verified', artifacts_status: artifactsVerified ? 'verified' : 'missing',
               write_effect: 'none', no_write_outside_generated: true, artifacts, fixture_paths: ['examples/billing/main.gooo'],
-              cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], missing_reasons: domainEvidence.missing_reasons, domain_evidence: domainEvidence, guardian_evidence: guardianEvidence, promotion_observation: promotionObservation, foundation_promotion: foundationPromotion
+              cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], missing_reasons: domainEvidence.missing_reasons, domain_evidence: domainEvidence, promotion_observation: promotionObservation
             };
             fs.writeFileSync('ci-proof-context.json', JSON.stringify(contextData));
       - name: Build deterministic proof and append receipt
@@ -1100,7 +1039,7 @@ jobs:
         run: go run ./scripts/ci-proof --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass
       - name: Upload proof and provenance receipt
         if: ${{ always() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -1113,234 +1052,18 @@ jobs:
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
-      - name: Upload Foundation promotion evidence
-        if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
-        uses: actions/upload-artifact@v6
-        with:
-          name: foundation-promotion-${{ github.run_id }}-${{ github.run_attempt }}
-          path: foundation-promotion-evidence.json
-          if-no-files-found: error
-          retention-days: 30
-
-  foundation-authorization:
-    name: FOUNDATION authorization
-    needs: [proof]
-    if: ${{ always() && github.event_name == 'pull_request' && github.head_ref == 'agent/foundation-authorization-dev-sync-20260831' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Verify exact FOUNDATION authorization envelope
-        uses: actions/github-script@v8
-        env:
-          FOUNDATION_TOKEN: ${{ github.token }}
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const fs = require('fs');
-            const {execFileSync} = require('child_process');
-            const authorization = require('./scripts/ci-proof/foundation_authorization');
-            const policy = JSON.parse(fs.readFileSync('.github/foundation-authorization.json', 'utf8'));
-            authorization.validatePolicy(policy);
-            const currentPull = context.payload.pull_request;
-            const repository = context.payload.repository.full_name;
-            const livePullResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: currentPull.number});
-            const livePull = livePullResponse.data;
-            if (livePull.state !== 'open' || livePull.merged === true || livePull.head.sha !== currentPull.head.sha || livePull.base.ref !== 'dev' || livePull.base.sha !== policy.candidate.base_sha || livePull.base.repo.full_name !== repository || livePull.head.ref !== authorization.AUTHORIZATION_BRANCH || livePull.head.repo.full_name !== repository || livePull.number !== policy.authorization.pull_request) {
-              throw new Error('FOUNDATION authorization PR identity is not exact');
-            }
-            const changedFiles = [];
-            for (let page = 1; page <= 1000; page += 1) {
-              const response = await github.rest.pulls.listFiles({owner: context.repo.owner, repo: context.repo.repo, pull_number: currentPull.number, per_page: 100, page});
-              changedFiles.push(...response.data);
-              if (response.data.length < 100) break;
-              if (page === 1000) throw new Error('FOUNDATION authorization changed-file pagination exceeded the limit');
-            }
-            if (JSON.stringify(authorization.canonicalPathNames(changedFiles)) !== JSON.stringify(policy.authorization.changed_paths)) throw new Error('FOUNDATION authorization changed paths are not exact');
-            const candidateResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: policy.candidate.pull_request});
-            const candidate = candidateResponse.data;
-            if (candidate.base?.ref !== 'dev' || candidate.base?.sha !== policy.candidate.base_sha || candidate.head?.ref !== policy.candidate.branch || candidate.head?.sha !== policy.candidate.head_sha || candidate.head?.repo?.full_name !== repository || candidate.state !== 'closed' || candidate.merged === true) throw new Error('candidate PR is not the preserved exact pre-authorization tuple');
-            const baseCommitResponse = await github.rest.repos.getCommit({owner: context.repo.owner, repo: context.repo.repo, ref: policy.candidate.base_sha});
-            const baseCommit = baseCommitResponse.data;
-            if (baseCommit.sha !== policy.base_attestation.commit || baseCommit.commit.tree.sha !== policy.base_attestation.tree_sha || JSON.stringify(baseCommit.parents.map(parent => parent.sha)) !== JSON.stringify(policy.base_attestation.parents)) throw new Error('candidate base tree/parent attestation is not exact');
-            const diffResponse = await github.rest.repos.compareCommits({owner: context.repo.owner, repo: context.repo.repo, base: policy.candidate.base_sha, head: policy.candidate.head_sha});
-            const diff = diffResponse.data;
-            if (!diff || !Array.isArray(diff.files) || authorization.canonicalPathNames(diff.files).length !== policy.candidate.changed_path_count || authorization.digestChangedPaths(diff.files) !== policy.candidate.changed_paths_sha256) throw new Error('candidate changed-path digest P is not exact');
-            const manifestResponse = await github.rest.repos.getContent({owner: context.repo.owner, repo: context.repo.repo, path: policy.candidate.manifest_path, ref: policy.candidate.head_sha});
-            const manifestData = manifestResponse.data;
-            const manifestBytes = Buffer.from(manifestData.content.replace(/\s/g, ''), 'base64');
-            if (authorization.sha256(manifestBytes) !== policy.candidate.manifest_sha256) throw new Error('candidate manifest digest M is not exact');
-            const candidateCommitResponse = await github.rest.repos.getCommit({owner: context.repo.owner, repo: context.repo.repo, ref: policy.candidate.head_sha});
-            const treeResponse = await github.rest.git.getTree({owner: context.repo.owner, repo: context.repo.repo, tree_sha: candidateCommitResponse.data.commit.tree.sha, recursive: '1'});
-            if (authorization.digestTreeEntries(treeResponse.data.tree, policy.auth_policy_paths) !== policy.candidate.tree_sha256_excluding_authorization_paths) throw new Error('candidate tree digest T is not exact');
-            execFileSync('git', ['fetch', '--no-tags', `https://x-access-token:${process.env.FOUNDATION_TOKEN}@github.com/${repository}.git`, policy.candidate.branch], {stdio: 'ignore'});
-            const diffArgs = ['diff', '--binary', `${policy.candidate.base_sha}...${policy.candidate.head_sha}`, '--', '.', ...policy.auth_policy_paths.map(path => `:(exclude)${path}`)];
-            const patch = execFileSync('git', diffArgs);
-            if (authorization.sha256(patch) !== policy.candidate.patch_sha256_excluding_authorization_paths) throw new Error('candidate patch digest T is not exact');
-            await core.summary.addHeading('FOUNDATION authorization').addTable([
-              [{data: 'binding', header: true}, {data: 'value', header: true}],
-              ['candidate', `${policy.candidate.pull_request} ${policy.candidate.head_sha}`],
-              ['manifest M', policy.candidate.manifest_sha256],
-              ['changed paths P', policy.candidate.changed_paths_sha256],
-              ['patch T', policy.candidate.patch_sha256_excluding_authorization_paths],
-              ['tree T', policy.candidate.tree_sha256_excluding_authorization_paths],
-              ['replay', policy.authorization.replay_decision],
-            ]).write();
-
-  foundation-authorization-protocol:
-    name: FOUNDATION authorization protocol
-    if: ${{ github.event_name == 'pull_request' && github.base_ref == 'dev' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Execute exact-candidate protocol audit
-        uses: actions/github-script@v8
-        env:
-          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          EXPECTED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          WORKFLOW_REF: ${{ github.workflow_ref }}
-          WORKFLOW_SHA: ${{ github.workflow_sha }}
-          RUNTIME_REF: ${{ github.ref }}
-          RUNTIME_SHA: ${{ github.sha }}
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const fs = require('node:fs');
-            const protocol = require('./scripts/ci-proof/foundation_authorization_protocol');
-            const eventPull = context.payload.pull_request;
-            const repositoryPayload = context.payload.repository;
-            const livePull = (await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: eventPull.number})).data;
-            if (!livePull || livePull.number !== eventPull.number || livePull.state !== 'open' || livePull.merged === true || livePull.base.ref !== 'dev' || livePull.base.sha !== process.env.EXPECTED_BASE_SHA || livePull.head.sha !== process.env.EXPECTED_HEAD_SHA || livePull.base.repo.full_name !== context.payload.repository.full_name || livePull.head.repo.full_name !== context.payload.repository.full_name) {
-              throw new Error('FOUNDATION authorization protocol PR identity is not exact');
-            }
-            const changedFiles = [];
-            for (let page = 1; page <= 1000; page += 1) {
-              const response = await github.rest.pulls.listFiles({owner: context.repo.owner, repo: context.repo.repo, pull_number: livePull.number, per_page: 100, page});
-              if (!response.data || !Array.isArray(response.data)) throw new Error('FOUNDATION authorization protocol changed-file API returned malformed data');
-              changedFiles.push(...response.data);
-              if (response.data.length < 100) break;
-              if (page === 1000) throw new Error('FOUNDATION authorization protocol changed-file pagination exceeded the limit');
-            }
-            const compare = (await github.rest.repos.compareCommits({owner: context.repo.owner, repo: context.repo.repo, base: livePull.base.sha, head: livePull.head.sha})).data;
-            if (!compare || !compare.merge_base_commit || !protocol.validSHA(compare.merge_base_commit.sha)) throw new Error('FOUNDATION authorization protocol merge-base evidence is unavailable');
-            const changedPaths = protocol.canonicalPathNames(changedFiles);
-            const protectedPaths = protocol.canonicalProtectedIntersection(changedFiles);
-            const candidate = {
-              pull_request: livePull.number,
-              base_repo: livePull.base.repo.full_name,
-              base_branch: livePull.base.ref,
-              base_sha: livePull.base.sha,
-              head_repo: livePull.head.repo.full_name,
-              head_branch: livePull.head.ref,
-              head_sha: livePull.head.sha,
-              merge_base_sha: compare.merge_base_commit.sha,
-              changed_paths: {paths: changedPaths, count: changedPaths.length, digest: protocol.digestPathList(changedPaths)},
-              protected_intersection: {paths: protectedPaths, count: protectedPaths.length, digest: protocol.digestPathList(protectedPaths)},
-            };
-            async function readKernelTree(ref) {
-              const commit = (await github.rest.repos.getCommit({owner: context.repo.owner, repo: context.repo.repo, ref})).data;
-              const tree = (await github.rest.git.getTree({owner: context.repo.owner, repo: context.repo.repo, tree_sha: commit.commit.tree.sha, recursive: '1'})).data;
-              if (tree.truncated === true) throw new Error('kernel tree was truncated');
-              return tree.tree;
-            }
-            let kernel = {before_sha256: null, after_sha256: null};
-            try {
-              kernel.before_sha256 = protocol.digestKernelEntries(await readKernelTree(livePull.base.sha));
-              kernel.after_sha256 = protocol.digestKernelEntries(await readKernelTree(livePull.head.sha));
-            } catch (error) {
-              core.warning(`kernel digest observation unavailable: ${error.message || String(error)}`);
-            }
-            const runtime = {
-              workflow_ref: process.env.WORKFLOW_REF,
-              workflow_sha: process.env.WORKFLOW_SHA,
-              runtime_ref: process.env.RUNTIME_REF,
-              runtime_sha: process.env.RUNTIME_SHA,
-              check_name: 'FOUNDATION authorization protocol',
-              check_run_id: context.runId,
-              app_id: protocol.CI_APP_ID,
-            };
-            const ownerPayload = repositoryPayload.owner;
-            const sender = context.payload.sender || {};
-            const owner = {login: ownerPayload.login, id: ownerPayload.id, type: ownerPayload.type};
-            const actor = {login: context.actor, id: sender.id, type: sender.type || 'User'};
-            async function probe(operation, callback) {
-              try {
-                const response = await callback();
-                return {operation, read_status: 'verified', status: response.status || 200};
-              } catch (error) {
-                return {operation, read_status: 'unavailable', status: error.status || null, reason: error.message || String(error)};
-              }
-            }
-            const audit = {
-              authenticated_actor: {login: context.actor, id: sender.id, type: sender.type || 'User'},
-              installation: await probe('GET /repos/{owner}/{repo}/installation', () => github.request('GET /repos/{owner}/{repo}/installation', {owner: context.repo.owner, repo: context.repo.repo})),
-              rulesets: await probe('GET /repos/{owner}/{repo}/rulesets', () => github.request('GET /repos/{owner}/{repo}/rulesets', {owner: context.repo.owner, repo: context.repo.repo})),
-              environments: await probe('GET /repos/{owner}/{repo}/environments', () => github.request('GET /repos/{owner}/{repo}/environments', {owner: context.repo.owner, repo: context.repo.repo})),
-              owner_operation: {read_status: 'unavailable', reason: 'NO_SERVER_SIDE_OWNER_AUTHORIZATION_OPERATION', operation: 'OWNER_CREATE_ONE_USE_AUTHORIZATION_FOR_EXACT_CANDIDATE'},
-              no_protection_mutation: true,
-              no_check_bypass: true,
-            };
-            const root = protocol.buildRootAxiomReceipt({repository: repositoryPayload.full_name, owner, actor, pullRequest: livePull.number, baseBranch: livePull.base.ref, baseSha: livePull.base.sha, headSha: livePull.head.sha, audit});
-            protocol.validateRootAxiomReceipt(root);
-            const liveInput = {
-              repository: {full_name: repositoryPayload.full_name, owner_login: owner.login, owner_id: owner.id, owner_type: owner.type},
-              actor: {...actor, owner_match: actor.login === owner.login && actor.id === owner.id && actor.type === owner.type},
-              intent: 'Replace the historical one-tuple foundation authorization with a reusable one-use exact-candidate authorization protocol.',
-              proof_choice: 'FOUNDATION',
-              candidate,
-              runtime,
-              kernel,
-              authorization: {state: 'PENDING', owner_selection: null, nonce: null, issued_at: null, expires_at: null, stale: false, use_count: 0, reuse_attempts: 0, revoked: false, authorization_receipt: null},
-              consumption: null,
-              observed: {candidate, runtime, kernel},
-            };
-            const evaluation = protocol.evaluate(liveInput, {now: new Date().toISOString()});
-            if (!['UNKNOWN', 'REFUTED'].includes(evaluation.decision) || evaluation.repository_writes !== 0 || !evaluation.unknown && !evaluation.refuted) throw new Error('live protocol audit did not fail closed');
-            fs.writeFileSync('foundation-authorization-root-axiom.json', JSON.stringify(root, null, 2) + '\n');
-            fs.writeFileSync('foundation-authorization-protocol-live.json', JSON.stringify({schema: protocol.PROTOCOL_SCHEMA, repository: repositoryPayload.full_name, pull_request: livePull.number, candidate, runtime, kernel, evaluation, root_axiom: root}, null, 2) + '\n');
-            await core.summary.addHeading('FOUNDATION authorization protocol').addTable([
-              [{data: 'binding', header: true}, {data: 'value', header: true}],
-              ['candidate', `${candidate.pull_request} ${candidate.head_sha}`],
-              ['base', candidate.base_sha],
-              ['merge base', candidate.merge_base_sha],
-              ['changed paths', `${candidate.changed_paths.count} ${candidate.changed_paths.digest}`],
-              ['protected intersection', `${candidate.protected_intersection.count} ${candidate.protected_intersection.digest}`],
-              ['live decision', evaluation.decision],
-              ['root axiom', root.reason],
-              ['owner action', root.required_owner_action],
-            ]).write();
-      - name: Run exact protocol case witnesses
-        run: node scripts/ci-proof/foundation_authorization_protocol_test.js
-      - name: Upload protocol audit and root axiom
-        uses: actions/upload-artifact@v6
-        with:
-          name: foundation-authorization-protocol-${{ github.event.pull_request.head.sha }}
-          path: |
-            foundation-authorization-root-axiom.json
-            foundation-authorization-protocol-live.json
-          if-no-files-found: error
-          retention-days: 30
-
   failure-report:
     name: CI failure summary
     needs: [format, vet, test, race, semantic, policy, proof]
-    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1352,12 +1075,12 @@ jobs:
       - name: Download exact proof evidence
         if: ${{ always() }}
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-proof-input
       - name: Capture exact failure tuple
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
@@ -1374,11 +1097,11 @@ jobs:
             }
             const expectedJobs = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
             const pull = context.payload.pull_request;
-            const {normalizeBaseRef, normalizeOwnerBranch} = require('./scripts/ci-proof/refs');
+            const {normalizeBaseRef, normalizeHeadBranch} = require('./scripts/ci-proof/refs');
             const normalizedBaseRef = normalizeBaseRef(context.eventName, context.ref, pull);
-            const normalizedOwnerBranch = normalizeOwnerBranch(context.eventName, context.ref, pull);
+            const normalizedHeadBranch = normalizeHeadBranch(context.eventName, context.ref, pull);
             fs.writeFileSync('ci-base-ref.txt', normalizedBaseRef + '\n');
-            fs.writeFileSync('ci-owner-branch.txt', normalizedOwnerBranch + '\n');
+            fs.writeFileSync('ci-head-branch.txt', normalizedHeadBranch + '\n');
             const terminalFailures = jobsFromAPI
               .filter(job => job.name !== 'CI failure summary' && job.status === 'completed' && job.conclusion && job.conclusion !== 'success' && job.conclusion !== 'skipped')
               .sort((left, right) => left.id - right.id || left.name.localeCompare(right.name));
@@ -1484,13 +1207,12 @@ jobs:
             const proofRejections = proof && Array.isArray(proof.rejections) ? [...new Set(proof.rejections)].sort() : [];
             const proofCodes = new Set();
             const addProofCode = (predicate, code) => { if (proofRejections.some(predicate)) proofCodes.add(code); };
-            addProofCode(reason => reason === 'branch_protection_missing' || reason === 'write_effect_not_none', 'CI-GATE-001');
+            addProofCode(reason => reason === 'write_effect_not_none', 'CI-GATE-001');
             addProofCode(reason => reason === 'scope_not_passed', 'CI-SCOPE-001');
             addProofCode(reason => reason.includes('artifact') || reason.includes('fixture_inventory'), 'CI-ARTIFACT-001');
             addProofCode(reason => reason === 'fixture_evidence_not_verified', 'CI-TEST-001');
             addProofCode(reason => reason.includes('fresh') || reason.includes('stale') || reason.includes('mismatch'), 'CI-FRESHNESS-001');
             addProofCode(reason => reason.includes('provenance') || reason === 'missing_external_evidence', 'CI-PROVENANCE-001');
-            addProofCode(reason => reason.includes('ownership'), 'CI-OWNERSHIP-001');
             addProofCode(reason => reason.includes('dependency'), 'CI-DEPENDENCY-001');
             addProofCode(reason => reason.includes('contract') || reason === 'source_evidence_not_verified' || reason === 'semantic_evidence_not_verified' || reason.startsWith('cache_'), 'CI-CONTRACT-001');
             let code;
@@ -1534,28 +1256,43 @@ jobs:
                 missingReasons = proof.missing_reasons || {};
               }
             }
-            const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-OWNERSHIP-001', 'CI-UNCLASSIFIED-001', 'CI-TEST-001'];
+            const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-UNCLASSIFIED-001', 'CI-TEST-001'];
             const terminalFailureCodes = terminalFailures.map(job => job.name === 'CI proof bundle' ? (proofFailureCodes[0] || 'CI-UNCLASSIFIED-001') : classifyTerminalJob(job));
+            const terminalFailureEvidence = terminalFailures.map((job, index) => {
+              const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
+              const classification = job.name === 'CI proof bundle' ? 'proof_evidence' : terminalCodes.has(job.name) ? 'known_job' : 'unclassified_job';
+              const reason = job.name === 'CI proof bundle'
+                ? `proof_state:${proofState}`
+                : terminalCodes.has(job.name)
+                  ? `catalog_mapping:${failedStep?.name || 'terminal_job_conclusion'}`
+                  : 'unknown_terminal_job';
+              return {
+                job: {id: job.id, name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, run_id: job.run_id, run_attempt: runAttempt},
+                code: terminalFailureCodes[index],
+                classification,
+                reason,
+              };
+            });
             failureCodes = [...new Set([...terminalFailureCodes, ...proofFailureCodes])].sort();
             code = priority.find(candidate => failureCodes.includes(candidate)) || 'CI-UNCLASSIFIED-001';
             const message = `${failed.name} concluded ${failed.conclusion} for exact run ${context.runId} attempt ${runAttempt}; codes=${failureCodes.join(',')}`;
             const remediation = code === 'CI-GATE-001'
-              ? 'Read every recorded rejection and obtain only the missing independent governance evidence for this exact tuple.'
+              ? 'Recompute the required checks and promotion predicates from pinned refs; keep missing evidence unknown.'
               : code === 'CI-ARTIFACT-001'
-                ? 'Rebuild and publish the required artifact for this exact run and verify its count, digest, and tuple binding.'
+                ? 'Regenerate the required artifact from this exact run and verify its count, digest, and tuple binding.'
                 : code === 'CI-FRESHNESS-001'
-                  ? 'Stop promotion, fetch the current refs, and require a fresh exact-head run.'
+                  ? 'Reobserve the exact refs and bind a fresh run to the current head before promotion.'
                   : code === 'CI-PROVENANCE-001'
-                    ? 'Record the missing provenance reason and request legitimate external evidence without inferring it.'
+                    ? 'Fetch provenance through read-only APIs and preserve unavailable values as unknown.'
                     : code === 'CI-SCOPE-001'
-                      ? 'Inspect the CI policy summary and remove the out-of-scope or contract-violating change before pushing.'
-                      : 'Reproduce the terminal job failure at the exact head, fix only the owned scope, and rerun the required checks.';
+                      ? 'Recompute changed paths and PR route from exact base/head commits; preserve contradictions as unknown.'
+                      : 'Apply the catalog next_operation using exact-head failure evidence; recompute canonical checks after source repair.';
             fs.writeFileSync('ci-failure-input.json', JSON.stringify({
               code,
               failure_codes: failureCodes,
               message,
               remediation,
-              owner_branch: normalizedOwnerBranch,
+              head_branch: normalizedHeadBranch,
               rejections,
               missing_reasons: missingReasons,
               artifacts,
@@ -1564,6 +1301,7 @@ jobs:
               artifact_reason: artifactReason,
               terminal_failures: terminalFailures.map(job => ({id: job.id, name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, run_id: job.run_id, run_attempt: runAttempt})),
               terminal_failure_codes: terminalFailureCodes,
+              terminal_failure_evidence: terminalFailureEvidence,
               job: {
                 id: failed.id,
                 name: failed.name,
@@ -1589,12 +1327,12 @@ jobs:
           CI_RUN_ID: ${{ github.run_id }}
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_ACTOR: ${{ github.actor }}
-          CI_OWNER_BRANCH: ""
+          CI_HEAD_BRANCH: ""
         run: |
           test -s ci-base-ref.txt
-          test -s ci-owner-branch.txt
+          test -s ci-head-branch.txt
           export CI_BASE_REF="$(cat ci-base-ref.txt)"
-          export CI_OWNER_BRANCH="$(cat ci-owner-branch.txt)"
+          export CI_HEAD_BRANCH="$(cat ci-head-branch.txt)"
           if [ -s ci-closure-input.json ]; then
             go run ./scripts/ci-proof --closure-input ci-closure-input.json --closure-output ci-closure.json
             jq -r '"### CI closure\n- status: `\(.status)`\n- decision: `\(.decision)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)`\n- canonical jobs: \(.canonical_jobs | map([.id, .name, .head_sha, .conclusion] | @csv) | join("; "))\n- terminal failures: none\n- write effect: `\(.write_effect)`"' ci-closure.json >> "$GITHUB_STEP_SUMMARY"
@@ -1605,11 +1343,11 @@ jobs:
             exit 1
           fi
           go run ./scripts/ci-proof --failure-input ci-failure-input.json --failure-output ci-failure.json
-          jq -r '"### CI failure\n- code: `\(.code)`\n- class: `\(.class)`\n- severity: `\(.severity)`\n- scope: `\(.scope)`\n- blocking_scope: `\(.blocking_scope)`\n- parallelizable: `\(.parallelizable)`\n- handoff_required: `\(.handoff_required)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)` job `\(.job.id)`\n- catalog: `\(.catalog_path)`\n- evidence: \(.evidence_refs | join(", "))\n- message: \(.message)\n- remediation: \(.remediation)"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
-          jq -r '"- failure_codes: `\(.failure_codes | join(", "))`\n- owner_branch: `\(.owner_branch)` ref `\(.owner_ref)`\n- catalog_digest: `\(.catalog_digest)`\n- artifact_status: `\(.artifact_status)` reason `\(.artifact_reason)` refs \(.artifact_refs | map([.id, .name, .size_bytes, .digest, .run_id, .run_attempt] | @csv) | join("; "))\n- proof_artifact_ref: \(.proof_artifact_ref // "none" | tostring)\n- rejections: \(.rejections | join(", "))"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"### CI failure\n- code: `\(.code)`\n- class: `\(.class)`\n- severity: `\(.severity)`\n- scope: `\(.scope)`\n- blocking_scope: `\(.blocking_scope)`\n- parallelizable: `\(.parallelizable)`\n- next_operation: `\(.next_operation)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)` job `\(.job.id)`\n- catalog: `\(.catalog_path)`\n- evidence: \(.evidence_refs | join(", "))\n- message: \(.message)\n- remediation: \(.remediation)"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"- failure_codes: `\(.failure_codes | join(", "))`\n- head_branch: `\(.head_branch)`\n- catalog_digest: `\(.catalog_digest)`\n- artifact_status: `\(.artifact_status)` reason `\(.artifact_reason)` refs \(.artifact_refs | map([.id, .name, .size_bytes, .digest, .run_id, .run_attempt] | @csv) | join("; "))\n- proof_artifact_ref: \(.proof_artifact_ref // "none" | tostring)\n- rejections: \(.rejections | join(", "))"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
       - name: Upload failure reason manifest
         if: ${{ always() && hashFiles('ci-failure.json') != '' }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-failure.json
@@ -1617,7 +1355,7 @@ jobs:
           retention-days: 14
       - name: Upload no-failure closure manifest
         if: ${{ always() && hashFiles('ci-closure.json') != '' }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-closure-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-closure.json
@@ -1629,12 +1367,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1720,7 +1458,7 @@ jobs:
           cmp "$RUNNER_TEMP/predecessor-semantic-a.json" "$RUNNER_TEMP/predecessor-semantic-b.json"
           echo "emitted=true" >> "$GITHUB_OUTPUT"
           jq -r '"### Predecessor semantic state\n- decision: \(.report.decision) (\(.report.reason))\n- next: \(.report.snapshot.next_operation)\n- replay verified: \(.replay_verified)\n- receipt digest: \(.receipt_digest)"' "$RUNNER_TEMP/predecessor-semantic-a.json" >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: feedback-predecessor-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -1728,7 +1466,7 @@ jobs:
             ${{ runner.temp }}/predecessor-receipt-a.json
           if-no-files-found: error
           retention-days: 30
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: steps.semantic.outputs.emitted == 'true'
         with:
           name: feedback-semantic-state-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -1744,8 +1482,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: true
@@ -1753,7 +1491,7 @@ jobs:
         env:
           EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: scripts/language-package-execution/main.sh "$RUNNER_TEMP/language-package-execution"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: language-package-execution-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/language-package-execution
@@ -1766,12 +1504,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1816,7 +1554,8 @@ jobs:
             (.predecessor_sha | test("^[0-9a-f]{40}$")) and
             .canonical_branch == $canonical_branch and
             .canonical_workflow == "CI [push full]" and
-            (.candidates | length >= 1)
+            (has("candidates") and
+              (.candidates == null or (.candidates | type) == "array"))
           ' "$extracted/predecessor-input-a.json" > /dev/null
           jq -e --arg repository "$GITHUB_REPOSITORY" --arg report_digest "$expected_report_digest" '
             .schema == "gooo/meta-feedback-predecessor-receipt/v1" and
@@ -1843,6 +1582,11 @@ jobs:
           ' "$extracted/predecessor-receipt-a.json" > /dev/null
           application_decision="$(jq -r '.report.decision' "$extracted/predecessor-receipt-a.json")"
           application_reason="$(jq -r '.report.reason' "$extracted/predecessor-receipt-a.json")"
+          synthetic_seed_used="$(jq -r 'if .candidates == null or ((.candidates | type) == "array" and (.candidates | length == 0)) then "true" else "false" end' "$extracted/predecessor-input-a.json")"
+          case "$synthetic_seed_used" in
+            true|false) ;;
+            *) echo "invalid synthetic seed marker: $synthetic_seed_used" >&2; exit 1 ;;
+          esac
           case "$application_decision" in
             FOUNDATION|SELECTED)
               boundary_decision=NORMAL
@@ -1887,8 +1631,26 @@ jobs:
           test "$actual_check_status" = "$expected_check_status"
           cmp "$extracted/predecessor-receipt-a.json" "$probe_root/probe-receipt.json"
 
-          jq '.candidates = [.candidates[0]] | .candidates[0].conclusion = "success" | .candidates[0].receipt_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' \
-            "$extracted/predecessor-input-a.json" > "$probe_root/normal-input.json"
+          jq '
+            def seed_candidate:
+              if .candidates == null or (.candidates | length == 0) then {
+                artifact_id: 1,
+                run_id: 1,
+                run_attempt: 1,
+                artifact_name: ("artifact-feedback-resolution-" + .predecessor_sha),
+                head_sha: .predecessor_sha,
+                head_branch: .canonical_branch,
+                workflow: .canonical_workflow,
+                event: "push",
+                conclusion: "failure",
+                expired: false,
+                receipt_digest: "",
+                repository_writes: 0
+              } else .candidates[0] end;
+            .candidates = [seed_candidate]
+          ' "$extracted/predecessor-input-a.json" > "$probe_root/seeded-input.json"
+          jq '.candidates[0].conclusion = "success" | .candidates[0].receipt_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' \
+            "$probe_root/seeded-input.json" > "$probe_root/normal-input.json"
           go run ./cmd/feedback-predecessor-witness \
             --root "$GITHUB_WORKSPACE" \
             --input "$probe_root/normal-input.json" \
@@ -1911,8 +1673,8 @@ jobs:
             .report.report_digest == .replay_report_digest
           ' "$probe_root/normal-receipt-a.json" > /dev/null
 
-          jq '.candidates = [.candidates[0]] | .candidates[0].conclusion = "failure" | .candidates[0].receipt_digest = ""' \
-            "$extracted/predecessor-input-a.json" > "$probe_root/unknown-input.json"
+          jq '.candidates[0].conclusion = "failure" | .candidates[0].receipt_digest = ""' \
+            "$probe_root/seeded-input.json" > "$probe_root/unknown-input.json"
           go run ./cmd/feedback-predecessor-witness \
             --root "$GITHUB_WORKSPACE" \
             --input "$probe_root/unknown-input.json" \
@@ -1972,6 +1734,7 @@ jobs:
             --arg application_decision "$application_decision" \
             --arg application_reason "$application_reason" \
             --arg unknown_class "$unknown_class" \
+            --argjson synthetic_seed_used "$synthetic_seed_used" \
             --slurpfile receipt "$probe_root/probe-receipt.json" \
             --slurpfile normal_receipt "$probe_root/normal-receipt-a.json" \
             --slurpfile unknown_receipt "$probe_root/unknown-receipt-a.json" \
@@ -2016,6 +1779,8 @@ jobs:
               },
               case_witnesses: {
                 normal: {
+                  source: "caller-temp-synthetic-fixture",
+                  seed_used: $synthetic_seed_used,
                   decision: "NORMAL",
                   application_decision: $normal.report.decision,
                   report_digest: $normal.report.report_digest,
@@ -2023,6 +1788,8 @@ jobs:
                   check_exit: 0
                 },
                 unknown: {
+                  source: "caller-temp-synthetic-fixture",
+                  seed_used: $synthetic_seed_used,
                   decision: "UNKNOWN",
                   application_decision: $unknown.report.decision,
                   reason: $unknown.report.reason,
@@ -2032,6 +1799,8 @@ jobs:
                   unknown_fields: ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"]
                 },
                 refuted: {
+                  source: "caller-temp-foundation-fixture",
+                  seed_used: false,
                   decision: "REFUTED",
                   application_decision: $refuted.report.decision,
                   reason: $refuted.report.reason,
@@ -2042,7 +1811,7 @@ jobs:
               }
             }' \
             > coherence-boundary-probe.json
-          jq -e --arg boundary_decision "$boundary_decision" '
+          jq -e --arg boundary_decision "$boundary_decision" --argjson synthetic_seed_used "$synthetic_seed_used" '
             .schema == "gooo/coherence-boundary-probe/v2" and
             .status == "PASS" and
             .boundary == "COHERENCE evaluator" and
@@ -2053,9 +1822,9 @@ jobs:
             .meta_binding.report_schema == "gooo/meta-feedback-predecessor-selection/v2" and
             .meta_binding.producer == "feedbackpredecessor.Select" and
             .meta_binding.consumer == "self-improvement-cycle" and
-            (.case_witnesses.normal.decision == "NORMAL" and .case_witnesses.normal.application_decision == "SELECTED" and .case_witnesses.normal.replay_verified == true and .case_witnesses.normal.check_exit == 0) and
-            (.case_witnesses.unknown.decision == "UNKNOWN" and .case_witnesses.unknown.application_decision == "LOWER_RESOLUTION" and .case_witnesses.unknown.replay_verified == true and .case_witnesses.unknown.check_exit == 0 and .case_witnesses.unknown.unknown_fields == ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"]) and
-            (.case_witnesses.refuted.decision == "REFUTED" and .case_witnesses.refuted.application_decision == "REFUTED" and .case_witnesses.refuted.reason == "FOUNDATION_RECOVERY_REFUTED" and .case_witnesses.refuted.replay_verified == true and .case_witnesses.refuted.check_exit == 1) and
+            (.case_witnesses.normal.source == "caller-temp-synthetic-fixture" and .case_witnesses.normal.seed_used == $synthetic_seed_used and .case_witnesses.normal.decision == "NORMAL" and .case_witnesses.normal.application_decision == "SELECTED" and .case_witnesses.normal.replay_verified == true and .case_witnesses.normal.check_exit == 0) and
+            (.case_witnesses.unknown.source == "caller-temp-synthetic-fixture" and .case_witnesses.unknown.seed_used == $synthetic_seed_used and .case_witnesses.unknown.decision == "UNKNOWN" and .case_witnesses.unknown.application_decision == "LOWER_RESOLUTION" and .case_witnesses.unknown.replay_verified == true and .case_witnesses.unknown.check_exit == 0 and .case_witnesses.unknown.unknown_fields == ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"]) and
+            (.case_witnesses.refuted.source == "caller-temp-foundation-fixture" and .case_witnesses.refuted.seed_used == false and .case_witnesses.refuted.decision == "REFUTED" and .case_witnesses.refuted.application_decision == "REFUTED" and .case_witnesses.refuted.reason == "FOUNDATION_RECOVERY_REFUTED" and .case_witnesses.refuted.replay_verified == true and .case_witnesses.refuted.check_exit == 1) and
             (if .decision == "UNKNOWN" then
               (.unknown | keys == ["blocked_by", "next_operation", "reason", "stage", "step", "unknown_class"] and
                 .stage == "COHERENCE" and .step == "RECONSUME_PREDECESSOR" and
@@ -2064,7 +1833,7 @@ jobs:
             else .unknown == null end)
           ' coherence-boundary-probe.json > /dev/null
           jq -r '"### COHERENCE evaluator boundary\n- status: `\(.status)`\n- predecessor decision: `\(.decision)`\n- successor commit: `\(.coherence_successor_commit)`\n- predecessor artifact: `\(.predecessor_artifact.name)` (`\(.predecessor_artifact.digest)`)\n- exact report digest: `\(.predecessor_report_digest)`"' coherence-boundary-probe.json >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: coherence-boundary-probe-${{ github.event.pull_request.head.sha || github.sha }}
           path: coherence-boundary-probe.json

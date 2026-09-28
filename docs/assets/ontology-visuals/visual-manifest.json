@@ -21,7 +21,7 @@
       "generated_or_changed_artifact": "examples/billing-package/operation-interface.golden.json",
       "terminal_decision": "PASS / INTERFACE_ONLY",
       "next_consumer": "operation-manifest emitter",
-      "evidence": [{"path": "examples/billing-package/activity.gooo", "digest": "sha256:a012513d1ccc19394542a96ce43355433b7496746277da08a2724e7fe0647dd3", "receipt_path": "examples/billing-package/operation-interface.golden.json", "receipt_digest": "sha256:6738fe5a38268a29421d24438731111b14005d4d655d2706e9eb4d25c271f571"}],
+      "evidence": [{"path": "examples/billing-package/activity.gooo", "digest": "sha256:a012513d1ccc19394542a96ce43355433b7496746277da08a2724e7fe0647dd3", "receipt_path": "examples/billing-package/operation-interface.golden.json", "receipt_digest": "sha256:cd6383fcb58019730ddedf439fd5a11d300bcc26cc4a749b3e862b0231dd3edd"}],
       "binding": {"nodes": ["gooo.intent", "semantic.ir", "generated.go", "evidence"], "edges": ["lower", "normalize", "project", "record"], "transitions": ["source", "ir", "structural-view", "proof"]}
     },
     {
@@ -61,7 +61,7 @@
       "generated_or_changed_artifact": "examples/billing-package/operation-manifest.artifact.golden.json",
       "terminal_decision": "PASS / EXACT",
       "next_consumer": "PayOrder entry executor",
-      "evidence": [{"path": "examples/billing-package/activity.gooo", "digest": "sha256:a012513d1ccc19394542a96ce43355433b7496746277da08a2724e7fe0647dd3", "receipt_path": "examples/billing-package/operation-manifest.artifact.golden.json", "receipt_digest": "sha256:c591fca2be3ca32fe3fb6c83404e3a23908e89c32587db3aabf2eb80f47d4d00"}, {"path": "examples/billing-package/entities.gooo", "digest": "sha256:02b7a8cacdc6e00de1c753b372e252f85c4891b9b8c9b3d3e0dda742ab8809df", "receipt_path": "examples/billing-package/operation-manifest.artifact.golden.json", "receipt_digest": "sha256:c591fca2be3ca32fe3fb6c83404e3a23908e89c32587db3aabf2eb80f47d4d00"}],
+      "evidence": [{"path": "examples/billing-package/activity.gooo", "digest": "sha256:a012513d1ccc19394542a96ce43355433b7496746277da08a2724e7fe0647dd3", "receipt_path": "examples/billing-package/operation-manifest.artifact.golden.json", "receipt_digest": "sha256:241eb6e2ad1b79ac72d219d7f05d6e9fef94f991bc9e61e9db5e80ec44c3f1e3"}, {"path": "examples/billing-package/entities.gooo", "digest": "sha256:02b7a8cacdc6e00de1c753b372e252f85c4891b9b8c9b3d3e0dda742ab8809df", "receipt_path": "examples/billing-package/operation-manifest.artifact.golden.json", "receipt_digest": "sha256:241eb6e2ad1b79ac72d219d7f05d6e9fef94f991bc9e61e9db5e80ec44c3f1e3"}],
       "binding": {"nodes": ["activity.gooo", "entities.gooo", "canonical-order", "package-api", "entry.receipt"], "edges": ["sort", "parse", "merge", "resolve", "execute"], "transitions": ["unordered", "canonical", "bound", "entry", "receipt"]}
     },
     {
@@ -81,7 +81,7 @@
       "generated_or_changed_artifact": "caller-owned generated.go + receipt.json",
       "terminal_decision": "REVIEW RECEIPT READY",
       "next_consumer": "reviewer agent",
-      "evidence": [{"path": "AGENTS.md", "digest": "sha256:9f1a9483252cea20cfba4b13926b3e2b864f660ba796a1ab6360a27dbcb0e55f", "receipt_path": "examples/language-assurance-kernel/write-set-exactness.md", "receipt_digest": "sha256:2e3f28c95684b09dc73741ae83a56abe5113bc8f58f987ce24ce53f17b064b06"}],
+      "evidence": [{"path": "AGENTS.md", "digest": "sha256:241fd7670bbb45ed958c96045fa96add17531e568ebc1e8f383257bcf939cd35", "receipt_path": "examples/language-assurance-kernel/write-set-exactness.md", "receipt_digest": "sha256:2e3f28c95684b09dc73741ae83a56abe5113bc8f58f987ce24ce53f17b064b06"}],
       "binding": {"nodes": ["author.agent", "intent", "compiler.agent", "generated.output", "reviewer.agent", "receipt"], "edges": ["writes", "reads", "creates", "consumes", "authority-boundary"], "transitions": ["intent", "handoff", "generated", "reviewed"]}
     },
     {
@@ -181,7 +181,7 @@
       "generated_or_changed_artifact": "scripts/self-improvement-contract/README.md",
       "terminal_decision": "ELIGIBLE AFTER OBSERVATION",
       "next_consumer": "promotion controller",
-      "evidence": [{"path": "docs/deterministic-ci-evolution.md", "digest": "sha256:6955df1d9d21bb6d44a9af697f92da2c5fc1dd0fdcec107bf114f721343a76f4", "receipt_path": "scripts/self-improvement-contract/README.md", "receipt_digest": "sha256:197f7e8035f6da622711e38588dc48ce15daf65505777fbf95456d98b232b7af"}],
+      "evidence": [{"path": "docs/deterministic-ci-evolution.md", "digest": "sha256:f437f80bb35165eda9b40dd02bf570007dfb733ec3b7b67f244eb6f44c804a55", "receipt_path": "scripts/self-improvement-contract/README.md", "receipt_digest": "sha256:197f7e8035f6da622711e38588dc48ce15daf65505777fbf95456d98b232b7af"}],
       "binding": {"nodes": ["observation", "meta-rule", "exact-head-ci", "dev", "post-adoption", "main-eligibility"], "edges": ["observe", "change", "verify", "adopt", "promote"], "transitions": ["bug", "rule", "ci", "dev", "receipt", "eligible"]}
     },
     {

@@ -22,7 +22,7 @@ func LoadDirectory(directory string) ([]Source, error) {
 		if entry.Type()&os.ModeSymlink != 0 || !entry.Type().IsRegular() {
 			return nil, fmt.Errorf("packageexecution: source %q is not a regular file", entry.Name())
 		}
-		data, err := os.ReadFile(filepath.Join(directory, entry.Name()))
+		data, err := readSourceFile(filepath.Join(directory, entry.Name()))
 		if err != nil {
 			return nil, err
 		}

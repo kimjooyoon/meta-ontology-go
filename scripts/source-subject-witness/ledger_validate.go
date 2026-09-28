@@ -40,6 +40,11 @@ func validateLedger(ledger witnessLedger) error {
 	}
 	counts := countWitnesses(ledger.Witnesses)
 	counts.MetaIndicators = ledger.Counts.MetaIndicators
+	if counts.SourceIndicatorsApplicable > ledger.Counts.SourceIndicatorsApplicable || counts.SourceIndicatorsNotApplicable > ledger.Counts.SourceIndicatorsNotApplicable {
+		return fmt.Errorf("ledger witness applicability exceeds source indicator applicability")
+	}
+	counts.SourceIndicatorsApplicable = ledger.Counts.SourceIndicatorsApplicable
+	counts.SourceIndicatorsNotApplicable = ledger.Counts.SourceIndicatorsNotApplicable
 	if counts != ledger.Counts || digestValues(ledger.Witnesses) != ledger.SubjectWitnessDigest {
 		return fmt.Errorf("ledger counts or subject digest mismatch")
 	}
@@ -59,10 +64,10 @@ func validateLedger(ledger witnessLedger) error {
 		}
 		seen := make(map[string]bool, len(ledger.SourceObservations))
 		for _, observation := range ledger.SourceObservations {
-			if observation.Satisfied || observation.Value <= observation.Limit {
-				return fmt.Errorf("source observation %q is not an unsatisfied driver", observation.Subject)
+			if observation.Satisfied {
+				return fmt.Errorf("source observation %q is satisfied", observation.Subject)
 			}
-			if err := validateLineCapIndicator(observation); err != nil {
+			if err := validateIndicatorState(observation); err != nil {
 				return err
 			}
 			key := observation.MetricID + "\x00" + observation.Subject

@@ -1,0 +1,11 @@
+package runtimebinding
+namespace runtimebinding
+
+entity Integer id "gooo://runtime-binding/entity/integer"
+
+activity Produce(Integer) -> Integer computes "int.add:1"
+activity ConsumeA(Integer) -> Integer computes "int.add:1"
+activity ConsumeB(Integer) -> Integer computes "int.add:1"
+
+bind Produce.result -> ConsumeA.input
+bind Produce.result -> ConsumeB.input

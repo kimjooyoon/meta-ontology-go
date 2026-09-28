@@ -19,6 +19,8 @@ type queryOptions struct {
 	rule        string
 	layer       string
 	direction   string
+	storyID     string
+	ledgerPath  string
 	maxDepth    int
 	maxDepthSet bool
 	limit       int
@@ -60,6 +62,9 @@ func runQuery(args []string, reader SourceReader, parser SourceParser, stdout, s
 	ir, err := lowerInspectIRWith(file, remainingDeadline(deadline), bidir.Lower)
 	if err != nil {
 		return reportFailure(jsonMode, stdout, stderr, "query", filename, "semantic.lowering", err.Error(), syntaxFileSpan(file))
+	}
+	if options.storyID != "" {
+		return runQueryStory(options, ir, filename, jsonMode, stdout, stderr)
 	}
 	return runQueryEngine(options, ir, filename, jsonMode, stdout, stderr)
 }

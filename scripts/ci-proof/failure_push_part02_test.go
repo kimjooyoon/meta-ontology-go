@@ -9,22 +9,22 @@ func TestProtectedPushFailureManifestRejectsUnknownOrStaleOwner(t *testing.T) {
 		"unknown protected branch": func(binding *failureBinding) {
 			binding.BaseRef = "release"
 			binding.EventRef = "refs/heads/release"
-			binding.OwnerBranch = "release"
+			binding.HeadBranch = "release"
 		},
 		"stale owner": func(binding *failureBinding) {
 			binding.BaseRef = "main"
 			binding.EventRef = "refs/heads/main"
-			binding.OwnerBranch = "integration"
+			binding.HeadBranch = "integration"
 		},
 		"retired protected branch": func(binding *failureBinding) {
 			binding.BaseRef = "integration"
 			binding.EventRef = "refs/heads/integration"
-			binding.OwnerBranch = "integration"
+			binding.HeadBranch = "integration"
 		},
 		"pull request number": func(binding *failureBinding) {
 			binding.BaseRef = "dev"
 			binding.EventRef = "refs/heads/dev"
-			binding.OwnerBranch = "dev"
+			binding.HeadBranch = "dev"
 			binding.PRNumber = 105
 		},
 	} {
@@ -33,7 +33,7 @@ func TestProtectedPushFailureManifestRejectsUnknownOrStaleOwner(t *testing.T) {
 			binding.Event = "push"
 			mutate(&binding)
 			input := validFailureInput()
-			input.OwnerBranch = binding.OwnerBranch
+			input.HeadBranch = binding.HeadBranch
 			if _, err := buildFailureManifest(input, binding); err == nil {
 				t.Fatal("invalid protected push owner was accepted")
 			}
