@@ -1,0 +1,30 @@
+{
+  "decision_id": "capability-discovery-utility-slice-20260928",
+  "domain_id": "gooo.declaration.capability-discovery",
+  "declaration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "baseline_receipt_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "candidate_slice": [
+    "natural_query_normalization",
+    "declaration_bound_hover",
+    "unknown_first_missing_stage"
+  ],
+  "value_rationale": "Enable users to ask what a gooo declaration can support while preserving a non-executing boundary and replayable provenance.",
+  "unknown_identifiers": [
+    "generated_semantics_not_observed",
+    "external_boundary_not_bound"
+  ],
+  "estimated_cost": {
+    "engineering_effort": 2,
+    "ci_duration_seconds": 1800,
+    "resource_cost": 0
+  },
+  "expected_change": {
+    "metric": "utility_yield",
+    "minimum_delta": 0.1,
+    "new_evidence_required": true
+  },
+  "falsifier": "Two consecutive usage slices fail to produce a declaration-bound next operation or lose the first missing stage.",
+  "rollback_condition": "Any accepted receipt crosses execution or authorization boundaries, or its provenance tuple cannot be replayed.",
+  "decision": "PROCEED",
+  "evidence_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+}
