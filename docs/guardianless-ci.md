@@ -5,7 +5,9 @@
 The separate Guardian workflow and its privileged evidence chain have been
 removed from the active CI path. Promotion evidence is gathered in the regular
 CI run from the current pull request and live `dev`/`main` refs. A `main`
-promotion now accepts only `head=dev`; the one-time Foundation authorization,
+promotion accepts the exact `dev` head when it is a fast-forward, or a narrowly
+bound snapshot whose tree is exactly the live `dev` tree and whose parent is the
+live `main` head; the one-time Foundation authorization,
 review identity, last-push approval, reconciliation route, Guardian artifact,
 branch-protection snapshot, and the hard-coded PR 602 human decision are not
 inputs to that decision.

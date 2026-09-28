@@ -1,16 +1,20 @@
 # Branch and pull-request policy
 
-The current route is:
+The current routes are:
 
 ```text
-agent/* -> dev -> main
+agent/* -> dev
+dev -> main (direct fast-forward when ancestry permits)
+agent/main-promotion-snapshot-<dev-sha> -> main (exact dev tree, main parent)
 ```
 
-Work branches target `dev`. The only promotion route is an exact, same-repository
-pull request with `base=main` and `head=dev`. CI verifies the live PR tuple and
-the current `dev` and `main` commit identities before it writes a
-`promotion_authorization` record. That record is bound to the six canonical CI
-checks and exact proof artifacts. CI does not update refs.
+Work branches target `dev`. Promotion is a same-repository pull request with
+`base=main` and either `head=dev` or `head=agent/main-promotion-snapshot-<dev-sha>`.
+CI verifies the live PR tuple and refs before it writes a
+`promotion_authorization` record. A snapshot is accepted only when its tree is
+identical to the live `dev` tree and its sole parent is the live `main` commit.
+That record is bound to the six canonical CI checks and exact proof artifacts.
+CI does not update refs.
 
 The repository defines six canonical required status contexts:
 

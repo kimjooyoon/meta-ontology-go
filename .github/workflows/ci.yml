@@ -922,7 +922,11 @@ jobs:
             const fs = require('fs');
             const eventPull = context.payload.pull_request;
             const current = (await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: eventPull.number})).data;
-            if (!current || current.base?.ref !== 'main' || current.base?.sha !== eventPull.base?.sha || current.head?.ref !== eventPull.head?.ref || current.head?.sha !== eventPull.head?.sha || current.base?.repo?.full_name !== context.payload.repository.full_name || current.head?.repo?.full_name !== context.payload.repository.full_name) throw new Error('promotion PR tuple changed during CI');
+            const exactPull = current && current.base?.ref === 'main' && current.base?.sha === eventPull.base?.sha &&
+              current.head?.ref === eventPull.head?.ref && current.head?.sha === eventPull.head?.sha &&
+              current.base?.repo?.full_name === context.payload.repository.full_name &&
+              current.head?.repo?.full_name === context.payload.repository.full_name;
+            if (!exactPull) throw new Error('promotion PR tuple changed during CI');
             const [dev, main] = await Promise.all([
               github.rest.git.getRef({owner: context.repo.owner, repo: context.repo.repo, ref: 'heads/dev'}),
               github.rest.git.getRef({owner: context.repo.owner, repo: context.repo.repo, ref: 'heads/main'}),
@@ -930,9 +934,44 @@ jobs:
             const liveDevSHA = dev.data?.object?.sha;
             const liveMainSHA = main.data?.object?.sha;
             if (!/^[0-9a-f]{40}$/.test(liveDevSHA || '') || !/^[0-9a-f]{40}$/.test(liveMainSHA || '')) throw new Error('live source or target ref is unavailable');
-            const compare = (await github.rest.repos.compareCommits({owner: context.repo.owner, repo: context.repo.repo, base: liveMainSHA, head: liveDevSHA})).data;
+            const [candidate, source] = await Promise.all([
+              github.rest.git.getCommit({owner: context.repo.owner, repo: context.repo.repo, commit_sha: current.head.sha}),
+              github.rest.git.getCommit({owner: context.repo.owner, repo: context.repo.repo, commit_sha: liveDevSHA}),
+            ]);
+            const candidateTreeSHA = candidate.data?.tree?.sha;
+            const sourceTreeSHA = source.data?.tree?.sha;
+            const candidateParents = candidate.data?.parents || [];
+            const directDevHead = current.head.ref === 'dev' && current.head.sha === liveDevSHA;
+            const snapshotRef = `agent/main-promotion-snapshot-${liveDevSHA}`;
+            const exactDevTreeSnapshot = current.head.ref === snapshotRef && candidateParents.length === 1 &&
+              candidateParents[0]?.sha === liveMainSHA && candidateTreeSHA === sourceTreeSHA;
+            if (!directDevHead && !exactDevTreeSnapshot) throw new Error('promotion candidate must be exact dev or a direct-main child with the live dev tree');
+            const compare = (await github.rest.repos.compareCommits({owner: context.repo.owner, repo: context.repo.repo, base: liveMainSHA, head: current.head.sha})).data;
             const topology = {status: compare.status === 'ahead' && compare.ahead_by > 0 && compare.behind_by === 0 ? 'ahead' : compare.status, ahead_by: compare.ahead_by, behind_by: compare.behind_by, merge_base_sha: compare.merge_base_commit?.sha || ''};
-            fs.writeFileSync('ci-promotion-observation.json', JSON.stringify({repository: current.base.repo.full_name, pr_number: current.number, action: context.payload.action, state: current.state, draft: current.draft === true, merged: current.merged === true, mergeable: current.mergeable === true, mergeable_state: current.mergeable_state, base_repo: current.base.repo.full_name, base_ref: current.base.ref, base_sha: current.base.sha, head_repo: current.head.repo.full_name, head_ref: current.head.ref, head_sha: current.head.sha, live_dev_sha: liveDevSHA, live_main_sha: liveMainSHA, topology}, null, 2) + '\n');
+            const observation = {
+              repository: current.base.repo.full_name,
+              pr_number: current.number,
+              action: context.payload.action,
+              promotion_mode: directDevHead ? 'DIRECT_DEV_HEAD' : 'DEV_TREE_SNAPSHOT',
+              state: current.state,
+              draft: current.draft === true,
+              merged: current.merged === true,
+              mergeable: current.mergeable === true,
+              mergeable_state: current.mergeable_state,
+              base_repo: current.base.repo.full_name,
+              base_ref: current.base.ref,
+              base_sha: current.base.sha,
+              head_repo: current.head.repo.full_name,
+              head_ref: current.head.ref,
+              head_sha: current.head.sha,
+              head_parent_sha: candidateParents[0]?.sha || '',
+              head_tree_sha: candidateTreeSHA || '',
+              live_dev_sha: liveDevSHA,
+              live_dev_tree_sha: sourceTreeSHA || '',
+              live_main_sha: liveMainSHA,
+              topology,
+            };
+            fs.writeFileSync('ci-promotion-observation.json', JSON.stringify(observation, null, 2) + '\n');
       - name: Collect proof context
         uses: actions/github-script@v9.0.0
         env:

@@ -54,20 +54,24 @@ publishing are not current guarantees.
 
 ## CI-only branch flow
 
-Work branches use `agent/* -> dev`. The only promotion route is the exact
-same-repository `dev -> main` route; no intermediary branch participates in the
-current contract. Governance mode is `ci_only`: review roles, approval actors,
-and last-push approval fields are not CI proof inputs.
+Work branches use `agent/* -> dev`. Promotion uses a same-repository PR to
+`main` with either the exact `dev` head or a snapshot branch named
+`agent/main-promotion-snapshot-<dev-sha>`. CI accepts the snapshot only when its
+tree equals the live `dev` tree and its sole parent is the live `main` commit.
+No other main-target head is accepted. Governance mode is `ci_only`: review
+roles, approval actors, and last-push approval fields are not CI proof inputs.
 
 The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
-`Semantic conformance`, and `CI policy`. Those six are the complete required
-status set on both `dev` and `main`.
+`Semantic conformance`, and `CI policy`. The live `main` protection rule
+requires exactly those six; `dev` has no required status contexts.
 
-For a `dev -> main` promotion, CI emits a digest-bound `promotion_authorization`
-with `source=dev`, `target=main`, and `operation=fast_forward`. It is `PASS`
-only for a current, open, non-draft, unmerged, clean, mergeable same-repository
-PR whose live `dev` ref is ahead of `main`, has `behind=0`, and has `main` as
-its merge base, with the exact proof and artifacts. GitHub's native branch
+For a promotion, CI emits a digest-bound `promotion_authorization` with
+`source=dev`, `target=main`, and `operation=fast_forward`. It is `PASS` only for
+a current, open, non-draft, unmerged, clean, mergeable same-repository PR whose
+candidate is either a direct fast-forward `dev` head or a source-bound snapshot
+with the exact live `dev` tree and live `main` parent. Topology must have
+`behind=0` and `main` as its merge base, with the exact proof and artifacts.
+GitHub's native branch
 rules enforce the six required statuses; proof does not make a second app-bound
 policy snapshot.
 The authorization never writes refs or protection. After a final exact reread,

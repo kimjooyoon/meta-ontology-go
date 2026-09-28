@@ -45,15 +45,17 @@ For documentation or example work, the allowed ownership is `docs/**`,
 
 The branch contract is deterministic and CI-only:
 
-- Work branches target `dev`; no intermediary branch is a route, promotion
-  source, or ownership boundary.
+- Work branches target `dev`; no other feature branch is a promotion source or
+  ownership boundary.
 - The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
   `Semantic conformance`, and `CI policy`.
-- Protected `dev` and `main` require the same six canonical contexts.
-- The only promotion is a same-repository PR with `base=main` and `head=dev`.
-  CI accepts it only when the PR is open, non-draft, unmerged, mergeable, clean,
-  and bound to the current refs with `main` as the merge base, `ahead > 0`, and
-  `behind = 0`.
+- The `main` rule requires all six canonical contexts; the `dev` rule has no
+  required status contexts.
+- Promotion is a same-repository PR to `main` from `dev`, or from the exact
+  snapshot branch `agent/main-promotion-snapshot-<dev-sha>`. CI accepts a
+  snapshot only when its tree equals live `dev` and its sole parent is live
+  `main`. Both routes require a clean, open, non-draft, unmerged PR, current refs,
+  `main` as merge base, `ahead > 0`, and `behind = 0`.
 - The proof contains a digest-bound `promotion_authorization` with
   `operation=fast_forward`, `source=dev`, and `target=main`. It is a pure,
   non-mutating authorization record and is `FAIL_CLOSED` for missing or stale

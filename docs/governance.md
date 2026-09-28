@@ -44,9 +44,12 @@ The checked-in governance mode is `ci_only`. Reviewer identity, approval actors,
 and last-push approval fields are not CI proof inputs. The six machine checks and
 the exact source/ref evidence below decide promotion.
 
-Work branches use `agent/* -> dev`. No intermediary branch is a route, ownership
-boundary, or promotion source. The only promotion
-route is a same-repository pull request with `base=main` and `head=dev`.
+Work branches use `agent/* -> dev`. Promotion is a same-repository pull request
+with `base=main` and either `head=dev` or a narrowly bound snapshot branch named
+`agent/main-promotion-snapshot-<dev-sha>`. A snapshot must have the exact live
+`dev` tree and one parent equal to the live `main` SHA. It carries no independent
+source authority; it makes the exact `dev` tree a fast-forward child of `main`
+when older history diverged.
 
 The six canonical proof jobs are:
 
@@ -54,25 +57,26 @@ The six canonical proof jobs are:
 gofmt | go vet | go test | go test -race | Semantic conformance | CI policy
 ```
 
-The repository defines these six contexts as its required CI proof set. The last
-owner-account inspection found that `dev` had no required status contexts and
-`main` additionally required the retired `CI guardian` context. This change
-removes that duplicate workflow and evidence path from the repository; it does
-not edit the remote branch rule. There is no Guardian artifact or app-bound
-status context in the checked-in CI path.
+The live `main` protection rule requires exactly these six contexts; `dev` has
+no required status contexts. The retired `CI guardian` context, its duplicate
+workflow, and its app-bound evidence path are absent from the active CI route.
 
 An exact promotion proof requires all of the following:
 
 1. The PR is open, non-draft, unmerged, mergeable, clean, and binds the same
-   repository's `dev` head to the `main` base.
-2. The live `dev` and `main` refs are the recorded head and base both before and
-   after inspection. The topology is `ahead`, with `ahead > 0`, `behind = 0`, and
-   `merge_base_sha` equal to the live main SHA.
+   repository's `main` base to either `dev` or the exact snapshot branch name
+   derived from the live `dev` SHA.
+2. The live `dev` and `main` refs are reread during inspection. A direct `dev`
+   candidate must itself be a fast-forward. A snapshot candidate must have the
+   exact live `dev` tree and a sole parent equal to live `main`. In both forms,
+   topology is `ahead`, with `ahead > 0`, `behind = 0`, and `merge_base_sha`
+   equal to live `main`.
 3. The six canonical jobs and their current immutable artifact pass. The same
    CI proof does not request a second observer to approve its branch-policy view.
 4. The proof contains a digest-bound `promotion_authorization` with
-   `operation=fast_forward`, `source=dev`, `target=main`, the exact base/head
-   SHAs, and `proof_digest` equal to the proof bundle digest.
+   `operation=fast_forward`, `source=dev`, `target=main`, exact base/head SHAs,
+   the source and candidate tree digests, and `proof_digest` equal to the proof
+   bundle digest.
 
 The authorization is pure, non-mutating evidence. It is `PASS` only when every
 predicate holds and is otherwise `FAIL_CLOSED` with a reason code. The proof

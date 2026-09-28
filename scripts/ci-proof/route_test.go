@@ -46,3 +46,19 @@ func TestDeclaredContextRouteMustMatchTuple(t *testing.T) {
 		t.Fatal("deterministic main push route was rejected")
 	}
 }
+
+func TestMainPromotionRouteAcceptsOnlyDirectOrNamedSnapshotHeads(t *testing.T) {
+	snapshot := "agent/main-promotion-snapshot-0123456789abcdef0123456789abcdef01234567"
+	for _, head := range []string{"dev", snapshot} {
+		context := contextInput{Event: "pull_request", BaseRef: "main", HeadRef: head, Route: proofRoutePromotionMain}
+		if !validContextProofRoute(context) || !isPromotionContext(context) {
+			t.Fatalf("valid main promotion head %q was rejected", head)
+		}
+	}
+	for _, head := range []string{"agent/unrelated-main-change", "agent/main-promotion-snapshot-short"} {
+		context := contextInput{Event: "pull_request", BaseRef: "main", HeadRef: head, Route: proofRoutePromotionMain}
+		if validContextProofRoute(context) || isPromotionContext(context) {
+			t.Fatalf("unverified main promotion head %q was accepted", head)
+		}
+	}
+}

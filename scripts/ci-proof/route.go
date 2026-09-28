@@ -26,22 +26,26 @@ func classifyProofRoute(event, baseRef string) (string, error) {
 
 func validContextProofRoute(context contextInput) bool {
 	route, err := classifyProofRoute(context.Event, context.BaseRef)
-	return err == nil && context.Route == route && (context.BaseRef != "main" || context.Event != "pull_request" || context.HeadRef == "dev")
+	return err == nil && context.Route == route && (context.BaseRef != "main" || context.Event != "pull_request" || validMainPromotionHead(context.HeadRef))
 }
 
 func validBundleProofRoute(bundle proofBundle) bool {
 	route, err := classifyProofRoute(bundle.Event, bundle.BaseRef)
-	return err == nil && route == expectedProofRoute(bundle.Event, bundle.BaseRef) && (bundle.BaseRef != "main" || bundle.Event != "pull_request" || bundle.HeadRef == "dev")
+	return err == nil && route == expectedProofRoute(bundle.Event, bundle.BaseRef) && (bundle.BaseRef != "main" || bundle.Event != "pull_request" || validMainPromotionHead(bundle.HeadRef))
 }
 
 func isPromotionContext(context contextInput) bool {
 	route, err := classifyProofRoute(context.Event, context.BaseRef)
-	return err == nil && route == proofRoutePromotionMain && context.HeadRef == "dev"
+	return err == nil && route == proofRoutePromotionMain && validMainPromotionHead(context.HeadRef)
 }
 
 func isPromotionBundle(bundle proofBundle) bool {
 	route, err := classifyProofRoute(bundle.Event, bundle.BaseRef)
-	return err == nil && route == proofRoutePromotionMain && bundle.HeadRef == "dev"
+	return err == nil && route == proofRoutePromotionMain && validMainPromotionHead(bundle.HeadRef)
+}
+
+func validMainPromotionHead(headRef string) bool {
+	return headRef == "dev" || validPromotionSnapshotHeadBranch(headRef)
 }
 
 func expectedProofRoute(event, baseRef string) string {
