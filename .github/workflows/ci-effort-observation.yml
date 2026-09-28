@@ -238,12 +238,17 @@ jobs:
           mkdir -p "$baseline"
           workflow_id="$(jq -r '.workflow_id // 0' "$root/run.json")"
           source_event="$(jq -r '.event // ""' "$root/run.json")"
-          source_ref="$(jq -r '.ref // ""' "$root/run.json")"
           source_branch="$(jq -r '.head_branch // ""' "$root/run.json")"
+          source_ref="$(jq -r 'if (.ref // "") != "" then .ref elif .event == "push" and (.head_branch == "dev" or .head_branch == "main") then "refs/heads/" + .head_branch else "" end' "$root/run.json")"
+          source_ref_resolution="$(jq -r 'if (.ref // "") != "" then "ACTIONS_API_REF" elif .event == "push" and (.head_branch == "dev" or .head_branch == "main") then "PUSH_EVENT_ALLOWLISTED_HEAD_BRANCH" else "UNRESOLVED" end' "$root/run.json")"
           current_run_id="$(jq -r '.id // 0' "$root/run.json")"
           current_repository="$(jq -r '.head_repository.full_name // ""' "$root/run.json")"
+          jq --arg ref "$source_ref" --arg resolution "$source_ref_resolution" '. + {ref:$ref,ref_resolution:$resolution}' "$root/run.json" > "$baseline/current-run.json"
           history_status="OK"
-          if [ "$workflow_id" -gt 0 ] && [ -n "$source_event" ] && [ -n "$source_ref" ] && [ -n "$source_branch" ] && [ -n "$current_repository" ]; then
+          if [ "$source_event" = "pull_request" ]; then
+            history_status="NOT_APPLICABLE"
+            jq -n --arg schema "gooo/ci-required-check-baseline-input/v1" --arg lookup "$history_status" '{schema:$schema,lookup_status:$lookup,samples:[]}' > "$baseline/history.json"
+          elif [ "$source_event" = "push" ] && [ "$workflow_id" -gt 0 ] && [ -n "$source_ref" ] && [ -n "$source_branch" ] && [ -n "$current_repository" ]; then
             if gh api --method GET "repos/$GITHUB_REPOSITORY/actions/workflows/$workflow_id/runs" \
               -f event="$source_event" -f branch="$source_branch" -f status=completed -F per_page=100 \
               > "$baseline/run-list.json"; then
@@ -254,14 +259,15 @@ jobs:
                 --arg repository "$current_repository" \
                 --argjson workflow "$workflow_id" \
                 --argjson current "$current_run_id" \
-                '[.workflow_runs[] | select(.id != $current and .workflow_id == $workflow and .event == $event and .ref == $ref and .head_branch == $branch and .head_repository.full_name == $repository and .status == "completed" and .conclusion == "success")] | sort_by(.id) | reverse | .[:20] | map({id,workflow_id,event,ref,head_branch,head_sha,status,conclusion,run_attempt,created_at,run_started_at,html_url,head_repository})' \
+                '[.workflow_runs[] | . as $run | ($run.ref // "") as $api_ref | (if $api_ref != "" then $api_ref elif $run.event == "push" and ($run.head_branch == "dev" or $run.head_branch == "main") then "refs/heads/" + $run.head_branch else "" end) as $resolved_ref | ($api_ref != "") as $api_ref_present | select($run.id != $current and $run.workflow_id == $workflow and $run.event == $event and $resolved_ref == $ref and $run.head_branch == $branch and $run.head_repository.full_name == $repository and $run.status == "completed" and $run.conclusion == "success") | $run + {ref:$resolved_ref,ref_resolution:(if $api_ref_present then "ACTIONS_API_REF" else "PUSH_EVENT_ALLOWLISTED_HEAD_BRANCH" end)}] | sort_by(.id) | reverse | .[:20] | map({id,workflow_id,event,ref,ref_resolution,head_branch,head_sha,status,conclusion,run_attempt,created_at,run_started_at,html_url,head_repository})' \
                 "$baseline/run-list.json" > "$baseline/candidates.json"
               : > "$baseline/samples.ndjson"
               while IFS= read -r historical_run_id; do
                 historical_run="$(jq -c --argjson id "$historical_run_id" '.[] | select(.id == $id)' "$baseline/candidates.json")"
                 jobs_path="$baseline/jobs-$historical_run_id.json"
                 if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$historical_run_id/jobs?per_page=100" > "$jobs_path"; then
-                  jq -c --argjson run "$historical_run" --slurpfile jobs "$jobs_path" \
+                  # -n prevents jq from consuming the remaining run IDs from the loop's stdin.
+                  jq -n -c --argjson run "$historical_run" --slurpfile jobs "$jobs_path" \
                     --argjson required '["gofmt","go vet","go test","go test -race","Semantic conformance","CI policy"]' \
                     '$run + {job_lookup_status:"OK",jobs:[($jobs[0].jobs // [])[] | select(.name as $name | (($required | index($name)) != null)) | {id,name,status,conclusion,head_sha,run_id,started_at,completed_at}]}' \
                     >> "$baseline/samples.ndjson"
@@ -279,7 +285,7 @@ jobs:
             jq -n --arg schema "gooo/ci-required-check-baseline-input/v1" --arg lookup "$history_status" '{schema:$schema,lookup_status:$lookup,samples:[]}' > "$baseline/history.json"
           fi
           go run ./scripts/ci-effort-observation/baseline \
-            --run "$root/run.json" \
+            --run "$baseline/current-run.json" \
             --jobs "$root/jobs.json" \
             --history "$baseline/history.json" \
             --output "$baseline/report.json" \

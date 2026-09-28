@@ -2,9 +2,9 @@ name: OpenTofu released-CLI observation
 
 on:
   pull_request:
-    branches: [dev]
+    branches: [dev, main]
   push:
-    branches: [dev]
+    branches: [dev, main]
 
 permissions:
   contents: read
