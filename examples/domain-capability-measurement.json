@@ -1,0 +1,27 @@
+{
+  "version": "domain.capability.input.v1",
+  "domain": "support_triage",
+  "expected_capabilities": [
+    "declaration_analysis",
+    "provenance",
+    "support_triage"
+  ],
+  "observations": [
+    {
+      "domain": "support_triage",
+      "capability_id": "declaration_analysis",
+      "outcome": "useful",
+      "evidence_digest": "example-evidence-declaration-analysis",
+      "non_executing": true,
+      "non_authorizing": true
+    },
+    {
+      "domain": "support_triage",
+      "capability_id": "provenance",
+      "outcome": "unresolved",
+      "evidence_digest": "example-evidence-provenance",
+      "non_executing": true,
+      "non_authorizing": true
+    }
+  ]
+}
