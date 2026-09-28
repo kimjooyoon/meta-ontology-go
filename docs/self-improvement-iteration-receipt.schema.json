@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kimjooyoon/meta-ontology-go/docs/self-improvement-iteration-receipt.schema.json",
+  "title": "Self-improvement iteration receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "iteration_id",
+    "observation_digest",
+    "candidate_digest",
+    "state",
+    "non_executing",
+    "non_authorizing"
+  ],
+  "properties": {
+    "version": {
+      "const": "self.improvement.iteration.v1"
+    },
+    "iteration_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observation_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "candidate_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "verification_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "rollback_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "state": {
+      "enum": ["PROPOSED", "ACCEPTED", "REJECTED", "UNKNOWN"]
+    },
+    "first_missing_stage": {
+      "type": "string",
+      "minLength": 1
+    },
+    "next_operation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "non_executing": {
+      "const": true
+    },
+    "non_authorizing": {
+      "const": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "enum": ["ACCEPTED", "REJECTED"]
+          }
+        }
+      },
+      "then": {
+        "required": ["verification_digest", "rollback_digest"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "UNKNOWN"
+          }
+        }
+      },
+      "then": {
+        "required": ["first_missing_stage", "next_operation"]
+      }
+    }
+  ]
+}
+
