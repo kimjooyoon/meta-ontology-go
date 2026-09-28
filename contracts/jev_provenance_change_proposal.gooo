@@ -1,0 +1,31 @@
+module jev_provenance_change_proposal
+
+input reverse_observation_receipt
+input requested_change
+input target_scope_digest
+input rationale_digest
+input review_evidence_digest
+input explicit_application_boundary
+
+status UNKNOWN provenance or proposal identity is missing
+status DEFERRED receipt is incomplete, mismatched, or not comparable
+status PROPOSED provenance-bound change proposal is ready for review
+status REJECTED proposal cannot cross its declared scope or boundary
+
+field status
+field source_digest
+field generated_artifact_digest
+field reverse_observation_digest
+field target_scope_digest
+field rationale_digest
+field review_evidence_digest
+field first_boundary
+field proposal_digest
+
+constraint receipt_precedes_proposal
+constraint proposal_is_not_mutation
+constraint explicit_application_boundary
+constraint target_scope_is_bound
+constraint mismatch_is_not_success
+constraint no_automatic_authorization
+constraint no_provider_invocation
