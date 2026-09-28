@@ -1,0 +1,34 @@
+module jev_capability_discovery_investment_bridge
+
+input natural_language_query
+input discovery_observation
+input discovery_query_digest
+input discovery_provenance_digest
+input declaration_scope_digest
+input explicit_investment_target
+input unresolved_capability_boundaries
+
+status UNKNOWN discovery, scope, or policy evidence is not bound
+status DEFERRED discovery evidence is incomplete or incomparable
+status INVESTIGATE unresolved capability boundaries must be investigated first
+status INVEST observed capability coverage is below the explicit target
+status MAINTAIN observed capability coverage meets the explicit target
+
+field disposition
+field first_boundary
+field discovery_query_digest
+field discovery_provenance_digest
+field declaration_scope_digest
+field target_numerator
+field target_denominator
+field gap_numerator
+field plan_digest
+
+constraint discovery_precedes_investment
+constraint target_is_policy_not_truth
+constraint preserve_first_boundary
+constraint preserve_discovery_provenance
+constraint scope_and_target_are_explicit
+constraint no_execution
+constraint no_authorization
+constraint no_mutation
