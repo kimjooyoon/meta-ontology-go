@@ -20,31 +20,28 @@ import (
 )
 
 const (
-	Schema                         = "gooo/self-improvement-execution-grant/v1"
-	RequestSchema                  = "gooo/self-improvement-execution-grant-request/v1"
-	ResolutionSchema               = "gooo/self-improvement-execution-grant-resolution/v1"
-	ReceiptSchema                  = "gooo/self-improvement-execution-grant-receipt/v1"
-	PolicySchema                   = "gooo/self-improvement-execution-grant-policy/v1"
-	CanonicalCasesSchema           = "gooo/self-improvement-execution-grant-cases/v1"
-	VerificationSchema             = "gooo/self-improvement-execution-grant-verification/v1"
-	ContractID                     = "gooo://self-improvement/execution-grant/v1"
-	PolicyName                     = "SeparateExecutionGrant"
-	PolicyPath                     = "examples/self-improvement-execution-grant/grant.gooo"
-	GrantRequestReason             = "EXECUTION_GRANT_REQUESTED"
-	GrantTarget                    = "self-improvement-execution"
-	GrantMode                      = "separate-one-use-grant"
-	MaxExecutions                  = 1
-	PerformanceUnknown             = "UNKNOWN"
-	GrantDecisionSchema            = "gooo/self-improvement-execution-grant-decision/v1"
-	DecisionAllow                  = "ALLOW"
-	DecisionDeny                   = "DENY"
-	DecisionSourceWorkflowDispatch = "workflow_dispatch"
-	DecisionSourceCanonical        = "canonical-fixture"
-	ActorEvidenceLabel             = "GITHUB_EVENT_ACTOR_EVIDENCE"
-	CanonicalEvidenceLabel         = "CANONICAL_FIXTURE_METADATA"
-	ConsumptionObligation          = "NEXT_EXECUTOR_MUST_VERIFY_AND_CONSUME_ONCE"
-	ConsumptionPending             = "UNCONSUMED_NOT_EXECUTED"
-	KnownFlawedArtifactID          = int64(9955461668)
+	Schema                = "gooo/self-improvement-execution-grant/v2"
+	RequestSchema         = "gooo/self-improvement-execution-grant-request/v2"
+	ResolutionSchema      = "gooo/self-improvement-execution-grant-resolution/v2"
+	ReceiptSchema         = "gooo/self-improvement-execution-grant-receipt/v2"
+	PolicySchema          = "gooo/self-improvement-execution-grant-policy/v2"
+	CanonicalCasesSchema  = "gooo/self-improvement-execution-grant-cases/v2"
+	VerificationSchema    = "gooo/self-improvement-execution-grant-verification/v2"
+	ContractID            = "gooo://self-improvement/execution-grant/v2"
+	PolicyName            = "SeparateExecutionGrant"
+	PolicyPath            = "examples/self-improvement-execution-grant/grant.gooo"
+	GrantRequestReason    = "EXECUTION_GRANT_REQUESTED"
+	GrantTarget           = "self-improvement-execution"
+	GrantMode             = "separate-one-use-grant"
+	MaxExecutions         = 1
+	PerformanceUnknown    = "UNKNOWN"
+	GrantDecisionSchema   = "gooo/self-improvement-execution-grant-decision/v2"
+	DecisionAllow         = "ALLOW"
+	DecisionSourceSystem  = "system-derived-exact-evidence"
+	DecisionRule          = "EXACT_V24_V25_SOURCE_BUNDLE_V1"
+	ConsumptionObligation = "NEXT_EXECUTOR_MUST_VERIFY_AND_CONSUME_ONCE"
+	ConsumptionPending    = "UNCONSUMED_NOT_EXECUTED"
+	KnownFlawedArtifactID = int64(9955461668)
 )
 
 type Decision string
@@ -60,7 +57,6 @@ type Resolution string
 const (
 	ResolutionExact             Resolution = "EXACT"
 	ResolutionLower             Resolution = "LOWER_RESOLUTION"
-	ResolutionDenied            Resolution = "DENIED"
 	ResolutionGrantedUnconsumed Resolution = "GRANTED_UNCONSUMED"
 )
 
@@ -116,15 +112,6 @@ type SourceArtifact struct {
 	ArtifactRetrievalError string `json:"artifact_retrieval_error,omitempty"`
 }
 
-type ActorEvidence struct {
-	Repository         string `json:"repository"`
-	Actor              string `json:"actor"`
-	WorkflowRunID      int64  `json:"workflow_run_id"`
-	WorkflowRunAttempt int    `json:"workflow_run_attempt"`
-	Event              string `json:"event"`
-	EvidenceLabel      string `json:"evidence_label"`
-}
-
 type GrantRequest struct {
 	Schema     string         `json:"schema"`
 	Lifecycle  string         `json:"lifecycle"`
@@ -147,15 +134,15 @@ type GrantDecisionInput struct {
 	V24            V24Binding     `json:"v24_authorization"`
 	V25            V25Binding     `json:"v25_pre_execution_contract"`
 	Source         SourceArtifact `json:"source_artifact"`
-	ActorEvidence  ActorEvidence  `json:"actor_evidence"`
+	DecisionRule   string         `json:"decision_rule"`
 	DecisionSource string         `json:"decision_source"`
+	EvidenceDigest string         `json:"evidence_digest"`
 	DecisionDigest string         `json:"decision_digest,omitempty"`
 }
 
 type GrantInput struct {
-	Request        GrantRequest         `json:"request"`
-	DecisionInputs []GrantDecisionInput `json:"decision_inputs,omitempty"`
-	Live           bool                 `json:"-"`
+	Request GrantRequest `json:"request"`
+	Live    bool         `json:"-"`
 }
 
 type UnknownState struct {
@@ -168,20 +155,21 @@ type UnknownState struct {
 }
 
 type GrantReceipt struct {
-	Schema                 string        `json:"schema"`
-	GrantID                string        `json:"grant_id"`
-	RequestDigest          string        `json:"request_digest"`
-	Decision               string        `json:"decision"`
-	DecisionSource         string        `json:"decision_source"`
-	ActorEvidence          ActorEvidence `json:"actor_evidence"`
-	GrantAllowsExecution   bool          `json:"grant_allows_execution"`
-	RemainingUses          int           `json:"remaining_uses"`
-	ConsumedUses           int           `json:"consumed_uses"`
-	ExecutionCount         int           `json:"execution_count"`
-	ConsumptionStatus      string        `json:"consumption_status"`
-	ConsumptionObligation  string        `json:"consumption_obligation"`
-	OneUseEnforcementState string        `json:"one_use_enforcement_state"`
-	Digest                 string        `json:"digest"`
+	Schema                 string `json:"schema"`
+	GrantID                string `json:"grant_id"`
+	RequestDigest          string `json:"request_digest"`
+	Decision               string `json:"decision"`
+	DecisionSource         string `json:"decision_source"`
+	DecisionRule           string `json:"decision_rule"`
+	EvidenceDigest         string `json:"evidence_digest"`
+	GrantAllowsExecution   bool   `json:"grant_allows_execution"`
+	RemainingUses          int    `json:"remaining_uses"`
+	ConsumedUses           int    `json:"consumed_uses"`
+	ExecutionCount         int    `json:"execution_count"`
+	ConsumptionStatus      string `json:"consumption_status"`
+	ConsumptionObligation  string `json:"consumption_obligation"`
+	OneUseEnforcementState string `json:"one_use_enforcement_state"`
+	Digest                 string `json:"digest"`
 }
 
 type GrantMetrics struct {
@@ -198,6 +186,7 @@ type GrantMetrics struct {
 	ExactSourceDigestBound                   int     `json:"exact_source_digest_bound"`
 	LiveGrantRequests                        int     `json:"live_grant_requests"`
 	LiveGrants                               int     `json:"live_grants"`
+	SystemDerivedGrants                      int     `json:"system_derived_grants"`
 	LiveGrantsBefore                         int     `json:"live_grants_before"`
 	LiveGrantsAfter                          int     `json:"live_grants_after"`
 	LiveExecutionCount                       int     `json:"live_execution_count"`
@@ -238,29 +227,29 @@ type PolicyEvidence struct {
 }
 
 type GrantResolution struct {
-	Schema                string               `json:"schema"`
-	RequestDigest         string               `json:"request_digest"`
-	Decision              Decision             `json:"decision"`
-	Resolution            Resolution           `json:"resolution"`
-	Reason                string               `json:"reason"`
-	Unknown               *UnknownState        `json:"unknown,omitempty"`
-	MissingFields         []string             `json:"missing_fields,omitempty"`
-	ContradictoryFields   []string             `json:"contradictory_fields,omitempty"`
-	Obligations           []string             `json:"obligations,omitempty"`
-	Frontier              []string             `json:"frontier,omitempty"`
-	DecisionInputs        []GrantDecisionInput `json:"decision_inputs,omitempty"`
-	GrantAllowsExecution  bool                 `json:"grant_allows_execution"`
-	RemainingUses         int                  `json:"remaining_uses"`
-	ConsumedUses          int                  `json:"consumed_uses"`
-	ExecutionCount        int                  `json:"execution_count"`
-	RepositoryWrites      int                  `json:"repository_writes"`
-	LocalTestExecutions   int                  `json:"local_test_executions"`
-	FallbackAccepted      int                  `json:"fallback_accepted"`
-	ConsumptionObligation string               `json:"consumption_obligation"`
-	OneUseEnforced        bool                 `json:"one_use_enforced"`
-	Receipt               *GrantReceipt        `json:"receipt,omitempty"`
-	Metrics               GrantMetrics         `json:"metrics"`
-	Digest                string               `json:"digest"`
+	Schema                string              `json:"schema"`
+	RequestDigest         string              `json:"request_digest"`
+	Decision              Decision            `json:"decision"`
+	Resolution            Resolution          `json:"resolution"`
+	Reason                string              `json:"reason"`
+	Unknown               *UnknownState       `json:"unknown,omitempty"`
+	MissingFields         []string            `json:"missing_fields,omitempty"`
+	ContradictoryFields   []string            `json:"contradictory_fields,omitempty"`
+	Obligations           []string            `json:"obligations,omitempty"`
+	Frontier              []string            `json:"frontier,omitempty"`
+	SystemEvidence        *GrantDecisionInput `json:"system_evidence,omitempty"`
+	GrantAllowsExecution  bool                `json:"grant_allows_execution"`
+	RemainingUses         int                 `json:"remaining_uses"`
+	ConsumedUses          int                 `json:"consumed_uses"`
+	ExecutionCount        int                 `json:"execution_count"`
+	RepositoryWrites      int                 `json:"repository_writes"`
+	LocalTestExecutions   int                 `json:"local_test_executions"`
+	FallbackAccepted      int                 `json:"fallback_accepted"`
+	ConsumptionObligation string              `json:"consumption_obligation"`
+	OneUseEnforced        bool                `json:"one_use_enforced"`
+	Receipt               *GrantReceipt       `json:"receipt,omitempty"`
+	Metrics               GrantMetrics        `json:"metrics"`
+	Digest                string              `json:"digest"`
 }
 
 type Verification struct {
@@ -333,6 +322,7 @@ type CanonicalCaseReport struct {
 	ReplayEqual                              bool            `json:"replay_equal"`
 	LiveGrantRequests                        int             `json:"live_grant_requests"`
 	LiveGrants                               int             `json:"live_grants"`
+	SystemDerivedGrants                      int             `json:"system_derived_grants"`
 	LiveExecutionCount                       int             `json:"live_execution_count"`
 	CanonicalGrantedCases                    int             `json:"canonical_granted_cases"`
 	CanonicalExecutionCount                  int             `json:"canonical_execution_count"`
@@ -441,16 +431,20 @@ func canonicalDigest(value CanonicalCaseReport) string {
 func verificationDigest(value Verification) string { value.Digest = ""; return digestJSON(value) }
 
 func ProjectV24(request candidate.AuthorizationRequest, resolution candidate.AuthorizationResolution) V24Binding {
+	decision := resolution.Decision
+	if resolution.Authorization != nil {
+		decision = resolution.Authorization.Decision
+	}
 	return V24Binding{
 		RequestSchema: request.Schema, RequestDigest: request.Digest,
 		ResolutionSchema: resolution.Schema, ResolutionDigest: resolution.Digest,
 		CandidateStableID: request.Candidate.CandidateID, CandidateDigest: request.Candidate.CandidateDigest,
 		SubjectSHA: request.Candidate.SubjectSHA, ObservationDigest: request.Candidate.SourceObservationDigest,
 		ContractDigest:        request.Candidate.ContractCanonicalDigest,
-		AuthorizationDecision: resolution.Decision, AuthorizationResolution: resolution.Resolution,
+		AuthorizationDecision: decision, AuthorizationResolution: resolution.Decision,
 		AuthorizationOutcome: resolution.Outcome,
 		RequestValid:         candidate.ValidateAuthorizationRequest(request) == nil,
-		ResolutionValid:      candidate.ValidateAuthorizationResolution(resolution) == nil,
+		ResolutionValid:      candidate.ValidateAuthorizationResolution(resolution) == nil && candidate.VerifyAuthorizationResolution(request, resolution) == nil,
 	}
 }
 
@@ -478,9 +472,19 @@ func BuildRequest(program PolicyProgram, v24Binding V24Binding, v25Binding V25Bi
 	return request
 }
 
-func BuildDecisionInput(request GrantRequest, decision string, source string, actor ActorEvidence) GrantDecisionInput {
-	input := GrantDecisionInput{Schema: GrantDecisionSchema, Decision: decision, RequestDigest: request.Digest,
-		V24: request.V24, V25: request.V25, Source: request.Source, DecisionSource: source, ActorEvidence: actor}
+func grantEvidenceDigest(request GrantRequest) string {
+	return digestJSON(struct {
+		RequestDigest string         `json:"request_digest"`
+		V24           V24Binding     `json:"v24_authorization"`
+		V25           V25Binding     `json:"v25_pre_execution_contract"`
+		Source        SourceArtifact `json:"source_artifact"`
+	}{RequestDigest: request.Digest, V24: request.V24, V25: request.V25, Source: request.Source})
+}
+
+func deriveGrantEvidence(request GrantRequest) GrantDecisionInput {
+	input := GrantDecisionInput{Schema: GrantDecisionSchema, Decision: DecisionAllow, RequestDigest: request.Digest,
+		V24: request.V24, V25: request.V25, Source: request.Source, DecisionRule: DecisionRule,
+		DecisionSource: DecisionSourceSystem, EvidenceDigest: grantEvidenceDigest(request)}
 	input.DecisionDigest = decisionDigest(input)
 	return input
 }

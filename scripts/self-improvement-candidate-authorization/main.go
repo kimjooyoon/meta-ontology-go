@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -20,19 +18,18 @@ func main() {
 	candidate := flag.String("candidate", "", "candidate report JSON")
 	metadata := flag.String("metadata", "", "candidate artifact metadata JSON")
 	request := flag.String("request", "", "authorization request JSON")
-	decision := flag.String("decision", "", "explicit decision input JSON")
 	resolution := flag.String("resolution", "", "authorization resolution JSON")
 	output := flag.String("output", "", "output JSON")
 	check := flag.Bool("check", false, "require independent validation")
 	flag.Parse()
 
-	if err := run(*mode, *contract, *candidate, *metadata, *request, *decision, *resolution, *output, *check); err != nil {
+	if err := run(*mode, *contract, *candidate, *metadata, *request, *resolution, *output, *check); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(mode, contractPath, candidatePath, metadataPath, requestPath, decisionPath, resolutionPath, outputPath string, check bool) error {
+func run(mode, contractPath, candidatePath, metadataPath, requestPath, resolutionPath, outputPath string, check bool) error {
 	if outputPath == "" {
 		return errors.New("authorization output path is required")
 	}
@@ -40,7 +37,7 @@ func run(mode, contractPath, candidatePath, metadataPath, requestPath, decisionP
 	case "request":
 		return runRequest(contractPath, candidatePath, metadataPath, outputPath, check)
 	case "resolve":
-		return runResolve(requestPath, decisionPath, outputPath, check)
+		return runResolve(requestPath, outputPath, check)
 	case "verify":
 		return runVerify(requestPath, resolutionPath, outputPath, check)
 	case "cases":
@@ -71,20 +68,12 @@ func runRequest(contractPath, candidatePath, metadataPath, outputPath string, ch
 	return writeJSON(outputPath, request)
 }
 
-func runResolve(requestPath, decisionPath, outputPath string, check bool) error {
+func runResolve(requestPath, outputPath string, check bool) error {
 	request, err := readRequest(requestPath)
 	if err != nil {
 		return err
 	}
-	var inputs []selfimprovementcandidate.AuthorizationDecisionInput
-	if decisionPath != "" {
-		input, err := readDecision(decisionPath)
-		if err != nil {
-			return err
-		}
-		inputs = []selfimprovementcandidate.AuthorizationDecisionInput{input}
-	}
-	resolution := selfimprovementcandidate.ResolveAuthorization(request, inputs)
+	resolution := selfimprovementcandidate.ResolveAuthorization(request)
 	if check {
 		if err := selfimprovementcandidate.VerifyAuthorizationResolution(request, resolution); err != nil {
 			return err
@@ -156,19 +145,6 @@ func readRequest(path string) (selfimprovementcandidate.AuthorizationRequest, er
 	return request, nil
 }
 
-func readDecision(path string) (selfimprovementcandidate.AuthorizationDecisionInput, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return selfimprovementcandidate.AuthorizationDecisionInput{}, fmt.Errorf("read decision input: %w", err)
-	}
-	var input selfimprovementcandidate.AuthorizationDecisionInput
-	if err := decode(data, &input); err != nil {
-		return input, fmt.Errorf("decode decision input: %w", err)
-	}
-	input.DecisionDigest = decisionInputDigest(data)
-	return input, nil
-}
-
 func readResolution(path string) (selfimprovementcandidate.AuthorizationResolution, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -179,23 +155,6 @@ func readResolution(path string) (selfimprovementcandidate.AuthorizationResoluti
 		return resolution, fmt.Errorf("decode authorization resolution: %w", err)
 	}
 	return resolution, nil
-}
-
-func decisionInputDigest(data []byte) string {
-	// The package's canonical decision digest is deliberately reconstructed by
-	// the evaluator; this raw digest is only provenance metadata for the CLI.
-	var input selfimprovementcandidate.AuthorizationDecisionInput
-	if err := decode(data, &input); err != nil {
-		return ""
-	}
-	input.DecisionDigest = ""
-	canonical, _ := json.Marshal(input)
-	return digestBytes(canonical)
-}
-
-func digestBytes(data []byte) string {
-	digest := sha256.Sum256(data)
-	return "sha256:" + hex.EncodeToString(digest[:])
 }
 
 func decode(data []byte, target any) error {

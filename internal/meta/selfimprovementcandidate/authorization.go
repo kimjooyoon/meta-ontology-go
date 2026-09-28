@@ -16,36 +16,33 @@ import (
 )
 
 const (
-	AuthorizationContractSchema   = "gooo/self-improvement-candidate-authorization-contract/v1"
-	AuthorizationRequestSchema    = "gooo/self-improvement-candidate-authorization-request/v1"
-	AuthorizationDecisionSchema   = "gooo/self-improvement-candidate-authorization-decision/v1"
-	AuthorizationResolutionSchema = "gooo/self-improvement-candidate-authorization-resolution/v1"
-	AuthorizationCasesSchema      = "gooo/self-improvement-candidate-authorization-cases/v1"
-	AuthorizationContractID       = "gooo://self-improvement/candidate-authorization/v1"
-	AuthorizationScope            = "candidate-authorization-only"
+	AuthorizationContractSchema   = "gooo/self-improvement-candidate-authorization-contract/v2"
+	AuthorizationRequestSchema    = "gooo/self-improvement-candidate-authorization-request/v2"
+	AuthorizationDecisionSchema   = "gooo/self-improvement-candidate-authorization-decision/v2"
+	AuthorizationResolutionSchema = "gooo/self-improvement-candidate-authorization-resolution/v2"
+	AuthorizationCasesSchema      = "gooo/self-improvement-candidate-authorization-cases/v2"
+	AuthorizationContractID       = "gooo://self-improvement/candidate-authorization/v2"
+	AuthorizationScope            = "candidate-eligibility-only"
 	AuthorizationRequestState     = "REQUESTED"
 	AuthorizationUnresolved       = "UNRESOLVED"
 	AuthorizationClosed           = "CLOSED"
 	AuthorizationUnknown          = "UNKNOWN"
 	AuthorizationRefuted          = "REFUTED"
 	AuthorizationAllow            = "ALLOW"
-	AuthorizationDeny             = "DENY"
 	AuthorizationAuthorized       = "AUTHORIZED"
-	AuthorizationDenied           = "DENIED"
-	AuthorizationUnknownReason    = "MISSING_EXPLICIT_AUTHORIZATION"
-	AuthorizationUnknownStage     = "AUTHORIZE"
-	AuthorizationUnknownStep      = "DECIDE_CANDIDATE"
+	AuthorizationUnknownReason    = "SYSTEM_AUTHORIZATION_EVIDENCE_INCOMPLETE"
+	AuthorizationUnknownStage     = "ELIGIBILITY"
+	AuthorizationUnknownStep      = "DERIVE_FROM_EVIDENCE"
 	AuthorizationUnknownClass     = "INCOMPLETE_EVIDENCE"
-	AuthorizationUnknownNext      = "PROVIDE_EXPLICIT_AUTHORIZATION"
-	AuthorizationRefutedReason    = "CANDIDATE_AUTHORIZATION_CONTRADICTION"
-	AuthorizationClosedAllow      = "EXPLICIT_HUMAN_AUTHORIZATION"
-	AuthorizationClosedDeny       = "EXPLICIT_HUMAN_DENIAL"
+	AuthorizationUnknownNext      = "COMPLETE_SYSTEM_AUTHORIZATION_EVIDENCE"
+	AuthorizationRefutedReason    = "CANDIDATE_EVIDENCE_CONTRADICTION"
+	AuthorizationClosedAllow      = "EXACT_SYSTEM_DERIVED_CANDIDATE_ELIGIBILITY"
 	AuthorizationArtifactReason   = "CANDIDATE_ARTIFACT_UNAVAILABLE"
 	AuthorizationFieldReason      = "MISSING_CANDIDATE_ADAPTER_FIELD"
-	AuthorizationInputReason      = "MISSING_EXPLICIT_DECISION_INPUT"
-	AuthorizationScopeReason      = "AUTHORIZATION_SCOPE_CONTRADICTION"
-	AuthorizationRequestReason    = "AUTHORIZATION_REQUEST_INTEGRITY_MISMATCH"
-	AuthorizationDuplicateReason  = "CONFLICTING_DUPLICATE_DECISIONS"
+	AuthorizationRequestReason    = "ELIGIBILITY_REQUEST_INTEGRITY_MISMATCH"
+	AuthorizationContractReason   = "AUTHORIZATION_CONTRACT_INTEGRITY_MISMATCH"
+	AuthorizationEvidenceRule     = "EXACT_PROPOSED_CANDIDATE_V1"
+	AuthorizationEvidenceSource   = "system-derived-exact-evidence"
 )
 
 // AuthorizationContract is the compiled semantic IR for authorization.gooo.
@@ -93,6 +90,7 @@ type CandidateBinding struct {
 
 type ArtifactMetadata struct {
 	Repository    string `json:"repository"`
+	SubjectSHA    string `json:"subject_sha"`
 	RunID         int64  `json:"run_id"`
 	RunAttempt    int    `json:"run_attempt"`
 	ArtifactID    int64  `json:"artifact_id"`
@@ -108,6 +106,7 @@ type AuthorizationMetrics struct {
 	AdapterEdges                 int `json:"adapter_edges"`
 	Requests                     int `json:"requests"`
 	Decisions                    int `json:"decisions"`
+	SystemDerivedDecisions       int `json:"system_derived_decisions"`
 	UnknownSixField              int `json:"unknown_six_field"`
 	RefutedContradictions        int `json:"refuted_contradictions"`
 	FallbackAccepted             int `json:"fallback_accepted"`
@@ -140,8 +139,9 @@ type AuthorizationRequest struct {
 	Digest              string                `json:"digest"`
 }
 
-// AuthorizationDecisionInput is accepted only from an explicit decision
-// channel. Actor and run values are provenance metadata, not signatures.
+// AuthorizationDecisionInput is a deterministic system evidence receipt. It
+// is derived from the exact request and cannot be supplied by a person or
+// override the evaluator's decision.
 type AuthorizationDecisionInput struct {
 	Schema                  string `json:"schema"`
 	Decision                string `json:"decision"`
@@ -157,20 +157,17 @@ type AuthorizationDecisionInput struct {
 	SubjectSHA              string `json:"subject_sha"`
 	ScopeDigest             string `json:"scope_digest"`
 	Repository              string `json:"repository"`
-	Actor                   string `json:"actor"`
-	WorkflowRunID           int64  `json:"workflow_run_id"`
-	WorkflowRunAttempt      int    `json:"workflow_run_attempt"`
 	CandidateArtifactID     int64  `json:"candidate_artifact_id"`
 	CandidateArtifactDigest string `json:"candidate_artifact_digest"`
+	DecisionRule            string `json:"decision_rule"`
 	DecisionSource          string `json:"decision_source"`
-	IdentityAssurance       string `json:"identity_assurance"`
+	EvidenceDigest          string `json:"evidence_digest"`
 	DecisionDigest          string `json:"decision_digest,omitempty"`
 }
 
 // AuthorizationReceipt embeds the released semantic-self-adoption
-// authorization contract and adds the candidate-specific binding fields.
-// The embedded contract's Authorized field is the only allow/deny authority;
-// execution remains explicitly disabled by this adapter.
+// authorization contract and adds candidate-specific system evidence. The
+// receipt records eligibility only; execution remains explicitly disabled.
 type AuthorizationReceipt struct {
 	generation.SemanticAdoptionAuthorization
 	Decision                string `json:"decision"`
@@ -191,17 +188,15 @@ type AuthorizationReceipt struct {
 	CandidateArtifactID     int64  `json:"candidate_artifact_id"`
 	CandidateArtifactDigest string `json:"candidate_artifact_digest"`
 	Repository              string `json:"repository"`
-	Actor                   string `json:"actor"`
-	WorkflowRunID           int64  `json:"workflow_run_id"`
-	WorkflowRunAttempt      int    `json:"workflow_run_attempt"`
 	DecisionSource          string `json:"decision_source"`
-	IdentityAssurance       string `json:"identity_assurance"`
+	DecisionRule            string `json:"decision_rule"`
+	EvidenceDigest          string `json:"evidence_digest"`
 	DecisionInputDigest     string `json:"decision_input_digest"`
 }
 
 // AuthorizationResolution is the decision-side semantic IR and independent
-// consumer receipt. It emits Authorization only for an exact explicit allow
-// or deny; UNKNOWN and REFUTED never produce an authorization artifact.
+// consumer receipt. It emits a system-derived eligibility receipt only for an
+// exact candidate binding; execution and repository mutation remain disabled.
 type AuthorizationResolution struct {
 	Schema              string                           `json:"schema"`
 	Lifecycle           string                           `json:"lifecycle"`
@@ -213,10 +208,11 @@ type AuthorizationResolution struct {
 	Resolution          string                           `json:"resolution"`
 	Reason              string                           `json:"reason"`
 	Unknown             *generation.EnvelopeUnknownState `json:"unknown,omitempty"`
-	DecisionInputs      []AuthorizationDecisionInput     `json:"decision_inputs,omitempty"`
+	DecisionInputs      []AuthorizationDecisionInput     `json:"decision_evidence,omitempty"`
 	Authorization       *AuthorizationReceipt            `json:"authorization,omitempty"`
 	LiveAuthorized      int                              `json:"live_authorized"`
 	LiveState           string                           `json:"live_state"`
+	ExecutionAuthorized bool                             `json:"execution_authorized"`
 	Metrics             AuthorizationMetrics             `json:"metrics"`
 	RepositoryWrites    int                              `json:"repository_writes"`
 	LocalTestExecutions int                              `json:"local_test_executions"`
@@ -237,6 +233,7 @@ type AuthorizationVerification struct {
 	Decision            string `json:"decision"`
 	Resolution          string `json:"resolution"`
 	DecisionVerified    bool   `json:"decision_verified"`
+	ExecutionAuthorized bool   `json:"execution_authorized"`
 	RepositoryWrites    int    `json:"repository_writes"`
 	LocalTestExecutions int    `json:"local_test_executions"`
 	LiveAuthorized      int    `json:"live_authorized"`
@@ -305,7 +302,7 @@ func compileAuthorizationContract(repository fs.FS, path string) (AuthorizationC
 		EntityCount: 4, ActivityCount: 3, SourceDigest: digestBytes(raw),
 		CanonicalDigest:    digestBytes([]byte(canonical)),
 		RequestActivity:    "RequestCandidateAuthorization",
-		DecisionActivity:   "DecideCandidateAuthorization",
+		DecisionActivity:   "DeriveCandidateAuthorization",
 		ResolutionActivity: "ResolveCandidateAuthorization",
 	}, nil
 }
@@ -353,12 +350,12 @@ func authorizationDeclarationsKnown(file *syntax.File) bool {
 	expectedEntities := map[string]string{
 		"NonExecutingImprovementCandidate": "gooo://self-improvement/entity/non-executing-improvement-candidate",
 		"CandidateAuthorizationRequest":    "gooo://self-improvement/entity/candidate-authorization-request",
-		"CandidateAuthorizationDecision":   "gooo://self-improvement/entity/candidate-authorization-decision",
+		"CandidateAuthorizationDecision":   "gooo://self-improvement/entity/system-derived-candidate-authorization-decision",
 		"CandidateAuthorizationResolution": "gooo://self-improvement/entity/candidate-authorization-resolution",
 	}
 	expectedActivities := map[string][2]string{
 		"RequestCandidateAuthorization": {"NonExecutingImprovementCandidate", "CandidateAuthorizationRequest"},
-		"DecideCandidateAuthorization":  {"CandidateAuthorizationRequest", "CandidateAuthorizationDecision"},
+		"DeriveCandidateAuthorization":  {"CandidateAuthorizationRequest", "CandidateAuthorizationDecision"},
 		"ResolveCandidateAuthorization": {"CandidateAuthorizationDecision", "CandidateAuthorizationResolution"},
 	}
 	return mapsEqual(entities, expectedEntities) && mapsEqual(activities, expectedActivities)
@@ -391,6 +388,9 @@ func BuildAuthorizationRequest(repository fs.FS, contractPath string, candidateR
 	}
 	if !validArtifactMetadata(metadata) {
 		return AuthorizationRequest{}, errors.New("candidate artifact metadata is unavailable")
+	}
+	if report.SubjectSHA != metadata.SubjectSHA || report.SourceWorkflowRunID != metadata.RunID {
+		return AuthorizationRequest{}, errors.New("candidate report is not bound to its source run")
 	}
 	candidate := report.Candidates[0]
 	binding := CandidateBinding{
@@ -460,9 +460,24 @@ func decisionDigest(input AuthorizationDecisionInput) string {
 }
 
 func validArtifactMetadata(metadata ArtifactMetadata) bool {
-	return metadata.Repository != "" && metadata.RunID > 0 && metadata.RunAttempt > 0 &&
+	return metadata.Repository != "" && validSHA(metadata.SubjectSHA) && metadata.RunID > 0 && metadata.RunAttempt > 0 &&
 		metadata.ArtifactID > 0 && metadata.ArtifactName != "" && validDigest(metadata.ArchiveDigest) &&
 		metadata.SizeBytes > 0 && !metadata.Expired
+}
+
+func incompleteAuthorizationContract(contract AuthorizationContract) bool {
+	return contract.Schema == "" || contract.ContractID == "" || contract.Path == "" || contract.Package == "" ||
+		contract.Namespace == "" || contract.SourceDigest == "" || contract.CanonicalDigest == ""
+}
+
+func validAuthorizationContract(contract AuthorizationContract) bool {
+	return contract.Schema == AuthorizationContractSchema && contract.ContractID == AuthorizationContractID &&
+		contract.Path == "examples/self-improvement/authorization.gooo" && contract.Package == "selfimprovement" &&
+		contract.Namespace == "selfimprovement" && contract.EntityCount == 4 && contract.ActivityCount == 3 &&
+		validDigest(contract.SourceDigest) && validDigest(contract.CanonicalDigest) &&
+		contract.RequestActivity == "RequestCandidateAuthorization" &&
+		contract.DecisionActivity == "DeriveCandidateAuthorization" &&
+		contract.ResolutionActivity == "ResolveCandidateAuthorization"
 }
 
 func validCandidateBinding(binding CandidateBinding) bool {
@@ -535,52 +550,33 @@ func refutedResolution(request AuthorizationRequest, reason string, inputs []Aut
 	return resolution
 }
 
-func missingDecision(input AuthorizationDecisionInput) bool {
-	return input.Schema == "" || input.Decision == "" || input.RequestDigest == "" || input.CandidateID == "" ||
-		input.CandidateDigest == "" || input.CandidateReportDigest == "" || input.SourceObservationDigest == "" ||
-		input.InputSourceDigest == "" || input.ExecutionInputDigest == "" || input.PolicyDigest == "" || input.ContractDigest == "" || input.SubjectSHA == "" ||
-		input.ScopeDigest == "" || input.Repository == "" || input.Actor == "" || input.WorkflowRunID == 0 ||
-		input.WorkflowRunAttempt == 0 || input.CandidateArtifactID == 0 || input.CandidateArtifactDigest == "" ||
-		input.DecisionSource == "" || input.IdentityAssurance == ""
+func systemEvidenceDigest(request AuthorizationRequest) string {
+	return digestJSON(struct {
+		RequestDigest string                `json:"request_digest"`
+		Candidate     CandidateBinding      `json:"candidate"`
+		Artifact      ArtifactMetadata      `json:"artifact"`
+		Contract      AuthorizationContract `json:"contract"`
+	}{RequestDigest: request.Digest, Candidate: request.Candidate, Artifact: request.Artifact, Contract: request.Contract})
 }
 
-func decisionBindingMatches(request AuthorizationRequest, input AuthorizationDecisionInput) bool {
-	return input.RequestDigest == request.Digest && input.CandidateID == request.Candidate.CandidateID &&
-		input.CandidateDigest == request.Candidate.CandidateDigest && input.CandidateReportDigest == request.Candidate.CandidateReportDigest &&
-		input.SourceObservationDigest == request.Candidate.SourceObservationDigest && input.InputSourceDigest == request.Candidate.InputSourceDigest &&
-		input.ExecutionInputDigest == request.Candidate.ExecutionInputDigest &&
-		input.PolicyDigest == request.Candidate.PolicyDigest && input.ContractDigest == request.Candidate.ContractCanonicalDigest &&
-		input.SubjectSHA == request.Candidate.SubjectSHA && input.ScopeDigest == request.Candidate.ScopeDigest &&
-		input.Repository == request.Artifact.Repository && input.CandidateArtifactID == request.Artifact.ArtifactID &&
-		input.CandidateArtifactDigest == request.Artifact.ArchiveDigest
-}
-
-func decisionInputValid(input AuthorizationDecisionInput) bool {
-	return input.Schema == AuthorizationDecisionSchema && (input.Decision == AuthorizationAllow || input.Decision == AuthorizationDeny) &&
-		validDigest(input.RequestDigest) && validDigest(input.CandidateID) && validDigest(input.CandidateDigest) &&
-		validDigest(input.CandidateReportDigest) && validDigest(input.SourceObservationDigest) && validDigest(input.InputSourceDigest) &&
-		validDigest(input.ExecutionInputDigest) &&
-		validDigest(input.PolicyDigest) && validDigest(input.ContractDigest) && validSHA(input.SubjectSHA) && validDigest(input.ScopeDigest) &&
-		input.Repository != "" && input.Actor != "" && input.WorkflowRunID > 0 && input.WorkflowRunAttempt > 0 &&
-		input.CandidateArtifactID > 0 && validDigest(input.CandidateArtifactDigest) &&
-		(input.DecisionSource == "workflow_dispatch" || input.DecisionSource == "canonical-fixture") &&
-		(input.IdentityAssurance == "UNSIGNED_GITHUB_ACTOR_METADATA" || input.IdentityAssurance == "CANONICAL_FIXTURE_METADATA")
-}
-
-func decisionsConflict(inputs []AuthorizationDecisionInput) bool {
-	if len(inputs) < 2 {
-		return false
+func deriveSystemDecision(request AuthorizationRequest) AuthorizationDecisionInput {
+	input := AuthorizationDecisionInput{
+		Schema: AuthorizationDecisionSchema, Decision: AuthorizationAllow, RequestDigest: request.Digest,
+		CandidateID: request.Candidate.CandidateID, CandidateDigest: request.Candidate.CandidateDigest,
+		CandidateReportDigest: request.Candidate.CandidateReportDigest, SourceObservationDigest: request.Candidate.SourceObservationDigest,
+		InputSourceDigest: request.Candidate.InputSourceDigest, ExecutionInputDigest: request.Candidate.ExecutionInputDigest,
+		PolicyDigest: request.Candidate.PolicyDigest, ContractDigest: request.Candidate.ContractCanonicalDigest,
+		SubjectSHA: request.Candidate.SubjectSHA, ScopeDigest: request.Candidate.ScopeDigest,
+		Repository: request.Artifact.Repository, CandidateArtifactID: request.Artifact.ArtifactID,
+		CandidateArtifactDigest: request.Artifact.ArchiveDigest, DecisionRule: AuthorizationEvidenceRule,
+		DecisionSource: AuthorizationEvidenceSource, EvidenceDigest: systemEvidenceDigest(request),
 	}
-	first := inputs[0]
-	for _, input := range inputs[1:] {
-		left := first
-		right := input
-		left.DecisionDigest, right.DecisionDigest = "", ""
-		if !reflect.DeepEqual(left, right) {
-			return true
-		}
-	}
-	return false
+	input.DecisionDigest = decisionDigest(input)
+	return input
+}
+
+func decisionInputValid(request AuthorizationRequest, input AuthorizationDecisionInput) bool {
+	return reflect.DeepEqual(input, deriveSystemDecision(request))
 }
 
 func candidateBindingEqual(left, right CandidateBinding) bool {
@@ -595,9 +591,9 @@ func candidateBindingEqual(left, right CandidateBinding) bool {
 func buildAuthorization(request AuthorizationRequest, input AuthorizationDecisionInput) *AuthorizationReceipt {
 	authorized := input.Decision == AuthorizationAllow
 	base := generation.SemanticAdoptionAuthorization{
-		Schema:            generation.SemanticAdoptionAuthorizationSchema,
-		AuthorizationID:   "candidate-authorization/" + strings.TrimPrefix(decisionDigest(input), "sha256:"),
-		AuthorizationMode: generation.SemanticAdoptionAuthorizationMode,
+		Schema:            generation.SemanticAdoptionSystemDecisionSchema,
+		AuthorizationID:   "candidate-system-decision/" + strings.TrimPrefix(decisionDigest(input), "sha256:"),
+		AuthorizationMode: generation.SemanticAdoptionSystemDecisionMode,
 		ProposalDigest:    adoptionDigest(request.Digest), CandidateStableID: adoptionDigest(request.Candidate.CandidateID),
 		CandidateInputDigest: adoptionDigest(request.Candidate.InputSourceDigest),
 		ContractDigest:       adoptionDigest(request.Candidate.ContractCanonicalDigest),
@@ -615,9 +611,8 @@ func buildAuthorization(request AuthorizationRequest, input AuthorizationDecisio
 		ContractCanonicalDigest: request.Candidate.ContractCanonicalDigest, Scope: request.Candidate.Scope,
 		ScopeDigest: request.Candidate.ScopeDigest, ExecutionAuthorized: false,
 		CandidateArtifactID: request.Artifact.ArtifactID, CandidateArtifactDigest: request.Artifact.ArchiveDigest,
-		Repository: input.Repository, Actor: input.Actor, WorkflowRunID: input.WorkflowRunID,
-		WorkflowRunAttempt: input.WorkflowRunAttempt, DecisionSource: input.DecisionSource,
-		IdentityAssurance: input.IdentityAssurance, DecisionInputDigest: decisionDigest(input),
+		Repository: input.Repository, DecisionSource: input.DecisionSource, DecisionRule: input.DecisionRule,
+		EvidenceDigest: input.EvidenceDigest, DecisionInputDigest: decisionDigest(input),
 	}
 }
 
@@ -627,68 +622,51 @@ func adoptionDigest(value string) string {
 	return strings.TrimPrefix(value, "sha256:")
 }
 
-// ResolveAuthorization is the evaluator for the request -> decision ->
-// resolution transition. REFUTED binding contradictions dominate UNKNOWN.
-func ResolveAuthorization(request AuthorizationRequest, inputs []AuthorizationDecisionInput) AuthorizationResolution {
+// ResolveAuthorization derives candidate eligibility from complete, exact
+// system evidence. REFUTED binding contradictions dominate UNKNOWN.
+func ResolveAuthorization(request AuthorizationRequest) AuthorizationResolution {
 	if !requestCommonValid(request) {
-		return refutedResolution(request, AuthorizationRequestReason, inputs)
+		return refutedResolution(request, AuthorizationRequestReason, nil)
+	}
+	if incompleteAuthorizationContract(request.Contract) {
+		return unknownResolution(request, AuthorizationFieldReason, "RESTORE_AUTHORIZATION_CONTRACT", []string{"authorization_contract"})
+	}
+	if !validAuthorizationContract(request.Contract) {
+		return refutedResolution(request, AuthorizationContractReason, nil)
 	}
 	if incompleteCandidateBinding(request.Candidate) {
 		return unknownResolution(request, AuthorizationFieldReason, "PROVIDE_COMPLETE_CANDIDATE_BINDING", []string{"candidate_adapter_field"})
 	}
 	if request.Candidate.Authority != (Authority{}) {
-		return refutedResolution(request, "CANDIDATE_AUTHORITY_CONTRADICTION", inputs)
+		return refutedResolution(request, "CANDIDATE_AUTHORITY_CONTRADICTION", nil)
 	}
 	if !validCandidateBinding(request.Candidate) {
-		return refutedResolution(request, AuthorizationRefutedReason, inputs)
+		return refutedResolution(request, AuthorizationRefutedReason, nil)
 	}
 	if request.Artifact.Expired || request.Artifact.ArtifactID == 0 || request.Artifact.ArtifactName == "" ||
 		request.Artifact.ArchiveDigest == "" || request.Artifact.SizeBytes == 0 {
 		return unknownResolution(request, AuthorizationArtifactReason, "RESTORE_CANDIDATE_ARTIFACT", []string{"candidate_artifact"})
 	}
 	if !validArtifactMetadata(request.Artifact) {
-		return refutedResolution(request, AuthorizationRefutedReason, inputs)
+		return refutedResolution(request, AuthorizationRefutedReason, nil)
 	}
-	if len(inputs) == 0 {
-		return unknownResolution(request, AuthorizationInputReason, AuthorizationUnknownNext, []string{"explicit_authorization"})
-	}
-	if decisionsConflict(inputs) {
-		return refutedResolution(request, AuthorizationDuplicateReason, inputs)
-	}
-	input := inputs[0]
-	if input.Schema != AuthorizationDecisionSchema || (input.Decision != AuthorizationAllow && input.Decision != AuthorizationDeny) {
-		return refutedResolution(request, AuthorizationRefutedReason, inputs)
-	}
-	if missingDecision(input) {
-		return unknownResolution(request, AuthorizationInputReason, AuthorizationUnknownNext, []string{"explicit_authorization"})
-	}
-	if !decisionBindingMatches(request, input) {
-		return refutedResolution(request, AuthorizationRefutedReason, inputs)
-	}
-	if !decisionInputValid(input) {
-		return refutedResolution(request, AuthorizationRefutedReason, inputs)
+	if request.Artifact.SubjectSHA != request.Candidate.SubjectSHA || request.Artifact.RunID != request.Candidate.SourceWorkflowRunID {
+		return refutedResolution(request, AuthorizationRefutedReason, nil)
 	}
 
+	input := deriveSystemDecision(request)
 	resolution := resolutionBase(request)
 	resolution.Decision = AuthorizationClosed
 	resolution.Resolution = ResolutionExact
-	resolution.DecisionInputs = append([]AuthorizationDecisionInput(nil), inputs...)
+	resolution.DecisionInputs = []AuthorizationDecisionInput{input}
 	resolution.Authorization = buildAuthorization(request, input)
-	resolution.Outcome = AuthorizationDenied
-	resolution.Reason = AuthorizationClosedDeny
+	resolution.Outcome = AuthorizationAuthorized
+	resolution.Reason = AuthorizationClosedAllow
 	resolution.Metrics.Decisions = 1
-	if input.Decision == AuthorizationAllow {
-		resolution.Outcome = AuthorizationAuthorized
-		resolution.Reason = AuthorizationClosedAllow
-	}
-	if input.DecisionSource == "workflow_dispatch" {
-		if input.Decision == AuthorizationAllow {
-			resolution.LiveAuthorized = 1
-			resolution.LiveState = "CLOSED/AUTHORIZED"
-		} else {
-			resolution.LiveState = "CLOSED/DENIED"
-		}
-	}
+	resolution.Metrics.SystemDerivedDecisions = 1
+	resolution.LiveAuthorized = 1
+	resolution.LiveState = "CLOSED/AUTHORIZED"
+	resolution.ExecutionAuthorized = false
 	resolution.Digest = resolutionDigest(resolution)
 	return resolution
 }
@@ -697,7 +675,8 @@ func ValidateAuthorizationRequest(request AuthorizationRequest) error {
 	if !requestCommonValid(request) {
 		return errors.New("authorization request identity mismatch")
 	}
-	if !validCandidateBinding(request.Candidate) || !validArtifactMetadata(request.Artifact) {
+	if !validAuthorizationContract(request.Contract) || !validCandidateBinding(request.Candidate) || !validArtifactMetadata(request.Artifact) ||
+		request.Artifact.SubjectSHA != request.Candidate.SubjectSHA || request.Artifact.RunID != request.Candidate.SourceWorkflowRunID {
 		return errors.New("authorization request binding mismatch")
 	}
 	if request.Metrics.StructuralUnboundEdgesBefore != 1 || request.Metrics.StructuralUnboundEdgesAfter != 0 ||
@@ -711,7 +690,7 @@ func ValidateAuthorizationRequest(request AuthorizationRequest) error {
 
 func ValidateAuthorizationResolution(resolution AuthorizationResolution) error {
 	if resolution.Schema != AuthorizationResolutionSchema || resolution.RequestDigest == "" || resolution.Digest != resolutionDigest(resolution) ||
-		resolution.RepositoryWrites != 0 || resolution.LocalTestExecutions != 0 || resolution.Metrics.StructuralUnboundEdgesBefore != 1 ||
+		resolution.RepositoryWrites != 0 || resolution.LocalTestExecutions != 0 || resolution.ExecutionAuthorized || resolution.Metrics.StructuralUnboundEdgesBefore != 1 ||
 		resolution.Metrics.StructuralUnboundEdgesAfter != 0 || resolution.Metrics.AdapterEdges != 1 || resolution.Metrics.Requests != 1 ||
 		resolution.Metrics.FallbackAccepted != 0 || resolution.Metrics.RepositoryWrites != 0 || resolution.Metrics.LocalTestExecutions != 0 {
 		return errors.New("authorization resolution identity or safety mismatch")
@@ -720,21 +699,23 @@ func ValidateAuthorizationResolution(resolution AuthorizationResolution) error {
 	case AuthorizationUnknown:
 		if resolution.Resolution != ResolutionLower || resolution.Unknown == nil || resolution.Authorization != nil ||
 			len(resolution.DecisionInputs) != 0 || resolution.Outcome != "" || resolution.Metrics.UnknownSixField != 1 ||
-			resolution.Metrics.RefutedContradictions != 0 || resolution.Unknown.Stage != AuthorizationUnknownStage ||
+			resolution.Metrics.RefutedContradictions != 0 || resolution.Metrics.SystemDerivedDecisions != 0 || resolution.Unknown.Stage != AuthorizationUnknownStage ||
 			resolution.Unknown.Step != AuthorizationUnknownStep || resolution.Unknown.UnknownClass != AuthorizationUnknownClass ||
 			len(resolution.Unknown.BlockedBy) == 0 {
 			return errors.New("authorization UNKNOWN resolution is not causal")
 		}
 	case AuthorizationRefuted:
 		if resolution.Resolution != ResolutionExact || resolution.Unknown != nil || resolution.Authorization != nil ||
-			len(resolution.DecisionInputs) == 0 || resolution.Outcome != "" || resolution.Metrics.UnknownSixField != 0 ||
-			resolution.Metrics.RefutedContradictions != 1 {
+			len(resolution.DecisionInputs) != 0 || resolution.Outcome != "" || resolution.Metrics.UnknownSixField != 0 ||
+			resolution.Metrics.RefutedContradictions != 1 || resolution.Metrics.SystemDerivedDecisions != 0 {
 			return errors.New("authorization REFUTED resolution is not causal")
 		}
 	case AuthorizationClosed:
 		if resolution.Resolution != ResolutionExact || resolution.Unknown != nil || resolution.Authorization == nil ||
-			len(resolution.DecisionInputs) != 1 || (resolution.Outcome != AuthorizationAuthorized && resolution.Outcome != AuthorizationDenied) ||
-			resolution.Metrics.Decisions != 1 || resolution.Metrics.UnknownSixField != 0 || resolution.Metrics.RefutedContradictions != 0 {
+			len(resolution.DecisionInputs) != 1 || resolution.Outcome != AuthorizationAuthorized ||
+			resolution.LiveAuthorized != 1 || resolution.LiveState != "CLOSED/AUTHORIZED" ||
+			resolution.Metrics.Decisions != 1 || resolution.Metrics.SystemDerivedDecisions != 1 ||
+			resolution.Metrics.UnknownSixField != 0 || resolution.Metrics.RefutedContradictions != 0 {
 			return errors.New("authorization CLOSED resolution is not exact")
 		}
 	default:
@@ -748,11 +729,7 @@ func ValidateAuthorizationResolution(resolution AuthorizationResolution) error {
 // decision alone.
 func VerifyAuthorizationResolution(request AuthorizationRequest, resolution AuthorizationResolution) error {
 	if err := ValidateAuthorizationRequest(request); err != nil {
-		if resolution.Decision != AuthorizationUnknown || !requestCommonValid(request) || request.Digest != requestDigest(request) {
-			return err
-		}
-		if !incompleteCandidateBinding(request.Candidate) && !(request.Artifact.Expired || request.Artifact.ArtifactID == 0 ||
-			request.Artifact.ArtifactName == "" || request.Artifact.ArchiveDigest == "" || request.Artifact.SizeBytes == 0) {
+		if !requestCommonValid(request) || request.Digest != requestDigest(request) {
 			return err
 		}
 	}
@@ -762,15 +739,19 @@ func VerifyAuthorizationResolution(request AuthorizationRequest, resolution Auth
 	if resolution.RequestDigest != request.Digest || !candidateBindingEqual(resolution.Candidate, request.Candidate) || resolution.Artifact != request.Artifact {
 		return errors.New("authorization resolution is not bound to the request")
 	}
+	if expected := ResolveAuthorization(request); !reflect.DeepEqual(expected, resolution) {
+		return errors.New("authorization resolution differs from independent system replay")
+	}
 	if resolution.Decision == AuthorizationUnknown {
 		return nil
 	}
 	if resolution.Decision == AuthorizationRefuted {
 		return nil
 	}
-	input := resolution.DecisionInputs[0]
-	if !decisionInputValid(input) || !decisionBindingMatches(request, input) {
-		return errors.New("authorization decision input is not exact")
+	input := deriveSystemDecision(request)
+	if !decisionInputValid(request, resolution.DecisionInputs[0]) ||
+		!reflect.DeepEqual(resolution.DecisionInputs[0], input) {
+		return errors.New("system authorization evidence is not exact")
 	}
 	auth := resolution.Authorization
 	if err := generation.ValidateSemanticAdoptionAuthorization(auth.SemanticAdoptionAuthorization); err != nil {
@@ -782,12 +763,18 @@ func VerifyAuthorizationResolution(request AuthorizationRequest, resolution Auth
 		auth.CandidateDigest != request.Candidate.CandidateDigest || auth.CandidateReportDigest != request.Candidate.CandidateReportDigest ||
 		auth.ExecutionInputDigest != request.Candidate.ExecutionInputDigest ||
 		auth.SourceObservationDigest != request.Candidate.SourceObservationDigest || auth.SubjectSHA != request.Candidate.SubjectSHA ||
-		auth.PolicyDigest != request.Candidate.PolicyDigest || auth.ContractCanonicalDigest != request.Candidate.ContractCanonicalDigest ||
+		auth.PolicyDigest != request.Candidate.PolicyDigest || auth.ContractID != request.Candidate.ContractID ||
+		auth.ContractSourceDigest != request.Candidate.ContractSourceDigest ||
+		auth.ContractCanonicalDigest != request.Candidate.ContractCanonicalDigest || auth.Scope != request.Candidate.Scope ||
 		auth.ScopeDigest != request.Candidate.ScopeDigest || auth.CandidateArtifactID != request.Artifact.ArtifactID ||
 		auth.CandidateArtifactDigest != request.Artifact.ArchiveDigest || auth.ExecutionAuthorized || auth.RepositoryWrites != 0 ||
-		auth.LocalTestExecutions != 0 || auth.Authorized != (input.Decision == AuthorizationAllow) ||
+		auth.LocalTestExecutions != 0 || !auth.Authorized ||
+		auth.Schema != generation.SemanticAdoptionSystemDecisionSchema || auth.AuthorizationMode != generation.SemanticAdoptionSystemDecisionMode ||
+		auth.Decision != AuthorizationAllow || auth.Repository != request.Artifact.Repository ||
+		auth.DecisionSource != input.DecisionSource || auth.DecisionRule != input.DecisionRule || auth.EvidenceDigest != input.EvidenceDigest ||
+		resolution.LiveAuthorized != 1 || resolution.LiveState != "CLOSED/AUTHORIZED" || resolution.ExecutionAuthorized ||
 		resolution.Decision != AuthorizationClosed ||
-		resolution.Outcome != map[bool]string{true: AuthorizationAuthorized, false: AuthorizationDenied}[auth.Authorized] {
+		resolution.Outcome != AuthorizationAuthorized || resolution.Reason != AuthorizationClosedAllow {
 		return errors.New("authorization receipt binding or safety invariant mismatch")
 	}
 	if auth.DecisionInputDigest != decisionDigest(input) {
@@ -800,9 +787,9 @@ func BuildAuthorizationVerification(request AuthorizationRequest, resolution Aut
 	if err := VerifyAuthorizationResolution(request, resolution); err != nil {
 		return AuthorizationVerification{}, err
 	}
-	verification := AuthorizationVerification{Schema: "gooo/self-improvement-candidate-authorization-verification/v1",
+	verification := AuthorizationVerification{Schema: "gooo/self-improvement-candidate-authorization-verification/v2",
 		RequestDigest: request.Digest, ResolutionDigest: resolution.Digest, Decision: resolution.Decision,
-		Resolution: resolution.Resolution, DecisionVerified: true, RepositoryWrites: resolution.RepositoryWrites,
+		Resolution: resolution.Resolution, DecisionVerified: true, ExecutionAuthorized: resolution.ExecutionAuthorized, RepositoryWrites: resolution.RepositoryWrites,
 		LocalTestExecutions: resolution.LocalTestExecutions, LiveAuthorized: resolution.LiveAuthorized, LiveState: resolution.LiveState}
 	verification.Digest = verificationDigest(verification)
 	return verification, nil
@@ -813,20 +800,8 @@ func resolutionSummary(resolution AuthorizationResolution, id string) CanonicalC
 		ActualDecision: resolution.Decision, ActualReason: resolution.Reason, Unknown: resolution.Unknown, Pass: true}
 }
 
-func fixtureDecision(request AuthorizationRequest, decision string) AuthorizationDecisionInput {
-	return AuthorizationDecisionInput{Schema: AuthorizationDecisionSchema, Decision: decision, RequestDigest: request.Digest,
-		CandidateID: request.Candidate.CandidateID, CandidateDigest: request.Candidate.CandidateDigest,
-		CandidateReportDigest: request.Candidate.CandidateReportDigest, SourceObservationDigest: request.Candidate.SourceObservationDigest,
-		InputSourceDigest: request.Candidate.InputSourceDigest, ExecutionInputDigest: request.Candidate.ExecutionInputDigest, PolicyDigest: request.Candidate.PolicyDigest,
-		ContractDigest: request.Candidate.ContractCanonicalDigest, SubjectSHA: request.Candidate.SubjectSHA,
-		ScopeDigest: request.Candidate.ScopeDigest, Repository: request.Artifact.Repository, Actor: "canonical-fixture",
-		WorkflowRunID: 1, WorkflowRunAttempt: 1, CandidateArtifactID: request.Artifact.ArtifactID,
-		CandidateArtifactDigest: request.Artifact.ArchiveDigest, DecisionSource: "canonical-fixture",
-		IdentityAssurance: "CANONICAL_FIXTURE_METADATA"}
-}
-
-func canonicalCase(id string, request AuthorizationRequest, inputs []AuthorizationDecisionInput, expectedDecision, expectedReason string) (CanonicalCase, error) {
-	resolution := ResolveAuthorization(request, inputs)
+func canonicalCase(id string, request AuthorizationRequest, expectedDecision, expectedReason string) (CanonicalCase, error) {
+	resolution := ResolveAuthorization(request)
 	if resolution.Decision != expectedDecision || resolution.Reason != expectedReason {
 		return CanonicalCase{}, fmt.Errorf("canonical case %s resolved %s/%s, expected %s/%s", id, resolution.Decision, resolution.Reason, expectedDecision, expectedReason)
 	}
@@ -841,31 +816,44 @@ func canonicalCase(id string, request AuthorizationRequest, inputs []Authorizati
 type authorizationCaseSpec struct {
 	id, decision, reason string
 	request              AuthorizationRequest
-	inputs               []AuthorizationDecisionInput
 }
 
-func canonicalAuthorizationCaseSpecs(request AuthorizationRequest, allow, deny AuthorizationDecisionInput) []authorizationCaseSpec {
+func cloneAuthorizationRequest(request AuthorizationRequest) AuthorizationRequest {
+	raw, _ := json.Marshal(request)
+	var clone AuthorizationRequest
+	_ = json.Unmarshal(raw, &clone)
+	return clone
+}
+
+func canonicalAuthorizationCaseSpecs(request AuthorizationRequest) []authorizationCaseSpec {
 	missingField := request
 	missingField.Candidate.CandidateDigest = ""
 	missingField.Digest = requestDigest(missingField)
 	expired := request
 	expired.Artifact.Expired = true
 	expired.Digest = requestDigest(expired)
-	candidateMismatch := allow
-	candidateMismatch.CandidateDigest = digestBytes([]byte("wrong-candidate"))
-	observationMismatch := allow
-	observationMismatch.SourceObservationDigest = digestBytes([]byte("wrong-observation"))
-	conflicting := []AuthorizationDecisionInput{allow, deny}
+	policyMissing := request
+	policyMissing.Candidate.PolicyDigest = ""
+	policyMissing.Digest = requestDigest(policyMissing)
+	candidateMismatch := cloneAuthorizationRequest(request)
+	candidateMismatch.Candidate.ExecutionInput.CandidateDigest = digestBytes([]byte("wrong-candidate"))
+	candidateMismatch.Digest = requestDigest(candidateMismatch)
+	observationMismatch := cloneAuthorizationRequest(request)
+	observationMismatch.Candidate.ExecutionInput.ObservationDigest = digestBytes([]byte("wrong-observation"))
+	observationMismatch.Digest = requestDigest(observationMismatch)
+	authorityMismatch := request
+	authorityMismatch.Candidate.Authority.RepositoryWrites = 1
+	authorityMismatch.Digest = requestDigest(authorityMismatch)
 	return []authorizationCaseSpec{
-		{"allow", AuthorizationClosed, AuthorizationClosedAllow, request, []AuthorizationDecisionInput{allow}},
-		{"deny", AuthorizationClosed, AuthorizationClosedDeny, request, []AuthorizationDecisionInput{deny}},
-		{"deterministic-replay", AuthorizationClosed, AuthorizationClosedAllow, request, []AuthorizationDecisionInput{allow}},
-		{"missing-decision", AuthorizationUnknown, AuthorizationInputReason, request, nil},
-		{"missing-adapter-field", AuthorizationUnknown, AuthorizationFieldReason, missingField, []AuthorizationDecisionInput{allow}},
-		{"expired-or-missing-artifact", AuthorizationUnknown, AuthorizationArtifactReason, expired, []AuthorizationDecisionInput{allow}},
-		{"candidate-digest-mismatch", AuthorizationRefuted, AuthorizationRefutedReason, request, []AuthorizationDecisionInput{candidateMismatch}},
-		{"observation-contract-mismatch", AuthorizationRefuted, AuthorizationRefutedReason, request, []AuthorizationDecisionInput{observationMismatch}},
-		{"conflicting-duplicate-decision", AuthorizationRefuted, AuthorizationDuplicateReason, request, conflicting},
+		{"exact-system-evidence", AuthorizationClosed, AuthorizationClosedAllow, request},
+		{"deterministic-replay", AuthorizationClosed, AuthorizationClosedAllow, request},
+		{"independent-system-decision", AuthorizationClosed, AuthorizationClosedAllow, request},
+		{"missing-adapter-field", AuthorizationUnknown, AuthorizationFieldReason, missingField},
+		{"expired-or-missing-artifact", AuthorizationUnknown, AuthorizationArtifactReason, expired},
+		{"missing-policy-evidence", AuthorizationUnknown, AuthorizationFieldReason, policyMissing},
+		{"candidate-digest-mismatch", AuthorizationRefuted, AuthorizationRefutedReason, candidateMismatch},
+		{"observation-contract-mismatch", AuthorizationRefuted, AuthorizationRefutedReason, observationMismatch},
+		{"authority-contradiction", AuthorizationRefuted, "CANDIDATE_AUTHORITY_CONTRADICTION", authorityMismatch},
 	}
 }
 
@@ -885,20 +873,18 @@ func BuildCanonicalCases(request AuthorizationRequest) (CanonicalCaseReport, err
 	if err := ValidateAuthorizationRequest(request); err != nil {
 		return CanonicalCaseReport{}, err
 	}
-	allow := fixtureDecision(request, AuthorizationAllow)
-	deny := fixtureDecision(request, AuthorizationDeny)
-	caseSpecs := canonicalAuthorizationCaseSpecs(request, allow, deny)
+	caseSpecs := canonicalAuthorizationCaseSpecs(request)
 	report := newCanonicalCaseReport(request)
 	for _, spec := range caseSpecs {
-		result, err := canonicalCase(spec.id, spec.request, spec.inputs, spec.decision, spec.reason)
+		result, err := canonicalCase(spec.id, spec.request, spec.decision, spec.reason)
 		if err != nil {
 			return CanonicalCaseReport{}, err
 		}
 		report.Cases = append(report.Cases, result)
 		report.Counts[result.ActualDecision]++
 	}
-	first := ResolveAuthorization(request, []AuthorizationDecisionInput{allow})
-	second := ResolveAuthorization(request, []AuthorizationDecisionInput{allow})
+	first := ResolveAuthorization(request)
+	second := ResolveAuthorization(request)
 	firstBytes, _ := json.Marshal(first)
 	secondBytes, _ := json.Marshal(second)
 	report.ReplayEqual = bytes.Equal(firstBytes, secondBytes)
@@ -909,7 +895,7 @@ func BuildCanonicalCases(request AuthorizationRequest) (CanonicalCaseReport, err
 	report.UnknownCases = report.Counts[AuthorizationUnknown]
 	report.RefutedCases = report.Counts[AuthorizationRefuted]
 	report.Metrics = AuthorizationMetrics{StructuralUnboundEdgesBefore: 1, StructuralUnboundEdgesAfter: 0,
-		AdapterEdges: 1, Requests: 9, Decisions: 6, UnknownSixField: 3, RefutedContradictions: 3,
+		AdapterEdges: 1, Requests: 9, Decisions: 3, SystemDerivedDecisions: 3, UnknownSixField: 3, RefutedContradictions: 3,
 		FallbackAccepted: 0, IndependentReplayComparisons: 1, ArtifactFiles: 9, ArtifactTypes: 3,
 		RepositoryWrites: 0, LocalTestExecutions: 0}
 	report.Digest = canonicalCasesDigest(report)
@@ -931,6 +917,11 @@ func ValidateCanonicalCases(report CanonicalCaseReport) error {
 		report.Roundtrip.PointerIdentityDependencyAfter != 0 || report.Roundtrip.CounterexampleRunID != 33926584593 ||
 		report.Digest != canonicalCasesDigest(report) {
 		return errors.New("canonical authorization cases are not exact")
+	}
+	if report.Metrics.Decisions != 3 || report.Metrics.SystemDerivedDecisions != 3 ||
+		report.Metrics.UnknownSixField != 3 || report.Metrics.RefutedContradictions != 3 ||
+		report.Metrics.FallbackAccepted != 0 || report.Metrics.RepositoryWrites != 0 || report.Metrics.LocalTestExecutions != 0 {
+		return errors.New("canonical system decision metrics are not exact")
 	}
 	if len(report.Cases) != report.CaseDenominator {
 		return errors.New("canonical authorization case denominator mismatch")

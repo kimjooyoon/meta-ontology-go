@@ -1,7 +1,19 @@
 # Self-improvement execution grant v26
 
-This policy is the bounded grant layer between the v24 candidate authorization and the v25 pre-execution contract. It can declare a separate, one-use execution grant only when the v24 request and resolution, v25 contract, source artifact, scope, safety envelope, and decision evidence are exact.
+This is the bounded grant layer between the v24 system-derived candidate
+eligibility receipt and the v25 pre-execution contract. It derives a one-use
+grant only when the exact v24 request and resolution, v25 contract, source
+artifact, candidate scope, and safety limits all agree.
 
-The grant is not execution. An `ALLOW` resolves to `CLOSED/GRANTED_UNCONSUMED` with `remaining_uses=1`, `execution_count=0`, and `one_use_enforced=false`. The next bounded executor must verify the receipt, verify that it is unconsumed, and consume it exactly once. This v26 layer neither consumes the grant nor runs the candidate, produces output, compares results, or adopts changes.
+The grant is not execution. A successful receipt is `CLOSED/GRANTED_UNCONSUMED`
+with one remaining use, zero consumed uses, zero executions, zero repository
+writes, and `one_use_enforced=false`. The next executor must independently
+verify the receipt and consume it exactly once. This v26 layer neither consumes
+the grant nor runs the candidate, produces output, compares results, or adopts
+changes.
 
-Automatic `workflow_run` requests contain no explicit grant decision and therefore resolve to `UNKNOWN/LOWER_RESOLUTION` with the six causal fields and `blocked_by=explicit_execution_grant_decision`. A `workflow_dispatch` decision binds the GitHub event actor, repository, run ID, run attempt, event, and explicit decision as actor evidence; it is not represented as a cryptographic signature or authenticated identity.
+The policy has nine canonical cases: three successful system derivations, three
+`UNKNOWN` cases for missing or incomplete upstream evidence, and three
+`REFUTED` contradictions. Live output records system-derived grants separately
+from executions and keeps performance `UNKNOWN` until comparable runtime
+measurements exist.
