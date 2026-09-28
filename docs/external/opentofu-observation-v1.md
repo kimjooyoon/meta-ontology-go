@@ -27,6 +27,11 @@ replay comparison and does not infer the Go toolchain used to build OpenTofu.
 The Go 1.27 toolchain is the observer's toolchain only. The version command's
 `terraform_version` and `platform` fields are retained as observed data.
 
+CI runs this observer for same-repository pull requests targeting `dev` or
+`main`, and for pushes to either branch. Each artifact is named and bound to
+the exact checked-out commit SHA so downstream CI metrics can join evidence
+without substituting a different commit that happens to have the same tree.
+
 The relevant released CLI contracts are the OpenTofu documentation for
 [`version -json`](https://opentofu.org/docs/cli/commands/version/),
 [`test -json`](https://opentofu.org/docs/cli/commands/test/), and
