@@ -139,10 +139,13 @@ source of truth for required CI, not as a promise of future compiler features.
 
 ## Branch and promotion contract
 
-Work branches target `dev`. The only promotion route is an exact,
-same-repository `dev`-to-`main` pull request; no intermediary branch is part of
-the current contract. Governance is `ci_only`: review and approval fields do not
-authorize a protected-branch promotion.
+Work branches target `dev`. Promotion uses a same-repository pull request to
+`main`. CI accepts either the exact `dev` head when it is a fast-forward, or a
+single-commit snapshot branch named `agent/main-promotion-snapshot-<dev-sha>`
+whose tree equals the live `dev` tree and whose sole parent is the live `main`
+head. The snapshot form preserves the current tree and main's linear history
+when old branch ancestry has diverged. Governance is `ci_only`: review and
+approval fields do not authorize a protected-branch promotion.
 
 The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
 `Semantic conformance`, and `CI policy`. GitHub's `main` protection rule now
@@ -150,18 +153,19 @@ requires exactly these six contexts; the retired `CI guardian` context was
 removed. The `dev` rule has no required status checks. No badge above turns a
 workflow result into an enforcement claim.
 
-The root README reaches the default `main` page only after a later, legitimate
-protected-main promotion. This is a `dev`-targeted trust-surface update; the
-separate `main` protection edit removes only the retired Guardian check and
-does not change the promotion route.
+The root README reaches the default `main` page after a legitimate
+protected-main promotion. The separate protection update removed only the
+retired Guardian check. The snapshot fallback changes CI evidence handling and
+leaves all branch protection settings unchanged.
 
-For the promotion route, CI emits a digest-bound `promotion_authorization` with
-`source=dev`, `target=main`, and `operation=fast_forward`. It passes only for
-fresh exact refs and topology (`ahead > 0`, `behind = 0`, `main` as merge base),
-the six canonical proof jobs, and a clean, open, non-draft, unmerged
-same-repository pull request. The proof producer never mutates refs or
-protection. After a final exact reread, only a normal CAS/fast-forward update is
-allowed; force updates are prohibited.
+For either promotion form, CI emits a digest-bound `promotion_authorization`
+with `source=dev`, `target=main`, and `operation=fast_forward`. It passes only
+for fresh exact refs and topology (`ahead > 0`, `behind = 0`, `main` as merge
+base), the six canonical proof jobs, and a clean, open, non-draft, unmerged
+same-repository pull request. Snapshot evidence also binds the live `dev` SHA
+and tree, candidate tree, and candidate's sole `main` parent. The proof producer
+never mutates refs or protection. After a final exact reread, only a normal
+fast-forward update is allowed; force updates are prohibited.
 
 ## Project status
 

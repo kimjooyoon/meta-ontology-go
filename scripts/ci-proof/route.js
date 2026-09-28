@@ -11,12 +11,17 @@ const routes = Object.freeze({
 });
 
 function classifyProofRoute(event, baseRef, input = {}) {
-  if (event === 'pull_request' && baseRef === 'main' && input.headRef !== undefined && input.headRef !== 'dev') {
-    throw new Error('main promotion head must be dev');
+  if (event === 'pull_request' && baseRef === 'main' && input.headRef !== 'dev' && !isPromotionSnapshotHead(input.headRef)) {
+    throw new Error('main promotion head must be dev or an exact dev-tree snapshot');
   }
   const route = routes[event + ':' + baseRef];
   if (!route) throw new Error('unsupported CI proof route tuple');
   return route;
+}
+
+function isPromotionSnapshotHead(headRef) {
+  const match = typeof headRef === 'string' && headRef.match(/^agent\/main-promotion-snapshot-([0-9a-f]{40})$/);
+  return Boolean(match && match[1] !== '0'.repeat(40));
 }
 
 function buildProofRouteEvidence(input) {

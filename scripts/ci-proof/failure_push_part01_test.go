@@ -21,13 +21,32 @@ func TestPullRequestPromotionFailureManifestUsesExactDevHead(t *testing.T) {
 		t.Fatalf("exact dev-to-main promotion owner was not preserved: %+v", manifest)
 	}
 }
+
+func TestPullRequestPromotionFailureManifestPreservesSnapshotBranchIdentity(t *testing.T) {
+	branch := "agent/main-promotion-snapshot-" + strings.Repeat("a", 40)
+	binding := validFailureBinding()
+	binding.BaseRef = "main"
+	binding.EventRef = "refs/pull/163/merge"
+	binding.PRNumber = 163
+	binding.HeadBranch = branch
+	input := validFailureInput()
+	input.HeadBranch = branch
+	manifest, err := buildFailureManifest(input, binding)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if manifest.Scope != "pr" || manifest.BaseRef != "main" || manifest.HeadBranch != branch {
+		t.Fatalf("snapshot promotion identity was not preserved: %+v", manifest)
+	}
+}
 func TestPullRequestBranchBindingRejectsInvalidPromotionRoutes(t *testing.T) {
 	for name, route := range map[string]struct{ base, head string }{
-		"agent to main":  {base: "main", head: "agent/ci-workflow"},
-		"main to main":   {base: "main", head: "main"},
-		"dev to dev":     {base: "dev", head: "dev"},
-		"unknown base":   {base: "release", head: "agent/ci-workflow"},
-		"malformed head": {base: "main", head: ""},
+		"agent to main":      {base: "main", head: "agent/ci-workflow"},
+		"main to main":       {base: "main", head: "main"},
+		"dev to dev":         {base: "dev", head: "dev"},
+		"unknown base":       {base: "release", head: "agent/ci-workflow"},
+		"malformed head":     {base: "main", head: ""},
+		"malformed snapshot": {base: "main", head: "agent/main-promotion-snapshot-short"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			binding := validFailureBinding()

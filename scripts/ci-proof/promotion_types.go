@@ -11,6 +11,7 @@ type promotionObservation struct {
 	Repository     string            `json:"repository"`
 	PRNumber       int64             `json:"pr_number"`
 	Action         string            `json:"action"`
+	Mode           string            `json:"promotion_mode"`
 	State          string            `json:"state"`
 	Draft          bool              `json:"draft"`
 	Merged         bool              `json:"merged"`
@@ -22,7 +23,10 @@ type promotionObservation struct {
 	HeadRepo       string            `json:"head_repo"`
 	HeadRef        string            `json:"head_ref"`
 	HeadSHA        string            `json:"head_sha"`
+	HeadParentSHA  string            `json:"head_parent_sha"`
+	HeadTreeSHA    string            `json:"head_tree_sha"`
 	LiveDevSHA     string            `json:"live_dev_sha"`
+	LiveDevTreeSHA string            `json:"live_dev_tree_sha"`
 	LiveMainSHA    string            `json:"live_main_sha"`
 	Topology       promotionTopology `json:"topology"`
 }

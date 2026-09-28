@@ -86,10 +86,12 @@ implicit deletion; removals must be explicit.
 
 ## CI-only branch and promotion flow
 
-The checked-in governance mode is `ci_only`. Work branches target `dev`; no
-intermediary branch is a current route or promotion source. The only
-promotion route is an exact same-repository pull request with `base=main` and
-`head=dev`.
+The checked-in governance mode is `ci_only`. Work branches target `dev`.
+Promotion is a same-repository pull request with `base=main` and either
+`head=dev` or a snapshot branch named `agent/main-promotion-snapshot-<dev-sha>`.
+The snapshot is accepted only when its tree equals the live `dev` tree and its
+sole parent is the live `main` SHA, preserving linear history after ancestry
+diverges.
 
 The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
 `Semantic conformance`, and `CI policy`. GitHub's `main` protection rule now
@@ -98,18 +100,20 @@ review count, Guardian output, and an app-bound branch-policy snapshot are not
 proof inputs.
 
 For a promotion, the proof must bind an open, non-draft, unmerged, mergeable,
-clean same-repository PR to the current `main` and `dev` refs. The live refs are
-read before and after inspection and must remain unchanged. The topology must
-be `ahead` with `ahead > 0`, `behind = 0`, and `merge_base_sha` equal to the
-current main SHA. The six proof jobs and exact artifacts must also pass.
+clean same-repository PR to live `main` and `dev` refs. A direct `dev` head must
+be a fast-forward. A snapshot head must name the live `dev` SHA, have the same
+tree, and have only the current `main` commit as its parent. The live refs are
+reread during inspection. The topology must be `ahead` with `ahead > 0`,
+`behind = 0`, and `merge_base_sha` equal to the current main SHA. The six proof
+jobs and exact artifacts must also pass.
 
 The proof emits a `promotion_authorization` containing the exact base/head
-SHAs, `source=dev`, `target=main`, `operation=fast_forward`, and the proof bundle
-digest. It is `PASS` only when all predicates above hold; otherwise it is
-`FAIL_CLOSED` with a reason code. This authorization is pure evidence: the
-proof producer never writes refs. GitHub's external branch rules enforce the
-six configured `main` contexts. CI does not duplicate their observation with a
-privileged app token.
+SHAs, `source=dev`, `target=main`, `operation=fast_forward`, source/candidate
+tree digests, and the proof bundle digest. It is `PASS` only when all predicates
+above hold; otherwise it is `FAIL_CLOSED` with a reason code. This authorization
+is pure evidence: the proof producer never writes refs. GitHub's external
+branch rules enforce the six configured `main` contexts. CI does not duplicate
+their observation with a privileged app token.
 
 The Guardian retirement and measured CI bottleneck analysis are documented in
 [Guardianless CI](guardianless-ci.md).
