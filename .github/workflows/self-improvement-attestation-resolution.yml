@@ -22,18 +22,18 @@ jobs:
       CANDIDATE_RUN_ID: ${{ github.event.workflow_run.id }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           persist-credentials: false
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
 
       - name: Download exact candidate transport receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: self-improvement-nonexecuting-candidate-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/attestation-resolution/input
@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload producer attestation resolution
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-attestation-resolution-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/attestation-resolution/output

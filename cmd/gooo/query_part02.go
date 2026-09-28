@@ -5,7 +5,7 @@ import (
 )
 
 func parseQueryArguments(args []string) (queryOptions, string, string) {
-	usage := "usage: gooo query [--json] <file.gooo> [--id <stable-id>] [--kind <kind>] [--predicate <relation>]"
+	usage := "usage: gooo query [--json] <file.gooo> [--id <stable-id>] [--kind <kind>] [--predicate <relation>] [--story <stable-id> --provenance-ledger <path>]"
 	if len(args) == 0 {
 		return queryOptions{}, "", usage
 	}
@@ -37,6 +37,14 @@ func parseQueryArguments(args []string) (queryOptions, string, string) {
 			return queryOptions{}, "", optionUsage
 		}
 		index++
+	}
+	if options.storyID != "" {
+		if options.ledgerPath == "" || options.root != "" || options.target != "" || options.relation != "" || options.rule != "" || options.operation != "" && options.operation != "story" {
+			return queryOptions{}, "", usage
+		}
+		options.operation = "story"
+	} else if options.ledgerPath != "" {
+		return queryOptions{}, "", usage
 	}
 	if options.operation == "" {
 		switch {

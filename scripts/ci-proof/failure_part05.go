@@ -22,7 +22,7 @@ func failureArtifactInputs(artifacts []artifactInput, proofArtifact *artifactInp
 	return refs
 }
 func failureEvidenceRefs(manifest failureManifest, runRef, jobRef string) []string {
-	refs := []string{runRef, jobRef, manifest.OwnerRef}
+	refs := []string{runRef, jobRef}
 	refs = append(refs, manifest.ArtifactURLs...)
 	return append(refs, manifest.CatalogRef, manifest.CatalogSHA256)
 }

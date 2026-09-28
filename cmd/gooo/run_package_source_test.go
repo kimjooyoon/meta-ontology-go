@@ -20,7 +20,7 @@ func TestRunSourceAcceptsPackageDirectory(t *testing.T) {
 		t.Fatalf("handled=%t code=%d stderr=%s", handled, code, stderr.String())
 	}
 	receipt := decodePackageReceipt(t, stdout.Bytes())
-	if receipt.Decision != "PASS" || len(receipt.Sources) != 2 {
+	if receipt.Scope != "DECLARATION_RESOLUTION_ONLY" || receipt.Decision != "PASS" || len(receipt.Sources) != 2 {
 		t.Fatalf("decision=%s sources=%d", receipt.Decision, len(receipt.Sources))
 	}
 }
@@ -97,4 +97,29 @@ func decodePackageReceipt(t *testing.T, data []byte) packageexecution.Receipt {
 		t.Fatalf("package JSON receipt was not sealed: %v", err)
 	}
 	return receipt
+}
+
+func TestRunSourcePackageOutputFailureIsNotSuccess(t *testing.T) {
+	for _, mode := range []string{"human", "json"} {
+		t.Run(mode, func(t *testing.T) {
+			args := []string{"--entry", "PayOrder", filepath.Join("..", "..", "examples", "billing-package")}
+			if mode == "json" {
+				args = append([]string{"--json"}, args...)
+			}
+			var stderr bytes.Buffer
+			code := runSource(args, OSFileReader{}, sourcePackageResultRejectedWriter{}, &stderr)
+			if code != exitFailure {
+				t.Fatalf("output failure returned code=%d stderr=%q", code, stderr.String())
+			}
+			if !strings.Contains(stderr.String(), io.ErrClosedPipe.Error()) {
+				t.Fatalf("output failure lost its cause: stderr=%q", stderr.String())
+			}
+		})
+	}
+}
+
+type sourcePackageResultRejectedWriter struct{}
+
+func (sourcePackageResultRejectedWriter) Write(_ []byte) (int, error) {
+	return 0, io.ErrClosedPipe
 }

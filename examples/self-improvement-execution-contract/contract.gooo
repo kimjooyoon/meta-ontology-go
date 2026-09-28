@@ -1,0 +1,181 @@
+package selfimprovementexecutioncontract
+namespace selfimprovementexecutioncontract
+
+policy CandidateExecutionContract id "gooo://self-improvement/candidate-execution-contract/v1" {
+    state "EXACT_DECLARATION"
+    state "DETERMINISTIC_REPLAY"
+    state "EXPLICIT_SAFETY_LOCK"
+    state "MISSING_OBSERVATION_EVIDENCE"
+    state "UNSUPPORTED_OPERATION_MAPPING"
+    state "MISSING_REGISTRY_IDENTITY"
+    state "CANDIDATE_DIGEST_MISMATCH"
+    state "SOURCE_SPAN_CONTRADICTION"
+    state "MAX_EXECUTIONS_OR_WRITE_AUTHORITY"
+    state "CLOSED"
+    state "UNKNOWN"
+    state "REFUTED"
+
+    transition "EXACT_DECLARATION" -> "CLOSED"
+    transition "DETERMINISTIC_REPLAY" -> "CLOSED"
+    transition "EXPLICIT_SAFETY_LOCK" -> "CLOSED"
+    transition "MISSING_OBSERVATION_EVIDENCE" -> "UNKNOWN"
+    transition "UNSUPPORTED_OPERATION_MAPPING" -> "UNKNOWN"
+    transition "MISSING_REGISTRY_IDENTITY" -> "UNKNOWN"
+    transition "CANDIDATE_DIGEST_MISMATCH" -> "REFUTED"
+    transition "SOURCE_SPAN_CONTRADICTION" -> "REFUTED"
+    transition "MAX_EXECUTIONS_OR_WRITE_AUTHORITY" -> "REFUTED"
+
+    case "EXACT_DECLARATION" {
+        evidence "required_fields" "12/12 exact and registry-bound"
+        resolution {
+            decision "CLOSED"
+            stage "DECLARE"
+            step "1"
+            reason "PRE_EXECUTION_CONTRACT_DECLARED"
+            decision_stage "DECLARE"
+            decision_step "1"
+            decision_reason "PRE_EXECUTION_CONTRACT_DECLARED"
+            role "CONTRACT"
+            meta_operation "declare-candidate-execution-contract"
+            proof_choice "EXACT_TYPED_BINDING"
+            claim "candidate-to-operation-bound"
+        }
+    }
+    case "DETERMINISTIC_REPLAY" {
+        evidence "replay" "same typed input and policy produce the same declaration"
+        resolution {
+            decision "CLOSED"
+            stage "REPLAY"
+            step "2"
+            reason "PRE_EXECUTION_CONTRACT_REPLAYED"
+            decision_stage "REPLAY"
+            decision_step "2"
+            decision_reason "PRE_EXECUTION_CONTRACT_REPLAYED"
+            role "CONSUMER"
+            meta_operation "replay-candidate-execution-contract"
+            proof_choice "INDEPENDENT_REPLAY"
+            claim "declaration-byte-stable"
+        }
+    }
+    case "EXPLICIT_SAFETY_LOCK" {
+        evidence "authorization" "v24 ALLOW remains non-executing"
+        resolution {
+            decision "CLOSED"
+            stage "SAFETY"
+            step "3"
+            reason "EXECUTION_REQUIRES_SEPARATE_GRANT"
+            decision_stage "SAFETY"
+            decision_step "3"
+            decision_reason "EXECUTION_REQUIRES_SEPARATE_GRANT"
+            role "GUARDRAIL"
+            meta_operation "preserve-execution-grant-boundary"
+            proof_choice "DEFAULT_DENY"
+            claim "allow-does-not-authorize-execution"
+        }
+    }
+    case "MISSING_OBSERVATION_EVIDENCE" {
+        evidence "observation" "candidate observation spans and count unavailable"
+        resolution {
+            decision "UNKNOWN"
+            stage "OBSERVE"
+            step "4"
+            reason "MISSING_EXACT_OBSERVATION_EVIDENCE"
+            decision_stage "RESOLVE"
+            decision_step "4"
+            decision_reason "MISSING_EXACT_OBSERVATION_EVIDENCE"
+            unknown_class "INCOMPLETE_EVIDENCE"
+            next_operation "bind-exact-observation-evidence"
+            blocked_by "observation_evidence"
+            role "CONSUMER"
+            meta_operation "bind-observation-evidence"
+            proof_choice "SIX_FIELD_UNKNOWN"
+            claim "observation-bound"
+        }
+    }
+    case "UNSUPPORTED_OPERATION_MAPPING" {
+        evidence "operation" "candidate operation is not in the fixed registry"
+        resolution {
+            decision "UNKNOWN"
+            stage "BIND"
+            step "5"
+            reason "UNSUPPORTED_OPERATION_MAPPING"
+            decision_stage "RESOLVE"
+            decision_step "5"
+            decision_reason "UNSUPPORTED_OPERATION_MAPPING"
+            unknown_class "UNSUPPORTED_MAPPING"
+            next_operation "register-supported-operation"
+            blocked_by "operation_registry"
+            role "CONSUMER"
+            meta_operation "bind-operation-registry"
+            proof_choice "EXPLICIT_REGISTRY_ONLY"
+            claim "known-operation-mapping"
+        }
+    }
+    case "MISSING_REGISTRY_IDENTITY" {
+        evidence "registry" "evaluator or toolchain identity unavailable"
+        resolution {
+            decision "UNKNOWN"
+            stage "BIND"
+            step "6"
+            reason "MISSING_REGISTRY_IDENTITY"
+            decision_stage "RESOLVE"
+            decision_step "6"
+            decision_reason "MISSING_REGISTRY_IDENTITY"
+            unknown_class "INCOMPLETE_EVIDENCE"
+            next_operation "bind-fixed-registry-identity"
+            blocked_by "registry_identity"
+            role "CONSUMER"
+            meta_operation "bind-registry-identity"
+            proof_choice "EXACT_REGISTRY_DIGEST"
+            claim "registry-bound"
+        }
+    }
+    case "CANDIDATE_DIGEST_MISMATCH" {
+        evidence "candidate_input" "candidate and observation digests disagree"
+        resolution {
+            decision "REFUTED"
+            stage "BIND"
+            step "7"
+            reason "CANDIDATE_OBSERVATION_CONTRADICTION"
+            decision_stage "RESOLVE"
+            decision_step "7"
+            decision_reason "CANDIDATE_OBSERVATION_CONTRADICTION"
+            role "GUARDRAIL"
+            meta_operation "refute-candidate-observation-binding"
+            proof_choice "CONTRADICTION_DOMINATES"
+            claim "candidate-input-bound"
+        }
+    }
+    case "SOURCE_SPAN_CONTRADICTION" {
+        evidence "source_span" "span range is not well-formed"
+        resolution {
+            decision "REFUTED"
+            stage "OBSERVE"
+            step "8"
+            reason "SOURCE_SPAN_CONTRADICTION"
+            decision_stage "RESOLVE"
+            decision_step "8"
+            decision_reason "SOURCE_SPAN_CONTRADICTION"
+            role "GUARDRAIL"
+            meta_operation "refute-source-span-binding"
+            proof_choice "EXACT_SPAN_VALIDATION"
+            claim "source-span-bound"
+        }
+    }
+    case "MAX_EXECUTIONS_OR_WRITE_AUTHORITY" {
+        evidence "safety" "execution ceiling or repository write authority exceeds zero"
+        resolution {
+            decision "REFUTED"
+            stage "SAFETY"
+            step "9"
+            reason "SAFETY_ENVELOPE_CONTRADICTION"
+            decision_stage "RESOLVE"
+            decision_step "9"
+            decision_reason "SAFETY_ENVELOPE_CONTRADICTION"
+            role "GUARDRAIL"
+            meta_operation "refute-safety-envelope"
+            proof_choice "DEFAULT_DENY"
+            claim "non-executing-boundary"
+        }
+    }
+}

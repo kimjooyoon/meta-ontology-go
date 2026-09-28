@@ -6,7 +6,7 @@ import (
 )
 
 func Validate(receipt Receipt) error {
-	if receipt.Schema != "gooo/language-debug-receipt/v1" || receipt.Digest == "" {
+	if receipt.Schema != "gooo/language-debug-receipt/v1" || receipt.Scope != SourceExecutionScope || receipt.Digest == "" {
 		return fmt.Errorf("debug receipt identity is invalid")
 	}
 	if seal(receipt).Digest != receipt.Digest || !slices.Equal(receipt.NonClaims, CanonicalNonClaims()) {
@@ -20,6 +20,11 @@ func Validate(receipt Receipt) error {
 	}
 	if receipt.Decision == DecisionFailClosed && receipt.Reason == "DEBUG_BREAKPOINT_NOT_REACHED" &&
 		receipt.Resolution == ResolutionExact && receipt.State == StateRejected && receipt.CurrentEvent == nil {
+		return nil
+	}
+	if receipt.Decision == DecisionFailClosed && receipt.Reason == "DEBUG_EXECUTION_UNKNOWN" &&
+		receipt.Resolution == ResolutionLower && receipt.State == StateRejected && receipt.CurrentEvent == nil &&
+		len(receipt.Trace) == 0 && receipt.ExecutionDigest == "" {
 		return nil
 	}
 	return fmt.Errorf("debug receipt decision is invalid")

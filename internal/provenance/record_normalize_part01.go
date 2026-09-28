@@ -14,6 +14,9 @@ func normalizeEvidence(evidence Evidence) (Evidence, error) {
 	if err := normalizeIdentity(&evidence); err != nil {
 		return Evidence{}, err
 	}
+	if _, err := ParseWorkloadIdentityAttributes(evidence.Attributes); err != nil {
+		return Evidence{}, err
+	}
 	if err := normalizeClassification(&evidence); err != nil {
 		return Evidence{}, err
 	}

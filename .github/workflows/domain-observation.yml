@@ -1,0 +1,119 @@
+name: Domain observation example
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/domain-observation.yml
+      - .github/ci-governance.json
+      - .github/agent-scope-table.md
+      - examples/domain-observation/**
+      - cmd/gooo/**
+      - internal/**
+      - go.mod
+      - go.sum
+  push:
+    branches: [dev, agent/domain-runtime-dogfood-20260916]
+    paths:
+      - .github/workflows/domain-observation.yml
+      - .github/ci-governance.json
+      - .github/agent-scope-table.md
+      - examples/domain-observation/**
+      - cmd/gooo/**
+      - internal/**
+      - go.mod
+      - go.sum
+
+permissions:
+  contents: read
+
+concurrency:
+  group: domain-runtime-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  observe:
+    name: Execute domain, replay, resume and preserve counterexamples
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Bind source and build the public CLI once
+        env:
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/domain-evidence"
+          jq -n --arg source_sha "$(git rev-parse HEAD)" --arg head_sha "${PR_HEAD:-$GITHUB_SHA}" \
+            --arg base_sha "$PR_BASE" --arg workflow_sha "$GITHUB_WORKFLOW_SHA" \
+            --arg toolchain "$(go version)" --arg run_id "$GITHUB_RUN_ID" --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            '{source_sha:$source_sha,head_sha:$head_sha,base_sha:$base_sha,workflow_sha:$workflow_sha,
+              toolchain:$toolchain,run_id:$run_id,run_attempt:$run_attempt}' > "$RUNNER_TEMP/domain-evidence/subject.json"
+          /usr/bin/time -f '{"wall_seconds":"%e","peak_rss_kib":%M}' \
+            -o "$RUNNER_TEMP/domain-evidence/build-observation.json" \
+            go build -o "$RUNNER_TEMP/gooo-domain-cli" ./cmd/gooo
+      - name: Execute the bound Gooo domain and retain real failures
+        run: |
+          bash examples/domain-observation/observe.sh "$RUNNER_TEMP/gooo-domain-cli" "$RUNNER_TEMP/domain-evidence/runtime"
+          cat "$RUNNER_TEMP/domain-evidence/runtime/report.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep generic generation claims separate
+        run: |
+          set -euo pipefail
+          cli="$RUNNER_TEMP/gooo-domain-cli"
+          out="$RUNNER_TEMP/domain-evidence/generation"
+          mkdir -p "$out"
+          "$cli" check --semantic examples/domain-observation/main.gooo > "$out/semantic-check.txt" 2>&1
+          "$cli" check --semantic examples/domain-observation/incident.gooo > "$out/incident-semantic-check.txt" 2>&1
+          bound="$out/bound"
+          "$cli" generate examples/domain-observation/main.gooo --out "$bound" --runtime-plan runtime-plan.json > "$out/bound.log" 2>&1
+          test -s "$bound/semantic.gooo.go"
+          test -s "$bound/semantic.gooo.manifest.jsonl"
+          test -s "$bound/runtime-plan.json"
+          jq -e '
+            .schema == "gooo/runtime-plan/v1" and
+            (.source_digest | test("^sha256:[0-9a-f]{64}$")) and
+            (.semantic_hash | length == 64) and
+            (.runtime_binding_count == (.bindings | length)) and
+            (.runtime_binding_count > 0)
+          ' "$bound/runtime-plan.json"
+          "$cli" generate examples/domain-observation/definition.gooo --out "$out/first"
+          "$cli" generate examples/domain-observation/definition.gooo --out "$out/second"
+          cmp "$out/first/semantic.gooo.go" "$out/second/semantic.gooo.go"
+          test -s "$out/first/semantic.gooo.go"
+          test -z "$(gofmt -l "$out/first/semantic.gooo.go")"
+          echo '- runtime-bound generation: explicit runtime-plan artifact and generated Go output passed' >> "$GITHUB_STEP_SUMMARY"
+      - name: Reverse-observe generated Go against the Gooo authority
+        run: |
+          set -euo pipefail
+          cli="$RUNNER_TEMP/gooo-domain-cli"
+          out="$RUNNER_TEMP/domain-evidence/generation"
+          "$cli" analyze examples/domain-observation/definition.gooo --go "$out/first/semantic.gooo.go" > "$out/first/analyze.json"
+          "$cli" analyze examples/domain-observation/definition.gooo --go "$out/second/semantic.gooo.go" > "$out/second/analyze.json"
+          cmp "$out/first/analyze.json" "$out/second/analyze.json"
+          jq -e '
+            .schema_version == "analyzer-semantic-delta/v1" and
+            .semantic_equal == true and
+            .authority_semantic_digest == .observed_semantic_digest and
+            .write_effect == "no-write" and
+            (.digest | length == 64)
+          ' "$out/first/analyze.json"
+          echo '- generated Go reverse observation: authority/IR digest equality and no-write passed' >> "$GITHUB_STEP_SUMMARY"
+      - name: Validate scope registration and execution regression suites
+        run: |
+          set -euo pipefail
+          go test -count=1 -json ./internal/syntax ./internal/bidir ./internal/semantic ./internal/valueexecution ./internal/verify ./cmd/gooo \
+            | tee "$RUNNER_TEMP/domain-evidence/tests.ndjson"
+      - name: Retain evidence even when another boundary fails
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: domain-runtime-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/domain-evidence/
+          if-no-files-found: error
+          retention-days: 14

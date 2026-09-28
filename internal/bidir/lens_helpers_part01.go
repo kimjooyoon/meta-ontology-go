@@ -86,5 +86,24 @@ func validateDocumentSpans(document Document) error {
 			return fmt.Errorf("relation %d %s %q -> %q: %w", index, relation.Kind, relation.Source, relation.Target, err)
 		}
 	}
+	for index, binding := range document.RuntimeBindings {
+		if err := binding.Span.Validate(); err != nil {
+			return fmt.Errorf("runtime binding %d: %w", index, err)
+		}
+		for _, item := range []struct {
+			label    string
+			endpoint BindingEndpoint
+		}{
+			{label: "producer", endpoint: binding.Producer},
+			{label: "consumer", endpoint: binding.Consumer},
+		} {
+			if err := item.endpoint.Activity.Span.Validate(); err != nil {
+				return fmt.Errorf("runtime binding %d %s activity: %w", index, item.label, err)
+			}
+			if err := item.endpoint.Port.Span.Validate(); err != nil {
+				return fmt.Errorf("runtime binding %d %s port: %w", index, item.label, err)
+			}
+		}
+	}
 	return nil
 }

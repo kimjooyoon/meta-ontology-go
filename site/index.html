@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Read-only navigation to the meta-ontology-go repository, documentation, CI evidence, and experimental releases.">
+  <title>meta-ontology-go - public evidence index</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d2a35;
+      --muted: #5f6d78;
+      --line: #d9e1e6;
+      --paper: #f7f9fa;
+      --card: #ffffff;
+      --accent: #176b87;
+      --accent-soft: #e8f3f6;
+      --warm: #fff7e8;
+      --warm-line: #efd9a7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 16px/1.6 Georgia, "Palatino Linotype", Palatino, serif;
+    }
+
+    a { color: var(--accent); }
+
+    .wrap {
+      width: min(1080px, calc(100% - 2rem));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 4.5rem 0 2.5rem;
+      background: linear-gradient(135deg, #eef7f8, #f7f9fa 62%);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 .6rem;
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, p { margin-top: 0; }
+    h1 { max-width: 760px; margin-bottom: 1rem; font-size: clamp(2rem, 5vw, 3.7rem); line-height: 1.08; letter-spacing: -.035em; }
+    h2 { margin-bottom: .45rem; font-size: 1.35rem; line-height: 1.2; }
+    .lede { max-width: 720px; margin-bottom: 0; color: var(--muted); font-size: 1.08rem; }
+
+    main { padding: 2rem 0 3.5rem; }
+
+    .notice {
+      margin-bottom: 2rem;
+      padding: 1rem 1.1rem;
+      border: 1px solid var(--warm-line);
+      border-radius: .8rem;
+      background: var(--warm);
+    }
+
+    .notice p { margin-bottom: 0; }
+
+    section { margin: 2.5rem 0; }
+    .section-intro { margin-bottom: 1rem; color: var(--muted); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      display: block;
+      min-height: 100%;
+      padding: 1.1rem;
+      color: inherit;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: .8rem;
+      background: var(--card);
+      box-shadow: 0 3px 12px rgb(29 42 53 / 5%);
+    }
+
+    .card:hover, .card:focus-visible { border-color: var(--accent); outline: 3px solid var(--accent-soft); }
+    .card h3 { margin: 0 0 .35rem; color: var(--accent); font-size: 1.05rem; }
+    .card p { margin: 0; color: var(--muted); font-size: .93rem; }
+
+    .boundary {
+      padding: 1.2rem;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .boundary p { margin-bottom: .6rem; }
+    .boundary p:last-child { margin-bottom: 0; }
+    code { padding: .12rem .3rem; border-radius: .3rem; background: rgb(29 42 53 / 8%); font-size: .9em; }
+
+    footer {
+      padding: 1.5rem 0 3rem;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      font-size: .9rem;
+    }
+
+    @media (max-width: 760px) {
+      header { padding: 3rem 0 2rem; }
+      .grid { grid-template-columns: 1fr; }
+      main { padding-top: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <p class="eyebrow">Read-only presentation layer</p>
+      <h1>meta-ontology-go<br>public evidence index</h1>
+      <p class="lede">A small, static directory to the repository's existing documentation, source contracts, semantic evidence, CI observations, and experimental releases.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="notice">
+      <p><strong>Evidence boundary.</strong> This page only links to existing public material. It does not run the compiler, recalculate metrics, create a score, publish a release, or authorize promotion. The moving <code>dev</code> links, workflow indexes, and release indexes below are for navigation - not exact snapshot evidence.</p>
+    </div>
+
+    <section aria-labelledby="start-heading">
+      <h2 id="start-heading">Start with the repository</h2>
+      <p class="section-intro">The checked-in README and governance documents describe the supported surface and its limits.</p>
+      <div class="grid">
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/README.md">
+          <h3>README</h3>
+          <p>Project overview, quick start, public trust badges, and explicit status limits.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/architecture.md">
+          <h3>Architecture</h3>
+          <p>Authority boundaries for .gooo intent, semantic IR, generated Go, and evidence.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/spec.md">
+          <h3>Language sketch</h3>
+          <p>The current syntax and semantic contract, including unsupported surfaces.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/governance.md">
+          <h3>Governance</h3>
+          <p>Source-of-truth, evidence, write-back, and fail-closed rules.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/metric-catalog.md">
+          <h3>Metric catalog</h3>
+          <p>Named metric contracts and their declared decision states.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/metrics-rfc.md">
+          <h3>Metrics RFC</h3>
+          <p>Design context for deterministic metrics; it is not a live scorecard.</p>
+        </a>
+      </div>
+    </section>
+
+    <section aria-labelledby="evidence-heading">
+      <h2 id="evidence-heading">Source and semantic evidence</h2>
+      <p class="section-intro">These links show where the declared policy and its generated semantic evaluator live in the source tree.</p>
+      <div class="grid">
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/examples/public-trust-surface/main.gooo">
+          <h3>Public-trust .gooo policy</h3>
+          <p>The source policy that declares the public-trust rows and their states.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/internal/meta/publictrust/generated/evaluator.go">
+          <h3>Generated evaluator</h3>
+          <p>The checked-in semantic projection generated from the public-trust policy.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/external/gooo-release-evidence-v1.md">
+          <h3>Release evidence contract</h3>
+          <p>Exact-head readiness evidence, fixed denominators, and fail-closed behavior.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/external/gooo-release-publication-v1.md">
+          <h3>Release publication contract</h3>
+          <p>Experimental release identity, asset boundaries, and permission separation.</p>
+        </a>
+      </div>
+      <div class="boundary">
+        <p><strong>UNKNOWN and REFUTED remain evidence.</strong> The Public trust surface report preserves unavailable and refuted rows. Read the original report and exact workflow run when a claim matters; this index never turns an absent or contradictory observation into success.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="ci-heading">
+      <h2 id="ci-heading">Existing CI observations</h2>
+      <p class="section-intro">GitHub Actions is the source for run-scoped summaries and exact-head artifacts. Open the relevant run before treating an observation as evidence.</p>
+      <div class="grid">
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/public-trust-surface.yml">
+          <h3>Public trust surface</h3>
+          <p>Manifest and human report, including UNKNOWN and REFUTED rows.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/ci.yml">
+          <h3>CI and source metrics</h3>
+          <p>Run summaries and exact-SHA metric, provenance, receipt, and proof artifacts.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/gooo-release-readiness.yml">
+          <h3>Release readiness</h3>
+          <p>Exact candidate and readiness evidence; it does not itself publish a release.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/live-governance-snapshot.yml">
+          <h3>Governance snapshot</h3>
+          <p>Existing live governance observations with their own run and artifact scope.</p>
+        </a>
+      </div>
+    </section>
+
+    <section aria-labelledby="release-heading">
+      <h2 id="release-heading">Experimental releases</h2>
+      <p class="section-intro">Release pages are the existing publication surface. A readiness result and a published release are separate claims.</p>
+      <div class="grid">
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/releases">
+          <h3>Release index</h3>
+          <p>Published and prerelease tags with their attached assets.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.4.0-dev">
+          <h3>v0.4.0-dev experimental release</h3>
+          <p>The existing v0.4.0-dev prerelease and its published assets.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/language/toolchain-cross-platform-release.md">
+          <h3>Cross-platform release notes</h3>
+          <p>Scope and evidence boundaries for the experimental toolchain release path.</p>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      Presentation only: no runtime dependency, external font, analytics, compiler execution, metric recomputation, promotion, or release mutation is included here.
+    </div>
+  </footer>
+</body>
+</html>

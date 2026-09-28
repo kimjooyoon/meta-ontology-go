@@ -11,6 +11,7 @@ type Candidate struct {
 	Target                      Coordinate `json:"target"`
 	ProofChoice                 string     `json:"proof_choice"`
 	MetaOperation               string     `json:"meta_operation"`
+	ExecutionInputDigest        string     `json:"execution_input_digest"`
 	ExecutionAuthorized         bool       `json:"execution_authorized"`
 	MutationAuthorized          bool       `json:"mutation_authorized"`
 	PromotionAuthorized         bool       `json:"promotion_authorized"`

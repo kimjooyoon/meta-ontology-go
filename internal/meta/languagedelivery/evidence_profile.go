@@ -1,7 +1,10 @@
 package languagedelivery
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/languageprofile"
+
 type ProfileReceipt struct {
 	Schema            string         `json:"schema"`
+	Scope             string         `json:"scope"`
 	SubjectSHA        string         `json:"subject_sha"`
 	Decision          string         `json:"decision"`
 	Resolution        string         `json:"resolution"`
@@ -29,6 +32,10 @@ func inspectProfile(data []byte, head string, receipt *ProfileReceipt, entry Man
 	observation.MutationAuthority = receipt.MutationAuthority || receipt.Summary.Effects.MutationAuthority
 	if receipt.SubjectSHA != head || receipt.Summary.Unknowns != 0 {
 		return headUnknown(observation)
+	}
+	if receipt.Scope != languageprofile.ExecutionScope {
+		observation.State, observation.Reason = "UNKNOWN", "PROFILE_SCOPE_UNKNOWN"
+		return observation
 	}
 	return finalizeObservation(observation, receipt.Schema, "gooo/language-profile-experiment-report/v1")
 }

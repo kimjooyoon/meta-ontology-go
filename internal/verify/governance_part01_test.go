@@ -54,14 +54,15 @@ func TestGovernanceMatrixRejectsNonCIMode(t *testing.T) {
 		t.Fatal("non-ci governance mode was accepted")
 	}
 }
-func TestGovernanceMatrixRejectsSixOnlyDevProtection(t *testing.T) {
+func TestGovernanceMatrixAcceptsSixCanonicalContexts(t *testing.T) {
 	matrix, err := ReadGovernanceMatrix(filepath.Join("..", "..", ".github", "ci-governance.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	matrix.RequiredContexts.Dev = canonicalJobs()
-	if err := ValidateGovernanceMatrix(matrix); err == nil {
-		t.Fatal("six-only dev protection was accepted as steady-state governance")
+	matrix.RequiredContexts.Main = canonicalJobs()
+	if err := ValidateGovernanceMatrix(matrix); err != nil {
+		t.Fatalf("six canonical contexts were rejected: %v", err)
 	}
 }
 func TestGovernanceMatrixRejectsWildcardOwnership(t *testing.T) {

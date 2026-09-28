@@ -1,0 +1,90 @@
+name: Public Pages presentation
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'site/index.html'
+      - '.github/workflows/public-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'kimjooyoon/meta-ontology-go' && github.ref == 'refs/heads/dev'
+    name: Stage public Pages artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact dev commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Stage explicit public file allowlist
+        id: stage
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          source="$GITHUB_WORKSPACE/site/index.html"
+          stage="$(mktemp -d "$RUNNER_TEMP/public-pages.XXXXXX")"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test ! -L "$source"
+          test -f "$source"
+          install -m 0644 "$source" "$stage/index.html"
+          entry_count="$(find "$stage" -mindepth 1 -maxdepth 1 -print | wc -l | tr -d '[:space:]')"
+          file_count="$(find "$stage" -mindepth 1 -maxdepth 1 -type f -name 'index.html' -print | wc -l | tr -d '[:space:]')"
+          bytes="$(wc -c < "$stage/index.html" | tr -d '[:space:]')"
+          test "$entry_count" = "1"
+          test "$file_count" = "1"
+          test "$bytes" -gt 0
+          printf 'path=%s\n' "$stage" >> "$GITHUB_OUTPUT"
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          {
+            echo "### Public Pages presentation"
+            printf -- '- staged source commit: `%s`\n' "$EXPECTED_SHA"
+            printf -- '- staged files: `%s`\n' "$file_count"
+            printf -- '- staged bytes: `%s`\n' "$bytes"
+            printf -- '- native run: %s\n' "$run_url"
+            echo "- exact snapshot: no; moving dev/workflow/release links are navigation only"
+            echo "- execution: static staging only; Go/compiler/test/metric/release operations: 0"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload explicit Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: ${{ steps.stage.outputs.path }}
+          retention-days: 1
+
+  deploy:
+    if: github.repository == 'kimjooyoon/meta-ontology-go' && github.ref == 'refs/heads/dev'
+    name: Deploy public Pages artifact
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

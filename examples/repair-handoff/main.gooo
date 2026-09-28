@@ -1,0 +1,10 @@
+package repair_handoff
+namespace repair_handoff
+
+entity RepairCandidate id "gooo://repair-handoff/entity/repair-candidate"
+entity RepairHandoff id "gooo://repair-handoff/entity/repair-handoff"
+
+activity ValidateCandidate(RepairCandidate) -> RepairCandidate computes "repair.candidate.validate:v1"
+activity DeferCandidate(RepairCandidate) -> RepairHandoff computes "repair.handoff.defer:v1"
+
+bind ValidateCandidate.result -> DeferCandidate.input

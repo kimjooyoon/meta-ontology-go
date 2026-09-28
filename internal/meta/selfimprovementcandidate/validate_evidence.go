@@ -8,6 +8,7 @@ func validCandidate(candidate Candidate, sourceDigest string) bool {
 		coordinateEquals(candidate.Before, 0, 1) && coordinateEquals(candidate.Target, 1, 1) &&
 		candidate.ProofChoice == "COHERENCE" &&
 		candidate.MetaOperation == "propose-value-level-witness-experiment" &&
+		validDigest(candidate.ExecutionInputDigest) &&
 		!candidate.ExecutionAuthorized && !candidate.MutationAuthorized &&
 		!candidate.PromotionAuthorized && !candidate.AutomaticAdoptionAuthorized &&
 		candidate.Digest == candidateDigest(candidate)

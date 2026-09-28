@@ -17,7 +17,7 @@ func assertWorkflowIdentityMarkers(t *testing.T, text string) {
 	if strings.Contains(text, "context.ref_name") {
 		t.Fatal("workflow uses the unavailable github-script context.ref_name field")
 	}
-	for _, marker := range []string{"- dev", "normalizeOwnerBranch", "ci-base-ref.txt", "ci-owner-branch.txt"} {
+	for _, marker := range []string{"- dev", "normalizeHeadBranch", "ci-base-ref.txt", "ci-head-branch.txt"} {
 		if !strings.Contains(text, marker) {
 			t.Fatalf("workflow lost protected-push identity marker %q", marker)
 		}

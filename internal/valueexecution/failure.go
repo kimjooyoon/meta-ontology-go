@@ -9,6 +9,7 @@ const (
 	ReasonSourceReadFailed          = "VALUE_SOURCE_READ_FAILED"
 	ReasonSourceParseFailed         = "VALUE_SOURCE_PARSE_FAILED"
 	ReasonSemanticBindingFailed     = "VALUE_SEMANTIC_BINDING_FAILED"
+	ReasonPlanRequired              = "VALUE_PLAN_REQUIRED"
 	ReasonActivityNotFound          = "VALUE_ACTIVITY_NOT_FOUND"
 	ReasonProgramMissing            = "VALUE_PROGRAM_MISSING"
 	ReasonProgramUnknown            = "VALUE_PROGRAM_UNKNOWN"
@@ -19,14 +20,26 @@ const (
 	ReasonOperationIRInvalid        = "VALUE_OPERATION_IR_INVALID"
 	ReasonInputArityMismatch        = "VALUE_INPUT_ARITY_MISMATCH"
 	ReasonIntegerOverflow           = "VALUE_INTEGER_OVERFLOW"
+	ReasonIntegerDivisionByZero     = "VALUE_INTEGER_DIVISION_BY_ZERO"
+	ReasonIntegerModuloByZero       = "VALUE_INTEGER_MODULO_BY_ZERO"
 	ReasonIndicatorUnsatisfied      = "VALUE_INDICATOR_UNSATISFIED"
+	ReasonProgramAuthorityInvalid   = "VALUE_PROGRAM_AUTHORITY_INVALID"
+	ReasonProgramAuthorityMismatch  = "VALUE_PROGRAM_AUTHORITY_MISMATCH"
+	ReasonResultHandleInvalid       = "VALUE_RESULT_HANDLE_INVALID"
+	ReasonResultProducerMismatch    = "VALUE_RESULT_PRODUCER_MISMATCH"
+	ReasonPlanInvalid               = "VALUE_PLAN_INVALID"
+	ReasonExternalInputMissing      = "VALUE_EXTERNAL_INPUT_MISSING"
+	ReasonExternalInputUnexpected   = "VALUE_EXTERNAL_INPUT_UNEXPECTED"
+	ReasonBindingResultInvalid      = "VALUE_BINDING_RESULT_INVALID"
+	ReasonPlanExecutionFailed       = "VALUE_PLAN_EXECUTION_FAILED"
+	ReasonSourceRevisionInvalid     = "VALUE_SOURCE_REVISION_INVALID"
 )
 
 type Failure struct {
-	Code   string
-	Stage  string
-	Step   string
-	Detail string
+	Code   string `json:"code"`
+	Stage  string `json:"stage"`
+	Step   string `json:"step"`
+	Detail string `json:"detail"`
 }
 
 func (failure Failure) Error() string {

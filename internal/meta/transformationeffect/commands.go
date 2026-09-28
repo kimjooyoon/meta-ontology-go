@@ -45,6 +45,21 @@ func resolveActionBinding(plan generation.Plan, action generation.Action) (gener
 			Expected: binding.Evaluator, Observed: action.Evaluator,
 		}
 	}
+	if action.SubjectKind != binding.InputSubjectKind {
+		return generation.Binding{}, &executorBindingError{
+			Operation: string(action.Operation), FieldPath: "$.selected.subject_kind",
+			Expected: string(binding.InputSubjectKind), Observed: string(action.SubjectKind),
+		}
+	}
+	if action.InputSubjectKind != binding.InputSubjectKind ||
+		action.InputContractSourceDigest != binding.InputContractSourceDigest ||
+		action.InputContractSemanticDigest != binding.InputContractSemanticDigest {
+		return generation.Binding{}, &executorBindingError{
+			Operation: string(action.Operation), FieldPath: "$.selected.input_contract",
+			Expected: binding.InputContractSourceDigest + ":" + binding.InputContractSemanticDigest,
+			Observed: action.InputContractSourceDigest + ":" + action.InputContractSemanticDigest,
+		}
+	}
 	return binding, nil
 }
 
@@ -79,7 +94,30 @@ func freshMetrics(box *workspace.Sandbox, expected string) (linecaps.LineMetrics
 	if report.CommitSHA != expected {
 		return report, nil, fmt.Errorf("remeasured SHA is not exact")
 	}
-	return report, stdout.Bytes(), nil
+	canonicalPayload, err := canonicalMetricsPayload(stdout.Bytes(), box.Root)
+	if err != nil {
+		return report, nil, err
+	}
+	return report, canonicalPayload, nil
+}
+
+func canonicalMetricsPayload(payload []byte, root string) ([]byte, error) {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(payload, &fields); err != nil {
+		return nil, err
+	}
+	for _, field := range []string{"root", "storage_root"} {
+		raw, ok := fields[field]
+		if !ok {
+			continue
+		}
+		var value string
+		if err := json.Unmarshal(raw, &value); err != nil || value != root {
+			continue
+		}
+		fields[field] = json.RawMessage(`"<workspace>"`)
+	}
+	return json.Marshal(fields)
 }
 
 func residualActionable(report linecaps.LineMetricsReport, action generation.Action) int {

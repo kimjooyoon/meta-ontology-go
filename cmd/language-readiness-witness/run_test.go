@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	readinessartifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact"
@@ -39,8 +40,8 @@ func TestRunPublishesExactThirteenOfTwentyFour(t *testing.T) {
 	if err := json.Unmarshal(data, &receipt); err != nil {
 		t.Fatal(err)
 	}
-	if receipt.Snapshot.Summary.Completed != 13 || receipt.Snapshot.Summary.Total != 24 ||
-		receipt.Snapshot.Summary.ReadinessBPS != 5416 || receipt.FixedPoint.Decision != improvement.NoChange {
+	if receipt.Snapshot.Summary.Completed != 12 || receipt.Snapshot.Summary.Total != 24 ||
+		receipt.Snapshot.Summary.ReadinessBPS != 5000 || receipt.FixedPoint.Decision != improvement.NoChange {
 		t.Fatalf("receipt = %+v", receipt)
 	}
 }
@@ -56,5 +57,39 @@ func TestRunRejectsRepositoryOutput(t *testing.T) {
 	}, &bytes.Buffer{})
 	if err == nil {
 		t.Fatal("repository output accepted")
+	}
+}
+
+func TestRunRejectsPartialConceptOperationEvidence(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = run(config{
+		root: root, input: conceptInput(t, root), output: filepath.Join(t.TempDir(), "readiness.json"),
+		expectedSHA: testSHA, conceptOperationBinding: filepath.Join(t.TempDir(), "receipt.json"),
+	}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("partial concept-operation evidence was accepted")
+	}
+}
+
+func TestBuildDoesNotIgnorePromotionOnCompleteRoute(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	promotion := filepath.Join(t.TempDir(), "promotion.json")
+	if err := os.WriteFile(promotion, []byte("{"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	guarded := filepath.Join(t.TempDir(), "guarded.json")
+	_, err = build(config{
+		root: root, input: conceptInput(t, root), expectedSHA: testSHA,
+		promotion: promotion, guarded: guarded,
+		conceptOperationBinding: filepath.Join(t.TempDir(), "binding.json"),
+	})
+	if err == nil || !strings.Contains(err.Error(), guarded) {
+		t.Fatalf("complete route was bypassed in favor of observation: %v", err)
 	}
 }

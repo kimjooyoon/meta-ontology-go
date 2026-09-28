@@ -30,7 +30,14 @@ func run(cfg config) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	report, replay := feedbackstate.Evaluate(bound), feedbackstate.Evaluate(bound)
+	report, err := feedbackstate.Evaluate(bound)
+	if err != nil {
+		return false, fmt.Errorf("evaluate semantic state: %w", err)
+	}
+	replay, err := feedbackstate.Evaluate(bound)
+	if err != nil {
+		return false, fmt.Errorf("replay semantic state: %w", err)
+	}
 	if report.ReportDigest != replay.ReportDigest {
 		return false, fmt.Errorf("semantic snapshot replay digest mismatch")
 	}

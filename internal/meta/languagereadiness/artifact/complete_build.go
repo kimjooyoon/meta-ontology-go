@@ -1,6 +1,8 @@
 package artifact
 
 import (
+	"os"
+
 	readiness "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance"
@@ -10,9 +12,21 @@ import (
 	metacli "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli"
 	metaff "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
+	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 )
 
 func BuildWithCompleteEvidence(input CompleteEvidenceInput) (Receipt, error) {
+	conceptOperation, err := decodeCompleteEvidence[conceptoperation.Receipt](input.ConceptOperationBinding)
+	if err != nil {
+		return Receipt{}, err
+	}
+	if err := conceptoperation.VerifyReceipt(conceptOperation, input.ExpectedRepository, input.HeadSHA); err != nil {
+		return Receipt{}, err
+	}
+	input.ConceptOperationInputs.ScratchDirectory = input.ConceptOperationScratchDirectory
+	if err := conceptoperation.VerifySource(conceptOperation, input.ConceptOperationInputs, os.DirFS(input.RepositoryRoot), input.RepositoryRoot, input.ExpectedRepository, input.HeadSHA); err != nil {
+		return Receipt{}, err
+	}
 	promotion, err := decodeCompleteEvidence[proposalpromotion.Receipt](input.Promotion)
 	if err != nil {
 		return Receipt{}, err
@@ -45,7 +59,7 @@ func BuildWithCompleteEvidence(input CompleteEvidenceInput) (Receipt, error) {
 	if err != nil {
 		return Receipt{}, err
 	}
-	bundle := readiness.PromotionEvidence{Promotion: promotion, Capability: capability,
+	bundle := readiness.PromotionEvidence{Promotion: promotion, ConceptOperation: conceptOperation, ConceptOperationInputs: input.ConceptOperationInputs, ConceptOperationRepository: input.RepositoryRoot, ConceptOperationScratchDirectory: input.ConceptOperationScratchDirectory, Capability: capability,
 		UseCases: useCases, Syntax: syntaxReport, Diagnostic: diagnostic,
 		PackageRuntime: []languagepackageruntime.Report{runtimeReport}}
 	snapshot, err := buildToolchainSnapshot(input, bundle, cliReport, formatFixReport)
