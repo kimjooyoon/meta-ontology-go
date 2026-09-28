@@ -1,0 +1,33 @@
+module domain_investment_plan_example
+
+input domain_id
+input scope_digest
+input evidence_digest
+input declared_capability_count
+input observed_capability_count
+input unresolved_capability_count
+input target_numerator
+input target_denominator
+input evidence_complete
+input comparable
+
+status UNKNOWN evidence or investment policy is not bound
+status DEFERRED evidence is incomplete or incomparable
+status INVESTIGATE unresolved capability boundaries remain
+status INVEST observed capability coverage is below the explicit target
+status MAINTAIN observed capability coverage meets the explicit target
+
+field disposition
+field coverage_numerator
+field coverage_denominator
+field gap_numerator
+field first_boundary
+field reason
+field plan_digest
+
+constraint target_is_policy_not_truth
+constraint preserve_unknown_and_deferred
+constraint unresolved_boundary_precedes_investment
+constraint digest_binds_scope_and_evidence
+constraint read_only
+constraint no_execution
