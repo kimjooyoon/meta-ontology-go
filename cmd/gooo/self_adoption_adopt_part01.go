@@ -13,15 +13,15 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-const adoptionUsage = "usage: gooo adopt <observation.gooo> --input <file.gooo> --observation FILE --proposal FILE --authorization FILE --out <directory>"
+const adoptionUsage = "usage: gooo adopt <observation.gooo> --input <file.gooo> --observation FILE --proposal FILE [--system-decision FILE] --out <directory>"
 
 type adoptionOptions struct {
-	contractFilename      string
-	inputFilename         string
-	observationFilename   string
-	proposalFilename      string
-	authorizationFilename string
-	outputDir             string
+	contractFilename       string
+	inputFilename          string
+	observationFilename    string
+	proposalFilename       string
+	systemDecisionFilename string
+	outputDir              string
 }
 
 type adoptionPair struct {
@@ -121,7 +121,7 @@ func validateAdoptionProvenanceChain(observation generation.SemanticObservation,
 	}
 	if observationProvenance == nil || proposalProvenance == nil || authorizationProvenance == nil ||
 		*observationProvenance != *expected || *proposalProvenance != *expected || *authorizationProvenance != *expected {
-		return fmt.Errorf("adoption provenance is not continuous across observation, proposal, and authorization")
+		return fmt.Errorf("adoption provenance is not continuous across observation, proposal, and system decision")
 	}
 	return nil
 }
@@ -165,7 +165,16 @@ func writeAdoptionReport(outputDir string, report generation.SemanticAdoptionRep
 		return exitFailure
 	}
 	reportData = append(reportData, '\n')
-	if err := writeAdoptionArtifact(outputDir, "adoption-result.json", reportData); err != nil {
+	systemDecisionData, err := json.MarshalIndent(report.Authorization, "", "  ")
+	if err != nil {
+		fmt.Fprintf(stderr, "gooo: adoption: encode system decision: %v\n", err)
+		return exitFailure
+	}
+	systemDecisionData = append(systemDecisionData, '\n')
+	if err := writeAdoptionArtifacts(outputDir, []adoptionArtifact{
+		{name: "adoption-result.json", data: reportData},
+		{name: "system-decision.json", data: systemDecisionData},
+	}); err != nil {
 		fmt.Fprintf(stderr, "gooo: adoption: output: %v\n", err)
 		return exitFailure
 	}
@@ -199,11 +208,11 @@ func parseAdoptionArguments(args []string) (adoptionOptions, error) {
 				return adoptionOptions{}, fmt.Errorf("%s", adoptionUsage)
 			}
 			options.proposalFilename = value
-		case "--authorization":
-			if options.authorizationFilename != "" {
+		case "--system-decision":
+			if options.systemDecisionFilename != "" {
 				return adoptionOptions{}, fmt.Errorf("%s", adoptionUsage)
 			}
-			options.authorizationFilename = value
+			options.systemDecisionFilename = value
 		case "--out":
 			if options.outputDir != "" {
 				return adoptionOptions{}, fmt.Errorf("%s", adoptionUsage)
@@ -215,7 +224,7 @@ func parseAdoptionArguments(args []string) (adoptionOptions, error) {
 		index++
 	}
 	if options.contractFilename == "" || options.inputFilename == "" || options.observationFilename == "" ||
-		options.proposalFilename == "" || options.authorizationFilename == "" || options.outputDir == "" {
+		options.proposalFilename == "" || options.outputDir == "" {
 		return adoptionOptions{}, fmt.Errorf("%s", adoptionUsage)
 	}
 	return options, nil
@@ -230,10 +239,6 @@ func readAdoptionInputs(options adoptionOptions, reader SourceReader) ([]byte, g
 	if err != nil {
 		return nil, generation.SemanticObservation{}, nil, generation.SemanticAdoptionProposal{}, nil, generation.SemanticAdoptionAuthorization{}, fmt.Errorf("read proposal: %w", err)
 	}
-	authorizationData, err := reader.ReadFile(options.authorizationFilename)
-	if err != nil {
-		return nil, generation.SemanticObservation{}, nil, generation.SemanticAdoptionProposal{}, nil, generation.SemanticAdoptionAuthorization{}, fmt.Errorf("read authorization: %w", err)
-	}
 	var observation generation.SemanticObservation
 	var proposal generation.SemanticAdoptionProposal
 	var authorization generation.SemanticAdoptionAuthorization
@@ -243,9 +248,25 @@ func readAdoptionInputs(options adoptionOptions, reader SourceReader) ([]byte, g
 	if err := json.Unmarshal(proposalData, &proposal); err != nil {
 		return nil, observation, nil, proposal, nil, authorization, fmt.Errorf("decode proposal: %w", err)
 	}
-	if err := json.Unmarshal(authorizationData, &authorization); err != nil {
-		return nil, observation, nil, proposal, nil, authorization, fmt.Errorf("decode authorization: %w", err)
+	if options.systemDecisionFilename != "" {
+		systemDecisionData, err := reader.ReadFile(options.systemDecisionFilename)
+		if err != nil {
+			return nil, observation, nil, proposal, nil, authorization, fmt.Errorf("read system decision: %w", err)
+		}
+		if err := json.Unmarshal(systemDecisionData, &authorization); err != nil {
+			return nil, observation, nil, proposal, nil, authorization, fmt.Errorf("decode system decision: %w", err)
+		}
+	} else {
+		authorization, err = generation.DeriveSemanticAdoptionAuthorization(proposal, cache.HashBytes(proposalData).String())
+		if err != nil {
+			return nil, observation, nil, proposal, nil, authorization, fmt.Errorf("derive system decision: %w", err)
+		}
 	}
+	authorizationData, err := json.MarshalIndent(authorization, "", "  ")
+	if err != nil {
+		return nil, observation, nil, proposal, nil, authorization, fmt.Errorf("encode system decision: %w", err)
+	}
+	authorizationData = append(authorizationData, '\n')
 	return observationData, observation, proposalData, proposal, authorizationData, authorization, nil
 }
 
@@ -272,9 +293,12 @@ func validateAdoptionInputs(inputs observationInputs, observationData []byte, ob
 	if err := generation.ValidateSemanticAdoptionAuthorization(authorization); err != nil {
 		return err
 	}
+	if authorization.Schema != generation.SemanticAdoptionSystemDecisionSchema || authorization.AuthorizationMode != generation.SemanticAdoptionSystemDecisionMode {
+		return fmt.Errorf("adoption requires a system-derived decision")
+	}
 	if authorization.ProposalDigest != proposalDigest || authorization.CandidateStableID != proposal.Candidate.StableID || authorization.CandidateInputDigest != proposal.Candidate.InputDigest ||
 		authorization.ContractDigest != proposal.ContractDigest || authorization.InputSourceDigest != proposal.InputSourceDigest {
-		return fmt.Errorf("authorization is not bound to the exact proposal candidate")
+		return fmt.Errorf("system decision is not bound to the exact proposal candidate")
 	}
 	return nil
 }
@@ -348,7 +372,12 @@ func adoptionEvidence(proposal generation.SemanticAdoptionProposal, proposalDige
 
 func adoptionLifecycle(authorized bool) string {
 	if authorized {
-		return "AUTHORIZED_ADOPTION"
+		return "SYSTEM_DERIVED_ADOPTION"
 	}
-	return "AUTHORIZATION_REQUIRED"
+	return "SYSTEM_EVIDENCE_INCOMPLETE"
+}
+
+type adoptionArtifact struct {
+	name string
+	data []byte
 }

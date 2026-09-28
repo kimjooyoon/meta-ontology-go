@@ -119,7 +119,7 @@ func validateRetentionAdoptionReport(evidence retentionEvidence) error {
 	proposalDigest := cache.HashBytes(evidence.proposalData).String()
 	authorizationDigest := evidence.adoption.AuthorizationDigest
 	observationDigest := cache.HashBytes(evidence.observationData).String()
-	if evidence.adoption.Schema != generation.SemanticAdoptionReportSchema || evidence.adoption.Lifecycle != "AUTHORIZED_ADOPTION" ||
+	if evidence.adoption.Schema != generation.SemanticAdoptionReportSchema || evidence.adoption.Lifecycle != "SYSTEM_DERIVED_ADOPTION" ||
 		evidence.adoption.ObservationDigest != observationDigest || evidence.adoption.ProposalDigest != proposalDigest ||
 		evidence.adoption.AuthorizationDigest != authorizationDigest || !reflect.DeepEqual(evidence.adoption.Proposal, evidence.proposal) ||
 		evidence.adoption.IndependentDecision != "CLOSED" ||
@@ -158,7 +158,7 @@ func validateRetentionAuthorization(evidence retentionEvidence) error {
 		evidence.authorization.InputSourceDigest != evidence.proposal.InputSourceDigest {
 		return errors.New("authorization is not bound to the exact proposal candidate")
 	}
-	if evidence.authorization != evidence.adoption.Authorization {
+	if !reflect.DeepEqual(evidence.authorization, evidence.adoption.Authorization) {
 		return errors.New("authorization differs from the authorized adoption report")
 	}
 	if cache.HashBytes(evidence.authorizationData).String() != evidence.adoption.AuthorizationDigest {

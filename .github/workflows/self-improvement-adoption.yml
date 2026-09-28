@@ -80,24 +80,7 @@ jobs:
           jq -e '.schema == "gooo/semantic-self-adoption-proposal/v1" and .execution_allowed == false and .repository_writes == 0 and .mode == "bounded-in-memory-reuse" and .candidate.expected_reducible_count == 1 and .candidate.safety_assessment == "UNKNOWN_NOT_INFERRED" and .candidate.benefit_assessment == "UNKNOWN_NOT_INFERRED"' \
             "$work/proposal/adoption-proposal.json" >/dev/null
 
-      - name: Materialize explicit authorization input
-        shell: bash
-        run: |
-          set -euo pipefail
-          work="$RUNNER_TEMP/self-improvement-adoption"
-          proposal="$work/proposal/adoption-proposal.json"
-          observation="$work/observation/compiler-observation.json"
-          jq -S -n \
-            --arg proposal_digest "$(sha256sum "$proposal" | awk '{print $1}')" \
-            --arg candidate_stable_id "$(jq -r '.candidate.stable_id' "$proposal")" \
-            --arg candidate_input_digest "$(jq -r '.candidate.input_digest' "$proposal")" \
-            --arg contract_digest "$(jq -r '.contract_digest' "$observation")" \
-            --arg input_source_digest "$(jq -r '.input_source_digest' "$observation")" \
-            '{schema:"gooo/semantic-self-adoption-authorization/v1",authorization_id:"iteration-5-human-approval-fixture",authorization_mode:"explicit-human-input",proposal_digest:$proposal_digest,candidate_stable_id:$candidate_stable_id,candidate_input_digest:$candidate_input_digest,contract_digest:$contract_digest,input_source_digest:$input_source_digest,authorized:true,repository_writes:0,local_test_executions:0}' \
-            > "$work/authorization.json"
-          jq -e '.authorized == true and .authorization_mode == "explicit-human-input" and .repository_writes == 0 and .local_test_executions == 0' "$work/authorization.json" >/dev/null
-
-      - name: Execute only the explicitly authorized compiler behavior
+      - name: Derive and execute the exact-evidence system decision
         shell: bash
         run: |
           set -euo pipefail
@@ -106,24 +89,24 @@ jobs:
             --input examples/self-improvement-observation/input.fixture \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/authorization.json" \
             --out "$work/adoption"
-          jq -e '.independent_decision == "CLOSED" and .lifecycle == "AUTHORIZED_ADOPTION" and .evidence.before_operation_count == 2 and .evidence.after_operation_count == 1 and .evidence.cache_misses == 1 and .evidence.cache_hits == 1 and .evidence.reuse_applied and .evidence.behavior_equal and .evidence.determinism_equal and .evidence.repository_writes == 0 and .evidence.local_test_executions == 0 and .observation.adoption.candidate_stable_id == .evidence.candidate_stable_id and .observation.pair_evidence.change_adopted' \
+          jq -e '.schema == "gooo/semantic-self-adoption-report/v2" and .independent_decision == "CLOSED" and .lifecycle == "SYSTEM_DERIVED_ADOPTION" and .authorization.schema == "gooo/semantic-self-adoption-system-decision/v1" and .authorization.authorization_mode == "system-derived-exact-evidence" and .evidence.before_operation_count == 2 and .evidence.after_operation_count == 1 and .evidence.cache_misses == 1 and .evidence.cache_hits == 1 and .evidence.reuse_applied and .evidence.behavior_equal and .evidence.determinism_equal and .evidence.repository_writes == 0 and .evidence.local_test_executions == 0 and .observation.adoption.candidate_stable_id == .evidence.candidate_stable_id and .observation.pair_evidence.change_adopted' \
             "$work/adoption/adoption-result.json" >/dev/null
+          cp "$work/adoption/system-decision.json" "$work/system-decision.json"
 
-      - name: Prove missing authorization remains UNKNOWN without execution
+      - name: Prove denied system decision remains UNKNOWN without execution
         shell: bash
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/self-improvement-adoption"
-          jq -S '.authorization_id = "iteration-5-missing-human-approval" | .authorized = false' "$work/authorization.json" > "$work/denied-authorization.json"
+          jq -S '.authorization_id = "system-policy-counterfactual-denied" | .authorized = false' "$work/system-decision.json" > "$work/denied-system-decision.json"
           go run ./cmd/gooo adopt examples/self-improvement-observation/observation.gooo \
             --input examples/self-improvement-observation/input.fixture \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/denied-authorization.json" \
+            --system-decision "$work/denied-system-decision.json" \
             --out "$work/unknown"
-          jq -e '.independent_decision == "UNKNOWN" and .lifecycle == "AUTHORIZATION_REQUIRED" and .evidence.repository_writes == 0 and .evidence.local_test_executions == 0 and (.evidence.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"] and .evidence.unknown.stage == "ADOPTION" and .evidence.unknown.step == "AUTHORIZE_CANDIDATE" and .evidence.unknown.reason == "MISSING_EXPLICIT_AUTHORIZATION" and .evidence.unknown.unknown_class == "INCOMPLETE_EVIDENCE" and .evidence.unknown.next_operation == "PROVIDE_EXPLICIT_AUTHORIZATION" and .evidence.unknown.blocked_by == ["explicit_authorization"] and .observation.decision == "UNKNOWN"' \
+          jq -e '.independent_decision == "UNKNOWN" and .lifecycle == "SYSTEM_EVIDENCE_INCOMPLETE" and .evidence.repository_writes == 0 and .evidence.local_test_executions == 0 and (.evidence.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"] and .evidence.unknown.stage == "ADOPTION" and .evidence.unknown.step == "VERIFY_SYSTEM_DECISION" and .evidence.unknown.reason == "SYSTEM_DECISION_EVIDENCE_INCOMPLETE" and .evidence.unknown.unknown_class == "INCOMPLETE_EVIDENCE" and .evidence.unknown.next_operation == "COMPLETE_SYSTEM_DECISION_EVIDENCE" and .evidence.unknown.blocked_by == ["system_decision_evidence"] and .observation.decision == "UNKNOWN"' \
             "$work/unknown/adoption-result.json" >/dev/null
 
       - name: Independently verify the adoption loop and envelope binding
@@ -135,13 +118,13 @@ jobs:
             -contract examples/self-improvement-observation/observation.gooo \
             -observation "$work/observation/compiler-observation.json" \
             -proposal "$work/proposal/adoption-proposal.json" \
-            -authorization "$work/authorization.json" \
+            -system-decision "$work/system-decision.json" \
             -unknown "$work/unknown/adoption-result.json" \
-            -unknown-authorization "$work/denied-authorization.json" \
+            -unknown-system-decision "$work/denied-system-decision.json" \
             -adoption "$work/adoption/adoption-result.json" \
             -envelope-root "$work/envelopes" \
             -output "$work/adoption-loop.json"
-          jq -e '.schema == "gooo/semantic-self-adoption-report/v1" and .scenario_denominator == 4 and .counts == {CLOSED:2,UNKNOWN:1,REFUTED:1} and .envelope_scenario_denominator == 6 and .envelope_artifacts_per_adoption_scenario == 36 and .envelope_artifacts_per_operation == 6 and .replay_equal and .repository_writes == 0 and .local_test_executions == 0 and ([.scenarios[].id] | sort) == ["NORMAL","REFUTED","REPLAY","UNKNOWN"]' \
+          jq -e '.schema == "gooo/semantic-self-adoption-report/v2" and .scenario_denominator == 4 and .counts == {CLOSED:2,UNKNOWN:1,REFUTED:1} and .envelope_scenario_denominator == 6 and .envelope_artifacts_per_adoption_scenario == 36 and .envelope_artifacts_per_operation == 6 and .replay_equal and .repository_writes == 0 and .local_test_executions == 0 and ([.scenarios[].id] | sort) == ["NORMAL","REFUTED","REPLAY","UNKNOWN"]' \
             "$work/adoption-loop.json" >/dev/null
           test "$(find "$work/envelopes" -type f | wc -l | tr -d ' ')" -eq 144
           test "$(git status --porcelain)" = ""

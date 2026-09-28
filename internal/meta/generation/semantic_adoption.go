@@ -10,21 +10,23 @@ import (
 )
 
 const (
-	SemanticAdoptionProposalSchema      = "gooo/semantic-self-adoption-proposal/v1"
-	SemanticAdoptionAuthorizationSchema = "gooo/semantic-self-adoption-authorization/v1"
-	SemanticAdoptionEvidenceSchema      = "gooo/semantic-self-adoption-evidence/v1"
-	SemanticAdoptionReportSchema        = "gooo/semantic-self-adoption-report/v1"
-	SemanticAdoptionTarget              = "gooo.generate.semantic-lowering"
-	SemanticAdoptionMode                = "bounded-in-memory-reuse"
-	SemanticAdoptionAuthorizationMode   = "explicit-human-input"
-	SemanticAdoptionUnknownReason       = "MISSING_EXPLICIT_AUTHORIZATION"
-	SemanticAdoptionUnknownNext         = "PROVIDE_EXPLICIT_AUTHORIZATION"
-	SemanticAdoptionUnknownClass        = "INCOMPLETE_EVIDENCE"
-	SemanticAdoptionUnknownStage        = "ADOPTION"
-	SemanticAdoptionUnknownStep         = "AUTHORIZE_CANDIDATE"
-	SemanticAdoptionRefutedReason       = "ADOPTION_CONTRADICTION"
-	SemanticAdoptionClosedReason        = "EXACT_AUTHORIZED_REUSE"
-	SemanticAdoptionRefuted             = "REFUTED"
+	SemanticAdoptionProposalSchema       = "gooo/semantic-self-adoption-proposal/v1"
+	SemanticAdoptionAuthorizationSchema  = "gooo/semantic-self-adoption-authorization/v1"
+	SemanticAdoptionSystemDecisionSchema = "gooo/semantic-self-adoption-system-decision/v1"
+	SemanticAdoptionEvidenceSchema       = "gooo/semantic-self-adoption-evidence/v1"
+	SemanticAdoptionReportSchema         = "gooo/semantic-self-adoption-report/v2"
+	SemanticAdoptionTarget               = "gooo.generate.semantic-lowering"
+	SemanticAdoptionMode                 = "bounded-in-memory-reuse"
+	SemanticAdoptionAuthorizationMode    = "explicit-human-input"
+	SemanticAdoptionSystemDecisionMode   = "system-derived-exact-evidence"
+	SemanticAdoptionUnknownReason        = "SYSTEM_DECISION_EVIDENCE_INCOMPLETE"
+	SemanticAdoptionUnknownNext          = "COMPLETE_SYSTEM_DECISION_EVIDENCE"
+	SemanticAdoptionUnknownClass         = "INCOMPLETE_EVIDENCE"
+	SemanticAdoptionUnknownStage         = "ADOPTION"
+	SemanticAdoptionUnknownStep          = "VERIFY_SYSTEM_DECISION"
+	SemanticAdoptionRefutedReason        = "ADOPTION_CONTRADICTION"
+	SemanticAdoptionClosedReason         = "EXACT_SYSTEM_DERIVED_REUSE"
+	SemanticAdoptionRefuted              = "REFUTED"
 )
 
 type SemanticAdoptionProvenance struct {
@@ -56,8 +58,8 @@ type SemanticAdoptionProposal struct {
 	RepositoryWrites   int                          `json:"repository_writes"`
 }
 
-// SemanticAdoptionAuthorization is the explicit human-controlled input that
-// permits a proposal to exercise the bounded compiler reuse path.
+// SemanticAdoptionAuthorization carries a decision bound to one proposal.
+// Semantic adoption accepts only the system-derived decision schema below.
 type SemanticAdoptionAuthorization struct {
 	Schema               string                      `json:"schema"`
 	AuthorizationID      string                      `json:"authorization_id"`
@@ -138,7 +140,7 @@ func AdoptionUnknownState() *EnvelopeUnknownState {
 	return &EnvelopeUnknownState{
 		Stage: SemanticAdoptionUnknownStage, Step: SemanticAdoptionUnknownStep,
 		Reason: SemanticAdoptionUnknownReason, UnknownClass: SemanticAdoptionUnknownClass,
-		NextOperation: SemanticAdoptionUnknownNext, BlockedBy: []string{"explicit_authorization"},
+		NextOperation: SemanticAdoptionUnknownNext, BlockedBy: []string{"system_decision_evidence"},
 	}
 }
 
@@ -176,9 +178,37 @@ func ValidateSemanticAdoptionProposal(proposal SemanticAdoptionProposal) error {
 	return nil
 }
 
+// DeriveSemanticAdoptionAuthorization creates the system decision for a
+// candidate whose measured observation establishes a repeated pure operation
+// over the same normalized input. The caller must still compare before/after
+// behavior and deterministic replay before reporting adoption as CLOSED.
+func DeriveSemanticAdoptionAuthorization(proposal SemanticAdoptionProposal, proposalDigest string) (SemanticAdoptionAuthorization, error) {
+	if err := ValidateSemanticAdoptionProposal(proposal); err != nil {
+		return SemanticAdoptionAuthorization{}, err
+	}
+	if !cache.Digest(proposalDigest).Known() {
+		return SemanticAdoptionAuthorization{}, errors.New("system decision proposal digest is unknown")
+	}
+	return SemanticAdoptionAuthorization{
+		Schema:               SemanticAdoptionSystemDecisionSchema,
+		AuthorizationID:      "system-derived:" + proposalDigest,
+		AuthorizationMode:    SemanticAdoptionSystemDecisionMode,
+		ProposalDigest:       proposalDigest,
+		CandidateStableID:    proposal.Candidate.StableID,
+		CandidateInputDigest: proposal.Candidate.InputDigest,
+		ContractDigest:       proposal.ContractDigest,
+		InputSourceDigest:    proposal.InputSourceDigest,
+		AnalysisProvenance:   proposal.AnalysisProvenance,
+		Authorized:           true,
+		RepositoryWrites:     0,
+		LocalTestExecutions:  0,
+	}, nil
+}
+
 func ValidateSemanticAdoptionAuthorization(authorization SemanticAdoptionAuthorization) error {
-	if authorization.Schema != SemanticAdoptionAuthorizationSchema || authorization.AuthorizationID == "" ||
-		authorization.AuthorizationMode != SemanticAdoptionAuthorizationMode ||
+	validSchemaMode := (authorization.Schema == SemanticAdoptionAuthorizationSchema && authorization.AuthorizationMode == SemanticAdoptionAuthorizationMode) ||
+		(authorization.Schema == SemanticAdoptionSystemDecisionSchema && authorization.AuthorizationMode == SemanticAdoptionSystemDecisionMode)
+	if !validSchemaMode || authorization.AuthorizationID == "" ||
 		!cache.Digest(authorization.ProposalDigest).Known() || authorization.CandidateStableID == "" ||
 		!cache.Digest(authorization.CandidateInputDigest).Known() ||
 		!cache.Digest(authorization.ContractDigest).Known() || !cache.Digest(authorization.InputSourceDigest).Known() ||
@@ -230,6 +260,9 @@ func VerifySemanticAdoption(proposal SemanticAdoptionProposal, proposalDigest st
 	}
 	if err := ValidateSemanticAdoptionAuthorization(authorization); err != nil {
 		return "", "", nil, err
+	}
+	if authorization.Schema != SemanticAdoptionSystemDecisionSchema || authorization.AuthorizationMode != SemanticAdoptionSystemDecisionMode {
+		return SemanticAdoptionRefuted, SemanticAdoptionRefutedReason, nil, nil
 	}
 	if err := ValidateSemanticAdoptionEvidence(evidence); err != nil {
 		return "", "", nil, err

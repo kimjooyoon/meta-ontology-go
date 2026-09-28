@@ -43,15 +43,16 @@ func runAdoptionProposal(args []string, reader SourceReader, stdout, stderr io.W
 		return exitFailure
 	}
 	proposal := generation.SemanticAdoptionProposal{
-		Schema:            generation.SemanticAdoptionProposalSchema,
-		ObservationDigest: cache.HashBytes(data).String(),
-		ContractDigest:    observation.ContractDigest,
-		InputSourceDigest: observation.InputSourceDigest,
-		Candidate:         observation.Candidates[0],
-		Target:            generation.SemanticAdoptionTarget,
-		Mode:              generation.SemanticAdoptionMode,
-		ExecutionAllowed:  false,
-		RepositoryWrites:  0,
+		Schema:             generation.SemanticAdoptionProposalSchema,
+		ObservationDigest:  cache.HashBytes(data).String(),
+		ContractDigest:     observation.ContractDigest,
+		InputSourceDigest:  observation.InputSourceDigest,
+		AnalysisProvenance: observation.AnalysisProvenance,
+		Candidate:          observation.Candidates[0],
+		Target:             generation.SemanticAdoptionTarget,
+		Mode:               generation.SemanticAdoptionMode,
+		ExecutionAllowed:   false,
+		RepositoryWrites:   0,
 	}
 	if err := generation.ValidateSemanticAdoptionProposal(proposal); err != nil {
 		fmt.Fprintf(stderr, "gooo: adoption proposal: %v\n", err)
@@ -110,6 +111,25 @@ func writeAdoptionArtifact(outputDir, filename string, data []byte) error {
 	}
 	if err := os.WriteFile(filepath.Join(outputDir, filename), data, 0o644); err != nil {
 		return fmt.Errorf("write %s: %w", filename, err)
+	}
+	return nil
+}
+
+func writeAdoptionArtifacts(outputDir string, artifacts []adoptionArtifact) error {
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		return fmt.Errorf("create caller-owned output directory: %w", err)
+	}
+	entries, err := os.ReadDir(outputDir)
+	if err != nil {
+		return fmt.Errorf("inspect caller-owned output directory: %w", err)
+	}
+	if len(entries) != 0 {
+		return fmt.Errorf("caller-owned output directory must be empty")
+	}
+	for _, artifact := range artifacts {
+		if err := os.WriteFile(filepath.Join(outputDir, artifact.name), artifact.data, 0o644); err != nil {
+			return fmt.Errorf("write %s: %w", artifact.name, err)
+		}
 	}
 	return nil
 }
