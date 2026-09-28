@@ -59,6 +59,12 @@ job wall time, excludes queue wait, and remains descriptive. A workflow ID does
 not prove that the workflow definition stayed the same, so workflow edits can
 create discontinuities and comparisons do not attribute cause.
 
+The observer also joins an exact-head OpenTofu released-CLI receipt. Its
+producer now runs on pull requests targeting both `dev` and `main`, and pushes
+to both branches. This covers the two observed gaps where a main-promotion PR
+or main push had no OpenTofu receipt for its exact SHA; equal trees at different
+SHAs are not treated as interchangeable evidence.
+
 The language utility portfolio compares current evidence with the digest-bound
 floors in `examples/language-utility/contract.json`. Its progress receipt does
 not fetch a pinned Actions artifact, so an artifact expiring after its retention
