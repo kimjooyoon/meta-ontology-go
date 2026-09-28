@@ -1,0 +1,14 @@
+{
+  "schema_version": "capability.discovery.v1",
+  "status": "DEFERRED",
+  "source_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "declaration_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "query_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "catalog_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "evidence_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+  "toolchain_identity": "gooo-jev/capability-discovery/v1",
+  "first_missing_stage": "generation_digest",
+  "next_operation": "bind_generation_evidence",
+  "non_executing": true,
+  "non_authorizing": true
+}
