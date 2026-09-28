@@ -266,7 +266,8 @@ jobs:
                 historical_run="$(jq -c --argjson id "$historical_run_id" '.[] | select(.id == $id)' "$baseline/candidates.json")"
                 jobs_path="$baseline/jobs-$historical_run_id.json"
                 if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$historical_run_id/jobs?per_page=100" > "$jobs_path"; then
-                  jq -c --argjson run "$historical_run" --slurpfile jobs "$jobs_path" \
+                  # -n prevents jq from consuming the remaining run IDs from the loop's stdin.
+                  jq -n -c --argjson run "$historical_run" --slurpfile jobs "$jobs_path" \
                     --argjson required '["gofmt","go vet","go test","go test -race","Semantic conformance","CI policy"]' \
                     '$run + {job_lookup_status:"OK",jobs:[($jobs[0].jobs // [])[] | select(.name as $name | (($required | index($name)) != null)) | {id,name,status,conclusion,head_sha,run_id,started_at,completed_at}]}' \
                     >> "$baseline/samples.ndjson"
