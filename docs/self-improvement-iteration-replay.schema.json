@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kimjooyoon/meta-ontology-go/docs/self-improvement-iteration-replay.schema.json",
+  "title": "Self-improvement iteration replay",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "prior_iteration_digest",
+    "observation_digest",
+    "outcome",
+    "non_executing",
+    "non_authorizing"
+  ],
+  "properties": {
+    "version": {
+      "const": "self.improvement.iteration.replay.v1"
+    },
+    "prior_iteration_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "observation_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "current_iteration_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "outcome": {
+      "enum": ["CONFIRMED", "REFUTED", "UNRESOLVED"]
+    },
+    "first_missing_stage": {
+      "type": "string",
+      "minLength": 1
+    },
+    "next_operation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "non_executing": {
+      "const": true
+    },
+    "non_authorizing": {
+      "const": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "enum": ["CONFIRMED", "REFUTED"]
+          }
+        }
+      },
+      "then": {
+        "required": ["current_iteration_digest"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "UNRESOLVED"
+          }
+        }
+      },
+      "then": {
+        "required": ["first_missing_stage", "next_operation"]
+      }
+    }
+  ]
+}
+
