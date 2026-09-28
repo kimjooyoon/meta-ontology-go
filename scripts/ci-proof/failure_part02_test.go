@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestFailureManifestRejectsTamperedClassificationAndHandoff(t *testing.T) {
+func TestFailureManifestRejectsTamperedClassificationAndSystemOperation(t *testing.T) {
 	binding := validFailureBinding()
 	manifest, err := buildFailureManifest(validFailureInput(), binding)
 	if err != nil {
@@ -19,9 +19,9 @@ func TestFailureManifestRejectsTamperedClassificationAndHandoff(t *testing.T) {
 		t.Fatal("tampered failure classification was accepted")
 	}
 	manifest.Class = "test"
-	manifest.HandoffOwner = "gate"
+	manifest.NextOperation = "BYPASS_GATE"
 	if err := validateFailureManifest(manifest, binding); err == nil {
-		t.Fatal("tampered failure handoff owner was accepted")
+		t.Fatal("unknown failure next operation was accepted")
 	}
 }
 func TestFailureCatalogMatchesCheckedInDocument(t *testing.T) {

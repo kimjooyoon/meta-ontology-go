@@ -51,5 +51,5 @@ func setFailureBindingEnvironment(t *testing.T, binding failureBinding) {
 	t.Setenv("CI_RUN_ID", "9")
 	t.Setenv("CI_RUN_ATTEMPT", "2")
 	t.Setenv("CI_ACTOR", binding.Actor)
-	t.Setenv("CI_OWNER_BRANCH", binding.OwnerBranch)
+	t.Setenv("CI_HEAD_BRANCH", binding.HeadBranch)
 }

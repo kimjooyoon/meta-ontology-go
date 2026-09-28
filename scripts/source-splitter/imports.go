@@ -6,9 +6,11 @@ import (
 	pathpkg "path"
 	"strconv"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
-func importsFor(file *ast.File, declarations []ast.Decl) ([]ast.Decl, []*ast.ImportSpec) {
+func importsFor(file *ast.File, declarations []ast.Decl) ([]ast.Decl, []*ast.ImportSpec, error) {
 	used := selectorNames(declarations)
 	importDecls := make([]ast.Decl, 0)
 	imports := make([]*ast.ImportSpec, 0)
@@ -27,10 +29,30 @@ func importsFor(file *ast.File, declarations []ast.Decl) ([]ast.Decl, []*ast.Imp
 			}
 		}
 		if len(copyOf.Specs) != 0 {
-			importDecls = append(importDecls, &copyOf)
+			normalized, eligible, err := generation.NormalizeImportHeaderGroup(file, general, importSpecs(copyOf.Specs), generation.ImportHeaderNormalizationNamedAlias)
+			if err != nil {
+				return nil, nil, err
+			}
+			if eligible {
+				for _, declaration := range normalized {
+					importDecls = append(importDecls, declaration)
+				}
+			} else {
+				importDecls = append(importDecls, &copyOf)
+			}
 		}
 	}
-	return importDecls, imports
+	return importDecls, imports, nil
+}
+
+func importSpecs(specs []ast.Spec) []*ast.ImportSpec {
+	result := make([]*ast.ImportSpec, 0, len(specs))
+	for _, raw := range specs {
+		if spec, ok := raw.(*ast.ImportSpec); ok {
+			result = append(result, spec)
+		}
+	}
+	return result
 }
 
 func selectorNames(declarations []ast.Decl) map[string]bool {

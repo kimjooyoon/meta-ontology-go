@@ -27,12 +27,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out exact subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
           fetch-depth: 0
       - name: Set up Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           check-latest: true
@@ -89,7 +89,7 @@ jobs:
             jq -r '"- post direct-entry blockers: `\(.indicators[]|select(.id=="storage.direct-entry")|.value)`\n- post mixed-kind blockers: `\(.indicators[]|select(.id=="storage.mixed-kind")|.value)`"' "$work/post-partition-projection.json"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact remediation artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: go-package-partition-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/go-package-partition

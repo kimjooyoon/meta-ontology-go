@@ -14,7 +14,6 @@ func TestCIReceiptRejectsTamperedBindingEvidence(t *testing.T) {
 	}{
 		{name: "repository", mutate: func(receipt *provenanceReceipt) { receipt.Repository = "other/repo" }},
 		{name: "job head", mutate: func(receipt *provenanceReceipt) { receipt.Jobs[0].HeadSHA = strings.Repeat("b", 40) }},
-		{name: "branch protection", mutate: func(receipt *provenanceReceipt) { receipt.BranchProtection.MissingReason = "tampered" }},
 		{name: "domain evidence", mutate: func(receipt *provenanceReceipt) { receipt.DomainEvidence.ObserverStatus = "verified" }},
 		{name: "proof digest", mutate: func(receipt *provenanceReceipt) { receipt.Digests.Bundle = strings.Repeat("d", 64) }},
 	}

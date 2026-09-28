@@ -32,6 +32,10 @@ func writeArtifacts(directory string, source, program, verification []byte) erro
 	return nil
 }
 
+func writeConceptOperationReceipt(directory string, payload []byte) error {
+	return writeAtomic(filepath.Join(directory, "concept-operation-binding.json"), payload)
+}
+
 func writeAtomic(path string, payload []byte) error {
 	directory := filepath.Dir(path)
 	temporary, err := os.CreateTemp(directory, ".metric-meta-program-*")

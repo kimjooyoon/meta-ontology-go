@@ -1,0 +1,6 @@
+package valuewitness
+namespace valuewitness
+
+entity Integer id "gooo://value-witness/entity/integer"
+
+activity Remainder(Integer) -> Integer computes "int.mod:3"

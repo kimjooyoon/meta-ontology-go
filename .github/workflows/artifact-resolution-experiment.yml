@@ -28,12 +28,12 @@ jobs:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
       - name: Set up exact Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: "1.27.0"
           cache: true
@@ -41,7 +41,7 @@ jobs:
         run: bash scripts/artifact-resolution-experiment/main.sh
       - name: Upload resolution receipts
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: artifact-resolution-experiment-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/artifact-resolution-experiment

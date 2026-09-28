@@ -8,29 +8,33 @@ const (
 )
 
 type Config struct {
-	RunPath              string
-	JobsPath             string
-	ManifestPath         string
-	ContractPath         string
-	ProgramPath          string
-	TimeCausalityRoot    string
-	SummaryPath          string
-	EvidencePath         string
-	RepositoryStatusPath string
-	OpenTofuPath         string
-	OpenTofuMetaPath     string
-	PriorPath            string
-	DependencyFiles      []string
-	Environment          string
-	OutputPath           string
-	MarkdownPath         string
-	Check                bool
+	RunPath                 string
+	JobsPath                string
+	ManifestPath            string
+	ContractPath            string
+	ProgramPath             string
+	TimeCausalityRoot       string
+	SummaryPath             string
+	EvidencePath            string
+	RepositoryStatusPath    string
+	OpenTofuPath            string
+	OpenTofuMetaPath        string
+	PriorPath               string
+	DependencyFiles         []string
+	Environment             string
+	OutputPath              string
+	MarkdownPath            string
+	ReadOnly                bool
+	LineageObservationPath  string
+	ReadOnlyObservationPath string
+	Check                   bool
 }
 
 type SourceRun struct {
 	ID             int64  `json:"id"`
 	Name           string `json:"name"`
 	WorkflowName   string `json:"workflow_name"`
+	WorkflowPath   string `json:"path"`
 	Event          string `json:"event"`
 	Ref            string `json:"ref"`
 	HeadBranch     string `json:"head_branch"`
@@ -131,6 +135,20 @@ type JobObservation struct {
 	Skipped               bool              `json:"skipped,omitempty"`
 	Steps                 []StepObservation `json:"steps"`
 	Unknown               *Unknown          `json:"unknown,omitempty"`
+}
+
+// GateBottleneck records the observed runtime spread among the six canonical
+// CI checks. It is descriptive evidence and never changes the CI decision.
+type GateBottleneck struct {
+	State                    string `json:"state"`
+	Reason                   string `json:"reason,omitempty"`
+	RequiredChecks           int    `json:"required_checks"`
+	ObservedChecks           int    `json:"observed_checks"`
+	SlowestCheck             string `json:"slowest_check,omitempty"`
+	SlowestWallMS            int64  `json:"slowest_wall_ms,omitempty"`
+	NextSlowestCheck         string `json:"next_slowest_check,omitempty"`
+	NextSlowestWallMS        int64  `json:"next_slowest_wall_ms,omitempty"`
+	SlowestCheckExcessWallMS int64  `json:"slowest_check_excess_wall_ms,omitempty"`
 }
 
 type StepObservation struct {
@@ -402,6 +420,7 @@ type Report struct {
 	WorkflowSourcePath        string                 `json:"workflow_source_path"`
 	WorkflowSourceDigest      string                 `json:"workflow_source_digest"`
 	Window                    WorkflowWindow         `json:"workflow_window"`
+	GateBottleneck            GateBottleneck         `json:"gate_bottleneck"`
 	RuntimeResolution         string                 `json:"runtime_resolution"`
 	RuntimeCases              []RuntimeCase          `json:"runtime_cases"`
 	Jobs                      []JobObservation       `json:"jobs"`

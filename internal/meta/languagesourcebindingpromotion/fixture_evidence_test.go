@@ -7,7 +7,7 @@ import (
 
 func producerFixture(head, receiptDigest, artifactDigest string) producerEnvelope {
 	cases := fmt.Sprintf(`[{"id":"execute-billing","status":"SATISFIED","evidence_digest":%q}]`, artifactDigest)
-	value := producerEnvelope{Schema: "gooo/language-source-execution-artifact/v1", HeadSHA: head,
+	value := producerEnvelope{Schema: "gooo/language-source-execution-artifact/v1", Scope: sourceReceiptScope, HeadSHA: head,
 		Decision: DecisionPass, Resolution: ResolutionExact, Reason: "SOURCE_EXECUTION_CONTRACT_SATISFIED",
 		ContractDigest: receiptDigest, Cases: json.RawMessage(cases),
 		Summary: json.RawMessage(`{"cases_satisfied":4,"cases_total":4}`), Indicators: json.RawMessage(`[]`),

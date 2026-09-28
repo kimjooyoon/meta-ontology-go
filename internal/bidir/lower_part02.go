@@ -34,11 +34,74 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 		if err := checkLowerContext(ctx); err != nil {
 			return Document{}, err
 		}
+		if _, isPolicy := declaration.(*syntax.PolicyDecl); isPolicy {
+			continue
+		}
 		adapted, err := adaptSyntaxDeclaration(ctx, declaration)
 		if err != nil {
 			return Document{}, err
 		}
 		document.Declarations = append(document.Declarations, adapted)
+	}
+	idsByName := make(map[string]ID, len(document.Declarations))
+	for _, declaration := range document.Declarations {
+		id := declaration.ID
+		if id == "" {
+			canonical, err := declarationIdentity(document.Namespace, declaration)
+			if err != nil {
+				return Document{}, err
+			}
+			id = canonical
+		}
+		idsByName[declaration.Name] = id
+	}
+	for _, binding := range file.Bindings {
+		if binding.Feedback {
+			continue
+		}
+		source, sourceOK := idsByName[binding.Producer.Activity.Name]
+		target, targetOK := idsByName[binding.Consumer.Activity.Name]
+		if !sourceOK || !targetOK {
+			return Document{}, fmt.Errorf("binding references unknown activity")
+		}
+		document.BindingEdges = append(document.BindingEdges, BindingEdge{
+			SourceActivity: source,
+			SourcePort:     binding.Producer.Port.Name,
+			TargetActivity: target,
+			TargetPort:     binding.Consumer.Port.Name,
+			Span:           toSourceSpan(binding.Span),
+		})
+	}
+	for _, declaration := range syntaxDeclarations(file) {
+		if err := checkLowerContext(ctx); err != nil {
+			return Document{}, err
+		}
+		policy, ok := declaration.(*syntax.PolicyDecl)
+		if !ok {
+			continue
+		}
+		lowered, err := lowerSyntaxPolicy(policy)
+		if err != nil {
+			return Document{}, err
+		}
+		document.Policies = append(document.Policies, lowered)
+	}
+	for _, binding := range file.Bindings {
+		if err := checkLowerContext(ctx); err != nil {
+			return Document{}, err
+		}
+		document.RuntimeBindings = append(document.RuntimeBindings, RuntimeBinding{
+			Feedback: binding.Feedback,
+			Producer: BindingEndpoint{
+				Activity: Reference{Name: binding.Producer.Activity.Name, Span: toSourceSpan(binding.Producer.Activity.Span)},
+				Port:     Reference{Name: binding.Producer.Port.Name, Span: toSourceSpan(binding.Producer.Port.Span)},
+			},
+			Consumer: BindingEndpoint{
+				Activity: Reference{Name: binding.Consumer.Activity.Name, Span: toSourceSpan(binding.Consumer.Activity.Span)},
+				Port:     Reference{Name: binding.Consumer.Port.Name, Span: toSourceSpan(binding.Consumer.Port.Span)},
+			},
+			Span: toSourceSpan(binding.Span),
+		})
 	}
 	if err := validateEntityFieldsDocument(document, document.Namespace, semantic.DefaultTypeRegistry(), support); err != nil {
 		return Document{}, err

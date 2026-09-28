@@ -13,6 +13,8 @@ const (
 	StateRejected               = "REJECTED"
 )
 
+const SourceExecutionScope = "DECLARATION_RESOLUTION_ONLY"
+
 type Event struct {
 	Sequence int    `json:"sequence"`
 	Kind     string `json:"kind"`
@@ -26,6 +28,7 @@ type Effects struct {
 
 type Receipt struct {
 	Schema          string            `json:"schema"`
+	Scope           string            `json:"scope"`
 	Decision        Decision          `json:"decision"`
 	Reason          string            `json:"reason"`
 	Resolution      string            `json:"resolution"`

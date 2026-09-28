@@ -1,0 +1,136 @@
+name: Self-improvement semantic observation
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/workflows/self-improvement-observation.yml'
+      - 'cmd/gooo/**'
+      - 'examples/self-improvement-observation/**'
+      - 'internal/meta/generation/**'
+      - 'scripts/self-improvement-observation/**'
+      - 'go.mod'
+      - 'go.sum'
+  push:
+    branches: [dev, main]
+    paths:
+      - '.github/workflows/self-improvement-observation.yml'
+      - 'cmd/gooo/**'
+      - 'examples/self-improvement-observation/**'
+      - 'internal/meta/generation/**'
+      - 'scripts/self-improvement-observation/**'
+      - 'go.mod'
+      - 'go.sum'
+
+permissions:
+  contents: read
+
+jobs:
+  semantic-observation:
+    name: Semantic observation closed loop
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+
+    steps:
+      - name: Check out the exact subject
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install the exact toolchain
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Require exact toolchain and clean source worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          test -n "$BASE_SHA"
+          test "$(git status --porcelain)" = ""
+
+      - name: Record the real compiler observation and paired CI measurements
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-observation"
+          contract=examples/self-improvement-observation/observation.gooo
+          input=examples/self-improvement-observation/input.fixture
+          mkdir -p "$work/observation"
+          go run ./cmd/gooo check --semantic "$contract"
+
+          start_ns="$(date +%s%N)"
+          /usr/bin/time -f '%M' -o "$work/observe-rss" env GOCACHE="$work/go-cache-observe" go run ./cmd/gooo observe "$contract" --input "$input" --out "$work/observation" > "$work/observe.stdout"
+          finish_ns="$(date +%s%N)"
+          wall_ms=$(( (finish_ns - start_ns + 999999) / 1000000 ))
+          peak_rss_kib="$(tr -d '[:space:]' < "$work/observe-rss")"
+
+          build_start="$(date +%s%N)"
+          env GOCACHE="$work/go-cache-build" go test ./cmd/gooo ./internal/meta/generation -run '^$' -count=1 > "$work/build.stdout" 2> "$work/build.stderr"
+          build_finish="$(date +%s%N)"
+          build_ms=$(( (build_finish - build_start + 999999) / 1000000 ))
+
+          test_start="$(date +%s%N)"
+          env GOCACHE="$work/go-cache-test" go test ./cmd/gooo ./internal/meta/generation -count=1 -json > "$work/test.json"
+          test_finish="$(date +%s%N)"
+          test_ms=$(( (test_finish - test_start + 999999) / 1000000 ))
+          executed_tests="$(jq -s '[.[] | select(.Action == "pass" and .Test != null)] | length' "$work/test.json")"
+          gooo_lines="$(( $(wc -l < "$contract") + $(wc -l < "$input") ))"
+
+          observation="$work/observation/compiler-observation.json"
+          jq --argjson wall_ms "$wall_ms" \
+            --argjson peak_rss_kib "$peak_rss_kib" \
+            --argjson build_ms "$build_ms" \
+            --argjson test_ms "$test_ms" \
+            --argjson executed_tests "$executed_tests" \
+            --argjson gooo_lines "$gooo_lines" \
+            '.metrics.wall_ms=$wall_ms |
+             .metrics.peak_rss_kib=$peak_rss_kib |
+             .metrics.build_ms=$build_ms |
+             .metrics.test_ms=$test_ms |
+             .metrics.executed_tests=$executed_tests |
+             .metrics.reused_tests=0 |
+             .metrics.input_go_physical_lines=0 |
+             .metrics.input_gooo_physical_lines=$gooo_lines' \
+            "$observation" > "$work/observation/compiler-observation.with-metrics.json"
+          mv "$work/observation/compiler-observation.with-metrics.json" "$observation"
+
+          jq -e '.schema == "gooo/semantic-self-observation/v1" and .observed_operations == 2 and .distinct_input_digests == 1 and .duplicate_evaluations == 1 and .candidates_emitted == 1 and .candidates[0].observed_count == 2 and .candidates[0].expected_reducible_count == 1 and .candidates[0].safety_assessment == "UNKNOWN_NOT_INFERRED" and .candidates[0].benefit_assessment == "UNKNOWN_NOT_INFERRED" and .pair_evidence.evidence_available and (.pair_evidence.change_adopted | not) and .pair_evidence.behavior_equal and .pair_evidence.determinism_equal and .metrics.repository_writes == 0 and .metrics.local_test_executions == 0 and .metrics.wall_ms > 0 and .metrics.peak_rss_kib > 0 and .metrics.allocation_count >= 0 and .metrics.allocation_bytes >= 0 and .metrics.build_ms > 0 and .metrics.test_ms > 0 and .metrics.executed_tests >= 0 and .metrics.reused_tests == 0' "$observation" >/dev/null
+          test "$(git status --porcelain)" = ""
+
+      - name: Bind the observation into the envelope and independently verify fixed scenarios
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-observation"
+          contract=examples/self-improvement-observation/observation.gooo
+          go run ./scripts/self-improvement-observation \
+            -mode compiler \
+            -compiler-contract "$contract" \
+            -compiler-observation "$work/observation/compiler-observation.json" \
+            -envelope-root "$work/envelopes" \
+            -compiler-output "$work/loop-report.json"
+          jq -e '.schema == "gooo/compiler-self-observation-loop/v1" and .scenario_denominator == 4 and .counts == {CLOSED:2,UNKNOWN:1,REFUTED:1} and .observed_operations == 2 and .distinct_input_digests == 1 and .duplicate_evaluations == 1 and .candidates_emitted == 1 and .artifacts_per_scenario == 6 and .repository_writes == 0 and .local_test_executions == 0 and (.scenarios | length) == 4' "$work/loop-report.json" >/dev/null
+          jq -e '.scenarios[] | select(.id == "NORMAL") | .generated_decision == "CLOSED" and .verified_decision == "CLOSED" and .observation_reason == "EXACT_DUPLICATE_SEMANTIC_OPERATION" and .artifacts == 6' "$work/loop-report.json" >/dev/null
+          jq -e '.scenarios[] | select(.id == "UNKNOWN") | .generated_decision == "UNKNOWN" and .verified_decision == "UNKNOWN" and .observation_reason == "MISSING_EXACT_PAIR_EVIDENCE"' "$work/loop-report.json" >/dev/null
+          jq -e '.scenarios[] | select(.id == "REFUTED") | .generated_decision == "REFUTED" and .verified_decision == "REFUTED" and .observation_reason == "OBSERVATION_CONTRADICTION"' "$work/loop-report.json" >/dev/null
+          jq -e '.scenarios[] | select(.id == "REPLAY") | .generated_decision == "CLOSED" and .verified_decision == "CLOSED" and .observation_reason == "EXACT_DUPLICATE_SEMANTIC_OPERATION"' "$work/loop-report.json" >/dev/null
+          test "$(find "$work/envelopes" -mindepth 2 -maxdepth 2 -type f | wc -l | tr -d ' ')" -eq 24
+          test "$(git status --porcelain)" = ""
+
+      - name: Upload exact-head observation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: self-improvement-observation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/self-improvement-observation
+          if-no-files-found: error
+          retention-days: 30

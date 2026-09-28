@@ -1,49 +1,15 @@
 package main
 
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 )
 
-func TestCIBranchProtectionMissingReasonCanonicalizesForBothStatuses(t *testing.T) {
-	bundle := validProof()
-	bundle.BaseRef = "main"
-	verifiedProtection := validBranchProtection(bundle)
-	verifiedProtection.RequiredChecks = append(append([]string(nil), proofJobs...), "CI guardian")
-	verifiedProtection.RequiredCheckBindings = requiredCheckBindingsFor(verifiedProtection.RequiredChecks)
-	verifiedProtection.Digest = digestBranchProtection(verifiedProtection)
-	verified, err := json.Marshal(verifiedProtection)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(verified), `"missing_reason":""`) {
-		t.Fatalf("verified protection JSON omitted the empty missing_reason key: %s", verified)
-	}
-	unavailable := validBranchProtection(validProof())
-	unavailable.ReadStatus = "unavailable"
-	unavailable.Exists = false
-	unavailable.RequiredChecks = nil
-	unavailable.RequiredCheckBindings = nil
-	unavailable.MissingReason = "branch_protection_token_unavailable"
-	unavailable.Digest = digestBranchProtection(unavailable)
-	data, err := json.Marshal(unavailable)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var roundTrip branchProtection
-	if err := json.Unmarshal(data, &roundTrip); err != nil {
-		t.Fatal(err)
-	}
-	if roundTrip.MissingReason == "" || digestBranchProtection(roundTrip) != unavailable.Digest {
-		t.Fatalf("unavailable protection missing reason was not canonicalized: %+v", roundTrip)
-	}
-}
-func TestCIGateRejectionsUseMachineEvidenceWithoutHumanReviews(t *testing.T) {
+func TestCIGateRejectionsUseOnlyMachineEvidence(t *testing.T) {
 	bundle := validProof()
 	context := contextInput{
 		Event: bundle.Event, BaseRef: bundle.BaseRef, Route: proofRouteFeatureDev,
-		Actor: "builder", Builder: "builder", Gate: "CI policy", BranchProtection: bundle.BranchProtection,
+		Actor: "builder", Builder: "builder", Gate: "CI policy",
 		ScopeDecision: "passed", FixtureStatus: "verified", SourceStatus: "verified", SemanticStatus: "verified", ProvenanceStatus: "verified",
 		ArtifactsStatus: "verified", WriteEffect: "none", NoWrite: true,
 		FixturePaths: []string{"examples/billing/main.gooo"}, Artifacts: bundle.Artifacts,

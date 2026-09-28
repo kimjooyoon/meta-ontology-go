@@ -40,14 +40,16 @@ docs-owned receipt and typed-path design; its two proposed metrics remain
 
 ## 2. CI-only branch and promotion contract
 
-The checked-in governance mode is `ci_only`. Review roles, approval actors, and
-last-push approval fields are not CI proof inputs. Review roles remain useful for
-scope and evidence review, but protected-branch promotion is decided only by the
-deterministic proof and branch-protection predicates below.
+The checked-in governance mode is `ci_only`. Reviewer identity, approval actors,
+and last-push approval fields are not CI proof inputs. The six machine checks and
+the exact source/ref evidence below decide promotion.
 
-Work branches use `agent/* -> dev`. No intermediary branch is a route, ownership
-boundary, or promotion source. The only promotion
-route is a same-repository pull request with `base=main` and `head=dev`.
+Work branches use `agent/* -> dev`. Promotion is a same-repository pull request
+with `base=main` and either `head=dev` or a narrowly bound snapshot branch named
+`agent/main-promotion-snapshot-<dev-sha>`. A snapshot must have the exact live
+`dev` tree and one parent equal to the live `main` SHA. It carries no independent
+source authority; it makes the exact `dev` tree a fast-forward child of `main`
+when older history diverged.
 
 The six canonical proof jobs are:
 
@@ -55,30 +57,35 @@ The six canonical proof jobs are:
 gofmt | go vet | go test | go test -race | Semantic conformance | CI policy
 ```
 
-Protected `dev` requires those six contexts plus `CI guardian shadow`.
-Protected `main` requires those six contexts plus `CI guardian`. The Guardian
-context is app-bound and route-specific, so both branches require exactly seven
-contexts.
+The live `main` protection rule requires exactly these six contexts; `dev` has
+no required status contexts. The retired `CI guardian` context, its duplicate
+workflow, and its app-bound evidence path are absent from the active CI route.
 
 An exact promotion proof requires all of the following:
 
 1. The PR is open, non-draft, unmerged, mergeable, clean, and binds the same
-   repository's `dev` head to the `main` base.
-2. The live `dev` and `main` refs are the recorded head and base both before and
-   after inspection. The topology is `ahead`, with `ahead > 0`, `behind = 0`, and
-   `merge_base_sha` equal to the live main SHA.
-3. The six canonical jobs, their current immutable artifact, Guardian evidence,
-   and exact seven-context protection snapshots all pass.
+   repository's `main` base to either `dev` or the exact snapshot branch name
+   derived from the live `dev` SHA.
+2. The live `dev` and `main` refs are reread during inspection. A direct `dev`
+   candidate must itself be a fast-forward. A snapshot candidate must have the
+   exact live `dev` tree and a sole parent equal to live `main`. In both forms,
+   topology is `ahead`, with `ahead > 0`, `behind = 0`, and `merge_base_sha`
+   equal to live `main`.
+3. The six canonical jobs and their current immutable artifact pass. The same
+   CI proof does not request a second observer to approve its branch-policy view.
 4. The proof contains a digest-bound `promotion_authorization` with
-   `operation=fast_forward`, `source=dev`, `target=main`, the exact base/head
-   SHAs, and `proof_digest` equal to the proof bundle digest.
+   `operation=fast_forward`, `source=dev`, `target=main`, exact base/head SHAs,
+   the source and candidate tree digests, and `proof_digest` equal to the proof
+   bundle digest.
 
 The authorization is pure, non-mutating evidence. It is `PASS` only when every
 predicate holds and is otherwise `FAIL_CLOSED` with a reason code. The proof
-producer does not write refs or branch protection. Immediately before a real
-promotion, the gate must reread the exact ref and protection tuple; only an
-ordinary compare-and-swap/fast-forward update of `main` may follow. Force-push
-and force-update operations are never permitted.
+producer does not write refs or branch protection. GitHub's native required
+status checks enforce configured contexts; CI does not duplicate them by
+reading a privileged branch-protection snapshot. A future automatic promotion executor
+must use an atomic compare-and-swap/fast-forward update of `main` against the
+observed `dev` and `main` SHAs. Force-push and force-update operations are never
+permitted.
 
 The bootstrap fixtures and [bootstrap evidence bridge](bootstrap-evidence.md)
 record non-promoting evidence shapes only. Self-hosting and a self-hosted
@@ -174,20 +181,11 @@ text stable. Generated output is not a place to fix a source-model problem.
 
 ## 6. Agent roles and separation of duties
 
-- **Builder:** changes the assigned authority view, keeps the diff within scope,
-  and supplies tests or runnable examples.
-- **Guardian:** verifies semantic scope, stable IDs, provenance, BX laws, marker
-  integrity, and evidence freshness; they do not implement the feature.
-- **Approver:** records review acceptance after the Guardian's review and
-  required CI checks. This review role does not authorize a protected
-  branch promotion; the CI-only contract in section 2 does.
-- **Docs/example Builder:** owns only `docs/**`, `examples/**`, and the root
-  governance Markdown files for documentation work. Core package source belongs
-  to its implementing Builder.
-
-No single agent should implement a change, weaken its verifier, and approve it.
-When a worktree contains another Builder's uncommitted source, stage only the
-explicit paths owned by the current task.
+The system evaluates the exact source revision, scope, stable IDs, provenance,
+BX laws, marker integrity, and available evidence. Review identities and a
+separate reviewer/approver lane do not affect the CI result. Documentation and
+example ownership remains scoped to `docs/**`, `examples/**`, and the root
+governance Markdown files.
 
 ## 7. Branch, PR, and CI workflow
 
@@ -218,9 +216,10 @@ check is a runnable billing-fixture check. Static analysis, LSP behavior, cache
 conformance, generated-output snapshots, and automatic durable provenance
 publishing are not current guarantees.
 
-The six jobs remain the proof core; protected-branch contexts add exactly one
-route-specific app-bound Guardian context: `CI guardian shadow` on `dev` and
-`CI guardian` on `main`. Review and approval data do not replace these contexts.
+The six jobs are both the proof core and the complete required-context set for
+`dev` and `main`. A read-only CI observer records their runtime spread in the
+`gate_bottleneck` field. Missing, stale, duplicate, or sub-second intervals are
+reported as `UNKNOWN`; the metric is descriptive and does not gate promotion.
 
 The [bootstrap evidence bridge](bootstrap-evidence.md) defines non-promoting
 fixture states such as `deferred`, `not-run`, and
