@@ -1,0 +1,28 @@
+module jev_provenance_change_review
+
+input provenance_change_proposal
+input reviewer_digest
+input approval_evidence_digest
+input application_boundary_digest
+
+status UNKNOWN proposal identity is not bound
+status PENDING review or approval evidence is incomplete
+status ACCEPTED_FOR_APPLICATION proposal may enter a separate explicit application step
+status REJECTED proposal cannot cross the declared boundary
+
+field status
+field proposal_digest
+field reviewer_digest
+field approval_evidence_digest
+field application_boundary_digest
+field first_boundary
+field reason
+field application_allowed
+field review_digest
+
+constraint proposal_precedes_review
+constraint approval_evidence_is_explicit
+constraint application_is_separate
+constraint accepted_is_not_applied
+constraint no_automatic_authorization
+constraint no_provider_invocation
