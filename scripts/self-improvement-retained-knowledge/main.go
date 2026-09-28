@@ -413,7 +413,7 @@ func verifySourceEvidence(contract, input, observationData []byte, observation g
 	if authorization.ProposalDigest != proposalDigest || authorization.CandidateStableID != proposal.Candidate.StableID || authorization.CandidateInputDigest != proposal.Candidate.InputDigest || authorization.ContractDigest != proposal.ContractDigest || authorization.InputSourceDigest != proposal.InputSourceDigest || !authorization.Authorized {
 		return errors.New("authorization is not the exact authorized candidate input")
 	}
-	if adoption.Schema != generation.SemanticAdoptionReportSchema || adoption.Lifecycle != "AUTHORIZED_ADOPTION" || adoption.ObservationDigest != observationDigest || adoption.ProposalDigest != proposalDigest || adoption.AuthorizationDigest != authorizationDigest || !reflect.DeepEqual(adoption.Proposal, proposal) || !reflect.DeepEqual(adoption.Authorization, authorization) || adoption.IndependentDecision != "CLOSED" || adoption.IndependentReason != adoption.Evidence.Reason {
+	if adoption.Schema != generation.SemanticAdoptionReportSchema || adoption.Lifecycle != "SYSTEM_DERIVED_ADOPTION" || adoption.ObservationDigest != observationDigest || adoption.ProposalDigest != proposalDigest || adoption.AuthorizationDigest != authorizationDigest || !reflect.DeepEqual(adoption.Proposal, proposal) || !reflect.DeepEqual(adoption.Authorization, authorization) || adoption.IndependentDecision != "CLOSED" || adoption.IndependentReason != adoption.Evidence.Reason {
 		return errors.New("adoption report is not bound to exact evidence")
 	}
 	decision, reason, _, err := generation.VerifySemanticAdoption(proposal, proposalDigest, authorization, authorizationDigest, adoption.Evidence)

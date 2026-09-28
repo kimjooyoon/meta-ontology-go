@@ -102,7 +102,7 @@ jobs:
           test "$counter_decision" = CLOSED
           test "$(git status --porcelain)" = ""
 
-      - name: Declare, observe, propose, and authorize the real compiler seam
+      - name: Declare, observe, propose, and derive the system decision
         shell: bash
         run: |
           set -euo pipefail
@@ -115,22 +115,14 @@ jobs:
           jq -e '.decision == "CLOSED" and .candidates_emitted == 1 and (.candidates | length) == 1 and .pair_evidence.evidence_available and (.pair_evidence.change_adopted | not)' \
             "$work/observation/compiler-observation.json" >/dev/null
           go run ./cmd/gooo propose "$work/observation/compiler-observation.json" --out "$work/proposal"
-          jq -S -n \
-            --arg proposal_digest "$(sha256sum "$work/proposal/adoption-proposal.json" | awk '{print $1}')" \
-            --arg candidate_stable_id "$(jq -r '.candidate.stable_id' "$work/proposal/adoption-proposal.json")" \
-            --arg candidate_input_digest "$(jq -r '.candidate.input_digest' "$work/proposal/adoption-proposal.json")" \
-            --arg contract_digest "$(jq -r '.contract_digest' "$work/observation/compiler-observation.json")" \
-            --arg input_source_digest "$(jq -r '.input_source_digest' "$work/observation/compiler-observation.json")" \
-            '{schema:"gooo/semantic-self-adoption-authorization/v1",authorization_id:"iteration-6-human-approval-fixture",authorization_mode:"explicit-human-input",proposal_digest:$proposal_digest,candidate_stable_id:$candidate_stable_id,candidate_input_digest:$candidate_input_digest,contract_digest:$contract_digest,input_source_digest:$input_source_digest,authorized:true,repository_writes:0,local_test_executions:0}' \
-            > "$work/authorization.json"
           go run ./cmd/gooo adopt examples/self-improvement-observation/observation.gooo \
             --input examples/self-improvement-observation/input.fixture \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/authorization.json" \
             --out "$work/adoption"
-          jq -e '.independent_decision == "CLOSED" and .evidence.before_operation_count == 2 and .evidence.after_operation_count == 1 and .evidence.cache_hits == 1 and .evidence.cache_misses == 1' \
+          jq -e '.schema == "gooo/semantic-self-adoption-report/v2" and .independent_decision == "CLOSED" and .lifecycle == "SYSTEM_DERIVED_ADOPTION" and .authorization.authorization_mode == "system-derived-exact-evidence" and .evidence.before_operation_count == 2 and .evidence.after_operation_count == 1 and .evidence.cache_hits == 1 and .evidence.cache_misses == 1' \
             "$work/adoption/adoption-result.json" >/dev/null
+          cp "$work/adoption/system-decision.json" "$work/system-decision.json"
 
       - name: Certify the immutable caller-owned result
         shell: bash
@@ -141,7 +133,7 @@ jobs:
             --input examples/self-improvement-observation/input.fixture \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/authorization.json" \
+            --authorization "$work/system-decision.json" \
             --adoption "$work/adoption/adoption-result.json" \
             --out "$work/certify"
           jq -e '.schema == "gooo/semantic-self-retention-certificate/v1" and .mode == "caller-owned-immutable-certificate" and .repository_writes == 0 and .local_test_executions == 0 and (.normalized_ir_digest | length) == 64 and (.generated_output_digest | length) == 64 and (.compiler_digest | length) == 64 and (.toolchain_digest | length) == 64 and (.verifier_digest | length) == 64' \
@@ -165,14 +157,14 @@ jobs:
             --contract examples/self-improvement-observation/observation.gooo \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/authorization.json" \
+            --authorization "$work/system-decision.json" \
             --adoption "$work/adoption/adoption-result.json"
           go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture \
             --out "$public/replay" --certificate "$work/certify/retained-knowledge-certificate.json" \
             --contract examples/self-improvement-observation/observation.gooo \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/authorization.json" \
+            --authorization "$work/system-decision.json" \
             --adoption "$work/adoption/adoption-result.json"
           for directory in applied replay; do
             jq -e '.decision == "CLOSED" and .reason == "PUBLIC_GENERATE_RETAINED_KNOWLEDGE_HIT" and .metrics.semantic_operation_count == 0 and .metrics.certificate_hits == 1 and .metrics.certificate_misses == 0 and .output_file_count == 4' \
@@ -190,21 +182,21 @@ jobs:
             --proposal "$work/proposal/adoption-proposal.json" \
             --adoption "$work/adoption/adoption-result.json")
           go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture --out "$cases/certificate-hit" \
-            --certificate "$work/certify/retained-knowledge-certificate.json" --authorization "$work/authorization.json" "${common[@]}"
+            --certificate "$work/certify/retained-knowledge-certificate.json" --authorization "$work/system-decision.json" "${common[@]}"
           go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture --out "$cases/certificate-replay" \
-            --certificate "$work/certify/retained-knowledge-certificate.json" --authorization "$work/authorization.json" "${common[@]}"
+            --certificate "$work/certify/retained-knowledge-certificate.json" --authorization "$work/system-decision.json" "${common[@]}"
           go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture --out "$cases/missing-certificate" \
-            --certificate "$work/public/not-present.json" --authorization "$work/authorization.json" "${common[@]}"
+            --certificate "$work/public/not-present.json" --authorization "$work/system-decision.json" "${common[@]}"
           go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture --out "$cases/missing-authorization" \
             --certificate "$work/certify/retained-knowledge-certificate.json" "${common[@]}"
           cp examples/self-improvement-observation/input.fixture "$work/public/stale-input.gooo"
           printf '\n' >> "$work/public/stale-input.gooo"
           go run ./cmd/gooo generate "$work/public/stale-input.gooo" --out "$cases/stale-input" \
-            --certificate "$work/certify/retained-knowledge-certificate.json" --authorization "$work/authorization.json" "${common[@]}"
+            --certificate "$work/certify/retained-knowledge-certificate.json" --authorization "$work/system-decision.json" "${common[@]}"
           jq -S '.verifier_digest = "0000000000000000000000000000000000000000000000000000000000000000"' \
             "$work/certify/retained-knowledge-certificate.json" > "$work/public/mismatched-certificate.json"
           go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture --out "$cases/mismatched-certificate" \
-            --certificate "$work/public/mismatched-certificate.json" --authorization "$work/authorization.json" "${common[@]}"
+            --certificate "$work/public/mismatched-certificate.json" --authorization "$work/system-decision.json" "${common[@]}"
           jq -e '.decision == "CLOSED" and .reason == "PUBLIC_GENERATE_RETAINED_KNOWLEDGE_HIT"' "$cases/certificate-hit/generation-report.json" >/dev/null
           jq -e '.decision == "CLOSED" and .reason == "PUBLIC_GENERATE_RETAINED_KNOWLEDGE_HIT"' "$cases/certificate-replay/generation-report.json" >/dev/null
           jq -e '.decision == "UNKNOWN" and .reason == "MISSING_RETAINED_CERTIFICATE" and .metrics == {semantic_operation_count:0,certificate_hits:0,certificate_misses:0,generated_bytes_equal:false,normalized_semantic_equal:false,wall_ms:0,peak_rss_kib:0,allocation_count:0,allocation_bytes:0,build_ms:0,test_ms:0,executed_tests:0,reused_tests:0}' "$cases/missing-certificate/generation-report.json" >/dev/null
@@ -222,7 +214,7 @@ jobs:
             -input examples/self-improvement-observation/input.fixture \
             -observation "$work/observation/compiler-observation.json" \
             -proposal "$work/proposal/adoption-proposal.json" \
-            -authorization "$work/authorization.json" \
+            -authorization "$work/system-decision.json" \
             -adoption "$work/adoption/adoption-result.json" \
             -certificate "$work/certify/retained-knowledge-certificate.json" \
             -baseline "$work/public/baseline" -applied "$work/public/applied" -replay "$work/public/replay" \
@@ -240,7 +232,7 @@ jobs:
             --input examples/self-improvement-observation/input.fixture \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/authorization.json" \
+            --authorization "$work/system-decision.json" \
             --adoption "$work/adoption/adoption-result.json" \
             --certificate "$work/certify/retained-knowledge-certificate.json" \
             --baseline "$work/certify/retention-before.json" \
@@ -257,7 +249,7 @@ jobs:
             --input examples/self-improvement-observation/input.fixture \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/authorization.json" \
+            --authorization "$work/system-decision.json" \
             --adoption "$work/adoption/adoption-result.json" \
             --certificate "$work/certify/retained-knowledge-certificate.json" \
             --baseline "$work/certify/retention-before.json" \
@@ -274,7 +266,7 @@ jobs:
             --input examples/self-improvement-observation/input.fixture \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/authorization.json" \
+            --authorization "$work/system-decision.json" \
             --adoption "$work/adoption/adoption-result.json" \
             --out "$work/missing-certificate"
           jq -e '.decision == "UNKNOWN" and .reason == "MISSING_RETAINED_CERTIFICATE" and .unknown.stage == "RETENTION" and .unknown.step == "LOAD_CERTIFICATE" and .unknown.blocked_by == ["retained_certificate"] and .metrics == {semantic_operation_count:0,certificate_hits:0,certificate_misses:0,generated_bytes_equal:false,normalized_semantic_equal:false,wall_ms:0,peak_rss_kib:0,allocation_count:0,allocation_bytes:0,build_ms:0,test_ms:0,executed_tests:0,reused_tests:0}' \
@@ -300,7 +292,7 @@ jobs:
             --input "$work/stale-input.gooo" \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/authorization.json" \
+            --authorization "$work/system-decision.json" \
             --adoption "$work/adoption/adoption-result.json" \
             --certificate "$work/certify/retained-knowledge-certificate.json" \
             --out "$work/stale-input"
@@ -312,7 +304,7 @@ jobs:
             --input examples/self-improvement-observation/input.fixture \
             --observation "$work/observation/compiler-observation.json" \
             --proposal "$work/proposal/adoption-proposal.json" \
-            --authorization "$work/authorization.json" \
+            --authorization "$work/system-decision.json" \
             --adoption "$work/adoption/adoption-result.json" \
             --certificate "$work/mismatched-certificate.json" \
             --baseline "$work/certify/retention-before.json" \
@@ -330,7 +322,7 @@ jobs:
             -input examples/self-improvement-observation/input.fixture \
             -observation "$work/observation/compiler-observation.json" \
             -proposal "$work/proposal/adoption-proposal.json" \
-            -authorization "$work/authorization.json" \
+            -authorization "$work/system-decision.json" \
             -adoption "$work/adoption/adoption-result.json" \
             -certificate "$work/certify/retained-knowledge-certificate.json" \
             -before "$work/certify/retention-before.json" \

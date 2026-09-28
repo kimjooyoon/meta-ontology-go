@@ -42,22 +42,22 @@ func main() {
 	contractPath := flag.String("contract", "", "observation authority .gooo")
 	observationPath := flag.String("observation", "", "pre-adoption observation JSON")
 	proposalPath := flag.String("proposal", "", "caller-owned adoption proposal JSON")
-	authorizationPath := flag.String("authorization", "", "explicit authorization JSON")
+	systemDecisionPath := flag.String("system-decision", "", "machine-derived system decision JSON")
 	unknownPath := flag.String("unknown", "", "authorization-denied adoption result JSON")
-	unknownAuthorizationPath := flag.String("unknown-authorization", "", "authorization-denied input JSON")
+	unknownSystemDecisionPath := flag.String("unknown-system-decision", "", "denied system decision counterfactual JSON")
 	adoptionPath := flag.String("adoption", "", "authorized adoption result JSON")
 	envelopeRoot := flag.String("envelope-root", "", "caller-owned envelope output root")
 	outputPath := flag.String("output", "", "caller-owned loop report JSON")
 	flag.Parse()
-	if *contractPath == "" || *observationPath == "" || *proposalPath == "" || *authorizationPath == "" || *unknownPath == "" || *unknownAuthorizationPath == "" || *adoptionPath == "" || *envelopeRoot == "" || *outputPath == "" {
-		fail(errors.New("self-improvement-adoption requires -contract, -observation, -proposal, -authorization, -unknown, -unknown-authorization, -adoption, -envelope-root, and -output"))
+	if *contractPath == "" || *observationPath == "" || *proposalPath == "" || *systemDecisionPath == "" || *unknownPath == "" || *unknownSystemDecisionPath == "" || *adoptionPath == "" || *envelopeRoot == "" || *outputPath == "" {
+		fail(errors.New("self-improvement-adoption requires -contract, -observation, -proposal, -system-decision, -unknown, -unknown-system-decision, -adoption, -envelope-root, and -output"))
 	}
-	if err := run(*contractPath, *observationPath, *proposalPath, *authorizationPath, *unknownPath, *unknownAuthorizationPath, *adoptionPath, *envelopeRoot, *outputPath); err != nil {
+	if err := run(*contractPath, *observationPath, *proposalPath, *systemDecisionPath, *unknownPath, *unknownSystemDecisionPath, *adoptionPath, *envelopeRoot, *outputPath); err != nil {
 		fail(err)
 	}
 }
 
-func run(contractPath, observationPath, proposalPath, authorizationPath, unknownPath, unknownAuthorizationPath, adoptionPath, envelopeRoot, outputPath string) error {
+func run(contractPath, observationPath, proposalPath, systemDecisionPath, unknownPath, unknownSystemDecisionPath, adoptionPath, envelopeRoot, outputPath string) error {
 	contract, err := os.ReadFile(contractPath)
 	if err != nil {
 		return fmt.Errorf("read contract: %w", err)
@@ -70,7 +70,7 @@ func run(contractPath, observationPath, proposalPath, authorizationPath, unknown
 	if err != nil {
 		return err
 	}
-	authorizationData, authorization, err := readAuthorization(authorizationPath)
+	authorizationData, authorization, err := readAuthorization(systemDecisionPath)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func run(contractPath, observationPath, proposalPath, authorizationPath, unknown
 	if err != nil {
 		return err
 	}
-	unknownAuthorizationData, unknownAuthorization, err := readAuthorization(unknownAuthorizationPath)
+	unknownAuthorizationData, unknownAuthorization, err := readAuthorization(unknownSystemDecisionPath)
 	if err != nil {
 		return err
 	}
@@ -95,8 +95,8 @@ func run(contractPath, observationPath, proposalPath, authorizationPath, unknown
 	if proposal.ObservationDigest != observationDigest {
 		return errors.New("proposal does not bind the pre-adoption observation")
 	}
-	if err := validateAdoptionReportBinding(adoptedReport, proposal, authorization, observationDigest, proposalDigest, authorizationDigest, "AUTHORIZED_ADOPTION"); err != nil {
-		return fmt.Errorf("authorized adoption report binding: %w", err)
+	if err := validateAdoptionReportBinding(adoptedReport, proposal, authorization, observationDigest, proposalDigest, authorizationDigest, "SYSTEM_DERIVED_ADOPTION"); err != nil {
+		return fmt.Errorf("system-derived adoption report binding: %w", err)
 	}
 	if decision, reason, _, err := generation.VerifySemanticAdoption(proposal, proposalDigest, authorization, authorizationDigest, adoptedReport.Evidence); err != nil || decision != "CLOSED" || reason != generation.SemanticAdoptionClosedReason {
 		if err != nil {
@@ -110,11 +110,11 @@ func run(contractPath, observationPath, proposalPath, authorizationPath, unknown
 	if err := generation.VerifySemanticObservation(adoptedReport.Observation); err != nil {
 		return fmt.Errorf("adopted observation: %w", err)
 	}
-	if unknownReport.Authorization != unknownAuthorization {
-		return errors.New("unknown adoption report is not bound to its authorization input")
+	if !reflect.DeepEqual(unknownReport.Authorization, unknownAuthorization) {
+		return errors.New("unknown adoption report is not bound to its system decision input")
 	}
 	unknownAuthorizationDigest := cache.HashBytes(unknownAuthorizationData).String()
-	if err := validateAdoptionReportBinding(unknownReport, proposal, unknownAuthorization, observationDigest, proposalDigest, unknownAuthorizationDigest, "AUTHORIZATION_REQUIRED"); err != nil {
+	if err := validateAdoptionReportBinding(unknownReport, proposal, unknownAuthorization, observationDigest, proposalDigest, unknownAuthorizationDigest, "SYSTEM_EVIDENCE_INCOMPLETE"); err != nil {
 		return fmt.Errorf("unknown adoption report binding: %w", err)
 	}
 	unknownDecision, unknownReason, unknownState, err := generation.VerifySemanticAdoption(proposal, proposalDigest, unknownAuthorization, unknownAuthorizationDigest, unknownReport.Evidence)
@@ -278,13 +278,17 @@ func readProposal(path string) ([]byte, generation.SemanticAdoptionProposal, err
 func readAuthorization(path string) ([]byte, generation.SemanticAdoptionAuthorization, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, generation.SemanticAdoptionAuthorization{}, fmt.Errorf("read authorization: %w", err)
+		return nil, generation.SemanticAdoptionAuthorization{}, fmt.Errorf("read system decision: %w", err)
 	}
 	var value generation.SemanticAdoptionAuthorization
 	if err := json.Unmarshal(data, &value); err != nil {
-		return nil, value, fmt.Errorf("decode authorization: %w", err)
+		return nil, value, fmt.Errorf("decode system decision: %w", err)
 	}
-	return data, value, nil
+	canonical, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return nil, value, fmt.Errorf("encode system decision: %w", err)
+	}
+	return append(canonical, '\n'), value, nil
 }
 
 func readReport(path string) ([]byte, generation.SemanticAdoptionReport, error) {
