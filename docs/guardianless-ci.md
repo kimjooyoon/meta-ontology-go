@@ -57,6 +57,18 @@ job wall time, excludes queue wait, and remains descriptive. A workflow ID does
 not prove that the workflow definition stayed the same, so workflow edits can
 create discontinuities and comparisons do not attribute cause.
 
+The language utility portfolio compares current evidence with the digest-bound
+floors in `examples/language-utility/contract.json`. Its progress receipt does
+not fetch a pinned Actions artifact, so an artifact expiring after its retention
+period cannot turn a valid observation into a failed workflow. The receipt
+states that no comparable performance pair exists until same-scope measurements
+are available.
+
+The external capability workflow keeps exact per-run, default-deny evidence and
+removes the one-use authorization-foundation closure that depended on a
+historical artifact. The current capability evidence grants no execution,
+repository-mutation, or promotion authority.
+
 Failure manifests now use `gooo/ci-failure/v2`: `handoff_required`, handoff
 owners, and the branch-registration pointer are gone. Reports bind the exact
 `head_branch` as identity and carry a closed `next_operation` code. The current
