@@ -1,0 +1,31 @@
+{
+  "decision_id": "capability-discovery-provenance-defer-20260928",
+  "domain_id": "gooo.declaration.capability-discovery",
+  "declaration_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "baseline_receipt_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "candidate_slice": [
+    "external_boundary_receipt",
+    "provenance_replay",
+    "first_missing_stage_feedback"
+  ],
+  "value_rationale": "Defer expansion until external-boundary evidence and replay continuity are observed across a complete usage slice.",
+  "unknown_identifiers": [
+    "external_boundary_evidence",
+    "replay_confirmation",
+    "utility_yield_baseline"
+  ],
+  "estimated_cost": {
+    "engineering_effort": 1,
+    "ci_duration_seconds": 900,
+    "resource_cost": 0
+  },
+  "expected_change": {
+    "metric": "provenance_continuity",
+    "minimum_delta": 0.05,
+    "new_evidence_required": true
+  },
+  "falsifier": "A bounded observation slice confirms replayable evidence continuity and a useful next operation without adding new implementation.",
+  "rollback_condition": "A receipt loses its source or evidence identity, or a deferred result is promoted without explicit boundary evidence.",
+  "decision": "DEFER",
+  "evidence_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+}
