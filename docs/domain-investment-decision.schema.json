@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kimjooyoon/meta-ontology-go/blob/main/docs/domain-investment-decision.schema.json",
+  "title": "Domain Investment Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision_id",
+    "domain_id",
+    "declaration_digest",
+    "baseline_receipt_digest",
+    "candidate_slice",
+    "value_rationale",
+    "unknown_identifiers",
+    "estimated_cost",
+    "expected_change",
+    "falsifier",
+    "rollback_condition",
+    "decision"
+  ],
+  "properties": {
+    "decision_id": { "type": "string", "minLength": 1 },
+    "domain_id": { "type": "string", "minLength": 1 },
+    "declaration_digest": { "$ref": "#/$defs/digest" },
+    "baseline_receipt_digest": { "$ref": "#/$defs/digest" },
+    "candidate_slice": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "value_rationale": { "type": "string", "minLength": 1 },
+    "unknown_identifiers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "estimated_cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engineering_effort", "ci_duration_seconds"],
+      "properties": {
+        "engineering_effort": { "type": "number", "minimum": 0 },
+        "ci_duration_seconds": { "type": "number", "minimum": 0 },
+        "resource_cost": { "type": "number", "minimum": 0 }
+      }
+    },
+    "expected_change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric", "minimum_delta"],
+      "properties": {
+        "metric": {
+          "type": "string",
+          "enum": [
+            "scope_coverage",
+            "available_coverage",
+            "evidence_completeness",
+            "provenance_continuity",
+            "utility_yield"
+          ]
+        },
+        "minimum_delta": { "type": "number" },
+        "new_evidence_required": { "type": "boolean" }
+      }
+    },
+    "falsifier": { "type": "string", "minLength": 1 },
+    "rollback_condition": { "type": "string", "minLength": 1 },
+    "decision": {
+      "type": "string",
+      "enum": ["PROCEED", "DEFER", "REJECT"]
+    },
+    "evidence_digest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{64}$"
+    }
+  }
+}
