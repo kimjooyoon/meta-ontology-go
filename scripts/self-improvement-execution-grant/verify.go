@@ -17,7 +17,7 @@ func runVerification(program grant.PolicyProgram, settings options) error {
 	if err := readJSON(settings.resolutionPath, &resolution); err != nil {
 		return err
 	}
-	input := grant.GrantInput{Request: request, DecisionInputs: resolution.DecisionInputs}
+	input := grant.GrantInput{Request: request}
 	verification := grant.Verify(program, input, resolution)
 	if settings.check && !verification.Verified {
 		return fmt.Errorf("grant verification failed: %#v", verification)

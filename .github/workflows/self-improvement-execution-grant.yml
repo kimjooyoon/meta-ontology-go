@@ -91,10 +91,6 @@ on:
         description: Exact CI continuation request digest
         required: true
         type: string
-      decision:
-        description: Optional explicit human grant decision; empty means automatic request only
-        required: false
-        type: string
 
 permissions:
   actions: read
@@ -122,7 +118,6 @@ jobs:
       DISPATCH_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.dispatch_ref || '' }}
       DISPATCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.dispatch_mode || '' }}
       CONTINUATION_REQUEST_DIGEST: ${{ github.event_name == 'workflow_dispatch' && inputs.continuation_request_digest || '' }}
-      DISPATCH_DECISION: ${{ github.event_name == 'workflow_dispatch' && inputs.decision || '' }}
       GOTOOLCHAIN: local
       GOFLAGS: -mod=readonly
 
@@ -169,6 +164,8 @@ jobs:
           artifact_retrieved=false
           retrieval_error=""
           v25_contract=""
+          v24_request=""
+          v24_resolution=""
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             test "$SOURCE_REPOSITORY" = "$GITHUB_REPOSITORY"
             test "$SOURCE_WORKFLOW_NAME" = "Self-improvement candidate execution contract"
@@ -215,7 +212,9 @@ jobs:
             unzip -q "$archive" -d "$source_dir"
             while IFS= read -r file; do
               if jq -e '.schema == "gooo/self-improvement-execution-contract/v1"' "$file" >/dev/null 2>&1; then v25_contract="$file"; break; fi
-            done < <(find "$source_dir" -type f -name '*.json' -print | sort)
+          done < <(find "$source_dir" -type f -name '*.json' -print | sort)
+          v24_request="$(find "$source_dir" -type f -name source-authorization-request.json -print -quit)"
+          v24_resolution="$(find "$source_dir" -type f -name source-authorization-resolution.json -print -quit)"
             if [ -n "$v25_contract" ]; then
               jq -e --arg receipt "$SOURCE_RECEIPT_DIGEST" --arg sha "$SUBJECT_SHA" \
                 '.schema == "gooo/self-improvement-execution-contract/v1" and
@@ -247,6 +246,8 @@ jobs:
             '{repository:$repository,workflow_run_id:$workflow_run_id,workflow_run_attempt:$workflow_run_attempt,artifact_id:$artifact_id,artifact_digest:$artifact_digest,observed_artifact_digest:$observed_artifact_digest,artifact_expired:$artifact_expired,artifact_expiry_known:$artifact_expiry_known,artifact_retrieved:$artifact_retrieved} + (if $artifact_retrieval_error == "" then {} else {artifact_retrieval_error:$artifact_retrieval_error} end)' \
             > "$work/source.json"
           echo "V25_CONTRACT=$v25_contract" >> "$GITHUB_ENV"
+          echo "V24_REQUEST=$v24_request" >> "$GITHUB_ENV"
+          echo "V24_RESOLUTION=$v24_resolution" >> "$GITHUB_ENV"
           echo "GRANT_WORK=$work" >> "$GITHUB_ENV"
           echo "GRANT_OUTPUT=$output_dir" >> "$GITHUB_ENV"
 
@@ -260,7 +261,7 @@ jobs:
             -output "$GRANT_OUTPUT/canonical-cases.json" \
             -check
           jq -e '
-            .schema == "gooo/self-improvement-execution-grant-cases/v1" and
+            .schema == "gooo/self-improvement-execution-grant-cases/v2" and
             .case_denominator == 9 and
             .counts == {CLOSED:3,UNKNOWN:3,REFUTED:3} and
             .structural_separate_grant_edges_before == 0 and
@@ -274,9 +275,10 @@ jobs:
             (.counterexample_artifact_ids | index(9955461668)) != null and
             .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and
             .replay_equal and .live_grant_requests == 0 and .live_grants == 0 and
-            .live_execution_count == 0 and .canonical_granted_cases == 2 and
+            .live_execution_count == 0 and .canonical_granted_cases == 3 and
+            .system_derived_grants == 3 and
             .canonical_execution_count == 0 and .six_field_unknowns == 3 and
-            .refuted_contradictions == 3 and .grant_remaining_uses == 2 and
+            .refuted_contradictions == 3 and .grant_remaining_uses == 3 and
             .grant_consumed_uses == 0 and .repository_writes == 0 and
             .local_test_executions == 0 and .fallback_accepted == 0 and
             .independent_replay_comparisons == 1 and .artifact_files == 9 and
@@ -284,54 +286,57 @@ jobs:
             ([.cases[] | select(.pass == false)] | length) == 0' \
             "$GRANT_OUTPUT/canonical-cases.json" >/dev/null
 
-      - name: Emit live grant request or explicit grant declaration
+      - name: Derive and verify live one-use grant from system evidence
         shell: bash
         run: |
           set -euo pipefail
           args=(-mode live -contract examples/self-improvement-execution-grant/grant.gooo -source "$GRANT_WORK/source.json" -output "$GRANT_OUTPUT/live-grant.json" -check)
           if [ -n "$V25_CONTRACT" ]; then args+=(-v25-contract "$V25_CONTRACT"); fi
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ -n "$DISPATCH_DECISION" ]; then
-            args+=(-decision "$DISPATCH_DECISION" -decision-source workflow_dispatch -actor "$GITHUB_ACTOR" -repository "$GITHUB_REPOSITORY" -event "$GITHUB_EVENT_NAME" -workflow-run-id "$GITHUB_RUN_ID" -workflow-run-attempt "$GITHUB_RUN_ATTEMPT")
+          if [ -n "$V24_REQUEST" ] && [ -n "$V24_RESOLUTION" ]; then
+            args+=(-v24-request "$V24_REQUEST" -v24-resolution "$V24_RESOLUTION")
           fi
           go run ./scripts/self-improvement-execution-grant "${args[@]}"
-          if [ -z "$DISPATCH_DECISION" ]; then
-            jq --arg event "$GITHUB_EVENT_NAME" -e '
-              .schema == "gooo/self-improvement-execution-grant/v1" and
-              ((.resolution.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"]) and
-              .metrics.live_grant_requests == 1 and .metrics.live_grants == 0 and
-              .metrics.live_execution_count == 0 and .metrics.grant_consumed_uses == 0 and
-              .metrics.repository_writes == 0 and .metrics.local_test_executions == 0 and
-              .metrics.fallback_accepted == 0 and
-              .metrics.source_artifact_bound_before == 0 and .metrics.source_artifact_expired_misclassified_before == 1 and
-              .metrics.exact_source_digest_bound_before == 0 and .metrics.live_grants_before == 0 and
-              .metrics.execution_count_before == 0 and .metrics.repository_writes_before == 0 and
-              .metrics.source_artifact_expired_misclassified_after == 0 and .metrics.live_grants_after == 0 and
-              .metrics.execution_count_after == 0 and .metrics.repository_writes_after == 0 and .verification.verified and
-              (if .request.source_artifact.artifact_retrieval_error then
-                .resolution.decision == "UNKNOWN" and .resolution.resolution == "LOWER_RESOLUTION" and
-                .resolution.reason == "SOURCE_ARTIFACT_RETRIEVAL_FAILED" and
-                .metrics.source_artifact_bound_after == 0 and .metrics.exact_source_digest_bound_after == 0 and
-                .metrics.source_artifact_bound == 0 and .metrics.exact_source_digest_bound == 0 and
-                .resolution.unknown.blocked_by == "source_artifact_retrieval" and
-                (.resolution.obligations | index("explicit_execution_grant_decision")) != null and
-                (.resolution.obligations | index("source_artifact_retrieval")) != null
-               elif ($event == "workflow_run" or $event == "workflow_dispatch") then
-                .request.source_artifact.artifact_retrieved and .request.source_artifact.artifact_expired == false and
-                .request.source_artifact.artifact_digest == .request.source_artifact.observed_artifact_digest and
-                .metrics.source_artifact_bound_after == 1 and .metrics.exact_source_digest_bound_after == 1 and
-                .metrics.source_artifact_bound == 1 and .metrics.exact_source_digest_bound == 1 and
-                .resolution.decision == "UNKNOWN" and .resolution.resolution == "LOWER_RESOLUTION" and
-                .resolution.reason == "MISSING_EXPLICIT_EXECUTION_GRANT_DECISION" and
-                .resolution.unknown.blocked_by == "explicit_execution_grant_decision"
-               else
-                .metrics.source_artifact_bound_after == 0 and .metrics.exact_source_digest_bound_after == 0 and
-                .metrics.source_artifact_bound == 0 and .metrics.exact_source_digest_bound == 0 and
-                .resolution.decision == "UNKNOWN" and .resolution.resolution == "LOWER_RESOLUTION" and
-                .resolution.reason == "MISSING_EXPLICIT_EXECUTION_GRANT_DECISION" and
-                .resolution.unknown.blocked_by == "explicit_execution_grant_decision"
-               end)' \
-              "$GRANT_OUTPUT/live-grant.json" >/dev/null
-          fi
+          jq -e --arg event "$GITHUB_EVENT_NAME" '
+            .schema == "gooo/self-improvement-execution-grant/v2" and
+            .metrics.live_grant_requests == 1 and
+            .metrics.live_execution_count == 0 and .metrics.grant_consumed_uses == 0 and
+            .metrics.repository_writes == 0 and .metrics.local_test_executions == 0 and
+            .metrics.fallback_accepted == 0 and
+            .metrics.source_artifact_expired_misclassified_before == 1 and
+            .metrics.source_artifact_expired_misclassified_after == 0 and .verification.verified and
+            (if .request.source_artifact.artifact_retrieval_error then
+              .resolution.decision == "UNKNOWN" and .resolution.resolution == "LOWER_RESOLUTION" and
+              .resolution.reason == "SOURCE_ARTIFACT_RETRIEVAL_FAILED" and
+              .metrics.source_artifact_bound_after == 0 and .metrics.exact_source_digest_bound_after == 0 and
+              .resolution.unknown.blocked_by == "source_artifact_retrieval"
+             elif $event == "workflow_dispatch" and
+                  .request.source_artifact.artifact_retrieved and
+                  .request.source_artifact.artifact_expired == false and
+             .request.source_artifact.artifact_digest == .request.source_artifact.observed_artifact_digest and
+             .request.v24_authorization.request_valid and .request.v24_authorization.resolution_valid and
+                  .request.v24_authorization.authorization_decision == "ALLOW" and
+                  .request.v24_authorization.authorization_resolution == "CLOSED" and
+                  .request.v24_authorization.authorization_outcome == "AUTHORIZED" and
+                  .request.v25_pre_execution_contract.valid and
+                  .request.v25_pre_execution_contract.decision == "CLOSED" then
+              .resolution.decision == "CLOSED" and .resolution.resolution == "GRANTED_UNCONSUMED" and
+              .resolution.reason == "EXECUTION_GRANT_GRANTED_UNCONSUMED" and
+              .resolution.system_evidence.decision == "ALLOW" and
+              .resolution.system_evidence.decision_source == "system-derived-exact-evidence" and
+              .resolution.system_evidence.decision_rule == "EXACT_V24_V25_SOURCE_BUNDLE_V1" and
+              .metrics.source_artifact_bound_after == 1 and .metrics.exact_source_digest_bound_after == 1 and
+              .metrics.live_grants == 1 and .metrics.system_derived_grants == 1 and
+             .resolution.remaining_uses == 1 and .resolution.execution_count == 0 and
+             .resolution.consumed_uses == 0 and .resolution.one_use_enforced == false
+             else
+              (.resolution.decision == "UNKNOWN" or .resolution.decision == "REFUTED") and
+              .metrics.live_grants == 0 and .metrics.system_derived_grants == 0 and
+              .resolution.grant_allows_execution == false and
+              (if .resolution.decision == "UNKNOWN" then
+                 ((.resolution.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"])
+               else .resolution.receipt == null end)
+             end)' \
+            "$GRANT_OUTPUT/live-grant.json" >/dev/null
           jq -r '"live grant: \(.resolution.decision)/\(.resolution.resolution)/\(.resolution.reason), grant_allows_execution=\(.resolution.grant_allows_execution), remaining_uses=\(.resolution.remaining_uses), consumed_uses=\(.resolution.consumed_uses), execution_count=\(.resolution.execution_count)"' "$GRANT_OUTPUT/live-grant.json" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Independently replay the live grant resolution

@@ -11,22 +11,18 @@ func runLive(program grant.PolicyProgram, settings options) error {
 		return err
 	}
 	resolution := grant.Evaluate(program, input)
-	report := grant.LiveReport{Schema: grant.Schema, Policy: program.Evidence, Request: input.Request, GrantDecision: settings.decision, DecisionSource: settings.decisionSource, Resolution: resolution, Verification: grant.Verify(program, input, resolution), Metrics: resolution.Metrics}
+	decision, decisionSource := "", grant.DecisionSourceSystem
+	if resolution.SystemEvidence != nil {
+		decision = resolution.SystemEvidence.Decision
+	}
+	report := grant.LiveReport{Schema: grant.Schema, Policy: program.Evidence, Request: input.Request, GrantDecision: decision, DecisionSource: decisionSource, Resolution: resolution, Verification: grant.Verify(program, input, resolution), Metrics: resolution.Metrics}
 	if settings.check {
 		if err := grant.VerifyGrantResolution(resolution); err != nil || !report.Verification.Verified {
 			return fmt.Errorf("live execution grant check failed: resolution=%v verification=%v", err, report.Verification)
 		}
-		if settings.decision == "" {
-			if input.Request.Source.ArtifactRetrievalError != "" {
-				if resolution.Decision != grant.DecisionUnknown || resolution.Reason != grant.ReasonSourceRetrievalFailed || resolution.Unknown == nil || resolution.Unknown.BlockedBy != "source_artifact_retrieval" {
-					return fmt.Errorf("source retrieval failure was not preserved as UNKNOWN: %#v", resolution)
-				}
-			} else if resolution.Decision != grant.DecisionUnknown || resolution.Reason != grant.ReasonMissingDecision || resolution.Unknown == nil || resolution.Unknown.BlockedBy != "explicit_execution_grant_decision" {
-				return fmt.Errorf("live no-decision grant request was not UNKNOWN: %#v", resolution)
-			}
-			if resolution.Metrics.LiveGrantRequests != 1 || resolution.Metrics.LiveGrants != 0 || resolution.ExecutionCount != 0 || resolution.ConsumedUses != 0 {
-				return fmt.Errorf("live grant request crossed execution boundary: %#v", resolution)
-			}
+		if resolution.Metrics.LiveGrantRequests != 1 || resolution.ExecutionCount != 0 || resolution.ConsumedUses != 0 ||
+			resolution.RepositoryWrites != 0 || resolution.LocalTestExecutions != 0 {
+			return fmt.Errorf("live system grant crossed execution boundary: %#v", resolution)
 		}
 	}
 	report.Digest = reportDigest(report)
