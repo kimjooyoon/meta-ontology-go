@@ -1,0 +1,29 @@
+{
+  "domain_id": "gooo.provenance",
+  "bindings": [
+    {
+      "capability_id": "gooo.declaration.diff",
+      "declaration_id": "decl.provenance.diff",
+      "source_digest": "sha256:source-diff",
+      "evidence_digest": "sha256:evidence-diff"
+    },
+    {
+      "capability_id": "gooo.provenance.compare",
+      "declaration_id": "decl.provenance.compare",
+      "source_digest": "sha256:source-compare",
+      "evidence_digest": "sha256:evidence-compare"
+    }
+  ],
+  "source_capability_ids": [
+    "gooo.declaration.diff",
+    "gooo.provenance.compare"
+  ],
+  "excluded_binding": {
+    "capability_id": "gooo.provenance.unknown",
+    "declaration_id": "decl.provenance.unknown",
+    "source_digest": "",
+    "evidence_digest": "sha256:evidence-unknown",
+    "reason": "source evidence is missing"
+  },
+  "measurement_semantics": "source_capability_ids contain only complete declaration and evidence bindings"
+}
