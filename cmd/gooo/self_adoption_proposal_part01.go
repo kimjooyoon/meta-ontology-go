@@ -43,15 +43,16 @@ func runAdoptionProposal(args []string, reader SourceReader, stdout, stderr io.W
 		return exitFailure
 	}
 	proposal := generation.SemanticAdoptionProposal{
-		Schema:            generation.SemanticAdoptionProposalSchema,
-		ObservationDigest: cache.HashBytes(data).String(),
-		ContractDigest:    observation.ContractDigest,
-		InputSourceDigest: observation.InputSourceDigest,
-		Candidate:         observation.Candidates[0],
-		Target:            generation.SemanticAdoptionTarget,
-		Mode:              generation.SemanticAdoptionMode,
-		ExecutionAllowed:  false,
-		RepositoryWrites:  0,
+		Schema:             generation.SemanticAdoptionProposalSchema,
+		ObservationDigest:  cache.HashBytes(data).String(),
+		ContractDigest:     observation.ContractDigest,
+		InputSourceDigest:  observation.InputSourceDigest,
+		AnalysisProvenance: observation.AnalysisProvenance,
+		Candidate:          observation.Candidates[0],
+		Target:             generation.SemanticAdoptionTarget,
+		Mode:               generation.SemanticAdoptionMode,
+		ExecutionAllowed:   false,
+		RepositoryWrites:   0,
 	}
 	if err := generation.ValidateSemanticAdoptionProposal(proposal); err != nil {
 		fmt.Fprintf(stderr, "gooo: adoption proposal: %v\n", err)
