@@ -1,0 +1,37 @@
+module jev_domain_investment_plan
+
+input domain_scope
+input observed_capabilities
+input unresolved_capability_boundaries
+input explicit_investment_target
+input evidence_comparability
+input evidence_completeness
+
+status UNKNOWN investment inputs are not sufficiently bound
+status DEFERRED evidence is incomplete or incomparable
+status INVESTIGATE unresolved capability boundaries need investigation
+status INVEST observed coverage is below the explicit target
+status MAINTAIN observed coverage meets the explicit target
+
+field domain_id
+field disposition
+field coverage_numerator
+field coverage_denominator
+field target_numerator
+field target_denominator
+field gap_numerator
+field unresolved_capability_count
+field first_boundary
+field reason
+field scope_digest
+field evidence_digest
+field plan_digest
+
+constraint target_is_policy_not_truth
+constraint no_semantic_completeness_score
+constraint unresolved_boundary_preserved
+constraint unknown_and_deferred_preserved
+constraint evidence_bound
+constraint deterministic_digest
+constraint no_execution
+constraint no_authorization
