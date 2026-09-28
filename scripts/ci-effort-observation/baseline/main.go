@@ -31,6 +31,7 @@ type WorkflowRun struct {
 	WorkflowID     int64         `json:"workflow_id"`
 	Event          string        `json:"event"`
 	Ref            string        `json:"ref"`
+	RefResolution  string        `json:"ref_resolution"`
 	HeadBranch     string        `json:"head_branch"`
 	HeadSHA        string        `json:"head_sha"`
 	HeadRepository repositoryRef `json:"head_repository"`
@@ -70,13 +71,14 @@ type History struct {
 }
 
 type SampleObservation struct {
-	RunID        int64            `json:"run_id"`
-	RunAttempt   int64            `json:"run_attempt"`
-	HeadSHA      string           `json:"head_sha"`
-	CreatedAt    string           `json:"created_at"`
-	RunStartedAt string           `json:"run_started_at"`
-	HTMLURL      string           `json:"html_url"`
-	Durations    map[string]int64 `json:"durations_wall_ms"`
+	RunID         int64            `json:"run_id"`
+	RunAttempt    int64            `json:"run_attempt"`
+	HeadSHA       string           `json:"head_sha"`
+	RefResolution string           `json:"ref_resolution"`
+	CreatedAt     string           `json:"created_at"`
+	RunStartedAt  string           `json:"run_started_at"`
+	HTMLURL       string           `json:"html_url"`
+	Durations     map[string]int64 `json:"durations_wall_ms"`
 }
 
 type CheckBaseline struct {
@@ -98,6 +100,7 @@ type Report struct {
 	WorkflowID           int64               `json:"workflow_id"`
 	Event                string              `json:"event"`
 	Ref                  string              `json:"ref"`
+	RefResolution        string              `json:"ref_resolution"`
 	HeadBranch           string              `json:"head_branch"`
 	HeadSHA              string              `json:"head_sha"`
 	CurrentRunID         int64               `json:"current_run_id"`
@@ -181,7 +184,7 @@ func buildReport(current WorkflowRun, currentJobs []Job, history History, histor
 	report := Report{
 		Schema: reportSchema, MetricID: "gooo.metric.ci.required-check-baseline.v1",
 		Repository: current.HeadRepository.FullName, WorkflowID: current.WorkflowID,
-		Event: current.Event, Ref: current.Ref, HeadBranch: current.HeadBranch, HeadSHA: current.HeadSHA,
+		Event: current.Event, Ref: current.Ref, RefResolution: current.RefResolution, HeadBranch: current.HeadBranch, HeadSHA: current.HeadSHA,
 		CurrentRunID: current.ID, CurrentRunAttempt: current.RunAttempt, CurrentRunConclusion: current.Conclusion,
 		HistoryInputDigest: "sha256:" + hex.EncodeToString(digest[:]), LookupStatus: history.LookupStatus,
 		BaselineState: "UNKNOWN", ComparisonState: "UNKNOWN", RequiredChecks: append([]string(nil), requiredChecks...),
@@ -191,6 +194,20 @@ func buildReport(current WorkflowRun, currentJobs []Job, history History, histor
 	}
 	if history.Schema != inputSchema {
 		report.Reason = "HISTORY_SCHEMA_INVALID"
+		return report
+	}
+	if current.Event == "pull_request" {
+		report.BaselineState = "NOT_APPLICABLE"
+		report.ComparisonState = "NOT_APPLICABLE"
+		report.Reason = "BASELINE_SCOPE_EXCLUDES_NON_PUSH_EVENT"
+		return report
+	}
+	if current.Event != "push" {
+		report.Reason = "BASELINE_EVENT_UNSUPPORTED"
+		return report
+	}
+	if current.Ref == "" {
+		report.Reason = "CURRENT_RUN_REF_UNRESOLVED"
 		return report
 	}
 	if history.LookupStatus != "OK" {
@@ -231,7 +248,7 @@ func buildReport(current WorkflowRun, currentJobs []Job, history History, histor
 		}
 		report.Samples = append(report.Samples, SampleObservation{
 			RunID: sample.ID, RunAttempt: sample.RunAttempt, HeadSHA: sample.HeadSHA,
-			CreatedAt: sample.CreatedAt, RunStartedAt: sample.RunStartedAt, HTMLURL: sample.HTMLURL,
+			RefResolution: sample.RefResolution, CreatedAt: sample.CreatedAt, RunStartedAt: sample.RunStartedAt, HTMLURL: sample.HTMLURL,
 			Durations: durations,
 		})
 		for _, name := range requiredChecks {
@@ -361,7 +378,7 @@ func seal(report Report) string {
 func markdown(report Report) string {
 	var builder strings.Builder
 	fmt.Fprintf(&builder, "CI required-check baseline: %s/%s reason=%s\n", report.BaselineState, report.ComparisonState, report.Reason)
-	fmt.Fprintf(&builder, "metric=%s run=%d attempt=%d workflow=%d event=%s ref=%s samples=%d/%d lookup=%s\n", report.MetricID, report.CurrentRunID, report.CurrentRunAttempt, report.WorkflowID, report.Event, report.Ref, report.SampleCount, report.MaximumSamples, report.LookupStatus)
+	fmt.Fprintf(&builder, "metric=%s run=%d attempt=%d workflow=%d event=%s ref=%s ref_resolution=%s samples=%d/%d lookup=%s\n", report.MetricID, report.CurrentRunID, report.CurrentRunAttempt, report.WorkflowID, report.Event, report.Ref, report.RefResolution, report.SampleCount, report.MaximumSamples, report.LookupStatus)
 	for _, check := range report.Checks {
 		if check.CurrentWallMS == nil {
 			fmt.Fprintf(&builder, "check=%q median_wall_ms=%d current=UNKNOWN\n", check.Name, check.MedianWallMS)

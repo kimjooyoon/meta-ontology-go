@@ -47,16 +47,22 @@ intervals, cache state, queue time, and parallelism. Optimization should be
 credited only after same-scope before/after observations; lower check time alone
 does not prove a particular code change caused the improvement.
 
-The CI effort observer also emits `gooo.metric.ci.required-check-baseline.v1`.
-It reads up to 20 recent successful Actions runs with the same repository,
-workflow ID, event, full ref, and head branch. It reports each check's median
-duration and the current run's delta after at least five complete, unique,
-successful samples. Run IDs, attempts, head SHAs, excluded-sample reasons, and
-an input digest are retained in an artifact configured for 90 days. If history
-is unavailable, fewer than five samples qualify, or the current run is not fully
-successful, the corresponding result remains `UNKNOWN`. The measurement uses
-job wall time, excludes queue wait, and remains descriptive. A workflow ID does
-not prove that the workflow definition stayed the same, so workflow edits can
+The CI effort observer also emits `gooo.metric.ci.required-check-baseline.v1`
+for terminal push runs. It reads up to 20 recent successful Actions runs with
+the same repository, workflow ID, push event, full ref, and head branch. When
+the Actions API omits `ref`, the collector derives `refs/heads/dev` or
+`refs/heads/main` only from a push event whose `head_branch` is exactly
+`dev` or `main`; the report records whether the ref came from the API or that
+allowlisted derivation. Pull-request reports mark this baseline as
+`NOT_APPLICABLE`, since their source ref is not a stable branch-history key.
+It reports each check's median duration and the current run's delta after at
+least five complete, unique, successful samples. Run IDs, attempts, head SHAs,
+ref-resolution provenance, excluded-sample reasons, and an input digest are
+retained in an artifact configured for 90 days. If history is unavailable,
+fewer than five samples qualify, or the current run is not fully successful,
+the corresponding result remains `UNKNOWN`. The measurement uses job wall
+time, excludes queue wait, and remains descriptive. A workflow ID does not
+prove that the workflow definition stayed the same, so workflow edits can
 create discontinuities and comparisons do not attribute cause.
 
 The observer also joins an exact-head OpenTofu released-CLI receipt. Its
