@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/capability-discovery-receipt.schema.json",
+  "title": "Capability discovery receipt",
+  "description": "A non-executing, non-authorizing receipt for explaining what a bound .gooo declaration can support.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "source_digest",
+    "query_digest",
+    "catalog_digest",
+    "evidence_digest",
+    "toolchain_identity",
+    "non_executing",
+    "non_authorizing",
+    "next_operation"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "capability.discovery.v1"},
+    "status": {"type": "string", "enum": ["AVAILABLE", "DEFERRED", "UNKNOWN"]},
+    "source_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "declaration_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "query_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "catalog_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "evidence_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "toolchain_identity": {"type": "string", "minLength": 1},
+    "capability_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "first_missing_stage": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "next_operation": {"type": "string", "minLength": 1},
+    "non_executing": {"type": "boolean", "const": true},
+    "non_authorizing": {"type": "boolean", "const": true}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "AVAILABLE"}}},
+      "then": {
+        "required": ["declaration_digest", "capability_ids"],
+        "properties": {"first_missing_stage": {"type": "null"}}
+      }
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["DEFERRED", "UNKNOWN"]}}},
+      "then": {
+        "required": ["first_missing_stage"],
+        "properties": {"first_missing_stage": {"type": "string", "minLength": 1}}
+      }
+    }
+  ]
+}
