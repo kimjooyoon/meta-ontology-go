@@ -1,0 +1,37 @@
+module jev_domain_measurement_plan
+
+input declared_domain_scope
+input source_digest
+input capability_digest
+input observation_evidence
+input observed_use_cases
+input required_use_cases
+input investment_budget
+input estimated_investment
+
+status BOUND evidence is bound for a declared domain scope, not language completeness
+status DEFERRED required evidence, scope, or investment policy is unresolved
+status UNKNOWN domain identity or measurement evidence is missing
+
+field status
+field domain
+field scope_digest
+field source_digest
+field capability_digest
+field observation_evidence_digest
+field observed_use_cases
+field required_use_cases
+field remaining_use_cases
+field investment_budget
+field estimated_investment
+field decision
+field first_boundary
+field plan_digest
+
+constraint declared_scope_is_explicit
+constraint metric_is_evidence_coverage_not_completeness
+constraint remaining_use_cases_is_derived
+constraint budget_decision_is_explicit
+constraint unresolved_boundary_is_preserved
+constraint no_automatic_expansion
+constraint no_automatic_authorization
