@@ -4,8 +4,8 @@
 
 ## Validation
 
-- [ ] Feature PR targets `dev`; only an exact `dev` head may target
-      `main` for promotion.
+- [ ] Feature PR targets `dev`; promotion targets `main` from either the exact
+      `dev` head or an exact-`dev`-tree snapshot with a direct `main` parent.
 - [ ] `gofmt -l .` is empty.
 - [ ] `go vet ./...` passes.
 - [ ] `go test ./...` passes.
