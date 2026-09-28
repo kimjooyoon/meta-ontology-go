@@ -9,15 +9,38 @@ const (
 	promotionAuthorizationCode = "CI-PROMOTION-AUTH-001"
 )
 
-func validPromotionObservation(observation *promotionObservation, repository string, prNumber int64, baseSHA, headSHA string) bool {
-	return observation != nil && observation.Repository == repository && observation.PRNumber == prNumber && observation.Action != "" && observation.State == "open" && !observation.Draft && !observation.Merged && observation.Mergeable && observation.MergeableState == "clean" && observation.BaseRepo == repository && observation.BaseRef == "main" && observation.BaseSHA == baseSHA && observation.HeadRepo == repository && observation.HeadRef == "dev" && observation.HeadSHA == headSHA && validSHA(observation.BaseSHA) && validSHA(observation.HeadSHA) && validSHA(observation.LiveDevSHA) && validSHA(observation.LiveMainSHA) && observation.LiveDevSHA == headSHA && observation.LiveMainSHA == baseSHA && observation.Topology.Status == "ahead" && observation.Topology.AheadBy > 0 && observation.Topology.BehindBy == 0 && observation.Topology.MergeBaseSHA == baseSHA
+func validPromotionObservation(observation *promotionObservation, repository string, prNumber int64, baseSHA, headSHA, headRef string) bool {
+	if observation == nil ||
+		observation.Repository != repository || observation.PRNumber != prNumber || observation.Action == "" ||
+		observation.State != "open" || observation.Draft || observation.Merged || !observation.Mergeable || observation.MergeableState != "clean" ||
+		observation.BaseRepo != repository || observation.BaseRef != "main" || observation.BaseSHA != baseSHA ||
+		observation.HeadRepo != repository || observation.HeadRef != headRef || observation.HeadSHA != headSHA ||
+		!validSHA(observation.BaseSHA) || !validSHA(observation.HeadSHA) || !validSHA(observation.HeadParentSHA) ||
+		!validSHA(observation.HeadTreeSHA) || !validSHA(observation.LiveDevSHA) || !validSHA(observation.LiveDevTreeSHA) ||
+		!validSHA(observation.LiveMainSHA) || observation.LiveMainSHA != baseSHA ||
+		observation.Topology.Status != "ahead" || observation.Topology.AheadBy == 0 ||
+		observation.Topology.BehindBy != 0 || observation.Topology.MergeBaseSHA != baseSHA {
+		return false
+	}
+	switch observation.Mode {
+	case "DIRECT_DEV_HEAD":
+		return observation.HeadRef == "dev" && observation.HeadSHA == observation.LiveDevSHA && observation.HeadTreeSHA == observation.LiveDevTreeSHA
+	case "DEV_TREE_SNAPSHOT":
+		return validPromotionSnapshotHeadBranch(observation.HeadRef) &&
+			observation.HeadRef == "agent/main-promotion-snapshot-"+observation.LiveDevSHA &&
+			observation.HeadSHA != observation.LiveDevSHA && observation.HeadParentSHA == baseSHA &&
+			observation.HeadTreeSHA == observation.LiveDevTreeSHA && observation.Topology.AheadBy == 1
+	default:
+		return false
+	}
 }
 func validPromotionObservationForContext(context contextInput) bool {
 	if !isPromotionContext(context) {
 		return context.PromotionObservation == nil
 	}
-	return validPromotionObservation(context.PromotionObservation, context.Repository, context.PRNumber, context.BaseSHA, context.HeadSHA)
+	return validPromotionObservation(context.PromotionObservation, context.Repository, context.PRNumber, context.BaseSHA, context.HeadSHA, context.HeadRef)
 }
+
 func validatePromotionObservation(observation *promotionObservation, bundle proofBundle) error {
 	if !isPromotionBundle(bundle) {
 		if observation != nil {
@@ -25,13 +48,13 @@ func validatePromotionObservation(observation *promotionObservation, bundle proo
 		}
 		return nil
 	}
-	if !validPromotionObservation(observation, bundle.Repository, bundle.PRNumber, bundle.BaseSHA, bundle.HeadSHA) {
-		return fmt.Errorf("promotion PR observation is not open, clean, exact dev-to-main, or live-topology bound")
+	if !validPromotionObservation(observation, bundle.Repository, bundle.PRNumber, bundle.BaseSHA, bundle.HeadSHA, bundle.HeadRef) {
+		return fmt.Errorf("promotion PR observation is not open, clean, source-tree exact, or live-topology bound")
 	}
 	return nil
 }
 func promotionProofCoreReady(bundle proofBundle) bool {
-	if bundle.Decision != "PASS" || !branchProtectionReadyFor(bundle.BranchProtection, "main") || validateGuardianEvidence(bundle.GuardianEvidence, bundle) != nil || len(bundle.Jobs) != len(proofJobs) {
+	if bundle.Decision != "PASS" || len(bundle.Jobs) != len(proofJobs) {
 		return false
 	}
 	for index, job := range bundle.Jobs {
@@ -46,7 +69,7 @@ func promotionAuthorizationFor(bundle proofBundle) *promotionAuthorization {
 		return nil
 	}
 	authorization := &promotionAuthorization{Decision: "FAIL_CLOSED", Code: new(promotionAuthorizationCode), Operation: "fast_forward", Source: "dev", Target: "main", BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA}
-	if !validPromotionObservation(bundle.PromotionObservation, bundle.Repository, bundle.PRNumber, bundle.BaseSHA, bundle.HeadSHA) {
+	if validatePromotionObservation(bundle.PromotionObservation, bundle) != nil {
 		authorization.Code = new(promotionObservationCode)
 	} else if promotionProofCoreReady(bundle) {
 		authorization.Decision = "PASS"

@@ -15,3 +15,9 @@ The receipt proves only one registry-bound `int.add` value program at
 changes its semantic fingerprint at `1/1`; unknown attributes still fail
 closed at `1/1`. The core IR does not execute or generate code from the value
 program.
+
+When the default value-witness source is selected, the receipt also contains a
+`runtime_plan` object produced by invoking the native `go run` CLI on the
+runtime-binding example with input `41`. The detached plan evidence records the
+observed three operation applications, two deliveries, and `43` results for
+both consumers; it is validated before the witness receipt is written.

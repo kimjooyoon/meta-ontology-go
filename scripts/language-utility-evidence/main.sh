@@ -54,20 +54,6 @@ cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/graph-observation.json" "$out
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/program.gooo" "$out/program.gooo"
 
 digest() { printf 'sha256:%s' "$(sha256sum "$1" | cut -d' ' -f1)"; }
-github_curl() {
-  if test -n "${GITHUB_TOKEN:-}"; then
-    if curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "$@"; then
-      return 0
-    fi
-  fi
-  checkout_header="$(git config --local --get-all http.https://github.com/.extraheader 2>/dev/null | head -n 1 || true)"
-  if test -n "$checkout_header"; then
-    if curl -fsSL -H "$checkout_header" -H "Accept: application/vnd.github+json" "$@"; then
-      return 0
-    fi
-  fi
-  curl -fsSL -H "Accept: application/vnd.github+json" "$@"
-}
 stages='["SOURCE_PRESENT","SYNTAX_ACCEPTED","SEMANTIC_ACCEPTED","OUTCOME_OBSERVED","DETERMINISTIC_REPLAY","RESOURCE_OBSERVED","USER_ARTIFACT_VERIFIED"]'
 phase="OBSERVATION"
 debug_report_digest="$(digest "$out/evidence/debugging.json")"
@@ -130,38 +116,59 @@ jq -e --slurpfile generated "$out/gooo-graph.json" \
   '.graph_hash==$generated[0].graph_hash and .relations==$generated[0].relations and ([.nodes[]|{id,kind,name}]|sort_by(.id))==([$generated[0].nodes[]|{id,kind,name}]|sort_by(.id))' \
   "$out/final-gooo-graph.json"
 phase="ASSERT"
-jq -e '.decision=="PROGRESS_OBSERVED" and .resolution=="EXACT" and .summary.closed_cells==41 and .summary.open_cells==1 and .summary.cells_total==42 and .summary.complete_use_cases==5 and .summary.use_cases_total==6 and .summary.remaining_cells==1 and .summary.unknown_cells==0 and .summary.refuted_cells==0 and .summary.closed_delta_from_floor==2 and .summary.complete_use_case_floor_delta==1' "$out/report.json"
+jq -e --slurpfile contract examples/language-utility/contract.json '
+  $contract[0] as $contract |
+  .summary as $summary |
+  .contract_id == $contract.id and
+  ((.decision == "PROGRESS_OBSERVED") or (.decision == "UTILITY_COMPLETE")) and
+  .resolution == "EXACT" and
+  $summary.cells_total == (($contract.use_cases | length) * ($contract.stages | length)) and
+  $summary.use_cases_total == ($contract.use_cases | length) and
+  $summary.closed_floor == $contract.floors.closed_cells and
+  $summary.complete_use_case_floor == $contract.floors.complete_use_cases and
+  ($summary.closed_cells + $summary.open_cells + $summary.unknown_cells + $summary.refuted_cells) == $summary.cells_total and
+  $summary.remaining_cells == ($summary.cells_total - $summary.closed_cells) and
+  $summary.closed_delta_from_floor == ($summary.closed_cells - $contract.floors.closed_cells) and
+  $summary.complete_use_case_floor_delta == ($summary.complete_use_cases - $contract.floors.complete_use_cases) and
+  $summary.unknown_cells == 0 and $summary.refuted_cells == 0 and
+  $summary.observation_issues == 0 and $summary.repository_writes == 0 and
+  ((($summary.utility_complete == true) and (.decision == "UTILITY_COMPLETE")) or
+   (($summary.utility_complete == false) and (.decision == "PROGRESS_OBSERVED")))
+' "$out/report.json"
 
-phase="BASELINE_RECEIPT"
-baseline_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9690576734"
-github_curl "$baseline_api" > "$out/baseline-artifact.json"
-jq -e --arg name "language-utility-evidence-57ac9ec486bbca69e447a8eba94e0ce3cd03ced0" \
-  '.id==9690576734 and .name==$name and .digest=="sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5" and .size_in_bytes==6987602' \
-  "$out/baseline-artifact.json"
-github_curl -L "$baseline_api/zip" -o "$out/baseline-artifact.zip"
-baseline_zip_digest="$(digest "$out/baseline-artifact.zip")"
-test "$baseline_zip_digest" = "sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5"
-baseline_extract="$out/baseline-extract"
-mkdir -p "$baseline_extract"
-unzip -q "$out/baseline-artifact.zip" -d "$baseline_extract"
-baseline_report="$baseline_extract/report.json"
-test -f "$baseline_report"
-jq -e '.summary.closed_cells==39 and .summary.open_cells==3 and .summary.unknown_cells==0 and .summary.refuted_cells==0 and .summary.cells_total==42 and .summary.complete_use_cases==4 and .summary.use_cases_total==6 and .summary.remaining_cells==3' \
-  "$baseline_report"
-jq -n --slurpfile before "$baseline_report" --slurpfile after "$out/report.json" \
-  --arg artifact_id "9690576734" --arg artifact_name "language-utility-evidence-57ac9ec486bbca69e447a8eba94e0ce3cd03ced0" \
-  --arg artifact_digest "sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5" \
-  --argjson artifact_size 6987602 --arg zip_digest "$baseline_zip_digest" '
-  ($before[0].summary) as $b | ($after[0].summary) as $a |
-  {schema:"gooo/language-utility-progress-receipt/v1",
-   baseline_artifact:{id:($artifact_id|tonumber),name:$artifact_name,digest:$artifact_digest,size_bytes:$artifact_size,downloaded_zip_digest:$zip_digest},
-   contract:{cells_total_before:$b.cells_total,cells_total_after:$a.cells_total},
-   before:{closed:$b.closed_cells,open:($b.open_cells+$b.unknown_cells),unknown:$b.unknown_cells,refuted:$b.refuted_cells,complete_use_cases:$b.complete_use_cases,remaining:$b.remaining_cells},
-   after:{closed:$a.closed_cells,open:($a.open_cells+$a.unknown_cells),unknown:$a.unknown_cells,refuted:$a.refuted_cells,complete_use_cases:$a.complete_use_cases,remaining:$a.remaining_cells},
-   delta_closed:($a.closed_cells-$b.closed_cells),delta_open:(($a.open_cells+$a.unknown_cells)-($b.open_cells+$b.unknown_cells)),
-   delta_complete_use_cases:($a.complete_use_cases-$b.complete_use_cases),
+phase="FLOOR_RECEIPT"
+contract_file="examples/language-utility/contract.json"
+contract_digest="$(digest "$contract_file")"
+jq -n --slurpfile contract "$contract_file" --slurpfile report "$out/report.json" \
+  --arg contract_path "$contract_file" --arg contract_digest "$contract_digest" --arg subject "$HEAD_SHA" '
+  $contract[0] as $contract | $report[0].summary as $summary |
+  ($contract.floors) as $floors |
+  (($contract.use_cases | length) * ($contract.stages | length)) as $cells_total |
+  {schema:"gooo/language-utility-progress-receipt/v2",subject_sha:$subject,
+   contract:{path:$contract_path,digest:$contract_digest,cells_total:$cells_total},
+   floor:{closed_cells:$floors.closed_cells,remaining_cells:($cells_total-$floors.closed_cells),
+          complete_use_cases:$floors.complete_use_cases},
+   current:{closed_cells:$summary.closed_cells,open_cells:$summary.open_cells,
+            unknown_cells:$summary.unknown_cells,refuted_cells:$summary.refuted_cells,
+            complete_use_cases:$summary.complete_use_cases,remaining_cells:$summary.remaining_cells},
+   delta_from_floor:{closed_cells:$summary.closed_delta_from_floor,
+                     remaining_cells:($summary.remaining_cells-($cells_total-$floors.closed_cells)),
+                     complete_use_cases:$summary.complete_use_case_floor_delta},
+   comparison_basis:"VERSIONED_CONTRACT_FLOOR",
    performance_comparison:"NONE_NO_COMPARABLE_PERFORMANCE_PAIR"}' > "$out/progress-receipt.json"
-jq -e '.contract.cells_total_before==42 and .contract.cells_total_after==42 and .before=={closed:39,open:3,unknown:0,refuted:0,complete_use_cases:4,remaining:3} and .after=={closed:41,open:1,unknown:0,refuted:0,complete_use_cases:5,remaining:1} and .delta_closed==2 and .delta_open==-2 and .delta_complete_use_cases==1 and .performance_comparison=="NONE_NO_COMPARABLE_PERFORMANCE_PAIR"' "$out/progress-receipt.json"
+jq -e --slurpfile contract "$contract_file" --arg contract_digest "$contract_digest" '
+  $contract[0] as $contract |
+  .contract.digest == $contract_digest and
+  .contract.cells_total == (($contract.use_cases | length) * ($contract.stages | length)) and
+  .floor.closed_cells == $contract.floors.closed_cells and
+  .floor.complete_use_cases == $contract.floors.complete_use_cases and
+  .delta_from_floor.closed_cells == (.current.closed_cells - .floor.closed_cells) and
+  .delta_from_floor.remaining_cells == (.current.remaining_cells - .floor.remaining_cells) and
+  .delta_from_floor.complete_use_cases == (.current.complete_use_cases - .floor.complete_use_cases) and
+  .current.unknown_cells == 0 and .current.refuted_cells == 0 and
+  .comparison_basis == "VERSIONED_CONTRACT_FLOOR" and
+  .performance_comparison == "NONE_NO_COMPARABLE_PERFORMANCE_PAIR"
+' "$out/progress-receipt.json"
 
 phase="INVENTORY"
 inventory_files=()
@@ -198,8 +205,8 @@ phase="SUMMARY"
   echo '## Gooo language utility portfolio'
   jq -r '"- progress: \(.summary.closed_cells)/\(.summary.cells_total) cells (\(.summary.progress_basis_points) bps)\n- complete use cases: \(.summary.complete_use_cases)/\(.summary.use_cases_total)\n- remaining: \(.summary.remaining_cells)\n- observation/utility/promotion complete: \(.summary.observation_complete)/\(.summary.utility_complete)/\(.summary.promotion_complete)\n- decision: \(.decision) / \(.resolution)\n- receipt: \(.digest)"' "$out/report.json"
   echo
-  echo '### Exact progress receipt'
-  jq -r '"- baseline artifact: \(.baseline_artifact.id) / \(.baseline_artifact.name) / \(.baseline_artifact.digest) / \(.baseline_artifact.size_bytes) bytes\n- closed: \(.before.closed) -> \(.after.closed)\n- open: \(.before.open) -> \(.after.open)\n- complete use cases: \(.before.complete_use_cases) -> \(.after.complete_use_cases)\n- remaining: \(.before.remaining) -> \(.after.remaining)\n- deltas: closed \(.delta_closed), open \(.delta_open), complete use cases \(.delta_complete_use_cases)\n- performance comparison: \(.performance_comparison)"' "$out/progress-receipt.json"
+  echo '### System-derived progress receipt'
+  jq -r '"- contract digest: \(.contract.digest)\n- comparison basis: \(.comparison_basis)\n- closed cells: floor \(.floor.closed_cells), current \(.current.closed_cells), delta \(.delta_from_floor.closed_cells)\n- remaining cells: floor \(.floor.remaining_cells), current \(.current.remaining_cells), delta \(.delta_from_floor.remaining_cells)\n- complete use cases: floor \(.floor.complete_use_cases), current \(.current.complete_use_cases), delta \(.delta_from_floor.complete_use_cases)\n- performance comparison: \(.performance_comparison)"' "$out/progress-receipt.json"
   echo
   echo '### Debugging evidence'
   jq -r '"- replay: \(.replay.equal) / \(.replay.schema)\n- runtime observations: \(.summary.resource_observations)\n- source digests: \(.runtime_observations[0].source_raw_digest), \(.runtime_observations[1].source_raw_digest)\n- semantic digests: \(.runtime_observations[0].source_semantic_digest), \(.runtime_observations[1].source_semantic_digest)\n- binary digest: \(.runtime_observations[0].binary_digest)\n- arguments: \(.runtime_observations[0].arguments | join(" ")) ; \(.runtime_observations[1].arguments | join(" "))\n- subject SHA: \(.runtime_observations[0].subject_sha)\n- output digests: \(.runtime_observations[0].output_digest), \(.runtime_observations[1].output_digest)\n- wall_ns/wall_ms: \(.runtime_observations[0].wall_ns)/\(.runtime_observations[0].wall_ms), \(.runtime_observations[1].wall_ns)/\(.runtime_observations[1].wall_ms)\n- peak RSS KiB: \(.runtime_observations[0].peak_rss_kib), \(.runtime_observations[1].peak_rss_kib)\n- build wall_ms/RSS KiB: \(.build.wall_ms)/\(.build.peak_rss_kib)\n- evaluator build wall_ms/RSS KiB: \(.evaluator_build.wall_ms)/\(.evaluator_build.peak_rss_kib)\n- test wall_ms/RSS KiB: \(.test.wall_ms)/\(.test.peak_rss_kib)\n- cache states: \(.build.cache_state) ; \(.evaluator_build.cache_state) ; \(.test.cache_state)\n- Go runtime receipts: \(.summary.compiler.go127_runtimes)\n- Gooo graph activities/edges: \(.graph.activity_count)/\(.graph.edge_count)\n- Gooo debug activities, outputs, used/generated edges: \(.graph.debug_activity_count)/\(.graph.debug_output_count)/\(.graph.debug_used_edge_count)/\(.graph.debug_generated_edge_count)"' "$out/evidence/debugging.json"

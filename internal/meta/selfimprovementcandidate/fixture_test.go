@@ -19,8 +19,19 @@ activity SelectMissingCapability(ReadOnlyImprovementInput) -> MissingCapability
 activity ProposeNonExecutingCandidate(MissingCapability) -> NonExecutingImprovementCandidate
 `
 
+const valueWitnessSource = `package valuewitness
+namespace valuewitness
+
+entity Integer id "gooo://value-witness/entity/integer"
+
+activity Increment(Integer) -> Integer computes "int.add:1"
+`
+
 func validRepository() fstest.MapFS {
-	return fstest.MapFS{candidateContractPath: &fstest.MapFile{Data: []byte(candidateContract), Mode: 0o444}}
+	return fstest.MapFS{
+		candidateContractPath:                       &fstest.MapFile{Data: []byte(candidateContract), Mode: 0o444},
+		"examples/language-value-witness/main.gooo": &fstest.MapFile{Data: []byte(valueWitnessSource), Mode: 0o444},
+	}
 }
 
 func sourceBytes(source sourceObservation) []byte {

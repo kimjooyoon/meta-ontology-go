@@ -55,7 +55,7 @@ func validProofFailureInput() failureInput {
 	input := validFailureInput()
 	input.Code = "CI-GATE-001"
 	input.FailureCodes = []string{"CI-GATE-001", "CI-PROVENANCE-001"}
-	input.Rejections = []string{"branch_protection_missing", "provenance_evidence_not_verified"}
+	input.Rejections = []string{"promotion_observation_not_verified", "provenance_evidence_not_verified"}
 	input.MissingReasons = missingReasons{Protection: "protection observer not provisioned", Provenance: "provenance observer not provisioned"}
 	input.ArtifactStatus = "verified"
 	input.ArtifactReason = "proof_artifact_current_and_bound"

@@ -61,6 +61,20 @@ func resolveArtifact(artifacts []artifactAPI, run workflowRunAPI,
 	return bound[0], nil
 }
 
+func artifactStats(artifacts []artifactAPI, name string) (int, int) {
+	instances := 0
+	types := map[string]bool{}
+	for _, artifact := range artifacts {
+		if artifact.Name == name && !artifact.Expired {
+			instances++
+		}
+		if artifact.Name != "" {
+			types[artifact.Name] = true
+		}
+	}
+	return instances, len(types)
+}
+
 func validateArtifact(artifact artifactAPI) error {
 	if artifact.Expired {
 		return fmt.Errorf("LOCATE/validate-artifact-metadata/ARTIFACT_EXPIRED")

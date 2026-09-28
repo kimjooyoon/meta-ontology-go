@@ -1,6 +1,6 @@
 package main
 
-const failureSchema = "gooo/ci-failure/v1"
+const failureSchema = "gooo/ci-failure/v2"
 const failureCatalogPath = "scripts/ci-proof/docs/failure-reasons.md"
 
 type failureJob struct {
@@ -12,21 +12,28 @@ type failureJob struct {
 	RunID      int64  `json:"run_id"`
 	RunAttempt int64  `json:"run_attempt"`
 }
+type terminalFailureEvidence struct {
+	Job            failureJob `json:"job"`
+	Code           string     `json:"code"`
+	Classification string     `json:"classification"`
+	Reason         string     `json:"reason"`
+}
 type failureInput struct {
-	Code                 string          `json:"code"`
-	FailureCodes         []string        `json:"failure_codes"`
-	Message              string          `json:"message"`
-	Remediation          string          `json:"remediation"`
-	OwnerBranch          string          `json:"owner_branch"`
-	Rejections           []string        `json:"rejections"`
-	MissingReasons       missingReasons  `json:"missing_reasons"`
-	Artifacts            []artifactInput `json:"artifacts"`
-	ProofArtifact        *artifactInput  `json:"proof_artifact"`
-	ArtifactStatus       string          `json:"artifact_status"`
-	ArtifactReason       string          `json:"artifact_reason"`
-	TerminalFailures     []failureJob    `json:"terminal_failures"`
-	TerminalFailureCodes []string        `json:"terminal_failure_codes"`
-	Job                  failureJob      `json:"job"`
+	Code                    string                    `json:"code"`
+	FailureCodes            []string                  `json:"failure_codes"`
+	Message                 string                    `json:"message"`
+	Remediation             string                    `json:"remediation"`
+	HeadBranch              string                    `json:"head_branch"`
+	Rejections              []string                  `json:"rejections"`
+	MissingReasons          missingReasons            `json:"missing_reasons"`
+	Artifacts               []artifactInput           `json:"artifacts"`
+	ProofArtifact           *artifactInput            `json:"proof_artifact"`
+	ArtifactStatus          string                    `json:"artifact_status"`
+	ArtifactReason          string                    `json:"artifact_reason"`
+	TerminalFailures        []failureJob              `json:"terminal_failures"`
+	TerminalFailureCodes    []string                  `json:"terminal_failure_codes"`
+	TerminalFailureEvidence []terminalFailureEvidence `json:"terminal_failure_evidence"`
+	Job                     failureJob                `json:"job"`
 }
 type failureBinding struct {
 	Repository  string
@@ -41,7 +48,7 @@ type failureBinding struct {
 	RunID       int64
 	RunAttempt  int64
 	Actor       string
-	OwnerBranch string
+	HeadBranch  string
 }
 type failureProvenance struct {
 	WasGeneratedBy    string   `json:"wasGeneratedBy"`

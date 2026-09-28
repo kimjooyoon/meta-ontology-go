@@ -11,8 +11,11 @@ const (
 	ValueIndicatorCount  = 18
 )
 
+const RegisteredValueOperationScope = "REGISTERED_VALUE_OPERATION"
+
 type Report struct {
 	Schema              string                 `json:"schema"`
+	Scope               string                 `json:"scope"`
 	Decision            string                 `json:"decision"`
 	Reason              string                 `json:"reason"`
 	Resolution          string                 `json:"resolution"`
@@ -37,6 +40,14 @@ type Report struct {
 	NonClaims           []string               `json:"non_claims"`
 	Authority           Authority              `json:"authority"`
 	Digest              string                 `json:"digest"`
+}
+
+func DefaultNonClaims() []string {
+	return []string{
+		"general expression language", "arbitrary value types", "core IR execution or code generation",
+		"runtime memory or performance bounds", "repository mutation, promotion, or automatic adoption",
+		"handwritten Go-body execution", "external effects",
+	}
 }
 
 type RegistrySummary struct {

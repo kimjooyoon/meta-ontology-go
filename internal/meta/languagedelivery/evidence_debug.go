@@ -1,7 +1,10 @@
 package languagedelivery
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/languagedebug"
+
 type DebugReceipt struct {
 	Schema            string       `json:"schema"`
+	Scope             string       `json:"scope"`
 	SubjectSHA        string       `json:"subject_sha"`
 	Decision          string       `json:"decision"`
 	Resolution        string       `json:"resolution"`
@@ -29,6 +32,10 @@ func inspectDebug(data []byte, head string, receipt *DebugReceipt, entry Manifes
 	observation.MutationAuthority = receipt.MutationAuthority || receipt.Summary.Effects.MutationAuthority
 	if receipt.SubjectSHA != head || receipt.Summary.Unknowns != 0 {
 		return headUnknown(observation)
+	}
+	if receipt.Scope != languagedebug.SourceExecutionScope {
+		observation.State, observation.Reason = "UNKNOWN", "DEBUG_SCOPE_UNKNOWN"
+		return observation
 	}
 	return finalizeObservation(observation, receipt.Schema, "gooo/language-debug-experiment-report/v1")
 }

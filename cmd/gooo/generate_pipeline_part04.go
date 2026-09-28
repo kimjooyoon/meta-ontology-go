@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func generateWithDeadline(file *syntax.File, previous []byte, timeout time.Duration) (generationResult, error) {
+func generateWithDeadlineCore(file *syntax.File, previous []byte, timeout time.Duration) (generationResult, error) {
 	if timeout <= 0 {
 		return generationResult{}, errCommandDeadline
 	}

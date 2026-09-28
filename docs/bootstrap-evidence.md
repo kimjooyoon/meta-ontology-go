@@ -93,9 +93,9 @@ meaning change.
 
 Promotion is a CI-only state transition, not a field a fixture may set to true.
 These fixtures never authorize a branch update. The current protected-branch
-promotion contract is the exact same-repository `dev`-to-`main` route documented
-in [governance.md](governance.md); its proof is fail-closed whenever required
-evidence is deferred or absent.
+promotion contract is the same-repository `main` PR from `dev` or its narrowly
+bound exact-tree snapshot, as documented in [governance.md](governance.md); its
+proof is fail-closed whenever required evidence is deferred or absent.
 
 ## Fixtures and execution
 

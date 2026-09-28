@@ -30,7 +30,14 @@ func Evaluate(filesystem fs.FS, sourcePath, headSHA string) Report {
 	report.CoreIRFingerprint = observed.actualCore.fingerprint
 	report.BaselineCoreProgram = observed.actualCore.programs[BaselineActivity]
 	report.ExtensionCoreProgram = observed.actualCore.programs[ExtensionActivity]
-	report.OperationSpecs = valueexecution.CanonicalOperationSpecs()
+	specs := valueexecution.CanonicalOperationSpecs()
+	report.OperationSpecs = make([]valueexecution.OperationSpec, 0, 1)
+	for _, spec := range specs {
+		if spec.ID == "int.add" {
+			report.OperationSpecs = append(report.OperationSpecs, spec)
+			break
+		}
+	}
 	report.Baseline, report.Extension = observed.baseline, observed.extension
 	report.Improvement = Improvement{ID: "source-only-catalog-extension", Before: coordinate(0, 1), After: coordinate(boolInt(observed.extensionPresent), 1), BeforeEvidence: observed.beforeReason, AfterEvidence: report.SourceDigest}
 	report.Summary = Summary{

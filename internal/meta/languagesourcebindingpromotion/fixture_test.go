@@ -7,7 +7,7 @@ import (
 
 func fixtureInput() Input {
 	head := strings.Repeat("a", 40)
-	receipt := receiptEnvelope{Schema: "gooo/source-execution-receipt/v1", Decision: DecisionPass,
+	receipt := receiptEnvelope{Schema: "gooo/source-execution-receipt/v1", Scope: sourceReceiptScope, Decision: DecisionPass,
 		Reason: "SOURCE_ACTIVITY_EXECUTED", Resolution: ResolutionExact, Filename: "examples/billing/main.gooo",
 		SourceDigest: "sha256:" + strings.Repeat("b", 64), SemanticDigest: "sha256:" + strings.Repeat("c", 64),
 		Entry: json.RawMessage(`{}`), Events: json.RawMessage(`[]`), Diagnostics: json.RawMessage(`[]`), Effects: json.RawMessage(`{}`)}

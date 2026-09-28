@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+var canonicalRequiredChecks = []string{"gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"}
+
 const runtimeIntervalModel = "github-rest-iso8601-second-value-v1"
 
 const runtimeIntervalModelDefinition = "timestamp values=UTC ISO-8601 second values; wall_ms=reported endpoint delta; physical elapsed bounds=not established; parallel sums are not critical-path claims"
@@ -18,6 +20,8 @@ const runtimeIntervalModelDefinition = "timestamp values=UTC ISO-8601 second val
 type sourceRunInput struct {
 	ID             int64  `json:"id"`
 	Name           string `json:"name"`
+	WorkflowName   string `json:"workflow_name"`
+	WorkflowPath   string `json:"path"`
 	Event          string `json:"event"`
 	Ref            string `json:"ref"`
 	HeadBranch     string `json:"head_branch"`
@@ -114,7 +118,7 @@ func buildReport(config Config) (Report, error) {
 		SourceWorkflow: manifest.Workflow, SourceEvent: source.Event, SourceRef: source.Ref,
 		HeadSHA: source.HeadSHA, SourceRunConclusion: source.Conclusion, SourceRunID: source.ID, SourceRunAttempt: source.RunAttempt,
 		SourceRunURL: source.HTMLURL, WorkflowSourcePath: manifest.WorkflowSource, WorkflowSourceDigest: digestIfPresent(workflowBytes),
-		Window: window, RuntimeResolution: runtimeResolution(window), Jobs: observedJobs, Operations: operations,
+		Window: window, GateBottleneck: observeGateBottleneck(observedJobs, source.HeadSHA), RuntimeResolution: runtimeResolution(window), Jobs: observedJobs, Operations: operations,
 		Accounting: accounting, Reuse: reuse, OpenTofu: openTofu,
 		OperationManifestDigest: digestBytes(manifestBytes),
 		Graph:                   graph, TimeCausality: timeCausality, RepositoryStatus: repositoryStatus, RepositoryWrites: repositoryStatus.Writes, LocalTestExecutions: 0,
@@ -205,6 +209,59 @@ func observeJobsWithSource(input []APIJob, source sourceRunInput) ([]JobObservat
 	window.JobWallMSNominal, window.StepWallMSNominal = runtimeNominalForJobs(result)
 	sort.Strings(window.RuntimeRejectionReasons)
 	return result, window, nil
+}
+
+func observeGateBottleneck(jobs []JobObservation, headSHA string) GateBottleneck {
+	result := GateBottleneck{State: "UNKNOWN", RequiredChecks: len(canonicalRequiredChecks)}
+	byName := make(map[string]JobObservation, len(canonicalRequiredChecks))
+	for _, job := range jobs {
+		for _, required := range canonicalRequiredChecks {
+			if job.Name != required {
+				continue
+			}
+			if _, exists := byName[required]; exists {
+				result.Reason = "REQUIRED_CHECK_AMBIGUOUS"
+				return result
+			}
+			byName[required] = job
+		}
+	}
+	if len(byName) != len(canonicalRequiredChecks) {
+		result.Reason = "REQUIRED_CHECK_MISSING"
+		result.ObservedChecks = len(byName)
+		return result
+	}
+	ordered := make([]JobObservation, 0, len(canonicalRequiredChecks))
+	for _, required := range canonicalRequiredChecks {
+		job := byName[required]
+		if job.Status != "completed" || job.HeadSHA != headSHA || job.Skipped {
+			result.Reason = "REQUIRED_CHECK_NOT_TERMINAL_OR_EXACT_HEAD"
+			result.ObservedChecks = len(ordered)
+			return result
+		}
+		if job.Unknown != nil || job.RejectionReason != "" || job.BelowSourceResolution {
+			result.Reason = "REQUIRED_CHECK_RUNTIME_UNRESOLVED"
+			result.ObservedChecks = len(ordered)
+			return result
+		}
+		ordered = append(ordered, job)
+	}
+	sort.Slice(ordered, func(i, j int) bool {
+		if ordered[i].WallMS != ordered[j].WallMS {
+			return ordered[i].WallMS > ordered[j].WallMS
+		}
+		return ordered[i].Name < ordered[j].Name
+	})
+	result.State = "OBSERVED"
+	result.ObservedChecks = len(ordered)
+	result.SlowestCheck = ordered[0].Name
+	result.SlowestWallMS = ordered[0].WallMS
+	if len(ordered) > 1 {
+		result.NextSlowestCheck = ordered[1].Name
+		result.NextSlowestWallMS = ordered[1].WallMS
+		result.SlowestCheckExcessWallMS = ordered[0].WallMS - ordered[1].WallMS
+	}
+	return result
 }
 
 func observeSteps(input []APIStep) ([]StepObservation, int64, error) {

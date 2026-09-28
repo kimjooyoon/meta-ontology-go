@@ -5,13 +5,13 @@ import (
 	"testing"
 )
 
-func TestFailureManifestRejectsTamperedOwnerBinding(t *testing.T) {
+func TestFailureManifestRejectsTamperedHeadBinding(t *testing.T) {
 	binding := validFailureBinding()
 	manifest, err := buildFailureManifest(validFailureInput(), binding)
 	if err != nil {
 		t.Fatal(err)
 	}
-	manifest.OwnerBranch = "agent/other"
+	manifest.HeadBranch = "agent/other"
 	if err := validateFailureManifest(manifest, binding); err == nil {
 		t.Fatal("tampered failure owner branch was accepted")
 	}

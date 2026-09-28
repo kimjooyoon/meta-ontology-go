@@ -9,6 +9,7 @@ type Proof struct {
 
 type Report struct {
 	Schema                  string      `json:"schema"`
+	Scope                   string      `json:"scope"`
 	Decision                string      `json:"decision"`
 	Resolution              string      `json:"resolution"`
 	Reason                  string      `json:"reason"`

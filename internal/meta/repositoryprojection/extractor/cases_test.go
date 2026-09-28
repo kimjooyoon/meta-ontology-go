@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -146,5 +147,47 @@ func TestExtractionReplayIsByteIdentical(t *testing.T) {
 		if !bytes.Equal(first[path], second[path]) {
 			t.Fatalf("nondeterministic output for %s", path)
 		}
+	}
+}
+
+func TestExtractionDecomposesSafeOversizedFunction(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	source := "package p\n\nfunc F() {\n" + strings.Repeat("\t_ = 1\n", 65) + "\tif true {\n" + strings.Repeat("\t\t_ = 1\n", 12) + "\t}\n}\n"
+	if err := os.WriteFile(filepath.Join(root, "x.go"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	result, err := ExtractWithResult(root, "x.go")
+	if err != nil {
+		t.Fatalf("safe oversized function extraction failed: %v", err)
+	}
+	if len(result.Paths) < 2 || !slices.Contains(result.Operations, "extract-function") {
+		t.Fatalf("result=%+v, want decomposed helper and extract-function operation", result)
+	}
+	for path, data := range result.Generated {
+		if _, err := parser.ParseFile(token.NewFileSet(), path, data, parser.ParseComments); err != nil {
+			t.Fatalf("generated helper %s is not parseable: %v", path, err)
+		}
+	}
+}
+
+func TestExtractionDecompositionCapacityRemainsRefuted(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	source := "package p\n\nfunc F() {\n\tdefer func() {}()\n" + strings.Repeat("\t_ = 1\n", 82) + "}\n"
+	if err := os.WriteFile(filepath.Join(root, "x.go"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := ExtractWithResult(root, "x.go")
+	var failure Failure
+	if !errors.As(err, &failure) || failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" || failure.UnknownClass != "KNOWN_CONTRADICTION" || failure.NextOperation != "report-counterexample" {
+		t.Fatalf("failure=%v, want REFUTED capacity contradiction", err)
+	}
+	if len(failure.Diagnostics) == 0 || !strings.Contains(failure.Diagnostics[0], "declaration=func:F") {
+		t.Fatalf("failure diagnostics=%v, want function counterexample", failure.Diagnostics)
 	}
 }

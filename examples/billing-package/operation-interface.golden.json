@@ -4,7 +4,7 @@
   "resolution": "INTERFACE_ONLY",
   "reason": "OPERATION_INTERFACE_EMITTED",
   "kind": "operation-interface",
-  "subject_digest": "sha256:14d4ce3669226139d0cdfd813d75fd8cf1afe4f006dd0173ea6a41a9ec08174f",
+  "subject_digest": "sha256:8f1117c151aa2daaf8080cb5234056f46d5df096424807f5d9c6b88e1b851659",
   "package": {
     "path": "billing-package",
     "name": "billing",
@@ -39,5 +39,5 @@
     "repository_writes": 0,
     "mutation_authority": false
   },
-  "digest": "sha256:d37a4ae45c69e4164610fab5b1b7447340b6cee23ac73dd2ed1ff4f7a98c7953"
+  "digest": "sha256:5888d8e9bc8e96f78dab7a75d62c1b79e3c552ee9e7863c8e90ce65ff29d8d66"
 }

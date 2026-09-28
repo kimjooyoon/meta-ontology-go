@@ -15,8 +15,8 @@ func failureScope(binding failureBinding) (string, error) {
 		return "pr", nil
 	}
 	if binding.Event == "push" && (binding.BaseRef == "dev" || binding.BaseRef == "main") {
-		if binding.EventRef != "refs/heads/"+binding.BaseRef || binding.OwnerBranch != binding.BaseRef {
-			return "", fmt.Errorf("protected push owner must equal the exact protected branch")
+		if binding.EventRef != "refs/heads/"+binding.BaseRef || binding.HeadBranch != binding.BaseRef {
+			return "", fmt.Errorf("protected push head branch must equal the exact protected branch")
 		}
 		return binding.BaseRef, nil
 	}

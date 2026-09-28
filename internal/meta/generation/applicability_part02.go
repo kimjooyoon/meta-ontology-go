@@ -3,7 +3,9 @@ package generation
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
 func validActionApplicability(action Action) bool {
-	return action.SubjectKind != "" &&
+	return action.SubjectKind != "" && action.InputSubjectKind != "" &&
+		action.SubjectKind == action.InputSubjectKind &&
+		validDigest(action.InputContractSourceDigest) && validDigest(action.InputContractSemanticDigest) &&
 		action.Applicability == sourcepolicy.ApplicabilityApplicable &&
 		action.ApplicabilityRule == sourcepolicy.ApplicabilityRuleDefault &&
 		action.ApplicabilityReason == sourcepolicy.ApplicabilityReasonCatalogApplicable &&

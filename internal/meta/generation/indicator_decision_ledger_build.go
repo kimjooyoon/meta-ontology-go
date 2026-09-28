@@ -7,6 +7,10 @@ import (
 )
 
 func buildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions []Action, deferredIDs []string) (IndicatorDecisionLedger, error) {
+	return buildIndicatorDecisionLedgerWithRefuted(indicators, actions, deferredIDs, nil)
+}
+
+func buildIndicatorDecisionLedgerWithRefuted(indicators []sourcepolicy.Indicator, actions []Action, deferredIDs, refutedIDs []string) (IndicatorDecisionLedger, error) {
 	actionsByIndicator, err := indexLedgerActions(actions)
 	if err != nil {
 		return IndicatorDecisionLedger{}, err
@@ -15,7 +19,11 @@ func buildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions [
 	if err != nil {
 		return IndicatorDecisionLedger{}, err
 	}
-	entries, selectedCount, deferredCount, err := buildLedgerEntries(indicators, actionsByIndicator, deferred)
+	refuted, err := indexRefutedIndicatorIDs(refutedIDs)
+	if err != nil {
+		return IndicatorDecisionLedger{}, err
+	}
+	entries, selectedCount, deferredCount, refutedCount, err := buildLedgerEntriesWithRefuted(indicators, actionsByIndicator, deferred, refuted)
 	if err != nil {
 		return IndicatorDecisionLedger{}, err
 	}
@@ -27,6 +35,7 @@ func buildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions [
 		IndicatorCount: len(entries),
 		SelectedCount:  selectedCount,
 		DeferredCount:  deferredCount,
+		RefutedCount:   refutedCount,
 		Entries:        entries,
 	}
 	for _, entry := range entries {
