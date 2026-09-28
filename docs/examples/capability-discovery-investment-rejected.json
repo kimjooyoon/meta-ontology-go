@@ -1,0 +1,31 @@
+{
+  "decision_id": "capability-discovery-utility-reject-20260928",
+  "domain_id": "gooo.declaration.capability-discovery",
+  "declaration_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+  "baseline_receipt_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+  "candidate_slice": [
+    "unbound_capability_alias",
+    "inferred_completeness_claim",
+    "non_replayable_evidence"
+  ],
+  "value_rationale": "Reject an expansion that would turn a catalog match into an unsupported completeness or authorization claim.",
+  "unknown_identifiers": [
+    "declaration_binding",
+    "evidence_replay",
+    "semantic_utility"
+  ],
+  "estimated_cost": {
+    "engineering_effort": 0,
+    "ci_duration_seconds": 0,
+    "resource_cost": 0
+  },
+  "expected_change": {
+    "metric": "evidence_completeness",
+    "minimum_delta": 0,
+    "new_evidence_required": true
+  },
+  "falsifier": "A later bounded usage slice supplies declaration-bound, replayable evidence and demonstrates utility without the rejected expansion.",
+  "rollback_condition": "A rejected slice is silently reintroduced without new evidence or changes status to AVAILABLE through cache or inferred defaults.",
+  "decision": "REJECT",
+  "evidence_digest": "3333333333333333333333333333333333333333333333333333333333333333"
+}
