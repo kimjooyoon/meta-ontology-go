@@ -50,6 +50,7 @@ func validSnapshotPromotionBundleFixture() proofBundle {
 	bundle.HeadRef = "agent/main-promotion-snapshot-" + observation.LiveDevSHA
 	bundle.CheckoutRef = bundle.HeadSHA
 	bundle.WorkflowSHA = bundle.HeadSHA
+	bundle.ArtifactProvenance = artifactProvenanceFixture(bundle.BaseSHA, bundle.HeadSHA)
 	for index := range bundle.Jobs {
 		bundle.Jobs[index].HeadSHA = bundle.HeadSHA
 	}

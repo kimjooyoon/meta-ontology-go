@@ -20,7 +20,7 @@ func TestPromotionOperatorRejectsDraftDirtyOrStaleObservation(t *testing.T) {
 		func(observation *promotionObservation) { observation.MergeableState = "behind" },
 		func(observation *promotionObservation) { observation.LiveDevSHA = strings.Repeat("f", 40) },
 		func(observation *promotionObservation) { observation.LiveDevTreeSHA = strings.Repeat("f", 40) },
-		func(observation *promotionObservation) { observation.HeadParentSHA = strings.Repeat("f", 40) },
+		func(observation *promotionObservation) { observation.Topology.MergeBaseSHA = strings.Repeat("f", 40) },
 		func(observation *promotionObservation) { observation.HeadTreeSHA = strings.Repeat("f", 40) },
 	}
 	for index, mutate := range mutations {
