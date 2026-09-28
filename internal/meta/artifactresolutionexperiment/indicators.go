@@ -6,8 +6,8 @@ func buildIndicators(input Input) []Indicator {
 	return []Indicator{
 		metric("artifact.manifest", "OUTCOME", "FOUNDATION", "project-full-receipt", boolInt(manifestEmitted(input)), 1),
 		metric("artifact.interface", "OUTCOME", "FOUNDATION", "project-public-interface", boolInt(interfaceEmitted(input)), 1),
-		metric("golden.manifest", "OUTCOME", "COHERENCE", "compare-manifest-golden", boolInt(reflect.DeepEqual(input.Manifest, input.ManifestGolden)), 1),
-		metric("golden.interface", "OUTCOME", "COHERENCE", "compare-interface-golden", boolInt(reflect.DeepEqual(input.Interface, input.InterfaceGolden)), 1),
+		metric("golden.manifest", "OUTCOME", "COHERENCE", "compare-manifest-golden", boolInt(goldenEqual(input.Manifest, input.ManifestGolden)), 1),
+		metric("golden.interface", "OUTCOME", "COHERENCE", "compare-interface-golden", boolInt(goldenEqual(input.Interface, input.InterfaceGolden)), 1),
 		metric("replay.manifest", "OUTCOME", "REGRESSION", "replay-full-receipt", boolInt(reflect.DeepEqual(input.Manifest, input.ManifestReplay)), 1),
 		metric("replay.interface", "OUTCOME", "REGRESSION", "replay-public-interface", boolInt(reflect.DeepEqual(input.Interface, input.InterfaceReplay)), 1),
 		metric("coherence.operation", "OUTCOME", "COHERENCE", "compare-operation-semantics", boolInt(operationCoherent(input)), 1),

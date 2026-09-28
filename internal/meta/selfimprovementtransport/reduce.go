@@ -28,6 +28,14 @@ func reduce(report *Report) {
 	case firstFalse != nil:
 		report.Decision, report.Resolution = DecisionFailClosed, ResolutionLower
 		report.Reason, report.Coordinate = ReasonKnownMismatch, firstFalse.Coordinate
+	case report.Provenance.State == ResolutionRefuted:
+		report.Decision, report.Resolution = DecisionFailClosed, ResolutionLower
+		report.Reason = ReasonKnownMismatch
+		report.Coordinate = Coordinate{Stage: report.Provenance.Stage, Step: report.Provenance.Step}
+	case report.Provenance.State == ResolutionUnknown:
+		report.Decision, report.Resolution = DecisionObserved, ResolutionLower
+		report.Reason = report.Provenance.Reason
+		report.Coordinate = Coordinate{Stage: report.Provenance.Stage, Step: report.Provenance.Step}
 	case firstUnknown != nil:
 		report.Decision, report.Resolution = DecisionObserved, ResolutionLower
 		report.Reason, report.Coordinate = firstUnknown.Reason, firstUnknown.Coordinate

@@ -2,7 +2,6 @@ package policycompilation
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -112,7 +111,7 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 	if receipt.Summary.CaseCount != ExpectedCaseCount || receipt.Summary.CanonicalCaseDenominator != ExpectedCaseCount || receipt.Summary.GeneratedIndependentEquivalent != ExpectedCaseCount || receipt.Summary.SourceAllEquivalent != ExpectedCaseCount || receipt.Summary.ValidatorExpectationsConfirmed != ExpectedCaseCount {
 		return errors.New("receipt summary does not cover 3/3/3 canonical cases")
 	}
-	return nil
+	return verifyReceiptReconstruction(receipt, policy, artifact, judgeHash, cases)
 }
 
 func verifyWriteSet(observation WriteSetObservation) error {
@@ -230,14 +229,52 @@ func verifyCaseClaimEvents(ledger ClaimLedger, caseIndex int, stored CaseReceipt
 
 func DecodeReceipt(data []byte) (Receipt, error) {
 	var receipt Receipt
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&receipt); err != nil {
+	if err := decodeStrictJSON(data, &receipt); err != nil {
 		return Receipt{}, err
 	}
-	var trailing any
-	if err := decoder.Decode(&trailing); err == nil {
-		return Receipt{}, errors.New("receipt contains trailing JSON")
-	}
 	return receipt, nil
+}
+
+// verifyReceiptReconstruction checks source-derived internal consistency, not
+// external execution attestation. Generated observations remain caller inputs;
+// VerifyReceipt has already compared them with both source interpreters.
+func verifyReceiptReconstruction(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifact, judgeHash string, cases []Case) error {
+	byID := make(map[string]CaseReceipt, len(receipt.Cases))
+	for _, stored := range receipt.Cases {
+		if _, exists := byID[stored.ID]; exists {
+			return fmt.Errorf("receipt reconstruction has duplicate case %q", stored.ID)
+		}
+		byID[stored.ID] = stored
+	}
+	generated := make([]DecisionResult, len(cases))
+	independent := make([]DecisionResult, len(cases))
+	for index, input := range cases {
+		stored, ok := byID[input.ID]
+		if !ok {
+			return fmt.Errorf("receipt reconstruction is missing case %q", input.ID)
+		}
+		generated[index], independent[index] = stored.Generated, stored.Independent
+	}
+	expected, err := BuildReceipt(policy, artifact, judgeHash, cases, generated, independent, receipt.WriteSet, receipt.PublicCLI)
+	if err != nil {
+		return fmt.Errorf("receipt reconstruction failed: %w", err)
+	}
+	// The producer's provenance description is an observation, not a
+	// compiler-owned constant. Its nonempty binding was checked earlier.
+	expected.CurrentEvidence.Provenance = receipt.CurrentEvidence.Provenance
+	// The supplied digest was already checked. Compare the actual content,
+	// including all source-owned claims, lifecycle events and exact counts.
+	expected.ReceiptDigest, receipt.ReceiptDigest = "", ""
+	want, err := canonicalJSON(expected)
+	if err != nil {
+		return err
+	}
+	got, err := canonicalJSON(receipt)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(want, got) {
+		return errors.New("receipt differs from source-derived reconstruction")
+	}
+	return nil
 }

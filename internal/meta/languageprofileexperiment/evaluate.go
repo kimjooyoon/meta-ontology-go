@@ -20,7 +20,7 @@ func Evaluate(input Input) Report {
 	facts := observeFacts(input)
 	indicators := buildIndicators(input, facts)
 	summary := summarize(input, facts, indicators)
-	report := Report{Schema: ReportSchema, Decision: "PASS", Resolution: "EXACT", Reason: "LANGUAGE_PROFILE_EXPERIMENT_OBSERVED", Interpretation: "RUNNER_SCOPED_PROFILE_OBSERVED", SubjectSHA: input.SubjectSHA, ContractID: input.Contract.ID, ResourceObservationMode: "RUNNER_SCOPED_NONDETERMINISTIC", Summary: summary, Indicators: indicators, Views: buildViews(indicators), NotClaimed: languageprofile.DefaultNonClaims(), RepositoryWrites: summary.Effects.RepositoryWrites, MutationAuthority: summary.Effects.MutationAuthority, FactsDigest: digestValue(input)}
+	report := Report{Schema: ReportSchema, Scope: languageprofile.ExecutionScope, Decision: "PASS", Resolution: "EXACT", Reason: "LANGUAGE_PROFILE_EXPERIMENT_OBSERVED", Interpretation: "RUNNER_SCOPED_PROFILE_OBSERVED", SubjectSHA: input.SubjectSHA, ContractID: input.Contract.ID, ResourceObservationMode: "RUNNER_SCOPED_NONDETERMINISTIC", Summary: summary, Indicators: indicators, Views: buildViews(indicators), NotClaimed: languageprofile.DefaultNonClaims(), RepositoryWrites: summary.Effects.RepositoryWrites, MutationAuthority: summary.Effects.MutationAuthority, FactsDigest: digestValue(input)}
 	report.Proofs = buildProofs(summary, report.FactsDigest)
 	if summary.Coordinates.Satisfied != ExpectedIndicators {
 		report.Decision, report.Reason, report.Interpretation = "FAIL_CLOSED", "LANGUAGE_PROFILE_CONTRACT_NOT_SATISFIED", "NO_LANGUAGE_QUALITY_CLAIM"
@@ -53,7 +53,7 @@ func topDecisionUnknown(input Input) bool {
 func closed(input Input, resolution, reason string, unknowns int) Report {
 	facts := observeFacts(input)
 	summary := Summary{Coordinates: Counter{Total: ExpectedIndicators}, Unknowns: unknowns, Effects: EffectSummary{RepositoryWrites: facts.writes, MutationAuthority: facts.mutation}, NotClaimed: ExpectedNonClaims, Compiler: CompilerSummary{ExecutableDigest: input.ExecutableDigest}}
-	report := Report{Schema: ReportSchema, Decision: "FAIL_CLOSED", Resolution: resolution, Reason: reason, Interpretation: "NO_LANGUAGE_QUALITY_CLAIM", SubjectSHA: input.SubjectSHA, ContractID: input.Contract.ID, ResourceObservationMode: "RUNNER_SCOPED_NONDETERMINISTIC", Summary: summary, Indicators: []Indicator{}, Views: []View{}, Proofs: []Proof{}, NotClaimed: languageprofile.DefaultNonClaims(), RepositoryWrites: facts.writes, MutationAuthority: facts.mutation, FactsDigest: digestValue(input)}
+	report := Report{Schema: ReportSchema, Scope: languageprofile.ExecutionScope, Decision: "FAIL_CLOSED", Resolution: resolution, Reason: reason, Interpretation: "NO_LANGUAGE_QUALITY_CLAIM", SubjectSHA: input.SubjectSHA, ContractID: input.Contract.ID, ResourceObservationMode: "RUNNER_SCOPED_NONDETERMINISTIC", Summary: summary, Indicators: []Indicator{}, Views: []View{}, Proofs: []Proof{}, NotClaimed: languageprofile.DefaultNonClaims(), RepositoryWrites: facts.writes, MutationAuthority: facts.mutation, FactsDigest: digestValue(input)}
 	return sealReport(report)
 }
 

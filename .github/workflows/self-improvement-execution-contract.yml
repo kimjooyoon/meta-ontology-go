@@ -1,0 +1,392 @@
+name: Self-improvement candidate execution contract
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/self-improvement-execution-contract.yml'
+      - 'examples/language-syntax-roundtrip/corpus.json'
+      - 'examples/self-improvement-execution-contract/**'
+      - 'examples/language-value-witness/main.gooo'
+      - 'examples/self-improvement-value-witness-execution-input/**'
+      - 'internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go'
+      - 'internal/meta/languagereadiness/languagesyntax/model.go'
+      - 'internal/meta/languagereadiness/languagesyntax/registry.go'
+      - 'internal/meta/selfimprovementexecutioncontract/**'
+      - 'internal/meta/selfimprovementvaluewitnessinput/**'
+      - 'internal/valueexecution/**'
+      - 'internal/verify/scope_gooo_self_improvement_execution_contract_v25.go'
+      - 'scripts/self-improvement-execution-contract/**'
+      - 'go.mod'
+      - 'go.sum'
+  workflow_dispatch:
+    inputs:
+      source_workflow_name:
+        description: Exact source workflow name
+        required: true
+        type: string
+      source_workflow_path:
+        description: Exact source workflow path
+        required: true
+        type: string
+      source_repository:
+        description: Exact source repository
+        required: true
+        type: string
+      source_event:
+        description: Exact source workflow event
+        required: true
+        type: string
+      source_ref:
+        description: Exact source ref
+        required: true
+        type: string
+      source_head_sha:
+        description: Exact source head SHA
+        required: true
+        type: string
+      source_run_id:
+        description: Exact source workflow run ID
+        required: true
+        type: string
+      source_run_attempt:
+        description: Exact source workflow run attempt
+        required: true
+        type: string
+      source_artifact_name:
+        description: Exact continuation artifact name
+        required: true
+        type: string
+      source_artifact_id:
+        description: Exact continuation artifact ID
+        required: true
+        type: string
+      source_artifact_archive_digest:
+        description: API archive digest for the exact continuation artifact
+        required: true
+        type: string
+      source_artifact_observed_digest:
+        description: Observed archive digest for the exact continuation artifact
+        required: true
+        type: string
+      source_receipt_digest:
+        description: Embedded continuation receipt digest
+        required: true
+        type: string
+      target_workflow_name:
+        description: Exact target workflow name
+        required: true
+        type: string
+      target_workflow_path:
+        description: Exact target workflow path
+        required: true
+        type: string
+      dispatch_ref:
+        description: Exact dispatch ref
+        required: true
+        type: string
+      dispatch_mode:
+        description: Exact dispatch mode
+        required: true
+        type: string
+      continuation_request_digest:
+        description: Exact CI continuation request digest
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  execution-contract:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.source_head_sha || github.event.pull_request.head.sha }}
+      SOURCE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.source_ref || '' }}
+      SOURCE_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.source_run_id || '' }}
+      SOURCE_RUN_ATTEMPT: ${{ github.event_name == 'workflow_dispatch' && inputs.source_run_attempt || '' }}
+      SOURCE_WORKFLOW_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.source_workflow_name || '' }}
+      SOURCE_WORKFLOW_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.source_workflow_path || '' }}
+      SOURCE_REPOSITORY: ${{ github.event_name == 'workflow_dispatch' && inputs.source_repository || '' }}
+      SOURCE_EVENT: ${{ github.event_name == 'workflow_dispatch' && inputs.source_event || '' }}
+      SOURCE_ARTIFACT_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.source_artifact_name || '' }}
+      SOURCE_ARTIFACT_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.source_artifact_id || '' }}
+      SOURCE_ARTIFACT_ARCHIVE_DIGEST: ${{ github.event_name == 'workflow_dispatch' && inputs.source_artifact_archive_digest || '' }}
+      SOURCE_ARTIFACT_OBSERVED_DIGEST: ${{ github.event_name == 'workflow_dispatch' && inputs.source_artifact_observed_digest || '' }}
+      SOURCE_RECEIPT_DIGEST: ${{ github.event_name == 'workflow_dispatch' && inputs.source_receipt_digest || '' }}
+      TARGET_WORKFLOW_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.target_workflow_name || '' }}
+      TARGET_WORKFLOW_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.target_workflow_path || '' }}
+      DISPATCH_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.dispatch_ref || '' }}
+      DISPATCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.dispatch_mode || '' }}
+      CONTINUATION_REQUEST_DIGEST: ${{ github.event_name == 'workflow_dispatch' && inputs.continuation_request_digest || '' }}
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+
+    steps:
+      - name: Check out the exact subject
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Bind the exact subject and toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test "$(git status --porcelain)" = ""
+
+      - name: Emit and replay the nine v25 canonical contract cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/self-improvement-execution-contract"
+          go run ./scripts/self-improvement-execution-contract \
+            -mode cases \
+            -contract examples/self-improvement-execution-contract/contract.gooo \
+            -output "$RUNNER_TEMP/self-improvement-execution-contract/canonical-cases.json" \
+            -check
+          jq -e '
+            .schema == "gooo/self-improvement-execution-contract-cases/v1" and
+            .case_denominator == 9 and
+            .counts == {CLOSED:3,UNKNOWN:3,REFUTED:3} and
+            .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and
+            .replay_equal and
+            .bound_fields == 12 and .missing_fields == 0 and .contradictory_fields == 0 and
+            .execution_input_digest != null and (.execution_input_digest | startswith("sha256:")) and
+            .execution_input.schema == "gooo/self-improvement-value-witness-execution-input/v1" and
+            .execution_input.source.path == "examples/language-value-witness/main.gooo" and
+            (.execution_input.corpus | length) == 5 and .execution_input.allowed_effects == [] and
+            .structural_candidate_to_operation_edges_before == 0 and
+            .structural_candidate_to_operation_edges_after == 1 and
+            .live_execution_count == 0 and .canonical_execution_count == 0 and
+            .execution_grants == 0 and .repository_writes == 0 and
+            .local_test_executions == 0 and .fallback_accepted == 0 and
+            .independent_replay_comparisons == 1 and
+            .artifact_files == 9 and .artifact_types == 3 and
+            .performance_improvement == "UNKNOWN" and
+            ([.cases[] | select(.pass == false)] | length) == 0' \
+            "$RUNNER_TEMP/self-improvement-execution-contract/canonical-cases.json" >/dev/null
+
+      - name: Verify exact continuation artifact and v24 request
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-execution-contract"
+          source_dir="$work/continuation"
+          mkdir -p "$source_dir"
+          test "$SOURCE_REPOSITORY" = "$GITHUB_REPOSITORY"
+          test "$SOURCE_WORKFLOW_NAME" = "Self-improvement candidate authorization bridge"
+          test "$SOURCE_WORKFLOW_PATH" = ".github/workflows/self-improvement-candidate-authorization.yml"
+          test "$SOURCE_EVENT" = "workflow_run"
+          test "$SOURCE_REF" = "refs/heads/dev"
+          test "$DISPATCH_REF" = "dev"
+          test "$DISPATCH_MODE" = "workflow_dispatch"
+          test "$TARGET_WORKFLOW_NAME" = "Self-improvement candidate execution contract"
+          test "$TARGET_WORKFLOW_PATH" = ".github/workflows/self-improvement-execution-contract.yml"
+          test "$CONTINUATION_REQUEST_DIGEST" = "$SOURCE_RECEIPT_DIGEST"
+          [[ "$SUBJECT_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$SOURCE_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          [[ "$SOURCE_RUN_ATTEMPT" =~ ^[1-9][0-9]*$ ]]
+          [[ "$SOURCE_ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$work/source-run.json"
+          jq -e --argjson id "$SOURCE_RUN_ID" --argjson attempt "$SOURCE_RUN_ATTEMPT" \
+            --arg name "$SOURCE_WORKFLOW_NAME" --arg path "$SOURCE_WORKFLOW_PATH" \
+            --arg repository "$GITHUB_REPOSITORY" --arg sha "$SUBJECT_SHA" \
+            '.id == $id and .run_attempt == $attempt and .name == $name and .path == $path and
+             .event == "workflow_run" and .head_branch == "dev" and .head_sha == $sha and
+             .head_repository.full_name == $repository and .repository.full_name == $repository' \
+            "$work/source-run.json" >/dev/null
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$work/source-artifacts.json"
+          test "$(jq -r --arg name "$SOURCE_ARTIFACT_NAME" '[.artifacts[] | select(.name == $name)] | length' "$work/source-artifacts.json")" = 1
+          jq -e --arg name "$SOURCE_ARTIFACT_NAME" --argjson id "$SOURCE_ARTIFACT_ID" \
+            --arg digest "$SOURCE_ARTIFACT_ARCHIVE_DIGEST" \
+            '[.artifacts[] | select(.name == $name)][0] |
+             .id == $id and .name == $name and .digest == $digest and .expired == false' \
+            "$work/source-artifacts.json" >/dev/null
+          archive="$work/continuation.zip"
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$SOURCE_ARTIFACT_ID/zip" -o "$archive"
+          observed_digest="sha256:$(sha256sum "$archive" | awk '{print $1}')"
+          test "$observed_digest" = "$SOURCE_ARTIFACT_OBSERVED_DIGEST"
+          test "$observed_digest" = "$SOURCE_ARTIFACT_ARCHIVE_DIGEST"
+          unzip -q "$archive" -d "$source_dir"
+          continuation="$source_dir/continuation.json"
+          request="$source_dir/source-authorization-request.json"
+          resolution="$source_dir/source-authorization-resolution.json"
+          verification="$source_dir/verification.json"
+          test -f "$continuation"
+          test -f "$request"
+          test -f "$resolution"
+          test -f "$verification"
+          jq -e --arg sha "$SUBJECT_SHA" --arg run "$SOURCE_RUN_ID" --arg receipt "$SOURCE_RECEIPT_DIGEST" \
+            --arg source_workflow "$SOURCE_WORKFLOW_NAME" --arg source_path "$SOURCE_WORKFLOW_PATH" --arg target_path "$TARGET_WORKFLOW_PATH" \
+            '.schema == "gooo/self-improvement-ci-continuation/v1" and .digest == $receipt and
+             .request.continuation_input.source_head_sha == $sha and
+             (.request.continuation_input.source_run_id | tostring) == $run and
+             .request.continuation_input.source_workflow_name == $source_workflow and
+             .request.continuation_input.source_workflow_path == $source_path and
+             .request.continuation_input.source_artifact_archive_digest != null and
+             .request.continuation_input.source_artifact_archive_digest == .request.continuation_input.source_artifact_observed_digest and
+             .request.continuation_input.target_workflow_path == $target_path and
+             .verification.verified == true and .resolution.execution_authorized == false and
+             .resolution.execution_grants == 0 and .resolution.live_grant_decision == 0 and
+             .resolution.live_execution_count == 0 and .resolution.grant_consumed_uses == 0 and
+             .resolution.repository_writes == 0 and .resolution.local_test_executions == 0' \
+            "$continuation" >/dev/null
+          jq -e --arg sha "$SUBJECT_SHA" \
+            '.schema == "gooo/self-improvement-candidate-authorization-request/v1" and
+             .candidate.subject_sha == $sha and .live_authorized == 0 and .live_state == "UNKNOWN" and
+             .repository_writes == 0 and .local_test_executions == 0' "$request" >/dev/null
+          jq -e '.schema == "gooo/self-improvement-candidate-authorization-resolution/v1" and
+             .live_authorized == 0 and .live_state == "UNKNOWN" and
+             .repository_writes == 0 and .local_test_executions == 0' "$resolution" >/dev/null
+          jq -e '.schema == "gooo/self-improvement-ci-continuation-verification/v1" and
+             .verified == true and .independent_replay_comparisons == 1 and
+             .execution_authorized == false and .live_grant_decision == 0 and
+             .live_execution_count == 0 and .grant_consumed_uses == 0 and
+             .repository_writes == 0 and .local_test_executions == 0' "$verification" >/dev/null
+          echo "V24_REQUEST=$request" >> "$GITHUB_ENV"
+          echo "CONTINUATION=$continuation" >> "$GITHUB_ENV"
+          jq -r '"continuation: \(.resolution.decision)/\(.resolution.reason), source artifact exact, execution/grants/writes=\(.resolution.live_execution_count)/\(.resolution.execution_grants)/\(.resolution.repository_writes)"' "$continuation" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Emit live pre-execution contract without granting execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          request="${V24_REQUEST:-}"
+          if [ -n "$request" ]; then
+            go run ./scripts/self-improvement-execution-contract \
+              -mode live \
+              -contract examples/self-improvement-execution-contract/contract.gooo \
+              -request "$request" \
+              -output "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" \
+              -check
+          else
+            go run ./scripts/self-improvement-execution-contract \
+              -mode live \
+              -contract examples/self-improvement-execution-contract/contract.gooo \
+              -output "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" \
+              -check
+          fi
+          jq -e '
+            .schema == "gooo/self-improvement-execution-contract/v1" and
+            .execution_authorized == false and .execution_grant_required and
+            .execution_grant_blocked_by == "separate_execution_grant" and
+            .max_executions == 1 and .repository_writes_allowed == false and
+            .output_evidence_deferred and .runtime_result_deferred and
+            .verification.verified and .verification.independent_replay_comparisons == 1 and
+            ((.decision == "CLOSED" and .resolution == "DECLARED" and
+              .metrics.bound_fields == 12 and .metrics.missing_fields == 0 and .metrics.contradictory_fields == 0 and
+              (.execution_input_digest | startswith("sha256:")) and
+              .execution_input.schema == "gooo/self-improvement-value-witness-execution-input/v1" and
+              .execution_input.source.path == "examples/language-value-witness/main.gooo" and
+              (.execution_input.corpus | length) == 5 and .execution_input.allowed_effects == [] and
+              .execution_input.max_executions == 1 and .execution_input.repository_writes_allowed == false) or
+             (.decision == "UNKNOWN" and (.unknown | type) == "object" and
+              ((.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"])))' \
+            "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" >/dev/null
+          jq -r '"live contract: \(.decision)/\(.resolution)/\(.reason), execution_authorized=\(.execution_authorized), grant_required=\(.execution_grant_required), writes=\(.metrics.repository_writes), local_tests=\(.metrics.local_test_executions)"' \
+            "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload v25 contract evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: self-improvement-execution-contract-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/self-improvement-execution-contract/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  dispatch-v26-continuation:
+    name: Dispatch exact v26 grant verifier
+    needs: execution-contract
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.source_head_sha != ''
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    env:
+      SOURCE_HEAD_SHA: ${{ inputs.source_head_sha }}
+      SOURCE_REF: ${{ inputs.source_ref }}
+      V25_RUN_ID: ${{ github.run_id }}
+      V25_RUN_ATTEMPT: ${{ github.run_attempt }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Verify exact v25 artifact and dispatch v26
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-v26-dispatch"
+          mkdir -p "$work/source"
+          test "$SOURCE_REF" = "refs/heads/dev"
+          [[ "$SOURCE_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$V25_RUN_ID" > "$work/source-run.json"
+          jq -e --argjson id "$V25_RUN_ID" --argjson attempt "$V25_RUN_ATTEMPT" --arg sha "$SOURCE_HEAD_SHA" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            '.id == $id and .run_attempt == $attempt and .name == "Self-improvement candidate execution contract" and
+             .path == ".github/workflows/self-improvement-execution-contract.yml" and .event == "workflow_dispatch" and
+             .head_branch == "dev" and .head_sha == $sha and .head_repository.full_name == $repository and
+             .repository.full_name == $repository' "$work/source-run.json" >/dev/null
+          artifact_name="self-improvement-execution-contract-$SOURCE_HEAD_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$V25_RUN_ID/artifacts?per_page=100" > "$work/artifacts.json"
+          test "$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name)] | length' "$work/artifacts.json")" = 1
+          artifact_id="$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name)][0].id' "$work/artifacts.json")"
+          archive_digest="$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name)][0].digest' "$work/artifacts.json")"
+          jq -e --arg name "$artifact_name" --argjson id "$artifact_id" --arg digest "$archive_digest" \
+            '[.artifacts[] | select(.name == $name)][0] | .id == $id and .digest == $digest and .expired == false' "$work/artifacts.json" >/dev/null
+          archive="$work/v25-contract.zip"
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" -o "$archive"
+          observed_digest="sha256:$(sha256sum "$archive" | awk '{print $1}')"
+          test "$observed_digest" = "$archive_digest"
+          unzip -q "$archive" -d "$work/source"
+          live_contract="$work/source/live-contract.json"
+          test -f "$live_contract"
+          jq -e --arg sha "$SOURCE_HEAD_SHA" \
+            '.schema == "gooo/self-improvement-execution-contract/v1" and
+             .execution_authorized == false and .execution_grant_required == true and
+             .max_executions == 1 and .repository_writes_allowed == false and
+             .verification.verified == true and .verification.independent_replay_comparisons == 1 and
+             .metrics.live_execution_count == 0 and .metrics.execution_grants == 0 and
+             .metrics.repository_writes == 0 and .metrics.local_test_executions == 0 and
+             (.execution_input.subject_sha == $sha)' "$live_contract" >/dev/null
+          receipt_digest="$(jq -r '.verification.digest' "$live_contract")"
+          jq -e '(.verification.digest | startswith("sha256:")) and (.digest | startswith("sha256:"))' "$live_contract" >/dev/null
+          jq -n \
+            --arg source_workflow "Self-improvement candidate execution contract" \
+            --arg source_path ".github/workflows/self-improvement-execution-contract.yml" \
+            --arg repository "$GITHUB_REPOSITORY" --arg ref "$SOURCE_REF" --arg sha "$SOURCE_HEAD_SHA" \
+            --arg artifact "$artifact_name" --arg archive_digest "$archive_digest" --arg observed_digest "$observed_digest" \
+            --arg receipt_digest "$receipt_digest" \
+            --arg run "$V25_RUN_ID" --arg attempt "$V25_RUN_ATTEMPT" --arg artifact_id "$artifact_id" \
+            '{ref:"dev",inputs:{source_workflow_name:$source_workflow,source_workflow_path:$source_path,source_repository:$repository,source_event:"workflow_dispatch",source_ref:$ref,source_head_sha:$sha,source_run_id:$run,source_run_attempt:$attempt,source_artifact_name:$artifact,source_artifact_id:$artifact_id,source_artifact_archive_digest:$archive_digest,source_artifact_observed_digest:$observed_digest,source_receipt_digest:$receipt_digest,target_workflow_name:"Self-improvement separate execution grant",target_workflow_path:".github/workflows/self-improvement-execution-grant.yml",dispatch_ref:"dev",dispatch_mode:"workflow_dispatch",continuation_request_digest:$receipt_digest,decision:""}}' \
+            > "$work/v26-dispatch.json"
+          jq -e '(.inputs | type) == "object" and ([.inputs[] | type] | all(. == "string"))' \
+            "$work/v26-dispatch.json" >/dev/null
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/$GITHUB_REPOSITORY/actions/workflows/self-improvement-execution-grant.yml/dispatches" \
+            --input "$work/v26-dispatch.json"

@@ -1,13 +1,16 @@
 package bidir
 
 import (
+	"maps"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"sort"
 )
 
 // Clone returns a detached model suitable for transactional updates.
 func (m Model) Clone() Model {
-	clone := Model{Package: m.Package, Namespace: m.Namespace}
+	clone := Model{Package: m.Package, Namespace: m.Namespace, RuntimeBindings: append([]RuntimeBinding(nil), m.RuntimeBindings...),
+		activityInputArity: cloneActivityArity(m.activityInputArity), activityOutputArity: cloneActivityArity(m.activityOutputArity)}
 	for _, node := range m.Nodes {
 		clone.Nodes = append(clone.Nodes, node.normalized())
 	}
@@ -16,6 +19,15 @@ func (m Model) Clone() Model {
 	}
 	clone.Candidates = m.Candidates.Normalized()
 	return clone
+}
+
+func cloneActivityArity(source map[ID]int) map[ID]int {
+	if len(source) == 0 {
+		return nil
+	}
+	result := make(map[ID]int, len(source))
+	maps.Copy(result, source)
+	return result
 }
 
 // Normalized returns a deterministic, detached copy.

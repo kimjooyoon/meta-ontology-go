@@ -20,12 +20,14 @@ contract=examples/language-source-execution/contract.json
 "$binary" run --json --entry PayOrder "$source" > source-execution-output/positive.json
 "$binary" run --json --entry PayOrder "$source" > source-execution-output/replay.json
 cmp -s source-execution-output/positive.json source-execution-output/replay.json
+jq -e '.scope=="DECLARATION_RESOLUTION_ONLY"' source-execution-output/positive.json
 if "$binary" run --json --entry Missing "$source" > source-execution-output/unknown-entry.json; then exit 1; fi
 if "$binary" run --json --entry Missing examples/language-source-execution/invalid.gooo > source-execution-output/invalid-syntax.json; then exit 1; fi
 
 common=(--head "$HEAD_SHA" --contract "$contract" --replay source-execution-output/replay.json --unknown-entry source-execution-output/unknown-entry.json --invalid-syntax source-execution-output/invalid-syntax.json)
 go run ./cmd/language-source-execution-witness "${common[@]}" --positive source-execution-output/positive.json --out source-execution-output/artifact.json
 jq -e '.decision=="PASS" and .resolution=="EXACT" and .summary.cases_satisfied==4 and .summary.cases_total==4' source-execution-output/artifact.json
+jq -e '.scope=="DECLARATION_RESOLUTION_ONLY" and (.not_claimed | index("handwritten Go-body execution")) != null and (.not_claimed | index("external effects")) != null' source-execution-output/artifact.json
 jq -e '.summary.source_executions==1 and .summary.deterministic_replays==1 and .summary.diagnostic_rejections==2 and .summary.execution_events==4' source-execution-output/artifact.json
 jq -e '.summary.unknowns==0 and .summary.repository_writes==0 and .summary.mutation_authorities==0' source-execution-output/artifact.json
 

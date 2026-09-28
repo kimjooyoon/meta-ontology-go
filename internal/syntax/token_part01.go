@@ -70,4 +70,5 @@ const (
 	TokenArrow
 	TokenLBrace
 	TokenRBrace
+	TokenDot
 )

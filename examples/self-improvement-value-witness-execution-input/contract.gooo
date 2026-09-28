@@ -1,0 +1,8 @@
+package selfimprovementvaluewitnessinput
+namespace selfimprovementvaluewitnessinput
+
+entity ValueWitnessExecutionInput id "gooo://self-improvement/value-witness-execution-input/entity/execution-input"
+entity ValueWitnessSourceSnapshot id "gooo://self-improvement/value-witness-execution-input/entity/source-snapshot"
+entity ValueWitnessValueCase id "gooo://self-improvement/value-witness-execution-input/entity/value-case"
+
+activity BindValueWitnessExecutionInput(ValueWitnessExecutionInput) -> ValueWitnessExecutionInput

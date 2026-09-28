@@ -2,8 +2,8 @@ package main
 
 const (
 	evidenceSchema       = "gooo/ci-evidence/v3"
-	proofSchema          = "gooo/ci-proof/v4"
-	receiptSchema        = "gooo/provenance-receipt/v4"
+	proofSchema          = "gooo/ci-proof/v5"
+	receiptSchema        = "gooo/provenance-receipt/v5"
 	domainEvidenceSchema = "gooo/domain-evidence/v2"
 )
 
@@ -18,17 +18,12 @@ type proofInputs struct {
 type governanceInput struct {
 	Schema           string             `json:"schema"`
 	RequiredContexts governanceContexts `json:"required_contexts"`
-	GuardianContexts guardianContexts   `json:"guardian_contexts"`
 	ProofJobs        []string           `json:"proof_jobs"`
 	Promotion        promotionInput     `json:"promotion"`
 }
 type governanceContexts struct {
 	Dev  []string `json:"dev"`
 	Main []string `json:"main"`
-}
-type guardianContexts struct {
-	DevShadow    string `json:"dev_shadow"`
-	MainRequired string `json:"main_required"`
 }
 type promotionInput struct {
 	Source                   string   `json:"source"`

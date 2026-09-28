@@ -7,14 +7,18 @@ import (
 )
 
 func buildApplicableLedgerEntry(entry IndicatorDecisionLedgerEntry, action Action, hasAction, deferred bool) (IndicatorDecisionLedgerEntry, error) {
+	return buildApplicableLedgerEntryWithRefuted(entry, action, hasAction, deferred, false)
+}
+
+func buildApplicableLedgerEntryWithRefuted(entry IndicatorDecisionLedgerEntry, action Action, hasAction, deferred, refuted bool) (IndicatorDecisionLedgerEntry, error) {
 	if entry.SourceIndicator.Satisfied {
-		if hasAction || deferred {
+		if hasAction || deferred || refuted {
 			return IndicatorDecisionLedgerEntry{}, fmt.Errorf("conforming indicator %q selected a repair", entry.IndicatorID)
 		}
 		entry.Disposition = IndicatorDispositionConforming
 		return entry, nil
 	}
-	if hasAction && deferred {
+	if (hasAction && deferred) || (hasAction && refuted) || (deferred && refuted) {
 		return IndicatorDecisionLedgerEntry{}, fmt.Errorf("violating indicator %q is both selected and deferred", entry.IndicatorID)
 	}
 	if hasAction {
@@ -25,6 +29,10 @@ func buildApplicableLedgerEntry(entry IndicatorDecisionLedgerEntry, action Actio
 	}
 	if deferred {
 		entry.Disposition = IndicatorDispositionRepairDeferred
+		return entry, nil
+	}
+	if refuted {
+		entry.Disposition = IndicatorDispositionRepairRefuted
 		return entry, nil
 	}
 	return IndicatorDecisionLedgerEntry{}, fmt.Errorf("violating indicator %q has no selected repair", entry.IndicatorID)

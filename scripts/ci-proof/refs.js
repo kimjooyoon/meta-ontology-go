@@ -37,7 +37,7 @@ function normalizeBaseRef(event, ref, pullRequest) {
   throw new Error(`unsupported event for base branch normalization: ${event || '<missing>'}`);
 }
 
-function normalizeOwnerBranch(event, ref, pullRequest) {
+function normalizeHeadBranch(event, ref, pullRequest) {
   if (event === 'pull_request') {
     return normalizeBranchName(pullRequest && pullRequest.head && pullRequest.head.ref, 'pull request owner branch');
   }
@@ -47,4 +47,4 @@ function normalizeOwnerBranch(event, ref, pullRequest) {
   throw new Error(`unsupported event for owner branch normalization: ${event || '<missing>'}`);
 }
 
-module.exports = {normalizeBaseRef, normalizeOwnerBranch, normalizeProtectedBranchRef};
+module.exports = {normalizeBaseRef, normalizeHeadBranch, normalizeProtectedBranchRef};

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/conformance/adapter"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicdiscovery"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
@@ -33,6 +35,12 @@ func buildProjectionManifest(filename, generatedFile string, source []byte, prev
 	if err != nil {
 		return projectionManifest{}, err
 	}
+	analysisProvenance := semanticAdoptionProvenance(
+		filename,
+		cache.HashBytes(source).String(),
+		publicdiscovery.PolicySourcePath(),
+		publicdiscovery.PolicySourceDigest(),
+	)
 	return projectionManifest{
 		Schema:              projectionManifestSchema,
 		Producer:            "gooo",
@@ -49,6 +57,7 @@ func buildProjectionManifest(filename, generatedFile string, source []byte, prev
 		ProtectedBytesEqual: protectedEqual,
 		GeneratedFile:       generatedFile,
 		ResponseDigest:      responseDigest,
+		AnalysisProvenance:  analysisProvenance,
 		EvidenceManifest:    manifest,
 	}, nil
 }

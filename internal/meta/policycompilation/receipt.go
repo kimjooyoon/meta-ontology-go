@@ -253,7 +253,7 @@ func refuted(rule Rule, reason string) claimAssessment {
 func reductionResultMatches(policy CompiledPolicy, input Case, result DecisionResult) bool {
 	for _, row := range policy.Reduction.Rules {
 		if sourceConditionMatches(row.Condition, policy.SourceDigest, policy.SemanticDigest, input) {
-			return result.Decision == row.Decision && result.Stage == row.Stage && result.Step == row.Step && result.Reason == row.Reason && result.UnknownClass == row.UnknownClass && result.NextOperation == row.NextOperation && sameStrings(result.BlockedBy, row.BlockedBy)
+			return result.MatchedCondition == row.Condition && result.Decision == row.Decision && result.Stage == row.Stage && result.Step == row.Step && result.Reason == row.Reason && result.UnknownClass == row.UnknownClass && result.NextOperation == row.NextOperation && sameStrings(result.BlockedBy, row.BlockedBy)
 		}
 	}
 	return false
@@ -273,7 +273,7 @@ func validResult(value DecisionResult, caseID string, policy CompiledPolicy) boo
 }
 
 func sameResult(left, right DecisionResult) bool {
-	return left.CaseID == right.CaseID && left.Decision == right.Decision && left.Stage == right.Stage && left.Step == right.Step && left.Reason == right.Reason && left.UnknownClass == right.UnknownClass && left.NextOperation == right.NextOperation && sameStrings(left.BlockedBy, right.BlockedBy) && left.PolicyDigest == right.PolicyDigest && left.SemanticDigest == right.SemanticDigest && left.Denominator == right.Denominator
+	return left.CaseID == right.CaseID && left.Decision == right.Decision && left.MatchedCondition == right.MatchedCondition && left.Stage == right.Stage && left.Step == right.Step && left.Reason == right.Reason && left.UnknownClass == right.UnknownClass && left.NextOperation == right.NextOperation && sameStrings(left.BlockedBy, right.BlockedBy) && left.PolicyDigest == right.PolicyDigest && left.SemanticDigest == right.SemanticDigest && left.Denominator == right.Denominator
 }
 
 func sameStrings(left, right []string) bool {

@@ -16,6 +16,40 @@ and CI results are derived views or evidence.
      └── source spans, IDs, and explicit assertions
 ```
 
+<!-- PUBLIC-TRUST-BADGES:BEGIN -->
+### Public trust surface
+
+These badges are generated from the lowered public-trust `.gooo` policy. Workflow badges report workflow results; they do not claim branch-protection or ruleset enforcement.
+
+#### Language / Release
+
+[![Go 1.27.0 toolchain](https://img.shields.io/badge/Go-1.27.0-00ADD8?logo=go&logoColor=white)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/go.mod)
+[![Published release v0.4.0-dev](https://img.shields.io/github/v/release/kimjooyoon/meta-ontology-go?include_prereleases&label=published%20release)](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.4.0-dev)
+
+#### Build / Conformance
+
+[![CI workflow result](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/ci.yml)
+[![Compiler compatibility evidence](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/self-improvement-compiler-compatibility.yml/badge.svg?branch=dev)](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/self-improvement-compiler-compatibility.yml)
+[![Experimental release readiness](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/gooo-release-readiness.yml/badge.svg?branch=dev)](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/gooo-release-readiness.yml)
+
+#### Security / Supply Chain
+
+[![CodeQL code scanning configured](https://img.shields.io/badge/CodeQL-code%20scanning-2ea44f?logo=github)](https://github.com/kimjooyoon/meta-ontology-go/security/code-scanning)
+[![Dependabot weekly updates](https://img.shields.io/badge/Dependabot-weekly%20updates-0366d6?logo=dependabot)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/.github/dependabot.yml)
+[![Dependency review on pull requests](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/dependency-review.yml/badge.svg?branch=dev)](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/dependency-review.yml)
+[![Private vulnerability reporting enabled](https://img.shields.io/badge/Private%20vulnerability%20reporting-enabled-2ea44f?logo=github)](https://github.com/kimjooyoon/meta-ontology-go/security/advisories/new)
+
+#### Evidence / Project Health
+
+[![Project status: experimental](https://img.shields.io/badge/Project-experimental-orange)](https://github.com/kimjooyoon/meta-ontology-go#project-status)
+
+#### Community
+
+[![MIT licensed](https://img.shields.io/github/license/kimjooyoon/meta-ontology-go)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/LICENSE)
+
+The complete row ledger, including unavailable and refuted claims, is emitted by the `Public trust surface` workflow.
+<!-- PUBLIC-TRUST-BADGES:END -->
+
 The repository is intentionally small. The supported language sketch currently
 covers packages, namespaces, entities with URI-like IDs, and activities with
 entity inputs and an entity result. The semantic kernel also defines a
@@ -105,23 +139,33 @@ source of truth for required CI, not as a promise of future compiler features.
 
 ## Branch and promotion contract
 
-Work branches target `dev`. The only promotion route is an exact,
-same-repository `dev`-to-`main` pull request; no intermediary branch is part of
-the current contract. Governance is `ci_only`: review and approval fields do not
-authorize a protected-branch promotion.
+Work branches target `dev`. Promotion uses a same-repository pull request to
+`main`. CI accepts either the exact `dev` head when it is a fast-forward, or a
+single-commit snapshot branch named `agent/main-promotion-snapshot-<dev-sha>`
+whose tree equals the live `dev` tree and whose sole parent is the live `main`
+head. The snapshot form preserves the current tree and main's linear history
+when old branch ancestry has diverged. Governance is `ci_only`: review and
+approval fields do not authorize a protected-branch promotion.
 
 The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
-`Semantic conformance`, and `CI policy`. Protected `dev` requires those six plus
-`CI guardian shadow`; protected `main` requires those six plus `CI guardian`.
-The resulting seven-context protections are route-specific.
+`Semantic conformance`, and `CI policy`. GitHub's `main` protection rule now
+requires exactly these six contexts; the retired `CI guardian` context was
+removed. The `dev` rule has no required status checks. No badge above turns a
+workflow result into an enforcement claim.
 
-For the promotion route, CI emits a digest-bound `promotion_authorization` with
-`source=dev`, `target=main`, and `operation=fast_forward`. It passes only for
-fresh exact refs and topology (`ahead > 0`, `behind = 0`, `main` as merge base),
-the required proof and Guardian evidence, both exact seven-context protection
-snapshots, and a clean, open, non-draft, unmerged same-repository pull request.
-The proof producer never mutates refs or protection. After a final exact reread,
-only a normal CAS/fast-forward update is allowed; force updates are prohibited.
+The root README reaches the default `main` page after a legitimate
+protected-main promotion. The separate protection update removed only the
+retired Guardian check. The snapshot fallback changes CI evidence handling and
+leaves all branch protection settings unchanged.
+
+For either promotion form, CI emits a digest-bound `promotion_authorization`
+with `source=dev`, `target=main`, and `operation=fast_forward`. It passes only
+for fresh exact refs and topology (`ahead > 0`, `behind = 0`, `main` as merge
+base), the six canonical proof jobs, and a clean, open, non-draft, unmerged
+same-repository pull request. Snapshot evidence also binds the live `dev` SHA
+and tree, candidate tree, and candidate's sole `main` parent. The proof producer
+never mutates refs or protection. After a final exact reread, only a normal
+fast-forward update is allowed; force updates are prohibited.
 
 ## Project status
 

@@ -16,6 +16,7 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 			DefinitionProvider:      true,
 			DocumentSymbolProvider:  true,
 			ReferencesProvider:      true,
+			RenameProvider:          true,
 			WorkspaceSymbolProvider: &WorkspaceSymbolOptions{Schema: WorkspaceSymbolProtocolSchema},
 			SemanticTokensProvider: &SemanticTokensOptions{
 				Schema: SemanticTokensProtocolSchema,
@@ -24,6 +25,29 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 					TokenModifiers: []string{},
 				},
 				Full: true,
+			},
+			Experimental: map[string]any{
+				"goooDocumentProvenance": map[string]string{
+					"method": "gooo/documentProvenance", "schema": documentProvenanceSchema,
+				},
+				"goooSelfImprovementProvenance": map[string]string{
+					"method": "gooo/selfImprovementProvenance", "schema": SelfImprovementProvenanceChainSchemaPart01,
+				},
+				"goooExecutionPlanProvenance": map[string]string{
+					"method": "gooo/executionPlanProvenance", "schema": ExecutionPlanProvenanceSchemaPart01,
+				},
+				"goooReferencesProvenance": map[string]string{
+					"method": "gooo/referencesProvenance", "schema": referencesProvenanceSchema,
+				},
+				"goooDiagnosticProvenance": map[string]string{
+					"method": "gooo/diagnosticProvenance", "schema": diagnosticProvenanceSchema,
+				},
+				"goooStoryProvenance": map[string]string{
+					"method": "gooo/storyProvenance", "schema": storyProvenanceSchema,
+				},
+				"goooCompletionProvenance": map[string]string{
+					"method": "gooo/completionProvenance", "schema": completionProvenanceSchema,
+				},
 			},
 		},
 		ServerInfo: ServerInfo{Name: "gooo-lsp", Version: "current-ddaf"},
