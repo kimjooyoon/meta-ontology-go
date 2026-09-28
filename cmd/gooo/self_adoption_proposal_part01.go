@@ -113,3 +113,22 @@ func writeAdoptionArtifact(outputDir, filename string, data []byte) error {
 	}
 	return nil
 }
+
+func writeAdoptionArtifacts(outputDir string, artifacts []adoptionArtifact) error {
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		return fmt.Errorf("create caller-owned output directory: %w", err)
+	}
+	entries, err := os.ReadDir(outputDir)
+	if err != nil {
+		return fmt.Errorf("inspect caller-owned output directory: %w", err)
+	}
+	if len(entries) != 0 {
+		return fmt.Errorf("caller-owned output directory must be empty")
+	}
+	for _, artifact := range artifacts {
+		if err := os.WriteFile(filepath.Join(outputDir, artifact.name), artifact.data, 0o644); err != nil {
+			return fmt.Errorf("write %s: %w", artifact.name, err)
+		}
+	}
+	return nil
+}
