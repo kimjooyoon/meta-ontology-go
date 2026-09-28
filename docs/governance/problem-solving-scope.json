@@ -15,6 +15,36 @@
       "performance improvement"
     ]
   },
+  "domain_scope_contract": {
+    "unit": "declared_capability_and_evidence_identity",
+    "coverage_states": [
+      "UNOBSERVED",
+      "OBSERVED",
+      "EXACT_BOUND",
+      "SHADOW",
+      "BLOCKING"
+    ],
+    "investment_intents": [
+      "NO_INVESTMENT_UNTIL_EVIDENCE",
+      "BOUNDED_DECLARATION_EVIDENCE",
+      "BOUNDED_VERIFICATION",
+      "REVIEW_BEFORE_CATALOG_CHANGE"
+    ],
+    "claim_policy": {
+      "completeness": "NOT_CLAIMED",
+      "missing_evidence": "UNKNOWN",
+      "cache_presence": "NOT_SEMANTIC_EVIDENCE",
+      "scope_change": "NEW_DECLARATION_AND_NEW_EVIDENCE"
+    },
+    "required_identity": [
+      "domain_id",
+      "capability_id",
+      "source_head",
+      "declaration_digest",
+      "evidence_digest",
+      "toolchain_identity"
+    ]
+  },
   "resolution_scope": {
     "unit": [
       "registered_lane",
