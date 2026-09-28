@@ -164,6 +164,8 @@ jobs:
           artifact_retrieved=false
           retrieval_error=""
           v25_contract=""
+          v24_request=""
+          v24_resolution=""
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             test "$SOURCE_REPOSITORY" = "$GITHUB_REPOSITORY"
             test "$SOURCE_WORKFLOW_NAME" = "Self-improvement candidate execution contract"
