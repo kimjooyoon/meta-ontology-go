@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-const closureSchema = "gooo/ci-closure/v1"
+const closureSchema = "gooo/ci-closure/v2"
 
 type closureInput struct {
 	CanonicalJobs        []failureJob `json:"canonical_jobs"`
@@ -29,8 +29,7 @@ type closureManifest struct {
 	RunID                   int64        `json:"run_id"`
 	RunAttempt              int64        `json:"run_attempt"`
 	WorkflowSHA             string       `json:"workflow_sha"`
-	OwnerBranch             string       `json:"owner_branch"`
-	OwnerRef                string       `json:"owner_ref"`
+	HeadBranch              string       `json:"head_branch"`
 	CanonicalJobs           []failureJob `json:"canonical_jobs"`
 	TerminalFailures        []failureJob `json:"terminal_failures"`
 	TerminalFailureCodes    []string     `json:"terminal_failure_codes"`

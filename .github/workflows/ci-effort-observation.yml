@@ -226,6 +226,66 @@ jobs:
           fi
           exit "$lineage_status"
 
+      - name: Collect machine-derived required-check baseline
+        if: always() && env.SOURCE_TERMINAL == 'true'
+        continue-on-error: true
+        working-directory: source-worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/ci-effort-observation/source"
+          baseline="$root/bottleneck-baseline"
+          mkdir -p "$baseline"
+          workflow_id="$(jq -r '.workflow_id // 0' "$root/run.json")"
+          source_event="$(jq -r '.event // ""' "$root/run.json")"
+          source_ref="$(jq -r '.ref // ""' "$root/run.json")"
+          source_branch="$(jq -r '.head_branch // ""' "$root/run.json")"
+          current_run_id="$(jq -r '.id // 0' "$root/run.json")"
+          current_repository="$(jq -r '.head_repository.full_name // ""' "$root/run.json")"
+          history_status="OK"
+          if [ "$workflow_id" -gt 0 ] && [ -n "$source_event" ] && [ -n "$source_ref" ] && [ -n "$source_branch" ] && [ -n "$current_repository" ]; then
+            if gh api --method GET "repos/$GITHUB_REPOSITORY/actions/workflows/$workflow_id/runs" \
+              -f event="$source_event" -f branch="$source_branch" -f status=completed -F per_page=100 \
+              > "$baseline/run-list.json"; then
+              jq \
+                --arg event "$source_event" \
+                --arg ref "$source_ref" \
+                --arg branch "$source_branch" \
+                --arg repository "$current_repository" \
+                --argjson workflow "$workflow_id" \
+                --argjson current "$current_run_id" \
+                '[.workflow_runs[] | select(.id != $current and .workflow_id == $workflow and .event == $event and .ref == $ref and .head_branch == $branch and .head_repository.full_name == $repository and .status == "completed" and .conclusion == "success")] | sort_by(.id) | reverse | .[:20] | map({id,workflow_id,event,ref,head_branch,head_sha,status,conclusion,run_attempt,created_at,run_started_at,html_url,head_repository})' \
+                "$baseline/run-list.json" > "$baseline/candidates.json"
+              : > "$baseline/samples.ndjson"
+              while IFS= read -r historical_run_id; do
+                historical_run="$(jq -c --argjson id "$historical_run_id" '.[] | select(.id == $id)' "$baseline/candidates.json")"
+                jobs_path="$baseline/jobs-$historical_run_id.json"
+                if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$historical_run_id/jobs?per_page=100" > "$jobs_path"; then
+                  jq -c --argjson run "$historical_run" --slurpfile jobs "$jobs_path" \
+                    --argjson required '["gofmt","go vet","go test","go test -race","Semantic conformance","CI policy"]' \
+                    '$run + {job_lookup_status:"OK",jobs:[($jobs[0].jobs // [])[] | select(.name as $name | (($required | index($name)) != null)) | {id,name,status,conclusion,head_sha,run_id,started_at,completed_at}]}' \
+                    >> "$baseline/samples.ndjson"
+                else
+                  jq -c --argjson run "$historical_run" '$run + {job_lookup_status:"UNAVAILABLE",jobs:[]}' <<< '{}' >> "$baseline/samples.ndjson"
+                fi
+              done < <(jq -r '.[].id' "$baseline/candidates.json")
+              jq -n --arg schema "gooo/ci-required-check-baseline-input/v1" --arg lookup "$history_status" --slurpfile samples "$baseline/samples.ndjson" '{schema:$schema,lookup_status:$lookup,samples:$samples}' > "$baseline/history.json"
+            else
+              history_status="UNAVAILABLE"
+              jq -n --arg schema "gooo/ci-required-check-baseline-input/v1" --arg lookup "$history_status" '{schema:$schema,lookup_status:$lookup,samples:[]}' > "$baseline/history.json"
+            fi
+          else
+            history_status="UNAVAILABLE"
+            jq -n --arg schema "gooo/ci-required-check-baseline-input/v1" --arg lookup "$history_status" '{schema:$schema,lookup_status:$lookup,samples:[]}' > "$baseline/history.json"
+          fi
+          go run ./scripts/ci-effort-observation/baseline \
+            --run "$root/run.json" \
+            --jobs "$root/jobs.json" \
+            --history "$baseline/history.json" \
+            --output "$baseline/report.json" \
+            --markdown "$baseline/report.md"
+          cat "$baseline/report.md" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Materialize diagnostic-only pending lineage preview
         if: always() && env.LINEAGE_DEFERRED == 'true'
         shell: bash
@@ -451,3 +511,14 @@ jobs:
           path: ${{ runner.temp }}/ci-effort-observation
           if-no-files-found: error
           retention-days: 30
+
+      - name: Upload required-check baseline receipt
+        if: always() && env.SOURCE_TERMINAL == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ci-required-check-baseline-${{ env.SOURCE_RUN_ID }}-${{ env.SOURCE_RUN_ATTEMPT }}
+          path: |
+            ${{ runner.temp }}/ci-effort-observation/source/bottleneck-baseline/history.json
+            ${{ runner.temp }}/ci-effort-observation/source/bottleneck-baseline/report.json
+          if-no-files-found: warn
+          retention-days: 90

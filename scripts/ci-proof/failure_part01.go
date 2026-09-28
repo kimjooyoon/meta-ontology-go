@@ -1,6 +1,6 @@
 package main
 
-const failureSchema = "gooo/ci-failure/v1"
+const failureSchema = "gooo/ci-failure/v2"
 const failureCatalogPath = "scripts/ci-proof/docs/failure-reasons.md"
 
 type failureJob struct {
@@ -23,7 +23,7 @@ type failureInput struct {
 	FailureCodes            []string                  `json:"failure_codes"`
 	Message                 string                    `json:"message"`
 	Remediation             string                    `json:"remediation"`
-	OwnerBranch             string                    `json:"owner_branch"`
+	HeadBranch              string                    `json:"head_branch"`
 	Rejections              []string                  `json:"rejections"`
 	MissingReasons          missingReasons            `json:"missing_reasons"`
 	Artifacts               []artifactInput           `json:"artifacts"`
@@ -48,7 +48,7 @@ type failureBinding struct {
 	RunID       int64
 	RunAttempt  int64
 	Actor       string
-	OwnerBranch string
+	HeadBranch  string
 }
 type failureProvenance struct {
 	WasGeneratedBy    string   `json:"wasGeneratedBy"`

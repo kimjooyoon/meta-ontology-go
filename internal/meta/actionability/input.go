@@ -10,9 +10,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metabinding"
 )
 
-type documentDecoder struct{}
-
-func (documentDecoder) Read[T any](path string) (T, []byte, error) {
+func readDocument[T any](path string) (T, []byte, error) {
 	var document T
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -25,12 +23,11 @@ func (documentDecoder) Read[T any](path string) (T, []byte, error) {
 }
 
 func Load(metricsPath, bindingPath string) (input, error) {
-	decoder := documentDecoder{}
-	metrics, metricsData, err := decoder.Read[metricsDocument](metricsPath)
+	metrics, metricsData, err := readDocument[metricsDocument](metricsPath)
 	if err != nil {
 		return input{}, err
 	}
-	binding, bindingData, err := decoder.Read[metabinding.Report](bindingPath)
+	binding, bindingData, err := readDocument[metabinding.Report](bindingPath)
 	if err != nil {
 		return input{}, err
 	}

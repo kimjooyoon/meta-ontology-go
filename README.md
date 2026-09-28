@@ -145,23 +145,23 @@ the current contract. Governance is `ci_only`: review and approval fields do not
 authorize a protected-branch promotion.
 
 The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
-`Semantic conformance`, and `CI policy`. Those names identify workflow evidence,
-not branch-protection enforcement. The v19 live audit found no required status
-checks on `dev`; `main` retains its existing seven-context branch-protection
-listing, while the named `dev` and `main` rulesets are disabled. No badge above
-turns a workflow result into an enforcement claim.
+`Semantic conformance`, and `CI policy`. GitHub's `main` protection rule now
+requires exactly these six contexts; the retired `CI guardian` context was
+removed. The `dev` rule has no required status checks. No badge above turns a
+workflow result into an enforcement claim.
 
 The root README reaches the default `main` page only after a later, legitimate
-protected-main promotion. This v19 change is a `dev`-targeted trust-surface
-update and does not alter protection, rulesets, or the promotion route.
+protected-main promotion. This is a `dev`-targeted trust-surface update; the
+separate `main` protection edit removes only the retired Guardian check and
+does not change the promotion route.
 
 For the promotion route, CI emits a digest-bound `promotion_authorization` with
 `source=dev`, `target=main`, and `operation=fast_forward`. It passes only for
 fresh exact refs and topology (`ahead > 0`, `behind = 0`, `main` as merge base),
-the required proof and Guardian evidence, both exact seven-context protection
-snapshots, and a clean, open, non-draft, unmerged same-repository pull request.
-The proof producer never mutates refs or protection. After a final exact reread,
-only a normal CAS/fast-forward update is allowed; force updates are prohibited.
+the six canonical proof jobs, and a clean, open, non-draft, unmerged
+same-repository pull request. The proof producer never mutates refs or
+protection. After a final exact reread, only a normal CAS/fast-forward update is
+allowed; force updates are prohibited.
 
 ## Project status
 

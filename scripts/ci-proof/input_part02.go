@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 )
 
 func validateInputIdentity(evidence evidenceInput, context contextInput, jobs []jobInput) error {
@@ -57,7 +56,4 @@ func validateEvidenceDigests(root string, evidence evidenceInput) error {
 		return fmt.Errorf("proof repository root is required")
 	}
 	return nil
-}
-func validateBranchProtection(protection branchProtection, evidence evidenceInput, context contextInput) error {
-	return validateBranchProtectionAt(protection, evidence, context, time.Now().UTC())
 }

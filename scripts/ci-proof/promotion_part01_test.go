@@ -1,18 +1,19 @@
 package main
 
 import (
+	"strings"
 	"testing"
 )
 
 func validPromotionBundleFixture() proofBundle {
-	evidence, _ := validGuardianEvidenceFixture()
 	bundle := validProof()
-	bundle.Repository = evidence.Repository
+	bundle.Repository = "owner/repo"
 	bundle.Event = "pull_request"
-	bundle.PRNumber = evidence.PRNumber
+	bundle.PRNumber = 7
 	bundle.BaseRef = "main"
-	bundle.BaseSHA = evidence.BaseSHA
-	bundle.HeadSHA = evidence.HeadSHA
+	bundle.HeadRef = "dev"
+	bundle.BaseSHA = strings.Repeat("b", 40)
+	bundle.HeadSHA = strings.Repeat("a", 40)
 	bundle.Ref = "refs/pull/7/merge"
 	bundle.EventRef = bundle.Ref
 	bundle.CheckoutRef = bundle.HeadSHA
@@ -27,14 +28,11 @@ func validPromotionBundleFixture() proofBundle {
 	bundle.Artifacts[0].Name = "ci-evidence-300-1"
 	bundle.Artifacts[0].RunID = bundle.RunID
 	bundle.Artifacts[0].RunAttempt = bundle.RunAttempt
-	bundle.BranchProtection = evidence.BranchProtection
-	bundle.DevBranchProtection = evidence.DevBranchProtection
 	bundle.DomainEvidence = validDomainEvidence(bundle)
-	bundle.GuardianEvidence = &evidence
 	bundle.PromotionObservation = &promotionObservation{
 		Repository: bundle.Repository, PRNumber: bundle.PRNumber, Action: "synchronize", State: "open", Mergeable: true, MergeableState: "clean",
 		BaseRepo: bundle.Repository, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadRepo: bundle.Repository, HeadRef: "dev", HeadSHA: bundle.HeadSHA,
-		LiveDevSHA: bundle.HeadSHA, LiveMainSHA: bundle.BaseSHA, Topology: guardianTopology{Status: "ahead", AheadBy: 1, BehindBy: 0, MergeBaseSHA: bundle.BaseSHA},
+		LiveDevSHA: bundle.HeadSHA, LiveMainSHA: bundle.BaseSHA, Topology: promotionTopology{Status: "ahead", AheadBy: 1, BehindBy: 0, MergeBaseSHA: bundle.BaseSHA},
 	}
 	bundle.PromotionAuthorization = promotionAuthorizationFor(bundle)
 	bundle.Digests.Bundle = ""

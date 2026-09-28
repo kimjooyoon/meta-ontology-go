@@ -24,6 +24,9 @@ func validateScopeRevisions(from, to, expectedHead string) error {
 	}
 	return nil
 }
+
+// checkAgentPushBranch is retained for legacy registry fixtures; run no longer
+// consults branch ownership or path allowlists for a PR.
 func checkAgentPushBranch(branch string) error {
 	if !strings.HasPrefix(branch, "agent/") {
 		return nil

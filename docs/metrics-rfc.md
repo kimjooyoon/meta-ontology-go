@@ -424,8 +424,8 @@ must be named before any feature or promotion claim can rely on it.
 Define fixtures, authority inputs, predicates, and evidence packets in this
 order; implementation is a later RFC or owner-scoped change.
 
-- **P0:** determinization-debt/replay, exact CI tuple, protection snapshot, and
-  issue-backed retirement safety.
+- **P0:** determinization-debt/replay, exact CI tuple, repeated-run performance
+  baselines, causal improvement evidence, and issue-backed retirement safety.
 - **P1:** intent cardinality, stable identity, source-backed authority, BX and
   locality, and generated boundary preservation.
 - **P2:** performance baselines, host parity, rollback rehearsal, and capability

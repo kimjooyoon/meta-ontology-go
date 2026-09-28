@@ -6,26 +6,15 @@ import (
 	"path/filepath"
 )
 
-const failureOwnerRegistryPath = ".github/ci-governance.json"
-const promotionOwnerBindingCode = "CI-PROMOTION-OWNER-BINDING-001"
+const promotionBranchBindingCode = "CI-PROMOTION-BRANCH-BINDING-001"
 
 type catalogDocumentEntry struct {
-	Code            string
-	Class           string
-	Severity        string
-	BlockingScope   string
-	Parallelizable  bool
-	HandoffRequired bool
-	Owner           string
-}
-type failureOwnerRegistryEntry struct {
-	Branch string   `json:"branch"`
-	Paths  []string `json:"paths"`
-}
-type failureOwnerRegistry struct {
-	Schema                string                      `json:"schema"`
-	ProtectedPushBranches []string                    `json:"protected_push_branches"`
-	Ownership             []failureOwnerRegistryEntry `json:"ownership"`
+	Code           string
+	Class          string
+	Severity       string
+	BlockingScope  string
+	Parallelizable bool
+	NextOperation  string
 }
 
 var failureCatalogDigest, failureCatalogDigestErr = loadFailureCatalogDigest()

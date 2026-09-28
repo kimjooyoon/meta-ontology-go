@@ -8,7 +8,7 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 	if err := validateFailureCatalog(); err != nil {
 		return failureManifest{}, err
 	}
-	if err := validateFailureOwnerBinding(binding); err != nil {
+	if err := validateFailureBranchBinding(binding); err != nil {
 		return failureManifest{}, err
 	}
 	entry, ok := failureCatalog[input.Code]
@@ -22,21 +22,21 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 	if input.Message == "" || input.Remediation == "" {
 		return failureManifest{}, fmt.Errorf("failure message and remediation are required")
 	}
-	if input.OwnerBranch == "" || input.OwnerBranch != binding.OwnerBranch {
-		return failureManifest{}, fmt.Errorf("failure owner branch is missing or mismatched")
+	if input.HeadBranch == "" || input.HeadBranch != binding.HeadBranch {
+		return failureManifest{}, fmt.Errorf("failure head branch is missing or mismatched")
 	}
 	manifest := failureManifest{
-		Schema: failureSchema, Version: 1, Code: input.Code, FailureCodes: input.FailureCodes, Class: entry.Class, Severity: entry.Severity,
+		Schema: failureSchema, Version: 2, Code: input.Code, FailureCodes: input.FailureCodes, Class: entry.Class, Severity: entry.Severity,
 		Scope: scope, BlockingScope: entry.BlockingScope, Parallelizable: entry.Parallelizable,
 		SourceCommit: binding.HeadSHA, Repository: binding.Repository, BaseRef: binding.BaseRef, BaseSHA: binding.BaseSHA, HeadSHA: binding.HeadSHA,
 		Event: binding.Event, EventRef: binding.EventRef, CheckoutRef: binding.CheckoutRef, PRNumber: binding.PRNumber, RunID: binding.RunID,
 		RunAttempt: binding.RunAttempt, WorkflowSHA: binding.WorkflowSHA, Job: input.Job,
-		OwnerBranch: binding.OwnerBranch, OwnerRef: failureOwnerRef(binding), CatalogPath: failureCatalogPath, CatalogDigest: failureCatalogDigest,
-		CatalogRef: failureCatalogPath + "@" + binding.HeadSHA, CatalogVersion: 1, CatalogSHA256: failureCatalogDigest,
+		HeadBranch: binding.HeadBranch, CatalogPath: failureCatalogPath, CatalogDigest: failureCatalogDigest,
+		CatalogRef: failureCatalogPath + "@" + binding.HeadSHA, CatalogVersion: 2, CatalogSHA256: failureCatalogDigest,
 		Rejections: input.Rejections, MissingReasons: input.MissingReasons, Artifacts: input.Artifacts, ProofArtifactRef: input.ProofArtifact,
 		ArtifactStatus: input.ArtifactStatus, ArtifactReason: input.ArtifactReason, Message: input.Message, Remediation: input.Remediation,
 		TerminalFailures: append([]failureJob(nil), input.TerminalFailures...), TerminalFailureCodes: append([]string(nil), input.TerminalFailureCodes...), TerminalFailureEvidence: append([]terminalFailureEvidence(nil), input.TerminalFailureEvidence...),
-		HandoffRequired: entry.HandoffRequired, HandoffOwner: entry.Owner,
+		NextOperation: entry.NextOperation,
 	}
 	if len(manifest.FailureCodes) == 0 {
 		manifest.FailureCodes = []string{input.Code}
@@ -54,13 +54,10 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 		WasGeneratedBy:    manifest.Activity,
 		WasAssociatedWith: manifest.Agent,
 		WasDerivedFrom:    []string{runRef, jobRef},
-		HadPrimarySource:  append([]string{sourceRef, manifest.OwnerRef, manifest.CatalogRef, manifest.CatalogSHA256}, manifest.ArtifactURLs...),
+		HadPrimarySource:  append([]string{sourceRef, manifest.CatalogRef, manifest.CatalogSHA256}, manifest.ArtifactURLs...),
 	}
 	if err := validateFailureManifest(manifest, binding); err != nil {
 		return failureManifest{}, err
 	}
 	return manifest, nil
-}
-func failureOwnerRef(binding failureBinding) string {
-	return fmt.Sprintf("https://github.com/%s/blob/%s/.github/ci-governance.json", binding.Repository, binding.HeadSHA)
 }
