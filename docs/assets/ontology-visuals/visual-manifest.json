@@ -201,7 +201,7 @@
       "generated_or_changed_artifact": "proposed mismatch dossier",
       "terminal_decision": "UNKNOWN / NOT YET CLOSED",
       "next_consumer": "future domain-projection implementation",
-      "evidence": [{"path": "docs/external/opentofu-observation-v1.md", "digest": "sha256:0b236a43d3c8ffdf2a5dceb113fe290515fd9b82ca24d5588d676b110acab8e4", "receipt_path": "", "receipt_digest": ""}],
+      "evidence": [{"path": "docs/external/opentofu-observation-v1.md", "digest": "sha256:32c4c5db7166ae64e650a553a235d6177f69d191218f5d49447f8fcecf146415", "receipt_path": "", "receipt_digest": ""}],
       "binding": {"nodes": ["service.contract", "infra.facts", "proposed.gooo", "mismatch.dossier", "UNKNOWN"], "edges": ["connect", "compare", "report", "hold"], "transitions": ["experimental", "projected", "mismatch", "unknown"]}
     }
   ]
