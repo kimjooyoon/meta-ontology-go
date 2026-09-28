@@ -32,15 +32,15 @@ func TestCanonicalCasesAreNineSeparateGrantCases(t *testing.T) {
 	if err := ValidateCanonicalCases(report); err != nil {
 		t.Fatal(err)
 	}
-	if report.StructuralSeparateGrantEdgesBefore != 0 || report.StructuralSeparateGrantEdgesAfter != 1 || report.SourceArtifactBoundBefore != 0 || report.SourceArtifactBoundAfter != 1 || report.SourceArtifactExpiredMisclassifiedBefore != 1 || report.SourceArtifactExpiredMisclassifiedAfter != 0 || report.ExactSourceDigestBoundBefore != 0 || report.ExactSourceDigestBoundAfter != 1 || len(report.CounterexampleArtifactIDs) != 1 || report.CounterexampleArtifactIDs[0] != KnownFlawedArtifactID || report.CanonicalGrantedCases != 2 || report.CanonicalExecutionCount != 0 || report.GrantConsumedUses != 0 || report.RepositoryWrites != 0 || report.LocalTestExecutions != 0 || report.FallbackAccepted != 0 {
+	if report.StructuralSeparateGrantEdgesBefore != 0 || report.StructuralSeparateGrantEdgesAfter != 1 || report.SourceArtifactBoundBefore != 0 || report.SourceArtifactBoundAfter != 1 || report.SourceArtifactExpiredMisclassifiedBefore != 1 || report.SourceArtifactExpiredMisclassifiedAfter != 0 || report.ExactSourceDigestBoundBefore != 0 || report.ExactSourceDigestBoundAfter != 1 || len(report.CounterexampleArtifactIDs) != 1 || report.CounterexampleArtifactIDs[0] != KnownFlawedArtifactID || report.CanonicalGrantedCases != 3 || report.SystemDerivedGrants != 3 || report.CanonicalExecutionCount != 0 || report.GrantConsumedUses != 0 || report.RepositoryWrites != 0 || report.LocalTestExecutions != 0 || report.FallbackAccepted != 0 {
 		t.Fatalf("canonical grant boundary drifted: %#v", report)
 	}
 }
 
-func TestExplicitAllowProducesUnconsumedGrant(t *testing.T) {
+func TestExactSystemEvidenceProducesUnconsumedGrant(t *testing.T) {
 	program := testProgram(t)
 	request := canonicalRequest(program)
-	input := GrantInput{Request: request, DecisionInputs: []GrantDecisionInput{fixtureDecision(request, DecisionAllow)}}
+	input := GrantInput{Request: request, Live: true}
 	resolution := Evaluate(program, input)
 	if resolution.Decision != DecisionClosed || resolution.Resolution != ResolutionGrantedUnconsumed || !resolution.GrantAllowsExecution || resolution.RemainingUses != 1 || resolution.ConsumedUses != 0 || resolution.ExecutionCount != 0 || resolution.OneUseEnforced {
 		t.Fatalf("ALLOW crossed the execution or consumption boundary: %#v", resolution)
@@ -48,32 +48,36 @@ func TestExplicitAllowProducesUnconsumedGrant(t *testing.T) {
 	if err := ValidateGrantReceipt(*resolution.Receipt); err != nil {
 		t.Fatal(err)
 	}
+	if resolution.SystemEvidence == nil || resolution.SystemEvidence.DecisionSource != DecisionSourceSystem ||
+		resolution.SystemEvidence.DecisionRule != DecisionRule || resolution.Metrics.SystemDerivedGrants != 1 {
+		t.Fatalf("grant was not derived from system evidence: %#v", resolution)
+	}
 	verification := Verify(program, input, resolution)
 	if !verification.Verified || verification.ExecutionCount != 0 || verification.GrantConsumedUses != 0 {
 		t.Fatalf("independent grant replay failed: %#v", verification)
 	}
 }
 
-func TestExplicitDenyClosesWithoutGrant(t *testing.T) {
+func TestSystemGrantDoesNotExecuteOrConsume(t *testing.T) {
 	program := testProgram(t)
 	request := canonicalRequest(program)
-	resolution := Evaluate(program, GrantInput{Request: request, DecisionInputs: []GrantDecisionInput{fixtureDecision(request, DecisionDeny)}})
-	if resolution.Decision != DecisionClosed || resolution.Resolution != ResolutionDenied || resolution.GrantAllowsExecution || resolution.RemainingUses != 0 || resolution.ExecutionCount != 0 {
-		t.Fatalf("DENY did not close without execution authority: %#v", resolution)
+	resolution := Evaluate(program, GrantInput{Request: request})
+	if resolution.Decision != DecisionClosed || resolution.Resolution != ResolutionGrantedUnconsumed || !resolution.GrantAllowsExecution || resolution.RemainingUses != 1 || resolution.ConsumedUses != 0 || resolution.ExecutionCount != 0 || resolution.OneUseEnforced {
+		t.Fatalf("system grant crossed the execution or consumption boundary: %#v", resolution)
 	}
 	if err := VerifyGrantResolution(resolution); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestLiveNoDecisionIsSixFieldUnknown(t *testing.T) {
+func TestLiveExactEvidenceDerivesGrant(t *testing.T) {
 	program := testProgram(t)
 	request := canonicalRequest(program)
 	resolution := Evaluate(program, GrantInput{Request: request, Live: true})
-	if resolution.Decision != DecisionUnknown || resolution.Resolution != ResolutionLower || resolution.Reason != ReasonMissingDecision || resolution.Unknown == nil || resolution.Unknown.BlockedBy != "explicit_execution_grant_decision" {
-		t.Fatalf("live request did not remain blocked: %#v", resolution)
+	if resolution.Decision != DecisionClosed || resolution.Resolution != ResolutionGrantedUnconsumed || resolution.SystemEvidence == nil || !resolution.GrantAllowsExecution {
+		t.Fatalf("live exact evidence did not derive eligibility: %#v", resolution)
 	}
-	if resolution.Metrics.LiveGrantRequests != 1 || resolution.Metrics.LiveGrants != 0 || resolution.ExecutionCount != 0 || resolution.ConsumedUses != 0 {
+	if resolution.Metrics.LiveGrantRequests != 1 || resolution.Metrics.LiveGrants != 1 || resolution.ExecutionCount != 0 || resolution.ConsumedUses != 0 {
 		t.Fatalf("live grant metrics crossed the boundary: %#v", resolution.Metrics)
 	}
 	if resolution.Metrics.SourceArtifactBound != 1 || resolution.Metrics.SourceArtifactBoundAfter != 1 || resolution.Metrics.ExactSourceDigestBound != 1 || resolution.Metrics.ExactSourceDigestBoundAfter != 1 || resolution.Metrics.SourceArtifactExpiredMisclassified != 0 || resolution.Metrics.SourceArtifactExpiredMisclassifiedAfter != 0 {
@@ -94,8 +98,8 @@ func TestSourceRetrievalFailureIsUnknownWithoutExpiredMisclassification(t *testi
 	if resolution.Decision != DecisionUnknown || resolution.Resolution != ResolutionLower || resolution.Reason != ReasonSourceRetrievalFailed || resolution.Unknown == nil || resolution.Unknown.Stage != "FETCH" || resolution.Unknown.Step != "2" || resolution.Unknown.BlockedBy != "source_artifact_retrieval" {
 		t.Fatalf("retrieval failure was not preserved as UNKNOWN: %#v", resolution)
 	}
-	if !contains(resolution.Obligations, "explicit_execution_grant_decision") || !contains(resolution.Obligations, "source_artifact_retrieval") || !contains(resolution.Frontier, "provide-explicit-execution-grant-decision") || !contains(resolution.Frontier, "retry-exact-source-artifact-retrieval") {
-		t.Fatalf("retrieval and decision obligations were not both preserved: %#v", resolution)
+	if !contains(resolution.Obligations, "source_artifact_retrieval") || !contains(resolution.Frontier, "retry-exact-source-artifact-retrieval") {
+		t.Fatalf("retrieval obligation was not preserved: %#v", resolution)
 	}
 	if resolution.Metrics.SourceArtifactBound != 0 || resolution.Metrics.SourceArtifactBoundAfter != 0 || resolution.Metrics.ExactSourceDigestBound != 0 || resolution.Metrics.ExactSourceDigestBoundAfter != 0 || resolution.Metrics.SourceArtifactExpiredMisclassified != 0 || resolution.Metrics.SourceArtifactExpiredMisclassifiedAfter != 0 || resolution.Metrics.LiveGrants != 0 || resolution.ExecutionCount != 0 {
 		t.Fatalf("retrieval failure crossed a safety boundary: %#v", resolution.Metrics)
@@ -105,24 +109,25 @@ func TestSourceRetrievalFailureIsUnknownWithoutExpiredMisclassification(t *testi
 	}
 }
 
-func TestScopeDuplicateAndSafetyContradictionsRefute(t *testing.T) {
+func TestScopeSafetyAndUpstreamContradictionsRefute(t *testing.T) {
 	program := testProgram(t)
 	request := canonicalRequest(program)
 	scope := request
 	scope.V25.BoundedTarget = "UNBOUNDED"
 	scope.Digest = requestDigest(scope)
-	if resolution := Evaluate(program, GrantInput{Request: scope, DecisionInputs: []GrantDecisionInput{fixtureDecision(scope, DecisionAllow)}}); resolution.Decision != DecisionRefuted || resolution.Reason != ReasonScopeMismatch {
+	if resolution := Evaluate(program, GrantInput{Request: scope}); resolution.Decision != DecisionRefuted || resolution.Reason != ReasonScopeMismatch {
 		t.Fatalf("scope contradiction was not refuted: %#v", resolution)
-	}
-	allow := fixtureDecision(request, DecisionAllow)
-	deny := fixtureDecision(request, DecisionDeny)
-	if resolution := Evaluate(program, GrantInput{Request: request, DecisionInputs: []GrantDecisionInput{allow, deny}}); resolution.Decision != DecisionRefuted || resolution.Reason != ReasonDuplicate {
-		t.Fatalf("conflicting duplicate was not refuted: %#v", resolution)
 	}
 	unsafe := request
 	unsafe.V25.MaxExecutions = 2
 	unsafe.Digest = requestDigest(unsafe)
-	if resolution := Evaluate(program, GrantInput{Request: unsafe, DecisionInputs: []GrantDecisionInput{fixtureDecision(unsafe, DecisionAllow)}}); resolution.Decision != DecisionRefuted || resolution.Reason != ReasonUnsafe {
+	if resolution := Evaluate(program, GrantInput{Request: unsafe}); resolution.Decision != DecisionRefuted || resolution.Reason != ReasonUnsafe {
 		t.Fatalf("unsafe grant was not refuted: %#v", resolution)
+	}
+	contradiction := request
+	contradiction.V24.AuthorizationOutcome = "DENIED"
+	contradiction.Digest = requestDigest(contradiction)
+	if resolution := Evaluate(program, GrantInput{Request: contradiction}); resolution.Decision != DecisionRefuted || resolution.Reason != ReasonUpstreamContradiction {
+		t.Fatalf("contradictory upstream evidence was not refuted: %#v", resolution)
 	}
 }

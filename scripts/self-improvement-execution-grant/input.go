@@ -34,9 +34,5 @@ func loadInput(settings options, program grant.PolicyProgram) (grant.GrantInput,
 		_ = readJSON(settings.sourcePath, &source)
 	}
 	request := grant.BuildRequest(program, v24Binding, v25Binding, source)
-	input := grant.GrantInput{Request: request, Live: settings.mode == "live"}
-	if settings.decision != "" {
-		input.DecisionInputs = []grant.GrantDecisionInput{grant.BuildDecisionInput(request, settings.decision, settings.decisionSource, grant.ActorEvidence{Repository: settings.repository, Actor: settings.actor, WorkflowRunID: settings.workflowRunID, WorkflowRunAttempt: settings.workflowRunAttempt, Event: settings.event, EvidenceLabel: grant.ActorEvidenceLabel})}
-	}
-	return input, nil
+	return grant.GrantInput{Request: request, Live: settings.mode == "live"}, nil
 }

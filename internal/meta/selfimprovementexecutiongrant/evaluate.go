@@ -3,7 +3,6 @@ package selfimprovementexecutiongrant
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"slices"
 	"strings"
 
@@ -13,21 +12,18 @@ import (
 
 const (
 	ReasonAllow                 = "EXECUTION_GRANT_GRANTED_UNCONSUMED"
-	ReasonDeny                  = "EXECUTION_GRANT_DENIED"
 	ReasonReplay                = "EXECUTION_GRANT_REPLAYED_DETERMINISTICALLY"
-	ReasonMissingDecision       = "MISSING_EXPLICIT_EXECUTION_GRANT_DECISION"
 	ReasonMissingArtifact       = "MISSING_OR_EXPIRED_UPSTREAM_ARTIFACT"
 	ReasonSourceRetrievalFailed = "SOURCE_ARTIFACT_RETRIEVAL_FAILED"
 	ReasonIncompleteInput       = "INCOMPLETE_EXECUTION_GRANT_INPUT"
 	ReasonV24Unknown            = "V24_AUTHORIZATION_UNKNOWN"
-	ReasonV24Denied             = "V24_AUTHORIZATION_DENIED"
+	ReasonV24Refuted            = "V24_AUTHORIZATION_REFUTED"
 	ReasonV25Unknown            = "V25_PRE_EXECUTION_CONTRACT_UNKNOWN"
 	ReasonV25Refuted            = "V25_PRE_EXECUTION_CONTRACT_REFUTED"
 	ReasonDigestMismatch        = "EXECUTION_GRANT_DIGEST_BINDING_MISMATCH"
 	ReasonScopeMismatch         = "EXECUTION_GRANT_SCOPE_BINDING_MISMATCH"
-	ReasonDuplicate             = "CONFLICTING_DUPLICATE_EXECUTION_GRANTS"
 	ReasonUnsafe                = "UNAUTHORIZED_OR_UNSAFE_EXECUTION_GRANT"
-	ReasonUpstreamContradiction = "UPSTREAM_AUTHORIZATION_CONTRADICTION"
+	ReasonUpstreamContradiction = "UPSTREAM_EVIDENCE_CONTRADICTION"
 )
 
 func Evaluate(program PolicyProgram, input GrantInput) GrantResolution {
@@ -44,41 +40,28 @@ func Evaluate(program PolicyProgram, input GrantInput) GrantResolution {
 	if sourceArtifactRetrievalFailed(input.Request.Source) {
 		return finishUnknownWithObligations(resolution, ReasonSourceRetrievalFailed, "FETCH", "2", "SOURCE_ARTIFACT_RETRIEVAL", "retry-exact-source-artifact-retrieval", "source_artifact_retrieval", unknownObligations(input, "source_artifact_retrieval"), unknownFrontier(input, "retry-exact-source-artifact-retrieval"))
 	}
-	if len(input.DecisionInputs) == 0 {
-		return finishUnknownWithObligations(resolution, ReasonMissingDecision, "GRANT", "1", "INCOMPLETE_EVIDENCE", "provide-explicit-execution-grant-decision", "explicit_execution_grant_decision", unknownObligations(input, "explicit_execution_grant_decision"), unknownFrontier(input, "provide-explicit-execution-grant-decision"))
-	}
 	if sourceMissing(input.Request.Source) || input.Request.Source.ArtifactExpired {
 		return finishUnknownWithObligations(resolution, ReasonMissingArtifact, "BIND", "3", "UPSTREAM_ARTIFACT_UNAVAILABLE", "restore-exact-upstream-artifact", "upstream_artifact", unknownObligations(input, "upstream_artifact"), unknownFrontier(input, "restore-exact-upstream-artifact"))
 	}
 	if len(missing) > 0 {
 		return finishUnknown(resolution, ReasonIncompleteInput, "BIND", "3", "INCOMPLETE_EVIDENCE", "bind-complete-execution-grant-input", "grant_input_binding")
 	}
-	if conflictingDecisions(input.DecisionInputs) {
-		return finishRefuted(resolution, ReasonDuplicate)
+	if input.Request.V24.AuthorizationResolution == candidate.AuthorizationUnknown {
+		return finishUnknown(resolution, ReasonV24Unknown, "UPSTREAM", "4", "UPSTREAM_UNKNOWN", "resolve-v24-authorization", "v24_authorization_resolution")
 	}
-	decision := input.DecisionInputs[0]
-	if decision.Decision == DecisionAllow {
-		if input.Request.V24.AuthorizationResolution == candidate.AuthorizationUnknown {
-			return finishUnknown(resolution, ReasonV24Unknown, "UPSTREAM", "4", "UPSTREAM_UNKNOWN", "resolve-v24-authorization", "v24_authorization_resolution")
-		}
-		if input.Request.V24.AuthorizationOutcome == candidate.AuthorizationDenied || input.Request.V24.AuthorizationDecision == candidate.AuthorizationDeny {
-			return finishRefuted(resolution, ReasonV24Denied)
-		}
-		if input.Request.V25.Decision == string(v25.DecisionUnknown) {
-			return finishUnknown(resolution, ReasonV25Unknown, "UPSTREAM", "5", "UPSTREAM_UNKNOWN", "resolve-v25-pre-execution-contract", "v25_pre_execution_contract")
-		}
-		if input.Request.V25.Decision == string(v25.DecisionRefuted) {
-			return finishRefuted(resolution, ReasonV25Refuted)
-		}
-		if !v24AllowsGrant(input.Request.V24) || !v25AllowsGrant(input.Request.V25) {
-			return finishRefuted(resolution, ReasonUpstreamContradiction)
-		}
-		return finishClosed(resolution, decision, true, ReasonAllow, ResolutionGrantedUnconsumed)
+	if input.Request.V24.AuthorizationResolution == candidate.AuthorizationRefuted {
+		return finishRefuted(resolution, ReasonV24Refuted)
 	}
-	if decision.Decision == DecisionDeny {
-		return finishClosed(resolution, decision, false, ReasonDeny, ResolutionDenied)
+	if input.Request.V25.Decision == string(v25.DecisionUnknown) {
+		return finishUnknown(resolution, ReasonV25Unknown, "UPSTREAM", "5", "UPSTREAM_UNKNOWN", "resolve-v25-pre-execution-contract", "v25_pre_execution_contract")
 	}
-	return finishRefuted(resolution, ReasonUnsafe)
+	if input.Request.V25.Decision == string(v25.DecisionRefuted) {
+		return finishRefuted(resolution, ReasonV25Refuted)
+	}
+	if !v24AllowsGrant(input.Request.V24) || !v25AllowsGrant(input.Request.V25) {
+		return finishRefuted(resolution, ReasonUpstreamContradiction)
+	}
+	return finishClosed(resolution, deriveGrantEvidence(input.Request), true, ReasonAllow, ResolutionGrantedUnconsumed)
 }
 
 func baseResolution(program PolicyProgram, input GrantInput) GrantResolution {
@@ -119,9 +102,6 @@ func finishUnknownWithObligations(resolution GrantResolution, reason, stage, ste
 
 func unknownObligations(input GrantInput, primary string) []string {
 	obligations := []string{primary}
-	if len(input.DecisionInputs) == 0 {
-		obligations = append(obligations, "explicit_execution_grant_decision")
-	}
 	if sourceArtifactRetrievalFailed(input.Request.Source) {
 		obligations = append(obligations, "source_artifact_retrieval")
 	}
@@ -136,9 +116,6 @@ func unknownObligations(input GrantInput, primary string) []string {
 
 func unknownFrontier(input GrantInput, primary string) []string {
 	frontier := []string{primary}
-	if len(input.DecisionInputs) == 0 {
-		frontier = append(frontier, "provide-explicit-execution-grant-decision")
-	}
 	if sourceArtifactRetrievalFailed(input.Request.Source) {
 		frontier = append(frontier, "retry-exact-source-artifact-retrieval")
 	}
@@ -170,13 +147,14 @@ func finishRefuted(resolution GrantResolution, reason string) GrantResolution {
 
 func finishClosed(resolution GrantResolution, input GrantDecisionInput, allows bool, reason string, outcome Resolution) GrantResolution {
 	resolution.Decision, resolution.Resolution, resolution.Reason = DecisionClosed, outcome, reason
-	resolution.DecisionInputs = []GrantDecisionInput{input}
+	resolution.SystemEvidence = &input
 	resolution.GrantAllowsExecution = allows
 	resolution.ExecutionCount, resolution.ConsumedUses = 0, 0
 	if allows {
 		resolution.RemainingUses = 1
 		resolution.Metrics.LiveGrants = boolInt(resolution.Metrics.LiveGrantRequests == 1)
 		resolution.Metrics.LiveGrantsAfter = resolution.Metrics.LiveGrants
+		resolution.Metrics.SystemDerivedGrants = 1
 		resolution.Metrics.GrantRemainingUses = 1
 	}
 	resolution.Receipt = buildReceipt(resolution.RequestDigest, input, allows)
@@ -191,7 +169,8 @@ func buildReceipt(requestDigest string, input GrantDecisionInput, allows bool) *
 	receipt := GrantReceipt{Schema: ReceiptSchema,
 		GrantID:       "execution-grant/" + strings.TrimPrefix(input.DecisionDigest, "sha256:"),
 		RequestDigest: requestDigest, Decision: input.Decision, DecisionSource: input.DecisionSource,
-		ActorEvidence: input.ActorEvidence, GrantAllowsExecution: allows, RemainingUses: boolInt(allows),
+		DecisionRule: input.DecisionRule, EvidenceDigest: input.EvidenceDigest,
+		GrantAllowsExecution: allows, RemainingUses: boolInt(allows),
 		ConsumedUses: 0, ExecutionCount: 0, ConsumptionStatus: ConsumptionPending,
 		ConsumptionObligation: ConsumptionObligation, OneUseEnforcementState: "PENDING_NEXT_EXECUTOR"}
 	receipt.Digest = receiptDigest(receipt)
@@ -225,12 +204,6 @@ func inspectInput(input GrantInput) ([]string, []string) {
 	inspectV24(input.Request.V24, addContradiction)
 	inspectV25(input.Request.V25, addContradiction)
 	inspectSource(input.Request.Source, addContradiction)
-	if conflictingDecisions(input.DecisionInputs) {
-		addContradiction("conflicting_duplicate_grant")
-	}
-	for _, decision := range input.DecisionInputs {
-		inspectDecision(input.Request, decision, addContradiction)
-	}
 	return missing, contradictions
 }
 
@@ -243,7 +216,17 @@ func inspectV24(binding V24Binding, add func(string)) {
 	if binding.SubjectSHA != "" && !validSHA(binding.SubjectSHA) {
 		add("subject_sha")
 	}
-	if binding.RequestValid && binding.ResolutionValid && (binding.AuthorizationDecision != candidate.AuthorizationAllow && binding.AuthorizationDecision != candidate.AuthorizationDeny) {
+	if binding.RequestSchema != "" && binding.RequestSchema != candidate.AuthorizationRequestSchema {
+		add("v24_request_schema")
+	}
+	if binding.ResolutionSchema != "" && binding.ResolutionSchema != candidate.AuthorizationResolutionSchema {
+		add("v24_resolution_schema")
+	}
+	if binding.AuthorizationResolution != "" && binding.AuthorizationResolution != candidate.AuthorizationClosed &&
+		binding.AuthorizationResolution != candidate.AuthorizationUnknown && binding.AuthorizationResolution != candidate.AuthorizationRefuted {
+		add("v24_authorization_resolution")
+	}
+	if binding.AuthorizationResolution == candidate.AuthorizationClosed && binding.AuthorizationDecision != candidate.AuthorizationAllow {
 		add("v24_authorization_decision")
 	}
 }
@@ -285,45 +268,25 @@ func inspectSource(source SourceArtifact, add func(string)) {
 	}
 }
 
-func inspectDecision(request GrantRequest, input GrantDecisionInput, add func(string)) {
-	if input.Schema != "" && input.Schema != GrantDecisionSchema {
-		add("grant_decision_schema")
-	}
-	if input.Decision != "" && input.Decision != DecisionAllow && input.Decision != DecisionDeny {
-		add("grant_decision")
-	}
-	if input.RequestDigest != "" && (!validDigest(input.RequestDigest) || input.RequestDigest != request.Digest) {
-		add("grant_request_digest")
-	}
-	if input.DecisionDigest != "" && (!validDigest(input.DecisionDigest) || input.DecisionDigest != decisionDigest(input)) {
-		add("grant_decision_digest")
-	}
-	if input.V24 != request.V24 {
-		add("v24_binding")
-	}
-	if input.V25 != request.V25 {
-		add("v25_binding")
-	}
-	if input.Source != request.Source {
-		add("source_artifact_binding")
-	}
-	if input.DecisionSource != DecisionSourceWorkflowDispatch && input.DecisionSource != DecisionSourceCanonical {
-		add("unauthorized_grant")
-	}
-	if input.DecisionSource == DecisionSourceWorkflowDispatch && (input.ActorEvidence.EvidenceLabel != ActorEvidenceLabel || input.ActorEvidence.Event != DecisionSourceWorkflowDispatch || input.ActorEvidence.Repository == "" || input.ActorEvidence.Actor == "" || input.ActorEvidence.WorkflowRunID <= 0 || input.ActorEvidence.WorkflowRunAttempt <= 0) {
-		add("unauthorized_grant")
-	}
-	if input.DecisionSource == DecisionSourceCanonical && input.ActorEvidence.EvidenceLabel != CanonicalEvidenceLabel {
-		add("unauthorized_grant")
-	}
-}
-
 func requiredMissing(input GrantInput) []string {
 	missing := []string{}
 	add := func(name string) {
 		if !contains(missing, name) {
 			missing = append(missing, name)
 		}
+	}
+	request := input.Request
+	if request.Schema == "" {
+		add("grant_request_schema")
+	}
+	if request.ContractID == "" {
+		add("grant_contract_id")
+	}
+	if request.Digest == "" {
+		add("grant_request_digest")
+	}
+	if request.Target == "" || request.Mode == "" {
+		add("scope")
 	}
 	v24 := input.Request.V24
 	if v24.RequestDigest == "" {
@@ -389,7 +352,10 @@ func requiredMissing(input GrantInput) []string {
 }
 
 func v24Ready(binding V24Binding) bool {
-	return binding.RequestSchema == candidate.AuthorizationRequestSchema && binding.ResolutionSchema == candidate.AuthorizationResolutionSchema && validDigest(binding.RequestDigest) && validDigest(binding.ResolutionDigest) && validDigest(binding.CandidateStableID) && validDigest(binding.CandidateDigest) && validSHA(binding.SubjectSHA) && validDigest(binding.ObservationDigest) && validDigest(binding.ContractDigest) && binding.RequestValid && binding.ResolutionValid
+	return binding.RequestSchema == candidate.AuthorizationRequestSchema && binding.ResolutionSchema == candidate.AuthorizationResolutionSchema &&
+		validDigest(binding.RequestDigest) && validDigest(binding.ResolutionDigest) && validDigest(binding.CandidateStableID) &&
+		validDigest(binding.CandidateDigest) && validSHA(binding.SubjectSHA) && validDigest(binding.ObservationDigest) &&
+		validDigest(binding.ContractDigest) && binding.RequestValid && binding.ResolutionValid
 }
 
 func v25Ready(binding V25Binding) bool {
@@ -404,36 +370,14 @@ func v25AllowsGrant(binding V25Binding) bool {
 	return v25Ready(binding) && binding.Decision == string(v25.DecisionClosed) && binding.Resolution == string(v25.ResolutionDeclared) && !binding.ExecutionAuthorized && binding.ExecutionGrantRequired && binding.MaxExecutions == MaxExecutions && !binding.RepositoryWritesAllowed
 }
 
-func conflictingDecisions(inputs []GrantDecisionInput) bool {
-	if len(inputs) < 2 {
-		return false
-	}
-	first := inputs[0]
-	first.DecisionDigest = ""
-	for _, current := range inputs[1:] {
-		candidate := current
-		candidate.DecisionDigest = ""
-		if !reflect.DeepEqual(first, candidate) {
-			return true
-		}
-	}
-	return false
-}
-
 func refutedReason(fields []string) string {
-	if contains(fields, "conflicting_duplicate_grant") {
-		return ReasonDuplicate
-	}
 	if contains(fields, "execution_safety") || contains(fields, "max_executions") {
-		return ReasonUnsafe
-	}
-	if contains(fields, "unauthorized_grant") {
 		return ReasonUnsafe
 	}
 	if contains(fields, "scope") {
 		return ReasonScopeMismatch
 	}
-	if contains(fields, "grant_request_digest") || contains(fields, "grant_decision_digest") || contains(fields, "v24_binding") || contains(fields, "v25_binding") || contains(fields, "source_artifact_binding") || contains(fields, "candidate_digest") {
+	if contains(fields, "grant_request_digest") || contains(fields, "v24_binding") || contains(fields, "v25_binding") || contains(fields, "source_artifact_binding") || contains(fields, "candidate_digest") || contains(fields, "v24_request_schema") || contains(fields, "v24_resolution_schema") {
 		return ReasonDigestMismatch
 	}
 	return ReasonDigestMismatch
@@ -466,15 +410,19 @@ func ValidateResolution(resolution GrantResolution) error {
 	}
 	switch resolution.Decision {
 	case DecisionUnknown:
-		if resolution.Resolution != ResolutionLower || resolution.Unknown == nil || resolution.Receipt != nil || len(resolution.DecisionInputs) != 0 || resolution.Unknown.Stage == "" || resolution.Unknown.Step == "" || resolution.Unknown.Reason == "" || resolution.Unknown.UnknownClass == "" || resolution.Unknown.NextOperation == "" || resolution.Unknown.BlockedBy == "" || len(resolution.Obligations) == 0 || len(resolution.Frontier) == 0 || !contains(resolution.Obligations, resolution.Unknown.BlockedBy) || !contains(resolution.Frontier, resolution.Unknown.NextOperation) {
+		if resolution.Resolution != ResolutionLower || resolution.Unknown == nil || resolution.Receipt != nil || resolution.SystemEvidence != nil || resolution.Unknown.Stage == "" || resolution.Unknown.Step == "" || resolution.Unknown.Reason == "" || resolution.Unknown.UnknownClass == "" || resolution.Unknown.NextOperation == "" || resolution.Unknown.BlockedBy == "" || len(resolution.Obligations) == 0 || len(resolution.Frontier) == 0 || !contains(resolution.Obligations, resolution.Unknown.BlockedBy) || !contains(resolution.Frontier, resolution.Unknown.NextOperation) {
 			return errors.New("execution grant UNKNOWN resolution is not six-field causal")
 		}
 	case DecisionRefuted:
-		if resolution.Resolution != ResolutionExact || resolution.Unknown != nil || resolution.Receipt != nil || resolution.Metrics.RefutedContradictions != 1 {
+		if resolution.Resolution != ResolutionExact || resolution.Unknown != nil || resolution.Receipt != nil || resolution.SystemEvidence != nil || resolution.Metrics.RefutedContradictions != 1 {
 			return errors.New("execution grant REFUTED resolution is not exact")
 		}
 	case DecisionClosed:
-		if len(resolution.DecisionInputs) != 1 || resolution.Receipt == nil || (resolution.Resolution != ResolutionDenied && resolution.Resolution != ResolutionGrantedUnconsumed) || resolution.Receipt.Digest != receiptDigest(*resolution.Receipt) {
+		if resolution.SystemEvidence == nil || resolution.Receipt == nil || !resolution.GrantAllowsExecution ||
+			resolution.Resolution != ResolutionGrantedUnconsumed || resolution.RemainingUses != 1 ||
+			resolution.SystemEvidence.Decision != DecisionAllow || resolution.SystemEvidence.DecisionSource != DecisionSourceSystem ||
+			resolution.SystemEvidence.DecisionRule != DecisionRule || resolution.Metrics.SystemDerivedGrants != 1 ||
+			resolution.Receipt.Digest != receiptDigest(*resolution.Receipt) {
 			return errors.New("execution grant CLOSED resolution is not exact")
 		}
 	default:

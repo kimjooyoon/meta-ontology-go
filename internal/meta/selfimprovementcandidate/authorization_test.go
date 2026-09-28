@@ -15,11 +15,11 @@ namespace selfimprovement
 
 entity NonExecutingImprovementCandidate id "gooo://self-improvement/entity/non-executing-improvement-candidate"
 entity CandidateAuthorizationRequest id "gooo://self-improvement/entity/candidate-authorization-request"
-entity CandidateAuthorizationDecision id "gooo://self-improvement/entity/candidate-authorization-decision"
+entity CandidateAuthorizationDecision id "gooo://self-improvement/entity/system-derived-candidate-authorization-decision"
 entity CandidateAuthorizationResolution id "gooo://self-improvement/entity/candidate-authorization-resolution"
 
 activity RequestCandidateAuthorization(NonExecutingImprovementCandidate) -> CandidateAuthorizationRequest
-activity DecideCandidateAuthorization(CandidateAuthorizationRequest) -> CandidateAuthorizationDecision
+activity DeriveCandidateAuthorization(CandidateAuthorizationRequest) -> CandidateAuthorizationDecision
 activity ResolveCandidateAuthorization(CandidateAuthorizationDecision) -> CandidateAuthorizationResolution
 `
 
@@ -33,8 +33,8 @@ func authorizationCandidateRaw(head string, runID int64) []byte {
 	return raw
 }
 
-func authorizationMetadata() ArtifactMetadata {
-	return ArtifactMetadata{Repository: "kimjooyoon/meta-ontology-go", RunID: 100, RunAttempt: 1,
+func authorizationMetadata(head string, runID int64) ArtifactMetadata {
+	return ArtifactMetadata{Repository: "kimjooyoon/meta-ontology-go", SubjectSHA: head, RunID: runID, RunAttempt: 1,
 		ArtifactID: 200, ArtifactName: "self-improvement-nonexecuting-candidate-test",
 		ArchiveDigest: fixtureDigest(), SizeBytes: 1234}
 }
@@ -55,7 +55,7 @@ func authorizationJSONRoundTrip[T any](t *testing.T, value T) T {
 func TestBuildAuthorizationRequestBindsExactCandidateAndLeavesLiveUnknown(t *testing.T) {
 	head, runID := fixtureSHA("e"), int64(45)
 	raw := authorizationCandidateRaw(head, runID)
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, raw, authorizationMetadata())
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, raw, authorizationMetadata(head, runID))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestBuildAuthorizationRequestBindsExactCandidateAndLeavesLiveUnknown(t *tes
 	if request.Metrics.StructuralUnboundEdgesBefore != 1 || request.Metrics.StructuralUnboundEdgesAfter != 0 {
 		t.Fatalf("structural edge transition was not recorded: %+v", request.Metrics)
 	}
-	second, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, raw, authorizationMetadata())
+	second, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, raw, authorizationMetadata(head, runID))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,11 +84,12 @@ func TestBuildAuthorizationRequestBindsExactCandidateAndLeavesLiveUnknown(t *tes
 }
 
 func TestVerifyAuthorizationResolutionAcceptsExactJSONRoundTripValue(t *testing.T) {
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("a"), 50), authorizationMetadata())
+	head := fixtureSHA("a")
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(head, 50), authorizationMetadata(head, 50))
 	if err != nil {
 		t.Fatal(err)
 	}
-	resolution := ResolveAuthorization(request, []AuthorizationDecisionInput{fixtureDecision(request, AuthorizationAllow)})
+	resolution := ResolveAuthorization(request)
 	if resolution.Decision != AuthorizationClosed {
 		t.Fatalf("expected CLOSED resolution, got %+v", resolution)
 	}
@@ -103,7 +104,8 @@ func TestVerifyAuthorizationResolutionAcceptsExactJSONRoundTripValue(t *testing.
 }
 
 func TestResolveAuthorizationRefutesNestedExecutionInputContradictions(t *testing.T) {
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("b"), 51), authorizationMetadata())
+	head := fixtureSHA("b")
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(head, 51), authorizationMetadata(head, 51))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +125,7 @@ func TestResolveAuthorizationRefutesNestedExecutionInputContradictions(t *testin
 			mutated := authorizationJSONRoundTrip(t, request)
 			mutation.mutate(mutated.Candidate.ExecutionInput)
 			mutated.Digest = requestDigest(mutated)
-			resolution := ResolveAuthorization(mutated, []AuthorizationDecisionInput{fixtureDecision(mutated, AuthorizationAllow)})
+			resolution := ResolveAuthorization(mutated)
 			if resolution.Decision != AuthorizationRefuted {
 				t.Fatalf("nested execution-input contradiction was not REFUTED: %+v", resolution)
 			}
@@ -132,17 +134,18 @@ func TestResolveAuthorizationRefutesNestedExecutionInputContradictions(t *testin
 }
 
 func TestVerifyAuthorizationResolutionDistinguishesNilAndPresentExecutionInput(t *testing.T) {
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("c"), 52), authorizationMetadata())
+	head := fixtureSHA("c")
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(head, 52), authorizationMetadata(head, 52))
 	if err != nil {
 		t.Fatal(err)
 	}
 	nilRequest := authorizationJSONRoundTrip(t, request)
 	nilRequest.Candidate.ExecutionInput = nil
 	nilRequest.Digest = requestDigest(nilRequest)
-	if resolution := ResolveAuthorization(nilRequest, []AuthorizationDecisionInput{fixtureDecision(nilRequest, AuthorizationAllow)}); resolution.Decision != AuthorizationUnknown {
+	if resolution := ResolveAuthorization(nilRequest); resolution.Decision != AuthorizationUnknown {
 		t.Fatalf("nil execution input was treated as present: %+v", resolution)
 	}
-	resolution := ResolveAuthorization(request, []AuthorizationDecisionInput{fixtureDecision(request, AuthorizationAllow)})
+	resolution := ResolveAuthorization(request)
 	nilResolution := authorizationJSONRoundTrip(t, resolution)
 	nilResolution.Candidate.ExecutionInput = nil
 	nilResolution.Digest = resolutionDigest(nilResolution)
@@ -151,70 +154,73 @@ func TestVerifyAuthorizationResolutionDistinguishesNilAndPresentExecutionInput(t
 	}
 }
 
-func TestResolveAuthorizationExplicitAllowAndDenyKeepExecutionClosed(t *testing.T) {
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("f"), 46), authorizationMetadata())
+func TestResolveAuthorizationDerivesEligibilityAndKeepsExecutionClosed(t *testing.T) {
+	head := fixtureSHA("f")
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(head, 46), authorizationMetadata(head, 46))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, expected := range []struct {
-		decision, outcome, reason string
-		authorized                bool
-	}{{AuthorizationAllow, AuthorizationAuthorized, AuthorizationClosedAllow, true}, {AuthorizationDeny, AuthorizationDenied, AuthorizationClosedDeny, false}} {
-		input := fixtureDecision(request, expected.decision)
-		resolution := ResolveAuthorization(request, []AuthorizationDecisionInput{input})
-		if resolution.Decision != AuthorizationClosed || resolution.Outcome != expected.outcome || resolution.Reason != expected.reason || resolution.LiveAuthorized != 0 {
-			t.Fatalf("unexpected explicit resolution: %+v", resolution)
-		}
-		if err := VerifyAuthorizationResolution(request, resolution); err != nil {
-			t.Fatal(err)
-		}
-		if resolution.Authorization == nil || resolution.Authorization.Authorized != expected.authorized || resolution.Authorization.ExecutionAuthorized ||
-			resolution.Authorization.RepositoryWrites != 0 || resolution.Authorization.LocalTestExecutions != 0 {
-			t.Fatalf("authorization gained forbidden authority: %+v", resolution.Authorization)
-		}
+	resolution := ResolveAuthorization(request)
+	if resolution.Decision != AuthorizationClosed || resolution.Outcome != AuthorizationAuthorized ||
+		resolution.Reason != AuthorizationClosedAllow || resolution.LiveAuthorized != 1 ||
+		resolution.LiveState != "CLOSED/AUTHORIZED" || resolution.ExecutionAuthorized {
+		t.Fatalf("unexpected system-derived resolution: %+v", resolution)
+	}
+	if err := VerifyAuthorizationResolution(request, resolution); err != nil {
+		t.Fatal(err)
+	}
+	if resolution.Authorization == nil || !resolution.Authorization.Authorized || resolution.Authorization.ExecutionAuthorized ||
+		resolution.Authorization.Schema != "gooo/semantic-self-adoption-system-decision/v1" ||
+		resolution.Authorization.AuthorizationMode != "system-derived-exact-evidence" ||
+		resolution.Authorization.DecisionSource != AuthorizationEvidenceSource ||
+		resolution.Authorization.DecisionRule != AuthorizationEvidenceRule ||
+		resolution.Authorization.RepositoryWrites != 0 || resolution.Authorization.LocalTestExecutions != 0 {
+		t.Fatalf("system authorization gained forbidden authority: %+v", resolution.Authorization)
 	}
 }
 
-func TestResolveAuthorizationMissingDecisionIsExactSixFieldUnknown(t *testing.T) {
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("1"), 47), authorizationMetadata())
+func TestResolveAuthorizationMissingSystemEvidenceIsExactSixFieldUnknown(t *testing.T) {
+	head := fixtureSHA("1")
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(head, 47), authorizationMetadata(head, 47))
 	if err != nil {
 		t.Fatal(err)
 	}
-	resolution := ResolveAuthorization(request, nil)
-	if resolution.Decision != AuthorizationUnknown || resolution.Reason != AuthorizationInputReason || resolution.Authorization != nil ||
+	request.Candidate.PolicyDigest = ""
+	request.Digest = requestDigest(request)
+	resolution := ResolveAuthorization(request)
+	if resolution.Decision != AuthorizationUnknown || resolution.Reason != AuthorizationFieldReason || resolution.Authorization != nil ||
 		resolution.Unknown == nil || resolution.Unknown.Stage != AuthorizationUnknownStage || resolution.Unknown.Step != AuthorizationUnknownStep ||
-		resolution.Unknown.UnknownClass != AuthorizationUnknownClass || resolution.Unknown.NextOperation != AuthorizationUnknownNext ||
-		len(resolution.Unknown.BlockedBy) != 1 || resolution.Unknown.BlockedBy[0] != "explicit_authorization" {
-		t.Fatalf("missing decision was not causal UNKNOWN: %+v", resolution)
+		resolution.Unknown.UnknownClass != AuthorizationUnknownClass ||
+		len(resolution.Unknown.BlockedBy) != 1 || resolution.Unknown.BlockedBy[0] != "candidate_adapter_field" ||
+		resolution.Unknown.NextOperation != "PROVIDE_COMPLETE_CANDIDATE_BINDING" {
+		t.Fatalf("incomplete system evidence was not causal UNKNOWN: %+v", resolution)
 	}
 	if err := VerifyAuthorizationResolution(request, resolution); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestResolveAuthorizationRefutesContradictionsAndConflictingDuplicates(t *testing.T) {
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("2"), 48), authorizationMetadata())
+func TestResolveAuthorizationRefutesCandidateContradictions(t *testing.T) {
+	head := fixtureSHA("2")
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(head, 48), authorizationMetadata(head, 48))
 	if err != nil {
 		t.Fatal(err)
 	}
-	wrong := fixtureDecision(request, AuthorizationAllow)
-	wrong.CandidateDigest = digestBytes([]byte("not-the-candidate"))
-	if resolution := ResolveAuthorization(request, []AuthorizationDecisionInput{wrong}); resolution.Decision != AuthorizationRefuted || resolution.Reason != AuthorizationRefutedReason {
+	wrong := authorizationJSONRoundTrip(t, request)
+	wrong.Candidate.ExecutionInput.CandidateDigest = digestBytes([]byte("not-the-candidate"))
+	wrong.Digest = requestDigest(wrong)
+	resolution := ResolveAuthorization(wrong)
+	if resolution.Decision != AuthorizationRefuted || resolution.Reason != AuthorizationRefutedReason {
 		t.Fatalf("candidate contradiction was not REFUTED: %+v", resolution)
 	}
-	allow := fixtureDecision(request, AuthorizationAllow)
-	deny := fixtureDecision(request, AuthorizationDeny)
-	resolution := ResolveAuthorization(request, []AuthorizationDecisionInput{allow, deny})
-	if resolution.Decision != AuthorizationRefuted || resolution.Reason != AuthorizationDuplicateReason {
-		t.Fatalf("conflicting duplicate decision was not REFUTED: %+v", resolution)
-	}
-	if err := VerifyAuthorizationResolution(request, resolution); err != nil {
+	if err := VerifyAuthorizationResolution(wrong, resolution); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestBuildCanonicalAuthorizationCasesFixesNineCaseDenominator(t *testing.T) {
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("3"), 49), authorizationMetadata())
+	head := fixtureSHA("3")
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(head, 49), authorizationMetadata(head, 49))
 	if err != nil {
 		t.Fatal(err)
 	}
