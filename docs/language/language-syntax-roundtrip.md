@@ -10,14 +10,14 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v2` registry contains exactly 65 cases: 62 valid sources and three invalid
-fixtures. The current registry observation contains 65 cases, while the
-independent repository observation contains 78 `.gooo` files and 2048 physical
-Gooo lines. Each observed file carries its individual line count and source
-digest. Of the 65 cases, 63 are
-`LANGUAGE_CAPABILITY` and two (`live-governance-snapshot` and
-`self-improvement-ci-continuation`) are separate `GOVERNANCE_OBSERVATION`
-cases. EntityFields is a language capability case; its
+The `v2` registry contains exactly 80 cases: 77 valid sources and three invalid
+fixtures. The current registry observation contains 80 cases, while the
+independent repository observation contains 95 `.gooo` files. Each observed
+file carries its individual line count and source digest. Of the 80 cases, 79
+are `LANGUAGE_CAPABILITY` and one (`self-improvement-ci-continuation`) is a
+separate `GOVERNANCE_OBSERVATION` case. The duplicate live protection observer
+has been retired and is no longer counted as a language capability. EntityFields
+is a language capability case; its
 12 proof activities live in the separate `internal/meta/entityfields/entity-fields-meta.gooo`
 meta source and are not emitted into the user/domain Go projection. These are
 fixed observation denominators, not a quality score.

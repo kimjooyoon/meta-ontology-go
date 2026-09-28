@@ -28,20 +28,16 @@ func TestMainPushCannotAcquirePromotionCapabilities(t *testing.T) {
 	bundle.BaseRef = "main"
 	bundle.Ref = "refs/heads/main"
 	bundle.EventRef = bundle.Ref
-	bundle.BranchProtection = validBranchProtection(bundle)
 	if isPromotionBundle(bundle) {
 		t.Fatal("main push was classified as a promotion")
 	}
 	if promotionAuthorizationFor(bundle) != nil {
 		t.Fatal("main push acquired a promotion authorization")
 	}
-	if err := validateGuardianEvidence(nil, bundle); err != nil {
-		t.Fatalf("main push required promotion Guardian evidence: %v", err)
-	}
 }
 
 func TestDeclaredContextRouteMustMatchTuple(t *testing.T) {
-	context := contextInput{Event: "push", BaseRef: "main", Route: proofRoutePromotionMain}
+	context := contextInput{Event: "push", BaseRef: "main", HeadRef: "dev", Route: proofRoutePromotionMain}
 	if validContextProofRoute(context) {
 		t.Fatal("forged promotion route matched a main push")
 	}

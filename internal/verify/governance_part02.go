@@ -10,17 +10,17 @@ func ValidateGovernanceMatrix(matrix GovernanceMatrix) error {
 	if matrix.Schema != GovernanceSchemaVersion {
 		return fmt.Errorf("unsupported governance schema %q", matrix.Schema)
 	}
-	if matrix.Mode != "ci_only" || matrix.CIAppID != 15368 || matrix.GuardianContexts.DevShadow != "CI guardian shadow" || matrix.GuardianContexts.MainRequired != "CI guardian" {
+	if matrix.Mode != "ci_only" {
 		return fmt.Errorf("governance mode must be ci_only")
 	}
 	if !sameStrings(matrix.ProofJobs, canonicalJobs()) {
 		return fmt.Errorf("proof jobs do not match canonical CI jobs")
 	}
-	if !sameStrings(matrix.RequiredContexts.Dev, append(append([]string(nil), canonicalJobs()...), "CI guardian shadow")) || !sameStrings(matrix.RequiredContexts.Main, append(append([]string(nil), canonicalJobs()...), "CI guardian")) {
-		return fmt.Errorf("required contexts do not match the dev/main guardian matrix")
+	if !sameStrings(matrix.RequiredContexts.Dev, canonicalJobs()) || !sameStrings(matrix.RequiredContexts.Main, canonicalJobs()) {
+		return fmt.Errorf("required contexts must be the six canonical CI jobs")
 	}
-	if len(matrix.RequiredContexts.Dev) != len(canonicalJobs())+1 || len(matrix.RequiredContexts.Main) != len(matrix.RequiredContexts.Dev) || contains(matrix.RequiredContexts.Dev, "CI guardian") || !contains(matrix.RequiredContexts.Dev, "CI guardian shadow") {
-		return fmt.Errorf("required context names are not unique and route-specific")
+	if len(matrix.RequiredContexts.Dev) != len(canonicalJobs()) || len(matrix.RequiredContexts.Main) != len(canonicalJobs()) {
+		return fmt.Errorf("required context names are not unique and canonical")
 	}
 	if err := validateGovernanceOwnership(matrix.Ownership); err != nil {
 		return err

@@ -13,12 +13,12 @@ func TestScopePreflightRunsBeforeExpensiveEvidenceAndKeepsFinalCheck(t *testing.
 	}
 	workflow := string(raw)
 	names := []string{
-		"      - name: Preflight changed-file scope before meta execution",
+		"      - name: Preflight exact source identity before meta execution",
 		"      - name: Emit source metrics (go/gooo + folders/files)",
 		"      - name: Execute declared meta-operation plan",
 		"      - name: Replay declared meta-operation plan",
 		"      - name: Emit source metric receipts and feedback",
-		"      - name: Check changed-file scope and PR target",
+		"      - name: Verify exact PR route and protected target",
 	}
 	positions := make([]int, len(names))
 	previous := -1
@@ -36,14 +36,13 @@ func TestScopePreflightRunsBeforeExpensiveEvidenceAndKeepsFinalCheck(t *testing.
 		"GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}",
 		"GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}",
 		"GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}",
-		"GOOO_SCOPE_BRANCH: ${{ github.event.pull_request.head.ref }}",
 		"run: go run ./scripts/verify --skip-caps --head= --base=",
 	} {
 		if !strings.Contains(preflight, required) {
 			t.Errorf("preflight lost exact input or failure behavior: %s", required)
 		}
 	}
-	for _, forbidden := range []string{"continue-on-error", "|| true", "METRICS_DIR", "GOOO_HUMAN_DECISION"} {
+	for _, forbidden := range []string{"continue-on-error", "|| true", "METRICS_DIR", "GOOO_HUMAN_DECISION", "GOOO_SCOPE_BRANCH"} {
 		if strings.Contains(preflight, forbidden) {
 			t.Errorf("preflight depends on late evidence or grants/ignores authority: %s", forbidden)
 		}

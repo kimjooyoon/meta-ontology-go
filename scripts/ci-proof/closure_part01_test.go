@@ -19,7 +19,7 @@ func TestNoFailureClosureBindsHealthOnlyTuple(t *testing.T) {
 		t.Fatal(err)
 	}
 	encoded, err := json.Marshal(manifest)
-	if err != nil || !strings.Contains(string(encoded), `"schema":"gooo/ci-closure/v1"`) {
+	if err != nil || !strings.Contains(string(encoded), `"schema":"gooo/ci-closure/v2"`) {
 		t.Fatalf("closure schema missing: %s", encoded)
 	}
 }
@@ -30,32 +30,32 @@ func TestNoFailureClosureRejectsTerminalFailureData(t *testing.T) {
 		t.Fatal("no-failure closure accepted terminal failure data")
 	}
 }
-func TestNoFailureClosureSupportsExactDevToMainPromotion(t *testing.T) {
+func TestNoFailureClosureSupportsExactDevToMainHead(t *testing.T) {
 	binding := validFailureBinding()
 	binding.BaseRef = "main"
 	binding.EventRef = "refs/pull/163/merge"
 	binding.PRNumber = 163
-	binding.OwnerBranch = "dev"
+	binding.HeadBranch = "dev"
 	manifest, err := buildClosureManifest(validClosureInputFor(binding), binding)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if manifest.BaseRef != "main" || manifest.OwnerBranch != "dev" || manifest.Decision != "HEALTH_PASS_ONLY" {
+	if manifest.BaseRef != "main" || manifest.HeadBranch != "dev" || manifest.Decision != "HEALTH_PASS_ONLY" {
 		t.Fatalf("exact dev-to-main promotion closure was not preserved: %+v", manifest)
 	}
 	if err := validateClosureManifest(manifest, binding); err != nil {
 		t.Fatal(err)
 	}
 }
-func TestNoFailureClosureAcceptsRegisteredDocsOwner(t *testing.T) {
+func TestNoFailureClosureAcceptsUnregisteredFeatureHead(t *testing.T) {
 	binding := validFailureBinding()
-	binding.OwnerBranch = "agent/docs"
+	binding.HeadBranch = "agent/docs"
 	manifest, err := buildClosureManifest(validClosureInputFor(binding), binding)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if manifest.OwnerBranch != binding.OwnerBranch || manifest.OwnerRef == "" {
-		t.Fatalf("registered docs owner was not bound: %+v", manifest)
+	if manifest.HeadBranch != binding.HeadBranch {
+		t.Fatalf("feature head identity was not bound: %+v", manifest)
 	}
 	if err := validateClosureManifest(manifest, binding); err != nil {
 		t.Fatal(err)

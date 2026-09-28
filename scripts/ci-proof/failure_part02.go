@@ -25,8 +25,7 @@ type failureManifest struct {
 	Job                     failureJob                `json:"job"`
 	Activity                string                    `json:"activity"`
 	Agent                   string                    `json:"agent"`
-	OwnerBranch             string                    `json:"owner_branch"`
-	OwnerRef                string                    `json:"owner_ref"`
+	HeadBranch              string                    `json:"head_branch"`
 	Entity                  string                    `json:"entity"`
 	Provenance              failureProvenance         `json:"provenance"`
 	EvidenceRefs            []string                  `json:"evidence_refs"`
@@ -48,6 +47,5 @@ type failureManifest struct {
 	TerminalFailureEvidence []terminalFailureEvidence `json:"terminal_failure_evidence"`
 	Message                 string                    `json:"message"`
 	Remediation             string                    `json:"remediation"`
-	HandoffOwner            string                    `json:"handoff_owner"`
-	HandoffRequired         bool                      `json:"handoff_required"`
+	NextOperation           string                    `json:"next_operation"`
 }

@@ -28,23 +28,16 @@ func init() {
 type GovernanceMatrix struct {
 	Schema                string                `json:"schema"`
 	Mode                  string                `json:"mode"`
-	CIAppID               int64                 `json:"ci_app_id"`
 	RequiredContexts      GovernanceContexts    `json:"required_contexts"`
-	GuardianContexts      GuardianContexts      `json:"guardian_contexts"`
 	ProofJobs             []string              `json:"proof_jobs"`
 	ProtectedPushBranches []string              `json:"protected_push_branches"`
 	Ownership             []GovernanceOwnership `json:"ownership"`
 	ProtectedKernel       []string              `json:"protected_kernel_paths"`
 	Promotion             GovernancePromotion   `json:"promotion"`
-	FoundationPromotion   map[string]any        `json:"foundation_promotion"`
 }
 type GovernanceContexts struct {
 	Dev  []string `json:"dev"`
 	Main []string `json:"main"`
-}
-type GuardianContexts struct {
-	DevShadow    string `json:"dev_shadow"`
-	MainRequired string `json:"main_required"`
 }
 type GovernanceOwnership struct {
 	Branch string   `json:"branch"`

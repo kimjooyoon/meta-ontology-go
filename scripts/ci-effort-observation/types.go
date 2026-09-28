@@ -137,6 +137,20 @@ type JobObservation struct {
 	Unknown               *Unknown          `json:"unknown,omitempty"`
 }
 
+// GateBottleneck records the observed runtime spread among the six canonical
+// CI checks. It is descriptive evidence and never changes the CI decision.
+type GateBottleneck struct {
+	State                    string `json:"state"`
+	Reason                   string `json:"reason,omitempty"`
+	RequiredChecks           int    `json:"required_checks"`
+	ObservedChecks           int    `json:"observed_checks"`
+	SlowestCheck             string `json:"slowest_check,omitempty"`
+	SlowestWallMS            int64  `json:"slowest_wall_ms,omitempty"`
+	NextSlowestCheck         string `json:"next_slowest_check,omitempty"`
+	NextSlowestWallMS        int64  `json:"next_slowest_wall_ms,omitempty"`
+	SlowestCheckExcessWallMS int64  `json:"slowest_check_excess_wall_ms,omitempty"`
+}
+
 type StepObservation struct {
 	OperationID           string   `json:"operation_id"`
 	RunID                 int64    `json:"run_id"`
@@ -406,6 +420,7 @@ type Report struct {
 	WorkflowSourcePath        string                 `json:"workflow_source_path"`
 	WorkflowSourceDigest      string                 `json:"workflow_source_digest"`
 	Window                    WorkflowWindow         `json:"workflow_window"`
+	GateBottleneck            GateBottleneck         `json:"gate_bottleneck"`
 	RuntimeResolution         string                 `json:"runtime_resolution"`
 	RuntimeCases              []RuntimeCase          `json:"runtime_cases"`
 	Jobs                      []JobObservation       `json:"jobs"`

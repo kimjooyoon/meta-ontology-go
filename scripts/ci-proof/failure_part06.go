@@ -6,20 +6,20 @@ import (
 
 func validateFailureManifest(manifest failureManifest, binding failureBinding) error {
 	entry, ok := failureCatalog[manifest.Code]
-	if !ok || manifest.Schema != failureSchema || manifest.Version != 1 {
+	if !ok || manifest.Schema != failureSchema || manifest.Version != 2 {
 		return fmt.Errorf("failure manifest schema or code is invalid")
 	}
 	scope, err := failureScope(binding)
 	if err != nil {
 		return err
 	}
-	if manifest.Scope != scope || manifest.Class != entry.Class || manifest.Severity != entry.Severity || manifest.BlockingScope != entry.BlockingScope || manifest.Parallelizable != entry.Parallelizable || manifest.HandoffRequired != entry.HandoffRequired || manifest.HandoffOwner != entry.Owner {
+	if manifest.Scope != scope || manifest.Class != entry.Class || manifest.Severity != entry.Severity || manifest.BlockingScope != entry.BlockingScope || manifest.Parallelizable != entry.Parallelizable || manifest.NextOperation != entry.NextOperation {
 		return fmt.Errorf("failure classification does not match catalog")
 	}
-	if manifest.SourceCommit != binding.HeadSHA || manifest.Repository != binding.Repository || manifest.BaseRef != binding.BaseRef || manifest.BaseSHA != binding.BaseSHA || manifest.HeadSHA != binding.HeadSHA || manifest.Event != binding.Event || manifest.EventRef != binding.EventRef || manifest.CheckoutRef != binding.CheckoutRef || manifest.PRNumber != binding.PRNumber || manifest.RunID != binding.RunID || manifest.RunAttempt != binding.RunAttempt || manifest.WorkflowSHA != binding.WorkflowSHA || manifest.OwnerBranch != binding.OwnerBranch || manifest.OwnerRef != failureOwnerRef(binding) || !sameArtifactInputs(manifest.ArtifactRefs, failureArtifactInputs(manifest.Artifacts, manifest.ProofArtifactRef)) || !sameFailureJobs(manifest.TerminalFailures, manifest.Job, manifest.TerminalFailureCodes) || !sameTerminalFailureEvidence(manifest.TerminalFailureEvidence, manifest.TerminalFailures, manifest.TerminalFailureCodes) {
+	if manifest.SourceCommit != binding.HeadSHA || manifest.Repository != binding.Repository || manifest.BaseRef != binding.BaseRef || manifest.BaseSHA != binding.BaseSHA || manifest.HeadSHA != binding.HeadSHA || manifest.Event != binding.Event || manifest.EventRef != binding.EventRef || manifest.CheckoutRef != binding.CheckoutRef || manifest.PRNumber != binding.PRNumber || manifest.RunID != binding.RunID || manifest.RunAttempt != binding.RunAttempt || manifest.WorkflowSHA != binding.WorkflowSHA || manifest.HeadBranch != binding.HeadBranch || !sameArtifactInputs(manifest.ArtifactRefs, failureArtifactInputs(manifest.Artifacts, manifest.ProofArtifactRef)) || !sameFailureJobs(manifest.TerminalFailures, manifest.Job, manifest.TerminalFailureCodes) || !sameTerminalFailureEvidence(manifest.TerminalFailureEvidence, manifest.TerminalFailures, manifest.TerminalFailureCodes) {
 		return fmt.Errorf("failure manifest tuple is stale or mismatched")
 	}
-	if manifest.Repository == "" || manifest.BaseRef == "" || manifest.OwnerBranch == "" || containsUnknown(manifest.OwnerBranch) || manifest.CatalogPath != failureCatalogPath || manifest.CatalogDigest != failureCatalogDigest || manifest.CatalogRef != failureCatalogPath+"@"+binding.HeadSHA || manifest.CatalogVersion != 1 || manifest.CatalogSHA256 != failureCatalogDigest || !validSHA(manifest.SourceCommit) || !validSHA(manifest.BaseSHA) || !validSHA(manifest.HeadSHA) || !validSHA(manifest.WorkflowSHA) || manifest.BaseSHA == manifest.HeadSHA || !validEventRef(manifest.Event, manifest.EventRef) || manifest.CheckoutRef != manifest.HeadSHA || manifest.RunID <= 0 || manifest.RunAttempt <= 0 || manifest.PRNumber < 0 || manifest.Activity == "" || manifest.Agent == "" || manifest.Entity == "" || manifest.Message == "" || manifest.Remediation == "" || containsUnknown(manifest.Message) || containsUnknown(manifest.Remediation) {
+	if manifest.Repository == "" || manifest.BaseRef == "" || manifest.HeadBranch == "" || containsUnknown(manifest.HeadBranch) || manifest.CatalogPath != failureCatalogPath || manifest.CatalogDigest != failureCatalogDigest || manifest.CatalogRef != failureCatalogPath+"@"+binding.HeadSHA || manifest.CatalogVersion != 2 || manifest.CatalogSHA256 != failureCatalogDigest || !validSHA(manifest.SourceCommit) || !validSHA(manifest.BaseSHA) || !validSHA(manifest.HeadSHA) || !validSHA(manifest.WorkflowSHA) || manifest.BaseSHA == manifest.HeadSHA || !validEventRef(manifest.Event, manifest.EventRef) || manifest.CheckoutRef != manifest.HeadSHA || manifest.RunID <= 0 || manifest.RunAttempt <= 0 || manifest.PRNumber < 0 || manifest.Activity == "" || manifest.Agent == "" || manifest.Entity == "" || manifest.Message == "" || manifest.Remediation == "" || !validFailureNextOperation(manifest.NextOperation) || containsUnknown(manifest.Message) || containsUnknown(manifest.Remediation) {
 		return fmt.Errorf("failure manifest has incomplete or unknown values")
 	}
 	if err := validateFailureCodes(manifest.FailureCodes, manifest.Code); err != nil {
@@ -28,7 +28,7 @@ func validateFailureManifest(manifest failureManifest, binding failureBinding) e
 	if err := validateFailureCatalog(); err != nil {
 		return err
 	}
-	if err := validateFailureOwnerBinding(binding); err != nil {
+	if err := validateFailureBranchBinding(binding); err != nil {
 		return err
 	}
 	if err := validateTerminalFailureMapping(manifest, binding); err != nil {

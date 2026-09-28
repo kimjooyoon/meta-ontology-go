@@ -65,10 +65,10 @@ project. Merge, release, and semantic approval remain separate authorities.
 
 ## CI authority
 
-The new native workflow adds a narrow independent check and preserves the
-existing CI workflows. It does not weaken required checks, invent approvals,
-change branch protection, bypass the Guardian, or fix the open release-cache
-security finding. Those remain separately observable integration concerns.
+The native workflow adds a narrow independent check and preserves the existing
+CI workflows. It does not change GitHub branch protection or fix the open
+release-cache security finding. Those remain separately observable integration
+concerns.
 
 Local validation is intentionally not run. Native Actions must establish
 actual conformance before this implementation can be counted as closed.

@@ -45,22 +45,3 @@ func TestCIProofJobsRejectDuplicateID(t *testing.T) {
 		t.Fatal("duplicate canonical job ID was accepted")
 	}
 }
-func TestCIBranchProtectionSnapshotMismatchFailsClosed(t *testing.T) {
-	bundle := validProof()
-	bundle.BranchProtection.Digest = "mismatch"
-	if err := validateProof(bundle); err == nil {
-		t.Fatal("unbound branch protection snapshot was accepted")
-	}
-}
-func TestCIBranchProtectionSnapshotRefTamperingFailsClosed(t *testing.T) {
-	for _, mutate := range []func(*branchProtection){
-		func(snapshot *branchProtection) { snapshot.EventRef = "refs/pull/2/merge" },
-		func(snapshot *branchProtection) { snapshot.CheckoutRef = strings.Repeat("b", 40) },
-	} {
-		bundle := validProof()
-		mutate(&bundle.BranchProtection)
-		if err := validateProof(bundle); err == nil {
-			t.Fatal("tampered branch protection ref was accepted")
-		}
-	}
-}

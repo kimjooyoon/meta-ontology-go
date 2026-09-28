@@ -73,6 +73,7 @@ type readOnlyProjection struct {
 	Timing                  readOnlyTimingSummary   `json:"timing"`
 	OperationCounts         readOnlyOperationCounts `json:"operation_counts"`
 	Window                  WorkflowWindow          `json:"workflow_window"`
+	GateBottleneck          GateBottleneck          `json:"gate_bottleneck"`
 	Jobs                    []JobObservation        `json:"jobs"`
 	Operations              []OperationObservation  `json:"operations"`
 	Accounting              Accounting              `json:"accounting"`
@@ -162,7 +163,7 @@ func buildReadOnlyProjection(config Config) (readOnlyProjection, error) {
 		WorkflowSourcePath: manifest.WorkflowSource, WorkflowSourceDigest: digestIfPresent(workflow), ContractID: contract.ID,
 		OperationManifestDigest: digestBytes(manifestBytes), ExactSourceIdentity: true, SourceFailureKept: true,
 		EvidenceReuseAllowed: false, PromotionAllowed: false, Timing: timing, OperationCounts: readOnlyCounts(accounting),
-		Window: window, Jobs: observedJobs, Operations: operations, Accounting: accounting,
+		Window: window, GateBottleneck: observeGateBottleneck(observedJobs, source.HeadSHA), Jobs: observedJobs, Operations: operations, Accounting: accounting,
 		Graph: graphObservation(config.ProgramPath, program, contract), RepositoryWrites: 0,
 		LocalTestExecutions: 0, Improvement: "UNKNOWN",
 	}
@@ -303,6 +304,9 @@ func validateReadOnlyProjection(report readOnlyProjection, manifest Manifest, co
 	if expected := summarizeReadOnlyTiming(report.Window, report.Jobs, len(report.Jobs) == 0); expected != report.Timing {
 		return fmt.Errorf("read-only timing details do not match observations")
 	}
+	if expected := observeGateBottleneck(report.Jobs, report.HeadSHA); expected != report.GateBottleneck {
+		return fmt.Errorf("read-only required-check bottleneck is not derived from exact source jobs")
+	}
 	if err := validateJobs(report.Jobs, report.HeadSHA); err != nil {
 		return err
 	}
@@ -410,6 +414,7 @@ func humanReadOnlyReport(report readOnlyProjection) string {
 	fmt.Fprintf(&builder, "source repository=%s workflow=%s event=%s ref=%q head=%s run=%d attempt=%d status=%s conclusion=%s exact_identity=%t source_failure_kept=%t\n", report.Repository, report.SourceWorkflow, report.SourceEvent, report.SourceRef, report.HeadSHA, report.SourceRunID, report.SourceRunAttempt, report.SourceRunStatus, report.SourceRunConclusion, report.ExactSourceIdentity, report.SourceFailureKept)
 	fmt.Fprintf(&builder, "workflow_source=%s digest=%s contract=%s manifest_digest=%s\n", report.WorkflowSourcePath, report.WorkflowSourceDigest, report.ContractID, report.OperationManifestDigest)
 	fmt.Fprintf(&builder, "timing window_wall_ms=%d window_timestamps_unknown=%t observed_jobs=%d observed_steps=%d missing_jobs=%d missing_steps=%d jobs_data_unavailable=%t below_source_resolution_jobs=%d steps=%d runtime_rejections=%d\n", report.Timing.WindowWallMS, report.Timing.WindowTimestampsUnknown, report.Timing.ObservedJobIntervals, report.Timing.ObservedStepIntervals, report.Timing.MissingJobIntervals, report.Timing.MissingStepIntervals, report.Timing.JobsDataUnavailable, report.Timing.BelowSourceResolutionJobs, report.Timing.BelowSourceResolutionSteps, report.Timing.RuntimeRejectionCount)
+	fmt.Fprintf(&builder, "required_check_bottleneck state=%s reason=%s observed=%d/%d slowest=%q/%dms next=%q/%dms excess=%dms; descriptive only\n", report.GateBottleneck.State, report.GateBottleneck.Reason, report.GateBottleneck.ObservedChecks, report.GateBottleneck.RequiredChecks, report.GateBottleneck.SlowestCheck, report.GateBottleneck.SlowestWallMS, report.GateBottleneck.NextSlowestCheck, report.GateBottleneck.NextSlowestWallMS, report.GateBottleneck.SlowestCheckExcessWallMS)
 	fmt.Fprintf(&builder, "operations manifest=%d observed=%d skipped=%d missing=%d rejected=%d\n", report.OperationCounts.Manifest, report.OperationCounts.Observed, report.OperationCounts.Skipped, report.OperationCounts.Missing, report.OperationCounts.Rejected)
 	for _, operation := range report.Operations {
 		unknownReason := ""

@@ -105,6 +105,9 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if count, reasons := runtimeRejectionEvidence(report.Window, report.Jobs); report.Window.RuntimeRejectionCount != count || !sameStrings(report.Window.RuntimeRejectionReasons, reasons) {
 		return fmt.Errorf("runtime rejection evidence is inconsistent")
 	}
+	if expected := observeGateBottleneck(report.Jobs, report.HeadSHA); expected != report.GateBottleneck {
+		return fmt.Errorf("required-check bottleneck is not derived from exact source jobs")
+	}
 	expectedRuntimeResolution := runtimeResolution(report.Window)
 	if report.RuntimeResolution != expectedRuntimeResolution {
 		return fmt.Errorf("runtime resolution does not match observations")
@@ -543,6 +546,7 @@ func humanReport(report Report) string {
 	fmt.Fprintf(&builder, "workflow_source=%s digest=%s\n", report.WorkflowSourcePath, report.WorkflowSourceDigest)
 	fmt.Fprintf(&builder, "time_causality release=%s/%s immutable=%t target=%s source=%s ir=%s evaluator=%s assets=%d summary=%d/%d/%d/%d retries=%v binding=%s\n", report.TimeCausality.Release.Repository, report.TimeCausality.Release.Version, report.TimeCausality.Release.Immutable, report.TimeCausality.Release.TargetCommit, report.TimeCausality.SourceDigest, report.TimeCausality.SemanticIRDigest, report.TimeCausality.GeneratedEvaluatorDigest, len(report.TimeCausality.OutputAssets), report.TimeCausality.Summary.Total, report.TimeCausality.Summary.Closed, report.TimeCausality.Summary.Unknown, report.TimeCausality.Summary.Refuted, report.TimeCausality.RetryAttempts, report.TimeCausality.BindingDigest)
 	fmt.Fprintf(&builder, "observed workflow window=%d ms (%s -> %s); parallel job/step sums are not a critical-path claim\n", report.Window.WallMS, report.Window.StartAt, report.Window.EndAt)
+	fmt.Fprintf(&builder, "required_check_bottleneck state=%s reason=%s observed=%d/%d slowest=%q/%dms next=%q/%dms excess=%dms; descriptive only\n", report.GateBottleneck.State, report.GateBottleneck.Reason, report.GateBottleneck.ObservedChecks, report.GateBottleneck.RequiredChecks, report.GateBottleneck.SlowestCheck, report.GateBottleneck.SlowestWallMS, report.GateBottleneck.NextSlowestCheck, report.GateBottleneck.NextSlowestWallMS, report.GateBottleneck.SlowestCheckExcessWallMS)
 	fmt.Fprintf(&builder, "runtime source-value model=%s digest=%s definition=%s\n", report.Window.IntervalModel, report.Window.IntervalModelDigest, runtimeIntervalModelDefinition)
 	fmt.Fprintf(&builder, "nominal source deltas job_ms=%d step_ms=%d; physical elapsed bounds=NOT_ESTABLISHED; interval counts jobs=%d steps=%d; runtime_resolution=%s timestamp_resolution_ms=%d below_source_resolution_jobs=%d steps=%d runtime_rejections=%d reasons=%q\n", report.Window.JobWallMSNominal, report.Window.StepWallMSNominal, report.Window.JobIntervalCount, report.Window.StepIntervalCount, report.RuntimeResolution, report.Window.TimestampResolutionMS, report.Window.BelowSourceResolutionJobs, report.Window.BelowSourceResolutionSteps, report.Window.RuntimeRejectionCount, report.Window.RuntimeRejectionReasons)
 	for _, runtimeCase := range report.RuntimeCases {
