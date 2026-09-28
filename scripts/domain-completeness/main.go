@@ -84,11 +84,9 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
-	decoder := json.NewDecoder(strings.NewReader(string(payload)))
-	decoder.DisallowUnknownFields()
-	var receipt domainReceipt
-	if err := decoder.Decode(&receipt); err != nil {
-		writeReport(validationReport{Error: fmt.Sprintf("decode receipt: %v", err)})
+	receipt, decodeErr := decodeReceipt(payload)
+	if decodeErr != nil {
+		writeReport(validationReport{Error: fmt.Sprintf("decode receipt: %v", decodeErr)})
 		os.Exit(2)
 	}
 	if err := receipt.Validate(); err != nil {
@@ -100,6 +98,23 @@ func main() {
 		fail(err)
 	}
 	writeReport(validationReport{Valid: true, ReceiptDigest: digest})
+}
+
+func decodeReceipt(payload []byte) (domainReceipt, error) {
+	decoder := json.NewDecoder(strings.NewReader(string(payload)))
+	decoder.DisallowUnknownFields()
+	var receipt domainReceipt
+	if err := decoder.Decode(&receipt); err != nil {
+		return domainReceipt{}, err
+	}
+	var trailing json.RawMessage
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return domainReceipt{}, fmt.Errorf("receipt contains trailing JSON")
+		}
+		return domainReceipt{}, fmt.Errorf("decode trailing receipt data: %w", err)
+	}
+	return receipt, nil
 }
 
 func readInput(path string) ([]byte, error) {

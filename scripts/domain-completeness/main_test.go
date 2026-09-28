@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -56,5 +57,16 @@ func TestDomainReceiptRejectsUnknownWithoutCause(t *testing.T) {
 	receipt.Observations[1].Reason = ""
 	if err := receipt.Validate(); err == nil {
 		t.Fatal("Validate() accepted UNKNOWN without a cause")
+	}
+}
+
+func TestDecodeReceiptRejectsTrailingJSON(t *testing.T) {
+	payload, err := json.Marshal(validDomainReceipt())
+	if err != nil {
+		t.Fatalf("Marshal() error = %v", err)
+	}
+	payload = append(payload, []byte(`{}`)...)
+	if _, err := decodeReceipt(payload); err == nil {
+		t.Fatal("decodeReceipt() accepted trailing JSON")
 	}
 }
