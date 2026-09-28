@@ -128,7 +128,11 @@ jobs:
             finish_ns="$(date +%s%N)"
             wall_ns=$((finish_ns - start_ns))
             wall_ms=$(( (wall_ns + 999999) / 1000000 ))
-            peak_rss_kib="$(tr -d '[:space:]' < "$sample/rss")"
+            peak_rss_kib="$(tail -n 1 "$sample/rss" | tr -d '[:space:]')"
+            if [[ ! "$peak_rss_kib" =~ ^[0-9]+$ ]]; then
+              echo "invalid peak RSS observation for $label: $peak_rss_kib" >&2
+              return 1
+            fi
             jq -cn --argjson wall_ms "$wall_ms" --argjson peak_rss_kib "$peak_rss_kib" \
               '{wall_ms:$wall_ms,peak_rss_kib:$peak_rss_kib}'
           }
