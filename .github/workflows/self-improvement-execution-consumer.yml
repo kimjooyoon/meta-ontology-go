@@ -128,6 +128,20 @@ jobs:
             fi
           done < <(find "$contract_dir" -type f -name '*.json' -print | sort)
           test -n "$contract_report"
+          jq '.request' "$grant_report" > "$work/grant-request.json"
+          jq '.resolution' "$grant_report" > "$work/grant-resolution.json"
+          go run ./scripts/self-improvement-execution-contract \
+            -mode verify -resolution "$contract_report" \
+            -output "$work/contract-verification.json" -check
+          jq -e '.verified and .contract_digest != "" and .independent_replay_comparisons == 1' \
+            "$work/contract-verification.json" >/dev/null
+          go run ./scripts/self-improvement-execution-grant \
+            -mode verify -contract examples/self-improvement-execution-grant/grant.gooo \
+            -grant-request "$work/grant-request.json" -resolution "$work/grant-resolution.json" \
+            -output "$work/grant-verification.json" -check
+          jq -e '.verified and .independent_replay_comparisons == 1 and
+            .execution_count == 0 and .grant_consumed_uses == 0 and .repository_writes == 0' \
+            "$work/grant-verification.json" >/dev/null
           metadata="$work/source-metadata.json"
           jq -n --arg repository "$GITHUB_REPOSITORY" --arg subject_sha "$SUBJECT_SHA" \
             --arg grant_artifact_digest "$grant_digest" --arg contract_artifact_digest "$contract_digest" \
@@ -163,9 +177,9 @@ jobs:
         run: |
           set -euo pipefail
           reservation="$CONSUMER_WORK/reservation.json"
-          go run ./scripts/self-improvement-execution-consumer \
-            -mode reserve -grant "$GRANT_REPORT" -contract "$CONTRACT_REPORT" \
-            -metadata "$SOURCE_METADATA" -output "$reservation"
+          python3 scripts/self-improvement-execution-consumer/consume.py reserve \
+            --grant "$GRANT_REPORT" --contract "$CONTRACT_REPORT" \
+            --metadata "$SOURCE_METADATA" --output "$reservation"
           jq -e '.status == "CONSUMPTION_RESERVED" and .consumed_uses == 1 and
             .remaining_uses == 0 and .execution_count == 0 and .one_use_enforced and .digest != ""' \
             "$reservation" >/dev/null
@@ -185,9 +199,9 @@ jobs:
         run: |
           set -euo pipefail
           output="$CONSUMER_WORK/consumption-report.json"
-          go run ./scripts/self-improvement-execution-consumer \
-            -mode consume -grant "$GRANT_REPORT" -contract "$CONTRACT_REPORT" \
-            -metadata "$SOURCE_METADATA" -reservation "$RESERVATION" -output "$output"
+          python3 scripts/self-improvement-execution-consumer/consume.py consume \
+            --grant "$GRANT_REPORT" --contract "$CONTRACT_REPORT" \
+            --metadata "$SOURCE_METADATA" --reservation "$RESERVATION" --output "$output"
           jq -e '.schema == "gooo/self-improvement-execution-consumption/v1" and
             .execution_count == 1 and .evaluator_invocations == 5 and
             .consumed_uses == 1 and .remaining_uses == 0 and .one_use_enforced and
