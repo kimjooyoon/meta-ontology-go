@@ -43,6 +43,10 @@ The request declares the candidate IDs and descriptions, one choice question,
 and a fallback ID that must be among those candidates. This makes disconnected
 execution stable for the same request. The receipt includes the selected ID,
 execution mode, fallback reason when applicable, provider/model/revision metadata,
-probabilities when returned, and a request digest. Do not treat model confidence
-as proof of correctness: evaluate the classifications against Gooo's own
-accepted outcomes before making a model part of a policy decision.
+probabilities and both confidence fields when returned, plus a request digest.
+Do not treat model confidence as proof of correctness: evaluate the
+classifications against Gooo's own accepted outcomes before making a model part
+of a policy decision.
+
+See [the local CPU evaluation](laya-local-evaluation-2026-09-29.md) for a
+measured warm-request latency and process CPU/RSS baseline.

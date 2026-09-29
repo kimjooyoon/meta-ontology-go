@@ -36,9 +36,10 @@ type layaResponse struct {
 	Model   string         `json:"model"`
 	Routing map[string]any `json:"routing"`
 	Answers map[string]struct {
-		Choice        string             `json:"choice"`
-		Probabilities map[string]float64 `json:"probabilities"`
-		Confidence    *float64           `json:"confidence"`
+		Choice           string             `json:"choice"`
+		Probabilities    map[string]float64 `json:"probabilities"`
+		Confidence       *float64           `json:"confidence"`
+		AnswerConfidence *float64           `json:"answer_confidence"`
 	} `json:"answers"`
 }
 
@@ -81,14 +82,15 @@ func Resolve(ctx context.Context, request Request, endpoint, apiKey string) (Rec
 		return fallback(request, digest, FallbackInvalidResult), nil
 	}
 	answer, ok := result.Answers[request.Question.ID]
-	if !ok || !validChoice(request, answer.Choice) || !validProbabilities(request, answer.Probabilities) || !validConfidence(answer.Confidence) {
+	if !ok || !validChoice(request, answer.Choice) || !validProbabilities(request, answer.Probabilities) || !validConfidence(answer.Confidence) || !validConfidence(answer.AnswerConfidence) {
 		return fallback(request, digest, FallbackInvalidResult), nil
 	}
 	return Receipt{
 		Schema: ReceiptSchema, Mode: "laya", Selected: answer.Choice, Provider: "laya",
 		Model: result.Model, ModelRevision: readModelRevision(ctx, endpoint, result.Routing),
 		Routing: result.Routing, Probabilities: answer.Probabilities,
-		Confidence: answer.Confidence, RequestSHA256: digest,
+		Confidence: answer.Confidence, AnswerConfidence: answer.AnswerConfidence,
+		RequestSHA256: digest,
 	}, nil
 }
 

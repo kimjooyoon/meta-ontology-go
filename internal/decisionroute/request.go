@@ -31,17 +31,18 @@ type Option struct {
 }
 
 type Receipt struct {
-	Schema         string             `json:"schema"`
-	Mode           string             `json:"mode"`
-	Selected       string             `json:"selected"`
-	FallbackReason string             `json:"fallback_reason,omitempty"`
-	Provider       string             `json:"provider"`
-	Model          string             `json:"model,omitempty"`
-	ModelRevision  string             `json:"model_revision,omitempty"`
-	Routing        map[string]any     `json:"routing,omitempty"`
-	Probabilities  map[string]float64 `json:"probabilities,omitempty"`
-	Confidence     *float64           `json:"confidence,omitempty"`
-	RequestSHA256  string             `json:"request_sha256"`
+	Schema           string             `json:"schema"`
+	Mode             string             `json:"mode"`
+	Selected         string             `json:"selected"`
+	FallbackReason   string             `json:"fallback_reason,omitempty"`
+	Provider         string             `json:"provider"`
+	Model            string             `json:"model,omitempty"`
+	ModelRevision    string             `json:"model_revision,omitempty"`
+	Routing          map[string]any     `json:"routing,omitempty"`
+	Probabilities    map[string]float64 `json:"probabilities,omitempty"`
+	Confidence       *float64           `json:"confidence,omitempty"`
+	AnswerConfidence *float64           `json:"answer_confidence,omitempty"`
+	RequestSHA256    string             `json:"request_sha256"`
 }
 
 func Validate(request Request) (string, error) {
