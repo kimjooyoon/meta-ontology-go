@@ -95,10 +95,23 @@ func assertCompletenessReceipt(t *testing.T, receipt *CompletenessReceipt) {
 		t.Fatalf("aggregate completeness must remain unscored: %#v", receipt.AggregateCompletenessScore)
 	}
 	counts := map[string]int{"PASS": 0, "PROGRESS": 0, "UNKNOWN": 0, "FAIL_CLOSED": 0}
+	dimensionIDs := make(map[string]bool, len(receipt.Dimensions))
 	for _, dimension := range receipt.Dimensions {
+		if dimensionIDs[dimension.ID] {
+			t.Fatalf("duplicate completeness dimension %q", dimension.ID)
+		}
+		dimensionIDs[dimension.ID] = true
 		counts[dimension.Status]++
 		if dimension.ID == "" || dimension.Unit == "" || dimension.Reason == "" || len(dimension.Evidence) == 0 {
 			t.Fatalf("dimension lacks reasoned evidence: %#v", dimension)
+		}
+	}
+	if len(receipt.CoreDimensions) == 0 {
+		t.Fatal("completeness receipt must identify its core dimensions")
+	}
+	for _, id := range receipt.CoreDimensions {
+		if !dimensionIDs[id] {
+			t.Fatalf("core dimension %q is not declared in dimensions", id)
 		}
 	}
 	for status, count := range counts {

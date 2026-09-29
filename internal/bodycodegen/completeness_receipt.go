@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -91,9 +92,9 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 			"selected routes in the compiler-declared candidate set", "The selected lowering must be a route the compiler declared eligible for this source shape.",
 			[]string{"candidate_routes", "selected_route:" + report.Route}, report.Route != "" && !containsString(report.CandidateRoutes, report.Route)),
 		provenanceDimension(report, compilerSHA),
-		completenessDimension("boundary_coverage", boolCount(report.RepositoryWrites == 0)*3, 3,
-			"non-executing, non-authorizing, zero-write properties", "The command emits source bytes, does not execute the generated function or authorize effects, and records repository writes.",
-			[]string{"generated source is returned on stdout or JSON", "repository_writes:0", "generated code execution is outside this command"}, report.RepositoryWrites != 0),
+		completenessDimension("repository_write_boundary", boolCount(report.RepositoryWrites == 0), 1,
+			"repository writes", "The command emits generated source without mutating the repository.",
+			[]string{"repository_writes:" + strconv.Itoa(report.RepositoryWrites)}, report.RepositoryWrites != 0),
 		completenessDimension("execution_boundary", 0, 1,
 			"generated package runtime executions", "This command typechecks and replays generated source but does not execute the generated package.",
 			[]string{"body-codegen does not run generated Go"}, false),
