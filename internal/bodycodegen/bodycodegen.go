@@ -43,29 +43,30 @@ type Result struct {
 
 // Report describes what was lowered and how the output was checked.
 type Report struct {
-	Schema                 string                `json:"schema"`
-	Decision               string                `json:"decision"`
-	Activity               string                `json:"activity"`
-	ActivityID             string                `json:"activity_id"`
-	SourceDigest           string                `json:"source_digest"`
-	ProgramDigest          string                `json:"program_digest"`
-	GeneratedDigest        string                `json:"generated_digest"`
-	ReplayDigest           string                `json:"replay_digest"`
-	Route                  string                `json:"route"`
-	RouteDecision          decisionroute.Receipt `json:"route_decision"`
-	RouteSelection         RouteSelectionReceipt `json:"route_selection"`
-	RouteDecisionLatencyMS float64               `json:"route_decision_latency_ms"`
-	CandidateRoutes        []string              `json:"candidate_routes"`
-	EquivalenceRule        string                `json:"equivalence_rule"`
-	SourceConstructs       int                   `json:"source_constructs"`
-	LoweredConstructs      int                   `json:"lowered_constructs"`
-	SourceSemanticUnits    int                   `json:"source_semantic_units"`
-	LoweredSemanticUnits   int                   `json:"lowered_semantic_units"`
-	CompletenessPercent    float64               `json:"completeness_percent"`
-	TypecheckPassed        bool                  `json:"typecheck_passed"`
-	DeterministicReplay    bool                  `json:"deterministic_replay"`
-	RepositoryWrites       int                   `json:"repository_writes"`
-	UnsupportedConstructs  string                `json:"unsupported_constructs"`
+	Schema                 string                  `json:"schema"`
+	Decision               string                  `json:"decision"`
+	Activity               string                  `json:"activity"`
+	ActivityID             string                  `json:"activity_id"`
+	SourceDigest           string                  `json:"source_digest"`
+	ProgramDigest          string                  `json:"program_digest"`
+	GeneratedDigest        string                  `json:"generated_digest"`
+	ReplayDigest           string                  `json:"replay_digest"`
+	Route                  string                  `json:"route"`
+	RouteDecision          decisionroute.Receipt   `json:"route_decision"`
+	RouteSelection         RouteSelectionReceipt   `json:"route_selection"`
+	RouteDecisionLatencyMS float64                 `json:"route_decision_latency_ms"`
+	CandidateRoutes        []string                `json:"candidate_routes"`
+	EquivalenceRule        string                  `json:"equivalence_rule"`
+	SourceConstructs       int                     `json:"source_constructs"`
+	LoweredConstructs      int                     `json:"lowered_constructs"`
+	SourceSemanticUnits    int                     `json:"source_semantic_units"`
+	LoweredSemanticUnits   int                     `json:"lowered_semantic_units"`
+	CompletenessPercent    float64                 `json:"completeness_percent"`
+	RouteEquivalence       RouteEquivalenceReceipt `json:"route_equivalence"`
+	TypecheckPassed        bool                    `json:"typecheck_passed"`
+	DeterministicReplay    bool                    `json:"deterministic_replay"`
+	RepositoryWrites       int                     `json:"repository_writes"`
+	UnsupportedConstructs  string                  `json:"unsupported_constructs"`
 }
 
 // RouteSelectionReceipt makes an optional weighted route draw replayable without
@@ -279,24 +280,38 @@ func generateRoute(packageName, activityName, activityID, inputType, outputType,
 	if err != nil {
 		return generatedRoute{}, err
 	}
+	equivalenceRule := routeEquivalenceRule(route)
+	equivalence, err := routeEquivalence(packageName, activityName, inputType, outputType, body, generated, equivalenceRule)
+	if err != nil {
+		return generatedRoute{}, err
+	}
+	if !equivalence.Equivalent {
+		return generatedRoute{}, fmt.Errorf("route %q failed its canonical semantic equivalence receipt", route)
+	}
 	completeness := 0.0
 	if sourceUnits > 0 {
 		covered := min(loweredUnits, sourceUnits)
 		completeness = float64(covered) * 100 / float64(sourceUnits)
-	}
-	equivalenceRule := "source-shape-preserving-v1"
-	if route == guardReturnRoute {
-		equivalenceRule = "if-return-else-return-to-guard-return-v1"
-	} else if route == mergeResultRoute {
-		equivalenceRule = "if-return-else-return-to-explicit-result-join-v1"
 	}
 	return generatedRoute{source: generated, report: Report{
 		Schema: schema, Decision: "PASS", Activity: activityName, ActivityID: activityID,
 		Route: route, EquivalenceRule: equivalenceRule,
 		SourceConstructs: sourceConstructs, LoweredConstructs: loweredConstructs,
 		SourceSemanticUnits: sourceUnits, LoweredSemanticUnits: loweredUnits,
-		CompletenessPercent: completeness, TypecheckPassed: true,
+		CompletenessPercent: completeness, RouteEquivalence: equivalence,
+		TypecheckPassed: true,
 	}}, nil
+}
+
+func routeEquivalenceRule(route string) string {
+	switch route {
+	case guardReturnRoute:
+		return "if-return-else-return-to-guard-return-v1"
+	case mergeResultRoute:
+		return "if-return-else-return-to-explicit-result-join-v1"
+	default:
+		return "source-shape-preserving-v1"
+	}
 }
 
 func render(packageName, activityName, activityID, inputType, outputType, body, route string) ([]byte, int, int, int, int, error) {
