@@ -49,6 +49,7 @@ cp \
   "$profile_work/first.json" \
   "$profile_work/replay.json" \
   "$profile_work/unknown-entry.json" \
+  "$profile_work/comparison.json" \
   "$profile_work/input.json" \
   "$profile_work/report.json" \
   "$profile_work/unknown-top-input.json" \
@@ -56,6 +57,7 @@ cp \
   source-execution-output/profile/
 cp "$profile_build/gooo" source-execution-output/profile/gooo
 cp "$profile_build/language-profile-experiment" source-execution-output/profile/language-profile-experiment
+cp "$profile_build/language-comparison" source-execution-output/profile/language-comparison
 
 bash scripts/language-debug-experiment/main.sh
 debug_work="${RUNNER_TEMP:-/tmp}/language-debug-experiment"
