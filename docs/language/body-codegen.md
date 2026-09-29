@@ -9,6 +9,13 @@ markers:
 go run ./cmd/gooo body-codegen --activity ClampBelowZero examples/body-codegen/main.gooo.fixture
 ```
 
+For an explicit seeded probability experiment, pass a seed:
+
+```sh
+go run ./cmd/gooo body-codegen --json --sample-seed experiment-17 \
+  --activity ChooseBranch examples/body-codegen/guard-route.gooo.fixture
+```
+
 To let the local Laya service select among eligible routes, set the same
 endpoint used by `gooo decide`:
 
@@ -25,11 +32,11 @@ checker after a closed syntax filter. Function calls, imports, loops, multiple
 inputs, and external effects fail closed. The generated result is written to
 stdout; this command does not mutate the repository.
 
-The JSON report records the source/program/generated digests, source and
-lowered semantic-unit counts, candidate and selected route, Laya decision
-receipt and decision latency when a route choice is available, typecheck
-result, deterministic replay digest, and completeness over the accepted
-source-body units. A semantic unit is a non-container statement or expression
+The v3 JSON report records the source/program/generated digests, source and
+lowered semantic-unit counts, candidate and final route, Laya decision and
+route-selection receipts, provider latency, typecheck result, deterministic
+replay digest, and completeness over the accepted source-body units. A
+semantic unit is a non-container statement or expression
 node in the activity body. Completeness is the fraction of those source units represented
 by the selected lowering; it measures coverage of this body profile, not the
 percentage of a person's unstated intent. A `PASS` also requires that the
@@ -45,10 +52,23 @@ explicit `merge-result` join. The guard rewrite changes
 The join route assigns each branch value to a typed local and returns it after
 the conditional, making the control-flow merge explicit. Each route records
 its equivalence rule and is typechecked before output. Laya receives a source
-digest and structural summary, not the activity body. An absent, unavailable,
-malformed, or over-budget provider uses the declared `preserve` fallback; the
-planner has a three-second budget. With no Laya setting, repeated runs
-therefore select the same route and produce the same generated digest.
+digest and structural summary, not the activity body. By default, an absent,
+unavailable, malformed, or over-budget provider uses the declared `preserve`
+fallback; the planner has a three-second budget. With no Laya setting and no
+sample seed, repeated runs therefore select the same route and produce the
+same generated digest.
+
+`--sample-seed` opts into a probability draw. With Laya available, the command
+normalizes its per-route probabilities and samples only among the eligible
+routes. Without Laya, it samples from an equal prior over those routes. The
+receipt records the sampling method, seed digest, normalized weights, draw
+value, proposed route, and final emitted route; it never stores the raw seed.
+The draw binds the seed to the canonical decision-request digest and ordered
+candidate set. Repeating the same source, seed, and recorded weights therefore
+replays the same route. If the seed is omitted, the existing Laya top-choice
+and deterministic `preserve` fallback behavior remains unchanged. Every
+selected route still passes Gooo's closed syntax checks, type checking, and
+internal emission replay before it is returned.
 
 The experiment does not change `gooo generate`'s package projection or claim
 that the current runtime executes these bodies. The model selects a bounded
