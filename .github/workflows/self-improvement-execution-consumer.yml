@@ -130,8 +130,9 @@ jobs:
           test -n "$contract_report"
           jq '.request' "$grant_report" > "$work/grant-request.json"
           jq '.resolution' "$grant_report" > "$work/grant-resolution.json"
+          jq 'del(.verification)' "$contract_report" > "$work/contract-resolution.json"
           go run ./scripts/self-improvement-execution-contract \
-            -mode verify -resolution "$contract_report" \
+            -mode verify -resolution "$work/contract-resolution.json" \
             -output "$work/contract-verification.json" -check
           jq -e '.verified and .contract_digest != "" and .independent_replay_comparisons == 1' \
             "$work/contract-verification.json" >/dev/null
