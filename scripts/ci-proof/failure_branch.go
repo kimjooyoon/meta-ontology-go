@@ -21,7 +21,10 @@ func validPromotionSnapshotHeadBranch(branch string) bool {
 }
 
 func validateFailureBranchBinding(binding failureBinding) error {
-	if binding.Event == "pull_request" {
+	if binding.Event == "pull_request" || binding.Event == "workflow_dispatch" {
+		if binding.Event == "workflow_dispatch" && (binding.PRNumber <= 0 || binding.EventRef != "refs/heads/"+binding.HeadBranch) {
+			return fmt.Errorf("%s: promotion dispatch does not bind its exact pull request head", promotionBranchBindingCode)
+		}
 		if binding.BaseRef != "dev" && binding.BaseRef != "main" {
 			return fmt.Errorf("%s: pull request base branch is unsupported", promotionBranchBindingCode)
 		}

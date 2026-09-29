@@ -14,14 +14,17 @@ func validateInputIdentity(evidence evidenceInput, context contextInput, jobs []
 	if context.Ref == "" || context.EventRef == "" || context.CheckoutRef == "" || context.EventRef != context.Ref || context.CheckoutRef != evidence.HeadSHA || context.Actor == "" || context.Builder == "" || context.Gate == "" || !validSHA(evidence.BaseSHA) || !validSHA(evidence.HeadSHA) || !validSHA(evidence.WorkflowSHA) || !validSHA(context.CheckoutRef) || evidence.BaseSHA == evidence.HeadSHA {
 		return fmt.Errorf("proof identity is missing, invalid, or identical")
 	}
-	if evidence.Event != "pull_request" && evidence.Event != "push" {
+	if evidence.Event != "pull_request" && evidence.Event != "push" && evidence.Event != "workflow_dispatch" {
 		return fmt.Errorf("unsupported proof event %q", evidence.Event)
 	}
-	if evidence.Event == "pull_request" && context.PRNumber <= 0 {
+	if (evidence.Event == "pull_request" || evidence.Event == "workflow_dispatch") && context.PRNumber <= 0 {
 		return fmt.Errorf("pull-request proof number is required")
 	}
 	if evidence.Event == "push" && context.PRNumber != 0 {
 		return fmt.Errorf("push proof cannot carry a pull request number")
+	}
+	if evidence.Event == "workflow_dispatch" && !validPromotionDispatchBinding(context.Event, context.Ref, context.PRNumber, context.BaseRef, context.HeadRef) {
+		return fmt.Errorf("promotion dispatch does not bind an exact main pull request")
 	}
 	if err := compareJobs(evidence.Jobs, jobs, evidence.HeadSHA, evidence.RunID, evidence.Attempt); err != nil {
 		return err

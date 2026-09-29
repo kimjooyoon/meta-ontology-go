@@ -16,7 +16,7 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 	if strings.Contains(text, "'agent/**'") || strings.Contains(text, "agent push cap-only") {
 		t.Fatal("CI workflow retained a non-protected agent push trigger")
 	}
-	for _, condition := range []string{"if: github.event_name == 'pull_request'", "if: github.event_name == 'push'"} {
+	for _, condition := range []string{"if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}", "if: github.event_name == 'push'"} {
 		if !strings.Contains(text, condition) {
 			t.Fatalf("workflow lost event condition %q", condition)
 		}
