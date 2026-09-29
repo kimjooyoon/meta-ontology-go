@@ -10,14 +10,14 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v2` registry contains exactly 80 cases: 77 valid sources and three invalid
-fixtures. The current registry observation contains 80 cases, while the
-independent repository observation contains 95 `.gooo` files. Each observed
-file carries its individual line count and source digest. Of the 80 cases, 79
-are `LANGUAGE_CAPABILITY` and one (`self-improvement-ci-continuation`) is a
-separate `GOVERNANCE_OBSERVATION` case. The duplicate live protection observer
-has been retired and is no longer counted as a language capability. EntityFields
-is a language capability case; its
+The `v2` registry contains exactly 81 cases: 78 valid sources and three invalid
+fixtures. The current registry observation contains 81 cases, while the
+independent repository observation contains 96 `.gooo` files. Each observed
+file carries its individual line count and source digest. Of the 81 cases, 79
+are `LANGUAGE_CAPABILITY` and two (`self-improvement-ci-continuation` and
+`domain-completeness-profile`) are `GOVERNANCE_OBSERVATION` cases. The duplicate
+live protection observer has been retired and is no longer counted as a
+language capability. EntityFields is a language capability case; its
 12 proof activities live in the separate `internal/meta/entityfields/entity-fields-meta.gooo`
 meta source and are not emitted into the user/domain Go projection. These are
 fixed observation denominators, not a quality score.
@@ -40,7 +40,7 @@ does not become a fixed point; it produces `FAIL_CLOSED` at `LOWER_RESOLUTION`.
 | Choice | Meta-operation | Passing condition |
 | --- | --- | --- |
 | FOUNDATION | bind-versioned-complete-gooo-corpus | exact registry, exact commit, complete path set, bound concept artifact |
-| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 41 valid cases satisfy all five preservation laws |
+| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 78 valid cases satisfy all five preservation laws |
 | REGRESSION | reject-invalid-syntax-with-zero-effects | all three diagnostics reject and writes and authority remain zero |
 
 ## CI authority
