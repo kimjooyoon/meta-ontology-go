@@ -13,6 +13,7 @@ import (
 	"go/scanner"
 	"go/token"
 	"go/types"
+	"maps"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
@@ -267,9 +268,7 @@ func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]
 
 func cloneNames(names map[string]bool) map[string]bool {
 	clone := make(map[string]bool, len(names))
-	for name, present := range names {
-		clone[name] = present
-	}
+	maps.Copy(clone, names)
 	return clone
 }
 
