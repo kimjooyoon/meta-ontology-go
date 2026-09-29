@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageutility"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -614,16 +615,14 @@ func reportDigest(value Report) (string, error) {
 }
 
 func symbol(value string) string {
-	parts := strings.FieldsFunc(value, func(r rune) bool {
-		return r == '-' || r == '_' || r == ' '
-	})
+	parts := strings.FieldsFunc(value, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) })
 	var result strings.Builder
 	for _, part := range parts {
-		runes := []rune(part)
+		runes := []rune(strings.ToLower(part))
 		if len(runes) == 0 {
 			continue
 		}
-		runes[0] = []rune(strings.ToUpper(string(runes[0])))[0]
+		runes[0] = unicode.ToUpper(runes[0])
 		result.WriteString(string(runes))
 	}
 	return result.String()
