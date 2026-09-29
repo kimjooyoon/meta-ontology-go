@@ -39,12 +39,23 @@ func TestObserveExecutionOriginBindsPhaseWithoutGrantingAuthority(t *testing.T) 
 	if !receipt.NonAuthorizing || len(receipt.Conditions) != 2 {
 		t.Fatalf("receipt guardrails/conditions=%#v", receipt)
 	}
+	if !receipt.Validate() {
+		t.Fatal("complete origin receipt did not validate")
+	}
+	tampered := receipt
+	tampered.ExecutionDigest = "sha256:tampered"
+	if tampered.Validate() {
+		t.Fatal("tampered origin receipt validated")
+	}
 
 	execution.Phase = ExecutionPhaseFailed
 	execution.ExecutionDigest = "sha256:failed-execution-observation"
 	failedReceipt := ObserveExecutionOrigin(origin, execution)
 	if failedReceipt.Status != ExecutionOriginStatusBound || failedReceipt.Phase != ExecutionPhaseFailed {
 		t.Fatalf("failed phase was not preserved: %#v", failedReceipt)
+	}
+	if !failedReceipt.Validate() {
+		t.Fatal("failed execution observation did not retain a valid receipt")
 	}
 }
 
@@ -63,5 +74,8 @@ func TestObserveExecutionOriginKeepsIncompleteEvidenceUnknown(t *testing.T) {
 	empty := ObserveExecutionOrigin(provenance.OriginChainObservation{}, Execution{Phase: ExecutionPhaseCompleted})
 	if empty.Status != ExecutionOriginStatusUnknown || empty.Reason != "ORIGIN_OBSERVATION_INCOMPLETE" {
 		t.Fatalf("empty origin receipt=%#v", empty)
+	}
+	if !receipt.Validate() || !empty.Validate() {
+		t.Fatal("unknown origin receipts did not retain valid observation digests")
 	}
 }

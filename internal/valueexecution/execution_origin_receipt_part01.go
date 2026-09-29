@@ -2,6 +2,7 @@ package valueexecution
 
 import (
 	"encoding/json"
+	"slices"
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
@@ -56,6 +57,35 @@ func ObserveExecutionOrigin(origin provenance.OriginChainObservation, execution 
 	}
 	receipt.ReceiptDigest = executionOriginReceiptDigest(receipt)
 	return receipt
+}
+
+// Validate checks the integrity and internal state of an origin receipt. It
+// verifies the receipt digest and lifecycle fields, but does not authenticate
+// who produced the receipt or grant authority to its subject.
+func (receipt ExecutionOriginReceipt) Validate() bool {
+	if !receipt.NonAuthorizing || receipt.ReceiptDigest == "" ||
+		receipt.ReceiptDigest != executionOriginReceiptDigest(receipt) ||
+		!slices.Equal(receipt.Conditions, canonicalOriginExecutionConditions(receipt.Conditions)) {
+		return false
+	}
+	switch receipt.Status {
+	case ExecutionOriginStatusBound:
+		return receipt.OriginDigest != "" && receipt.ExecutionDigest != "" &&
+			knownExecutionPhase(receipt.Phase) && receipt.Reason == "ORIGIN_BOUND_TO_EXECUTION"
+	case ExecutionOriginStatusUnknown:
+		switch receipt.Reason {
+		case "ORIGIN_OBSERVATION_INCOMPLETE":
+			return true
+		case "EXECUTION_DIGEST_MISSING":
+			return receipt.ExecutionDigest == ""
+		case "EXECUTION_PHASE_UNKNOWN":
+			return !knownExecutionPhase(receipt.Phase)
+		default:
+			return false
+		}
+	default:
+		return false
+	}
 }
 
 func knownExecutionPhase(phase ExecutionPhase) bool {
