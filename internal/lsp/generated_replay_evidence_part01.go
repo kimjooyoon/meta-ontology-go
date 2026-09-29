@@ -97,6 +97,7 @@ func executionPlanGeneratedReplayDigestsPart01(
 		return "", "", closure
 	}
 	currentToolchainDigest, currentEvaluatorDigest := valueexecution.RuntimeEvidenceIdentities()
+	identityMismatchAtOrAfterArtifact := false
 	for _, identity := range []struct {
 		stageIndex int
 		name       string
@@ -116,7 +117,11 @@ func executionPlanGeneratedReplayDigestsPart01(
 		)
 		if reason != "" {
 			closure = generatedReplayClosureAtStagePart01(closure, identity.stageIndex, reason)
-			return "", "", closure
+			if identity.stageIndex < 5 {
+				return "", "", closure
+			}
+			identityMismatchAtOrAfterArtifact = true
+			break
 		}
 	}
 	generatedArtifactDigest := canonicalLSPProvenanceDigestPart01(evidence.GeneratedArtifactDigest)
@@ -125,6 +130,9 @@ func executionPlanGeneratedReplayDigestsPart01(
 	}
 	if generatedArtifactDigest == "" {
 		return "", "", generatedReplayClosureAtStagePart01(closure, 4, "GENERATED_REPLAY_ARTIFACT_DIGEST_INVALID")
+	}
+	if identityMismatchAtOrAfterArtifact {
+		return generatedArtifactDigest, "", closure
 	}
 	if closure.Status == ExecutionEvidenceReceiptClosureComplete {
 		return generatedArtifactDigest, closure.Digest, closure
