@@ -1,40 +1,46 @@
 package valueexecution
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"io"
+	"os"
 	"runtime"
-	"runtime/debug"
-	"sort"
 	"strings"
+	"sync"
 )
 
-// RuntimeEvidenceIdentities reports the Go runtime/toolchain identity and the
-// exact clean VCS build identity used by this evaluator. An evaluator digest
-// is unavailable for modified or non-VCS builds so evidence cannot claim a
-// reproducible replay from an unbound binary.
+var runtimeEvaluatorIdentityOnce sync.Once
+var runtimeEvaluatorIdentityDigest string
+
+// RuntimeEvidenceIdentities reports the runtime/toolchain identity and the
+// exact bytes of the evaluator executable. If the executable cannot be read,
+// its identity stays empty so the consuming provenance boundary remains
+// UNKNOWN.
 func RuntimeEvidenceIdentities() (toolchainDigest, evaluatorDigest string) {
 	toolchainDigest = digestBytes([]byte(strings.Join([]string{
 		runtime.Version(), runtime.GOOS, runtime.GOARCH,
 	}, "\x00")))
+	runtimeEvaluatorIdentityOnce.Do(func() {
+		runtimeEvaluatorIdentityDigest = runtimeEvaluatorDigest()
+	})
+	return toolchainDigest, runtimeEvaluatorIdentityDigest
+}
 
-	buildInfo, ok := debug.ReadBuildInfo()
-	if !ok {
-		return toolchainDigest, ""
+func runtimeEvaluatorDigest() string {
+	executable, err := os.Executable()
+	if err != nil {
+		return ""
 	}
-	settings := make(map[string]string, len(buildInfo.Settings))
-	for _, setting := range buildInfo.Settings {
-		settings[setting.Key] = setting.Value
+	file, err := os.Open(executable)
+	if err != nil {
+		return ""
 	}
-	if settings["vcs.revision"] == "" || settings["vcs.modified"] != "false" {
-		return toolchainDigest, ""
+	defer file.Close()
+
+	hash := sha256.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return ""
 	}
-	buildSettings := make([]string, 0, len(buildInfo.Settings))
-	for key, value := range settings {
-		buildSettings = append(buildSettings, key+"="+value)
-	}
-	sort.Strings(buildSettings)
-	evaluatorIdentity := append([]string{
-		"gooo/valueexecution/evaluator/v1",
-		settings["vcs.revision"],
-	}, buildSettings...)
-	return toolchainDigest, digestBytes([]byte(strings.Join(evaluatorIdentity, "\x00")))
+	return "sha256:" + hex.EncodeToString(hash.Sum(nil))
 }
