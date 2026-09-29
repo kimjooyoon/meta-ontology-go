@@ -82,10 +82,12 @@ The authorization is pure, non-mutating evidence. It is `PASS` only when every
 predicate holds and is otherwise `FAIL_CLOSED` with a reason code. The proof
 producer does not write refs or branch protection. GitHub's native required
 status checks enforce configured contexts; CI does not duplicate them by
-reading a privileged branch-protection snapshot. A future automatic promotion executor
-must use an atomic compare-and-swap/fast-forward update of `main` against the
-observed `dev` and `main` SHAs. Force-push and force-update operations are never
-permitted.
+reading a privileged branch-protection snapshot. Once installed on the default
+branch, the automatic promotion executor opens or reuses the exact `main` PR,
+dispatches CI with the PR number and observed head/base SHAs, and merges through
+GitHub's PR API with the expected head SHA only after the proof and required
+checks pass. Branch protection stays active; force-push and force-update
+operations are never permitted.
 
 The bootstrap fixtures and [bootstrap evidence bridge](bootstrap-evidence.md)
 record non-promoting evidence shapes only. Self-hosting and a self-hosted

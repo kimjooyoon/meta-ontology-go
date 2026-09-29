@@ -1,0 +1,6 @@
+package bodycodegen
+namespace bodycodegen
+
+entity Integer id "bodycodegen://entity/integer"
+
+activity ClampBelowZero(Integer) -> Integer computes "let value = input\nvalue = input\nlet accepted = value >= 0\nif accepted { return value } else { return 0 }"
