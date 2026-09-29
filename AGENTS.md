@@ -74,10 +74,13 @@ with the exact live `dev` tree and live `main` parent. Topology must have
 GitHub's native branch
 rules enforce the six required statuses; proof does not make a second app-bound
 policy snapshot.
-The authorization never writes refs or protection. After a final exact reread,
-only a normal compare-and-swap/fast-forward operation may update `main`; force
-pushes and force updates are not permitted. Missing or stale evidence is
-`FAIL_CLOSED`.
+The authorization never writes refs or protection. Once the promotion workflow
+is installed on the default branch, a successful exact-head `dev` run opens or
+reuses the matching `main` PR and dispatches CI with the PR number and exact
+head/base SHAs. CI re-reads that tuple, emits the digest-bound proof, and the
+executor merges through GitHub's normal PR API with the expected head SHA.
+Native branch protection remains authoritative; force pushes and force updates
+are not permitted. Missing or stale evidence is `FAIL_CLOSED`.
 
 ## Review caps
 

@@ -25,10 +25,7 @@ for (const [event, baseRef, expected, headRef] of cases) {
   assert.doesNotThrow(() => route.validateProofRouteEvidence(evidence, input));
 }
 
-assert.throws(
-  () => route.classifyProofRoute('workflow_dispatch', 'main'),
-  /unsupported CI proof route tuple/,
-);
+assert.throws(() => route.classifyProofRoute('workflow_dispatch', 'main'), /main promotion head must be dev or an exact dev-tree snapshot/);
 
 assert.throws(() => route.classifyProofRoute('pull_request', 'main'), /main promotion head must be dev or an exact dev-tree snapshot/);
 assert.throws(() => route.classifyProofRoute('pull_request', 'main', {headRef: 'agent/unrelated-main-change'}), /main promotion head must be dev or an exact dev-tree snapshot/);

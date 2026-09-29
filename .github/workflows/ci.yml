@@ -1,5 +1,5 @@
 name: CI
-run-name: "CI [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+run-name: "CI [${{ github.event_name == 'pull_request' && 'PR authoritative' || (github.event_name == 'workflow_dispatch' && 'promotion dispatch' || 'push full') }}]"
 
 on:
   push:
@@ -9,13 +9,27 @@ on:
   pull_request:
     branches:
       - dev
-      - main
     types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      promotion_pr_number:
+        description: Exact open main promotion PR number
+        required: true
+        type: string
+      promotion_head_sha:
+        description: Exact promotion PR head SHA
+        required: true
+        type: string
+      promotion_base_sha:
+        description: Exact main base SHA
+        required: true
+        type: string
 
 permissions:
   contents: read
   actions: read
   checks: read
+  pull-requests: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.run_attempt > 1 && format('replay-{0}', github.run_id) || 'head' }}
@@ -335,6 +349,8 @@ jobs:
         run: |
           if [ "$CI_EVENT" = "pull_request" ]; then
             source="PR authoritative"
+          elif [ "$CI_EVENT" = "workflow_dispatch" ]; then
+            source="promotion dispatch"
           else
             source="push full"
           fi
@@ -345,10 +361,10 @@ jobs:
             echo "- ref: $CI_REF"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Verify PR checkout identity
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
         env:
-          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
-          EXPECTED_BASE: ${{ github.event.pull_request.base.sha }}
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.event.inputs.promotion_head_sha }}
+          EXPECTED_BASE: ${{ github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha }}
         run: |
           actual_head="$(git rev-parse HEAD)"
           test "$actual_head" = "$EXPECTED_HEAD"
@@ -367,7 +383,7 @@ jobs:
         timeout-minutes: 15
         env:
           METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: |
           mkdir -p "$METRICS_DIR"
@@ -404,7 +420,7 @@ jobs:
         timeout-minutes: 30
         env:
           METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: |
           go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution.json"
@@ -412,7 +428,7 @@ jobs:
         timeout-minutes: 30
         env:
           METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: |
           go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution-replay.json"
@@ -421,7 +437,7 @@ jobs:
         timeout-minutes: 15
         env:
           METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: |
           go run ./scripts/meta-receipts -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-receipts.json"
@@ -614,22 +630,22 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Validate source metric and meta evidence (caps are observations)
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
         env:
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
       - name: Verify exact PR route and protected target
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
         env:
-          GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
-          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
-          GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
-          GOOO_SCOPE_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
-          GOOO_PR_HEAD: ${{ github.head_ref }}
-          GOOO_PR_BASE: ${{ github.base_ref }}
+          GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
+          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha || github.event.inputs.promotion_head_sha || github.sha }}
+          GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.event.inputs.promotion_head_sha || github.sha }}
+          GOOO_SCOPE_BRANCH: ${{ github.head_ref || github.ref_name }}
+          GOOO_PR_HEAD: ${{ github.head_ref || github.ref_name }}
+          GOOO_PR_BASE: ${{ github.base_ref || (github.event_name == 'workflow_dispatch' && 'main' || '') }}
           GOOO_REPOSITORY: ${{ github.repository }}
-          GOOO_PR_NUMBER: ${{ github.event.pull_request.number || 0 }}
-          GOOO_PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          GOOO_PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.promotion_pr_number || 0 }}
+          GOOO_PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
           GOOO_NON_ROUTE_RESULTS: "format=${{ needs.format.result }},vet=${{ needs.vet.result }},test=${{ needs.test.result }},race=${{ needs.race.result }},semantic=${{ needs.semantic.result }}"
         run: go run ./scripts/verify --skip-caps
       - name: Validate source metric and meta evidence on protected push
@@ -640,7 +656,7 @@ jobs:
   evidence:
     name: CI evidence
     needs: [format, vet, test, race, semantic, policy]
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -706,8 +722,8 @@ jobs:
           CI_EVENT: ${{ github.event_name }}
           CI_EVENT_REF: ${{ github.ref }}
           CI_CHECKOUT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          CI_BASE_REF: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
-          CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          CI_BASE_REF: ${{ github.event_name == 'pull_request' && github.base_ref || (github.event_name == 'workflow_dispatch' && 'main' || github.ref_name) }}
+          CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
           CI_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           CI_RUN_ID: ${{ github.run_id }}
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
@@ -727,9 +743,10 @@ jobs:
             const crypto = require('crypto');
             const fs = require('fs');
             const evidence = JSON.parse(fs.readFileSync('ci-evidence.json', 'utf8'));
-            const pull = context.payload.pull_request;
+            const {resolvePromotionPull} = require('./scripts/ci-proof/dispatch');
+            const pull = await resolvePromotionPull(github, context);
             const headSha = pull ? pull.head.sha : context.sha;
-            const baseSha = pull ? pull.base.sha : context.payload.before;
+            const baseSha = pull ? pull.base.sha : (context.payload.before || context.payload.inputs?.promotion_base_sha);
             const {normalizeBaseRef} = require('./scripts/ci-proof/refs');
             const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
             const output = fs.readFileSync('ci-domain/cli-check.stdout', 'utf8');
@@ -763,7 +780,7 @@ jobs:
   proof:
     name: CI proof bundle
     needs: [format, vet, test, race, semantic, policy, evidence, feedback-predecessor]
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -901,12 +918,13 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const pull = context.payload.pull_request;
+            const {resolvePromotionPull} = require('./scripts/ci-proof/dispatch');
+            const pull = await resolvePromotionPull(github, context);
             const {normalizeBaseRef} = require('./scripts/ci-proof/refs');
             const route = require('./scripts/ci-proof/route');
             const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
             const headSha = pull ? pull.head.sha : context.sha;
-            const baseSha = pull ? pull.base.sha : context.payload.before;
+            const baseSha = pull ? pull.base.sha : (context.payload.before || context.payload.inputs?.promotion_base_sha);
             const evidence = route.buildProofRouteEvidence({
               event: context.eventName, eventRef: context.ref, baseRef, baseSha, headSha,
               repository: context.payload.repository.full_name, prNumber: pull ? pull.number : 0,
@@ -914,14 +932,23 @@ jobs:
             });
             fs.writeFileSync('ci-proof-route.json', JSON.stringify(evidence, null, 2) + '\n');
       - name: Observe exact promotion tuple
-        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'main')
         uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ github.token }}
           script: |
             const fs = require('fs');
-            const eventPull = context.payload.pull_request;
-            const current = (await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: eventPull.number})).data;
+            const {resolvePromotionPull} = require('./scripts/ci-proof/dispatch');
+            const eventPull = await resolvePromotionPull(github, context);
+            let current;
+            for (let attempt = 0; attempt < 12; attempt++) {
+              current = (await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: eventPull.number})).data;
+              if (current.mergeable !== null && current.mergeable_state !== 'unknown') break;
+              if (attempt < 11) await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+            if (!current || current.mergeable === null || current.mergeable_state === 'unknown') {
+              throw new Error('GitHub did not resolve promotion PR mergeability within 60 seconds');
+            }
             const exactPull = current && current.base?.ref === 'main' && current.base?.sha === eventPull.base?.sha &&
               current.head?.ref === eventPull.head?.ref && current.head?.sha === eventPull.head?.sha &&
               current.base?.repo?.full_name === context.payload.repository.full_name &&
@@ -951,7 +978,7 @@ jobs:
             const observation = {
               repository: current.base.repo.full_name,
               pr_number: current.number,
-              action: context.payload.action,
+              action: context.payload.action || 'workflow_dispatch',
               promotion_mode: directDevHead ? 'DIRECT_DEV_HEAD' : 'DEV_TREE_SNAPSHOT',
               state: current.state,
               draft: current.draft === true,
@@ -980,10 +1007,11 @@ jobs:
           github-token: ${{ github.token }}
           script: |
             const fs = require('fs');
-            const pull = context.payload.pull_request;
+            const {resolvePromotionPull} = require('./scripts/ci-proof/dispatch');
+            const pull = await resolvePromotionPull(github, context);
             const {normalizeBaseRef} = require('./scripts/ci-proof/refs');
             const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
-            const baseSha = pull ? pull.base.sha : context.payload.before;
+            const baseSha = pull ? pull.base.sha : (context.payload.before || context.payload.inputs?.promotion_base_sha);
             const headSha = pull ? pull.head.sha : context.sha;
             const routePolicy = require('./scripts/ci-proof/route');
             const routeEvidence = JSON.parse(fs.readFileSync('ci-proof-route.json', 'utf8'));
@@ -1055,7 +1083,7 @@ jobs:
   failure-report:
     name: CI failure summary
     needs: [format, vet, test, race, semantic, policy, proof]
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -1096,7 +1124,8 @@ jobs:
               if (page === 1000) throw new Error('failure job API pagination exceeded the fail-closed page limit');
             }
             const expectedJobs = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
-            const pull = context.payload.pull_request;
+            const {resolvePromotionPull} = require('./scripts/ci-proof/dispatch');
+            const pull = await resolvePromotionPull(github, context);
             const {normalizeBaseRef, normalizeHeadBranch} = require('./scripts/ci-proof/refs');
             const normalizedBaseRef = normalizeBaseRef(context.eventName, context.ref, pull);
             const normalizedHeadBranch = normalizeHeadBranch(context.eventName, context.ref, pull);
@@ -1139,7 +1168,7 @@ jobs:
                   && proof.repository === `${context.repo.owner}/${context.repo.repo}`
                   && proof.event === context.eventName
                   && proof.base_ref === normalizedBaseRef
-                  && proof.base_sha === (pull?.base.sha || context.payload.before)
+                  && proof.base_sha === (pull?.base.sha || context.payload.before || context.payload.inputs?.promotion_base_sha)
                   && proof.head_sha === head
                   && proof.ref === context.ref
                   && proof.event_ref === context.ref
@@ -1320,10 +1349,10 @@ jobs:
           CI_EVENT_REF: ${{ github.ref }}
           CI_CHECKOUT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           CI_BASE_REF: ""
-          CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
           CI_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
-          CI_PR_NUMBER: ${{ github.event_name == 'pull_request' && github.event.pull_request.number || 0 }}
+          CI_PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.promotion_pr_number || 0 }}
           CI_RUN_ID: ${{ github.run_id }}
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_ACTOR: ${{ github.actor }}
@@ -1384,12 +1413,12 @@ jobs:
         name: Resolve predecessor cause
         env:
           EVENT_NAME: ${{ github.event_name }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref || (github.event_name == 'workflow_dispatch' && 'main' || '') }}
           PUSH_BEFORE: ${{ github.event.before }}
           REF_NAME: ${{ github.ref_name }}
         run: |
-          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+          if [[ "$EVENT_NAME" == "pull_request" || "$EVENT_NAME" == "workflow_dispatch" ]]; then
             sha="$PR_BASE_SHA"
             branch="$PR_BASE_REF"
           else

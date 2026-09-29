@@ -6,12 +6,13 @@ const schema = 'gooo/ci-proof-route/v1';
 const routes = Object.freeze({
   'pull_request:dev': 'feature_dev',
   'pull_request:main': 'promotion_main',
+  'workflow_dispatch:main': 'promotion_main',
   'push:dev': 'protected_push_dev',
   'push:main': 'protected_push_main',
 });
 
 function classifyProofRoute(event, baseRef, input = {}) {
-  if (event === 'pull_request' && baseRef === 'main' && input.headRef !== 'dev' && !isPromotionSnapshotHead(input.headRef)) {
+  if ((event === 'pull_request' || event === 'workflow_dispatch') && baseRef === 'main' && input.headRef !== 'dev' && !isPromotionSnapshotHead(input.headRef)) {
     throw new Error('main promotion head must be dev or an exact dev-tree snapshot');
   }
   const route = routes[event + ':' + baseRef];
