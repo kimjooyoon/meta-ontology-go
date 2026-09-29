@@ -58,3 +58,23 @@ func TestPromotionAuthorizationIsBoundToProofDigest(t *testing.T) {
 		t.Fatal("promotion authorization with a forged proof digest was accepted")
 	}
 }
+
+func TestSnapshotPromotionAcceptsBlockedAggregateOnlyWithCompletePassingProof(t *testing.T) {
+	bundle := validSnapshotPromotionBundleFixture()
+	bundle.PromotionObservation.MergeableState = "blocked"
+	rebindPromotionFixture(&bundle)
+	if err := validateProof(bundle); err != nil {
+		t.Fatalf("complete exact proof with a blocked aggregate observation rejected: %v", err)
+	}
+	if !promotionOperatorReady(bundle) {
+		t.Fatal("complete exact CI proof did not authorize the blocked aggregate observation")
+	}
+
+	bundle = validSnapshotPromotionBundleFixture()
+	bundle.PromotionObservation.MergeableState = "blocked"
+	bundle.Jobs[0].Conclusion = "failure"
+	rebindPromotionFixture(&bundle)
+	if promotionOperatorReady(bundle) {
+		t.Fatal("blocked aggregate observation with a failed required job was authorized")
+	}
+}
