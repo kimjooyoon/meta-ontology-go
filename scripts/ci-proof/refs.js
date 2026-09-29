@@ -31,6 +31,11 @@ function normalizeBaseRef(event, ref, pullRequest) {
   if (event === 'pull_request') {
     return normalizeActiveBaseBranch(pullRequest && pullRequest.base && pullRequest.base.ref, 'pull request base branch');
   }
+  if (event === 'workflow_dispatch') {
+    const head = normalizeBranchName(pullRequest && pullRequest.head && pullRequest.head.ref, 'promotion pull request head branch');
+    if (ref !== `refs/heads/${head}`) throw new Error('promotion dispatch ref does not match the live pull request head');
+    return normalizeActiveBaseBranch(pullRequest && pullRequest.base && pullRequest.base.ref, 'promotion pull request base branch');
+  }
   if (event === 'push') {
     return normalizeProtectedBranchRef(ref);
   }
@@ -40,6 +45,11 @@ function normalizeBaseRef(event, ref, pullRequest) {
 function normalizeHeadBranch(event, ref, pullRequest) {
   if (event === 'pull_request') {
     return normalizeBranchName(pullRequest && pullRequest.head && pullRequest.head.ref, 'pull request owner branch');
+  }
+  if (event === 'workflow_dispatch') {
+    const head = normalizeBranchName(pullRequest && pullRequest.head && pullRequest.head.ref, 'promotion pull request head branch');
+    if (ref !== `refs/heads/${head}`) throw new Error('promotion dispatch ref does not match the live pull request head');
+    return head;
   }
   if (event === 'push') {
     return normalizeProtectedBranchRef(ref);

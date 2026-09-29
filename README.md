@@ -186,4 +186,9 @@ the design-only deterministic metric contract. [docs/conformance.md](docs/confor
 is the runnable example index. The [Deterministic CI Evolution Retrospective](docs/deterministic-ci-evolution.md)
 is the append-only read-only evidence record.
 
+An experimental source-to-Go activity-body projection is documented at
+[docs/language/body-codegen.md](docs/language/body-codegen.md). It keeps body
+generation separate from the stable package projection until its syntax and
+completeness claims have broader evidence.
+
 [W3C PROV-O]: https://www.w3.org/TR/prov-o/
