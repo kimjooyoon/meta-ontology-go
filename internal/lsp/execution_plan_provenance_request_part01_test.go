@@ -178,6 +178,7 @@ activity RecordIndependentReview(Integer) -> Integer computes "int.add:1"
 bind ProposeCandidate.result -> RecordIndependentReview.input
 `
 	semanticDigest := cache.HashBytes([]byte(source)).String()
+	sourceDigest := "sha256:" + cache.HashBytes([]byte(source)).String()
 	parser := ParserFunc(func(string, string) ParseResult {
 		return ParseResult{semanticDigest: semanticDigest, semanticChecked: true, semanticValid: true}
 	})
@@ -209,7 +210,6 @@ bind ProposeCandidate.result -> RecordIndependentReview.input
 	receipt := executionOriginReceiptFixturePart01(runtimePlanDigest)
 	server.mu.RLock()
 	stored := server.documents[uri]
-	sourceDigest := stored.cacheKey.sourceDigest
 	currentSemanticDigest := stored.result.semanticDigest
 	server.mu.RUnlock()
 	evidence := GeneratedReplayEvidencePart01{
