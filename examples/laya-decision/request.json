@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/typed-decision-request/v1",
+  "state": "Laya를 설치했다. Gooo의 작업 분류 실행 경로에 직접 연결하고, 제공자가 연결되지 않은 경우에도 작업이 결정론적으로 진행되게 한다.",
+  "question": {
+    "id": "next_step",
+    "instructions": "작업 상태에서 다음으로 수행할 가장 유용한 작업 종류를 고른다.",
+    "options": [
+      {"id": "inspect", "description": "기존 코드를 읽고 현재 동작과 제약을 파악한다."},
+      {"id": "implement", "description": "Gooo 실행 경로를 변경하거나 요청된 기능을 추가한다."},
+      {"id": "verify", "description": "기능을 실행하고 실제 결과를 확인한다."},
+      {"id": "report", "description": "완료한 작업과 근거를 사용자에게 요약한다."}
+    ]
+  },
+  "fallback": "implement"
+}
