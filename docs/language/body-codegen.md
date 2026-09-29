@@ -6,7 +6,7 @@ function, bound to the activity's stable semantic ID by generated-region
 markers:
 
 ```sh
-go run ./cmd/gooo body-codegen --activity ClampBelowZero examples/body-codegen/main.gooo
+go run ./cmd/gooo body-codegen --activity ClampBelowZero examples/body-codegen/main.gooo.fixture
 ```
 
 The v1 body profile accepts one `Integer` or `Boolean` input and one matching
@@ -26,6 +26,8 @@ runtime executes these bodies. Laya remains outside source generation: a
 planner may later select among bounded lowering routes, while this emitter
 retains deterministic authority over the resulting Go.
 
-The example intentionally uses a finite, side-effect-free body so later
-experiments can compare behavior across codegen routes without granting the
-model authority to produce code.
+The checked-in `.gooo.fixture` intentionally uses a finite, side-effect-free
+body. The suffix keeps this experimental input outside the repository's fixed
+`.gooo` conformance inventory until the language corpus itself is revised.
+Later experiments can compare behavior across codegen routes without granting
+the model authority to produce code.
