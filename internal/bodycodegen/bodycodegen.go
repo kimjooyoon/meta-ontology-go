@@ -27,6 +27,7 @@ const (
 	schema              = "gooo/body-codegen-report/v2"
 	preserveRoute       = "preserve"
 	guardReturnRoute    = "guard-return"
+	mergeResultRoute    = "merge-result"
 	routeDecisionBudget = 3 * time.Second
 )
 
@@ -38,27 +39,28 @@ type Result struct {
 
 // Report describes what was lowered and how the output was checked.
 type Report struct {
-	Schema                string                `json:"schema"`
-	Decision              string                `json:"decision"`
-	Activity              string                `json:"activity"`
-	ActivityID            string                `json:"activity_id"`
-	SourceDigest          string                `json:"source_digest"`
-	ProgramDigest         string                `json:"program_digest"`
-	GeneratedDigest       string                `json:"generated_digest"`
-	ReplayDigest          string                `json:"replay_digest"`
-	Route                 string                `json:"route"`
-	RouteDecision         decisionroute.Receipt `json:"route_decision"`
-	CandidateRoutes       []string              `json:"candidate_routes"`
-	EquivalenceRule       string                `json:"equivalence_rule"`
-	SourceConstructs      int                   `json:"source_constructs"`
-	LoweredConstructs     int                   `json:"lowered_constructs"`
-	SourceSemanticUnits   int                   `json:"source_semantic_units"`
-	LoweredSemanticUnits  int                   `json:"lowered_semantic_units"`
-	CompletenessPercent   float64               `json:"completeness_percent"`
-	TypecheckPassed       bool                  `json:"typecheck_passed"`
-	DeterministicReplay   bool                  `json:"deterministic_replay"`
-	RepositoryWrites      int                   `json:"repository_writes"`
-	UnsupportedConstructs string                `json:"unsupported_constructs"`
+	Schema                 string                `json:"schema"`
+	Decision               string                `json:"decision"`
+	Activity               string                `json:"activity"`
+	ActivityID             string                `json:"activity_id"`
+	SourceDigest           string                `json:"source_digest"`
+	ProgramDigest          string                `json:"program_digest"`
+	GeneratedDigest        string                `json:"generated_digest"`
+	ReplayDigest           string                `json:"replay_digest"`
+	Route                  string                `json:"route"`
+	RouteDecision          decisionroute.Receipt `json:"route_decision"`
+	RouteDecisionLatencyMS float64               `json:"route_decision_latency_ms"`
+	CandidateRoutes        []string              `json:"candidate_routes"`
+	EquivalenceRule        string                `json:"equivalence_rule"`
+	SourceConstructs       int                   `json:"source_constructs"`
+	LoweredConstructs      int                   `json:"lowered_constructs"`
+	SourceSemanticUnits    int                   `json:"source_semantic_units"`
+	LoweredSemanticUnits   int                   `json:"lowered_semantic_units"`
+	CompletenessPercent    float64               `json:"completeness_percent"`
+	TypecheckPassed        bool                  `json:"typecheck_passed"`
+	DeterministicReplay    bool                  `json:"deterministic_replay"`
+	RepositoryWrites       int                   `json:"repository_writes"`
+	UnsupportedConstructs  string                `json:"unsupported_constructs"`
 }
 
 // Generate compiles one .gooo activity body into a marked Go source region.
@@ -156,13 +158,16 @@ func GenerateWithPlanner(ctx context.Context, filename string, source []byte, ac
 			},
 			Fallback: preserveRoute,
 		}
+		started := time.Now()
 		decisionContext, cancel := context.WithTimeout(ctx, routeDecisionBudget)
 		receipt, err = decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
 		cancel()
+		decisionLatencyMS := float64(time.Since(started)) / float64(time.Millisecond)
 		if err != nil {
 			return Result{}, fmt.Errorf("select code generation route: %w", err)
 		}
 		selected = receipt.Selected
+		base.report.RouteDecisionLatencyMS = decisionLatencyMS
 	}
 	result := base
 	if selected != preserveRoute {
@@ -191,6 +196,7 @@ func GenerateWithPlanner(ctx context.Context, filename string, source []byte, ac
 	result.report.ReplayDigest = digest(replay.source)
 	result.report.Route = selected
 	result.report.RouteDecision = receipt
+	result.report.RouteDecisionLatencyMS = base.report.RouteDecisionLatencyMS
 	result.report.CandidateRoutes = candidateIDs
 	result.report.DeterministicReplay = result.report.GeneratedDigest == result.report.ReplayDigest
 	result.report.RepositoryWrites = 0
@@ -227,6 +233,8 @@ func generateRoute(packageName, activityName, activityID, inputType, outputType,
 	equivalenceRule := "source-shape-preserving-v1"
 	if route == guardReturnRoute {
 		equivalenceRule = "if-return-else-return-to-guard-return-v1"
+	} else if route == mergeResultRoute {
+		equivalenceRule = "if-return-else-return-to-explicit-result-join-v1"
 	}
 	return generatedRoute{source: generated, report: Report{
 		Schema: schema, Decision: "PASS", Activity: activityName, ActivityID: activityID,
@@ -259,6 +267,10 @@ func render(packageName, activityName, activityID, inputType, outputType, body, 
 	if route == guardReturnRoute {
 		if !lowerGuardReturn(function.Body) {
 			return nil, 0, 0, 0, 0, fmt.Errorf("activity %q does not match the guard-return route shape", activityName)
+		}
+	} else if route == mergeResultRoute {
+		if !lowerMergeResult(function.Body, outputType) {
+			return nil, 0, 0, 0, 0, fmt.Errorf("activity %q does not match the merge-result route shape", activityName)
 		}
 	} else if route != preserveRoute {
 		return nil, 0, 0, 0, 0, fmt.Errorf("unknown body-codegen route %q", route)
@@ -311,6 +323,10 @@ func candidateRoutes(packageName, activityName, body string) ([]decisionroute.Op
 			ID:          guardReturnRoute,
 			Description: "For a single pure if/else whose branches each return once, emit the true-branch guard followed by the false-branch return; this removes one nesting block while preserving both outcomes.",
 		})
+		options = append(options, decisionroute.Option{
+			ID:          mergeResultRoute,
+			Description: "For a single pure if/else whose branches each return once, assign both branch values to one typed result local and return it after the conditional; this makes the control-flow join explicit.",
+		})
 	}
 	return options, shape, nil
 }
@@ -343,6 +359,36 @@ func lowerGuardReturn(body *ast.BlockStmt) bool {
 	fallback := otherwise.List[0]
 	conditional.Else = nil
 	body.List = []ast.Stmt{conditional, fallback}
+	return true
+}
+
+func lowerMergeResult(body *ast.BlockStmt, outputType string) bool {
+	if !isGuardReturnShape(body) {
+		return false
+	}
+	conditional := body.List[0].(*ast.IfStmt)
+	otherwise := conditional.Else.(*ast.BlockStmt)
+	thenReturn := conditional.Body.List[0].(*ast.ReturnStmt)
+	elseReturn := otherwise.List[0].(*ast.ReturnStmt)
+	resultName := "_goooResult"
+	result := ast.NewIdent(resultName)
+	declaration := &ast.DeclStmt{Decl: &ast.GenDecl{
+		Tok: token.VAR,
+		Specs: []ast.Spec{&ast.ValueSpec{
+			Names: []*ast.Ident{ast.NewIdent(resultName)},
+			Type:  ast.NewIdent(outputType),
+		}},
+	}}
+	merge := &ast.IfStmt{
+		Cond: conditional.Cond,
+		Body: &ast.BlockStmt{List: []ast.Stmt{&ast.AssignStmt{
+			Lhs: []ast.Expr{ast.NewIdent(resultName)}, Tok: token.ASSIGN, Rhs: thenReturn.Results,
+		}}},
+		Else: &ast.BlockStmt{List: []ast.Stmt{&ast.AssignStmt{
+			Lhs: []ast.Expr{ast.NewIdent(resultName)}, Tok: token.ASSIGN, Rhs: elseReturn.Results,
+		}}},
+	}
+	body.List = []ast.Stmt{declaration, merge, &ast.ReturnStmt{Results: []ast.Expr{result}}}
 	return true
 }
 
@@ -386,10 +432,16 @@ func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]
 				return 0, fmt.Errorf("only one local let declaration is supported")
 			}
 			spec, ok := declaration.Specs[0].(*ast.ValueSpec)
-			if !ok || len(spec.Names) != 1 || len(spec.Values) != 1 || spec.Type != nil {
+			if !ok || len(spec.Names) != 1 || len(spec.Values) != 1 {
 				return 0, fmt.Errorf("let requires one inferred local value")
 			}
 			name := spec.Names[0].Name
+			if spec.Type != nil {
+				typeName, supported := spec.Type.(*ast.Ident)
+				if name != "_goooResult" || !supported || (typeName.Name != "int64" && typeName.Name != "bool") {
+					return 0, fmt.Errorf("explicit local types are reserved for compiler-generated result joins")
+				}
+			}
 			if name == inputName || locals[name] {
 				return 0, fmt.Errorf("let name %q is already bound", name)
 			}

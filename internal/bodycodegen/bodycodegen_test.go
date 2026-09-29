@@ -89,7 +89,7 @@ activity Choose(Integer) -> Integer computes "if input > 5 { return input + 2 } 
 	if result.Report.Route != guardReturnRoute || result.Report.RouteDecision.Mode != "laya" || result.Report.RouteDecision.ModelRevision != modelRevision {
 		t.Fatalf("Laya decision was not bound to code generation: %#v", result.Report)
 	}
-	if result.Report.CandidateRoutes[0] != preserveRoute || result.Report.CandidateRoutes[1] != guardReturnRoute {
+	if len(result.Report.CandidateRoutes) != 3 || result.Report.CandidateRoutes[0] != preserveRoute || result.Report.CandidateRoutes[1] != guardReturnRoute || result.Report.CandidateRoutes[2] != mergeResultRoute {
 		t.Fatalf("unexpected route candidates: %#v", result.Report.CandidateRoutes)
 	}
 	if strings.Contains(result.Source, "} else {") || !strings.Contains(result.Source, "\n\treturn 0\n}") {
@@ -97,6 +97,40 @@ activity Choose(Integer) -> Integer computes "if input > 5 { return input + 2 } 
 	}
 	if result.Report.EquivalenceRule != "if-return-else-return-to-guard-return-v1" || result.Report.SourceSemanticUnits != result.Report.LoweredSemanticUnits || result.Report.CompletenessPercent != 100 {
 		t.Fatalf("lowering completeness or equivalence witness is missing: %#v", result.Report)
+	}
+}
+
+func TestGenerateWithPlannerCanSelectExplicitResultJoin(t *testing.T) {
+	const sourceText = `package bodycodegen
+namespace bodycodegen
+entity Integer id "bodycodegen://entity/integer"
+activity Choose(Integer) -> Integer computes "if input > 5 { return input + 2 } else { return 0 }"
+`
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "route-model",
+			"answers": map[string]any{"body_codegen_route": map[string]any{
+				"choice": mergeResultRoute,
+			}},
+		})
+	}))
+	defer server.Close()
+
+	result, err := GenerateWithPlanner(context.Background(), "main.gooo", []byte(sourceText), "Choose", server.URL+"/v1/systemone", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Report.Route != mergeResultRoute || result.Report.RouteDecision.Mode != "laya" {
+		t.Fatalf("explicit result join was not selected: %#v", result.Report)
+	}
+	for _, want := range []string{"var _goooResult int64", "_goooResult = input + 2", "_goooResult = 0", "return _goooResult"} {
+		if !strings.Contains(result.Source, want) {
+			t.Fatalf("merge-result output missing %q:\n%s", want, result.Source)
+		}
+	}
+	if result.Report.EquivalenceRule != "if-return-else-return-to-explicit-result-join-v1" || result.Report.CompletenessPercent != 100 || result.Report.SourceSemanticUnits == 0 || result.Report.LoweredSemanticUnits < result.Report.SourceSemanticUnits {
+		t.Fatalf("result-join report is incomplete: %#v", result.Report)
 	}
 }
 
