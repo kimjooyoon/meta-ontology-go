@@ -11,11 +11,13 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyCodegenUsage = "usage: gooo body-codegen [--json] --activity <name> <file.gooo>"
+const bodyCodegenUsage = "usage: gooo body-codegen [--json] [--sample-seed <seed>] --activity <name> <file.gooo>"
 
 func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	jsonMode := false
 	activity := ""
+	sampleSeed := ""
+	sampleSeedSet := false
 	filename := ""
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
@@ -27,6 +29,14 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 				return exitUsage
 			}
 			activity = args[index+1]
+			index++
+		case "--sample-seed":
+			if sampleSeedSet || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
+				fmt.Fprintln(stderr, bodyCodegenUsage)
+				return exitUsage
+			}
+			sampleSeed = args[index+1]
+			sampleSeedSet = true
 			index++
 		default:
 			if strings.HasPrefix(args[index], "-") || filename != "" {
@@ -44,7 +54,7 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 	if err != nil {
 		return reportBodyCodegenFailure(jsonMode, filename, err, stdout, stderr)
 	}
-	result, err := bodycodegen.GenerateWithPlanner(context.Background(), filename, source, activity, os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"))
+	result, err := bodycodegen.GenerateWithPlannerAndSampleSeed(context.Background(), filename, source, activity, os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"), sampleSeed)
 	if err != nil {
 		return reportBodyCodegenFailure(jsonMode, filename, err, stdout, stderr)
 	}
@@ -72,7 +82,7 @@ func reportBodyCodegenFailure(jsonMode bool, filename string, cause error, stdou
 			Source           string `json:"source"`
 			RepositoryWrites int    `json:"repository_writes"`
 			Error            string `json:"error"`
-		}{Schema: "gooo/body-codegen-report/v2", Decision: "FAIL_CLOSED", RepositoryWrites: 0, Error: cause.Error()}
+		}{Schema: "gooo/body-codegen-report/v3", Decision: "FAIL_CLOSED", RepositoryWrites: 0, Error: cause.Error()}
 		encoder := json.NewEncoder(stdout)
 		encoder.SetEscapeHTML(false)
 		if err := encoder.Encode(payload); err != nil {

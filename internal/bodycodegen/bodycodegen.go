@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -15,6 +17,7 @@ import (
 	"go/token"
 	"go/types"
 	"maps"
+	"math"
 	"strings"
 	"time"
 
@@ -24,11 +27,12 @@ import (
 )
 
 const (
-	schema              = "gooo/body-codegen-report/v2"
+	schema              = "gooo/body-codegen-report/v3"
 	preserveRoute       = "preserve"
 	guardReturnRoute    = "guard-return"
 	mergeResultRoute    = "merge-result"
 	routeDecisionBudget = 3 * time.Second
+	seededSelectionV1   = "sha256_seeded_weighted_choice/v1"
 )
 
 // Result is an immutable report and generated source projection.
@@ -49,6 +53,7 @@ type Report struct {
 	ReplayDigest           string                `json:"replay_digest"`
 	Route                  string                `json:"route"`
 	RouteDecision          decisionroute.Receipt `json:"route_decision"`
+	RouteSelection         RouteSelectionReceipt `json:"route_selection"`
 	RouteDecisionLatencyMS float64               `json:"route_decision_latency_ms"`
 	CandidateRoutes        []string              `json:"candidate_routes"`
 	EquivalenceRule        string                `json:"equivalence_rule"`
@@ -63,6 +68,18 @@ type Report struct {
 	UnsupportedConstructs  string                `json:"unsupported_constructs"`
 }
 
+// RouteSelectionReceipt makes an optional weighted route draw replayable without
+// exposing the caller's seed. The weights are the normalized distribution used
+// for this draw; the Gooo emitter still validates the selected route.
+type RouteSelectionReceipt struct {
+	Method        string             `json:"method"`
+	SeedSHA256    string             `json:"seed_sha256,omitempty"`
+	DrawHex       string             `json:"draw_hex,omitempty"`
+	Weights       map[string]float64 `json:"weights,omitempty"`
+	ProposedRoute string             `json:"proposed_route"`
+	FinalRoute    string             `json:"final_route"`
+}
+
 // Generate compiles one .gooo activity body into a marked Go source region.
 // The accepted body subset is local declarations/assignments, conditionals,
 // and returns over int64 and bool values. Calls and effects fail closed.
@@ -74,6 +91,16 @@ func Generate(filename string, source []byte, activityName string) (Result, erro
 // lowering routes that are valid for this activity. With no usable provider,
 // decisionroute selects the declared deterministic fallback.
 func GenerateWithPlanner(ctx context.Context, filename string, source []byte, activityName, endpoint, apiKey string) (Result, error) {
+	return GenerateWithPlannerAndSampleSeed(ctx, filename, source, activityName, endpoint, apiKey, "")
+}
+
+// GenerateWithPlannerAndSampleSeed behaves like GenerateWithPlanner unless a
+// non-empty sampleSeed is supplied. In that case, Laya probabilities (when
+// available) or an equal prior over eligible routes drive a replayable draw.
+func GenerateWithPlannerAndSampleSeed(ctx context.Context, filename string, source []byte, activityName, endpoint, apiKey, sampleSeed string) (Result, error) {
+	if sampleSeed != "" && strings.TrimSpace(sampleSeed) == "" {
+		return Result{}, fmt.Errorf("route sample seed must contain a non-whitespace character")
+	}
 	file, diagnostics := syntax.ParseFile(filename, string(source))
 	if diagnostics.HasErrors() {
 		return Result{}, fmt.Errorf("parse .gooo source: %w", diagnostics.Error())
@@ -143,6 +170,11 @@ func GenerateWithPlanner(ctx context.Context, filename string, source []byte, ac
 		Schema: decisionroute.ReceiptSchema, Mode: "deterministic_fallback", Selected: preserveRoute,
 		FallbackReason: "NO_ALTERNATIVE_ROUTE", Provider: "deterministic",
 	}
+	selection := RouteSelectionReceipt{Method: "single_eligible_route", ProposedRoute: preserveRoute, FinalRoute: preserveRoute}
+	if sampleSeed != "" {
+		selection.SeedSHA256 = digest([]byte(sampleSeed))
+		selection.Weights = map[string]float64{preserveRoute: 1}
+	}
 	candidateIDs := make([]string, 0, len(routes))
 	for _, option := range routes {
 		candidateIDs = append(candidateIDs, option.ID)
@@ -167,6 +199,25 @@ func GenerateWithPlanner(ctx context.Context, filename string, source []byte, ac
 			return Result{}, fmt.Errorf("select code generation route: %w", err)
 		}
 		selected = receipt.Selected
+		if sampleSeed != "" {
+			weights := receipt.Probabilities
+			if receipt.Mode == "laya" && len(weights) == 0 && receipt.Selected != "" {
+				weights = map[string]float64{receipt.Selected: 1}
+			}
+			selection, err = sampleRoute(sampleSeed, receipt.RequestSHA256, routes, weights, receipt.Selected)
+			if err != nil {
+				return Result{}, fmt.Errorf("sample code generation route: %w", err)
+			}
+			selected = selection.ProposedRoute
+		} else if receipt.Mode == "laya" {
+			selection = RouteSelectionReceipt{
+				Method: "laya_top1", ProposedRoute: receipt.Selected, FinalRoute: receipt.Selected,
+			}
+		} else {
+			selection = RouteSelectionReceipt{
+				Method: "deterministic_fallback", ProposedRoute: receipt.Selected, FinalRoute: receipt.Selected,
+			}
+		}
 		base.report.RouteDecisionLatencyMS = decisionLatencyMS
 	}
 	result := base
@@ -180,9 +231,11 @@ func GenerateWithPlanner(ctx context.Context, filename string, source []byte, ac
 			receipt.Mode = "deterministic_fallback"
 			receipt.Provider = "deterministic"
 			receipt.FallbackReason = "SELECTED_ROUTE_LOWERING_FAILED"
+			selection.Method = "deterministic_fallback_after_lowering_failure"
 			result = base
 		}
 	}
+	selection.FinalRoute = selected
 	replay, err := generateRoute(file.Package.Name, activityName, activityID, inputType, outputType, body, selected)
 	if err != nil {
 		return Result{}, fmt.Errorf("replay selected code generation route: %w", err)
@@ -196,6 +249,7 @@ func GenerateWithPlanner(ctx context.Context, filename string, source []byte, ac
 	result.report.ReplayDigest = digest(replay.source)
 	result.report.Route = selected
 	result.report.RouteDecision = receipt
+	result.report.RouteSelection = selection
 	result.report.RouteDecisionLatencyMS = base.report.RouteDecisionLatencyMS
 	result.report.CandidateRoutes = candidateIDs
 	result.report.DeterministicReplay = result.report.GeneratedDigest == result.report.ReplayDigest
@@ -329,6 +383,90 @@ func candidateRoutes(packageName, activityName, body string) ([]decisionroute.Op
 		})
 	}
 	return options, shape, nil
+}
+
+func sampleRoute(seed, requestDigest string, options []decisionroute.Option, supplied map[string]float64, fallback string) (RouteSelectionReceipt, error) {
+	if strings.TrimSpace(seed) == "" || requestDigest == "" || len(options) == 0 {
+		return RouteSelectionReceipt{}, fmt.Errorf("seed, request digest, and eligible routes are required")
+	}
+	weights, err := normalizedRouteWeights(options, supplied, fallback)
+	if err != nil {
+		return RouteSelectionReceipt{}, err
+	}
+	material := []byte(seededSelectionV1 + "\x00" + seed + "\x00" + requestDigest)
+	for _, option := range options {
+		material = append(material, 0)
+		material = append(material, option.ID...)
+	}
+	drawDigest := sha256.Sum256(material)
+	drawValue := binary.BigEndian.Uint64(drawDigest[:8])
+	draw := float64(drawValue>>11) / float64(uint64(1)<<53)
+
+	var selected string
+	cumulative := 0.0
+	for _, option := range options {
+		weight := weights[option.ID]
+		if weight == 0 {
+			continue
+		}
+		selected = option.ID
+		cumulative += weight
+		if draw < cumulative {
+			break
+		}
+	}
+	if selected == "" {
+		return RouteSelectionReceipt{}, fmt.Errorf("eligible route distribution has no positive weight")
+	}
+	return RouteSelectionReceipt{
+		Method: seededSelectionV1, SeedSHA256: digest([]byte(seed)),
+		DrawHex: hex.EncodeToString(drawDigest[:8]), Weights: weights,
+		ProposedRoute: selected, FinalRoute: selected,
+	}, nil
+}
+
+func normalizedRouteWeights(options []decisionroute.Option, supplied map[string]float64, fallback string) (map[string]float64, error) {
+	eligible := make(map[string]bool, len(options))
+	for _, option := range options {
+		eligible[option.ID] = true
+	}
+	for route := range supplied {
+		if !eligible[route] {
+			return nil, fmt.Errorf("route probability names ineligible route %q", route)
+		}
+	}
+
+	weights := make(map[string]float64, len(options))
+	if len(supplied) == 0 {
+		uniform := 1.0 / float64(len(options))
+		for _, option := range options {
+			weights[option.ID] = uniform
+		}
+		return weights, nil
+	}
+	total := 0.0
+	for _, option := range options {
+		weight := supplied[option.ID]
+		if math.IsNaN(weight) || math.IsInf(weight, 0) || weight < 0 {
+			return nil, fmt.Errorf("route %q has an invalid probability", option.ID)
+		}
+		weights[option.ID] = weight
+		total += weight
+	}
+	if total == 0 {
+		if !eligible[fallback] {
+			return nil, fmt.Errorf("zero route probabilities have no eligible fallback")
+		}
+		for _, option := range options {
+			weights[option.ID] = 0
+		}
+		weights[fallback] = 1
+		return weights, nil
+	}
+	for _, option := range options {
+		weights[option.ID] /= total
+	}
+	return weights, nil
 }
 
 func isGuardReturnShape(body *ast.BlockStmt) bool {
