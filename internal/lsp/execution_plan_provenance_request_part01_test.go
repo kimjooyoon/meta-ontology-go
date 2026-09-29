@@ -11,6 +11,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
 func TestExecutionPlanProvenanceExposesTypedPlanIdentity(t *testing.T) {
@@ -166,6 +167,7 @@ func TestExecutionPlanProvenancePreservesUnknownWithoutFullChain(t *testing.T) {
 }
 
 func TestExecutionPlanProvenanceClosesOnlyCurrentGeneratedReplayEvidence(t *testing.T) {
+	toolchainDigest, evaluatorDigest := valueexecution.RuntimeEvidenceIdentities()
 	uri := "file:///typed-generated-replay-provenance.gooo"
 	source := `package runtimebinding
 namespace runtimebinding
@@ -218,6 +220,8 @@ bind ProposeCandidate.result -> RecordIndependentReview.input
 		TypedPlanDigest:          typedPlan.Digest(),
 		RuntimePlanDigest:        runtimePlanDigest,
 		GeneratedArtifactDigest:  "sha256:" + strings.Repeat("b", 64),
+		ToolchainDigest:          toolchainDigest,
+		EvaluatorDigest:          evaluatorDigest,
 		ReverseObservationDigest: "sha256:" + strings.Repeat("c", 64),
 	}
 	params := ExecutionPlanProvenanceParamsPart01{
