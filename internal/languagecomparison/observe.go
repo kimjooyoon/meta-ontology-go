@@ -199,11 +199,20 @@ func directive(group *ast.CommentGroup, name string) string {
 		return ""
 	}
 	prefix := name + " "
-	for _, line := range strings.Split(group.Text(), "\n") {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, prefix) {
-			return strings.TrimSpace(strings.TrimPrefix(line, prefix))
+	value := ""
+	for _, comment := range group.List {
+		line := strings.TrimSpace(comment.Text)
+		if len(line) < 2 || line[:2] != "//" {
+			continue
 		}
+		line = strings.TrimSpace(line[2:])
+		if len(line) < len(prefix) || line[:len(prefix)] != prefix {
+			continue
+		}
+		if value != "" {
+			return ""
+		}
+		value = strings.TrimSpace(line[len(prefix):])
 	}
-	return ""
+	return value
 }
