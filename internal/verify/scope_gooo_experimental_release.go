@@ -27,6 +27,17 @@ func init() {
 		"internal/meta/languagereadiness/toolchainrelease/fixture_test.go",
 		"internal/verify/scope_gooo_experimental_release.go",
 	}
+	branchScopeAllowlist["agent/gooo-experimental-release-v3"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/gooo-release-publish.yml",
+		"cmd/gooo/version.go",
+		"cmd/gooo/version_test.go",
+		"docs/external/gooo-release-publication-v3.md",
+		"internal/meta/languagereadiness/toolchaincli",
+		"internal/meta/languagereadiness/toolchainrelease/fixture_test.go",
+		"internal/verify/scope_gooo_experimental_release.go",
+	}
 	branchScopeAllowlist["agent/gooo-release-asset-set"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
