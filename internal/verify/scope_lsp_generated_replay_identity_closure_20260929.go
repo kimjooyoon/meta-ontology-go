@@ -4,6 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/lsp-generated-replay-identity-closure-dev-20260929"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
+		"cmd/gooo/lsp_part01_test.go",
 		"internal/lsp/execution_plan_provenance_request_part01.go",
 		"internal/lsp/execution_plan_provenance_request_part01_test.go",
 		"internal/lsp/execution_receipt_evidence_closure_part01.go",
