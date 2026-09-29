@@ -46,6 +46,88 @@ activity ClampBelowZero(Integer) -> Integer computes "let value = input\nvalue =
 		result.Report.RouteEquivalence.SourceSemanticDigest != result.Report.RouteEquivalence.GeneratedSemanticDigest {
 		t.Fatalf("source-preserving route lacks matching semantic digests: %#v", result.Report.RouteEquivalence)
 	}
+	assertCompletenessReceipt(t, result.Report.CompletenessReceipt)
+	planSHA, planOK := result.Report.CompletenessReceipt.Scope["plan_sha256"].(string)
+	compilerSHA, compilerOK := result.Report.CompletenessReceipt.Scope["compiler_source_sha"].(string)
+	if !planOK || !compilerOK || result.Report.PlanSHA256 != planSHA || result.Report.CompilerSourceSHA != compilerSHA {
+		t.Fatal("top-level report identities are not bound to the completeness receipt scope")
+	}
+}
+
+func TestCompletenessReceiptPreservesPartialSourceCoverageAndUnknowns(t *testing.T) {
+	receipt := buildCompletenessReceipt(Report{
+		Decision: "PASS", Activity: "Partial", ActivityID: "sample://activity/partial",
+		SourceSemanticUnits: 4, LoweredSemanticUnits: 3,
+	}, "")
+	assertCompletenessReceipt(t, receipt)
+	dimension := completenessDimensionByID(t, receipt, "source_ast_coverage")
+	if dimension.Status != "PROGRESS" || dimension.Numerator != 3 || dimension.Denominator != 4 {
+		t.Fatalf("partial source coverage was not preserved: %#v", dimension)
+	}
+	for _, id := range []string{"execution_boundary", "reverse_observation_coverage", "use_case_coverage", "semantic_profile_delta"} {
+		if got := completenessDimensionByID(t, receipt, id).Status; got != "UNKNOWN" {
+			t.Fatalf("%s status = %q, want UNKNOWN", id, got)
+		}
+	}
+	if receipt.Decision == "PASS_WITHIN_DECLARED_FIXTURE_SCOPE" {
+		t.Fatal("incomplete core source coverage received a scoped PASS")
+	}
+}
+
+func TestFailedBodyCodegenRetainsFailureAndFirstUnresolvedStage(t *testing.T) {
+	receipt := FailureCompletenessReceipt("Clamp", []byte("invalid source"), "parse .gooo source failed")
+	assertCompletenessReceipt(t, receipt)
+	if receipt.Decision != "FAIL_CLOSED" || receipt.FailClosedReason == nil || *receipt.FailClosedReason != "parse .gooo source failed" {
+		t.Fatalf("failure was not retained: %#v", receipt)
+	}
+	if receipt.FirstUnresolved == nil || receipt.FirstUnresolved.ID != "declaration_coverage" ||
+		receipt.FirstUnresolved.NextOperation == "" {
+		t.Fatalf("first unresolved stage was not retained: %#v", receipt.FirstUnresolved)
+	}
+}
+
+func assertCompletenessReceipt(t *testing.T, receipt *CompletenessReceipt) {
+	t.Helper()
+	if receipt == nil || receipt.Schema != completenessReceiptSchema || receipt.ProfileID == "" || receipt.DecisionBasis == "" {
+		t.Fatalf("shared completeness receipt is missing or malformed: %#v", receipt)
+	}
+	if receipt.AggregateCompletenessScore != nil {
+		t.Fatalf("aggregate completeness must remain unscored: %#v", receipt.AggregateCompletenessScore)
+	}
+	counts := map[string]int{"PASS": 0, "PROGRESS": 0, "UNKNOWN": 0, "FAIL_CLOSED": 0}
+	for _, dimension := range receipt.Dimensions {
+		counts[dimension.Status]++
+		if dimension.ID == "" || dimension.Unit == "" || dimension.Reason == "" || len(dimension.Evidence) == 0 {
+			t.Fatalf("dimension lacks reasoned evidence: %#v", dimension)
+		}
+	}
+	for status, count := range counts {
+		if receipt.StatusCounts[status] != count {
+			t.Fatalf("status_counts[%s]=%d, dimension count=%d", status, receipt.StatusCounts[status], count)
+		}
+	}
+	if len(receipt.UnresolvedClaims) == 0 {
+		t.Fatal("the non-executing body-codegen profile must retain unresolved dimensions")
+	}
+	if receipt.FirstUnresolved == nil || *receipt.FirstUnresolved != receipt.UnresolvedClaims[0] {
+		t.Fatalf("first_unresolved does not match the first unresolved claim: %#v", receipt.FirstUnresolved)
+	}
+	for _, claim := range receipt.UnresolvedClaims {
+		if claim.ID == "" || claim.Reason == "" || claim.NextOperation == "" {
+			t.Fatalf("unresolved claim lacks a reason or next operation: %#v", claim)
+		}
+	}
+}
+
+func completenessDimensionByID(t *testing.T, receipt *CompletenessReceipt, id string) CompletenessDimension {
+	t.Helper()
+	for _, dimension := range receipt.Dimensions {
+		if dimension.ID == id {
+			return dimension
+		}
+	}
+	t.Fatalf("missing completeness dimension %q", id)
+	return CompletenessDimension{}
 }
 
 func TestGenerateWithPlannerUsesLayaOnlyForBoundedEquivalentRoutes(t *testing.T) {
