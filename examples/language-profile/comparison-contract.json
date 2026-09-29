@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/language-comparison-contract/v1",
+  "contract_id": "billing-declaration-signature-go-ast-v1",
+  "receipt_schema": "gooo/language-comparison-receipt/v1",
+  "gooo_fixture": "examples/billing/main.gooo",
+  "go_fixture": "examples/language-profile/go-baseline.go",
+  "entry": "PayOrder",
+  "samples_per_language": 5,
+  "runner_image": "ubuntu-24.04",
+  "go_toolchain": "go1.27.0",
+  "scope": "DECLARATION_SIGNATURE_PARSE_AND_RESOLUTION",
+  "equivalence": "exact sourceexecution.Entry including stable entity IDs",
+  "ratios": "Go baseline median divided by Gooo median; parts per million",
+  "not_claimed": [
+    "general language performance ranking",
+    "native compilation cost",
+    "production workload performance",
+    "business correctness",
+    "cross-runner improvement"
+  ]
+}
