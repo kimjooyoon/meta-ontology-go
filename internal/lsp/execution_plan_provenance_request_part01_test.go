@@ -11,6 +11,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
 func TestExecutionPlanProvenanceExposesTypedPlanIdentity(t *testing.T) {
