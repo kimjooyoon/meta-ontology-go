@@ -225,6 +225,21 @@ jobs:
                  .metrics.execution_grants == 0 and .metrics.repository_writes == 0 and
                  .metrics.local_test_executions == 0' "$v25_contract" >/dev/null
               artifact_retrieved=true
+              if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+                test -n "$v24_request"
+                test -s "$v24_request"
+                test -n "$v24_resolution"
+                test -s "$v24_resolution"
+                jq -e --arg sha "$SUBJECT_SHA" \
+                  '.schema == "gooo/self-improvement-candidate-authorization-request/v2" and
+                   .candidate.subject_sha == $sha and .candidate.candidate_digest != "" and
+                   .candidate.candidate_id != "" and .candidate.source_observation_digest != ""' \
+                  "$v24_request" >/dev/null
+                jq -e '.schema == "gooo/self-improvement-candidate-authorization-resolution/v2" and
+                   .decision == "CLOSED" and .outcome == "AUTHORIZED" and
+                   .execution_authorized == false and .repository_writes == 0 and
+                   .local_test_executions == 0' "$v24_resolution" >/dev/null
+              fi
             else
               retrieval_error="SOURCE_ARTIFACT_RETRIEVAL_FAILED"
             fi
