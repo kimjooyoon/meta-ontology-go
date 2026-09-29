@@ -726,6 +726,15 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
       "scope": "GOVERNANCE_OBSERVATION"
+    },
+    {
+      "id": "domain-completeness-profile",
+      "path": "scripts/domain-completeness/profile.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "GOVERNANCE_OBSERVATION"
     }
   ],
   "package_units": [
