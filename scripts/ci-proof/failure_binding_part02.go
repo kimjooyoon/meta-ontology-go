@@ -8,7 +8,7 @@ import (
 )
 
 func failureScope(binding failureBinding) (string, error) {
-	if binding.Event == "pull_request" {
+	if binding.Event == "pull_request" || binding.Event == "workflow_dispatch" {
 		if binding.PRNumber <= 0 {
 			return "", fmt.Errorf("pull-request failure requires an exact PR number")
 		}

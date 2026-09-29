@@ -41,14 +41,17 @@ func TestCIWorkflowUsesImmutableCheckoutForEveryJob(t *testing.T) {
 		t.Fatalf("expected nine immutable checkout refs, got %d", strings.Count(string(workflow), marker))
 	}
 }
-func TestCISCOPE008WorkflowKeepsCanonicalJobsOnPullRequests(t *testing.T) {
+func TestCISCOPE008WorkflowKeepsCanonicalJobsOnDevPullRequests(t *testing.T) {
 	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci.yml"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	text := string(workflow)
-	if !strings.Contains(text, "pull_request:\n    branches:\n      - dev\n      - main") {
-		t.Fatal("pull-request trigger does not include the dev/main steady-state targets")
+	if !strings.Contains(text, "pull_request:\n    branches:\n      - dev") || strings.Contains(text, "pull_request:\n    branches:\n      - dev\n      - main") {
+		t.Fatal("pull-request CI must run on dev; main promotion uses an exact workflow dispatch")
+	}
+	if !strings.Contains(text, "  workflow_dispatch:\n    inputs:") || !strings.Contains(text, "promotion_pr_number:") {
+		t.Fatal("main promotion does not dispatch CI with its exact PR tuple")
 	}
 	if strings.Contains(text, "'agent/**'") {
 		t.Fatal("push trigger includes an unprotected agent branch")
