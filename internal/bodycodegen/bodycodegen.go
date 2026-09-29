@@ -221,10 +221,7 @@ func generateRoute(packageName, activityName, activityID, inputType, outputType,
 	}
 	completeness := 0.0
 	if sourceUnits > 0 {
-		covered := loweredUnits
-		if covered > sourceUnits {
-			covered = sourceUnits
-		}
+		covered := min(loweredUnits, sourceUnits)
 		completeness = float64(covered) * 100 / float64(sourceUnits)
 	}
 	equivalenceRule := "source-shape-preserving-v1"
