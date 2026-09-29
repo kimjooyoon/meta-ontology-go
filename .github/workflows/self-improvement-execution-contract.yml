@@ -266,6 +266,7 @@ jobs:
              .live_execution_count == 0 and .grant_consumed_uses == 0 and
              .repository_writes == 0 and .local_test_executions == 0' "$verification" >/dev/null
           echo "V24_REQUEST=$request" >> "$GITHUB_ENV"
+          echo "V24_RESOLUTION=$resolution" >> "$GITHUB_ENV"
           echo "CONTINUATION=$continuation" >> "$GITHUB_ENV"
           jq -r '"continuation: \(.resolution.decision)/\(.resolution.reason), source artifact exact, execution/grants/writes=\(.resolution.live_execution_count)/\(.resolution.execution_grants)/\(.resolution.repository_writes)"' "$continuation" >> "$GITHUB_STEP_SUMMARY"
 
@@ -307,6 +308,31 @@ jobs:
             "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" >/dev/null
           jq -r '"live contract: \(.decision)/\(.resolution)/\(.reason), execution_authorized=\(.execution_authorized), grant_required=\(.execution_grant_required), writes=\(.metrics.repository_writes), local_tests=\(.metrics.local_test_executions)"' \
             "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Carry exact v24 authorization evidence into the v25 artifact
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-execution-contract"
+          test -n "${V24_REQUEST:-}"
+          test -s "$V24_REQUEST"
+          test -n "${V24_RESOLUTION:-}"
+          test -s "$V24_RESOLUTION"
+          jq -e --arg sha "$SUBJECT_SHA" \
+            '.schema == "gooo/self-improvement-candidate-authorization-request/v2" and
+             .candidate.subject_sha == $sha and .candidate.candidate_digest != "" and
+             .candidate.candidate_id != "" and .candidate.source_observation_digest != ""' \
+            "$V24_REQUEST" >/dev/null
+          jq -e '.schema == "gooo/self-improvement-candidate-authorization-resolution/v2" and
+             .decision == "CLOSED" and .outcome == "AUTHORIZED" and
+             .execution_authorized == false and .repository_writes == 0 and
+             .local_test_executions == 0' "$V24_RESOLUTION" >/dev/null
+          cp "$V24_REQUEST" "$work/source-authorization-request.json"
+          cp "$V24_RESOLUTION" "$work/source-authorization-resolution.json"
+          test -s "$work/source-authorization-request.json"
+          test -s "$work/source-authorization-resolution.json"
+          echo "v24 request and resolution copied into the exact v25 source bundle" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload v25 contract evidence
         if: always()
