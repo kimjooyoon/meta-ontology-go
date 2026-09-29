@@ -256,7 +256,7 @@ func render(packageName, activityName, activityID, inputType, outputType, body, 
 	if !ok {
 		return nil, 0, 0, 0, 0, fmt.Errorf("activity body did not produce a function")
 	}
-	sourceConstructs, err := validateBlock(function.Body, "input", map[string]bool{"input": true})
+	sourceConstructs, err := validateBlock(function.Body, "input", map[string]bool{"input": true}, false)
 	if err != nil {
 		return nil, 0, 0, 0, 0, err
 	}
@@ -275,7 +275,7 @@ func render(packageName, activityName, activityID, inputType, outputType, body, 
 	} else if route != preserveRoute {
 		return nil, 0, 0, 0, 0, fmt.Errorf("unknown body-codegen route %q", route)
 	}
-	loweredConstructs, err := validateBlock(function.Body, "input", map[string]bool{"input": true})
+	loweredConstructs, err := validateBlock(function.Body, "input", map[string]bool{"input": true}, route == guardReturnRoute)
 	if err != nil {
 		return nil, 0, 0, 0, 0, err
 	}
@@ -417,7 +417,7 @@ func findFunction(file *ast.File, name string) (*ast.FuncDecl, bool) {
 	return nil, false
 }
 
-func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]bool) (int, error) {
+func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]bool, allowGuardReturn bool) (int, error) {
 	if block == nil {
 		return 0, fmt.Errorf("activity body has no block")
 	}
@@ -432,21 +432,25 @@ func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]
 				return 0, fmt.Errorf("only one local let declaration is supported")
 			}
 			spec, ok := declaration.Specs[0].(*ast.ValueSpec)
-			if !ok || len(spec.Names) != 1 || len(spec.Values) != 1 {
-				return 0, fmt.Errorf("let requires one inferred local value")
+			if !ok || len(spec.Names) != 1 {
+				return 0, fmt.Errorf("let requires one local name")
 			}
 			name := spec.Names[0].Name
 			if spec.Type != nil {
 				typeName, supported := spec.Type.(*ast.Ident)
-				if name != "_goooResult" || !supported || (typeName.Name != "int64" && typeName.Name != "bool") {
+				if name != "_goooResult" || !supported || (typeName.Name != "int64" && typeName.Name != "bool") || len(spec.Values) != 0 {
 					return 0, fmt.Errorf("explicit local types are reserved for compiler-generated result joins")
 				}
+			} else if len(spec.Values) != 1 {
+				return 0, fmt.Errorf("let requires one inferred local value")
 			}
 			if name == inputName || locals[name] {
 				return 0, fmt.Errorf("let name %q is already bound", name)
 			}
-			if err := validateExpression(spec.Values[0]); err != nil {
-				return 0, err
+			if len(spec.Values) == 1 {
+				if err := validateExpression(spec.Values[0]); err != nil {
+					return 0, err
+				}
 			}
 			locals[name] = true
 		case *ast.AssignStmt:
@@ -461,26 +465,29 @@ func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]
 				return 0, err
 			}
 		case *ast.IfStmt:
-			if value.Init != nil || value.Else == nil {
+			if value.Init != nil || (value.Else == nil && !allowGuardReturn) {
 				return 0, fmt.Errorf("if requires a condition and an explicit else branch")
 			}
 			if err := validateExpression(value.Cond); err != nil {
 				return 0, err
 			}
-			thenCount, err := validateBlock(value.Body, inputName, locals)
+			thenCount, err := validateBlock(value.Body, inputName, locals, allowGuardReturn)
 			if err != nil {
 				return 0, err
 			}
 			count += thenCount
+			if value.Else == nil {
+				continue
+			}
 			switch otherwise := value.Else.(type) {
 			case *ast.BlockStmt:
-				elseCount, err := validateBlock(otherwise, inputName, locals)
+				elseCount, err := validateBlock(otherwise, inputName, locals, allowGuardReturn)
 				if err != nil {
 					return 0, err
 				}
 				count += elseCount
 			case *ast.IfStmt:
-				elseCount, err := validateBlock(&ast.BlockStmt{List: []ast.Stmt{otherwise}}, inputName, locals)
+				elseCount, err := validateBlock(&ast.BlockStmt{List: []ast.Stmt{otherwise}}, inputName, locals, allowGuardReturn)
 				if err != nil {
 					return 0, err
 				}
