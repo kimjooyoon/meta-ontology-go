@@ -1,9 +1,10 @@
 # Language syntax round-trip corpus
 
 `corpus.json` is the versioned denominator for `LANGUAGE-SYNTAX-ROUNDTRIP`.
-It observes all 78 repository `.gooo` files and 2048 physical Gooo lines. Its
-single-file semantic denominator is exactly 65 cases: 62 valid source units and
-three fail-closed fixtures.
+It observes all 96 repository `.gooo` files and 2173 physical Gooo lines. Its
+single-file semantic denominator is exactly 81 cases: 78 valid source units and
+three fail-closed fixtures, split into 79 language capabilities and two
+governance observations.
 
 CI rejects an unregistered `.gooo` file, a missing registered file, an unknown
 registry field, a replay mismatch, any repository write, or mutation authority.
