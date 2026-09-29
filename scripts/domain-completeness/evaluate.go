@@ -88,10 +88,7 @@ func evaluate(
 	inputs := loadInputs(contractPath, evidenceDir)
 	inputs.inputFiles++
 	inputs.inputBytes += int64(len(profileRaw))
-	repositoryWrites := inputs.inventory.RepositoryWrites
-	if inputs.observation.RepositoryWrites > repositoryWrites {
-		repositoryWrites = inputs.observation.RepositoryWrites
-	}
+	repositoryWrites := max(inputs.observation.RepositoryWrites, inputs.inventory.RepositoryWrites)
 	report := Report{
 		Schema: ReceiptSchema, ProfileID: ProfileID, SubjectSHA: subject,
 		Decision: "UNKNOWN", Reason: "DOMAIN_EVIDENCE_UNAVAILABLE",
@@ -521,10 +518,7 @@ func classify(numerator, denominator, unknown int, refuted bool) string {
 func unknown(dimension Dimension, reason, operation string) Dimension {
 	dimension.Status = "UNKNOWN"
 	if dimension.UnknownUnits == 0 {
-		dimension.UnknownUnits = dimension.Denominator - dimension.Numerator
-		if dimension.UnknownUnits < 0 {
-			dimension.UnknownUnits = 0
-		}
+		dimension.UnknownUnits = max(dimension.Denominator-dimension.Numerator, 0)
 	}
 	dimension.FirstUnresolved = &Frontier{Unit: dimension.ID, Stage: dimension.ID, Reason: reason, NextOperation: operation}
 	return dimension

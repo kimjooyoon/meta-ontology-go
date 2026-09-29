@@ -5,7 +5,7 @@ entity BoundaryCoverage id "gooo://meta/domain-completeness/dimension/boundary-c
 entity BoundaryEvidence id "gooo://meta/domain-completeness/evidence/boundary"
 entity DeclarationCoverage id "gooo://meta/domain-completeness/dimension/declaration-coverage"
 entity DeclarationEvidence id "gooo://meta/domain-completeness/evidence/declaration"
-entity DomainCompletenessReceipt id "gooo/domain-completeness-receipt/v1"
+entity DomainCompletenessReceipt id "gooo://meta/domain-completeness/receipt/v1"
 entity DomainCompletenessVector id "gooo://meta/domain-completeness/vector"
 entity DomainProfile id "gooo://meta/domain-completeness/profile/gooo-language-utility-v1"
 entity ExcludedExternalAdoption id "gooo://meta/domain-completeness/excluded/external-adoption"

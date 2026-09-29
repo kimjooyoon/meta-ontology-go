@@ -1,7 +1,7 @@
 package main
 
 const (
-	ReceiptSchema = "gooo/domain-completeness-receipt/v1"
+	ReceiptSchema = "gooo://meta/domain-completeness/receipt/v1"
 	ProfileID     = "gooo://meta/domain-completeness/profile/gooo-language-utility-v1"
 )
 
