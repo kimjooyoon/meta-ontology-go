@@ -3,6 +3,7 @@ package lsp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -252,7 +253,18 @@ bind ProposeCandidate.result -> RecordIndependentReview.input
 		complete.ProvenanceStages[4].Digest != evidence.GeneratedArtifactDigest[7:] ||
 		complete.ProvenanceStages[5].Digest != complete.GeneratedReplayClosure.Digest ||
 		complete.AdoptionAuthorized || !complete.NonAuthorizing {
-		t.Fatalf("current generated replay was not bound as non-authorizing evidence: %#v", complete)
+		closure := "<nil>"
+		if complete.GeneratedReplayClosure != nil {
+			closure = fmt.Sprintf("%+v", *complete.GeneratedReplayClosure)
+		}
+		t.Fatalf(
+			"current generated replay was not bound as non-authorizing evidence: binding=%#v closure=%s evidence=%+v expected_typed_plan_digest=%q bound_typed_plan_digest=%q",
+			complete,
+			closure,
+			evidence,
+			typedPlan.Digest(),
+			complete.Plan.TypedPlanDigest,
+		)
 	}
 
 	staleEvidence := evidence
