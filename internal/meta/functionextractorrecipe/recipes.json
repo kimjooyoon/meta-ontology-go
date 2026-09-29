@@ -1,5 +1,5 @@
 {
-  "schema": "gooo.function-extraction-recipes.v1",
+  "schema": "gooo.function-extraction-recipes.v2",
   "recipes": [
     {
       "subject": "internal/meta/languageconcept/evaluate.go",
@@ -4695,5 +4695,86 @@
     }
   ]
 }
+  ],
+  "retired_recipes": [
+    {
+      "recipe": {
+        "subject": "cmd/gooo/main_part01.go",
+        "operation": "extract-cli-analysis-types",
+        "edits": [
+          {
+            "path": "cmd/gooo/main_part01.go",
+            "old_lines": [
+              "\t\"runtime\""
+            ],
+            "new_lines": []
+          },
+          {
+            "path": "cmd/gooo/main_part01.go",
+            "old_lines": [
+              "\t\"github.com/kimjooyoon/meta-ontology-go/internal/analyzer\""
+            ],
+            "new_lines": []
+          },
+          {
+            "path": "cmd/gooo/main_part01.go",
+            "old_lines": [
+              "var analyzeDeltaToolchain = runtime.Version() + \"|\" + runtime.GOOS + \"/\" + runtime.GOARCH",
+              "",
+              "type analyzeDeltaOptions struct {",
+              "\tauthority string",
+              "\tgoFiles   []string",
+              "}",
+              "type analyzeDeltaOutput struct {",
+              "\tanalyzer.SemanticNormalizedDelta",
+              "\tAuthoritySemanticDigest string                        `json:\"authority_semantic_digest\"`",
+              "\tObservedSemanticDigest  string                        `json:\"observed_semantic_digest\"`",
+              "\tSemanticEqual           bool                          `json:\"semantic_equal\"`",
+              "\tWriteEffect             analyzer.ReconcileWriteEffect `json:\"write_effect\"`",
+              "}",
+              "type analyzeGeneratedRegion struct{ id string }",
+              "type analyzeMarkerAlias struct{ id, name string }"
+            ],
+            "new_lines": []
+          }
+        ],
+        "creates": [
+          {
+            "path": "cmd/gooo/main_analyze_types.go",
+            "lines": [
+              "package main",
+              "",
+              "import (",
+              "\t\"runtime\"",
+              "",
+              "\t\"github.com/kimjooyoon/meta-ontology-go/internal/analyzer\"",
+              ")",
+              "",
+              "var analyzeDeltaToolchain = runtime.Version() + \"|\" + runtime.GOOS + \"/\" + runtime.GOARCH",
+              "",
+              "type analyzeDeltaOptions struct {",
+              "\tauthority string",
+              "\tgoFiles   []string",
+              "}",
+              "type analyzeDeltaOutput struct {",
+              "\tanalyzer.SemanticNormalizedDelta",
+              "\tAuthoritySemanticDigest string                        `json:\"authority_semantic_digest\"`",
+              "\tObservedSemanticDigest  string                        `json:\"observed_semantic_digest\"`",
+              "\tSemanticEqual           bool                          `json:\"semantic_equal\"`",
+              "\tWriteEffect             analyzer.ReconcileWriteEffect `json:\"write_effect\"`",
+              "}",
+              "type analyzeGeneratedRegion struct{ id string }",
+              "type analyzeMarkerAlias struct{ id, name string }"
+            ]
+          }
+        ]
+      },
+      "recipe_digest": "sha256:ee577a3384488b2cbbd62fd6a57b1eef756d19ff0137cf1fc8b4a5e53e77dfe6",
+      "source_path": "cmd/gooo/main_part01.go",
+      "source_digest": "sha256:a1effbc73c1717412fccb6f172d5d689e9c9dc26f9b803dd55b59b677bb9f401",
+      "retired_at_head": "c21c26c61172bf8a56cc7929ac31dc3ad419c021",
+      "reason_code": "SOURCE_SPLIT_INVALIDATED_EXACT_PRECONDITION",
+      "reason": "The analyze declarations moved out of cmd/gooo/main_part01.go during the source split. The exact old_lines precondition no longer identifies a safe edit target; the generic repository-projection extractor now handles eligible residuals."
+    }
   ]
 }
