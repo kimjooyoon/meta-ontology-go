@@ -36,7 +36,7 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 				"goooExecutionPlanProvenance": map[string]string{
 					"method":                            "gooo/executionPlanProvenance",
 					"schema":                            ExecutionPlanProvenanceSchemaPart01,
-					"generatedReplayEvidenceFields":     "source_digest,semantic_digest,typed_plan_digest",
+					"generatedReplayEvidenceFields":     "source_digest,semantic_digest,typed_plan_digest,toolchain_digest,evaluator_digest",
 					"generatedReplayContinuationFields": "runtime_plan_digest,generated_artifact_digest,reverse_observation_digest",
 					"receiptClosureSchema":              ExecutionEvidenceReceiptClosureObservationSchema,
 					"nonAuthorizing":                    "true",

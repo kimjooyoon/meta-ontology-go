@@ -74,7 +74,7 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 			"goooExecutionPlanProvenance": map[string]any{
 				"method":                            "gooo/executionPlanProvenance",
 				"schema":                            "gooo/execution-plan-provenance-binding/v1",
-				"generatedReplayEvidenceFields":     "source_digest,semantic_digest,typed_plan_digest",
+				"generatedReplayEvidenceFields":     "source_digest,semantic_digest,typed_plan_digest,toolchain_digest,evaluator_digest",
 				"generatedReplayContinuationFields": "runtime_plan_digest,generated_artifact_digest,reverse_observation_digest",
 				"receiptClosureSchema":              lsp.ExecutionEvidenceReceiptClosureObservationSchema,
 				"nonAuthorizing":                    "true",
