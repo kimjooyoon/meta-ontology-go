@@ -33,6 +33,25 @@ func TestClassifyKeepsUnknownDistinctFromProgress(t *testing.T) {
 	}
 }
 
+func TestDeclarationCoverageMatchesGeneratedUtilityProgram(t *testing.T) {
+	contractRaw, err := os.ReadFile(filepath.Join("..", "..", "examples", "language-utility", "contract.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	contract, err := languageutility.DecodeContract(contractRaw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	program, err := languageutility.GenerateProgram(contract)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dimension := measureDeclarationCoverage(dimensions[0], contract, []byte(program), loadedInputs{contractRaw: contractRaw})
+	if dimension.Status != "PASS" || dimension.Numerator != 42 || dimension.Denominator != 42 || dimension.FirstUnresolved != nil {
+		t.Fatalf("declaration coverage = %#v, want PASS 42/42", dimension)
+	}
+}
+
 func TestDecisionKeepsUnknownAndRefutedEvidenceDistinct(t *testing.T) {
 	progress := Dimension{ID: "generation_coverage", Status: "PROGRESS",
 		FirstUnresolved: &Frontier{NextOperation: "COLLECT_GENERATION"}}
