@@ -15,6 +15,9 @@ func validEventRef(event, ref string) bool {
 	if event == "push" {
 		return strings.HasPrefix(ref, "refs/heads/")
 	}
+	if event == "workflow_dispatch" {
+		return strings.HasPrefix(ref, "refs/heads/") && len(strings.TrimPrefix(ref, "refs/heads/")) > 0
+	}
 	return false
 }
 func normalizeJobs(apiJobs []apiJob, headSHA string, runID, runAttempt int64) ([]jobEvidence, error) {
