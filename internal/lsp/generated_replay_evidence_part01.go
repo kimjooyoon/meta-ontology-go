@@ -6,38 +6,9 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
-// GeneratedReplayEvidencePart01 binds a runtime-plan replay observation to
-// the current source and typed-plan identities. Digests are observations,
-// never execution or adoption authority.
-type GeneratedReplayEvidencePart01 struct {
-	SourceDigest             string `json:"source_digest"`
-	SemanticDigest           string `json:"semantic_digest"`
-	TypedPlanDigest          string `json:"typed_plan_digest"`
-	RuntimePlanDigest        string `json:"runtime_plan_digest"`
-	GeneratedArtifactDigest  string `json:"generated_artifact_digest"`
-	ReverseObservationDigest string `json:"reverse_observation_digest"`
-}
-
-// StageDigests returns the stable source-to-replay order. Invalid or absent
-// digests become empty stages so the first unresolved boundary is retained.
-func (evidence GeneratedReplayEvidencePart01) StageDigests() []string {
-	values := evidence.rawStageDigestsPart01()
-	for index, value := range values {
-		values[index] = canonicalLSPProvenanceDigestPart01(value)
-	}
-	return values
-}
-
-func (evidence GeneratedReplayEvidencePart01) rawStageDigestsPart01() []string {
-	return []string{
-		evidence.SourceDigest,
-		evidence.SemanticDigest,
-		evidence.TypedPlanDigest,
-		evidence.RuntimePlanDigest,
-		evidence.GeneratedArtifactDigest,
-		evidence.ReverseObservationDigest,
-	}
-}
+// GeneratedReplayEvidencePart01 is the shared CLI/LSP observation contract.
+// Digests remain evidence and never grant execution or adoption authority.
+type GeneratedReplayEvidencePart01 = valueexecution.GeneratedReplayEvidencePart01
 
 // ObserveGeneratedReplayEvidencePrefixPart01 observes the ordered replay
 // stages without inferring or authorizing missing evidence.
@@ -55,7 +26,7 @@ func ObserveGeneratedReplayEvidenceReceiptClosurePart01(
 ) ExecutionEvidenceReceiptClosureObservation {
 	prefix := ObserveGeneratedReplayEvidencePrefixPart01(evidence)
 	observation := ObserveExecutionEvidenceReceiptClosure(prefix, receipt)
-	for index, value := range evidence.rawStageDigestsPart01() {
+	for index, value := range evidence.RawStageDigests() {
 		if strings.TrimSpace(value) == "" {
 			return generatedReplayClosureAtStagePart01(
 				observation,
@@ -125,14 +96,19 @@ func executionPlanGeneratedReplayDigestsPart01(
 	if evidence == nil {
 		return "", "", closure
 	}
-	for index, identity := range []struct {
-		name     string
-		observed string
-		current  string
+	currentToolchainDigest, currentEvaluatorDigest := valueexecution.RuntimeEvidenceIdentities()
+	identityMismatchAtOrAfterArtifact := false
+	for _, identity := range []struct {
+		stageIndex int
+		name       string
+		observed   string
+		current    string
 	}{
-		{name: "SOURCE", observed: evidence.SourceDigest, current: sourceDigest},
-		{name: "SEMANTIC", observed: evidence.SemanticDigest, current: semanticDigest},
-		{name: "TYPED_PLAN", observed: evidence.TypedPlanDigest, current: typedPlanDigest},
+		{stageIndex: 0, name: "SOURCE", observed: evidence.SourceDigest, current: sourceDigest},
+		{stageIndex: 1, name: "SEMANTIC", observed: evidence.SemanticDigest, current: semanticDigest},
+		{stageIndex: 2, name: "TYPED_PLAN", observed: evidence.TypedPlanDigest, current: typedPlanDigest},
+		{stageIndex: 5, name: "TOOLCHAIN", observed: evidence.ToolchainDigest, current: currentToolchainDigest},
+		{stageIndex: 6, name: "EVALUATOR", observed: evidence.EvaluatorDigest, current: currentEvaluatorDigest},
 	} {
 		reason := generatedReplayIdentityFailureReasonPart01(
 			identity.observed,
@@ -140,8 +116,12 @@ func executionPlanGeneratedReplayDigestsPart01(
 			identity.name,
 		)
 		if reason != "" {
-			closure = generatedReplayClosureAtStagePart01(closure, index, reason)
-			return "", "", closure
+			closure = generatedReplayClosureAtStagePart01(closure, identity.stageIndex, reason)
+			if identity.stageIndex < 5 {
+				return "", "", closure
+			}
+			identityMismatchAtOrAfterArtifact = true
+			break
 		}
 	}
 	generatedArtifactDigest := canonicalLSPProvenanceDigestPart01(evidence.GeneratedArtifactDigest)
@@ -150,6 +130,9 @@ func executionPlanGeneratedReplayDigestsPart01(
 	}
 	if generatedArtifactDigest == "" {
 		return "", "", generatedReplayClosureAtStagePart01(closure, 4, "GENERATED_REPLAY_ARTIFACT_DIGEST_INVALID")
+	}
+	if identityMismatchAtOrAfterArtifact {
+		return generatedArtifactDigest, "", closure
 	}
 	if closure.Status == ExecutionEvidenceReceiptClosureComplete {
 		return generatedArtifactDigest, closure.Digest, closure
@@ -173,7 +156,7 @@ func generatedReplayIdentityFailureReasonPart01(observed, current, stage string)
 }
 
 func generatedReplayStageNamePart01(index int) string {
-	stages := [...]string{"SOURCE", "SEMANTIC", "TYPED_PLAN", "RUNTIME_PLAN", "ARTIFACT", "REVERSE_OBSERVATION"}
+	stages := [...]string{"SOURCE", "SEMANTIC", "TYPED_PLAN", "RUNTIME_PLAN", "ARTIFACT", "TOOLCHAIN", "EVALUATOR", "REVERSE_OBSERVATION"}
 	if index < 0 || index >= len(stages) {
 		return "UNKNOWN_STAGE"
 	}
