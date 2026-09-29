@@ -29,16 +29,18 @@ trap finish_preflight EXIT
 write_preflight "UNKNOWN" "LOWER_RESOLUTION" "PREFLIGHT_RUNNING"
 
 phase="GO_FIX"
-go fix ./cmd/gooo ./cmd/language-profile-experiment ./internal/languageprofile ./internal/meta/languageprofileexperiment
+go fix ./cmd/gooo ./cmd/language-profile-experiment ./cmd/language-comparison ./internal/languageprofile ./internal/languagecomparison ./internal/meta/languageprofileexperiment
 git diff --exit-code
 phase="GOFMT"
-gofmt -l cmd/gooo cmd/language-profile-experiment internal/languageprofile internal/meta/languageprofileexperiment | tee "$work/unformatted.txt"
+gofmt -l cmd/gooo cmd/language-profile-experiment cmd/language-comparison internal/languageprofile internal/languagecomparison internal/meta/languageprofileexperiment | tee "$work/unformatted.txt"
 test ! -s "$work/unformatted.txt"
 phase="GO_TEST"
-go test ./cmd/gooo ./cmd/language-profile-experiment ./internal/languageprofile ./internal/meta/languageprofileexperiment
+go test ./cmd/gooo ./cmd/language-profile-experiment ./cmd/language-comparison ./internal/languageprofile ./internal/languagecomparison ./internal/meta/languageprofileexperiment
 phase="GO_BUILD"
 go build -trimpath -o "$binary" ./cmd/gooo
 go build -trimpath -o "$reducer" ./cmd/language-profile-experiment
+comparison="$build/language-comparison"
+go build -trimpath -o "$comparison" ./cmd/language-comparison
 
 phase="PROFILE"
 "$binary" profile --json --samples 5 --entry PayOrder examples/billing/main.gooo > "$work/first.json"
@@ -47,6 +49,31 @@ if "$binary" profile --json --samples 5 --entry Missing examples/billing/main.go
   echo "unknown profile entry unexpectedly passed" >&2
   exit 1
 fi
+phase="LANGUAGE_COMPARISON"
+comparison_contract="$root/examples/language-profile/comparison-contract.json"
+jq -e '
+  .schema=="gooo/language-comparison-contract/v1" and
+  .contract_id=="billing-declaration-signature-go-ast-v1" and
+  .samples_per_language==5 and .runner_image=="ubuntu-24.04" and .go_toolchain=="go1.27.0" and
+  .not_claimed==["general language performance ranking", "native compilation cost",
+    "production workload performance", "business correctness", "cross-runner improvement"]
+' "$comparison_contract"
+"$comparison" -subject "$HEAD_SHA" -runner ubuntu-24.04 -gooo "$(jq -r '.gooo_fixture' "$comparison_contract")" \
+  -go "$(jq -r '.go_fixture' "$comparison_contract")" -entry "$(jq -r '.entry' "$comparison_contract")" \
+  -samples "$(jq -r '.samples_per_language' "$comparison_contract")" -executable "$comparison" \
+  -out "$work/comparison.json"
+jq -e '
+  .schema=="gooo/language-comparison-receipt/v1" and
+  .contract_id=="billing-declaration-signature-go-ast-v1" and
+  (.decision=="PASS" or .decision=="FAIL_CLOSED") and
+  .scope=="DECLARATION_SIGNATURE_PARSE_AND_RESOLUTION" and
+  .effects.repository_writes==0 and .effects.mutation_authority==false and
+  (if .decision=="PASS" then
+     .resolution=="RUNNER_SCOPED" and .summary.equivalent_output_samples==5 and .summary.samples_observed==5
+   else
+     .resolution=="EXACT" and .reason!=""
+   end)
+' "$work/comparison.json"
 executable_digest="sha256:$(sha256sum "$binary" | cut -d' ' -f1)"
 jq -n --arg subject "$HEAD_SHA" --arg executable "$executable_digest" \
   --slurpfile contract "$contract" --slurpfile first "$work/first.json" \
@@ -72,3 +99,4 @@ phase="CLOSED"
 write_preflight "PASS" "EXACT" "EXPERIMENT_CLOSED"
 trap - EXIT
 jq -r '"### Gooo language profile experiment\n- decision: \(.decision) / \(.resolution)\n- indicators: \(.summary.coordinates.satisfied)/\(.summary.coordinates.total)\n- USER: \(.views[0].satisfied)/\(.views[0].total)\n- TOOL_AUTHOR: \(.views[1].satisfied)/\(.views[1].total)\n- GOVERNOR: \(.views[2].satisfied)/\(.views[2].total)\n- profiles/samples: \(.summary.profiles)/\(.summary.samples)\n- wall ns min/median/max: \(.summary.resources.wall_min_nanoseconds)/\(.summary.resources.wall_median_nanoseconds)/\(.summary.resources.wall_max_nanoseconds)\n- TotalAlloc bytes min/median/max: \(.summary.resources.total_alloc_min_bytes)/\(.summary.resources.total_alloc_median_bytes)/\(.summary.resources.total_alloc_max_bytes)\n- receipt: \(.digest)"' "$work/report.json" >> "$GITHUB_STEP_SUMMARY"
+jq -r '"### Gooo to Go declaration comparison\n- decision: \(.decision) / \(.resolution)\n- equivalent output: \(.summary.equivalent_output_samples)/\(.summary.samples_observed)\n- Gooo wall ns median: \(.summary.gooo.wall_median_nanoseconds)\n- Go AST baseline wall ns median: \(.summary.go.wall_median_nanoseconds)\n- Go/Gooo wall ratio (ppm): \(.summary.go_to_gooo_wall_ratio_ppm)\n- Gooo allocation bytes median: \(.summary.gooo.total_alloc_median_bytes)\n- Go AST baseline allocation bytes median: \(.summary.go.total_alloc_median_bytes)\n- Go/Gooo allocation ratio (ppm): \(.summary.go_to_gooo_allocation_ratio_ppm)\n- scope: \(.scope)\n- receipt: \(.digest)"' "$work/comparison.json" >> "$GITHUB_STEP_SUMMARY"
