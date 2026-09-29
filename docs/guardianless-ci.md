@@ -18,6 +18,13 @@ GitHub status checks. The live `main` protection rule now requires exactly
 these six; the `dev` rule has no required checks. The removed app token and
 duplicate observer did not add a seventh verification of the program.
 
+The repository keeps default `GITHUB_TOKEN` permissions read-only and enables
+the Actions setting that permits workflow tokens to create and approve pull
+requests. Only `ci-automatic-promotion.yml` requests `pull-requests: write`;
+that workflow creates or reuses the promotion PR and merges it after proof
+validation but does not submit an approving review. The normal six-check
+`main` protection rule remains the merge gate.
+
 ## What the run records show
 
 | Evidence | Observation | Interpretation |
