@@ -33,6 +33,54 @@
   ],
   "ownership": [
     {
+      "branch": "agent/candidate-source-run-binding-20260929",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/selfimprovementcandidate/authorization.go",
+        "internal/meta/selfimprovementcandidate/authorization_test.go",
+        "internal/verify/scope_candidate_source_run_binding_20260929.go"
+      ]
+    },
+    {
+      "branch": "agent/v25-v26-system-evidence-bridge-20260929",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-execution-contract.yml",
+        ".github/workflows/self-improvement-execution-grant.yml",
+        "internal/verify/scope_v25_v26_system_evidence_bridge_20260929.go"
+      ]
+    },
+    {
+      "branch": "agent/system-derived-eligibility-20260929",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-candidate-authorization.yml",
+        ".github/workflows/self-improvement-execution-contract.yml",
+        ".github/workflows/self-improvement-execution-grant.yml",
+        "examples/self-improvement-execution-grant/README.md",
+        "examples/self-improvement-execution-grant/grant.gooo",
+        "examples/self-improvement/AUTHORIZATION.md",
+        "examples/self-improvement/authorization.gooo",
+        "internal/meta/selfimprovementcandidate/authorization.go",
+        "internal/meta/selfimprovementcandidate/authorization_test.go",
+        "internal/meta/selfimprovementexecutiongrant/canonical.go",
+        "internal/meta/selfimprovementexecutiongrant/evaluate.go",
+        "internal/meta/selfimprovementexecutiongrant/evaluate_test.go",
+        "internal/meta/selfimprovementexecutiongrant/model.go",
+        "internal/meta/selfimprovementexecutiongrant/verify.go",
+        "internal/verify/scope_system_derived_eligibility_20260929.go",
+        "scripts/self-improvement-candidate-authorization/main.go",
+        "scripts/self-improvement-execution-grant/cases.go",
+        "scripts/self-improvement-execution-grant/input.go",
+        "scripts/self-improvement-execution-grant/live.go",
+        "scripts/self-improvement-execution-grant/main.go",
+        "scripts/self-improvement-execution-grant/verify.go"
+      ]
+    },
+    {
       "branch": "agent/spiffe-execution-boundary-provenance-dev-20260925-r1",
       "paths": [
         ".github/agent-scope-table.md",
