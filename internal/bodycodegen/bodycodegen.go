@@ -47,6 +47,10 @@ type Report struct {
 	Decision               string                  `json:"decision"`
 	Activity               string                  `json:"activity"`
 	ActivityID             string                  `json:"activity_id"`
+	InputType              string                  `json:"input_type"`
+	OutputType             string                  `json:"output_type"`
+	PlanSHA256             string                  `json:"plan_sha256"`
+	CompilerSourceSHA      string                  `json:"compiler_source_sha"`
 	SourceDigest           string                  `json:"source_digest"`
 	ProgramDigest          string                  `json:"program_digest"`
 	GeneratedDigest        string                  `json:"generated_digest"`
@@ -67,6 +71,7 @@ type Report struct {
 	DeterministicReplay    bool                    `json:"deterministic_replay"`
 	RepositoryWrites       int                     `json:"repository_writes"`
 	UnsupportedConstructs  string                  `json:"unsupported_constructs"`
+	CompletenessReceipt    *CompletenessReceipt    `json:"completeness_receipt,omitempty"`
 }
 
 // RouteSelectionReceipt makes an optional weighted route draw replayable without
@@ -256,6 +261,7 @@ func GenerateWithPlannerAndSampleSeed(ctx context.Context, filename string, sour
 	result.report.DeterministicReplay = result.report.GeneratedDigest == result.report.ReplayDigest
 	result.report.RepositoryWrites = 0
 	result.report.UnsupportedConstructs = "calls, loops, imports, external effects, multiple inputs"
+	populateCompletenessReceipt(&result.report, "")
 	return Result{Report: result.report, Source: string(result.source)}, nil
 }
 
@@ -295,6 +301,7 @@ func generateRoute(packageName, activityName, activityID, inputType, outputType,
 	}
 	return generatedRoute{source: generated, report: Report{
 		Schema: schema, Decision: "PASS", Activity: activityName, ActivityID: activityID,
+		InputType: inputType, OutputType: outputType,
 		Route: route, EquivalenceRule: equivalenceRule,
 		SourceConstructs: sourceConstructs, LoweredConstructs: loweredConstructs,
 		SourceSemanticUnits: sourceUnits, LoweredSemanticUnits: loweredUnits,
