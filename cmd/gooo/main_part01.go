@@ -63,6 +63,8 @@ func runWithInputCommandsOne(args []string, stdout, stderr io.Writer) (int, bool
 		return runLanguageTest(args[1:], OSFileReader{}, stdout, stderr), true
 	case "check":
 		return runCheck(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
+	case "decide":
+		return runDecide(args[1:], OSFileReader{}, stdout, stderr), true
 	case "generate":
 		return runGenerate(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
 	default:
