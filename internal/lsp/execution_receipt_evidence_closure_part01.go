@@ -1,31 +1,22 @@
 package lsp
 
 import (
-	"encoding/json"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
 	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
-const ExecutionEvidenceReceiptClosureObservationSchema = "gooo.lsp.execution-evidence-receipt-closure.v1"
-
-type ExecutionEvidenceReceiptClosureStatus string
-
 const (
-	ExecutionEvidenceReceiptClosureComplete ExecutionEvidenceReceiptClosureStatus = "COMPLETE"
-	ExecutionEvidenceReceiptClosureUnknown  ExecutionEvidenceReceiptClosureStatus = "UNKNOWN"
+	ExecutionEvidenceReceiptClosureObservationSchema = provenance.ExecutionEvidenceReceiptClosureObservationSchemaPart01
 )
 
-type ExecutionEvidenceReceiptClosureObservation struct {
-	Schema               string                                `json:"schema"`
-	EvidencePrefixDigest string                                `json:"evidence_prefix_digest"`
-	ReceiptDigest        string                                `json:"receipt_digest"`
-	MissingStageIndex    int                                   `json:"missing_stage_index"`
-	Status               ExecutionEvidenceReceiptClosureStatus `json:"status"`
-	Reason               string                                `json:"reason"`
-	NonAuthorizing       bool                                  `json:"non_authorizing"`
-	Digest               string                                `json:"digest"`
-}
+type ExecutionEvidenceReceiptClosureStatus = provenance.ExecutionEvidenceReceiptClosureStatusPart01
+
+const (
+	ExecutionEvidenceReceiptClosureComplete = provenance.ExecutionEvidenceReceiptClosureCompletePart01
+	ExecutionEvidenceReceiptClosureUnknown  = provenance.ExecutionEvidenceReceiptClosureUnknownPart01
+)
+
+type ExecutionEvidenceReceiptClosureObservation = provenance.ExecutionEvidenceReceiptClosureObservationPart01
 
 // ObserveExecutionEvidenceReceiptClosure keeps LSP completion non-authorizing
 // until the entire observed evidence prefix and runtime receipt are complete.
@@ -49,6 +40,12 @@ func ObserveExecutionEvidenceReceiptClosure(
 		observation.Reason = "EXECUTION_EVIDENCE_PREFIX_INCOMPLETE"
 	case prefix.EvidencePrefixDigest == "":
 		observation.Reason = "EXECUTION_EVIDENCE_PREFIX_DIGEST_MISSING"
+	case !receipt.Validate():
+		if receipt.Status == "" && receipt.ReceiptDigest == "" {
+			observation.Reason = "EXECUTION_ORIGIN_RECEIPT_MISSING"
+		} else {
+			observation.Reason = "EXECUTION_ORIGIN_RECEIPT_INVALID"
+		}
 	case receipt.Status != valueexecution.ExecutionOriginStatusBound:
 		observation.Reason = "EXECUTION_ORIGIN_UNBOUND"
 	case receipt.Phase != valueexecution.ExecutionPhaseCompleted:
@@ -59,7 +56,7 @@ func ObserveExecutionEvidenceReceiptClosure(
 		observation.Status = ExecutionEvidenceReceiptClosureComplete
 		observation.Reason = "EXECUTION_EVIDENCE_RECEIPT_CLOSED"
 	}
-	observation.Digest = executionEvidenceReceiptClosureObservationDigest(observation)
+	observation.Digest = observation.ComputedDigest()
 	return observation
 }
 
@@ -70,6 +67,7 @@ func ValidateExecutionEvidenceReceiptClosureObservation(
 ) bool {
 	expected := ObserveExecutionEvidenceReceiptClosure(prefix, receipt)
 	return observation.Schema == expected.Schema &&
+		observation.Validate() &&
 		observation.EvidencePrefixDigest == expected.EvidencePrefixDigest &&
 		observation.ReceiptDigest == expected.ReceiptDigest &&
 		observation.MissingStageIndex == expected.MissingStageIndex &&
@@ -82,7 +80,5 @@ func ValidateExecutionEvidenceReceiptClosureObservation(
 func executionEvidenceReceiptClosureObservationDigest(
 	observation ExecutionEvidenceReceiptClosureObservation,
 ) string {
-	observation.Digest = ""
-	encoded, _ := json.Marshal(observation)
-	return cache.HashBytes(encoded).String()
+	return observation.ComputedDigest()
 }

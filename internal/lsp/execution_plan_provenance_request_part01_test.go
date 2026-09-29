@@ -3,6 +3,7 @@ package lsp
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
@@ -160,5 +161,110 @@ func TestExecutionPlanProvenancePreservesUnknownWithoutFullChain(t *testing.T) {
 	tampered.Plan.Task = "tampered"
 	if err := tampered.Validate(); err == nil {
 		t.Fatal("tampered execution-plan provenance binding was accepted")
+	}
+}
+
+func TestExecutionPlanProvenanceClosesOnlyCurrentGeneratedReplayEvidence(t *testing.T) {
+	uri := "file:///typed-generated-replay-provenance.gooo"
+	source := `package runtimebinding
+namespace runtimebinding
+
+entity Integer id "gooo://runtime-binding/entity/integer"
+
+activity ProposeCandidate(Integer) -> Integer computes "int.add:1"
+activity RecordIndependentReview(Integer) -> Integer computes "int.add:1"
+
+bind ProposeCandidate.result -> RecordIndependentReview.input
+`
+	semanticDigest := cache.HashBytes([]byte(source)).String()
+	parser := ParserFunc(func(string, string) ParseResult {
+		return ParseResult{semanticDigest: semanticDigest, semanticChecked: true, semanticValid: true}
+	})
+	server := NewServer(parser)
+	sourceJSON, err := json.Marshal(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, err = server.didOpen(context.Background(), requestEnvelope{
+		Params: json.RawMessage(`{"textDocument":{"uri":"` + uri + `","version":1,"text":` + string(sourceJSON) + `}}`),
+	})
+	if err != nil {
+		t.Fatalf("didOpen() error = %v", err)
+	}
+
+	file, diagnostics := syntax.ParseFile(uri, source)
+	if diagnostics.HasErrors() || file == nil {
+		t.Fatalf("typed plan parse diagnostics=%v file=%#v", diagnostics, file)
+	}
+	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV1Support())
+	if err != nil {
+		t.Fatal(err)
+	}
+	typedPlan, err := bidir.CompileTypedPlan(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtimePlanDigest := "sha256:" + strings.Repeat("a", 64)
+	receipt := executionOriginReceiptFixturePart01(runtimePlanDigest)
+	server.mu.RLock()
+	stored := server.documents[uri]
+	sourceDigest := stored.cacheKey.sourceDigest
+	currentSemanticDigest := stored.result.semanticDigest
+	server.mu.RUnlock()
+	evidence := GeneratedReplayEvidencePart01{
+		SourceDigest:             sourceDigest,
+		SemanticDigest:           currentSemanticDigest,
+		TypedPlanDigest:          typedPlan.Digest(),
+		RuntimePlanDigest:        runtimePlanDigest,
+		GeneratedArtifactDigest:  "sha256:" + strings.Repeat("b", 64),
+		ReverseObservationDigest: "sha256:" + strings.Repeat("c", 64),
+	}
+	params := ExecutionPlanProvenanceParamsPart01{
+		TextDocument:            TextDocumentIdentifier{URI: uri},
+		Task:                    "replay-typed-plan",
+		WorkspaceDigest:         "sha256:" + strings.Repeat("d", 64),
+		Model:                   "model-1",
+		Lifecycle:               provenance.ExecutionPlanLifecyclePlanned,
+		GeneratedReplayEvidence: &evidence,
+		ExecutionOriginReceipt:  &receipt,
+	}
+	invoke := func(id string, value ExecutionPlanProvenanceParamsPart01) provenance.ExecutionPlanProvenanceBindingPart01 {
+		paramsJSON, marshalErr := json.Marshal(value)
+		if marshalErr != nil {
+			t.Fatal(marshalErr)
+		}
+		response, _, requestErr := server.executionPlanProvenanceRequest(context.Background(), requestEnvelope{
+			ID: json.RawMessage(id), Params: paramsJSON,
+		})
+		if requestErr != nil || response == nil {
+			t.Fatalf("execution-plan provenance response=%#v, error=%v", response, requestErr)
+		}
+		var binding provenance.ExecutionPlanProvenanceBindingPart01
+		if err := json.Unmarshal(response.Result, &binding); err != nil {
+			t.Fatal(err)
+		}
+		return binding
+	}
+
+	complete := invoke("1", params)
+	if complete.Status != provenance.ExecutionPlanBindingBound || complete.GeneratedReplayClosure == nil ||
+		complete.GeneratedReplayClosure.Status != provenance.ExecutionEvidenceReceiptClosureCompletePart01 ||
+		complete.ProvenanceStages[4].Digest != evidence.GeneratedArtifactDigest[7:] ||
+		complete.ProvenanceStages[5].Digest != complete.GeneratedReplayClosure.Digest ||
+		complete.AdoptionAuthorized || !complete.NonAuthorizing {
+		t.Fatalf("current generated replay was not bound as non-authorizing evidence: %#v", complete)
+	}
+
+	staleEvidence := evidence
+	staleEvidence.SemanticDigest = "sha256:" + strings.Repeat("e", 64)
+	staleParams := params
+	staleParams.GeneratedReplayEvidence = &staleEvidence
+	stale := invoke("2", staleParams)
+	if stale.Status != provenance.ExecutionPlanBindingUnknown || stale.GeneratedReplayClosure == nil ||
+		stale.GeneratedReplayClosure.Status != provenance.ExecutionEvidenceReceiptClosureUnknownPart01 ||
+		stale.GeneratedReplayClosure.MissingStageIndex != 1 ||
+		stale.GeneratedReplayClosure.Reason != "GENERATED_REPLAY_SEMANTIC_DIGEST_MISMATCH" ||
+		stale.MissingStageIndex != 4 || stale.NextRequiredStage != "generated" || stale.AdoptionAuthorized {
+		t.Fatalf("stale generated replay evidence did not preserve UNKNOWN frontier: %#v", stale)
 	}
 }

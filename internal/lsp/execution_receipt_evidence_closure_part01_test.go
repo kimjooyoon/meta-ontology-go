@@ -2,8 +2,6 @@ package lsp
 
 import (
 	"testing"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
 func TestObserveExecutionEvidenceReceiptClosureCompletesOnlyWithFullEvidence(t *testing.T) {
@@ -14,12 +12,7 @@ func TestObserveExecutionEvidenceReceiptClosureCompletesOnlyWithFullEvidence(t *
 		"generated-digest",
 		"reverse-digest",
 	})
-	receipt := valueexecution.ExecutionOriginReceipt{
-		Status:          valueexecution.ExecutionOriginStatusBound,
-		Phase:           valueexecution.ExecutionPhaseCompleted,
-		ReceiptDigest:   "receipt-digest",
-		ExecutionDigest: "execution-digest",
-	}
+	receipt := completeExecutionOriginReceiptFixturePart01()
 	observation := ObserveExecutionEvidenceReceiptClosure(prefix, receipt)
 	if observation.Status != ExecutionEvidenceReceiptClosureComplete {
 		t.Fatalf("status=%q, want complete", observation.Status)
@@ -39,12 +32,7 @@ func TestObserveExecutionEvidenceReceiptClosurePreservesUnknownBoundary(t *testi
 		"ir-digest",
 		"generated-digest",
 	})
-	receipt := valueexecution.ExecutionOriginReceipt{
-		Status:          valueexecution.ExecutionOriginStatusBound,
-		Phase:           valueexecution.ExecutionPhaseCompleted,
-		ReceiptDigest:   "receipt-digest",
-		ExecutionDigest: "execution-digest",
-	}
+	receipt := completeExecutionOriginReceiptFixturePart01()
 	observation := ObserveExecutionEvidenceReceiptClosure(prefix, receipt)
 	if observation.Status != ExecutionEvidenceReceiptClosureUnknown ||
 		observation.MissingStageIndex != 1 ||
@@ -59,12 +47,7 @@ func TestValidateExecutionEvidenceReceiptClosureObservationRejectsTamper(t *test
 		"source-digest",
 		"ir-digest",
 	})
-	receipt := valueexecution.ExecutionOriginReceipt{
-		Status:          valueexecution.ExecutionOriginStatusBound,
-		Phase:           valueexecution.ExecutionPhaseCompleted,
-		ReceiptDigest:   "receipt-digest",
-		ExecutionDigest: "execution-digest",
-	}
+	receipt := completeExecutionOriginReceiptFixturePart01()
 	observation := ObserveExecutionEvidenceReceiptClosure(prefix, receipt)
 	observation.EvidencePrefixDigest = "tampered-prefix"
 	if ValidateExecutionEvidenceReceiptClosureObservation(observation, prefix, receipt) {

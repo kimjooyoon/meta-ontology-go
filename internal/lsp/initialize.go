@@ -34,7 +34,12 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 					"method": "gooo/selfImprovementProvenance", "schema": SelfImprovementProvenanceChainSchemaPart01,
 				},
 				"goooExecutionPlanProvenance": map[string]string{
-					"method": "gooo/executionPlanProvenance", "schema": ExecutionPlanProvenanceSchemaPart01,
+					"method":                            "gooo/executionPlanProvenance",
+					"schema":                            ExecutionPlanProvenanceSchemaPart01,
+					"generatedReplayEvidenceFields":     "source_digest,semantic_digest,typed_plan_digest",
+					"generatedReplayContinuationFields": "runtime_plan_digest,generated_artifact_digest,reverse_observation_digest",
+					"receiptClosureSchema":              ExecutionEvidenceReceiptClosureObservationSchema,
+					"nonAuthorizing":                    "true",
 				},
 				"goooReferencesProvenance": map[string]string{
 					"method": "gooo/referencesProvenance", "schema": referencesProvenanceSchema,
