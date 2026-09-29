@@ -50,9 +50,16 @@ choose among preserving the branch returns, a `guard-return` rewrite, or an
 explicit `merge-result` join. The guard rewrite changes
 `if c { return a } else { return b }` into `if c { return a }; return b`.
 The join route assigns each branch value to a typed local and returns it after
-the conditional, making the control-flow merge explicit. Each route records
-its equivalence rule and is typechecked before output. Laya receives a source
-digest and structural summary, not the activity body. By default, an absent,
+the conditional, making the control-flow merge explicit. Each emitted report
+includes a `route_equivalence` receipt with schema, decision, method, rule,
+source and generated semantic digests, and the declared proof scope. The
+compiler canonicalizes only the direct `if/else`-return, guard-return, and
+typed-result-join shapes; other accepted bodies must have matching formatted Go
+AST bodies. A mismatch fails closed before output. This is a structural
+equivalence witness for the closed pure body profile, not a proof of unstated
+intent, full-domain behavior, or which route is clearer. Each route is also
+typechecked before output. Laya receives a source digest and structural
+summary, not the activity body. By default, an absent,
 unavailable, malformed, or over-budget provider uses the declared `preserve`
 fallback; the planner has a three-second budget. With no Laya setting and no
 sample seed, repeated runs therefore select the same route and produce the
