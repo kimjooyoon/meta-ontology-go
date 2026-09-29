@@ -160,8 +160,11 @@ jobs:
           mapfile -t prior_runs < <(gh api --paginate --jq '.workflow_runs[].id' \
             "repos/$GITHUB_REPOSITORY/actions/workflows/self-improvement-execution-consumer.yml/runs?branch=dev&head_sha=$SUBJECT_SHA&per_page=100")
           for prior_run_id in "${prior_runs[@]}"; do
-            prior_count="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$prior_run_id/artifacts?per_page=100" \
-              --jq --arg name "$consumption_artifact" '[.artifacts[] | select(.name == $name)] | length')"
+            prior_artifacts="$work/prior-artifacts-$prior_run_id.json"
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$prior_run_id/artifacts?per_page=100" \
+              > "$prior_artifacts"
+            prior_count="$(jq -r --arg name "$consumption_artifact" \
+              '[.artifacts[] | select(.name == $name)] | length' "$prior_artifacts")"
             if [ "$prior_count" != 0 ]; then
               echo "This exact grant already has a reservation artifact."
               exit 1
