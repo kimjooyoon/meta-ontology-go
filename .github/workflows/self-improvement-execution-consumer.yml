@@ -1,0 +1,208 @@
+name: Self-improvement bounded execution consumer
+
+on:
+  workflow_run:
+    workflows: ["Self-improvement separate execution grant"]
+    types: [completed]
+    branches: [dev]
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: self-improvement-grant-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  consume:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_branch == 'dev'
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event.workflow_run.head_sha }}
+      GRANT_RUN_ID: ${{ github.event.workflow_run.id }}
+      GRANT_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+    steps:
+      - name: Check out the exact grant subject
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Bind the exact v26 run and retrieve its artifact
+        id: grant
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-execution-consumer"
+          grant_dir="$work/grant"
+          contract_dir="$work/contract"
+          mkdir -p "$grant_dir" "$contract_dir"
+          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          [[ "$SUBJECT_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GRANT_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          test "$GRANT_RUN_ATTEMPT" = 1
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GRANT_RUN_ID" > "$work/grant-run.json"
+          jq -e --argjson id "$GRANT_RUN_ID" --arg sha "$SUBJECT_SHA" \
+            --arg repo "$GITHUB_REPOSITORY" \
+            '.id == $id and .run_attempt == 1 and .name == "Self-improvement separate execution grant" and
+             .path == ".github/workflows/self-improvement-execution-grant.yml" and
+             .event == "workflow_dispatch" and .head_branch == "dev" and .head_sha == $sha and
+             .conclusion == "success" and .head_repository.full_name == $repo and .repository.full_name == $repo' \
+            "$work/grant-run.json" >/dev/null
+          grant_name="self-improvement-execution-grant-$SUBJECT_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GRANT_RUN_ID/artifacts?per_page=100" > "$work/grant-artifacts.json"
+          test "$(jq -r --arg name "$grant_name" '[.artifacts[] | select(.name == $name)] | length' "$work/grant-artifacts.json")" = 1
+          grant_artifact_id="$(jq -r --arg name "$grant_name" '[.artifacts[] | select(.name == $name)][0].id' "$work/grant-artifacts.json")"
+          grant_digest="$(jq -r --arg name "$grant_name" '[.artifacts[] | select(.name == $name)][0].digest' "$work/grant-artifacts.json")"
+          test "$(jq -r --arg name "$grant_name" '[.artifacts[] | select(.name == $name)][0].expired' "$work/grant-artifacts.json")" = false
+          [[ "$grant_artifact_id" =~ ^[1-9][0-9]*$ ]]
+          [[ "$grant_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          grant_archive="$work/grant.zip"
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$grant_artifact_id/zip" -o "$grant_archive"
+          observed_grant_digest="sha256:$(sha256sum "$grant_archive" | awk '{print $1}')"
+          test "$observed_grant_digest" = "$grant_digest"
+          unzip -q "$grant_archive" -d "$grant_dir"
+          grant_report=""
+          while IFS= read -r file; do
+            if jq -e '.schema == "gooo/self-improvement-execution-grant/v2"' "$file" >/dev/null 2>&1; then
+              test -z "$grant_report"
+              grant_report="$file"
+            fi
+          done < <(find "$grant_dir" -type f -name '*.json' -print | sort)
+          test -n "$grant_report"
+          contract_run_id="$(jq -r '.request.source_artifact.workflow_run_id' "$grant_report")"
+          contract_attempt="$(jq -r '.request.source_artifact.workflow_run_attempt' "$grant_report")"
+          contract_artifact_id="$(jq -r '.request.source_artifact.artifact_id' "$grant_report")"
+          contract_digest="$(jq -r '.request.source_artifact.artifact_digest' "$grant_report")"
+          contract_observed="$(jq -r '.request.source_artifact.observed_artifact_digest' "$grant_report")"
+          [[ "$contract_run_id" =~ ^[1-9][0-9]*$ ]]
+          test "$contract_attempt" = 1
+          [[ "$contract_artifact_id" =~ ^[1-9][0-9]*$ ]]
+          [[ "$contract_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          test "$contract_digest" = "$contract_observed"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$contract_run_id" > "$work/contract-run.json"
+          jq -e --argjson id "$contract_run_id" --arg sha "$SUBJECT_SHA" \
+            --arg repo "$GITHUB_REPOSITORY" \
+            '.id == $id and .run_attempt == 1 and .name == "Self-improvement candidate execution contract" and
+             .path == ".github/workflows/self-improvement-execution-contract.yml" and
+             .event == "workflow_dispatch" and .head_branch == "dev" and .head_sha == $sha and
+             .conclusion == "success" and .head_repository.full_name == $repo and .repository.full_name == $repo' \
+            "$work/contract-run.json" >/dev/null
+          contract_name="self-improvement-execution-contract-$SUBJECT_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$contract_run_id/artifacts?per_page=100" > "$work/contract-artifacts.json"
+          test "$(jq -r --arg name "$contract_name" '[.artifacts[] | select(.name == $name)] | length' "$work/contract-artifacts.json")" = 1
+          jq -e --arg name "$contract_name" --argjson id "$contract_artifact_id" \
+            --arg digest "$contract_digest" \
+            '[.artifacts[] | select(.name == $name)][0] | .id == $id and .digest == $digest and .expired == false' \
+            "$work/contract-artifacts.json" >/dev/null
+          contract_archive="$work/contract.zip"
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$contract_artifact_id/zip" -o "$contract_archive"
+          observed_contract_digest="sha256:$(sha256sum "$contract_archive" | awk '{print $1}')"
+          test "$observed_contract_digest" = "$contract_digest"
+          test "$observed_contract_digest" = "$contract_observed"
+          unzip -q "$contract_archive" -d "$contract_dir"
+          contract_report=""
+          while IFS= read -r file; do
+            if jq -e '.schema == "gooo/self-improvement-execution-contract/v1"' "$file" >/dev/null 2>&1; then
+              test -z "$contract_report"
+              contract_report="$file"
+            fi
+          done < <(find "$contract_dir" -type f -name '*.json' -print | sort)
+          test -n "$contract_report"
+          metadata="$work/source-metadata.json"
+          jq -n --arg repository "$GITHUB_REPOSITORY" --arg subject_sha "$SUBJECT_SHA" \
+            --arg grant_artifact_digest "$grant_digest" --arg contract_artifact_digest "$contract_digest" \
+            --argjson grant_run_id "$GRANT_RUN_ID" --argjson grant_run_attempt "$GRANT_RUN_ATTEMPT" \
+            --argjson grant_artifact_id "$grant_artifact_id" --argjson contract_run_id "$contract_run_id" \
+            --argjson contract_run_attempt "$contract_attempt" --argjson contract_artifact_id "$contract_artifact_id" \
+            '{repository:$repository,subject_sha:$subject_sha,grant_run_id:$grant_run_id,
+              grant_run_attempt:$grant_run_attempt,grant_artifact_id:$grant_artifact_id,
+              grant_artifact_digest:$grant_artifact_digest,contract_run_id:$contract_run_id,
+              contract_run_attempt:$contract_run_attempt,contract_artifact_id:$contract_artifact_id,
+              contract_artifact_digest:$contract_artifact_digest}' > "$metadata"
+          request_digest="$(jq -r '.request.digest' "$grant_report")"
+          [[ "$request_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          consumption_artifact="gooo-consumed-${request_digest//:/-}"
+          mapfile -t prior_runs < <(gh api --paginate --jq '.workflow_runs[].id' \
+            "repos/$GITHUB_REPOSITORY/actions/workflows/self-improvement-execution-consumer.yml/runs?branch=dev&head_sha=$SUBJECT_SHA&per_page=100")
+          for prior_run_id in "${prior_runs[@]}"; do
+            prior_count="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$prior_run_id/artifacts?per_page=100" \
+              --jq --arg name "$consumption_artifact" '[.artifacts[] | select(.name == $name)] | length')"
+            if [ "$prior_count" != 0 ]; then
+              echo "This exact grant already has a reservation artifact."
+              exit 1
+            fi
+          done
+          echo "GRANT_REPORT=$grant_report" >> "$GITHUB_ENV"
+          echo "CONTRACT_REPORT=$contract_report" >> "$GITHUB_ENV"
+          echo "SOURCE_METADATA=$metadata" >> "$GITHUB_ENV"
+          echo "CONSUMPTION_ARTIFACT=$consumption_artifact" >> "$GITHUB_ENV"
+          echo "CONSUMER_WORK=$work" >> "$GITHUB_ENV"
+
+      - name: Reserve the exact grant before execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          reservation="$CONSUMER_WORK/reservation.json"
+          go run ./scripts/self-improvement-execution-consumer \
+            -mode reserve -grant "$GRANT_REPORT" -contract "$CONTRACT_REPORT" \
+            -metadata "$SOURCE_METADATA" -output "$reservation"
+          jq -e '.status == "CONSUMPTION_RESERVED" and .consumed_uses == 1 and
+            .remaining_uses == 0 and .execution_count == 0 and .one_use_enforced and .digest != ""' \
+            "$reservation" >/dev/null
+          echo "RESERVATION=$reservation" >> "$GITHUB_ENV"
+
+      - name: Persist the one-use reservation
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.CONSUMPTION_ARTIFACT }}
+          path: ${{ runner.temp }}/self-improvement-execution-consumer/reservation.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Execute the one-use bounded value experiment
+        id: execute
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$CONSUMER_WORK/consumption-report.json"
+          go run ./scripts/self-improvement-execution-consumer \
+            -mode consume -grant "$GRANT_REPORT" -contract "$CONTRACT_REPORT" \
+            -metadata "$SOURCE_METADATA" -reservation "$RESERVATION" -output "$output"
+          jq -e '.schema == "gooo/self-improvement-execution-consumption/v1" and
+            .execution_count == 1 and .evaluator_invocations == 5 and
+            .consumed_uses == 1 and .remaining_uses == 0 and .one_use_enforced and
+            .repository_writes == 0 and .external_effects == [] and
+            .case_count == 5 and .passed_cases == 5 and
+            .performance_improvement == "UNKNOWN" and
+            ([.cases[] | select(.passed == false)] | length) == 0' "$output" >/dev/null
+          jq -r '"grant consumed once; cases \(.passed_cases)/\(.case_count); evaluator time \(.evaluation_elapsed_nanoseconds) ns; performance improvement \(.performance_improvement)"' \
+            "$output" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the bounded execution evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.CONSUMPTION_ARTIFACT }}-result
+          path: ${{ runner.temp }}/self-improvement-execution-consumer/consumption-report.json
+          if-no-files-found: warn
+          retention-days: 14
