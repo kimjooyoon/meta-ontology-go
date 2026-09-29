@@ -33,12 +33,15 @@ func completeExecutionOriginReceiptFixturePart01() valueexecution.ExecutionOrigi
 }
 
 func completeGeneratedReplayEvidenceFixturePart01() GeneratedReplayEvidencePart01 {
+	toolchainDigest, evaluatorDigest := valueexecution.RuntimeEvidenceIdentities()
 	return GeneratedReplayEvidencePart01{
 		SourceDigest:             "sha256:" + strings.Repeat("c", 64),
 		SemanticDigest:           "sha256:" + strings.Repeat("d", 64),
 		TypedPlanDigest:          "sha256:" + strings.Repeat("e", 64),
 		RuntimePlanDigest:        "sha256:" + strings.Repeat("a", 64),
 		GeneratedArtifactDigest:  "sha256:" + strings.Repeat("f", 64),
+		ToolchainDigest:          toolchainDigest,
+		EvaluatorDigest:          evaluatorDigest,
 		ReverseObservationDigest: "sha256:" + strings.Repeat("1", 64),
 	}
 }
@@ -131,12 +134,60 @@ func TestGeneratedReplayDigestsRequireCurrentSourceAndPlanIdentities(t *testing.
 		evidence.SemanticDigest,
 		evidence.TypedPlanDigest,
 	)
-	if generated == "" || reverse != "" || closure.MissingStageIndex != 5 {
+	if generated == "" || reverse != "" || closure.MissingStageIndex != 7 {
 		t.Fatalf(
 			"missing reverse observation lost its frontier: generated=%q reverse=%q closure=%+v",
 			generated,
 			reverse,
 			closure,
 		)
+	}
+}
+
+func TestGeneratedReplayDigestsRejectChangedToolchainAndEvaluatorPart01(t *testing.T) {
+	evidence := completeGeneratedReplayEvidenceFixturePart01()
+	receipt := completeExecutionOriginReceiptFixturePart01()
+	params := ExecutionPlanProvenanceParamsPart01{
+		GeneratedReplayEvidence: &evidence,
+		ExecutionOriginReceipt:  &receipt,
+	}
+	for _, testCase := range []struct {
+		name       string
+		mutate     func(*GeneratedReplayEvidencePart01)
+		stageIndex int
+		reason     string
+	}{
+		{
+			name: "toolchain",
+			mutate: func(evidence *GeneratedReplayEvidencePart01) {
+				evidence.ToolchainDigest = "sha256:" + strings.Repeat("9", 64)
+			},
+			stageIndex: 5,
+			reason:     "GENERATED_REPLAY_TOOLCHAIN_DIGEST_MISMATCH",
+		},
+		{
+			name: "evaluator",
+			mutate: func(evidence *GeneratedReplayEvidencePart01) {
+				evidence.EvaluatorDigest = "sha256:" + strings.Repeat("9", 64)
+			},
+			stageIndex: 6,
+			reason:     "GENERATED_REPLAY_EVALUATOR_DIGEST_MISMATCH",
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			mutated := evidence
+			testCase.mutate(&mutated)
+			params.GeneratedReplayEvidence = &mutated
+			generated, reverse, closure := executionPlanGeneratedReplayDigestsPart01(
+				params,
+				evidence.SourceDigest,
+				evidence.SemanticDigest,
+				evidence.TypedPlanDigest,
+			)
+			if generated == "" || reverse != "" || closure.Status != ExecutionEvidenceReceiptClosureUnknown ||
+				closure.MissingStageIndex != testCase.stageIndex || closure.Reason != testCase.reason {
+				t.Fatalf("identity mismatch escaped UNKNOWN frontier: generated=%q reverse=%q closure=%+v", generated, reverse, closure)
+			}
+		})
 	}
 }

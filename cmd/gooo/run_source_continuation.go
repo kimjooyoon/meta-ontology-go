@@ -9,7 +9,15 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
-func runSourceContinuation(options runSourceOptions, plan valueexecution.Plan, input int64, runtimePlanDigest string, jsonMode bool, stdout, stderr io.Writer) int {
+func runSourceContinuation(
+	options runSourceOptions,
+	plan valueexecution.Plan,
+	input int64,
+	runtimePlanDocument runtimePlanDocument,
+	runtimePlanDigest string,
+	jsonMode bool,
+	stdout, stderr io.Writer,
+) int {
 	trace, err := plan.ExecuteIterations(context.Background(), map[string]int64{options.entry: input}, options.iterations)
 	if runtimePlanDigest != "" {
 		var bindErr error
@@ -22,18 +30,37 @@ func runSourceContinuation(options runSourceOptions, plan valueexecution.Plan, i
 	if err != nil {
 		decision, code = "FAIL_CLOSED", exitFailure
 	}
+	var generatedReplayEvidence *valueexecution.GeneratedReplayEvidencePart01
+	var executionOriginReceipt *valueexecution.ExecutionOriginReceipt
+	if options.runtimePlan != "" && len(trace.Executions) > 0 {
+		execution := trace.Executions[len(trace.Executions)-1]
+		evidence, receipt := observeRuntimePlanReplayEvidence(
+			options.filename,
+			options.entry,
+			options.runtimePlan,
+			runtimePlanDocument,
+			runtimePlanDigest,
+			execution,
+			trace.Digest,
+		)
+		generatedReplayEvidence = &evidence
+		executionOriginReceipt = &receipt
+	}
 	if jsonMode {
 		payload := struct {
-			Schema              string                      `json:"schema"`
-			Decision            string                      `json:"decision"`
-			SourcePath          string                      `json:"source_path"`
-			SourceDigest        string                      `json:"source_digest"`
-			SemanticFingerprint string                      `json:"semantic_fingerprint"`
-			RuntimePlanDigest   string                      `json:"runtime_plan_digest,omitempty"`
-			Continuation        valueexecution.Continuation `json:"continuation"`
+			Schema                  string                                        `json:"schema"`
+			Decision                string                                        `json:"decision"`
+			SourcePath              string                                        `json:"source_path"`
+			SourceDigest            string                                        `json:"source_digest"`
+			SemanticFingerprint     string                                        `json:"semantic_fingerprint"`
+			RuntimePlanDigest       string                                        `json:"runtime_plan_digest,omitempty"`
+			GeneratedReplayEvidence *valueexecution.GeneratedReplayEvidencePart01 `json:"generated_replay_evidence,omitempty"`
+			ExecutionOriginReceipt  *valueexecution.ExecutionOriginReceipt        `json:"execution_origin_receipt,omitempty"`
+			Continuation            valueexecution.Continuation                   `json:"continuation"`
 		}{Schema: valueexecution.ContinuationSchema, Decision: decision, SourcePath: options.filename,
 			SourceDigest: plan.SourceDigest, SemanticFingerprint: plan.SemanticFingerprint,
-			RuntimePlanDigest: runtimePlanDigest, Continuation: trace}
+			RuntimePlanDigest: runtimePlanDigest, GeneratedReplayEvidence: generatedReplayEvidence,
+			ExecutionOriginReceipt: executionOriginReceipt, Continuation: trace}
 		if encodeErr := json.NewEncoder(stdout).Encode(payload); encodeErr != nil {
 			return exitFailure
 		}
