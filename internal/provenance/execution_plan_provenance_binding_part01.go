@@ -44,20 +44,21 @@ type ExecutionPlanPart01 struct {
 // ExecutionPlanProvenanceBindingPart01 binds an execution-plan observation to
 // the six-stage provenance chain. It is evidence only, never authorization.
 type ExecutionPlanProvenanceBindingPart01 struct {
-	Schema                string                                 `json:"schema"`
-	Plan                  ExecutionPlanPart01                    `json:"plan"`
-	ProvenanceChainDigest string                                 `json:"provenance_chain_digest"`
-	ProvenanceStages      []SelfImprovementProvenanceStagePart01 `json:"provenance_stages"`
-	BoundStages           int                                    `json:"bound_stages"`
-	TotalStages           int                                    `json:"total_stages"`
-	NextRequiredStage     string                                 `json:"next_required_stage"`
-	EvidencePrefixDigest  string                                 `json:"evidence_prefix_digest"`
-	MissingStageIndex     int                                    `json:"missing_stage_index"`
-	Status                ExecutionPlanBindingStatusPart01       `json:"status"`
-	CausalReason          string                                 `json:"causal_reason"`
-	AdoptionAuthorized    bool                                   `json:"adoption_authorized"`
-	NonAuthorizing        bool                                   `json:"non_authorizing"`
-	BindingDigest         string                                 `json:"binding_digest"`
+	Schema                 string                                            `json:"schema"`
+	Plan                   ExecutionPlanPart01                               `json:"plan"`
+	ProvenanceChainDigest  string                                            `json:"provenance_chain_digest"`
+	ProvenanceStages       []SelfImprovementProvenanceStagePart01            `json:"provenance_stages"`
+	BoundStages            int                                               `json:"bound_stages"`
+	TotalStages            int                                               `json:"total_stages"`
+	NextRequiredStage      string                                            `json:"next_required_stage"`
+	EvidencePrefixDigest   string                                            `json:"evidence_prefix_digest"`
+	MissingStageIndex      int                                               `json:"missing_stage_index"`
+	GeneratedReplayClosure *ExecutionEvidenceReceiptClosureObservationPart01 `json:"generated_replay_closure,omitempty"`
+	Status                 ExecutionPlanBindingStatusPart01                  `json:"status"`
+	CausalReason           string                                            `json:"causal_reason"`
+	AdoptionAuthorized     bool                                              `json:"adoption_authorized"`
+	NonAuthorizing         bool                                              `json:"non_authorizing"`
+	BindingDigest          string                                            `json:"binding_digest"`
 }
 
 // BindExecutionPlanToProvenancePart01 records an AX-shaped declarative
@@ -245,6 +246,18 @@ func BindExecutionPlanToProvenanceWithTypedPlanAndWorkloadIdentityPart01(
 	return binding
 }
 
+// BindExecutionEvidenceReceiptClosurePart01 attaches the existing LSP replay
+// closure observation to the provenance response and reseals its digest.
+func BindExecutionEvidenceReceiptClosurePart01(
+	binding ExecutionPlanProvenanceBindingPart01,
+	closure ExecutionEvidenceReceiptClosureObservationPart01,
+) ExecutionPlanProvenanceBindingPart01 {
+	copy := closure
+	binding.GeneratedReplayClosure = &copy
+	binding.BindingDigest = hashExecutionPlanProvenanceBindingPart01(binding)
+	return binding
+}
+
 func (binding ExecutionPlanProvenanceBindingPart01) Validate() error {
 	if binding.Schema != ExecutionPlanProvenanceBindingSchemaPart01 {
 		return fmt.Errorf("unexpected execution-plan provenance schema %q", binding.Schema)
@@ -263,6 +276,30 @@ func (binding ExecutionPlanProvenanceBindingPart01) Validate() error {
 	}
 	if binding.Plan.WorkloadIdentityBindingDigest != "" && !isSHA256Digest(binding.Plan.WorkloadIdentityBindingDigest) {
 		return fmt.Errorf("execution-plan workload identity binding digest is invalid")
+	}
+	if binding.GeneratedReplayClosure != nil {
+		if !binding.GeneratedReplayClosure.Validate() {
+			return fmt.Errorf("execution-plan generated replay closure is invalid")
+		}
+		if binding.GeneratedReplayClosure.Status == ExecutionEvidenceReceiptClosureCompletePart01 &&
+			binding.Status != ExecutionPlanBindingBound {
+			return fmt.Errorf("complete generated replay closure requires a bound provenance chain")
+		}
+		if binding.GeneratedReplayClosure.Status == ExecutionEvidenceReceiptClosureUnknownPart01 &&
+			binding.Status != ExecutionPlanBindingUnknown {
+			return fmt.Errorf("unknown generated replay closure cannot bind the execution plan")
+		}
+		if len(binding.ProvenanceStages) == 6 {
+			reverseStage := binding.ProvenanceStages[5]
+			if binding.GeneratedReplayClosure.Status == ExecutionEvidenceReceiptClosureCompletePart01 &&
+				reverseStage.Digest != binding.GeneratedReplayClosure.Digest {
+				return fmt.Errorf("complete generated replay closure does not match reverse-observation provenance")
+			}
+			if binding.GeneratedReplayClosure.Status == ExecutionEvidenceReceiptClosureUnknownPart01 &&
+				reverseStage.Bound {
+				return fmt.Errorf("unknown generated replay closure cannot bind reverse-observation provenance")
+			}
+		}
 	}
 	if binding.BoundStages != countBoundExecutionPlanStagesPart01(binding.ProvenanceStages) {
 		return fmt.Errorf("execution-plan provenance binding bound stage count does not match its stages")
