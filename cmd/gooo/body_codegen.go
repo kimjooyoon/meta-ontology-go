@@ -52,11 +52,11 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 	}
 	source, err := reader.ReadFile(filename)
 	if err != nil {
-		return reportBodyCodegenFailure(jsonMode, filename, err, stdout, stderr)
+		return reportBodyCodegenFailure(jsonMode, filename, activity, nil, err, stdout, stderr)
 	}
 	result, err := bodycodegen.GenerateWithPlannerAndSampleSeed(context.Background(), filename, source, activity, os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"), sampleSeed)
 	if err != nil {
-		return reportBodyCodegenFailure(jsonMode, filename, err, stdout, stderr)
+		return reportBodyCodegenFailure(jsonMode, filename, activity, source, err, stdout, stderr)
 	}
 	if jsonMode {
 		encoder := json.NewEncoder(stdout)
@@ -74,15 +74,24 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 	return exitOK
 }
 
-func reportBodyCodegenFailure(jsonMode bool, filename string, cause error, stdout, stderr io.Writer) int {
+func reportBodyCodegenFailure(jsonMode bool, filename, activity string, source []byte, cause error, stdout, stderr io.Writer) int {
 	if jsonMode {
+		completeness := bodycodegen.FailureCompletenessReceipt(activity, source, cause.Error())
 		payload := struct {
-			Schema           string `json:"schema"`
-			Decision         string `json:"decision"`
-			Source           string `json:"source"`
-			RepositoryWrites int    `json:"repository_writes"`
-			Error            string `json:"error"`
-		}{Schema: "gooo/body-codegen-report/v3", Decision: "FAIL_CLOSED", RepositoryWrites: 0, Error: cause.Error()}
+			Schema              string                           `json:"schema"`
+			Decision            string                           `json:"decision"`
+			Source              string                           `json:"source"`
+			PlanSHA256          string                           `json:"plan_sha256"`
+			CompilerSourceSHA   string                           `json:"compiler_source_sha"`
+			RepositoryWrites    int                              `json:"repository_writes"`
+			Error               string                           `json:"error"`
+			CompletenessReceipt *bodycodegen.CompletenessReceipt `json:"completeness_receipt"`
+		}{
+			Schema: "gooo/body-codegen-report/v3", Decision: "FAIL_CLOSED",
+			PlanSHA256:        stringScopeValue(completeness.Scope, "plan_sha256"),
+			CompilerSourceSHA: stringScopeValue(completeness.Scope, "compiler_source_sha"),
+			RepositoryWrites:  0, Error: cause.Error(), CompletenessReceipt: completeness,
+		}
 		encoder := json.NewEncoder(stdout)
 		encoder.SetEscapeHTML(false)
 		if err := encoder.Encode(payload); err != nil {
@@ -92,4 +101,9 @@ func reportBodyCodegenFailure(jsonMode bool, filename string, cause error, stdou
 	}
 	fmt.Fprintf(stderr, "gooo: %s: body-codegen: %v\n", filename, cause)
 	return exitFailure
+}
+
+func stringScopeValue(scope map[string]any, key string) string {
+	value, _ := scope[key].(string)
+	return value
 }
