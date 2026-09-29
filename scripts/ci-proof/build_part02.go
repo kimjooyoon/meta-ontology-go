@@ -6,10 +6,10 @@ import (
 	"os"
 )
 
-// promotionOperatorReady is a pure, non-mutating predicate for a future
-// external fast-forward operator. It never writes refs or protection.
+// promotionOperatorReady is a pure predicate for the promotion contract. It
+// never writes refs or branch protection.
 func promotionOperatorReady(bundle proofBundle) bool {
-	if bundle.Decision != "PASS" || bundle.Event != "pull_request" || bundle.BaseRef != "main" || bundle.PRNumber <= 0 || !validSHA(bundle.BaseSHA) || !validSHA(bundle.HeadSHA) || bundle.Repository == "" {
+	if bundle.Decision != "PASS" || (bundle.Event != "pull_request" && bundle.Event != "workflow_dispatch") || bundle.BaseRef != "main" || bundle.PRNumber <= 0 || !validSHA(bundle.BaseSHA) || !validSHA(bundle.HeadSHA) || bundle.Repository == "" {
 		return false
 	}
 	if validatePromotionObservation(bundle.PromotionObservation, bundle) != nil || validatePromotionAuthorization(bundle) != nil || !promotionProofCoreReady(bundle) {
