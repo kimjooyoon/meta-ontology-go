@@ -10,12 +10,15 @@ const (
 )
 
 func validPromotionObservation(observation *promotionObservation, repository string, prNumber int64, baseSHA, headSHA, headRef string) bool {
-	// GitHub's aggregate merge state can be unstable while individual checks are
-	// reported. The required promotion checks are bound separately below.
+	// GitHub can report "blocked" while a workflow_dispatch check suite is still
+	// completing: the required job results are bound to the exact head below, but
+	// the PR aggregate is reconciled only after the run closes. This observation
+	// alone never authorizes a merge; promotionAuthorizationFor also requires the
+	// complete passing proof, and the native PR merge API enforces branch rules.
 	if observation == nil ||
 		observation.Repository != repository || observation.PRNumber != prNumber || observation.Action == "" ||
 		observation.State != "open" || observation.Draft || observation.Merged || !observation.Mergeable ||
-		(observation.MergeableState != "clean" && observation.MergeableState != "unstable") ||
+		(observation.MergeableState != "clean" && observation.MergeableState != "unstable" && observation.MergeableState != "blocked") ||
 		observation.BaseRepo != repository || observation.BaseRef != "main" || observation.BaseSHA != baseSHA ||
 		observation.HeadRepo != repository || observation.HeadRef != headRef || observation.HeadSHA != headSHA ||
 		!validSHA(observation.BaseSHA) || !validSHA(observation.HeadSHA) || !validSHA(observation.HeadParentSHA) ||
