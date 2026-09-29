@@ -4,6 +4,7 @@ package bodycodegen
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"go/ast"
@@ -15,12 +16,19 @@ import (
 	"go/types"
 	"maps"
 	"strings"
+	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-const schema = "gooo/body-codegen-report/v1"
+const (
+	schema              = "gooo/body-codegen-report/v2"
+	preserveRoute       = "preserve"
+	guardReturnRoute    = "guard-return"
+	routeDecisionBudget = 3 * time.Second
+)
 
 // Result is an immutable report and generated source projection.
 type Result struct {
@@ -30,27 +38,40 @@ type Result struct {
 
 // Report describes what was lowered and how the output was checked.
 type Report struct {
-	Schema                string  `json:"schema"`
-	Decision              string  `json:"decision"`
-	Activity              string  `json:"activity"`
-	ActivityID            string  `json:"activity_id"`
-	SourceDigest          string  `json:"source_digest"`
-	ProgramDigest         string  `json:"program_digest"`
-	GeneratedDigest       string  `json:"generated_digest"`
-	ReplayDigest          string  `json:"replay_digest"`
-	SourceConstructs      int     `json:"source_constructs"`
-	LoweredConstructs     int     `json:"lowered_constructs"`
-	CompletenessPercent   float64 `json:"completeness_percent"`
-	TypecheckPassed       bool    `json:"typecheck_passed"`
-	DeterministicReplay   bool    `json:"deterministic_replay"`
-	RepositoryWrites      int     `json:"repository_writes"`
-	UnsupportedConstructs string  `json:"unsupported_constructs"`
+	Schema                string                `json:"schema"`
+	Decision              string                `json:"decision"`
+	Activity              string                `json:"activity"`
+	ActivityID            string                `json:"activity_id"`
+	SourceDigest          string                `json:"source_digest"`
+	ProgramDigest         string                `json:"program_digest"`
+	GeneratedDigest       string                `json:"generated_digest"`
+	ReplayDigest          string                `json:"replay_digest"`
+	Route                 string                `json:"route"`
+	RouteDecision         decisionroute.Receipt `json:"route_decision"`
+	CandidateRoutes       []string              `json:"candidate_routes"`
+	EquivalenceRule       string                `json:"equivalence_rule"`
+	SourceConstructs      int                   `json:"source_constructs"`
+	LoweredConstructs     int                   `json:"lowered_constructs"`
+	SourceSemanticUnits   int                   `json:"source_semantic_units"`
+	LoweredSemanticUnits  int                   `json:"lowered_semantic_units"`
+	CompletenessPercent   float64               `json:"completeness_percent"`
+	TypecheckPassed       bool                  `json:"typecheck_passed"`
+	DeterministicReplay   bool                  `json:"deterministic_replay"`
+	RepositoryWrites      int                   `json:"repository_writes"`
+	UnsupportedConstructs string                `json:"unsupported_constructs"`
 }
 
 // Generate compiles one .gooo activity body into a marked Go source region.
 // The accepted body subset is local declarations/assignments, conditionals,
 // and returns over int64 and bool values. Calls and effects fail closed.
 func Generate(filename string, source []byte, activityName string) (Result, error) {
+	return GenerateWithPlanner(context.Background(), filename, source, activityName, "", "")
+}
+
+// GenerateWithPlanner asks Laya to choose only among source-shape-preserving
+// lowering routes that are valid for this activity. With no usable provider,
+// decisionroute selects the declared deterministic fallback.
+func GenerateWithPlanner(ctx context.Context, filename string, source []byte, activityName, endpoint, apiKey string) (Result, error) {
 	file, diagnostics := syntax.ParseFile(filename, string(source))
 	if diagnostics.HasErrors() {
 		return Result{}, fmt.Errorf("parse .gooo source: %w", diagnostics.Error())
@@ -106,28 +127,75 @@ func Generate(filename string, source []byte, activityName string) (Result, erro
 	if err != nil {
 		return Result{}, err
 	}
-	generated, constructs, err := render(file.Package.Name, activityName, activityID, inputType, outputType, body)
+	base, err := generateRoute(file.Package.Name, activityName, activityID, inputType, outputType, body, preserveRoute)
 	if err != nil {
 		return Result{}, err
 	}
-	replay, replayConstructs, err := render(file.Package.Name, activityName, activityID, inputType, outputType, body)
+
+	routes, shape, err := candidateRoutes(file.Package.Name, activityName, body)
 	if err != nil {
 		return Result{}, err
 	}
-	if constructs != replayConstructs {
+	selected := preserveRoute
+	receipt := decisionroute.Receipt{
+		Schema: decisionroute.ReceiptSchema, Mode: "deterministic_fallback", Selected: preserveRoute,
+		FallbackReason: "NO_ALTERNATIVE_ROUTE", Provider: "deterministic",
+	}
+	candidateIDs := make([]string, 0, len(routes))
+	for _, option := range routes {
+		candidateIDs = append(candidateIDs, option.ID)
+	}
+	if len(routes) > 1 {
+		request := decisionroute.Request{
+			Schema: decisionroute.RequestSchema,
+			State:  fmt.Sprintf("activity=%s; source_sha256=%s; program_sha256=%s; input=%s; output=%s; body_shape=%s; source_semantic_units=%d", activityName, digest(source), digest([]byte(activity.ValueProgram)), inputs[0].Name, outputs, shape, base.report.SourceSemanticUnits),
+			Question: decisionroute.Question{
+				ID:           "body_codegen_route",
+				Instructions: "Choose one listed, semantics-preserving lowering route for the described Gooo activity shape. Do not invent code or routes. Prefer the route whose generated control flow is clearest for this shape.",
+				Options:      routes,
+			},
+			Fallback: preserveRoute,
+		}
+		decisionContext, cancel := context.WithTimeout(ctx, routeDecisionBudget)
+		receipt, err = decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
+		cancel()
+		if err != nil {
+			return Result{}, fmt.Errorf("select code generation route: %w", err)
+		}
+		selected = receipt.Selected
+	}
+	result := base
+	if selected != preserveRoute {
+		result, err = generateRoute(file.Package.Name, activityName, activityID, inputType, outputType, body, selected)
+		if err != nil {
+			// A planner can choose only a declared route. Keep the source-preserving
+			// route authoritative if a declared lowering unexpectedly fails.
+			selected = preserveRoute
+			receipt.Selected = preserveRoute
+			receipt.Mode = "deterministic_fallback"
+			receipt.Provider = "deterministic"
+			receipt.FallbackReason = "SELECTED_ROUTE_LOWERING_FAILED"
+			result = base
+		}
+	}
+	replay, err := generateRoute(file.Package.Name, activityName, activityID, inputType, outputType, body, selected)
+	if err != nil {
+		return Result{}, fmt.Errorf("replay selected code generation route: %w", err)
+	}
+	if result.report.SourceConstructs != replay.report.SourceConstructs || result.report.LoweredConstructs != replay.report.LoweredConstructs || result.report.SourceSemanticUnits != replay.report.SourceSemanticUnits || result.report.LoweredSemanticUnits != replay.report.LoweredSemanticUnits {
 		return Result{}, fmt.Errorf("internal error: replay construct count changed")
 	}
-	generatedDigest, replayDigest := digest(generated), digest(replay)
-	programDigest := digest([]byte(activity.ValueProgram))
-	sourceConstructs := constructs
-	report := Report{
-		Schema: schema, Decision: "PASS", Activity: activityName, ActivityID: activityID,
-		SourceDigest: digest(source), ProgramDigest: programDigest, GeneratedDigest: generatedDigest,
-		ReplayDigest: replayDigest, SourceConstructs: sourceConstructs, LoweredConstructs: constructs,
-		CompletenessPercent: 100, TypecheckPassed: true, DeterministicReplay: generatedDigest == replayDigest,
-		RepositoryWrites: 0, UnsupportedConstructs: "calls, loops, imports, external effects, multiple inputs",
-	}
-	return Result{Report: report, Source: string(generated)}, nil
+	result.report.SourceDigest = digest(source)
+	result.report.ProgramDigest = digest([]byte(activity.ValueProgram))
+	result.report.GeneratedDigest = digest(result.source)
+	result.report.ReplayDigest = digest(replay.source)
+	result.report.Route = selected
+	result.report.RouteDecision = receipt
+	result.report.CandidateRoutes = candidateIDs
+	result.report.DeterministicReplay = result.report.GeneratedDigest == result.report.ReplayDigest
+	result.report.RepositoryWrites = 0
+	result.report.UnsupportedConstructs = "calls, loops, imports, external effects, multiple inputs"
+	return Result{Report: result.report, Source: string(result.source)}, nil
 }
 
 func goTypeForEntity(entity string) (string, bool) {
@@ -141,41 +209,160 @@ func goTypeForEntity(entity string) (string, bool) {
 	}
 }
 
-func render(packageName, activityName, activityID, inputType, outputType, body string) ([]byte, int, error) {
+type generatedRoute struct {
+	report Report
+	source []byte
+}
+
+func generateRoute(packageName, activityName, activityID, inputType, outputType, body, route string) (generatedRoute, error) {
+	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, err := render(packageName, activityName, activityID, inputType, outputType, body, route)
+	if err != nil {
+		return generatedRoute{}, err
+	}
+	completeness := 0.0
+	if sourceUnits > 0 {
+		covered := loweredUnits
+		if covered > sourceUnits {
+			covered = sourceUnits
+		}
+		completeness = float64(covered) * 100 / float64(sourceUnits)
+	}
+	equivalenceRule := "source-shape-preserving-v1"
+	if route == guardReturnRoute {
+		equivalenceRule = "if-return-else-return-to-guard-return-v1"
+	}
+	return generatedRoute{source: generated, report: Report{
+		Schema: schema, Decision: "PASS", Activity: activityName, ActivityID: activityID,
+		Route: route, EquivalenceRule: equivalenceRule,
+		SourceConstructs: sourceConstructs, LoweredConstructs: loweredConstructs,
+		SourceSemanticUnits: sourceUnits, LoweredSemanticUnits: loweredUnits,
+		CompletenessPercent: completeness, TypecheckPassed: true,
+	}}, nil
+}
+
+func render(packageName, activityName, activityID, inputType, outputType, body, route string) ([]byte, int, int, int, int, error) {
 	wrapped := fmt.Sprintf("package %s\nfunc %s(input %s) %s {\n%s\n}\n", packageName, activityName, inputType, outputType, body)
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "body.goo", wrapped, parser.AllErrors)
 	if err != nil {
-		return nil, 0, fmt.Errorf("parse computes body: %w", err)
+		return nil, 0, 0, 0, 0, fmt.Errorf("parse computes body: %w", err)
 	}
 	function, ok := findFunction(file, activityName)
 	if !ok {
-		return nil, 0, fmt.Errorf("activity body did not produce a function")
+		return nil, 0, 0, 0, 0, fmt.Errorf("activity body did not produce a function")
 	}
-	constructs, err := validateBlock(function.Body, "input", map[string]bool{"input": true})
+	sourceConstructs, err := validateBlock(function.Body, "input", map[string]bool{"input": true})
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, 0, 0, err
 	}
 	if !blockTerminates(function.Body) {
-		return nil, 0, fmt.Errorf("activity %q body must return on every control-flow path", activityName)
+		return nil, 0, 0, 0, 0, fmt.Errorf("activity %q body must return on every control-flow path", activityName)
 	}
+	sourceUnits := semanticUnitCount(function.Body)
+	if route == guardReturnRoute {
+		if !lowerGuardReturn(function.Body) {
+			return nil, 0, 0, 0, 0, fmt.Errorf("activity %q does not match the guard-return route shape", activityName)
+		}
+	} else if route != preserveRoute {
+		return nil, 0, 0, 0, 0, fmt.Errorf("unknown body-codegen route %q", route)
+	}
+	loweredConstructs, err := validateBlock(function.Body, "input", map[string]bool{"input": true})
+	if err != nil {
+		return nil, 0, 0, 0, 0, err
+	}
+	if !blockTerminates(function.Body) {
+		return nil, 0, 0, 0, 0, fmt.Errorf("lowered activity %q body does not return on every control-flow path", activityName)
+	}
+	loweredUnits := semanticUnitCount(function.Body)
 	if err := typecheck(packageName, file, fset); err != nil {
-		return nil, 0, fmt.Errorf("typecheck generated activity: %w", err)
+		return nil, 0, 0, 0, 0, fmt.Errorf("typecheck generated activity: %w", err)
 	}
 
 	var output bytes.Buffer
 	fmt.Fprintf(&output, "package %s\n\n", packageName)
 	fmt.Fprintf(&output, "//gooo:generated:start id=%q kind=\"activity\"\n", activityID)
 	if err := format.Node(&output, fset, function); err != nil {
-		return nil, 0, fmt.Errorf("format generated activity: %w", err)
+		return nil, 0, 0, 0, 0, fmt.Errorf("format generated activity: %w", err)
 	}
 	output.WriteByte('\n')
 	fmt.Fprintf(&output, "//gooo:generated:end id=%q kind=\"activity\"\n", activityID)
 	formatted, err := format.Source(output.Bytes())
 	if err != nil {
-		return nil, 0, fmt.Errorf("format generated source: %w", err)
+		return nil, 0, 0, 0, 0, fmt.Errorf("format generated source: %w", err)
 	}
-	return formatted, constructs, nil
+	return formatted, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, nil
+}
+
+func candidateRoutes(packageName, activityName, body string) ([]decisionroute.Option, string, error) {
+	options := []decisionroute.Option{{
+		ID:          preserveRoute,
+		Description: "Preserve the explicit source control-flow shape while lowering each accepted statement and expression directly.",
+	}}
+	wrapped := fmt.Sprintf("package %s\nfunc %s(input int64) int64 {\n%s\n}\n", packageName, activityName, body)
+	file, err := parser.ParseFile(token.NewFileSet(), "body.goo", wrapped, parser.AllErrors|parser.ParseComments)
+	if err != nil {
+		return nil, "", fmt.Errorf("inspect codegen route candidates: %w", err)
+	}
+	function, ok := findFunction(file, activityName)
+	if !ok {
+		return nil, "", fmt.Errorf("activity body did not produce a function")
+	}
+	shape := "general-pure-body"
+	if len(file.Comments) == 0 && isGuardReturnShape(function.Body) {
+		shape = "single-if-else-with-one-return-per-branch"
+		options = append(options, decisionroute.Option{
+			ID:          guardReturnRoute,
+			Description: "For a single pure if/else whose branches each return once, emit the true-branch guard followed by the false-branch return; this removes one nesting block while preserving both outcomes.",
+		})
+	}
+	return options, shape, nil
+}
+
+func isGuardReturnShape(body *ast.BlockStmt) bool {
+	if body == nil || len(body.List) != 1 {
+		return false
+	}
+	conditional, ok := body.List[0].(*ast.IfStmt)
+	if !ok || conditional.Init != nil || conditional.Else == nil || len(conditional.Body.List) != 1 {
+		return false
+	}
+	if _, ok := conditional.Body.List[0].(*ast.ReturnStmt); !ok {
+		return false
+	}
+	otherwise, ok := conditional.Else.(*ast.BlockStmt)
+	if !ok || len(otherwise.List) != 1 {
+		return false
+	}
+	_, ok = otherwise.List[0].(*ast.ReturnStmt)
+	return ok
+}
+
+func lowerGuardReturn(body *ast.BlockStmt) bool {
+	if !isGuardReturnShape(body) {
+		return false
+	}
+	conditional := body.List[0].(*ast.IfStmt)
+	otherwise := conditional.Else.(*ast.BlockStmt)
+	fallback := otherwise.List[0]
+	conditional.Else = nil
+	body.List = []ast.Stmt{conditional, fallback}
+	return true
+}
+
+func semanticUnitCount(node ast.Node) int {
+	count := 0
+	ast.Inspect(node, func(current ast.Node) bool {
+		switch value := current.(type) {
+		case ast.Stmt:
+			if _, container := value.(*ast.BlockStmt); !container {
+				count++
+			}
+		case ast.Expr:
+			count++
+		}
+		return true
+	})
+	return count
 }
 
 func findFunction(file *ast.File, name string) (*ast.FuncDecl, bool) {

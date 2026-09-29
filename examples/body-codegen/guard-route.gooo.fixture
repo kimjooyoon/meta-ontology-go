@@ -1,0 +1,6 @@
+package bodycodegen
+namespace bodycodegen
+
+entity Integer id "bodycodegen://entity/integer"
+
+activity ChooseBranch(Integer) -> Integer computes "if input > 5 { return input + 2 } else { return 0 }"

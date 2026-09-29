@@ -50,15 +50,17 @@ or confidence calibration.
 
 ## Code-generation implications
 
-Gooo currently lowers `.gooo` source into semantic IR in
+The stable `gooo generate` path lowers `.gooo` source into semantic IR in
 [`generateWithDeadlineCore`](../../cmd/gooo/generate_pipeline_part04.go) and
 emits Go through the [deterministic generator](../../internal/generator/generator_part01.go).
-Laya can fit before that boundary as a bounded router: choose among existing
-generation recipes or classify an intent into a small known set, then let the
-semantic parser, generator, and conformance checks do the construction and
-acceptance. Keep the selected recipe, probabilities, checkpoint revision,
-source digest, generated digest, and deterministic check outcomes in the
-observation record.
+The experimental `gooo body-codegen` path now uses Laya as a bounded router
+between equivalent lowering shapes for a small pure activity-body profile.
+The initial `guard-return` route only changes a two-return `if/else` into a
+guard return plus fallthrough return. It does not ask Laya to write code or
+make semantic IR decisions. The selected route, probabilities, checkpoint
+revision, source digest, generated digest, structural completeness, typecheck,
+and deterministic replay are recorded in its JSON report. A missing or
+unavailable endpoint selects the exact `preserve` route.
 
 Laya should not directly author Go or become a source-of-truth path. Its model
 card describes it as a typed-decision model that does not generate text. It
@@ -67,8 +69,10 @@ typed-decisions benchmark; the higher score belongs to a separately fine-tuned
 checkpoint. Confidence therefore needs calibration against Gooo's own recorded
 outcomes. The current `gooo decide` uses a valid Laya choice even at low
 confidence; it falls back for missing, unavailable, or malformed provider
-results. A future code-generation router should add an uncertainty gate only
-after calibration, with the explicit deterministic choice as its fallback.
+results. The body-codegen experiment currently uses valid route choices
+without a confidence threshold; both candidates are mechanically equivalent,
+and its report does not treat confidence as correctness evidence. Expand the
+route set only after CI and recorded codegen outcomes show a useful distinction.
 See the [Laya model card](https://huggingface.co/convaiinnovations/laya)
 for its capabilities and benchmark limits.
 
