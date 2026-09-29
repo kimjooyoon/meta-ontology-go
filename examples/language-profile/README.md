@@ -18,6 +18,8 @@ stable entity IDs to match in every sample. It reports median wall time and Go
 `TotalAlloc` for each path plus Go/Gooo ratios in parts per million. The detailed
 measurement boundaries and limits are in
 [`docs/language/language-comparison.md`](../../docs/language/language-comparison.md).
+CI preserves the raw receipt in the exact-head `language-utility-evidence`
+artifact and shows its summary in the workflow step summary.
 
 Compiler conformance and delivery credit are separate stages: this profile capability remains
 outside the delivery score until GitHub Actions emits and inspects an external receipt.

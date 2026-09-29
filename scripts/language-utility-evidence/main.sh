@@ -46,6 +46,7 @@ cp "${RUNNER_TEMP:-/tmp}/gooo-ci-plan/scorecard.json" "$out/evidence/ci-plan.jso
 cp source-execution-output/artifact.json "$out/evidence/source-execution.json"
 cp "${RUNNER_TEMP:-/tmp}/language-example-experiment/report.json" "$out/evidence/artifact-emission.json"
 cp "${RUNNER_TEMP:-/tmp}/language-profile-experiment/report.json" "$out/evidence/profiling.json"
+cp "${RUNNER_TEMP:-/tmp}/language-profile-experiment/comparison.json" "$out/evidence/language-comparison.json"
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/report.json" "$out/evidence/debugging.json"
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/counterexamples.json" "$out/debugging-counterexamples.json"
 cp "$out/package/report.json" "$out/evidence/package-execution.json"

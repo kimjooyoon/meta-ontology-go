@@ -19,7 +19,7 @@ The measurement warms both paths once and alternates which path runs first for
 five paired samples. The receipt binds the exact source SHA, both fixture source
 digests, comparison executable digest, Go version, operating system, architecture,
 logical CPU count, and runner image label. It is uploaded in the existing
-exact-head `language-source-execution` artifact and summarized in the CI run.
+exact-head `language-utility-evidence` artifact and summarized in the CI run.
 
 ## Scope and limits
 
