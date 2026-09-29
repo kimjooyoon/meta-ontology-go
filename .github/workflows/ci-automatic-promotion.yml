@@ -1,0 +1,329 @@
+name: CI automatic promotion
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  actions: write
+  checks: read
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ci-automatic-promotion-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: >-
+      github.event.workflow_run.workflow_id == 332218049 &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.repository.full_name == github.repository &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      ((github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'dev') ||
+       (github.event.workflow_run.event == 'workflow_dispatch' &&
+        (github.event.workflow_run.head_branch == 'dev' ||
+         startsWith(github.event.workflow_run.head_branch, 'agent/main-promotion-snapshot-'))))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download exact CI proof artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ci-proof-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}
+          path: ${{ runner.temp }}/ci-promotion-proof
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Prepare or merge an exact CI-authorized promotion
+        uses: actions/github-script@v9.0.0
+        env:
+          CI_PROOF_PATH: ${{ runner.temp }}/ci-promotion-proof/ci-proof.json
+          CI_RUN_ID: ${{ github.event.workflow_run.id }}
+          CI_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const repository = `${owner}/${repo}`;
+            const eventRun = context.payload.workflow_run;
+            const requiredJobs = [
+              'gofmt',
+              'go vet',
+              'go test',
+              'go test -race',
+              'Semantic conformance',
+              'CI policy',
+            ];
+            const workflowRunID = Number(process.env.CI_RUN_ID);
+            const attempt = Number(process.env.CI_RUN_ATTEMPT);
+
+            const run = (await github.rest.actions.getWorkflowRun({
+              owner, repo, run_id: workflowRunID,
+            })).data;
+            if (run.id !== workflowRunID || run.workflow_id !== 332218049 ||
+                run.status !== 'completed' || run.conclusion !== 'success' ||
+                run.run_attempt !== attempt || run.head_repository?.full_name !== repository ||
+                run.head_sha !== eventRun.head_sha || run.head_branch !== eventRun.head_branch) {
+              throw new Error('CI source run identity is not the exact successful current attempt');
+            }
+
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner, repo, run_id: workflowRunID, per_page: 100,
+            });
+            const requiredRunJobs = [...requiredJobs, 'CI proof bundle'];
+            for (const name of requiredRunJobs) {
+              const matches = jobs.filter(job => job.name === name);
+              if (matches.length !== 1 || matches[0].status !== 'completed' ||
+                  matches[0].conclusion !== 'success' || matches[0].head_sha !== run.head_sha) {
+                throw new Error(`required exact-head job is not uniquely successful: ${name}`);
+              }
+            }
+
+            async function liveRef(name) {
+              const response = await github.rest.git.getRef({
+                owner, repo, ref: `heads/${name}`,
+              });
+              const sha = response.data?.object?.sha;
+              if (!/^[0-9a-f]{40}$/.test(sha || '')) {
+                throw new Error(`live ${name} ref has no exact commit SHA`);
+              }
+              return sha;
+            }
+
+            async function listOpenPromotionPRs(headRef) {
+              return github.paginate(github.rest.pulls.list, {
+                owner, repo, state: 'open', base: 'main',
+                head: `${owner}:${headRef}`, per_page: 100,
+              });
+            }
+
+            async function dispatchPromotionCI(pull, headSHA, baseSHA) {
+              if (pull.head.ref !== 'dev' && !/^agent\/main-promotion-snapshot-[0-9a-f]{40}$/.test(pull.head.ref)) {
+                throw new Error('refusing to dispatch CI for an unrecognized promotion branch');
+              }
+              await github.rest.actions.createWorkflowDispatch({
+                owner, repo, workflow_id: 332218049, ref: pull.head.ref,
+                inputs: {
+                  promotion_pr_number: String(pull.number),
+                  promotion_head_sha: headSHA,
+                  promotion_base_sha: baseSHA,
+                },
+              });
+              core.info(`Dispatched exact main-promotion CI for PR ${pull.number} at ${headSHA}.`);
+            }
+
+            async function exactCommit(sha) {
+              return (await github.rest.git.getCommit({
+                owner, repo, commit_sha: sha,
+              })).data;
+            }
+
+            async function ensureSnapshotBranch(devSHA, mainSHA, devCommit) {
+              const branch = `agent/main-promotion-snapshot-${devSHA}`;
+              const refName = `heads/${branch}`;
+              let existing;
+              try {
+                existing = (await github.rest.git.getRef({owner, repo, ref: refName})).data;
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+
+              if (existing) {
+                const commit = await exactCommit(existing.object.sha);
+                if (commit.tree?.sha !== devCommit.tree?.sha || commit.parents?.length !== 1 ||
+                    commit.parents[0]?.sha !== mainSHA) {
+                  throw new Error('existing promotion snapshot ref is stale or has a different tree; refusing to rewrite it');
+                }
+                return {branch, sha: existing.object.sha};
+              }
+
+              const now = new Date().toISOString();
+              const identity = {
+                name: 'Gooo CI promotion',
+                email: 'gooo-ci-promotion@users.noreply.github.com',
+                date: now,
+              };
+              const snapshot = (await github.rest.git.createCommit({
+                owner, repo,
+                message: `promote: dev ${devSHA.slice(0, 7)} to main`,
+                tree: devCommit.tree.sha,
+                parents: [mainSHA],
+                author: identity,
+                committer: identity,
+              })).data;
+              try {
+                await github.rest.git.createRef({
+                  owner, repo, ref: `refs/${refName}`, sha: snapshot.sha,
+                });
+              } catch (error) {
+                if (error.status !== 422) throw error;
+                const raced = (await github.rest.git.getRef({owner, repo, ref: refName})).data;
+                const racedCommit = await exactCommit(raced.object.sha);
+                if (racedCommit.tree?.sha !== devCommit.tree?.sha || racedCommit.parents?.length !== 1 ||
+                    racedCommit.parents[0]?.sha !== mainSHA) {
+                  throw new Error('concurrent promotion snapshot creation produced a different candidate');
+                }
+                return {branch, sha: raced.object.sha};
+              }
+              return {branch, sha: snapshot.sha};
+            }
+
+            async function prepareFromDevPush() {
+              const devSHA = run.head_sha;
+              if (run.event !== 'push' || run.head_branch !== 'dev' ||
+                  await liveRef('dev') !== devSHA) {
+                core.info('The successful dev run is stale; a newer exact-head run will decide promotion.');
+                return;
+              }
+
+              const mainSHA = await liveRef('main');
+              const [devCommit, mainCommit, comparison] = await Promise.all([
+                exactCommit(devSHA),
+                exactCommit(mainSHA),
+                github.rest.repos.compareCommits({owner, repo, base: mainSHA, head: devSHA}).then(r => r.data),
+              ]);
+              if (devCommit.tree?.sha === mainCommit.tree?.sha) {
+                core.info('dev and main already have the same tree; no promotion PR is needed.');
+                return;
+              }
+
+              let candidate = {branch: 'dev', sha: devSHA};
+              const directFastForward = comparison.status === 'ahead' && comparison.ahead_by > 0 &&
+                comparison.behind_by === 0 && comparison.merge_base_commit?.sha === mainSHA;
+              if (!directFastForward) {
+                candidate = await ensureSnapshotBranch(devSHA, mainSHA, devCommit);
+              }
+
+              if (await liveRef('dev') !== devSHA || await liveRef('main') !== mainSHA) {
+                core.info('A source or target ref changed while preparing the promotion; no PR was opened.');
+                return;
+              }
+
+              const open = await listOpenPromotionPRs(candidate.branch);
+              if (open.length > 1) throw new Error('multiple open main promotion PRs share one exact head');
+              if (open.length === 1) {
+                const current = open[0];
+                if (current.head.sha !== candidate.sha || current.base.sha !== mainSHA ||
+                    current.head.repo?.full_name !== repository || current.base.repo?.full_name !== repository) {
+                  throw new Error('existing promotion PR no longer matches the exact live refs');
+                }
+                core.info(`Exact promotion PR already exists: ${current.html_url}`);
+                await dispatchPromotionCI(current, candidate.sha, mainSHA);
+                return;
+              }
+
+              const pull = (await github.rest.pulls.create({
+                owner, repo, base: 'main', head: candidate.branch,
+                title: `promote: dev ${devSHA.slice(0, 7)} to main`,
+                body: [
+                  'This promotion was opened by the successful exact-head CI run on `dev`.',
+                  '',
+                  `- Source dev SHA: \`${devSHA}\``,
+                  `- Target main SHA: \`${mainSHA}\``,
+                  `- Source tree SHA: \`${devCommit.tree.sha}\``,
+                  `- Candidate head: \`${candidate.sha}\``,
+                  '',
+                  'The main-target CI run must emit `promotion_authorization=PASS` and pass all six required checks before the CI executor can merge this PR. The executor uses GitHub’s pull-request merge API; it does not bypass branch protection or write directly to `main`.',
+                ].join('\n'),
+              })).data;
+              core.info(`Opened exact CI promotion PR: ${pull.html_url}`);
+              await dispatchPromotionCI(pull, candidate.sha, mainSHA);
+            }
+
+            async function mergeAuthorizedPromotion() {
+              if (run.event !== 'workflow_dispatch') return;
+              const open = await listOpenPromotionPRs(run.head_branch);
+              if (open.length === 0) {
+                core.info('No open main promotion PR matches this successful CI run.');
+                return;
+              }
+              if (open.length !== 1) throw new Error('promotion head does not identify exactly one open main PR');
+
+              const pull = open[0];
+              if (pull.draft || pull.state !== 'open' || pull.merged ||
+                  pull.base.repo?.full_name !== repository || pull.head.repo?.full_name !== repository ||
+                  pull.base.ref !== 'main' || pull.head.sha !== run.head_sha || pull.head.ref !== run.head_branch) {
+                throw new Error('promotion PR is not the exact open same-repository CI head');
+              }
+
+              const proof = JSON.parse(fs.readFileSync(process.env.CI_PROOF_PATH, 'utf8'));
+              const authorization = proof.promotion_authorization;
+              const observation = proof.promotion_observation;
+              const proofDigest = proof.digests?.bundle_sha256;
+              if (proof.decision !== 'PASS' || proof.repository !== repository ||
+                  proof.event !== 'workflow_dispatch' || proof.pr_number !== pull.number ||
+                  proof.run_id !== workflowRunID || proof.run_attempt !== attempt ||
+                  proof.base_ref !== 'main' || proof.base_sha !== pull.base.sha ||
+                  proof.head_ref !== pull.head.ref || proof.head_sha !== run.head_sha ||
+                  proof.ref !== `refs/heads/${pull.head.ref}` || proof.event_ref !== proof.ref ||
+                  !/^[0-9a-f]{64}$/.test(proofDigest || '') ||
+                  authorization?.decision !== 'PASS' || authorization.operation !== 'fast_forward' ||
+                  authorization.source !== 'dev' || authorization.target !== 'main' ||
+                  authorization.base_sha !== pull.base.sha || authorization.head_sha !== run.head_sha ||
+                  authorization.proof_digest !== proofDigest ||
+                  observation?.pr_number !== pull.number || observation.base_ref !== 'main' ||
+                  observation.head_ref !== pull.head.ref || observation.head_sha !== run.head_sha ||
+                  observation.base_sha !== pull.base.sha || observation.head_repo !== repository ||
+                  observation.base_repo !== repository || observation.draft !== false ||
+                  observation.merged !== false || observation.topology?.status !== 'ahead' ||
+                  observation.topology?.ahead_by < 1 || observation.topology?.behind_by !== 0 ||
+                  observation.topology?.merge_base_sha !== pull.base.sha) {
+                throw new Error('promotion authorization artifact is missing, stale, or not digest-bound to this PR');
+              }
+
+              const devSHA = await liveRef('dev');
+              const mainSHA = await liveRef('main');
+              if (mainSHA !== pull.base.sha) {
+                core.info('main changed after CI authorization; the PR must receive fresh exact-head CI evidence.');
+                return;
+              }
+              const devCommit = await exactCommit(devSHA);
+              const candidate = await exactCommit(run.head_sha);
+              const isDirect = pull.head.ref === 'dev' && pull.head.sha === devSHA;
+              const snapshotRef = `agent/main-promotion-snapshot-${devSHA}`;
+              const isSnapshot = pull.head.ref === snapshotRef && candidate.parents?.length === 1 &&
+                candidate.parents[0]?.sha === mainSHA && candidate.tree?.sha === devCommit.tree?.sha;
+              if (!isDirect && !isSnapshot) {
+                core.info('dev advanced or the candidate no longer matches its exact source tree; no merge performed.');
+                return;
+              }
+
+              const topology = (await github.rest.repos.compareCommits({
+                owner, repo, base: mainSHA, head: candidate.sha,
+              })).data;
+              if (topology.status !== 'ahead' || topology.ahead_by < 1 || topology.behind_by !== 0 ||
+                  topology.merge_base_commit?.sha !== mainSHA) {
+                core.info('promotion candidate is no longer a strict main fast-forward; no merge performed.');
+                return;
+              }
+
+              const latest = (await github.rest.pulls.get({
+                owner, repo, pull_number: pull.number,
+              })).data;
+              if (latest.state !== 'open' || latest.draft || latest.merged ||
+                  latest.base.ref !== 'main' || latest.base.sha !== mainSHA ||
+                  latest.head.ref !== pull.head.ref || latest.head.sha !== run.head_sha ||
+                  latest.base.repo?.full_name !== repository || latest.head.repo?.full_name !== repository) {
+                core.info('promotion PR tuple changed during the final check; no merge performed.');
+                return;
+              }
+
+              const result = (await github.rest.pulls.merge({
+                owner, repo, pull_number: pull.number,
+                sha: run.head_sha,
+                merge_method: 'squash',
+              })).data;
+              if (!result.merged) throw new Error(`GitHub did not merge the authorized promotion: ${result.message || 'unknown reason'}`);
+              core.info(`Merged CI-authorized promotion PR ${pull.number} as ${result.sha}.`);
+            }
+
+            if (run.event === 'push') {
+              await prepareFromDevPush();
+            } else {
+              await mergeAuthorizedPromotion();
+            }

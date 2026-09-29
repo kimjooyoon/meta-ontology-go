@@ -94,19 +94,23 @@ repairs source or updates refs from the report.
 - The branch-to-path ownership check has been removed from the active PR path.
   Any valid `agent/*` branch receives the same six full checks; legacy tables
   remain only for verifier compatibility fixtures and can be retired separately.
-- CI emits promotion authorization as evidence but does not merge or update
-  refs. The remote `main` rule now requires exactly the six canonical checks;
-  its up-to-date, linear-history, admin-enforcement, force-push, and deletion
-  settings were preserved. The `dev` rule still has required checks disabled.
+- The CI promotion executor now opens or reuses the exact `main` PR after a
+  successful `dev` run, dispatches the normal CI workflow with exact PR/head/base
+  identities, and merges only after the digest-bound authorization and six
+  required checks pass. It uses GitHub's PR merge API with an expected head SHA;
+  the remote `main` rule remains active with the six canonical checks and its
+  up-to-date, linear-history, admin-enforcement, force-push, and deletion
+  settings preserved. The `dev` rule still has required checks disabled.
 - The v2 failure report removes person assignment and emits a bounded system
   action key. An executor that performs safe source repair and replays the
   checks is still needed; ambiguous contracts remain unresolved and fail closed.
 
 Accordingly, this change removes human approval evidence, the active per-branch
 scope-registration block, and the separate Guardian workflow from checked-in
-CI. It adds system-derived per-run bottleneck and repeated-run baseline reports.
-GitHub's `main` rule was updated separately to remove only the Guardian check.
-Automatic promotion and the self-repair of failed checks remain future work.
+CI. It adds system-derived per-run bottleneck and repeated-run baseline reports,
+and system-triggered promotion after the exact checks pass. Safe source repair
+and replay from a failure report remain future work; ambiguous contracts still
+fail closed.
 
 ## Domain completeness vector
 
