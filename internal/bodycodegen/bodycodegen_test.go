@@ -42,6 +42,10 @@ activity ClampBelowZero(Integer) -> Integer computes "let value = input\nvalue =
 	if result.Report.GeneratedDigest != result.Report.ReplayDigest || result.Report.RepositoryWrites != 0 {
 		t.Fatalf("output replay or write boundary is incorrect: %#v", result.Report)
 	}
+	if result.Report.RouteEquivalence.Decision != "PASS" || !result.Report.RouteEquivalence.Equivalent ||
+		result.Report.RouteEquivalence.SourceSemanticDigest != result.Report.RouteEquivalence.GeneratedSemanticDigest {
+		t.Fatalf("source-preserving route lacks matching semantic digests: %#v", result.Report.RouteEquivalence)
+	}
 }
 
 func TestGenerateWithPlannerUsesLayaOnlyForBoundedEquivalentRoutes(t *testing.T) {
@@ -95,7 +99,10 @@ activity Choose(Integer) -> Integer computes "if input > 5 { return input + 2 } 
 	if strings.Contains(result.Source, "} else {") || !strings.Contains(result.Source, "\n\treturn 0\n}") {
 		t.Fatalf("guard-return route was not emitted:\n%s", result.Source)
 	}
-	if result.Report.EquivalenceRule != "if-return-else-return-to-guard-return-v1" || result.Report.SourceSemanticUnits != result.Report.LoweredSemanticUnits || result.Report.CompletenessPercent != 100 {
+	if result.Report.EquivalenceRule != "if-return-else-return-to-guard-return-v1" || result.Report.SourceSemanticUnits != result.Report.LoweredSemanticUnits || result.Report.CompletenessPercent != 100 ||
+		result.Report.RouteEquivalence.Decision != "PASS" || !result.Report.RouteEquivalence.Equivalent ||
+		result.Report.RouteEquivalence.SourceSemanticDigest != result.Report.RouteEquivalence.GeneratedSemanticDigest ||
+		result.Report.RouteEquivalence.Rule != result.Report.EquivalenceRule {
 		t.Fatalf("lowering completeness or equivalence witness is missing: %#v", result.Report)
 	}
 }
@@ -129,8 +136,30 @@ activity Choose(Integer) -> Integer computes "if input > 5 { return input + 2 } 
 			t.Fatalf("merge-result output missing %q:\n%s", want, result.Source)
 		}
 	}
-	if result.Report.EquivalenceRule != "if-return-else-return-to-explicit-result-join-v1" || result.Report.CompletenessPercent != 100 || result.Report.SourceSemanticUnits == 0 || result.Report.LoweredSemanticUnits < result.Report.SourceSemanticUnits {
+	if result.Report.EquivalenceRule != "if-return-else-return-to-explicit-result-join-v1" || result.Report.CompletenessPercent != 100 || result.Report.SourceSemanticUnits == 0 || result.Report.LoweredSemanticUnits < result.Report.SourceSemanticUnits ||
+		result.Report.RouteEquivalence.Decision != "PASS" || !result.Report.RouteEquivalence.Equivalent ||
+		result.Report.RouteEquivalence.SourceSemanticDigest != result.Report.RouteEquivalence.GeneratedSemanticDigest ||
+		result.Report.RouteEquivalence.Rule != result.Report.EquivalenceRule {
 		t.Fatalf("result-join report is incomplete: %#v", result.Report)
+	}
+}
+
+func TestRouteEquivalenceFailsClosedWhenBranchSemanticsDiffer(t *testing.T) {
+	const sourceBody = "if input > 5 { return input + 2 } else { return 0 }"
+	generated := []byte(`package bodycodegen
+func Choose(input int64) int64 {
+	if input > 5 {
+		return input + 2
+	}
+	return 1
+}
+`)
+	receipt, err := routeEquivalence("bodycodegen", "Choose", "int64", "int64", sourceBody, generated, "if-return-else-return-to-guard-return-v1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if receipt.Decision != "FAIL_CLOSED" || receipt.Equivalent || receipt.SourceSemanticDigest == receipt.GeneratedSemanticDigest {
+		t.Fatalf("different branch behavior received an equivalence pass: %#v", receipt)
 	}
 }
 
