@@ -50,13 +50,15 @@ or confidence calibration.
 
 ## Code-generation implications
 
-Gooo currently lowers `.gooo` source into semantic IR and emits Go through its
-deterministic generator. Laya can fit before that boundary as a bounded router:
-choose among existing generation recipes or classify an intent into a small
-known set, then let the semantic parser, generator, and conformance checks do
-the construction and acceptance. Keep the selected recipe, probabilities,
-checkpoint revision, source digest, generated digest, and deterministic check
-outcomes in the observation record.
+Gooo currently lowers `.gooo` source into semantic IR in
+[`generateWithDeadlineCore`](../../cmd/gooo/generate_pipeline_part04.go) and
+emits Go through the [deterministic generator](../../internal/generator/generator_part01.go).
+Laya can fit before that boundary as a bounded router: choose among existing
+generation recipes or classify an intent into a small known set, then let the
+semantic parser, generator, and conformance checks do the construction and
+acceptance. Keep the selected recipe, probabilities, checkpoint revision,
+source digest, generated digest, and deterministic check outcomes in the
+observation record.
 
 Laya should not directly author Go or become a source-of-truth path. Its model
 card describes it as a typed-decision model that does not generate text. It
