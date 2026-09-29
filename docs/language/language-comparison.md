@@ -18,8 +18,8 @@ first exact-head, system-generated comparison with another language. On the
 The measurement warms both paths once and alternates which path runs first for
 five paired samples. The receipt binds the exact source SHA, both fixture source
 digests, comparison executable digest, Go version, operating system, architecture,
-logical CPU count, and runner image label. It is uploaded in the existing
-exact-head `language-utility-evidence` artifact and summarized in the CI run.
+logical CPU count, and runner image label. It is uploaded as its own exact-head
+`language-comparison-<sha>` artifact and summarized in the CI run.
 
 ## Scope and limits
 
