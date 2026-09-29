@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
@@ -42,7 +44,7 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 	if err != nil {
 		return reportBodyCodegenFailure(jsonMode, filename, err, stdout, stderr)
 	}
-	result, err := bodycodegen.Generate(filename, source, activity)
+	result, err := bodycodegen.GenerateWithPlanner(context.Background(), filename, source, activity, os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"))
 	if err != nil {
 		return reportBodyCodegenFailure(jsonMode, filename, err, stdout, stderr)
 	}
@@ -70,7 +72,7 @@ func reportBodyCodegenFailure(jsonMode bool, filename string, cause error, stdou
 			Source           string `json:"source"`
 			RepositoryWrites int    `json:"repository_writes"`
 			Error            string `json:"error"`
-		}{Schema: "gooo/body-codegen-report/v1", Decision: "FAIL_CLOSED", RepositoryWrites: 0, Error: cause.Error()}
+		}{Schema: "gooo/body-codegen-report/v2", Decision: "FAIL_CLOSED", RepositoryWrites: 0, Error: cause.Error()}
 		encoder := json.NewEncoder(stdout)
 		encoder.SetEscapeHTML(false)
 		if err := encoder.Encode(payload); err != nil {

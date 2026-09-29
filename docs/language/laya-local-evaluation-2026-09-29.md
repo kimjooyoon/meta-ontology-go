@@ -50,15 +50,18 @@ or confidence calibration.
 
 ## Code-generation implications
 
-Gooo currently lowers `.gooo` source into semantic IR in
+The stable `gooo generate` path lowers `.gooo` source into semantic IR in
 [`generateWithDeadlineCore`](../../cmd/gooo/generate_pipeline_part04.go) and
 emits Go through the [deterministic generator](../../internal/generator/generator_part01.go).
-Laya can fit before that boundary as a bounded router: choose among existing
-generation recipes or classify an intent into a small known set, then let the
-semantic parser, generator, and conformance checks do the construction and
-acceptance. Keep the selected recipe, probabilities, checkpoint revision,
-source digest, generated digest, and deterministic check outcomes in the
-observation record.
+The experimental `gooo body-codegen` path now uses Laya as a bounded router
+between equivalent lowering shapes for a small pure activity-body profile.
+The initial alternatives preserve two branch returns, rewrite them as a
+guard-return plus fallthrough, or create an explicit result local at the
+control-flow join. This is a bounded IR-structure choice; it does not ask Laya
+to write code. The selected route, probabilities, checkpoint
+revision, source digest, generated digest, structural completeness, typecheck,
+and deterministic replay are recorded in its JSON report. A missing or
+unavailable endpoint selects the exact `preserve` route.
 
 Laya should not directly author Go or become a source-of-truth path. Its model
 card describes it as a typed-decision model that does not generate text. It
@@ -67,10 +70,57 @@ typed-decisions benchmark; the higher score belongs to a separately fine-tuned
 checkpoint. Confidence therefore needs calibration against Gooo's own recorded
 outcomes. The current `gooo decide` uses a valid Laya choice even at low
 confidence; it falls back for missing, unavailable, or malformed provider
-results. A future code-generation router should add an uncertainty gate only
-after calibration, with the explicit deterministic choice as its fallback.
+results. The body-codegen experiment currently uses valid route choices
+without a confidence threshold; all three routes are defined by fixed lowering
+rules, and its report does not treat confidence as correctness evidence.
+Expand the route set only after CI and recorded codegen outcomes show a useful
+distinction.
 See the [Laya model card](https://huggingface.co/convaiinnovations/laya)
 for its capabilities and benchmark limits.
+
+The `body-codegen` JSON report includes route-decision latency in milliseconds.
+It covers the local decision request and model-revision lookup; whole-command
+duration also includes Go process startup and lowering.
+
+## Body-codegen integration smoke — 2026-09-30
+
+This follow-up exercised the real local Laya server through
+`gooo body-codegen` after the checkpoint finished loading. It used the same
+single pure conditional fixture 30 times, with three eligible lowering routes.
+The local runtime was Python 3.11.15 with `laya[serve]==0.3.21`, PyTorch 2.14.0,
+and Transformers 5.17.0; model inference used CPU.
+The table reports the Gooo receipt's decision latency, which includes Laya's
+choice request and the local model-revision lookup.
+
+| Measurement | Result |
+| --- | ---: |
+| Calls | 30 |
+| Route-decision p50 | 108.48 ms |
+| Route-decision p95 | 123.10 ms |
+| Mean / min / max | 112.84 / 105.36 / 219.90 ms |
+| End-to-end batch wall time | 4.10 s |
+| Selected route | `preserve`, 30 of 30 calls |
+| One returned confidence / answer confidence | 0.4649 / 0.8211 |
+| Laya process CPU-time increase during batch | 5.72 s |
+| Laya CPU share over the 4.10-second batch | 139.5% of one core |
+| Laya RSS before / after batch | 82.1 / 625.0 MiB |
+
+The CPU percentage is normalized to one core; on this 10-logical-CPU Apple M4,
+139.5% of one core is about 14.0% of total CPU capacity during this short
+batch. The `ps` snapshot was 0.1% at idle before the batch and 161.2% just
+after it. The local `.venv-laya` occupied 758 MiB and the model cache occupied
+3.5 MiB at measurement time; 32 GiB remained available on the volume.
+
+The first cold request exceeded the three-second planner budget while Laya
+loaded the checkpoint. Gooo returned a typechecked `preserve` result with
+`PROVIDER_UNAVAILABLE`; the full `go run` command took 5.01 seconds including
+Go startup. The largest Laya RSS observed during loading was about 983 MiB.
+Once the model was available, the receipt returned the Laya model revision
+`55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851` and generated code with 10/10
+semantic units covered. Repeating one input 30 times measures latency and
+resource use, not route accuracy. The model consistently preferred preserving
+the source shape, so this run does not show that the alternate joins improve
+generated code.
 
 For a fully automatic improvement loop, first run the classifier in shadow
 mode over real Gooo tasks. Measure recipe-selection accuracy against outcomes
