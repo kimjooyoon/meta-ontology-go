@@ -43,6 +43,18 @@ percentage of a person's unstated intent. A `PASS` also requires that the
 closed syntax filter, control-flow termination check, Go typecheck, and replay
 all succeed.
 
+The report also carries a
+`gooo/metaprogramming-completeness-receipt/v2` record. It keeps declaration,
+generation, source-AST, route-equivalence, typecheck, replay, route-protocol,
+provenance, and write-boundary evidence separate from UNKNOWN dimensions such
+as runtime execution, reverse observation, real workflows, full-domain
+semantics, route quality, and comparable before/after baselines. Each open
+dimension retains its reason and next operation; `first_unresolved` identifies
+the earliest open stage. The aggregate score remains null. Compiler source
+identity comes from clean Go build metadata; modified or metadata-free builds
+retain an incomplete provenance status. Error JSON also retains a fail-closed
+receipt and its cause.
+
 When `GOOO_LAYA_URL` points to a Laya `/v1/systemone` endpoint, this command
 uses Laya to choose only from routes already proven eligible for that source
 shape. For a single pure `if/else` whose two branches each return once, it can
