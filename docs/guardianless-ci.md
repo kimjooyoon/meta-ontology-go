@@ -107,3 +107,25 @@ scope-registration block, and the separate Guardian workflow from checked-in
 CI. It adds system-derived per-run bottleneck and repeated-run baseline reports.
 GitHub's `main` rule was updated separately to remove only the Guardian check.
 Automatic promotion and the self-repair of failed checks remain future work.
+
+## Domain completeness vector
+
+The language-utility-evidence workflow also emits the
+gooo/domain-completeness-receipt/v1 receipt. Its profile is declared in
+scripts/domain-completeness/profile.gooo, and the generated Gooo structure
+contains the same receipt schema and semantic hash.
+
+The receipt keeps six axes separate: declaration coverage, generation
+coverage, reverse-observation coverage, use-case coverage, boundary coverage,
+and provenance integrity. Each axis reports PASS, PROGRESS, UNKNOWN, or
+FAIL_CLOSED; no axis can compensate for another. Missing evidence stays
+UNKNOWN, partial evidence stays PROGRESS, and digest or read-only boundary
+contradictions stay FAIL_CLOSED. The first unresolved unit and a bounded
+system next_operation are recorded without assigning a person.
+
+This profile measures the repository's declared language-utility portfolio.
+It does not claim universal language completeness, external adoption, or
+gooo-jev completeness. Its first receipt has no profile-bound historical vector,
+so cross-run comparison remains UNKNOWN until an exact compatible baseline
+receipt is available. The vector is descriptive and does not add a blocking CI
+check.
