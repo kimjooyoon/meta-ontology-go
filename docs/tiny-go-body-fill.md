@@ -51,12 +51,18 @@ affect the operation mapping. Literal, identifier-only, unary, unsupported, or
 duplicate-root candidates fail before local inference. Those plans can still
 use the existing default or Laya fill path.
 
-The model proposes one operation. The compiler translates that operation back
-to the corresponding declared candidate ID. An abstention or operation absent
-from the plan selects the deterministic first-candidate fallback. The compiler
-may then adjust a lower-scoring proposal to the best observed candidate based
-on the same declared finite test cases. Reported functional accuracy is only
-the selected body’s score on those cases; it is not a full-domain proof.
+The model proposes one operation. The receipt preserves that raw closed-set
+label in `tiny_go_predicted_operation` and records `tiny_go_prediction_applied`
+as an explicit Boolean. `true` means the proposal mapped to an offered
+candidate before finite-suite score adjustment; it does not mean that candidate
+remained in the final body. An abstention or operation absent from the plan
+selects the deterministic first-candidate fallback and records `false` while
+retaining any raw operation label. In a fallback receipt, `proposed_candidate_id`
+and `proposed_accuracy_percent` describe the fallback candidate selected by the
+router, so its score must not be read as raw model accuracy. The compiler may
+then adjust a lower-scoring proposal to the best observed candidate based on
+the same declared finite test cases. Reported functional accuracy is only the
+selected body’s score on those cases; it is not a full-domain proof.
 
 The report records `local_model_predictions`, `external_provider_calls`, and
 whether the external-call count is known. A successful tiny_go path records one

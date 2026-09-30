@@ -346,7 +346,7 @@ func generateWithIRBodyFillOptions(
 		if validateErr != nil {
 			return Result{}, fmt.Errorf("validate typed tiny_go request: %w", validateErr)
 		}
-		if !validTinyGoDecisionReceipt(decision, expectedRequestSHA256) {
+		if !validTinyGoDecisionReceipt(decision, expectedRequestSHA256, request) {
 			return Result{}, fmt.Errorf("tiny_go chooser returned incomplete or mismatched model provenance")
 		}
 	}

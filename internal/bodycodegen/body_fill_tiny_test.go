@@ -34,6 +34,10 @@ func TestTinyGoBodyFillMapsConditionRootOperationsToDeclaredIDs(t *testing.T) {
 		fill.FunctionalAccuracyPct != 100 || fill.TestCasesTotal != 3 {
 		t.Fatalf("unexpected selected finite-suite result: %+v", fill)
 	}
+	if fill.Decision.TinyGoPredictedOperation != decisionroute.TinyGoOperationSubtract ||
+		fill.Decision.TinyGoPredictionApplied == nil || !*fill.Decision.TinyGoPredictionApplied {
+		t.Fatalf("mapped model operation was not preserved in the receipt: %+v", fill.Decision)
+	}
 	if result.Report.RouteEquivalence.Decision != "PASS" || !result.Report.TypecheckPassed {
 		t.Fatalf("tiny-filled conditional lost compiler validation: route=%+v typecheck=%t", result.Report.RouteEquivalence, result.Report.TypecheckPassed)
 	}
@@ -157,6 +161,37 @@ func TestTinyGoBodyFillRejectsLayaConfigurationAndUsesDeterministicFallback(t *t
 		fill.LocalModelPredictions != 1 || fill.ExternalProviderCalls != 0 {
 		t.Fatalf("abstention did not preserve explicit local fallback accounting: %+v", fill)
 	}
+	if fill.Decision.TinyGoPredictedOperation != decisionroute.TinyGoOperationSubtract ||
+		fill.Decision.TinyGoPredictionApplied == nil || *fill.Decision.TinyGoPredictionApplied {
+		t.Fatalf("abstention did not preserve its unapplied raw operation: %+v", fill.Decision)
+	}
+}
+
+func TestTinyGoUnOfferedOperationFallbackScoreIsNotModelAccuracy(t *testing.T) {
+	fixture := tinyBodyFillFixture(`let result = __GOOO_BODY_HOLE_value__
+return result`)
+	plan := tinyBodyFillPlan("Add or subtract zero from the input.", "value",
+		IRBodyFillCandidate{ID: "first", Expression: "input + 0"},
+		IRBodyFillCandidate{ID: "second", Expression: "input - 0"},
+	)
+	plan.TestCases = []IRBodyFillTestCase{{Input: -4, Expected: -4}, {Input: 0, Expected: 0}, {Input: 9, Expected: 9}}
+	provider := &recordingTinyGoBodyFillProvider{operation: decisionroute.TinyGoOperationLessEqual}
+	result, err := generateWithIRBodyFillOptions(context.Background(), "tiny-unoffered.gooo", fixture, "Choose",
+		plan, "", "", IRBodyFillOptions{}, provider)
+	if err != nil {
+		t.Fatalf("GenerateWithIRBodyFillWithOptions: %v", err)
+	}
+	fill := result.Report.BodyFill
+	if fill == nil || fill.Decision.Mode != "deterministic_fallback" ||
+		fill.Decision.FallbackReason != decisionroute.TinyGoFallbackOperationNotOffered ||
+		fill.Decision.TinyGoPredictedOperation != decisionroute.TinyGoOperationLessEqual ||
+		fill.Decision.TinyGoPredictionApplied == nil || *fill.Decision.TinyGoPredictionApplied {
+		t.Fatalf("unoffered raw prediction was lost or treated as applied: %+v", fill)
+	}
+	if fill.ProposedCandidateID != plan.Candidates[0].ID || fill.ProposedAccuracyPct != 100 ||
+		fill.FunctionalAccuracyPct != 100 {
+		t.Fatalf("fallback's finite-suite score was not preserved separately: %+v", fill)
+	}
 }
 
 func TestTinyGoBodyFillHonorsCancellationWithoutCallingProvider(t *testing.T) {
@@ -221,11 +256,19 @@ func TestTinyGoBodyFillRejectsMissingMetadataProvenance(t *testing.T) {
 }
 
 func TestTinyGoReceiptRejectsMalformedMetadataSHA256(t *testing.T) {
+	request := decisionroute.Request{Question: decisionroute.Question{Options: []decisionroute.Option{
+		{ID: "add", Operation: decisionroute.TinyGoOperationAdd},
+		{ID: "subtract", Operation: decisionroute.TinyGoOperationSubtract},
+	}}, Fallback: "add"}
+	apply := true
 	valid := decisionroute.Receipt{
+		Schema: decisionroute.ReceiptSchema, Provider: decisionroute.ProviderTinyGo,
+		Mode: decisionroute.ProviderTinyGo, Selected: "add",
+		TinyGoPredictedOperation: decisionroute.TinyGoOperationAdd, TinyGoPredictionApplied: &apply,
 		TinyGoVariant: "fp32", TinyGoWeightsSHA256: strings.Repeat("a", 64),
 		TinyGoMetadataSHA256: strings.Repeat("b", 64), RequestSHA256: "request",
 	}
-	if !validTinyGoDecisionReceipt(valid, "request") {
+	if !validTinyGoDecisionReceipt(valid, "request", request) {
 		t.Fatal("valid metadata SHA-256 was rejected")
 	}
 	for name, digest := range map[string]string{
@@ -237,10 +280,78 @@ func TestTinyGoReceiptRejectsMalformedMetadataSHA256(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			candidate := valid
 			candidate.TinyGoMetadataSHA256 = digest
-			if validTinyGoDecisionReceipt(candidate, "request") {
+			if validTinyGoDecisionReceipt(candidate, "request", request) {
 				t.Fatal("malformed metadata SHA-256 was accepted")
 			}
 		})
+	}
+}
+
+func TestTinyGoReceiptRequiresSupportedPredictionAndConsistentMode(t *testing.T) {
+	request := decisionroute.Request{Question: decisionroute.Question{Options: []decisionroute.Option{
+		{ID: "add", Operation: decisionroute.TinyGoOperationAdd},
+		{ID: "subtract", Operation: decisionroute.TinyGoOperationSubtract},
+	}}, Fallback: "add"}
+	apply := true
+	valid := decisionroute.Receipt{
+		Schema: decisionroute.ReceiptSchema, Mode: decisionroute.ProviderTinyGo,
+		Provider: decisionroute.ProviderTinyGo, Selected: "add",
+		TinyGoPredictedOperation: decisionroute.TinyGoOperationAdd, TinyGoPredictionApplied: &apply,
+		FallbackReason: "", TinyGoVariant: "fp32",
+		TinyGoWeightsSHA256: strings.Repeat("a", 64), TinyGoMetadataSHA256: strings.Repeat("b", 64),
+		RequestSHA256: "request",
+	}
+	if !validTinyGoDecisionReceipt(valid, "request", request) {
+		t.Fatal("valid applied prediction was rejected")
+	}
+	cases := []struct {
+		name   string
+		change func(*decisionroute.Receipt)
+	}{
+		{name: "missing application flag", change: func(receipt *decisionroute.Receipt) { receipt.TinyGoPredictionApplied = nil }},
+		{name: "unsupported raw operation", change: func(receipt *decisionroute.Receipt) { receipt.TinyGoPredictedOperation = "emit_source" }},
+		{name: "unknown mode", change: func(receipt *decisionroute.Receipt) { receipt.Mode = "unknown" }},
+		{name: "tiny mode marked unapplied", change: func(receipt *decisionroute.Receipt) { *receipt.TinyGoPredictionApplied = false }},
+		{name: "tiny selected operation mismatch", change: func(receipt *decisionroute.Receipt) { receipt.Selected = "subtract" }},
+		{name: "fallback marked applied", change: func(receipt *decisionroute.Receipt) {
+			receipt.Mode = "deterministic_fallback"
+			receipt.Selected = request.Fallback
+			receipt.FallbackReason = decisionroute.TinyGoFallbackLowConfidence
+		}},
+		{name: "fallback without supported reason", change: func(receipt *decisionroute.Receipt) {
+			*receipt.TinyGoPredictionApplied = false
+			receipt.Mode = "deterministic_fallback"
+			receipt.Selected = request.Fallback
+			receipt.FallbackReason = "UNEXPECTED"
+		}},
+		{name: "unoffered reason for offered operation", change: func(receipt *decisionroute.Receipt) {
+			*receipt.TinyGoPredictionApplied = false
+			receipt.Mode = "deterministic_fallback"
+			receipt.Selected = request.Fallback
+			receipt.FallbackReason = decisionroute.TinyGoFallbackOperationNotOffered
+		}},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			candidate := valid
+			value := true
+			candidate.TinyGoPredictionApplied = &value
+			test.change(&candidate)
+			if validTinyGoDecisionReceipt(candidate, "request", request) {
+				t.Fatal("inconsistent prediction receipt was accepted")
+			}
+		})
+	}
+
+	// An unoffered operation can be recorded only as an unapplied fallback.
+	apply = false
+	valid.Mode = "deterministic_fallback"
+	valid.Selected = request.Fallback
+	valid.FallbackReason = decisionroute.TinyGoFallbackOperationNotOffered
+	valid.TinyGoPredictedOperation = decisionroute.TinyGoOperationLessEqual
+	valid.TinyGoPredictionApplied = &apply
+	if !validTinyGoDecisionReceipt(valid, "request", request) {
+		t.Fatal("valid unoffered-operation fallback was rejected")
 	}
 }
 
@@ -266,11 +377,14 @@ func (provider *recordingTinyGoBodyFillProvider) Resolve(ctx context.Context, re
 	}
 	selected := request.Fallback
 	reason := decisionroute.TinyGoFallbackLowConfidence
+	predictionApplied := false
 	if !provider.abstain {
-		reason = ""
+		reason = decisionroute.TinyGoFallbackOperationNotOffered
 		for _, option := range request.Question.Options {
 			if option.Operation == provider.operation {
 				selected = option.ID
+				reason = ""
+				predictionApplied = true
 				break
 			}
 		}
@@ -290,6 +404,7 @@ func (provider *recordingTinyGoBodyFillProvider) Resolve(ctx context.Context, re
 	receipt := decisionroute.Receipt{
 		Schema: decisionroute.ReceiptSchema, Mode: mode, Provider: decisionroute.ProviderTinyGo,
 		Selected: selected, FallbackReason: reason, TinyGoVariant: "fp32",
+		TinyGoPredictedOperation: provider.operation, TinyGoPredictionApplied: &predictionApplied,
 		TinyGoWeightsSHA256: weightsSHA, TinyGoMetadataSHA256: metadataSHA, RequestSHA256: digest,
 	}
 	if provider.afterResolve != nil {

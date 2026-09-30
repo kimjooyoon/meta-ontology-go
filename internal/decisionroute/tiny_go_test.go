@@ -28,7 +28,9 @@ func TestTinyGoProviderLoadsSyntheticBundleAndMapsClosedOperationToDeclaredID(t 
 		t.Fatalf("Resolve: %v", err)
 	}
 	if receipt.Provider != ProviderTinyGo || receipt.Mode != ProviderTinyGo ||
-		receipt.Selected != "candidate-boundary-id" || receipt.FallbackReason != "" {
+		receipt.Selected != "candidate-boundary-id" || receipt.FallbackReason != "" ||
+		receipt.TinyGoPredictedOperation != TinyGoOperationLessEqual ||
+		receipt.TinyGoPredictionApplied == nil || !*receipt.TinyGoPredictionApplied {
 		t.Fatalf("unexpected provider receipt: %+v", receipt)
 	}
 	if receipt.TinyGoVariant != "fp32" || len(receipt.TinyGoWeightsSHA256) != 64 ||
@@ -110,6 +112,9 @@ func TestTinyGoProviderUsesOneToOneClosedEightOperationMapping(t *testing.T) {
 	if receipt.Selected != "id-or" || len(receipt.Probabilities) != decision.LabelCount {
 		t.Fatalf("all labels should map to declared unique IDs: %+v", receipt)
 	}
+	if receipt.TinyGoPredictedOperation != TinyGoOperationOr || receipt.TinyGoPredictionApplied == nil || !*receipt.TinyGoPredictionApplied {
+		t.Fatalf("closed model prediction was not recorded as applied: %+v", receipt)
+	}
 	if len(tinyGoOperations()) != decision.LabelCount {
 		t.Fatalf("closed operation contract has %d labels, want %d", len(tinyGoOperations()), decision.LabelCount)
 	}
@@ -128,6 +133,7 @@ func TestTinyGoProviderFallsBackForAbstentionAndUnofferedOperation(t *testing.T)
 			receipt.FallbackReason != TinyGoFallbackLowConfidence || receipt.Provider != ProviderTinyGo {
 			t.Fatalf("unexpected abstention fallback: %+v", receipt)
 		}
+		assertTinyGoPredictionApplied(t, receipt, TinyGoOperationAdd, false)
 	})
 
 	t.Run("operation not offered", func(t *testing.T) {
@@ -141,7 +147,31 @@ func TestTinyGoProviderFallsBackForAbstentionAndUnofferedOperation(t *testing.T)
 			receipt.FallbackReason != TinyGoFallbackOperationNotOffered {
 			t.Fatalf("unexpected unoffered operation fallback: %+v", receipt)
 		}
+		assertTinyGoPredictionApplied(t, receipt, TinyGoOperationSubtract, false)
 	})
+}
+
+func TestTinyGoPredictionAppliedIsExplicitInJSON(t *testing.T) {
+	receipt := Receipt{TinyGoPredictedOperation: TinyGoOperationSubtract}
+	apply := false
+	receipt.TinyGoPredictionApplied = &apply
+	encoded, err := json.Marshal(receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(encoded), `"tiny_go_predicted_operation":"subtract"`) ||
+		!strings.Contains(string(encoded), `"tiny_go_prediction_applied":false`) {
+		t.Fatalf("receipt omitted the raw prediction or explicit false application: %s", encoded)
+	}
+}
+
+func assertTinyGoPredictionApplied(t *testing.T, receipt Receipt, operation string, applied bool) {
+	t.Helper()
+	if receipt.TinyGoPredictedOperation != operation || receipt.TinyGoPredictionApplied == nil ||
+		*receipt.TinyGoPredictionApplied != applied {
+		t.Fatalf("prediction operation/application = %q/%v, want %q/%t", receipt.TinyGoPredictedOperation,
+			receipt.TinyGoPredictionApplied, operation, applied)
+	}
 }
 
 func TestTinyGoProviderFailsClosedOnUnsupportedRuntimeLabel(t *testing.T) {

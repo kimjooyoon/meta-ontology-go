@@ -97,23 +97,57 @@ func bodyFillProviderAccounting(receipt decisionroute.Receipt) (localPredictions
 	}
 }
 
-func validTinyGoDecisionReceipt(receipt decisionroute.Receipt, expectedRequestSHA256 string) bool {
+func validTinyGoDecisionReceipt(receipt decisionroute.Receipt, expectedRequestSHA256 string, request decisionroute.Request) bool {
+	if receipt.Schema != decisionroute.ReceiptSchema || receipt.Provider != decisionroute.ProviderTinyGo ||
+		receipt.RequestSHA256 != expectedRequestSHA256 || receipt.TinyGoPredictionApplied == nil {
+		return false
+	}
 	switch receipt.TinyGoVariant {
 	case "fp32", "ptq_ternary", "qat_ternary":
 	default:
 		return false
 	}
-	if len(receipt.TinyGoWeightsSHA256) != 64 || receipt.TinyGoWeightsSHA256 != strings.ToLower(receipt.TinyGoWeightsSHA256) {
+	if !validTinyGoSHA256(receipt.TinyGoWeightsSHA256) || !validTinyGoSHA256(receipt.TinyGoMetadataSHA256) ||
+		!decisionroute.IsTinyGoOperation(receipt.TinyGoPredictedOperation) {
 		return false
 	}
-	if _, err := hex.DecodeString(receipt.TinyGoWeightsSHA256); err != nil {
+	return validTinyGoPredictionSelection(receipt, request)
+}
+
+func validTinyGoSHA256(value string) bool {
+	if len(value) != 64 || value != strings.ToLower(value) {
 		return false
 	}
-	if len(receipt.TinyGoMetadataSHA256) != 64 || receipt.TinyGoMetadataSHA256 != strings.ToLower(receipt.TinyGoMetadataSHA256) {
+	_, err := hex.DecodeString(value)
+	return err == nil
+}
+
+func validTinyGoPredictionSelection(receipt decisionroute.Receipt, request decisionroute.Request) bool {
+	if receipt.Mode == decisionroute.ProviderTinyGo {
+		if !*receipt.TinyGoPredictionApplied || receipt.FallbackReason != "" {
+			return false
+		}
+		for _, option := range request.Question.Options {
+			if option.ID == receipt.Selected && option.Operation == receipt.TinyGoPredictedOperation {
+				return true
+			}
+		}
 		return false
 	}
-	if _, err := hex.DecodeString(receipt.TinyGoMetadataSHA256); err != nil {
+	if receipt.Mode != "deterministic_fallback" || *receipt.TinyGoPredictionApplied ||
+		receipt.Selected != request.Fallback {
 		return false
 	}
-	return receipt.RequestSHA256 == expectedRequestSHA256
+	predictionWasOffered := false
+	for _, option := range request.Question.Options {
+		predictionWasOffered = predictionWasOffered || option.Operation == receipt.TinyGoPredictedOperation
+	}
+	switch receipt.FallbackReason {
+	case decisionroute.TinyGoFallbackLowConfidence:
+		return true
+	case decisionroute.TinyGoFallbackOperationNotOffered:
+		return !predictionWasOffered
+	default:
+		return false
+	}
 }

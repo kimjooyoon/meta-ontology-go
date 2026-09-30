@@ -150,9 +150,11 @@ func (worker *TinyGoWorker) receipt(request Request, digest string, operationIDs
 		}
 	}
 	confidence := float64(prediction.Confidence)
+	predictionApplied := false
 	receipt := Receipt{
 		Schema: ReceiptSchema, Provider: ProviderTinyGo,
 		TinyGoVariant: variant, TinyGoWeightsSHA256: weightsSHA256, TinyGoMetadataSHA256: metadataSHA256,
+		TinyGoPredictedOperation: label, TinyGoPredictionApplied: &predictionApplied,
 		RequestSHA256: digest, Probabilities: probabilities, Confidence: &confidence,
 	}
 	if prediction.Abstained {
@@ -168,6 +170,7 @@ func (worker *TinyGoWorker) receipt(request Request, digest string, operationIDs
 		receipt.FallbackReason = TinyGoFallbackOperationNotOffered
 		return receipt, nil
 	}
+	*receipt.TinyGoPredictionApplied = true
 	receipt.Mode = ProviderTinyGo
 	receipt.Selected = selected
 	return receipt, nil
@@ -206,4 +209,10 @@ func tinyGoOperationIndex(value string) (int, bool) {
 		}
 	}
 	return 0, false
+}
+
+// IsTinyGoOperation reports whether value is one of the model's closed labels.
+func IsTinyGoOperation(value string) bool {
+	_, ok := tinyGoOperationIndex(value)
+	return ok
 }
