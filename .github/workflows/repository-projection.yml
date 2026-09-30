@@ -25,7 +25,7 @@ jobs:
       - name: Install the declared Go toolchain
         uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: 1.27.1
           cache: false
 
       - name: Bind clean exact-SHA logical split metrics

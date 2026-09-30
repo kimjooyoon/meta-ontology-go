@@ -47,7 +47,7 @@ const (
 	ReferenceURL    = "https://github.com/cosmos72/gomacro"
 	ReferenceCommit = "cf0d4bf32da393dbda97e3572f216731013ffa55"
 	ReferenceTree   = "8cc240a53dd29432ad83620b20fd8a0a05674c6d"
-	GoVersion       = "go1.27.0"
+	GoVersion       = "go1.27.1"
 )
 
 var artifactNames = []string{AssuranceName, ParentReportName, ParentObservationName,

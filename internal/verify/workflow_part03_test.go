@@ -9,11 +9,13 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 	t.Helper()
 	for _, marker := range []string{
 		"run-name: \"CI [${{ github.event_name == 'pull_request' && 'PR authoritative' || (github.event_name == 'workflow_dispatch' && 'promotion dispatch' || 'push full') }}]\"",
-		"types: [opened, synchronize, reopened, ready_for_review]",
+		"types: [opened, synchronize, reopened, ready_for_review, edited]",
 		"Record CI event source",
 		"source=\"PR authoritative\"",
 		"source=\"promotion dispatch\"",
 		"source=\"push full\"",
+		"Test automatic promotion protocol",
+		"node --test scripts/ci-automatic-promotion/promotion.test.js",
 		"GITHUB_STEP_SUMMARY",
 		"ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}",
 		"Verify PR checkout identity",

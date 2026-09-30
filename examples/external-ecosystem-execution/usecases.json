@@ -10,7 +10,7 @@
     "repository": "https://github.com/cosmos72/gomacro",
     "commit": "cf0d4bf32da393dbda97e3572f216731013ffa55",
     "tree": "8cc240a53dd29432ad83620b20fd8a0a05674c6d",
-    "go_version": "go1.27.0",
+    "go_version": "go1.27.1",
     "runs": 2,
     "normalized_replays_required": 2
   },
@@ -22,6 +22,7 @@
     "exact_success_cases": 1
   },
   "observed_baseline": {
+    "go_version": "go1.27.0",
     "decision": "FAIL_CLOSED",
     "resolution": "EXACT",
     "completed": 6,

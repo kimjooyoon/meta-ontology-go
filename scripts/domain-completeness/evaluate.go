@@ -475,7 +475,7 @@ func measureProvenanceIntegrity(spec dimensionSpec, profile ProfileModel, inputs
 	check(profile.SemanticHash != "" && profileSemanticsEqual && inputs.report.ContractID == inputs.contract.ID, !reportLoaded || !contractLoaded)
 	runIdentityMissing := os.Getenv("GITHUB_REPOSITORY") == "" || runID <= 0 || attempt <= 0
 	check(!runIdentityMissing, runIdentityMissing)
-	check(toolchainIdentity() == "go1.27.0", false)
+	check(toolchainIdentity() == "go1.27.1", false)
 	dimension.Evidence = []EvidenceRef{
 		{Role: "profile-source", Path: "scripts/domain-completeness/profile.gooo", Digest: profile.SourceDigest},
 		{Role: "utility-contract", Path: "examples/language-utility/contract.json", Digest: digestBytes(inputs.contractRaw)},

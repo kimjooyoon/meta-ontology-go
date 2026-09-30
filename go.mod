@@ -1,6 +1,6 @@
 module github.com/kimjooyoon/meta-ontology-go
 
-go 1.27.0
+go 1.27.1
 
 tool (
 	github.com/kimjooyoon/meta-ontology-go/bootstrap/source-repacker
@@ -12,3 +12,5 @@ tool (
 	github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter
 	github.com/kimjooyoon/meta-ontology-go/scripts/verify
 )
+
+require github.com/kimjooyoon/gooo-decision-runtime v0.1.1-experimental

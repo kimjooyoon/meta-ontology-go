@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 30
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      GOTOOLCHAIN: go1.27.0
+      GOTOOLCHAIN: go1.27.1
       GOWORK: "off"
       GOFLAGS: -mod=readonly
       TF_IN_AUTOMATION: "1"
@@ -34,7 +34,7 @@ jobs:
       - name: Set up Go 1.27 observer
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.0'
+          go-version: '1.27.1'
           cache: false
       - name: Observe released OpenTofu CLI
         shell: bash

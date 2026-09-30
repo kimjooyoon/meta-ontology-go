@@ -19,7 +19,7 @@ func buildCounterexamplePublicCLI(t *testing.T, ctx context.Context, work string
 	binary := filepath.Join(work, "gooo")
 	command := exec.CommandContext(ctx, "go", "build", "-o", binary, "./cmd/gooo")
 	command.Dir = root
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.0")
+	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("build public Gooo CLI once: %v: %s", err, output)
 	}

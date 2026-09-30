@@ -23,7 +23,7 @@ These badges are generated from the lowered public-trust `.gooo` policy. Workflo
 
 #### Language / Release
 
-[![Go 1.27.0 toolchain](https://img.shields.io/badge/Go-1.27.0-00ADD8?logo=go&logoColor=white)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/go.mod)
+[![Go 1.27.1 toolchain](https://img.shields.io/badge/Go-1.27.1-00ADD8?logo=go&logoColor=white)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/go.mod)
 [![Published release v0.4.0-dev](https://img.shields.io/github/v/release/kimjooyoon/meta-ontology-go?include_prereleases&label=published%20release)](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.4.0-dev)
 
 #### Build / Conformance
