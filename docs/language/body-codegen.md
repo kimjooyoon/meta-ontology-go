@@ -69,7 +69,11 @@ includes a `route_equivalence` receipt with schema, decision, method, rule,
 source and generated semantic digests, and the declared proof scope. The
 compiler canonicalizes only the direct `if/else`-return, guard-return, and
 typed-result-join shapes; other accepted bodies must have matching formatted Go
-AST bodies. A mismatch fails closed before output. This is a structural
+AST bodies. Method `canonical_control_flow_form/v2` removes only outer
+parentheses around each complete condition or return expression before comparing
+these forms, because Go formatting may remove those wrappers. Inner grouping,
+operators, operand order, and branch values remain part of the comparison.
+A mismatch fails closed before output. This is a structural
 equivalence witness for the closed pure body profile, not a proof of unstated
 intent, full-domain behavior, or which route is clearer. Each route is also
 typechecked before output. Laya receives a source digest and structural
