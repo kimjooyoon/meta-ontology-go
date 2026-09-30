@@ -104,6 +104,63 @@ that the current runtime executes these bodies. The model selects a bounded
 construction route; the Gooo emitter, typechecker, and replay check retain
 authority over generated Go.
 
+## Source-bound structural paths with a local Go model
+
+`--path-plan` is a separate local experiment for composing typed structural
+decisions, including local references, assignment targets, operand order,
+then/else layout, and statement order. A document declares the fallback body,
+two options per decision, explicit integer cases, and a finite attempt budget.
+
+```sh
+go run ./cmd/gooo body-codegen --json --path-plan \
+  examples/body-codegen/typed-path-compound-plan.json \
+  --activity Combined examples/body-codegen/typed-path-compound.gooo.fixture
+```
+
+Add `--path-model /path/to/model.json` to load a downloaded
+`gooo/tiny-path-decision-model/v1` bundle, such as the public
+[Gooo typed path models](https://huggingface.co/asketeddy/gooo-typed-path-tiny-v1).
+The operation-model ABI used by `--tiny-model` is deliberately rejected here.
+No model is downloaded implicitly. Runtime and orchestration are Go; this path
+makes zero external provider calls even if Laya environment settings exist.
+
+The compiler validates the fallback against the original activity body using
+its existing canonical equivalence witness before loading the model. The
+activity must have one Integer input and Integer result. Edits replace only
+the in-memory `computes` literal and preserve the source package, unrelated
+declarations, and stable semantic identity; repository writes remain zero.
+
+One synchronous prediction per decision ranks its two typed options before
+candidate tests. Conditional probabilities are ranking weights, not calibrated
+odds that a request is fulfilled. The bounded search checks combined scope and
+types, evaluates finite cases, and retains the best observed partial candidate.
+The selected body then passes native Gooo emission, equivalence, type checking,
+replay, and an independent native AST evaluator compared with the arena results.
+There is no background codegen goroutine waiting for a model response.
+
+`body_paths` records original/selected source, plan, test suite, model metadata
+and weight hashes; actual predictions; candidate attempts, type rejections and
+unattempted alternatives; per-stage timings; and finite functional completeness.
+Native lowering `PASS` can coexist with functional `PARTIAL`: 100% lowering
+means all selected source constructs were emitted, while e.g. 2/3 finite cases
+means 66.67% measured functional completeness. Neither is full natural-language
+or all-input correctness. Test cases are never fed into the model API.
+
+Bounds are 16 binary decisions, 128 expression and statement arena nodes, 128
+cases, 64 attempted combinations, 128 KiB source/document, and a cooperative
+eight-second operation deadline. Without a model, enumeration starts from the
+declared fallback in deterministic order; it can still change that fallback in
+response to the explicit finite contract. A document `seed` is optional with a
+model and enables a reproducible probability draw. Failure JSON retains the
+structural receipt where available. These flags cannot combine with route,
+fill-plan, fill-search, or operator-model modes.
+
+The compound fixture has three decisions and eight combinations, including
+two combined scope failures. Its expected arithmetic is `5*input+2`, subtracting
+3 for negative inputs and adding 3 otherwise. The original fallback deliberately
+differs, so the example measures structural assembly and finite feedback rather
+than asserting semantic equivalence between the original and requested edit.
+
 ## Filling a typed body IR hole
 
 The separate `--fill-plan` experiment lets Laya select one listed expression to
