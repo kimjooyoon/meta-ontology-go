@@ -80,64 +80,7 @@ func decodeStrictJSON(data []byte, target any) error {
 
 func rejectDuplicateJSONKeys(data []byte) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	var parseValue func() error
-	parseValue = func() error {
-		token, err := decoder.Token()
-		if err != nil {
-			return err
-		}
-		delimiter, isDelimiter := token.(json.Delim)
-		if !isDelimiter {
-			return nil
-		}
-		switch delimiter {
-		case '{':
-			seen := []string{}
-			for decoder.More() {
-				keyToken, err := decoder.Token()
-				if err != nil {
-					return err
-				}
-				key, ok := keyToken.(string)
-				if !ok {
-					return fmt.Errorf("JSON object key is not a string")
-				}
-				for _, prior := range seen {
-					if strings.EqualFold(prior, key) {
-						return fmt.Errorf("duplicate JSON field %q (case-insensitive match for %q)", key, prior)
-					}
-				}
-				seen = append(seen, key)
-				if err := parseValue(); err != nil {
-					return err
-				}
-			}
-			end, err := decoder.Token()
-			if err != nil || end != json.Delim('}') {
-				if err != nil {
-					return err
-				}
-				return fmt.Errorf("unterminated JSON object")
-			}
-		case '[':
-			for decoder.More() {
-				if err := parseValue(); err != nil {
-					return err
-				}
-			}
-			end, err := decoder.Token()
-			if err != nil || end != json.Delim(']') {
-				if err != nil {
-					return err
-				}
-				return fmt.Errorf("unterminated JSON array")
-			}
-		default:
-			return fmt.Errorf("unexpected JSON delimiter %q", delimiter)
-		}
-		return nil
-	}
-	if err := parseValue(); err != nil {
+	if err := parseJSONValue(decoder); err != nil {
 		return err
 	}
 	if _, err := decoder.Token(); err != io.EOF {
@@ -147,6 +90,87 @@ func rejectDuplicateJSONKeys(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func parseJSONValue(decoder *json.Decoder) error {
+	token, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	delimiter, isDelimiter := token.(json.Delim)
+	if !isDelimiter {
+		return nil
+	}
+	switch delimiter {
+	case '{':
+		return parseJSONObject(decoder)
+	case '[':
+		return parseJSONArray(decoder)
+	default:
+		return fmt.Errorf("unexpected JSON delimiter %q", delimiter)
+	}
+}
+
+func parseJSONObject(decoder *json.Decoder) error {
+	seen := []string{}
+	for decoder.More() {
+		if err := parseJSONObjectMember(decoder, &seen); err != nil {
+			return err
+		}
+	}
+	return consumeJSONDelimiter(decoder, '}')
+}
+
+func parseJSONObjectMember(decoder *json.Decoder, seen *[]string) error {
+	keyToken, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	key, ok := keyToken.(string)
+	if !ok {
+		return fmt.Errorf("JSON object key is not a string")
+	}
+	if err := addUniqueJSONKey(seen, key); err != nil {
+		return err
+	}
+	return parseJSONValue(decoder)
+}
+
+func addUniqueJSONKey(seen *[]string, key string) error {
+	for _, prior := range *seen {
+		if strings.EqualFold(prior, key) {
+			return fmt.Errorf("duplicate JSON field %q (case-insensitive match for %q)", key, prior)
+		}
+	}
+	*seen = append(*seen, key)
+	return nil
+}
+
+func parseJSONArray(decoder *json.Decoder) error {
+	for decoder.More() {
+		if err := parseJSONValue(decoder); err != nil {
+			return err
+		}
+	}
+	return consumeJSONDelimiter(decoder, ']')
+}
+
+func consumeJSONDelimiter(decoder *json.Decoder, expected json.Delim) error {
+	end, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	if end != expected {
+		return fmt.Errorf("unterminated JSON %s", jsonContainerName(expected))
+	}
+	return nil
+}
+
+func jsonContainerName(delimiter json.Delim) string {
+	if delimiter == '}' {
+		return "object"
+	}
+	return "array"
 }
 
 // IRBodySearchExternalFeedbackReceipt records local provenance bindings and
