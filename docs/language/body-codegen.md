@@ -96,6 +96,67 @@ that the current runtime executes these bodies. The model selects a bounded
 construction route; the Gooo emitter, typechecker, and replay check retain
 authority over generated Go.
 
+## Filling a typed body IR hole
+
+The separate `--fill-plan` experiment lets Laya supply one expression that is
+missing from a Gooo-authored body skeleton. The activity keeps the control
+flow and a typed hole; the plan supplies a natural-language intent, a finite
+list of expression candidates, and explicit input/output cases:
+
+```sh
+GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
+  go run ./cmd/gooo body-codegen --json --fill-plan \
+  examples/body-codegen/ir-fill-clamp-plan.json \
+  --activity ClampNegativeToZero \
+  examples/body-codegen/ir-fill-clamp.gooo.fixture
+```
+
+This first slice accepts one `Integer -> Integer` hole named
+`__GOOO_BODY_HOLE_<hole_id>__`, two to sixteen closed expression candidates,
+and one to 4096 integer test cases. Intent text is limited to 2000 Unicode
+characters. Gooo typechecks every candidate and
+evaluates it with a closed, side-effect-free integer AST interpreter before
+asking Laya. Laya receives the Gooo
+body IR skeleton, the intent, candidate expressions, and each candidate's
+measured test score. It can return only a listed candidate ID. Gooo then fills
+that IR hole, emits the final Go function, typechecks and replays it, and
+reports the emitted expression's exact pass fraction on the same suite. If the
+proposal scores below another declared candidate, Gooo emits the highest-scoring
+candidate instead; an equal-scoring Laya proposal is retained. The receipt keeps
+both the model proposal and the actual emitted candidate, so the deterministic
+test gate cannot hide a poor model selection.
+This fixture places the hole inside a conditional assignment to a local `let`
+binding, then returns that value, so it exercises condition, assignment, and
+return paths together. The model receives candidate score summaries plus the test count and digest;
+the individual input/output cases stay in Gooo's local receipt.
+
+The `functional_accuracy_percent` field means passed cases divided by declared
+cases. It is an exact score for that finite suite under the named bounded AST
+interpreter; generated Go is typechecked but not executed by this command. The
+score does not claim whole-domain correctness. `candidate_scores` reports every
+candidate's score; `best_candidate_accuracy_percent` records the best score
+available in this candidate set, and `selection_regret_percentage_points`
+measures how far the proposal falls below it. Those values separate
+candidate-set coverage from Laya's selection quality on the declared suite.
+The checked-in plan includes `int64` minimum and maximum values as well as
+inputs on both sides of zero.
+
+This path is deliberately sequential: Gooo creates and scores the typed IR
+plan, then makes one synchronous Laya call, then fills and emits the final
+body. No body-emission goroutines run beside the model request. The request
+inherits cancellation and has an eight-second decision budget for the larger
+IR-and-test context; a timeout or unavailable provider records deterministic
+fallback, then the same score gate picks the best declared candidate. The report records IR preparation,
+decision, final-emission, and total wall latency. Tests cover the blocking
+call order, cancellation, exact functional percentages, and disconnected
+replay. This bounded evaluator accepts only the existing pure expression and
+statement profile; it does not run arbitrary model-authored source.
+
+The evidence sent in this call is candidate-level TDD data computed before
+emission, not a GitHub Actions result. CI runs after a generated revision
+exists, so it can verify this output and inform a later generation round, but
+it cannot be an outcome of the same decision that produced the revision.
+
 The checked-in `.gooo.fixture` intentionally uses a finite, side-effect-free
 body. The suffix keeps this experimental input outside the repository's fixed
 `.gooo` conformance inventory until the language corpus itself is revised.
