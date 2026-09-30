@@ -46,14 +46,15 @@ type CompletenessReceipt struct {
 }
 
 type completenessPlanIdentity struct {
-	ProfileID          string `json:"profile_id"`
-	Activity           string `json:"activity"`
-	ActivityID         string `json:"activity_id"`
-	InputType          string `json:"input_type"`
-	OutputType         string `json:"output_type"`
-	SourceDigest       string `json:"source_digest"`
-	ProgramDigest      string `json:"program_digest"`
-	BodyFillPlanSHA256 string `json:"body_fill_plan_sha256,omitempty"`
+	ProfileID            string `json:"profile_id"`
+	Activity             string `json:"activity"`
+	ActivityID           string `json:"activity_id"`
+	InputType            string `json:"input_type"`
+	OutputType           string `json:"output_type"`
+	SourceDigest         string `json:"source_digest"`
+	ProgramDigest        string `json:"program_digest"`
+	BodyFillPlanSHA256   string `json:"body_fill_plan_sha256,omitempty"`
+	BodySearchPlanSHA256 string `json:"body_search_plan_sha256,omitempty"`
 }
 
 func buildCompletenessReceipt(report Report, failure string) *CompletenessReceipt {
@@ -70,6 +71,9 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 	if report.BodyFill != nil {
 		layaMode = report.BodyFill.Decision.Mode
 		layaProvider = report.BodyFill.Decision.Provider
+	}
+	if report.BodySearch != nil {
+		layaMode, layaProvider = bodySearchProviderSummary(report.BodySearch)
 	}
 
 	generationReason := "Measures whether this accepted activity produced a digest-bound Go projection."
@@ -152,6 +156,12 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		core = append(core, dimension.ID)
 		allowedInvestment = "compiler-controlled assembly from declared expression candidates, measured finite-suite scores, and an optional Laya proposal; no human approval or authorization is required"
 	}
+	if search := report.BodySearch; search != nil {
+		searchDimensions, searchCore := bodySearchCompletenessDimensions(search, report.GeneratedDigest)
+		dimensions = append(dimensions, searchDimensions...)
+		core = append(core, searchCore...)
+		allowedInvestment = "bounded candidate search before evaluation, prior training observations, and independent post-selection holdout measurement; no human approval or authorization is required"
+	}
 	sort.Strings(core)
 	counts := map[string]int{"PASS": 0, "PROGRESS": 0, "UNKNOWN": 0, "FAIL_CLOSED": 0}
 	byID := make(map[string]CompletenessDimension, len(dimensions))
@@ -227,16 +237,27 @@ func populateCompletenessReceipt(report *Report, failure string) {
 
 func completenessPlanSHA(report Report) string {
 	fillPlanSHA256 := ""
+	searchPlanSHA256 := ""
 	if report.BodyFill != nil {
 		fillPlanSHA256 = report.BodyFill.IRPlanSHA256
+	}
+	if report.BodySearch != nil {
+		searchPlanSHA256 = report.BodySearch.IRPlanSHA256
 	}
 	planBytes, _ := json.Marshal(completenessPlanIdentity{
 		ProfileID: "gooo/body-codegen-pure-v1", Activity: report.Activity,
 		ActivityID: report.ActivityID, InputType: report.InputType, OutputType: report.OutputType,
 		SourceDigest: report.SourceDigest, ProgramDigest: report.ProgramDigest,
-		BodyFillPlanSHA256: fillPlanSHA256,
+		BodyFillPlanSHA256:   fillPlanSHA256,
+		BodySearchPlanSHA256: searchPlanSHA256,
 	})
 	return digest(planBytes)
+}
+
+func SearchFailureCompletenessReceipt(activity string, source []byte, failure string, search *IRBodySearchReceipt) *CompletenessReceipt {
+	report := Report{Decision: "FAIL_CLOSED", Activity: activity, SourceDigest: digest(source), BodySearch: search}
+	populateCompletenessReceipt(&report, failure)
+	return report.CompletenessReceipt
 }
 
 // FailureCompletenessReceipt preserves the stage and cause when the CLI cannot
@@ -293,6 +314,17 @@ func provenanceDimension(report Report, compilerSHA string) CompletenessDimensio
 }
 
 func networkBoundaryDimension(report Report) CompletenessDimension {
+	if search := report.BodySearch; search != nil {
+		noProvider := true
+		for _, attempt := range search.Attempts {
+			if decision := attempt.Decision; decision != nil {
+				noProvider = noProvider && decision.Mode == "deterministic_fallback" && decision.FallbackReason == "NOT_CONFIGURED"
+			}
+		}
+		return completenessDimension("external_network_boundary", boolCount(noProvider), 1,
+			"search runs with no Laya provider request", "Only sole-candidate choices and unconfigured-provider fallback establish no provider request.",
+			[]string{"body_search.attempts"}, false)
+	}
 	decision := report.RouteDecision
 	if report.BodyFill != nil {
 		decision = report.BodyFill.Decision
@@ -307,6 +339,18 @@ func networkBoundaryDimension(report Report) CompletenessDimension {
 }
 
 func layaObservationDimension(report Report) CompletenessDimension {
+	if search := report.BodySearch; search != nil {
+		observed, eligible := 0, 0
+		for _, attempt := range search.Attempts {
+			if attempt.Decision != nil {
+				eligible++
+				observed += boolCount(attempt.Decision.Mode == "laya")
+			}
+		}
+		return completenessDimension("laya_decision_observation", observed, eligible,
+			"multi-candidate search choices before evaluation", "Counts model choices before candidate evaluation; this does not measure candidate correctness.",
+			[]string{"body_search.attempts.decision", "body_search.ir_plan_sha256:" + search.IRPlanSHA256}, false)
+	}
 	eligible := len(report.CandidateRoutes) > 1
 	decision := report.RouteDecision
 	unit := "eligible multi-route Laya decisions"
@@ -333,6 +377,10 @@ func layaObservationDimension(report Report) CompletenessDimension {
 
 func nextCompletenessOperation(id string) string {
 	operations := map[string]string{
+		"search_training_accuracy":           "EXPAND_OR_REPAIR_CANDIDATES_AGAINST_TRAINING_FAILURES_WITHIN_THE_SEARCH_BUDGET",
+		"search_holdout_accuracy":            "VALIDATE_THE_SELECTED_BODY_AGAINST_A_SEPARATE_UNSEEN_TEST_SUITE",
+		"search_candidate_observation":       "MEASURE_UNTESTED_CANDIDATES_IN_A_SEPARATE_EXHAUSTIVE_BASELINE",
+		"search_candidate_scoring":           "REPAIR_UNSCORED_CANDIDATES_AND_MEASURE_A_SEPARATE_BASELINE",
 		"declared_suite_functional_accuracy": "EXPAND_OR_REPAIR_BODY_CANDIDATES_AGAINST_DECLARED_TESTS_AND_VALIDATE_HELD_OUT_BEHAVIOR",
 		"declaration_coverage":               "BIND_THE_REQUESTED_ACTIVITY_TO_A_STABLE_SOURCE_ID",
 		"generation_coverage":                "REPAIR_OR_REGENERATE_THE_ACTIVITY_PROJECTION",
