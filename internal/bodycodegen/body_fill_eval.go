@@ -1,6 +1,7 @@
 package bodycodegen
 
 import (
+	"context"
 	"fmt"
 	"go/ast"
 	"go/constant"
@@ -10,6 +11,7 @@ import (
 )
 
 type integerBodyEvaluator struct {
+	context     context.Context
 	information types.Info
 	environment map[types.Object]any
 }
@@ -22,6 +24,15 @@ func evaluateIntegerCases(
 	activity string,
 	cases []IRBodyFillTestCase,
 ) ([]IRBodyFillCaseResult, int, error) {
+	return evaluateIntegerCasesContext(context.Background(), source, activity, cases)
+}
+
+func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity string,
+	cases []IRBodyFillTestCase,
+) ([]IRBodyFillCaseResult, int, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, 0, err
+	}
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "generated.go", source, parser.AllErrors|parser.ParseComments)
 	if err != nil {
@@ -37,6 +48,9 @@ func evaluateIntegerCases(
 		Uses:  make(map[*ast.Ident]types.Object),
 	}
 	configuration := types.Config{}
+	if err := ctx.Err(); err != nil {
+		return nil, 0, err
+	}
 	if _, err := configuration.Check(file.Name.Name, fset, []*ast.File{file}, &information); err != nil {
 		return nil, 0, fmt.Errorf("typecheck integer evaluator input: %w", err)
 	}
@@ -48,12 +62,18 @@ func evaluateIntegerCases(
 	if input == nil || input.Type() != types.Typ[types.Int64] {
 		return nil, 0, fmt.Errorf("integer evaluator input must be int64")
 	}
-	evaluator := integerBodyEvaluator{information: information}
+	evaluator := integerBodyEvaluator{context: ctx, information: information}
 	results := make([]IRBodyFillCaseResult, 0, len(cases))
 	passed := 0
 	for _, testCase := range cases {
+		if err := ctx.Err(); err != nil {
+			return nil, 0, err
+		}
 		evaluator.environment = map[types.Object]any{input: testCase.Input}
 		value, returned, err := evaluator.evaluateBlock(function.Body)
+		if err := ctx.Err(); err != nil {
+			return nil, 0, err
+		}
 		if err != nil {
 			return nil, 0, fmt.Errorf("input %d: %w", testCase.Input, err)
 		}
@@ -77,6 +97,11 @@ func evaluateIntegerCases(
 
 func (e *integerBodyEvaluator) evaluateBlock(block *ast.BlockStmt) (any, bool, error) {
 	for _, statement := range block.List {
+		if e.context != nil {
+			if err := e.context.Err(); err != nil {
+				return nil, false, err
+			}
+		}
 		switch value := statement.(type) {
 		case *ast.DeclStmt:
 			declaration, ok := value.Decl.(*ast.GenDecl)
@@ -175,6 +200,11 @@ func (e *integerBodyEvaluator) evaluateBlock(block *ast.BlockStmt) (any, bool, e
 }
 
 func (e *integerBodyEvaluator) evaluateExpression(expression ast.Expr) (any, error) {
+	if e.context != nil {
+		if err := e.context.Err(); err != nil {
+			return nil, err
+		}
+	}
 	typed := e.information.Types[expression]
 	if typed.Value != nil {
 		// Go folds constants with arbitrary precision before conversion to a
