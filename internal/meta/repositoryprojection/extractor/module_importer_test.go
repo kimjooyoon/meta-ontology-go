@@ -1,6 +1,7 @@
 package extractor
 
 import (
+	"context"
 	"errors"
 	"go/ast"
 	"go/build"
@@ -198,24 +199,26 @@ func Value() int { return 1 }
 }
 
 func TestModuleImporterStopsAtCumulativeGoListBudgets(t *testing.T) {
-	for name, configure := range map[string]func(*moduleImporter){
-		"deadline": func(imports *moduleImporter) {
+	for name, test := range map[string]struct {
+		code      moduleDependencyCauseCode
+		configure func(*moduleImporter)
+	}{
+		"deadline": {moduleCauseTimeBudget, func(imports *moduleImporter) {
 			imports.listStarted = time.Now().Add(-moduleListTotalTimeout)
-		},
-		"calls": func(imports *moduleImporter) {
+		}},
+		"calls": {moduleCauseCallBudget, func(imports *moduleImporter) {
 			imports.listCalls = moduleListCallsMax
-		},
-		"bytes": func(imports *moduleImporter) {
+		}},
+		"bytes": {moduleCauseByteBudget, func(imports *moduleImporter) {
 			imports.listBytes = moduleListTotalMax
-		},
+		}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			imports := &moduleImporter{root: t.TempDir(), listStarted: time.Now()}
-			configure(imports)
+			test.configure(imports)
 			priorCalls := imports.listCalls
-			if _, err := imports.runGoList([]string{"list", "example.test/unused"}); !errors.Is(err, errModuleDependency) {
-				t.Fatalf("go list error=%v, want fail-closed budget error", err)
-			}
+			_, err := imports.runGoList([]string{"list", "example.test/unused"})
+			requireModuleFailure(t, err, test.code)
 			if imports.listCalls != priorCalls {
 				t.Fatalf("budget rejection launched a go list call: before=%d after=%d", priorCalls, imports.listCalls)
 			}
@@ -229,6 +232,58 @@ func TestModuleImporterStopsAtCumulativeGoListBudgets(t *testing.T) {
 	}
 	if imports.allowExternalPackage() {
 		t.Fatal("external package budget allowed an extra package")
+	}
+	blocked := &moduleImporter{externalPackages: modulePackageMax}
+	if _, err := blocked.Import("example.test/blocked"); !errors.Is(err, errModuleDependency) {
+		t.Fatalf("package budget error=%v, want fail-closed module dependency error", err)
+	} else {
+		requireModuleFailure(t, err, moduleCausePackageLimit)
+	}
+}
+
+func TestModuleListFailureCodesAreSanitizedAndPreserved(t *testing.T) {
+	raw := errors.New("/private/go env=TOP_SECRET executable failure")
+	cases := []struct {
+		name string
+		err  error
+		code moduleDependencyCauseCode
+	}{
+		{"timeout", moduleListCommandFailure(raw, context.DeadlineExceeded, false, false), moduleCauseTimeout},
+		{"output", moduleListCommandFailure(raw, nil, true, false), moduleCauseOutputCap},
+		{"subprocess", moduleListCommandFailure(raw, nil, false, false), moduleCauseSubprocess},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			requireModuleFailure(t, test.err, test.code)
+			if strings.Contains(test.err.Error(), "/private") || strings.Contains(test.err.Error(), "TOP_SECRET") {
+				t.Fatalf("failure leaked raw subprocess details: %v", test.err)
+			}
+		})
+	}
+	wrapped := errors.Join(errors.New("wrapper includes /private/path"), cases[0].err)
+	requireModuleFailure(t, preserveModuleFailure(wrapped), moduleCauseTimeout)
+	if got := preserveModuleFailure(raw); got != errModuleDependency {
+		t.Fatalf("untyped failure was not reduced to the generic sentinel: %v", got)
+	}
+}
+
+func TestModuleListTimeoutBoundsAreExplicit(t *testing.T) {
+	if moduleListTimeout != 30*time.Second || moduleListTotalTimeout != 120*time.Second {
+		t.Fatalf("go list bounds = %s per call / %s total", moduleListTimeout, moduleListTotalTimeout)
+	}
+	if moduleListCallsMax != 64 || moduleListTotalMax != 16<<20 {
+		t.Fatalf("go list count/byte budgets changed: calls=%d bytes=%d", moduleListCallsMax, moduleListTotalMax)
+	}
+}
+
+func requireModuleFailure(t *testing.T, err error, code moduleDependencyCauseCode) {
+	t.Helper()
+	if !errors.Is(err, errModuleDependency) {
+		t.Fatalf("error %v is not a module dependency failure", err)
+	}
+	var failure *moduleDependencyFailure
+	if !errors.As(err, &failure) || failure.code != code {
+		t.Fatalf("error %v has cause code %v, want %v", err, failure, code)
 	}
 }
 

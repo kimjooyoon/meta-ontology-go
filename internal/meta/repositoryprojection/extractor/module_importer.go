@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	moduleListTimeout      = 10 * time.Second
-	moduleListTotalTimeout = 60 * time.Second
+	moduleListTimeout      = 30 * time.Second
+	moduleListTotalTimeout = 120 * time.Second
 	moduleListMax          = 8 << 20
 	moduleListTotalMax     = 16 << 20
 	moduleListCallsMax     = 64
@@ -38,6 +38,40 @@ const (
 )
 
 var errModuleDependency = errors.New("module dependency could not be resolved safely")
+
+type moduleDependencyCauseCode string
+
+const (
+	moduleCauseCallBudget   moduleDependencyCauseCode = "GO_LIST_CALL_BUDGET"
+	moduleCauseTimeBudget   moduleDependencyCauseCode = "GO_LIST_TIME_BUDGET"
+	moduleCauseByteBudget   moduleDependencyCauseCode = "GO_LIST_BYTE_BUDGET"
+	moduleCauseTimeout      moduleDependencyCauseCode = "GO_LIST_TIMEOUT"
+	moduleCauseOutputCap    moduleDependencyCauseCode = "GO_LIST_OUTPUT_CAP"
+	moduleCauseSubprocess   moduleDependencyCauseCode = "GO_LIST_SUBPROCESS_FAILURE"
+	moduleCausePackageLimit moduleDependencyCauseCode = "MODULE_PACKAGE_LIMIT"
+	moduleCauseSourceLimit  moduleDependencyCauseCode = "MODULE_SOURCE_LIMIT"
+)
+
+type moduleDependencyFailure struct {
+	code moduleDependencyCauseCode
+}
+
+func (failure *moduleDependencyFailure) Error() string {
+	return "module dependency could not be resolved safely (" + string(failure.code) + ")"
+}
+
+func (failure *moduleDependencyFailure) Unwrap() error { return errModuleDependency }
+
+func moduleFailure(code moduleDependencyCauseCode) error {
+	return &moduleDependencyFailure{code: code}
+}
+
+func preserveModuleFailure(err error) error {
+	if failure, ok := errors.AsType[*moduleDependencyFailure](err); ok {
+		return failure
+	}
+	return errModuleDependency
+}
 
 type moduleImporter struct {
 	root                string
@@ -75,13 +109,13 @@ func (imports *moduleImporter) Import(path string) (*types.Package, error) {
 		if imports.standardLibrary(path) {
 			package_, importErr := imports.fallback.Import(path)
 			if importErr != nil || package_ == nil {
-				return nil, errModuleDependency
+				return nil, preserveModuleFailure(importErr)
 			}
 			imports.packages[path] = package_
 			return package_, nil
 		}
 		if !imports.allowExternalPackage() {
-			return nil, errModuleDependency
+			return nil, moduleFailure(moduleCausePackageLimit)
 		}
 		files, err = imports.moduleFiles(path)
 		if err != nil {
@@ -108,13 +142,13 @@ func (imports *moduleImporter) Import(path string) (*types.Package, error) {
 		} else {
 			data, readErr = readBoundedModuleSource(name)
 			if int64(len(data)) > moduleSourceMax-imports.externalSourceBytes {
-				return nil, errModuleDependency
+				return nil, moduleFailure(moduleCauseSourceLimit)
 			}
 			imports.externalSourceBytes += int64(len(data))
 		}
 		if readErr != nil {
 			if !imports.local(path) {
-				return nil, errModuleDependency
+				return nil, preserveModuleFailure(readErr)
 			}
 			return nil, readErr
 		}
@@ -159,8 +193,14 @@ func (imports *moduleImporter) moduleFiles(path string) ([]string, error) {
 		return nil, errModuleDependency
 	}
 	listed, err := imports.listModulePackage(path, false)
-	if err != nil || listed.Goroot || listed.ImportPath != path || listed.Incomplete || len(listed.CgoFiles) != 0 ||
-		len(listed.GoFiles) == 0 || len(listed.GoFiles) > moduleFilesMax || !filepath.IsAbs(listed.Dir) {
+	if err != nil {
+		return nil, preserveModuleFailure(err)
+	}
+	if len(listed.GoFiles) > moduleFilesMax {
+		return nil, moduleFailure(moduleCausePackageLimit)
+	}
+	if listed.Goroot || listed.ImportPath != path || listed.Incomplete || len(listed.CgoFiles) != 0 ||
+		len(listed.GoFiles) == 0 || !filepath.IsAbs(listed.Dir) {
 		return nil, errModuleDependency
 	}
 	files := make([]string, 0, len(listed.GoFiles))
@@ -172,11 +212,14 @@ func (imports *moduleImporter) moduleFiles(path string) ([]string, error) {
 		path := filepath.Join(listed.Dir, name)
 		info, err := os.Stat(path)
 		if err != nil || !info.Mode().IsRegular() || info.Size() < 0 || info.Size() > moduleFileMax {
+			if err == nil && info.Size() > moduleFileMax {
+				return nil, moduleFailure(moduleCauseSourceLimit)
+			}
 			return nil, errModuleDependency
 		}
 		total += info.Size()
 		if total > moduleSourceMax {
-			return nil, errModuleDependency
+			return nil, moduleFailure(moduleCauseSourceLimit)
 		}
 		files = append(files, path)
 	}
@@ -190,7 +233,7 @@ func (imports *moduleImporter) exportData(path string) (io.ReadCloser, error) {
 	exportPath, ok := imports.exportPaths[path]
 	if !ok {
 		if err := imports.loadStandardExports(path); err != nil {
-			return nil, errModuleDependency
+			return nil, preserveModuleFailure(err)
 		}
 		exportPath, ok = imports.exportPaths[path]
 		if !ok {
@@ -209,7 +252,7 @@ func (imports *moduleImporter) loadStandardExports(path string) error {
 	args = append(args, "-deps", "-export", "-json", path)
 	output, err := imports.runGoList(args)
 	if err != nil {
-		return errModuleDependency
+		return preserveModuleFailure(err)
 	}
 	decoder := json.NewDecoder(bytes.NewReader(output))
 	loaded := make(map[string]string)
@@ -221,6 +264,9 @@ func (imports *moduleImporter) loadStandardExports(path string) error {
 			break
 		}
 		if err != nil || count >= moduleListPackagesMax || listed.ImportPath == "" || listed.Incomplete || !listed.Goroot {
+			if count >= moduleListPackagesMax {
+				return moduleFailure(moduleCausePackageLimit)
+			}
 			return errModuleDependency
 		}
 		if listed.ImportPath == "unsafe" {
@@ -251,7 +297,7 @@ func (imports *moduleImporter) loadStandardExports(path string) error {
 		}
 	}
 	if newPackages > moduleListPackagesMax-imports.exportPackages {
-		return errModuleDependency
+		return moduleFailure(moduleCausePackageLimit)
 	}
 	maps.Copy(imports.exportPaths, loaded)
 	imports.exportPackages += newPackages
@@ -300,9 +346,14 @@ func (imports *moduleImporter) absoluteRoot() string {
 }
 
 func (imports *moduleImporter) runGoList(args []string) ([]byte, error) {
-	if imports.listCalls >= moduleListCallsMax || imports.listBytes >= moduleListTotalMax ||
-		time.Since(imports.listStarted) >= moduleListTotalTimeout {
-		return nil, errModuleDependency
+	if imports.listCalls >= moduleListCallsMax {
+		return nil, moduleFailure(moduleCauseCallBudget)
+	}
+	if imports.listBytes >= moduleListTotalMax {
+		return nil, moduleFailure(moduleCauseByteBudget)
+	}
+	if time.Since(imports.listStarted) >= moduleListTotalTimeout {
+		return nil, moduleFailure(moduleCauseTimeBudget)
 	}
 	root := imports.absoluteRoot()
 	if root == "" {
@@ -332,12 +383,25 @@ func (imports *moduleImporter) runGoList(args []string) ([]byte, error) {
 	written := int64(stdout.Len() + stderr.Len())
 	imports.listBytes += written
 	if written > moduleListTotalMax || imports.listBytes > moduleListTotalMax {
-		return nil, errModuleDependency
+		return nil, moduleFailure(moduleCauseOutputCap)
 	}
-	if runErr != nil || stdout.exceeded || stderr.exceeded || ctx.Err() != nil {
-		return nil, errModuleDependency
+	if failure := moduleListCommandFailure(runErr, ctx.Err(), stdout.exceeded, stderr.exceeded); failure != nil {
+		return nil, failure
 	}
 	return stdout.Bytes(), nil
+}
+
+func moduleListCommandFailure(runErr, contextErr error, stdoutExceeded, stderrExceeded bool) error {
+	if errors.Is(contextErr, context.DeadlineExceeded) {
+		return moduleFailure(moduleCauseTimeout)
+	}
+	if stdoutExceeded || stderrExceeded {
+		return moduleFailure(moduleCauseOutputCap)
+	}
+	if runErr != nil || contextErr != nil {
+		return moduleFailure(moduleCauseSubprocess)
+	}
+	return nil
 }
 
 func moduleListEnvironment(parent []string) []string {
@@ -504,8 +568,11 @@ func readBoundedModuleSource(name string) ([]byte, error) {
 	}
 	defer file.Close()
 	data, err := io.ReadAll(io.LimitReader(file, moduleFileMax+1))
-	if err != nil || len(data) > moduleFileMax {
+	if err != nil {
 		return nil, errModuleDependency
+	}
+	if len(data) > moduleFileMax {
+		return nil, moduleFailure(moduleCauseSourceLimit)
 	}
 	return data, nil
 }
