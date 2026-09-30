@@ -128,3 +128,77 @@ that can be derived from parser success, generated-artifact replay, semantic
 conformance, and regression checks. Promote a model or routing rule only when
 those deterministic measures improve; do not use Laya's self-reported
 confidence as the improvement score.
+
+## Typed IR body-fill and test-score gate — 2026-09-30
+
+The measurements below describe the initial body-fill implementation at
+`2fc19ea5b094f424f550e2b0a9ebe6477759d1a2` (merged to `dev` as
+`fa33c7532a8c0bebfc5fdb594fbfd4ba4b2d2e2a`). A subsequent differential review
+found evaluator errors for shadowed Boolean names and large constant
+arithmetic, plus expression-grouping and CLI error-propagation defects.
+The simple clamp fixture below does not contain those counterexamples.
+These historical timing measurements are not a benchmark of the repaired
+type-information-based evaluator.
+
+This experiment asks Laya to choose a typed expression for one Gooo IR hole in
+a body that declares a local value, branches on `input < 0`, assigns the hole
+in the negative branch, and returns the local. Gooo first typechecks three
+closed candidates and scores them against nine declared `int64` inputs,
+including the minimum and maximum values. The local evaluator reports exact
+pass counts for this suite; it does not execute the generated Go binary or
+prove behavior for every `int64` value.
+
+The live run used the CPU English checkpoint at revision
+`55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851`, Laya 0.3.21, Python 3.11.15,
+PyTorch 2.14.0, Transformers 5.17.0, and `LAYA_THREADS=4` on an Apple M4 with
+10 logical CPUs. The loopback server was already warm. The request sent the IR
+skeleton, candidate expressions and pass counts, plus the test count and
+digest; individual test inputs remained in Gooo's local receipt.
+
+| Measurement | Result |
+| --- | ---: |
+| Sequential calls | 10 |
+| Laya decision p50 / p95 | 364.46 / 388.95 ms |
+| Laya decision min / max | 360.41 / 388.95 ms |
+| Whole CLI p50 | 370.34 ms |
+| Batch wall time | 3.77 s |
+| Laya process CPU-time increase | 8.50 s |
+| Average Laya CPU | 225.6% of one core, about 22.6% of this 10-core host |
+| Laya process peak RSS | 1,613.9 MiB |
+
+Laya proposed `negate` in all 10 calls. That candidate passed 5/9 cases
+(55.56%); `zero` passed 9/9 (100%). The receipt records Laya's proposal and a
+44.44 percentage-point selection regret. Gooo's deterministic score gate
+replaced the proposal with `zero` in all 10 runs; the emitted body passed 9/9,
+then passed Go typechecking and deterministic replay. Repetition of one fixture
+measures latency and repeatability, not general code-generation accuracy.
+
+A paired context check used the same body skeleton and candidates, with five
+warm calls per form. Sending all nine test cases produced a 394.26 ms median
+and Laya selected `negate` in 5/5. Sending candidate score summaries, test
+count, and digest produced a 381.78 ms median and Laya selected `zero` in 5/5.
+That small sample does not establish a reliable speedup; the more useful
+finding is that the decision changed when Laya saw the compact test evidence.
+Gooo still scores every individual case locally and gates the emitted choice,
+so the provider cannot erase or overrule test outcomes.
+
+With no provider configured, ten body-fill CLI runs on the final local-variable
+fixture had a 0.478 ms median reported generation time and a 5.86 ms median
+process wall time. The 8-second body-fill provider decision limit is bounded and
+cancellation-tested; it does not bound parsing, candidate scoring, or final
+emission. It accommodates the measured warm path while leaving
+deterministic fallback for missing or slow providers. Lazy model startup can
+exceed that budget, so preload the intended checkpoint before latency-sensitive
+use. The temporary
+Python environment measured 943 MiB and lived outside the repository; the
+checkpoint stayed in the existing Hugging Face cache and no model weights were
+added to Git.
+
+This experiment supports Laya as a bounded proposal source for codegen. It does
+not support trusting its selection without deterministic test evidence: the
+full-input call repeatedly chose a candidate with a 44.44-point observed gap.
+The effective path is Gooo-owned IR, test-scored candidates, synchronous Laya
+proposal, deterministic best-score arbitration, then emission and replay.
+The score context here is local TDD evidence prepared before Laya is called,
+not a GitHub Actions result. The exact generated revision's CI run can validate
+this outcome and feed a subsequent iteration.

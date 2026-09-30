@@ -11,13 +11,15 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyCodegenUsage = "usage: gooo body-codegen [--json] [--sample-seed <seed>] --activity <name> <file.gooo>"
+const bodyCodegenUsage = "usage: gooo body-codegen [--json] " +
+	"[--sample-seed <seed> | --fill-plan <plan.json>] --activity <name> <file.gooo>"
 
 func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	jsonMode := false
 	activity := ""
 	sampleSeed := ""
 	sampleSeedSet := false
+	fillPlanPath := ""
 	filename := ""
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
@@ -31,12 +33,21 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 			activity = args[index+1]
 			index++
 		case "--sample-seed":
-			if sampleSeedSet || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
+			if sampleSeedSet || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" ||
+				strings.HasPrefix(args[index+1], "-") {
 				fmt.Fprintln(stderr, bodyCodegenUsage)
 				return exitUsage
 			}
 			sampleSeed = args[index+1]
 			sampleSeedSet = true
+			index++
+		case "--fill-plan":
+			if fillPlanPath != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" ||
+				strings.HasPrefix(args[index+1], "-") {
+				fmt.Fprintln(stderr, bodyCodegenUsage)
+				return exitUsage
+			}
+			fillPlanPath = args[index+1]
 			index++
 		default:
 			if strings.HasPrefix(args[index], "-") || filename != "" {
@@ -46,7 +57,7 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 			filename = args[index]
 		}
 	}
-	if activity == "" || filename == "" {
+	if activity == "" || filename == "" || (sampleSeedSet && fillPlanPath != "") {
 		fmt.Fprintln(stderr, bodyCodegenUsage)
 		return exitUsage
 	}
@@ -54,7 +65,34 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 	if err != nil {
 		return reportBodyCodegenFailure(jsonMode, filename, activity, nil, err, stdout, stderr)
 	}
-	result, err := bodycodegen.GenerateWithPlannerAndSampleSeed(context.Background(), filename, source, activity, os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"), sampleSeed)
+	var result bodycodegen.Result
+	if fillPlanPath != "" {
+		planBytes, readErr := reader.ReadFile(fillPlanPath)
+		if readErr != nil {
+			return reportBodyCodegenFailure(jsonMode, fillPlanPath, activity, planBytes, readErr, stdout, stderr)
+		}
+		var plan bodycodegen.IRBodyFillPlan
+		decoder := json.NewDecoder(strings.NewReader(string(planBytes)))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&plan); err != nil {
+			return reportBodyCodegenFailure(jsonMode, fillPlanPath, activity, planBytes, err, stdout, stderr)
+		}
+		if err := decoder.Decode(&struct{}{}); err != io.EOF {
+			if err == nil {
+				err = fmt.Errorf("multiple JSON values in IR body-fill plan")
+			}
+			return reportBodyCodegenFailure(jsonMode, fillPlanPath, activity, planBytes, err, stdout, stderr)
+		}
+		result, err = bodycodegen.GenerateWithIRBodyFill(
+			context.Background(), filename, source, activity, plan,
+			os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"),
+		)
+	} else {
+		result, err = bodycodegen.GenerateWithPlannerAndSampleSeed(
+			context.Background(), filename, source, activity,
+			os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"), sampleSeed,
+		)
+	}
 	if err != nil {
 		return reportBodyCodegenFailure(jsonMode, filename, activity, source, err, stdout, stderr)
 	}

@@ -46,13 +46,14 @@ type CompletenessReceipt struct {
 }
 
 type completenessPlanIdentity struct {
-	ProfileID     string `json:"profile_id"`
-	Activity      string `json:"activity"`
-	ActivityID    string `json:"activity_id"`
-	InputType     string `json:"input_type"`
-	OutputType    string `json:"output_type"`
-	SourceDigest  string `json:"source_digest"`
-	ProgramDigest string `json:"program_digest"`
+	ProfileID          string `json:"profile_id"`
+	Activity           string `json:"activity"`
+	ActivityID         string `json:"activity_id"`
+	InputType          string `json:"input_type"`
+	OutputType         string `json:"output_type"`
+	SourceDigest       string `json:"source_digest"`
+	ProgramDigest      string `json:"program_digest"`
+	BodyFillPlanSHA256 string `json:"body_fill_plan_sha256,omitempty"`
 }
 
 func buildCompletenessReceipt(report Report, failure string) *CompletenessReceipt {
@@ -63,6 +64,12 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 	planSHA := report.PlanSHA256
 	if planSHA == "" {
 		planSHA = completenessPlanSHA(report)
+	}
+	layaMode := report.RouteDecision.Mode
+	layaProvider := report.RouteDecision.Provider
+	if report.BodyFill != nil {
+		layaMode = report.BodyFill.Decision.Mode
+		layaProvider = report.BodyFill.Decision.Provider
 	}
 
 	generationReason := "Measures whether this accepted activity produced a digest-bound Go projection."
@@ -131,6 +138,20 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		"provenance_integrity", "repository_write_boundary", "route_choice_protocol",
 		"route_semantic_equivalence", "source_ast_coverage", "typecheck_coverage",
 	}
+	allowedInvestment := "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required"
+	if fill := report.BodyFill; fill != nil {
+		dimension := completenessDimension("declared_suite_functional_accuracy", fill.TestCasesPassed, fill.TestCasesTotal,
+			"declared test cases matched by the emitted body in the bounded AST evaluator",
+			"Measures the declared selection suite only; held-out behavior, generated-package execution, and full-domain correctness require separate evidence.",
+			[]string{"body_fill.evaluator:" + fill.Evaluator, "body_fill.test_suite_sha256:" + fill.TestSuiteSHA256,
+				"body_fill.ir_plan_sha256:" + fill.IRPlanSHA256, "generated_digest:" + report.GeneratedDigest}, false)
+		if fill.TestCasesTotal > 0 && fill.TestCasesPassed == 0 {
+			dimension.Status = "PROGRESS"
+		}
+		dimensions = append(dimensions, dimension)
+		core = append(core, dimension.ID)
+		allowedInvestment = "compiler-controlled assembly from declared expression candidates, measured finite-suite scores, and an optional Laya proposal; no human approval or authorization is required"
+	}
 	sort.Strings(core)
 	counts := map[string]int{"PASS": 0, "PROGRESS": 0, "UNKNOWN": 0, "FAIL_CLOSED": 0}
 	byID := make(map[string]CompletenessDimension, len(dimensions))
@@ -177,15 +198,15 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 	return &CompletenessReceipt{
 		Schema: completenessReceiptSchema, ProfileID: "gooo/body-codegen-pure-v1",
 		Decision:      decision,
-		DecisionBasis: "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; UNKNOWN dimensions remain explicit and are never aggregated",
+		DecisionBasis: "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
 		Scope: map[string]any{
 			"domain_scope":       "one pure typed Gooo activity body in the closed body-codegen profile, with one Integer, Boolean, or Text input and one supported scalar result",
-			"allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+			"allowed_investment": allowedInvestment,
 			"excluded_scope":     []string{"unstated natural-language intent", "independently sourced production workflows", "generated runtime behavior", "unrestricted Gooo body syntax", "route clarity or utility"},
 			"plan_sha256":        planSHA, "compiler_source_sha": compilerSHA,
 			"toolchain": runtime.Version(), "execution_environment": runtime.GOOS + "/" + runtime.GOARCH,
 			"input_type": report.InputType, "output_type": report.OutputType,
-			"laya_mode": report.RouteDecision.Mode, "laya_provider": report.RouteDecision.Provider,
+			"laya_mode": layaMode, "laya_provider": layaProvider,
 			"system_budget":        map[string]int{"maximum_human_actions": 0, "maximum_repository_writes": 0},
 			"observed_system_cost": map[string]int{"human_actions": 0, "repository_writes": report.RepositoryWrites},
 			"boundary":             map[string]any{"non_executing": true, "non_authorizing": true, "excluded_effects": []string{"generated code execution", "repository mutation", "external authority"}},
@@ -205,10 +226,15 @@ func populateCompletenessReceipt(report *Report, failure string) {
 }
 
 func completenessPlanSHA(report Report) string {
+	fillPlanSHA256 := ""
+	if report.BodyFill != nil {
+		fillPlanSHA256 = report.BodyFill.IRPlanSHA256
+	}
 	planBytes, _ := json.Marshal(completenessPlanIdentity{
 		ProfileID: "gooo/body-codegen-pure-v1", Activity: report.Activity,
 		ActivityID: report.ActivityID, InputType: report.InputType, OutputType: report.OutputType,
 		SourceDigest: report.SourceDigest, ProgramDigest: report.ProgramDigest,
+		BodyFillPlanSHA256: fillPlanSHA256,
 	})
 	return digest(planBytes)
 }
@@ -267,52 +293,67 @@ func provenanceDimension(report Report, compilerSHA string) CompletenessDimensio
 }
 
 func networkBoundaryDimension(report Report) CompletenessDimension {
-	noProviderCall := report.RouteDecision.Mode == "deterministic_fallback" &&
-		(report.RouteDecision.FallbackReason == "NOT_CONFIGURED" || report.RouteDecision.FallbackReason == "NO_ALTERNATIVE_ROUTE")
+	decision := report.RouteDecision
+	if report.BodyFill != nil {
+		decision = report.BodyFill.Decision
+	}
+	noProviderCall := decision.Mode == "deterministic_fallback" &&
+		(decision.FallbackReason == "NOT_CONFIGURED" || decision.FallbackReason == "NO_ALTERNATIVE_ROUTE")
 	numerator := boolCount(noProviderCall)
 	return completenessDimension("external_network_boundary", numerator, 1,
 		"runs with no Laya provider request", "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
-		[]string{"route_decision.mode:" + report.RouteDecision.Mode, "route_decision.provider:" + report.RouteDecision.Provider,
-			"route_decision.fallback_reason:" + report.RouteDecision.FallbackReason}, false)
+		[]string{"decision.mode:" + decision.Mode, "decision.provider:" + decision.Provider,
+			"decision.fallback_reason:" + decision.FallbackReason}, false)
 }
 
 func layaObservationDimension(report Report) CompletenessDimension {
 	eligible := len(report.CandidateRoutes) > 1
-	observed := eligible && report.RouteDecision.Mode == "laya"
+	decision := report.RouteDecision
+	unit := "eligible multi-route Laya decisions"
+	evidence := []string{"candidate_routes", "route_decision.mode:" + decision.Mode,
+		"route_decision.request_sha256:" + decision.RequestSHA256,
+		"route_decision.model_revision:" + decision.ModelRevision}
+	if report.BodyFill != nil {
+		eligible = len(report.BodyFill.CandidateScores) > 1
+		decision = report.BodyFill.Decision
+		unit = "eligible IR body-fill decisions"
+		evidence = []string{"body_fill.candidate_scores", "body_fill.decision.mode:" + decision.Mode,
+			"body_fill.decision.request_sha256:" + decision.RequestSHA256,
+			"body_fill.decision.model_revision:" + decision.ModelRevision}
+	}
+	observed := eligible && decision.Mode == "laya"
 	numerator, denominator := 0, 0
 	if eligible {
 		denominator = 1
 		numerator = boolCount(observed)
 	}
 	return completenessDimension("laya_decision_observation", numerator, denominator,
-		"eligible multi-route Laya decisions", "Records a model choice only when the source shape has multiple compiler-approved routes and the Laya provider supplied the decision.",
-		[]string{"candidate_routes", "route_decision.mode:" + report.RouteDecision.Mode,
-			"route_decision.request_sha256:" + report.RouteDecision.RequestSHA256,
-			"route_decision.model_revision:" + report.RouteDecision.ModelRevision}, false)
+		unit, "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.", evidence, false)
 }
 
 func nextCompletenessOperation(id string) string {
 	operations := map[string]string{
-		"declaration_coverage":         "BIND_THE_REQUESTED_ACTIVITY_TO_A_STABLE_SOURCE_ID",
-		"generation_coverage":          "REPAIR_OR_REGENERATE_THE_ACTIVITY_PROJECTION",
-		"source_ast_coverage":          "LOWER_EVERY_ACCEPTED_SOURCE_AST_UNIT_OR_FAIL_CLOSED",
-		"route_semantic_equivalence":   "REPAIR_THE_SELECTED_ROUTE_OR_ITS_SEMANTIC_WITNESS",
-		"typecheck_coverage":           "REPAIR_GENERATED_GO_TYPE_ERRORS",
-		"internal_replay_coverage":     "REPLAY_THE_SELECTED_EMISSION_AND_COMPARE_DIGESTS",
-		"route_choice_protocol":        "SELECT_ONLY_FROM_THE_COMPILER_DECLARED_CANDIDATE_SET",
-		"provenance_integrity":         "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION",
-		"boundary_coverage":            "KEEP_CODEGEN_NON_EXECUTING_NON_AUTHORIZING_AND_ZERO_WRITE",
-		"execution_boundary":           "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER",
-		"permission_boundary":          "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY",
-		"external_network_boundary":    "RECORD_AND_AUDIT_THE_CONFIGURED_PROVIDER_NETWORK_SCOPE",
-		"laya_decision_observation":    "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION",
-		"use_case_coverage":            "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES",
-		"reverse_observation_coverage": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS",
-		"full_domain_semantics":        "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE",
-		"route_quality":                "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE",
-		"resource_observation":         "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS",
-		"resource_baseline_comparison": "BIND_A_COMPATIBLE_RESOURCE_BASELINE",
-		"semantic_profile_delta":       "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS",
+		"declared_suite_functional_accuracy": "EXPAND_OR_REPAIR_BODY_CANDIDATES_AGAINST_DECLARED_TESTS_AND_VALIDATE_HELD_OUT_BEHAVIOR",
+		"declaration_coverage":               "BIND_THE_REQUESTED_ACTIVITY_TO_A_STABLE_SOURCE_ID",
+		"generation_coverage":                "REPAIR_OR_REGENERATE_THE_ACTIVITY_PROJECTION",
+		"source_ast_coverage":                "LOWER_EVERY_ACCEPTED_SOURCE_AST_UNIT_OR_FAIL_CLOSED",
+		"route_semantic_equivalence":         "REPAIR_THE_SELECTED_ROUTE_OR_ITS_SEMANTIC_WITNESS",
+		"typecheck_coverage":                 "REPAIR_GENERATED_GO_TYPE_ERRORS",
+		"internal_replay_coverage":           "REPLAY_THE_SELECTED_EMISSION_AND_COMPARE_DIGESTS",
+		"route_choice_protocol":              "SELECT_ONLY_FROM_THE_COMPILER_DECLARED_CANDIDATE_SET",
+		"provenance_integrity":               "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION",
+		"boundary_coverage":                  "KEEP_CODEGEN_NON_EXECUTING_NON_AUTHORIZING_AND_ZERO_WRITE",
+		"execution_boundary":                 "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER",
+		"permission_boundary":                "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY",
+		"external_network_boundary":          "RECORD_AND_AUDIT_THE_CONFIGURED_PROVIDER_NETWORK_SCOPE",
+		"laya_decision_observation":          "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION",
+		"use_case_coverage":                  "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES",
+		"reverse_observation_coverage":       "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS",
+		"full_domain_semantics":              "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE",
+		"route_quality":                      "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE",
+		"resource_observation":               "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS",
+		"resource_baseline_comparison":       "BIND_A_COMPATIBLE_RESOURCE_BASELINE",
+		"semantic_profile_delta":             "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS",
 	}
 	return operations[id]
 }
