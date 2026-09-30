@@ -161,16 +161,12 @@ func consumeJSONDelimiter(decoder *json.Decoder, expected json.Delim) error {
 		return err
 	}
 	if end != expected {
-		return fmt.Errorf("unterminated JSON %s", jsonContainerName(expected))
+		if expected == '}' {
+			return fmt.Errorf("unterminated JSON object")
+		}
+		return fmt.Errorf("unterminated JSON array")
 	}
 	return nil
-}
-
-func jsonContainerName(delimiter json.Delim) string {
-	if delimiter == '}' {
-		return "object"
-	}
-	return "array"
 }
 
 // IRBodySearchExternalFeedbackReceipt records local provenance bindings and
