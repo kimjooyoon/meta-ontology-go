@@ -10,7 +10,7 @@ on:
     branches:
       - dev
       - main
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
   workflow_dispatch:
     inputs:
       promotion_pr_number:
@@ -343,6 +343,8 @@ jobs:
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Test automatic promotion protocol
+        run: node --test scripts/ci-automatic-promotion/promotion.test.js
       - name: Record CI event source
         env:
           CI_EVENT: ${{ github.event_name }}
