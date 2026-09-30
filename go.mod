@@ -12,3 +12,5 @@ tool (
 	github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter
 	github.com/kimjooyoon/meta-ontology-go/scripts/verify
 )
+
+require github.com/kimjooyoon/gooo-decision-runtime v0.1.1-experimental

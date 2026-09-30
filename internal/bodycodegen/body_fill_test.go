@@ -228,6 +228,10 @@ func TestGenerateWithIRBodyFillTimesOutWithoutDeadlockAndUsesFallback(t *testing
 		result.Report.BodyFill.Decision.FallbackReason != "PROVIDER_UNAVAILABLE" {
 		t.Fatalf("timeout did not produce a deterministic fallback receipt: %#v", result.Report.BodyFill)
 	}
+	timing := result.Report.BodyFill.Timing
+	if timing.LayaDecisionMS != 0 || timing.TinyDecisionMS != 0 || timing.ProviderDecisionMS < 50 {
+		t.Fatalf("failed Laya request timing was attributed incorrectly: %#v", timing)
+	}
 	if result.Report.BodyFill.SelectedCandidateID != "zero" || result.Report.BodyFill.FunctionalAccuracyPct != 100 {
 		t.Fatalf("fallback did not emit and score the declared first candidate: %#v", result.Report.BodyFill)
 	}
@@ -261,6 +265,10 @@ func TestGenerateWithIRBodyFillWithoutLayaIsDeterministic(t *testing.T) {
 		first.Report.BodyFill.FunctionalAccuracyPct != 100 ||
 		first.Report.BodyFill.SelectionAdjustment != "replaced_with_best_scoring_candidate" {
 		t.Fatalf("disconnected provider fallback reason = %q", first.Report.BodyFill.Decision.FallbackReason)
+	}
+	timing := first.Report.BodyFill.Timing
+	if timing.LayaDecisionMS != 0 || timing.TinyDecisionMS != 0 || timing.ProviderDecisionMS <= 0 {
+		t.Fatalf("disconnected fallback timing was attributed to a model: %#v", timing)
 	}
 }
 

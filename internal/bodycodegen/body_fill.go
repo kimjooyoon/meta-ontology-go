@@ -25,14 +25,15 @@ const bodyFillEvaluator = "gooo/bodycodegen-int64-ast-interpreter/v2"
 const irBodyFillDecisionBudget = 8 * time.Second
 
 // IRBodyFillPlan supplies finite, typed expression candidates for one explicit
-// hole in a Gooo activity body. Gooo owns the body skeleton and emitter; Laya
-// may choose only one of these expressions.
+// hole in a Gooo activity body. Gooo owns the body skeleton and emitter; an
+// optional decision provider may choose only one of these expressions.
 type IRBodyFillPlan struct {
-	Schema     string                `json:"schema"`
-	Intent     string                `json:"intent"`
-	HoleID     string                `json:"hole_id"`
-	Candidates []IRBodyFillCandidate `json:"candidates"`
-	TestCases  []IRBodyFillTestCase  `json:"test_cases"`
+	Schema        string                `json:"schema"`
+	Intent        string                `json:"intent"`
+	HoleID        string                `json:"hole_id"`
+	ProviderModel string                `json:"provider_model,omitempty"`
+	Candidates    []IRBodyFillCandidate `json:"candidates"`
+	TestCases     []IRBodyFillTestCase  `json:"test_cases"`
 }
 
 type IRBodyFillCandidate struct {
@@ -82,38 +83,44 @@ type IRBodyFillCaseResult struct {
 }
 
 type IRBodyFillTiming struct {
-	IRPlanBuildMS   float64 `json:"ir_plan_build_ms"`
-	LayaDecisionMS  float64 `json:"laya_decision_ms"`
-	FinalEmissionMS float64 `json:"final_emission_ms"`
-	TotalMS         float64 `json:"total_ms"`
-	ExecutionModel  string  `json:"execution_model"`
-	DecisionStage   string  `json:"decision_stage"`
+	IRPlanBuildMS      float64  `json:"ir_plan_build_ms"`
+	TinyModelLoadMS    *float64 `json:"tiny_model_load_ms,omitempty"`
+	ProviderDecisionMS float64  `json:"provider_decision_ms"`
+	LayaDecisionMS     float64  `json:"laya_decision_ms"`
+	TinyDecisionMS     float64  `json:"tiny_decision_ms"`
+	FinalEmissionMS    float64  `json:"final_emission_ms"`
+	TotalMS            float64  `json:"total_ms"`
+	ExecutionModel     string   `json:"execution_model"`
+	DecisionStage      string   `json:"decision_stage"`
 }
 
 type IRBodyFillReceipt struct {
-	Schema                string                     `json:"schema"`
-	Intent                string                     `json:"intent"`
-	HoleID                string                     `json:"hole_id"`
-	HoleToken             string                     `json:"hole_token"`
-	IRPlanSHA256          string                     `json:"ir_plan_sha256"`
-	ProposedCandidateID   string                     `json:"proposed_candidate_id"`
-	ProposedAccuracyPct   float64                    `json:"proposed_accuracy_percent"`
-	SelectedCandidateID   string                     `json:"selected_candidate_id"`
-	SelectedExpression    string                     `json:"selected_expression"`
-	BestCandidateID       string                     `json:"best_candidate_id"`
-	BestAccuracyPercent   float64                    `json:"best_candidate_accuracy_percent"`
-	SelectionRegretPP     float64                    `json:"selection_regret_percentage_points"`
-	SelectionAdjustment   string                     `json:"selection_adjustment"`
-	Decision              decisionroute.Receipt      `json:"decision"`
-	CandidateScores       []IRBodyFillCandidateScore `json:"candidate_scores"`
-	TestSuiteSHA256       string                     `json:"test_suite_sha256"`
-	TestCasesPassed       int                        `json:"test_cases_passed"`
-	TestCasesTotal        int                        `json:"test_cases_total"`
-	FunctionalAccuracyPct float64                    `json:"functional_accuracy_percent"`
-	Evaluator             string                     `json:"evaluator"`
-	SelectedCaseResults   []IRBodyFillCaseResult     `json:"selected_case_results"`
-	AccuracyScope         string                     `json:"accuracy_scope"`
-	Timing                IRBodyFillTiming           `json:"timing"`
+	Schema                     string                     `json:"schema"`
+	Intent                     string                     `json:"intent"`
+	HoleID                     string                     `json:"hole_id"`
+	HoleToken                  string                     `json:"hole_token"`
+	IRPlanSHA256               string                     `json:"ir_plan_sha256"`
+	ProposedCandidateID        string                     `json:"proposed_candidate_id"`
+	ProposedAccuracyPct        float64                    `json:"proposed_accuracy_percent"`
+	SelectedCandidateID        string                     `json:"selected_candidate_id"`
+	SelectedExpression         string                     `json:"selected_expression"`
+	BestCandidateID            string                     `json:"best_candidate_id"`
+	BestAccuracyPercent        float64                    `json:"best_candidate_accuracy_percent"`
+	SelectionRegretPP          float64                    `json:"selection_regret_percentage_points"`
+	SelectionAdjustment        string                     `json:"selection_adjustment"`
+	Decision                   decisionroute.Receipt      `json:"decision"`
+	CandidateScores            []IRBodyFillCandidateScore `json:"candidate_scores"`
+	TestSuiteSHA256            string                     `json:"test_suite_sha256"`
+	TestCasesPassed            int                        `json:"test_cases_passed"`
+	TestCasesTotal             int                        `json:"test_cases_total"`
+	FunctionalAccuracyPct      float64                    `json:"functional_accuracy_percent"`
+	LocalModelPredictions      int                        `json:"local_model_predictions"`
+	ExternalProviderCalls      int                        `json:"external_provider_calls"`
+	ExternalProviderCallsKnown bool                       `json:"external_provider_calls_known"`
+	Evaluator                  string                     `json:"evaluator"`
+	SelectedCaseResults        []IRBodyFillCaseResult     `json:"selected_case_results"`
+	AccuracyScope              string                     `json:"accuracy_scope"`
+	Timing                     IRBodyFillTiming           `json:"timing"`
 }
 
 type irBodyFillState struct {
@@ -132,9 +139,10 @@ type irBodyFillState struct {
 }
 
 // GenerateWithIRBodyFill builds the typed hole plan synchronously from a Gooo
-// activity, calls Laya once after that plan is complete, fills the hole from
-// the declared candidate set, and only then emits the final Go projection.
-// The v1 experiment is intentionally limited to one Integer -> Integer hole.
+// activity, calls the existing Laya/default path once after that plan is
+// complete, fills the hole from the declared candidate set, and only then emits
+// the final Go projection. The v1 experiment is limited to one Integer ->
+// Integer hole.
 func GenerateWithIRBodyFill(
 	ctx context.Context,
 	filename string,
@@ -143,9 +151,56 @@ func GenerateWithIRBodyFill(
 	plan IRBodyFillPlan,
 	endpoint, apiKey string,
 ) (Result, error) {
+	return GenerateWithIRBodyFillWithOptions(ctx, filename, source, activityName, plan, endpoint, apiKey, IRBodyFillOptions{})
+}
+
+// GenerateWithIRBodyFillWithOptions preserves the legacy Laya path when
+// TinyGoProvider is nil and adds an explicit opt-in local model path otherwise.
+func GenerateWithIRBodyFillWithOptions(
+	ctx context.Context,
+	filename string,
+	source []byte,
+	activityName string,
+	plan IRBodyFillPlan,
+	endpoint, apiKey string,
+	options IRBodyFillOptions,
+) (Result, error) {
+	var tinyProvider tinyGoBodyFillResolver
+	if options.TinyGoProvider != nil {
+		tinyProvider = options.TinyGoProvider
+	}
+	return generateWithIRBodyFillOptions(ctx, filename, source, activityName, plan, endpoint, apiKey,
+		options, tinyProvider)
+}
+
+func generateWithIRBodyFillOptions(
+	ctx context.Context,
+	filename string,
+	source []byte,
+	activityName string,
+	plan IRBodyFillPlan,
+	endpoint, apiKey string,
+	options IRBodyFillOptions,
+	tinyProvider tinyGoBodyFillResolver,
+) (Result, error) {
 	totalStarted := time.Now()
+	if ctx == nil {
+		return Result{}, fmt.Errorf("body-fill context is required")
+	}
+	usingTinyGo := tinyProvider != nil
+	if usingTinyGo {
+		if err := ctx.Err(); err != nil {
+			return Result{}, err
+		}
+	}
 	if err := validateIRBodyFillPlan(plan); err != nil {
 		return Result{}, err
+	}
+	if err := decisionroute.ValidateProviderModel(plan.ProviderModel); err != nil {
+		return Result{}, fmt.Errorf("body-fill provider model: %w", err)
+	}
+	if usingTinyGo && (endpoint != "" || apiKey != "" || plan.ProviderModel != "") {
+		return Result{}, fmt.Errorf("tiny_go body fill cannot be combined with Laya endpoint, API key, or provider model")
 	}
 	file, diagnostics := syntax.ParseFile(filename, string(source))
 	if diagnostics.HasErrors() {
@@ -234,33 +289,71 @@ func GenerateWithIRBodyFill(
 	if err != nil {
 		return Result{}, fmt.Errorf("encode Gooo IR body-fill state: %w", err)
 	}
-	options := make([]decisionroute.Option, 0, len(plan.Candidates))
-	for _, candidate := range plan.Candidates {
-		score := scoreByID(scores, candidate.ID)
-		options = append(options, decisionroute.Option{
-			ID: candidate.ID,
-			Description: fmt.Sprintf("Emit exactly this expression: %s. It passes %d of %d declared test cases (%.2f%%).",
-				candidate.Expression, score.TestCasesPassed, score.TestCasesTotal, score.AccuracyPercent),
-		})
+	requestOptions := make([]decisionroute.Option, 0, len(plan.Candidates))
+	if usingTinyGo {
+		requestOptions, err = tinyGoBodyFillOptions(plan.Candidates)
+		if err != nil {
+			return Result{}, err
+		}
+	} else {
+		for _, candidate := range plan.Candidates {
+			score := scoreByID(scores, candidate.ID)
+			requestOptions = append(requestOptions, decisionroute.Option{
+				ID: candidate.ID,
+				Description: fmt.Sprintf("Emit exactly this expression: %s. It passes %d of %d declared test cases (%.2f%%).",
+					candidate.Expression, score.TestCasesPassed, score.TestCasesTotal, score.AccuracyPercent),
+			})
+		}
 	}
 	request := decisionroute.Request{
 		Schema: decisionroute.RequestSchema, State: string(stateBytes),
+		ProviderModel: plan.ProviderModel,
 		Question: decisionroute.Question{
 			ID: "body_ir_fill",
 			Instructions: "Fill the single typed expression hole in the supplied Gooo body IR. " +
 				"Choose only a listed candidate. " +
 				"Use the intent and declared test evidence; do not invent code or modify any other IR node.",
-			Options: options,
+			Options: requestOptions,
 		},
 		Fallback: plan.Candidates[0].ID,
 	}
+	if usingTinyGo {
+		request.Intent = plan.Intent
+	}
+	if usingTinyGo {
+		if err := ctx.Err(); err != nil {
+			return Result{}, err
+		}
+	}
 	decisionStarted := time.Now()
 	decisionContext, cancel := context.WithTimeout(ctx, irBodyFillDecisionBudget)
-	decision, err := decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
+	var decision decisionroute.Receipt
+	if usingTinyGo {
+		decision, err = tinyProvider.Resolve(decisionContext, request)
+	} else {
+		decision, err = decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
+	}
 	cancel()
 	decisionMS := float64(time.Since(decisionStarted)) / float64(time.Millisecond)
 	if err != nil {
 		return Result{}, fmt.Errorf("select Gooo IR body-fill candidate: %w", err)
+	}
+	if usingTinyGo && decision.Provider != decisionroute.ProviderTinyGo {
+		return Result{}, fmt.Errorf("tiny_go chooser returned provider %q", decision.Provider)
+	}
+	if usingTinyGo {
+		expectedRequestSHA256, validateErr := decisionroute.Validate(request)
+		if validateErr != nil {
+			return Result{}, fmt.Errorf("validate typed tiny_go request: %w", validateErr)
+		}
+		if !validTinyGoDecisionReceipt(decision, expectedRequestSHA256) {
+			return Result{}, fmt.Errorf("tiny_go chooser returned incomplete or mismatched model provenance")
+		}
+	}
+	if usingTinyGo {
+		if err := ctx.Err(); err != nil {
+			return Result{}, err
+		}
 	}
 	proposed, ok := candidateByID(plan.Candidates, decision.Selected)
 	if !ok {
@@ -290,6 +383,16 @@ func GenerateWithIRBodyFill(
 		return Result{}, fmt.Errorf("evaluate selected generated body: %w", err)
 	}
 	accuracy := float64(passed) * 100 / float64(len(plan.TestCases))
+	localPredictions, externalCalls, externalCallsKnown := bodyFillProviderAccounting(decision)
+	tinyDecisionMS, layaDecisionMS := 0.0, 0.0
+	var tinyModelLoadMS *float64
+	switch decision.Provider {
+	case decisionroute.ProviderTinyGo:
+		tinyDecisionMS = decisionMS
+		tinyModelLoadMS = options.TinyModelLoadMS
+	case "laya":
+		layaDecisionMS = decisionMS
+	}
 	planBytes, _ := json.Marshal(plan)
 	result.Report.BodyFill = &IRBodyFillReceipt{
 		Schema: bodyFillPlanSchema, Intent: plan.Intent, HoleID: plan.HoleID,
@@ -302,11 +405,15 @@ func GenerateWithIRBodyFill(
 		Decision:            decision, CandidateScores: scores,
 		TestSuiteSHA256: testSuiteSHA256, TestCasesPassed: passed,
 		TestCasesTotal: len(plan.TestCases), FunctionalAccuracyPct: accuracy,
-		Evaluator:           bodyFillEvaluator,
-		SelectedCaseResults: caseResults,
-		AccuracyScope:       "exact observed accuracy over the declared finite test suite; not a full-domain proof",
+		LocalModelPredictions: localPredictions, ExternalProviderCalls: externalCalls,
+		ExternalProviderCallsKnown: externalCallsKnown,
+		Evaluator:                  bodyFillEvaluator,
+		SelectedCaseResults:        caseResults,
+		AccuracyScope:              "exact observed accuracy over the declared finite test suite; not a full-domain proof",
 		Timing: IRBodyFillTiming{
-			IRPlanBuildMS: planBuildMS, LayaDecisionMS: decisionMS,
+			IRPlanBuildMS: planBuildMS, TinyModelLoadMS: tinyModelLoadMS,
+			ProviderDecisionMS: decisionMS,
+			LayaDecisionMS:     layaDecisionMS, TinyDecisionMS: tinyDecisionMS,
 			FinalEmissionMS: emissionMS,
 			TotalMS:         float64(time.Since(totalStarted)) / float64(time.Millisecond),
 			ExecutionModel:  "synchronous_sequential_no_background_codegen_goroutines",
