@@ -46,9 +46,19 @@ func TestIRBodySearchCallerCancellationStopsProviderRound(t *testing.T) {
 	case err := <-done:
 		var failure *IRBodySearchError
 		if !errors.Is(err, context.Canceled) || !errors.As(err, &failure) || failure.Receipt.StopReason != "CALLER_CANCELLED" ||
-			len(failure.Receipt.Attempts) != 0 {
+			len(failure.Receipt.Attempts) != 0 || failure.Receipt.AttemptedCandidates != 0 || failure.Receipt.ProviderOperations != 1 {
 			t.Fatalf("caller cancellation became a fallback or scored attempt: %v", err)
 		}
+		completeness := SearchFailureCompletenessReceipt("ClampNegativeToZero", source, err.Error(), failure.Receipt)
+		for _, dimension := range completeness.Dimensions {
+			if dimension.ID == "external_network_boundary" {
+				if dimension.Status != "UNKNOWN" {
+					t.Fatalf("canceled provider operation was reported as a proven no-network run: %#v", dimension)
+				}
+				return
+			}
+		}
+		t.Fatal("external network boundary dimension is missing")
 	case <-time.After(5 * time.Second):
 		t.Fatal("caller cancellation did not stop the search")
 	}
@@ -75,7 +85,7 @@ func TestIRBodySearchSharedProviderBudgetSkipsLaterNetworkRounds(t *testing.T) {
 		t.Fatal(err)
 	}
 	receipt := result.Report.BodySearch
-	if calls.Load() != 1 || receipt.SelectedCandidateID != "zero" || len(receipt.Attempts) != 2 ||
+	if calls.Load() != 1 || receipt.SelectedCandidateID != "zero" || len(receipt.Attempts) != 2 || receipt.ProviderOperations != 1 ||
 		receipt.ProviderBudgetMS != 250 || receipt.ProviderBudgetUsedMS <= 0 {
 		t.Fatalf("budget did not bound network rounds while preserving deterministic search: %#v, calls=%d", receipt, calls.Load())
 	}
@@ -84,6 +94,63 @@ func TestIRBodySearchSharedProviderBudgetSkipsLaterNetworkRounds(t *testing.T) {
 			t.Fatalf("in-flight or skipped budget exhaustion was mislabeled: %#v", attempt)
 		}
 	}
+}
+
+func TestIRBodySearchProviderOperationsCountConfiguredResolveRounds(t *testing.T) {
+	plan := irBodySearchPlan([]IRBodyFillCandidate{
+		{ID: "identity", Expression: "input"}, {ID: "zero", Expression: "0"}, {ID: "negate", Expression: "-input"},
+	}, []IRBodyFillTestCase{{Input: -1, Expected: 0}}, nil, 2)
+	var requests []searchRequestSnapshot
+	server := newIRBodySearchServer(t, func(call int, snapshot searchRequestSnapshot) string {
+		requests = append(requests, snapshot)
+		return []string{"identity", "zero"}[call]
+	})
+	defer server.Close()
+	result, err := GenerateWithIRBodySearch(context.Background(), "provider-operations.gooo", readIRBodySearchFixture(t),
+		"ClampNegativeToZero", plan, server.URL+"/v1/systemone", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodySearch
+	if len(requests) != 2 || receipt.ProviderOperations != 2 || len(receipt.Attempts) != 2 ||
+		receipt.AttemptedCandidates != 2 || receipt.EvaluatedCandidates != 2 || receipt.SelectedCandidateID != "zero" {
+		t.Fatalf("provider operation count does not match completed configured Resolve rounds: requests=%d receipt=%#v", len(requests), receipt)
+	}
+	for _, dimension := range result.Report.CompletenessReceipt.Dimensions {
+		if dimension.ID == "external_network_boundary" {
+			if dimension.Status != "UNKNOWN" {
+				t.Fatalf("configured provider operations were reported as a proven no-network run: %#v", dimension)
+			}
+			return
+		}
+	}
+	t.Fatal("external network boundary dimension is missing")
+}
+
+func TestIRBodySearchWhitespaceEndpointUsesNoProviderBudget(t *testing.T) {
+	plan := irBodySearchPlan([]IRBodyFillCandidate{{ID: "identity", Expression: "input"}, {ID: "zero", Expression: "0"}},
+		[]IRBodyFillTestCase{{Input: -1, Expected: 0}}, nil, 2)
+	result, err := GenerateWithIRBodySearch(context.Background(), "blank-endpoint.gooo", readIRBodySearchFixture(t),
+		"ClampNegativeToZero", plan, " \t\n ", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodySearch
+	if receipt.ProviderOperations != 0 || receipt.ProviderBudgetUsedMS != 0 || receipt.SelectedCandidateID != "zero" || len(receipt.Attempts) != 2 {
+		t.Fatalf("whitespace-only endpoint consumed provider operations or budget: %#v", receipt)
+	}
+	if decision := receipt.Attempts[0].Decision; decision == nil || decision.Mode != "deterministic_fallback" || decision.FallbackReason != "NOT_CONFIGURED" {
+		t.Fatalf("whitespace-only endpoint was not normalized to an unconfigured provider: %#v", decision)
+	}
+	for _, dimension := range result.Report.CompletenessReceipt.Dimensions {
+		if dimension.ID == "external_network_boundary" {
+			if dimension.Status != "PASS" {
+				t.Fatalf("whitespace-only endpoint did not establish zero provider operations: %#v", dimension)
+			}
+			return
+		}
+	}
+	t.Fatal("external network boundary dimension is missing")
 }
 
 func TestIRBodySearchFinalBodyMatchesCompiledGoOracle(t *testing.T) {
