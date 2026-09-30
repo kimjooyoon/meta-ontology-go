@@ -112,50 +112,58 @@ func TestRunBodyCodegenSearchFailsClosedForMalformedPlans(t *testing.T) {
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			reader := mapSourceReader{
-				"fixture.gooo":     []byte(bodySearchFixture),
-				"search-plan.json": []byte(test.plan),
-			}
-			var stdout, stderr bytes.Buffer
-			code := runBodyCodegen(
-				[]string{"--json", "--fill-search", "search-plan.json", "--activity", "ClampNegativeToZero", "fixture.gooo"},
-				reader, &stdout, &stderr,
-			)
-			var report struct {
-				Decision   string `json:"decision"`
-				Source     string `json:"source"`
-				BodySearch *struct {
-					TrainingAccuracyPercent *float64 `json:"training_accuracy_percent"`
-					AttemptedCandidates     int      `json:"attempted_candidates"`
-					EvaluatedCandidates     int      `json:"evaluated_candidates"`
-					Attempts                []struct {
-						ScoringCompleted bool     `json:"scoring_completed"`
-						AccuracyPercent  *float64 `json:"accuracy_percent"`
-					} `json:"attempts"`
-				} `json:"body_search"`
-			}
-			if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
-				t.Fatalf("search failure did not produce a JSON report: code=%d stdout=%q stderr=%q: %v", code, stdout.String(), stderr.String(), err)
-			}
-			if code != exitFailure || report.Decision != "FAIL_CLOSED" || report.Source != "" {
-				t.Fatalf("invalid search plan was not a closed failure: code=%d report=%#v stdout=%q stderr=%q", code, report, stdout.String(), stderr.String())
-			}
+			report := assertBodySearchPlanFailsClosed(t, test.plan)
 			if test.name == "all candidates invalid" {
-				// The report field is optional for failures before search starts,
-				// but an entered all-invalid search retains its diagnostic trace.
-				if report.BodySearch == nil {
-					t.Fatalf("all-invalid search did not retain its trace: %#v", report)
-				}
-				if report.BodySearch.AttemptedCandidates != 2 || report.BodySearch.EvaluatedCandidates != 0 ||
-					len(report.BodySearch.Attempts) != 2 || report.BodySearch.TrainingAccuracyPercent != nil {
-					t.Fatalf("all-invalid search counts do not separate attempts from completed scores: %#v", report.BodySearch)
-				}
-				for _, attempt := range report.BodySearch.Attempts {
-					if attempt.ScoringCompleted || attempt.AccuracyPercent != nil {
-						t.Fatalf("unscored invalid candidate received a completed score: %#v", attempt)
-					}
-				}
+				assertAllInvalidBodySearchTrace(t, report)
 			}
 		})
+	}
+}
+
+type bodySearchFailureReport struct {
+	Decision   string `json:"decision"`
+	Source     string `json:"source"`
+	BodySearch *struct {
+		TrainingAccuracyPercent *float64 `json:"training_accuracy_percent"`
+		AttemptedCandidates     int      `json:"attempted_candidates"`
+		EvaluatedCandidates     int      `json:"evaluated_candidates"`
+		Attempts                []struct {
+			ScoringCompleted bool     `json:"scoring_completed"`
+			AccuracyPercent  *float64 `json:"accuracy_percent"`
+		} `json:"attempts"`
+	} `json:"body_search"`
+}
+
+func assertBodySearchPlanFailsClosed(t *testing.T, plan string) bodySearchFailureReport {
+	t.Helper()
+	reader := mapSourceReader{"fixture.gooo": []byte(bodySearchFixture), "search-plan.json": []byte(plan)}
+	var stdout, stderr bytes.Buffer
+	code := runBodyCodegen(
+		[]string{"--json", "--fill-search", "search-plan.json", "--activity", "ClampNegativeToZero", "fixture.gooo"},
+		reader, &stdout, &stderr,
+	)
+	var report bodySearchFailureReport
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+		t.Fatalf("search failure did not produce JSON: code=%d stdout=%q stderr=%q: %v", code, stdout.String(), stderr.String(), err)
+	}
+	if code != exitFailure || report.Decision != "FAIL_CLOSED" || report.Source != "" {
+		t.Fatalf("invalid search plan was not closed: code=%d report=%#v stdout=%q stderr=%q", code, report, stdout.String(), stderr.String())
+	}
+	return report
+}
+
+func assertAllInvalidBodySearchTrace(t *testing.T, report bodySearchFailureReport) {
+	t.Helper()
+	if report.BodySearch == nil {
+		t.Fatalf("all-invalid search did not retain its trace: %#v", report)
+	}
+	if report.BodySearch.AttemptedCandidates != 2 || report.BodySearch.EvaluatedCandidates != 0 ||
+		len(report.BodySearch.Attempts) != 2 || report.BodySearch.TrainingAccuracyPercent != nil {
+		t.Fatalf("all-invalid counts do not separate attempts from scores: %#v", report.BodySearch)
+	}
+	for _, attempt := range report.BodySearch.Attempts {
+		if attempt.ScoringCompleted || attempt.AccuracyPercent != nil {
+			t.Fatalf("unscored invalid candidate received a completed score: %#v", attempt)
+		}
 	}
 }
