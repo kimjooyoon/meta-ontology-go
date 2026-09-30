@@ -257,6 +257,64 @@ body. The suffix keeps this experimental input outside the repository's fixed
 Later experiments can compare behavior across codegen routes without granting
 the model authority to produce code.
 
+### Reusing source-bound external training observations
+
+An `ir-search` plan may include an `external_training_feedback` object when a
+separate run produced actual results for the exact same DSL bytes and typed
+training cases. The Go API is `IRBodySearchPlan.ExternalTrainingFeedback
+*ExternalTrainingFeedback`; the JSON form is:
+
+```json
+{
+  "source_digest": "sha256:<lowercase hex of the original .gooo bytes>",
+  "training_suite_sha256": "sha256:<lowercase hex of canonical typed training cases>",
+  "candidate_id": "identity",
+  "observations": [
+    { "input": -2, "expected": 0, "actual": -2, "passed": false },
+    { "input": 1, "expected": 1, "actual": 1, "passed": true }
+  ]
+}
+```
+
+`source_digest` binds the exact original DSL byte sequence using the same
+`sha256:<hex>` notation as receipts. `training_suite_sha256` binds Go's
+canonical `encoding/json` encoding of the typed `[]IRBodyFillTestCase` in
+`test_cases`. An observation must name a declared training input and its exact
+expected value; duplicate inputs, holdout rows, stale digests, unknown
+candidates, and a `passed` value that disagrees with `actual == expected` are
+rejected before any provider call. There must be 1 through 4096 observations,
+and each observation must explicitly supply non-null `input`, `expected`,
+`actual`, and `passed` fields. The observation list contains measured values,
+not an attestation that a particular CI system produced them.
+
+External observations are advisory prior feedback. They are not authenticated
+CI proof, a semantic authority, or a score for this search invocation. Gooo
+does not score a candidate before asking the chooser; after a candidate is
+selected, Gooo typechecks and measures it against the current declared training
+cases as usual. Holdout cases cannot be supplied as external observations and
+remain withheld from the chooser. The chooser receives only the declared
+candidate ID and up to eight failing `{input, expected, actual}` triples, with
+`failed_cases_total` and `failed_cases_truncated`. The local receipt retains the
+feedback hash, both digest bindings, candidate ID, and observation/failure
+counts. With no provider endpoint, declared candidate order remains the
+deterministic selection rule even when feedback is attached.
+
+An optional `prompt_profile` selects the request packaging. Omission or an
+empty value keeps the legacy package, including its `training_suite_sha256`
+state field. The value `compact` omits that field whether or not external
+feedback is attached; compact requests use the same concise chooser
+instructions in both cases, so a comparison of compact prompts isolates the
+presence of external failure observations from packaging and wording changes.
+Compact model state contains no external digest strings. Other profile values
+are rejected before body selection or a provider call. The receipt echoes a
+non-empty `prompt_profile` for local provenance.
+
+The optional plan field `provider_model` is passed through to the typed
+decision request. Supported values are `english`, `multilingual`, and
+`typed-decisions`; omission or an empty value keeps the provider's automatic
+default. Any other value fails plan validation before source-body selection or
+a provider call.
+
 The text fixtures in `examples/body-codegen/` cover string equality and
 conditional results on the bounded Laya route, plus local assignment on the
 deterministic route. This adds scalar text behavior to the closed source-body
