@@ -45,6 +45,8 @@ type IRBodySearchAttempt struct {
 	EvaluationMS      float64                `json:"evaluation_ms"`
 }
 
+// IRBodySearchReceipt records candidate evidence and provider resolver activity.
+// ProviderOperations counts calls with an endpoint, including canceled calls, rather than HTTP requests.
 type IRBodySearchReceipt struct {
 	Schema                      string                 `json:"schema"`
 	IRPlanSHA256                string                 `json:"ir_plan_sha256"`
@@ -66,6 +68,7 @@ type IRBodySearchReceipt struct {
 	CandidateCount              int                    `json:"candidate_count"`
 	AttemptedCandidates         int                    `json:"attempted_candidates"`
 	EvaluatedCandidates         int                    `json:"evaluated_candidates"`
+	ProviderOperations          int                    `json:"provider_operations"`
 	UntestedCandidates          int                    `json:"untested_candidates"`
 	BestObservedAccuracyPercent *float64               `json:"best_observed_accuracy_percent"`
 	GlobalBestAccuracyPercent   *float64               `json:"global_best_accuracy_percent"`
@@ -112,6 +115,7 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	plan IRBodySearchPlan, endpoint, apiKey string, providerBudget time.Duration,
 ) (Result, error) {
 	started := time.Now()
+	endpoint = strings.TrimSpace(endpoint)
 	if err := validateIRBodySearchPlan(plan); err != nil {
 		return Result{}, err
 	}
@@ -165,6 +169,9 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 			cancel := func() {}
 			if url != "" {
 				decisionContext, cancel = context.WithTimeout(ctx, remainingProviderBudget)
+			}
+			if url != "" {
+				receipt.ProviderOperations++
 			}
 			decision, err := decisionroute.Resolve(decisionContext, request, url, apiKey)
 			budgetExpired := decisionContext.Err() == context.DeadlineExceeded

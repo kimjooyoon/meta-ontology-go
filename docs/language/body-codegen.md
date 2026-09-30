@@ -218,6 +218,14 @@ next model round is bounded: it includes at most the first eight failed
 training cases, along with `failed_cases_total` and `failed_cases_truncated`.
 The local receipt retains the complete case results.
 
+`provider_operations` counts resolver calls made with a nonblank endpoint,
+including a call canceled before a candidate attempt is recorded. It excludes
+sole-candidate selection and fallback after the shared provider budget is spent.
+This is not an HTTP request count: a resolver operation can also request provider
+health metadata. Whitespace-only endpoints behave as an unconfigured provider.
+The external-network completeness dimension uses this counter separately from
+completed candidate attempts.
+
 All provider rounds share one eight-second budget accumulated only during
 provider decision calls; `provider_budget_used_ms` reports the time charged to
 those calls. Plan parsing, candidate checking and scoring, the final training
