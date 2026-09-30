@@ -32,6 +32,7 @@ func TestRouteEquivalenceRetainsInnerGroupingAndOperandOrder(t *testing.T) {
 	for _, changed := range []string{
 		"input + 1 * 2 < 10",
 		"(input + 2) * 1 < 10",
+		"(1 + input) * 2 < 10",
 	} {
 		t.Run(changed, func(t *testing.T) {
 			body := "if (((input + 1) * 2 < 10)) { return 2 } else { return -1 }"
