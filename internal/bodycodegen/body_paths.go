@@ -31,6 +31,7 @@ type BodyPathReceipt struct {
 }
 
 type BodyPathTiming struct {
+	PlanPrepareMS   float64 `json:"plan_prepare_ms"`
 	SourceBindingMS float64 `json:"source_binding_ms"`
 	ModelLoadMS     float64 `json:"model_load_ms"`
 	BoundedSearchMS float64 `json:"bounded_search_ms"`
@@ -73,12 +74,16 @@ func GenerateWithTypedPaths(ctx context.Context, filename string, source []byte,
 	if err := ctx.Err(); err != nil {
 		return fail(err)
 	}
-	if err := document.Validate(); err != nil {
+	prepareStarted := time.Now()
+	prepared, err := document.Prepare()
+	receipt.Timing.PlanPrepareMS = elapsedMS(prepareStarted)
+	if err != nil {
 		return fail(err)
 	}
 	if document.Seed != "" && modelPath == "" {
 		return fail(fmt.Errorf("typed path sampling requires an explicit local model"))
 	}
+	bindingStarted := time.Now()
 	documentBytes, err := json.Marshal(document)
 	if err != nil || len(documentBytes) > 128<<10 {
 		return fail(fmt.Errorf("typed path document exceeds its byte budget"))
@@ -100,21 +105,14 @@ func GenerateWithTypedPaths(ctx context.Context, filename string, source []byte,
 		}
 	}
 	if activity == nil || !activity.ValueProgramPresent || len(activity.Inputs) != 1 ||
-		activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" || document.Plan.Base.Name != activityName {
+		activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" || prepared.ActivityName() != activityName {
 		return fail(fmt.Errorf("typed path plan must match one source Integer -> Integer activity"))
 	}
 	base, err := GenerateWithPlanner(ctx, filename, source, activityName, "", "")
 	if err != nil {
 		return fail(err)
 	}
-	defaults, err := pathplan.Validate(document.Plan)
-	if err != nil {
-		return fail(err)
-	}
-	fallback, err := pathplan.Compile(document.Plan, defaults)
-	if err != nil {
-		return fail(err)
-	}
+	fallback := prepared.Fallback()
 	fallbackBody, err := rewriteLetDeclarations(fallback.GoooBody())
 	if err != nil {
 		return fail(err)
@@ -134,7 +132,7 @@ func GenerateWithTypedPaths(ctx context.Context, filename string, source []byte,
 		return fail(fmt.Errorf("typed path fallback does not match the authoritative source body"))
 	}
 	receipt.SourceBaseMatched = true
-	receipt.Timing.SourceBindingMS = elapsedMS(started)
+	receipt.Timing.SourceBindingMS = elapsedMS(bindingStarted)
 	if err := ctx.Err(); err != nil {
 		return fail(err)
 	}
@@ -148,7 +146,7 @@ func GenerateWithTypedPaths(ctx context.Context, filename string, source []byte,
 		}
 	}
 	searchStarted := time.Now()
-	search, selected, err := pathplan.Search(ctx, document.Plan, model, document.TestCases, document.MaxAttempts, document.Seed)
+	search, selected, err := prepared.Search(ctx, model, document.TestCases, document.MaxAttempts, document.Seed)
 	receipt.Search = search
 	receipt.Timing.BoundedSearchMS = elapsedMS(searchStarted)
 	if err != nil {
