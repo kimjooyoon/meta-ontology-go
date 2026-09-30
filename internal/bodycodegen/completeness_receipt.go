@@ -179,7 +179,7 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		Decision:      decision,
 		DecisionBasis: "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; UNKNOWN dimensions remain explicit and are never aggregated",
 		Scope: map[string]any{
-			"domain_scope":       "one pure typed Gooo activity body in the closed body-codegen profile, with one Integer or Boolean input and one matching result",
+			"domain_scope":       "one pure typed Gooo activity body in the closed body-codegen profile, with one Integer, Boolean, or Text input and one supported scalar result",
 			"allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
 			"excluded_scope":     []string{"unstated natural-language intent", "independently sourced production workflows", "generated runtime behavior", "unrestricted Gooo body syntax", "route clarity or utility"},
 			"plan_sha256":        planSHA, "compiler_source_sha": compilerSHA,

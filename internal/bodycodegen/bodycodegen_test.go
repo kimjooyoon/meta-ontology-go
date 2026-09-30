@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -51,6 +53,73 @@ activity ClampBelowZero(Integer) -> Integer computes "let value = input\nvalue =
 	compilerSHA, compilerOK := result.Report.CompletenessReceipt.Scope["compiler_source_sha"].(string)
 	if !planOK || !compilerOK || result.Report.PlanSHA256 != planSHA || result.Report.CompilerSourceSHA != compilerSHA {
 		t.Fatal("top-level report identities are not bound to the completeness receipt scope")
+	}
+}
+
+func TestGenerateTextFixtureWithLayaSelectedResultJoin(t *testing.T) {
+	fixturePath := filepath.Join("..", "..", "examples", "body-codegen", "text-route.gooo.fixture")
+	source, err := os.ReadFile(fixturePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path == "/health" {
+			_ = json.NewEncoder(writer).Encode(map[string]any{"revisions": map[string]string{"route-model": "0123456789abcdef0123456789abcdef01234567"}})
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "route-model",
+			"answers": map[string]any{"body_codegen_route": map[string]any{
+				"choice": mergeResultRoute,
+			}},
+		})
+	}))
+	defer server.Close()
+
+	result, err := GenerateWithPlanner(context.Background(), fixturePath, source, "RouteText", server.URL+"/v1/systemone", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Report.Route != mergeResultRoute || result.Report.InputType != "string" || result.Report.OutputType != "string" {
+		t.Fatalf("text types or selected route were not preserved: %#v", result.Report)
+	}
+	if !result.Report.TypecheckPassed || !result.Report.DeterministicReplay || result.Report.CompletenessPercent != 100 {
+		t.Fatalf("text body did not pass compiler evidence: %#v", result.Report)
+	}
+	if result.Report.RouteEquivalence.Decision != "PASS" || !result.Report.RouteEquivalence.Equivalent ||
+		result.Report.RouteEquivalence.SourceSemanticDigest != result.Report.RouteEquivalence.GeneratedSemanticDigest {
+		t.Fatalf("text lowering lacks semantic equivalence evidence: %#v", result.Report.RouteEquivalence)
+	}
+	for _, want := range []string{"func RouteText(input string) string", "var _goooResult string", `_goooResult = "allow"`, `_goooResult = "deny"`} {
+		if !strings.Contains(result.Source, want) {
+			t.Fatalf("generated text source missing %q:\n%s", want, result.Source)
+		}
+	}
+}
+
+func TestGenerateTextAssignmentFixtureDeterministically(t *testing.T) {
+	fixturePath := filepath.Join("..", "..", "examples", "body-codegen", "text-assignment.gooo.fixture")
+	source, err := os.ReadFile(fixturePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := Generate(fixturePath, source, "NormalizeText")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := Generate(fixturePath, source, "NormalizeText")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Report.Route != preserveRoute || first.Report.RouteDecision.Mode != "deterministic_fallback" ||
+		first.Report.GeneratedDigest != second.Report.GeneratedDigest || !first.Report.DeterministicReplay {
+		t.Fatalf("deterministic text lowering changed across replay: first=%#v second=%#v", first.Report, second.Report)
+	}
+	for _, want := range []string{"func NormalizeText(input string) string", "var normalized = input", "normalized = input", `normalized == "approved"`} {
+		if !strings.Contains(first.Source, want) {
+			t.Fatalf("generated text source missing %q:\n%s", want, first.Source)
+		}
 	}
 }
 

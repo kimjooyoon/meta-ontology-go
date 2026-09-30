@@ -1,0 +1,6 @@
+package bodycodegen
+namespace bodycodegen
+
+entity Text id "bodycodegen://entity/text"
+
+activity RouteText(Text) -> Text computes "if input == \"approved\" { return \"allow\" } else { return \"deny\" }"
