@@ -16,15 +16,16 @@ verification decisions in Gooo's deterministic execution and proof paths.
 ## Install and run Laya locally
 
 Laya requires Python 3.10 or newer. Install the server extra and start it on
-loopback; the first request downloads the selected checkpoint. Use the
-multilingual checkpoint for Korean inputs:
+loopback. For Gooo's English and Korean request paths, preload both checkpoints
+and cap CPU inference at four threads so the first decision does not pay model
+startup cost:
 
 ```sh
 python3 -m venv .venv-laya
 . .venv-laya/bin/activate
 python -m pip install 'laya[serve]==0.3.21'
-LAYA_HOST=127.0.0.1 LAYA_PORT=8787 LAYA_MODELS=multilingual \
-  LAYA_DEVICE=cpu LAYA_PRELOAD=0 laya-serve
+LAYA_HOST=127.0.0.1 LAYA_PORT=8787 LAYA_MODELS=english,multilingual \
+  LAYA_DEVICE=cpu LAYA_THREADS=4 LAYA_PRELOAD=1 laya-serve
 ```
 
 In another shell, point Gooo at the local API and execute the sample choice:
@@ -36,6 +37,11 @@ GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
 
 To run without Laya, omit `GOOO_LAYA_URL`. To protect the local service with
 `LAYA_API_KEY`, set the same value in `GOOO_LAYA_API_KEY` for Gooo.
+
+Preloading both checkpoints used about 1.6 GiB of Laya process RSS on the
+tested Apple M4. On a memory-limited machine, preload only the checkpoint
+needed for the intended language; the other model can load on demand, but its
+first decision will be slower.
 
 ## Request and receipt
 

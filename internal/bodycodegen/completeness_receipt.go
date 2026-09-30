@@ -64,6 +64,12 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 	if planSHA == "" {
 		planSHA = completenessPlanSHA(report)
 	}
+	layaMode := report.RouteDecision.Mode
+	layaProvider := report.RouteDecision.Provider
+	if report.BodyFill != nil {
+		layaMode = report.BodyFill.Decision.Mode
+		layaProvider = report.BodyFill.Decision.Provider
+	}
 
 	generationReason := "Measures whether this accepted activity produced a digest-bound Go projection."
 	if failure != "" {
@@ -185,7 +191,7 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 			"plan_sha256":        planSHA, "compiler_source_sha": compilerSHA,
 			"toolchain": runtime.Version(), "execution_environment": runtime.GOOS + "/" + runtime.GOARCH,
 			"input_type": report.InputType, "output_type": report.OutputType,
-			"laya_mode": report.RouteDecision.Mode, "laya_provider": report.RouteDecision.Provider,
+			"laya_mode": layaMode, "laya_provider": layaProvider,
 			"system_budget":        map[string]int{"maximum_human_actions": 0, "maximum_repository_writes": 0},
 			"observed_system_cost": map[string]int{"human_actions": 0, "repository_writes": report.RepositoryWrites},
 			"boundary":             map[string]any{"non_executing": true, "non_authorizing": true, "excluded_effects": []string{"generated code execution", "repository mutation", "external authority"}},
@@ -267,28 +273,42 @@ func provenanceDimension(report Report, compilerSHA string) CompletenessDimensio
 }
 
 func networkBoundaryDimension(report Report) CompletenessDimension {
-	noProviderCall := report.RouteDecision.Mode == "deterministic_fallback" &&
-		(report.RouteDecision.FallbackReason == "NOT_CONFIGURED" || report.RouteDecision.FallbackReason == "NO_ALTERNATIVE_ROUTE")
+	decision := report.RouteDecision
+	if report.BodyFill != nil {
+		decision = report.BodyFill.Decision
+	}
+	noProviderCall := decision.Mode == "deterministic_fallback" &&
+		(decision.FallbackReason == "NOT_CONFIGURED" || decision.FallbackReason == "NO_ALTERNATIVE_ROUTE")
 	numerator := boolCount(noProviderCall)
 	return completenessDimension("external_network_boundary", numerator, 1,
 		"runs with no Laya provider request", "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
-		[]string{"route_decision.mode:" + report.RouteDecision.Mode, "route_decision.provider:" + report.RouteDecision.Provider,
-			"route_decision.fallback_reason:" + report.RouteDecision.FallbackReason}, false)
+		[]string{"decision.mode:" + decision.Mode, "decision.provider:" + decision.Provider,
+			"decision.fallback_reason:" + decision.FallbackReason}, false)
 }
 
 func layaObservationDimension(report Report) CompletenessDimension {
 	eligible := len(report.CandidateRoutes) > 1
-	observed := eligible && report.RouteDecision.Mode == "laya"
+	decision := report.RouteDecision
+	unit := "eligible multi-route Laya decisions"
+	evidence := []string{"candidate_routes", "route_decision.mode:" + decision.Mode,
+		"route_decision.request_sha256:" + decision.RequestSHA256,
+		"route_decision.model_revision:" + decision.ModelRevision}
+	if report.BodyFill != nil {
+		eligible = len(report.BodyFill.CandidateScores) > 1
+		decision = report.BodyFill.Decision
+		unit = "eligible IR body-fill decisions"
+		evidence = []string{"body_fill.candidate_scores", "body_fill.decision.mode:" + decision.Mode,
+			"body_fill.decision.request_sha256:" + decision.RequestSHA256,
+			"body_fill.decision.model_revision:" + decision.ModelRevision}
+	}
+	observed := eligible && decision.Mode == "laya"
 	numerator, denominator := 0, 0
 	if eligible {
 		denominator = 1
 		numerator = boolCount(observed)
 	}
 	return completenessDimension("laya_decision_observation", numerator, denominator,
-		"eligible multi-route Laya decisions", "Records a model choice only when the source shape has multiple compiler-approved routes and the Laya provider supplied the decision.",
-		[]string{"candidate_routes", "route_decision.mode:" + report.RouteDecision.Mode,
-			"route_decision.request_sha256:" + report.RouteDecision.RequestSHA256,
-			"route_decision.model_revision:" + report.RouteDecision.ModelRevision}, false)
+		unit, "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.", evidence, false)
 }
 
 func nextCompletenessOperation(id string) string {

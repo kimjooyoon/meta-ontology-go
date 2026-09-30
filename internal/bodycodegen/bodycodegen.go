@@ -59,6 +59,7 @@ type Report struct {
 	RouteDecision          decisionroute.Receipt   `json:"route_decision"`
 	RouteSelection         RouteSelectionReceipt   `json:"route_selection"`
 	RouteDecisionLatencyMS float64                 `json:"route_decision_latency_ms"`
+	BodyFill               *IRBodyFillReceipt      `json:"body_fill,omitempty"`
 	CandidateRoutes        []string                `json:"candidate_routes"`
 	EquivalenceRule        string                  `json:"equivalence_rule"`
 	SourceConstructs       int                     `json:"source_constructs"`
