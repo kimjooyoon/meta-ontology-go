@@ -49,6 +49,7 @@ func routeEquivalence(packageName, activityName, inputType, outputType, body str
 	if !ok {
 		return RouteEquivalenceReceipt{}, fmt.Errorf("accepted source body has no function for equivalence receipt")
 	}
+	normalizeIntegerLocalInitializers(packageName, sourceFile, sourceFileSet)
 
 	generatedFileSet := token.NewFileSet()
 	generatedFile, err := parser.ParseFile(generatedFileSet, "generated-body.go", generated, parser.AllErrors)
