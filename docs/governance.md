@@ -83,14 +83,20 @@ predicate holds and is otherwise `FAIL_CLOSED` with a reason code. The proof
 producer does not write refs or branch protection. GitHub's native required
 status checks enforce configured contexts; CI does not duplicate them by
 reading a privileged branch-protection snapshot. Once installed on the default
-branch, the automatic promotion executor opens or reuses the exact `main` PR,
-dispatches CI with the PR number and observed head/base SHAs, and merges through
-GitHub's PR API with the expected head SHA only after the proof and required
-checks pass. The original successful `dev` run waits for one uniquely identified
-new dispatch run, bounded to 40 minutes. A dependent job consumes that run's
-exact current attempt and proof, then checks the live PR, refs, source tree and
-topology again. Missing, ambiguous, failed or stale observations stop promotion.
-The flow does not require a subsequent dispatched-CI completion callback.
+branch and configured with its [scoped App](automatic-promotion-app.md), the
+automatic promotion executor opens or refreshes the exact `main` PR using an
+App installation token limited to this repository's `pull_requests:write`.
+An existing PR receives a single body-marker edit; it is not closed and reopened.
+The original successful `dev` run waits for one uniquely identified new
+`pull_request` CI run, bounded to 40 minutes. Checks from `workflow_dispatch`
+are not authorizing evidence. The six checks and proof check must belong to
+that PR run's GitHub Actions check suite and current attempt. A dependent job
+consumes that attempt's exact proof, binds its PR number, refs and head/base
+SHAs, and checks the live PR, refs, source tree and topology again before the
+normal PR merge API call with the expected head SHA. Missing, ambiguous, failed
+or stale observations stop promotion. The flow does not require a completion
+callback from the PR's CI. Missing App configuration emits a machine-readable
+`PROMOTION_APP_CONFIGURATION_REQUIRED` result before opening or refreshing a PR.
 Branch protection stays active; force-push and force-update
 operations are never permitted.
 
