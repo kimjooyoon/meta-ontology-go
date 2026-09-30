@@ -30,6 +30,10 @@ supported `Integer`, `Boolean`, or `Text` result, local `let` declarations,
 assignment to an existing local, `if/else`, and one-value `return`. `Integer`,
 `Boolean`, and `Text` lower to Go `int64`, `bool`, and `string`. Conditions and
 expressions are checked by Go's type checker after a closed syntax filter.
+An inferred local initialized from an integer constant uses `int64`, keeping
+Integer locals aligned with the DSL type. This rule applies at local bindings;
+it adds no conversions at activity input or output boundaries. Boolean and
+Text locals retain Go's `bool` and `string` inference.
 Function calls, imports, loops, multiple inputs, and external effects fail
 closed. The generated result is written to stdout; this command does not
 mutate the repository.
