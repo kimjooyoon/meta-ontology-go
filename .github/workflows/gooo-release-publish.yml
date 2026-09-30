@@ -45,7 +45,7 @@ jobs:
     env:
       EXACT_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.validated_sha || github.event.pull_request.head.sha }}
       RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || 'v0.6.0-dev' }}
-      GOTOOLCHAIN: go1.27.0
+      GOTOOLCHAIN: go1.27.1
     steps:
       - name: Bind dispatched source to current dev before executing it
         if: github.event_name == 'workflow_dispatch'
@@ -65,7 +65,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.0'
+          go-version: '1.27.1'
           cache: false
       - name: Bind and check the Gooo publication authority
         shell: bash
@@ -239,7 +239,7 @@ jobs:
       READINESS_RUN_ID: ${{ inputs.readiness_run_id }}
       VALIDATED_SHA: ${{ inputs.validated_sha }}
       RELEASE_TAG: ${{ inputs.tag }}
-      GOTOOLCHAIN: go1.27.0
+      GOTOOLCHAIN: go1.27.1
     steps:
       - name: Check out exact validated merge
         uses: actions/checkout@v7
@@ -250,7 +250,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.0'
+          go-version: '1.27.1'
           # Downloaded release candidates must not populate reusable caches.
           cache: false
       - name: Build trusted witness before downloading release inputs

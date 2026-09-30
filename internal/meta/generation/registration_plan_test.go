@@ -15,8 +15,8 @@ func registrationPlanFixture(t *testing.T) (sourcepolicy.Report, syntaxregistrat
 	t.Helper()
 	hash := "sha256:" + strings.Repeat("a", 64)
 	request := syntaxregistration.Request{BaseVersion: 30, SnapshotDigest: hash, SourceDigest: hash,
-		Toolchain: "go1.27.0", ExecutionIdentity: syntaxregistration.ExecutionIdentity{
-			GoVersion: "go1.27.0", GOOS: "linux", GOARCH: "amd64",
+		Toolchain: "go1.27.1", ExecutionIdentity: syntaxregistration.ExecutionIdentity{
+			GoVersion: "go1.27.1", GOOS: "linux", GOARCH: "amd64",
 			ExecutableDigest: hash, GoCommandDigest: hash, CompilerDigest: hash},
 		Case: languagesyntax.CaseDefinition{ID: "native-registration-plan-fixture",
 			Path: "examples/native-registration-plan-fixture/main.gooo", Kind: languagesyntax.KindValid,

@@ -6,7 +6,7 @@ This v1 corpus fixes a denominator of three native x64 targets and twenty cases.
 - macOS uses `macos-15-intel` and emits `tar.gz`.
 - Windows uses `windows-2025` and emits `zip`.
 
-Each runner builds twice with Go 1.27.0, runs `gooo version --json` natively,
+Each runner builds twice with Go 1.27.1, runs `gooo version --json` natively,
 packages twice with fixed metadata, and emits one source-bound receipt.
 
 The aggregate witness accepts only three unique `PASS / EXACT` receipts. Missing,

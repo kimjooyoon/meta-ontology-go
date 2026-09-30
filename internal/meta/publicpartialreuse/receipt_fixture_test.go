@@ -37,7 +37,7 @@ func receiptEvaluationFixture(t *testing.T) EvaluationInput {
 			CanonicalSemanticSubgraphDigest: digest, GeneratedArtifactDigest: digest,
 			GeneratedSemanticDigest: digest, GeneratedManifestDigest: digest,
 			CompilerDigest: digest, ReleasedToolDigest: ReleasedToolDigest(digest),
-			ToolchainDigest: digest, ToolchainVersion: "go1.27.0", TestCommand: command,
+			ToolchainDigest: digest, ToolchainVersion: "go1.27.1", TestCommand: command,
 			TestCommandDigest: TestCommandDigest(command, digest), TestContractDigest: digest,
 			DependencyGraphDigest: policy.DependencyGraphDigest(), OrchestrationReportDigest: digest,
 			OrchestrationOperation: "gooo.self-improvement.public-orchestration",

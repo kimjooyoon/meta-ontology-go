@@ -5,7 +5,7 @@ package compatibilitypolicygenerated
 const (
 	EvaluatorSchema    = "gooo/compiler-compatibility-policy-evaluator/v1"
 	PolicySourcePath   = "examples/self-improvement-observation/observation.gooo"
-	PolicySourceDigest = "c2930ee0546554ac750520f496ace55d3e09e5fe588fb70296a6e02ba1dd90fd"
+	PolicySourceDigest = "103d3a0b24052bd6eba7b0f62fed47097f3e9337a3d776aae6804398728ee58d"
 	EvaluatorDigest    = "4fd8ed8b5f497030be3006c9ad6519d25cf7bfbb90a6234932d091c56a62497f"
 )
 

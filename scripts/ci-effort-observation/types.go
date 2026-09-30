@@ -4,7 +4,7 @@ const (
 	reportSchema   = "gooo/ci-effort-observation/v1"
 	contractSchema = "gooo/ci-effort-observation-contract/v1"
 	manifestSchema = "gooo/ci-effort-operation-manifest/v1"
-	goToolchain    = "go1.27.0"
+	goToolchain    = "go1.27.1"
 )
 
 type Config struct {

@@ -35,7 +35,7 @@ jobs:
       - name: Install Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.0'
+          go-version: '1.27.1'
           cache: false
 
       - name: Bind the exact v26 run and retrieve its artifact
@@ -49,7 +49,7 @@ jobs:
           grant_dir="$work/grant"
           contract_dir="$work/contract"
           mkdir -p "$grant_dir" "$contract_dir"
-          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(go env GOVERSION)" = "go1.27.1"
           test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
           [[ "$SUBJECT_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$GRANT_RUN_ID" =~ ^[1-9][0-9]*$ ]]

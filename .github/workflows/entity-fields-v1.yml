@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      GOTOOLCHAIN: go1.27.0
+      GOTOOLCHAIN: go1.27.1
       GOWORK: off
       GOFLAGS: -mod=readonly
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -37,7 +37,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
         with:
-          go-version: '1.27.0'
+          go-version: '1.27.1'
           cache: false
 
       - name: Execute and replay EntityFields V1 in caller-owned temp

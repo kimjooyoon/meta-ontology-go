@@ -52,7 +52,7 @@ func TestPromotionEvidenceWorkflowSeparatesProducerFromJudge(t *testing.T) {
 		t.Fatal("promotion evidence authority boundary is missing")
 	}
 	for _, fragment := range []string{
-		"needs: strategy", "GOTOOLCHAIN: go1.27.0", "persist-credentials: false",
+		"needs: strategy", "GOTOOLCHAIN: go1.27.1", "persist-credentials: false",
 		"go run ./cmd/language-readiness-witness/proposal-promotion",
 		`--check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"`,
 		"name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}",

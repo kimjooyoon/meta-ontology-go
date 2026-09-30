@@ -7,7 +7,7 @@
   "entry": "PayOrder",
   "samples_per_language": 5,
   "runner_image": "ubuntu-24.04",
-  "go_toolchain": "go1.27.0",
+  "go_toolchain": "go1.27.1",
   "scope": "DECLARATION_SIGNATURE_PARSE_AND_RESOLUTION",
   "equivalence": "exact sourceexecution.Entry including stable entity IDs",
   "ratios": "Go baseline median divided by Gooo median; parts per million",

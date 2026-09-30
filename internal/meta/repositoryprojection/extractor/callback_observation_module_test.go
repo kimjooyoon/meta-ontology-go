@@ -18,7 +18,7 @@ func TestCallbackObservationPreservesModuleAndPackageIdentityCI(t *testing.T) {
 	root, output := t.TempDir(), t.TempDir()
 	const logical = "cmd/subject/subject_test.go"
 	files := map[string][]byte{
-		"go.mod":                         []byte("module example.invalid/callback-observation/v2\n\ngo 1.27.0\n"),
+		"go.mod":                         []byte("module example.invalid/callback-observation/v2\n\ngo 1.27.1\n"),
 		"go.sum":                         []byte(""),
 		"internal/value/value.go":        []byte("package value\nconst Answer = 42\n"),
 		"cmd/subject/testdata/proof.txt": []byte("original-input"),
@@ -95,7 +95,7 @@ func TestRequired(t *testing.T) {
 
 func TestCallbackObservationModuleSnapshotRejectsDriftAndCancellation(t *testing.T) {
 	root := t.TempDir()
-	for name, raw := range map[string]string{"go.mod": "module example.invalid/snapshot\n\ngo 1.27.0\n", "subject_test.go": "package subject\n"} {
+	for name, raw := range map[string]string{"go.mod": "module example.invalid/snapshot\n\ngo 1.27.1\n", "subject_test.go": "package subject\n"} {
 		if err := os.WriteFile(filepath.Join(root, name), []byte(raw), 0o600); err != nil {
 			t.Fatal(err)
 		}
