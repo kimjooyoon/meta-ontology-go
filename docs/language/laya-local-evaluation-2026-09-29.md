@@ -131,6 +131,15 @@ confidence as the improvement score.
 
 ## Typed IR body-fill and test-score gate — 2026-09-30
 
+The measurements below describe the initial body-fill implementation at
+`2fc19ea5b094f424f550e2b0a9ebe6477759d1a2` (merged to `dev` as
+`fa33c7532a8c0bebfc5fdb594fbfd4ba4b2d2e2a`). A subsequent differential review
+found evaluator errors for shadowed Boolean names and large constant
+arithmetic, plus expression-grouping and CLI error-propagation defects.
+The simple clamp fixture below does not contain those counterexamples.
+These historical timing measurements are not a benchmark of the repaired
+type-information-based evaluator.
+
 This experiment asks Laya to choose a typed expression for one Gooo IR hole in
 a body that declares a local value, branches on `input < 0`, assigns the hole
 in the negative branch, and returns the local. Gooo first typechecks three
@@ -175,8 +184,9 @@ so the provider cannot erase or overrule test outcomes.
 
 With no provider configured, ten body-fill CLI runs on the final local-variable
 fixture had a 0.478 ms median reported generation time and a 5.86 ms median
-process wall time. The 8-second body-fill decision limit is bounded and
-cancellation-tested; it accommodates the measured warm path while leaving
+process wall time. The 8-second body-fill provider decision limit is bounded and
+cancellation-tested; it does not bound parsing, candidate scoring, or final
+emission. It accommodates the measured warm path while leaving
 deterministic fallback for missing or slow providers. Lazy model startup can
 exceed that budget, so preload the intended checkpoint before latency-sensitive
 use. The temporary

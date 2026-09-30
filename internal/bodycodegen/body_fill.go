@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go/ast"
+	"go/format"
 	"go/parser"
 	"go/scanner"
 	"go/token"
@@ -19,6 +21,7 @@ import (
 
 const bodyFillPlanSchema = "gooo/body-codegen-ir-fill-plan/v1"
 const bodyFillStateSchema = "gooo/body-codegen-ir-fill-state/v1"
+const bodyFillEvaluator = "gooo/bodycodegen-int64-ast-interpreter/v2"
 const irBodyFillDecisionBudget = 8 * time.Second
 
 // IRBodyFillPlan supplies finite, typed expression candidates for one explicit
@@ -43,6 +46,23 @@ type IRBodyFillCandidate struct {
 type IRBodyFillTestCase struct {
 	Input    int64 `json:"input"`
 	Expected int64 `json:"expected"`
+}
+
+func (testCase *IRBodyFillTestCase) UnmarshalJSON(data []byte) error {
+	var fields struct {
+		Input    *int64 `json:"input"`
+		Expected *int64 `json:"expected"`
+	}
+	decoder := json.NewDecoder(strings.NewReader(string(data)))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&fields); err != nil {
+		return err
+	}
+	if fields.Input == nil || fields.Expected == nil {
+		return fmt.Errorf("IR body-fill test case requires explicit integer input and expected values")
+	}
+	*testCase = IRBodyFillTestCase{Input: *fields.Input, Expected: *fields.Expected}
+	return nil
 }
 
 type IRBodyFillCandidateScore struct {
@@ -282,7 +302,7 @@ func GenerateWithIRBodyFill(
 		Decision:            decision, CandidateScores: scores,
 		TestSuiteSHA256: testSuiteSHA256, TestCasesPassed: passed,
 		TestCasesTotal: len(plan.TestCases), FunctionalAccuracyPct: accuracy,
-		Evaluator:           "gooo/bodycodegen-int64-ast-interpreter/v1",
+		Evaluator:           bodyFillEvaluator,
 		SelectedCaseResults: caseResults,
 		AccuracyScope:       "exact observed accuracy over the declared finite test suite; not a full-domain proof",
 		Timing: IRBodyFillTiming{
@@ -384,6 +404,21 @@ func replaceIdentifier(body, name, replacement string) (string, error) {
 	}
 	if count != 1 || start < 0 || end > len(body) {
 		return "", fmt.Errorf("expected one typed IR hole %q, found %d", name, count)
+	}
+	expression, err := parser.ParseExpr(replacement)
+	if err != nil {
+		return "", fmt.Errorf("parse replacement expression: %w", err)
+	}
+	var formatted strings.Builder
+	if err := format.Node(&formatted, token.NewFileSet(), expression); err != nil {
+		return "", fmt.Errorf("format replacement expression: %w", err)
+	}
+	replacement = formatted.String()
+	switch expression.(type) {
+	case *ast.BinaryExpr, *ast.UnaryExpr:
+		// A hole denotes one expression, so its caller cannot change the
+		// candidate's precedence or merge adjacent unary operator tokens.
+		replacement = "(" + replacement + ")"
 	}
 	return body[:start] + replacement + body[end:], nil
 }

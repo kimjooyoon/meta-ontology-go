@@ -98,8 +98,8 @@ authority over generated Go.
 
 ## Filling a typed body IR hole
 
-The separate `--fill-plan` experiment lets Laya supply one expression that is
-missing from a Gooo-authored body skeleton. The activity keeps the control
+The separate `--fill-plan` experiment lets Laya select one listed expression to
+fill a hole in a Gooo-authored body skeleton. The activity keeps the control
 flow and a typed hole; the plan supplies a natural-language intent, a finite
 list of expression candidates, and explicit input/output cases:
 
@@ -114,7 +114,8 @@ GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
 This first slice accepts one `Integer -> Integer` hole named
 `__GOOO_BODY_HOLE_<hole_id>__`, two to sixteen closed expression candidates,
 and one to 4096 integer test cases. Intent text is limited to 2000 Unicode
-characters. Gooo typechecks every candidate and
+characters. Every JSON test case must explicitly provide non-null integer
+`input` and `expected` fields. Gooo typechecks every candidate and
 evaluates it with a closed, side-effect-free integer AST interpreter before
 asking Laya. Laya receives the Gooo
 body IR skeleton, the intent, candidate expressions, and each candidate's
@@ -138,8 +139,27 @@ candidate's score; `best_candidate_accuracy_percent` records the best score
 available in this candidate set, and `selection_regret_percentage_points`
 measures how far the proposal falls below it. Those values separate
 candidate-set coverage from Laya's selection quality on the declared suite.
+The completeness receipt adds `declared_suite_functional_accuracy` to the
+body-fill core and binds its plan identity to the fill-plan digest. Known
+failing cases keep completeness at `PROGRESS`, even when emitted code compiles.
+Reports identify the repaired evaluator as `gooo/bodycodegen-int64-ast-interpreter/v2`.
 The checked-in plan includes `int64` minimum and maximum values as well as
 inputs on both sides of zero.
+
+Candidate expressions retain their grouping when inserted into a larger
+expression: filling `2 * HOLE` with `input + 1` emits `2 * (input + 1)`.
+The evaluator uses Go typechecker bindings and constant values. Local names
+such as `true` or `false` resolve to their declared variables; constant
+arithmetic keeps Go's arbitrary precision until conversion, while runtime
+integer operations use their declared widths. Boolean and string locals are
+also supported inside an integer-input/integer-output body. Unsupported
+runtime value types return an error instead of a functional score. CLI
+generation failures return a nonzero exit status and a failure receipt.
+
+Regression tests compare interpreter results against independently compiled
+Go for constant boundaries, local bindings, integer overflow, and compound
+expressions. That comparison tests the evaluator's fidelity on those cases;
+it does not turn the declared user suite into a full-domain proof.
 
 This path is deliberately sequential: Gooo creates and scores the typed IR
 plan, then makes one synchronous Laya call, then fills and emits the final
@@ -148,8 +168,11 @@ inherits cancellation and has an eight-second decision budget for the larger
 IR-and-test context; a timeout or unavailable provider records deterministic
 fallback, then the same score gate picks the best declared candidate. The report records IR preparation,
 decision, final-emission, and total wall latency. Tests cover the blocking
-call order, cancellation, exact functional percentages, and disconnected
-replay. This bounded evaluator accepts only the existing pure expression and
+call order, provider cancellation, exact functional percentages, and disconnected
+replay. The eight seconds bounds provider work only; parsing, candidate scoring,
+and final emission do not have an operation-wide deadline. An expired provider
+request still allows deterministic fallback and emission to finish.
+This bounded evaluator accepts only the existing pure expression and
 statement profile; it does not run arbitrary model-authored source.
 
 The evidence sent in this call is candidate-level TDD data computed before

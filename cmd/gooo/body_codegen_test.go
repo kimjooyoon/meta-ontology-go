@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"strings"
 	"testing"
@@ -57,6 +58,49 @@ activity Clamp(Integer) -> Integer computes "if input < 0 { return __GOOO_BODY_H
 		!strings.Contains(stdout.String(), `"test_cases_passed":3`) ||
 		!strings.Contains(stdout.String(), `"execution_model":"synchronous_sequential_no_background_codegen_goroutines"`) {
 		t.Fatalf("IR body-fill = %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestRunBodyCodegenFailsClosedForInvalidIRBodyFill(t *testing.T) {
+	t.Setenv("GOOO_LAYA_URL", "")
+	t.Setenv("GOOO_LAYA_API_KEY", "")
+	fixture := `package sample
+namespace sample
+entity Integer id "sample://entity/integer"
+activity Clamp(Integer) -> Integer computes "if input < 0 { return __GOOO_BODY_HOLE_floor__ } else { return input }"
+`
+	cases := []struct {
+		name string
+		plan string
+	}{
+		{
+			name: "ill-typed candidate",
+			plan: `{"schema":"gooo/body-codegen-ir-fill-plan/v1","intent":"Clamp negative inputs.","hole_id":"floor","candidates":[{"id":"bad","expression":"true"},{"id":"zero","expression":"0"}],"test_cases":[{"input":-1,"expected":0}]}`,
+		},
+		{
+			name: "missing expected value",
+			plan: `{"schema":"gooo/body-codegen-ir-fill-plan/v1","intent":"Clamp negative inputs.","hole_id":"floor","candidates":[{"id":"zero","expression":"0"},{"id":"identity","expression":"input"}],"test_cases":[{"input":-1}]}`,
+		},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			reader := mapSourceReader{
+				"fixture.gooo":   []byte(fixture),
+				"fill-plan.json": []byte(test.plan),
+			}
+			var stdout, stderr bytes.Buffer
+			code := runBodyCodegen([]string{"--json", "--fill-plan", "fill-plan.json", "--activity", "Clamp", "fixture.gooo"}, reader, &stdout, &stderr)
+			var report struct {
+				Decision string `json:"decision"`
+				Source   string `json:"source"`
+			}
+			if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+				t.Fatalf("body-codegen did not return a failure report: code=%d stdout=%q stderr=%q: %v", code, stdout.String(), stderr.String(), err)
+			}
+			if code != exitFailure || report.Decision != "FAIL_CLOSED" || report.Source != "" || stdout.Len() == 0 {
+				t.Fatalf("invalid IR body fill was not a closed failure: code=%d report=%#v stdout=%q stderr=%q", code, report, stdout.String(), stderr.String())
+			}
+		})
 	}
 }
 

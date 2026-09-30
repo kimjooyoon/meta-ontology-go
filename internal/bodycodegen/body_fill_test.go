@@ -135,7 +135,7 @@ func TestGenerateWithIRBodyFillCorrectsImperfectLayaChoiceFromTestScores(t *test
 	if receipt == nil || receipt.ProposedCandidateID != "identity" || receipt.ProposedAccuracyPct != 500.0/9.0 ||
 		receipt.SelectedCandidateID != "zero" || receipt.FunctionalAccuracyPct != 100 ||
 		receipt.TestCasesPassed != 9 || receipt.TestCasesTotal != 9 ||
-		receipt.Evaluator != "gooo/bodycodegen-int64-ast-interpreter/v1" || receipt.BestCandidateID != "zero" ||
+		receipt.Evaluator != "gooo/bodycodegen-int64-ast-interpreter/v2" || receipt.BestCandidateID != "zero" ||
 		receipt.BestAccuracyPercent != 100 || receipt.SelectionRegretPP != 100-500.0/9.0 ||
 		receipt.SelectionAdjustment != "replaced_with_best_scoring_candidate" || receipt.Decision.Selected != "identity" {
 		t.Fatalf("imperfect model outcome was hidden or mis-scored: %#v", receipt)
@@ -352,5 +352,47 @@ func TestIRBodyFillPlanRequiresAClosedSchema(t *testing.T) {
 	plan.Intent += "한"
 	if err := validateIRBodyFillPlan(plan); err == nil {
 		t.Fatalf("intent longer than 2000 characters was accepted: %v", err)
+	}
+}
+
+func TestIRBodyFillCompletenessBindsAndMeasuresDeclaredSuite(t *testing.T) {
+	fixture, plan := readIRBodyFillInputs(t)
+	plan.TestCases = []IRBodyFillTestCase{{Input: 1, Expected: 2}}
+	first, err := GenerateWithIRBodyFill(
+		context.Background(), "clamp.gooo", fixture, "ClampNegativeToZero", plan, "", "",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const dimensionID = "declared_suite_functional_accuracy"
+	found := false
+	for _, dimension := range first.Report.CompletenessReceipt.Dimensions {
+		if dimension.ID == dimensionID {
+			found = true
+			if dimension.Status != "PROGRESS" || dimension.Numerator != 0 || dimension.Denominator != 1 {
+				t.Fatalf("known failing suite was misreported: %#v", dimension)
+			}
+		}
+	}
+	if !found || !containsString(first.Report.CompletenessReceipt.CoreDimensions, dimensionID) {
+		t.Fatal("body-fill functional accuracy is missing from the completeness core")
+	}
+	plan.TestCases[0].Expected = 1
+	second, err := GenerateWithIRBodyFill(
+		context.Background(), "clamp.gooo", fixture, "ClampNegativeToZero", plan, "", "",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Source != second.Source || first.Report.GeneratedDigest != second.Report.GeneratedDigest {
+		t.Fatal("fixture must keep the same emitted body while the declared contract changes")
+	}
+	if first.Report.PlanSHA256 == second.Report.PlanSHA256 {
+		t.Fatal("distinct body-fill test contracts shared one completeness plan identity")
+	}
+	for _, dimension := range second.Report.CompletenessReceipt.Dimensions {
+		if dimension.ID == dimensionID && (dimension.Status != "PASS" || dimension.Numerator != 1) {
+			t.Fatalf("passing suite was misreported: %#v", dimension)
+		}
 	}
 }
