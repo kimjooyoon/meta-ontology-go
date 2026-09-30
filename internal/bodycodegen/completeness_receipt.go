@@ -315,15 +315,10 @@ func provenanceDimension(report Report, compilerSHA string) CompletenessDimensio
 
 func networkBoundaryDimension(report Report) CompletenessDimension {
 	if search := report.BodySearch; search != nil {
-		noProvider := true
-		for _, attempt := range search.Attempts {
-			if decision := attempt.Decision; decision != nil {
-				noProvider = noProvider && decision.Mode == "deterministic_fallback" && decision.FallbackReason == "NOT_CONFIGURED"
-			}
-		}
-		return completenessDimension("external_network_boundary", boolCount(noProvider), 1,
-			"search runs with no Laya provider request", "Only sole-candidate choices and unconfigured-provider fallback establish no provider request.",
-			[]string{"body_search.attempts"}, false)
+		noProviderOperation := search.ProviderOperations == 0
+		return completenessDimension("external_network_boundary", boolCount(noProviderOperation), 1,
+			"search runs with no configured-provider resolver operations", "A zero operation count establishes that no provider resolver call was configured; completed candidate attempts are tracked separately.",
+			[]string{"body_search.provider_operations:" + strconv.Itoa(search.ProviderOperations), "body_search.attempts"}, false)
 	}
 	decision := report.RouteDecision
 	if report.BodyFill != nil {
