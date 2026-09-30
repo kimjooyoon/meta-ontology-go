@@ -12,12 +12,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
 )
 
 const bodyCodegenUsage = "usage: gooo body-codegen [--json] " +
-	"[--sample-seed <seed> | --fill-plan <plan.json> [--tiny-model <model.json>] | --fill-search <plan.json>] --activity <name> <file.gooo>"
+	"[--sample-seed <seed> | --fill-plan <plan.json> [--tiny-model <model.json>] | --fill-search <plan.json> | " +
+	"--path-plan <plan.json> [--path-model <model.json>]] --activity <name> <file.gooo>"
 const tinyModelDiagnosticLabel = "<tiny_model>"
 
 func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -34,6 +36,8 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 	fillPlanPath := ""
 	searchPlanPath := ""
 	tinyModelPath := ""
+	pathPlanPath := ""
+	pathModelPath := ""
 	filename := ""
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
@@ -79,6 +83,18 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 			}
 			tinyModelPath = args[index+1]
 			index++
+		case "--path-plan", "--path-model":
+			target := &pathPlanPath
+			if args[index] == "--path-model" {
+				target = &pathModelPath
+			}
+			if *target != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" ||
+				strings.HasPrefix(args[index+1], "-") {
+				fmt.Fprintln(stderr, bodyCodegenUsage)
+				return exitUsage
+			}
+			*target = args[index+1]
+			index++
 		default:
 			if strings.HasPrefix(args[index], "-") || filename != "" {
 				fmt.Fprintln(stderr, bodyCodegenUsage)
@@ -93,6 +109,11 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		fmt.Fprintln(stderr, bodyCodegenUsage)
 		return exitUsage
 	}
+	if (pathPlanPath != "" && (sampleSeedSet || fillPlanPath != "" || searchPlanPath != "" || tinyModelPath != "")) ||
+		(pathModelPath != "" && pathPlanPath == "") {
+		fmt.Fprintln(stderr, bodyCodegenUsage)
+		return exitUsage
+	}
 	if tinyModelPath != "" && (strings.TrimSpace(os.Getenv("GOOO_LAYA_URL")) != "" ||
 		strings.TrimSpace(os.Getenv("GOOO_LAYA_API_KEY")) != "") {
 		fmt.Fprintln(stderr, "gooo: --tiny-model cannot be combined with configured GOOO_LAYA_URL or GOOO_LAYA_API_KEY")
@@ -103,7 +124,17 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		return reportBodyCodegenFailure(jsonMode, filename, activity, nil, err, stdout, stderr)
 	}
 	var result bodycodegen.Result
-	if fillPlanPath != "" || searchPlanPath != "" {
+	if pathPlanPath != "" {
+		planBytes, readErr := reader.ReadFile(pathPlanPath)
+		if readErr != nil {
+			return reportBodyCodegenFailure(jsonMode, pathPlanPath, activity, planBytes, readErr, stdout, stderr)
+		}
+		document, decodeErr := pathplan.DecodeDocument(planBytes)
+		if decodeErr != nil {
+			return reportBodyCodegenFailure(jsonMode, pathPlanPath, activity, planBytes, decodeErr, stdout, stderr)
+		}
+		result, err = bodycodegen.GenerateWithTypedPaths(ctx, filename, source, activity, document, pathModelPath)
+	} else if fillPlanPath != "" || searchPlanPath != "" {
 		planPath := fillPlanPath
 		if searchPlanPath != "" {
 			planPath = searchPlanPath
@@ -180,6 +211,10 @@ func reportBodyCodegenFailure(jsonMode bool, filename, activity string, source [
 	if jsonMode {
 		completeness := bodycodegen.FailureCompletenessReceipt(activity, source, cause.Error())
 		var searchReceipt *bodycodegen.IRBodySearchReceipt
+		var pathReceipt *bodycodegen.BodyPathReceipt
+		if pathError, ok := errors.AsType[*bodycodegen.BodyPathError](cause); ok {
+			pathReceipt = pathError.Receipt
+		}
 		if searchError, ok := errors.AsType[*bodycodegen.IRBodySearchError](cause); ok {
 			searchReceipt = searchError.Receipt
 			completeness = bodycodegen.SearchFailureCompletenessReceipt(activity, source, cause.Error(), searchReceipt)
@@ -194,11 +229,13 @@ func reportBodyCodegenFailure(jsonMode bool, filename, activity string, source [
 			Error               string                           `json:"error"`
 			CompletenessReceipt *bodycodegen.CompletenessReceipt `json:"completeness_receipt"`
 			BodySearch          *bodycodegen.IRBodySearchReceipt `json:"body_search,omitempty"`
+			BodyPaths           *bodycodegen.BodyPathReceipt     `json:"body_paths,omitempty"`
 		}{
 			Schema: "gooo/body-codegen-report/v3", Decision: "FAIL_CLOSED",
 			PlanSHA256:        stringScopeValue(completeness.Scope, "plan_sha256"),
 			CompilerSourceSHA: stringScopeValue(completeness.Scope, "compiler_source_sha"),
-			RepositoryWrites:  0, Error: cause.Error(), CompletenessReceipt: completeness, BodySearch: searchReceipt,
+			RepositoryWrites:  0, Error: cause.Error(), CompletenessReceipt: completeness,
+			BodySearch: searchReceipt, BodyPaths: pathReceipt,
 		}
 		encoder := json.NewEncoder(stdout)
 		encoder.SetEscapeHTML(false)
