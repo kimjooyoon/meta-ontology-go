@@ -29,6 +29,21 @@ activity Clamp(Integer) -> Integer computes "if input > 0 { return input } else 
 	}
 }
 
+func TestRunBodyCodegenInfersIntegerLiteralLocalAsInt64(t *testing.T) {
+	t.Setenv("GOOO_LAYA_URL", "")
+	t.Setenv("GOOO_LAYA_API_KEY", "")
+	fixture := `package sample
+namespace sample
+entity Integer id "sample://entity/integer"
+activity ConstantLocal(Integer) -> Integer computes "let result = 5\nreturn result"
+`
+	var stdout, stderr bytes.Buffer
+	code := runBodyCodegen([]string{"--activity", "ConstantLocal", "fixture.gooo"}, fixtureReader{source: fixture}, &stdout, &stderr)
+	if code != exitOK || stderr.Len() != 0 || !strings.Contains(stdout.String(), "var result int64 = 5") {
+		t.Fatalf("integer-local body-codegen = %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
+	}
+}
+
 func TestRunBodyCodegenFillsTypedIRHoleAndReportsFunctionalScore(t *testing.T) {
 	t.Setenv("GOOO_LAYA_URL", "")
 	t.Setenv("GOOO_LAYA_API_KEY", "")

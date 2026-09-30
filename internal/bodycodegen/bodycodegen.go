@@ -362,7 +362,8 @@ func render(packageName, activityName, activityID, inputType, outputType, body, 
 	if !blockTerminates(function.Body) {
 		return nil, 0, 0, 0, 0, fmt.Errorf("lowered activity %q body does not return on every control-flow path", activityName)
 	}
-	loweredUnits := semanticUnitCount(function.Body)
+	inferredIntegerLocals := normalizeIntegerLocalInitializers(packageName, file, fset)
+	loweredUnits := semanticUnitCount(function.Body) - inferredIntegerLocals
 	if err := typecheck(packageName, file, fset); err != nil {
 		return nil, 0, 0, 0, 0, fmt.Errorf("typecheck generated activity: %w", err)
 	}
@@ -730,6 +731,39 @@ func typecheck(packageName string, file *ast.File, fset *token.FileSet) error {
 	configuration := types.Config{Importer: importer.Default()}
 	_, err := configuration.Check(packageName, fset, []*ast.File{file}, nil)
 	return err
+}
+
+// normalizeIntegerLocalInitializers gives inferred integer locals the DSL's
+// Integer representation. Go otherwise defaults an integer literal to int,
+// which is not interchangeable with the compiler's int64 Integer type.
+// Boolean and text locals retain Go's normal inference.
+func normalizeIntegerLocalInitializers(packageName string, file *ast.File, fset *token.FileSet) int {
+	information := &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}
+	configuration := types.Config{Importer: importer.Default(), Error: func(error) {}}
+	// The initial check can report the int/int64 mismatch this normalization
+	// addresses. go/types still records initializer types for declarations it
+	// can analyze; the final check below reports all remaining errors.
+	_, _ = configuration.Check(packageName, fset, []*ast.File{file}, information)
+
+	inferred := 0
+	ast.Inspect(file, func(node ast.Node) bool {
+		spec, ok := node.(*ast.ValueSpec)
+		if !ok || spec.Type != nil || len(spec.Names) != 1 || len(spec.Values) != 1 {
+			return true
+		}
+		value, ok := information.Types[spec.Values[0]]
+		if !ok || value.Type == nil {
+			return true
+		}
+		basic, ok := value.Type.Underlying().(*types.Basic)
+		if !ok || (basic.Kind() != types.Int && basic.Kind() != types.UntypedInt) {
+			return true
+		}
+		spec.Type = ast.NewIdent("int64")
+		inferred++
+		return true
+	})
+	return inferred
 }
 
 func rewriteLetDeclarations(body string) (string, error) {
