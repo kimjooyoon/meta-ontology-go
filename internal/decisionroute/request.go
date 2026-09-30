@@ -13,10 +13,11 @@ const RequestSchema = "gooo/typed-decision-request/v1"
 const ReceiptSchema = "gooo/typed-decision-receipt/v1"
 
 type Request struct {
-	Schema   string   `json:"schema"`
-	State    string   `json:"state"`
-	Question Question `json:"question"`
-	Fallback string   `json:"fallback"`
+	Schema        string   `json:"schema"`
+	State         string   `json:"state"`
+	Question      Question `json:"question"`
+	Fallback      string   `json:"fallback"`
+	ProviderModel string   `json:"provider_model,omitempty"`
 }
 
 type Question struct {
@@ -31,21 +32,43 @@ type Option struct {
 }
 
 type Receipt struct {
-	Schema           string             `json:"schema"`
-	Mode             string             `json:"mode"`
-	Selected         string             `json:"selected"`
-	FallbackReason   string             `json:"fallback_reason,omitempty"`
-	Provider         string             `json:"provider"`
-	Model            string             `json:"model,omitempty"`
-	ModelRevision    string             `json:"model_revision,omitempty"`
-	Routing          map[string]any     `json:"routing,omitempty"`
-	Probabilities    map[string]float64 `json:"probabilities,omitempty"`
-	Confidence       *float64           `json:"confidence,omitempty"`
-	AnswerConfidence *float64           `json:"answer_confidence,omitempty"`
-	RequestSHA256    string             `json:"request_sha256"`
+	Schema                 string             `json:"schema"`
+	Mode                   string             `json:"mode"`
+	Selected               string             `json:"selected"`
+	FallbackReason         string             `json:"fallback_reason,omitempty"`
+	Provider               string             `json:"provider"`
+	Model                  string             `json:"model,omitempty"`
+	RequestedProviderModel string             `json:"requested_provider_model,omitempty"`
+	ModelRevision          string             `json:"model_revision,omitempty"`
+	Routing                map[string]any     `json:"routing,omitempty"`
+	Probabilities          map[string]float64 `json:"probabilities,omitempty"`
+	Confidence             *float64           `json:"confidence,omitempty"`
+	AnswerConfidence       *float64           `json:"answer_confidence,omitempty"`
+	RequestSHA256          string             `json:"request_sha256"`
+}
+
+var supportedProviderModels = map[string]struct{}{
+	"english":         {},
+	"multilingual":    {},
+	"typed-decisions": {},
+}
+
+// ValidateProviderModel accepts the automatic default or one of Laya's
+// explicitly supported model identifiers.
+func ValidateProviderModel(model string) error {
+	if model == "" {
+		return nil
+	}
+	if _, ok := supportedProviderModels[model]; !ok {
+		return fmt.Errorf("unsupported provider model %q", model)
+	}
+	return nil
 }
 
 func Validate(request Request) (string, error) {
+	if err := ValidateProviderModel(request.ProviderModel); err != nil {
+		return "", err
+	}
 	if request.Schema != RequestSchema || strings.TrimSpace(request.State) == "" ||
 		strings.TrimSpace(request.Question.ID) == "" || strings.TrimSpace(request.Question.Instructions) == "" {
 		return "", errors.New("schema, state, question id, and question instructions are required")

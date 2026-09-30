@@ -22,6 +22,7 @@ const (
 )
 
 type layaRequest struct {
+	Model     string                        `json:"model,omitempty"`
 	State     map[string]string             `json:"state"`
 	Questions map[string]layaChoiceQuestion `json:"questions"`
 }
@@ -81,14 +82,21 @@ func Resolve(ctx context.Context, request Request, endpoint, apiKey string) (Rec
 	if err := json.Unmarshal(raw, &result); err != nil {
 		return fallback(request, digest, FallbackInvalidResult), nil
 	}
+	if request.ProviderModel != "" {
+		responseModel, _ := result.Routing["model"].(string)
+		if responseModel != request.ProviderModel {
+			return fallback(request, digest, FallbackInvalidResult), nil
+		}
+	}
 	answer, ok := result.Answers[request.Question.ID]
 	if !ok || !validChoice(request, answer.Choice) || !validProbabilities(request, answer.Probabilities) || !validConfidence(answer.Confidence) || !validConfidence(answer.AnswerConfidence) {
 		return fallback(request, digest, FallbackInvalidResult), nil
 	}
 	return Receipt{
 		Schema: ReceiptSchema, Mode: "laya", Selected: answer.Choice, Provider: "laya",
-		Model: result.Model, ModelRevision: readModelRevision(ctx, endpoint, result.Routing),
-		Routing: result.Routing, Probabilities: answer.Probabilities,
+		Model: result.Model, RequestedProviderModel: request.ProviderModel,
+		ModelRevision: readModelRevision(ctx, endpoint, result.Routing),
+		Routing:       result.Routing, Probabilities: answer.Probabilities,
 		Confidence: answer.Confidence, AnswerConfidence: answer.AnswerConfidence,
 		RequestSHA256: digest,
 	}, nil
@@ -146,6 +154,7 @@ func buildLayaRequest(request Request) layaRequest {
 		criteria[option.ID] = option.Description
 	}
 	return layaRequest{
+		Model: request.ProviderModel,
 		State: map[string]string{"request": request.State},
 		Questions: map[string]layaChoiceQuestion{request.Question.ID: {
 			Type: "choice", Instructions: request.Question.Instructions, Criteria: criteria,
@@ -181,6 +190,7 @@ func validConfidence(value *float64) bool {
 func fallback(request Request, digest, reason string) Receipt {
 	return Receipt{
 		Schema: ReceiptSchema, Mode: "deterministic_fallback", Selected: request.Fallback,
-		FallbackReason: reason, Provider: "deterministic", RequestSHA256: digest,
+		FallbackReason: reason, Provider: "deterministic", RequestedProviderModel: request.ProviderModel,
+		RequestSHA256: digest,
 	}
 }
