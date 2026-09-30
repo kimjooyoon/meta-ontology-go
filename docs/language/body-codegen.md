@@ -180,6 +180,69 @@ emission, not a GitHub Actions result. CI runs after a generated revision
 exists, so it can verify this output and inform a later generation round, but
 it cannot be an outcome of the same decision that produced the revision.
 
+## Sequential before-score search
+
+The experimental `--fill-search` mode uses a separate plan schema to let Laya
+propose one declared expression candidate at a time before Gooo scores it:
+
+```sh
+GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
+  go run ./cmd/gooo body-codegen --json --fill-search \
+  examples/body-codegen/ir-search-clamp-plan.json \
+  --activity ClampNegativeToZero \
+  examples/body-codegen/ir-fill-clamp.gooo.fixture
+```
+
+The `gooo/body-codegen-ir-search-plan/v1` plan names the intent and typed IR
+hole, declares an ordered candidate list, provides `test_cases` for training,
+may provide `holdout_test_cases`, and must set `max_attempts` from one through
+the number of candidates. This is still a single `int64 -> int64` expression
+hole in a Gooo-authored body skeleton. It does not let the model author
+arbitrary code or control flow.
+
+On each attempt, the model proposes from candidates that have not yet been
+tried. Gooo scores only that selected candidate against the training cases. A
+perfect training candidate ends the search; otherwise the next model round
+receives the prior candidate's training failure before it proposes again. The
+search stops at the first perfect training candidate or after
+`max_attempts`. If it does not find a perfect candidate, it emits the best
+observed candidate; ties follow the declared candidate order. Without a
+provider, candidates are tried in declared order. When only one candidate
+remains, Gooo selects it without another model call.
+
+Each attempt appears in the receipt. `attempted_candidates` counts every
+candidate tried, while `evaluated_candidates` counts only completed training
+scores. A candidate rejected before scoring has `scoring_completed: false` and
+a null `accuracy_percent`, rather than a misleading zero. Feedback for the
+next model round is bounded: it includes at most the first eight failed
+training cases, along with `failed_cases_total` and `failed_cases_truncated`.
+The local receipt retains the complete case results.
+
+All provider rounds share one eight-second budget accumulated only during
+provider decision calls; `provider_budget_used_ms` reports the time charged to
+those calls. Plan parsing, candidate checking and scoring, the final training
+rescore, holdout evaluation, and final emission do not consume that budget.
+There is no end-to-end generation deadline. After the final candidate is
+chosen and emitted, Gooo rescores the emitted source against the training
+suite; receipt training metrics and `training_case_results` describe that
+final source. The
+holdout suite is evaluated only after final selection; its cases are never
+sent to the model and never affect search arbitration. The receipt keeps
+training and holdout results separate and reports
+`global_best_accuracy_percent` as null (`UNKNOWN`): candidates outside the
+declared finite set and behavior outside the supplied cases are not
+established. These scores come from the bounded integer AST interpreter;
+generated Go is typechecked and replayed but not executed by this CLI. A
+runtime functional metric requires a separate compiled oracle. The
+deterministic offline fixture includes bad identity and negation candidates
+before the correct zero expression, with `int64` extrema held out from
+training.
+
+This experiment establishes only exact training and holdout results on the
+declared cases under Gooo's bounded integer interpreter. It does not establish
+whole-domain correctness, model quality in general, or a speed benefit over
+the score-first `--fill-plan` experiment.
+
 The checked-in `.gooo.fixture` intentionally uses a finite, side-effect-free
 body. The suffix keeps this experimental input outside the repository's fixed
 `.gooo` conformance inventory until the language corpus itself is revised.
