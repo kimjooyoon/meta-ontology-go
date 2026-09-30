@@ -81,7 +81,7 @@
       "generated_or_changed_artifact": "caller-owned generated.go + receipt.json",
       "terminal_decision": "REVIEW RECEIPT READY",
       "next_consumer": "reviewer agent",
-      "evidence": [{"path": "AGENTS.md", "digest": "sha256:b018064896d11a7431b65a001b16dd3c699d4883b5cd0103a22d5adc091bc84a", "receipt_path": "examples/language-assurance-kernel/write-set-exactness.md", "receipt_digest": "sha256:2e3f28c95684b09dc73741ae83a56abe5113bc8f58f987ce24ce53f17b064b06"}],
+      "evidence": [{"path": "AGENTS.md", "digest": "sha256:3465c3bd5239509a04334fde667d17292a8fd461245612fb61682c180c1e545e", "receipt_path": "examples/language-assurance-kernel/write-set-exactness.md", "receipt_digest": "sha256:2e3f28c95684b09dc73741ae83a56abe5113bc8f58f987ce24ce53f17b064b06"}],
       "binding": {"nodes": ["author.agent", "intent", "compiler.agent", "generated.output", "reviewer.agent", "receipt"], "edges": ["writes", "reads", "creates", "consumes", "authority-boundary"], "transitions": ["intent", "handoff", "generated", "reviewed"]}
     },
     {
