@@ -67,9 +67,9 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 	}
 	var result bodycodegen.Result
 	if fillPlanPath != "" {
-		planBytes, err := reader.ReadFile(fillPlanPath)
-		if err != nil {
-			return reportBodyCodegenFailure(jsonMode, fillPlanPath, activity, planBytes, err, stdout, stderr)
+		planBytes, readErr := reader.ReadFile(fillPlanPath)
+		if readErr != nil {
+			return reportBodyCodegenFailure(jsonMode, fillPlanPath, activity, planBytes, readErr, stdout, stderr)
 		}
 		var plan bodycodegen.IRBodyFillPlan
 		decoder := json.NewDecoder(strings.NewReader(string(planBytes)))

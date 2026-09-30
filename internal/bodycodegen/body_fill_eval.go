@@ -3,10 +3,16 @@ package bodycodegen
 import (
 	"fmt"
 	"go/ast"
+	"go/constant"
 	"go/parser"
 	"go/token"
-	"strconv"
+	"go/types"
 )
+
+type integerBodyEvaluator struct {
+	information types.Info
+	environment map[types.Object]any
+}
 
 // evaluateIntegerCases interprets only the already typechecked, pure integer
 // body profile. It is used to score bounded experimental candidates without
@@ -25,11 +31,29 @@ func evaluateIntegerCases(
 	if !ok {
 		return nil, 0, fmt.Errorf("generated function %q was not found", activity)
 	}
+	information := types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	configuration := types.Config{}
+	if _, err := configuration.Check(file.Name.Name, fset, []*ast.File{file}, &information); err != nil {
+		return nil, 0, fmt.Errorf("typecheck integer evaluator input: %w", err)
+	}
+	if function.Type.Params == nil || len(function.Type.Params.List) != 1 ||
+		len(function.Type.Params.List[0].Names) != 1 {
+		return nil, 0, fmt.Errorf("integer evaluator requires one named input")
+	}
+	input := information.Defs[function.Type.Params.List[0].Names[0]]
+	if input == nil || input.Type() != types.Typ[types.Int64] {
+		return nil, 0, fmt.Errorf("integer evaluator input must be int64")
+	}
+	evaluator := integerBodyEvaluator{information: information}
 	results := make([]IRBodyFillCaseResult, 0, len(cases))
 	passed := 0
 	for _, testCase := range cases {
-		environment := map[string]any{"input": testCase.Input}
-		value, returned, err := evaluateIntBlock(function.Body, environment)
+		evaluator.environment = map[types.Object]any{input: testCase.Input}
+		value, returned, err := evaluator.evaluateBlock(function.Body)
 		if err != nil {
 			return nil, 0, fmt.Errorf("input %d: %w", testCase.Input, err)
 		}
@@ -51,7 +75,7 @@ func evaluateIntegerCases(
 	return results, passed, nil
 }
 
-func evaluateIntBlock(block *ast.BlockStmt, environment map[string]any) (any, bool, error) {
+func (e *integerBodyEvaluator) evaluateBlock(block *ast.BlockStmt) (any, bool, error) {
 	for _, statement := range block.List {
 		switch value := statement.(type) {
 		case *ast.DeclStmt:
@@ -63,15 +87,28 @@ func evaluateIntBlock(block *ast.BlockStmt, environment map[string]any) (any, bo
 			if !ok || len(spec.Names) != 1 {
 				return nil, false, fmt.Errorf("unsupported generated value declaration")
 			}
-			var initial any
+			object := e.information.Defs[spec.Names[0]]
+			if object == nil {
+				return nil, false, fmt.Errorf("generated declaration has no typed binding")
+			}
+			var initial any = int64(0)
+			if object.Type().Underlying() == types.Typ[types.Bool] {
+				initial = false
+			} else if object.Type().Underlying() == types.Typ[types.String] {
+				initial = ""
+			}
 			if len(spec.Values) == 1 {
 				var err error
-				initial, err = evaluateIntExpression(spec.Values[0], environment)
+				initial, err = e.evaluateExpression(spec.Values[0])
 				if err != nil {
 					return nil, false, err
 				}
 			}
-			environment[spec.Names[0].Name] = initial
+			initial, err := coerceBodyValue(initial, object.Type())
+			if err != nil {
+				return nil, false, err
+			}
+			e.environment[object] = initial
 		case *ast.AssignStmt:
 			if len(value.Lhs) != 1 || len(value.Rhs) != 1 || value.Tok != token.ASSIGN {
 				return nil, false, fmt.Errorf("unsupported generated assignment")
@@ -80,13 +117,24 @@ func evaluateIntBlock(block *ast.BlockStmt, environment map[string]any) (any, bo
 			if !ok {
 				return nil, false, fmt.Errorf("unsupported generated assignment target")
 			}
-			assigned, err := evaluateIntExpression(value.Rhs[0], environment)
+			assigned, err := e.evaluateExpression(value.Rhs[0])
 			if err != nil {
 				return nil, false, err
 			}
-			environment[name.Name] = assigned
+			if name.Name == "_" {
+				continue
+			}
+			object := e.information.Uses[name]
+			if object == nil {
+				return nil, false, fmt.Errorf("generated assignment has no typed binding")
+			}
+			assigned, err = coerceBodyValue(assigned, object.Type())
+			if err != nil {
+				return nil, false, err
+			}
+			e.environment[object] = assigned
 		case *ast.IfStmt:
-			condition, err := evaluateIntExpression(value.Cond, environment)
+			condition, err := e.evaluateExpression(value.Cond)
 			if err != nil {
 				return nil, false, err
 			}
@@ -95,19 +143,19 @@ func evaluateIntBlock(block *ast.BlockStmt, environment map[string]any) (any, bo
 				return nil, false, fmt.Errorf("generated if condition evaluated to %T", condition)
 			}
 			if truth {
-				result, returned, err := evaluateIntBlock(value.Body, environment)
+				result, returned, err := e.evaluateBlock(value.Body)
 				if err != nil || returned {
 					return result, returned, err
 				}
 			} else {
 				switch otherwise := value.Else.(type) {
 				case *ast.BlockStmt:
-					result, returned, err := evaluateIntBlock(otherwise, environment)
+					result, returned, err := e.evaluateBlock(otherwise)
 					if err != nil || returned {
 						return result, returned, err
 					}
 				case *ast.IfStmt:
-					result, returned, err := evaluateIntBlock(&ast.BlockStmt{List: []ast.Stmt{otherwise}}, environment)
+					result, returned, err := e.evaluateBlock(&ast.BlockStmt{List: []ast.Stmt{otherwise}})
 					if err != nil || returned {
 						return result, returned, err
 					}
@@ -117,7 +165,7 @@ func evaluateIntBlock(block *ast.BlockStmt, environment map[string]any) (any, bo
 			if len(value.Results) != 1 {
 				return nil, false, fmt.Errorf("generated return must have one value")
 			}
-			returned, err := evaluateIntExpression(value.Results[0], environment)
+			returned, err := e.evaluateExpression(value.Results[0])
 			return returned, true, err
 		default:
 			return nil, false, fmt.Errorf("unsupported generated statement %T", statement)
@@ -126,33 +174,41 @@ func evaluateIntBlock(block *ast.BlockStmt, environment map[string]any) (any, bo
 	return nil, false, nil
 }
 
-func evaluateIntExpression(expression ast.Expr, environment map[string]any) (any, error) {
+func (e *integerBodyEvaluator) evaluateExpression(expression ast.Expr) (any, error) {
+	typed := e.information.Types[expression]
+	if typed.Value != nil {
+		// Go folds constants with arbitrary precision before conversion to a
+		// runtime type. This also handles MinInt64 and shadowed true/false.
+		var value any
+		switch typed.Value.Kind() {
+		case constant.Bool:
+			value = constant.BoolVal(typed.Value)
+		case constant.String:
+			value = constant.StringVal(typed.Value)
+		default:
+			integerConstant := constant.ToInt(typed.Value)
+			if integerConstant.Kind() != constant.Int {
+				return nil, fmt.Errorf("constant %s is outside the integer evaluator profile", typed.Value)
+			}
+			integer, exact := constant.Int64Val(integerConstant)
+			if !exact {
+				return nil, fmt.Errorf("constant %s is outside the integer evaluator profile", typed.Value)
+			}
+			value = integer
+		}
+		return coerceBodyValue(value, typed.Type)
+	}
 	switch value := expression.(type) {
 	case *ast.Ident:
-		if value.Name == "true" {
-			return true, nil
-		}
-		if value.Name == "false" {
-			return false, nil
-		}
-		result, ok := environment[value.Name]
+		result, ok := e.environment[e.information.Uses[value]]
 		if !ok {
 			return nil, fmt.Errorf("unbound identifier %q", value.Name)
 		}
 		return result, nil
-	case *ast.BasicLit:
-		if value.Kind != token.INT {
-			return nil, fmt.Errorf("unsupported generated literal %s", value.Kind)
-		}
-		parsed, err := strconv.ParseInt(value.Value, 0, 64)
-		if err != nil {
-			return nil, fmt.Errorf("parse generated integer %q: %w", value.Value, err)
-		}
-		return parsed, nil
 	case *ast.ParenExpr:
-		return evaluateIntExpression(value.X, environment)
+		return e.evaluateExpression(value.X)
 	case *ast.UnaryExpr:
-		operand, err := evaluateIntExpression(value.X, environment)
+		operand, err := e.evaluateExpression(value.X)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +218,7 @@ func evaluateIntExpression(expression ast.Expr, environment map[string]any) (any
 			if !ok {
 				return nil, fmt.Errorf("unary minus operand is %T", operand)
 			}
-			return -number, nil
+			return coerceBodyValue(-number, typed.Type)
 		case token.NOT:
 			truth, ok := operand.(bool)
 			if !ok {
@@ -173,7 +229,7 @@ func evaluateIntExpression(expression ast.Expr, environment map[string]any) (any
 			return nil, fmt.Errorf("unsupported generated unary operator %s", value.Op)
 		}
 	case *ast.BinaryExpr:
-		left, err := evaluateIntExpression(value.X, environment)
+		left, err := e.evaluateExpression(value.X)
 		if err != nil {
 			return nil, err
 		}
@@ -195,14 +251,50 @@ func evaluateIntExpression(expression ast.Expr, environment map[string]any) (any
 				return true, nil
 			}
 		}
-		right, err := evaluateIntExpression(value.Y, environment)
+		right, err := e.evaluateExpression(value.Y)
 		if err != nil {
 			return nil, err
 		}
-		return evaluateIntegerBinary(value.Op, left, right)
+		result, err := evaluateIntegerBinary(value.Op, left, right)
+		if err != nil {
+			return nil, err
+		}
+		return coerceBodyValue(result, typed.Type)
 	default:
 		return nil, fmt.Errorf("unsupported generated expression %T", expression)
 	}
+}
+
+func coerceBodyValue(value any, valueType types.Type) (any, error) {
+	if valueType == nil {
+		return nil, fmt.Errorf("generated value has no static type")
+	}
+	basic, ok := valueType.Underlying().(*types.Basic)
+	if !ok {
+		return nil, fmt.Errorf("unsupported generated value type %s", valueType)
+	}
+	switch basic.Kind() {
+	case types.Int, types.Int32, types.Int64, types.UntypedInt, types.UntypedRune:
+		number, ok := value.(int64)
+		if !ok {
+			return nil, fmt.Errorf("generated integer value has type %T", value)
+		}
+		if basic.Kind() == types.Int32 {
+			number = int64(int32(number))
+		} else if basic.Kind() == types.Int {
+			number = int64(int(number))
+		}
+		return number, nil
+	case types.Bool, types.UntypedBool:
+		if truth, ok := value.(bool); ok {
+			return truth, nil
+		}
+	case types.String, types.UntypedString:
+		if text, ok := value.(string); ok {
+			return text, nil
+		}
+	}
+	return nil, fmt.Errorf("unsupported generated value %T for type %s", value, valueType)
 }
 
 func evaluateIntegerBinary(operator token.Token, left, right any) (any, error) {
@@ -246,6 +338,28 @@ func evaluateIntegerBinary(operator token.Token, left, right any) (any, error) {
 			return a == b, nil
 		case token.NEQ:
 			return a != b, nil
+		}
+	}
+	if a, ok := left.(string); ok {
+		b, ok := right.(string)
+		if !ok {
+			return nil, fmt.Errorf("binary operands have types %T and %T", left, right)
+		}
+		switch operator {
+		case token.ADD:
+			return a + b, nil
+		case token.EQL:
+			return a == b, nil
+		case token.NEQ:
+			return a != b, nil
+		case token.LSS:
+			return a < b, nil
+		case token.LEQ:
+			return a <= b, nil
+		case token.GTR:
+			return a > b, nil
+		case token.GEQ:
+			return a >= b, nil
 		}
 	}
 	return nil, fmt.Errorf("unsupported generated binary operator %s for %T", operator, left)
