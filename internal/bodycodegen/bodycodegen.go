@@ -88,7 +88,7 @@ type RouteSelectionReceipt struct {
 
 // Generate compiles one .gooo activity body into a marked Go source region.
 // The accepted body subset is local declarations/assignments, conditionals,
-// and returns over int64 and bool values. Calls and effects fail closed.
+// and returns over int64, bool, and string values. Calls and effects fail closed.
 func Generate(filename string, source []byte, activityName string) (Result, error) {
 	return GenerateWithPlanner(context.Background(), filename, source, activityName, "", "")
 }
@@ -271,6 +271,8 @@ func goTypeForEntity(entity string) (string, bool) {
 		return "int64", true
 	case "Boolean":
 		return "bool", true
+	case "Text":
+		return "string", true
 	default:
 		return "", false
 	}
@@ -598,7 +600,7 @@ func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]
 			name := spec.Names[0].Name
 			if spec.Type != nil {
 				typeName, supported := spec.Type.(*ast.Ident)
-				if name != "_goooResult" || !supported || (typeName.Name != "int64" && typeName.Name != "bool") || len(spec.Values) != 0 {
+				if name != "_goooResult" || !supported || (typeName.Name != "int64" && typeName.Name != "bool" && typeName.Name != "string") || len(spec.Values) != 0 {
 					return 0, fmt.Errorf("explicit local types are reserved for compiler-generated result joins")
 				}
 			} else if len(spec.Values) != 1 {

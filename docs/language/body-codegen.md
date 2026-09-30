@@ -25,12 +25,14 @@ GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
   examples/body-codegen/guard-route.gooo.fixture
 ```
 
-The v1 body profile accepts one `Integer` or `Boolean` input and one matching
-result, local `let` declarations, assignment to an existing local, `if/else`,
-and one-value `return`. Conditions and expressions are checked by Go's type
-checker after a closed syntax filter. Function calls, imports, loops, multiple
-inputs, and external effects fail closed. The generated result is written to
-stdout; this command does not mutate the repository.
+The v1 body profile accepts one `Integer`, `Boolean`, or `Text` input and a
+supported `Integer`, `Boolean`, or `Text` result, local `let` declarations,
+assignment to an existing local, `if/else`, and one-value `return`. `Integer`,
+`Boolean`, and `Text` lower to Go `int64`, `bool`, and `string`. Conditions and
+expressions are checked by Go's type checker after a closed syntax filter.
+Function calls, imports, loops, multiple inputs, and external effects fail
+closed. The generated result is written to stdout; this command does not
+mutate the repository.
 
 The v3 JSON report records the source/program/generated digests, source and
 lowered semantic-unit counts, candidate and final route, Laya decision and
@@ -99,3 +101,9 @@ body. The suffix keeps this experimental input outside the repository's fixed
 `.gooo` conformance inventory until the language corpus itself is revised.
 Later experiments can compare behavior across codegen routes without granting
 the model authority to produce code.
+
+The text fixtures in `examples/body-codegen/` cover string equality and
+conditional results on the bounded Laya route, plus local assignment on the
+deterministic route. This adds scalar text behavior to the closed source-body
+profile; it does not add records, collections, multiple inputs, or dynamic
+model-authored code.
