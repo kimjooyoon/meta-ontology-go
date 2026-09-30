@@ -79,6 +79,10 @@ is installed on the default branch, a successful exact-head `dev` run opens or
 reuses the matching `main` PR and dispatches CI with the PR number and exact
 head/base SHAs. CI re-reads that tuple, emits the digest-bound proof, and the
 executor merges through GitHub's normal PR API with the expected head SHA.
+The original successful `dev` promotion run owns the dispatched CI through a
+bounded poll of its exact workflow, head, branch, run ID and current attempt.
+A dependent merge job downloads that attempt's proof and rechecks the live
+source/target tuple. Completion callbacks from dispatched CI do not own merges.
 Native branch protection remains authoritative; force pushes and force updates
 are not permitted. Missing or stale evidence is `FAIL_CLOSED`.
 
