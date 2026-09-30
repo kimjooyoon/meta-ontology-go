@@ -130,6 +130,21 @@ activity must have one Integer input and Integer result. Edits replace only
 the in-memory `computes` literal and preserve the source package, unrelated
 declarations, and stable semantic identity; repository writes remain zero.
 
+The typed plan is prepared once into an owned immutable snapshot. Its already
+checked fallback is used for source binding, and search reuses the same snapshot.
+Every combined candidate still passes the existing arena type/scope compiler;
+there is no global cache or reuse of earlier test outcomes. The receipt records
+`plan_prepare_ms` separately. Earlier receipts included preparation in source
+binding/search costs, so compare total processing before comparing stage costs.
+
+`typed-path-conditional-assignment.gooo.fixture` and its English/Korean plan
+documents exercise six interacting decisions across comparison operands,
+Boolean local references and assignment targets, Integer assignment targets,
+branch bodies and Boolean-update order. Their 64 combinations use the same
+structural ABI. Seven explicit cases select behavior; they do not prove every
+natural-language structural request. An inconsistent finite case retains a
+6/7 functional result while native lowering remains complete.
+
 One synchronous prediction per decision ranks its two typed options before
 candidate tests. Conditional probabilities are ranking weights, not calibrated
 odds that a request is fulfilled. The bounded search checks combined scope and
