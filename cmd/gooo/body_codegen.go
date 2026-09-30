@@ -138,9 +138,8 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 func reportBodyCodegenFailure(jsonMode bool, filename, activity string, source []byte, cause error, stdout, stderr io.Writer) int {
 	if jsonMode {
 		completeness := bodycodegen.FailureCompletenessReceipt(activity, source, cause.Error())
-		var searchError *bodycodegen.IRBodySearchError
 		var searchReceipt *bodycodegen.IRBodySearchReceipt
-		if errors.As(cause, &searchError) {
+		if searchError, ok := errors.AsType[*bodycodegen.IRBodySearchError](cause); ok {
 			searchReceipt = searchError.Receipt
 			completeness = bodycodegen.SearchFailureCompletenessReceipt(activity, source, cause.Error(), searchReceipt)
 		}
