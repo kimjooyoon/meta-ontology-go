@@ -163,7 +163,7 @@ func mergeResultForm(fileSet *token.FileSet, body *ast.BlockStmt) (canonicalSema
 		return canonicalSemanticForm{}, false
 	}
 	typeName, ok := valueSpec.Type.(*ast.Ident)
-	if !ok || (typeName.Name != "int64" && typeName.Name != "bool") {
+	if !ok || (typeName.Name != "int64" && typeName.Name != "bool" && typeName.Name != "string") {
 		return canonicalSemanticForm{}, false
 	}
 	conditional, ok := body.List[1].(*ast.IfStmt)
