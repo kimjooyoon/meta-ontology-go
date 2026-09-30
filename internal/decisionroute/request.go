@@ -18,6 +18,7 @@ type Request struct {
 	Question      Question `json:"question"`
 	Fallback      string   `json:"fallback"`
 	ProviderModel string   `json:"provider_model,omitempty"`
+	Intent        string   `json:"intent,omitempty"`
 }
 
 type Question struct {
@@ -29,22 +30,28 @@ type Question struct {
 type Option struct {
 	ID          string `json:"id"`
 	Description string `json:"description"`
+	Operation   string `json:"operation,omitempty"`
 }
 
 type Receipt struct {
-	Schema                 string             `json:"schema"`
-	Mode                   string             `json:"mode"`
-	Selected               string             `json:"selected"`
-	FallbackReason         string             `json:"fallback_reason,omitempty"`
-	Provider               string             `json:"provider"`
-	Model                  string             `json:"model,omitempty"`
-	RequestedProviderModel string             `json:"requested_provider_model,omitempty"`
-	ModelRevision          string             `json:"model_revision,omitempty"`
-	Routing                map[string]any     `json:"routing,omitempty"`
-	Probabilities          map[string]float64 `json:"probabilities,omitempty"`
-	Confidence             *float64           `json:"confidence,omitempty"`
-	AnswerConfidence       *float64           `json:"answer_confidence,omitempty"`
-	RequestSHA256          string             `json:"request_sha256"`
+	Schema                   string             `json:"schema"`
+	Mode                     string             `json:"mode"`
+	Selected                 string             `json:"selected"`
+	FallbackReason           string             `json:"fallback_reason,omitempty"`
+	Provider                 string             `json:"provider"`
+	TinyGoVariant            string             `json:"tiny_go_variant,omitempty"`
+	TinyGoWeightsSHA256      string             `json:"tiny_go_weights_sha256,omitempty"`
+	TinyGoMetadataSHA256     string             `json:"tiny_go_metadata_sha256,omitempty"`
+	TinyGoPredictedOperation string             `json:"tiny_go_predicted_operation,omitempty"`
+	TinyGoPredictionApplied  *bool              `json:"tiny_go_prediction_applied,omitempty"`
+	Model                    string             `json:"model,omitempty"`
+	RequestedProviderModel   string             `json:"requested_provider_model,omitempty"`
+	ModelRevision            string             `json:"model_revision,omitempty"`
+	Routing                  map[string]any     `json:"routing,omitempty"`
+	Probabilities            map[string]float64 `json:"probabilities,omitempty"`
+	Confidence               *float64           `json:"confidence,omitempty"`
+	AnswerConfidence         *float64           `json:"answer_confidence,omitempty"`
+	RequestSHA256            string             `json:"request_sha256"`
 }
 
 var supportedProviderModels = map[string]struct{}{

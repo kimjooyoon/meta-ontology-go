@@ -85,7 +85,7 @@ chmod +x "$tofu"
 
 go_version="$(go version)"
 go_env_version="$(go env GOVERSION)"
-test "$go_env_version" = "go1.27.0"
+test "$go_env_version" = "go1.27.1"
 printf '%s\n%s\n' "$go_version" "$go_env_version" > "$work/observer-toolchain.txt"
 observer_toolchain_digest="$(digest "$work/observer-toolchain.txt")"
 
@@ -225,7 +225,7 @@ source_digest="$(printf '%s\n' "$(git rev-parse HEAD^{tree})" | sha256sum | cut 
 source_digest="sha256:$source_digest"
 argument_digest="$(printf '%s\n' "$init_descriptor" "$plan_descriptor" "$show_descriptor" "$test_descriptor" | sha256sum | cut -d' ' -f1)"
 argument_digest="sha256:$argument_digest"
-environment_digest="$(printf '%s\n' 'GOTOOLCHAIN=go1.27.0' 'GOWORK=off' 'GOFLAGS=-mod=readonly' 'TF_IN_AUTOMATION=1' | sha256sum | cut -d' ' -f1)"
+environment_digest="$(printf '%s\n' 'GOTOOLCHAIN=go1.27.1' 'GOWORK=off' 'GOFLAGS=-mod=readonly' 'TF_IN_AUTOMATION=1' | sha256sum | cut -d' ' -f1)"
 environment_digest="sha256:$environment_digest"
 dependency_digest="$(digest "$work/run-1/show.stdout")"
 expected_digest="$(printf '%s\n' 'init=0' 'plan=0' 'show=0' 'test=0' 'plan_events=valid' | sha256sum | cut -d' ' -f1)"

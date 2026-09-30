@@ -213,8 +213,8 @@ func loadIdentity(input executionInput) (identity, error) {
 		return identity{}, err
 	}
 	toolchainVersion := publictestreuse.CurrentToolchainVersion()
-	if toolchainVersion != "go1.27.0" {
-		return identity{}, fmt.Errorf("public test reuse requires Go 1.27.0, got %s", toolchainVersion)
+	if toolchainVersion != "go1.27.1" {
+		return identity{}, fmt.Errorf("public test reuse requires Go 1.27.1, got %s", toolchainVersion)
 	}
 	commandDigest := publictestreuse.TestCommandDigest(testCommand, cache.HashBytes(testContract).String())
 	return identity{

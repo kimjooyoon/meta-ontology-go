@@ -7,21 +7,33 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
 )
 
 const bodyCodegenUsage = "usage: gooo body-codegen [--json] " +
-	"[--sample-seed <seed> | --fill-plan <plan.json> | --fill-search <plan.json>] --activity <name> <file.gooo>"
+	"[--sample-seed <seed> | --fill-plan <plan.json> [--tiny-model <model.json>] | --fill-search <plan.json>] --activity <name> <file.gooo>"
+const tinyModelDiagnosticLabel = "<tiny_model>"
 
 func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer) int {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	return runBodyCodegenContext(ctx, args, reader, stdout, stderr)
+}
+
+func runBodyCodegenContext(ctx context.Context, args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	jsonMode := false
 	activity := ""
 	sampleSeed := ""
 	sampleSeedSet := false
 	fillPlanPath := ""
 	searchPlanPath := ""
+	tinyModelPath := ""
 	filename := ""
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
@@ -59,6 +71,14 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 			}
 			searchPlanPath = args[index+1]
 			index++
+		case "--tiny-model":
+			if tinyModelPath != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" ||
+				strings.HasPrefix(args[index+1], "-") {
+				fmt.Fprintln(stderr, bodyCodegenUsage)
+				return exitUsage
+			}
+			tinyModelPath = args[index+1]
+			index++
 		default:
 			if strings.HasPrefix(args[index], "-") || filename != "" {
 				fmt.Fprintln(stderr, bodyCodegenUsage)
@@ -68,8 +88,14 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 		}
 	}
 	if activity == "" || filename == "" || (sampleSeedSet && (fillPlanPath != "" || searchPlanPath != "")) ||
-		(fillPlanPath != "" && searchPlanPath != "") {
+		(fillPlanPath != "" && searchPlanPath != "") ||
+		(tinyModelPath != "" && (fillPlanPath == "" || searchPlanPath != "" || sampleSeedSet)) {
 		fmt.Fprintln(stderr, bodyCodegenUsage)
+		return exitUsage
+	}
+	if tinyModelPath != "" && (strings.TrimSpace(os.Getenv("GOOO_LAYA_URL")) != "" ||
+		strings.TrimSpace(os.Getenv("GOOO_LAYA_API_KEY")) != "") {
+		fmt.Fprintln(stderr, "gooo: --tiny-model cannot be combined with configured GOOO_LAYA_URL or GOOO_LAYA_API_KEY")
 		return exitUsage
 	}
 	source, err := reader.ReadFile(filename)
@@ -104,15 +130,30 @@ func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer
 			return reportBodyCodegenFailure(jsonMode, planPath, activity, planBytes, err, stdout, stderr)
 		}
 		if searchPlanPath != "" {
-			result, err = bodycodegen.GenerateWithIRBodySearch(context.Background(), filename, source, activity,
+			result, err = bodycodegen.GenerateWithIRBodySearch(ctx, filename, source, activity,
 				searchPlan, os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"))
 		} else {
-			result, err = bodycodegen.GenerateWithIRBodyFill(context.Background(), filename, source, activity,
-				plan, os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"))
+			if tinyModelPath != "" {
+				if plan.ProviderModel != "" {
+					return reportBodyCodegenFailure(jsonMode, planPath, activity, planBytes,
+						fmt.Errorf("--tiny-model cannot be combined with the plan provider_model selector"), stdout, stderr)
+				}
+				modelLoadStarted := time.Now()
+				provider, loadErr := decisionroute.LoadTinyGoProvider(tinyModelPath)
+				modelLoadMS := float64(time.Since(modelLoadStarted)) / float64(time.Millisecond)
+				if loadErr != nil {
+					return reportBodyCodegenFailure(jsonMode, tinyModelDiagnosticLabel, activity, planBytes, loadErr, stdout, stderr)
+				}
+				result, err = bodycodegen.GenerateWithIRBodyFillWithOptions(ctx, filename, source, activity,
+					plan, "", "", bodycodegen.IRBodyFillOptions{TinyGoProvider: provider, TinyModelLoadMS: &modelLoadMS})
+			} else {
+				result, err = bodycodegen.GenerateWithIRBodyFillWithOptions(ctx, filename, source, activity,
+					plan, os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"), bodycodegen.IRBodyFillOptions{})
+			}
 		}
 	} else {
 		result, err = bodycodegen.GenerateWithPlannerAndSampleSeed(
-			context.Background(), filename, source, activity,
+			ctx, filename, source, activity,
 			os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"), sampleSeed,
 		)
 	}

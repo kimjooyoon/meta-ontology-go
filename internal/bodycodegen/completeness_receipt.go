@@ -68,12 +68,20 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 	}
 	layaMode := report.RouteDecision.Mode
 	layaProvider := report.RouteDecision.Provider
+	decisionMode := report.RouteDecision.Mode
+	decisionProvider := report.RouteDecision.Provider
 	if report.BodyFill != nil {
 		layaMode = report.BodyFill.Decision.Mode
 		layaProvider = report.BodyFill.Decision.Provider
+		decisionMode = report.BodyFill.Decision.Mode
+		decisionProvider = report.BodyFill.Decision.Provider
+		if decisionProvider == "tiny_go" {
+			layaMode, layaProvider = "", ""
+		}
 	}
 	if report.BodySearch != nil {
 		layaMode, layaProvider = bodySearchProviderSummary(report.BodySearch)
+		decisionMode, decisionProvider = layaMode, layaProvider
 	}
 
 	generationReason := "Measures whether this accepted activity produced a digest-bound Go projection."
@@ -153,8 +161,19 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 			dimension.Status = "PROGRESS"
 		}
 		dimensions = append(dimensions, dimension)
+		dimensions = append(dimensions, completenessDimension("provider_execution_accounting",
+			boolCount(fill.ExternalProviderCallsKnown), 1,
+			"body-fill provider executions classified as local predictions or external calls",
+			"Counts local model predictions separately from external provider calls; unknown failed request outcomes remain unknown.",
+			[]string{"body_fill.local_model_predictions:" + strconv.Itoa(fill.LocalModelPredictions),
+				"body_fill.external_provider_calls:" + strconv.Itoa(fill.ExternalProviderCalls),
+				"body_fill.external_provider_calls_known:" + strconv.FormatBool(fill.ExternalProviderCallsKnown)}, false))
 		core = append(core, dimension.ID)
-		allowedInvestment = "compiler-controlled assembly from declared expression candidates, measured finite-suite scores, and an optional Laya proposal; no human approval or authorization is required"
+		if decisionProvider == "tiny_go" {
+			allowedInvestment = "compiler-controlled assembly from declared expression candidates, measured finite-suite scores, and an optional local tiny_go operation prediction; no human approval or authorization is required"
+		} else {
+			allowedInvestment = "compiler-controlled assembly from declared expression candidates, measured finite-suite scores, and an optional Laya proposal; no human approval or authorization is required"
+		}
 	}
 	if search := report.BodySearch; search != nil {
 		searchDimensions, searchCore := bodySearchCompletenessDimensions(search, report.GeneratedDigest)
@@ -216,6 +235,7 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 			"plan_sha256":        planSHA, "compiler_source_sha": compilerSHA,
 			"toolchain": runtime.Version(), "execution_environment": runtime.GOOS + "/" + runtime.GOARCH,
 			"input_type": report.InputType, "output_type": report.OutputType,
+			"decision_mode": decisionMode, "decision_provider": decisionProvider,
 			"laya_mode": layaMode, "laya_provider": layaProvider,
 			"system_budget":        map[string]int{"maximum_human_actions": 0, "maximum_repository_writes": 0},
 			"observed_system_cost": map[string]int{"human_actions": 0, "repository_writes": report.RepositoryWrites},
@@ -323,6 +343,14 @@ func networkBoundaryDimension(report Report) CompletenessDimension {
 	decision := report.RouteDecision
 	if report.BodyFill != nil {
 		decision = report.BodyFill.Decision
+		if decision.Provider == "tiny_go" && report.BodyFill.ExternalProviderCallsKnown &&
+			report.BodyFill.ExternalProviderCalls == 0 {
+			return completenessDimension("external_network_boundary", 1, 1,
+				"local tiny_go prediction runs with no external provider calls",
+				"The selected body-fill provider executed the local model and recorded zero external provider calls.",
+				[]string{"body_fill.local_model_predictions:" + strconv.Itoa(report.BodyFill.LocalModelPredictions),
+					"body_fill.external_provider_calls:0", "decision.provider:tiny_go"}, false)
+		}
 	}
 	noProviderCall := decision.Mode == "deterministic_fallback" &&
 		(decision.FallbackReason == "NOT_CONFIGURED" || decision.FallbackReason == "NO_ALTERNATIVE_ROUTE")
@@ -355,6 +383,12 @@ func layaObservationDimension(report Report) CompletenessDimension {
 	if report.BodyFill != nil {
 		eligible = len(report.BodyFill.CandidateScores) > 1
 		decision = report.BodyFill.Decision
+		if decision.Provider == "tiny_go" {
+			return completenessDimension("laya_decision_observation", 0, 0,
+				"eligible Laya decisions; local tiny_go choices are counted separately",
+				"This run used local tiny_go inference and made no Laya decision request.",
+				[]string{"body_fill.decision.provider:tiny_go", "body_fill.decision.mode:" + decision.Mode}, false)
+		}
 		unit = "eligible IR body-fill decisions"
 		evidence = []string{"body_fill.candidate_scores", "body_fill.decision.mode:" + decision.Mode,
 			"body_fill.decision.request_sha256:" + decision.RequestSHA256,
