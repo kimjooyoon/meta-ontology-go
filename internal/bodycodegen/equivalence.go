@@ -12,7 +12,7 @@ import (
 
 const (
 	routeEquivalenceSchema = "gooo/body-codegen-route-equivalence/v1"
-	routeEquivalenceMethod = "canonical_control_flow_form/v1"
+	routeEquivalenceMethod = "canonical_control_flow_form/v2"
 	routeEquivalenceScope  = "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
 )
 
@@ -215,6 +215,18 @@ func mergeAssignmentValue(statement ast.Stmt) (ast.Expr, bool) {
 }
 
 func formatNode(fileSet *token.FileSet, node ast.Node) (string, bool) {
+	// gofmt removes outer parentheses from if conditions. Normalize only
+	// wrappers around the entire expression; inner grouping remains evidence.
+	if expression, ok := node.(ast.Expr); ok {
+		for {
+			parenthesized, ok := expression.(*ast.ParenExpr)
+			if !ok {
+				break
+			}
+			expression = parenthesized.X
+		}
+		node = expression
+	}
 	var formatted bytes.Buffer
 	if err := format.Node(&formatted, fileSet, node); err != nil {
 		return "", false
