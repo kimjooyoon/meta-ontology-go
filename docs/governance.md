@@ -86,7 +86,12 @@ reading a privileged branch-protection snapshot. Once installed on the default
 branch, the automatic promotion executor opens or reuses the exact `main` PR,
 dispatches CI with the PR number and observed head/base SHAs, and merges through
 GitHub's PR API with the expected head SHA only after the proof and required
-checks pass. Branch protection stays active; force-push and force-update
+checks pass. The original successful `dev` run waits for one uniquely identified
+new dispatch run, bounded to 40 minutes. A dependent job consumes that run's
+exact current attempt and proof, then checks the live PR, refs, source tree and
+topology again. Missing, ambiguous, failed or stale observations stop promotion.
+The flow does not require a subsequent dispatched-CI completion callback.
+Branch protection stays active; force-push and force-update
 operations are never permitted.
 
 The bootstrap fixtures and [bootstrap evidence bridge](bootstrap-evidence.md)
