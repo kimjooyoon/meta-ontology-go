@@ -39,7 +39,7 @@ func releaseFixture(head string) []byte {
 	cases := []any{}
 	for _, target := range []string{"linux-amd64", "darwin-amd64", "windows-amd64"} {
 		cases = append(cases, map[string]any{"id": target + "-go127-toolchain",
-			"target_id": target, "observed": "go1.27.0", "expected": "go1.27.0"})
+			"target_id": target, "observed": "go1.27.1", "expected": "go1.27.1"})
 	}
 	for index := range 17 {
 		cases = append(cases, map[string]any{"id": fmt.Sprintf("case-%02d", index),

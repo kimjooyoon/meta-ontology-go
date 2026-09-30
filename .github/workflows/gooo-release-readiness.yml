@@ -37,7 +37,7 @@ jobs:
     timeout-minutes: 20
     env:
       EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      GOTOOLCHAIN: go1.27.0
+      GOTOOLCHAIN: go1.27.1
     steps:
       - name: Check out exact candidate
         uses: actions/checkout@v7
@@ -48,7 +48,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.0'
+          go-version: '1.27.1'
           cache: true
       - name: Bind exact candidate head
         shell: bash
@@ -80,7 +80,7 @@ jobs:
     timeout-minutes: 20
     env:
       EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      GOTOOLCHAIN: go1.27.0
+      GOTOOLCHAIN: go1.27.1
     steps:
       - name: Check out exact candidate
         uses: actions/checkout@v7
@@ -91,7 +91,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.0'
+          go-version: '1.27.1'
           cache: true
       - name: Bind exact candidate head
         run: test "$(git rev-parse HEAD)" = "$EXACT_SHA"

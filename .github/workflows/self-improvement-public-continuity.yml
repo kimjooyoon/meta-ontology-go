@@ -78,7 +78,7 @@ jobs:
       - name: Install the exact toolchain
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.0'
+          go-version: '1.27.1'
           cache: false
 
       - name: Materialize exact logical workspace
@@ -90,7 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(go env GOVERSION)" = "go1.27.1"
           test -n "$BASE_SHA"
           work="$RUNNER_TEMP/public-continuity"
           project=examples/self-improvement-discovery/project.gooo
@@ -215,7 +215,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(go env GOVERSION)" = "go1.27.1"
           work="$RUNNER_TEMP/public-continuity"
           project=examples/self-improvement-discovery/project.gooo
           contract=examples/self-improvement-discovery/discovery.gooo
@@ -392,7 +392,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(go env GOVERSION)" = "go1.27.1"
           work="$RUNNER_TEMP/public-continuity/test-reuse"
           project=examples/self-improvement-discovery/project.gooo
           baseline_generated="$RUNNER_TEMP/public-continuity/first/generated"
@@ -518,7 +518,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(go env GOVERSION)" = "go1.27.1"
           repo="$(pwd)"
           root="$RUNNER_TEMP/public-continuity/orchestration"
           prepare="$root/prepare"
@@ -672,7 +672,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(go env GOVERSION)" = "go1.27.1"
           repo="$(pwd)"
           root="$RUNNER_TEMP/public-continuity/partial-reuse"
           upstream="$RUNNER_TEMP/public-continuity/orchestration/resume/orchestration-report.json"
@@ -744,7 +744,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(go env GOVERSION)" = "go1.27.1"
           repo="$(pwd)"
           root="$RUNNER_TEMP/public-continuity/resolution-repair"
           upstream="$RUNNER_TEMP/public-continuity/orchestration/resume/orchestration-report.json"

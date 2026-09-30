@@ -46,7 +46,7 @@ func TestPolicyRevisionWitnessCLIEmitsBoundExecutionEvidence(t *testing.T) {
 	defer cancel()
 	build := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", binaryPath, "./cmd/meta-policy-compilation-witness")
 	build.Dir = repositoryRoot
-	build.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.0")
+	build.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
 	buildStart := time.Now()
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build native witness: %v\n%s", err, output)
@@ -59,7 +59,7 @@ func TestPolicyRevisionWitnessCLIEmitsBoundExecutionEvidence(t *testing.T) {
 
 	command := exec.CommandContext(ctx, binaryPath, "-policy", "policy.gooo", "-observe-revision", "request.json")
 	command.Dir = work
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.0")
+	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
 	var stdout, stderr bytes.Buffer
 	command.Stdout, command.Stderr = &stdout, &stderr
 	commandStart := time.Now()

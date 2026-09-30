@@ -6,10 +6,10 @@ on:
     types: [completed]
 
 permissions:
-  actions: write
+  actions: read
   checks: read
   contents: write
-  pull-requests: write
+  pull-requests: read
 
 concurrency:
   group: ci-automatic-promotion-${{ github.event.workflow_run.event }}-${{ github.event.workflow_run.head_branch }}
@@ -33,6 +33,9 @@ jobs:
       sha: ${{ steps.prepare.outputs.sha }}
       base_sha: ${{ steps.prepare.outputs.base_sha }}
       pr_number: ${{ steps.prepare.outputs.pr_number }}
+      app_config_status: ${{ steps.promotion-app-config.outputs.status }}
+      app_config_code: ${{ steps.promotion-app-config.outputs.code }}
+      app_config_action: ${{ steps.promotion-app-config.outputs.action }}
     steps:
       - name: Download source-run proof artifact
         uses: actions/download-artifact@v8
@@ -50,13 +53,48 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      - name: Prepare promotion and wait for its exact CI attempt
+      - name: Require the scoped promotion GitHub App configuration
+        id: promotion-app-config
+        shell: bash
+        env:
+          PROMOTION_APP_CLIENT_ID: ${{ vars.PROMOTION_APP_CLIENT_ID }}
+          PROMOTION_APP_PRIVATE_KEY: ${{ secrets.PROMOTION_APP_PRIVATE_KEY }}
+        run: |
+          if [[ -z "$PROMOTION_APP_CLIENT_ID" || -z "$PROMOTION_APP_PRIVATE_KEY" ]]; then
+            {
+              echo 'status=blocked'
+              echo 'code=PROMOTION_APP_CONFIGURATION_REQUIRED'
+              echo 'action=Configure repository variable PROMOTION_APP_CLIENT_ID and repository secret PROMOTION_APP_PRIVATE_KEY for an app installed on this repository with pull_requests:write.'
+            } >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo 'status=blocked'
+              echo 'code=PROMOTION_APP_CONFIGURATION_REQUIRED'
+              echo 'action=Configure repository variable PROMOTION_APP_CLIENT_ID and repository secret PROMOTION_APP_PRIVATE_KEY for an app installed on this repository with pull_requests:write.'
+            } >> "$GITHUB_OUTPUT"
+            echo '::error title=Promotion App configuration required::Configure the scoped GitHub App credentials before automatic promotion can open or update a PR.'
+            exit 1
+          fi
+
+      - name: Create a one-repository pull-request token
+        id: promotion-app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.PROMOTION_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PROMOTION_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-pull-requests: write
+
+      - name: Prepare promotion and wait for its exact PR CI attempt
         id: prepare
         uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ID: ${{ github.event.workflow_run.id }}
           CI_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          PROMOTION_APP_TOKEN: ${{ steps.promotion-app-token.outputs.token }}
         with:
+          # GitHub API reads, refs, checks, artifacts, and merge use GITHUB_TOKEN.
+          # The App token is passed separately and used only for PR API calls.
           github-token: ${{ github.token }}
           script: |
             const path = require('path');
@@ -67,14 +105,6 @@ jobs:
             const repo = context.repo.repo;
             const repository = `${owner}/${repo}`;
             const eventRun = context.payload.workflow_run;
-            const requiredJobs = [
-              'gofmt',
-              'go vet',
-              'go test',
-              'go test -race',
-              'Semantic conformance',
-              'CI policy',
-            ];
             const workflowRunID = Number(process.env.CI_RUN_ID);
             const attempt = Number(process.env.CI_RUN_ATTEMPT);
 
@@ -90,17 +120,9 @@ jobs:
               throw new Error('CI source run identity is not the exact successful current attempt');
             }
 
-            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
-              owner, repo, run_id: workflowRunID, per_page: 100,
-            });
-            const requiredRunJobs = [...requiredJobs, 'CI proof bundle'];
-            for (const name of requiredRunJobs) {
-              const matches = jobs.filter(job => job.name === name);
-              if (matches.length !== 1 || matches[0].status !== 'completed' ||
-                  matches[0].conclusion !== 'success' || matches[0].head_sha !== run.head_sha) {
-                throw new Error(`required exact-head job is not uniquely successful: ${name}`);
-              }
-            }
+            await promotion.successfulRequiredJobs(
+              github, owner, repo, run, process.env.GITHUB_API_URL,
+            );
 
             async function liveRef(name) {
               const response = await github.rest.git.getRef({
@@ -120,25 +142,66 @@ jobs:
               });
             }
 
-            async function dispatchPromotionCI(pull, headSHA, baseSHA) {
-              const child = await promotion.dispatchAndWait({
+            function requireExactPRTuple(pull, candidate, baseSHA, state) {
+              if (!pull || pull.state !== state || pull.base?.ref !== 'main' ||
+                  pull.base?.sha !== baseSHA || pull.head?.ref !== candidate.branch ||
+                  pull.head?.sha !== candidate.sha || pull.base?.repo?.full_name !== repository ||
+                  pull.head?.repo?.full_name !== repository || pull.draft || pull.merged) {
+                throw new Error(`App pull-request API returned a PR outside the exact ${state} candidate tuple`);
+              }
+              return pull;
+            }
+
+            async function openPromotionPullAndWait(candidate, baseSHA, existingPull, devSHA, treeSHA) {
+              const body = [
+                'This promotion was opened by the successful exact-head CI run on `dev`.',
+                '',
+                `- Source dev SHA: \`${devSHA}\``,
+                `- Target main SHA: \`${baseSHA}\``,
+                `- Source tree SHA: \`${treeSHA}\``,
+                `- Candidate head: \`${candidate.sha}\``,
+                '',
+                'The main-target pull_request CI run must emit `promotion_authorization=PASS` and pass all six required checks before the CI executor can merge this PR. The executor uses GitHub’s pull-request merge API; it does not bypass branch protection or write directly to `main`.',
+              ].join('\n');
+              let pull = existingPull;
+              const child = await promotion.pullRequestRunAndWait({
                 github, owner, repo, repository,
-                branch: pull.head.ref, sha: headSHA,
-                dispatch: () => github.rest.actions.createWorkflowDispatch({
-                  owner, repo, workflow_id: 332218049, ref: pull.head.ref,
-                  request: {timeout: 15000},
-                  inputs: {
-                    promotion_pr_number: String(pull.number),
-                    promotion_head_sha: headSHA,
-                    promotion_base_sha: baseSHA,
-                  },
-                }),
+                branch: candidate.branch, sha: candidate.sha, baseSHA,
+                prNumber: existingPull?.number,
+                apiURL: process.env.GITHUB_API_URL,
+                trigger: async () => {
+                  if (existingPull) {
+                    const marker = `<!-- gooo-ci-promotion-refresh:${workflowRunID}-${attempt} -->`;
+                    const description = String(existingPull.body || body)
+                      .replace(/\n?<!-- gooo-ci-promotion-refresh:[0-9]+-[0-9]+ -->/g, '')
+                      .trimEnd();
+                    pull = await promotion.appPullRequestRequest({
+                      apiURL: process.env.GITHUB_API_URL,
+                      token: process.env.PROMOTION_APP_TOKEN,
+                      owner, repo, method: 'PATCH', pullNumber: existingPull.number,
+                      body: {body: `${description}\n\n${marker}`},
+                    });
+                    requireExactPRTuple(pull, candidate, baseSHA, 'open');
+                  } else {
+                    pull = await promotion.appPullRequestRequest({
+                      apiURL: process.env.GITHUB_API_URL,
+                      token: process.env.PROMOTION_APP_TOKEN,
+                      owner, repo, method: 'POST', body: {
+                        base: 'main', head: candidate.branch,
+                        title: `promote: dev ${devSHA.slice(0, 7)} to main`, body,
+                      },
+                    });
+                    requireExactPRTuple(pull, candidate, baseSHA, 'open');
+                  }
+                  return pull;
+                },
               });
+              requireExactPRTuple(pull, candidate, baseSHA, 'open');
               core.info(
-                `Dispatched exact main-promotion CI for PR ${pull.number} at ${headSHA}; ` +
-                `run ${child.run_id} attempt ${child.attempt} completed successfully.`,
+                `Opened or refreshed PR ${pull.number} with the promotion App; ` +
+                `authoritative pull_request CI run ${child.run_id} attempt ${child.attempt} completed successfully.`,
               );
-              return child;
+              return {pull, child};
             }
 
             async function exactCommit(sha) {
@@ -237,26 +300,15 @@ jobs:
                   throw new Error('existing promotion PR no longer matches the exact live refs');
                 }
                 core.info(`Exact promotion PR already exists: ${current.html_url}`);
-                const child = await dispatchPromotionCI(current, candidate.sha, mainSHA);
-                return {pull: current, candidate, mainSHA, child};
+                const {pull, child} = await openPromotionPullAndWait(
+                  candidate, mainSHA, current, devSHA, devCommit.tree.sha,
+                );
+                return {pull, candidate, mainSHA, child};
               }
 
-              const pull = (await github.rest.pulls.create({
-                owner, repo, base: 'main', head: candidate.branch,
-                title: `promote: dev ${devSHA.slice(0, 7)} to main`,
-                body: [
-                  'This promotion was opened by the successful exact-head CI run on `dev`.',
-                  '',
-                  `- Source dev SHA: \`${devSHA}\``,
-                  `- Target main SHA: \`${mainSHA}\``,
-                  `- Source tree SHA: \`${devCommit.tree.sha}\``,
-                  `- Candidate head: \`${candidate.sha}\``,
-                  '',
-                  'The main-target CI run must emit `promotion_authorization=PASS` and pass all six required checks before the CI executor can merge this PR. The executor uses GitHub’s pull-request merge API; it does not bypass branch protection or write directly to `main`.',
-                ].join('\n'),
-              })).data;
-              core.info(`Opened exact CI promotion PR: ${pull.html_url}`);
-              const child = await dispatchPromotionCI(pull, candidate.sha, mainSHA);
+              const {pull, child} = await openPromotionPullAndWait(
+                candidate, mainSHA, undefined, devSHA, devCommit.tree.sha,
+              );
               return {pull, candidate, mainSHA, child};
             }
 
@@ -284,7 +336,7 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      - name: Download exact dispatched CI proof artifact
+      - name: Download exact PR-authoritative CI proof artifact
         uses: actions/download-artifact@v8
         with:
           name: ci-proof-${{ needs.prepare.outputs.run_id }}-${{ needs.prepare.outputs.attempt }}
@@ -312,6 +364,7 @@ jobs:
             ));
             await promotion.mergeAuthorizedPromotion({
               github, core, fs,
+              apiURL: process.env.GITHUB_API_URL,
               owner: context.repo.owner,
               repo: context.repo.repo,
               repository: `${context.repo.owner}/${context.repo.repo}`,

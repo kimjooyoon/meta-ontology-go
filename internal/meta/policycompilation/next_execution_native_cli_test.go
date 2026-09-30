@@ -29,7 +29,7 @@ func TestNextPolicyExecutionPublicHandoff(t *testing.T) {
 		next += ".exe"
 	}
 	build := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", next, "./cmd/meta-policy-compilation-witness/next-execution")
-	build.Dir, build.Env = root, append(os.Environ(), "GOTOOLCHAIN=go1.27.0")
+	build.Dir, build.Env = root, append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build next invocation: %v\n%s", err, output)
 	}
@@ -44,7 +44,7 @@ func TestNextPolicyExecutionPublicHandoff(t *testing.T) {
 	invoke := func(binary string, arguments ...string) ([]byte, int) {
 		t.Helper()
 		command := exec.CommandContext(ctx, binary, arguments...)
-		command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.0")
+		command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
 		var stdout, stderr bytes.Buffer
 		command.Stdout, command.Stderr = &stdout, &stderr
 		err := command.Run()

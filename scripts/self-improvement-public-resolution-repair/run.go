@@ -45,8 +45,8 @@ func run(input runInput) error {
 	if err != nil {
 		return err
 	}
-	if runtime.Version() != "go1.27.0" {
-		return fmt.Errorf("semantic resolution repair requires Go 1.27.0, got %s", runtime.Version())
+	if runtime.Version() != "go1.27.1" {
+		return fmt.Errorf("semantic resolution repair requires Go 1.27.1, got %s", runtime.Version())
 	}
 	counterexample, err := publicresolutionrepair.LoadCounterexample(v15Hidden, v15Report, policy)
 	if err != nil {
@@ -352,7 +352,7 @@ func preparePackage(directory string, program, testContract []byte) error {
 	if err := writeNew(filepath.Join(directory, "generated_project_test.go"), testContract, 0o644); err != nil {
 		return err
 	}
-	return writeNew(filepath.Join(directory, "go.mod"), []byte("module semantic-resolution-repair-example\n\ngo 1.27.0\n"), 0o644)
+	return writeNew(filepath.Join(directory, "go.mod"), []byte("module semantic-resolution-repair-example\n\ngo 1.27.1\n"), 0o644)
 }
 
 func executeTests(directory string, program, testContract []byte, regex string, units int, timePrefix string) (publicresolutionrepair.Metrics, executionResult, error) {

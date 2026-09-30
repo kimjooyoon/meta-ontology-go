@@ -1,0 +1,19 @@
+{
+  "schema": "gooo/pr-check-api-record-replay/v1",
+  "result": "PASS",
+  "run_id": 36734316475,
+  "attempt": 1,
+  "head_sha": "d9c3628dc9b9de2eca6ec297d9016ea98344f224",
+  "check_suite_id": 99488087458,
+  "required_jobs_verified": 7,
+  "required_actions_app_id": 15368,
+  "source_api_jobs": 12,
+  "source_api_checks": 76,
+  "helper_sha256": "77577056dbe53c583967f8b4bf5d135b36be23cb4b4cda5b33529a8deed2cef9",
+  "raw_record_sha256": {
+    "run.json": "4b01feb0a979e0d7d258f91856016f867fade0e8b792b52992207ebb70922d7b",
+    "jobs-attempt-1.json": "a1f88215e381097a23bbd81d814d0e92237a65c9c6600d595e3e9a3e4f299a5d",
+    "checks.json": "b428be6f66b980b999269a262886bd28db72f9a3ecd3ff7cae43b038634b7385"
+  },
+  "scope": "Actual public GitHub API records replayed through the local check selector; no App token, PR mutation, or merge was executed."
+}

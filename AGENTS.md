@@ -75,14 +75,19 @@ GitHub's native branch
 rules enforce the six required statuses; proof does not make a second app-bound
 policy snapshot.
 The authorization never writes refs or protection. Once the promotion workflow
-is installed on the default branch, a successful exact-head `dev` run opens or
-reuses the matching `main` PR and dispatches CI with the PR number and exact
-head/base SHAs. CI re-reads that tuple, emits the digest-bound proof, and the
-executor merges through GitHub's normal PR API with the expected head SHA.
-The original successful `dev` promotion run owns the dispatched CI through a
-bounded poll of its exact workflow, head, branch, run ID and current attempt.
+is installed on the default branch and its scoped App is configured, a successful
+exact-head `dev` run opens or refreshes the matching `main` PR using that App's
+one-repository `pull_requests:write` token. An existing PR is refreshed by one
+body-marker edit. The actual `pull_request` CI re-reads the tuple and emits the
+digest-bound proof. `workflow_dispatch` checks cannot authorize promotion.
+The original successful `dev` promotion run owns the PR CI through a bounded
+poll of its exact workflow, head, branch, run ID and current attempt. It verifies
+the six checks and proof check in that run's GitHub Actions check suite.
 A dependent merge job downloads that attempt's proof and rechecks the live
-source/target tuple. Completion callbacks from dispatched CI do not own merges.
+source/target tuple and PR-bound proof before using GitHub's normal PR merge API
+with the expected head SHA. Completion callbacks do not own merges. Missing App
+configuration is `PROMOTION_APP_CONFIGURATION_REQUIRED`; it is not a human
+review input to the proof. See [App setup](docs/automatic-promotion-app.md).
 Native branch protection remains authoritative; force pushes and force updates
 are not permitted. Missing or stale evidence is `FAIL_CLOSED`.
 

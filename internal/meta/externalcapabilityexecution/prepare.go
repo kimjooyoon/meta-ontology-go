@@ -16,7 +16,7 @@ func prepareTools(workspace, externalRoot string) (capabilityTools, error) {
 	if err := os.MkdirAll(harness, 0o755); err != nil {
 		return capabilityTools{}, err
 	}
-	goMod := fmt.Sprintf("module gooo.external.capability.witness\n\ngo 1.27.0\n\n"+
+	goMod := fmt.Sprintf("module gooo.external.capability.witness\n\ngo 1.27.1\n\n"+
 		"require github.com/cosmos72/gomacro v0.0.0\n\n"+
 		"replace github.com/cosmos72/gomacro => %s\n", filepath.ToSlash(externalRoot))
 	if err := os.WriteFile(filepath.Join(harness, "go.mod"), []byte(goMod), 0o644); err != nil {
