@@ -12,6 +12,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -252,9 +253,7 @@ func (imports *moduleImporter) loadStandardExports(path string) error {
 	if newPackages > moduleListPackagesMax-imports.exportPackages {
 		return errModuleDependency
 	}
-	for packagePath, exportPath := range loaded {
-		imports.exportPaths[packagePath] = exportPath
-	}
+	maps.Copy(imports.exportPaths, loaded)
 	imports.exportPackages += newPackages
 	return nil
 }
@@ -314,10 +313,7 @@ func (imports *moduleImporter) runGoList(args []string) ([]byte, error) {
 		goPath += ".exe"
 	}
 	remaining := moduleListTotalTimeout - time.Since(imports.listStarted)
-	callTimeout := moduleListTimeout
-	if remaining < callTimeout {
-		callTimeout = remaining
-	}
+	callTimeout := min(remaining, moduleListTimeout)
 	ctx, cancel := context.WithTimeout(context.Background(), callTimeout)
 	defer cancel()
 	command := exec.CommandContext(ctx, goPath, args...)
@@ -352,9 +348,7 @@ func moduleListEnvironment(parent []string) []string {
 		"GOARM": "", "GOARM64": "", "GOAMD64": "", "GO386": "",
 		"GOMIPS": "", "GOMIPS64": "", "GOPPC64": "", "GORISCV64": "", "GOWASM": "",
 	}
-	for name, value := range moduleListArchitectureSettings() {
-		controlled[name] = value
-	}
+	maps.Copy(controlled, moduleListArchitectureSettings())
 	if build.Default.CgoEnabled {
 		controlled["CGO_ENABLED"] = "1"
 	} else {
@@ -382,11 +376,11 @@ func moduleListArchitectureSettings() map[string]string {
 	for _, tag := range build.Default.ToolTags {
 		switch build.Default.GOARCH {
 		case "386":
-			if strings.HasPrefix(tag, "386.") {
-				settings["GO386"] = strings.TrimPrefix(tag, "386.")
+			if after, ok := strings.CutPrefix(tag, "386."); ok {
+				settings["GO386"] = after
 			}
 		case "amd64":
-			if value := strings.TrimPrefix(tag, "amd64.v"); value != tag {
+			if value, ok := strings.CutPrefix(tag, "amd64.v"); ok {
 				if level, err := strconv.Atoi(value); err == nil {
 					current, _ := strconv.Atoi(strings.TrimPrefix(settings["GOAMD64"], "v"))
 					if level > current {
@@ -395,7 +389,7 @@ func moduleListArchitectureSettings() map[string]string {
 				}
 			}
 		case "arm":
-			if value := strings.TrimPrefix(tag, "arm."); value != tag {
+			if value, ok := strings.CutPrefix(tag, "arm."); ok {
 				if level, err := strconv.Atoi(value); err == nil {
 					current, _ := strconv.Atoi(settings["GOARM"])
 					if level > current {
@@ -408,15 +402,15 @@ func moduleListArchitectureSettings() map[string]string {
 				settings["GOARM64"] = "v" + value
 			}
 		case "mips", "mipsle":
-			if strings.HasPrefix(tag, build.Default.GOARCH+".") {
-				settings["GOMIPS"] = strings.TrimPrefix(tag, build.Default.GOARCH+".")
+			if after, ok := strings.CutPrefix(tag, build.Default.GOARCH+"."); ok {
+				settings["GOMIPS"] = after
 			}
 		case "mips64", "mips64le":
-			if strings.HasPrefix(tag, build.Default.GOARCH+".") {
-				settings["GOMIPS64"] = strings.TrimPrefix(tag, build.Default.GOARCH+".")
+			if after, ok := strings.CutPrefix(tag, build.Default.GOARCH+"."); ok {
+				settings["GOMIPS64"] = after
 			}
 		case "ppc64", "ppc64le":
-			if value := strings.TrimPrefix(tag, "ppc64.power"); value != tag {
+			if value, ok := strings.CutPrefix(tag, "ppc64.power"); ok {
 				if level, err := strconv.Atoi(value); err == nil {
 					current, _ := strconv.Atoi(strings.TrimPrefix(settings["GOPPC64"], "power"))
 					if level > current {
@@ -425,12 +419,12 @@ func moduleListArchitectureSettings() map[string]string {
 				}
 			}
 		case "riscv64":
-			if value := strings.TrimPrefix(tag, "riscv64."); value != tag {
+			if value, ok := strings.CutPrefix(tag, "riscv64."); ok {
 				settings["GORISCV64"] = value
 			}
 		case "wasm":
-			if strings.HasPrefix(tag, "wasm.") {
-				value := strings.TrimPrefix(tag, "wasm.")
+			if after, ok := strings.CutPrefix(tag, "wasm."); ok {
+				value := after
 				if settings["GOWASM"] == "" {
 					settings["GOWASM"] = value
 				} else {
@@ -495,7 +489,7 @@ func validModuleImportPath(path string) bool {
 	if path == "" || strings.HasPrefix(path, "-") || strings.ContainsAny(path, "\\\"'<>?*|[]{}:;@\n\r\t ") {
 		return false
 	}
-	for _, segment := range strings.Split(path, "/") {
+	for segment := range strings.SplitSeq(path, "/") {
 		if segment == "" || segment == "." || segment == ".." {
 			return false
 		}
