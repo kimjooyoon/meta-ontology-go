@@ -29,6 +29,7 @@ type BodyPathReceipt struct {
 	Feedback               []pathplan.FeedbackReceipt `json:"feedback_judgments,omitempty"`
 	FeedbackUnfixed        bool                       `json:"feedback_unfixed,omitempty"`
 	ModelRetention         *RetainedModelInfo         `json:"model_retention,omitempty"`
+	ModelContext           *PathModelContextReceipt   `json:"model_context,omitempty"`
 	Diagnosis              *pathplan.Diagnosis        `json:"diagnosis,omitempty"`
 	DiagnosisOptionsSHA256 string                     `json:"diagnosis_options_sha256,omitempty"`
 	DiagnosisBudget        int                        `json:"diagnosis_budget,omitempty"`
@@ -40,15 +41,16 @@ type BodyPathReceipt struct {
 }
 
 type BodyPathTiming struct {
-	PlanPrepareMS   float64 `json:"plan_prepare_ms"`
-	SourceBindingMS float64 `json:"source_binding_ms"`
-	ModelLoadMS     float64 `json:"model_load_ms"`
-	BoundedSearchMS float64 `json:"bounded_search_ms"`
-	DiagnosisMS     float64 `json:"diagnosis_ms,omitempty"`
-	FinalEmissionMS float64 `json:"final_emission_ms"`
-	TotalMS         float64 `json:"total_ms"`
-	ExecutionModel  string  `json:"execution_model"`
-	DecisionStage   string  `json:"decision_stage"`
+	PlanPrepareMS    float64 `json:"plan_prepare_ms"`
+	SourceBindingMS  float64 `json:"source_binding_ms"`
+	ModelLoadMS      float64 `json:"model_load_ms"`
+	ContextPrepareMS float64 `json:"context_prepare_ms,omitempty"`
+	BoundedSearchMS  float64 `json:"bounded_search_ms"`
+	DiagnosisMS      float64 `json:"diagnosis_ms,omitempty"`
+	FinalEmissionMS  float64 `json:"final_emission_ms"`
+	TotalMS          float64 `json:"total_ms"`
+	ExecutionModel   string  `json:"execution_model"`
+	DecisionStage    string  `json:"decision_stage"`
 }
 
 type BodyPathError struct {
@@ -217,20 +219,38 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 			return fail(fmt.Errorf("load explicit structural model: %w", err))
 		}
 	}
+	contextStarted := time.Now()
+	var contextDeclined bool
+	prepared, receipt.ModelContext, contextDeclined, err = preparePathModelContext(ctx, document, prepared, model,
+		base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest)
+	if receipt.ModelContext != nil {
+		receipt.Timing.ContextPrepareMS = elapsedMS(contextStarted)
+	}
+	if err != nil {
+		return fail(err)
+	}
+	searchSeed := document.Seed
+	if contextDeclined {
+		receipt.ModelContext.SeedSkipped, receipt.ModelContext.FeedbackSkipped = searchSeed != "", feedback != nil
+		model, feedback, searchSeed = nil, nil, ""
+		receipt.FeedbackUnfixed = false
+		receipt.Timing.ExecutionModel = "source_bind_then_context_decline_then_deterministic_finite_tdd_then_native_emit"
+		receipt.Timing.DecisionStage = "no_predictions_representation_declined"
+	}
 	searchStarted := time.Now()
 	var search pathplan.SearchResult
 	var selected *bodyplan.Program
 	if feedback != nil && feedback.unfixed {
 		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchFeedbackBatchesUnfixed(ctx, model,
-			document.TestCases, document.MaxAttempts, stepAttempts, document.Seed, feedback.rounds, feedback.ci)
+			document.TestCases, document.MaxAttempts, stepAttempts, searchSeed, feedback.rounds, feedback.ci)
 	} else if feedback != nil {
 		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchFeedbackBatches(ctx, model, document.TestCases,
-			document.MaxAttempts, stepAttempts, document.Seed, feedback.rounds, feedback.ci)
+			document.MaxAttempts, stepAttempts, searchSeed, feedback.rounds, feedback.ci)
 	} else if stepAttempts == 0 {
-		search, selected, err = prepared.Search(ctx, model, document.TestCases, document.MaxAttempts, document.Seed)
+		search, selected, err = prepared.Search(ctx, model, document.TestCases, document.MaxAttempts, searchSeed)
 	} else {
 		search, selected, receipt.Progress, err = prepared.SearchBatches(ctx, model, document.TestCases,
-			document.MaxAttempts, stepAttempts, document.Seed)
+			document.MaxAttempts, stepAttempts, searchSeed)
 	}
 	receipt.Search = search
 	receipt.Timing.BoundedSearchMS = elapsedMS(searchStarted)
