@@ -65,11 +65,46 @@ func TestTypedPathCLIRejectsAmbiguousModes(t *testing.T) {
 		{"--path-plan", "plan.json", "--sample-seed", "seed"},
 		{"--path-plan", "plan.json", "--tiny-model", "model.json"},
 		{"--path-plan", "plan.json", "--path-plan", "again.json"},
+		{"--path-step-attempts", "8"},
+		{"--path-plan", "plan.json", "--path-step-attempts", "0"},
+		{"--path-plan", "plan.json", "--path-step-attempts", "65"},
+		{"--path-plan", "plan.json", "--path-step-attempts", "NaN"},
+		{"--path-plan", "plan.json", "--path-step-attempts", "1", "--path-step-attempts", "2"},
 	} {
 		args := append(flags, "--activity", "Combined", "fixture.gooo")
 		var stdout, stderr bytes.Buffer
 		if code := runBodyCodegen(args, mapSourceReader{}, &stdout, &stderr); code != exitUsage {
 			t.Fatalf("ambiguous mode accepted: %v: %d %s", flags, code, stderr.String())
 		}
+	}
+}
+
+func TestTypedPathCLIBatchesEmitLinkedPartialProgress(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/typed-path-conditional-assignment.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := os.ReadFile("../../examples/body-codegen/typed-path-conditional-assignment-ko-plan.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan = bytes.Replace(plan, []byte(`"expected": 24`), []byte(`"expected": 999`), 1)
+	reader := mapSourceReader{"fixture.gooo": source, "plan.json": plan}
+	args := []string{"--json", "--path-plan", "plan.json", "--path-step-attempts", "8",
+		"--activity", "ConditionalAssign", "fixture.gooo"}
+	var stdout, stderr bytes.Buffer
+	code := runBodyCodegen(args, reader, &stdout, &stderr)
+	var result bodycodegen.Result
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatal(err, stdout.String())
+	}
+	if code != exitOK || stderr.Len() != 0 || result.Report.BodyPaths == nil {
+		t.Fatalf("batched CLI failed: %d %s", code, stderr.String())
+	}
+	receipt := result.Report.BodyPaths
+	if receipt.Search.Status != "PARTIAL" || receipt.Search.Evaluated != 64 || len(receipt.Progress) != 9 ||
+		receipt.FunctionalCompleteness != 600.0/7 || receipt.Progress[0].Attempted != 0 ||
+		receipt.Progress[8].Attempted != 64 || receipt.Progress[8].Selection.ModelCalls != 0 {
+		t.Fatalf("CLI lost incremental partial observations: %+v", receipt)
 	}
 }
