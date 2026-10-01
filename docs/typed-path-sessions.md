@@ -34,7 +34,7 @@ ontology facts. Source binding, stable activity identity, deterministic replay,
 native type checking and parity with the typed interpreter remain required.
 Partial outcomes are retained with their explicit finite denominator.
 
-The Go SDK `v0.2.4-experimental` exposes `NewSession`, `Observe`, `Advance`,
+The Go SDK `v0.2.5-experimental` exposes `NewSession`, `Observe`, `Advance`,
 `SearchBatches`, `Reconsider` and `SearchFeedbackBatches`. Its core session keeps one best body, a frontier and a bitset,
 without previous attempt logs. The native compatibility helper retains up to
 64 attempts and their batch observations for its final receipt. The standalone
@@ -84,9 +84,17 @@ after each reconsideration include cumulative calls, including interrupted calls
 The same 8-second native deadline bounds binding, loading, search and emission.
 Interrupted searches retain receipts but do not emit an unverified Go body.
 
+If exactly one declared candidate remains, reconsideration cannot change the
+next path. A hashed `ranking_unnecessary` receipt retains the original failure,
+model, plan, cases, progress and caller CI bindings with zero new predictions.
+The bounded round is consumed and same-batch retries are rejected. The remaining
+candidate still passes normal type and finite-case evaluation. Deadline, model
+and context validation remain enforced. This saves a redundant invocation; it
+does not establish functional completion or a measured wall-time improvement.
+
 Omitting the feedback flag preserves rank-once batching. Omitting the model and
-feedback preserves deterministic fallback ordering. The current frozen models
-were not trained on feedback contexts. The public research pilot added 102
+feedback preserves deterministic fallback ordering. Callers choose their model;
+receipt wording does not infer its training history. The earlier frozen-model pilot added 102
 feedback predictions with identical final finite completeness across 16 pairs;
 this mechanism is an experiment in continued construction, not a demonstrated
 accuracy gain. Those results precede this native SDK integration; new native
