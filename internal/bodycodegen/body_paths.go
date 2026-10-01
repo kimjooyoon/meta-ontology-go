@@ -7,6 +7,7 @@ import (
 	"time"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
+	"github.com/kimjooyoon/gooo-decision-runtime/bodyplan"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -16,18 +17,19 @@ const bodyPathBudget = 8 * time.Second
 // BodyPathReceipt separates finite functional observations from the existing
 // compiler receipt for complete lowering of a selected, typed source body.
 type BodyPathReceipt struct {
-	Schema                 string                  `json:"schema"`
-	OriginalSourceSHA256   string                  `json:"original_source_sha256"`
-	SelectedSourceSHA256   string                  `json:"selected_source_sha256,omitempty"`
-	DocumentSHA256         string                  `json:"document_sha256"`
-	TestSuiteSHA256        string                  `json:"test_suite_sha256"`
-	SourceBaseMatched      bool                    `json:"source_base_matched"`
-	SourceBinding          RouteEquivalenceReceipt `json:"source_binding"`
-	Search                 pathplan.SearchResult   `json:"search"`
-	NativeCases            []IRBodyFillCaseResult  `json:"native_case_results,omitempty"`
-	FunctionalCompleteness float64                 `json:"finite_functional_completeness_percent"`
-	Scope                  string                  `json:"scope"`
-	Timing                 BodyPathTiming          `json:"timing"`
+	Schema                 string                     `json:"schema"`
+	OriginalSourceSHA256   string                     `json:"original_source_sha256"`
+	SelectedSourceSHA256   string                     `json:"selected_source_sha256,omitempty"`
+	DocumentSHA256         string                     `json:"document_sha256"`
+	TestSuiteSHA256        string                     `json:"test_suite_sha256"`
+	SourceBaseMatched      bool                       `json:"source_base_matched"`
+	SourceBinding          RouteEquivalenceReceipt    `json:"source_binding"`
+	Search                 pathplan.SearchResult      `json:"search"`
+	Progress               []pathplan.SessionProgress `json:"session_progress,omitempty"`
+	NativeCases            []IRBodyFillCaseResult     `json:"native_case_results,omitempty"`
+	FunctionalCompleteness float64                    `json:"finite_functional_completeness_percent"`
+	Scope                  string                     `json:"scope"`
+	Timing                 BodyPathTiming             `json:"timing"`
 }
 
 type BodyPathTiming struct {
@@ -55,6 +57,21 @@ func (failure *BodyPathError) Unwrap() error { return failure.Cause }
 // provider. Model ranking precedes candidate tests and final native emission.
 func GenerateWithTypedPaths(ctx context.Context, filename string, source []byte, activityName string,
 	document pathplan.Document, modelPath string) (Result, error) {
+	return generateWithTypedPathBatches(ctx, filename, source, activityName, document, modelPath, 0)
+}
+
+// GenerateWithTypedPathBatches ranks once and advances new typed candidates in
+// batches. The document's total 1..64 attempt budget and source authority remain.
+func GenerateWithTypedPathBatches(ctx context.Context, filename string, source []byte, activityName string,
+	document pathplan.Document, modelPath string, stepAttempts int) (Result, error) {
+	if stepAttempts < 1 || stepAttempts > 64 {
+		return Result{}, fmt.Errorf("typed path step attempts must be 1..64")
+	}
+	return generateWithTypedPathBatches(ctx, filename, source, activityName, document, modelPath, stepAttempts)
+}
+
+func generateWithTypedPathBatches(ctx context.Context, filename string, source []byte, activityName string,
+	document pathplan.Document, modelPath string, stepAttempts int) (Result, error) {
 	started := time.Now()
 	receipt := &BodyPathReceipt{
 		Schema: "gooo/body-codegen-typed-path-receipt/v1", OriginalSourceSHA256: digest(source),
@@ -146,7 +163,14 @@ func GenerateWithTypedPaths(ctx context.Context, filename string, source []byte,
 		}
 	}
 	searchStarted := time.Now()
-	search, selected, err := prepared.Search(ctx, model, document.TestCases, document.MaxAttempts, document.Seed)
+	var search pathplan.SearchResult
+	var selected *bodyplan.Program
+	if stepAttempts == 0 {
+		search, selected, err = prepared.Search(ctx, model, document.TestCases, document.MaxAttempts, document.Seed)
+	} else {
+		search, selected, receipt.Progress, err = prepared.SearchBatches(ctx, model, document.TestCases,
+			document.MaxAttempts, stepAttempts, document.Seed)
+	}
 	receipt.Search = search
 	receipt.Timing.BoundedSearchMS = elapsedMS(searchStarted)
 	if err != nil {
