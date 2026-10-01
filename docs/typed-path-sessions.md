@@ -34,7 +34,7 @@ ontology facts. Source binding, stable activity identity, deterministic replay,
 native type checking and parity with the typed interpreter remain required.
 Partial outcomes are retained with their explicit finite denominator.
 
-The Go SDK `v0.2.3-experimental` exposes `NewSession`, `Observe`, `Advance`,
+The Go SDK `v0.2.4-experimental` exposes `NewSession`, `Observe`, `Advance`,
 `SearchBatches`, `Reconsider` and `SearchFeedbackBatches`. Its core session keeps one best body, a frontier and a bitset,
 without previous attempt logs. The native compatibility helper retains up to
 64 attempts and their batch observations for its final receipt. The standalone
@@ -62,7 +62,15 @@ candidate batches with remaining paths. It neither repeats evaluated masks nor
 changes the original intentions, test expectations or selected best body.
 The same frozen model receives bounded original Korean/English intent plus the
 observed attempted count, finite pass count, first mismatch and optional CI status.
-All input strings must fit 512 bytes; the original intention is never truncated.
+Model inputs must fit 512 bytes; the original intention is never truncated.
+If failure context makes a valid original intention exceed that bound, the
+receipt records `context_declined`, input/intent hashes and the attempted byte
+count. This consumes a bounded feedback round with zero new predictions and
+leaves the remaining ranking unchanged. Candidate construction continues and
+can emit its verified best partial body. Same-batch retries are rejected.
+Cancellation, invalid model/ABI, source-binding errors and other prediction
+failures still stop generation; this exception applies only to representation
+declines detected before any feedback prediction.
 
 `hint.json` is optional and has exactly `source_sha` (40 lowercase hexadecimal
 characters) and `status` (`PASS`, `FAIL` or `UNKNOWN`). The file is bounded to
