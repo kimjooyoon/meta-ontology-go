@@ -25,50 +25,16 @@ func runBodyContext(args []string, reader SourceReader, stdout, stderr io.Writer
 }
 
 func runBodyContextWithContext(ctx context.Context, args []string, reader SourceReader, stdout, stderr io.Writer) int {
-	plan, activity, filename := "", "", ""
-	featureVersion := ""
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--plan", "--activity", "--feature-version":
-			flag := args[i]
-			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" || strings.HasPrefix(args[i+1], "-") ||
-				flag == "--plan" && plan != "" || flag == "--activity" && activity != "" || flag == "--feature-version" && featureVersion != "" {
-				fmt.Fprintln(stderr, bodyContextUsage)
-				return exitUsage
-			}
-			i++
-			switch flag {
-			case "--plan":
-				plan = args[i]
-			case "--activity":
-				activity = args[i]
-			case "--feature-version":
-				featureVersion = args[i]
-			}
-		default:
-			if strings.HasPrefix(args[i], "-") || filename != "" {
-				fmt.Fprintln(stderr, bodyContextUsage)
-				return exitUsage
-			}
-			filename = args[i]
-		}
-	}
-	if plan == "" || activity == "" || filename == "" {
+	options, ok := parseBodyContextArgs(args)
+	if !ok {
 		fmt.Fprintln(stderr, bodyContextUsage)
 		return exitUsage
 	}
-	if featureVersion == "" {
-		featureVersion = decision.SplitContextIntentFeatureVersion
-	}
-	if featureVersion != decision.SplitContextIntentFeatureVersion && featureVersion != decision.SemanticContextIntentFeatureVersion {
-		fmt.Fprintln(stderr, bodyContextUsage)
-		return exitUsage
-	}
-	source, err := reader.ReadFile(filename)
+	source, err := reader.ReadFile(options.filename)
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
-	raw, err := reader.ReadFile(plan)
+	raw, err := reader.ReadFile(options.plan)
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
@@ -76,7 +42,8 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
-	result, err := bodycodegen.ExportTypedPathContextWithFeature(ctx, filename, source, activity, document, featureVersion)
+	result, err := bodycodegen.ExportTypedPathContextWithFeature(ctx, options.filename, source,
+		options.activity, document, options.featureVersion)
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
@@ -85,6 +52,48 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 		return exitFailure
 	}
 	return exitOK
+}
+
+type bodyContextArgs struct{ plan, activity, filename, featureVersion string }
+
+func (o *bodyContextArgs) set(flag, value string) bool {
+	var target *string
+	switch flag {
+	case "--plan":
+		target = &o.plan
+	case "--activity":
+		target = &o.activity
+	case "--feature-version":
+		target = &o.featureVersion
+	}
+	if target == nil || *target != "" || strings.TrimSpace(value) == "" || strings.HasPrefix(value, "-") {
+		return false
+	}
+	*target = value
+	return true
+}
+
+func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
+	var o bodyContextArgs
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--plan", "--activity", "--feature-version":
+			if i+1 >= len(args) || !o.set(args[i], args[i+1]) {
+				return o, false
+			}
+			i++
+		default:
+			if strings.HasPrefix(args[i], "-") || o.filename != "" {
+				return o, false
+			}
+			o.filename = args[i]
+		}
+	}
+	if o.featureVersion == "" {
+		o.featureVersion = decision.SplitContextIntentFeatureVersion
+	}
+	valid := o.featureVersion == decision.SplitContextIntentFeatureVersion || o.featureVersion == decision.SemanticContextIntentFeatureVersion
+	return o, o.plan != "" && o.activity != "" && o.filename != "" && valid
 }
 
 func bodyContextFailure(stdout io.Writer, err error) int {

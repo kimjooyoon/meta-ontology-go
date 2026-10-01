@@ -52,8 +52,7 @@ func ExportTypedPathContextWithFeature(ctx context.Context, filename string, sou
 			ExecutionModel: "source_bind_then_compiler_context_export",
 			DecisionStage:  "no_model_no_candidate_tests_no_selected_emission"}}
 	fail := func(err error) (TypedPathContextExport, error) {
-		receipt.Timing.TotalMS = elapsedMS(started)
-		return TypedPathContextExport{}, &BodyPathError{Receipt: receipt, Cause: err}
+		return pathContextExportFailure(receipt, started, err)
 	}
 	if ctx == nil || len(source) == 0 || len(source) > 128<<10 {
 		return fail(fmt.Errorf("typed path context requires a context and source of at most 128 KiB"))
@@ -76,27 +75,27 @@ func ExportTypedPathContextWithFeature(ctx context.Context, filename string, sou
 	if err != nil {
 		return fail(err)
 	}
+	return exportBoundPathContext(ctx, document, prepared, bound.base.Report.ActivityID, featureVersion, receipt, started)
+}
+
+func pathContextExportFailure(receipt *BodyPathReceipt, started time.Time, err error) (TypedPathContextExport, error) {
+	receipt.Timing.TotalMS = elapsedMS(started)
+	return TypedPathContextExport{}, &BodyPathError{Receipt: receipt, Cause: err}
+}
+
+func exportBoundPathContext(ctx context.Context, document pathplan.Document, prepared *pathplan.PreparedPlan,
+	activityID, featureVersion string, receipt *BodyPathReceipt, started time.Time) (TypedPathContextExport, error) {
 	contextStarted := time.Now()
 	_, modelContext, declined, err := prepareCompilerPathContextWithFeature(ctx, document, prepared,
-		bound.base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest, "", featureVersion)
+		activityID, receipt.SourceBinding.SourceSemanticDigest, "", featureVersion)
 	receipt.ModelContext = modelContext
 	receipt.Timing.ContextPrepareMS = elapsedMS(contextStarted)
 	if err != nil {
-		return fail(err)
+		return pathContextExportFailure(receipt, started, err)
 	}
-	inputs := make([]ExportedPathInput, 0, len(document.Plan.Decisions))
-	if !declined {
-		var facts bodyplan.Plan
-		if featureVersion == decision.SplitContextIntentFeatureVersion {
-			facts = fallbackContextFacts(document.Plan)
-		}
-		for i, choice := range document.Plan.Decisions {
-			text, input, reason := encodeCompilerPathContext(featureVersion, facts, prepared, choice)
-			if reason != "" || input != modelContext.Inputs[i] {
-				return fail(fmt.Errorf("context export differs from ranking input"))
-			}
-			inputs = append(inputs, ExportedPathInput{PathContextInput: input, Text: text})
-		}
+	inputs, err := exportedPathInputs(document, prepared, modelContext, declined, featureVersion)
+	if err != nil {
+		return pathContextExportFailure(receipt, started, err)
 	}
 	receipt.Timing.TotalMS = elapsedMS(started)
 	schema := "gooo/compiler-path-input-export/v1"
@@ -108,4 +107,24 @@ func ExportTypedPathContextWithFeature(ctx context.Context, filename string, sou
 		TestSuiteSHA256: receipt.TestSuiteSHA256, SourceBinding: receipt.SourceBinding,
 		Context: modelContext, Inputs: inputs, Timing: receipt.Timing,
 		Scope: "explicit source-bound model inputs; validation projections generated; no model predictions, candidate tests, selected emission, or writes; seed unused; finite expectations excluded from input text"}, nil
+}
+
+func exportedPathInputs(document pathplan.Document, prepared *pathplan.PreparedPlan,
+	modelContext *PathModelContextReceipt, declined bool, featureVersion string) ([]ExportedPathInput, error) {
+	inputs := make([]ExportedPathInput, 0, len(document.Plan.Decisions))
+	if declined {
+		return inputs, nil
+	}
+	var facts bodyplan.Plan
+	if featureVersion == decision.SplitContextIntentFeatureVersion {
+		facts = fallbackContextFacts(document.Plan)
+	}
+	for i, choice := range document.Plan.Decisions {
+		text, input, reason := encodeCompilerPathContext(featureVersion, facts, prepared, choice)
+		if reason != "" || input != modelContext.Inputs[i] {
+			return nil, fmt.Errorf("context export differs from ranking input")
+		}
+		inputs = append(inputs, ExportedPathInput{PathContextInput: input, Text: text})
+	}
+	return inputs, nil
 }
