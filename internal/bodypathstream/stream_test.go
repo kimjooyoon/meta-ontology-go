@@ -51,7 +51,7 @@ func requestLine(t testing.TB, id, source string) []byte {
 func decodeResults(t *testing.T, raw []byte) []Result {
 	t.Helper()
 	var results []Result
-	for _, line := range bytes.Split(bytes.TrimSpace(raw), []byte{'\n'}) {
+	for line := range bytes.SplitSeq(bytes.TrimSpace(raw), []byte{'\n'}) {
 		if len(line) == 0 {
 			continue
 		}

@@ -40,7 +40,7 @@ type Request struct {
 	Source        string                       `json:"source"`
 	Activity      string                       `json:"activity"`
 	Document      json.RawMessage              `json:"document"`
-	Options       bodycodegen.TypedPathOptions `json:"options,omitempty"`
+	Options       bodycodegen.TypedPathOptions `json:"options"`
 }
 
 type Result struct {
@@ -314,8 +314,7 @@ func evaluate(ctx context.Context, model Generator, item record) Result {
 	}
 	response, err := model.Generate(ctx, "stream.gooo", []byte(request.Source), request.Activity, document, request.Options)
 	if err != nil {
-		var failure *bodycodegen.BodyPathError
-		if errors.As(err, &failure) {
+		if failure, ok := errors.AsType[*bodycodegen.BodyPathError](err); ok {
 			result.Failure = failure.Receipt
 		}
 		return reject(fmt.Errorf("construction rejected: %w", err))
