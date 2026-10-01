@@ -160,6 +160,76 @@ func TestTypedPathFeedbackCLIContinuesAfterContextDecline(t *testing.T) {
 	}
 }
 
+func solePathFeedbackReader(t *testing.T, intent string) mapSourceReader {
+	t.Helper()
+	source, err := os.ReadFile("../../examples/body-codegen/typed-path-conditional-assignment.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile("../../examples/body-codegen/typed-path-conditional-assignment-ko-plan.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document pathplan.Document
+	if err = json.Unmarshal(raw, &document); err != nil {
+		t.Fatal(err)
+	}
+	document.Plan.Decisions = document.Plan.Decisions[:1]
+	document.Plan.Decisions[0].Intent = intent
+	document.MaxAttempts = 2
+	document.TestCases = []pathplan.TestCase{{Input: 3, Expected: 999}}
+	raw, err = json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return mapSourceReader{"fixture.gooo": source, "plan.json": raw,
+		"hint.json": []byte(`{"source_sha":"` + strings.Repeat("a", 40) + `","status":"FAIL"}`)}
+}
+
+func TestTypedPathFeedbackCLISoleRemainingCandidateNeedsNoPrediction(t *testing.T) {
+	for _, intent := range []string{"Use reverse operand order.", "피연산자 순서를 반대로 사용해라."} {
+		t.Run(intent, func(t *testing.T) {
+			reader := solePathFeedbackReader(t, intent)
+			args := []string{"--json", "--path-plan", "plan.json", "--path-model", writeCLIPathFeedbackModel(t),
+				"--path-step-attempts", "1", "--activity", "ConditionalAssign"}
+			var baseline bodycodegen.Result
+			for _, feedback := range []bool{false, true} {
+				flags := append([]string(nil), args...)
+				if feedback {
+					flags = append(flags, "--path-feedback-rounds", "1", "--path-feedback-ci", "hint.json")
+				}
+				flags = append(flags, "fixture.gooo")
+				var out, stderr bytes.Buffer
+				if code := runBodyCodegen(flags, reader, &out, &stderr); code != exitOK || stderr.Len() != 0 {
+					t.Fatalf("CLI %d %s %s", code, out.String(), stderr.String())
+				}
+				var result bodycodegen.Result
+				if err := json.Unmarshal(out.Bytes(), &result); err != nil {
+					t.Fatal(err)
+				}
+				p := result.Report.BodyPaths
+				if p == nil || p.Search.Evaluated != 2 || p.Search.DeclaredCombinations != 2 || p.Search.Selection.ModelCalls != 1 || p.Search.Selection.ExternalCalls != 0 || p.FunctionalCompleteness != 0 || result.Source == "" || result.Report.RepositoryWrites != 0 {
+					t.Fatal("finite partial outcome or call accounting lost")
+				}
+				if !feedback {
+					baseline = result
+					continue
+				}
+				if len(p.Feedback) != 1 {
+					t.Fatal("zero-call receipt missing")
+				}
+				f := p.Feedback[0]
+				if !f.RankingUnnecessary || f.ModelCalls != 0 || f.CumulativeCalls != 1 || f.Applied || f.ContextDeclined || len(f.Judgments) != 0 || f.FirstFailure == nil || f.CI == nil || f.CI.Status != "FAIL" || f.CIIsAuthority || f.SHA == "" || f.FromProgressSHA == "" {
+					t.Fatal("sole candidate receipt differs")
+				}
+				if result.Source != baseline.Source || p.Search.SelectedTrainingPassed != baseline.Report.BodyPaths.Search.SelectedTrainingPassed {
+					t.Fatal("zero-call continuation changed selected body")
+				}
+			}
+		})
+	}
+}
+
 func TestTypedPathFeedbackCLIRejectsAmbiguousModes(t *testing.T) {
 	base := []string{"--path-plan", "plan.json", "--path-model", "model.json", "--path-step-attempts", "8"}
 	for _, flags := range [][]string{
