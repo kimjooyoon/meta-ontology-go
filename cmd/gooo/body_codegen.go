@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -19,7 +20,7 @@ import (
 
 const bodyCodegenUsage = "usage: gooo body-codegen [--json] " +
 	"[--sample-seed <seed> | --fill-plan <plan.json> [--tiny-model <model.json>] | --fill-search <plan.json> | " +
-	"--path-plan <plan.json> [--path-model <model.json>]] --activity <name> <file.gooo>"
+	"--path-plan <plan.json> [--path-model <model.json>] [--path-step-attempts <1..64>]] --activity <name> <file.gooo>"
 const tinyModelDiagnosticLabel = "<tiny_model>"
 
 func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -38,6 +39,7 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 	tinyModelPath := ""
 	pathPlanPath := ""
 	pathModelPath := ""
+	pathStepAttempts := 0
 	filename := ""
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
@@ -83,6 +85,18 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 			}
 			tinyModelPath = args[index+1]
 			index++
+		case "--path-step-attempts":
+			if pathStepAttempts != 0 || index+1 >= len(args) {
+				fmt.Fprintln(stderr, bodyCodegenUsage)
+				return exitUsage
+			}
+			value, err := strconv.Atoi(args[index+1])
+			if err != nil || value < 1 || value > 64 {
+				fmt.Fprintln(stderr, bodyCodegenUsage)
+				return exitUsage
+			}
+			pathStepAttempts = value
+			index++
 		case "--path-plan", "--path-model":
 			target := &pathPlanPath
 			if args[index] == "--path-model" {
@@ -110,7 +124,7 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		return exitUsage
 	}
 	if (pathPlanPath != "" && (sampleSeedSet || fillPlanPath != "" || searchPlanPath != "" || tinyModelPath != "")) ||
-		(pathModelPath != "" && pathPlanPath == "") {
+		((pathModelPath != "" || pathStepAttempts != 0) && pathPlanPath == "") {
 		fmt.Fprintln(stderr, bodyCodegenUsage)
 		return exitUsage
 	}
@@ -133,7 +147,12 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		if decodeErr != nil {
 			return reportBodyCodegenFailure(jsonMode, pathPlanPath, activity, planBytes, decodeErr, stdout, stderr)
 		}
-		result, err = bodycodegen.GenerateWithTypedPaths(ctx, filename, source, activity, document, pathModelPath)
+		if pathStepAttempts == 0 {
+			result, err = bodycodegen.GenerateWithTypedPaths(ctx, filename, source, activity, document, pathModelPath)
+		} else {
+			result, err = bodycodegen.GenerateWithTypedPathBatches(ctx, filename, source, activity,
+				document, pathModelPath, pathStepAttempts)
+		}
 	} else if fillPlanPath != "" || searchPlanPath != "" {
 		planPath := fillPlanPath
 		if searchPlanPath != "" {
