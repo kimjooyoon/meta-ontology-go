@@ -24,6 +24,7 @@ type typedPathModel struct {
 	path      string
 	model     *decision.Model
 	retention *RetainedModelInfo
+	diagnosis *PathDiagnosisOptions
 }
 
 // TypedPathGenerator shares immutable model arrays. Every Generate call owns
@@ -35,10 +36,11 @@ type TypedPathGenerator struct {
 }
 
 type TypedPathOptions struct {
-	StepAttempts    int              `json:"step_attempts,omitempty"`
-	FeedbackRounds  int              `json:"feedback_rounds,omitempty"`
-	FeedbackUnfixed bool             `json:"feedback_unfixed,omitempty"`
-	CI              *pathplan.CIHint `json:"ci,omitempty"`
+	StepAttempts    int                   `json:"step_attempts,omitempty"`
+	FeedbackRounds  int                   `json:"feedback_rounds,omitempty"`
+	FeedbackUnfixed bool                  `json:"feedback_unfixed,omitempty"`
+	CI              *pathplan.CIHint      `json:"ci,omitempty"`
+	Diagnosis       *PathDiagnosisOptions `json:"diagnosis,omitempty"`
 }
 
 // NewTypedPathGenerator loads an optional explicit local path model once.
@@ -69,23 +71,13 @@ func (g *TypedPathGenerator) Info() RetainedModelInfo { return g.info }
 
 func (g *TypedPathGenerator) Generate(ctx context.Context, filename string, source []byte, activityName string,
 	document pathplan.Document, options TypedPathOptions) (Result, error) {
-	if g == nil || g.info.Schema != "gooo/retained-path-model/v1" || options.StepAttempts < 0 || options.StepAttempts > 64 ||
-		options.FeedbackRounds < 0 || options.FeedbackRounds > 16 {
-		return Result{}, fmt.Errorf("generator required; step 0..64 and feedback rounds 0..16")
+	if g == nil || g.info.Schema != "gooo/retained-path-model/v1" {
+		return Result{}, fmt.Errorf("generator required")
 	}
-	if options.FeedbackRounds == 0 && (options.FeedbackUnfixed || options.CI != nil) {
-		return Result{}, fmt.Errorf("feedback options require explicit feedback rounds")
-	}
-	var feedback *typedPathFeedback
-	if options.FeedbackRounds != 0 {
-		if g.model == nil || options.StepAttempts == 0 {
-			return Result{}, fmt.Errorf("feedback requires a retained model and 1..64 step attempts")
-		}
-		if err := options.CI.Validate(); err != nil {
-			return Result{}, err
-		}
-		feedback = &typedPathFeedback{rounds: options.FeedbackRounds, ci: options.CI, unfixed: options.FeedbackUnfixed}
+	feedback, diagnosis, err := resolveTypedPathOptions(options, g.model != nil)
+	if err != nil {
+		return Result{}, err
 	}
 	return generateTypedPathRequest(ctx, filename, source, activityName, document,
-		typedPathModel{model: g.model, retention: &g.info}, options.StepAttempts, feedback)
+		typedPathModel{model: g.model, retention: &g.info, diagnosis: diagnosis}, options.StepAttempts, feedback)
 }

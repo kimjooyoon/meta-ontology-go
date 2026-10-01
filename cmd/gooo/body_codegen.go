@@ -21,6 +21,7 @@ import (
 const bodyCodegenUsage = "usage: gooo body-codegen [--json] " +
 	"[--sample-seed <seed> | --fill-plan <plan.json> [--tiny-model <model.json>] | --fill-search <plan.json> | " +
 	"--path-plan <plan.json> [--path-model <model.json>] [--path-step-attempts <1..64>] " +
+	"[--path-diagnosis <diagnosis.json>] " +
 	"[--path-feedback-rounds <1..16> [--path-feedback-ci <hint.json>] [--path-feedback-unfixed]]] " +
 	"--activity <name> <file.gooo>"
 const tinyModelDiagnosticLabel = "<tiny_model>"
@@ -45,6 +46,7 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 	pathFeedbackRounds := 0
 	pathFeedbackCI := ""
 	pathFeedbackUnfixed := false
+	pathDiagnosisPath := ""
 	filename := ""
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
@@ -127,10 +129,13 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 				return exitUsage
 			}
 			pathFeedbackUnfixed = true
-		case "--path-plan", "--path-model":
+		case "--path-plan", "--path-model", "--path-diagnosis":
 			target := &pathPlanPath
 			if args[index] == "--path-model" {
 				target = &pathModelPath
+			}
+			if args[index] == "--path-diagnosis" {
+				target = &pathDiagnosisPath
 			}
 			if *target != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" ||
 				strings.HasPrefix(args[index+1], "-") {
@@ -154,7 +159,8 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		return exitUsage
 	}
 	if (pathPlanPath != "" && (sampleSeedSet || fillPlanPath != "" || searchPlanPath != "" || tinyModelPath != "")) ||
-		((pathModelPath != "" || pathStepAttempts != 0 || pathFeedbackRounds != 0 || pathFeedbackCI != "") && pathPlanPath == "") ||
+		((pathModelPath != "" || pathStepAttempts != 0 || pathFeedbackRounds != 0 || pathFeedbackCI != "" ||
+			pathDiagnosisPath != "") && pathPlanPath == "") ||
 		(pathFeedbackRounds != 0 && (pathModelPath == "" || pathStepAttempts == 0)) ||
 		((pathFeedbackCI != "" || pathFeedbackUnfixed) && pathFeedbackRounds == 0) {
 		fmt.Fprintln(stderr, bodyCodegenUsage)
@@ -179,7 +185,12 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		if decodeErr != nil {
 			return reportBodyCodegenFailure(jsonMode, pathPlanPath, activity, planBytes, decodeErr, stdout, stderr)
 		}
-		if pathFeedbackRounds != 0 {
+		if pathDiagnosisPath != "" {
+			options := bodycodegen.TypedPathOptions{StepAttempts: pathStepAttempts, FeedbackRounds: pathFeedbackRounds,
+				FeedbackUnfixed: pathFeedbackUnfixed}
+			result, err = generateWithPathDiagnosis(ctx, reader, filename, source, activity, document, pathModelPath,
+				pathDiagnosisPath, pathFeedbackCI, options)
+		} else if pathFeedbackRounds != 0 {
 			var ci *pathplan.CIHint
 			if pathFeedbackCI != "" {
 				raw, readErr := reader.ReadFile(pathFeedbackCI)
