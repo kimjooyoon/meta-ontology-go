@@ -28,6 +28,7 @@ type BodyPathReceipt struct {
 	Progress               []pathplan.SessionProgress `json:"session_progress,omitempty"`
 	Feedback               []pathplan.FeedbackReceipt `json:"feedback_judgments,omitempty"`
 	FeedbackUnfixed        bool                       `json:"feedback_unfixed,omitempty"`
+	ModelRetention         *RetainedModelInfo         `json:"model_retention,omitempty"`
 	NativeCases            []IRBodyFillCaseResult     `json:"native_case_results,omitempty"`
 	FunctionalCompleteness float64                    `json:"finite_functional_completeness_percent"`
 	Scope                  string                     `json:"scope"`
@@ -106,12 +107,22 @@ func generateTypedFeedback(ctx context.Context, filename string, source []byte, 
 
 func generateWithTypedPathBatches(ctx context.Context, filename string, source []byte, activityName string,
 	document pathplan.Document, modelPath string, stepAttempts int, feedback *typedPathFeedback) (Result, error) {
+	return generateTypedPathRequest(ctx, filename, source, activityName, document,
+		typedPathModel{path: modelPath}, stepAttempts, feedback)
+}
+
+func generateTypedPathRequest(ctx context.Context, filename string, source []byte, activityName string,
+	document pathplan.Document, models typedPathModel, stepAttempts int, feedback *typedPathFeedback) (Result, error) {
 	started := time.Now()
 	receipt := &BodyPathReceipt{
 		Schema: "gooo/body-codegen-typed-path-receipt/v1", OriginalSourceSHA256: digest(source),
 		Scope: "declared finite cases and bounded typed alternatives; not proof of natural-language intent or all int64 inputs",
 		Timing: BodyPathTiming{ExecutionModel: "single_process_source_bind_then_rank_then_finite_tdd_then_native_emit",
 			DecisionStage: "all_local_predictions_before_candidate_tests_and_final_native_emission"},
+	}
+	if models.retention != nil {
+		info := *models.retention
+		receipt.ModelRetention = &info
 	}
 	if feedback != nil {
 		receipt.Timing.ExecutionModel = "single_process_source_bind_then_rank_then_interleaved_finite_tdd_feedback_then_native_emit"
@@ -136,7 +147,7 @@ func generateWithTypedPathBatches(ctx context.Context, filename string, source [
 	if err != nil {
 		return fail(err)
 	}
-	if document.Seed != "" && modelPath == "" {
+	if document.Seed != "" && models.path == "" && models.model == nil {
 		return fail(fmt.Errorf("typed path sampling requires an explicit local model"))
 	}
 	bindingStarted := time.Now()
@@ -192,10 +203,10 @@ func generateWithTypedPathBatches(ctx context.Context, filename string, source [
 	if err := ctx.Err(); err != nil {
 		return fail(err)
 	}
-	var model *decision.Model
-	if modelPath != "" {
+	model := models.model
+	if models.path != "" {
 		loadStarted := time.Now()
-		model, err = decision.LoadPath(modelPath)
+		model, err = decision.LoadPath(models.path)
 		receipt.Timing.ModelLoadMS = elapsedMS(loadStarted)
 		if err != nil {
 			return fail(fmt.Errorf("load explicit structural model: %w", err))
