@@ -159,7 +159,12 @@ unattempted alternatives; per-stage timings; and finite functional completeness.
 Native lowering `PASS` can coexist with functional `PARTIAL`: 100% lowering
 means all selected source constructs were emitted, while e.g. 2/3 finite cases
 means 66.67% measured functional completeness. Neither is full natural-language
-or all-input correctness. Test cases are never fed into the model API.
+or all-input correctness. Default ranking does not receive test cases.
+Optional `--path-feedback-rounds` can pass finite outcome counts and the first
+observed mismatch to the same frozen model between candidate batches. It requires
+`--path-model` and `--path-step-attempts`; a bounded `--path-feedback-ci` file can
+provide caller CI context without edit or merge authority. See
+[incremental typed paths](../typed-path-sessions.md) for budgets and receipts.
 
 Bounds are 16 binary decisions, 128 expression and statement arena nodes, 128
 cases, 64 attempted combinations, 128 KiB source/document, and a cooperative
