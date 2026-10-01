@@ -34,7 +34,7 @@ ontology facts. Source binding, stable activity identity, deterministic replay,
 native type checking and parity with the typed interpreter remain required.
 Partial outcomes are retained with their explicit finite denominator.
 
-The Go SDK `v0.2.5-experimental` exposes `NewSession`, `Observe`, `Advance`,
+The Go SDK `v0.2.7-experimental` exposes `NewSession`, `Observe`, `Advance`,
 `SearchBatches`, `Reconsider` and `SearchFeedbackBatches`. Its core session keeps one best body, a frontier and a bitset,
 without previous attempt logs. The native compatibility helper retains up to
 64 attempts and their batch observations for its final receipt. The standalone
@@ -99,3 +99,26 @@ feedback predictions with identical final finite completeness across 16 pairs;
 this mechanism is an experiment in continued construction, not a demonstrated
 accuracy gain. Those results precede this native SDK integration; new native
 measurements must be recorded separately.
+
+## Feedback over coordinates that still vary
+
+Add `--path-feedback-unfixed` to explicit feedback mode to use the SDK's shared
+`SearchFeedbackBatchesUnfixed` adapter. A local model, batch size and 1..16 rounds
+are required. Duplicate flags or use without feedback are rejected before source
+reads or model loading. The receipt records `feedback_unfixed: true`.
+
+Only coordinates varying over all unattempted declared masks receive a new
+prediction. A fixed coordinate is derived from committed mask counts, including
+type rejections, using a 64-byte `[16][2]uint16` array. Interrupted candidates do
+not consume a mask. Hashed `fixed_coordinates` receipts retain the sole remaining
+label, remaining mask count and original model/plan/cases/failure/progress/CI
+bindings. The same model validation, deadline and source binding still apply.
+Removing common log factors may change floating-point near ties on other data;
+ordinary typed candidate tests and verified native emission decide acceptance.
+
+The existing default feedback method and disconnected ordering keep their
+contracts. Earlier SDK development evidence observed 97 fewer predictions
+(1,014 → 917) with identical candidate sequences and final outcomes in 288 pairs
+of reused bilingual/contract views. This is a call-count observation, not new
+native timing evidence or first-shot language accuracy. See the
+[paired study](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/unfixed-feedback-study.md).
