@@ -23,7 +23,7 @@ Each input line is one object with these fields:
 | `source` | Original Gooo source string, at most 128 KiB |
 | `activity` | Named source Integer -> Integer activity |
 | `document` | Full existing `gooo/body-codegen-typed-path-plan/v1` document |
-| `options` | Optional `step_attempts`, `feedback_rounds`, `feedback_unfixed`, `ci` |
+| `options` | Optional `step_attempts`, `feedback_rounds`, `feedback_unfixed`, `ci`, `diagnosis` |
 
 Step attempts are 0..64 (zero means ordinary bounded search); feedback rounds are
 0..16. Feedback requires a model, nonzero step and explicit rounds. CI context is
@@ -53,3 +53,26 @@ This is an explicit experiment. Finite completeness can be partial. Transport
 understanding. Packed model storage is separate from resident decoded arrays.
 Worker memory and startup amortization require measured evidence; this document
 does not assert a speedup, all-input correctness, or arbitrary text generation.
+
+## Optional finite ambiguity diagnosis
+
+SDK 0.2.8 adds `options.diagnosis`, for example
+`{"inputs":[2,3],"max_candidates":2}`. It requires 1..32 integer inputs and
+1..64 candidate observations. After bounded selection, the same request deadline
+governs deterministic candidate compilation and probe evaluation. Diagnosis makes
+zero model predictions, keeps completed observations on interruption, and records
+its option hash, candidate budget and extra time separately.
+
+The receipt's `diagnosis` counts candidates indistinguishable by declared case
+outputs and reports the first supplied input whose alternative output differs.
+The two witness outputs are observations, with expected results unset. Agreement
+on every probe remains unresolved bounded evidence. These alternative values are
+typed-arena observations; native emission and ordinary case checks concern the
+selected body. Alternatives are not independently native-executed by this API.
+Source files, selection and finite acceptance are unchanged by diagnosis.
+
+The fresh CLI accepts `--path-diagnosis diagnosis.json` alongside `--path-plan`.
+The file schema is `gooo/path-diagnosis-request/v1`, with `inputs` and
+`max_candidates`. The examples in `examples/body-codegen/path-diagnosis-*`
+show a passed sparse test with two possible subtraction bodies and a distinguishing
+input. This is a runnable construction fixture, not natural-language accuracy.
