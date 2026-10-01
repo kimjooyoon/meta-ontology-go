@@ -3,8 +3,9 @@
 The optional local model judges bounded Korean or English intentions for Gooo
 structural alternatives. A session ranks those alternatives once, then evaluates
 new candidate bodies in batches without repeating earlier masks. It does not
-train, rewrite source files, call an external provider, or rerank from test/CI
-feedback. Changing the plan, cases, seed or model requires a new session.
+train, rewrite source files or call an external provider. Optional explicit
+feedback can rerank remaining paths from observed failures. Changing the plan,
+cases, seed or model requires a new session.
 
 ```sh
 gooo body-codegen --json --path-plan plan.json --path-model model.json \
@@ -33,8 +34,8 @@ ontology facts. Source binding, stable activity identity, deterministic replay,
 native type checking and parity with the typed interpreter remain required.
 Partial outcomes are retained with their explicit finite denominator.
 
-The Go SDK `v0.2.2-experimental` exposes `NewSession`, `Observe`, `Advance` and
-`SearchBatches`. Its core session keeps one best body, a frontier and a bitset,
+The Go SDK `v0.2.3-experimental` exposes `NewSession`, `Observe`, `Advance`,
+`SearchBatches`, `Reconsider` and `SearchFeedbackBatches`. Its core session keeps one best body, a frontier and a bitset,
 without previous attempt logs. The native compatibility helper retains up to
 64 attempts and their batch observations for its final receipt. The standalone
 research CLI can stream these observations across the larger declared finite
@@ -46,3 +47,39 @@ candidate without recording a partial case prefix. Generic output writers can
 still block outside the evaluator: process harnesses must bound and drain
 output and enforce a process deadline. This is not a guarantee of all-input
 correctness, general language accuracy or arbitrary I/O deadlock freedom.
+
+## Optional observed-feedback judgment
+
+```sh
+gooo body-codegen --json --path-plan plan.json --path-model model.json \
+  --path-step-attempts 8 --path-feedback-rounds 2 \
+  --path-feedback-ci hint.json --activity ConditionalAssign source.gooo
+```
+
+The local model and an explicit batch size are required for feedback. The total
+candidate budget stays 1..64; 1..16 rounds can reconsider only after new partial
+candidate batches with remaining paths. It neither repeats evaluated masks nor
+changes the original intentions, test expectations or selected best body.
+The same frozen model receives bounded original Korean/English intent plus the
+observed attempted count, finite pass count, first mismatch and optional CI status.
+All input strings must fit 512 bytes; the original intention is never truncated.
+
+`hint.json` is optional and has exactly `source_sha` (40 lowercase hexadecimal
+characters) and `status` (`PASS`, `FAIL` or `UNKNOWN`). The file is bounded to
+512 bytes. This caller claim is recorded as context; this API does not fetch or
+authenticate CI and the hint never grants authority to modify ontology or merge.
+
+`feedback_judgments` records input hashes, prediction counts, model hashes and
+links to preceding progress and feedback. Extra progress observations immediately
+after each reconsideration include cumulative calls, including interrupted calls.
+`predictions_this_advance` stays zero: candidate evaluation itself does not infer.
+The same 8-second native deadline bounds binding, loading, search and emission.
+Interrupted searches retain receipts but do not emit an unverified Go body.
+
+Omitting the feedback flag preserves rank-once batching. Omitting the model and
+feedback preserves deterministic fallback ordering. The current frozen models
+were not trained on feedback contexts. The public research pilot added 102
+feedback predictions with identical final finite completeness across 16 pairs;
+this mechanism is an experiment in continued construction, not a demonstrated
+accuracy gain. Those results precede this native SDK integration; new native
+measurements must be recorded separately.
