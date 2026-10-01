@@ -76,14 +76,13 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 }
 
 func bodyContextFailure(stdout io.Writer, err error) int {
-	var failure *bodycodegen.BodyPathError
 	output := struct {
 		Schema  string                       `json:"schema"`
 		Status  string                       `json:"status"`
 		Error   string                       `json:"error"`
 		Receipt *bodycodegen.BodyPathReceipt `json:"receipt,omitempty"`
 	}{Schema: "gooo/compiler-path-input-export/v1", Status: "FAIL_CLOSED", Error: err.Error()}
-	if errors.As(err, &failure) {
+	if failure, ok := errors.AsType[*bodycodegen.BodyPathError](err); ok {
 		output.Receipt = failure.Receipt
 	}
 	_ = json.NewEncoder(stdout).Encode(output)
