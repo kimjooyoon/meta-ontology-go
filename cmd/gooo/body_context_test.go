@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
@@ -45,10 +46,28 @@ func TestBodyContextCLIRejectsAmbiguousFlags(t *testing.T) {
 	for _, flags := range [][]string{
 		{}, {"--json"}, {"--plan"}, {"--plan", "p", "--plan", "q"},
 		{"--activity", "A", "--activity", "B"}, {"--path-model", "m"}, {"one", "two"},
+		{"--feature-version"}, {"--feature-version", "unknown", "--plan", "p", "--activity", "A", "f.gooo"},
+		{"--feature-version", decision.SemanticContextIntentFeatureVersion, "--feature-version", decision.SemanticContextIntentFeatureVersion},
 	} {
 		var out, stderr bytes.Buffer
 		if runBodyContext(flags, mapSourceReader{}, &out, &stderr) != exitUsage || out.Len() != 0 {
 			t.Fatalf("ambiguous flags accepted: %v", flags)
 		}
+	}
+}
+
+func TestBodyContextCLISelectsSemanticSourceFeatures(t *testing.T) {
+	source, _ := os.ReadFile("../../examples/body-codegen/typed-path-compound.gooo.fixture")
+	plan, _ := os.ReadFile("../../examples/body-codegen/typed-path-compound-plan.json")
+	var out, stderr bytes.Buffer
+	code := runBodyContext([]string{"--plan", "p", "--activity", "Combined", "--feature-version", decision.SemanticContextIntentFeatureVersion, "f.gooo"},
+		mapSourceReader{"f.gooo": source, "p": plan}, &out, &stderr)
+	var exported bodycodegen.TypedPathContextExport
+	if err := json.Unmarshal(out.Bytes(), &exported); err != nil {
+		t.Fatal(err)
+	}
+	if code != exitOK || stderr.Len() != 0 || len(exported.Inputs) != 3 || exported.Context.Schema != "gooo/compiler-typed-path-context/v3" ||
+		!strings.HasPrefix(exported.Inputs[0].Text, "gooo;sem64=") || exported.Inputs[0].SourceFeatureSHA == "" || exported.ModelPredictions != 0 {
+		t.Fatal("explicit v3 command failed", out.String())
 	}
 }
