@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
+	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
@@ -116,6 +117,46 @@ func TestTypedPathFeedbackCLIIsLocalAndEmitsPartialReceipts(t *testing.T) {
 	if code := runBodyCodegen(args, reader, &stdout, &stderr); code != exitFailure || calls.Load() != 0 ||
 		!strings.Contains(stdout.String(), `"decision":"FAIL_CLOSED"`) {
 		t.Fatal("invalid caller context reached an external provider or emitted a body")
+	}
+}
+
+func TestTypedPathFeedbackCLIContinuesAfterContextDecline(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/typed-path-conditional-assignment.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile("../../examples/body-codegen/typed-path-conditional-assignment-ko-plan.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document pathplan.Document
+	if err := json.Unmarshal(raw, &document); err != nil {
+		t.Fatal(err)
+	}
+	document.TestCases[6].Expected = 999
+	for len(document.Plan.Decisions[0].Intent)+len(" 설명") <= 480 {
+		document.Plan.Decisions[0].Intent += " 설명"
+	}
+	raw, err = json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reader := mapSourceReader{"fixture.gooo": source, "plan.json": raw}
+	args := []string{"--json", "--path-plan", "plan.json", "--path-model", writeCLIPathFeedbackModel(t),
+		"--path-step-attempts", "8", "--path-feedback-rounds", "2", "--activity", "ConditionalAssign", "fixture.gooo"}
+	var stdout, stderr bytes.Buffer
+	if code := runBodyCodegen(args, reader, &stdout, &stderr); code != exitOK || stderr.Len() != 0 {
+		t.Fatalf("context decline stopped CLI: %d %s %s", code, stderr.String(), stdout.String())
+	}
+	var result bodycodegen.Result
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	p := result.Report.BodyPaths
+	if result.Source == "" || p == nil || p.Search.Evaluated != 64 || p.Search.Selection.ModelCalls != 6 ||
+		p.FunctionalCompleteness != 600.0/7 || len(p.Feedback) != 2 || !p.Feedback[0].ContextDeclined ||
+		!p.Feedback[1].ContextDeclined || p.Feedback[0].ModelCalls != 0 || p.Feedback[1].ModelCalls != 0 {
+		t.Fatal("CLI did not retain zero-call declines and verified partial body")
 	}
 }
 

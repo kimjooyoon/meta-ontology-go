@@ -111,3 +111,40 @@ func TestTypedPathFeedbackValidatesBeforeModelLoad(t *testing.T) {
 		t.Fatal("feedback bypassed authoritative source binding")
 	}
 }
+
+func TestTypedPathFeedbackContextDeclineRetainsNativePartialBody(t *testing.T) {
+	for _, language := range []string{"en", "ko"} {
+		source, document := conditionalPathFixture(t, language)
+		document.TestCases[6].Expected = 999
+		for len(document.Plan.Decisions[0].Intent)+len(" detail") <= 480 {
+			document.Plan.Decisions[0].Intent += " detail"
+		}
+		model := writeTypedPathContractModel(t, false)
+		baseline, err := GenerateWithTypedPathBatches(context.Background(), "fixture.gooo", source,
+			"ConditionalAssign", document, model, 8)
+		if err != nil {
+			t.Fatal(err)
+		}
+		result, err := GenerateWithTypedPathFeedback(context.Background(), "fixture.gooo", source,
+			"ConditionalAssign", document, model, 8, 2, nil)
+		if err != nil {
+			t.Fatal("valid partial body blocked by optional context format", err)
+		}
+		receipt := result.Report.BodyPaths
+		if result.Source != baseline.Source || result.Report.ActivityID != baseline.Report.ActivityID ||
+			!result.Report.TypecheckPassed || !result.Report.DeterministicReplay || result.Report.RepositoryWrites != 0 ||
+			receipt.FunctionalCompleteness != 600.0/7 || receipt.Search.Status != "PARTIAL" || receipt.Search.Evaluated != 64 ||
+			receipt.Search.Selection.ModelCalls != 6 || len(receipt.Feedback) != 2 {
+			t.Fatal("native context decline lost finite parity or stable body identity")
+		}
+		for _, decline := range receipt.Feedback {
+			if !decline.ContextDeclined || decline.ModelCalls != 0 || decline.Applied || decline.SHA == "" || decline.DeclinedBytes <= 512 {
+				t.Fatal("native receipt hid zero-call context decline")
+			}
+		}
+		last := receipt.Progress[len(receipt.Progress)-1]
+		if last.Interrupted || last.FeedbackRounds != 2 || last.FeedbackPredictions != 0 || last.Attempted != 64 {
+			t.Fatal("representation decline interrupted native continuation")
+		}
+	}
+}
