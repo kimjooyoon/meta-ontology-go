@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	decision "github.com/kimjooyoon/gooo-decision-runtime"
+	"github.com/kimjooyoon/gooo-decision-runtime/bodyplan"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
 
@@ -36,6 +38,14 @@ type TypedPathContextExport struct {
 // caller data; callers choose what to export or publish. A decline exports no text.
 func ExportTypedPathContext(ctx context.Context, filename string, source []byte, activityName string,
 	document pathplan.Document) (TypedPathContextExport, error) {
+	return ExportTypedPathContextWithFeature(ctx, filename, source, activityName, document,
+		decision.SplitContextIntentFeatureVersion)
+}
+
+// ExportTypedPathContextWithFeature explicitly selects a compiler input ABI.
+// The default API/CLI continue to use v2; v3 weights must opt in via metadata.
+func ExportTypedPathContextWithFeature(ctx context.Context, filename string, source []byte, activityName string,
+	document pathplan.Document, featureVersion string) (TypedPathContextExport, error) {
 	started := time.Now()
 	receipt := &BodyPathReceipt{Schema: "gooo/body-context-export-validation/v1",
 		OriginalSourceSHA256: digest(source), Timing: BodyPathTiming{
@@ -47,6 +57,9 @@ func ExportTypedPathContext(ctx context.Context, filename string, source []byte,
 	}
 	if ctx == nil || len(source) == 0 || len(source) > 128<<10 {
 		return fail(fmt.Errorf("typed path context requires a context and source of at most 128 KiB"))
+	}
+	if featureVersion != decision.SplitContextIntentFeatureVersion && featureVersion != decision.SemanticContextIntentFeatureVersion {
+		return fail(fmt.Errorf("unsupported compiler context feature version"))
 	}
 	ctx, cancel := context.WithTimeout(ctx, bodyPathBudget)
 	defer cancel()
@@ -64,8 +77,8 @@ func ExportTypedPathContext(ctx context.Context, filename string, source []byte,
 		return fail(err)
 	}
 	contextStarted := time.Now()
-	_, modelContext, declined, err := prepareCompilerPathContext(ctx, document, prepared,
-		bound.base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest, "")
+	_, modelContext, declined, err := prepareCompilerPathContextWithFeature(ctx, document, prepared,
+		bound.base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest, "", featureVersion)
 	receipt.ModelContext = modelContext
 	receipt.Timing.ContextPrepareMS = elapsedMS(contextStarted)
 	if err != nil {
@@ -73,9 +86,12 @@ func ExportTypedPathContext(ctx context.Context, filename string, source []byte,
 	}
 	inputs := make([]ExportedPathInput, 0, len(document.Plan.Decisions))
 	if !declined {
-		facts := fallbackContextFacts(document.Plan)
+		var facts bodyplan.Plan
+		if featureVersion == decision.SplitContextIntentFeatureVersion {
+			facts = fallbackContextFacts(document.Plan)
+		}
 		for i, choice := range document.Plan.Decisions {
-			text, input, reason := encodePathContext(facts, choice)
+			text, input, reason := encodeCompilerPathContext(featureVersion, facts, prepared, choice)
 			if reason != "" || input != modelContext.Inputs[i] {
 				return fail(fmt.Errorf("context export differs from ranking input"))
 			}
@@ -83,7 +99,11 @@ func ExportTypedPathContext(ctx context.Context, filename string, source []byte,
 		}
 	}
 	receipt.Timing.TotalMS = elapsedMS(started)
-	return TypedPathContextExport{Schema: "gooo/compiler-path-input-export/v1",
+	schema := "gooo/compiler-path-input-export/v1"
+	if featureVersion == decision.SemanticContextIntentFeatureVersion {
+		schema = "gooo/compiler-path-input-export/v2"
+	}
+	return TypedPathContextExport{Schema: schema,
 		OriginalSourceSHA256: receipt.OriginalSourceSHA256, DocumentSHA256: receipt.DocumentSHA256,
 		TestSuiteSHA256: receipt.TestSuiteSHA256, SourceBinding: receipt.SourceBinding,
 		Context: modelContext, Inputs: inputs, Timing: receipt.Timing,

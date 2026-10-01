@@ -11,11 +11,12 @@ import (
 	"strings"
 	"syscall"
 
+	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyContextUsage = "usage: gooo body-context --plan <plan.json> --activity <name> <file.gooo>"
+const bodyContextUsage = "usage: gooo body-context --plan <plan.json> --activity <name> [--feature-version <version>] <file.gooo>"
 
 func runBodyContext(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -25,20 +26,24 @@ func runBodyContext(args []string, reader SourceReader, stdout, stderr io.Writer
 
 func runBodyContextWithContext(ctx context.Context, args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	plan, activity, filename := "", "", ""
+	featureVersion := ""
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
-		case "--plan", "--activity":
+		case "--plan", "--activity", "--feature-version":
 			flag := args[i]
 			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" || strings.HasPrefix(args[i+1], "-") ||
-				flag == "--plan" && plan != "" || flag == "--activity" && activity != "" {
+				flag == "--plan" && plan != "" || flag == "--activity" && activity != "" || flag == "--feature-version" && featureVersion != "" {
 				fmt.Fprintln(stderr, bodyContextUsage)
 				return exitUsage
 			}
 			i++
-			if flag == "--plan" {
+			switch flag {
+			case "--plan":
 				plan = args[i]
-			} else {
+			case "--activity":
 				activity = args[i]
+			case "--feature-version":
+				featureVersion = args[i]
 			}
 		default:
 			if strings.HasPrefix(args[i], "-") || filename != "" {
@@ -49,6 +54,13 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 		}
 	}
 	if plan == "" || activity == "" || filename == "" {
+		fmt.Fprintln(stderr, bodyContextUsage)
+		return exitUsage
+	}
+	if featureVersion == "" {
+		featureVersion = decision.SplitContextIntentFeatureVersion
+	}
+	if featureVersion != decision.SplitContextIntentFeatureVersion && featureVersion != decision.SemanticContextIntentFeatureVersion {
 		fmt.Fprintln(stderr, bodyContextUsage)
 		return exitUsage
 	}
@@ -64,7 +76,7 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
-	result, err := bodycodegen.ExportTypedPathContext(ctx, filename, source, activity, document)
+	result, err := bodycodegen.ExportTypedPathContextWithFeature(ctx, filename, source, activity, document, featureVersion)
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
