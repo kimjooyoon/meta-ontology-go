@@ -27,6 +27,7 @@ type BodyPathReceipt struct {
 	Search                 pathplan.SearchResult      `json:"search"`
 	Progress               []pathplan.SessionProgress `json:"session_progress,omitempty"`
 	Feedback               []pathplan.FeedbackReceipt `json:"feedback_judgments,omitempty"`
+	FeedbackUnfixed        bool                       `json:"feedback_unfixed,omitempty"`
 	NativeCases            []IRBodyFillCaseResult     `json:"native_case_results,omitempty"`
 	FunctionalCompleteness float64                    `json:"finite_functional_completeness_percent"`
 	Scope                  string                     `json:"scope"`
@@ -72,21 +73,35 @@ func GenerateWithTypedPathBatches(ctx context.Context, filename string, source [
 }
 
 type typedPathFeedback struct {
-	rounds int
-	ci     *pathplan.CIHint
+	rounds  int
+	ci      *pathplan.CIHint
+	unfixed bool
 }
 
 // GenerateWithTypedPathFeedback explicitly reconsiders remaining paths using
 // the original local model and observed finite failures. CI is caller context.
 func GenerateWithTypedPathFeedback(ctx context.Context, filename string, source []byte, activityName string,
 	document pathplan.Document, modelPath string, stepAttempts, rounds int, ci *pathplan.CIHint) (Result, error) {
+	return generateTypedFeedback(ctx, filename, source, activityName, document, modelPath, stepAttempts, rounds, ci, false)
+}
+
+// GenerateWithTypedPathUnfixedFeedback skips predictions only for coordinates
+// constant across all unattempted masks. Ordinary source and finite checks remain.
+func GenerateWithTypedPathUnfixedFeedback(ctx context.Context, filename string, source []byte, activityName string,
+	document pathplan.Document, modelPath string, stepAttempts, rounds int, ci *pathplan.CIHint) (Result, error) {
+	return generateTypedFeedback(ctx, filename, source, activityName, document, modelPath, stepAttempts, rounds, ci, true)
+}
+
+func generateTypedFeedback(ctx context.Context, filename string, source []byte, activityName string,
+	document pathplan.Document, modelPath string, stepAttempts, rounds int, ci *pathplan.CIHint, unfixed bool) (Result, error) {
 	if modelPath == "" || stepAttempts < 1 || stepAttempts > 64 || rounds < 1 || rounds > 16 {
 		return Result{}, fmt.Errorf("typed path feedback requires model, 1..64 step and 1..16 rounds")
 	}
 	if err := ci.Validate(); err != nil {
 		return Result{}, err
 	}
-	return generateWithTypedPathBatches(ctx, filename, source, activityName, document, modelPath, stepAttempts, &typedPathFeedback{rounds, ci})
+	return generateWithTypedPathBatches(ctx, filename, source, activityName, document, modelPath, stepAttempts,
+		&typedPathFeedback{rounds: rounds, ci: ci, unfixed: unfixed})
 }
 
 func generateWithTypedPathBatches(ctx context.Context, filename string, source []byte, activityName string,
@@ -101,6 +116,7 @@ func generateWithTypedPathBatches(ctx context.Context, filename string, source [
 	if feedback != nil {
 		receipt.Timing.ExecutionModel = "single_process_source_bind_then_rank_then_interleaved_finite_tdd_feedback_then_native_emit"
 		receipt.Timing.DecisionStage = "local_initial_ranking_and_explicit_partial_batch_feedback_before_final_native_emission"
+		receipt.FeedbackUnfixed = feedback.unfixed
 	}
 	fail := func(err error) (Result, error) {
 		receipt.Timing.TotalMS = elapsedMS(started)
@@ -188,7 +204,10 @@ func generateWithTypedPathBatches(ctx context.Context, filename string, source [
 	searchStarted := time.Now()
 	var search pathplan.SearchResult
 	var selected *bodyplan.Program
-	if feedback != nil {
+	if feedback != nil && feedback.unfixed {
+		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchFeedbackBatchesUnfixed(ctx, model,
+			document.TestCases, document.MaxAttempts, stepAttempts, document.Seed, feedback.rounds, feedback.ci)
+	} else if feedback != nil {
 		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchFeedbackBatches(ctx, model, document.TestCases,
 			document.MaxAttempts, stepAttempts, document.Seed, feedback.rounds, feedback.ci)
 	} else if stepAttempts == 0 {
