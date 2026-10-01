@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/bodyplan"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
@@ -152,7 +151,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return fail(err)
 	}
-	if document.Seed != "" && models.path == "" && models.model == nil {
+	if document.Seed != "" && models.path == "" && models.model == nil && models.joint == nil {
 		return fail(fmt.Errorf("typed path sampling requires an explicit local model"))
 	}
 	bound, err := bindTypedPathSource(ctx, filename, source, activityName, document, prepared, receipt)
@@ -161,9 +160,10 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	}
 	base, activity := bound.base, bound.activity
 	model := models.model
+	joint := models.joint
 	if models.path != "" {
 		loadStarted := time.Now()
-		model, err = decision.LoadPath(models.path)
+		model, joint, err = loadTypedStructuralModel(models.path)
 		receipt.Timing.ModelLoadMS = elapsedMS(loadStarted)
 		if err != nil {
 			return fail(fmt.Errorf("load explicit structural model: %w", err))
@@ -171,8 +171,12 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	}
 	contextStarted := time.Now()
 	var contextDeclined bool
-	prepared, receipt.ModelContext, contextDeclined, err = preparePathModelContext(ctx, document, prepared, model,
-		base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest)
+	if joint != nil {
+		prepared, receipt.ModelContext, contextDeclined, err = prepareJointModelContext(ctx, document, prepared, joint, base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest)
+	} else {
+		prepared, receipt.ModelContext, contextDeclined, err = preparePathModelContext(ctx, document, prepared, model,
+			base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest)
+	}
 	if receipt.ModelContext != nil {
 		receipt.Timing.ContextPrepareMS = elapsedMS(contextStarted)
 	}
@@ -183,6 +187,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if contextDeclined {
 		receipt.ModelContext.SeedSkipped, receipt.ModelContext.FeedbackSkipped = searchSeed != "", feedback != nil
 		model, feedback, searchSeed = nil, nil, ""
+		joint = nil
 		receipt.FeedbackUnfixed = false
 		receipt.Timing.ExecutionModel = "source_bind_then_context_decline_then_deterministic_finite_tdd_then_native_emit"
 		receipt.Timing.DecisionStage = "no_predictions_representation_declined"
@@ -190,7 +195,14 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	searchStarted := time.Now()
 	var search pathplan.SearchResult
 	var selected *bodyplan.Program
-	if feedback != nil && feedback.unfixed {
+	if joint != nil {
+		rounds := 0
+		var ci *pathplan.CIHint
+		if feedback != nil {
+			rounds, ci = feedback.rounds, feedback.ci
+		}
+		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchJointFeedbackBatches(ctx, joint, document.TestCases, document.MaxAttempts, max(1, stepAttempts), searchSeed, rounds, ci)
+	} else if feedback != nil && feedback.unfixed {
 		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchFeedbackBatchesUnfixed(ctx, model,
 			document.TestCases, document.MaxAttempts, stepAttempts, searchSeed, feedback.rounds, feedback.ci)
 	} else if feedback != nil {
