@@ -21,7 +21,8 @@ import (
 const bodyCodegenUsage = "usage: gooo body-codegen [--json] " +
 	"[--sample-seed <seed> | --fill-plan <plan.json> [--tiny-model <model.json>] | --fill-search <plan.json> | " +
 	"--path-plan <plan.json> [--path-model <model.json>] [--path-step-attempts <1..64>] " +
-	"[--path-feedback-rounds <1..16> [--path-feedback-ci <hint.json>]]] --activity <name> <file.gooo>"
+	"[--path-feedback-rounds <1..16> [--path-feedback-ci <hint.json>] [--path-feedback-unfixed]]] " +
+	"--activity <name> <file.gooo>"
 const tinyModelDiagnosticLabel = "<tiny_model>"
 
 func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -43,6 +44,7 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 	pathStepAttempts := 0
 	pathFeedbackRounds := 0
 	pathFeedbackCI := ""
+	pathFeedbackUnfixed := false
 	filename := ""
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
@@ -119,6 +121,12 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 			}
 			pathFeedbackCI = args[index+1]
 			index++
+		case "--path-feedback-unfixed":
+			if pathFeedbackUnfixed {
+				fmt.Fprintln(stderr, bodyCodegenUsage)
+				return exitUsage
+			}
+			pathFeedbackUnfixed = true
 		case "--path-plan", "--path-model":
 			target := &pathPlanPath
 			if args[index] == "--path-model" {
@@ -147,7 +155,8 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 	}
 	if (pathPlanPath != "" && (sampleSeedSet || fillPlanPath != "" || searchPlanPath != "" || tinyModelPath != "")) ||
 		((pathModelPath != "" || pathStepAttempts != 0 || pathFeedbackRounds != 0 || pathFeedbackCI != "") && pathPlanPath == "") ||
-		(pathFeedbackRounds != 0 && (pathModelPath == "" || pathStepAttempts == 0)) || (pathFeedbackCI != "" && pathFeedbackRounds == 0) {
+		(pathFeedbackRounds != 0 && (pathModelPath == "" || pathStepAttempts == 0)) ||
+		((pathFeedbackCI != "" || pathFeedbackUnfixed) && pathFeedbackRounds == 0) {
 		fmt.Fprintln(stderr, bodyCodegenUsage)
 		return exitUsage
 	}
@@ -182,7 +191,12 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 					return reportBodyCodegenFailure(jsonMode, pathFeedbackCI, activity, raw, decodeErr, stdout, stderr)
 				}
 			}
-			result, err = bodycodegen.GenerateWithTypedPathFeedback(ctx, filename, source, activity, document, pathModelPath, pathStepAttempts, pathFeedbackRounds, ci)
+			generate := bodycodegen.GenerateWithTypedPathFeedback
+			if pathFeedbackUnfixed {
+				generate = bodycodegen.GenerateWithTypedPathUnfixedFeedback
+			}
+			result, err = generate(ctx, filename, source, activity, document, pathModelPath,
+				pathStepAttempts, pathFeedbackRounds, ci)
 		} else if pathStepAttempts == 0 {
 			result, err = bodycodegen.GenerateWithTypedPaths(ctx, filename, source, activity, document, pathModelPath)
 		} else {
