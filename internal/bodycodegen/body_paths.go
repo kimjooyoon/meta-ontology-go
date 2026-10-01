@@ -29,6 +29,10 @@ type BodyPathReceipt struct {
 	Feedback               []pathplan.FeedbackReceipt `json:"feedback_judgments,omitempty"`
 	FeedbackUnfixed        bool                       `json:"feedback_unfixed,omitempty"`
 	ModelRetention         *RetainedModelInfo         `json:"model_retention,omitempty"`
+	Diagnosis              *pathplan.Diagnosis        `json:"diagnosis,omitempty"`
+	DiagnosisOptionsSHA256 string                     `json:"diagnosis_options_sha256,omitempty"`
+	DiagnosisBudget        int                        `json:"diagnosis_budget,omitempty"`
+	DiagnosisScope         string                     `json:"diagnosis_scope,omitempty"`
 	NativeCases            []IRBodyFillCaseResult     `json:"native_case_results,omitempty"`
 	FunctionalCompleteness float64                    `json:"finite_functional_completeness_percent"`
 	Scope                  string                     `json:"scope"`
@@ -40,6 +44,7 @@ type BodyPathTiming struct {
 	SourceBindingMS float64 `json:"source_binding_ms"`
 	ModelLoadMS     float64 `json:"model_load_ms"`
 	BoundedSearchMS float64 `json:"bounded_search_ms"`
+	DiagnosisMS     float64 `json:"diagnosis_ms,omitempty"`
 	FinalEmissionMS float64 `json:"final_emission_ms"`
 	TotalMS         float64 `json:"total_ms"`
 	ExecutionModel  string  `json:"execution_model"`
@@ -230,6 +235,9 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	receipt.Search = search
 	receipt.Timing.BoundedSearchMS = elapsedMS(searchStarted)
 	if err != nil {
+		return fail(err)
+	}
+	if err := diagnoseSelectedPath(ctx, prepared, document, models.diagnosis, receipt); err != nil {
 		return fail(err)
 	}
 	completed, err := replaceActivityProgram(source, activity.ValueProgramSpan, selected.GoooBody())
