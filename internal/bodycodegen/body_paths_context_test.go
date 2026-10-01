@@ -16,6 +16,10 @@ import (
 
 // Synthetic weights exercise the compiler-input contract, not trained quality.
 func writePathContextContractModel(t *testing.T) string {
+	return writePathContextContractModelVersion(t, decision.SplitContextIntentFeatureVersion)
+}
+
+func writePathContextContractModelVersion(t *testing.T, version string) string {
 	t.Helper()
 	name := writeTypedPathContractModel(t, false)
 	raw, err := os.ReadFile(name)
@@ -26,7 +30,7 @@ func writePathContextContractModel(t *testing.T) string {
 	if err = json.Unmarshal(raw, &metadata); err != nil {
 		t.Fatal(err)
 	}
-	metadata.FeatureVersion = decision.SplitContextIntentFeatureVersion
+	metadata.FeatureVersion = version
 	raw, err = json.Marshal(metadata)
 	if err != nil {
 		t.Fatal(err)
