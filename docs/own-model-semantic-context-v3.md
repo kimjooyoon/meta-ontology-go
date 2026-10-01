@@ -43,6 +43,12 @@ best partial body. Duplicate local definitions and input shadowing decline the
 optional projection rather than inventing variable-binding facts. The compiler
 still rejects invalid or unreachable body nodes before inference.
 
+SDK v0.2.11-experimental also preserves the prior prediction and workspace when
+semantic-v3 input validation fails. Actual-kernel tests verify the error contract
+and zero-allocation valid inference; previous feature versions keep their
+existing failed-output behavior. V0.2.10's early prediction clearing was corrected
+without changing valid features, predictions or weights.
+
 After actual partial tests, feedback keeps the source header bit-identical and
 appends observed failures/CI hints to the natural channel. Oversized feedback
 records the complete attempted byte count/hash, predicts nothing and leaves the
