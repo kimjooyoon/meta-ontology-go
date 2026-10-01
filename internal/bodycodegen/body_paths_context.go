@@ -11,7 +11,7 @@ import (
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
 
-const pathContextSchema = "gooo/compiler-typed-path-context/v1"
+const pathContextSchema = "gooo/compiler-typed-path-context/v2"
 
 type PathContextInput struct {
 	DecisionID           string `json:"decision_id"`
@@ -29,7 +29,7 @@ type PathModelContextReceipt struct {
 	SourceSemanticSHA string             `json:"source_semantic_sha256"`
 	OriginalPlanSHA   string             `json:"original_plan_sha256"`
 	RankedPlanSHA     string             `json:"ranked_plan_sha256,omitempty"`
-	MetadataSHA       string             `json:"model_metadata_sha256"`
+	MetadataSHA       string             `json:"model_metadata_sha256,omitempty"`
 	FeatureVersion    string             `json:"feature_version"`
 	Inputs            []PathContextInput `json:"inputs"`
 	DeclinedDecision  string             `json:"declined_decision,omitempty"`
@@ -47,10 +47,16 @@ func preparePathModelContext(ctx context.Context, document pathplan.Document, or
 	if model == nil || model.FeatureVersion() != decision.SplitContextIntentFeatureVersion {
 		return original, nil, false, nil
 	}
+	return prepareCompilerPathContext(ctx, document, original, activityID, sourceSemanticSHA,
+		model.MetadataSHA256())
+}
+
+func prepareCompilerPathContext(ctx context.Context, document pathplan.Document, original *pathplan.PreparedPlan,
+	activityID, sourceSemanticSHA, metadataSHA string) (*pathplan.PreparedPlan, *PathModelContextReceipt, bool, error) {
 	receipt := &PathModelContextReceipt{Schema: pathContextSchema, Status: "ENCODED", ActivityID: activityID,
-		SourceSemanticSHA: sourceSemanticSHA, OriginalPlanSHA: original.PlanSHA256(), MetadataSHA: model.MetadataSHA256(),
-		FeatureVersion: model.FeatureVersion(), Inputs: make([]PathContextInput, 0, len(document.Plan.Decisions)),
-		Scope: "fallback-normalized validated typed nodes and legal alternatives, bound to original source; one-hop node facts, not a complete semantic IR or intended-answer authority"}
+		SourceSemanticSHA: sourceSemanticSHA, OriginalPlanSHA: original.PlanSHA256(), MetadataSHA: metadataSHA,
+		FeatureVersion: decision.SplitContextIntentFeatureVersion, Inputs: make([]PathContextInput, 0, len(document.Plan.Decisions)),
+		Scope: "fallback-normalized validated typed nodes and source-relative legal alternatives, bound to original source; one-hop node facts, not a complete semantic IR or intended-answer authority"}
 	plan := document.Plan
 	plan.Decisions = append([]pathplan.Choice(nil), plan.Decisions...)
 	facts := fallbackContextFacts(document.Plan)
@@ -179,7 +185,7 @@ func encodePathContext(base bodyplan.Plan, choice pathplan.Choice) (string, Path
 	var b pathContextBuffer
 	b.add("gooo;result=" + string(base.ResultType) + ";kind=" + choice.Kind + ";target=")
 	b.integer(int64(choice.Target))
-	b.add(";node=")
+	b.add(";fallback=" + choice.Fallback + ";basis=source_fallback;node=")
 	switch choice.Kind {
 	case pathplan.LocalReference, pathplan.OperandOrder:
 		b.expression(base, choice.Target, true)
@@ -199,13 +205,7 @@ func encodePathContext(base bodyplan.Plan, choice pathplan.Choice) (string, Path
 		return "", input, fmt.Sprintf("UNSUPPORTED_VALIDATED_CHOICE_%s", choice.Kind)
 	}
 	b.add(";legal=")
-	for _, option := range choice.Options {
-		b.add(option.Label + ":" + option.Name + ":" + strconv.FormatBool(option.Reverse))
-		if len(option.Order) > 0 {
-			b.order(option.Order)
-		}
-		b.add("|")
-	}
+	addSourceRelativeOptions(&b, choice)
 	b.add(";intent: ")
 	b.add(intent)
 	input.Bytes = b.wanted
@@ -215,4 +215,28 @@ func encodePathContext(base bodyplan.Plan, choice pathplan.Choice) (string, Path
 	text := string(b.bytes[:b.used])
 	input.InputSHA = digest([]byte(text))
 	return text, input, ""
+}
+
+// Reverse flags describe the actual option relative to the bound source body.
+// Search still receives the original plan: normalizing that base would swap twice.
+func addSourceRelativeOptions(b *pathContextBuffer, choice pathplan.Choice) {
+	fallbackReverse := false
+	for _, option := range choice.Options {
+		if option.Label == choice.Fallback {
+			fallbackReverse = option.Reverse
+		}
+	}
+	for _, option := range choice.Options {
+		b.add(option.Label)
+		switch choice.Kind {
+		case pathplan.OperandOrder, pathplan.BranchLayout:
+			b.add(":reverse_source=" + strconv.FormatBool(option.Reverse != fallbackReverse))
+		case pathplan.LocalReference, pathplan.AssignmentTarget:
+			b.add(":name=" + option.Name)
+		case pathplan.RootOrder:
+			b.add(":order=")
+			b.order(option.Order)
+		}
+		b.add("|")
+	}
 }

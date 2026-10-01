@@ -2,14 +2,12 @@ package bodycodegen
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/bodyplan"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
-	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 const bodyPathBudget = 8 * time.Second
@@ -157,59 +155,11 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if document.Seed != "" && models.path == "" && models.model == nil {
 		return fail(fmt.Errorf("typed path sampling requires an explicit local model"))
 	}
-	bindingStarted := time.Now()
-	documentBytes, err := json.Marshal(document)
-	if err != nil || len(documentBytes) > 128<<10 {
-		return fail(fmt.Errorf("typed path document exceeds its byte budget"))
-	}
-	receipt.DocumentSHA256 = digest(documentBytes)
-	testBytes, _ := json.Marshal(document.TestCases)
-	receipt.TestSuiteSHA256 = digest(testBytes)
-	file, diagnostics := syntax.ParseFile(filename, string(source))
-	if diagnostics.HasErrors() || file == nil || file.Package == nil {
-		return fail(fmt.Errorf("typed path source must be a valid Gooo package"))
-	}
-	var activity *syntax.ActivityDecl
-	for _, declaration := range file.Declarations {
-		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == activityName {
-			if activity != nil {
-				return fail(fmt.Errorf("typed path source has duplicate activities"))
-			}
-			activity = candidate
-		}
-	}
-	if activity == nil || !activity.ValueProgramPresent || len(activity.Inputs) != 1 ||
-		activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" || prepared.ActivityName() != activityName {
-		return fail(fmt.Errorf("typed path plan must match one source Integer -> Integer activity"))
-	}
-	base, err := GenerateWithPlanner(ctx, filename, source, activityName, "", "")
+	bound, err := bindTypedPathSource(ctx, filename, source, activityName, document, prepared, receipt)
 	if err != nil {
 		return fail(err)
 	}
-	fallback := prepared.Fallback()
-	fallbackBody, err := rewriteLetDeclarations(fallback.GoooBody())
-	if err != nil {
-		return fail(err)
-	}
-	fallbackRoute, err := generateRoute(file.Package.Name, activityName, base.Report.ActivityID,
-		"int64", "int64", fallbackBody, preserveRoute)
-	if err != nil {
-		return fail(err)
-	}
-	originalBody, err := rewriteLetDeclarations(activity.ValueProgram)
-	if err != nil {
-		return fail(err)
-	}
-	receipt.SourceBinding, err = routeEquivalence(file.Package.Name, activityName, "int64", "int64",
-		originalBody, fallbackRoute.source, "typed_path_fallback_matches_authoritative_source")
-	if err != nil || !receipt.SourceBinding.Equivalent {
-		return fail(fmt.Errorf("typed path fallback does not match the authoritative source body"))
-	}
-	receipt.SourceBaseMatched = true
-	receipt.Timing.SourceBindingMS = elapsedMS(bindingStarted)
-	if err := ctx.Err(); err != nil {
-		return fail(err)
-	}
+	base, activity := bound.base, bound.activity
 	model := models.model
 	if models.path != "" {
 		loadStarted := time.Now()
