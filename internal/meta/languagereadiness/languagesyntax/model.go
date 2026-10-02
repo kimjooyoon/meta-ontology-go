@@ -23,10 +23,11 @@ const (
 )
 
 type Registry struct {
-	Schema       string              `json:"schema"`
-	Cases        []CaseDefinition    `json:"cases"`
-	PackageUnits []PackageDefinition `json:"package_units"`
-	MetaSources  []string            `json:"meta_sources"`
+	Schema          string                 `json:"schema"`
+	Cases           []CaseDefinition       `json:"cases"`
+	PackageUnits    []PackageDefinition    `json:"package_units"`
+	MetaSources     []string               `json:"meta_sources"`
+	ProjectionUnits []ProjectionDefinition `json:"projection_units"`
 }
 
 type CaseDefinition struct {

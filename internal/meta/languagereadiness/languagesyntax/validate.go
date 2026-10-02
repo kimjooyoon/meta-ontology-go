@@ -16,7 +16,7 @@ func Validate(report Report, expectedHead string) error {
 	if !report.Source.ObservationKnown {
 		corpusDigestValid = report.Source.CorpusDigest == invalidDigest
 	}
-	if len(report.Cases) != totalCases || len(report.Indicators) != 16 || len(report.Proofs) != 3 ||
+	if len(report.Cases) != totalCases || len(report.Indicators) != 19 || len(report.Proofs) != 4 ||
 		!validDigest(report.Source.ConceptArtifactDigest) || !validDigest(report.Source.CatalogDigest) ||
 		!validDigest(report.Source.RegistryDigest) || !corpusDigestValid {
 		return fmt.Errorf("language syntax report shape mismatch")
@@ -38,6 +38,9 @@ func Validate(report Report, expectedHead string) error {
 	}
 	if !reflect.DeepEqual(definitions, expectedRegistry().Cases) {
 		return fmt.Errorf("language syntax case definitions mismatch")
+	}
+	if err := validateProjections(report); err != nil {
+		return err
 	}
 	for _, file := range report.Source.GoooFiles {
 		if !strings.HasSuffix(file.Path, ".gooo") || file.GoooLines <= 0 || !validDigest(file.SourceDigest) {

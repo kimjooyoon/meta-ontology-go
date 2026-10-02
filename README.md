@@ -191,4 +191,9 @@ An experimental source-to-Go activity-body projection is documented at
 generation separate from the stable package projection until its syntax and
 completeness claims have broader evidence.
 
+The completeness receipt's shared structure is declared in Gooo and generates
+the compiler's Go types and JSON Schema. See
+[declared completeness receipt](docs/declared-completeness-receipt.md) for the
+bounded projection profile, source binding and independent consumption checks.
+
 [W3C PROV-O]: https://www.w3.org/TR/prov-o/

@@ -19,6 +19,8 @@ func runExtensionCommand(args []string, stdout, stderr io.Writer) int {
 		return runAcceptedRevision(args[1:], OSFileReader{}, stdout, stderr)
 	case "emit":
 		return runEmit(args[1:], stdout, stderr)
+	case "receipt-schema":
+		return runReceiptSchema(args[1:], stdout, stderr)
 	case "certify":
 		return runRetentionCertify(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
 	case "consume":
