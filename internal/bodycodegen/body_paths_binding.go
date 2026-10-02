@@ -18,15 +18,8 @@ type typedPathSource struct {
 // Shared source authority check for generation and explicit training export.
 // It generates validation projections, never a selected candidate or model call.
 func bindTypedPathSource(ctx context.Context, filename string, source []byte, activityName string,
-	document pathplan.Document, prepared *pathplan.PreparedPlan, receipt *BodyPathReceipt) (typedPathSource, error) {
+	prepared *pathplan.PreparedPlan, receipt *BodyPathReceipt) (typedPathSource, error) {
 	bindingStarted := time.Now()
-	documentBytes, err := json.Marshal(document)
-	if err != nil || len(documentBytes) > 128<<10 {
-		return typedPathSource{}, fmt.Errorf("typed path document exceeds its byte budget")
-	}
-	receipt.DocumentSHA256 = digest(documentBytes)
-	testBytes, _ := json.Marshal(document.TestCases)
-	receipt.TestSuiteSHA256 = digest(testBytes)
 	file, diagnostics := syntax.ParseFile(filename, string(source))
 	if diagnostics.HasErrors() || file == nil || file.Package == nil {
 		return typedPathSource{}, fmt.Errorf("typed path source must be a valid Gooo package")
@@ -73,4 +66,16 @@ func bindTypedPathSource(ctx context.Context, filename string, source []byte, ac
 		return typedPathSource{}, err
 	}
 	return typedPathSource{base: base, activity: activity}, nil
+}
+
+func bindTypedPathDocument(document pathplan.Document, receipt *BodyPathReceipt) error {
+	documentBytes, err := json.Marshal(document)
+	if err != nil || len(documentBytes) > 128<<10 {
+		return fmt.Errorf("typed path document exceeds its byte budget")
+	}
+	receipt.DocumentSHA256 = digest(documentBytes)
+	testBytes, _ := json.Marshal(document.TestCases)
+	receipt.TestSuiteSHA256 = digest(testBytes)
+	receipt.DeclaredTestCases = len(document.TestCases)
+	return nil
 }

@@ -26,6 +26,9 @@ type Summary struct {
 	GovernanceTotal      int `json:"governance_total"`
 	GovernanceExecuted   int `json:"governance_executed"`
 	GovernanceUnresolved int `json:"governance_unresolved"`
+	ProjectionTotal      int `json:"projection_total"`
+	ProjectionSatisfied  int `json:"projection_satisfied"`
+	ProjectionUnresolved int `json:"projection_unresolved"`
 }
 
 type Indicator struct {
@@ -49,22 +52,23 @@ type Proof struct {
 }
 
 type Report struct {
-	Schema             string       `json:"schema"`
-	Decision           string       `json:"decision"`
-	Reason             string       `json:"reason"`
-	Resolution         string       `json:"resolution"`
-	Producer           string       `json:"producer"`
-	Consumer           string       `json:"consumer"`
-	MetaOperation      string       `json:"meta_operation"`
-	HeadSHA            string       `json:"head_sha"`
-	Source             Source       `json:"source"`
-	Summary            Summary      `json:"summary"`
-	Cases              []CaseResult `json:"cases"`
-	Indicators         []Indicator  `json:"indicators"`
-	Proofs             []Proof      `json:"proofs"`
-	RepositoryWrites   int          `json:"repository_writes"`
-	MutationAuthorized bool         `json:"mutation_authorized"`
-	ReportDigest       string       `json:"report_digest"`
+	Schema             string             `json:"schema"`
+	Decision           string             `json:"decision"`
+	Reason             string             `json:"reason"`
+	Resolution         string             `json:"resolution"`
+	Producer           string             `json:"producer"`
+	Consumer           string             `json:"consumer"`
+	MetaOperation      string             `json:"meta_operation"`
+	HeadSHA            string             `json:"head_sha"`
+	Source             Source             `json:"source"`
+	Summary            Summary            `json:"summary"`
+	Cases              []CaseResult       `json:"cases"`
+	ProjectionUnits    []ProjectionResult `json:"projection_units"`
+	Indicators         []Indicator        `json:"indicators"`
+	Proofs             []Proof            `json:"proofs"`
+	RepositoryWrites   int                `json:"repository_writes"`
+	MutationAuthorized bool               `json:"mutation_authorized"`
+	ReportDigest       string             `json:"report_digest"`
 }
 
 func metric(id, class, proof, resolution string, value, target int) Indicator {

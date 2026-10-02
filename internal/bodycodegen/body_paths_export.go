@@ -66,12 +66,15 @@ func ExportTypedPathContextWithFeature(ctx context.Context, filename string, sou
 		return fail(err)
 	}
 	prepareStarted := time.Now()
+	if err := bindTypedPathDocument(document, receipt); err != nil {
+		return fail(err)
+	}
 	prepared, err := document.Prepare()
 	receipt.Timing.PlanPrepareMS = elapsedMS(prepareStarted)
 	if err != nil {
 		return fail(err)
 	}
-	bound, err := bindTypedPathSource(ctx, filename, source, activityName, document, prepared, receipt)
+	bound, err := bindTypedPathSource(ctx, filename, source, activityName, prepared, receipt)
 	if err != nil {
 		return fail(err)
 	}

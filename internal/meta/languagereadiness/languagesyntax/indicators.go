@@ -21,6 +21,9 @@ func indicators(report Report, drift int) []Indicator {
 		metric("repository-writes.guardrail", "GUARDRAIL", "REGRESSION", report.Resolution, report.RepositoryWrites, 0),
 		metric("mutation-authority.guardrail", "GUARDRAIL", "REGRESSION", report.Resolution, boolInt(report.MutationAuthorized), 0),
 		metric("registry-drift.guardrail", "GUARDRAIL", "FOUNDATION", report.Resolution, drift, 0),
+		metric("projection-units", "DRIVER", "FOUNDATION", report.Resolution, s.ProjectionTotal, FixedProjectionTotal),
+		metric("source-bound-projections", "DRIVER", "COHERENCE", report.Resolution, s.ProjectionSatisfied, FixedProjectionTotal),
+		metric("unresolved-projections.guardrail", "GUARDRAIL", "FOUNDATION", report.Resolution, s.ProjectionUnresolved, 0),
 	}
 }
 
@@ -32,6 +35,8 @@ func proofs(report Report, drift int) []Proof {
 			Passed: report.Summary.ValidCases == validCases},
 		{Choice: "REGRESSION", MetaOperation: "reject-invalid-syntax-with-zero-effects", EvidenceDigest: digestJSON(report.Summary),
 			Passed: report.Summary.InvalidCases == invalidCases && report.RepositoryWrites == 0 && !report.MutationAuthorized},
+		{Choice: "COHERENCE", MetaOperation: "replay-declared-structure-and-generated-artifacts", EvidenceDigest: digestJSON(report.ProjectionUnits),
+			Passed: report.Summary.ProjectionSatisfied == FixedProjectionTotal},
 	}
 }
 

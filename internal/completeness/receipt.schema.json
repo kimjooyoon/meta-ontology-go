@@ -1,0 +1,307 @@
+{
+  "$defs": {
+    "CompletenessDimension": {
+      "additionalProperties": false,
+      "properties": {
+        "denominator": {
+          "minimum": 0,
+          "type": "integer",
+          "x-gooo-id": "gooo://completeness/field/dimension/denominator",
+          "x-gooo-source-span": {
+            "end": 960,
+            "start": 866
+          }
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://completeness/field/dimension/evidence",
+          "x-gooo-source-span": {
+            "end": 1225,
+            "start": 1137
+          }
+        },
+        "id": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/dimension/id",
+          "x-gooo-source-span": {
+            "end": 677,
+            "start": 602
+          }
+        },
+        "numerator": {
+          "minimum": 0,
+          "type": "integer",
+          "x-gooo-id": "gooo://completeness/field/dimension/numerator",
+          "x-gooo-source-span": {
+            "end": 861,
+            "start": 771
+          }
+        },
+        "reason": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/dimension/reason",
+          "x-gooo-source-span": {
+            "end": 1132,
+            "start": 1049
+          }
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "PROGRESS",
+            "UNKNOWN",
+            "FAIL_CLOSED"
+          ],
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/dimension/status",
+          "x-gooo-source-span": {
+            "end": 766,
+            "start": 682
+          }
+        },
+        "unit": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/dimension/unit",
+          "x-gooo-source-span": {
+            "end": 1044,
+            "start": 965
+          }
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "numerator",
+        "denominator",
+        "unit",
+        "reason",
+        "evidence"
+      ],
+      "type": "object",
+      "x-gooo-id": "gooo://completeness/entity/dimension"
+    },
+    "CompletenessReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "aggregate_completeness_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "x-gooo-id": "gooo://completeness/field/receipt/aggregate-score",
+          "x-gooo-source-span": {
+            "end": 2657,
+            "start": 2543
+          }
+        },
+        "core_dimensions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://completeness/field/receipt/core-dimensions",
+          "x-gooo-source-span": {
+            "end": 2324,
+            "start": 2224
+          }
+        },
+        "decision": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/receipt/decision",
+          "x-gooo-source-span": {
+            "end": 2031,
+            "start": 1946
+          }
+        },
+        "decision_basis": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/receipt/decision-basis",
+          "x-gooo-source-span": {
+            "end": 2133,
+            "start": 2036
+          }
+        },
+        "dimensions": {
+          "items": {
+            "$ref": "#/$defs/CompletenessDimension"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://completeness/field/receipt/dimensions",
+          "x-gooo-source-span": {
+            "end": 2436,
+            "start": 2329
+          }
+        },
+        "fail_closed_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "x-gooo-id": "gooo://completeness/field/receipt/fail-closed-reason",
+          "x-gooo-source-span": {
+            "end": 3125,
+            "start": 3020
+          }
+        },
+        "first_unresolved": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnresolvedCompletenessClaim"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "x-gooo-id": "gooo://completeness/field/receipt/first-unresolved",
+          "x-gooo-source-span": {
+            "end": 2786,
+            "start": 2662
+          }
+        },
+        "not_claimed": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://completeness/field/receipt/not-claimed",
+          "x-gooo-source-span": {
+            "end": 3015,
+            "start": 2923
+          }
+        },
+        "profile_id": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/receipt/profile",
+          "x-gooo-source-span": {
+            "end": 1941,
+            "start": 1855
+          }
+        },
+        "schema": {
+          "const": "gooo/metaprogramming-completeness-receipt/v2",
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/receipt/schema",
+          "x-gooo-source-span": {
+            "end": 1850,
+            "start": 1769
+          }
+        },
+        "scope": {
+          "type": "object",
+          "x-gooo-id": "gooo://completeness/field/receipt/scope",
+          "x-gooo-source-span": {
+            "end": 2219,
+            "start": 2138
+          }
+        },
+        "status_counts": {
+          "additionalProperties": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "object",
+          "x-gooo-id": "gooo://completeness/field/receipt/status-counts",
+          "x-gooo-source-span": {
+            "end": 2538,
+            "start": 2441
+          }
+        },
+        "unresolved_claims": {
+          "items": {
+            "$ref": "#/$defs/UnresolvedCompletenessClaim"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://completeness/field/receipt/unresolved-claims",
+          "x-gooo-source-span": {
+            "end": 2918,
+            "start": 2791
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "profile_id",
+        "decision",
+        "decision_basis",
+        "scope",
+        "core_dimensions",
+        "dimensions",
+        "status_counts",
+        "aggregate_completeness_score",
+        "first_unresolved",
+        "unresolved_claims",
+        "not_claimed",
+        "fail_closed_reason"
+      ],
+      "type": "object",
+      "x-gooo-id": "gooo://schema/metaprogramming-completeness-receipt/v2"
+    },
+    "UnresolvedCompletenessClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/claim/id",
+          "x-gooo-source-span": {
+            "end": 1397,
+            "start": 1326
+          }
+        },
+        "next_operation": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/claim/next-operation",
+          "x-gooo-source-span": {
+            "end": 1666,
+            "start": 1571
+          }
+        },
+        "reason": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/claim/reason",
+          "x-gooo-source-span": {
+            "end": 1566,
+            "start": 1487
+          }
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "PROGRESS",
+            "UNKNOWN",
+            "FAIL_CLOSED"
+          ],
+          "type": "string",
+          "x-gooo-id": "gooo://completeness/field/claim/status",
+          "x-gooo-source-span": {
+            "end": 1482,
+            "start": 1402
+          }
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "reason",
+        "next_operation"
+      ],
+      "type": "object",
+      "x-gooo-id": "gooo://completeness/entity/unresolved-claim"
+    }
+  },
+  "$id": "gooo/metaprogramming-completeness-receipt/v2",
+  "$ref": "#/$defs/CompletenessReceipt",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "x-gooo-declaration-sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+  "x-gooo-projection-profile": "gooo/receipt-structure-projection/v1"
+}
