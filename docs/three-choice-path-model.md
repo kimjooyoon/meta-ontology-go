@@ -1,5 +1,18 @@
 # Optional own Gooo three-choice path model
 
+## Choosing a compatible model — 2026-10-03
+
+Use the [compact V3 bundle](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1/tree/985999a89caba6a31cc7147f66ba29a5ce76a1d9/research/compact-runtime-20261003)
+for the current compiler and SDK v0.2.14-experimental. Its generated-program
+measurements are linked below. The same Hugging Face repository also publishes
+new [full-input research models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1/tree/main/research/full-input-initial-20261003).
+Their V4 whole-text fragment feature contract runs in the research runtime;
+SDK extraction, numerical portability and native compiler adoption remain pending.
+The [language direction guide](language-direction.ko.md) explains the progression
+and the remaining language work.
+
+## Current compiler contract
+
 An explicit `--path-model` may supply the separate
 `gooo/tiny-three-choice-path-model/v1` schema, or the compact shared schema below,
 from SDK v0.2.14-experimental. Direct codegen binds the original Gooo body to the
