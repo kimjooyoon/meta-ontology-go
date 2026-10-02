@@ -81,9 +81,11 @@ The latest model study and the deployed integration have separate evidence:
   order; wording augmentation and ternary conversion also produced regressions.
   On arm64 and Linux, all 18,432 first choices agreed, while **272 complete
   candidate rankings differed** under small numerical changes. The exact
-  comparison failed on partial-completion curves. The numerical-contract repair,
-  remaining evaluations and native adoption of the new V4 models are pending.
-  [Retained diagnosis and next work](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-numerical-portability-followup-20261003.md).
+  comparison failed on partial-completion curves. A subsequent versioned rounding
+  rule now reproduces every intermediate value and full ranking on those 18,432
+  pairs, with unchanged weights and first-path completeness. SDK extraction,
+  remaining evaluations and native adoption of the new V4 models are next.
+  [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
 The compiler currently uses **Go SDK v0.2.14-experimental** and the earlier V3
 feature contract. The native timing/execution figures above belong to those
