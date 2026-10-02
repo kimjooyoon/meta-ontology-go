@@ -3,7 +3,7 @@
 ## Choosing a compatible model — 2026-10-03
 
 Use the [compact V3 bundle](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1/tree/985999a89caba6a31cc7147f66ba29a5ce76a1d9/research/compact-runtime-20261003)
-for the current compiler and SDK v0.2.14-experimental. Its generated-program
+for SDK v0.2.14 and later. Its generated-program
 measurements are linked below. The same Hugging Face repository also publishes
 new [full-input research models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1/tree/main/research/full-input-initial-20261003).
 Their V4 whole-text fragment feature contract runs in the research runtime and
@@ -12,9 +12,13 @@ Explicit arithmetic now matches the frozen arm64/Linux observations, including
 every full ranking. The SDK replay passed on both platforms at revision `59c8d34`:
 18,432 complete inputs and 36,864 predictions per platform.
 [Linux SDK replay](https://github.com/kimjooyoon/gooo-decision-runtime/actions/runs/37070241916).
-The compiler still depends on v0.2.14; use the pinned V3 files above for its
-current `--path-model` contract. Native V4 generation and execution are the next
-stage in the [registered protocol](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/daecfea3583614e006c960de263448a1645a9190/docs/full-input-sdk-native-protocol-20261003.md).
+This compiler revision uses v0.2.15 and dispatches the declared V3/V4 feature
+version through strict loaders. Feature and arithmetic identities travel through
+context, retention and initial/feedback receipts. The
+[native observation](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-native-results-20261003.md)
+completed 400 generations and 800 compiled runs; all 9,600 supplied expectations
+and 192 expanded/compact pairs matched. The explicit-arithmetic models are pinned
+in [this bundle](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1/tree/7c4501789b34d885c14ab54aee1d40995eb8b1e6/research/full-input-separate-20261003).
 The [language direction guide](language-direction.ko.md) explains the progression
 and the remaining language work.
 
@@ -22,7 +26,7 @@ and the remaining language work.
 
 An explicit `--path-model` may supply the separate
 `gooo/tiny-three-choice-path-model/v1` schema, or the compact shared schema below,
-from SDK v0.2.14-experimental. Direct codegen binds the original Gooo body to the
+from SDK v0.2.15-experimental. Direct codegen binds the original Gooo body to the
 declared typed fallback before opening a model. Retained generators load during
 construction; every request binds its source before predicting. The compiler projects three complete source-v3 inputs
 in declared order and ranks all eight absolute masks in one initial prediction.

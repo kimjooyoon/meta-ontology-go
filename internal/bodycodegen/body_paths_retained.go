@@ -21,6 +21,7 @@ type RetainedModelInfo struct {
 	Scope               string  `json:"scope"`
 	ModelSchema         string  `json:"model_schema,omitempty"`
 	FeatureVersion      string  `json:"feature_version,omitempty"`
+	ArithmeticVersion   string  `json:"arithmetic_version,omitempty"`
 }
 
 type typedPathModel struct {
@@ -67,6 +68,7 @@ func NewTypedPathGenerator(modelPath string) (*TypedPathGenerator, error) {
 			g.info.MetadataSHA256, g.info.WeightsSHA256 = g.three.MetadataSHA256(), g.three.WeightsSHA256()
 			g.info.ResidentTensorBytes = g.three.ResidentTensorBytes()
 			g.info.ModelSchema, g.info.FeatureVersion = g.three.Schema(), g.three.FeatureVersion()
+			g.info.ArithmeticVersion = g.three.ArithmeticVersion()
 		} else if g.joint != nil {
 			g.info.MetadataSHA256, g.info.WeightsSHA256 = g.joint.MetadataSHA256(), g.joint.WeightsSHA256()
 			g.info.ResidentTensorBytes = g.joint.ResidentTensorBytes()
