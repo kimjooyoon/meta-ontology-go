@@ -34,12 +34,17 @@ func loadTypedStructuralModel(name string) (typedPathModel, error) {
 		return typedPathModel{}, err
 	}
 	var selector struct {
-		Schema string `json:"schema"`
+		Schema  string `json:"schema"`
+		Feature string `json:"feature_version"`
 	}
 	if err = json.Unmarshal(raw, &selector); err != nil {
 		return typedPathModel{}, err
 	}
 	if selector.Schema == jointdecision.ThreeSchema {
+		if selector.Feature == jointdecision.ThreeBagFeatureVersion {
+			model, err := jointdecision.LoadThreeBag(name)
+			return typedPathModel{three: model}, err
+		}
 		model, err := jointdecision.LoadThree(name)
 		return typedPathModel{three: model}, err
 	}

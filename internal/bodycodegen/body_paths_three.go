@@ -18,14 +18,16 @@ func prepareThreeModelContext(ctx context.Context, document pathplan.Document, o
 	if len(document.Plan.Decisions) != 3 {
 		r := &PathModelContextReceipt{Schema: schema, Status: "DECLINED_TO_DETERMINISTIC", ActivityID: activityID,
 			SourceSemanticSHA: semanticSHA, OriginalPlanSHA: original.PlanSHA256(), MetadataSHA: model.MetadataSHA256(),
-			FeatureVersion: jointdecision.ThreeFeatureVersion, Reason: "THREE_DECISION_COUNT_UNSUPPORTED",
+			FeatureVersion: model.FeatureVersion(), ArithmeticVersion: model.ArithmeticVersion(),
+			Reason:         "THREE_DECISION_COUNT_UNSUPPORTED",
 			DeclaredInputs: declared, Scope: "exactly three typed decisions required; complete original inputs retained"}
 		return original, r, true, nil
 	}
 	prepared, r, declined, err := prepareCompilerPathContextWithFeature(ctx, document, original, activityID,
 		semanticSHA, model.MetadataSHA256(), decision.SemanticContextIntentFeatureVersion)
 	if r != nil {
-		r.Schema, r.FeatureVersion, r.DeclaredInputs = schema, jointdecision.ThreeFeatureVersion, declared
+		r.Schema, r.FeatureVersion, r.DeclaredInputs = schema, model.FeatureVersion(), declared
+		r.ArithmeticVersion = model.ArithmeticVersion()
 	}
 	if err != nil || declined {
 		return prepared, r, declined, err
