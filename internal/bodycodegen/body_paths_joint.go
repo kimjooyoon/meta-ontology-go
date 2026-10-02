@@ -13,41 +13,45 @@ import (
 
 // Schema dispatch occurs after source binding; each loader enforces its full
 // closed metadata and weights contract. The operation classifier is rejected.
-func loadTypedStructuralModel(name string) (*decision.Model, *jointdecision.Model, error) {
+func loadTypedStructuralModel(name string) (typedPathModel, error) {
 	f, err := os.Open(name)
 	if err != nil {
-		return nil, nil, err
+		return typedPathModel{}, err
 	}
 	defer f.Close()
 	info, err := f.Stat()
 	if err != nil || !info.Mode().IsRegular() || info.Size() <= 0 || info.Size() > 64<<10 {
-		return nil, nil, fmt.Errorf("bounded regular structural metadata required")
+		return typedPathModel{}, fmt.Errorf("bounded regular structural metadata required")
 	}
 	raw, err := io.ReadAll(io.LimitReader(f, (64<<10)+1))
 	if err != nil {
-		return nil, nil, err
+		return typedPathModel{}, err
 	}
 	if len(raw) > 64<<10 {
-		return nil, nil, fmt.Errorf("structural metadata grew beyond bound")
+		return typedPathModel{}, fmt.Errorf("structural metadata grew beyond bound")
 	}
 	if err = decision.RejectDuplicateJSONKeys(raw); err != nil {
-		return nil, nil, err
+		return typedPathModel{}, err
 	}
 	var selector struct {
 		Schema string `json:"schema"`
 	}
 	if err = json.Unmarshal(raw, &selector); err != nil {
-		return nil, nil, err
+		return typedPathModel{}, err
+	}
+	if selector.Schema == jointdecision.ThreeSchema {
+		model, err := jointdecision.LoadThree(name)
+		return typedPathModel{three: model}, err
 	}
 	if selector.Schema == jointdecision.Schema {
 		model, err := jointdecision.Load(name)
-		return nil, model, err
+		return typedPathModel{joint: model}, err
 	}
 	if selector.Schema != decision.PathMetadataSchema {
-		return nil, nil, fmt.Errorf("explicit structural model schema required")
+		return typedPathModel{}, fmt.Errorf("explicit structural model schema required")
 	}
 	model, err := decision.LoadPath(name)
-	return model, nil, err
+	return typedPathModel{model: model}, err
 }
 func prepareJointModelContext(ctx context.Context, document pathplan.Document, original *pathplan.PreparedPlan,
 	model *jointdecision.Model, activityID, semanticSHA string) (*pathplan.PreparedPlan, *PathModelContextReceipt, bool, error) {

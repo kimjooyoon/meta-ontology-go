@@ -27,6 +27,7 @@ type typedPathModel struct {
 	path      string
 	model     *decision.Model
 	joint     *jointdecision.Model
+	three     *jointdecision.ThreeModel
 	retention *RetainedModelInfo
 	diagnosis *PathDiagnosisOptions
 }
@@ -37,6 +38,7 @@ type typedPathModel struct {
 type TypedPathGenerator struct {
 	model *decision.Model
 	joint *jointdecision.Model
+	three *jointdecision.ThreeModel
 	info  RetainedModelInfo
 }
 
@@ -55,20 +57,24 @@ func NewTypedPathGenerator(modelPath string) (*TypedPathGenerator, error) {
 	g := &TypedPathGenerator{info: RetainedModelInfo{Schema: "gooo/retained-path-model/v1",
 		Scope: "one constructor load; excluded from request timing; fresh source and plan each request"}}
 	if modelPath != "" {
-		model, joint, err := loadTypedStructuralModel(modelPath)
+		models, err := loadTypedStructuralModel(modelPath)
 		if err != nil {
 			return nil, fmt.Errorf("load retained structural model: %w", err)
 		}
-		g.model, g.joint = model, joint
+		g.model, g.joint, g.three = models.model, models.joint, models.three
 		g.info.Loaded = true
-		if joint != nil {
-			g.info.MetadataSHA256, g.info.WeightsSHA256 = joint.MetadataSHA256(), joint.WeightsSHA256()
-			g.info.ResidentTensorBytes = joint.ResidentTensorBytes()
-			g.info.ModelSchema, g.info.FeatureVersion = joint.Schema(), joint.FeatureVersion()
+		if g.three != nil {
+			g.info.MetadataSHA256, g.info.WeightsSHA256 = g.three.MetadataSHA256(), g.three.WeightsSHA256()
+			g.info.ResidentTensorBytes = g.three.ResidentTensorBytes()
+			g.info.ModelSchema, g.info.FeatureVersion = g.three.Schema(), g.three.FeatureVersion()
+		} else if g.joint != nil {
+			g.info.MetadataSHA256, g.info.WeightsSHA256 = g.joint.MetadataSHA256(), g.joint.WeightsSHA256()
+			g.info.ResidentTensorBytes = g.joint.ResidentTensorBytes()
+			g.info.ModelSchema, g.info.FeatureVersion = g.joint.Schema(), g.joint.FeatureVersion()
 		} else {
-			g.info.MetadataSHA256 = model.MetadataSHA256()
-			g.info.WeightsSHA256 = model.WeightsSHA256()
-			g.info.ResidentTensorBytes = model.ResidentTensorBytes()
+			g.info.MetadataSHA256 = g.model.MetadataSHA256()
+			g.info.WeightsSHA256 = g.model.WeightsSHA256()
+			g.info.ResidentTensorBytes = g.model.ResidentTensorBytes()
 		}
 	}
 	g.info.SetupMS = elapsedMS(started)
@@ -82,10 +88,10 @@ func (g *TypedPathGenerator) Generate(ctx context.Context, filename string, sour
 	if g == nil || g.info.Schema != "gooo/retained-path-model/v1" {
 		return Result{}, fmt.Errorf("generator required")
 	}
-	feedback, diagnosis, err := resolveTypedPathOptions(options, g.model != nil || g.joint != nil)
+	feedback, diagnosis, err := resolveTypedPathOptions(options, g.model != nil || g.joint != nil || g.three != nil)
 	if err != nil {
 		return Result{}, err
 	}
 	return generateTypedPathRequest(ctx, filename, source, activityName, document,
-		typedPathModel{model: g.model, joint: g.joint, retention: &g.info, diagnosis: diagnosis}, options.StepAttempts, feedback)
+		typedPathModel{model: g.model, joint: g.joint, three: g.three, retention: &g.info, diagnosis: diagnosis}, options.StepAttempts, feedback)
 }
