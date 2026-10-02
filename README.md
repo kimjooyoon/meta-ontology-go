@@ -77,6 +77,12 @@ The latest model study and the deployed integration have separate evidence:
   Compact prediction medians were **23.7–30.2 µs** and fresh-process codegen
   medians **27.8–29.5 ms** on local arm64 with Go 1.27.1. QAT's codegen median
   rose slightly. [Native study and resource scope](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/compact-shared-native-results-20261003.md).
+- **New full-input execution:** compiler `e461c1d` with SDK v0.2.15 completed
+  **400 generations, 816 predictions and 800 compiled runs**. All **9,600 finite
+  expectations** and **192 expanded/compact pairs** matched. Bag-original compact
+  FP32 had an 8.33 µs prediction median and 10.00 ms whole-codegen median;
+  disconnected codegen was 9.80 ms. The sixteen known tasks show fewer candidate
+  attempts and similar process latency. [Complete observation and resource scope](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-native-results-20261003.md).
 - **What the new study exposed:** counting text fragments can lose operation
   order; wording augmentation and ternary conversion also produced regressions.
   On arm64 and Linux, all 18,432 first choices agreed, while **272 complete
@@ -84,12 +90,13 @@ The latest model study and the deployed integration have separate evidence:
   comparison failed on partial-completion curves. A subsequent versioned rounding
   rule now reproduces every intermediate value and full ranking on those 18,432
   pairs, with unchanged weights and first-path completeness. SDK v0.2.15 now
-  carries these rules; native adoption and remaining model evaluations are next.
+  carries the rules used in the new native study; remaining model evaluations
+  and broader task coverage are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
-The compiler currently uses **Go SDK v0.2.14-experimental** and the earlier V3
-feature contract. The native timing/execution figures above belong to those
-models. New V4 artifacts run in the research runtime and SDK v0.2.15; the
+This compiler revision uses **Go SDK v0.2.15-experimental**, with V3/V4 feature
+contracts and versioned arithmetic. Each dated native study above identifies its
+own model and source revision. The
 [model guide](docs/three-choice-path-model.md) identifies the compatible bundle.
 The earlier [phrasing diagnosis](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/bilingual-wrapper-audit-results-20261003.md)
 explains why the new study keeps the entire instruction while changing its
@@ -99,17 +106,17 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| Compiler `dev` / `main` | SDK v0.2.14 with the pinned compact V3 bundle | Carry the new feature and arithmetic identities through generation and execution |
-| [SDK v0.2.15](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.15-experimental) | V3/V4 inference and explicit arithmetic | Native compiler integration |
+| Compiler at this revision | SDK v0.2.15; V3/V4 model, context and feedback identities | Broader typed construction and new intentions |
+| [SDK v0.2.15](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.15-experimental) | V3/V4 inference and explicit arithmetic | Repeated-use cost and broader inputs |
 | [Hugging Face model](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Wording, operation order and new-task evaluation |
 
 At SDK revision `59c8d34`, local arm64 and
 [Linux CI](https://github.com/kimjooyoon/gooo-decision-runtime/actions/runs/37070241916)
 each replayed 18,432 frozen inputs with 36,864 actual predictions. All intermediate
 values and complete rankings matched the explicit-arithmetic observations.
-This checks the transfer from research code into the library. The planned native
-study will additionally measure generated Go and execution; its planned counts
-are kept in the [integration protocol](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/daecfea3583614e006c960de263448a1645a9190/docs/full-input-sdk-native-protocol-20261003.md).
+This checks the transfer from research code into the library. The native study
+above then observed generated Go and execution using the
+[registered integration protocol](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/daecfea3583614e006c960de263448a1645a9190/docs/full-input-sdk-native-protocol-20261003.md).
 
 For a concrete walk through intent, finite choices, tests and remaining work,
 see [the Korean guide](docs/language-direction.ko.md#한-번의-조립을-따라가-보면).
