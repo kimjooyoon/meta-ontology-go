@@ -8,6 +8,7 @@ tool (
 	github.com/kimjooyoon/meta-ontology-go/scripts/maintenance
 	github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution
 	github.com/kimjooyoon/meta-ontology-go/scripts/meta-receipts
+	github.com/kimjooyoon/meta-ontology-go/scripts/receipt-schema
 	github.com/kimjooyoon/meta-ontology-go/scripts/refactor-metrics
 	github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter
 	github.com/kimjooyoon/meta-ontology-go/scripts/verify
