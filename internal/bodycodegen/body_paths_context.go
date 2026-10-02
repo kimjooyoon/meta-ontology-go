@@ -33,6 +33,7 @@ type PathModelContextReceipt struct {
 	RankedPlanSHA     string              `json:"ranked_plan_sha256,omitempty"`
 	MetadataSHA       string              `json:"model_metadata_sha256,omitempty"`
 	FeatureVersion    string              `json:"feature_version"`
+	ArithmeticVersion string              `json:"arithmetic_version,omitempty"`
 	Inputs            []PathContextInput  `json:"inputs"`
 	DeclinedDecision  string              `json:"declined_decision,omitempty"`
 	Reason            string              `json:"reason,omitempty"`
