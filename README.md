@@ -6,7 +6,8 @@ contains its Go compiler. Source files use the `.gooo` extension.
 
 Think of Gooo as a workshop: declarations provide the plan, a small local model
 can suggest which permitted parts to assemble, and the compiler checks the fit
-and runs the resulting program. Each attempt leaves a receipt connecting intent,
+and generates Go. A Go experiment runner builds and executes the resulting
+program. Each attempt leaves a receipt connecting intent,
 choices, generated code, test results, and unresolved questions.
 
 Business intent lives in Gooo declarations. The compiler lowers them to semantic
