@@ -6,8 +6,15 @@ Use the [compact V3 bundle](https://huggingface.co/asketeddy/gooo-shared-judgmen
 for the current compiler and SDK v0.2.14-experimental. Its generated-program
 measurements are linked below. The same Hugging Face repository also publishes
 new [full-input research models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1/tree/main/research/full-input-initial-20261003).
-Their V4 whole-text fragment feature contract runs in the research runtime;
-SDK extraction, numerical portability and native compiler adoption remain pending.
+Their V4 whole-text fragment feature contract runs in the research runtime and
+[SDK v0.2.15-experimental](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.15-experimental).
+Explicit arithmetic now matches the frozen arm64/Linux observations, including
+every full ranking. The SDK replay passed on both platforms at revision `59c8d34`:
+18,432 complete inputs and 36,864 predictions per platform.
+[Linux SDK replay](https://github.com/kimjooyoon/gooo-decision-runtime/actions/runs/37070241916).
+The compiler still depends on v0.2.14; use the pinned V3 files above for its
+current `--path-model` contract. Native V4 generation and execution are the next
+stage in the [registered protocol](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/daecfea3583614e006c960de263448a1645a9190/docs/full-input-sdk-native-protocol-20261003.md).
 The [language direction guide](language-direction.ko.md) explains the progression
 and the remaining language work.
 
