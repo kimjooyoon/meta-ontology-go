@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/body-runtime-cases/v1",
+  "cases": [
+    {"input": -4, "expected": -21},
+    {"input": 1, "expected": 10},
+    {"input": 4, "expected": 25}
+  ]
+}
