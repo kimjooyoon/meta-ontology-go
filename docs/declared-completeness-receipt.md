@@ -29,6 +29,17 @@ explicitly requested generated files. CI tests regenerate both artifacts and
 compare every byte. Reflection of the compiled Go fields independently checks
 field order, type, JSON key and stable ID against the source declaration.
 
+The complete language corpus registers this declaration as a required projection
+unit with the exact profile, root and both artifact paths. Its evidence replays
+the AST, canonical formatting and typed structural identity, then regenerates and
+compares both checked-in artifacts byte for byte. Missing artifacts remain
+UNKNOWN; changed source or stale outputs fail the overall corpus result. The
+projection has its own fixed denominator and evidence digest, bound to the source
+inventory and revision. The existing 81 syntax cases and their 78 general
+Get-Put/Put-Get checks remain separate; this profile does not count as an extra
+general semantic or BX proof. Removing or redirecting the projection registration
+fails corpus validation.
+
 The `schema` wire value and existing JSON keys remain v2-compatible. All receipt
 producers use the generated shared types through aliases, including body-fill,
 body-search and source/parse failures. `scope.receipt_declaration` binds the

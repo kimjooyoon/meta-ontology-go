@@ -20,6 +20,7 @@ func Evaluate(repository fs.FS, headSHA string, registryRaw []byte,
 	registry, registryErr := decodeRegistry(registryRaw)
 	if registryErr != nil {
 		report.Cases = unresolvedCases(report.Source)
+		report.ProjectionUnits = evaluateProjections(repository, report.Source, false)
 		return finish(report)
 	}
 	report.Source.RegistryDigest = registryDigest()
@@ -34,6 +35,7 @@ func Evaluate(repository fs.FS, headSHA string, registryRaw []byte,
 	}
 	if observationErr != nil || !report.Source.ConceptBound {
 		report.Cases = unresolvedCases(report.Source)
+		report.ProjectionUnits = evaluateProjections(repository, report.Source, false)
 		return finish(report)
 	}
 	for _, definition := range registry.Cases {
@@ -48,6 +50,7 @@ func Evaluate(repository fs.FS, headSHA string, registryRaw []byte,
 		item.EvidenceDigest = caseDigest(item, report.Source)
 		report.Cases = append(report.Cases, item)
 	}
+	report.ProjectionUnits = evaluateProjections(repository, report.Source, true)
 	return finish(report)
 }
 

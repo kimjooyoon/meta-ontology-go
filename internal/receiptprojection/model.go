@@ -75,13 +75,17 @@ func Compile(filename string, source []byte, root string) (Projection, error) {
 	if !ok || !rootEntity.FieldsPresent {
 		return Projection{}, fmt.Errorf("root receipt entity %q is absent or has no fields", root)
 	}
-	if !strings.HasPrefix(rootEntity.ID, "gooo://schema/") {
+	if !strings.HasPrefix(rootEntity.ID, "gooo://schema/") || rootEntity.ID == "gooo://schema/" {
 		return Projection{}, fmt.Errorf("root receipt ID must use gooo://schema/")
 	}
 	p.Schema = "gooo/" + strings.TrimPrefix(rootEntity.ID, "gooo://schema/")
 	boundSchema := false
 	for _, field := range rootEntity.Fields {
-		if strings.ToLower(field.Name) != "schema" {
+		wireName := field.Name
+		if wireName == strings.ToUpper(wireName) {
+			wireName = strings.ToLower(wireName)
+		}
+		if wireName != "schema" {
 			continue
 		}
 		target, exists := byName[field.TypeRef.Spelling]

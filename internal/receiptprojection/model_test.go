@@ -68,6 +68,8 @@ func TestInvalidSourceFailsBeforeProjection(t *testing.T) {
 		"duplicate-json-name": strings.Replace(original, "field status id", "field ID id", 1),
 		"empty":               "",
 		"missing-schema":      strings.Replace(original, "field schema id", "field unrelated id", 1),
+		"wrong-schema-key":    strings.Replace(original, "field schema id", "field Schema id", 1),
+		"empty-schema-id":     strings.Replace(original, "gooo://schema/metaprogramming-completeness-receipt/v2", "gooo://schema/", 1),
 		"metadata-name":       strings.Replace(original, "entity CompletenessDimension id", "entity DeclarationSHA256 id", 1),
 	} {
 		t.Run(name, func(t *testing.T) {

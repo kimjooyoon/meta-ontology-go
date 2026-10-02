@@ -790,6 +790,16 @@
       "execution_indicator": "PACKAGE_EXECUTIONS"
     }
   ],
+  "projection_units": [
+    {
+      "id": "declared-completeness-receipt",
+      "path": "internal/completeness/receipt.gooo",
+      "profile": "gooo/receipt-structure-projection/v1",
+      "root": "CompletenessReceipt",
+      "go_path": "internal/completeness/receipt.generated.go",
+      "json_schema_path": "internal/completeness/receipt.schema.json"
+    }
+  ],
   "meta_sources": [
     "internal/meta/syntaxregistration/contract.gooo",
     "internal/meta/entityfields/entity-fields-meta.gooo",
