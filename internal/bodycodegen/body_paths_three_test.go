@@ -151,66 +151,82 @@ func TestThreeNativeFullOverflowAndUnsupportedArityKeepDeterministicPaths(t *tes
 	ctx := context.Background()
 	for _, kind := range []string{"feedback-overflow", "initial-overflow", "two", "four"} {
 		t.Run(kind, func(t *testing.T) {
-			source, doc := threeNativeFixture(t)
-			switch kind {
-			case "feedback-overflow", "initial-overflow":
-				length := 364
-				if kind == "initial-overflow" {
-					length = 400
-				}
-				for i := range doc.Plan.Decisions {
-					doc.Plan.Decisions[i].Intent = strings.Repeat("x", length)
-				}
-			case "two":
-				doc.Plan.Decisions = doc.Plan.Decisions[:2]
-			case "four":
-				doc.Plan.Base.Expressions = append(doc.Plan.Base.Expressions, bodyplan.Expr{Kind: bodyplan.ExprInt, Int: 2},
-					bodyplan.Expr{Kind: bodyplan.ExprBinary, Operation: "subtract", Left: 8, Right: 9})
-				doc.Plan.Base.Statements[2].Expr = 10
-				doc.Plan.Decisions = append(doc.Plan.Decisions, pathplan.Choice{ID: "fourth", Kind: pathplan.OperandOrder,
-					Target: 10, Intent: "Retain the complete fourth intention.", Fallback: "layout_forward",
-					Options: []pathplan.Option{{Label: "layout_forward"}, {Label: "layout_reverse", Reverse: true}}})
-				doc.MaxAttempts = 16
-				source = threeNativeSource(t, doc)
-			}
-			if kind != "feedback-overflow" {
-				doc.Seed = "must-skip-seed"
-			}
+			source, doc := threeNativeDeclineFixture(t, kind)
 			result, err := GenerateWithTypedPathUnfixedFeedback(ctx, "fixture.gooo", source, "ThreeTest", doc, model, 1, 7, nil)
 			if err != nil {
 				t.Fatal(err)
 			}
-			r := result.Report.BodyPaths
 			if kind == "feedback-overflow" {
-				if r.Search.Selection.ModelCalls != 1 || r.FunctionalCompleteness != 100 || len(r.Feedback) != 7 {
-					t.Fatal("native overflow continuation differs")
-				}
-				for _, feedback := range r.Feedback[:6] {
-					if !feedback.ContextDeclined || feedback.ModelCalls != 0 || feedback.Three == nil ||
-						feedback.Three.Bytes <= 1560 || feedback.Three.PartSHA[2] == "" {
-						t.Fatal("native overflow lost complete zero-call evidence")
-					}
-				}
+				assertThreeFeedbackOverflow(t, result.Report.BodyPaths)
 				return
 			}
-			declared := r.ModelContext.DeclaredInputs
-			if r.Search.Selection.ModelCalls != 0 || len(r.Feedback) != 0 || !r.ModelContext.SeedSkipped ||
-				!r.ModelContext.FeedbackSkipped || declared == nil || declared.Decisions != len(doc.Plan.Decisions) ||
-				declared.Bytes != len(declared.Text) || declared.SHA256 != digest([]byte(declared.Text)) {
-				t.Fatal("native decline inferred or lost full original input")
-			}
-			for _, c := range doc.Plan.Decisions {
-				if !strings.Contains(declared.Text, c.Intent) {
-					t.Fatal("original unsupported input dropped", c.ID)
-				}
-			}
-			doc.Seed = ""
-			baseline, err := GenerateWithTypedPathBatches(ctx, "fixture.gooo", source, "ThreeTest", doc, "", 1)
-			if err != nil || baseline.Source != result.Source ||
-				!reflect.DeepEqual(baseline.Report.BodyPaths.Search.Attempts, r.Search.Attempts) {
-				t.Fatal("native decline changed disconnected ordering or emitted source", err)
-			}
+			assertThreeDeterministicDecline(t, source, doc, result)
 		})
+	}
+}
+
+func threeNativeDeclineFixture(t *testing.T, kind string) ([]byte, pathplan.Document) {
+	t.Helper()
+	source, doc := threeNativeFixture(t)
+	switch kind {
+	case "feedback-overflow", "initial-overflow":
+		length := 364
+		if kind == "initial-overflow" {
+			length = 400
+		}
+		for i := range doc.Plan.Decisions {
+			doc.Plan.Decisions[i].Intent = strings.Repeat("x", length)
+		}
+	case "two":
+		doc.Plan.Decisions = doc.Plan.Decisions[:2]
+	case "four":
+		doc.Plan.Base.Expressions = append(doc.Plan.Base.Expressions, bodyplan.Expr{Kind: bodyplan.ExprInt, Int: 2},
+			bodyplan.Expr{Kind: bodyplan.ExprBinary, Operation: "subtract", Left: 8, Right: 9})
+		doc.Plan.Base.Statements[2].Expr = 10
+		doc.Plan.Decisions = append(doc.Plan.Decisions, pathplan.Choice{ID: "fourth", Kind: pathplan.OperandOrder,
+			Target: 10, Intent: "Retain the complete fourth intention.", Fallback: "layout_forward",
+			Options: []pathplan.Option{{Label: "layout_forward"}, {Label: "layout_reverse", Reverse: true}}})
+		doc.MaxAttempts = 16
+		source = threeNativeSource(t, doc)
+	}
+	if kind != "feedback-overflow" {
+		doc.Seed = "must-skip-seed"
+	}
+	return source, doc
+}
+
+func assertThreeFeedbackOverflow(t *testing.T, r *BodyPathReceipt) {
+	t.Helper()
+	if r.Search.Selection.ModelCalls != 1 || r.FunctionalCompleteness != 100 || len(r.Feedback) != 7 {
+		t.Fatal("native overflow continuation differs")
+	}
+	for _, feedback := range r.Feedback[:6] {
+		if !feedback.ContextDeclined || feedback.ModelCalls != 0 || feedback.Three == nil ||
+			feedback.Three.Bytes <= 1560 || feedback.Three.PartSHA[2] == "" {
+			t.Fatal("native overflow lost complete zero-call evidence")
+		}
+	}
+}
+
+func assertThreeDeterministicDecline(t *testing.T, source []byte, doc pathplan.Document, result Result) {
+	t.Helper()
+	r := result.Report.BodyPaths
+	declared := r.ModelContext.DeclaredInputs
+	if r.Search.Selection.ModelCalls != 0 || len(r.Feedback) != 0 || !r.ModelContext.SeedSkipped ||
+		!r.ModelContext.FeedbackSkipped || declared == nil || declared.Decisions != len(doc.Plan.Decisions) ||
+		declared.Bytes != len(declared.Text) || declared.SHA256 != digest([]byte(declared.Text)) {
+		t.Fatal("native decline inferred or lost full original input")
+	}
+	for _, c := range doc.Plan.Decisions {
+		if !strings.Contains(declared.Text, c.Intent) {
+			t.Fatal("original unsupported input dropped", c.ID)
+		}
+	}
+	doc.Seed = ""
+	baseline, err := GenerateWithTypedPathBatches(context.Background(), "fixture.gooo", source, "ThreeTest", doc, "", 1)
+	if err != nil || baseline.Source != result.Source ||
+		!reflect.DeepEqual(baseline.Report.BodyPaths.Search.Attempts, r.Search.Attempts) {
+		t.Fatal("native decline changed disconnected ordering or emitted source", err)
 	}
 }
 
