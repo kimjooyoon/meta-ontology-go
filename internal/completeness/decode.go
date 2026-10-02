@@ -12,16 +12,8 @@ import (
 // Decode retains exact JSON numbers, rejects duplicate keys and trailing data,
 // and checks the shared accounting contract without executing observations.
 func Decode(data []byte) (*CompletenessReceipt, error) {
-	if len(data) == 0 || len(data) > 1<<20 || !utf8.Valid(data) {
-		return nil, fmt.Errorf("receipt must contain 1..1048576 valid UTF-8 bytes")
-	}
-	scan := json.NewDecoder(bytes.NewReader(data))
-	scan.UseNumber()
-	if err := checkJSONValue(scan, 0); err != nil {
+	if err := CheckJSON(data, 1<<20); err != nil {
 		return nil, err
-	}
-	if _, err := scan.Token(); err != io.EOF {
-		return nil, fmt.Errorf("trailing receipt data")
 	}
 	if err := checkShape(data, reflect.TypeFor[CompletenessReceipt]()); err != nil {
 		return nil, err
@@ -37,6 +29,23 @@ func Decode(data []byte) (*CompletenessReceipt, error) {
 		return nil, err
 	}
 	return &r, nil
+}
+
+// CheckJSON checks bounded UTF-8 JSON, duplicate keys, depth and trailing data.
+// It does not validate a schema or authenticate an observation.
+func CheckJSON(data []byte, limit int) error {
+	if len(data) == 0 || len(data) > limit || !utf8.Valid(data) {
+		return fmt.Errorf("JSON must contain 1..%d valid UTF-8 bytes", limit)
+	}
+	scan := json.NewDecoder(bytes.NewReader(data))
+	scan.UseNumber()
+	if err := checkJSONValue(scan, 0); err != nil {
+		return err
+	}
+	if _, err := scan.Token(); err != io.EOF {
+		return fmt.Errorf("trailing JSON data")
+	}
+	return nil
 }
 
 func checkJSONValue(d *json.Decoder, depth int) error {

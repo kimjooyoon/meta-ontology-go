@@ -5,8 +5,8 @@ package publictrustgenerated
 const (
 	Schema             = "gooo/public-trust-surface/v1"
 	PolicySourcePath   = "examples/public-trust-surface/main.gooo"
-	PolicySourceDigest = "0183615cec233e5e0834748782ef65b81653ce42baaca773257f29684bf2194a"
-	EvaluatorDigest    = "1b98ebc4c4cde8f3ddd8aab2bf9222eb6b5e44a389fe5fc63874c2188a88696b"
+	PolicySourceDigest = "4c078913ec2d7d1f68861b301b9c04e2ce3450019bc5640e0a9fef8d869093d0"
+	EvaluatorDigest    = "bbff6070ec8b967ff69bd85cc69210bb5efb344a16c93b979b550419b52522ef"
 )
 
 type Badge struct {
@@ -16,7 +16,7 @@ type Badge struct {
 
 var rows = [...]Badge{
 	{ID: "go-toolchain", Category: "Language / Release", Claim: "Go 1.27.1 toolchain", Semantics: "The repository declares the Go 1.27.1 toolchain used by CI", ImageURL: "https://img.shields.io/badge/Go-1.27.1-00ADD8?logo=go&logoColor=white", TargetURL: "https://github.com/kimjooyoon/meta-ontology-go/blob/dev/go.mod", EvidenceURL: "https://github.com/kimjooyoon/meta-ontology-go/blob/dev/go.mod", State: "CLOSED", Render: true},
-	{ID: "published-prerelease", Category: "Language / Release", Claim: "Published release v0.4.0-dev", Semantics: "The newest published release is an experimental prerelease, not a stable compatibility promise", ImageURL: "https://img.shields.io/github/v/release/kimjooyoon/meta-ontology-go?include_prereleases&label=published%20release", TargetURL: "https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.4.0-dev", EvidenceURL: "https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.4.0-dev", State: "CLOSED", Render: true},
+	{ID: "published-prerelease", Category: "Language / Release", Claim: "Published release v0.6.0-dev", Semantics: "The newest published release is an experimental prerelease, not a stable compatibility promise", ImageURL: "https://img.shields.io/github/v/release/kimjooyoon/meta-ontology-go?include_prereleases&label=published%20release", TargetURL: "https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.0-dev", EvidenceURL: "https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.0-dev", State: "CLOSED", Render: true},
 	{ID: "ci-workflow", Category: "Build / Conformance", Claim: "CI workflow result", Semantics: "The repository CI workflow reports its latest exact-head result and does not claim branch-protection enforcement", ImageURL: "https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/ci.yml/badge.svg?branch=dev", TargetURL: "https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/ci.yml", EvidenceURL: "https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/ci.yml", State: "CLOSED", Render: true},
 	{ID: "compiler-compatibility", Category: "Build / Conformance", Claim: "Compiler compatibility evidence", Semantics: "The compatibility workflow reports the bounded successor replay contract", ImageURL: "https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/self-improvement-compiler-compatibility.yml/badge.svg?branch=dev", TargetURL: "https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/self-improvement-compiler-compatibility.yml", EvidenceURL: "https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/self-improvement-compiler-compatibility.yml", State: "CLOSED", Render: true},
 	{ID: "release-readiness", Category: "Build / Conformance", Claim: "Experimental release readiness", Semantics: "The release-readiness workflow reports evidence for the current experimental release path", ImageURL: "https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/gooo-release-readiness.yml/badge.svg?branch=dev", TargetURL: "https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/gooo-release-readiness.yml", EvidenceURL: "https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/gooo-release-readiness.yml", State: "CLOSED", Render: true},
