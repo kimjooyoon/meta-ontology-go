@@ -70,7 +70,17 @@ func TestTypedPathUnfixedCLIReconcilesRemainingCoordinatesAndPartialBody(t *test
 			}
 			if !unfixed {
 				legacy = result
-				if p.Search.Selection.ModelCalls != 6 || bytes.Contains(out.Bytes(), []byte(`"feedback_unfixed"`)) {
+				var wire struct {
+					Report struct {
+						Paths map[string]json.RawMessage `json:"body_paths"`
+					} `json:"report"`
+				}
+				if err := json.Unmarshal(out.Bytes(), &wire); err != nil {
+					t.Fatal(err)
+				}
+				// The opt-in observation stays omitted at its original path; the
+				// separately bound search configuration now records false explicitly.
+				if p.Search.Selection.ModelCalls != 6 || wire.Report.Paths["feedback_unfixed"] != nil {
 					t.Fatal("default receipt changed")
 				}
 				continue

@@ -294,6 +294,7 @@ func reportBodyCodegenFailure(jsonMode bool, filename, activity string, source [
 		var pathReceipt *bodycodegen.BodyPathReceipt
 		if pathError, ok := errors.AsType[*bodycodegen.BodyPathError](cause); ok {
 			pathReceipt = pathError.Receipt
+			completeness = bodycodegen.PathFailureCompletenessReceipt(activity, source, cause.Error(), pathReceipt)
 		}
 		if searchError, ok := errors.AsType[*bodycodegen.IRBodySearchError](cause); ok {
 			searchReceipt = searchError.Receipt

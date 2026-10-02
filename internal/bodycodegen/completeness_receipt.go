@@ -19,15 +19,18 @@ type UnresolvedCompletenessClaim = completeness.UnresolvedCompletenessClaim
 type CompletenessReceipt = completeness.CompletenessReceipt
 
 type completenessPlanIdentity struct {
-	ProfileID            string `json:"profile_id"`
-	Activity             string `json:"activity"`
-	ActivityID           string `json:"activity_id"`
-	InputType            string `json:"input_type"`
-	OutputType           string `json:"output_type"`
-	SourceDigest         string `json:"source_digest"`
-	ProgramDigest        string `json:"program_digest"`
-	BodyFillPlanSHA256   string `json:"body_fill_plan_sha256,omitempty"`
-	BodySearchPlanSHA256 string `json:"body_search_plan_sha256,omitempty"`
+	ProfileID                    string `json:"profile_id"`
+	Activity                     string `json:"activity"`
+	ActivityID                   string `json:"activity_id"`
+	InputType                    string `json:"input_type"`
+	OutputType                   string `json:"output_type"`
+	SourceDigest                 string `json:"source_digest"`
+	ProgramDigest                string `json:"program_digest"`
+	BodyFillPlanSHA256           string `json:"body_fill_plan_sha256,omitempty"`
+	BodySearchPlanSHA256         string `json:"body_search_plan_sha256,omitempty"`
+	BodyPathDocumentSHA256       string `json:"body_path_document_sha256,omitempty"`
+	BodyPathOriginalSourceSHA256 string `json:"body_path_original_source_sha256,omitempty"`
+	BodyPathSearchConfigSHA256   string `json:"body_path_search_config_sha256,omitempty"`
 }
 
 func buildCompletenessReceipt(report Report, failure string) *CompletenessReceipt {
@@ -158,6 +161,12 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		core = append(core, searchCore...)
 		allowedInvestment = "bounded candidate search before evaluation, prior training observations, and independent post-selection holdout measurement; no human approval or authorization is required"
 	}
+	if report.BodyPaths != nil {
+		pathDimensions, pathCore := bodyPathCompletenessDimensions(report)
+		dimensions = append(dimensions, pathDimensions...)
+		core = append(core, pathCore...)
+		allowedInvestment = "source-bound typed alternatives, optional local predictions and finite TDD within declared budgets; CI is caller context; no human actions or repository writes"
+	}
 	sort.Strings(core)
 	counts := map[string]int{"PASS": 0, "PROGRESS": 0, "UNKNOWN": 0, "FAIL_CLOSED": 0}
 	byID := make(map[string]CompletenessDimension, len(dimensions))
@@ -201,7 +210,7 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 			}
 		}
 	}
-	return &CompletenessReceipt{
+	receipt := &CompletenessReceipt{
 		Schema: completenessReceiptSchema, ProfileID: "gooo/body-codegen-pure-v1",
 		Decision:      decision,
 		DecisionBasis: "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
@@ -225,6 +234,10 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		NotClaimed:       []string{"user-intent completeness", "real-workflow coverage", "generated runtime behavior", "full-domain semantics", "route quality", "universal language completeness"},
 		FailClosedReason: failReason,
 	}
+	if report.BodyPaths != nil {
+		bindPathCompletenessScope(receipt, report)
+	}
+	return receipt
 }
 
 func populateCompletenessReceipt(report *Report, failure string) {
@@ -236,18 +249,24 @@ func populateCompletenessReceipt(report *Report, failure string) {
 func completenessPlanSHA(report Report) string {
 	fillPlanSHA256 := ""
 	searchPlanSHA256 := ""
+	pathDocument, pathOriginal, pathConfig := "", "", ""
 	if report.BodyFill != nil {
 		fillPlanSHA256 = report.BodyFill.IRPlanSHA256
 	}
 	if report.BodySearch != nil {
 		searchPlanSHA256 = report.BodySearch.IRPlanSHA256
 	}
+	if path := report.BodyPaths; path != nil {
+		pathDocument, pathOriginal, pathConfig = path.DocumentSHA256, path.OriginalSourceSHA256, path.SearchConfigSHA256
+	}
 	planBytes, _ := json.Marshal(completenessPlanIdentity{
-		ProfileID: "gooo/body-codegen-pure-v1", Activity: report.Activity,
+		ProfileID: completenessProfile(report), Activity: report.Activity,
 		ActivityID: report.ActivityID, InputType: report.InputType, OutputType: report.OutputType,
 		SourceDigest: report.SourceDigest, ProgramDigest: report.ProgramDigest,
-		BodyFillPlanSHA256:   fillPlanSHA256,
-		BodySearchPlanSHA256: searchPlanSHA256,
+		BodyFillPlanSHA256:     fillPlanSHA256,
+		BodySearchPlanSHA256:   searchPlanSHA256,
+		BodyPathDocumentSHA256: pathDocument, BodyPathOriginalSourceSHA256: pathOriginal,
+		BodyPathSearchConfigSHA256: pathConfig,
 	})
 	return digest(planBytes)
 }
@@ -312,6 +331,9 @@ func provenanceDimension(report Report, compilerSHA string) CompletenessDimensio
 }
 
 func networkBoundaryDimension(report Report) CompletenessDimension {
+	if report.BodyPaths != nil {
+		return bodyPathNetworkDimension(report.BodyPaths)
+	}
 	if search := report.BodySearch; search != nil {
 		noProviderOperation := search.ProviderOperations == 0
 		return completenessDimension("external_network_boundary", boolCount(noProviderOperation), 1,
@@ -340,6 +362,11 @@ func networkBoundaryDimension(report Report) CompletenessDimension {
 }
 
 func layaObservationDimension(report Report) CompletenessDimension {
+	if report.BodyPaths != nil {
+		return completenessDimension("laya_decision_observation", 0, 0,
+			"eligible Laya decisions", "Typed-path search uses local predictions or deterministic choices; Laya is not configured.",
+			[]string{"body_paths.search.selection", "typed_path_provider_accounting"}, false)
+	}
 	if search := report.BodySearch; search != nil {
 		observed, eligible := 0, 0
 		for _, attempt := range search.Attempts {
@@ -384,6 +411,11 @@ func layaObservationDimension(report Report) CompletenessDimension {
 
 func nextCompletenessOperation(id string) string {
 	operations := map[string]string{
+		"typed_path_source_binding":          "BIND_ORIGINAL_SOURCE_DOCUMENT_SEARCH_CONFIG_AND_SELECTED_BODY",
+		"typed_path_finite_accuracy":         "CONTINUE_TYPED_CANDIDATES_AGAINST_DECLARED_FAILURES_AND_MEASURE_UNSEEN_INPUTS_SEPARATELY",
+		"typed_path_provider_accounting":     "RECORD_LOCAL_PREDICTIONS_MODEL_PINS_AND_EXTERNAL_CALL_COUNTS",
+		"typed_path_candidate_observation":   "CONTINUE_UNATTEMPTED_TYPED_PATHS_WITHIN_THE_DECLARED_BUDGET",
+		"typed_path_candidate_scoring":       "REPAIR_TYPE_REJECTIONS_AND_SCORE_REMAINING_DECLARED_CANDIDATES",
 		"search_training_accuracy":           "EXPAND_OR_REPAIR_CANDIDATES_AGAINST_TRAINING_FAILURES_WITHIN_THE_SEARCH_BUDGET",
 		"search_holdout_accuracy":            "VALIDATE_THE_SELECTED_BODY_AGAINST_A_SEPARATE_UNSEEN_TEST_SUITE",
 		"search_candidate_observation":       "MEASURE_UNTESTED_CANDIDATES_IN_A_SEPARATE_EXHAUSTIVE_BASELINE",

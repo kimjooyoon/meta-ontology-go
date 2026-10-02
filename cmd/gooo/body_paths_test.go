@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 )
 
 func TestTypedPathCLIIsLocalWithConfiguredExternalProvider(t *testing.T) {
@@ -106,5 +107,38 @@ func TestTypedPathCLIBatchesEmitLinkedPartialProgress(t *testing.T) {
 		receipt.FunctionalCompleteness != 600.0/7 || receipt.Progress[0].Attempted != 0 ||
 		receipt.Progress[8].Attempted != 64 || receipt.Progress[8].Selection.ModelCalls != 0 {
 		t.Fatalf("CLI lost incremental partial observations: %+v", receipt)
+	}
+}
+
+func TestTypedPathCLIFailureUsesCommonPathReceipt(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/typed-path-compound.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := os.ReadFile("../../examples/body-codegen/typed-path-compound-plan.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	source = bytes.Replace(source, []byte("input + 2"), []byte("input + 99"), 1)
+	args := []string{"--json", "--path-plan", "plan.json", "--path-model", "missing-model.json",
+		"--activity", "Combined", "fixture.gooo"}
+	var stdout, stderr bytes.Buffer
+	code := runBodyCodegen(args, mapSourceReader{"fixture.gooo": source, "plan.json": plan}, &stdout, &stderr)
+	var result struct {
+		Receipt json.RawMessage              `json:"completeness_receipt"`
+		Paths   *bodycodegen.BodyPathReceipt `json:"body_paths"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	receipt, err := completeness.Decode(result.Receipt)
+	if err != nil || code != exitFailure || receipt.ProfileID != "gooo/body-codegen-typed-path-v1" ||
+		result.Paths == nil || result.Paths.SearchStarted || result.Paths.DocumentSHA256 == "" {
+		t.Fatalf("failure lost path provenance: code=%d error=%v output=%s", code, err, stdout.String())
+	}
+	for _, d := range receipt.Dimensions {
+		if d.ID == "typed_path_finite_accuracy" && (d.Status != "UNKNOWN" || d.Denominator != 3) {
+			t.Fatalf("unobserved score: %+v", d)
+		}
 	}
 }
