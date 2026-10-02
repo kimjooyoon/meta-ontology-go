@@ -1,0 +1,44 @@
+package completeness
+namespace completeness
+
+// This closed projection profile preserves typed counters and lists. It is
+// independent of the string-only EntityFields V1 semantic profile.
+entity Text id "gooo://receipt-structure/type/text"
+entity State id "gooo://receipt-structure/type/state"
+entity Count id "gooo://receipt-structure/type/count"
+entity Number id "gooo://receipt-structure/type/number"
+entity Record id "gooo://receipt-structure/type/record"
+entity Counts id "gooo://receipt-structure/type/counts"
+
+entity CompletenessDimension id "gooo://completeness/entity/dimension" fields {
+    field ID id "gooo://completeness/field/dimension/id" type Text required one
+    field status id "gooo://completeness/field/dimension/status" type State required one
+    field numerator id "gooo://completeness/field/dimension/numerator" type Count required one
+    field denominator id "gooo://completeness/field/dimension/denominator" type Count required one
+    field unit id "gooo://completeness/field/dimension/unit" type Text required one
+    field reason id "gooo://completeness/field/dimension/reason" type Text required one
+    field evidence id "gooo://completeness/field/dimension/evidence" type Text required many
+}
+
+entity UnresolvedCompletenessClaim id "gooo://completeness/entity/unresolved-claim" fields {
+    field ID id "gooo://completeness/field/claim/id" type Text required one
+    field status id "gooo://completeness/field/claim/status" type State required one
+    field reason id "gooo://completeness/field/claim/reason" type Text required one
+    field next_operation id "gooo://completeness/field/claim/next-operation" type Text required one
+}
+
+entity CompletenessReceipt id "gooo://schema/metaprogramming-completeness-receipt/v2" fields {
+    field schema id "gooo://completeness/field/receipt/schema" type Text required one
+    field profile_id id "gooo://completeness/field/receipt/profile" type Text required one
+    field decision id "gooo://completeness/field/receipt/decision" type Text required one
+    field decision_basis id "gooo://completeness/field/receipt/decision-basis" type Text required one
+    field scope id "gooo://completeness/field/receipt/scope" type Record required one
+    field core_dimensions id "gooo://completeness/field/receipt/core-dimensions" type Text required many
+    field dimensions id "gooo://completeness/field/receipt/dimensions" type CompletenessDimension required many
+    field status_counts id "gooo://completeness/field/receipt/status-counts" type Counts required one
+    field aggregate_completeness_score id "gooo://completeness/field/receipt/aggregate-score" type Number optional one
+    field first_unresolved id "gooo://completeness/field/receipt/first-unresolved" type UnresolvedCompletenessClaim optional one
+    field unresolved_claims id "gooo://completeness/field/receipt/unresolved-claims" type UnresolvedCompletenessClaim required many
+    field not_claimed id "gooo://completeness/field/receipt/not-claimed" type Text required many
+    field fail_closed_reason id "gooo://completeness/field/receipt/fail-closed-reason" type Text optional one
+}

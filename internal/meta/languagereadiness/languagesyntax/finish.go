@@ -3,7 +3,11 @@ package languagesyntax
 func finish(report Report) Report {
 	summary := Summary{Total: totalCases, UnregisteredGooo: len(report.Source.UnregisteredGooo),
 		MissingRegistered: len(report.Source.MissingRegistered), CapabilityTotal: FixedCapabilityTotal,
-		GovernanceTotal: FixedGovernanceTotal}
+		GovernanceTotal: FixedGovernanceTotal, ProjectionTotal: FixedProjectionTotal}
+	for _, item := range report.ProjectionUnits {
+		summary.ProjectionSatisfied += boolInt(item.Status == "SATISFIED")
+		summary.ProjectionUnresolved += boolInt(item.Status == "UNRESOLVED")
+	}
 	for _, file := range report.Source.GoooFiles {
 		summary.GoooLines += file.GoooLines
 	}
@@ -48,12 +52,12 @@ func finish(report Report) Report {
 	summary.ReadinessBPS = summary.Satisfied * 10_000 / totalCases
 	report.Summary = summary
 	registryDrift := boolInt(report.Source.RegistryDigest != registryDigest())
-	ready := summary.Satisfied == totalCases && summary.Unresolved == 0 &&
+	ready := summary.Satisfied == totalCases && summary.Unresolved == 0 && summary.ProjectionSatisfied == FixedProjectionTotal &&
 		summary.UnregisteredGooo == 0 && summary.MissingRegistered == 0 &&
 		report.RepositoryWrites == 0 && report.Source.ConceptRepositoryWrites == 0 &&
 		!report.MutationAuthorized && report.Source.ConceptBound && report.Source.ObservationKnown && registryDrift == 0
 	report.Decision, report.Reason, report.Resolution = DecisionClosed, "SYNTAX_ROUNDTRIP_MISMATCH", ResolutionExact
-	if summary.Unresolved > 0 || !report.Source.ObservationKnown || !report.Source.ConceptBound {
+	if summary.Unresolved > 0 || summary.ProjectionUnresolved > 0 || !report.Source.ObservationKnown || !report.Source.ConceptBound {
 		report.Reason, report.Resolution = "SYNTAX_ROUNDTRIP_EVIDENCE_UNKNOWN", ResolutionLower
 	} else if ready {
 		report.Decision, report.Reason = DecisionPass, "LANGUAGE_SYNTAX_ROUNDTRIP_PROVEN"

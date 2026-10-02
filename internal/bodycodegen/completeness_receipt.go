@@ -8,42 +8,15 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 )
 
-const completenessReceiptSchema = "gooo/metaprogramming-completeness-receipt/v2"
+const completenessReceiptSchema = completeness.CompletenessReceiptSchema
 
-type CompletenessDimension struct {
-	ID          string   `json:"id"`
-	Status      string   `json:"status"`
-	Numerator   int      `json:"numerator"`
-	Denominator int      `json:"denominator"`
-	Unit        string   `json:"unit"`
-	Reason      string   `json:"reason"`
-	Evidence    []string `json:"evidence"`
-}
-
-type UnresolvedCompletenessClaim struct {
-	ID            string `json:"id"`
-	Status        string `json:"status"`
-	Reason        string `json:"reason"`
-	NextOperation string `json:"next_operation"`
-}
-
-type CompletenessReceipt struct {
-	Schema                     string                        `json:"schema"`
-	ProfileID                  string                        `json:"profile_id"`
-	Decision                   string                        `json:"decision"`
-	DecisionBasis              string                        `json:"decision_basis"`
-	Scope                      map[string]any                `json:"scope"`
-	CoreDimensions             []string                      `json:"core_dimensions"`
-	Dimensions                 []CompletenessDimension       `json:"dimensions"`
-	StatusCounts               map[string]int                `json:"status_counts"`
-	AggregateCompletenessScore *float64                      `json:"aggregate_completeness_score"`
-	FirstUnresolved            *UnresolvedCompletenessClaim  `json:"first_unresolved"`
-	UnresolvedClaims           []UnresolvedCompletenessClaim `json:"unresolved_claims"`
-	NotClaimed                 []string                      `json:"not_claimed"`
-	FailClosedReason           *string                       `json:"fail_closed_reason"`
-}
+type CompletenessDimension = completeness.CompletenessDimension
+type UnresolvedCompletenessClaim = completeness.UnresolvedCompletenessClaim
+type CompletenessReceipt = completeness.CompletenessReceipt
 
 type completenessPlanIdentity struct {
 	ProfileID            string `json:"profile_id"`
@@ -111,6 +84,9 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 			"selected routes in the compiler-declared candidate set", "The selected lowering must be a route the compiler declared eligible for this source shape.",
 			[]string{"candidate_routes", "selected_route:" + report.Route}, report.Route != "" && !containsString(report.CandidateRoutes, report.Route)),
 		provenanceDimension(report, compilerSHA),
+		completenessDimension("receipt_schema_binding", boolCount(completeness.DeclarationMatchesProjection()), 1,
+			"source-owned receipt schema and generated structure bindings", "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+			[]string{"receipt_declaration_sha256:" + completeness.DeclarationSHA256, "projection_profile:" + completeness.ProjectionProfile}, !completeness.DeclarationMatchesProjection()),
 		completenessDimension("repository_write_boundary", boolCount(report.RepositoryWrites == 0), 1,
 			"repository writes", "The command emits generated source without mutating the repository.",
 			[]string{"repository_writes:" + strconv.Itoa(report.RepositoryWrites)}, report.RepositoryWrites != 0),
@@ -149,6 +125,7 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		"declaration_coverage", "generation_coverage", "internal_replay_coverage",
 		"provenance_integrity", "repository_write_boundary", "route_choice_protocol",
 		"route_semantic_equivalence", "source_ast_coverage", "typecheck_coverage",
+		"receipt_schema_binding",
 	}
 	allowedInvestment := "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required"
 	if fill := report.BodyFill; fill != nil {
@@ -229,10 +206,11 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		Decision:      decision,
 		DecisionBasis: "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
 		Scope: map[string]any{
-			"domain_scope":       "one pure typed Gooo activity body in the closed body-codegen profile, with one Integer, Boolean, or Text input and one supported scalar result",
-			"allowed_investment": allowedInvestment,
-			"excluded_scope":     []string{"unstated natural-language intent", "independently sourced production workflows", "generated runtime behavior", "unrestricted Gooo body syntax", "route clarity or utility"},
-			"plan_sha256":        planSHA, "compiler_source_sha": compilerSHA,
+			"receipt_declaration": completeness.ContractBinding(),
+			"domain_scope":        "one pure typed Gooo activity body in the closed body-codegen profile, with one Integer, Boolean, or Text input and one supported scalar result",
+			"allowed_investment":  allowedInvestment,
+			"excluded_scope":      []string{"unstated natural-language intent", "independently sourced production workflows", "generated runtime behavior", "unrestricted Gooo body syntax", "route clarity or utility"},
+			"plan_sha256":         planSHA, "compiler_source_sha": compilerSHA,
 			"toolchain": runtime.Version(), "execution_environment": runtime.GOOS + "/" + runtime.GOARCH,
 			"input_type": report.InputType, "output_type": report.OutputType,
 			"decision_mode": decisionMode, "decision_provider": decisionProvider,
