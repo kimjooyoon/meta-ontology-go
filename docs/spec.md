@@ -1,7 +1,11 @@
 # `.gooo` language sketch
 
-The surface language is intentionally narrow. A file currently contains a
-package, a namespace, entity declarations, and activity declarations:
+This page describes the core declaration language and its explicit profiles.
+For current body construction and local-model experiments, continue to
+[body codegen](language/body-codegen.md), [three-choice paths](three-choice-path-model.md),
+and [the project direction](language-direction.ko.md).
+
+A core file contains a package, a namespace, entities, and activities:
 
 ```gooo
 package billing

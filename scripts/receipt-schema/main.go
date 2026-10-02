@@ -15,6 +15,7 @@ func main() {
 	source := flag.String("source", "", "Gooo declaration")
 	goOutput := flag.String("go", "", "generated Go output")
 	jsonOutput := flag.String("json", "", "JSON schema output")
+	root := flag.String("root", "CompletenessReceipt", "root entity")
 	flag.Parse()
 	if *source == "" || *goOutput == "" || *jsonOutput == "" || flag.NArg() != 0 {
 		fail(fmt.Errorf("source, go and json paths are required"))
@@ -28,7 +29,7 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
-	p, err := receiptprojection.Compile(*source, raw, "CompletenessReceipt")
+	p, err := receiptprojection.Compile(*source, raw, *root)
 	if err != nil {
 		fail(err)
 	}

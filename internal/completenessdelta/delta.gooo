@@ -1,0 +1,51 @@
+package completenessdelta
+namespace completenessdelta
+
+entity Text id "gooo://receipt-structure/type/text"
+entity State id "gooo://receipt-structure/type/state"
+entity Count id "gooo://receipt-structure/type/count"
+entity Record id "gooo://receipt-structure/type/record"
+entity Counts id "gooo://receipt-structure/type/counts"
+
+entity DimensionObservation id "gooo://completeness-delta/entity/observation" fields {
+    field status id "gooo://completeness-delta/field/observation/status" type State required one
+    field numerator id "gooo://completeness-delta/field/observation/numerator" type Count required one
+    field denominator id "gooo://completeness-delta/field/observation/denominator" type Count required one
+    field unit id "gooo://completeness-delta/field/observation/unit" type Text required one
+    field reason id "gooo://completeness-delta/field/observation/reason" type Text required one
+    field evidence id "gooo://completeness-delta/field/observation/evidence" type Text required many
+}
+
+entity DimensionChange id "gooo://completeness-delta/entity/change" fields {
+    field ID id "gooo://completeness-delta/field/change/id" type Text required one
+    field presence id "gooo://completeness-delta/field/change/presence" type Text required one
+    field before id "gooo://completeness-delta/field/change/before" type DimensionObservation optional one
+    field after id "gooo://completeness-delta/field/change/after" type DimensionObservation optional one
+    field state_transition id "gooo://completeness-delta/field/change/state-transition" type Text required one
+    field observation_change id "gooo://completeness-delta/field/change/observation-change" type Text required one
+    field count_direction id "gooo://completeness-delta/field/change/count-direction" type Text required one
+    field count_magnitude id "gooo://completeness-delta/field/change/count-magnitude" type Count optional one
+    field regression id "gooo://completeness-delta/field/change/regression" type Text required one
+    field reason id "gooo://completeness-delta/field/change/reason" type Text required one
+}
+
+// Status describes comparison scope, never product completeness or permission.
+// Original receipts retain first-unresolved, exclusions and provenance unchanged.
+entity CompletenessDelta id "gooo://schema/completeness-delta/v1" fields {
+    field schema id "gooo://completeness-delta/field/receipt/schema" type Text required one
+    field status id "gooo://completeness-delta/field/receipt/status" type State required one
+    field relation id "gooo://completeness-delta/field/receipt/relation" type Text required one
+    field basis id "gooo://completeness-delta/field/receipt/basis" type Text required one
+    field declaration id "gooo://completeness-delta/field/receipt/declaration" type Record required one
+    field before_input_sha256 id "gooo://completeness-delta/field/receipt/before-input-sha256" type Text required one
+    field after_input_sha256 id "gooo://completeness-delta/field/receipt/after-input-sha256" type Text required one
+    field before_receipt_sha256 id "gooo://completeness-delta/field/receipt/before-receipt-sha256" type Text required one
+    field after_receipt_sha256 id "gooo://completeness-delta/field/receipt/after-receipt-sha256" type Text required one
+    field before_receipt id "gooo://completeness-delta/field/receipt/before-receipt" type Record required one
+    field after_receipt id "gooo://completeness-delta/field/receipt/after-receipt" type Record required one
+    field changed_scope_fields id "gooo://completeness-delta/field/receipt/changed-scope-fields" type Text required many
+    field dimensions id "gooo://completeness-delta/field/receipt/dimensions" type DimensionChange required many
+    field transition_counts id "gooo://completeness-delta/field/receipt/transition-counts" type Counts required one
+    field comparator_operations id "gooo://completeness-delta/field/receipt/comparator-operations" type Counts required one
+    field not_claimed id "gooo://completeness-delta/field/receipt/not-claimed" type Text required many
+}

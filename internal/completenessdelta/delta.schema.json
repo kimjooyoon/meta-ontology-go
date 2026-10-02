@@ -1,0 +1,381 @@
+{
+  "$defs": {
+    "CompletenessDelta": {
+      "additionalProperties": false,
+      "properties": {
+        "after_input_sha256": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/after-input-sha256",
+          "x-gooo-source-span": {
+            "end": 3065,
+            "start": 2954
+          }
+        },
+        "after_receipt": {
+          "type": "object",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/after-receipt",
+          "x-gooo-source-span": {
+            "end": 3525,
+            "start": 3422
+          }
+        },
+        "after_receipt_sha256": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/after-receipt-sha256",
+          "x-gooo-source-span": {
+            "end": 3307,
+            "start": 3192
+          }
+        },
+        "basis": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/basis",
+          "x-gooo-source-span": {
+            "end": 2727,
+            "start": 2642
+          }
+        },
+        "before_input_sha256": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/before-input-sha256",
+          "x-gooo-source-span": {
+            "end": 2949,
+            "start": 2836
+          }
+        },
+        "before_receipt": {
+          "type": "object",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/before-receipt",
+          "x-gooo-source-span": {
+            "end": 3417,
+            "start": 3312
+          }
+        },
+        "before_receipt_sha256": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/before-receipt-sha256",
+          "x-gooo-source-span": {
+            "end": 3187,
+            "start": 3070
+          }
+        },
+        "changed_scope_fields": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/changed-scope-fields",
+          "x-gooo-source-span": {
+            "end": 3646,
+            "start": 3530
+          }
+        },
+        "comparator_operations": {
+          "additionalProperties": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "object",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/comparator-operations",
+          "x-gooo-source-span": {
+            "end": 3998,
+            "start": 3879
+          }
+        },
+        "declaration": {
+          "type": "object",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/declaration",
+          "x-gooo-source-span": {
+            "end": 2831,
+            "start": 2732
+          }
+        },
+        "dimensions": {
+          "items": {
+            "$ref": "#/$defs/DimensionChange"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/dimensions",
+          "x-gooo-source-span": {
+            "end": 3758,
+            "start": 3651
+          }
+        },
+        "not_claimed": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/not-claimed",
+          "x-gooo-source-span": {
+            "end": 4101,
+            "start": 4003
+          }
+        },
+        "relation": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/relation",
+          "x-gooo-source-span": {
+            "end": 2637,
+            "start": 2546
+          }
+        },
+        "schema": {
+          "const": "gooo/completeness-delta/v1",
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/schema",
+          "x-gooo-source-span": {
+            "end": 2448,
+            "start": 2361
+          }
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "PROGRESS",
+            "UNKNOWN",
+            "FAIL_CLOSED"
+          ],
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/status",
+          "x-gooo-source-span": {
+            "end": 2541,
+            "start": 2453
+          }
+        },
+        "transition_counts": {
+          "additionalProperties": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "object",
+          "x-gooo-id": "gooo://completeness-delta/field/receipt/transition-counts",
+          "x-gooo-source-span": {
+            "end": 3874,
+            "start": 3763
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "status",
+        "relation",
+        "basis",
+        "declaration",
+        "before_input_sha256",
+        "after_input_sha256",
+        "before_receipt_sha256",
+        "after_receipt_sha256",
+        "before_receipt",
+        "after_receipt",
+        "changed_scope_fields",
+        "dimensions",
+        "transition_counts",
+        "comparator_operations",
+        "not_claimed"
+      ],
+      "type": "object",
+      "x-gooo-id": "gooo://schema/completeness-delta/v1"
+    },
+    "DimensionChange": {
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DimensionObservation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "x-gooo-id": "gooo://completeness-delta/field/change/after",
+          "x-gooo-source-span": {
+            "end": 1480,
+            "start": 1380
+          }
+        },
+        "before": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DimensionObservation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "x-gooo-id": "gooo://completeness-delta/field/change/before",
+          "x-gooo-source-span": {
+            "end": 1375,
+            "start": 1273
+          }
+        },
+        "count_direction": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/change/count-direction",
+          "x-gooo-source-span": {
+            "end": 1815,
+            "start": 1711
+          }
+        },
+        "count_magnitude": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "x-gooo-id": "gooo://completeness-delta/field/change/count-magnitude",
+          "x-gooo-source-span": {
+            "end": 1925,
+            "start": 1820
+          }
+        },
+        "id": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/change/id",
+          "x-gooo-source-span": {
+            "end": 1173,
+            "start": 1095
+          }
+        },
+        "observation_change": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/change/observation-change",
+          "x-gooo-source-span": {
+            "end": 1706,
+            "start": 1596
+          }
+        },
+        "presence": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/change/presence",
+          "x-gooo-source-span": {
+            "end": 1268,
+            "start": 1178
+          }
+        },
+        "reason": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/change/reason",
+          "x-gooo-source-span": {
+            "end": 2115,
+            "start": 2029
+          }
+        },
+        "regression": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/change/regression",
+          "x-gooo-source-span": {
+            "end": 2024,
+            "start": 1930
+          }
+        },
+        "state_transition": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/change/state-transition",
+          "x-gooo-source-span": {
+            "end": 1591,
+            "start": 1485
+          }
+        }
+      },
+      "required": [
+        "id",
+        "presence",
+        "before",
+        "after",
+        "state_transition",
+        "observation_change",
+        "count_direction",
+        "count_magnitude",
+        "regression",
+        "reason"
+      ],
+      "type": "object",
+      "x-gooo-id": "gooo://completeness-delta/entity/change"
+    },
+    "DimensionObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "denominator": {
+          "minimum": 0,
+          "type": "integer",
+          "x-gooo-id": "gooo://completeness-delta/field/observation/denominator",
+          "x-gooo-source-span": {
+            "end": 721,
+            "start": 619
+          }
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://completeness-delta/field/observation/evidence",
+          "x-gooo-source-span": {
+            "end": 1010,
+            "start": 914
+          }
+        },
+        "numerator": {
+          "minimum": 0,
+          "type": "integer",
+          "x-gooo-id": "gooo://completeness-delta/field/observation/numerator",
+          "x-gooo-source-span": {
+            "end": 614,
+            "start": 516
+          }
+        },
+        "reason": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/observation/reason",
+          "x-gooo-source-span": {
+            "end": 909,
+            "start": 818
+          }
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "PROGRESS",
+            "UNKNOWN",
+            "FAIL_CLOSED"
+          ],
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/observation/status",
+          "x-gooo-source-span": {
+            "end": 511,
+            "start": 419
+          }
+        },
+        "unit": {
+          "type": "string",
+          "x-gooo-id": "gooo://completeness-delta/field/observation/unit",
+          "x-gooo-source-span": {
+            "end": 813,
+            "start": 726
+          }
+        }
+      },
+      "required": [
+        "status",
+        "numerator",
+        "denominator",
+        "unit",
+        "reason",
+        "evidence"
+      ],
+      "type": "object",
+      "x-gooo-id": "gooo://completeness-delta/entity/observation"
+    }
+  },
+  "$id": "gooo/completeness-delta/v1",
+  "$ref": "#/$defs/CompletenessDelta",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "x-gooo-declaration-sha256": "d8f093b9d138fe7ae29c9931398c7452bc92675f81050d477bd7c821fb6fcc47",
+  "x-gooo-projection-profile": "gooo/receipt-structure-projection/v1"
+}
