@@ -83,17 +83,36 @@ The latest model study and the deployed integration have separate evidence:
   candidate rankings differed** under small numerical changes. The exact
   comparison failed on partial-completion curves. A subsequent versioned rounding
   rule now reproduces every intermediate value and full ranking on those 18,432
-  pairs, with unchanged weights and first-path completeness. SDK extraction,
-  remaining evaluations and native adoption of the new V4 models are next.
+  pairs, with unchanged weights and first-path completeness. SDK v0.2.15 now
+  carries these rules; native adoption and remaining model evaluations are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
 The compiler currently uses **Go SDK v0.2.14-experimental** and the earlier V3
 feature contract. The native timing/execution figures above belong to those
-models. New V4 artifacts run in the research runtime; the
+models. New V4 artifacts run in the research runtime and SDK v0.2.15; the
 [model guide](docs/three-choice-path-model.md) identifies the compatible bundle.
 The earlier [phrasing diagnosis](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/bilingual-wrapper-audit-results-20261003.md)
 explains why the new study keeps the entire instruction while changing its
 representation and training wording.
+
+### Which public component should I use?
+
+| Component | Available now | Current development step |
+| --- | --- | --- |
+| Compiler `dev` / `main` | SDK v0.2.14 with the pinned compact V3 bundle | Carry the new feature and arithmetic identities through generation and execution |
+| [SDK v0.2.15](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.15-experimental) | V3/V4 inference and explicit arithmetic | Native compiler integration |
+| [Hugging Face model](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Wording, operation order and new-task evaluation |
+
+At SDK revision `59c8d34`, local arm64 and
+[Linux CI](https://github.com/kimjooyoon/gooo-decision-runtime/actions/runs/37070241916)
+each replayed 18,432 frozen inputs with 36,864 actual predictions. All intermediate
+values and complete rankings matched the explicit-arithmetic observations.
+This checks the transfer from research code into the library. The planned native
+study will additionally measure generated Go and execution; its planned counts
+are kept in the [integration protocol](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/daecfea3583614e006c960de263448a1645a9190/docs/full-input-sdk-native-protocol-20261003.md).
+
+For a concrete walk through intent, finite choices, tests and remaining work,
+see [the Korean guide](docs/language-direction.ko.md#한-번의-조립을-따라가-보면).
 
 FP32 weights occupy **8,288 bytes**. Ternary weights occupy **446 bytes** on disk
 and decode to **2,096 bytes** of tensors plus eight scale bytes; caller scratch
