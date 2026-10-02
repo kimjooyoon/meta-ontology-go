@@ -122,6 +122,10 @@ func exactKeys(data []byte, typ reflect.Type) error {
 	if typ == reflect.TypeFor[json.RawMessage]() {
 		return nil
 	}
+	if typ == reflect.TypeFor[[]byte]() {
+		var encoded string
+		return json.Unmarshal(data, &encoded) // JSON byte slices are base64 strings.
+	}
 	if typ.Kind() == reflect.Pointer {
 		return exactKeys(data, typ.Elem())
 	}

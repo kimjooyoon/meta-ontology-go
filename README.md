@@ -1,20 +1,100 @@
 # meta-ontology-go
 
-`meta-ontology-go` is an experimental semantic compiler implemented in Go. Its
-surface files use the `.gooo` extension: **Go Of Ontology**.
+**Gooo — Go Of Ontology** is an experimental language for expressing intent,
+assembling programs, and keeping the evidence of how they behave. This repository
+contains its Go compiler. Source files use the `.gooo` extension.
 
-The project has one deliberate authority boundary: `.gooo` declarations express
-business intent. The compiler lowers that view to a normalized semantic IR and
-projects structural boundaries to Go. Handwritten Go remains the source of truth
-for irreducible implementation logic; generated Go, query output, documentation,
-and CI results are derived views or evidence.
+Think of Gooo as a workshop: declarations provide the plan, a small local model
+can suggest which permitted parts to assemble, and the compiler checks the fit
+and runs the resulting program. Each attempt leaves a receipt connecting intent,
+choices, generated code, test results, and unresolved questions.
+
+Business intent lives in Gooo declarations. The compiler lowers them to semantic
+IR and projects structural Go. Handwritten Go slots hold implementation logic;
+the experimental typed-path route can assemble bounded activity bodies from
+conditions, assignments, references, branches, and expressions.
 
 ```text
-.gooo intent ──lower──> semantic IR ──project──> generated Go
-     │                         │                    │
-     │                         └── facts/evidence   └── handwritten slots
-     └── source spans, IDs, and explicit assertions
+Gooo source + intent + permitted choices + finite expectations
+                         │
+       optional local model → proposed path → finite tests
+                                  ↑              │
+                                  └── feedback ──┘
+                                         │
+                          selected source → Go → execution
+                                         │
+                         source-bound completeness receipts
 ```
+
+**Start here:** [direction and current progress, 한국어](docs/language-direction.ko.md)
+· [body generation](docs/language/body-codegen.md)
+· [small model integration](docs/three-choice-path-model.md)
+· [completeness observations](docs/declared-completeness-receipt.md).
+
+## What we are developing
+
+The goal is to make program construction an inspectable language operation.
+Stable semantic IDs connect a declaration to its generated structure and observed
+behavior. Small models guide finite choices inside those boundaries. When a model
+is unavailable, the compiler continues through the declared deterministic route.
+
+The current experiments use an independently trained **2,072-parameter shared
+judge** for three binary decisions, giving eight complete body paths. It receives
+source-derived context, Korean/English intent, candidate structure and, on later
+attempts, actual failed-case feedback. Gooo owns the alternatives and the budget.
+Broader natural-language discovery and reusable learned abstractions are the next
+language research questions.
+
+| Part | Public home | What to find there |
+| --- | --- | --- |
+| Language and compiler | This repository | Gooo source, semantic IR, projection, execution and receipts |
+| Local inference | [gooo-decision-runtime](https://github.com/kimjooyoon/gooo-decision-runtime) | Go model loaders, fixed workspaces, typed search and feedback |
+| Research | [gooo-neural-decision-experiments](https://github.com/kimjooyoon/gooo-neural-decision-experiments) | Training, comparisons, raw evidence and reproduction tools |
+| Model weights | [Hugging Face: shared Gooo judge](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | FP32 and ternary exports, model card and evidence bundles |
+
+## Current observations — 2026-10-03
+
+Two complementary experiments describe progress:
+
+- **Decision quality:** on 512 previously observed development views, shared FP32
+  completed the finite contract on its first choice in **113/512** views, versus
+  **95/512** for the dense control. Extra ranked attempts fell **1,572 → 1,469**.
+  Korean/English paired first choices still disagreed in **255/256** pairs, and
+  several function families and confidence measurements regressed.
+  [Quality study](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/shared-three-judgment-results-20261003.md).
+- **Compact execution:** 96 generations made 298 local predictions and led to
+  192 compiled runs. All **2,304 supplied finite expectations** passed; all
+  **48 expanded/compact pairs** retained the same unseeded generated behavior.
+  Compact prediction medians were **23.7–30.2 µs** and fresh-process codegen
+  medians **27.8–29.5 ms** on local arm64 with Go 1.27.1. QAT's codegen median
+  rose slightly. [Native study and resource scope](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/compact-shared-native-results-20261003.md).
+
+FP32 weights occupy **8,288 bytes**. Ternary weights occupy **446 bytes** on disk
+and decode to **2,096 bytes** of tensors plus eight scale bytes; caller scratch
+uses **3,200 bytes**. Whole-process RAM includes additional compiler/runtime
+work. These experiments use authored finite tasks; broader workflow coverage and
+bilingual meaning preservation need further measurement.
+
+We measure completeness as several obligations: declared structure, generation,
+finite behavior, reverse links, execution boundaries, and remaining unknowns.
+`gooo completeness-delta` compares two observations while retaining changed
+scope, removed obligations, failures, and the first unresolved claim.
+[Comparison contract and example](docs/completeness-delta.md).
+
+## Ideas we build on
+
+[SKETCH](https://people.csail.mit.edu/asolar/papers/asplos06-final.pdf) provides a
+useful precedent for completing a partial program under a specification.
+[DreamCoder](https://arxiv.org/abs/2006.08381) connects program search, neural
+guidance and the growth of reusable abstractions.
+[Laya](https://huggingface.co/convaiinnovations/laya) helped frame our early
+experiments around structured decisions; the current tiny models start from our
+own initialization and Gooo training data.
+[BitNet b1.58](https://arxiv.org/abs/2402.17764) motivates studying ternary weights,
+with storage, runtime memory and quality measured separately.
+[W3C PROV-O](https://www.w3.org/TR/prov-o/) supplies vocabulary for tracing the
+entities, activities and agents behind an artifact. Our combination of these
+ideas is developed through the public experiments linked above.
 
 <!-- PUBLIC-TRUST-BADGES:BEGIN -->
 ### Public trust surface
@@ -24,7 +104,7 @@ These badges are generated from the lowered public-trust `.gooo` policy. Workflo
 #### Language / Release
 
 [![Go 1.27.1 toolchain](https://img.shields.io/badge/Go-1.27.1-00ADD8?logo=go&logoColor=white)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/go.mod)
-[![Published release v0.4.0-dev](https://img.shields.io/github/v/release/kimjooyoon/meta-ontology-go?include_prereleases&label=published%20release)](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.4.0-dev)
+[![Published release v0.6.0-dev](https://img.shields.io/github/v/release/kimjooyoon/meta-ontology-go?include_prereleases&label=published%20release)](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.0-dev)
 
 #### Build / Conformance
 
@@ -50,14 +130,18 @@ These badges are generated from the lowered public-trust `.gooo` policy. Workflo
 The complete row ledger, including unavailable and refuted claims, is emitted by the `Public trust surface` workflow.
 <!-- PUBLIC-TRUST-BADGES:END -->
 
-The repository is intentionally small. The supported language sketch currently
-covers packages, namespaces, entities with URI-like IDs, and activities with
-entity inputs and an entity result. The semantic kernel also defines a
-PROV-inspired vocabulary, deterministic normalization, explicit candidate facts,
-and marker-based generated regions. See [the architecture](docs/architecture.md)
-and [the language sketch](docs/spec.md).
+The core language covers packages, namespaces, stable entity IDs and activities.
+Experimental profiles add entity fields, typed body construction and Gooo-owned
+receipt structures. [The language sketch](docs/spec.md) describes the core;
+[body generation](docs/language/body-codegen.md) and
+[receipt projection](docs/declared-completeness-receipt.md) describe those profiles.
 
-## The deterministic pressure loop
+## Earlier design illustrations
+
+The following illustrations explain design ideas. Current implemented behavior
+and measured results are described in the sections above and their linked studies.
+
+### The deterministic pressure loop
 
 [![Animated explanation of the semantic self-improvement loop: policy-defined base metrics rise from an observed floor; a deterministic selector chooses a focus subset while every baseline remains guarded; 100 heuristic attempts fan out; single-pressure regressions are rejected; source-backed evidence and path proof let deterministic CI requalify all dimensions; the verified ceiling ratchets into epoch 2's immutable floor](docs/assets/metric-pressure-loop/metric-pressure-loop.gif)](docs/assets/metric-pressure-loop/metric-pressure-loop.png)
 
@@ -153,10 +237,9 @@ requires exactly these six contexts; the retired `CI guardian` context was
 removed. The `dev` rule has no required status checks. No badge above turns a
 workflow result into an enforcement claim.
 
-The root README reaches the default `main` page after a legitimate
-protected-main promotion. The separate protection update removed only the
-retired Guardian check. The snapshot fallback changes CI evidence handling and
-leaves all branch protection settings unchanged.
+The repository's default branch is `dev`; checked changes are also promoted to
+protected `main` through this process. The separate protection update removed
+the retired Guardian check.
 
 For either promotion form, CI emits a digest-bound `promotion_authorization`
 with `source=dev`, `target=main`, and `operation=fast_forward`. It passes only
@@ -169,12 +252,11 @@ fast-forward update is allowed; force updates are prohibited.
 
 ## Project status
 
-This is an experimental language, not a stable application framework. In
-particular, the repository does not currently promise a production LSP, a stable
-`analyze` CLI, automatic promotion of ambiguous Go observations, or durable
-provenance publishing. Internal packages and design notes may describe those
-directions, but a feature is supported only when its command/API and conformance
-evidence are present.
+The language and its model interfaces are experimental. Runnable commands and
+their linked evidence define current support. Production editor integration,
+broader analysis, automatic reconciliation of ambiguous observations and durable
+provenance publishing remain development areas. Historical protocols retain the
+scope and outcomes of the revision they measured.
 
 ## Governance
 

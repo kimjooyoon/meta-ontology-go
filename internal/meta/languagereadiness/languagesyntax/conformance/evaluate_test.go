@@ -45,8 +45,8 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		report.Summary.GovernanceTotal != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceExecuted != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceUnresolved != 0 ||
-		report.Summary.ProjectionTotal != 1 || report.Summary.ProjectionSatisfied != 1 || report.Summary.ProjectionUnresolved != 0 ||
-		len(report.Source.GoooFiles) != 97 || len(report.Source.PackageUnits) != 4 ||
+		report.Summary.ProjectionTotal != languagesyntax.FixedProjectionTotal || report.Summary.ProjectionSatisfied != languagesyntax.FixedProjectionTotal || report.Summary.ProjectionUnresolved != 0 ||
+		len(report.Source.GoooFiles) != 98 || len(report.Source.PackageUnits) != 4 ||
 		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 3 ||
 		len(report.Source.PackageUnits[2].Members) != 1 || len(report.Source.PackageUnits[3].Members) != 1 {
 		invalidIDs := make([]string, 0, report.Summary.InvalidCases)
@@ -178,7 +178,7 @@ func (o projectionOverlay) Open(name string) (fs.File, error) {
 func TestProjectionCorpusBindsActualSourceAndBothArtifacts(t *testing.T) {
 	repository, raw := fixture(t)
 	baseline := languagesyntax.Evaluate(repository, testHead, raw, languageconcept.BuildArtifact(repository))
-	if baseline.Decision != languagesyntax.DecisionPass || len(baseline.ProjectionUnits) != 1 {
+	if baseline.Decision != languagesyntax.DecisionPass || len(baseline.ProjectionUnits) != languagesyntax.FixedProjectionTotal {
 		t.Fatalf("projection corpus not proven: %s %v", baseline.Decision, baseline.ProjectionUnits)
 	}
 	if baseline.Summary.GetPutLaws != baseline.Summary.ValidCases || baseline.Summary.PutGetLaws != baseline.Summary.ValidCases {
@@ -193,6 +193,10 @@ func TestProjectionCorpusBindsActualSourceAndBothArtifacts(t *testing.T) {
 		{"changed-json-schema", "internal/completeness/receipt.schema.json", "\"minimum\": 0", "\"minimum\": -1", false},
 		{"missing-generated-go", "internal/completeness/receipt.generated.go", "", "", true},
 		{"missing-json-schema", "internal/completeness/receipt.schema.json", "", "", true},
+		{"changed-delta-source", "internal/completenessdelta/delta.gooo", "type Count required one", "type Text required one", false},
+		{"changed-delta-go", "internal/completenessdelta/delta.generated.go", "Numerator   int", "Numerator   string", false},
+		{"changed-delta-schema", "internal/completenessdelta/delta.schema.json", "\"minimum\": 0", "\"minimum\": -1", false},
+		{"missing-delta-go", "internal/completenessdelta/delta.generated.go", "", "", true},
 	} {
 		t.Run(sample.name, func(t *testing.T) {
 			var altered []byte
@@ -211,8 +215,8 @@ func TestProjectionCorpusBindsActualSourceAndBothArtifacts(t *testing.T) {
 			if err := languagesyntax.Validate(report, testHead); err != nil {
 				t.Fatal(err)
 			}
-			if report.Decision != languagesyntax.DecisionClosed || report.Summary.ProjectionSatisfied != 0 ||
-				report.Summary.ProjectionTotal != 1 || report.Summary.Satisfied != 81 {
+			if report.Decision != languagesyntax.DecisionClosed || report.Summary.ProjectionSatisfied != languagesyntax.FixedProjectionTotal-1 ||
+				report.Summary.ProjectionTotal != languagesyntax.FixedProjectionTotal || report.Summary.Satisfied != 81 {
 				t.Fatalf("projection failure was hidden or changed ordinary case coverage: %#v", report.Summary)
 			}
 			if sample.missing && (report.Resolution != languagesyntax.ResolutionLower || report.Summary.ProjectionUnresolved != 1) {
@@ -247,7 +251,7 @@ func TestProjectionRegistryCannotDropOrRedirectObligations(t *testing.T) {
 			t.Fatal(err)
 		}
 		if report.Decision != languagesyntax.DecisionClosed || report.Summary.Unresolved != 81 ||
-			report.Summary.ProjectionUnresolved != 1 || report.Summary.ProjectionTotal != 1 {
+			report.Summary.ProjectionUnresolved != languagesyntax.FixedProjectionTotal || report.Summary.ProjectionTotal != languagesyntax.FixedProjectionTotal {
 			t.Fatal("registry drift reduced the fixed proof obligations")
 		}
 	}

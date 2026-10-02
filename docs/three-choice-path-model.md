@@ -59,9 +59,12 @@ weights to exercise all eight candidates, actual feedback, retained concurrent
 requests, full-input declines and independently compiled arithmetic for FP32,
 PTQ and QAT. They are not a new trained-model accuracy or native speed claim.
 
-This integration verifies source binding, all eight finite candidates, explicit
-feedback accounting, declines and independently compiled generated Go against
-authored arithmetic. Controlled test weights exercise the ABI, rather than
-trained quality. No default model is selected. Fresh three-choice training and
-the larger preregistered study remain separate phases:
-[frozen protocol](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/d74a8a455ceed5949fcbad482375405b4704dc9a/docs/own-three-choice-completeness-preregistration-20261002.md).
+The integration's controlled weights cover source binding, all eight candidates,
+feedback accounting, input declines and compiled arithmetic. Training and actual
+model measurements have since completed as separate studies:
+[fresh shared-model quality](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/shared-three-judgment-results-20261003.md)
+and [compact native generation](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/compact-shared-native-results-20261003.md).
+The compact study retains 96 generations, 298 actual predictions, 192 compiled
+runs and 48 matching unseeded representation pairs. Its 2,304 supplied finite
+expectations all pass. Bilingual first-choice disagreement and family regressions
+remain recorded in the quality study. Callers explicitly select the model.
