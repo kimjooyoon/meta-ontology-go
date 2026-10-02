@@ -6,7 +6,8 @@ contains its Go compiler. Source files use the `.gooo` extension.
 
 Think of Gooo as a workshop: declarations provide the plan, a small local model
 can suggest which permitted parts to assemble, and the compiler checks the fit
-and runs the resulting program. Each attempt leaves a receipt connecting intent,
+and generates Go. A Go experiment runner builds and executes the resulting
+program. Each attempt leaves a receipt connecting intent,
 choices, generated code, test results, and unresolved questions.
 
 Business intent lives in Gooo declarations. The compiler lowers them to semantic
@@ -54,7 +55,7 @@ language research questions.
 
 ## Current observations — 2026-10-03
 
-Two complementary experiments describe progress:
+The current studies describe decision quality, execution and input sensitivity:
 
 - **Decision quality:** on 512 previously observed development views, shared FP32
   completed the finite contract on its first choice in **113/512** views, versus
@@ -68,6 +69,12 @@ Two complementary experiments describe progress:
   Compact prediction medians were **23.7–30.2 µs** and fresh-process codegen
   medians **27.8–29.5 ms** on local arm64 with Go 1.27.1. QAT's codegen median
   rose slightly. [Native study and resource scope](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/compact-shared-native-results-20261003.md).
+- **Input sensitivity:** keeping the model, source and finite expectations fixed,
+  shared FP32 completed **113/512** original development instructions and
+  **480/512** instructions with an authored introductory phrase removed.
+  The latter matches the training format. This controlled diagnosis locates a
+  weakness in wording robustness; original-input quality remains **113/512**.
+  All complete inputs are retained. [Five-form, six-model study](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/bilingual-wrapper-audit-results-20261003.md).
 
 FP32 weights occupy **8,288 bytes**. Ternary weights occupy **446 bytes** on disk
 and decode to **2,096 bytes** of tensors plus eight scale bytes; caller scratch
