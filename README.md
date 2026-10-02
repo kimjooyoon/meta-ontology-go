@@ -46,6 +46,12 @@ attempts, actual failed-case feedback. Gooo owns the alternatives and the budget
 Broader natural-language discovery and reusable learned abstractions are the next
 language research questions.
 
+We want the language to carry the assembly plan and its unfinished obligations
+along with the program. A useful improvement should complete more of the declared
+behavior, spend fewer attempts or less memory, and keep the reason for each
+change inspectable. Those are the comparisons we are building toward across
+languages; the measurements below compare Gooo's own experimental variants.
+
 | Part | Public home | What to find there |
 | --- | --- | --- |
 | Language and compiler | This repository | Gooo source, semantic IR, projection, execution and receipts |
@@ -55,26 +61,37 @@ language research questions.
 
 ## Current observations — 2026-10-03
 
-The current studies describe decision quality, execution and input sensitivity:
+The latest model study and the deployed integration have separate evidence:
 
-- **Decision quality:** on 512 previously observed development views, shared FP32
-  completed the finite contract on its first choice in **113/512** views, versus
-  **95/512** for the dense control. Extra ranked attempts fell **1,572 → 1,469**.
-  Korean/English paired first choices still disagreed in **255/256** pairs, and
-  several function families and confidence measurements regressed.
-  [Quality study](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/shared-three-judgment-results-20261003.md).
+- **Full-input model research:** four freshly initialized shared judges completed
+  6,400 local GPU updates. On 512 previously observed development views, the
+  original FP32 control completed all 16 supplied expectations in **113/512**
+  first choices; the whole-text fragment model completed **368/512 (71.88%)**.
+  Extra ranked attempts fell **1,469 → 186**. Both Korean/English views chose
+  valid paths in **180/256** pairs, while **68/256** pairs chose the same wrong
+  path. All twelve FP32/PTQ/QAT exports are public.
+  [Full comparison](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-judgment-initial-results-20261003.md).
 - **Compact execution:** 96 generations made 298 local predictions and led to
   192 compiled runs. All **2,304 supplied finite expectations** passed; all
   **48 expanded/compact pairs** retained the same unseeded generated behavior.
   Compact prediction medians were **23.7–30.2 µs** and fresh-process codegen
   medians **27.8–29.5 ms** on local arm64 with Go 1.27.1. QAT's codegen median
   rose slightly. [Native study and resource scope](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/compact-shared-native-results-20261003.md).
-- **Input sensitivity:** keeping the model, source and finite expectations fixed,
-  shared FP32 completed **113/512** original development instructions and
-  **480/512** instructions with an authored introductory phrase removed.
-  The latter matches the training format. This controlled diagnosis locates a
-  weakness in wording robustness; original-input quality remains **113/512**.
-  All complete inputs are retained. [Five-form, six-model study](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/bilingual-wrapper-audit-results-20261003.md).
+- **What the new study exposed:** counting text fragments can lose operation
+  order; wording augmentation and ternary conversion also produced regressions.
+  On arm64 and Linux, all 18,432 first choices agreed, while **272 complete
+  candidate rankings differed** under small numerical changes. The exact
+  comparison failed on partial-completion curves. The numerical-contract repair,
+  remaining evaluations and native adoption of the new V4 models are pending.
+  [Retained diagnosis and next work](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-numerical-portability-followup-20261003.md).
+
+The compiler currently uses **Go SDK v0.2.14-experimental** and the earlier V3
+feature contract. The native timing/execution figures above belong to those
+models. New V4 artifacts run in the research runtime; the
+[model guide](docs/three-choice-path-model.md) identifies the compatible bundle.
+The earlier [phrasing diagnosis](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/bilingual-wrapper-audit-results-20261003.md)
+explains why the new study keeps the entire instruction while changing its
+representation and training wording.
 
 FP32 weights occupy **8,288 bytes**. Ternary weights occupy **446 bytes** on disk
 and decode to **2,096 bytes** of tensors plus eight scale bytes; caller scratch
@@ -84,6 +101,10 @@ bilingual meaning preservation need further measurement.
 
 We measure completeness as several obligations: declared structure, generation,
 finite behavior, reverse links, execution boundaries, and remaining unknowns.
+For example, “368/512 complete” counts functions meeting every supplied example
+on their first path. Partial example coverage, later search, and unresolved
+execution obligations have their own counts, so one percentage stays tied to
+the question it answers.
 `gooo completeness-delta` compares two observations while retaining changed
 scope, removed obligations, failures, and the first unresolved claim.
 [Comparison contract and example](docs/completeness-delta.md).
@@ -92,6 +113,8 @@ scope, removed obligations, failures, and the first unresolved claim.
 
 [SKETCH](https://people.csail.mit.edu/asolar/papers/asplos06-final.pdf) provides a
 useful precedent for completing a partial program under a specification.
+[DeepCoder](https://arxiv.org/abs/1611.01989) shows how learned program properties
+can guide a search; this helps frame our small model's role in choosing attempts.
 [DreamCoder](https://arxiv.org/abs/2006.08381) connects program search, neural
 guidance and the growth of reusable abstractions.
 [Laya](https://huggingface.co/convaiinnovations/laya) helped frame our early
