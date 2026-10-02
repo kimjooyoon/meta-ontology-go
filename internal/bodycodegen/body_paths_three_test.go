@@ -103,6 +103,10 @@ func TestThreeNativeSourceInputsFiniteTDDAndIndependentGo(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := result.Report.BodyPaths
+	consumePathCompleteness(t, result.Report.CompletenessReceipt)
+	if result.Report.CompletenessReceipt.Scope["typed_path"].(map[string]any)["local_model_predictions"] != 7 {
+		t.Fatal("common receipt lost actual three-choice feedback calls")
+	}
 	three := r.Search.Selection.Three
 	if three == nil || !three.PredictionValid || r.Search.Selection.Joint != nil ||
 		r.Search.Selection.ModelCalls != 7 || len(r.Search.Attempts) != 8 || r.Search.TypeRejected != 0 ||
@@ -157,10 +161,17 @@ func TestThreeNativeFullOverflowAndUnsupportedArityKeepDeterministicPaths(t *tes
 				t.Fatal(err)
 			}
 			if kind == "feedback-overflow" {
+				consumePathCompleteness(t, result.Report.CompletenessReceipt)
 				assertThreeFeedbackOverflow(t, result.Report.BodyPaths)
 				return
 			}
 			assertThreeDeterministicDecline(t, source, doc, result)
+			consumePathCompleteness(t, result.Report.CompletenessReceipt)
+			observed := result.Report.CompletenessReceipt.Scope["typed_path"].(map[string]any)
+			if observed["local_model_predictions"] != 0 || observed["provider_counts_known"] != true ||
+				observed["external_provider_calls"] != 0 {
+				t.Fatal("decline lost exact accounting")
+			}
 		})
 	}
 }

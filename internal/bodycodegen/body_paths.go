@@ -2,6 +2,7 @@ package bodycodegen
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -19,6 +20,11 @@ type BodyPathReceipt struct {
 	SelectedSourceSHA256   string                     `json:"selected_source_sha256,omitempty"`
 	DocumentSHA256         string                     `json:"document_sha256"`
 	TestSuiteSHA256        string                     `json:"test_suite_sha256"`
+	SearchConfigSHA256     string                     `json:"search_config_sha256"`
+	SearchConfig           json.RawMessage            `json:"search_config"`
+	DeclaredTestCases      int                        `json:"declared_test_cases"`
+	LocalModelRequested    bool                       `json:"local_model_requested"`
+	SearchStarted          bool                       `json:"search_started"`
 	SourceBaseMatched      bool                       `json:"source_base_matched"`
 	SourceBinding          RouteEquivalenceReceipt    `json:"source_binding"`
 	Search                 pathplan.SearchResult      `json:"search"`
@@ -118,8 +124,11 @@ func generateWithTypedPathBatches(ctx context.Context, filename string, source [
 func generateTypedPathRequest(ctx context.Context, filename string, source []byte, activityName string,
 	document pathplan.Document, models typedPathModel, stepAttempts int, feedback *typedPathFeedback) (Result, error) {
 	started := time.Now()
+	searchConfig := typedPathSearchConfig(stepAttempts, feedback)
 	receipt := &BodyPathReceipt{
 		Schema: "gooo/body-codegen-typed-path-receipt/v1", OriginalSourceSHA256: digest(source),
+		LocalModelRequested: models.path != "" || models.model != nil || models.joint != nil || models.three != nil,
+		SearchConfigSHA256:  digest(searchConfig), SearchConfig: searchConfig,
 		Scope: "declared finite cases and bounded typed alternatives; not proof of natural-language intent or all int64 inputs",
 		Timing: BodyPathTiming{ExecutionModel: "single_process_source_bind_then_rank_then_finite_tdd_then_native_emit",
 			DecisionStage: "all_local_predictions_before_candidate_tests_and_final_native_emission"},
@@ -146,6 +155,9 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 		return fail(err)
 	}
 	prepareStarted := time.Now()
+	if err := bindTypedPathDocument(document, receipt); err != nil {
+		return fail(err)
+	}
 	prepared, err := document.Prepare()
 	receipt.Timing.PlanPrepareMS = elapsedMS(prepareStarted)
 	if err != nil {
@@ -154,7 +166,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if document.Seed != "" && models.path == "" && models.model == nil && models.joint == nil && models.three == nil {
 		return fail(fmt.Errorf("typed path sampling requires an explicit local model"))
 	}
-	bound, err := bindTypedPathSource(ctx, filename, source, activityName, document, prepared, receipt)
+	bound, err := bindTypedPathSource(ctx, filename, source, activityName, prepared, receipt)
 	if err != nil {
 		return fail(err)
 	}
@@ -200,6 +212,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 		receipt.Timing.DecisionStage = "no_predictions_representation_declined"
 	}
 	searchStarted := time.Now()
+	receipt.SearchStarted = true
 	var search pathplan.SearchResult
 	var selected *bodyplan.Program
 	if three != nil {
@@ -276,5 +289,6 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	receipt.Timing.FinalEmissionMS = elapsedMS(emitStarted)
 	receipt.Timing.TotalMS = elapsedMS(started)
 	result.Report.BodyPaths = receipt
+	populateCompletenessReceipt(&result.Report, "")
 	return result, nil
 }

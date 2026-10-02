@@ -1,5 +1,35 @@
 # Gooo-declared completeness receipt
 
+## Typed-path selection and finite TDD
+
+`body-codegen --path-plan` uses the same generated receipt structure, with the
+`gooo/body-codegen-typed-path-v1` profile. Its plan identity binds the original
+source, complete typed-path document (including Korean/English intent and test
+expectations), search controls, and the final selected source. Two requests that
+emit identical Go can therefore retain different plan identities.
+
+Five additional axes record source binding, final finite-suite accuracy,
+provider accounting, candidate attempts, and completed candidate scores. The
+first three participate in the scoped decision. A selected body can have 100%
+lowering coverage and only 2/3 functional matches. An observed 0/3 is `PROGRESS`;
+an unobserved final score is `UNKNOWN`, even if search candidates were evaluated.
+
+`scope.typed_path` binds the actual path observation, model metadata/weights,
+local prediction count (including feedback), external calls, and model context.
+`scope.emission_decision_provider` describes final lowering; the nested path
+provider describes selection. Local predictions never become Laya calls or an
+implicit network request. A source rejection before the prediction entry point
+records known zero calls; a started search with a missing result stays unknown.
+
+The final suite is interpreted by the bounded Go AST evaluator and cross-checked
+against the typed interpreter. It is a selection suite, not an independent
+holdout or generated-package runtime execution. Execution, reverse observation,
+real workflow coverage and full-domain semantics remain unresolved until a
+separate producer supplies source-bound observations. No aggregate percentage
+replaces these axes, and no human action is needed to continue the bounded search.
+
+## Declared structure
+
 The compiler's existing `gooo/metaprogramming-completeness-receipt/v2` wire
 structure is now owned by
 [`receipt.gooo`](../internal/completeness/receipt.gooo). That declaration generates
