@@ -142,12 +142,22 @@ reverse observation, use-case, boundary and provenance measurements without
 inventing observations. Schema conformance cannot turn a fixture count into
 semantic evidence or convert an external authority failure into product coverage.
 
+## Before/after observations
+
+[`completeness-delta`](completeness-delta.md) consumes two existing receipts or
+their generation/runtime envelopes. Its separately declared Gooo structure
+preserves the v2 receipt ABI. It records exact input identities, scope changes,
+state transitions, removed obligations, and counter regressions under comparable
+conditions. UNKNOWN and failed measurements retain null numeric deltas.
+Generation-to-runtime parent continuation preserves the original unresolved
+frontier while adding runtime observations.
+
 ## Remaining work for issue #1023
 
 The shared declaration/generated structure and closed typed-path runtime/reverse
 producer now have executable evidence. Natural-language capability discovery and
 the broader runtime profiles still need to use this common receipt and bind
-independent inputs, source revisions, tool identities and observation artifacts. Comparable
-before/after domain deltas, regression accounting and real workflow coverage
-remain separate obligations. This change does not close #1023 or establish
-universal language completeness, production utility or permission authority.
+independent inputs, source revisions, tool identities and observation artifacts.
+Comparison currently covers the closed typed-path generation/runtime profiles;
+broader domain comparisons and independently observed workflow coverage remain
+open obligations under #1023.

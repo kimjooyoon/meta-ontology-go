@@ -798,6 +798,14 @@
       "root": "CompletenessReceipt",
       "go_path": "internal/completeness/receipt.generated.go",
       "json_schema_path": "internal/completeness/receipt.schema.json"
+    },
+    {
+      "id": "declared-completeness-delta",
+      "path": "internal/completenessdelta/delta.gooo",
+      "profile": "gooo/receipt-structure-projection/v1",
+      "root": "CompletenessDelta",
+      "go_path": "internal/completenessdelta/delta.generated.go",
+      "json_schema_path": "internal/completenessdelta/delta.schema.json"
     }
   ],
   "meta_sources": [
