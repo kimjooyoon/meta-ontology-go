@@ -151,7 +151,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return fail(err)
 	}
-	if document.Seed != "" && models.path == "" && models.model == nil && models.joint == nil {
+	if document.Seed != "" && models.path == "" && models.model == nil && models.joint == nil && models.three == nil {
 		return fail(fmt.Errorf("typed path sampling requires an explicit local model"))
 	}
 	bound, err := bindTypedPathSource(ctx, filename, source, activityName, document, prepared, receipt)
@@ -161,9 +161,12 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	base, activity := bound.base, bound.activity
 	model := models.model
 	joint := models.joint
+	three := models.three
 	if models.path != "" {
 		loadStarted := time.Now()
-		model, joint, err = loadTypedStructuralModel(models.path)
+		var loaded typedPathModel
+		loaded, err = loadTypedStructuralModel(models.path)
+		model, joint, three = loaded.model, loaded.joint, loaded.three
 		receipt.Timing.ModelLoadMS = elapsedMS(loadStarted)
 		if err != nil {
 			return fail(fmt.Errorf("load explicit structural model: %w", err))
@@ -171,7 +174,10 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	}
 	contextStarted := time.Now()
 	var contextDeclined bool
-	if joint != nil {
+	if three != nil {
+		prepared, receipt.ModelContext, contextDeclined, err = prepareThreeModelContext(ctx, document, prepared,
+			three, base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest)
+	} else if joint != nil {
 		prepared, receipt.ModelContext, contextDeclined, err = prepareJointModelContext(ctx, document, prepared, joint, base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest)
 	} else {
 		prepared, receipt.ModelContext, contextDeclined, err = preparePathModelContext(ctx, document, prepared, model,
@@ -188,6 +194,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 		receipt.ModelContext.SeedSkipped, receipt.ModelContext.FeedbackSkipped = searchSeed != "", feedback != nil
 		model, feedback, searchSeed = nil, nil, ""
 		joint = nil
+		three = nil
 		receipt.FeedbackUnfixed = false
 		receipt.Timing.ExecutionModel = "source_bind_then_context_decline_then_deterministic_finite_tdd_then_native_emit"
 		receipt.Timing.DecisionStage = "no_predictions_representation_declined"
@@ -195,7 +202,15 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	searchStarted := time.Now()
 	var search pathplan.SearchResult
 	var selected *bodyplan.Program
-	if joint != nil {
+	if three != nil {
+		rounds := 0
+		var ci *pathplan.CIHint
+		if feedback != nil {
+			rounds, ci = feedback.rounds, feedback.ci
+		}
+		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchThreeFeedbackBatches(ctx, three,
+			document.TestCases, document.MaxAttempts, max(1, stepAttempts), searchSeed, rounds, ci)
+	} else if joint != nil {
 		rounds := 0
 		var ci *pathplan.CIHint
 		if feedback != nil {

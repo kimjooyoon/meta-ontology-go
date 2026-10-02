@@ -1,5 +1,8 @@
 # Optional own Gooo joint path model
 
+The separate [three-choice model](three-choice-path-model.md) ranks eight masks.
+This document describes the original two-choice head.
+
 An explicit `--path-model` may supply the separate
 `gooo/tiny-joint-path-model/v1` schema from SDK v0.2.12-experimental.
 The compiler binds the original Gooo body to the typed fallback before opening
