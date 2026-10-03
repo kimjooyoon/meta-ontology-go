@@ -114,6 +114,9 @@ func TestTimingPreservesFailedToolLookupWithoutInventingNativeWork(t *testing.T)
 	if code := RunFilesCommand(context.Background(), "files", args, &stdout, &stderr); code != 1 {
 		t.Fatal(code, stderr.String())
 	}
+	if !strings.Contains(stderr.String(), "native unobserved") {
+		t.Fatal("unstarted native duration displayed as zero", stderr.String())
+	}
 	raw, err := os.ReadFile(filepath.Join(out, "run-1-timing.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -139,6 +142,19 @@ func TestTimingPreservesFailedToolLookupWithoutInventingNativeWork(t *testing.T)
 	}
 	if err := verifyTimingDirectory(context.Background(), out); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestPhaseDurationRequiresEveryGroupMember(t *testing.T) {
+	for _, tc := range []struct {
+		phases map[string]float64
+		want   string
+	}{{nil, "unobserved"}, {map[string]float64{"a": 1}, "unobserved"},
+		{map[string]float64{"a": 0, "b": 0}, "0.000ms"},
+		{map[string]float64{"a": 1.25, "b": 2.5}, "3.750ms"}} {
+		if got := phaseDuration(tc.phases, "a", "b"); got != tc.want {
+			t.Fatal(got, tc.want)
+		}
 	}
 }
 

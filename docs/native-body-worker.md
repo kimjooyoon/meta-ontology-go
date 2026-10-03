@@ -75,6 +75,14 @@ The supported native body is the closed pure `Integer -> Integer` projection.
 
 Add `--timing` to `body-path-run` to save `run-N-timing.json` and
 `timing-summary.json`. The latter reports milliseconds by phase for each request.
+
+The terminal prints `unobserved` for a missing phase, including a native pair
+where only one run started. An observed zero duration remains `0.000ms`.
+The executor lazily retains one 32 KiB hash buffer behind its existing gate and
+releases it on close or cancellation. Every current tool/executable check still
+reads the complete file; retained digests do not stand in for current bytes.
+Reads are bounded to 256 MiB plus one detection byte, and a changed read length
+fails the binding. These limits do not establish an atomic filesystem snapshot.
 Stderr also shows generation, source replay, two native runs and artifact saving.
 The recorder retains at most 32 sequential intervals per request and creates no
 background workers. Without the flag, no timing sidecars are created.

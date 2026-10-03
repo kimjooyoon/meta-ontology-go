@@ -150,7 +150,7 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 	}
 	phase.End(true)
 	phase = bodytiming.Start(ctx, "go_tool_hash")
-	r.GoToolSHA256, err = fileDigest(goBinary)
+	r.GoToolSHA256, err = owner.bindFile(goBinary)
 	if err != nil {
 		return finish(fmt.Errorf("cannot bind Go tool bytes"))
 	}
@@ -182,7 +182,7 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 		r.Stage = fmt.Sprintf("EXECUTE_%d", run+1)
 		if owner != nil {
 			phase = bodytiming.Start(ctx, phaseNames[run][0])
-			current, err := fileDigest(executable)
+			current, err := owner.bindFile(executable)
 			if err != nil || current != r.ExecutableSHA256 {
 				return finish(fmt.Errorf("owned executable binding changed before execution"))
 			}
@@ -263,17 +263,39 @@ func prepareWorkspace(root string, prior bodycodegen.Result) error {
 }
 
 func digest(b []byte) string { return fmt.Sprintf("sha256:%x", sha256.Sum256(b)) }
+
+const (
+	fileHashBufferBytes = 32 << 10
+	executableFileLimit = 256 << 20
+)
+
 func fileDigest(path string) (string, error) {
+	var scratch [fileHashBufferBytes]byte
+	return fileDigestBuffer(path, scratch[:])
+}
+
+func fileDigestBuffer(path string, scratch []byte) (string, error) {
+	if len(scratch) == 0 {
+		return "", fmt.Errorf("file hash buffer is required")
+	}
 	f, e := os.Open(path)
 	if e != nil {
 		return "", e
 	}
 	defer f.Close()
 	info, e := f.Stat()
-	if e != nil || !info.Mode().IsRegular() || info.Size() > 256<<20 {
+	if e != nil || !info.Mode().IsRegular() || info.Size() < 0 || info.Size() > executableFileLimit {
 		return "", fmt.Errorf("invalid executable file")
 	}
 	h := sha256.New()
-	_, e = io.Copy(h, f)
-	return fmt.Sprintf("sha256:%x", h.Sum(nil)), e
+	// Limit actual reads as well as the initial size. LimitReader also avoids
+	// os.File.WriteTo bypassing CopyBuffer's supplied scratch space.
+	n, e := io.CopyBuffer(h, io.LimitReader(f, executableFileLimit+1), scratch)
+	if e != nil {
+		return "", e
+	}
+	if n != info.Size() || n > executableFileLimit {
+		return "", fmt.Errorf("executable file size changed during hashing")
+	}
+	return fmt.Sprintf("sha256:%x", h.Sum(nil)), nil
 }
