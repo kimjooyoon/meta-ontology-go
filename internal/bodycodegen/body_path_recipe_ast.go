@@ -142,11 +142,18 @@ func (b *recipeArena) statement(node ast.Stmt, depth int) (int, error) {
 			return 0, err
 		}
 		if s.Else != nil {
-			otherwise, ok := s.Else.(*ast.BlockStmt)
-			if !ok {
-				return 0, fmt.Errorf("recipe else requires an explicit block")
+			var nodes []ast.Stmt
+			switch otherwise := s.Else.(type) {
+			case *ast.BlockStmt:
+				nodes = otherwise.List
+			case *ast.IfStmt:
+				// An else-if is one conditional inside the else branch. Keep
+				// its original positions for source-order choice selectors.
+				nodes = []ast.Stmt{otherwise}
+			default:
+				return 0, fmt.Errorf("recipe else requires a block or if")
 			}
-			value.Else, err = b.sequence(otherwise.List, depth+1)
+			value.Else, err = b.sequence(nodes, depth+1)
 			if err != nil {
 				return 0, err
 			}
