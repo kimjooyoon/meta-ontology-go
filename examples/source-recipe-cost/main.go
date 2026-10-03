@@ -127,8 +127,8 @@ func main() {
 	file, err := os.Create(filepath.Join(*out, "manifest.json"))
 	check(err)
 	defer file.Close()
-	check(json.NewEncoder(file).Encode(map[string]any{"schema": "gooo/source-recipe-cost/v1",
-		"compiler_sha": revision, "baseline_records_sha256": frozen, "requests": 128,
+	check(json.NewEncoder(file).Encode(map[string]any{"schema": "gooo/source-recipe-cost/v2",
+		"compiler_sha": revision, "baseline_records_sha256": frozen, "requests": 64, "request_budget_pairs": 128,
 		"measured_decodes": count, "repeats": *repeats, "model_predictions": 0,
 		"scope": "Fresh recipe decode wall and allocation deltas; excludes input reads, memory counter reads, final plan/digest checks and serialization; known requests only"}))
 }

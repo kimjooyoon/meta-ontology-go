@@ -28,3 +28,7 @@ go build -o /tmp/source-recipe-cost ./examples/source-recipe-cost
 Keep every original JSONL record, manifest, process timing and build identity.
 The historical native collection did not confirm a decode wall improvement;
 this paired follow-up addresses that unresolved cost observation.
+
+The first collection's v1 manifest field `requests:128` counts request/budget
+records; it contains 64 distinct source requests. Those original manifests remain
+preserved. Future v2 manifests name both `requests:64` and `request_budget_pairs:128`.
