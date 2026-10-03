@@ -3,10 +3,12 @@ package bodycodegen
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/orderjudge"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
 
@@ -29,6 +31,7 @@ type typedPathModel struct {
 	model       *decision.Model
 	joint       *jointdecision.Model
 	three       *jointdecision.ThreeModel
+	order       *orderjudge.Model
 	retention   *RetainedModelInfo
 	diagnosis   *PathDiagnosisOptions
 	observation *PathObservationOptions
@@ -41,6 +44,7 @@ type TypedPathGenerator struct {
 	model *decision.Model
 	joint *jointdecision.Model
 	three *jointdecision.ThreeModel
+	order *orderjudge.Model
 	info  RetainedModelInfo
 }
 
@@ -65,8 +69,19 @@ func NewTypedPathGenerator(modelPath string) (*TypedPathGenerator, error) {
 			return nil, fmt.Errorf("load retained structural model: %w", err)
 		}
 		g.model, g.joint, g.three = models.model, models.joint, models.three
+		g.order = models.order
 		g.info.Loaded = true
-		if g.three != nil {
+		if g.order != nil {
+			metadata, weights, err := g.order.Marshal()
+			if err != nil {
+				return nil, err
+			}
+			g.info.MetadataSHA256 = strings.TrimPrefix(digest(metadata), "sha256:")
+			g.info.WeightsSHA256 = strings.TrimPrefix(digest(weights), "sha256:")
+			g.info.ResidentTensorBytes = orderjudge.ParameterCount * 4
+			g.info.ModelSchema, g.info.FeatureVersion = orderjudge.Schema, orderjudge.FeatureVersion
+			g.info.ArithmeticVersion = orderjudge.ArithmeticVersion
+		} else if g.three != nil {
 			g.info.MetadataSHA256, g.info.WeightsSHA256 = g.three.MetadataSHA256(), g.three.WeightsSHA256()
 			g.info.ResidentTensorBytes = g.three.ResidentTensorBytes()
 			g.info.ModelSchema, g.info.FeatureVersion = g.three.Schema(), g.three.FeatureVersion()
@@ -92,7 +107,7 @@ func (g *TypedPathGenerator) Generate(ctx context.Context, filename string, sour
 	if g == nil || g.info.Schema != "gooo/retained-path-model/v1" {
 		return Result{}, fmt.Errorf("generator required")
 	}
-	feedback, diagnosis, err := resolveTypedPathOptions(options, g.model != nil || g.joint != nil || g.three != nil)
+	feedback, diagnosis, err := resolveTypedPathOptions(options, g.model != nil || g.joint != nil || g.three != nil || g.order != nil)
 	if err != nil {
 		return Result{}, err
 	}
@@ -101,5 +116,6 @@ func (g *TypedPathGenerator) Generate(ctx context.Context, filename string, sour
 		return Result{}, err
 	}
 	return generateTypedPathRequest(ctx, filename, source, activityName, document,
-		typedPathModel{model: g.model, joint: g.joint, three: g.three, retention: &g.info, diagnosis: diagnosis, observation: observation}, options.StepAttempts, feedback)
+		typedPathModel{model: g.model, joint: g.joint, three: g.three, order: g.order, retention: &g.info,
+			diagnosis: diagnosis, observation: observation}, options.StepAttempts, feedback)
 }
