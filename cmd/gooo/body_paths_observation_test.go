@@ -62,4 +62,9 @@ func TestPathObservationStrictFiniteRequest(t *testing.T) {
 	if _, err := decodePathObservation([]byte(strings.Replace(reuse, `:true`, `:"true"`, 1))); err == nil {
 		t.Fatal("non-boolean reuse accepted")
 	}
+	resolve := strings.Replace(reuse, `"reuse_probe_outputs":true`, `"reuse_probe_outputs":true,"resolve_unique_candidate":true`, 1)
+	options, err = decodePathObservation([]byte(resolve))
+	if err != nil || !options.ResolveUniqueCandidate {
+		t.Fatal("resolution option lost", err)
+	}
 }

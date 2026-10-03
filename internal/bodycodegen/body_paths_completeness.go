@@ -63,6 +63,10 @@ func bodyPathCompletenessDimensions(report Report) ([]CompletenessDimension, []s
 		d := pathObservationDimension(path)
 		dimensions, required = append(dimensions, d), append(required, d.ID)
 	}
+	if path.Resolution != nil || path.Observation != nil && path.Observation.Options.ResolveUniqueCandidate {
+		d := pathResolutionDimension(path)
+		dimensions, required = append(dimensions, d), append(required, d.ID)
+	}
 	return dimensions, required
 }
 
@@ -105,8 +109,9 @@ func bodyPathFiniteDimension(report Report) CompletenessDimension {
 	}
 	if len(p.NativeCases) > 0 {
 		raw, _ := json.Marshal(cases)
+		selectedPassed, selectedTotal := bodyPathSelectedScore(p)
 		mismatch = mismatch || digest(raw) != testSHA || len(cases) != total ||
-			p.Search.TrainingTotal != total || p.Search.SelectedTrainingPassed != passed ||
+			selectedTotal != total || selectedPassed != passed ||
 			!validDigest(report.GeneratedDigest) || p.SelectedSourceSHA256 != report.SourceDigest
 	}
 	evidenceSuite := "body_paths.test_suite_sha256:" + testSHA
@@ -125,7 +130,7 @@ func bodyPathFiniteDimension(report Report) CompletenessDimension {
 }
 
 func bodyPathCalls(p *BodyPathReceipt) (local, external int, known bool) {
-	s := p.Search.Selection
+	s := bodyPathSelection(p)
 	if !p.SearchStarted && s.Schema == "" && s.ModelCalls == 0 && s.ExternalCalls == 0 {
 		return 0, 0, true // Source/context/model-load failures precede the prediction entry point.
 	}
@@ -134,7 +139,7 @@ func bodyPathCalls(p *BodyPathReceipt) (local, external int, known bool) {
 
 func bodyPathAccountingDimension(p *BodyPathReceipt) CompletenessDimension {
 	local, external, known := bodyPathCalls(p)
-	s := p.Search.Selection
+	s := bodyPathSelection(p)
 	pinned := local == 0 || validDigest("sha256:"+s.MetadataSHA256) && validDigest("sha256:"+s.WeightsSHA256)
 	return completenessDimension("typed_path_provider_accounting", boolCount(known && pinned), 1,
 		"local prediction counts, model pins and external request counts",
@@ -158,9 +163,11 @@ func bodyPathNetworkDimension(p *BodyPathReceipt) CompletenessDimension {
 func bindPathCompletenessScope(receipt *CompletenessReceipt, report Report) {
 	p := report.BodyPaths
 	local, external, known := bodyPathCalls(p)
-	s := p.Search.Selection
+	s := bodyPathSelection(p)
 	mode, provider := "deterministic_finite_tdd", "deterministic"
-	if !p.SearchStarted {
+	if pathResolved(p) {
+		mode = "unique_source_observation"
+	} else if !p.SearchStarted {
 		mode, provider = "not_started", "none"
 	} else if !known {
 		mode, provider = "unobserved_search_result", "UNKNOWN"
