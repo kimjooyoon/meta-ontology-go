@@ -19,6 +19,7 @@ import (
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodytiming"
 )
 
 const (
@@ -292,8 +293,10 @@ func evaluate(ctx context.Context, model Generator, item record) Result {
 }
 
 func evaluateWithExecution(ctx context.Context, model Generator, item record, execution *executionSettings) Result {
+	phase := bodytiming.Start(ctx, "request_decode")
 	result := Result{Schema: ResultSchema, Sequence: item.sequence, Status: "rejected"}
 	reject := func(err error) Result {
+		phase.End(false)
 		result.Error = err.Error()
 		return result
 	}
@@ -345,10 +348,14 @@ func evaluateWithExecution(ctx context.Context, model Generator, item record, ex
 	} else if request.ExecutionCases != nil {
 		return reject(errors.New("execution_cases requires --execute"))
 	}
+	phase.End(true)
+	phase = bodytiming.Start(ctx, "source_plan")
 	document, err := bodycodegen.DecodeSourcePathDocument(ctx, "stream.gooo", []byte(request.Source), request.Activity, request.Document)
 	if err != nil {
 		return reject(fmt.Errorf("decode typed document: %w", err))
 	}
+	phase.End(true)
+	phase = bodytiming.Start(ctx, "generation")
 	response, err := model.Generate(ctx, "stream.gooo", []byte(request.Source), request.Activity, document, request.Options)
 	if err != nil {
 		if failure, ok := errors.AsType[*bodycodegen.BodyPathError](err); ok {
@@ -357,12 +364,15 @@ func evaluateWithExecution(ctx context.Context, model Generator, item record, ex
 		return reject(fmt.Errorf("construction rejected: %w", err))
 	}
 	result.Status = "completed"
+	phase.End(true)
 	result.Response = &response
 	if execution != nil {
+		phase = bodytiming.Start(ctx, "generation_parent_encode")
 		parent, err := json.Marshal(response.Report.CompletenessReceipt)
 		if err != nil {
 			return reject(err)
 		}
+		phase.End(true)
 		observed, err := execution.owner.Execute(ctx, "stream.gooo", []byte(request.Source),
 			document, response, parent, cases, execution.goBinary)
 		result.Execution = &observed
