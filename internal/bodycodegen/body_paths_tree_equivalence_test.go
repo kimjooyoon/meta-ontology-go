@@ -14,6 +14,9 @@ func TestTypedTreeEquivalencePreservesStructure(t *testing.T) {
 	}{
 		{"parentheses", "return input - (2 - 3)", "return (input - ((2 - 3)))", true},
 		{"literal spelling", "return input + 0x10", "return (input + 16)", true},
+		{"constant", "return 2 - 3", "return (2 - 3)", true},
+		{"constant operands", "return 2 - 3", "return (3 - 2)", false},
+		{"constant literal", "return 0x10", "return 16", true},
 		{"grouping", "return input - (2 - 3)", "return ((input - 2) - 3)", false},
 		{"operands", "return input - 2", "return (2 - input)", false},
 		{"name", "var x = input; return x", "var y = input; return y", false},
