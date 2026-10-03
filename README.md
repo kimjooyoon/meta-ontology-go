@@ -94,14 +94,15 @@ The latest model study and the deployed integration have separate evidence:
   and broader task coverage are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
-This compiler revision uses **Go SDK v0.2.17-experimental**, with V3/V4 feature
+This compiler revision uses **Go SDK v0.2.18-experimental**, with V3/V4 feature
 contracts, versioned arithmetic and bounded probe sessions. The
 [observation loop](docs/path-observation-loop.md) can choose a distinguishing
 input, obtain its result from a declared Gooo reference activity, and use that
 additional case during body construction. Verified probe outputs can be reused,
 and an explicit option directly selects a unique surviving candidate. A
 [small source recipe](docs/source-path-recipes.md) derives the typed base from
-Gooo and names the few structural choices to explore. These operations require
+Gooo and names the few structural choices to explore, including bodies that
+leave their declared input unread. These operations require
 no additional model training.
 Each dated native study above identifies its
 own model and source revision. The
@@ -114,8 +115,8 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| Compiler at this revision | SDK v0.2.17; source recipes, observation reuse/resolution, V3/V4 model and feedback | Paired observations of completion and total construction cost |
-| [SDK v0.2.17](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.17-experimental) | V3/V4 inference, explicit arithmetic and owned probe sessions | Broader source and behavior coverage |
+| Compiler at this revision | SDK v0.2.18; source recipes including constant bodies, observation reuse/resolution, V3/V4 model and feedback | Paired observations of completion and total construction cost |
+| [SDK v0.2.18](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.18-experimental) | V3/V4 inference, explicit arithmetic, owned probe sessions and unread signature inputs | Broader source and behavior coverage |
 | [Hugging Face model](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Wording, operation order and new-task evaluation |
 
 At SDK revision `59c8d34`, local arm64 and

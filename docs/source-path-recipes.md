@@ -101,6 +101,23 @@ arrays of 128 expression slots and 128 statement slots, and lowering limits
 semantic nesting to 16. Slices, compiler ASTs, emitted text and receipts still
 allocate. Repeated `input` references share the required single input node.
 
+With SDK v0.2.18, a body may leave its declared input unread. For example,
+`return 2 - 3` can expose an operand-order choice and assemble `return (3 - 2)`
+from finite expectations. The compiler appends the signature input only when
+absent; it still consumes one of the 128 expression slots. Existing bodies keep
+their expression indices. Try the checked-in constant example:
+
+```sh
+gooo body-codegen --json --activity Constant \
+  --path-plan examples/body-codegen/constant-recipe.json \
+  examples/body-codegen/constant-recipe.gooo.fixture
+```
+
+This uses ordinary deterministic search without training or a model. The SDK
+continues to reject other unused expressions and missing or duplicate input
+declarations. A literal-only body needs no recipe choices and can use ordinary
+`body-codegen`; recipes continue to require at least one structural choice.
+
 The source binding first uses the existing canonical body comparison. For
 supported typed bodies that differ only in presentation, the receipt may use
 `canonical_typed_body_tree/v1`: it keeps operators, child edges, local names,

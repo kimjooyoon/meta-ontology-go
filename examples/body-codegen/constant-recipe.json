@@ -1,0 +1,13 @@
+{
+  "schema": "gooo/source-typed-path-recipe/v1",
+  "choices": [
+    {
+      "id": "constant-order",
+      "kind": "operand_order",
+      "occurrence": 0,
+      "intent": "3에서 2를 뺀다. Subtract two from three."
+    }
+  ],
+  "test_cases": [{"input": 0, "expected": 1}, {"input": 17, "expected": 1}],
+  "max_attempts": 2
+}

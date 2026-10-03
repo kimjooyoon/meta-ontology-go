@@ -48,6 +48,9 @@ func typedBodyTree(ctx context.Context, name string, source []byte) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
+	if err := b.includeDeclaredInput(); err != nil {
+		return nil, err
+	}
 	plan := bodyplan.Plan{Schema: bodyplan.Schema, ID: "typed-source-tree", Name: name,
 		ResultType: decision.TypeInt, Expressions: b.expressions[:b.expressionCount],
 		Statements: b.statements[:b.statementCount], Root: root}

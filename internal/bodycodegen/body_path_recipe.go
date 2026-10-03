@@ -92,6 +92,9 @@ func expandSourceRecipe(ctx context.Context, filename string, source []byte, act
 	if err != nil {
 		return pathplan.Document{}, err
 	}
+	if err := b.includeDeclaredInput(); err != nil {
+		return pathplan.Document{}, err
+	}
 	document := pathplan.Document{Schema: pathplan.DocumentSchema, TestCases: recipe.TestCases,
 		MaxAttempts: recipe.MaxAttempts, Seed: recipe.Seed, Plan: pathplan.Plan{Schema: pathplan.Schema,
 			Base: bodyplan.Plan{Schema: bodyplan.Schema, ID: base.Report.ActivityID, Name: activity,
@@ -124,6 +127,16 @@ type recipeArena struct {
 	expressionCount, statementCount int
 	inputIndex                      int
 	inputSeen                       bool
+}
+
+// The source signature declares input even when a constant body never reads it.
+// Append only when absent so existing recipe indices and documents stay stable.
+func (b *recipeArena) includeDeclaredInput() error {
+	if b.inputSeen {
+		return nil
+	}
+	_, err := b.expression(&ast.Ident{Name: "input"}, 0)
+	return err
 }
 
 func (b *recipeArena) bounded(depth int) error {
