@@ -14,6 +14,37 @@ markers:
 go run ./cmd/gooo body-codegen --activity ClampBelowZero examples/body-codegen/main.gooo.fixture
 ```
 
+For several body statements, a backtick string can hold the code on separate
+lines. Backslashes and line endings are literal, and inner text literals keep
+their own Go body syntax. Existing double-quoted strings decode escapes as before.
+
+```gooo
+activity ClampBelowZero(Integer) -> Integer computes `
+let value = input
+value = input
+let accepted = value >= 0
+if accepted {
+    return value
+} else {
+    return 0
+}
+`
+```
+
+The [complete raw-body fixture](../../examples/body-codegen/raw-computes.gooo.fixture)
+includes the package, namespace and Integer declaration. Generate it with:
+
+```sh
+go run ./cmd/gooo body-codegen --activity ClampBelowZero examples/body-codegen/raw-computes.gooo.fixture
+```
+
+A closing backtick ends the outer literal. Use the double-quoted form for body
+text containing a backtick. Canonical Gooo formatting writes an escaped quoted
+string while preserving the decoded contents, stable IDs and body semantics.
+Whitespace remains part of the decoded body, so different layout can change
+generated formatting and source digests. Unterminated literals and invalid UTF-8
+retain source diagnostics and cannot become accepted body generation.
+
 For an explicit seeded probability experiment, pass a seed:
 
 ```sh
