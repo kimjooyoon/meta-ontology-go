@@ -1,5 +1,10 @@
 # Experimental activity body code generation
 
+For multiple requests in one process, use
+[`gooo body-path-stream`](../native-body-worker.md). It accepts source recipes,
+keeps an optional small model loaded and emits each result as soon as it is ready.
+Its `response` has the same shape as the JSON output below.
+
 `gooo body-codegen` is the first source-to-body projection experiment. It reads
 an activity's existing `computes` string and emits one deterministic Go
 function, bound to the activity's stable semantic ID by generated-region

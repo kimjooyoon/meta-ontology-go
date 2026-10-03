@@ -203,6 +203,11 @@ receipt structures. [The language sketch](docs/spec.md) describes the core;
 [body generation](docs/language/body-codegen.md) and
 [receipt projection](docs/declared-completeness-receipt.md) describe those profiles.
 
+For repeated body construction, `gooo body-path-stream` accepts one JSON request
+per line and emits each result when ready. Its optional local model stays loaded
+between requests; omitting `--model` selects deterministic construction. Start
+with the [runnable recipe example](docs/native-body-worker.md).
+
 ## Earlier design illustrations
 
 The following illustrations explain design ideas. Current implemented behavior
