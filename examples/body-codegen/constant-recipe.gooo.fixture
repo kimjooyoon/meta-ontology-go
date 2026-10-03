@@ -1,0 +1,4 @@
+package constants
+namespace constants
+entity Integer id "constants://integer"
+activity Constant(Integer) -> Integer computes "return 2 - 3"
