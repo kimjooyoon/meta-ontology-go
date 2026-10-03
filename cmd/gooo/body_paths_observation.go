@@ -17,11 +17,12 @@ func decodePathObservation(raw []byte) (*bodycodegen.PathObservationOptions, err
 		return nil, fmt.Errorf("path observation requires strict JSON of at most 4 KiB")
 	}
 	var wire struct {
-		Schema         string   `json:"schema"`
-		Inputs         []*int64 `json:"inputs"`
-		MaxCandidates  int      `json:"max_candidates"`
-		MaxRounds      int      `json:"max_rounds"`
-		OracleActivity string   `json:"oracle_activity"`
+		Schema            string   `json:"schema"`
+		Inputs            []*int64 `json:"inputs"`
+		MaxCandidates     int      `json:"max_candidates"`
+		MaxRounds         int      `json:"max_rounds"`
+		OracleActivity    string   `json:"oracle_activity"`
+		ReuseProbeOutputs bool     `json:"reuse_probe_outputs"`
 	}
 	d := json.NewDecoder(bytes.NewReader(raw))
 	d.DisallowUnknownFields()
@@ -34,7 +35,7 @@ func decodePathObservation(raw []byte) (*bodycodegen.PathObservationOptions, err
 		return nil, fmt.Errorf("invalid bounded path observation request")
 	}
 	opts := &bodycodegen.PathObservationOptions{MaxCandidates: wire.MaxCandidates, MaxRounds: wire.MaxRounds,
-		OracleActivity: wire.OracleActivity}
+		OracleActivity: wire.OracleActivity, ReuseProbeOutputs: wire.ReuseProbeOutputs}
 	for _, input := range wire.Inputs {
 		if input == nil {
 			return nil, fmt.Errorf("path probe input requires an explicit integer")
