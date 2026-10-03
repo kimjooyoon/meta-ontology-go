@@ -57,6 +57,9 @@ func bindTypedPathSource(ctx context.Context, filename string, source []byte, ac
 	}
 	receipt.SourceBinding, err = routeEquivalence(file.Package.Name, activityName, "int64", "int64",
 		originalBody, fallbackRoute.source, "typed_path_fallback_matches_authoritative_source")
+	if err == nil && !receipt.SourceBinding.Equivalent {
+		receipt.SourceBinding, err = typedBodyTreeEquivalence(ctx, activityName, originalBody, fallbackRoute.source)
+	}
 	if err != nil || !receipt.SourceBinding.Equivalent {
 		return typedPathSource{}, fmt.Errorf("typed path fallback does not match the authoritative source body")
 	}
