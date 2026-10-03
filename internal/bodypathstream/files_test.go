@@ -132,9 +132,13 @@ func TestFilesPreserveFiniteFailureAndNativeFailure(t *testing.T) {
 			t.Fatal("finite failure lost", row)
 		}
 	}
+	if !strings.Contains(stderr.String(), "finite expectations 0/1") || strings.Contains(stderr.String(), "unobserved") {
+		t.Fatal("observed zero displayed as missing", stderr.String())
+	}
 	args, out = fileArgs(t, false, `{"schema":"gooo/body-runtime-cases/v1","cases":[{"input":2,"expected":15}]}`)
 	args[len(args)-1] = filepath.Join(t.TempDir(), "missing-go")
 	stdout.Reset()
+	stderr.Reset()
 	if code := RunFilesCommand(context.Background(), "files", args, &stdout, &stderr); code != 1 {
 		t.Fatal("native failure exit", code)
 	}
@@ -142,6 +146,10 @@ func TestFilesPreserveFiniteFailureAndNativeFailure(t *testing.T) {
 		if row.Status != "execution_failed" || row.GenerationFile == "" || row.RuntimeFile == "" || row.NativeRuns != 0 {
 			t.Fatal("failure not retained", row)
 		}
+	}
+	if !strings.Contains(stderr.String(), "finite expectations unobserved (1 declared)") ||
+		strings.Contains(stderr.String(), "finite expectations 0/1") {
+		t.Fatal("unexecuted expectation displayed as failed", stderr.String())
 	}
 }
 
@@ -155,6 +163,10 @@ func TestFilesRejectMissingExpectationBeforeGeneration(t *testing.T) {
 		if row.Status != "rejected" || row.GenerationFile != "" || row.RuntimeFile != "" {
 			t.Fatal("invalid cases reached generation", row)
 		}
+	}
+	if !strings.Contains(stderr.String(), "finite expectations unobserved") ||
+		strings.Contains(stderr.String(), "finite expectations 0/0") {
+		t.Fatal("rejected expectation displayed as measured zero", stderr.String())
 	}
 }
 
