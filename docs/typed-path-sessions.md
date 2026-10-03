@@ -1,5 +1,8 @@
 # Incremental typed paths
 
+The `--path-plan` input also accepts a [small source recipe](source-path-recipes.md)
+that derives the typed base from the activity's existing Gooo body.
+
 The optional local model judges bounded Korean or English intentions for Gooo
 structural alternatives. A session ranks those alternatives once, then evaluates
 new candidate bodies in batches without repeating earlier masks. It does not

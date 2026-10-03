@@ -55,7 +55,7 @@ func runBodyExecuteContext(ctx context.Context, args []string, stdout, stderr io
 		fmt.Fprintf(stderr, "gooo body-execute: generation: %v\n", err)
 		return exitFailure
 	}
-	plan, err := bodyexecution.DecodePlan(data["--path-plan"])
+	plan, err := bodyexecution.DecodeSourcePlan(ctx, "<body-source>", data["--source"], prior.Report.Activity, data["--path-plan"])
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo body-execute: plan: %v\n", err)
 		return exitFailure

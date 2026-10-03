@@ -185,7 +185,7 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		if readErr != nil {
 			return reportBodyCodegenFailure(jsonMode, pathPlanPath, activity, planBytes, readErr, stdout, stderr)
 		}
-		document, decodeErr := pathplan.DecodeDocument(planBytes)
+		document, decodeErr := bodycodegen.DecodeSourcePathDocument(ctx, filename, source, activity, planBytes)
 		if decodeErr != nil {
 			return reportBodyCodegenFailure(jsonMode, pathPlanPath, activity, planBytes, decodeErr, stdout, stderr)
 		}
