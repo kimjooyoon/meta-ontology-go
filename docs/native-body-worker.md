@@ -83,6 +83,12 @@ releases it on close or cancellation. Every current tool/executable check still
 reads the complete file; retained digests do not stand in for current bytes.
 Reads are bounded to 256 MiB plus one detection byte, and a changed read length
 fails the binding. These limits do not establish an atomic filesystem snapshot.
+On Unix the hash reader opens with a nonblocking flag and rejects nonregular
+files before reading. An executable FIFO without a writer therefore returns
+`Go tool must be a regular executable file` instead of waiting for a writer.
+Ordinary regular-file symlinks remain supported. Other platforms inspect the
+file kind before opening and validate the opened file again. These checks bound
+the FIFO case; regular filesystem I/O still depends on the operating system.
 Stderr also shows generation, source replay, two native runs and artifact saving.
 The recorder retains at most 32 sequential intervals per request and creates no
 background workers. Without the flag, no timing sidecars are created.
