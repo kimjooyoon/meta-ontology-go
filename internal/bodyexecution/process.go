@@ -47,6 +47,7 @@ func (b *limitedBuffer) Write(p []byte) (int, error) {
 
 func process(ctx context.Context, dir, binary string, input []byte, args ...string) ([]byte, ProcessObservation, error) {
 	cmd := exec.CommandContext(ctx, binary, args...)
+	bindProcessGroup(cmd)
 	cmd.Dir, cmd.WaitDelay = dir, time.Second
 	cmd.Stdin = bytes.NewReader(input)
 	cmd.Env = childEnvironment()

@@ -50,6 +50,7 @@ Each input line is one object with these fields:
 | `activity` | Named source Integer -> Integer activity |
 | `document` | Full `gooo/body-codegen-typed-path-plan/v1` document or short `gooo/source-typed-path-recipe/v1` recipe |
 | `options` | Optional `step_attempts`, `feedback_rounds`, `feedback_unfixed`, `ci`, `diagnosis`, `observation` |
+| `execution_cases` | With `--execute`, a required `gooo/body-runtime-cases/v1` object containing 1..128 current integer input/expected pairs |
 
 Step attempts are 0..64 (zero means ordinary bounded search); feedback rounds are
 0..16. Feedback requires a model, nonzero step and explicit rounds. CI context is
@@ -91,6 +92,53 @@ This is an explicit experiment. Finite completeness can be partial. Transport
 understanding. Packed model storage is separate from resident decoded arrays.
 Worker memory and startup amortization require measured evidence; this document
 does not assert a speedup, all-input correctness, or arbitrary text generation.
+
+## Generate and immediately execute in one process
+
+Add `--execute` and put the independent suite in each request:
+
+```sh
+jq -cn --rawfile source examples/body-codegen/typed-path-compound.gooo.fixture \
+  --slurpfile document examples/body-codegen/typed-path-compound-plan.json \
+  --slurpfile cases examples/body-codegen/typed-path-runtime-cases.json \
+  'range(2) as $i | {schema:"gooo/native-body-stream-request/v1",correlation_id:("run-"+($i|tostring)),
+    source:$source,activity:"Combined",document:$document[0],execution_cases:$cases[0]}' \
+  | gooo body-path-stream --execute --go-bin /path/to/go1.27.1/bin/go > results.jsonl
+
+jq '{id:.correlation_id,status,error,reused:.execution.observation.artifact.reused,
+  cases:.execution.observation.cases}' results.jsonl
+```
+
+An explicit `--model` works with the same option. Its absence uses deterministic
+construction. Generation finishes before this request starts native execution;
+each result includes the original generation and a new `execution` receipt.
+Responses arrive before input EOF. A failed native setup/build/run returns
+`execution_failed` and preserves the generated body and partial runtime record.
+`completed` means the runtime observation finished; read its finite numerator and
+denominator to see unmet expectations. Individual failures still leave the stream
+available for the next request. Without `--execute`, `execution_cases` is rejected.
+
+One stream owns at most one temporary executable/workspace. Matching generated
+Go, driver contract, tool bytes/location/version, platform, producer and child
+environment reuse that artifact. Every call freshly replays the source, plan and
+parent receipt, hashes the executable before each run, and executes the current
+input array twice. Changed expectations produce new observations. Changed keys
+or artifact bytes require a new build. Close/EOF removes the workspace; cancellation
+joins active children and removes owned files. Linux/macOS cancellation targets
+the child process group; other platforms use the direct-child mechanism.
+
+Construction can use 1..8 workers; native observations share one cancellable gate.
+They execute serially, with queue wait recorded in `artifact.wait_ns`. The 60-second
+runtime deadline includes waiting; each compiled-program run has a two-second
+limit. Mixed projections can replace the slot frequently. A source-bound original
+build appears in `artifact.source_build`; `observation.build` records only work
+done by the current call. Reuse has three current children (version plus two runs)
+and excludes prior build cost. Owned execution uses runtime receipt profile v2;
+the standalone `body-execute` v1 behavior remains available.
+
+The runtime compiles the closed, pure `Integer -> Integer` projection and a stdlib
+array driver. Its Go tool is pinned to 1.27.1. Source checks constrain the emitted
+body; the caller still chooses the local Go executable and inherits host permissions.
 
 ## Optional finite ambiguity diagnosis
 

@@ -37,6 +37,14 @@ func runtimeCompleteness(prior bodycodegen.Result, result Result) *completeness.
 	}
 	o := result.Observation
 	r.ProfileID = "gooo/typed-path-runtime-v1"
+	buildPassed := o.Build.Completed && o.ExecutableSHA256 != ""
+	buildReason := "The Go tool and compiled executable bytes are bound separately."
+	if o.Artifact != nil {
+		r.ProfileID = "gooo/typed-path-runtime-v2"
+		buildPassed = o.Artifact.ExecutableVerified && o.Artifact.SourceBuild.Completed && o.ExecutableSHA256 != ""
+		r.Scope["owned_artifact"] = o.Artifact
+		buildReason = "The source-bound successful original build is recorded in owned_artifact; current Build records only work actually executed by this call."
+	}
 	r.DecisionBasis = "Original compiler dimensions are preserved; this producer adds exact source replay, native build, ordered compiled executions, finite caller expectations and reverse source links. Unobserved permissions, model-training generalization and full-domain behavior remain explicit."
 	r.Scope["parent_receipt_sha256"] = o.ParentReceiptSHA256
 	r.Scope["producer_source_sha"] = o.ProducerSourceSHA
@@ -82,7 +90,7 @@ func runtimeCompleteness(prior bodycodegen.Result, result Result) *completeness.
 	added := []completeness.CompletenessDimension{
 		axis("runtime_completion", btoi(o.Stage == "COMPLETE"), 1, "completed bounded runtime observations", "Build, execution, decoding and replay errors are recorded at the actual stage.", o.Stage),
 		axis("runtime_source_replay", btoi(o.ProjectionReplayed), 1, "exact source/document/selection/emission replays", "Only the closed selected projection may reach the build child.", o.OriginalSourceSHA256),
-		axis("runtime_build", btoi(o.Build.Completed && o.ExecutableSHA256 != ""), 1, "successful pinned Go builds", "The Go tool and compiled executable bytes are bound separately.", o.GoToolSHA256),
+		axis("runtime_build", btoi(buildPassed), 1, "successful pinned Go builds", buildReason, o.GoToolSHA256),
 		axis("execution_boundary", completed, 2, "completed compiled-program executions", "This producer actually executes the source-replayed generated package twice.", o.ExecutableSHA256),
 		axis("runtime_finite_accuracy", passed, o.DeclaredCases, "ordered finite caller expectations matched", "These cases measure supplied expectations only; actual outputs and failures are retained.", o.RuntimeSuiteSHA256),
 		axis("runtime_deterministic_replay", btoi(o.RuntimeReplayed), 1, "matching compiled output sequences", "Both independent process executions must return the same ordered int64 values.", o.ExecutableSHA256),
@@ -137,13 +145,22 @@ func replaceAxis(r *completeness.CompletenessReceipt, d completeness.Completenes
 }
 func runtimeResourceAxis(o Observation) completeness.CompletenessDimension {
 	processes := append([]ProcessObservation{o.Toolchain, o.Build}, o.Runs...)
+	if o.Artifact != nil && o.Artifact.Reused {
+		processes = append([]ProcessObservation{o.Toolchain}, o.Runs...)
+	}
 	observed := 0
 	for _, p := range processes {
 		if p.ExitCode != nil && p.PeakRSSBytes != nil && p.WallNS > 0 {
 			observed++
 		}
 	}
-	return axis("runtime_child_resources", observed, 4, "toolchain/build/two-runtime child CPU, wall and peak RSS profiles",
+	denominator := 4
+	unit := "toolchain/build/two-runtime child CPU, wall and peak RSS profiles"
+	if o.Artifact != nil && o.Artifact.Reused {
+		denominator = 3
+		unit = "current toolchain/two-runtime child CPU, wall and peak RSS profiles; retained build excluded"
+	}
+	return axis("runtime_child_resources", observed, denominator, unit,
 		"CPU is process user+system time; peak RSS is known on Linux/macOS. Parent compiler resources and whole-host utilization remain unobserved.", "runtime observation toolchain/build/runs")
 }
 

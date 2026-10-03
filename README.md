@@ -207,6 +207,10 @@ For repeated body construction, `gooo body-path-stream` accepts one JSON request
 per line and emits each result when ready. Its optional local model stays loaded
 between requests; omitting `--model` selects deterministic construction. Start
 with the [runnable recipe example](docs/native-body-worker.md).
+Add `--execute` and per-request `execution_cases` to observe the generated body
+immediately. A repeated matching body reuses one owned executable while each
+request checks current source and runs current inputs twice. Results retain
+finite failures and distinguish actual new builds from reused build evidence.
 
 ## Earlier design illustrations
 

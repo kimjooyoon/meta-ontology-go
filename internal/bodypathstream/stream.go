@@ -18,6 +18,7 @@ import (
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 )
 
 const (
@@ -35,12 +36,13 @@ type Generator interface {
 }
 
 type Request struct {
-	Schema        string                       `json:"schema"`
-	CorrelationID string                       `json:"correlation_id"`
-	Source        string                       `json:"source"`
-	Activity      string                       `json:"activity"`
-	Document      json.RawMessage              `json:"document"`
-	Options       bodycodegen.TypedPathOptions `json:"options"`
+	Schema         string                       `json:"schema"`
+	CorrelationID  string                       `json:"correlation_id"`
+	Source         string                       `json:"source"`
+	Activity       string                       `json:"activity"`
+	Document       json.RawMessage              `json:"document"`
+	Options        bodycodegen.TypedPathOptions `json:"options"`
+	ExecutionCases json.RawMessage              `json:"execution_cases,omitempty"`
 }
 
 type Result struct {
@@ -51,6 +53,7 @@ type Result struct {
 	Response      *bodycodegen.Result          `json:"response,omitempty"`
 	Failure       *bodycodegen.BodyPathReceipt `json:"failure_receipt,omitempty"`
 	Error         string                       `json:"error,omitempty"`
+	Execution     *bodyexecution.Result        `json:"execution,omitempty"`
 }
 
 type record struct {
@@ -65,6 +68,26 @@ type record struct {
 // On cancellation it closes input and output to interrupt pending I/O. Both
 // Close methods must promptly unblock a concurrent Read or Write.
 func Run(parent context.Context, model Generator, input io.ReadCloser, output io.WriteCloser, workers int) error {
+	return run(parent, model, input, output, workers, nil)
+}
+
+type executionSettings struct {
+	owner    *bodyexecution.Executor
+	goBinary string
+}
+
+// RunWithExecution constructs each request, then immediately observes its native
+// behavior. One owned artifact slot is shared by the bounded construction workers.
+// Each request supplies current expectations; all source checks and runs are fresh.
+func RunWithExecution(parent context.Context, model Generator, input io.ReadCloser, output io.WriteCloser,
+	workers int, goBinary string) (err error) {
+	owner := bodyexecution.NewExecutor()
+	defer func() { err = errors.Join(err, owner.Close()) }()
+	return run(parent, model, input, output, workers, &executionSettings{owner, goBinary})
+}
+
+func run(parent context.Context, model Generator, input io.ReadCloser, output io.WriteCloser,
+	workers int, execution *executionSettings) error {
 	if parent == nil {
 		return errors.New("context is required")
 	}
@@ -124,7 +147,7 @@ func Run(parent context.Context, model Generator, input io.ReadCloser, output io
 	for range workers {
 		go func() {
 			defer workerGroup.Done()
-			worker(ctx, model, jobs, results)
+			worker(ctx, model, jobs, results, execution)
 		}()
 	}
 	go func() {
@@ -242,7 +265,7 @@ func trimCR(line []byte) []byte {
 	return line
 }
 
-func worker(ctx context.Context, model Generator, jobs <-chan record, results chan<- Result) {
+func worker(ctx context.Context, model Generator, jobs <-chan record, results chan<- Result, execution *executionSettings) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -254,7 +277,7 @@ func worker(ctx context.Context, model Generator, jobs <-chan record, results ch
 			if ctx.Err() != nil {
 				return
 			}
-			result := evaluate(ctx, model, item)
+			result := evaluateWithExecution(ctx, model, item, execution)
 			select {
 			case <-ctx.Done():
 				return
@@ -265,6 +288,10 @@ func worker(ctx context.Context, model Generator, jobs <-chan record, results ch
 }
 
 func evaluate(ctx context.Context, model Generator, item record) Result {
+	return evaluateWithExecution(ctx, model, item, nil)
+}
+
+func evaluateWithExecution(ctx context.Context, model Generator, item record, execution *executionSettings) Result {
 	result := Result{Schema: ResultSchema, Sequence: item.sequence, Status: "rejected"}
 	reject := func(err error) Result {
 		result.Error = err.Error()
@@ -308,6 +335,16 @@ func evaluate(ctx context.Context, model Generator, item record) Result {
 		return reject(errors.New("correlation_id must be 1-128 UTF-8 bytes without control characters"))
 	}
 	result.CorrelationID = request.CorrelationID
+	var cases []pathplan.TestCase
+	if execution != nil {
+		var err error
+		cases, err = bodyexecution.DecodeCases(request.ExecutionCases)
+		if err != nil {
+			return reject(fmt.Errorf("execution_cases: %w", err))
+		}
+	} else if request.ExecutionCases != nil {
+		return reject(errors.New("execution_cases requires --execute"))
+	}
 	document, err := bodycodegen.DecodeSourcePathDocument(ctx, "stream.gooo", []byte(request.Source), request.Activity, request.Document)
 	if err != nil {
 		return reject(fmt.Errorf("decode typed document: %w", err))
@@ -321,6 +358,18 @@ func evaluate(ctx context.Context, model Generator, item record) Result {
 	}
 	result.Status = "completed"
 	result.Response = &response
+	if execution != nil {
+		parent, err := json.Marshal(response.Report.CompletenessReceipt)
+		if err != nil {
+			return reject(err)
+		}
+		observed, err := execution.owner.Execute(ctx, "stream.gooo", []byte(request.Source),
+			document, response, parent, cases, execution.goBinary)
+		result.Execution = &observed
+		if err != nil {
+			result.Status, result.Error = "execution_failed", err.Error()
+		}
+	}
 	return result
 }
 

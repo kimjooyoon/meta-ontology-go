@@ -20,8 +20,10 @@ func RunCommand(ctx context.Context, name string, args []string, input io.Reader
 	flags.SetOutput(stderr)
 	model := flags.String("model", "", "explicit local model.json; omit for deterministic construction")
 	workers := flags.Int("workers", 1, "bounded construction workers (1..8)")
+	execute := flags.Bool("execute", false, "observe each construction with current execution_cases; retain one native artifact")
+	goBinary := flags.String("go-bin", "", "local Go 1.27.1 tool for --execute")
 	flags.Usage = func() {
-		fmt.Fprintf(stderr, "usage: %s [--model model.json] [--workers 1..8] < requests.jsonl\n", name)
+		fmt.Fprintf(stderr, "usage: %s [--model model.json] [--workers 1..8] [--execute [--go-bin path]] < requests.jsonl\n", name)
 		flags.PrintDefaults()
 	}
 	if err := flags.Parse(args); err != nil {
@@ -30,7 +32,7 @@ func RunCommand(ctx context.Context, name string, args []string, input io.Reader
 		}
 		return 2
 	}
-	if flags.NArg() != 0 || *workers < 1 || *workers > MaxWorkers {
+	if flags.NArg() != 0 || *workers < 1 || *workers > MaxWorkers || (*goBinary != "" && !*execute) {
 		flags.Usage()
 		return 2
 	}
@@ -40,7 +42,7 @@ func RunCommand(ctx context.Context, name string, args []string, input io.Reader
 		fmt.Fprintf(stderr, "%s: input and output must support Close for cancellation\n", name)
 		return 1
 	}
-	if err := runCommandStream(ctx, *model, reader, writer, stderr, *workers); err != nil {
+	if err := runCommandStream(ctx, *model, reader, writer, stderr, *workers, *execute, *goBinary); err != nil {
 		fmt.Fprintf(stderr, "%s: %v\n", name, err)
 		return 1
 	}
@@ -48,7 +50,7 @@ func RunCommand(ctx context.Context, name string, args []string, input io.Reader
 }
 
 func runCommandStream(ctx context.Context, model string, input io.ReadCloser,
-	stdout io.WriteCloser, stderr io.Writer, workers int) error {
+	stdout io.WriteCloser, stderr io.Writer, workers int, execute bool, goBinary string) error {
 	if ctx == nil {
 		return errors.New("context is required")
 	}
@@ -61,6 +63,9 @@ func runCommandStream(ctx context.Context, model string, input io.ReadCloser,
 	}
 	if err := json.NewEncoder(stderr).Encode(generator.Info()); err != nil {
 		return fmt.Errorf("write setup record: %w", err)
+	}
+	if execute {
+		return RunWithExecution(ctx, generator, input, stdout, workers, goBinary)
 	}
 	return Run(ctx, generator, input, stdout, workers)
 }
