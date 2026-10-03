@@ -167,8 +167,7 @@ func timingKeys(raw []byte, shape reflect.Type) error {
 			return err
 		}
 		allowed := make(map[string]reflect.Type, shape.NumField())
-		for i := range shape.NumField() {
-			field := shape.Field(i)
+		for field := range shape.Fields() {
 			allowed[field.Tag.Get("json")] = field.Type
 		}
 		for key, value := range fields {
