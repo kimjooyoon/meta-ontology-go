@@ -76,7 +76,7 @@ func diagnoseSelectedPath(ctx context.Context, prepared *pathplan.PreparedPlan, 
 	raw, _ := json.Marshal(options)
 	receipt.DiagnosisOptionsSHA256 = digest(raw)
 	receipt.DiagnosisBudget = options.MaxCandidates
-	value, err := prepared.Diagnose(ctx, receipt.Search.Selection.Choices, document.TestCases,
+	value, err := prepared.Diagnose(ctx, bodyPathSelection(receipt).Choices, document.TestCases,
 		options.Inputs, options.MaxCandidates)
 	receipt.Timing.DiagnosisMS = elapsedMS(started)
 	if value.Schema != "" {

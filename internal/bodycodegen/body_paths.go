@@ -38,6 +38,7 @@ type BodyPathReceipt struct {
 	DiagnosisBudget        int                        `json:"diagnosis_budget,omitempty"`
 	DiagnosisScope         string                     `json:"diagnosis_scope,omitempty"`
 	Observation            *PathObservationReceipt    `json:"observation,omitempty"`
+	Resolution             *PathResolutionReceipt     `json:"resolution,omitempty"`
 	NativeCases            []IRBodyFillCaseResult     `json:"native_case_results,omitempty"`
 	FunctionalCompleteness float64                    `json:"finite_functional_completeness_percent"`
 	Scope                  string                     `json:"scope"`
@@ -52,6 +53,7 @@ type BodyPathTiming struct {
 	BoundedSearchMS  float64 `json:"bounded_search_ms"`
 	DiagnosisMS      float64 `json:"diagnosis_ms,omitempty"`
 	ObservationMS    float64 `json:"observation_ms,omitempty"`
+	ResolutionMS     float64 `json:"resolution_ms,omitempty"`
 	FinalEmissionMS  float64 `json:"final_emission_ms"`
 	TotalMS          float64 `json:"total_ms"`
 	ExecutionModel   string  `json:"execution_model"`
@@ -172,7 +174,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return fail(err)
 	}
-	base, activity := bound.base, bound.activity
+	base := bound.base
 	effectiveCases, err := observeTypedPaths(ctx, filename, source, activityName, prepared,
 		document.TestCases, models.observation, receipt)
 	if err != nil {
@@ -182,6 +184,16 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	// separately recorded finite evaluation suite gains oracle observations.
 	searchDocument := document
 	searchDocument.TestCases = effectiveCases
+	resolved, err := resolveObservedPath(ctx, document, prepared, receipt)
+	if err != nil {
+		return fail(err)
+	}
+	if resolved != nil {
+		if err := diagnoseSelectedPath(ctx, prepared, searchDocument, models.diagnosis, receipt); err != nil {
+			return fail(err)
+		}
+		return emitSelectedTypedPath(ctx, filename, source, activityName, bound, resolved, effectiveCases, receipt, started)
+	}
 	model := models.model
 	joint := models.joint
 	three := models.three
@@ -268,7 +280,17 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if err := diagnoseSelectedPath(ctx, prepared, searchDocument, models.diagnosis, receipt); err != nil {
 		return fail(err)
 	}
-	completed, err := replaceActivityProgram(source, activity.ValueProgramSpan, selected.GoooBody())
+	return emitSelectedTypedPath(ctx, filename, source, activityName, bound, selected, effectiveCases, receipt, started)
+}
+
+func emitSelectedTypedPath(ctx context.Context, filename string, source []byte, activityName string,
+	bound typedPathSource, selected *bodyplan.Program, effectiveCases []pathplan.TestCase,
+	receipt *BodyPathReceipt, started time.Time) (Result, error) {
+	fail := func(err error) (Result, error) {
+		receipt.Timing.TotalMS = elapsedMS(started)
+		return Result{}, &BodyPathError{Receipt: receipt, Cause: err}
+	}
+	completed, err := replaceActivityProgram(source, bound.activity.ValueProgramSpan, selected.GoooBody())
 	if err != nil {
 		return fail(err)
 	}
@@ -280,7 +302,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return fail(err)
 	}
-	if result.Report.ActivityID != base.Report.ActivityID {
+	if result.Report.ActivityID != bound.base.Report.ActivityID {
 		return fail(fmt.Errorf("typed path emission changed stable semantic identity"))
 	}
 	cases := make([]IRBodyFillTestCase, len(effectiveCases))
@@ -298,8 +320,9 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 			return fail(fmt.Errorf("native body and typed path evaluator disagree"))
 		}
 	}
-	if passed != search.SelectedTrainingPassed {
-		return fail(fmt.Errorf("native finite pass count differs from the search receipt"))
+	expectedPassed, _ := bodyPathSelectedScore(receipt)
+	if passed != expectedPassed {
+		return fail(fmt.Errorf("native finite pass count differs from the selection record"))
 	}
 	receipt.SelectedSourceSHA256 = digest(completed)
 	receipt.NativeCases = results
