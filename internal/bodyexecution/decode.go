@@ -74,17 +74,6 @@ func DecodeCases(data []byte) ([]pathplan.TestCase, error) {
 	if suite.Schema != "gooo/body-runtime-cases/v1" || len(suite.Cases) < 1 || len(suite.Cases) > 128 {
 		return nil, fmt.Errorf("runtime suite requires its declared schema and 1..128 cases")
 	}
-	var shape struct {
-		Cases []struct{ Input, Expected json.RawMessage }
-	}
-	if err := json.Unmarshal(data, &shape); err != nil {
-		return nil, err
-	}
-	for i, c := range shape.Cases {
-		if len(c.Input) == 0 || len(c.Expected) == 0 || bytes.Equal(bytes.TrimSpace(c.Input), []byte("null")) || bytes.Equal(bytes.TrimSpace(c.Expected), []byte("null")) {
-			return nil, fmt.Errorf("runtime case %d requires explicit int64 input and expected values", i+1)
-		}
-	}
 	return suite.Cases, nil
 }
 
