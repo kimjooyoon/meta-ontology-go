@@ -53,7 +53,7 @@ func VerifyTypedPathProjection(ctx context.Context, filename string, source []by
 		return err
 	}
 	if observed.DocumentSHA256 != p.DocumentSHA256 || observed.TestSuiteSHA256 != p.TestSuiteSHA256 ||
-		observed.DeclaredTestCases != p.DeclaredTestCases || len(p.Search.Selection.Choices) != len(document.Plan.Decisions) {
+		observed.DeclaredTestCases != p.DeclaredTestCases || len(bodyPathSelection(p).Choices) != len(document.Plan.Decisions) {
 		return fmt.Errorf("typed-path document, finite suite or complete selection differs")
 	}
 	bound, err := bindTypedPathSource(ctx, filename, source, r.Activity, prepared, observed)
@@ -64,7 +64,10 @@ func VerifyTypedPathProjection(ctx context.Context, filename string, source []by
 	if err != nil {
 		return err
 	}
-	selected, err := prepared.Compile(p.Search.Selection.Choices)
+	if err := replayPathResolution(document, p); err != nil {
+		return err
+	}
+	selected, err := prepared.Compile(bodyPathSelection(p).Choices)
 	if err != nil {
 		return err
 	}
@@ -90,8 +93,8 @@ func VerifyTypedPathProjection(ctx context.Context, filename string, source []by
 	if err != nil {
 		return err
 	}
-	if !slices.Equal(results, p.NativeCases) || passed != p.Search.SelectedTrainingPassed ||
-		len(results) != p.Search.TrainingTotal {
+	selectedPassed, selectedTotal := bodyPathSelectedScore(p)
+	if !slices.Equal(results, p.NativeCases) || passed != selectedPassed || len(results) != selectedTotal {
 		return fmt.Errorf("selected-body finite observations do not replay")
 	}
 	return nil

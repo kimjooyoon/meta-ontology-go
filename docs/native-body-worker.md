@@ -79,6 +79,13 @@ input. This is a runnable construction fixture, not natural-language accuracy.
 
 ## Optional observations before selection
 
+An observation request can set `resolve_unique_candidate: true`. A complete
+enumeration with one survivor then proceeds directly to checked projection.
+`body_paths.resolution` records the choice and skipped work; `search_started`
+remains false. The retained constructor may already have loaded the model, while
+that request performs zero predictions. Requests with partial or ambiguous
+observations continue their normal search. Each request owns this state.
+
 SDK v0.2.16 and the compiler's `options.observation` support a bounded observation
 loop before candidate selection, with fields `inputs`, `max_candidates`,
 `max_rounds` and optional `oracle_activity`. The oracle is a separate pure activity

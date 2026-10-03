@@ -13,11 +13,13 @@ import (
 )
 
 func TestRuntimeReplaysOracleAndKeepsAddedInputInSelectionSuite(t *testing.T) {
-	t.Run("fresh", func(t *testing.T) { runtimeReplaysOracle(t, false) })
-	t.Run("reuse", func(t *testing.T) { runtimeReplaysOracle(t, true) })
+	t.Run("fresh", func(t *testing.T) { runtimeReplaysOracle(t, false, false) })
+	t.Run("reuse", func(t *testing.T) { runtimeReplaysOracle(t, true, false) })
+	t.Run("resolved_fresh", func(t *testing.T) { runtimeReplaysOracle(t, false, true) })
+	t.Run("resolved_reuse", func(t *testing.T) { runtimeReplaysOracle(t, true, true) })
 }
 
-func runtimeReplaysOracle(t *testing.T, reuse bool) {
+func runtimeReplaysOracle(t *testing.T, reuse, resolve bool) {
 	t.Helper()
 	source, err := os.ReadFile("../../examples/body-codegen/path-observation.gooo.fixture")
 	if err != nil {
@@ -33,7 +35,7 @@ func runtimeReplaysOracle(t *testing.T, reuse bool) {
 	}
 	prior, err := bodycodegen.GenerateWithTypedPathOptions(context.Background(), "fixture.gooo", source, "Probe", doc, "",
 		bodycodegen.TypedPathOptions{Observation: &bodycodegen.PathObservationOptions{
-			Inputs: []int64{2, 3, 0}, MaxCandidates: 2, MaxRounds: 2, OracleActivity: "Expected", ReuseProbeOutputs: reuse}})
+			Inputs: []int64{2, 3, 0}, MaxCandidates: 2, MaxRounds: 2, OracleActivity: "Expected", ReuseProbeOutputs: reuse, ResolveUniqueCandidate: resolve}})
 	if err != nil {
 		t.Fatal(err)
 	}
