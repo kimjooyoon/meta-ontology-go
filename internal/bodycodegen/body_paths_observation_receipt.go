@@ -51,7 +51,7 @@ func observedPathContract(p *BodyPathReceipt) (string, int, bool) {
 		r.SourceSHA256 != p.OriginalSourceSHA256 || !validDigest(r.SourceSHA256) ||
 		!validDigest("sha256:"+r.PreparedPlanSHA256) || len(cases) != p.DeclaredTestCases ||
 		len(cases) == 0 || len(cases) > 128 || pathCasesDigest(cases) != p.TestSuiteSHA256 ||
-		len(r.Rounds) > options.MaxRounds+1
+		len(r.Rounds) > options.MaxRounds+1 || !pathProbeReuseBound(r)
 	probeRaw, _ := json.Marshal(options.Inputs)
 	observed := 0
 	for i, round := range r.Rounds {

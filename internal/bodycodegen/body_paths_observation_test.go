@@ -42,9 +42,13 @@ func TestPathObservationSeparatesTwoConditionalDecisionsAcrossRounds(t *testing.
 	}
 	source := []byte(prepared.Fallback().GoooSource() + "\nactivity Expected(Integer) -> Integer computes \"if input < 0 { return (0 - input) } else { return input }\"\n")
 	doc := pathplan.Document{Schema: pathplan.DocumentSchema, Plan: plan, MaxAttempts: 4, TestCases: []pathplan.TestCase{{Input: 0, Expected: 0}}}
-	for _, budget := range []int{1, 2} {
+	for _, mode := range []struct {
+		budget int
+		reuse  bool
+	}{{1, false}, {2, false}, {1, true}, {2, true}} {
+		budget := mode.budget
 		result, err := GenerateWithTypedPathOptions(context.Background(), "fixture.gooo", source, "Probe", doc, "", TypedPathOptions{
-			Observation: &PathObservationOptions{Inputs: []int64{-1, 1}, MaxCandidates: 4, MaxRounds: budget, OracleActivity: "Expected"}})
+			Observation: &PathObservationOptions{Inputs: []int64{-1, 1}, MaxCandidates: 4, MaxRounds: budget, OracleActivity: "Expected", ReuseProbeOutputs: mode.reuse}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -60,6 +64,16 @@ func TestPathObservationSeparatesTwoConditionalDecisionsAcrossRounds(t *testing.
 		}
 		if _, _, bad := observedPathContract(result.Report.BodyPaths); bad {
 			t.Fatal("invalid multi-round binding")
+		}
+		if mode.reuse {
+			last := r.Rounds[budget]
+			if last.Ranking.EvaluationAttempts != 0 || last.Reuse.TotalEvaluationAttempts != 12 ||
+				last.Reuse.TotalCachedComparisons != 2+2*budget {
+				t.Fatal("cached rounds repeated evaluation", r)
+			}
+		}
+		if err := VerifyTypedPathProjection(context.Background(), "fixture.gooo", source, doc, result); err != nil {
+			t.Fatal("multi-round observation failed replay", err)
 		}
 	}
 }

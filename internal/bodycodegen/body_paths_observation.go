@@ -13,15 +13,17 @@ import (
 // OracleActivity names a separate, caller-declared pure activity in the same
 // authoritative source. Empty means suggest an input without inventing a label.
 type PathObservationOptions struct {
-	Inputs         []int64 `json:"inputs"`
-	MaxCandidates  int     `json:"max_candidates"`
-	MaxRounds      int     `json:"max_rounds"`
-	OracleActivity string  `json:"oracle_activity,omitempty"`
+	Inputs            []int64 `json:"inputs"`
+	MaxCandidates     int     `json:"max_candidates"`
+	MaxRounds         int     `json:"max_rounds"`
+	OracleActivity    string  `json:"oracle_activity,omitempty"`
+	ReuseProbeOutputs bool    `json:"reuse_probe_outputs,omitempty"`
 }
 
 type PathObservationRound struct {
 	Ranking     pathplan.ProbeRanking `json:"ranking"`
 	Observation *pathplan.TestCase    `json:"oracle_observation,omitempty"`
+	Reuse       *PathProbeReuse       `json:"reuse,omitempty"`
 }
 
 type PathObservationReceipt struct {
@@ -91,10 +93,12 @@ func observeTypedPaths(ctx context.Context, filename string, source []byte, acti
 	if err != nil {
 		return cases, err
 	}
+	ranker := pathObservationRanker{prepared: prepared, options: options}
 	for round := 0; ; round++ {
-		ranking, err := prepared.RankProbes(ctx, cases, options.Inputs, options.MaxCandidates)
+		observed, err := ranker.rank(ctx, cases)
+		ranking := observed.Ranking
 		if ranking.Schema != "" {
-			r.Rounds = append(r.Rounds, PathObservationRound{Ranking: ranking})
+			r.Rounds = append(r.Rounds, observed)
 		}
 		if err != nil {
 			return cases, err
