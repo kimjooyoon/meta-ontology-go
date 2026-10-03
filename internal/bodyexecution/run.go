@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"go/parser"
 	"go/token"
@@ -152,6 +153,9 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 	phase = bodytiming.Start(ctx, "go_tool_hash")
 	r.GoToolSHA256, err = owner.bindFile(goBinary)
 	if err != nil {
+		if errors.Is(err, errNonRegularExecutable) {
+			return finish(fmt.Errorf("Go tool must be a regular executable file"))
+		}
 		return finish(fmt.Errorf("cannot bind Go tool bytes"))
 	}
 	r.Stage = "TOOLCHAIN"
@@ -269,6 +273,8 @@ const (
 	executableFileLimit = 256 << 20
 )
 
+var errNonRegularExecutable = errors.New("executable file is not regular")
+
 func fileDigest(path string) (string, error) {
 	var scratch [fileHashBufferBytes]byte
 	return fileDigestBuffer(path, scratch[:])
@@ -278,13 +284,19 @@ func fileDigestBuffer(path string, scratch []byte) (string, error) {
 	if len(scratch) == 0 {
 		return "", fmt.Errorf("file hash buffer is required")
 	}
-	f, e := os.Open(path)
+	f, e := openDigestFile(path)
 	if e != nil {
 		return "", e
 	}
 	defer f.Close()
 	info, e := f.Stat()
-	if e != nil || !info.Mode().IsRegular() || info.Size() < 0 || info.Size() > executableFileLimit {
+	if e != nil {
+		return "", e
+	}
+	if !info.Mode().IsRegular() {
+		return "", errNonRegularExecutable
+	}
+	if info.Size() < 0 || info.Size() > executableFileLimit {
 		return "", fmt.Errorf("invalid executable file")
 	}
 	h := sha256.New()
