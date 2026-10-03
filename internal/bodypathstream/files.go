@@ -199,9 +199,11 @@ func runFileRequests(ctx context.Context, generator Generator, request Request, 
 			}); err != nil {
 				return fail(err)
 			}
-			fmt.Fprintf(stderr, "%s timing: generation %.3fms, source replay %.3fms, native %.3fms, save %.3fms\n",
-				request.CorrelationID, timingRow.PhaseMS["generation"], timingRow.PhaseMS["source_replay"],
-				timingRow.PhaseMS["native_run_1"]+timingRow.PhaseMS["native_run_2"], timingRow.PhaseMS["artifact_save"])
+			fmt.Fprintf(stderr, "%s timing: generation %s, source replay %s, native %s, save %s\n",
+				request.CorrelationID, phaseDuration(timingRow.PhaseMS, "generation"),
+				phaseDuration(timingRow.PhaseMS, "source_replay"),
+				phaseDuration(timingRow.PhaseMS, "native_run_1", "native_run_2"),
+				phaseDuration(timingRow.PhaseMS, "artifact_save"))
 		}
 		rows = append(rows, row)
 		if err := writeFileJSON(out, "summary.json", struct {
@@ -224,6 +226,19 @@ func runFileRequests(ctx context.Context, generator Generator, request Request, 
 		return fail(err)
 	}
 	return code
+}
+
+// A missing phase is unobserved, even when another member of the group ran.
+func phaseDuration(phases map[string]float64, names ...string) string {
+	total := 0.0
+	for _, name := range names {
+		value, observed := phases[name]
+		if !observed {
+			return "unobserved"
+		}
+		total += value
+	}
+	return fmt.Sprintf("%.3fms", total)
 }
 
 func saveFileResult(out string, result Result, row *fileRunRow) error {

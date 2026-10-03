@@ -42,11 +42,12 @@ type compiledArtifact struct {
 // cancellable gate; each call replays current source and executes current cases.
 // Close cancels active work, waits for child completion and removes the workspace.
 type Executor struct {
-	gate      chan struct{}
-	lifetime  context.Context
-	stop      context.CancelFunc
-	artifact  *compiledArtifact
-	toolchain *ownedToolchain
+	gate        chan struct{}
+	lifetime    context.Context
+	stop        context.CancelFunc
+	artifact    *compiledArtifact
+	toolchain   *ownedToolchain
+	hashScratch *[fileHashBufferBytes]byte
 }
 
 func NewExecutor() *Executor {
@@ -121,7 +122,20 @@ func (e *Executor) Close() error {
 
 func (e *Executor) drop() error {
 	e.toolchain = nil
+	e.hashScratch = nil
 	return e.dropArtifact()
+}
+
+// bindFile uses scratch owned by the executor's existing serialization gate.
+// It still reads current bytes on every call; Close and cancellation release it.
+func (e *Executor) bindFile(path string) (string, error) {
+	if e == nil {
+		return fileDigest(path)
+	}
+	if e.hashScratch == nil {
+		e.hashScratch = new([fileHashBufferBytes]byte)
+	}
+	return fileDigestBuffer(path, e.hashScratch[:])
 }
 
 func (e *Executor) dropArtifact() error {
@@ -165,7 +179,7 @@ func executableFor(ctx context.Context, prior bodycodegen.Result, goBinary strin
 		if cached := owner.artifact; cached != nil {
 			r.Artifact.MissReason = "key_changed"
 			if cached.key == key {
-				observed, readErr := fileDigest(cached.executable)
+				observed, readErr := owner.bindFile(cached.executable)
 				if readErr == nil && observed == cached.digest {
 					r.ExecutableSHA256 = observed
 					r.Artifact.Reused, r.Artifact.ExecutableVerified, r.Artifact.MissReason = true, true, ""
@@ -197,7 +211,7 @@ func executableFor(ctx context.Context, prior bodycodegen.Result, goBinary strin
 	if err != nil {
 		return root, executable, release, err
 	}
-	r.ExecutableSHA256, err = fileDigest(executable)
+	r.ExecutableSHA256, err = owner.bindFile(executable)
 	if err != nil {
 		return root, executable, release, fmt.Errorf("cannot bind emitted executable")
 	}

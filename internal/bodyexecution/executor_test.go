@@ -254,7 +254,7 @@ func TestExecutorCanceledRunDropsArtifact(t *testing.T) {
 		t.Fatal("runtime cancellation deadlocked")
 	}
 	r, err := observed.result, observed.err
-	if !errors.Is(err, context.Canceled) || e.artifact != nil {
+	if !errors.Is(err, context.Canceled) || e.artifact != nil || e.hashScratch != nil {
 		t.Fatal("canceled execution retained work", err)
 	}
 	if len(r.Observation.Runs) != 1 || !r.Observation.Runs[0].Canceled || len(r.Observation.Cases) != 0 {
@@ -318,7 +318,7 @@ func TestExecutorGoToolBytesInvalidateAndCloseCancelsBuild(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("build child did not terminate")
 	}
-	if e.artifact != nil {
+	if e.artifact != nil || e.hashScratch != nil {
 		t.Fatal("canceled workspace retained")
 	}
 }
