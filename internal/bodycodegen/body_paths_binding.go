@@ -19,6 +19,14 @@ type typedPathSource struct {
 // It generates validation projections, never a selected candidate or model call.
 func bindTypedPathSource(ctx context.Context, filename string, source []byte, activityName string,
 	prepared *pathplan.PreparedPlan, receipt *BodyPathReceipt) (typedPathSource, error) {
+	return bindTypedPathSourceProjection(ctx, filename, source, activityName, prepared, receipt, nil)
+}
+
+// A recipe has already generated its original projection in this request.
+// Reuse only that exact source/activity result; fallback equivalence is still
+// checked here. Ordinary generation/export/replay always generate a fresh base.
+func bindTypedPathSourceProjection(ctx context.Context, filename string, source []byte, activityName string,
+	prepared *pathplan.PreparedPlan, receipt *BodyPathReceipt, projection *Result) (typedPathSource, error) {
 	bindingStarted := time.Now()
 	file, diagnostics := syntax.ParseFile(filename, string(source))
 	if diagnostics.HasErrors() || file == nil || file.Package == nil {
@@ -37,7 +45,7 @@ func bindTypedPathSource(ctx context.Context, filename string, source []byte, ac
 		activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" || prepared.ActivityName() != activityName {
 		return typedPathSource{}, fmt.Errorf("typed path plan must match one source Integer -> Integer activity")
 	}
-	base, err := GenerateWithPlanner(ctx, filename, source, activityName, "", "")
+	base, err := typedPathBindingProjection(ctx, filename, source, activityName, projection)
 	if err != nil {
 		return typedPathSource{}, err
 	}
@@ -69,6 +77,24 @@ func bindTypedPathSource(ctx context.Context, filename string, source []byte, ac
 		return typedPathSource{}, err
 	}
 	return typedPathSource{base: base, activity: activity}, nil
+}
+
+func typedPathBindingProjection(ctx context.Context, filename string, source []byte, activityName string,
+	projection *Result) (Result, error) {
+	if projection == nil {
+		return GenerateWithPlanner(ctx, filename, source, activityName, "", "")
+	}
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
+	}
+	report := projection.Report
+	if report.Schema != schema || report.Decision != "PASS" || report.Activity != activityName ||
+		report.SourceDigest != digest(source) || report.GeneratedDigest != digest([]byte(projection.Source)) ||
+		report.InputType != "int64" || report.OutputType != "int64" ||
+		!report.TypecheckPassed || !report.DeterministicReplay || report.RepositoryWrites != 0 {
+		return Result{}, fmt.Errorf("recipe projection must match the current checked source and activity")
+	}
+	return *projection, nil
 }
 
 func bindTypedPathDocument(document pathplan.Document, receipt *BodyPathReceipt) error {
