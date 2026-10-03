@@ -166,6 +166,13 @@ observed mismatch to the same frozen model between candidate batches. It require
 provide caller CI context without edit or merge authority. See
 [incremental typed paths](../typed-path-sessions.md) for budgets and receipts.
 
+Optional `--path-observation observation.json` asks which supplied input best
+separates the candidates. A separately declared pure Gooo activity can provide
+the expected result, extending the finite contract before search. The original
+cases and each additional observation remain separately recorded. See the
+[observation loop](../path-observation-loop.md) for an executable example, budgets
+and unresolved states. This path adds no training and works with a model disabled.
+
 Bounds are 16 binary decisions, 128 expression and statement arena nodes, 128
 cases, 64 attempted combinations, 128 KiB source/document, and a cooperative
 eight-second operation deadline. Without a model, enumeration starts from the

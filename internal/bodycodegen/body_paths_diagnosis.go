@@ -59,8 +59,12 @@ func GenerateWithTypedPathOptions(ctx context.Context, filename string, source [
 	if err != nil {
 		return Result{}, err
 	}
+	observation, err := copyPathObservation(options.Observation)
+	if err != nil {
+		return Result{}, err
+	}
 	return generateTypedPathRequest(ctx, filename, source, activityName, document,
-		typedPathModel{path: modelPath, diagnosis: diagnosis}, options.StepAttempts, feedback)
+		typedPathModel{path: modelPath, diagnosis: diagnosis, observation: observation}, options.StepAttempts, feedback)
 }
 
 func diagnoseSelectedPath(ctx context.Context, prepared *pathplan.PreparedPlan, document pathplan.Document,

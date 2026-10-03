@@ -23,7 +23,7 @@ Each input line is one object with these fields:
 | `source` | Original Gooo source string, at most 128 KiB |
 | `activity` | Named source Integer -> Integer activity |
 | `document` | Full existing `gooo/body-codegen-typed-path-plan/v1` document |
-| `options` | Optional `step_attempts`, `feedback_rounds`, `feedback_unfixed`, `ci`, `diagnosis` |
+| `options` | Optional `step_attempts`, `feedback_rounds`, `feedback_unfixed`, `ci`, `diagnosis`, `observation` |
 
 Step attempts are 0..64 (zero means ordinary bounded search); feedback rounds are
 0..16. Feedback requires a model, nonzero step and explicit rounds. CI context is
@@ -76,3 +76,13 @@ The file schema is `gooo/path-diagnosis-request/v1`, with `inputs` and
 `max_candidates`. The examples in `examples/body-codegen/path-diagnosis-*`
 show a passed sparse test with two possible subtraction bodies and a distinguishing
 input. This is a runnable construction fixture, not natural-language accuracy.
+
+## Optional observations before selection
+
+SDK v0.2.16 and the compiler's `options.observation` support a bounded observation
+loop before candidate selection, with fields `inputs`, `max_candidates`,
+`max_rounds` and optional `oracle_activity`. The oracle is a separate pure activity
+in the same request source. The compiler appends its observed labels to a private
+copy of the cases, then starts model-guided or deterministic search. See
+[the observation loop](path-observation-loop.md) for the corresponding CLI,
+recorded identities, partial states and independent execution replay.

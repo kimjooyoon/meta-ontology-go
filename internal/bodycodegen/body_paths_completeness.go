@@ -57,8 +57,13 @@ func bodyPathCompletenessDimensions(report Report) ([]CompletenessDimension, []s
 	if scoring.Status == "UNKNOWN" && len(search.Attempts) > 0 {
 		scoring.Status = "PROGRESS"
 	}
-	return []CompletenessDimension{source, finite, accounting, observation, scoring},
-		[]string{source.ID, finite.ID, accounting.ID}
+	dimensions := []CompletenessDimension{source, finite, accounting, observation, scoring}
+	required := []string{source.ID, finite.ID, accounting.ID}
+	if path.Observation != nil {
+		d := pathObservationDimension(path)
+		dimensions, required = append(dimensions, d), append(required, d.ID)
+	}
+	return dimensions, required
 }
 
 func bodyPathSourceDimension(report Report) CompletenessDimension {
@@ -88,8 +93,9 @@ func bodyPathSourceDimension(report Report) CompletenessDimension {
 
 func bodyPathFiniteDimension(report Report) CompletenessDimension {
 	p := report.BodyPaths
-	total, passed := max(0, p.DeclaredTestCases), 0
-	mismatch := p.DeclaredTestCases < 0
+	testSHA, expectedCount, observationMismatch := observedPathContract(p)
+	total, passed := max(0, expectedCount), 0
+	mismatch := p.DeclaredTestCases < 0 || observationMismatch
 	cases := make([]pathplan.TestCase, len(p.NativeCases))
 	for i, observed := range p.NativeCases {
 		matched := observed.Actual == observed.Expected
@@ -99,14 +105,18 @@ func bodyPathFiniteDimension(report Report) CompletenessDimension {
 	}
 	if len(p.NativeCases) > 0 {
 		raw, _ := json.Marshal(cases)
-		mismatch = mismatch || digest(raw) != p.TestSuiteSHA256 || len(cases) != total ||
+		mismatch = mismatch || digest(raw) != testSHA || len(cases) != total ||
 			p.Search.TrainingTotal != total || p.Search.SelectedTrainingPassed != passed ||
 			!validDigest(report.GeneratedDigest) || p.SelectedSourceSHA256 != report.SourceDigest
+	}
+	evidenceSuite := "body_paths.test_suite_sha256:" + testSHA
+	if p.Observation != nil {
+		evidenceSuite = "body_paths.observation.effective_cases_sha256:" + testSHA
 	}
 	d := completenessDimension("typed_path_finite_accuracy", min(passed, total), total,
 		"declared selection cases matched by the emitted body in the bounded Go AST evaluator",
 		"Observed actuals are checked against the declared suite and typed interpreter; selection tests do not prove unseen behavior or generated-package execution.",
-		[]string{"body_paths.native_case_results", "body_paths.test_suite_sha256:" + p.TestSuiteSHA256,
+		[]string{"body_paths.native_case_results", evidenceSuite,
 			"generated_digest:" + report.GeneratedDigest, "evaluator:bounded_integer_go_ast"}, mismatch)
 	if !mismatch && len(p.NativeCases) > 0 && passed == 0 {
 		d.Status = "PROGRESS"
