@@ -41,10 +41,11 @@ type compiledArtifact struct {
 // cancellable gate; each call replays current source and executes current cases.
 // Close cancels active work, waits for child completion and removes the workspace.
 type Executor struct {
-	gate     chan struct{}
-	lifetime context.Context
-	stop     context.CancelFunc
-	artifact *compiledArtifact
+	gate      chan struct{}
+	lifetime  context.Context
+	stop      context.CancelFunc
+	artifact  *compiledArtifact
+	toolchain *ownedToolchain
 }
 
 func NewExecutor() *Executor {
@@ -111,6 +112,11 @@ func (e *Executor) Close() error {
 }
 
 func (e *Executor) drop() error {
+	e.toolchain = nil
+	return e.dropArtifact()
+}
+
+func (e *Executor) dropArtifact() error {
 	if e.artifact == nil {
 		return nil
 	}
@@ -161,7 +167,7 @@ func executableFor(ctx context.Context, prior bodycodegen.Result, goBinary strin
 				}
 				r.Artifact.MissReason = "executable_changed_or_missing"
 			}
-			if err := owner.drop(); err != nil {
+			if err := owner.dropArtifact(); err != nil {
 				return "", "", release, err
 			}
 		}

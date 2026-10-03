@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -48,6 +47,7 @@ type Observation struct {
 	ElapsedNS               int64                              `json:"elapsed_ns"`
 	Scope                   string                             `json:"scope"`
 	Artifact                *ArtifactObservation               `json:"artifact,omitempty"`
+	ToolchainReference      *ToolchainObservation              `json:"toolchain_reference,omitempty"`
 }
 
 type Result struct {
@@ -144,14 +144,8 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 		return finish(fmt.Errorf("cannot bind Go tool bytes"))
 	}
 	r.Stage = "TOOLCHAIN"
-	version, observed, err := process(ctx, "", goBinary, nil, "version")
-	r.Toolchain = observed
-	if err != nil {
+	if err := observeToolchain(ctx, goBinary, r, owner); err != nil {
 		return finish(err)
-	}
-	r.GoVersion = strings.TrimSpace(string(version))
-	if r.GoVersion != "go version go1.27.1 "+runtime.GOOS+"/"+runtime.GOARCH {
-		return finish(fmt.Errorf("runtime requires the local Go 1.27.1 toolchain"))
 	}
 	root, executable, release, err := executableFor(ctx, prior, goBinary, r, owner)
 	defer release()

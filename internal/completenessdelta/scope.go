@@ -13,13 +13,14 @@ import (
 const generationProfile = "gooo/body-codegen-typed-path-v1"
 const runtimeProfile = bodyexecution.RuntimeProfileV1
 const ownedRuntimeProfile = bodyexecution.RuntimeProfileV2
+const ownedToolchainRuntimeProfile = bodyexecution.RuntimeProfileV3
 
 func scopeRelation(before, after *completeness.CompletenessReceipt, beforeDigest string) (string, string) {
 	if !supported(before.ProfileID) || !supported(after.ProfileID) {
 		return "INCOMPARABLE_SCOPE", "Unregistered observation profile; counters have no shared measurement contract."
 	}
 	for _, receipt := range []*completeness.CompletenessReceipt{before, after} {
-		if receipt.ProfileID == ownedRuntimeProfile && bodyexecution.ValidateOwnedRuntimeScope(receipt) != nil {
+		if (receipt.ProfileID == ownedRuntimeProfile || receipt.ProfileID == ownedToolchainRuntimeProfile) && bodyexecution.ValidateOwnedRuntimeScope(receipt) != nil {
 			return "INCOMPARABLE_SCOPE", "Missing, unsupported or inconsistent owned runtime binding."
 		}
 	}
@@ -66,7 +67,7 @@ func scopeRelation(before, after *completeness.CompletenessReceipt, beforeDigest
 
 func supported(profile string) bool { return profile == generationProfile || runtimeProfileID(profile) }
 func runtimeProfileID(profile string) bool {
-	return profile == runtimeProfile || profile == ownedRuntimeProfile
+	return profile == runtimeProfile || profile == ownedRuntimeProfile || profile == ownedToolchainRuntimeProfile
 }
 func validDigest(v any) bool {
 	s, ok := v.(string)

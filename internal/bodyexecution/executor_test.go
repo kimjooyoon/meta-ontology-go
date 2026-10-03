@@ -77,10 +77,10 @@ func TestExecutorReusesOnlyArtifactAndExecutesCurrentCases(t *testing.T) {
 	if d := dimension(t, second, "runtime_finite_accuracy"); d.Numerator != 1 || d.Denominator != 2 {
 		t.Fatal(d)
 	}
-	if d := dimension(t, second, "runtime_child_resources"); d.Denominator != 3 {
+	if d := dimension(t, second, "runtime_child_resources"); d.Denominator != 2 {
 		t.Fatal("previous build resources counted as current", d)
 	}
-	if dimension(t, second, "runtime_build").Status != "PASS" || second.CompletenessReceipt.ProfileID != "gooo/typed-path-runtime-v2" {
+	if dimension(t, second, "runtime_build").Status != "PASS" || second.CompletenessReceipt.ProfileID != RuntimeProfileV3 {
 		t.Fatal("missing source-bound actual build reference")
 	}
 	if !bytes.Equal(second.ParentReceipt, parent) {
