@@ -13,11 +13,12 @@ import (
 // executable, source authority or model operation by reading caller-owned JSON.
 func runtimeProfileBinding(result Result, receipt *completeness.CompletenessReceipt) error {
 	_, present := receipt.Scope["owned_artifact"]
+	_, toolPresent := receipt.Scope["owned_toolchain"]
 	a := result.Observation.Artifact
-	if receipt.ProfileID == RuntimeProfileV1 && a == nil && !present {
+	if receipt.ProfileID == RuntimeProfileV1 && a == nil && !present && !toolPresent && result.Observation.ToolchainReference == nil {
 		return nil
 	}
-	if receipt.ProfileID != RuntimeProfileV2 || a == nil || !present {
+	if (receipt.ProfileID != RuntimeProfileV2 && receipt.ProfileID != RuntimeProfileV3) || a == nil || !present {
 		return fmt.Errorf("unsupported or inconsistent runtime ownership profile")
 	}
 	scopeArtifact, err := ownedScopeArtifact(receipt)
@@ -28,20 +29,46 @@ func runtimeProfileBinding(result Result, receipt *completeness.CompletenessRece
 	if err != nil || receipt.Scope["runtime_observation_sha256"] != digest(observation) {
 		return fmt.Errorf("runtime observation digest differs")
 	}
+	if receipt.ProfileID == RuntimeProfileV2 {
+		if toolPresent || result.Observation.ToolchainReference != nil {
+			return fmt.Errorf("v2 cannot carry toolchain reuse")
+		}
+	} else {
+		reference, err := ownedScopeToolchain(receipt)
+		if err != nil || result.Observation.ToolchainReference == nil || !reflect.DeepEqual(reference, *result.Observation.ToolchainReference) ||
+			reference.GoToolSHA256 != result.Observation.GoToolSHA256 || reference.GoVersion != result.Observation.GoVersion {
+			return fmt.Errorf("owned toolchain scope differs or is incomplete")
+		}
+		if reference.Reused {
+			if !reflect.DeepEqual(result.Observation.Toolchain, ProcessObservation{}) {
+				return fmt.Errorf("reused toolchain invents current process work")
+			}
+		} else if !reflect.DeepEqual(result.Observation.Toolchain, reference.SourceCheck) {
+			return fmt.Errorf("fresh toolchain process differs from retained check")
+		}
+	}
 	return sourceBuildBinding(result.Observation)
 }
 
-// ValidateOwnedRuntimeScope checks the registered v2 ownership record in a bare
+// ValidateOwnedRuntimeScope checks registered v2/v3 ownership records in a bare
 // receipt. It validates recorded bindings, without attesting runtime execution.
 func ValidateOwnedRuntimeScope(receipt *completeness.CompletenessReceipt) error {
 	_, err := ownedScopeArtifact(receipt)
+	if err == nil && receipt.ProfileID == RuntimeProfileV3 {
+		_, err = ownedScopeToolchain(receipt)
+	}
+	if err == nil && receipt.ProfileID == RuntimeProfileV2 {
+		if _, present := receipt.Scope["owned_toolchain"]; present {
+			return fmt.Errorf("v2 cannot carry owned toolchain")
+		}
+	}
 	return err
 }
 
 func ownedScopeArtifact(receipt *completeness.CompletenessReceipt) (ArtifactObservation, error) {
 	var artifact ArtifactObservation
-	if receipt == nil || receipt.ProfileID != RuntimeProfileV2 {
-		return artifact, fmt.Errorf("owned runtime v2 receipt is required")
+	if receipt == nil || (receipt.ProfileID != RuntimeProfileV2 && receipt.ProfileID != RuntimeProfileV3) {
+		return artifact, fmt.Errorf("registered owned runtime receipt is required")
 	}
 	raw, err := json.Marshal(receipt.Scope["owned_artifact"])
 	observationDigest, _ := receipt.Scope["runtime_observation_sha256"].(string)

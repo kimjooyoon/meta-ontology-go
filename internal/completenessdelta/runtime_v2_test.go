@@ -87,7 +87,7 @@ func TestOwnedRuntimeComparisonsKeepParentScopeAndCurrentResourceDenominators(t 
 			finiteSeen = axis.CountMagnitude != nil && *axis.CountMagnitude == 0
 		case "runtime_child_resources":
 			resourceSeen = axis.CountMagnitude == nil && axis.Before.Denominator == 4 &&
-				axis.After.Denominator == 3 && axis.Before.Unit != axis.After.Unit
+				axis.After.Denominator == 2 && axis.Before.Unit != axis.After.Unit
 		}
 	}
 	if !finiteSeen || !resourceSeen {

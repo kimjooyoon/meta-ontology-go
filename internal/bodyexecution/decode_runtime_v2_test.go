@@ -54,7 +54,7 @@ func testRejectChangedOwnedRecords(t *testing.T, wire []byte) {
 	t.Helper()
 	for name, mutate := range map[string]func(*Result){
 		"parent-bytes":          func(r *Result) { r.ParentReceipt = append(r.ParentReceipt, '\n') },
-		"future-profile":        func(r *Result) { r.CompletenessReceipt.ProfileID = "gooo/typed-path-runtime-v3" },
+		"future-profile":        func(r *Result) { r.CompletenessReceipt.ProfileID = "gooo/typed-path-runtime-v4" },
 		"downgrade":             func(r *Result) { r.CompletenessReceipt.ProfileID = "gooo/typed-path-runtime-v1" },
 		"missing-artifact":      func(r *Result) { r.Observation.Artifact = nil },
 		"artifact-schema":       func(r *Result) { r.Observation.Artifact.Schema = "future/v1" },

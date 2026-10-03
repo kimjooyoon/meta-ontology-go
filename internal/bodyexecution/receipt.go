@@ -16,6 +16,10 @@ const RuntimeProfileV1 = "gooo/typed-path-runtime-v1"
 // RuntimeProfileV2 records an owned build separately from current-call work.
 const RuntimeProfileV2 = "gooo/typed-path-runtime-v2"
 
+// RuntimeProfileV3 additionally separates an owned Go version check from work
+// performed by the current call. The Go executable bytes are checked each time.
+const RuntimeProfileV3 = "gooo/typed-path-runtime-v3"
+
 func producerSourceSHA() string {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -51,6 +55,10 @@ func runtimeCompleteness(prior bodycodegen.Result, result Result) *completeness.
 		r.Scope["owned_artifact"] = o.Artifact
 		buildReason = "The source-bound successful original build is recorded in owned_artifact; current Build records only work actually executed by this call."
 	}
+	if o.ToolchainReference != nil {
+		r.ProfileID = RuntimeProfileV3
+		r.Scope["owned_toolchain"] = o.ToolchainReference
+	}
 	r.DecisionBasis = "Original compiler dimensions are preserved; this producer adds exact source replay, native build, ordered compiled executions, finite caller expectations and reverse source links. Unobserved permissions, model-training generalization and full-domain behavior remain explicit."
 	r.Scope["parent_receipt_sha256"] = o.ParentReceiptSHA256
 	r.Scope["producer_source_sha"] = o.ProducerSourceSHA
@@ -64,6 +72,10 @@ func runtimeCompleteness(prior bodycodegen.Result, result Result) *completeness.
 		"local_model_predictions": 0, "external_provider_calls": 0, "temporary_workspace": true,
 		"go_build_cache_writes": "possible in the configured Go cache; location inherited", "host_permission_profile": "inherited; unobserved",
 		"suite_authority": "explicit caller expectations; disjointness is only relative to this selection suite, not model training"}
+	if o.ToolchainReference != nil {
+		r.Scope["runtime_scope"].(map[string]any)["go_tool_sha256"] = o.GoToolSHA256
+		r.Scope["runtime_scope"].(map[string]any)["go_version"] = o.GoVersion
+	}
 	r.Scope["boundary"] = map[string]any{"non_executing": false, "non_authorizing": true, "repository_writes": "unobserved; temporary/cache locations inherited",
 		"execution_profile": "source-replayed closed pure Go body, stdlib-only wrapper, bounded temporary build and two runs"}
 	for i, v := range r.NotClaimed {
@@ -165,6 +177,20 @@ func runtimeResourceAxis(o Observation) completeness.CompletenessDimension {
 	if o.Artifact != nil && o.Artifact.Reused {
 		denominator = 3
 		unit = "current toolchain/two-runtime child CPU, wall and peak RSS profiles; retained build excluded"
+	}
+	if o.ToolchainReference != nil && o.ToolchainReference.Reused {
+		processes = append([]ProcessObservation{o.Build}, o.Runs...)
+		denominator, unit = 3, "current build/two-runtime child CPU, wall and peak RSS profiles; retained toolchain check excluded"
+		if o.Artifact != nil && o.Artifact.Reused {
+			processes = o.Runs
+			denominator, unit = 2, "current two-runtime child CPU, wall and peak RSS profiles; retained toolchain check and build excluded"
+		}
+		observed = 0
+		for _, p := range processes {
+			if p.ExitCode != nil && p.PeakRSSBytes != nil && p.WallNS > 0 {
+				observed++
+			}
+		}
 	}
 	return axis("runtime_child_resources", observed, denominator, unit,
 		"CPU is process user+system time; peak RSS is known on Linux/macOS. Parent compiler resources and whole-host utilization remain unobserved.", "runtime observation toolchain/build/runs")
