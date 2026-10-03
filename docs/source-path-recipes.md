@@ -65,12 +65,38 @@ Root order preserves every statement and only exchanges the selected pair.
 Stable activity IDs continue to come from the source.
 
 The source profile is one `Integer -> Integer` activity, with integer and boolean
-literals, local declarations, assignment, explicit `if`/`else` blocks, returns,
+literals, local declarations, assignment, `if`/`else` blocks and `else if` chains, returns,
 and binary `+`, `-`, `*`, `<`, `<=`, `==`, `&&`, `||`. Negative integer literals
 are supported. Calls, loops, other scalar types, unary variable negation and
 other operators require future profile work. Explicit local Go types are limited
 to `int64` and `bool`. The original projection and the expanded fallback must
 both typecheck and describe the same typed body.
+
+### Conditions in sequence
+
+An `else if` chain uses the existing nested typed branches. For example, this
+body limits a value to 0 through 10:
+
+```gooo
+activity Clamp(Integer) -> Integer computes "if input < 0 { return 0 } else if input < 10 { return input } else { return 10 }"
+```
+
+The checked-in `condition-chain.json` exposes the two branch layouts and the
+upper comparison's operand order. It works with deterministic search or the
+existing three-choice model. `branch_layout` occurrence 0 selects the outer
+condition; occurrence 1 selects the next condition. The source order is retained
+when the compiler lowers `else if` to `else { if ... }`. Existing variable scope,
+the 16-level nesting bound and the shared 128-slot limits still apply.
+
+```sh
+gooo body-codegen --json --activity Clamp \
+  --path-plan examples/body-codegen/condition-chain.json \
+  examples/body-codegen/condition-chain.gooo.fixture
+```
+
+The emitted Go uses explicit nested blocks. Typed-tree source binding accepts
+this presentation change while keeping condition order, local names, values and
+branch bodies. Scope and return checks apply before any model call.
 
 ## Observation, export and execution
 
