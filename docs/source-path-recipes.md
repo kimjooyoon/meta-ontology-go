@@ -104,6 +104,14 @@ The recipe also works with:
 
 - `body-context --plan recipe.json`: export the expanded source-bound model
   context without model calls.
+- Add `--include-plan` to explicitly include `expanded_plan`, the typed source
+  body and its declared alternatives. Its JSON digest equals
+  `context.original_plan_sha256`. This lets experiments inspect operation order
+  through the compiler's existing lowering. The export includes caller-authored
+  intentions and names; choose public fixtures when publishing it. Test cases,
+  expected results and feedback are excluded from `expanded_plan`. Source binding
+  and plan validation finish before this optional field is emitted; failed or
+  cancelled exports contain no plan. This flag performs no selection or training.
 - `body-codegen --path-observation`: add discriminating inputs from an explicit
   source oracle. The checked-in `path-recipe-observation.json` requests reuse and
   direct resolution if one candidate remains.
