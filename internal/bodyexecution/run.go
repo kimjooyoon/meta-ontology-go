@@ -103,7 +103,7 @@ func Execute(ctx context.Context, filename string, source []byte, document pathp
 	suite, _ := json.Marshal(cases)
 	r.RuntimeSuiteSHA256 = digest(suite)
 	for _, c := range cases {
-		if !slices.ContainsFunc(document.TestCases, func(t pathplan.TestCase) bool { return t.Input == c.Input }) {
+		if !selectionObservedInput(document, prior, c.Input) {
 			r.SelectionDisjointInputs++
 		}
 	}
@@ -184,6 +184,22 @@ func Execute(ctx context.Context, filename string, source []byte, document pathp
 	r.RuntimeReplayed = true
 	r.Stage = "COMPLETE"
 	return finish(nil)
+}
+
+// Source replay above validates every observation before it contributes to the
+// effective selection suite. Added oracle inputs cannot become holdout claims.
+func selectionObservedInput(document pathplan.Document, prior bodycodegen.Result, input int64) bool {
+	if slices.ContainsFunc(document.TestCases, func(t pathplan.TestCase) bool { return t.Input == input }) {
+		return true
+	}
+	if prior.Report.BodyPaths != nil && prior.Report.BodyPaths.Observation != nil {
+		for _, round := range prior.Report.BodyPaths.Observation.Rounds {
+			if round.Observation != nil && round.Observation.Input == input {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func prepareWorkspace(root string, prior bodycodegen.Result) error {
