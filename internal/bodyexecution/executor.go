@@ -13,6 +13,7 @@ import (
 
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodytiming"
 )
 
 const driverContract = "gooo/stdlib-int64-array-driver/v1"
@@ -58,10 +59,14 @@ func NewExecutor() *Executor {
 func (e *Executor) Execute(ctx context.Context, filename string, source []byte, document pathplan.Document,
 	prior bodycodegen.Result, parent []byte, cases []pathplan.TestCase, goBinary string) (Result, error) {
 	start := time.Now()
+	gatePhase := bodytiming.Start(ctx, "executor_gate")
 	reject := func(err error) (Result, error) {
+		gatePhase.End(false)
 		r := initialResult(source, prior, parent, cases)
 		r.Observation.Failure, r.Observation.ElapsedNS = err.Error(), time.Since(start).Nanoseconds()
+		phase := bodytiming.Start(ctx, "runtime_receipt")
 		r.CompletenessReceipt = runtimeCompleteness(prior, r)
+		phase.End(true)
 		return r, err
 	}
 	if ctx == nil || e == nil || e.lifetime == nil {
@@ -84,6 +89,7 @@ func (e *Executor) Execute(ctx context.Context, filename string, source []byte, 
 		return reject(ErrExecutorClosed)
 	}
 	wait := time.Since(start).Nanoseconds()
+	gatePhase.End(true)
 	stop := context.AfterFunc(e.lifetime, cancel)
 	defer stop()
 	r, err := execute(ctx, filename, source, document, prior, parent, cases, goBinary, e)
@@ -97,7 +103,9 @@ func (e *Executor) Execute(ctx context.Context, filename string, source []byte, 
 	if err != nil {
 		r.Observation.Failure = err.Error()
 	}
+	phase := bodytiming.Start(ctx, "runtime_receipt")
 	r.CompletenessReceipt = runtimeCompleteness(prior, r)
+	phase.End(true)
 	return r, err
 }
 
