@@ -25,12 +25,13 @@ type RetainedModelInfo struct {
 }
 
 type typedPathModel struct {
-	path      string
-	model     *decision.Model
-	joint     *jointdecision.Model
-	three     *jointdecision.ThreeModel
-	retention *RetainedModelInfo
-	diagnosis *PathDiagnosisOptions
+	path        string
+	model       *decision.Model
+	joint       *jointdecision.Model
+	three       *jointdecision.ThreeModel
+	retention   *RetainedModelInfo
+	diagnosis   *PathDiagnosisOptions
+	observation *PathObservationOptions
 }
 
 // TypedPathGenerator shares immutable model arrays. Every Generate call owns
@@ -44,11 +45,12 @@ type TypedPathGenerator struct {
 }
 
 type TypedPathOptions struct {
-	StepAttempts    int                   `json:"step_attempts,omitempty"`
-	FeedbackRounds  int                   `json:"feedback_rounds,omitempty"`
-	FeedbackUnfixed bool                  `json:"feedback_unfixed,omitempty"`
-	CI              *pathplan.CIHint      `json:"ci,omitempty"`
-	Diagnosis       *PathDiagnosisOptions `json:"diagnosis,omitempty"`
+	StepAttempts    int                     `json:"step_attempts,omitempty"`
+	FeedbackRounds  int                     `json:"feedback_rounds,omitempty"`
+	FeedbackUnfixed bool                    `json:"feedback_unfixed,omitempty"`
+	CI              *pathplan.CIHint        `json:"ci,omitempty"`
+	Diagnosis       *PathDiagnosisOptions   `json:"diagnosis,omitempty"`
+	Observation     *PathObservationOptions `json:"observation,omitempty"`
 }
 
 // NewTypedPathGenerator loads an optional explicit local path model once.
@@ -94,6 +96,10 @@ func (g *TypedPathGenerator) Generate(ctx context.Context, filename string, sour
 	if err != nil {
 		return Result{}, err
 	}
+	observation, err := copyPathObservation(options.Observation)
+	if err != nil {
+		return Result{}, err
+	}
 	return generateTypedPathRequest(ctx, filename, source, activityName, document,
-		typedPathModel{model: g.model, joint: g.joint, three: g.three, retention: &g.info, diagnosis: diagnosis}, options.StepAttempts, feedback)
+		typedPathModel{model: g.model, joint: g.joint, three: g.three, retention: &g.info, diagnosis: diagnosis, observation: observation}, options.StepAttempts, feedback)
 }

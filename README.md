@@ -94,8 +94,12 @@ The latest model study and the deployed integration have separate evidence:
   and broader task coverage are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
-This compiler revision uses **Go SDK v0.2.15-experimental**, with V3/V4 feature
-contracts and versioned arithmetic. Each dated native study above identifies its
+This compiler revision uses **Go SDK v0.2.16-experimental**, with V3/V4 feature
+contracts, versioned arithmetic and bounded probe ranking. The new
+[observation loop](docs/path-observation-loop.md) can choose a distinguishing
+input, obtain its result from a declared Gooo reference activity, and use that
+additional case during body construction. It works without model training.
+Each dated native study above identifies its
 own model and source revision. The
 [model guide](docs/three-choice-path-model.md) identifies the compatible bundle.
 The earlier [phrasing diagnosis](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/bilingual-wrapper-audit-results-20261003.md)
@@ -106,8 +110,8 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| Compiler at this revision | SDK v0.2.15; V3/V4 model, context and feedback identities | Broader typed construction and new intentions |
-| [SDK v0.2.15](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.15-experimental) | V3/V4 inference and explicit arithmetic | Repeated-use cost and broader inputs |
+| Compiler at this revision | SDK v0.2.16; source-bound observation loop, V3/V4 model and feedback | Paired observations of completion and added cost |
+| [SDK v0.2.16](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.16-experimental) | V3/V4 inference, explicit arithmetic and probe ranking | Reuse of verified observations and broader inputs |
 | [Hugging Face model](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Wording, operation order and new-task evaluation |
 
 At SDK revision `59c8d34`, local arm64 and
