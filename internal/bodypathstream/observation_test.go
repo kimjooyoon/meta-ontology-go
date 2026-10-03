@@ -38,15 +38,20 @@ func TestNativeStreamOwnsProbeSessionsAndRejectsNullInputs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	request.Options.Observation.ResolveUniqueCandidate = true
+	resolved, err := json.Marshal(request)
+	if err != nil {
+		t.Fatal(err)
+	}
 	invalid := bytes.Replace(reuse, []byte(`"inputs":[2,3,0]`), []byte(`"inputs":[2,null,0]`), 1)
 	var out bytes.Buffer
-	raw := bytes.Join([][]byte{invalid, reuse, fresh, reuse}, []byte{'\n'})
+	raw := bytes.Join([][]byte{invalid, reuse, fresh, reuse, resolved, resolved}, []byte{'\n'})
 	if err := Run(context.Background(), g, io.NopCloser(bytes.NewReader(raw)), asWriteCloser(&out), 3); err != nil {
 		t.Fatal(err)
 	}
 	results := decodeResults(t, out.Bytes())
 	sort.Slice(results, func(i, j int) bool { return results[i].Sequence < results[j].Sequence })
-	if len(results) != 4 || results[0].Status != "rejected" {
+	if len(results) != 6 || results[0].Status != "rejected" {
 		t.Fatal("null probe accepted or records lost")
 	}
 	for i, r := range results[1:] {
@@ -57,6 +62,10 @@ func TestNativeStreamOwnsProbeSessionsAndRejectsNullInputs(t *testing.T) {
 		if p.Observation.Options.ReuseProbeOutputs != (i != 1) || p.Observation.Status != "ONE_SURVIVING_CANDIDATE" ||
 			p.Observation.EffectiveCases != 2 || p.Search.Selection.ModelCalls != 0 {
 			t.Fatal("request inherited another session", p)
+		}
+		if i >= 3 && (p.Resolution == nil || p.Resolution.Status != "RESOLVED" || p.SearchStarted ||
+			p.Resolution.Selection.ModelCalls != 0) {
+			t.Fatal("resolved stream request ran search")
 		}
 		if r.Response.Source != results[1].Response.Source {
 			t.Fatal("mode changed generated source")

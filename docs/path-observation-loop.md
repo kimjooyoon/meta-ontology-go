@@ -71,11 +71,42 @@ new candidate evaluations or model calls. Each request owns its session, includi
 when a retained generator serves concurrent stream requests.
 
 The omitted/false setting preserves earlier v1 receipts and their repeated
-evaluation accounting. Both modes still run the existing candidate search after
-probing. Total code-generation latency and process memory need their own paired
-measurements; the SDK's cached-operation microbenchmark covers a smaller scope.
+evaluation accounting. With the default resolution setting, both modes run the
+existing candidate search after probing. Total code-generation latency and process
+memory need their own paired measurements; the SDK's cached-operation microbenchmark
+covers a smaller scope.
 
 ## Budgets and what the receipt means
+
+### Project a uniquely observed candidate
+
+The optional `"resolve_unique_candidate": true` field uses a candidate directly
+when the complete declared enumeration leaves exactly one survivor. It composes
+with either fresh evaluation or `reuse_probe_outputs`. A partial enumeration,
+empty survivor set or ambiguous set continues the existing bounded search and
+records `PARTIAL_ENUMERATION`, `NO_SURVIVOR` or `AMBIGUOUS` respectively.
+
+For a `RESOLVED` result, `body_paths.resolution` contains the selected mask and
+choices, final-ranking and effective-suite hashes, already observed finite score,
+and skipped-work flags. `search_started` is false and the search record is empty:
+probe observations are not counted as new search attempts. The compiler still
+checks the combined typed body, emits Go, compares its finite outputs with the
+typed interpreter and independently replays source observations before execution.
+
+A fresh request reads its model path only if search is needed. Consequently a
+resolved request may skip even opening that path; `model_load_skipped` records it.
+A retained worker has already loaded its model in the constructor. Both forms
+record zero predictions for resolved requests. Requested seed sampling and
+feedback are explicitly marked skipped. Original model/search controls remain
+bound to their source document and configuration. Existing receipt behavior is
+preserved when the option is omitted or false.
+
+The required `typed_path_observation_resolution` dimension checks the link between
+the finite observation and its direct selection or explicit search continuation.
+One survivor describes the declared finite candidate set and supplied cases;
+inputs beyond that suite retain their existing scope.
+
+### Finite limits
 
 Bounds are 1..32 supplied inputs, 1..64 observed candidates, 1..8 added
 observations, and 128 effective cases. A final ranking after the last observation

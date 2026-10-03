@@ -13,11 +13,12 @@ import (
 // OracleActivity names a separate, caller-declared pure activity in the same
 // authoritative source. Empty means suggest an input without inventing a label.
 type PathObservationOptions struct {
-	Inputs            []int64 `json:"inputs"`
-	MaxCandidates     int     `json:"max_candidates"`
-	MaxRounds         int     `json:"max_rounds"`
-	OracleActivity    string  `json:"oracle_activity,omitempty"`
-	ReuseProbeOutputs bool    `json:"reuse_probe_outputs,omitempty"`
+	Inputs                 []int64 `json:"inputs"`
+	MaxCandidates          int     `json:"max_candidates"`
+	MaxRounds              int     `json:"max_rounds"`
+	OracleActivity         string  `json:"oracle_activity,omitempty"`
+	ReuseProbeOutputs      bool    `json:"reuse_probe_outputs,omitempty"`
+	ResolveUniqueCandidate bool    `json:"resolve_unique_candidate,omitempty"`
 }
 
 type PathObservationRound struct {
