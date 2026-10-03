@@ -111,7 +111,7 @@ func expandSourceRecipe(ctx context.Context, filename string, source []byte, act
 	if err != nil {
 		return pathplan.Document{}, err
 	}
-	if _, err = bindTypedPathSource(ctx, filename, source, activity, prepared, &BodyPathReceipt{}); err != nil {
+	if _, err = bindTypedPathSourceProjection(ctx, filename, source, activity, prepared, &BodyPathReceipt{}, &base); err != nil {
 		return pathplan.Document{}, fmt.Errorf("recipe source binding: %w", err)
 	}
 	return document, nil

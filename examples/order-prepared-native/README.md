@@ -30,6 +30,21 @@ its second call reuses it. Both perform fresh source binding and model predictio
 This compares API ownership patterns in one revision. The original CLI timings
 are historical context; this collector does not establish a CLI speedup.
 
+### Source recipe projection follow-up (2026-10-03)
+
+The next collection keeps the same 512-generation protocol, frozen requests,
+weights and native comparisons. Recipe expansion reuses the original checked
+projection within that request instead of generating it again for fallback
+binding. Source/activity/projection identity and fallback equivalence are still
+checked. Generation, training export and independent replay bind fresh source.
+There is no source cache across requests.
+
+Compare the recorded recipe decoding interval with the preceding collection
+`order-prepared-native-20261003`. Those runs occur at different times; report
+their observed costs without treating them as a randomized cross-revision speed
+estimate. Full semantic and finite native outcomes must remain identical. This
+protocol note is committed before the follow-up starts.
+
 ## Run
 
 Build both binaries from the same clean compiler checkout with Go 1.27.1 and
