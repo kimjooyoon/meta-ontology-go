@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
@@ -109,13 +108,13 @@ func compare(result, old bodycodegen.Result, revision string, p prior, reused bo
 func observe(g *bodycodegen.TypedPathGenerator, setup float64, compiler, goBin, out, revision string,
 	p prior, mode string, trial int, source, recipe []byte, old bodycodegen.Result, reference native) record {
 	id := fmt.Sprintf("%s-%s-%d", p.ID, mode, trial)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	started := time.Now()
-	doc, err := pathplan.DecodeDocument(recipe)
+	doc, err := bodycodegen.DecodeSourcePathDocument(ctx, p.Request+".gooo", source, "Compose", recipe)
 	must(err)
 	r := record{ID: id, Request: p.Request, Budget: p.Budget, Mode: mode, Trial: trial, PlanSHA: p.PlanSHA,
 		SetupMS: setup, DecodeMS: float64(time.Since(started)) / 1e6}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	var before, after runtime.MemStats
 	runtime.ReadMemStats(&before)
 	started = time.Now()
