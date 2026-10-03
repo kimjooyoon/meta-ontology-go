@@ -6,15 +6,22 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 )
 
 const generationProfile = "gooo/body-codegen-typed-path-v1"
-const runtimeProfile = "gooo/typed-path-runtime-v1"
+const runtimeProfile = bodyexecution.RuntimeProfileV1
+const ownedRuntimeProfile = bodyexecution.RuntimeProfileV2
 
 func scopeRelation(before, after *completeness.CompletenessReceipt, beforeDigest string) (string, string) {
 	if !supported(before.ProfileID) || !supported(after.ProfileID) {
 		return "INCOMPARABLE_SCOPE", "Unregistered observation profile; counters have no shared measurement contract."
+	}
+	for _, receipt := range []*completeness.CompletenessReceipt{before, after} {
+		if receipt.ProfileID == ownedRuntimeProfile && bodyexecution.ValidateOwnedRuntimeScope(receipt) != nil {
+			return "INCOMPARABLE_SCOPE", "Missing, unsupported or inconsistent owned runtime binding."
+		}
 	}
 	for _, path := range [][]string{
 		{"domain_scope"}, {"input_type"}, {"output_type"}, {"allowed_investment"}, {"system_budget"},
@@ -33,7 +40,7 @@ func scopeRelation(before, after *completeness.CompletenessReceipt, beforeDigest
 	if at(before.Scope, "typed_path", "case_evaluator") != "bounded_integer_go_ast" {
 		return "INCOMPARABLE_SCOPE", "Unsupported finite evaluator."
 	}
-	if before.ProfileID == generationProfile && after.ProfileID == runtimeProfile &&
+	if before.ProfileID == generationProfile && runtimeProfileID(after.ProfileID) &&
 		after.Scope["parent_receipt_sha256"] == beforeDigest &&
 		reflect.DeepEqual(before.Scope["typed_path"], after.Scope["typed_path"]) {
 		return "PARENT_RUNTIME_CONTINUATION", "Exact parent bytes link a generation observation to runtime observations; changed profiles do not authorize numeric deltas."
@@ -46,7 +53,7 @@ func scopeRelation(before, after *completeness.CompletenessReceipt, beforeDigest
 		before.Scope["boundary"] == nil {
 		return "INCOMPARABLE_SCOPE", "Excluded scope or execution boundary is missing or changed."
 	}
-	if before.ProfileID == runtimeProfile {
+	if runtimeProfileID(before.ProfileID) {
 		for _, key := range []string{"runtime_suite_sha256", "activity_id", "suite_authority"} {
 			a, b := at(before.Scope, "runtime_scope", key), at(after.Scope, "runtime_scope", key)
 			if a == nil || a == "" || !reflect.DeepEqual(a, b) || key == "runtime_suite_sha256" && !validDigest(a) {
@@ -57,7 +64,10 @@ func scopeRelation(before, after *completeness.CompletenessReceipt, beforeDigest
 	return "SAME_MEASUREMENT_SCOPE", "Profile, original source, alternatives, finite suite, evaluator and declared investment match. Compiler/model/context differences remain observations, not causal proof."
 }
 
-func supported(profile string) bool { return profile == generationProfile || profile == runtimeProfile }
+func supported(profile string) bool { return profile == generationProfile || runtimeProfileID(profile) }
+func runtimeProfileID(profile string) bool {
+	return profile == runtimeProfile || profile == ownedRuntimeProfile
+}
 func validDigest(v any) bool {
 	s, ok := v.(string)
 	if !ok || len(s) != 71 || !strings.HasPrefix(s, "sha256:") {

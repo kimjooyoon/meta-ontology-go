@@ -65,6 +65,37 @@ Attributing a change to a model requires a separately controlled experiment.
 Runtime-to-runtime comparisons additionally require the same runtime suite,
 activity identity and suite authority.
 
+The registered runtime profiles are `gooo/typed-path-runtime-v1` (fresh execution)
+and `gooo/typed-path-runtime-v2` (one owned executable). The latter records the
+original source-bound build separately from work performed by the current call.
+Both envelopes preserve the exact parent receipt. A v2 envelope also requires a
+matching registered owned-artifact record, observation digest and original build
+binding. Failed observations remain readable when no successful build exists.
+The v2 bare receipt must retain its ownership contract. Future profiles are
+unregistered and do not become comparable by sharing a name prefix.
+
+File-based execution saves comparison inputs directly:
+
+```sh
+gooo body-path-run \
+  --source examples/body-codegen/typed-path-compound.gooo.fixture \
+  --activity Combined --path-plan examples/body-codegen/typed-path-compound-plan.json \
+  --cases examples/body-codegen/typed-path-runtime-cases.json \
+  --repeat 2 --out body-comparison-results
+gooo completeness-delta --before body-comparison-results/run-1-generation.json \
+  --after body-comparison-results/run-1-runtime.json
+gooo completeness-delta --before body-comparison-results/run-1-runtime.json \
+  --after body-comparison-results/run-2-runtime.json
+```
+
+Generation-to-runtime is a parent continuation with no numeric delta across
+profiles. First-build-to-reuse v2 observations can have the same finite expectation
+scope. Their current-child resource axes have different units and denominators
+(four children versus three with the earlier build excluded), so those axes retain
+both observations without a numeric improvement. Changed runtime expectations
+change the suite digest and are incomparable. The reader performs no new runtime
+execution or model operation, and JSON consistency does not attest past execution.
+
 ## Input and evidence boundaries
 
 Inputs are limited to 2 MiB each; each shared receipt remains limited to 1 MiB.
