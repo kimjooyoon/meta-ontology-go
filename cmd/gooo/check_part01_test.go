@@ -22,7 +22,7 @@ func TestRunCheckReportsDeterministicDiagnostics(t *testing.T) {
 		t.Fatalf("diagnostics were not deterministic: first=(%d,%q,%q), second=(%d,%q,%q)", firstCode, firstOut.String(), firstErr.String(), secondCode, secondOut.String(), secondErr.String())
 	}
 	want := "broken.gooo:2:1-2:7: error parse.expected-namespace: expected namespace declaration\n" +
-		"broken.gooo:2:22-2:23: error lex.unexpected-character: unexpected character '@'\n"
+		"broken.gooo:2:22-2:23: error lex.unexpected-character: unexpected character \"@\"\n"
 	if firstErr.String() != want {
 		t.Fatalf("diagnostics = %q, want %q", firstErr.String(), want)
 	}

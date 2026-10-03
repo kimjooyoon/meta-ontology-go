@@ -297,7 +297,7 @@ func evaluateWithExecution(ctx context.Context, model Generator, item record, ex
 		result.Error = err.Error()
 		return result
 	}
-	if item.tooLarge {
+	if item.tooLarge || len(item.raw) > MaxRecordBytes {
 		return reject(fmt.Errorf("request exceeds %d bytes", MaxRecordBytes))
 	}
 	if len(item.raw) == 0 {

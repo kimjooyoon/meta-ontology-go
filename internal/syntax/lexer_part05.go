@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"strconv"
 	"unicode"
 )
 
@@ -33,7 +34,7 @@ func (l *Lexer) emitText(kind TokenKind, start, end Position, text, value string
 	})
 }
 func quoteSource(value string) string {
-	return "'" + value + "'"
+	return strconv.Quote(value)
 }
 func (l *Lexer) addDiagnostic(code DiagnosticCode, span Span, message string) {
 	l.diagnostics = append(l.diagnostics, Diagnostic{

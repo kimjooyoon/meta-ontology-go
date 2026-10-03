@@ -1,5 +1,61 @@
 # Repeated body construction with one Gooo process
 
+## Start from source, recipe and expectation files
+
+Use one command to construct a body and immediately execute it twice. No input
+JSON lines or helper binary are needed:
+
+```sh
+gooo body-path-run \
+  --source examples/body-codegen/typed-path-compound.gooo.fixture \
+  --activity Combined \
+  --path-plan examples/body-codegen/typed-path-compound-plan.json \
+  --cases examples/body-codegen/typed-path-runtime-cases.json \
+  --out body-run-results --repeat 2
+```
+
+Choose a fresh `--out` path; an existing path is rejected. `--activity` is an
+explicit source activity name. Both full typed plans and short source recipes
+work. Add `--model /explicit/path/model.json` to use a local compatible judge;
+omitting it uses deterministic construction. `--go-bin /path/to/go1.27.1/bin/go`
+selects the native tool. Repetition is sequential, bounded to 1..16, default 1.
+One generator and one native executor serve all repetitions, using the same
+request evaluation as `body-path-stream --execute`.
+
+The directory contains exact input copies, `model-retention.json`, and each
+`run-N-response.json`, `run-N-generation.json`, `run-N-generated.go` and
+`run-N-runtime.json` when that stage exists. A `summary.json` records each
+completed observation before it is written to stdout and before the next request.
+Failed construction and native observations are preserved. Stdout emits one full
+result per request; stderr prints status, finite expectations and artifact reuse.
+Inspect generated code directly in `run-N-generated.go`.
+
+`response_ms` includes request decoding, construction and native execution,
+excluding initial model setup and saving/output costs. Inner generation/runtime
+intervals are parts of that response, so do not add them to it. `native_runs`
+counts actually started native children. A completed observation with unmet
+finite expectations still exits 0 and retains the numerator/denominator. Rejected
+construction or native errors exit 1 after recording the result. Usage errors
+exit 2. Output/filesystem errors and cancellation also exit 1; completed files
+remain available. Cancellation closes closeable stdout/stderr, joins native
+children and removes the owned temporary executable. Embedding requires output
+writers with prompt `Close` or cooperative nonblocking writes.
+
+An optional `--options options.json` passes the stream's exact options object,
+including caller-supplied CI context, finite ambiguity diagnosis and observation
+settings. For example: `{"diagnosis":{"inputs":[2,3],"max_candidates":2}}`.
+CI hints require a feedback-capable local model, nonzero `step_attempts` and
+explicit `feedback_rounds`, following the stream contract below. The whole-candidate
+order judge uses ordinary unseeded bounded search; its current profile rejects
+batch/feedback options. A CI-only options object is rejected before construction.
+Duplicate, aliased, unknown and trailing option fields are rejected. CI hints are
+context for construction; source-bound checks and current execution remain the
+measurement. Input files must be nonempty regular UTF-8 files: source <=128 KiB,
+plan <=256 KiB, cases <=32 KiB and options <=64 KiB. Runtime cases remain 1..128.
+The supported native body is the closed pure `Integer -> Integer` projection.
+
+## Use streaming requests
+
 Use the installed `gooo` command. Each line in `requests.jsonl` is one request:
 
 ```sh
