@@ -22,6 +22,23 @@ selects the native tool. Repetition is sequential, bounded to 1..16, default 1.
 One generator and one native executor serve all repetitions, using the same
 request evaluation as `body-path-stream --execute`.
 
+The executor keeps the first successful Go version check for a native Go1.27.1
+`cmd/go` executable. Every request hashes the current Go file and checks its
+embedded version/platform. The retained check is reused only when tool path,
+bytes, child environment and producer context match. Shell wrappers receive a
+fresh version process on every request. Current source/parent replay and the two
+compiled executions still run each time. A changed environment/tool invalidates
+the retained version check; closing or cancelling the executor clears it.
+
+Runtime profile `gooo/typed-path-runtime-v3` records `toolchain_reference` and
+the original `source_check`, exact `source_output` and content binding. A reused
+version leaves the current `toolchain` process record empty. With both version
+and build reused, `runtime_child_resources` counts only two current runtime
+children. If the version is reused but a new build is needed, it counts three.
+Earlier v1/v2 observations remain readable. Profile and resource-unit changes
+are preserved by `completeness-delta`; they do not create numeric improvement
+claims across different contracts.
+
 The directory contains exact input copies, `model-retention.json`, and each
 `run-N-response.json`, `run-N-generation.json`, `run-N-generated.go` and
 `run-N-runtime.json` when that stage exists. A `summary.json` records each
