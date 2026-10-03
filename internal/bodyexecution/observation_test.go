@@ -13,6 +13,12 @@ import (
 )
 
 func TestRuntimeReplaysOracleAndKeepsAddedInputInSelectionSuite(t *testing.T) {
+	t.Run("fresh", func(t *testing.T) { runtimeReplaysOracle(t, false) })
+	t.Run("reuse", func(t *testing.T) { runtimeReplaysOracle(t, true) })
+}
+
+func runtimeReplaysOracle(t *testing.T, reuse bool) {
+	t.Helper()
 	source, err := os.ReadFile("../../examples/body-codegen/path-observation.gooo.fixture")
 	if err != nil {
 		t.Fatal(err)
@@ -27,7 +33,7 @@ func TestRuntimeReplaysOracleAndKeepsAddedInputInSelectionSuite(t *testing.T) {
 	}
 	prior, err := bodycodegen.GenerateWithTypedPathOptions(context.Background(), "fixture.gooo", source, "Probe", doc, "",
 		bodycodegen.TypedPathOptions{Observation: &bodycodegen.PathObservationOptions{
-			Inputs: []int64{2, 3, 0}, MaxCandidates: 2, MaxRounds: 2, OracleActivity: "Expected"}})
+			Inputs: []int64{2, 3, 0}, MaxCandidates: 2, MaxRounds: 2, OracleActivity: "Expected", ReuseProbeOutputs: reuse}})
 	if err != nil {
 		t.Fatal(err)
 	}

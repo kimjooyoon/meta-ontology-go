@@ -64,9 +64,16 @@ predictions. The loop is synchronous and shares the existing eight-second reques
 deadline. A retained generator can use `TypedPathOptions.Observation`; each
 request owns its cases and observations.
 
-This first integration repeats candidate evaluation during search after probing.
-It establishes correctness and evidence flow; a latency improvement needs a paired
-measurement. Candidate pruning or reuse of verified evaluations is future work.
+The optional `"reuse_probe_outputs": true` request field retains the first
+ranking's candidate outputs in an SDK v0.2.17 probe session. Each added oracle
+observation then filters those values. Later observation rounds perform zero
+new candidate evaluations or model calls. Each request owns its session, including
+when a retained generator serves concurrent stream requests.
+
+The omitted/false setting preserves earlier v1 receipts and their repeated
+evaluation accounting. Both modes still run the existing candidate search after
+probing. Total code-generation latency and process memory need their own paired
+measurements; the SDK's cached-operation microbenchmark covers a smaller scope.
 
 ## Budgets and what the receipt means
 
@@ -93,6 +100,13 @@ one surviving candidate can still fail on an input outside the supplied suite.
 oracle identity and generated-code hash, newly observed labels, effective case
 hash/count, evaluation count and stopping status. Original source/document/test
 hashes stay separate. `timing.observation_ms` isolates the added work.
+
+In reuse mode each round also has a `reuse` record: revision, first-ranking hash,
+reused output count, cached comparisons and cumulative evaluations/comparisons.
+`ranking.evaluation_attempts` counts work in that round. Runtime replay builds a
+new bounded session from the source, checks its first outputs and follows each
+oracle observation. Imported cached outputs do not replace that replay. CLI and
+stream probes both require explicit integer values; a JSON `null` is rejected.
 
 The shared receipt adds `typed_path_observation_binding` and computes finite
 accuracy over the effective suite. Binding `PASS` means the records are connected;
