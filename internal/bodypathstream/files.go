@@ -215,8 +215,8 @@ func runFileRequests(ctx context.Context, generator Generator, request Request, 
 		if err := encoder.Encode(result); err != nil {
 			return fail(err)
 		}
-		fmt.Fprintf(stderr, "%s: %s, finite expectations %d/%d, artifact reused=%t, response %.3fms\n",
-			request.CorrelationID, row.Status, row.Passed, row.Total, row.ArtifactReused, row.ResponseMS)
+		fmt.Fprintf(stderr, "%s: %s, finite expectations %s, artifact reused=%t, response %.3fms\n",
+			request.CorrelationID, row.Status, finiteExpectationDisplay(result, row.Passed), row.ArtifactReused, row.ResponseMS)
 		if result.Status != "completed" {
 			fmt.Fprintf(stderr, "%s: %s\n", request.CorrelationID, result.Error)
 			code = 1
@@ -226,6 +226,36 @@ func runFileRequests(ctx context.Context, generator Generator, request Request, 
 		return fail(err)
 	}
 	return code
+}
+
+// Case observations and replay are separate facts. A first run can supply all
+// finite outputs even when the second run fails; the display preserves both.
+func finiteExpectationDisplay(result Result, passed int) string {
+	if result.Execution == nil {
+		return "unobserved"
+	}
+	o := result.Execution.Observation
+	observed := len(o.Cases)
+	if observed == 0 {
+		if o.DeclaredCases > 0 {
+			return fmt.Sprintf("unobserved (%d declared)", o.DeclaredCases)
+		}
+		return "unobserved"
+	}
+	if o.RuntimeReplayed && observed == o.DeclaredCases {
+		return fmt.Sprintf("%d/%d", passed, observed)
+	}
+	detail := ""
+	if observed != o.DeclaredCases {
+		detail = fmt.Sprintf("%d declared", o.DeclaredCases)
+	}
+	if !o.RuntimeReplayed {
+		if detail != "" {
+			detail += "; "
+		}
+		detail += "replay incomplete"
+	}
+	return fmt.Sprintf("observed %d/%d (%s)", passed, observed, detail)
 }
 
 // A missing phase is unobserved, even when another member of the group ran.
