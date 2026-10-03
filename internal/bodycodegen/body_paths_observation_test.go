@@ -31,7 +31,7 @@ func TestPathObservationSeparatesTwoConditionalDecisionsAcrossRounds(t *testing.
 			{Kind: "binary", Operation: "subtract", Left: 0, Right: 1}},
 		Statements: []bodyplan.Stmt{{Kind: "return", Expr: 3}, {Kind: "return", Expr: 4},
 			{Kind: "if", Expr: 2, Then: []int{0}, Else: []int{1}}}, Root: []int{2}}}
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		plan.Decisions = append(plan.Decisions, pathplan.Choice{ID: fmt.Sprintf("order_%d", i),
 			Kind: pathplan.OperandOrder, Target: 3 + i, Intent: "Choose the operand order.", Fallback: "layout_forward",
 			Options: []pathplan.Option{{Label: "layout_forward"}, {Label: "layout_reverse", Reverse: true}}})
