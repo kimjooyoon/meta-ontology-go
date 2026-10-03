@@ -100,7 +100,17 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 		return finish(fmt.Errorf("original parent receipt is invalid"))
 	}
 	left, _ := json.Marshal(parent)
-	right, _ := json.Marshal(prior.Report.CompletenessReceipt)
+	encodedPrior, err := json.Marshal(prior.Report.CompletenessReceipt)
+	if err != nil {
+		return finish(fmt.Errorf("generation parent receipt cannot be encoded"))
+	}
+	// A live generator can retain typed scope structs; decoded JSON uses maps.
+	// Validate both sides with the same exact-number decoder before comparing.
+	expectedParent, err := completeness.Decode(encodedPrior)
+	if err != nil {
+		return finish(fmt.Errorf("generation parent receipt is invalid"))
+	}
+	right, _ := json.Marshal(expectedParent)
 	if string(left) != string(right) {
 		return finish(fmt.Errorf("parent receipt and generation observation differ"))
 	}

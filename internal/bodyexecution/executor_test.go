@@ -24,6 +24,29 @@ func nativeTool() string {
 	return filepath.Join(runtime.GOROOT(), "bin", name)
 }
 
+func TestExecutorAcceptsLiveTypedScopeParentWithoutChangingIt(t *testing.T) {
+	source, doc, prior, _ := fixture(t)
+	prior.Report.CompletenessReceipt.Scope["typed_live_record"] = struct {
+		Z int `json:"z"`
+		A int `json:"a"`
+	}{Z: 2, A: 1}
+	parent, err := json.Marshal(prior.Report.CompletenessReceipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := NewExecutor()
+	defer e.Close()
+	r, err := e.Execute(context.Background(), "fixture.gooo", source, doc, prior, parent, doc.TestCases, nativeTool())
+	if err != nil || !bytes.Equal(parent, r.ParentReceipt) {
+		t.Fatal("live typed parent differs", err)
+	}
+	verifyReceipt(t, r)
+	wrong := bytes.Replace(parent, []byte(`"z":2`), []byte(`"z":3`), 1)
+	if _, err := e.Execute(context.Background(), "fixture.gooo", source, doc, prior, wrong, doc.TestCases, nativeTool()); err == nil {
+		t.Fatal("changed parent accepted")
+	}
+}
+
 func TestExecutorReusesOnlyArtifactAndExecutesCurrentCases(t *testing.T) {
 	source, doc, prior, parent := fixture(t)
 	e := NewExecutor()
