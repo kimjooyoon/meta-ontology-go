@@ -12,7 +12,6 @@ import (
 	"syscall"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
-	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
@@ -38,7 +37,7 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
-	document, err := pathplan.DecodeDocument(raw)
+	document, err := bodycodegen.DecodeSourcePathDocument(ctx, options.filename, source, options.activity, raw)
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
