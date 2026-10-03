@@ -1,0 +1,14 @@
+package bodycodegen
+namespace bodycodegen
+entity Integer id "bodycodegen://entity/integer"
+
+activity ClampBelowZero(Integer) -> Integer computes `
+let value = input
+value = input
+let accepted = value >= 0
+if accepted {
+    return value
+} else {
+    return 0
+}
+`

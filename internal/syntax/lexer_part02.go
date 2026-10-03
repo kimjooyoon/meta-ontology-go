@@ -23,6 +23,8 @@ func (l *Lexer) Lex() (Tokens, Diagnostics) {
 			l.lexIdentifier(start)
 		case r == '"':
 			l.lexString(start)
+		case r == '`':
+			l.lexRawString(start)
 		case r == '(':
 			l.advanceRune()
 			l.emit(TokenLParen, start)
