@@ -91,7 +91,9 @@ func TestStreamExecutionCasesRequireOptInAndValidSuite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, suite := range []string{`null`, `{}`, `{"schema":"gooo/body-runtime-cases/v1","cases":[]}`} {
+	for _, suite := range []string{`null`, `{}`, `{"schema":"gooo/body-runtime-cases/v1","cases":[]}`,
+		`{"schema":"gooo/body-runtime-cases/v1","cases":[{"input":0}]}`,
+		`{"schema":"gooo/body-runtime-cases/v1","cases":[{"input":null,"expected":0}]}`} {
 		line := executionLine(t, "invalid", suite)
 		result := evaluateWithExecution(context.Background(), g, record{sequence: 1, raw: bytes.TrimSpace(line)}, &executionSettings{})
 		if result.Status != "rejected" || result.Response != nil || result.Execution != nil {
