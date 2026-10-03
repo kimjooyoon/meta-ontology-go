@@ -3,7 +3,6 @@ package bodycodegen
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
@@ -31,20 +30,21 @@ type typedPathModel struct {
 	model       *decision.Model
 	joint       *jointdecision.Model
 	three       *jointdecision.ThreeModel
-	order       *orderjudge.Model
+	order       *retainedOrderModel
 	retention   *RetainedModelInfo
 	diagnosis   *PathDiagnosisOptions
 	observation *PathObservationOptions
 }
 
 // TypedPathGenerator shares immutable model arrays. Every Generate call owns
-// fresh preparation, source binding, session, workspace, feedback and receipts.
+// fresh source binding, session, workspace, feedback and receipts. The order
+// judge retains at most one fully checked plan, identified by its complete digest.
 // Callers must not mutate their source/document/options during a call.
 type TypedPathGenerator struct {
 	model *decision.Model
 	joint *jointdecision.Model
 	three *jointdecision.ThreeModel
-	order *orderjudge.Model
+	order *retainedOrderModel
 	info  RetainedModelInfo
 }
 
@@ -72,15 +72,12 @@ func NewTypedPathGenerator(modelPath string) (*TypedPathGenerator, error) {
 		g.order = models.order
 		g.info.Loaded = true
 		if g.order != nil {
-			metadata, weights, err := g.order.Marshal()
-			if err != nil {
-				return nil, err
-			}
-			g.info.MetadataSHA256 = strings.TrimPrefix(digest(metadata), "sha256:")
-			g.info.WeightsSHA256 = strings.TrimPrefix(digest(weights), "sha256:")
-			g.info.ResidentTensorBytes = orderjudge.ParameterCount * 4
+			identity := g.order.runtime.Identity()
+			g.info.MetadataSHA256, g.info.WeightsSHA256 = identity.MetadataSHA256, identity.WeightsSHA256
+			g.info.ResidentTensorBytes = identity.TensorBytes
 			g.info.ModelSchema, g.info.FeatureVersion = orderjudge.Schema, orderjudge.FeatureVersion
 			g.info.ArithmeticVersion = orderjudge.ArithmeticVersion
+			g.info.Scope = "one immutable model snapshot; fresh source binding; at most one retained whole-candidate plan"
 		} else if g.three != nil {
 			g.info.MetadataSHA256, g.info.WeightsSHA256 = g.three.MetadataSHA256(), g.three.WeightsSHA256()
 			g.info.ResidentTensorBytes = g.three.ResidentTensorBytes()

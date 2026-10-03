@@ -196,3 +196,18 @@ unsupported body or feature bound also returns an error before prediction; input
 is never silently shortened. Leave out `--path-model` for ordinary deterministic
 search across the compiler's broader supported profile. The retained generator
 loads the immutable model once and uses separate workspaces per request.
+
+With SDK v0.2.20, the order route compiles its eight legal candidates once per
+prepared plan and captures the model identity once. `NewTypedPathGenerator`
+retains at most one such plan per generator. Every call still binds the source,
+checks the full plan digest, makes a fresh prediction and evaluates its own cases.
+Changing the plan replaces the retained entry; changing only cases or the attempt
+budget reuses programs while producing fresh results. Concurrent misses may
+prepare independently and never wait on another request's preparation.
+
+`body_paths.whole_candidate_preparation` records the bound plan digest, whether
+preparation was reused, the eight-candidate count and acquisition time. Tensor
+bytes in model information exclude retained program arenas and source strings.
+A fresh CLI process prepares once; reuse across calls requires a retained Go
+generator. SDK search timing and complete compiler generation timing are measured
+separately in the [public experiment](https://github.com/kimjooyoon/gooo-neural-decision-experiments/tree/main/publication/order-prepared-sdk-20261003).
