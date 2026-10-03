@@ -6,6 +6,7 @@ import (
 	"fmt"
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/orderjudge"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"io"
 	"os"
@@ -39,6 +40,10 @@ func loadTypedStructuralModel(name string) (typedPathModel, error) {
 	}
 	if err = json.Unmarshal(raw, &selector); err != nil {
 		return typedPathModel{}, err
+	}
+	if selector.Schema == orderjudge.Schema {
+		model, err := loadOrderJudge(name, raw)
+		return typedPathModel{order: model}, err
 	}
 	if selector.Schema == jointdecision.ThreeSchema {
 		if selector.Feature == jointdecision.ThreeBagFeatureVersion {

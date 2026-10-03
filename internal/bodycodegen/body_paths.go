@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kimjooyoon/gooo-decision-runtime/bodyplan"
+	"github.com/kimjooyoon/gooo-decision-runtime/orderjudge"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
 
@@ -28,6 +29,7 @@ type BodyPathReceipt struct {
 	SourceBaseMatched      bool                       `json:"source_base_matched"`
 	SourceBinding          RouteEquivalenceReceipt    `json:"source_binding"`
 	Search                 pathplan.SearchResult      `json:"search"`
+	OrderJudgment          *orderjudge.SearchReceipt  `json:"whole_candidate_judgment,omitempty"`
 	Progress               []pathplan.SessionProgress `json:"session_progress,omitempty"`
 	Feedback               []pathplan.FeedbackReceipt `json:"feedback_judgments,omitempty"`
 	FeedbackUnfixed        bool                       `json:"feedback_unfixed,omitempty"`
@@ -131,7 +133,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	searchConfig := typedPathSearchConfig(stepAttempts, feedback)
 	receipt := &BodyPathReceipt{
 		Schema: "gooo/body-codegen-typed-path-receipt/v1", OriginalSourceSHA256: digest(source),
-		LocalModelRequested: models.path != "" || models.model != nil || models.joint != nil || models.three != nil,
+		LocalModelRequested: models.path != "" || models.model != nil || models.joint != nil || models.three != nil || models.order != nil,
 		SearchConfigSHA256:  digest(searchConfig), SearchConfig: searchConfig,
 		Scope: "declared finite cases and bounded typed alternatives; not proof of natural-language intent or all int64 inputs",
 		Timing: BodyPathTiming{ExecutionModel: "single_process_source_bind_then_rank_then_finite_tdd_then_native_emit",
@@ -167,7 +169,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return fail(err)
 	}
-	if document.Seed != "" && models.path == "" && models.model == nil && models.joint == nil && models.three == nil {
+	if document.Seed != "" && models.path == "" && models.model == nil && models.joint == nil && models.three == nil && models.order == nil {
 		return fail(fmt.Errorf("typed path sampling requires an explicit local model"))
 	}
 	bound, err := bindTypedPathSource(ctx, filename, source, activityName, prepared, receipt)
@@ -197,15 +199,24 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	model := models.model
 	joint := models.joint
 	three := models.three
+	order := models.order
 	if models.path != "" {
 		loadStarted := time.Now()
 		var loaded typedPathModel
 		loaded, err = loadTypedStructuralModel(models.path)
 		model, joint, three = loaded.model, loaded.joint, loaded.three
+		order = loaded.order
 		receipt.Timing.ModelLoadMS = elapsedMS(loadStarted)
 		if err != nil {
 			return fail(fmt.Errorf("load explicit structural model: %w", err))
 		}
+	}
+	if order != nil {
+		if document.Seed != "" || stepAttempts != 0 || feedback != nil {
+			return fail(fmt.Errorf("whole-candidate judge requires unseeded search without batch or feedback options"))
+		}
+		return generateOrderTypedPath(ctx, filename, source, activityName, searchDocument, prepared,
+			bound, order, models.diagnosis, receipt, started)
 	}
 	contextStarted := time.Now()
 	var contextDeclined bool
