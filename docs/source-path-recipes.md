@@ -167,3 +167,32 @@ counts passed declared cases; general behavior needs broader independent cases.
 Related: [incremental sessions](typed-path-sessions.md),
 [useful observations](path-observation-loop.md), and
 [language direction](language-direction.ko.md).
+
+## Whole-candidate order judge (SDK v0.2.19)
+
+The experimental [order judge](https://huggingface.co/asketeddy/gooo-order-judge-tiny-v1)
+can be passed through the ordinary `--path-model model.json` flag. It sees the
+complete original intent and the actual ordered operations in eight composed
+candidates. Source expansion and binding precede loading; one local prediction
+precedes finite candidate tests and selected Go emission. Its fixed neighboring
+`weights.bin` file is 16 KiB and is checked against the closed model metadata.
+
+The supported shape is `let v=input; v=op(...); v=op(...); return v`, using one
+`root_order` and two `operand_order` choices. Operators are add/subtract/multiply;
+leaves are local, input or integer constant; model constants are -16..16. Input
+text is the declared choice intents joined with newlines, at most 512 UTF-8 bytes.
+All declared choice orderings are retained. The search attempts up to the smaller
+of the document budget and eight, reusing exact equal operation descriptors.
+
+The result's `body_paths.whole_candidate_judgment` records all candidate ranks,
+descriptors, prediction timing and equivalence skips. `search` retains evaluated
+bodies and finite outcomes. The request may finish partially at a small budget;
+`body-execute` reconstructs the selected source and compiles/runs its actual Go
+projection, including cases that fail the supplied expectation.
+
+This initial model route supports unseeded, uninterrupted bounded search.
+Explicit sampling, batch and feedback options return a recorded error. An
+unsupported body or feature bound also returns an error before prediction; input
+is never silently shortened. Leave out `--path-model` for ordinary deterministic
+search across the compiler's broader supported profile. The retained generator
+loads the immutable model once and uses separate workspaces per request.
