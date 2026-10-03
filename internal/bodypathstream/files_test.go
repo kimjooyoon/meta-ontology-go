@@ -158,6 +158,29 @@ func TestFilesRejectMissingExpectationBeforeGeneration(t *testing.T) {
 	}
 }
 
+func TestFilesCIHintRequiresExplicitFeedback(t *testing.T) {
+	args, out := fileArgs(t, false, `{"schema":"gooo/body-runtime-cases/v1","cases":[{"input":2,"expected":15}]}`)
+	options := filepath.Join(t.TempDir(), "options.json")
+	raw := `{"ci":{"source_sha":"` + strings.Repeat("a", 40) + `","status":"FAIL"}}`
+	if err := os.WriteFile(options, []byte(raw), 0644); err != nil {
+		t.Fatal(err)
+	}
+	args = append(args, "--options", options)
+	var stdout, stderr bytes.Buffer
+	if code := RunFilesCommand(context.Background(), "files", args, &stdout, &stderr); code != 1 ||
+		!strings.Contains(stderr.String(), "feedback options require explicit feedback rounds") {
+		t.Fatal("CI context silently accepted", code, stderr.String())
+	}
+	for _, result := range decodeResults(t, stdout.Bytes()) {
+		if result.Status != "rejected" || result.Response != nil || result.Execution != nil {
+			t.Fatal("CI-only options reached generation")
+		}
+	}
+	if len(fileSummary(t, out)) != 2 {
+		t.Fatal("rejection not preserved")
+	}
+}
+
 func TestFilesArgumentAndInputBounds(t *testing.T) {
 	for _, tc := range []struct {
 		args []string

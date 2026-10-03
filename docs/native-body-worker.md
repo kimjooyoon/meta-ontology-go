@@ -43,7 +43,11 @@ writers with prompt `Close` or cooperative nonblocking writes.
 
 An optional `--options options.json` passes the stream's exact options object,
 including caller-supplied CI context, finite ambiguity diagnosis and observation
-settings. For example: `{"ci":{"source_sha":"<40 lowercase hex>","status":"FAIL"}}`.
+settings. For example: `{"diagnosis":{"inputs":[2,3],"max_candidates":2}}`.
+CI hints require a feedback-capable local model, nonzero `step_attempts` and
+explicit `feedback_rounds`, following the stream contract below. The whole-candidate
+order judge uses ordinary unseeded bounded search; its current profile rejects
+batch/feedback options. A CI-only options object is rejected before construction.
 Duplicate, aliased, unknown and trailing option fields are rejected. CI hints are
 context for construction; source-bound checks and current execution remain the
 measurement. Input files must be nonempty regular UTF-8 files: source <=128 KiB,
