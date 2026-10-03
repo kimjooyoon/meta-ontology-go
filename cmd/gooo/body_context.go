@@ -12,10 +12,16 @@ import (
 	"syscall"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
+	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyContextUsage = "usage: gooo body-context --plan <plan.json> --activity <name> [--feature-version <version>] <file.gooo>"
+const bodyContextUsage = "usage: gooo body-context --plan <plan.json> --activity <name> [--feature-version <version>] [--include-plan] <file.gooo>"
+
+type bodyContextOutput struct {
+	bodycodegen.TypedPathContextExport
+	ExpandedPlan *pathplan.Plan `json:"expanded_plan,omitempty"`
+}
 
 func runBodyContext(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -46,14 +52,21 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
-	if err = json.NewEncoder(stdout).Encode(result); err != nil {
+	output := bodyContextOutput{TypedPathContextExport: result}
+	if options.includePlan {
+		output.ExpandedPlan = &document.Plan
+	}
+	if err = json.NewEncoder(stdout).Encode(output); err != nil {
 		fmt.Fprintln(stderr, "context export output failed")
 		return exitFailure
 	}
 	return exitOK
 }
 
-type bodyContextArgs struct{ plan, activity, filename, featureVersion string }
+type bodyContextArgs struct {
+	plan, activity, filename, featureVersion string
+	includePlan                              bool
+}
 
 func (o *bodyContextArgs) set(flag, value string) bool {
 	var target *string
@@ -76,6 +89,11 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 	var o bodyContextArgs
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
+		case "--include-plan":
+			if o.includePlan {
+				return o, false
+			}
+			o.includePlan = true
 		case "--plan", "--activity", "--feature-version":
 			if i+1 >= len(args) || !o.set(args[i], args[i+1]) {
 				return o, false
