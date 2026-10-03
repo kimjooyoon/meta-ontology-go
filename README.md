@@ -39,10 +39,12 @@ Stable semantic IDs connect a declaration to its generated structure and observe
 behavior. Small models guide finite choices inside those boundaries. When a model
 is unavailable, the compiler continues through the declared deterministic route.
 
-The current experiments use an independently trained **2,072-parameter shared
-judge** for three binary decisions, giving eight complete body paths. It receives
-source-derived context, Korean/English intent, candidate structure and, on later
-attempts, actual failed-case feedback. Gooo owns the alternatives and the budget.
+The current integration includes an independently trained **4,096-parameter,
+16 KiB whole-candidate judge** that compares eight complete body paths, including
+two-operation order. Earlier experiments use a **2,072-parameter shared judge**
+for three binary decisions and actual failed-case feedback on later attempts.
+Both receive source-derived context, Korean/English intent and candidate
+structure. Gooo owns the alternatives and the budget.
 Broader natural-language discovery and reusable learned abstractions are the next
 language research questions.
 
@@ -57,7 +59,7 @@ languages; the measurements below compare Gooo's own experimental variants.
 | Language and compiler | This repository | Gooo source, semantic IR, projection, execution and receipts |
 | Local inference | [gooo-decision-runtime](https://github.com/kimjooyoon/gooo-decision-runtime) | Go model loaders, fixed workspaces, typed search and feedback |
 | Research | [gooo-neural-decision-experiments](https://github.com/kimjooyoon/gooo-neural-decision-experiments) | Training, comparisons, raw evidence and reproduction tools |
-| Model weights | [Hugging Face: shared Gooo judge](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | FP32 and ternary exports, model card and evidence bundles |
+| Model weights | [Whole-candidate judge](https://huggingface.co/asketeddy/gooo-order-judge-tiny-v1) · [shared judge](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Current 16 KiB model and earlier FP32/ternary studies, model cards and evidence bundles |
 
 ## Current observations — 2026-10-03
 
