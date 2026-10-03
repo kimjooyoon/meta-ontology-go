@@ -4,18 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/orderjudge"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
-	"io"
-	"os"
+	"github.com/kimjooyoon/meta-ontology-go/internal/fileopen"
 )
 
-// Schema dispatch occurs after source binding; each loader enforces its full
-// closed metadata and weights contract. The operation classifier is rejected.
+// Dispatch reads bounded metadata; each loader enforces its closed artifact
+// contract. Fresh source binding remains part of each construction request.
 func loadTypedStructuralModel(name string) (typedPathModel, error) {
-	f, err := os.Open(name)
+	f, err := fileopen.ReadOnly(name)
 	if err != nil {
 		return typedPathModel{}, err
 	}

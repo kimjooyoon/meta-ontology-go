@@ -90,6 +90,13 @@ nonempty/UTF-8/byte limits above still apply. Missing-file and permission failur
 retain the underlying filesystem error; nonregular inputs fail before model preparation
 or output directory creation.
 
+The initial retained structural-model metadata and the whole-candidate order
+judge's 16,384-byte weights use the same opening primitive. Their existing
+descriptor/size/schema/digest/finite-tensor checks remain authoritative. Model
+loading precedes output directory creation and does not perform predictions.
+The other model profiles retain their own SDK artifact loaders after metadata
+dispatch; this change does not alter their formats or inference contracts.
+
 ## Read the cost of each stage
 
 Add `--timing` to `body-path-run` to save `run-N-timing.json` and

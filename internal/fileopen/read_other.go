@@ -1,13 +1,15 @@
 //go:build !unix
 
-package bodypathstream
+package fileopen
 
 import (
 	"fmt"
 	"os"
 )
 
-func openFileInput(path string) (*os.File, error) {
+// ReadOnly retains the preliminary regular-file check on other platforms.
+// Callers must still inspect the opened descriptor and enforce their bounds.
+func ReadOnly(path string) (*os.File, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, err
