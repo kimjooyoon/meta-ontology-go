@@ -172,6 +172,7 @@ func runFileRequests(ctx context.Context, generator Generator, request Request, 
 		fmt.Fprintf(stderr, "%s: %s, finite expectations %d/%d, artifact reused=%t, response %.3fms\n",
 			request.CorrelationID, row.Status, row.Passed, row.Total, row.ArtifactReused, row.ResponseMS)
 		if result.Status != "completed" {
+			fmt.Fprintf(stderr, "%s: %s\n", request.CorrelationID, result.Error)
 			code = 1
 		}
 	}

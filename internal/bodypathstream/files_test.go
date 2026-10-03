@@ -217,6 +217,18 @@ func TestFileOptionsExactContract(t *testing.T) {
 	}
 }
 
+func TestFileEvaluatorRetainsStreamRecordBound(t *testing.T) {
+	raw := bytes.Repeat([]byte{' '}, MaxRecordBytes+1)
+	g := fakeGenerator{generate: func(context.Context, string) (bodycodegen.Result, error) {
+		t.Fatal("oversized record reached construction")
+		return bodycodegen.Result{}, nil
+	}}
+	r := evaluateWithExecution(context.Background(), g, record{sequence: 1, raw: raw}, &executionSettings{})
+	if r.Status != "rejected" || !strings.Contains(r.Error, "request exceeds") || r.Response != nil {
+		t.Fatal("direct file evaluation bypassed stream bound")
+	}
+}
+
 func TestFileCancellationUnblocksOutputAndPreservesLastReport(t *testing.T) {
 	line := executionLine(t, "current", `{"schema":"gooo/body-runtime-cases/v1","cases":[{"input":2,"expected":15}]}`)
 	var request Request
