@@ -1,12 +1,38 @@
-# Retained native body construction experiment
+# Repeated body construction with one Gooo process
 
-Build with Go 1.27.1:
+Use the installed `gooo` command. Each line in `requests.jsonl` is one request:
 
 ```sh
-go build -o gooo-body-worker ./cmd/gooo-body-worker
-./gooo-body-worker --model /explicit/path/model.json --workers 1 < requests.jsonl
-./gooo-body-worker --workers 1 < disconnected-requests.jsonl
+gooo body-path-stream --workers 1 < requests.jsonl > results.jsonl
+gooo body-path-stream --model /explicit/path/model.json --workers 1 < requests.jsonl > results.jsonl
+gooo body-path-stream --help
 ```
+
+Omit `--model` for deterministic construction. The optional model path is explicit;
+an unreadable or incompatible model stops setup with exit code 1. The command
+does not download a model. To try a source recipe from this repository root:
+
+```sh
+jq -cn --rawfile source examples/body-codegen/path-recipe.gooo.fixture \
+  --slurpfile document examples/body-codegen/path-recipe.json \
+  'range(2) as $i | {schema:"gooo/native-body-stream-request/v1",correlation_id:("recipe-"+($i|tostring)),
+    source:$source,activity:"Compose",document:$document[0]}' \
+  | gooo body-path-stream > results.jsonl
+
+jq '{id:.correlation_id,status,error,preparation:.response.report.body_paths.whole_candidate_preparation}' results.jsonl
+jq -s '.[1].response' results.jsonl > generation.json
+```
+
+`generation.json` has the same shape as `gooo body-codegen --json`; its `source`
+contains generated Go. Pass it to [body-execute](source-path-recipes.md)
+with the matching original source, recipe and independent cases. The
+[public two-request model example](https://github.com/kimjooyoon/gooo-neural-decision-experiments/tree/main/examples/whole-candidate-order)
+includes all these files and a small model. A recipe describes permitted choices;
+the model ranks those choices and the compiler checks the resulting body.
+
+The standalone `gooo-body-worker` remains available with the same protocol and
+options (`go build -o gooo-body-worker ./cmd/gooo-body-worker`, Go 1.27.1).
+Both entry points use one command implementation.
 
 The optional local model loads once. Standard error emits one
 `gooo/retained-path-model/v1` setup record with metadata/weight hashes and decoded
@@ -22,7 +48,7 @@ Each input line is one object with these fields:
 | `correlation_id` | 1..128 UTF-8 bytes, no control characters |
 | `source` | Original Gooo source string, at most 128 KiB |
 | `activity` | Named source Integer -> Integer activity |
-| `document` | Full existing `gooo/body-codegen-typed-path-plan/v1` document |
+| `document` | Full `gooo/body-codegen-typed-path-plan/v1` document or short `gooo/source-typed-path-recipe/v1` recipe |
 | `options` | Optional `step_attempts`, `feedback_rounds`, `feedback_unfixed`, `ci`, `diagnosis`, `observation` |
 
 Step attempts are 0..64 (zero means ordinary bounded search); feedback rounds are
@@ -33,10 +59,15 @@ Input is bounded to 1 MiB per line, with canonical lowercase ASCII field names,
 depth <=64, no duplicate or unknown keys. Oversized lines are consumed without
 growing retained line storage and rejected; the following line can proceed.
 
-Every request freshly prepares its typed plan, binds fallback to authoritative
-source, creates a private search/feedback session, then performs native emission,
-type/replay checks and finite-case evaluation. Source files are never written.
-Immutable model arrays are the only construction state shared between requests.
+Every request expands its recipe, binds fallback to authoritative source, creates
+a private search/feedback session, then performs native emission, type/replay
+checks and finite-case evaluation. Source files are never written. The whole-body
+order model retains immutable weights and at most one prepared candidate plan.
+An identical plan reuses that preparation; each request still predicts and checks
+its current cases. Changed plans replace the retained plan. Parallel misses may
+prepare independently. `body_paths.whole_candidate_preparation` reports the plan
+digest, candidate count, acquisition duration and `reused`. Recipe expansion and
+source binding still happen for every request. Other model families retain weights.
 The result's `model_retention.setup_ms` repeats constructor provenance and is
 excluded from per-request `timing.total_ms`; `model_load_ms` is zero. Do not add
 setup once per result. Existing fresh-process CLI receipts remain unchanged.
@@ -47,6 +78,13 @@ Cancellation closes transport streams to unblock reads/writes and joins workers.
 Embedding requires cooperative generators and I/O closers that unblock promptly.
 Normal EOF does not close caller-owned streams. Malformed/body-mismatched requests
 are rejected individually; native failures retain their partial receipt.
+
+Exit code 0 means the stream reached EOF (or help was shown). Inspect every result's
+`status`: individual rejected requests do not make the process fail. Invalid
+arguments exit 2; setup, input/output and cancellation failures exit 1. With
+multiple workers, match results by `sequence` and `correlation_id`, rather than
+assuming output order. Setup metadata and diagnostics go to stderr; results go
+to stdout so they can be piped to another program.
 
 This is an explicit experiment. Finite completeness can be partial. Transport
 `completed` means verified native construction, not perfect natural-language
