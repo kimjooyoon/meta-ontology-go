@@ -78,6 +78,8 @@ func runWithInputCommandsOne(args []string, stdout, stderr io.Writer) (int, bool
 
 func runWithInputCommandsTwo(args []string, input io.Reader, stdout, stderr io.Writer) (int, bool) {
 	switch args[0] {
+	case "body-path-run":
+		return runBodyPathFiles(args[1:], stdout, stderr), true
 	case "body-path-stream":
 		return runBodyPathStream(args[1:], input, stdout, stderr), true
 	case "observe":

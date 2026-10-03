@@ -203,6 +203,12 @@ receipt structures. [The language sketch](docs/spec.md) describes the core;
 [body generation](docs/language/body-codegen.md) and
 [receipt projection](docs/declared-completeness-receipt.md) describe those profiles.
 
+For source/recipe/case files, `gooo body-path-run --source original.gooo
+--activity Name --path-plan recipe.json --cases cases.json --out fresh-directory`
+constructs and immediately executes the body, saves generated Go and finite
+results, and supports `--repeat 1..16` with one retained native artifact. Omit
+`--model` for deterministic construction. See the [file and stream usage](docs/native-body-worker.md).
+
 For repeated body construction, `gooo body-path-stream` accepts one JSON request
 per line and emits each result when ready. Its optional local model stays loaded
 between requests; omitting `--model` selects deterministic construction. Start
