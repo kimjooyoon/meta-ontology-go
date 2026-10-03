@@ -11,8 +11,9 @@ import (
 )
 
 // VerifyTypedPathProjection reconstructs the declared selection from the original
-// source and document, without loading a model or searching candidates. This
-// validates the emitted pure program; it does not attest earlier model execution.
+// source and document without loading a model. When an observation loop was used,
+// its bounded candidate observations and oracle labels are independently replayed.
+// This validates the emitted pure program; it does not attest earlier model execution.
 func VerifyTypedPathProjection(ctx context.Context, filename string, source []byte,
 	document pathplan.Document, prior Result) error {
 	if ctx == nil || len(source) == 0 || len(source) > 128<<10 || len(prior.Source) > 256<<10 {
@@ -59,6 +60,10 @@ func VerifyTypedPathProjection(ctx context.Context, filename string, source []by
 	if err != nil {
 		return err
 	}
+	effectiveCases, err := replayPathObservation(ctx, filename, source, r.Activity, prepared, document.TestCases, p)
+	if err != nil {
+		return err
+	}
 	selected, err := prepared.Compile(p.Search.Selection.Choices)
 	if err != nil {
 		return err
@@ -77,8 +82,8 @@ func VerifyTypedPathProjection(ctx context.Context, filename string, source []by
 		r.ActivityID != bound.base.Report.ActivityID || replayed.Report.ProgramDigest != r.ProgramDigest {
 		return fmt.Errorf("selected Gooo and generated projection do not replay exactly")
 	}
-	cases := make([]IRBodyFillTestCase, len(document.TestCases))
-	for i, c := range document.TestCases {
+	cases := make([]IRBodyFillTestCase, len(effectiveCases))
+	for i, c := range effectiveCases {
 		cases[i] = IRBodyFillTestCase{Input: c.Input, Expected: c.Expected}
 	}
 	results, passed, err := evaluateIntegerCasesContext(ctx, []byte(replayed.Source), r.Activity, cases)

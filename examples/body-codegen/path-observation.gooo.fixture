@@ -1,0 +1,6 @@
+package path_observation
+namespace path_observation
+entity Integer id "path-observation://integer"
+activity Probe(Integer) -> Integer computes "return (input - 2)"
+activity Expected(Integer) -> Integer computes "return (2 - input)"
+activity Unrelated(Integer) -> Integer computes "return input"
