@@ -47,6 +47,16 @@ Failed construction and native observations are preserved. Stdout emits one full
 result per request; stderr prints status, finite expectations and artifact reuse.
 Inspect generated code directly in `run-N-generated.go`.
 
+The terminal says `finite expectations unobserved (128 declared)` when valid
+runtime expectations exist but no outputs were observed. A rejected request
+without a runtime observation says `finite expectations unobserved`. Completed
+replay keeps `passed/observed`, including a measured `0/128`. If outputs exist
+but replay is incomplete, the terminal preserves `observed passed/observed
+(replay incomplete)`; a differing declared count is shown separately. The
+saved `summary.json` still records the original `passed`, declared `total`,
+status and actually started `native_runs`. Read the runtime case observations
+and `runtime_replayed` alongside that summary when consuming failures.
+
 `response_ms` includes request decoding, construction and native execution,
 excluding initial model setup and saving/output costs. Inner generation/runtime
 intervals are parts of that response, so do not add them to it. `native_runs`
