@@ -47,6 +47,7 @@ type Observation struct {
 	RuntimeReplayed         bool                               `json:"runtime_replayed"`
 	ElapsedNS               int64                              `json:"elapsed_ns"`
 	Scope                   string                             `json:"scope"`
+	Artifact                *ArtifactObservation               `json:"artifact,omitempty"`
 }
 
 type Result struct {
@@ -60,13 +61,27 @@ type Result struct {
 // failed builds/runs. Original selection cases never become a holdout claim.
 func Execute(ctx context.Context, filename string, source []byte, document pathplan.Document,
 	prior bodycodegen.Result, parentReceipt []byte, cases []pathplan.TestCase, goBinary string) (Result, error) {
-	start := time.Now()
+	return execute(ctx, filename, source, document, prior, parentReceipt, cases, goBinary, nil)
+}
+
+func initialResult(source []byte, prior bodycodegen.Result, parentReceipt []byte, cases []pathplan.TestCase) Result {
 	result := Result{Observation: Observation{Schema: "gooo/typed-path-runtime-observation/v1", Stage: "VALIDATE",
 		OriginalSourceSHA256: digest(source), SelectedSourceSHA256: prior.Report.SourceDigest,
 		GeneratedSHA256: prior.Report.GeneratedDigest, ActivityID: prior.Report.ActivityID, PlanSHA256: prior.Report.PlanSHA256,
 		CompilerSourceSHA: prior.Report.CompilerSourceSHA, ProducerSourceSHA: producerSourceSHA(),
 		Runs: make([]ProcessObservation, 0, 2), Cases: make([]bodycodegen.IRBodyFillCaseResult, 0), DeclaredCases: len(cases),
 		Scope: "Independent compiled execution of one source-replayed Integer -> Integer projection; caller-supplied finite expectations; parent model observations are not re-attested; no inference or provider requests."}}
+	if len(parentReceipt) <= 1<<20 {
+		result.ParentReceipt = append([]byte(nil), parentReceipt...)
+	}
+	result.Observation.ParentReceiptSHA256 = digest(parentReceipt)
+	return result
+}
+
+func execute(ctx context.Context, filename string, source []byte, document pathplan.Document,
+	prior bodycodegen.Result, parentReceipt []byte, cases []pathplan.TestCase, goBinary string, owner *Executor) (Result, error) {
+	start := time.Now()
+	result := initialResult(source, prior, parentReceipt, cases)
 	finish := func(err error) (Result, error) {
 		result.Observation.ElapsedNS = time.Since(start).Nanoseconds()
 		if err != nil {
@@ -75,10 +90,6 @@ func Execute(ctx context.Context, filename string, source []byte, document pathp
 		result.CompletenessReceipt = runtimeCompleteness(prior, result)
 		return result, err
 	}
-	if len(parentReceipt) <= 1<<20 {
-		result.ParentReceipt = append([]byte(nil), parentReceipt...)
-	}
-	result.Observation.ParentReceiptSHA256 = digest(parentReceipt)
 	if ctx == nil || len(cases) == 0 || len(cases) > 128 || !token.IsIdentifier(prior.Report.Activity) || token.Lookup(prior.Report.Activity).IsKeyword() {
 		return finish(fmt.Errorf("runtime requires context, a declared activity and 1..128 finite cases"))
 	}
@@ -132,26 +143,10 @@ func Execute(ctx context.Context, filename string, source []byte, document pathp
 	if r.GoVersion != "go version go1.27.1 "+runtime.GOOS+"/"+runtime.GOARCH {
 		return finish(fmt.Errorf("runtime requires the local Go 1.27.1 toolchain"))
 	}
-	root, err := os.MkdirTemp("", "gooo-body-runtime-")
-	if err != nil {
-		return finish(fmt.Errorf("cannot create runtime workspace"))
-	}
-	defer os.RemoveAll(root)
-	if err := prepareWorkspace(root, prior); err != nil {
-		return finish(err)
-	}
-	executable := filepath.Join(root, "observed-body")
-	if runtime.GOOS == "windows" {
-		executable += ".exe"
-	}
-	r.Stage = "BUILD"
-	_, r.Build, err = process(ctx, root, goBinary, nil, "build", "-trimpath", "-buildvcs=false", "-o", executable, ".")
+	root, executable, release, err := executableFor(ctx, prior, goBinary, r, owner)
+	defer release()
 	if err != nil {
 		return finish(err)
-	}
-	r.ExecutableSHA256, err = fileDigest(executable)
-	if err != nil {
-		return finish(fmt.Errorf("cannot bind emitted executable"))
 	}
 	inputs := make([]int64, len(cases))
 	for i, c := range cases {
@@ -161,6 +156,12 @@ func Execute(ctx context.Context, filename string, source []byte, document pathp
 	var baseline []int64
 	for run := range 2 {
 		r.Stage = fmt.Sprintf("EXECUTE_%d", run+1)
+		if owner != nil {
+			current, err := fileDigest(executable)
+			if err != nil || current != r.ExecutableSHA256 {
+				return finish(fmt.Errorf("owned executable binding changed before execution"))
+			}
+		}
 		runCtx, stop := context.WithTimeout(ctx, 2*time.Second)
 		output, observation, runErr := process(runCtx, root, executable, input)
 		stop()

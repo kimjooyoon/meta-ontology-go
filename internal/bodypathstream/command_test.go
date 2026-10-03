@@ -24,6 +24,7 @@ func TestCommandArgumentsAndSetup(t *testing.T) {
 		{"positional", []string{"requests.jsonl"}, 2, "usage:"},
 		{"zero", []string{"--workers", "0"}, 2, "usage:"},
 		{"unbounded", []string{"--workers", "9"}, 2, "usage:"},
+		{"tool-without-execution", []string{"--go-bin", "go"}, 2, "usage:"},
 		{"missing-model", []string{"--model", "missing-model.json"}, 1, "missing-model.json"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
