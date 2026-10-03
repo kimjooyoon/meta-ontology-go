@@ -30,6 +30,7 @@ type BodyPathReceipt struct {
 	SourceBinding          RouteEquivalenceReceipt    `json:"source_binding"`
 	Search                 pathplan.SearchResult      `json:"search"`
 	OrderJudgment          *orderjudge.SearchReceipt  `json:"whole_candidate_judgment,omitempty"`
+	OrderPreparation       *OrderPreparationReceipt   `json:"whole_candidate_preparation,omitempty"`
 	Progress               []pathplan.SessionProgress `json:"session_progress,omitempty"`
 	Feedback               []pathplan.FeedbackReceipt `json:"feedback_judgments,omitempty"`
 	FeedbackUnfixed        bool                       `json:"feedback_unfixed,omitempty"`

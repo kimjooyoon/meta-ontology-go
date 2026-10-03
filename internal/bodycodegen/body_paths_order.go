@@ -7,13 +7,48 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"time"
 
 	"github.com/kimjooyoon/gooo-decision-runtime/orderjudge"
+	"github.com/kimjooyoon/gooo-decision-runtime/orderprepared"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
 
-func loadOrderJudge(name string, metadata []byte) (*orderjudge.Model, error) {
+type retainedOrderModel struct {
+	runtime  orderprepared.Runtime
+	prepared atomic.Pointer[orderprepared.Prepared]
+}
+
+type OrderPreparationReceipt struct {
+	Schema         string  `json:"schema"`
+	PlanSHA256     string  `json:"plan_sha256"`
+	Reused         bool    `json:"reused"`
+	CandidateCount int     `json:"candidate_count"`
+	AcquireMS      float64 `json:"acquire_ms"`
+}
+
+// Each model owner holds at most one prepared plan. Concurrent misses may each
+// prepare, but never wait on another caller or publish incomplete preparation.
+func (model *retainedOrderModel) acquire(ctx context.Context, plan pathplan.Plan, boundSHA string) (*orderprepared.Prepared, bool, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, false, err
+	}
+	if p := model.prepared.Load(); p != nil && p.PlanSHA256() == boundSHA {
+		return p, true, nil
+	}
+	p, err := model.runtime.Prepare(ctx, plan)
+	if err != nil {
+		return nil, false, err
+	}
+	if p.PlanSHA256() != boundSHA {
+		return nil, false, fmt.Errorf("prepared order plan differs from source-bound plan")
+	}
+	model.prepared.Store(p)
+	return p, false, nil
+}
+
+func loadOrderJudge(name string, metadata []byte) (*retainedOrderModel, error) {
 	if len(metadata) > 4096 {
 		return nil, fmt.Errorf("whole-candidate metadata exceeds 4096 bytes")
 	}
@@ -31,14 +66,22 @@ func loadOrderJudge(name string, metadata []byte) (*orderjudge.Model, error) {
 	if err != nil {
 		return nil, err
 	}
-	return orderjudge.Load(metadata, weights)
+	loaded, err := orderjudge.Load(metadata, weights)
+	if err != nil {
+		return nil, err
+	}
+	runtime, err := orderprepared.NewRuntime(loaded)
+	if err != nil {
+		return nil, err
+	}
+	return &retainedOrderModel{runtime: runtime}, nil
 }
 
 // The caller has already bound the complete original plan to the source. The
 // SDK sees original intent and actual operations, with no old context wrapper.
 func generateOrderTypedPath(ctx context.Context, filename string, source []byte, activity string,
 	document pathplan.Document, prepared *pathplan.PreparedPlan, bound typedPathSource,
-	model *orderjudge.Model, diagnosis *PathDiagnosisOptions, receipt *BodyPathReceipt, started time.Time) (Result, error) {
+	model *retainedOrderModel, diagnosis *PathDiagnosisOptions, receipt *BodyPathReceipt, started time.Time) (Result, error) {
 	fail := func(err error) (Result, error) {
 		receipt.Timing.TotalMS = elapsedMS(started)
 		return Result{}, &BodyPathError{Receipt: receipt, Cause: err}
@@ -58,7 +101,14 @@ func generateOrderTypedPath(ctx context.Context, filename string, source []byte,
 	}
 	searchStarted := time.Now()
 	receipt.SearchStarted = true
-	search, selected, ranking, err := orderjudge.Search(ctx, document.Plan, model, document.TestCases, budget, true)
+	acquireStarted := time.Now()
+	candidates, reused, err := model.acquire(ctx, document.Plan, prepared.PlanSHA256())
+	if err != nil {
+		return fail(fmt.Errorf("prepare whole-candidate search: %w", err))
+	}
+	receipt.OrderPreparation = &OrderPreparationReceipt{Schema: "gooo/prepared-order-candidates/v1",
+		PlanSHA256: prepared.PlanSHA256(), Reused: reused, CandidateCount: 8, AcquireMS: elapsedMS(acquireStarted)}
+	search, selected, ranking, err := candidates.Search(ctx, prepared.PlanSHA256(), document.TestCases, budget, true)
 	receipt.Search, receipt.OrderJudgment = search, ranking
 	receipt.Timing.BoundedSearchMS = elapsedMS(searchStarted)
 	if err != nil {
