@@ -10,6 +10,12 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 )
 
+// RuntimeProfileV1 records fresh execution, including pre-artifact failures.
+const RuntimeProfileV1 = "gooo/typed-path-runtime-v1"
+
+// RuntimeProfileV2 records an owned build separately from current-call work.
+const RuntimeProfileV2 = "gooo/typed-path-runtime-v2"
+
 func producerSourceSHA() string {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -36,11 +42,11 @@ func runtimeCompleteness(prior bodycodegen.Result, result Result) *completeness.
 		r = bodycodegen.FailureCompletenessReceipt(prior.Report.Activity, nil, result.Observation.Failure)
 	}
 	o := result.Observation
-	r.ProfileID = "gooo/typed-path-runtime-v1"
+	r.ProfileID = RuntimeProfileV1
 	buildPassed := o.Build.Completed && o.ExecutableSHA256 != ""
 	buildReason := "The Go tool and compiled executable bytes are bound separately."
 	if o.Artifact != nil {
-		r.ProfileID = "gooo/typed-path-runtime-v2"
+		r.ProfileID = RuntimeProfileV2
 		buildPassed = o.Artifact.ExecutableVerified && o.Artifact.SourceBuild.Completed && o.ExecutableSHA256 != ""
 		r.Scope["owned_artifact"] = o.Artifact
 		buildReason = "The source-bound successful original build is recorded in owned_artifact; current Build records only work actually executed by this call."

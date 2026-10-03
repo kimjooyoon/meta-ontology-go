@@ -33,9 +33,12 @@ func DecodeRuntimeReceipt(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	parent := digest(result.ParentReceipt)
-	if r.ProfileID != "gooo/typed-path-runtime-v1" || r.Scope["parent_receipt_sha256"] != parent ||
+	if r.Scope["parent_receipt_sha256"] != parent ||
 		result.Observation.ParentReceiptSHA256 != parent {
 		return nil, fmt.Errorf("runtime parent receipt binding differs")
+	}
+	if err := runtimeProfileBinding(result, r); err != nil {
+		return nil, err
 	}
 	return bytes.Clone(raw), nil
 }
