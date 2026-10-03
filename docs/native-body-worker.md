@@ -71,6 +71,44 @@ measurement. Input files must be nonempty regular UTF-8 files: source <=128 KiB,
 plan <=256 KiB, cases <=32 KiB and options <=64 KiB. Runtime cases remain 1..128.
 The supported native body is the closed pure `Integer -> Integer` projection.
 
+## Read the cost of each stage
+
+Add `--timing` to `body-path-run` to save `run-N-timing.json` and
+`timing-summary.json`. The latter reports milliseconds by phase for each request.
+Stderr also shows generation, source replay, two native runs and artifact saving.
+The recorder retains at most 32 sequential intervals per request and creates no
+background workers. Without the flag, no timing sidecars are created.
+
+```sh
+gooo body-path-run --source original.gooo --activity Name \
+  --path-plan recipe.json --cases cases.json --out measured-body --repeat 2 --timing
+gooo body-path-run --verify-timing --out measured-body
+```
+
+The read-only verification checks ordered nonnegative intervals, accounting,
+the original summary, and SHA256 bindings to the saved request, response,
+generation, generated Go and runtime files when those stages exist. It loads no
+model and starts no native child. A changed file, incomplete interval record or
+mismatched summary returns exit 1. Verification measures consistency of these
+saved files; execution evidence is still the original runtime receipt.
+
+`response_ns` ends before saving. `wall.capture_ns` extends through original
+artifact saving and file hashing. It excludes initial input/model loading,
+timing sidecar and summary writes, stdout and final executor cleanup. Phase
+durations plus `unassigned_ns` equal capture time; unassigned time includes
+inter-stage bookkeeping. Missing stages are unobserved, rather than zero-cost
+operations. Generation's existing inner timing is part of its outer interval.
+`executable_prepare` includes cache lookup, executable binding, temporary
+workspace preparation and a build when needed. `native_run_N` includes child
+startup, waiting, I/O and process accounting. `toolchain_bind` covers current
+embedded build-info validation and the retained version-check lookup.
+
+The intervals describe current wall costs. CPU and RSS come from the separate
+current-child process records; historical `source_build` and `source_check`
+records are not current CPU work. Whole-host CPU utilization remains unobserved.
+The stream result, original file summary and runtime receipt profiles keep their
+existing schemas. Failed requests retain only the stages actually reached.
+
 ## Use streaming requests
 
 Use the installed `gooo` command. Each line in `requests.jsonl` is one request:

@@ -16,6 +16,7 @@ import (
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodytiming"
 )
 
 type fileRunRow struct {
@@ -44,8 +45,10 @@ func RunFilesCommand(ctx context.Context, name string, args []string, stdout, st
 	options := f.String("options", "", "optional stream options JSON, including CI context")
 	model := f.String("model", "", "explicit local model.json; omit for deterministic construction")
 	goBin := f.String("go-bin", "", "local Go 1.27.1 tool")
-	out := f.String("out", "", "fresh output directory; existing paths are rejected")
+	out := f.String("out", "", "fresh output directory, or saved directory for --verify-timing")
 	repeat := f.Int("repeat", 1, "bounded sequential requests (1..16)")
+	timing := f.Bool("timing", false, "save bounded wall phases and original-file SHA256 bindings")
+	verifyTiming := f.Bool("verify-timing", false, "check saved timing consistency and file bindings; requires only --out")
 	f.Usage = func() {
 		fmt.Fprintf(stderr, "usage: %s --source file.gooo --activity name --path-plan recipe.json --cases cases.json --out fresh-directory [options]\n", name)
 		f.PrintDefaults()
@@ -55,6 +58,18 @@ func RunFilesCommand(ctx context.Context, name string, args []string, stdout, st
 			return 0
 		}
 		return 2
+	}
+	if *verifyTiming {
+		if f.NArg() != 0 || *out == "" || f.NFlag() != 2 {
+			f.Usage()
+			return 2
+		}
+		if err := verifyTimingDirectory(ctx, *out); err != nil {
+			fmt.Fprintf(stderr, "%s: %v\n", name, err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "timing consistency and saved-file bindings: PASS")
+		return 0
 	}
 	if f.NArg() != 0 || *source == "" || *activity == "" || *plan == "" || *cases == "" ||
 		*out == "" || *repeat < 1 || *repeat > 16 {
@@ -113,11 +128,11 @@ func RunFilesCommand(ctx context.Context, name string, args []string, stdout, st
 	if err := writeFileJSON(*out, "model-retention.json", generator.Info()); err != nil {
 		return fail(err)
 	}
-	return runFileRequests(ctx, generator, request, *repeat, *goBin, *out, stdout, stderr, fail)
+	return runFileRequests(ctx, generator, request, *repeat, *goBin, *out, stdout, stderr, fail, *timing)
 }
 
 func runFileRequests(ctx context.Context, generator Generator, request Request, repeat int,
-	goBin, out string, stdout, stderr io.Writer, fail func(error) int) (code int) {
+	goBin, out string, stdout, stderr io.Writer, fail func(error) int, timingFlags ...bool) (code int) {
 	owner := bodyexecution.NewExecutor()
 	defer func() {
 		if err := owner.Close(); err != nil {
@@ -141,6 +156,7 @@ func runFileRequests(ctx context.Context, generator Generator, request Request, 
 		}
 	}()
 	rows := make([]fileRunRow, 0, repeat)
+	timingRows := make([]fileTimingRow, 0, repeat)
 	encoder := json.NewEncoder(stdout)
 	for i := range repeat {
 		if err := ctx.Err(); err != nil {
@@ -151,13 +167,41 @@ func runFileRequests(ctx context.Context, generator Generator, request Request, 
 		if err != nil {
 			return fail(err)
 		}
+		requestCtx := ctx
+		var recorder *bodytiming.Recorder
+		if len(timingFlags) > 0 && timingFlags[0] {
+			recorder = bodytiming.NewRecorder()
+			requestCtx = bodytiming.WithRecorder(ctx, recorder)
+		}
 		started := time.Now()
-		result := evaluateWithExecution(ctx, generator, record{sequence: uint64(i + 1), raw: raw},
+		result := evaluateWithExecution(requestCtx, generator, record{sequence: uint64(i + 1), raw: raw},
 			&executionSettings{owner: owner, goBinary: goBin})
+		responseNS := time.Since(started).Nanoseconds()
 		row := fileRunRow{Sequence: result.Sequence, Status: result.Status,
-			ResponseMS: float64(time.Since(started)) / float64(time.Millisecond)}
-		if err := saveFileResult(out, result, &row); err != nil {
+			ResponseMS: float64(responseNS) / float64(time.Millisecond)}
+		phase := bodytiming.Start(requestCtx, "artifact_save")
+		err = saveFileResult(out, result, &row)
+		if err == nil && recorder != nil {
+			err = os.WriteFile(filepath.Join(out, fmt.Sprintf("run-%d-request.json", result.Sequence)), raw, 0644)
+		}
+		phase.End(err == nil)
+		if err != nil {
 			return fail(err)
+		}
+		if recorder != nil {
+			timingRow, err := saveFileTiming(requestCtx, out, raw, result, responseNS, recorder)
+			if err != nil {
+				return fail(err)
+			}
+			timingRows = append(timingRows, timingRow)
+			if err := writeFileJSON(out, "timing-summary.json", fileTimingSummary{
+				Schema: "gooo/body-path-file-timing-summary/v1", Scope: timingScope, Rows: timingRows,
+			}); err != nil {
+				return fail(err)
+			}
+			fmt.Fprintf(stderr, "%s timing: generation %.3fms, source replay %.3fms, native %.3fms, save %.3fms\n",
+				request.CorrelationID, timingRow.PhaseMS["generation"], timingRow.PhaseMS["source_replay"],
+				timingRow.PhaseMS["native_run_1"]+timingRow.PhaseMS["native_run_2"], timingRow.PhaseMS["artifact_save"])
 		}
 		rows = append(rows, row)
 		if err := writeFileJSON(out, "summary.json", struct {
