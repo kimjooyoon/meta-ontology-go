@@ -81,6 +81,15 @@ measurement. Input files must be nonempty regular UTF-8 files: source <=128 KiB,
 plan <=256 KiB, cases <=32 KiB and options <=64 KiB. Runtime cases remain 1..128.
 The supported native body is the closed pure `Integer -> Integer` projection.
 
+On Unix, source, plan, cases and options are opened without waiting for a FIFO
+writer, then validated using the opened file descriptor. A pathname replaced
+between discovery and opening cannot defer that descriptor check until a writer
+appears. A symlink to a regular input retains its exact bytes. Other platforms
+keep the preliminary path check and the descriptor check after opening. The
+nonempty/UTF-8/byte limits above still apply. Missing-file and permission failures
+retain the underlying filesystem error; nonregular inputs fail before model preparation
+or output directory creation.
+
 ## Read the cost of each stage
 
 Add `--timing` to `body-path-run` to save `run-N-timing.json` and
