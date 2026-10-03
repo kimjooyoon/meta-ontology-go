@@ -2,6 +2,7 @@ package bodyexecution
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -42,6 +43,24 @@ func DecodePlan(data []byte) (pathplan.Document, error) {
 		return plan, err
 	}
 	return pathplan.DecodeDocument(data)
+}
+
+// DecodeSourcePlan expands recipes from the execution's original source while
+// retaining the existing full-document decoder and its exact-field contract.
+func DecodeSourcePlan(ctx context.Context, filename string, source []byte, activity string, data []byte) (pathplan.Document, error) {
+	if len(data) == 0 || len(data) > 256<<10 || !utf8.Valid(data) {
+		return pathplan.Document{}, fmt.Errorf("invalid plan JSON size or UTF-8")
+	}
+	var header struct {
+		Schema string `json:"schema"`
+	}
+	if err := json.Unmarshal(data, &header); err != nil {
+		return pathplan.Document{}, err
+	}
+	if header.Schema == bodycodegen.SourcePathRecipeSchema {
+		return bodycodegen.DecodeSourcePathDocument(ctx, filename, source, activity, data)
+	}
+	return DecodePlan(data)
 }
 
 func DecodeCases(data []byte) ([]pathplan.TestCase, error) {

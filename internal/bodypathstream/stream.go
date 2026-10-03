@@ -308,7 +308,7 @@ func evaluate(ctx context.Context, model Generator, item record) Result {
 		return reject(errors.New("correlation_id must be 1-128 UTF-8 bytes without control characters"))
 	}
 	result.CorrelationID = request.CorrelationID
-	document, err := pathplan.DecodeDocument(request.Document)
+	document, err := bodycodegen.DecodeSourcePathDocument(ctx, "stream.gooo", []byte(request.Source), request.Activity, request.Document)
 	if err != nil {
 		return reject(fmt.Errorf("decode typed document: %w", err))
 	}
