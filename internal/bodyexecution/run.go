@@ -17,6 +17,7 @@ import (
 
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodytiming"
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 )
 
@@ -82,12 +83,16 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 	prior bodycodegen.Result, parentReceipt []byte, cases []pathplan.TestCase, goBinary string, owner *Executor) (Result, error) {
 	start := time.Now()
 	result := initialResult(source, prior, parentReceipt, cases)
+	phase := bodytiming.Start(ctx, "parent_receipt_validate")
 	finish := func(err error) (Result, error) {
+		phase.End(err == nil)
 		result.Observation.ElapsedNS = time.Since(start).Nanoseconds()
 		if err != nil {
 			result.Observation.Failure = err.Error()
 		}
+		receiptPhase := bodytiming.Start(ctx, "runtime_receipt")
 		result.CompletenessReceipt = runtimeCompleteness(prior, result)
+		receiptPhase.End(true)
 		return result, err
 	}
 	if ctx == nil || len(cases) == 0 || len(cases) > 128 || !token.IsIdentifier(prior.Report.Activity) || token.Lookup(prior.Report.Activity).IsKeyword() {
@@ -115,10 +120,14 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 		return finish(fmt.Errorf("parent receipt and generation observation differ"))
 	}
 	result.Observation.Stage = "SOURCE_REPLAY"
+	phase.End(true)
+	phase = bodytiming.Start(ctx, "source_replay")
 	if err := bodycodegen.VerifyTypedPathProjection(ctx, filename, source, document, prior); err != nil {
 		return finish(err)
 	}
 	r := &result.Observation
+	phase.End(true)
+	phase = bodytiming.Start(ctx, "runtime_suite_prepare")
 	r.ParentReceiptSHA256 = digest(parentReceipt)
 	r.ProjectionReplayed = true
 	suite, _ := json.Marshal(cases)
@@ -139,33 +148,47 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 	if err != nil {
 		return finish(err)
 	}
+	phase.End(true)
+	phase = bodytiming.Start(ctx, "go_tool_hash")
 	r.GoToolSHA256, err = fileDigest(goBinary)
 	if err != nil {
 		return finish(fmt.Errorf("cannot bind Go tool bytes"))
 	}
 	r.Stage = "TOOLCHAIN"
+	phase.End(true)
+	phase = bodytiming.Start(ctx, "toolchain_bind")
 	if err := observeToolchain(ctx, goBinary, r, owner); err != nil {
 		return finish(err)
 	}
+	phase.End(true)
+	phase = bodytiming.Start(ctx, "executable_prepare")
 	root, executable, release, err := executableFor(ctx, prior, goBinary, r, owner)
 	defer release()
 	if err != nil {
 		return finish(err)
 	}
+	phase.End(true)
 	inputs := make([]int64, len(cases))
 	for i, c := range cases {
 		inputs[i] = c.Input
 	}
 	input, _ := json.Marshal(inputs)
 	var baseline []int64
+	phaseNames := [2][3]string{
+		{"executable_hash_1", "native_run_1", "runtime_decode_1"},
+		{"executable_hash_2", "native_run_2", "runtime_decode_2"},
+	}
 	for run := range 2 {
 		r.Stage = fmt.Sprintf("EXECUTE_%d", run+1)
 		if owner != nil {
+			phase = bodytiming.Start(ctx, phaseNames[run][0])
 			current, err := fileDigest(executable)
 			if err != nil || current != r.ExecutableSHA256 {
 				return finish(fmt.Errorf("owned executable binding changed before execution"))
 			}
+			phase.End(true)
 		}
+		phase = bodytiming.Start(ctx, phaseNames[run][1])
 		runCtx, stop := context.WithTimeout(ctx, 2*time.Second)
 		output, observation, runErr := process(runCtx, root, executable, input)
 		stop()
@@ -173,6 +196,8 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 		if runErr != nil {
 			return finish(runErr)
 		}
+		phase.End(true)
+		phase = bodytiming.Start(ctx, phaseNames[run][2])
 		var values []int64
 		if err := json.Unmarshal(output, &values); err != nil || len(values) != len(cases) {
 			return finish(fmt.Errorf("runtime output count or int64 shape differs"))
@@ -185,6 +210,7 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 		} else if !slices.Equal(values, baseline) {
 			return finish(fmt.Errorf("compiled runtime replay differs"))
 		}
+		phase.End(true)
 	}
 	r.RuntimeReplayed = true
 	r.Stage = "COMPLETE"
