@@ -37,6 +37,7 @@ type BodyPathReceipt struct {
 	DiagnosisOptionsSHA256 string                     `json:"diagnosis_options_sha256,omitempty"`
 	DiagnosisBudget        int                        `json:"diagnosis_budget,omitempty"`
 	DiagnosisScope         string                     `json:"diagnosis_scope,omitempty"`
+	Observation            *PathObservationReceipt    `json:"observation,omitempty"`
 	NativeCases            []IRBodyFillCaseResult     `json:"native_case_results,omitempty"`
 	FunctionalCompleteness float64                    `json:"finite_functional_completeness_percent"`
 	Scope                  string                     `json:"scope"`
@@ -50,6 +51,7 @@ type BodyPathTiming struct {
 	ContextPrepareMS float64 `json:"context_prepare_ms,omitempty"`
 	BoundedSearchMS  float64 `json:"bounded_search_ms"`
 	DiagnosisMS      float64 `json:"diagnosis_ms,omitempty"`
+	ObservationMS    float64 `json:"observation_ms,omitempty"`
 	FinalEmissionMS  float64 `json:"final_emission_ms"`
 	TotalMS          float64 `json:"total_ms"`
 	ExecutionModel   string  `json:"execution_model"`
@@ -171,6 +173,15 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 		return fail(err)
 	}
 	base, activity := bound.base, bound.activity
+	effectiveCases, err := observeTypedPaths(ctx, filename, source, activityName, prepared,
+		document.TestCases, models.observation, receipt)
+	if err != nil {
+		return fail(err)
+	}
+	// Model context remains tied to the complete original document. Only the
+	// separately recorded finite evaluation suite gains oracle observations.
+	searchDocument := document
+	searchDocument.TestCases = effectiveCases
 	model := models.model
 	joint := models.joint
 	three := models.three
@@ -212,6 +223,13 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 		receipt.Timing.DecisionStage = "no_predictions_representation_declined"
 	}
 	searchStarted := time.Now()
+	if models.observation != nil {
+		receipt.Timing.ExecutionModel = "source_bind_then_oracle_observations_then_model_rank_finite_tdd_then_native_emit"
+		receipt.Timing.DecisionStage = "local_ranking_after_recorded_oracle_observations; original_model_input_preserved"
+		if contextDeclined {
+			receipt.Timing.DecisionStage = "no_predictions_representation_declined; recorded_oracle_observations_retained"
+		}
+	}
 	receipt.SearchStarted = true
 	var search pathplan.SearchResult
 	var selected *bodyplan.Program
@@ -222,24 +240,24 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 			rounds, ci = feedback.rounds, feedback.ci
 		}
 		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchThreeFeedbackBatches(ctx, three,
-			document.TestCases, document.MaxAttempts, max(1, stepAttempts), searchSeed, rounds, ci)
+			effectiveCases, document.MaxAttempts, max(1, stepAttempts), searchSeed, rounds, ci)
 	} else if joint != nil {
 		rounds := 0
 		var ci *pathplan.CIHint
 		if feedback != nil {
 			rounds, ci = feedback.rounds, feedback.ci
 		}
-		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchJointFeedbackBatches(ctx, joint, document.TestCases, document.MaxAttempts, max(1, stepAttempts), searchSeed, rounds, ci)
+		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchJointFeedbackBatches(ctx, joint, effectiveCases, document.MaxAttempts, max(1, stepAttempts), searchSeed, rounds, ci)
 	} else if feedback != nil && feedback.unfixed {
 		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchFeedbackBatchesUnfixed(ctx, model,
-			document.TestCases, document.MaxAttempts, stepAttempts, searchSeed, feedback.rounds, feedback.ci)
+			effectiveCases, document.MaxAttempts, stepAttempts, searchSeed, feedback.rounds, feedback.ci)
 	} else if feedback != nil {
-		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchFeedbackBatches(ctx, model, document.TestCases,
+		search, selected, receipt.Progress, receipt.Feedback, err = prepared.SearchFeedbackBatches(ctx, model, effectiveCases,
 			document.MaxAttempts, stepAttempts, searchSeed, feedback.rounds, feedback.ci)
 	} else if stepAttempts == 0 {
-		search, selected, err = prepared.Search(ctx, model, document.TestCases, document.MaxAttempts, searchSeed)
+		search, selected, err = prepared.Search(ctx, model, effectiveCases, document.MaxAttempts, searchSeed)
 	} else {
-		search, selected, receipt.Progress, err = prepared.SearchBatches(ctx, model, document.TestCases,
+		search, selected, receipt.Progress, err = prepared.SearchBatches(ctx, model, effectiveCases,
 			document.MaxAttempts, stepAttempts, searchSeed)
 	}
 	receipt.Search = search
@@ -247,7 +265,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return fail(err)
 	}
-	if err := diagnoseSelectedPath(ctx, prepared, document, models.diagnosis, receipt); err != nil {
+	if err := diagnoseSelectedPath(ctx, prepared, searchDocument, models.diagnosis, receipt); err != nil {
 		return fail(err)
 	}
 	completed, err := replaceActivityProgram(source, activity.ValueProgramSpan, selected.GoooBody())
@@ -265,8 +283,8 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if result.Report.ActivityID != base.Report.ActivityID {
 		return fail(fmt.Errorf("typed path emission changed stable semantic identity"))
 	}
-	cases := make([]IRBodyFillTestCase, len(document.TestCases))
-	for i, test := range document.TestCases {
+	cases := make([]IRBodyFillTestCase, len(effectiveCases))
+	for i, test := range effectiveCases {
 		cases[i] = IRBodyFillTestCase{Input: test.Input, Expected: test.Expected}
 	}
 	results, passed, err := evaluateIntegerCasesContext(ctx, []byte(result.Source), activityName, cases)
@@ -274,7 +292,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 		return fail(err)
 	}
 	// Compare all actuals, including failures, with the typed arena interpreter.
-	for i, test := range document.TestCases {
+	for i, test := range effectiveCases {
 		value, evaluateErr := selected.Evaluate(test.Input)
 		if evaluateErr != nil || value.Int != results[i].Actual {
 			return fail(fmt.Errorf("native body and typed path evaluator disagree"))
