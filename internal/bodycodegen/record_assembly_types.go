@@ -36,6 +36,7 @@ type RecordAssemblyReceipt struct {
 
 type RecordValueChoice struct {
 	ID         string `json:"id"`
+	Kind       string `json:"kind,omitempty"`
 	RecordID   string `json:"record_id"`
 	FieldID    string `json:"field_id"`
 	Field      string `json:"field"`
