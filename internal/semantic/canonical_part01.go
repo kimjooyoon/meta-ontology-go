@@ -30,6 +30,7 @@ func (n Node) Canonical() string {
 	}
 	writeCanonicalNodeValueProgram(&b, n.ValueProgram)
 	writeCanonicalNodeAssembly(&b, n)
+	writeCanonicalInputSequence(&b, n.InputSequence)
 	writeCanonicalSpan(&b, n.Span)
 	for _, field := range n.Fields {
 		b.WriteString(field.Canonical())
@@ -48,11 +49,22 @@ func (n Node) SemanticCanonical() string {
 	writeCanonicalField(&b, n.Namespace.String())
 	writeCanonicalNodeValueProgram(&b, n.ValueProgram)
 	writeCanonicalNodeAssembly(&b, n)
+	writeCanonicalInputSequence(&b, n.InputSequence)
 	for _, field := range n.Fields {
 		b.WriteString(field.SemanticCanonical())
 		b.WriteByte('\n')
 	}
 	return b.String()
+}
+func writeCanonicalInputSequence(b *strings.Builder, sequence []ID) {
+	if len(sequence) == 0 {
+		return
+	}
+	writeCanonicalField(b, "input-sequence")
+	for _, input := range sequence {
+		writeCanonicalField(b, input.String())
+	}
+	writeCanonicalField(b, "end-input-sequence")
 }
 func (r TypeRef) Canonical() string {
 	if normalized, err := r.Normalized(); err == nil {

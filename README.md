@@ -61,6 +61,8 @@ beside the working body so the next generation can use the same alternatives.
 edges. One optional model is retained across integer assemblies; Integer,
 Boolean and Text activities then execute in a compiled graph with ordered
 intermediate input/output observations and finite expectation counts.
+Ordinary bodies support up to 16 ordered scalar inputs, including repeated types
+and partially bound joins. [Input-port example and runnable guide](docs/native-body-composition.md).
 
 We want the language to carry the assembly plan and its unfinished obligations
 along with the program. A useful improvement should complete more of the declared

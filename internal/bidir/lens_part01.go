@@ -56,6 +56,9 @@ func getWithTypesAndEntityFieldsSupport(document Document, registry semantic.Typ
 	if err := lowerExplicitRelations(&model, document.Relations, ids); err != nil {
 		return Model{}, err
 	}
+	if err := bindSourceInputSequences(&model, document, names, ids); err != nil {
+		return Model{}, err
+	}
 	if err := lowerRuntimeBindings(&model, document.RuntimeBindings, names, ids); err != nil {
 		return Model{}, err
 	}

@@ -12,12 +12,20 @@ import (
 )
 
 type CompositionDelivery struct {
-	ActivityID string          `json:"activity_id"`
+	ActivityID string                    `json:"activity_id"`
+	ProducerID string                    `json:"producer_id,omitempty"`
+	Input      json.RawMessage           `json:"input,omitempty"`
+	Inputs     []CompositionPortDelivery `json:"inputs,omitempty"`
+	Actual     json.RawMessage           `json:"actual"`
+	Expected   json.RawMessage           `json:"expected,omitempty"`
+	Passed     *bool                     `json:"passed,omitempty"`
+}
+
+type CompositionPortDelivery struct {
+	Port       string          `json:"port"`
+	EntityID   string          `json:"entity_id"`
 	ProducerID string          `json:"producer_id,omitempty"`
-	Input      json.RawMessage `json:"input"`
-	Actual     json.RawMessage `json:"actual"`
-	Expected   json.RawMessage `json:"expected,omitempty"`
-	Passed     *bool           `json:"passed,omitempty"`
+	Value      json.RawMessage `json:"value"`
 }
 
 type CompositionTrace struct {
@@ -200,13 +208,26 @@ func (graph compositionGraph) nativeTraces(output []byte, suite CompositionCases
 			if err != nil {
 				return nil, 0, fmt.Errorf("activity %q runtime output: %w", node.Name, err)
 			}
-			input := suite.Cases[c].Inputs[node.Name]
-			producer := ""
-			if node.InputFrom >= 0 {
-				input, producer = trace.Deliveries[node.InputFrom].Actual, graph.nodes[node.InputFrom].ID
+			entry := CompositionDelivery{ActivityID: node.ID, Actual: actual}
+			if len(node.Inputs) > 0 {
+				entry.Inputs = make([]CompositionPortDelivery, len(node.Inputs))
 			}
-			input, _ = canonicalScalar(input, node.InputType)
-			entry := CompositionDelivery{ActivityID: node.ID, ProducerID: producer, Input: input, Actual: actual}
+			for p, slot := range node.inputSlots() {
+				input := suite.Cases[c].Inputs[node.inputKey(slot.Port)]
+				producer := ""
+				if slot.From >= 0 {
+					input, producer = trace.Deliveries[slot.From].Actual, graph.nodes[slot.From].ID
+				}
+				input, err = canonicalScalar(input, slot.Type)
+				if err != nil {
+					return nil, 0, fmt.Errorf("runtime input %q: %w", node.inputKey(slot.Port), err)
+				}
+				if len(node.Inputs) == 0 {
+					entry.Input, entry.ProducerID = input, producer
+				} else {
+					entry.Inputs[p] = CompositionPortDelivery{Port: slot.Port, EntityID: slot.EntityID, ProducerID: producer, Value: input}
+				}
+			}
 			if expected, present := suite.Cases[c].Expected[node.Name]; present {
 				entry.Expected, _ = canonicalScalar(expected, node.OutputType)
 				match := bytes.Equal(entry.Expected, actual)

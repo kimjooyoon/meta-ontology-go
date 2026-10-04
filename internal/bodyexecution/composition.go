@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
@@ -201,7 +202,7 @@ func replayCompositionPlain(ctx context.Context, filename string, source []byte,
 		r.BodySearch != nil || r.Route != "preserve" || r.Decision != "PASS" || !r.TypecheckPassed ||
 		!r.DeterministicReplay || r.ActivityID != node.ID || r.SourceDigest != expected.SourceDigest ||
 		r.GeneratedDigest != expected.GeneratedDigest || r.ProgramDigest != expected.ProgramDigest ||
-		r.InputType != expected.InputType || r.OutputType != expected.OutputType {
+		r.InputType != expected.InputType || r.OutputType != expected.OutputType || !reflect.DeepEqual(r.InputParameters, expected.InputParameters) {
 		return fmt.Errorf("ordinary body projection differs from its source")
 	}
 	return nil

@@ -31,9 +31,13 @@ func declarationFromNode(node Node, model Model, registry semantic.TypeRegistry)
 			}
 		}
 	}
-	sort.SliceStable(declaration.Inputs, func(i, j int) bool {
-		return referenceSourceOrderLess(declaration.Inputs[i], declaration.Inputs[j])
-	})
+	if len(node.InputSequence) > 0 {
+		declaration.Inputs = sourceInputSequence(node, model)
+	} else {
+		sort.SliceStable(declaration.Inputs, func(i, j int) bool {
+			return referenceSourceOrderLess(declaration.Inputs[i], declaration.Inputs[j])
+		})
+	}
 	sort.SliceStable(declaration.Outputs, func(i, j int) bool {
 		return referenceSourceOrderLess(declaration.Outputs[i], declaration.Outputs[j])
 	})
