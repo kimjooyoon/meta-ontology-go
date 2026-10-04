@@ -3,7 +3,9 @@ package bodycodegen
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"go/types"
 	"slices"
 	"time"
 
@@ -114,6 +116,19 @@ func searchRecordAssembly(ctx context.Context, p recordAssemblyPlan, r *RecordAs
 		}
 		candidate, err := p.candidate(mask)
 		if err != nil {
+			if contextError := ctx.Err(); contextError != nil {
+				return contextError
+			}
+			if _, ok := errors.AsType[types.Error](err); ok {
+				// Independently valid alternatives can remove every use of a
+				// local when combined. Keep this candidate's type observation,
+				// consume one attempt, and retain the best valid implementation.
+				// No finite cases executed, so no case denominator is reported.
+				r.Attempts = append(r.Attempts, RecordAssemblyAttempt{
+					Mask: mask, Status: "TYPECHECK_FAILED", Reason: err.Error(),
+				})
+				continue
+			}
 			return err
 		}
 		cases, err := evaluateRecordAssembly(ctx, candidate.source, p.body.activity.Name, p.body.records, p.spec.ValueCases)
@@ -132,7 +147,7 @@ func searchRecordAssembly(ctx context.Context, p recordAssemblyPlan, r *RecordAs
 		}
 	}
 	if best < 0 {
-		return fmt.Errorf("record assembly requires a candidate observation")
+		return fmt.Errorf("record assembly has no valid typed candidate within the attempt budget")
 	}
 	r.Status = "PARTIAL_FINITE"
 	if r.Passed == r.Total {
