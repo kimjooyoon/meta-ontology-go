@@ -32,8 +32,8 @@ func zeroRecordBodyValue(t types.Type) (recordBodyValue, error) {
 	if !ok || structure.NumFields() < 1 || structure.NumFields() > 16 {
 		return recordBodyValue{}, fmt.Errorf("record layout exceeds value bounds")
 	}
-	for i := 0; i < structure.NumFields(); i++ {
-		if structure.Field(i).Type() != types.Typ[types.String] {
+	for field := range structure.Fields() {
+		if field.Type() != types.Typ[types.String] {
 			return recordBodyValue{}, fmt.Errorf("record fields must be strings")
 		}
 	}
