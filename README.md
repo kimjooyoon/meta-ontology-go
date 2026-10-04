@@ -36,8 +36,8 @@ Gooo source + intent + permitted choices + finite expectations
 
 The goal is to make program construction an inspectable language operation.
 Stable semantic IDs connect a declaration to its generated structure and observed
-behavior. Small models guide finite choices inside those boundaries. When a model
-is unavailable, the compiler continues through the declared deterministic route.
+behavior. Small models guide finite choices inside those boundaries. Omitting an
+explicit model path selects the declared deterministic route.
 
 The current integration includes an independently trained **4,096-parameter,
 16 KiB whole-candidate judge** that compares eight complete body paths, including
@@ -61,7 +61,47 @@ languages; the measurements below compare Gooo's own experimental variants.
 | Research | [gooo-neural-decision-experiments](https://github.com/kimjooyoon/gooo-neural-decision-experiments) | Training, comparisons, raw evidence and reproduction tools |
 | Model weights | [Whole-candidate judge](https://huggingface.co/asketeddy/gooo-order-judge-tiny-v1) · [shared judge](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Current 16 KiB model and earlier FP32/ternary studies, model cards and evidence bundles |
 
-## Current observations — 2026-10-03
+## Starting and reading a body run — 2026-10-04
+
+Use `gooo body-path-run` for source, recipe and finite-case files; use
+`gooo body-path-stream` for repeated NDJSON requests. Omitting `--model` selects
+the deterministic route. An explicit model path is validated before construction.
+The [native worker guide](docs/native-body-worker.md) gives executable examples,
+file limits, compatible model profiles and result fields.
+
+| What happened | Where to start |
+| --- | --- |
+| Input/model setup error before an output directory | Check regular-file kind, readable path, size, source UTF-8 and model metadata/weights |
+| Go-tool setup error after generation | Check the Go 1.27.1 executable; the generated program and original error remain available |
+| Finite cases are unobserved | Read the setup/execution cause before interpreting a completion fraction |
+| Executed cases have a mismatch | Compare retained input, expected/actual output and replay result |
+
+Unix input readers open without waiting for a FIFO writer and validate the opened
+file itself. This includes source/recipe/case/options, structural model metadata
+and whole-candidate judge weights. Regular-file symlinks retain their contents.
+Other profiles keep their existing subsequent artifact loaders. Windows arm64
+evidence for this change is cross compilation.
+
+The source tested and locally installed for this observation is main
+[`d1bfd273`](https://github.com/kimjooyoon/meta-ontology-go/commit/d1bfd273ab4e21d0191548b066a27bcb77d7ed86).
+Dev #1202 and main #1203 each passed their own six checks and independently
+verified proofs before normal merges. CLI and standalone worker share that
+source, Go 1.27.1 and SDK v0.2.20. This is a reproducible observation pin.
+
+Fresh installed controls retained **1,024/1,024** finite cases in eight ordinary
+KO/EN model/deterministic constructions and **512/512** in four standalone-worker
+constructions with two concurrent requests per mode. All generated Go matched
+the frozen programs. A separate 64-swap input study had no writer releases or
+timeouts: 33 regular completions retained 4,224/4,224; 31 errors occurred before
+construction. These repeat existing authored tasks with unchanged weights/fit.
+[Original failures, CPU scope, source proofs and installed records](https://github.com/kimjooyoon/gooo-neural-decision-experiments/tree/main/publication/file-input-open-20261004).
+
+Normal model-request first/reused responses were 298.269/25.206417ms for Korean
+and 484.009167/27.778291ms for English, including construction and execution.
+Standalone-worker CPU accounting includes setup, native children and EOF joining;
+whole-host utilization and model-only RAM/latency remain unobserved.
+
+## Dated model studies — 2026-10-03
 
 The latest model study and the deployed integration have separate evidence:
 
@@ -96,8 +136,8 @@ The latest model study and the deployed integration have separate evidence:
   and broader task coverage are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
-This compiler revision uses **Go SDK v0.2.18-experimental**, with V3/V4 feature
-contracts, versioned arithmetic and bounded probe sessions. The
+This compiler revision uses **Go SDK v0.2.20-experimental**, with V3/V4 feature
+contracts, versioned arithmetic, bounded probe sessions and prepared candidate reuse. The
 [observation loop](docs/path-observation-loop.md) can choose a distinguishing
 input, obtain its result from a declared Gooo reference activity, and use that
 additional case during body construction. Verified probe outputs can be reused,
@@ -117,8 +157,8 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| Compiler at this revision | SDK v0.2.18; source recipes including constant bodies, observation reuse/resolution, V3/V4 model and feedback | Paired observations of completion and total construction cost |
-| [SDK v0.2.18](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.18-experimental) | V3/V4 inference, explicit arithmetic, owned probe sessions and unread signature inputs | Broader source and behavior coverage |
+| Compiler at this revision | SDK v0.2.20; source recipes, bounded observation/reuse, prepared candidates, file/stream construction and execution | Usability, finite completion and construction cost |
+| [SDK v0.2.20](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.20-experimental) | V3/V4 inference, explicit arithmetic, owned probes and reusable candidate preparation | Broader source and behavior coverage |
 | [Hugging Face model](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Wording, operation order and new-task evaluation |
 
 At SDK revision `59c8d34`, local arm64 and
