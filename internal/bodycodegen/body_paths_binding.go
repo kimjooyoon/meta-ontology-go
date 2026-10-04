@@ -72,6 +72,9 @@ func bindTypedPathSourceProjection(ctx context.Context, filename string, source 
 		return typedPathSource{}, fmt.Errorf("typed path fallback does not match the authoritative source body")
 	}
 	receipt.SourceBaseMatched = true
+	if err := verifySourceAssembly(ctx, filename, source, activity, base, receipt); err != nil {
+		return typedPathSource{}, err
+	}
 	receipt.Timing.SourceBindingMS = elapsedMS(bindingStarted)
 	if err := ctx.Err(); err != nil {
 		return typedPathSource{}, err

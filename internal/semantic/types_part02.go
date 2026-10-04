@@ -1,18 +1,22 @@
 package semantic
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
+
 // Node is a semantic declaration. Name and Aliases are presentation and
 // lookup metadata; ID, Kind, Namespace, latent field structure, and an
-// optional activity value program are the semantic identity boundary.
+// optional activity value program and assembly contract are the semantic boundary.
 // Fields are valid only on Entity nodes; ValueProgram is valid only on
-// Activity nodes and carries no execution authority.
+// Activity nodes. Assembly carries source intent, typed choices and finite cases;
+// execution observations are separate.
 type Node struct {
 	ID           ID
 	Kind         Kind
 	Namespace    Namespace
 	Name         string
 	Aliases      []string
-	Fields       []Field `json:"fields,omitempty"`
-	ValueProgram string  `json:"value_program,omitempty"`
+	Fields       []Field            `json:"fields,omitempty"`
+	ValueProgram string             `json:"value_program,omitempty"`
+	Assembly     *assemblyspec.Spec `json:"assembly,omitempty"`
 	Span         Span
 }
 
