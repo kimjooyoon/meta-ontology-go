@@ -317,17 +317,16 @@ func writeFileJSON(out, filename string, value any) error {
 }
 
 func readFileInput(filename string, limit int64) ([]byte, error) {
-	before, err := os.Stat(filename)
-	if err != nil || !before.Mode().IsRegular() {
-		return nil, fmt.Errorf("%s: input must be a regular file", filename)
-	}
-	f, err := os.Open(filename)
+	f, err := openFileInput(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 	info, err := f.Stat()
-	if err != nil || !info.Mode().IsRegular() || info.Size() == 0 || info.Size() > limit {
+	if err != nil || !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("%s: input must be a regular file", filename)
+	}
+	if info.Size() == 0 || info.Size() > limit {
 		return nil, fmt.Errorf("%s: input must be nonempty and within %d bytes", filename, limit)
 	}
 	b, err := io.ReadAll(io.LimitReader(f, limit+1))
