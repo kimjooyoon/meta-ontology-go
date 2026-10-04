@@ -17,6 +17,15 @@ activity Adjust(Integer) -> Integer computes "return input - 2" assembling {
 }`
 
 func TestAssemblyParseFormatCloneAndSpans(t *testing.T) {
+	testAssemblyParseFormatCloneAndSpans(t, assemblySource)
+	checkpoint := strings.Replace(assemblySource, "assembling {", `assembling {
+    baseline "return input - 2"
+    picked "offset" -> "layout_reverse"`, 1)
+	testAssemblyParseFormatCloneAndSpans(t, checkpoint)
+}
+
+func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
+	t.Helper()
 	file, diagnostics := ParseFile("inline.gooo", assemblySource)
 	if diagnostics.HasErrors() {
 		t.Fatal(diagnostics)
@@ -45,6 +54,12 @@ func TestAssemblyParseFormatCloneAndSpans(t *testing.T) {
 	if activity.Assembly.Spec.Choices[0].Intent == "changed" || activity.Assembly.Spec.Cases[0].Expected == 0 {
 		t.Fatal("syntax clone shares assembly storage")
 	}
+	if len(clone.Assembly.Spec.Picked) != 0 {
+		clone.Assembly.Spec.Picked[0].Label = "layout_forward"
+		if activity.Assembly.Spec.Picked[0].Label != "layout_reverse" {
+			t.Fatal("syntax clone shares checkpoint storage")
+		}
+	}
 }
 
 func TestAssemblyRejectsIncompleteOrAmbiguousDeclarations(t *testing.T) {
@@ -63,6 +78,10 @@ func TestAssemblyRejectsIncompleteOrAmbiguousDeclarations(t *testing.T) {
 		{`attempts "2"`, ""},
 		{`case "4" -> "-2"`, `case "4" -> "bad"`},
 		{`attempts "2"`, `attempts "2" seed "a" seed "b"`},
+		{`attempts "2"`, `attempts "2" baseline ""`},
+		{`attempts "2"`, `attempts "2" baseline "return input - 2"`},
+		{`attempts "2"`, `attempts "2" picked "offset" -> "layout_reverse"`},
+		{`attempts "2"`, `attempts "2" baseline "return input - 2" baseline "return input - 2"`},
 	} {
 		source := strings.Replace(assemblySource, mutation.from, mutation.to, 1)
 		if _, diagnostics := Parse(source); !diagnostics.HasErrors() {

@@ -90,7 +90,15 @@ func expandSourceRecipeProjection(ctx context.Context, filename string, source [
 	if err := ctx.Err(); err != nil {
 		return pathplan.Document{}, err
 	}
-	base, err := typedPathBindingProjection(ctx, filename, source, activity, projection)
+	planning, err := sourceAssemblyPlanningSource(ctx, filename, source, activity)
+	if err != nil {
+		return pathplan.Document{}, err
+	}
+	planningProjection := projection
+	if !bytes.Equal(planning, source) {
+		planningProjection = nil
+	}
+	base, err := typedPathBindingProjection(ctx, filename, planning, activity, planningProjection)
 	if err != nil {
 		return pathplan.Document{}, err
 	}
@@ -130,7 +138,11 @@ func expandSourceRecipeProjection(ctx context.Context, filename string, source [
 		return pathplan.Document{}, err
 	}
 	if bind {
-		if _, err = bindTypedPathSourceProjection(ctx, filename, source, activity, prepared, &BodyPathReceipt{}, &base); err != nil {
+		currentProjection := &base
+		if !bytes.Equal(planning, source) {
+			currentProjection = projection
+		}
+		if _, err = bindTypedPathSourceProjection(ctx, filename, source, activity, prepared, &BodyPathReceipt{}, currentProjection); err != nil {
 			return pathplan.Document{}, fmt.Errorf("recipe source binding: %w", err)
 		}
 	}

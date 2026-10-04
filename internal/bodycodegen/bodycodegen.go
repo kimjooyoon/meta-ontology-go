@@ -37,8 +37,9 @@ const (
 
 // Result is an immutable report and generated source projection.
 type Result struct {
-	Report Report `json:"report"`
-	Source string `json:"source"`
+	Report     Report `json:"report"`
+	Source     string `json:"source"`
+	GoooSource string `json:"gooo_source,omitempty"`
 }
 
 // Report describes what was lowered and how the output was checked.

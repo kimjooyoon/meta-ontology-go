@@ -3,6 +3,10 @@
 An activity can keep intent, typed paths, finite cases and a search budget in an
 [`assembling` block](../source-assembly.md). `body-codegen` detects it directly;
 context export and native execution read the same source contract.
+For source assembly, JSON generation also includes a reusable `gooo_source`.
+[`body-realize`](../source-assembly.md#continue-developing-from-the-selected-body)
+replays a saved selection into a new directory and preserves the baseline paths
+for the next generation, including results with partial finite completeness.
 
 For multiple requests in one process, use
 [`gooo body-path-stream`](../native-body-worker.md). It accepts source recipes,

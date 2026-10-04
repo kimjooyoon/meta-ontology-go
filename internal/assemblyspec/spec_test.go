@@ -58,3 +58,34 @@ func TestAssemblyFiniteAndTextBudgets(t *testing.T) {
 		t.Fatal("supported name path rejected", err)
 	}
 }
+
+func TestAssemblyCheckpointCanonicalSelectionAndClone(t *testing.T) {
+	s := validSpec()
+	s.Baseline = "return input - 2"
+	s.Picked = []Pick{{ID: "offset", Label: "layout_reverse"}}
+	raw, err := s.Canonical()
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeCanonical(raw)
+	if err != nil || decoded.Baseline != s.Baseline {
+		t.Fatal(err)
+	}
+	clone := s.Clone()
+	clone.Picked[0].Label = "layout_forward"
+	if s.Picked[0].Label != "layout_reverse" {
+		t.Fatal("checkpoint clone shares picked storage")
+	}
+	for _, mutate := range []func(*Spec){
+		func(s *Spec) { s.Baseline = "" }, func(s *Spec) { s.Picked = nil },
+		func(s *Spec) { s.Picked[0].ID = "other" }, func(s *Spec) { s.Picked[0].Label = "reference_second" },
+		func(s *Spec) { s.Picked = append(s.Picked, s.Picked[0]) },
+		func(s *Spec) { s.Baseline = strings.Repeat("x", 1+(128<<10)) },
+	} {
+		changed := s.Clone()
+		mutate(changed)
+		if changed.Validate() == nil {
+			t.Fatal("invalid checkpoint accepted", changed)
+		}
+	}
+}

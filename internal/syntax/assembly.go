@@ -21,15 +21,33 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 	keyword := p.advance()
 	d := &AssemblyDecl{Span: keyword.Span}
 	p.expect(TokenLBrace, "{", DiagUnexpectedDeclaration)
-	seenAttempts, seenSeed := false, false
+	seenAttempts, seenSeed, seenBaseline := false, false, false
 	for !p.at(TokenRBrace) && !p.at(TokenEOF) {
 		if !p.at(TokenIdentifier) {
-			p.error(DiagUnexpectedDeclaration, p.peek().Span, "expected assembly choice, case, attempts or seed")
+			p.error(DiagUnexpectedDeclaration, p.peek().Span, "expected an assembly field")
 			p.advance()
 			continue
 		}
 		field := p.advance()
 		switch field.Value {
+		case "baseline":
+			if seenBaseline {
+				p.error(DiagUnexpectedDeclaration, field.Span, "duplicate assembly baseline")
+			}
+			seenBaseline, d.Spec.Baseline = true, p.expectString().Name
+			if strings.TrimSpace(d.Spec.Baseline) == "" {
+				p.error(DiagUnexpectedDeclaration, field.Span, "assembly baseline must be nonempty")
+			}
+		case "picked":
+			id := p.expectString().Name
+			p.expect(TokenArrow, "->", DiagExpectedArrow)
+			label := p.expectString().Name
+			if len(d.Spec.Picked) == 16 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds 16 picked labels")
+				p.skipAssemblyRemainder()
+				continue
+			}
+			d.Spec.Picked = append(d.Spec.Picked, assemblyspec.Pick{ID: id, Label: label})
 		case "choice":
 			if len(d.Spec.Choices) == 16 {
 				p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds 16 choices")
@@ -120,6 +138,12 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 		return err
 	}
 	output.WriteString(" assembling {\n")
+	if d.Spec.Baseline != "" {
+		fmt.Fprintf(output, "    baseline %s\n", quoteString(d.Spec.Baseline))
+		for _, pick := range d.Spec.Picked {
+			fmt.Fprintf(output, "    picked %s -> %s\n", quoteString(pick.ID), quoteString(pick.Label))
+		}
+	}
 	for _, c := range d.Spec.Choices {
 		fmt.Fprintf(output, "    choice %s %s at %s", quoteString(c.ID), c.Kind, quoteString(strconv.Itoa(c.Occurrence)))
 		if c.Alternative != "" {
@@ -137,4 +161,13 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 	}
 	output.WriteByte('}')
 	return nil
+}
+
+// FormatAssembly renders only the contract, for a locality-preserving source edit.
+func FormatAssembly(d *AssemblyDecl) (string, error) {
+	var output strings.Builder
+	if err := formatAssembly(&output, d); err != nil {
+		return "", err
+	}
+	return strings.TrimPrefix(output.String(), " "), nil
 }
