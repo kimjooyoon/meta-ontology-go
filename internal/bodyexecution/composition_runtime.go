@@ -12,20 +12,23 @@ import (
 )
 
 type CompositionDelivery struct {
-	ActivityID string                    `json:"activity_id"`
-	ProducerID string                    `json:"producer_id,omitempty"`
-	Input      json.RawMessage           `json:"input,omitempty"`
-	Inputs     []CompositionPortDelivery `json:"inputs,omitempty"`
-	Actual     json.RawMessage           `json:"actual"`
-	Expected   json.RawMessage           `json:"expected,omitempty"`
-	Passed     *bool                     `json:"passed,omitempty"`
+	ActivityID   string                    `json:"activity_id"`
+	ProducerID   string                    `json:"producer_id,omitempty"`
+	Input        json.RawMessage           `json:"input,omitempty"`
+	InputFields  []CompositionRecordField  `json:"input_fields,omitempty"`
+	Inputs       []CompositionPortDelivery `json:"inputs,omitempty"`
+	Actual       json.RawMessage           `json:"actual"`
+	ActualFields []CompositionRecordField  `json:"actual_fields,omitempty"`
+	Expected     json.RawMessage           `json:"expected,omitempty"`
+	Passed       *bool                     `json:"passed,omitempty"`
 }
 
 type CompositionPortDelivery struct {
-	Port       string          `json:"port"`
-	EntityID   string          `json:"entity_id"`
-	ProducerID string          `json:"producer_id,omitempty"`
-	Value      json.RawMessage `json:"value"`
+	Port       string                   `json:"port"`
+	EntityID   string                   `json:"entity_id"`
+	ProducerID string                   `json:"producer_id,omitempty"`
+	Value      json.RawMessage          `json:"value"`
+	Fields     []CompositionRecordField `json:"fields,omitempty"`
 }
 
 type CompositionTrace struct {
@@ -73,7 +76,7 @@ func ExecuteComposition(ctx context.Context, filename string, source []byte, pri
 		SelectedSourceSHA256: prior.SelectedSourceSHA256, TypedPlanSHA256: prior.Plan.TypedPlanSHA256,
 		GeneratedSHA256: prior.GeneratedSHA256, DriverSHA256: prior.DriverSHA256, RuntimeSuiteSHA256: compositionDigest(suite),
 		ProducerSourceSHA: producerSourceSHA(), Runs: make([]ProcessObservation, 0, 2), Traces: []CompositionTrace{},
-		Scope: "two fresh compiled scalar-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"}
+		Scope: "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"}
 	finish := func(err error) (CompositionRuntime, error) {
 		r.ElapsedNS = time.Since(start).Nanoseconds()
 		if err != nil {
@@ -204,11 +207,12 @@ func (graph compositionGraph) nativeTraces(output []byte, suite CompositionCases
 		}
 		trace := CompositionTrace{CaseIndex: c, Deliveries: make([]CompositionDelivery, graph.count)}
 		for i, node := range graph.nodes[:graph.count] {
-			actual, err := canonicalScalar(row[i], node.OutputType)
+			actual, err := graph.canonicalValue(row[i], node.OutputType)
 			if err != nil {
 				return nil, 0, fmt.Errorf("activity %q runtime output: %w", node.Name, err)
 			}
-			entry := CompositionDelivery{ActivityID: node.ID, Actual: actual}
+			entry := CompositionDelivery{ActivityID: node.ID, Actual: actual,
+				ActualFields: graph.recordFieldValues(node.OutputType, actual)}
 			if len(node.Inputs) > 0 {
 				entry.Inputs = make([]CompositionPortDelivery, len(node.Inputs))
 			}
@@ -218,18 +222,20 @@ func (graph compositionGraph) nativeTraces(output []byte, suite CompositionCases
 				if slot.From >= 0 {
 					input, producer = trace.Deliveries[slot.From].Actual, graph.nodes[slot.From].ID
 				}
-				input, err = canonicalScalar(input, slot.Type)
+				input, err = graph.canonicalValue(input, slot.Type)
 				if err != nil {
 					return nil, 0, fmt.Errorf("runtime input %q: %w", node.inputKey(slot.Port), err)
 				}
 				if len(node.Inputs) == 0 {
 					entry.Input, entry.ProducerID = input, producer
+					entry.InputFields = graph.recordFieldValues(slot.Type, input)
 				} else {
-					entry.Inputs[p] = CompositionPortDelivery{Port: slot.Port, EntityID: slot.EntityID, ProducerID: producer, Value: input}
+					entry.Inputs[p] = CompositionPortDelivery{Port: slot.Port, EntityID: slot.EntityID,
+						ProducerID: producer, Value: input, Fields: graph.recordFieldValues(slot.Type, input)}
 				}
 			}
 			if expected, present := suite.Cases[c].Expected[node.Name]; present {
-				entry.Expected, _ = canonicalScalar(expected, node.OutputType)
+				entry.Expected, _ = graph.canonicalValue(expected, node.OutputType)
 				match := bytes.Equal(entry.Expected, actual)
 				entry.Passed = &match
 				if match {

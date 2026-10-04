@@ -20,7 +20,7 @@ func SourceAssembly(ctx context.Context, filename string, source []byte, activit
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	file, diagnostics := syntax.ParseFile(filename, string(source))
+	file, diagnostics := ParseBodyFile(filename, source)
 	if diagnostics.HasErrors() || file == nil {
 		return nil, fmt.Errorf("assembly source: %v", diagnostics)
 	}

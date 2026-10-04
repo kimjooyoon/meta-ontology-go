@@ -11,7 +11,7 @@ Each root gets an explicitly named input. Bound activities get only their
 declared producer's result. The runtime retains every activity's actual input
 and output, including intermediate results that have no supplied expectation.
 
-Activities may receive 1..16 scalar inputs. One input keeps the existing `input`
+Activities may receive 1..16 scalar or declared record inputs. One input keeps the existing `input`
 name. Multiple inputs use `input0`, `input1`, and so on in declaration order,
 including repeated types:
 
@@ -144,8 +144,9 @@ budget and each native run a2-second budget; cancellations and failures retain
 their first stage. Optional learned source assembly currently accepts a single
 Integer input and Integer result; multiple-input bodies connect these selected
 results through checked ordinary source. The `run` command's registered operation
-profile has its own input restrictions. Feedback across invocations, record-valued
-bodies, calls and loops require further language work.
+profile has its own input restrictions. The existing required-string field profile
+now supports [record values and field traces](native-record-values.md). Feedback
+across invocations, additional field types, calls and loops require further language work.
 
 Related: [source assembly](source-assembly.md), [language direction](language-direction.ko.md),
 [body generation](language/body-codegen.md).

@@ -42,9 +42,9 @@ func routeEquivalence(packageName, activityName, inputType, outputType, body str
 	return routeEquivalenceParameters(packageName, activityName, []InputParameter{{Name: "input", Type: inputType}}, outputType, body, generated, rule)
 }
 
-func routeEquivalenceParameters(packageName, activityName string, parameters []InputParameter, outputType, body string, generated []byte, rule string) (RouteEquivalenceReceipt, error) {
+func routeEquivalenceParameters(packageName, activityName string, parameters []InputParameter, outputType, body string, generated []byte, rule string, records ...RecordType) (RouteEquivalenceReceipt, error) {
 	sourceFileSet := token.NewFileSet()
-	sourceText := fmt.Sprintf("package %s\nfunc %s(%s) %s {\n%s\n}\n", packageName, activityName, parameterDeclaration(parameters), outputType, body)
+	sourceText := fmt.Sprintf("package %s\n%sfunc %s(%s) %s {\n%s\n}\n", packageName, RecordDeclarations(records, false), activityName, parameterDeclaration(parameters), outputType, body)
 	sourceFile, err := parser.ParseFile(sourceFileSet, "source-body.goo", sourceText, parser.AllErrors)
 	if err != nil {
 		return RouteEquivalenceReceipt{}, fmt.Errorf("parse accepted source body for equivalence receipt: %w", err)
@@ -60,20 +60,21 @@ func routeEquivalenceParameters(packageName, activityName string, parameters []I
 	if err != nil {
 		return RouteEquivalenceReceipt{}, fmt.Errorf("parse generated body for equivalence receipt: %w", err)
 	}
+	restoreRecordNames(generatedFile, records)
 	generatedFunction, ok := findFunction(generatedFile, activityName)
 	if !ok {
 		return RouteEquivalenceReceipt{}, fmt.Errorf("generated source has no function for equivalence receipt")
 	}
 
-	sourceForm, err := canonicalizeSemanticBody(sourceFileSet, sourceFunction.Body)
+	sourceForm, err := canonicalizeSemanticBody(sourceFileSet, sourceFunction.Body, records...)
 	if err != nil {
 		return RouteEquivalenceReceipt{}, fmt.Errorf("canonicalize accepted source body: %w", err)
 	}
-	generatedForm, err := canonicalizeSemanticBody(generatedFileSet, generatedFunction.Body)
+	generatedForm, err := canonicalizeSemanticBody(generatedFileSet, generatedFunction.Body, records...)
 	if err != nil {
 		return RouteEquivalenceReceipt{}, fmt.Errorf("canonicalize generated body: %w", err)
 	}
-	if len(parameters) > 1 {
+	if len(parameters) > 1 || len(records) > 0 {
 		sourceSignature, ok := formatNode(sourceFileSet, sourceFunction.Type)
 		if !ok {
 			return RouteEquivalenceReceipt{}, fmt.Errorf("format source signature")
@@ -84,6 +85,11 @@ func routeEquivalenceParameters(packageName, activityName string, parameters []I
 		}
 		sourceForm = append([]byte(sourceSignature+"\x00"), sourceForm...)
 		generatedForm = append([]byte(generatedSignature+"\x00"), generatedForm...)
+	}
+	if len(records) > 0 {
+		recordIdentity, _ := json.Marshal(records)
+		sourceForm = append(append(recordIdentity, 0), sourceForm...)
+		generatedForm = append(append([]byte(nil), recordIdentity...), append([]byte{0}, generatedForm...)...)
 	}
 	equivalent := bytes.Equal(sourceForm, generatedForm)
 	decision := "FAIL_CLOSED"
@@ -98,8 +104,8 @@ func routeEquivalenceParameters(packageName, activityName string, parameters []I
 	}, nil
 }
 
-func canonicalizeSemanticBody(fileSet *token.FileSet, body *ast.BlockStmt) ([]byte, error) {
-	if form, ok := conditionalReturnForm(fileSet, body); ok {
+func canonicalizeSemanticBody(fileSet *token.FileSet, body *ast.BlockStmt, records ...RecordType) ([]byte, error) {
+	if form, ok := conditionalReturnForm(fileSet, body, records...); ok {
 		return json.Marshal(form)
 	}
 	var formatted bytes.Buffer
@@ -109,7 +115,7 @@ func canonicalizeSemanticBody(fileSet *token.FileSet, body *ast.BlockStmt) ([]by
 	return json.Marshal(canonicalSemanticForm{Shape: "go_ast_body/v1", Body: formatted.String()})
 }
 
-func conditionalReturnForm(fileSet *token.FileSet, body *ast.BlockStmt) (canonicalSemanticForm, bool) {
+func conditionalReturnForm(fileSet *token.FileSet, body *ast.BlockStmt, records ...RecordType) (canonicalSemanticForm, bool) {
 	if isGuardReturnShape(body) {
 		conditional := body.List[0].(*ast.IfStmt)
 		otherwise := conditional.Else.(*ast.BlockStmt)
@@ -132,7 +138,7 @@ func conditionalReturnForm(fileSet *token.FileSet, body *ast.BlockStmt) (canonic
 	if form, ok := guardReturnForm(fileSet, body); ok {
 		return form, true
 	}
-	return mergeResultForm(fileSet, body)
+	return mergeResultForm(fileSet, body, records...)
 }
 
 func guardReturnForm(fileSet *token.FileSet, body *ast.BlockStmt) (canonicalSemanticForm, bool) {
@@ -163,7 +169,7 @@ func guardReturnForm(fileSet *token.FileSet, body *ast.BlockStmt) (canonicalSema
 	}, true
 }
 
-func mergeResultForm(fileSet *token.FileSet, body *ast.BlockStmt) (canonicalSemanticForm, bool) {
+func mergeResultForm(fileSet *token.FileSet, body *ast.BlockStmt, records ...RecordType) (canonicalSemanticForm, bool) {
 	if body == nil || len(body.List) != 3 {
 		return canonicalSemanticForm{}, false
 	}
@@ -180,7 +186,7 @@ func mergeResultForm(fileSet *token.FileSet, body *ast.BlockStmt) (canonicalSema
 		return canonicalSemanticForm{}, false
 	}
 	typeName, ok := valueSpec.Type.(*ast.Ident)
-	if !ok || (typeName.Name != "int64" && typeName.Name != "bool" && typeName.Name != "string") {
+	if !ok || !supportedBodyType(typeName.Name, records) {
 		return canonicalSemanticForm{}, false
 	}
 	conditional, ok := body.List[1].(*ast.IfStmt)

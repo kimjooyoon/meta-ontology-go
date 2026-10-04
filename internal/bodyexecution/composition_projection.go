@@ -8,13 +8,16 @@ import (
 	"go/token"
 	"go/types"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 func emitCompositionProjection(steps []CompositionStep, graph compositionGraph) (string, error) {
 	var source strings.Builder
 	source.WriteString("package main\n")
+	source.WriteString(bodycodegen.RecordDeclarations(graph.plan.Records, true))
 	for i, step := range steps {
-		part, err := compositionFunction(step.Generation.Source, graph.nodes[i].Name, i)
+		part, err := compositionStepFunction(step.Generation, graph.nodes[i], i)
 		if err != nil {
 			return "", err
 		}
@@ -73,7 +76,7 @@ func compositionDriver(graph compositionGraph) (string, error) {
 			input := fmt.Sprintf("v%d", slot.From)
 			if slot.From < 0 {
 				input = fmt.Sprintf("input%d", root)
-				fmt.Fprintf(&source, "var %s %s;if json.Unmarshal(row[%d],&%s)!=nil{os.Exit(2)}\n", input, scalarGoType(slot.Type), root, input)
+				fmt.Fprintf(&source, "var %s %s;if json.Unmarshal(row[%d],&%s)!=nil{os.Exit(2)}\n", input, graph.valueGoType(slot.Type), root, input)
 				root++
 			}
 			arguments = append(arguments, input)

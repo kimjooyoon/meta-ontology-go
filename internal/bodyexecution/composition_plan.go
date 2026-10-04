@@ -2,6 +2,8 @@ package bodyexecution
 
 import (
 	"reflect"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 const compositionLimit = 16
@@ -35,11 +37,12 @@ type CompositionEdge struct {
 }
 
 type CompositionPlan struct {
-	Schema              string                `json:"schema"`
-	TypedPlanSHA256     string                `json:"typed_plan_sha256"`
-	SemanticFingerprint string                `json:"semantic_fingerprint"`
-	Activities          []CompositionActivity `json:"activities"`
-	Edges               []CompositionEdge     `json:"edges"`
+	Schema              string                   `json:"schema"`
+	TypedPlanSHA256     string                   `json:"typed_plan_sha256"`
+	SemanticFingerprint string                   `json:"semantic_fingerprint"`
+	Activities          []CompositionActivity    `json:"activities"`
+	Edges               []CompositionEdge        `json:"edges"`
+	Records             []bodycodegen.RecordType `json:"record_types,omitempty"`
 }
 
 type compositionGraph struct {
