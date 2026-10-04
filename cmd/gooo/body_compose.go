@@ -8,19 +8,23 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 )
 
-const bodyComposeUsage = "usage: gooo body-compose --source <source.gooo> --cases <cases.json> " +
+const bodyComposeUsage = "usage: gooo body-compose --source <source.gooo> " +
+	"(--cases <cases.json> | --case-series <series.json>) [--repeat <1..16>] " +
 	"[--model <model.json> | --composition <composition.json>] [--go-bin <go1.27.1>] [--out <new-directory>]"
 
 type bodyCompositionOutput struct {
-	GeneratedNow bool                             `json:"generated_now"`
-	Composition  bodyexecution.Composition        `json:"composition"`
-	Runtime      bodyexecution.CompositionRuntime `json:"runtime"`
+	GeneratedNow   bool                                 `json:"generated_now"`
+	Composition    bodyexecution.Composition            `json:"composition"`
+	Runtime        bodyexecution.CompositionRuntime     `json:"runtime"`
+	RuntimeHistory []bodyexecution.CompositionRuntime   `json:"runtime_history,omitempty"`
+	CaseSeries     *bodyexecution.CompositionCaseSeries `json:"case_series,omitempty"`
 }
 
 func runBodyCompose(args []string, stdout, stderr io.Writer) int {
@@ -34,7 +38,7 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 		fmt.Fprintln(stderr, bodyComposeUsage)
 		return exitOK
 	}
-	flags := map[string]string{"--source": "", "--cases": "", "--model": "", "--composition": "", "--go-bin": "", "--out": ""}
+	flags := map[string]string{"--source": "", "--cases": "", "--case-series": "", "--repeat": "", "--model": "", "--composition": "", "--go-bin": "", "--out": ""}
 	for i := 0; i < len(args); i += 2 {
 		value, ok := flags[args[i]]
 		if !ok || value != "" || i+1 >= len(args) || args[i+1] == "" || strings.HasPrefix(args[i+1], "--") {
@@ -43,9 +47,17 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 		}
 		flags[args[i]] = args[i+1]
 	}
-	if flags["--source"] == "" || flags["--cases"] == "" || (flags["--model"] != "" && flags["--composition"] != "") {
+	if flags["--source"] == "" || (flags["--cases"] == "") == (flags["--case-series"] == "") ||
+		(flags["--model"] != "" && flags["--composition"] != "") {
 		fmt.Fprintln(stderr, bodyComposeUsage)
 		return exitUsage
+	}
+	if value := flags["--repeat"]; value != "" {
+		count, err := strconv.Atoi(value)
+		if err != nil || count < 1 || count > 16 {
+			fmt.Fprintln(stderr, bodyComposeUsage)
+			return exitUsage
+		}
 	}
 	return executeBodyComposition(ctx, flags, stdout, stderr)
 }
@@ -61,17 +73,25 @@ func executeBodyComposition(ctx context.Context, flags map[string]string, stdout
 	if err != nil {
 		return fail(err)
 	}
-	cases, err := readBodyExecutionFile(flags["--cases"], 32<<10)
+	suites, cases, series, err := readCompositionSuites(flags)
 	if err != nil {
 		return fail(err)
 	}
-	suite, err := bodyexecution.DecodeCompositionCases(cases)
-	if err != nil {
-		return fail(err)
+	repeat := 1
+	if flags["--repeat"] != "" {
+		repeat, _ = strconv.Atoi(flags["--repeat"])
 	}
-	output := bodyCompositionOutput{GeneratedNow: flags["--composition"] == ""}
+	if len(suites)*repeat > 16 {
+		return fail(fmt.Errorf("composition allows at most 16 executions per request"))
+	}
+	if series != nil {
+		if err := bodyexecution.ValidateCompositionSuites(ctx, flags["--source"], source, suites); err != nil {
+			return fail(err)
+		}
+	}
+	output := bodyCompositionOutput{GeneratedNow: flags["--composition"] == "", CaseSeries: series}
 	if output.GeneratedNow {
-		output.Composition, err = bodyexecution.GenerateComposition(ctx, flags["--source"], source, suite, flags["--model"])
+		output.Composition, err = bodyexecution.GenerateComposition(ctx, flags["--source"], source, suites[0], flags["--model"])
 	} else {
 		var raw []byte
 		raw, err = readBodyExecutionFile(flags["--composition"], 32<<20)
@@ -80,7 +100,14 @@ func executeBodyComposition(ctx context.Context, flags map[string]string, stdout
 		}
 	}
 	if err == nil {
-		output.Runtime, err = bodyexecution.ExecuteComposition(ctx, flags["--source"], source, output.Composition, suite, flags["--go-bin"])
+		if series != nil || repeat > 1 {
+			output.RuntimeHistory, err = executeCompositionHistory(ctx, flags, source, output.Composition, suites, repeat)
+			if len(output.RuntimeHistory) > 0 {
+				output.Runtime = output.RuntimeHistory[len(output.RuntimeHistory)-1]
+			}
+		} else {
+			output.Runtime, err = bodyexecution.ExecuteComposition(ctx, flags["--source"], source, output.Composition, suites[0], flags["--go-bin"])
+		}
 	}
 	if directory := flags["--out"]; directory != "" {
 		if writeErr := writeCompositionOutput(directory, source, cases, output); writeErr != nil {
@@ -117,6 +144,26 @@ func writeCompositionOutput(directory string, source, cases []byte, output bodyC
 		{"generated.go", []byte(output.Composition.Source)},
 		{"main.go", []byte(output.Composition.Driver)},
 		{"go.mod", []byte("module gooo.observed.composition\n\ngo 1.27.1\n")},
+	}
+	if len(output.RuntimeHistory) > 0 {
+		data, err := json.MarshalIndent(output.RuntimeHistory, "", "  ")
+		if err != nil {
+			return err
+		}
+		files = append(files, struct {
+			name string
+			data []byte
+		}{"runtime-history.json", append(data, '\n')})
+	}
+	if output.CaseSeries != nil {
+		data, err := json.MarshalIndent(output.CaseSeries, "", "  ")
+		if err != nil {
+			return err
+		}
+		files = append(files, struct {
+			name string
+			data []byte
+		}{"case-series.json", append(data, '\n')})
 	}
 	for _, file := range files {
 		if err := os.WriteFile(filepath.Join(directory, file.name), file.data, 0644); err != nil {
