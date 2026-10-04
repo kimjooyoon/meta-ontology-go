@@ -30,6 +30,7 @@ func (d EntityDecl) Clone() EntityDecl {
 
 // ActivityDecl declares an activity, its entity inputs, and its entity result.
 type ActivityDecl struct {
+	Assembly            *AssemblyDecl
 	ValueProgram        string
 	ValueProgramSpan    Span
 	ValueProgramPresent bool

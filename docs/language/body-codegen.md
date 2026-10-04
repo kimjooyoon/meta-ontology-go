@@ -1,5 +1,9 @@
 # Experimental activity body code generation
 
+An activity can keep intent, typed paths, finite cases and a search budget in an
+[`assembling` block](../source-assembly.md). `body-codegen` detects it directly;
+context export and native execution read the same source contract.
+
 For multiple requests in one process, use
 [`gooo body-path-stream`](../native-body-worker.md). It accepts source recipes,
 keeps an optional small model loaded and emits each result as soon as it is ready.

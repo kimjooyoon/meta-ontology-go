@@ -15,6 +15,16 @@ func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (De
 	if activity.ValueProgramPresent || activity.ValueProgram != "" {
 		declaration.Attributes = map[string]string{ActivityValueProgramAttribute: activity.ValueProgram}
 	}
+	if activity.Assembly != nil {
+		if declaration.Attributes == nil {
+			return Declaration{}, fmt.Errorf("assembly requires an activity value program")
+		}
+		canonical, err := activity.Assembly.Spec.Canonical()
+		if err != nil {
+			return Declaration{}, err
+		}
+		declaration.Attributes[ActivityAssemblyAttribute] = canonical
+	}
 	if len(activity.Inputs) == 0 && len(activity.Parameters) != 0 {
 		return Declaration{}, fmt.Errorf("activity %q uses unsupported legacy-only Parameters; canonical Inputs is required", activity.Name)
 	}

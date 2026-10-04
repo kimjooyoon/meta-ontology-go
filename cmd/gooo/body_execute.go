@@ -10,10 +10,11 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 )
 
-const bodyExecuteUsage = "usage: gooo body-execute --source <original.gooo> --path-plan <plan.json> " +
+const bodyExecuteUsage = "usage: gooo body-execute --source <original.gooo> [--path-plan <plan.json>] " +
 	"--generation <body-codegen.json> --cases <cases.json> [--go-bin <go1.27.1>]"
 
 func runBodyExecute(args []string, stdout, stderr io.Writer) int {
@@ -40,6 +41,9 @@ func runBodyExecuteContext(ctx context.Context, args []string, stdout, stderr io
 		{"--source", 128 << 10}, {"--path-plan", 256 << 10}, {"--generation", 2 << 20}, {"--cases", 32 << 10},
 	} {
 		if flags[field.name] == "" {
+			if field.name == "--path-plan" {
+				continue
+			}
 			fmt.Fprintln(stderr, bodyExecuteUsage)
 			return exitUsage
 		}
@@ -55,10 +59,13 @@ func runBodyExecuteContext(ctx context.Context, args []string, stdout, stderr io
 		fmt.Fprintf(stderr, "gooo body-execute: generation: %v\n", err)
 		return exitFailure
 	}
-	plan, err := bodyexecution.DecodeSourcePlan(ctx, "<body-source>", data["--source"], prior.Report.Activity, data["--path-plan"])
-	if err != nil {
-		fmt.Fprintf(stderr, "gooo body-execute: plan: %v\n", err)
-		return exitFailure
+	var plan pathplan.Document
+	if ctx.Err() == nil {
+		plan, err = bodyexecution.DecodeSourcePlan(ctx, "<body-source>", data["--source"], prior.Report.Activity, data["--path-plan"])
+		if err != nil {
+			fmt.Fprintf(stderr, "gooo body-execute: plan: %v\n", err)
+			return exitFailure
+		}
 	}
 	cases, err := bodyexecution.DecodeCases(data["--cases"])
 	if err != nil {

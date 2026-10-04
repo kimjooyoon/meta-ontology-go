@@ -16,7 +16,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyContextUsage = "usage: gooo body-context --plan <plan.json> --activity <name> [--feature-version <version>] [--include-plan] <file.gooo>"
+const bodyContextUsage = "usage: gooo body-context [--plan <plan.json>] --activity <name> [--feature-version <version>] [--include-plan] <file.gooo>"
 
 type bodyContextOutput struct {
 	bodycodegen.TypedPathContextExport
@@ -39,9 +39,12 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
-	raw, err := reader.ReadFile(options.plan)
-	if err != nil {
-		return bodyContextFailure(stdout, err)
+	var raw []byte
+	if options.plan != "" {
+		raw, err = reader.ReadFile(options.plan)
+		if err != nil {
+			return bodyContextFailure(stdout, err)
+		}
 	}
 	document, err := bodycodegen.DecodeSourcePathDocument(ctx, options.filename, source, options.activity, raw)
 	if err != nil {
@@ -110,7 +113,7 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 		o.featureVersion = decision.SplitContextIntentFeatureVersion
 	}
 	valid := o.featureVersion == decision.SplitContextIntentFeatureVersion || o.featureVersion == decision.SemanticContextIntentFeatureVersion
-	return o, o.plan != "" && o.activity != "" && o.filename != "" && valid
+	return o, o.activity != "" && o.filename != "" && valid
 }
 
 func bodyContextFailure(stdout io.Writer, err error) int {
