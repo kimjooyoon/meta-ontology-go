@@ -40,7 +40,16 @@ func toolchainKey(goBinary string, r *Observation) string {
 }
 
 func nativeGoBuildInfo(goBinary string) bool {
-	info, err := buildinfo.ReadFile(goBinary)
+	file, err := openDigestFile(goBinary)
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+	stat, err := file.Stat()
+	if err != nil || !stat.Mode().IsRegular() || stat.Size() > executableFileLimit {
+		return false
+	}
+	info, err := buildinfo.Read(file)
 	if err != nil || info.Path != "cmd/go" || info.GoVersion != "go1.27.1" {
 		return false
 	}

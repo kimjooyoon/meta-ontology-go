@@ -67,8 +67,9 @@ Inspect the running executable with `gooo version --build`; add `--json` for
 `gooo/build-identity/v1`. It shows the actual build Go, compiler module, SDK
 dependency/replacement and source-binding state. Dirty or unbound builds retain
 their original metadata and `UNBOUND_LOCAL_SOURCE`. Native requests check the
-actual selected Go executable independently; `--go-bin` selects Go1.27.1 when
-PATH points to a different tool. [Setup and output fields](docs/native-body-worker.md#check-the-executable-and-select-the-native-tool).
+actual selected Go executable independently. The default looks for native
+Go1.27.1 on PATH, then in the compiler's local GOROOT and exact toolchain cache. `--go-bin` takes priority
+for an explicit tool. [Setup and output fields](docs/native-body-worker.md#check-the-executable-and-run-with-a-local-native-tool).
 
 Use `gooo body-path-run` for source, recipe and finite-case files; use
 `gooo body-path-stream` for repeated NDJSON requests. Omitting `--model` selects
