@@ -50,9 +50,37 @@ the 3,854-byte weight file includes FP32 biases and decodes to 18,752 tensor
 bytes plus eight scale bytes. JSON and expression parsing allocate temporary
 storage; these tensor sizes do not describe whole-process RAM.
 
-Dedicated training and execution comparisons are being developed in
-[the public research repository](https://github.com/kimjooyoon/gooo-neural-decision-experiments).
-This compiler interface alone does not establish trained model quality.
+The [paired-intent model](https://huggingface.co/asketeddy/gooo-record-field-tiny-v2)
+learns all eight combinations of the three authored field requirements. In the
+published comparison, FP32 picked the complete mask first on 424/1,536 source
+views and 81/512 new-body/new-wording views. Finite continuation completed every
+full-budget native graph. These separate counts show the current wording and
+representation limits; probability does not replace execution evidence.
+
+## Shared field judgment
+
+SDK v0.2.23 adds `triple_record_field_context_v1_shared_v1`. It keeps the complete
+source context and feature array above, then uses the same 256/8/2 judge on each
+field. Eight summed path scores come from one prediction. This requires weights
+trained for that explicit contract. FP32 tensors occupy 8,288 bytes; ternary files
+occupy 446 bytes and decode into 2,096 tensor bytes plus eight scale bytes. The
+caller workspace remains 3,200 bytes.
+
+```sh
+gooo body-context --activity Select \
+  --feature-version triple_record_field_context_v1_shared_v1 \
+  examples/body-codegen/record-field-assembly.gooo.fixture
+gooo body-codegen --json --activity Select --model /path/to/shared/model.json \
+  examples/body-codegen/record-field-assembly.gooo.fixture
+```
+
+The receipt records `local_shared_field_prediction_then_finite_tdd`. A retained
+model can serve concurrent requests with separate selection state. Unsupported
+record arity/context size continues deterministically with zero predictions.
+A field-specific model applied to a scalar body also continues deterministically
+and reports `FIELD_MODEL_REQUIRES_RECORD_BODY`. Reconstruction makes zero new
+predictions. Each field is judged independently, so cross-field dependencies
+must be checked by the typed body and finite cases.
 
 ## Conditional bodies without an else
 

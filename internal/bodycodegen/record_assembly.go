@@ -54,9 +54,12 @@ func (g *TypedPathGenerator) generateRecordAssembly(ctx context.Context, filenam
 			var workspace jointdecision.ThreeWorkspace
 			var prediction jointdecision.ThreePrediction
 			predictStarted := time.Now()
-			if info.FeatureVersion == jointdecision.RecordFieldFeatureVersion {
+			switch info.FeatureVersion {
+			case jointdecision.RecordFieldFeatureVersion:
 				err = g.three.PredictRecordInto(r.Context.Text, &workspace, &prediction)
-			} else {
+			case jointdecision.RecordSharedFeatureVersion:
+				err = g.three.PredictRecordSharedInto(r.Context.Text, &workspace, &prediction)
+			default:
 				err = g.three.PredictInto(r.Context.Text, &workspace, &prediction)
 			}
 			r.ModelCalls, r.PredictNS = 1, time.Since(predictStarted).Nanoseconds()

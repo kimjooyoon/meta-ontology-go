@@ -15,12 +15,19 @@ func prepareThreeModelContext(ctx context.Context, document pathplan.Document, o
 	declared := &PathDeclaredInputs{Text: text, SHA256: digest([]byte(text)), Bytes: len(text),
 		Decisions: len(document.Plan.Decisions)}
 	const schema = "gooo/compiler-three-choice-path-context/v1"
+	reason := ""
 	if len(document.Plan.Decisions) != 3 {
+		reason = "THREE_DECISION_COUNT_UNSUPPORTED"
+	} else if model.FeatureVersion() == jointdecision.RecordFieldFeatureVersion ||
+		model.FeatureVersion() == jointdecision.RecordSharedFeatureVersion {
+		reason = "FIELD_MODEL_REQUIRES_RECORD_BODY"
+	}
+	if reason != "" {
 		r := &PathModelContextReceipt{Schema: schema, Status: "DECLINED_TO_DETERMINISTIC", ActivityID: activityID,
 			SourceSemanticSHA: semanticSHA, OriginalPlanSHA: original.PlanSHA256(), MetadataSHA: model.MetadataSHA256(),
 			FeatureVersion: model.FeatureVersion(), ArithmeticVersion: model.ArithmeticVersion(),
-			Reason:         "THREE_DECISION_COUNT_UNSUPPORTED",
-			DeclaredInputs: declared, Scope: "exactly three typed decisions required; complete original inputs retained"}
+			Reason:         reason,
+			DeclaredInputs: declared, Scope: "compatible three-decision input required; complete original inputs retained"}
 		return original, r, true, nil
 	}
 	prepared, r, declined, err := prepareCompilerPathContextWithFeature(ctx, document, original, activityID,

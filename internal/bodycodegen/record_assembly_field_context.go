@@ -7,7 +7,7 @@ import (
 )
 
 func recordModelContext(choices []RecordValueChoice, version string) *RecordOrdinalContext {
-	if version != jointdecision.RecordFieldFeatureVersion {
+	if version != jointdecision.RecordFieldFeatureVersion && version != jointdecision.RecordSharedFeatureVersion {
 		return recordOrdinalContext(choices)
 	}
 	r := &RecordOrdinalContext{Schema: "gooo/record-field-expression-context/v1", Status: "ENCODED",
