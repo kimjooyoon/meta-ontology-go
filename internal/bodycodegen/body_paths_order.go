@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"sync/atomic"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/kimjooyoon/gooo-decision-runtime/orderjudge"
 	"github.com/kimjooyoon/gooo-decision-runtime/orderprepared"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
+	"github.com/kimjooyoon/meta-ontology-go/internal/fileopen"
 )
 
 type retainedOrderModel struct {
@@ -52,7 +52,7 @@ func loadOrderJudge(name string, metadata []byte) (*retainedOrderModel, error) {
 	if len(metadata) > 4096 {
 		return nil, fmt.Errorf("whole-candidate metadata exceeds 4096 bytes")
 	}
-	f, err := os.Open(filepath.Join(filepath.Dir(name), "weights.bin"))
+	f, err := fileopen.ReadOnly(filepath.Join(filepath.Dir(name), "weights.bin"))
 	if err != nil {
 		return nil, err
 	}
