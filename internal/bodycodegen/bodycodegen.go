@@ -61,6 +61,7 @@ type Report struct {
 	BodyFill               *IRBodyFillReceipt      `json:"body_fill,omitempty"`
 	BodySearch             *IRBodySearchReceipt    `json:"body_search,omitempty"`
 	BodyPaths              *BodyPathReceipt        `json:"body_paths,omitempty"`
+	RecordAssembly         *RecordAssemblyReceipt  `json:"record_assembly,omitempty"`
 	CandidateRoutes        []string                `json:"candidate_routes"`
 	EquivalenceRule        string                  `json:"equivalence_rule"`
 	SourceConstructs       int                     `json:"source_constructs"`

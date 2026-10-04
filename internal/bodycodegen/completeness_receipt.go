@@ -31,6 +31,8 @@ type completenessPlanIdentity struct {
 	BodyPathDocumentSHA256       string `json:"body_path_document_sha256,omitempty"`
 	BodyPathOriginalSourceSHA256 string `json:"body_path_original_source_sha256,omitempty"`
 	BodyPathSearchConfigSHA256   string `json:"body_path_search_config_sha256,omitempty"`
+	RecordAssemblyContractSHA256 string `json:"record_assembly_contract_sha256,omitempty"`
+	RecordAssemblyOriginalSHA256 string `json:"record_assembly_original_source_sha256,omitempty"`
 }
 
 func buildCompletenessReceipt(report Report, failure string) *CompletenessReceipt {
@@ -167,6 +169,13 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		core = append(core, pathCore...)
 		allowedInvestment = "source-bound typed alternatives, optional local predictions and finite TDD within declared budgets; CI is caller context; no human actions or repository writes"
 	}
+	if report.RecordAssembly != nil {
+		for _, dimension := range recordAssemblyDimensions(report.RecordAssembly) {
+			dimensions = append(dimensions, dimension)
+			core = append(core, dimension.ID)
+		}
+		allowedInvestment = "source-bound record field expressions, optional local ordinal ranking, and finite field observations within the source budget"
+	}
 	sort.Strings(core)
 	counts := map[string]int{"PASS": 0, "PROGRESS": 0, "UNKNOWN": 0, "FAIL_CLOSED": 0}
 	byID := make(map[string]CompletenessDimension, len(dimensions))
@@ -237,6 +246,9 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 	if report.BodyPaths != nil {
 		bindPathCompletenessScope(receipt, report)
 	}
+	if report.RecordAssembly != nil {
+		bindRecordAssemblyScope(receipt, report)
+	}
 	return receipt
 }
 
@@ -250,6 +262,10 @@ func completenessPlanSHA(report Report) string {
 	fillPlanSHA256 := ""
 	searchPlanSHA256 := ""
 	pathDocument, pathOriginal, pathConfig := "", "", ""
+	recordContract, recordOriginal := "", ""
+	if r := report.RecordAssembly; r != nil {
+		recordContract, recordOriginal = r.ContractSHA256, r.OriginalSourceSHA256
+	}
 	if report.BodyFill != nil {
 		fillPlanSHA256 = report.BodyFill.IRPlanSHA256
 	}
@@ -266,7 +282,8 @@ func completenessPlanSHA(report Report) string {
 		BodyFillPlanSHA256:     fillPlanSHA256,
 		BodySearchPlanSHA256:   searchPlanSHA256,
 		BodyPathDocumentSHA256: pathDocument, BodyPathOriginalSourceSHA256: pathOriginal,
-		BodyPathSearchConfigSHA256: pathConfig,
+		BodyPathSearchConfigSHA256:   pathConfig,
+		RecordAssemblyContractSHA256: recordContract, RecordAssemblyOriginalSHA256: recordOriginal,
 	})
 	return digest(planBytes)
 }
@@ -421,6 +438,8 @@ func nextCompletenessOperation(id string) string {
 		"search_candidate_observation":       "MEASURE_UNTESTED_CANDIDATES_IN_A_SEPARATE_EXHAUSTIVE_BASELINE",
 		"search_candidate_scoring":           "REPAIR_UNSCORED_CANDIDATES_AND_MEASURE_A_SEPARATE_BASELINE",
 		"declared_suite_functional_accuracy": "EXPAND_OR_REPAIR_BODY_CANDIDATES_AGAINST_DECLARED_TESTS_AND_VALIDATE_HELD_OUT_BEHAVIOR",
+		"declared_record_case_accuracy":      "COMPARE_RECORD_ALTERNATIVES_AGAINST_DECLARED_TYPED_CASES",
+		"declared_record_field_accuracy":     "COMPLETE_UNMATCHED_DECLARED_RECORD_FIELDS_WITHIN_THE_ATTEMPT_BUDGET",
 		"declaration_coverage":               "BIND_THE_REQUESTED_ACTIVITY_TO_A_STABLE_SOURCE_ID",
 		"generation_coverage":                "REPAIR_OR_REGENERATE_THE_ACTIVITY_PROJECTION",
 		"source_ast_coverage":                "LOWER_EVERY_ACCEPTED_SOURCE_AST_UNIT_OR_FAIL_CLOSED",

@@ -1,5 +1,8 @@
 # Record values inside generated activity bodies
 
+Record constructors can declare source-owned field alternatives with per-field
+completion observations. See [record field assembly](record-field-assembly.md).
+
 An entity's existing `fields` declaration can describe a value carried by pure
 activity bodies. A body can read a field, construct a complete named record,
 copy it to a local or return it. `body-compose` passes the actual generated value
