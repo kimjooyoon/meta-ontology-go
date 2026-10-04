@@ -115,6 +115,11 @@ calls, loops and additional types remain development tasks.
 Related: [recipes](source-path-recipes.md), [language direction](language-direction.ko.md),
 [worker](native-body-worker.md).
 
+[Native body composition](native-body-composition.md) connects these selected
+bodies to other checked scalar activities through source-declared binds. The
+whole graph is compiled once and executed immediately with ordered intermediate
+input/output traces and separate finite runtime expectations.
+
 ## Continue developing from the selected body
 
 `body-codegen --json` returns `source` (Go) and, for source assembly, `gooo_source`
