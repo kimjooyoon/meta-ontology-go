@@ -29,7 +29,8 @@ func ExportRecordAssemblyContext(ctx context.Context, filename string, source []
 func ExportRecordAssemblyContextWithFeature(ctx context.Context, filename string, source []byte, activity string,
 	includePlan bool, version string) (RecordAssemblyContextExport, error) {
 	if version != "" && version != decision.SplitContextIntentFeatureVersion &&
-		version != decision.SemanticContextIntentFeatureVersion && version != jointdecision.RecordFieldFeatureVersion {
+		version != decision.SemanticContextIntentFeatureVersion && version != jointdecision.RecordFieldFeatureVersion &&
+		version != jointdecision.RecordSharedFeatureVersion {
 		return RecordAssemblyContextExport{}, fmt.Errorf("unsupported record context feature version")
 	}
 	plan, err := prepareRecordAssembly(ctx, filename, source, activity)
