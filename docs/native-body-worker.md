@@ -1,5 +1,25 @@
 # Repeated body construction with one Gooo process
 
+## Check the executable and select the native tool
+
+```sh
+gooo version --build
+gooo version --build --json
+gooo_go_bin="$(GOTOOLCHAIN=go1.27.1 go env GOROOT)/bin/go"
+"$gooo_go_bin" version
+```
+
+The build view reads embedded metadata from the running Gooo executable.
+`gooo/build-identity/v1` records its actual Go/module version, decision-runtime
+dependency and any replacement, plus the VCS revision and modification state.
+A clean, complete revision binds `compiler_source_sha`; a modified or unbound
+build retains `UNBOUND_LOCAL_SOURCE`. The original VCS fields remain readable.
+This view makes no model calls, downloads or native executions.
+
+The Go used to build Gooo and the Go selected for native execution are separate
+observations. Pass the executable above with `--go-bin`. A version mismatch
+retains the actual version response and reports that selection as the next action.
+
 ## Start from source, recipe and expectation files
 
 Use one command to construct a body and immediately execute it twice. No input
@@ -11,7 +31,7 @@ gooo body-path-run \
   --activity Combined \
   --path-plan examples/body-codegen/typed-path-compound-plan.json \
   --cases examples/body-codegen/typed-path-runtime-cases.json \
-  --out body-run-results --repeat 2
+  --go-bin "$gooo_go_bin" --out body-run-results --repeat 2
 ```
 
 Choose a fresh `--out` path; an existing path is rejected. `--activity` is an
