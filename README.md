@@ -66,6 +66,10 @@ and partially bound joins. [Input-port example and runnable guide](docs/native-b
 Declared required-string records can be constructed, read and passed through
 those binds as native value structs. Field observations retain stable IDs and
 actual values. [Record body example](docs/native-record-values.md).
+Record constructor fields can also declare alternative value expressions and
+typed JSON cases. Their assembly reports matching fields as well as complete
+cases, retaining partial results under a small attempt budget.
+[Field assembly example](docs/record-field-assembly.md).
 
 We want the language to carry the assembly plan and its unfinished obligations
 along with the program. A useful improvement should complete more of the declared

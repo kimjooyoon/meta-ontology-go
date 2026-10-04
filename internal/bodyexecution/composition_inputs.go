@@ -3,6 +3,7 @@ package bodyexecution
 import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -45,7 +46,8 @@ func (graph *compositionGraph) bindActivity(file *syntax.File, i int) error {
 		if graph.valueGoType(node.InputType) == "" || graph.valueGoType(node.OutputType) == "" {
 			return fmt.Errorf("composition activity %q requires a scalar or declared record", node.Name)
 		}
-		if node.Assembling && (len(activity.Inputs) != 1 || node.InputType != "Integer" || node.OutputType != "Integer") {
+		if node.Assembling && !bodycodegen.IsRecordAssembly(&activity.Assembly.Spec) &&
+			(len(activity.Inputs) != 1 || node.InputType != "Integer" || node.OutputType != "Integer") {
 			return fmt.Errorf("composition assembly activity %q requires Integer -> Integer", node.Name)
 		}
 		return nil

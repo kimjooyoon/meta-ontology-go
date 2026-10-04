@@ -15,7 +15,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
@@ -300,42 +299,12 @@ func evaluateWithExecution(ctx context.Context, model Generator, item record, ex
 		result.Error = err.Error()
 		return result
 	}
-	if item.tooLarge || len(item.raw) > MaxRecordBytes {
-		return reject(fmt.Errorf("request exceeds %d bytes", MaxRecordBytes))
-	}
-	if len(item.raw) == 0 {
-		return reject(errors.New("empty NDJSON record"))
-	}
-	if !utf8.Valid(item.raw) {
-		return reject(errors.New("request is not valid UTF-8"))
-	}
-	if err := canonicalKeys(item.raw); err != nil {
-		return reject(err)
-	}
-	if err := decision.RejectDuplicateJSONKeys(item.raw); err != nil {
-		return reject(fmt.Errorf("validate request JSON: %w", err))
-	}
-	decoder := json.NewDecoder(bytes.NewReader(item.raw))
-	decoder.DisallowUnknownFields()
-	var request Request
-	decodeErr := decoder.Decode(&request)
+	request, decodeErr := decodeStreamRequest(item)
 	if validCorrelationID(request.CorrelationID) {
 		result.CorrelationID = request.CorrelationID
 	}
 	if decodeErr != nil {
 		return reject(fmt.Errorf("decode request: %w", decodeErr))
-	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		if err == nil {
-			return reject(errors.New("request has trailing JSON content"))
-		}
-		return reject(fmt.Errorf("request has trailing content: %w", err))
-	}
-	if request.Schema != RequestSchema {
-		return reject(fmt.Errorf("schema must be %q", RequestSchema))
-	}
-	if !validCorrelationID(request.CorrelationID) {
-		return reject(errors.New("correlation_id must be 1-128 UTF-8 bytes without control characters"))
 	}
 	result.CorrelationID = request.CorrelationID
 	var cases []pathplan.TestCase
@@ -349,14 +318,7 @@ func evaluateWithExecution(ctx context.Context, model Generator, item record, ex
 		return reject(errors.New("execution_cases requires --execute"))
 	}
 	phase.End(true)
-	phase = bodytiming.Start(ctx, "source_plan")
-	document, err := bodycodegen.DecodeSourcePathDocument(ctx, "stream.gooo", []byte(request.Source), request.Activity, request.Document)
-	if err != nil {
-		return reject(fmt.Errorf("decode typed document: %w", err))
-	}
-	phase.End(true)
-	phase = bodytiming.Start(ctx, "generation")
-	response, err := model.Generate(ctx, "stream.gooo", []byte(request.Source), request.Activity, document, request.Options)
+	response, document, err := constructStreamResponse(ctx, model, request, execution != nil)
 	if err != nil {
 		if failure, ok := errors.AsType[*bodycodegen.BodyPathError](err); ok {
 			result.Failure = failure.Receipt
@@ -364,7 +326,6 @@ func evaluateWithExecution(ctx context.Context, model Generator, item record, ex
 		return reject(fmt.Errorf("construction rejected: %w", err))
 	}
 	result.Status = "completed"
-	phase.End(true)
 	result.Response = &response
 	if execution != nil {
 		phase = bodytiming.Start(ctx, "generation_parent_encode")

@@ -110,7 +110,7 @@ func (graph compositionGraph) preflight(ctx context.Context, filename string, so
 			return fmt.Errorf("activity %q: %w", node.Name, err)
 		}
 		if node.Assembling {
-			if _, err := bodycodegen.DecodeSourcePathDocument(ctx, filename, source, node.Name, nil); err != nil {
+			if err := bodycodegen.ValidateSourceAssembly(ctx, filename, source, node.Name); err != nil {
 				return fmt.Errorf("activity %q plan: %w", node.Name, err)
 			}
 		}

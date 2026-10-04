@@ -10,12 +10,13 @@ import (
 )
 
 type Spec struct {
-	Choices     []Choice `json:"choices"`
-	Cases       []Case   `json:"cases"`
-	MaxAttempts int      `json:"max_attempts"`
-	Seed        string   `json:"seed,omitempty"`
-	Baseline    string   `json:"baseline,omitempty"`
-	Picked      []Pick   `json:"picked,omitempty"`
+	Choices     []Choice    `json:"choices"`
+	Cases       []Case      `json:"cases"`
+	ValueCases  []ValueCase `json:"value_cases,omitempty"`
+	MaxAttempts int         `json:"max_attempts"`
+	Seed        string      `json:"seed,omitempty"`
+	Baseline    string      `json:"baseline,omitempty"`
+	Picked      []Pick      `json:"picked,omitempty"`
 }
 
 // Pick records an implementation relative to the immutable planning baseline.
@@ -37,8 +38,15 @@ type Case struct {
 	Expected int64 `json:"expected"`
 }
 
+// ValueCase carries canonical JSON: positional inputs and a named record result.
+type ValueCase struct {
+	Inputs   string `json:"inputs"`
+	Expected string `json:"expected"`
+}
+
 func (s Spec) Validate() error {
-	if len(s.Choices) < 1 || len(s.Choices) > 16 || len(s.Cases) < 1 || len(s.Cases) > 128 ||
+	if len(s.Choices) < 1 || len(s.Choices) > 16 || len(s.Cases)+len(s.ValueCases) < 1 ||
+		len(s.Cases)+len(s.ValueCases) > 128 ||
 		s.MaxAttempts < 1 || s.MaxAttempts > 64 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
 		return fmt.Errorf("assembly requires 1..16 choices, 1..128 cases and 1..64 attempts")
 	}
@@ -62,8 +70,26 @@ func (s Spec) Validate() error {
 			if !boundedText(c.Alternative, 128) {
 				return fmt.Errorf("assembly name choice %q requires an alternative local", c.ID)
 			}
+		case "field_value":
+			if !boundedText(c.Alternative, 512) || len(s.Cases) != 0 || len(s.ValueCases) == 0 || len(s.Choices) > 6 {
+				return fmt.Errorf("field assembly requires an alternative expression, 1..6 choices and value_case expectations")
+			}
 		default:
 			return fmt.Errorf("unknown assembly choice kind %q", c.Kind)
+		}
+	}
+	if len(s.ValueCases) != 0 {
+		for _, choice := range s.Choices {
+			if choice.Kind != "field_value" {
+				return fmt.Errorf("value_case requires only field_value choices")
+			}
+		}
+		for _, c := range s.ValueCases {
+			input, err := CanonicalValue(c.Inputs)
+			expected, next := CanonicalValue(c.Expected)
+			if err != nil || next != nil || input != c.Inputs || expected != c.Expected {
+				return fmt.Errorf("value_case requires bounded canonical JSON")
+			}
 		}
 	}
 	if err := s.validateCheckpoint(); err != nil {
@@ -88,6 +114,8 @@ func (s Spec) validateCheckpoint() error {
 			first, second = "assign_first", "assign_second"
 		case "root_order":
 			first, second = "schedule_forward", "schedule_reverse"
+		case "field_value":
+			first, second = "value_first", "value_second"
 		}
 		if s.Picked[i].ID != c.ID || (s.Picked[i].Label != first && s.Picked[i].Label != second) {
 			return fmt.Errorf("assembly picked labels must match declared choice order and kind")
@@ -104,6 +132,7 @@ func (s Spec) Clone() *Spec {
 	clone := s
 	clone.Choices = append([]Choice(nil), s.Choices...)
 	clone.Cases = append([]Case(nil), s.Cases...)
+	clone.ValueCases = append([]ValueCase(nil), s.ValueCases...)
 	clone.Picked = append([]Pick(nil), s.Picked...)
 	return &clone
 }
