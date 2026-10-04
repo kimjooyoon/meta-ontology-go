@@ -59,7 +59,22 @@ func bindTypedPathSourceProjection(ctx context.Context, filename string, source 
 	if err != nil {
 		return typedPathSource{}, err
 	}
-	originalBody, err := rewriteLetDeclarations(activity.ValueProgram)
+	planningBody := activity.ValueProgram
+	if activity.Assembly != nil && activity.Assembly.Spec.Baseline != "" {
+		planningBody = activity.Assembly.Spec.Baseline
+		choices := make(map[string]string, len(activity.Assembly.Spec.Picked))
+		for _, pick := range activity.Assembly.Spec.Picked {
+			choices[pick.ID] = pick.Label
+		}
+		current, compileErr := prepared.Compile(choices)
+		if compileErr != nil {
+			return typedPathSource{}, compileErr
+		}
+		if err := verifySourceCheckpoint(ctx, activity, file.Package.Name, base.Report.ActivityID, current.GoooBody()); err != nil {
+			return typedPathSource{}, err
+		}
+	}
+	originalBody, err := rewriteLetDeclarations(planningBody)
 	if err != nil {
 		return typedPathSource{}, err
 	}

@@ -19,6 +19,7 @@ type BodyPathReceipt struct {
 	Schema                 string                     `json:"schema"`
 	OriginalSourceSHA256   string                     `json:"original_source_sha256"`
 	SelectedSourceSHA256   string                     `json:"selected_source_sha256,omitempty"`
+	SourceFormat           string                     `json:"source_format,omitempty"`
 	DocumentSHA256         string                     `json:"document_sha256"`
 	TestSuiteSHA256        string                     `json:"test_suite_sha256"`
 	SearchConfigSHA256     string                     `json:"search_config_sha256"`
@@ -302,7 +303,8 @@ func emitSelectedTypedPath(ctx context.Context, filename string, source []byte, 
 		receipt.Timing.TotalMS = elapsedMS(started)
 		return Result{}, &BodyPathError{Receipt: receipt, Cause: err}
 	}
-	completed, err := replaceActivityProgram(source, bound.activity.ValueProgramSpan, selected.GoooBody())
+	completed, err := selectedTypedPathSource(source, bound.activity, selected.GoooBody(), bodyPathSelection(receipt).Choices,
+		bound.activity.Assembly != nil)
 	if err != nil {
 		return fail(err)
 	}
@@ -337,6 +339,10 @@ func emitSelectedTypedPath(ctx context.Context, filename string, source []byte, 
 		return fail(fmt.Errorf("native finite pass count differs from the selection record"))
 	}
 	receipt.SelectedSourceSHA256 = digest(completed)
+	if bound.activity.Assembly != nil {
+		receipt.SourceFormat = sourceAssemblyCheckpointFormat
+		result.GoooSource = string(completed)
+	}
 	receipt.NativeCases = results
 	receipt.FunctionalCompleteness = 100 * float64(passed) / float64(len(cases))
 	receipt.Timing.FinalEmissionMS = elapsedMS(emitStarted)

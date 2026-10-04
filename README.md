@@ -53,6 +53,9 @@ Activities can declare `assembling` alongside `computes`: intent, permitted sour
 paths, finite input/output cases and the search budget live together in Gooo.
 `body-codegen`, context export, file execution and retained workers read the same
 contract. See [source assembly](docs/source-assembly.md) for model/deterministic use.
+Generation also returns the selected Gooo source. `body-realize` replays a saved
+selection into a fresh directory, keeping its planning baseline and picked paths
+beside the working body so the next generation can use the same alternatives.
 
 We want the language to carry the assembly plan and its unfinished obligations
 along with the program. A useful improvement should complete more of the declared
