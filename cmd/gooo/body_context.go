@@ -132,7 +132,7 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 		o.featureVersion = decision.SplitContextIntentFeatureVersion
 	}
 	valid := o.featureVersion == decision.SplitContextIntentFeatureVersion || o.featureVersion == decision.SemanticContextIntentFeatureVersion ||
-		o.featureVersion == jointdecision.RecordFieldFeatureVersion
+		o.featureVersion == jointdecision.RecordFieldFeatureVersion || o.featureVersion == jointdecision.RecordSharedFeatureVersion
 	return o, o.activity != "" && o.filename != "" && valid
 }
 
