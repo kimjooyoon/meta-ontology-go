@@ -56,3 +56,7 @@ to a new model input version. Its new weights remain a separate training study.
 Records keep fixed sixteen-slot string-header storage in finite interpretation
 and value structs in Go. No per-field mutable map is introduced. Existing limits
 of six choices,64 attempts,128 cases and required Text fields still apply.
+
+When a combination removes every use of a local, [candidate continuation](record-candidate-continuation.md)
+records the type-check failure and tries the next combination within the same
+budget. A partial valid result can still be retained.
