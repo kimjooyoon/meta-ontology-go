@@ -63,6 +63,13 @@ languages; the measurements below compare Gooo's own experimental variants.
 
 ## Starting and reading a body run — 2026-10-04
 
+Inspect the running executable with `gooo version --build`; add `--json` for
+`gooo/build-identity/v1`. It shows the actual build Go, compiler module, SDK
+dependency/replacement and source-binding state. Dirty or unbound builds retain
+their original metadata and `UNBOUND_LOCAL_SOURCE`. Native requests check the
+actual selected Go executable independently; `--go-bin` selects Go1.27.1 when
+PATH points to a different tool. [Setup and output fields](docs/native-body-worker.md#check-the-executable-and-select-the-native-tool).
+
 Use `gooo body-path-run` for source, recipe and finite-case files; use
 `gooo body-path-stream` for repeated NDJSON requests. Omitting `--model` selects
 the deterministic route. An explicit model path is validated before construction.

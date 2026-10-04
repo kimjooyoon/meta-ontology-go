@@ -83,7 +83,12 @@ func observeToolchain(ctx context.Context, goBinary string, r *Observation, owne
 	}
 	r.GoVersion = strings.TrimSpace(string(version))
 	if r.GoVersion != "go version go1.27.1 "+runtime.GOOS+"/"+runtime.GOARCH {
-		return fmt.Errorf("runtime requires the local Go 1.27.1 toolchain")
+		observed := r.GoVersion
+		if len(observed) > 128 {
+			observed = observed[:128] + "..."
+		}
+		return fmt.Errorf("runtime requires the local Go 1.27.1 toolchain; observed %q; "+
+			"select its executable with --go-bin /path/to/go1.27.1/bin/go", observed)
 	}
 	if eligible {
 		reference := ToolchainObservation{Schema: "gooo/owned-go-toolchain/v1", KeySHA256: key,
