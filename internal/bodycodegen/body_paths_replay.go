@@ -16,7 +16,13 @@ import (
 // This validates the emitted pure program; it does not attest earlier model execution.
 func VerifyTypedPathProjection(ctx context.Context, filename string, source []byte,
 	document pathplan.Document, prior Result) error {
-	if ctx == nil || len(source) == 0 || len(source) > 128<<10 || len(prior.Source) > 256<<10 {
+	return replayTypedPathProjection(ctx, filename, source, document, prior, nil)
+}
+
+func replayTypedPathProjection(ctx context.Context, filename string, source []byte,
+	document pathplan.Document, prior Result, completedSource *[]byte) error {
+	if ctx == nil || len(source) == 0 || len(source) > 128<<10 || len(prior.Source) > 256<<10 ||
+		len(prior.GoooSource) > 128<<10 {
 		return fmt.Errorf("typed-path replay requires bounded source and context")
 	}
 	if err := ctx.Err(); err != nil {
@@ -26,6 +32,9 @@ func VerifyTypedPathProjection(ctx context.Context, filename string, source []by
 	if r.Schema != schema || r.Decision != "PASS" || p == nil || r.BodyFill != nil || r.BodySearch != nil ||
 		p.OriginalSourceSHA256 != digest(source) || !r.TypecheckPassed || !r.DeterministicReplay {
 		return fmt.Errorf("typed-path generation observation is missing or unbound")
+	}
+	if p.SourceFormat != "" && p.SourceFormat != sourceAssemblyCheckpointFormat {
+		return fmt.Errorf("unknown typed-path source format %q", p.SourceFormat)
 	}
 	encoded, err := json.Marshal(r.CompletenessReceipt)
 	if err != nil {
@@ -71,9 +80,17 @@ func VerifyTypedPathProjection(ctx context.Context, filename string, source []by
 	if err != nil {
 		return err
 	}
-	completed, err := replaceActivityProgram(source, bound.activity.ValueProgramSpan, selected.GoooBody())
+	if p.SourceFormat != "" && bound.activity.Assembly == nil {
+		return fmt.Errorf("assembly checkpoint requires its source-owned contract")
+	}
+	completed, err := selectedTypedPathSource(source, bound.activity, selected.GoooBody(), bodyPathSelection(p).Choices,
+		p.SourceFormat == sourceAssemblyCheckpointFormat)
 	if err != nil {
 		return err
+	}
+	if (p.SourceFormat == "" && prior.GoooSource != "") ||
+		(p.SourceFormat != "" && prior.GoooSource != string(completed)) {
+		return fmt.Errorf("generation Gooo source does not match the declared selection")
 	}
 	replayed, err := GenerateWithPlanner(ctx, filename, completed, r.Activity, "", "")
 	if err != nil {
@@ -96,6 +113,9 @@ func VerifyTypedPathProjection(ctx context.Context, filename string, source []by
 	selectedPassed, selectedTotal := bodyPathSelectedScore(p)
 	if !slices.Equal(results, p.NativeCases) || passed != selectedPassed || len(results) != selectedTotal {
 		return fmt.Errorf("selected-body finite observations do not replay")
+	}
+	if completedSource != nil {
+		*completedSource = completed
 	}
 	return nil
 }

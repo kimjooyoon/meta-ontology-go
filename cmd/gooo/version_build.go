@@ -135,7 +135,7 @@ func runBuildVersion(asJSON bool, stdout io.Writer) int {
 			return exitFailure
 		}
 	}
-	if _, err := fmt.Fprintln(stdout, "native execution: Go1.27.1; select its executable with --go-bin when PATH differs"); err != nil {
+	if _, err := fmt.Fprintln(stdout, "native execution: Go1.27.1 selected automatically; --go-bin chooses an explicit executable"); err != nil {
 		return exitFailure
 	}
 	return exitOK

@@ -90,13 +90,42 @@ func expandSourceRecipeProjection(ctx context.Context, filename string, source [
 	if err := ctx.Err(); err != nil {
 		return pathplan.Document{}, err
 	}
-	base, err := typedPathBindingProjection(ctx, filename, source, activity, projection)
+	planning, err := sourceAssemblyPlanningSource(ctx, filename, source, activity)
+	if err != nil {
+		return pathplan.Document{}, err
+	}
+	planningProjection := projection
+	if !bytes.Equal(planning, source) {
+		planningProjection = nil
+	}
+	base, err := typedPathBindingProjection(ctx, filename, planning, activity, planningProjection)
 	if err != nil {
 		return pathplan.Document{}, err
 	}
 	if base.Report.InputType != "int64" || base.Report.OutputType != "int64" {
 		return pathplan.Document{}, fmt.Errorf("source recipe requires Integer -> Integer")
 	}
+	document, err := sourceRecipeDocument(ctx, base, activity, recipe)
+	if err != nil {
+		return pathplan.Document{}, err
+	}
+	prepared, err := document.Prepare()
+	if err != nil {
+		return pathplan.Document{}, err
+	}
+	if bind {
+		currentProjection := &base
+		if !bytes.Equal(planning, source) {
+			currentProjection = projection
+		}
+		if _, err = bindTypedPathSourceProjection(ctx, filename, source, activity, prepared, &BodyPathReceipt{}, currentProjection); err != nil {
+			return pathplan.Document{}, fmt.Errorf("recipe source binding: %w", err)
+		}
+	}
+	return document, nil
+}
+
+func sourceRecipeDocument(ctx context.Context, base Result, activity string, recipe sourcePathRecipe) (pathplan.Document, error) {
 	file, err := parser.ParseFile(token.NewFileSet(), "recipe.go", base.Source, parser.AllErrors)
 	if err != nil {
 		return pathplan.Document{}, err
@@ -124,15 +153,6 @@ func expandSourceRecipeProjection(ctx context.Context, filename string, source [
 			return pathplan.Document{}, err
 		}
 		document.Plan.Decisions = append(document.Plan.Decisions, choice)
-	}
-	prepared, err := document.Prepare()
-	if err != nil {
-		return pathplan.Document{}, err
-	}
-	if bind {
-		if _, err = bindTypedPathSourceProjection(ctx, filename, source, activity, prepared, &BodyPathReceipt{}, &base); err != nil {
-			return pathplan.Document{}, fmt.Errorf("recipe source binding: %w", err)
-		}
 	}
 	return document, nil
 }
