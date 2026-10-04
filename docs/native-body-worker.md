@@ -15,18 +15,23 @@ build retains `UNBOUND_LOCAL_SOURCE`. The original VCS fields remain readable.
 This view makes no model calls, downloads or native executions.
 
 Without `--go-bin`, native execution inspects the `go` on PATH, then the
-`bin/go` (Windows: `bin/go.exe`) in the running compiler's `runtime.GOROOT()`.
+`bin/go` (Windows: `bin/go.exe`) in the running compiler's `runtime.GOROOT()`,
+then the exact Go1.27.1/host-platform toolchain module in the local module cache.
 It selects the first native `cmd/go` with embedded Go1.27.1 and matching host
 platform. If neither is recognized, it preserves the PATH tool for the existing
 actual-version observation. A missing PATH tool and unavailable compiler root
 produce an installation hint. An installed compiler copied from another machine
-may have an unavailable build root; this bounded lookup does not search the
-whole disk or download a tool.
+may have an unavailable build root; a `-trimpath` build can omit it. Cache lookup
+uses an absolute `GOMODCACHE` environment value, otherwise the first absolute
+`GOPATH` entry plus `pkg/mod`, otherwise the home directory's `go/pkg/mod`.
+It checks only `golang.org/toolchain@v0.0.1-go1.27.1.<os>-<arch>/bin/go`.
+Custom cache settings written only through `go env -w` require an environment
+value or `--go-bin`. This lookup searches at most three executable locations.
 
 The Go used to build Gooo and the Go selected for native execution remain
 separate observations. The executor hashes the selected executable and checks its
 actual version before building. `observation.go_tool_path` records the absolute
-path; `go_tool_selection` is `path`, `compiler_goroot`, `path_fallback` or
+path; `go_tool_selection` is `path`, `compiler_goroot`, `toolchain_cache`, `path_fallback` or
 `explicit`. These optional fields are covered by the existing runtime observation
 digest for owned v2/v3 receipts. Older observations without the fields remain
 readable. Selection performs no model calls or native child processes.

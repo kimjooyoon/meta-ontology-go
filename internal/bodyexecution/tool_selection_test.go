@@ -57,7 +57,7 @@ func TestResolveGoToolFixedLocalOrderAndExplicitPriority(t *testing.T) {
 				inspected = append(inspected, path)
 				return path == pathTool && tc.pathSupported || path == rootTool && tc.rootSupported
 			}
-			got, origin, err := resolveGoTool(tc.requested, tc.goroot, lookup, check)
+			got, origin, err := resolveGoTool(tc.requested, tc.goroot, "", lookup, check)
 			if (err != nil) != tc.wantError || got != tc.want || origin != tc.origin {
 				t.Fatalf("selection = %q, %q, %v", got, origin, err)
 			}

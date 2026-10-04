@@ -2,19 +2,42 @@ package bodyexecution
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 )
 
 func selectGoTool(requested string) (string, string, error) {
-	return resolveGoTool(requested, runtime.GOROOT(), exec.LookPath, nativeGoBuildInfo)
+	return resolveGoTool(requested, runtime.GOROOT(), localGoModuleCache(), exec.LookPath, nativeGoBuildInfo)
 }
 
-// Defaults inspect two local locations in a fixed order. Selection starts no
+func localGoModuleCache() string {
+	home, _ := os.UserHomeDir()
+	return goModuleCache(os.Getenv("GOMODCACHE"), os.Getenv("GOPATH"), home)
+}
+
+func goModuleCache(configured, goPath, home string) string {
+	if configured != "" {
+		if filepath.IsAbs(configured) {
+			return configured
+		}
+		return ""
+	}
+	if goPath == "" && home != "" {
+		goPath = filepath.Join(home, "go")
+	}
+	paths := filepath.SplitList(goPath)
+	if len(paths) == 0 || !filepath.IsAbs(paths[0]) {
+		return ""
+	}
+	return filepath.Join(paths[0], "pkg", "mod")
+}
+
+// Defaults inspect three local locations in a fixed order. Selection starts no
 // child and downloads nothing; the existing executor still binds current bytes
 // and observes the selected tool's actual version before building a body.
-func resolveGoTool(requested, goRoot string, lookup func(string) (string, error),
+func resolveGoTool(requested, goRoot, moduleCache string, lookup func(string) (string, error),
 	supported func(string) bool) (string, string, error) {
 	absolute := func(path, origin string, err error) (string, string, error) {
 		if err != nil {
@@ -39,6 +62,15 @@ func resolveGoTool(requested, goRoot string, lookup func(string) (string, error)
 		rootTool, err := lookup(filepath.Join(goRoot, "bin", name))
 		if err == nil && rootTool != path && supported(rootTool) {
 			return absolute(rootTool, "compiler_goroot", nil)
+		}
+	}
+	if moduleCache != "" {
+		// Go's toolchain module has one version/platform-specific location.
+		// This remains usable when -trimpath omitted the compiler's GOROOT.
+		version := "golang.org/toolchain@v0.0.1-go1.27.1." + runtime.GOOS + "-" + runtime.GOARCH
+		cachedTool, err := lookup(filepath.Join(moduleCache, version, "bin", name))
+		if err == nil && cachedTool != path && supported(cachedTool) {
+			return absolute(cachedTool, "toolchain_cache", nil)
 		}
 	}
 	// Preserve a PATH wrapper or wrong version as an actual observed failure
