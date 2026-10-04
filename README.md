@@ -78,9 +78,11 @@ file limits, compatible model profiles and result fields.
 
 Unix input readers open without waiting for a FIFO writer and validate the opened
 file itself. This includes source/recipe/case/options, structural model metadata
-and whole-candidate judge weights. Regular-file symlinks retain their contents.
-Other profiles keep their existing subsequent artifact loaders. Windows arm64
-evidence for this change is cross compilation.
+and whole-candidate judge weights; these readers accept regular-file symlinks.
+SDK v0.2.21 also applies bounded nonblocking/no-follow reads to operation/path
+and joint/shared model metadata and weights. Those profiles retain their existing
+non-symlink rule and check descriptor identity and extent before reading.
+Windows arm64 evidence for the SDK reader covers compilation.
 
 The source tested and locally installed for this observation is main
 [`d1bfd273`](https://github.com/kimjooyoon/meta-ontology-go/commit/d1bfd273ab4e21d0191548b066a27bcb77d7ed86).
@@ -136,7 +138,7 @@ The latest model study and the deployed integration have separate evidence:
   and broader task coverage are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
-This compiler revision uses **Go SDK v0.2.20-experimental**, with V3/V4 feature
+This compiler revision uses **Go SDK v0.2.21-experimental**, with V3/V4 feature
 contracts, versioned arithmetic, bounded probe sessions and prepared candidate reuse. The
 [observation loop](docs/path-observation-loop.md) can choose a distinguishing
 input, obtain its result from a declared Gooo reference activity, and use that
@@ -157,8 +159,8 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| Compiler at this revision | SDK v0.2.20; source recipes, bounded observation/reuse, prepared candidates, file/stream construction and execution | Usability, finite completion and construction cost |
-| [SDK v0.2.20](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.20-experimental) | V3/V4 inference, explicit arithmetic, owned probes and reusable candidate preparation | Broader source and behavior coverage |
+| Compiler at this revision | SDK v0.2.21; source recipes, bounded observation/reuse, prepared candidates, file/stream construction and execution | Usability, finite completion and construction cost |
+| [SDK v0.2.21](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.21-experimental) | V3/V4 inference, explicit arithmetic, owned probes, reusable candidates and bounded Unix model-file loading | Broader source and behavior coverage |
 | [Hugging Face model](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Wording, operation order and new-task evaluation |
 
 At SDK revision `59c8d34`, local arm64 and
