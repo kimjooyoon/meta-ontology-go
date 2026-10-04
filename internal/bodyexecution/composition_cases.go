@@ -59,21 +59,24 @@ func (graph compositionGraph) inputRows(suite CompositionCases) ([][]json.RawMes
 }
 
 func (graph compositionGraph) inputRow(test CompositionCase) ([]json.RawMessage, error) {
-	var storage [compositionLimit]json.RawMessage
+	var storage [compositionLimit * compositionLimit]json.RawMessage
 	roots, expected := 0, 0
 	for _, node := range graph.nodes[:graph.count] {
-		value, hasInput := test.Inputs[node.Name]
-		if node.InputFrom < 0 {
-			if !hasInput {
-				return nil, fmt.Errorf("root activity %q requires an explicit input", node.Name)
+		for _, input := range node.inputSlots() {
+			key := node.inputKey(input.Port)
+			value, hasInput := test.Inputs[key]
+			if input.From < 0 {
+				if !hasInput {
+					return nil, fmt.Errorf("root input %q requires an explicit value", key)
+				}
+				canonical, err := canonicalScalar(value, input.Type)
+				if err != nil {
+					return nil, fmt.Errorf("input %q: %w", key, err)
+				}
+				storage[roots], roots = canonical, roots+1
+			} else if hasInput {
+				return nil, fmt.Errorf("bound input %q must receive its producer's result", key)
 			}
-			canonical, err := canonicalScalar(value, node.InputType)
-			if err != nil {
-				return nil, fmt.Errorf("input %q: %w", node.Name, err)
-			}
-			storage[roots], roots = canonical, roots+1
-		} else if hasInput {
-			return nil, fmt.Errorf("bound activity %q must receive its producer's result", node.Name)
 		}
 		if value, present := test.Expected[node.Name]; present {
 			if _, err := canonicalScalar(value, node.OutputType); err != nil {

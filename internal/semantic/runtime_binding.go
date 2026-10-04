@@ -145,7 +145,8 @@ func normalizeRuntimeBindings(bindings []RuntimeBinding, graph Graph) ([]Runtime
 		if !consumerOK || consumer.Kind != Activity {
 			return nil, fmt.Errorf("%w: consumer %s", ErrRuntimeBindingUnknownNode, binding.ConsumerActivity)
 		}
-		if binding.ProducerPort != RuntimeOutputPort || binding.ConsumerPort != RuntimeInputPort {
+		consumerEntity, inputOK := runtimeInputEntity(graph, consumer, binding.ConsumerPort)
+		if binding.ProducerPort != RuntimeOutputPort || !inputOK {
 			return nil, fmt.Errorf("%w: %s -> %s", ErrRuntimeBindingPort, binding.ProducerPort, binding.ConsumerPort)
 		}
 		key := binding.Key()
@@ -159,12 +160,11 @@ func normalizeRuntimeBindings(bindings []RuntimeBinding, graph Graph) ([]Runtime
 		}
 		incoming[incomingKey] = struct{}{}
 		producerOutputs := runtimePortEntities(graph, binding.ProducerActivity, WasGeneratedBy)
-		consumerInputs := runtimePortEntities(graph, binding.ConsumerActivity, Used)
-		if len(producerOutputs) != 1 || len(consumerInputs) != 1 {
-			return nil, fmt.Errorf("%w: runtime bindings require one input and one output per activity", ErrRuntimeBindingPort)
+		if len(producerOutputs) != 1 {
+			return nil, fmt.Errorf("%w: runtime binding requires one producer output", ErrRuntimeBindingPort)
 		}
-		if producerOutputs[0] != consumerInputs[0] {
-			return nil, fmt.Errorf("%w: producer %s and consumer %s", ErrRuntimeBindingTypeMismatch, producerOutputs[0], consumerInputs[0])
+		if producerOutputs[0] != consumerEntity {
+			return nil, fmt.Errorf("%w: producer %s and consumer %s", ErrRuntimeBindingTypeMismatch, producerOutputs[0], consumerEntity)
 		}
 		if binding.Entity != "" && binding.Entity != producerOutputs[0] {
 			return nil, fmt.Errorf("%w: declared entity %s, producer entity %s", ErrRuntimeBindingTypeMismatch, binding.Entity, producerOutputs[0])

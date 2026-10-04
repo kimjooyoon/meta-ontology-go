@@ -84,7 +84,8 @@ func lowerDocumentRuntimeBindings(ctx context.Context, ir *semantic.IR, document
 			if err != nil {
 				return fmt.Errorf("runtime binding %d producer output: %w", index, err)
 			}
-			consumerEntity, err := resolveSemanticReference(consumerDeclaration.Inputs[0], namespace, ids, names)
+			inputIndex, _ := semantic.InputPortIndex(binding.Consumer.Port.Name, len(consumerDeclaration.Inputs))
+			consumerEntity, err := resolveSemanticReference(consumerDeclaration.Inputs[inputIndex], namespace, ids, names)
 			if err != nil {
 				return fmt.Errorf("runtime binding %d consumer input: %w", index, err)
 			}

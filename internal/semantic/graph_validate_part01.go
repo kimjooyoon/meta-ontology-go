@@ -48,6 +48,25 @@ func validateNodes(g Graph, issues *ValidationErrors) {
 		for _, field := range normalized.Fields {
 			registerGraphIdentity(identityOwners, field.ID, graphIdentityOwner{kind: "field", parent: normalized.ID}, issues)
 		}
+		if len(normalized.InputSequence) > 0 {
+			declared := make(map[ID]bool, len(normalized.InputSequence))
+			for _, input := range normalized.InputSequence {
+				declared[input] = true
+				entity, present := g.nodes[input]
+				if !present || entity.Kind != Entity {
+					issues.add("input-sequence", "ordered input must reference an Entity", normalized.ID, input)
+				}
+			}
+			used := runtimePortEntities(g, normalized.ID, Used)
+			if len(used) != len(declared) {
+				issues.add("input-sequence", "ordered inputs and used facts disagree", normalized.ID, "")
+			}
+			for _, input := range used {
+				if !declared[input] {
+					issues.add("input-sequence", "ordered inputs omit a used fact", normalized.ID, input)
+				}
+			}
+		}
 	}
 	validateNameIndex(g, nameOwners, issues)
 }

@@ -8,21 +8,44 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 const compositionLimit = 16
 
 type CompositionActivity struct {
-	Name           string `json:"name"`
-	ID             string `json:"id"`
-	InputType      string `json:"input_type"`
-	OutputType     string `json:"output_type"`
-	InputEntityID  string `json:"input_entity_id"`
-	OutputEntityID string `json:"output_entity_id"`
-	GoFunction     string `json:"go_function"`
-	InputFrom      int    `json:"input_from"`
-	Assembling     bool   `json:"assembling"`
+	Name           string             `json:"name"`
+	ID             string             `json:"id"`
+	InputType      string             `json:"input_type"`
+	OutputType     string             `json:"output_type"`
+	InputEntityID  string             `json:"input_entity_id"`
+	OutputEntityID string             `json:"output_entity_id"`
+	GoFunction     string             `json:"go_function"`
+	InputFrom      int                `json:"input_from"`
+	Assembling     bool               `json:"assembling"`
+	Inputs         []CompositionInput `json:"inputs,omitempty"`
+}
+
+type CompositionInput struct {
+	Port     string `json:"port"`
+	Type     string `json:"type"`
+	EntityID string `json:"entity_id"`
+	From     int    `json:"from"`
+}
+
+func (node CompositionActivity) inputSlots() []CompositionInput {
+	if len(node.Inputs) > 0 {
+		return node.Inputs
+	}
+	return []CompositionInput{{Port: "input", Type: node.InputType, EntityID: node.InputEntityID, From: node.InputFrom}}
+}
+
+func (node CompositionActivity) inputKey(port string) string {
+	if len(node.Inputs) == 0 {
+		return node.Name
+	}
+	return node.Name + "." + port
 }
 
 type CompositionEdge struct {
@@ -103,6 +126,11 @@ func prepareCompositionGraph(ctx context.Context, filename string, source []byte
 			if entity.Name == graph.nodes[i].OutputType {
 				graph.nodes[i].OutputEntityID = string(entity.ID)
 			}
+			for p := range graph.nodes[i].Inputs {
+				if entity.Name == graph.nodes[i].Inputs[p].Type {
+					graph.nodes[i].Inputs[p].EntityID = string(entity.ID)
+				}
+			}
 		}
 	}
 	if err := graph.bindEdges(typed); err != nil {
@@ -119,15 +147,24 @@ func (graph *compositionGraph) bindActivity(file *syntax.File, i int) error {
 		if !ok || activity.Name != node.Name {
 			continue
 		}
-		if len(activity.Inputs) != 1 || !activity.ValueProgramPresent {
-			return fmt.Errorf("composition activity %q requires one input and a computes body", node.Name)
+		if len(activity.Inputs) < 1 || len(activity.Inputs) > compositionLimit || !activity.ValueProgramPresent {
+			return fmt.Errorf("composition activity %q requires 1..16 inputs and a computes body", node.Name)
 		}
 		node.InputType, node.OutputType = activity.Inputs[0].Name, activity.Output
 		node.Assembling = activity.Assembly != nil
+		if len(activity.Inputs) > 1 {
+			node.Inputs = make([]CompositionInput, len(activity.Inputs))
+			for p, input := range activity.Inputs {
+				if scalarGoType(input.Name) == "" {
+					return fmt.Errorf("composition activity %q supports Integer, Boolean and Text", node.Name)
+				}
+				node.Inputs[p] = CompositionInput{Port: fmt.Sprintf("input%d", p), Type: input.Name, From: -1}
+			}
+		}
 		if scalarGoType(node.InputType) == "" || scalarGoType(node.OutputType) == "" {
 			return fmt.Errorf("composition activity %q supports Integer, Boolean and Text", node.Name)
 		}
-		if node.Assembling && (node.InputType != "Integer" || node.OutputType != "Integer") {
+		if node.Assembling && (len(activity.Inputs) != 1 || node.InputType != "Integer" || node.OutputType != "Integer") {
 			return fmt.Errorf("composition assembly activity %q requires Integer -> Integer", node.Name)
 		}
 		return nil
@@ -138,16 +175,29 @@ func (graph *compositionGraph) bindActivity(file *syntax.File, i int) error {
 func (graph *compositionGraph) bindEdges(typed bidir.TypedPlan) error {
 	for _, edge := range typed.Edges {
 		producer, consumer := graph.index(string(edge.SourceActivity)), graph.index(string(edge.TargetActivity))
-		if producer < 0 || consumer < 0 || producer >= consumer || edge.SourcePort != "result" || edge.TargetPort != "input" {
+		if producer < 0 || consumer < 0 || producer >= consumer || edge.SourcePort != "result" {
 			return fmt.Errorf("composition edge must bind an earlier result to a declared input")
 		}
-		if graph.nodes[consumer].InputFrom != -1 {
-			return fmt.Errorf("composition activity %q has multiple input producers", graph.nodes[consumer].Name)
+		node := &graph.nodes[consumer]
+		inputs := node.inputSlots()
+		port, ok := semantic.InputPortIndex(edge.TargetPort, len(inputs))
+		if !ok {
+			return fmt.Errorf("composition input port %q is not declared", edge.TargetPort)
 		}
-		graph.nodes[consumer].InputFrom = producer
+		if inputs[port].From != -1 {
+			return fmt.Errorf("composition activity %q port %q has multiple producers", node.Name, edge.TargetPort)
+		}
+		if len(node.Inputs) == 0 {
+			node.InputFrom = producer
+		} else {
+			node.Inputs[port].From = producer
+			if port == 0 {
+				node.InputFrom = producer
+			}
+		}
 		graph.plan.Edges = append(graph.plan.Edges, CompositionEdge{
 			Producer: graph.nodes[producer].ID, Consumer: graph.nodes[consumer].ID,
-			ProducerPort: "result", ConsumerPort: "input", Entity: graph.nodes[consumer].InputEntityID})
+			ProducerPort: "result", ConsumerPort: edge.TargetPort, Entity: inputs[port].EntityID})
 	}
 	return nil
 }
