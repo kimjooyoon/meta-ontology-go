@@ -29,6 +29,9 @@ func bindRecordAssemblyScope(common *CompletenessReceipt, result Report) {
 		if r.Context != nil && r.Context.FeatureVersion == jointdecision.RecordSharedFeatureVersion {
 			common.Scope["decision_mode"] = "local_shared_field_prediction_then_finite_tdd"
 		}
+		if r.Context != nil && r.Context.FeatureVersion == jointdecision.RecordOriginSharedFeatureVersion {
+			common.Scope["decision_mode"] = "local_source_origin_prediction_then_finite_tdd"
+		}
 	}
 }
 
@@ -49,7 +52,7 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 		return Realization{}, err
 	}
 	expected := newRecordAssemblyReceipt(source, plan)
-	if err = verifyRecordAssemblyRanking(r, expected); err != nil {
+	if err = verifyRecordAssemblyRanking(r, expected, plan); err != nil {
 		return Realization{}, err
 	}
 	expected.Ranking = append([]uint16(nil), r.Ranking...)
@@ -96,7 +99,7 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 		DocumentSHA256: r.ContractSHA256, TestSuiteSHA256: r.TestSuiteSHA256, ActivityID: a.ActivityID, FinitePassed: r.Passed, FiniteTotal: r.Total}, nil
 }
 
-func verifyRecordAssemblyRanking(r, expected *RecordAssemblyReceipt) error {
+func verifyRecordAssemblyRanking(r, expected *RecordAssemblyReceipt, plan recordAssemblyPlan) error {
 	if r.ContractSHA256 != expected.ContractSHA256 || r.TestSuiteSHA256 != expected.TestSuiteSHA256 ||
 		len(r.Ranking) != len(expected.Ranking) {
 		return fmt.Errorf("record contract or ranking differs")
@@ -117,7 +120,7 @@ func verifyRecordAssemblyRanking(r, expected *RecordAssemblyReceipt) error {
 	if r.Model == nil || !r.Model.Loaded || r.Context == nil || r.ModelCalls < 0 || r.ModelCalls > 1 {
 		return fmt.Errorf("record model observation is missing")
 	}
-	context := recordModelContext(expected.Choices, r.Model.FeatureVersion)
+	context := recordPlanModelContext(plan, r.Model.FeatureVersion)
 	if r.Context.Status == "DECLINED_TO_DETERMINISTIC" && r.Context.Reason == "THREE_CHOICE_MODEL_REQUIRED" {
 		context.Status, context.Reason = r.Context.Status, r.Context.Reason
 	}

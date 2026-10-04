@@ -19,7 +19,8 @@ func prepareThreeModelContext(ctx context.Context, document pathplan.Document, o
 	if len(document.Plan.Decisions) != 3 {
 		reason = "THREE_DECISION_COUNT_UNSUPPORTED"
 	} else if model.FeatureVersion() == jointdecision.RecordFieldFeatureVersion ||
-		model.FeatureVersion() == jointdecision.RecordSharedFeatureVersion {
+		model.FeatureVersion() == jointdecision.RecordSharedFeatureVersion ||
+		model.FeatureVersion() == jointdecision.RecordOriginSharedFeatureVersion {
 		reason = "FIELD_MODEL_REQUIRES_RECORD_BODY"
 	}
 	if reason != "" {
