@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
+	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
@@ -54,7 +55,8 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 		if len(raw) != 0 {
 			return bodyContextFailure(stdout, fmt.Errorf("record source assembly owns its plan"))
 		}
-		result, err := bodycodegen.ExportRecordAssemblyContext(ctx, options.filename, source, options.activity, options.includePlan)
+		result, err := bodycodegen.ExportRecordAssemblyContextWithFeature(ctx, options.filename, source,
+			options.activity, options.includePlan, options.featureVersion)
 		if err != nil {
 			return bodyContextFailure(stdout, err)
 		}
@@ -129,7 +131,8 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 	if o.featureVersion == "" {
 		o.featureVersion = decision.SplitContextIntentFeatureVersion
 	}
-	valid := o.featureVersion == decision.SplitContextIntentFeatureVersion || o.featureVersion == decision.SemanticContextIntentFeatureVersion
+	valid := o.featureVersion == decision.SplitContextIntentFeatureVersion || o.featureVersion == decision.SemanticContextIntentFeatureVersion ||
+		o.featureVersion == jointdecision.RecordFieldFeatureVersion
 	return o, o.activity != "" && o.filename != "" && valid
 }
 

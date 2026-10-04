@@ -46,7 +46,7 @@ func (g *TypedPathGenerator) generateRecordAssembly(ctx context.Context, filenam
 	if g.info.Loaded {
 		info := g.Info()
 		r.Model = &info
-		r.Context = recordOrdinalContext(plan.choices)
+		r.Context = recordModelContext(plan.choices, info.FeatureVersion)
 		if g.three == nil {
 			r.Context.Status, r.Context.Reason = "DECLINED_TO_DETERMINISTIC", "THREE_CHOICE_MODEL_REQUIRED"
 		}
@@ -54,7 +54,11 @@ func (g *TypedPathGenerator) generateRecordAssembly(ctx context.Context, filenam
 			var workspace jointdecision.ThreeWorkspace
 			var prediction jointdecision.ThreePrediction
 			predictStarted := time.Now()
-			err = g.three.PredictInto(r.Context.Text, &workspace, &prediction)
+			if info.FeatureVersion == jointdecision.RecordFieldFeatureVersion {
+				err = g.three.PredictRecordInto(r.Context.Text, &workspace, &prediction)
+			} else {
+				err = g.three.PredictInto(r.Context.Text, &workspace, &prediction)
+			}
 			r.ModelCalls, r.PredictNS = 1, time.Since(predictStarted).Nanoseconds()
 			if err != nil {
 				return Result{}, fmt.Errorf("record field prediction: %w", err)

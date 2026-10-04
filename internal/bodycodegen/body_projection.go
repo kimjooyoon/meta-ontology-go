@@ -49,7 +49,9 @@ func prepareBodyProjection(packageName, activityName string, parameters []InputP
 		return p, fmt.Errorf("activity body did not produce a function")
 	}
 	readonly := parameterNames(parameters)
-	p.constructs, err = validateBlockInputs(p.function.Body, readonly, readonly, false, records...)
+	// An absent else falls through to the next statement. Whole-function
+	// termination and Go type checking still validate every current path.
+	p.constructs, err = validateBlockInputs(p.function.Body, readonly, readonly, true, records...)
 	if err != nil {
 		return p, err
 	}
@@ -73,7 +75,7 @@ func (p bodyProjection) lower(packageName, activityName, outputType, route strin
 	} else if route != preserveRoute {
 		return 0, 0, fmt.Errorf("unknown body-codegen route %q", route)
 	}
-	constructs, err := validateBlockInputs(p.function.Body, readonly, readonly, route == guardReturnRoute, records...)
+	constructs, err := validateBlockInputs(p.function.Body, readonly, readonly, true, records...)
 	if err != nil {
 		return 0, 0, err
 	}
