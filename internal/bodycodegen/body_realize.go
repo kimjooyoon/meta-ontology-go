@@ -34,7 +34,7 @@ func RealizeSourceAssembly(ctx context.Context, filename string, source []byte, 
 	if err := replayTypedPathProjection(ctx, filename, source, document, prior, &completed); err != nil {
 		return Realization{}, err
 	}
-	file, diagnostics := syntax.ParseFile(filename, string(source))
+	file, diagnostics := ParseBodyFile(filename, source)
 	if diagnostics.HasErrors() {
 		return Realization{}, fmt.Errorf("realization source: %v", diagnostics)
 	}

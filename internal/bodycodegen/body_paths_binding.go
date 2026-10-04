@@ -28,63 +28,16 @@ func bindTypedPathSource(ctx context.Context, filename string, source []byte, ac
 func bindTypedPathSourceProjection(ctx context.Context, filename string, source []byte, activityName string,
 	prepared *pathplan.PreparedPlan, receipt *BodyPathReceipt, projection *Result) (typedPathSource, error) {
 	bindingStarted := time.Now()
-	file, diagnostics := syntax.ParseFile(filename, string(source))
-	if diagnostics.HasErrors() || file == nil || file.Package == nil {
-		return typedPathSource{}, fmt.Errorf("typed path source must be a valid Gooo package")
-	}
-	var activity *syntax.ActivityDecl
-	for _, declaration := range file.Declarations {
-		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == activityName {
-			if activity != nil {
-				return typedPathSource{}, fmt.Errorf("typed path source has duplicate activities")
-			}
-			activity = candidate
-		}
-	}
-	if activity == nil || !activity.ValueProgramPresent || len(activity.Inputs) != 1 ||
-		activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" || prepared.ActivityName() != activityName {
-		return typedPathSource{}, fmt.Errorf("typed path plan must match one source Integer -> Integer activity")
+	file, activity, err := typedPathActivity(filename, source, activityName, prepared)
+	if err != nil {
+		return typedPathSource{}, err
 	}
 	base, err := typedPathBindingProjection(ctx, filename, source, activityName, projection)
 	if err != nil {
 		return typedPathSource{}, err
 	}
-	fallback := prepared.Fallback()
-	fallbackBody, err := rewriteLetDeclarations(fallback.GoooBody())
-	if err != nil {
+	if err := bindTypedFallback(ctx, file, activity, prepared, base, receipt); err != nil {
 		return typedPathSource{}, err
-	}
-	fallbackRoute, err := generateRoute(file.Package.Name, activityName, base.Report.ActivityID,
-		"int64", "int64", fallbackBody, preserveRoute)
-	if err != nil {
-		return typedPathSource{}, err
-	}
-	planningBody := activity.ValueProgram
-	if activity.Assembly != nil && activity.Assembly.Spec.Baseline != "" {
-		planningBody = activity.Assembly.Spec.Baseline
-		choices := make(map[string]string, len(activity.Assembly.Spec.Picked))
-		for _, pick := range activity.Assembly.Spec.Picked {
-			choices[pick.ID] = pick.Label
-		}
-		current, compileErr := prepared.Compile(choices)
-		if compileErr != nil {
-			return typedPathSource{}, compileErr
-		}
-		if err := verifySourceCheckpoint(ctx, activity, file.Package.Name, base.Report.ActivityID, current.GoooBody()); err != nil {
-			return typedPathSource{}, err
-		}
-	}
-	originalBody, err := rewriteLetDeclarations(planningBody)
-	if err != nil {
-		return typedPathSource{}, err
-	}
-	receipt.SourceBinding, err = routeEquivalence(file.Package.Name, activityName, "int64", "int64",
-		originalBody, fallbackRoute.source, "typed_path_fallback_matches_authoritative_source")
-	if err == nil && !receipt.SourceBinding.Equivalent {
-		receipt.SourceBinding, err = typedBodyTreeEquivalence(ctx, activityName, originalBody, fallbackRoute.source)
-	}
-	if err != nil || !receipt.SourceBinding.Equivalent {
-		return typedPathSource{}, fmt.Errorf("typed path fallback does not match the authoritative source body")
 	}
 	receipt.SourceBaseMatched = true
 	if err := verifySourceAssembly(ctx, filename, source, activity, base, receipt); err != nil {

@@ -13,10 +13,11 @@ executes several activities joined by explicit `bind` declarations. It preserves
 all selected checkpoints and records actual intermediate values across Integer,
 Boolean and Text bodies. Optional local ranking is retained across integer
 assembly activities; saved composition replay needs no model calls.
-Ordinary bodies accept 1..16 Integer/Boolean/Text inputs in source order. Use
+Ordinary bodies accept 1..16 scalar or declared record inputs in source order. Use
 `input` for one input and `input0`, `input1`, ... for several; each parameter is
 read-only while local `let` values may be assigned. See the
-[multiple-input example and case keys](../native-body-composition.md).
+[multiple-input example and case keys](../native-body-composition.md) and
+[record construction and actual value delivery](../native-record-values.md).
 
 For multiple requests in one process, use
 [`gooo body-path-stream`](../native-body-worker.md). It accepts source recipes,
@@ -79,8 +80,8 @@ GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
   examples/body-codegen/guard-route.gooo.fixture
 ```
 
-The v1 body profile accepts one `Integer`, `Boolean`, or `Text` input and a
-supported `Integer`, `Boolean`, or `Text` result, local `let` declarations,
+The pure body profile accepts 1..16 `Integer`, `Boolean`, `Text` or declared
+required-string record inputs and one scalar/record result, local `let` declarations,
 assignment to an existing local, `if/else`, and one-value `return`. `Integer`,
 `Boolean`, and `Text` lower to Go `int64`, `bool`, and `string`. Conditions and
 expressions are checked by Go's type checker after a closed syntax filter.
@@ -88,7 +89,7 @@ An inferred local initialized from an integer constant uses `int64`, keeping
 Integer locals aligned with the DSL type. This rule applies at local bindings;
 it adds no conversions at activity input or output boundaries. Boolean and
 Text locals retain Go's `bool` and `string` inference.
-Function calls, imports, loops, multiple inputs, and external effects fail
+Function calls, imports, loops and external effects fail
 closed. The generated result is written to stdout; this command does not
 mutate the repository.
 
