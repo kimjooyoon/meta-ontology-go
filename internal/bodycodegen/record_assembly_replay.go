@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"slices"
 
+	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 )
 
@@ -22,6 +23,9 @@ func bindRecordAssemblyScope(common *CompletenessReceipt, result Report) {
 	common.Scope["decision_mode"], common.Scope["decision_provider"] = "deterministic_finite_tdd", "deterministic"
 	if r.ModelCalls > 0 {
 		common.Scope["decision_mode"], common.Scope["decision_provider"] = "local_ordinal_prediction_then_finite_tdd", "tiny_go"
+		if r.Context != nil && r.Context.FeatureVersion == jointdecision.RecordFieldFeatureVersion {
+			common.Scope["decision_mode"] = "local_field_expression_prediction_then_finite_tdd"
+		}
 	}
 }
 
@@ -107,10 +111,10 @@ func verifyRecordAssemblyRanking(r, expected *RecordAssemblyReceipt) error {
 		}
 		return nil
 	}
-	context := recordOrdinalContext(expected.Choices)
 	if r.Model == nil || !r.Model.Loaded || r.Context == nil || r.ModelCalls < 0 || r.ModelCalls > 1 {
 		return fmt.Errorf("record model observation is missing")
 	}
+	context := recordModelContext(expected.Choices, r.Model.FeatureVersion)
 	if r.Context.Status == "DECLINED_TO_DETERMINISTIC" && r.Context.Reason == "THREE_CHOICE_MODEL_REQUIRED" {
 		context.Status, context.Reason = r.Context.Status, r.Context.Reason
 	}

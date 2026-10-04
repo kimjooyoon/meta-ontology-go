@@ -139,3 +139,8 @@ The next learning target is reusable field decisions: source-owned alternatives,
 small bilingual intent and the observed field improvements. A useful model
 should complete more fields under the same attempt budget across new source
 shapes. Prediction latency and memory belong beside that result.
+## Record expression context
+
+For the record-specific expression/intent model contract, see
+[record expression context](record-field-context.md). It exports the actual
+ordered field alternatives and can use separately trained record weights.

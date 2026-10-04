@@ -70,14 +70,15 @@ type RecordAssemblyField struct {
 	Passed   bool   `json:"passed"`
 }
 
-// Context is a source-bound ordinal selection proxy, separately named from the
-// integer source feature contract used to train the frozen model.
+// Context records the complete source input for its explicitly named model
+// contract. Legacy ordinal observations preserve their original JSON shape.
 type RecordOrdinalContext struct {
-	Schema string   `json:"schema"`
-	Status string   `json:"status"`
-	Reason string   `json:"reason,omitempty"`
-	Text   string   `json:"text,omitempty"`
-	SHA256 string   `json:"sha256,omitempty"`
-	Parts  []string `json:"parts,omitempty"`
-	Scope  string   `json:"scope"`
+	Schema         string   `json:"schema"`
+	Status         string   `json:"status"`
+	Reason         string   `json:"reason,omitempty"`
+	Text           string   `json:"text,omitempty"`
+	SHA256         string   `json:"sha256,omitempty"`
+	Parts          []string `json:"parts,omitempty"`
+	FeatureVersion string   `json:"feature_version,omitempty"`
+	Scope          string   `json:"scope"`
 }
