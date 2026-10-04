@@ -77,6 +77,26 @@ func fileSummary(t *testing.T, out string) []fileRunRow {
 	return summary.Rows
 }
 
+func TestFilesExecuteWithoutExplicitGoTool(t *testing.T) {
+	args, out := fileArgs(t, false, `{"schema":"gooo/body-runtime-cases/v1","cases":[{"input":2,"expected":15}]}`)
+	args = args[:len(args)-2] // Omit --go-bin and use the local default resolver.
+	var stdout, stderr bytes.Buffer
+	if code := RunFilesCommand(context.Background(), "files", args, &stdout, &stderr); code != 0 {
+		t.Fatal(code, stderr.String())
+	}
+	for _, row := range fileSummary(t, out) {
+		if row.Status != "completed" || row.Passed != 1 || row.Total != 1 || row.NativeRuns != 2 {
+			t.Fatal("default file route did not execute current cases", row)
+		}
+	}
+	for _, result := range decodeResults(t, stdout.Bytes()) {
+		if result.Execution == nil || result.Execution.Observation.GoToolPath == "" ||
+			result.Execution.Observation.GoToolSelection == "" {
+			t.Fatal("default selection is unobserved")
+		}
+	}
+}
+
 func TestFilesNamedActivitiesAndActualNativeReuse(t *testing.T) {
 	for _, recipe := range []bool{false, true} {
 		suite := `{"schema":"gooo/body-runtime-cases/v1","cases":[{"input":2,"expected":15},{"input":-4,"expected":-21}]}`

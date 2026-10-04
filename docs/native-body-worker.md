@@ -1,12 +1,10 @@
 # Repeated body construction with one Gooo process
 
-## Check the executable and select the native tool
+## Check the executable and run with a local native tool
 
 ```sh
 gooo version --build
 gooo version --build --json
-gooo_go_bin="$(GOTOOLCHAIN=go1.27.1 go env GOROOT)/bin/go"
-"$gooo_go_bin" version
 ```
 
 The build view reads embedded metadata from the running Gooo executable.
@@ -16,9 +14,39 @@ A clean, complete revision binds `compiler_source_sha`; a modified or unbound
 build retains `UNBOUND_LOCAL_SOURCE`. The original VCS fields remain readable.
 This view makes no model calls, downloads or native executions.
 
-The Go used to build Gooo and the Go selected for native execution are separate
-observations. Pass the executable above with `--go-bin`. A version mismatch
-retains the actual version response and reports that selection as the next action.
+Without `--go-bin`, native execution inspects the `go` on PATH, then the
+`bin/go` (Windows: `bin/go.exe`) in the running compiler's `runtime.GOROOT()`,
+then the exact Go1.27.1/host-platform toolchain module in the local module cache.
+It selects the first native `cmd/go` with embedded Go1.27.1 and matching host
+platform. If neither is recognized, it preserves the PATH tool for the existing
+actual-version observation. A missing PATH tool and unavailable compiler root
+produce an installation hint. An installed compiler copied from another machine
+may have an unavailable build root; a `-trimpath` build can omit it. Cache lookup
+uses an absolute `GOMODCACHE` environment value, otherwise the first absolute
+`GOPATH` entry plus `pkg/mod`, otherwise the home directory's `go/pkg/mod`.
+It checks only `golang.org/toolchain@v0.0.1-go1.27.1.<os>-<arch>/bin/go`.
+Custom cache settings written only through `go env -w` require an environment
+value or `--go-bin`. This lookup searches at most three executable locations.
+
+The Go used to build Gooo and the Go selected for native execution remain
+separate observations. The executor hashes the selected executable and checks its
+actual version before building. `observation.go_tool_path` records the absolute
+path; `go_tool_selection` is `path`, `compiler_goroot`, `toolchain_cache`, `path_fallback` or
+`explicit`. These optional fields are covered by the existing runtime observation
+digest for owned v2/v3 receipts. Older observations without the fields remain
+readable. Selection performs no model calls or native child processes.
+
+An explicit `--go-bin` always takes priority, including a wrapper or a mismatched
+version. Its failure retains the actual version response. To locate a previously
+installed Go toolchain manually, or install it through Go's toolchain mechanism:
+
+```sh
+gooo_go_bin="$(GOTOOLCHAIN=go1.27.1 go env GOROOT)/bin/go"
+"$gooo_go_bin" version
+```
+
+That optional setup command can download a missing toolchain. Native body
+execution itself keeps `GOTOOLCHAIN=local` and uses local files.
 
 ## Start from source, recipe and expectation files
 
@@ -31,14 +59,14 @@ gooo body-path-run \
   --activity Combined \
   --path-plan examples/body-codegen/typed-path-compound-plan.json \
   --cases examples/body-codegen/typed-path-runtime-cases.json \
-  --go-bin "$gooo_go_bin" --out body-run-results --repeat 2
+  --out body-run-results --repeat 2
 ```
 
 Choose a fresh `--out` path; an existing path is rejected. `--activity` is an
 explicit source activity name. Both full typed plans and short source recipes
 work. Add `--model /explicit/path/model.json` to use a local compatible judge;
-omitting it uses deterministic construction. `--go-bin /path/to/go1.27.1/bin/go`
-selects the native tool. Repetition is sequential, bounded to 1..16, default 1.
+omitting it uses deterministic construction. Add `--go-bin /path/to/go1.27.1/bin/go`
+to select the native tool explicitly. Repetition is sequential, bounded to 1..16, default 1.
 One generator and one native executor serve all repetitions, using the same
 request evaluation as `body-path-stream --execute`.
 
