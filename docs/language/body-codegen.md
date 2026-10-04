@@ -13,6 +13,10 @@ executes several activities joined by explicit `bind` declarations. It preserves
 all selected checkpoints and records actual intermediate values across Integer,
 Boolean and Text bodies. Optional local ranking is retained across integer
 assembly activities; saved composition replay needs no model calls.
+Ordinary bodies accept 1..16 Integer/Boolean/Text inputs in source order. Use
+`input` for one input and `input0`, `input1`, ... for several; each parameter is
+read-only while local `let` values may be assigned. See the
+[multiple-input example and case keys](../native-body-composition.md).
 
 For multiple requests in one process, use
 [`gooo body-path-stream`](../native-body-worker.md). It accepts source recipes,

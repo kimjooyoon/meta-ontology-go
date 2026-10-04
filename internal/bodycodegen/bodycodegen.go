@@ -49,6 +49,7 @@ type Report struct {
 	Activity               string                  `json:"activity"`
 	ActivityID             string                  `json:"activity_id"`
 	InputType              string                  `json:"input_type"`
+	InputParameters        []InputParameter        `json:"input_parameters,omitempty"`
 	OutputType             string                  `json:"output_type"`
 	PlanSHA256             string                  `json:"plan_sha256"`
 	CompilerSourceSHA      string                  `json:"compiler_source_sha"`
@@ -132,12 +133,20 @@ func GenerateWithPlannerAndSampleSeed(ctx context.Context, filename string, sour
 		return Result{}, fmt.Errorf("activity %q has no computes body", activityName)
 	}
 	inputs, outputs := activity.Inputs, activity.Output
-	if len(inputs) != 1 {
-		return Result{}, fmt.Errorf("activity %q requires exactly one input, got %d", activityName, len(inputs))
+	if len(inputs) < 1 || len(inputs) > 16 {
+		return Result{}, fmt.Errorf("activity %q requires 1..16 inputs, got %d", activityName, len(inputs))
 	}
-	inputType, ok := goTypeForEntity(inputs[0].Name)
-	if !ok {
-		return Result{}, fmt.Errorf("activity %q input entity %q is outside the v1 profile", activityName, inputs[0].Name)
+	parameters := make([]InputParameter, len(inputs))
+	for i, input := range inputs {
+		inputType, ok := goTypeForEntity(input.Name)
+		if !ok {
+			return Result{}, fmt.Errorf("activity %q input entity %q is outside the scalar profile", activityName, input.Name)
+		}
+		name := "input"
+		if len(inputs) > 1 {
+			name = fmt.Sprintf("input%d", i)
+		}
+		parameters[i] = InputParameter{Name: name, Type: inputType}
 	}
 	outputType, ok := goTypeForEntity(outputs)
 	if !ok {
@@ -166,7 +175,7 @@ func GenerateWithPlannerAndSampleSeed(ctx context.Context, filename string, sour
 	if err != nil {
 		return Result{}, err
 	}
-	base, err := generateRoute(file.Package.Name, activityName, activityID, inputType, outputType, body, preserveRoute)
+	base, err := generateRouteParameters(file.Package.Name, activityName, activityID, parameters, outputType, body, preserveRoute)
 	if err != nil {
 		return Result{}, err
 	}
@@ -190,9 +199,17 @@ func GenerateWithPlannerAndSampleSeed(ctx context.Context, filename string, sour
 		candidateIDs = append(candidateIDs, option.ID)
 	}
 	if len(routes) > 1 {
+		inputDescription := inputs[0].Name
+		if len(inputs) > 1 {
+			names := make([]string, len(inputs))
+			for i, input := range inputs {
+				names[i] = input.Name
+			}
+			inputDescription = "(" + strings.Join(names, ",") + ")"
+		}
 		request := decisionroute.Request{
 			Schema: decisionroute.RequestSchema,
-			State:  fmt.Sprintf("activity=%s; source_sha256=%s; program_sha256=%s; input=%s; output=%s; body_shape=%s; source_semantic_units=%d", activityName, digest(source), digest([]byte(activity.ValueProgram)), inputs[0].Name, outputs, shape, base.report.SourceSemanticUnits),
+			State:  fmt.Sprintf("activity=%s; source_sha256=%s; program_sha256=%s; input=%s; output=%s; body_shape=%s; source_semantic_units=%d", activityName, digest(source), digest([]byte(activity.ValueProgram)), inputDescription, outputs, shape, base.report.SourceSemanticUnits),
 			Question: decisionroute.Question{
 				ID:           "body_codegen_route",
 				Instructions: "Choose one listed, semantics-preserving lowering route for the described Gooo activity shape. Do not invent code or routes. Prefer the route whose generated control flow is clearest for this shape.",
@@ -232,7 +249,7 @@ func GenerateWithPlannerAndSampleSeed(ctx context.Context, filename string, sour
 	}
 	result := base
 	if selected != preserveRoute {
-		result, err = generateRoute(file.Package.Name, activityName, activityID, inputType, outputType, body, selected)
+		result, err = generateRouteParameters(file.Package.Name, activityName, activityID, parameters, outputType, body, selected)
 		if err != nil {
 			// A planner can choose only a declared route. Keep the source-preserving
 			// route authoritative if a declared lowering unexpectedly fails.
@@ -246,7 +263,7 @@ func GenerateWithPlannerAndSampleSeed(ctx context.Context, filename string, sour
 		}
 	}
 	selection.FinalRoute = selected
-	replay, err := generateRoute(file.Package.Name, activityName, activityID, inputType, outputType, body, selected)
+	replay, err := generateRouteParameters(file.Package.Name, activityName, activityID, parameters, outputType, body, selected)
 	if err != nil {
 		return Result{}, fmt.Errorf("replay selected code generation route: %w", err)
 	}
@@ -288,12 +305,16 @@ type generatedRoute struct {
 }
 
 func generateRoute(packageName, activityName, activityID, inputType, outputType, body, route string) (generatedRoute, error) {
-	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, err := render(packageName, activityName, activityID, inputType, outputType, body, route)
+	return generateRouteParameters(packageName, activityName, activityID, []InputParameter{{Name: "input", Type: inputType}}, outputType, body, route)
+}
+
+func generateRouteParameters(packageName, activityName, activityID string, parameters []InputParameter, outputType, body, route string) (generatedRoute, error) {
+	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, err := renderParameters(packageName, activityName, activityID, parameters, outputType, body, route)
 	if err != nil {
 		return generatedRoute{}, err
 	}
 	equivalenceRule := routeEquivalenceRule(route)
-	equivalence, err := routeEquivalence(packageName, activityName, inputType, outputType, body, generated, equivalenceRule)
+	equivalence, err := routeEquivalenceParameters(packageName, activityName, parameters, outputType, body, generated, equivalenceRule)
 	if err != nil {
 		return generatedRoute{}, err
 	}
@@ -305,9 +326,13 @@ func generateRoute(packageName, activityName, activityID, inputType, outputType,
 		covered := min(loweredUnits, sourceUnits)
 		completeness = float64(covered) * 100 / float64(sourceUnits)
 	}
+	var inputParameters []InputParameter
+	if len(parameters) > 1 {
+		inputParameters = append([]InputParameter(nil), parameters...)
+	}
 	return generatedRoute{source: generated, report: Report{
 		Schema: schema, Decision: "PASS", Activity: activityName, ActivityID: activityID,
-		InputType: inputType, OutputType: outputType,
+		InputType: parameterTypeLabel(parameters), InputParameters: inputParameters, OutputType: outputType,
 		Route: route, EquivalenceRule: equivalenceRule,
 		SourceConstructs: sourceConstructs, LoweredConstructs: loweredConstructs,
 		SourceSemanticUnits: sourceUnits, LoweredSemanticUnits: loweredUnits,
@@ -328,7 +353,11 @@ func routeEquivalenceRule(route string) string {
 }
 
 func render(packageName, activityName, activityID, inputType, outputType, body, route string) ([]byte, int, int, int, int, error) {
-	wrapped := fmt.Sprintf("package %s\nfunc %s(input %s) %s {\n%s\n}\n", packageName, activityName, inputType, outputType, body)
+	return renderParameters(packageName, activityName, activityID, []InputParameter{{Name: "input", Type: inputType}}, outputType, body, route)
+}
+
+func renderParameters(packageName, activityName, activityID string, parameters []InputParameter, outputType, body, route string) ([]byte, int, int, int, int, error) {
+	wrapped := fmt.Sprintf("package %s\nfunc %s(%s) %s {\n%s\n}\n", packageName, activityName, parameterDeclaration(parameters), outputType, body)
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "body.goo", wrapped, parser.AllErrors)
 	if err != nil {
@@ -338,7 +367,8 @@ func render(packageName, activityName, activityID, inputType, outputType, body, 
 	if !ok {
 		return nil, 0, 0, 0, 0, fmt.Errorf("activity body did not produce a function")
 	}
-	sourceConstructs, err := validateBlock(function.Body, "input", map[string]bool{"input": true}, false)
+	readonly := parameterNames(parameters)
+	sourceConstructs, err := validateBlockInputs(function.Body, readonly, readonly, false)
 	if err != nil {
 		return nil, 0, 0, 0, 0, err
 	}
@@ -357,7 +387,7 @@ func render(packageName, activityName, activityID, inputType, outputType, body, 
 	} else if route != preserveRoute {
 		return nil, 0, 0, 0, 0, fmt.Errorf("unknown body-codegen route %q", route)
 	}
-	loweredConstructs, err := validateBlock(function.Body, "input", map[string]bool{"input": true}, route == guardReturnRoute)
+	loweredConstructs, err := validateBlockInputs(function.Body, readonly, readonly, route == guardReturnRoute)
 	if err != nil {
 		return nil, 0, 0, 0, 0, err
 	}
@@ -585,6 +615,10 @@ func findFunction(file *ast.File, name string) (*ast.FuncDecl, bool) {
 }
 
 func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]bool, allowGuardReturn bool) (int, error) {
+	return validateBlockInputs(block, map[string]bool{inputName: true}, inherited, allowGuardReturn)
+}
+
+func validateBlockInputs(block *ast.BlockStmt, readonly, inherited map[string]bool, allowGuardReturn bool) (int, error) {
 	if block == nil {
 		return 0, fmt.Errorf("activity body has no block")
 	}
@@ -611,7 +645,7 @@ func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]
 			} else if len(spec.Values) != 1 {
 				return 0, fmt.Errorf("let requires one inferred local value")
 			}
-			if name == inputName || locals[name] {
+			if readonly[name] || locals[name] {
 				return 0, fmt.Errorf("let name %q is already bound", name)
 			}
 			if len(spec.Values) == 1 {
@@ -625,7 +659,7 @@ func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]
 				return 0, fmt.Errorf("assignment requires one existing local and one value")
 			}
 			name, ok := value.Lhs[0].(*ast.Ident)
-			if !ok || name.Name == inputName || !locals[name.Name] {
+			if !ok || readonly[name.Name] || !locals[name.Name] {
 				return 0, fmt.Errorf("assignment target must be an existing local")
 			}
 			if err := validateExpression(value.Rhs[0]); err != nil {
@@ -638,7 +672,7 @@ func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]
 			if err := validateExpression(value.Cond); err != nil {
 				return 0, err
 			}
-			thenCount, err := validateBlock(value.Body, inputName, locals, allowGuardReturn)
+			thenCount, err := validateBlockInputs(value.Body, readonly, locals, allowGuardReturn)
 			if err != nil {
 				return 0, err
 			}
@@ -648,13 +682,13 @@ func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]
 			}
 			switch otherwise := value.Else.(type) {
 			case *ast.BlockStmt:
-				elseCount, err := validateBlock(otherwise, inputName, locals, allowGuardReturn)
+				elseCount, err := validateBlockInputs(otherwise, readonly, locals, allowGuardReturn)
 				if err != nil {
 					return 0, err
 				}
 				count += elseCount
 			case *ast.IfStmt:
-				elseCount, err := validateBlock(&ast.BlockStmt{List: []ast.Stmt{otherwise}}, inputName, locals, allowGuardReturn)
+				elseCount, err := validateBlockInputs(&ast.BlockStmt{List: []ast.Stmt{otherwise}}, readonly, locals, allowGuardReturn)
 				if err != nil {
 					return 0, err
 				}

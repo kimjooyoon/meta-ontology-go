@@ -58,21 +58,27 @@ func compositionDriver(graph compositionGraph) (string, error) {
 	source.WriteString("package main\nimport(\"encoding/json\";\"os\")\nfunc main(){\n")
 	roots := 0
 	for _, node := range graph.nodes[:graph.count] {
-		if node.InputFrom < 0 {
-			roots++
+		for _, input := range node.inputSlots() {
+			if input.From < 0 {
+				roots++
+			}
 		}
 	}
 	fmt.Fprintf(&source, "var in [][%d]json.RawMessage; if json.NewDecoder(os.Stdin).Decode(&in)!=nil||len(in)>128{os.Exit(2)}\n", roots)
 	fmt.Fprintf(&source, "out:=make([][%d]json.RawMessage,len(in));for c,row:=range in{\n", graph.count)
 	root := 0
 	for i, node := range graph.nodes[:graph.count] {
-		input := fmt.Sprintf("v%d", node.InputFrom)
-		if node.InputFrom < 0 {
-			input = fmt.Sprintf("input%d", root)
-			fmt.Fprintf(&source, "var %s %s;if json.Unmarshal(row[%d],&%s)!=nil{os.Exit(2)}\n", input, scalarGoType(node.InputType), root, input)
-			root++
+		arguments := make([]string, 0, len(node.inputSlots()))
+		for _, slot := range node.inputSlots() {
+			input := fmt.Sprintf("v%d", slot.From)
+			if slot.From < 0 {
+				input = fmt.Sprintf("input%d", root)
+				fmt.Fprintf(&source, "var %s %s;if json.Unmarshal(row[%d],&%s)!=nil{os.Exit(2)}\n", input, scalarGoType(slot.Type), root, input)
+				root++
+			}
+			arguments = append(arguments, input)
 		}
-		fmt.Fprintf(&source, "v%d:=GoooComposedActivity%d(%s);out[c][%d],_=json.Marshal(v%d)\n", i, i, input, i, i)
+		fmt.Fprintf(&source, "v%d:=GoooComposedActivity%d(%s);out[c][%d],_=json.Marshal(v%d)\n", i, i, strings.Join(arguments, ","), i, i)
 	}
 	source.WriteString("};if json.NewEncoder(os.Stdout).Encode(out)!=nil{os.Exit(3)}}\n")
 	raw, err := format.Source([]byte(source.String()))

@@ -7,6 +7,8 @@ import (
 	"slices"
 	"sort"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 // BindingEdge is an explicit typed data-flow edge between activity ports.
@@ -150,6 +152,9 @@ func activityPortType(declaration Declaration, port string, input bool) (ID, boo
 	if input {
 		references = declaration.Inputs
 		direction = "input"
+		if index, ok := semantic.InputPortIndex(port, len(references)); ok {
+			return references[index].ID, true, nil
+		}
 	}
 	if len(references) == 1 {
 		if input && port == "input" {

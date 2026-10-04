@@ -19,7 +19,9 @@ func orderedPortSequence(model Model) []string {
 	sequence := make([]string, 0)
 	for _, activity := range activities {
 		inputs, outputs := activityPorts(model, activity.ID)
-		sort.SliceStable(inputs, func(i, j int) bool { return referenceSourceOrderLess(inputs[i], inputs[j]) })
+		if len(activity.InputSequence) == 0 {
+			sort.SliceStable(inputs, func(i, j int) bool { return referenceSourceOrderLess(inputs[i], inputs[j]) })
+		}
 		sort.SliceStable(outputs, func(i, j int) bool { return referenceSourceOrderLess(outputs[i], outputs[j]) })
 		appendPortSequence(&sequence, activity.ID, "input", inputs)
 		appendPortSequence(&sequence, activity.ID, "output", outputs)
@@ -39,6 +41,9 @@ func activityPorts(model Model, activity ID) ([]Reference, []Reference) {
 				outputs = append(outputs, relationReference(node, relation))
 			}
 		}
+	}
+	if node, exists := model.node(activity); exists && len(node.InputSequence) > 0 {
+		inputs = sourceInputSequence(node, model)
 	}
 	return inputs, outputs
 }
