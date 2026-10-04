@@ -3,14 +3,12 @@
 package bodycodegen
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"go/ast"
-	"go/format"
 	"go/importer"
 	"go/parser"
 	"go/scanner"
@@ -21,9 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
-	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 const (
@@ -50,6 +46,7 @@ type Report struct {
 	ActivityID             string                  `json:"activity_id"`
 	InputType              string                  `json:"input_type"`
 	InputParameters        []InputParameter        `json:"input_parameters,omitempty"`
+	RecordTypes            []RecordType            `json:"record_types,omitempty"`
 	OutputType             string                  `json:"output_type"`
 	PlanSHA256             string                  `json:"plan_sha256"`
 	CompilerSourceSHA      string                  `json:"compiler_source_sha"`
@@ -93,7 +90,7 @@ type RouteSelectionReceipt struct {
 
 // Generate compiles one .gooo activity body into a marked Go source region.
 // The accepted body subset is local declarations/assignments, conditionals,
-// and returns over int64, bool, and string values. Calls and effects fail closed.
+// and returns over scalar or declared record values. Calls and effects fail closed.
 func Generate(filename string, source []byte, activityName string) (Result, error) {
 	return GenerateWithPlanner(context.Background(), filename, source, activityName, "", "")
 }
@@ -112,178 +109,15 @@ func GenerateWithPlannerAndSampleSeed(ctx context.Context, filename string, sour
 	if sampleSeed != "" && strings.TrimSpace(sampleSeed) == "" {
 		return Result{}, fmt.Errorf("route sample seed must contain a non-whitespace character")
 	}
-	file, diagnostics := syntax.ParseFile(filename, string(source))
-	if diagnostics.HasErrors() {
-		return Result{}, fmt.Errorf("parse .gooo source: %w", diagnostics.Error())
-	}
-	if file == nil || file.Package == nil {
-		return Result{}, fmt.Errorf(".gooo source has no package declaration")
-	}
-	var activity *syntax.ActivityDecl
-	for _, declaration := range file.Declarations {
-		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == activityName {
-			activity = candidate
-			break
-		}
-	}
-	if activity == nil {
-		return Result{}, fmt.Errorf("activity %q was not found", activityName)
-	}
-	if !activity.ValueProgramPresent || activity.ValueProgram == "" {
-		return Result{}, fmt.Errorf("activity %q has no computes body", activityName)
-	}
-	inputs, outputs := activity.Inputs, activity.Output
-	if len(inputs) < 1 || len(inputs) > 16 {
-		return Result{}, fmt.Errorf("activity %q requires 1..16 inputs, got %d", activityName, len(inputs))
-	}
-	parameters := make([]InputParameter, len(inputs))
-	for i, input := range inputs {
-		inputType, ok := goTypeForEntity(input.Name)
-		if !ok {
-			return Result{}, fmt.Errorf("activity %q input entity %q is outside the scalar profile", activityName, input.Name)
-		}
-		name := "input"
-		if len(inputs) > 1 {
-			name = fmt.Sprintf("input%d", i)
-		}
-		parameters[i] = InputParameter{Name: name, Type: inputType}
-	}
-	outputType, ok := goTypeForEntity(outputs)
-	if !ok {
-		return Result{}, fmt.Errorf("activity %q output entity %q is outside the v1 profile", activityName, outputs)
-	}
-	modelDocument, err := bidir.DocumentFromSyntax(file)
-	if err != nil {
-		return Result{}, fmt.Errorf("lower activity identity: %w", err)
-	}
-	model, err := bidir.Get(modelDocument)
-	if err != nil {
-		return Result{}, fmt.Errorf("resolve activity identity: %w", err)
-	}
-	activityID := ""
-	for _, node := range model.Nodes {
-		if node.Kind == bidir.ActivityKind && node.Name == activityName {
-			activityID = string(node.ID)
-			break
-		}
-	}
-	if activityID == "" {
-		return Result{}, fmt.Errorf("activity %q has no stable semantic identity", activityName)
-	}
-
-	body, err := rewriteLetDeclarations(activity.ValueProgram)
+	prepared, err := prepareActivityBody(filename, source, activityName)
 	if err != nil {
 		return Result{}, err
 	}
-	base, err := generateRouteParameters(file.Package.Name, activityName, activityID, parameters, outputType, body, preserveRoute)
+	choice, err := chooseBodyRoute(ctx, prepared, source, endpoint, apiKey, sampleSeed)
 	if err != nil {
 		return Result{}, err
 	}
-
-	routes, shape, err := candidateRoutes(file.Package.Name, activityName, body)
-	if err != nil {
-		return Result{}, err
-	}
-	selected := preserveRoute
-	receipt := decisionroute.Receipt{
-		Schema: decisionroute.ReceiptSchema, Mode: "deterministic_fallback", Selected: preserveRoute,
-		FallbackReason: "NO_ALTERNATIVE_ROUTE", Provider: "deterministic",
-	}
-	selection := RouteSelectionReceipt{Method: "single_eligible_route", ProposedRoute: preserveRoute, FinalRoute: preserveRoute}
-	if sampleSeed != "" {
-		selection.SeedSHA256 = digest([]byte(sampleSeed))
-		selection.Weights = map[string]float64{preserveRoute: 1}
-	}
-	candidateIDs := make([]string, 0, len(routes))
-	for _, option := range routes {
-		candidateIDs = append(candidateIDs, option.ID)
-	}
-	if len(routes) > 1 {
-		inputDescription := inputs[0].Name
-		if len(inputs) > 1 {
-			names := make([]string, len(inputs))
-			for i, input := range inputs {
-				names[i] = input.Name
-			}
-			inputDescription = "(" + strings.Join(names, ",") + ")"
-		}
-		request := decisionroute.Request{
-			Schema: decisionroute.RequestSchema,
-			State:  fmt.Sprintf("activity=%s; source_sha256=%s; program_sha256=%s; input=%s; output=%s; body_shape=%s; source_semantic_units=%d", activityName, digest(source), digest([]byte(activity.ValueProgram)), inputDescription, outputs, shape, base.report.SourceSemanticUnits),
-			Question: decisionroute.Question{
-				ID:           "body_codegen_route",
-				Instructions: "Choose one listed, semantics-preserving lowering route for the described Gooo activity shape. Do not invent code or routes. Prefer the route whose generated control flow is clearest for this shape.",
-				Options:      routes,
-			},
-			Fallback: preserveRoute,
-		}
-		started := time.Now()
-		decisionContext, cancel := context.WithTimeout(ctx, routeDecisionBudget)
-		receipt, err = decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
-		cancel()
-		decisionLatencyMS := float64(time.Since(started)) / float64(time.Millisecond)
-		if err != nil {
-			return Result{}, fmt.Errorf("select code generation route: %w", err)
-		}
-		selected = receipt.Selected
-		if sampleSeed != "" {
-			weights := receipt.Probabilities
-			if receipt.Mode == "laya" && len(weights) == 0 && receipt.Selected != "" {
-				weights = map[string]float64{receipt.Selected: 1}
-			}
-			selection, err = sampleRoute(sampleSeed, receipt.RequestSHA256, routes, weights, receipt.Selected)
-			if err != nil {
-				return Result{}, fmt.Errorf("sample code generation route: %w", err)
-			}
-			selected = selection.ProposedRoute
-		} else if receipt.Mode == "laya" {
-			selection = RouteSelectionReceipt{
-				Method: "laya_top1", ProposedRoute: receipt.Selected, FinalRoute: receipt.Selected,
-			}
-		} else {
-			selection = RouteSelectionReceipt{
-				Method: "deterministic_fallback", ProposedRoute: receipt.Selected, FinalRoute: receipt.Selected,
-			}
-		}
-		base.report.RouteDecisionLatencyMS = decisionLatencyMS
-	}
-	result := base
-	if selected != preserveRoute {
-		result, err = generateRouteParameters(file.Package.Name, activityName, activityID, parameters, outputType, body, selected)
-		if err != nil {
-			// A planner can choose only a declared route. Keep the source-preserving
-			// route authoritative if a declared lowering unexpectedly fails.
-			selected = preserveRoute
-			receipt.Selected = preserveRoute
-			receipt.Mode = "deterministic_fallback"
-			receipt.Provider = "deterministic"
-			receipt.FallbackReason = "SELECTED_ROUTE_LOWERING_FAILED"
-			selection.Method = "deterministic_fallback_after_lowering_failure"
-			result = base
-		}
-	}
-	selection.FinalRoute = selected
-	replay, err := generateRouteParameters(file.Package.Name, activityName, activityID, parameters, outputType, body, selected)
-	if err != nil {
-		return Result{}, fmt.Errorf("replay selected code generation route: %w", err)
-	}
-	if result.report.SourceConstructs != replay.report.SourceConstructs || result.report.LoweredConstructs != replay.report.LoweredConstructs || result.report.SourceSemanticUnits != replay.report.SourceSemanticUnits || result.report.LoweredSemanticUnits != replay.report.LoweredSemanticUnits {
-		return Result{}, fmt.Errorf("internal error: replay construct count changed")
-	}
-	result.report.SourceDigest = digest(source)
-	result.report.ProgramDigest = digest([]byte(activity.ValueProgram))
-	result.report.GeneratedDigest = digest(result.source)
-	result.report.ReplayDigest = digest(replay.source)
-	result.report.Route = selected
-	result.report.RouteDecision = receipt
-	result.report.RouteSelection = selection
-	result.report.RouteDecisionLatencyMS = base.report.RouteDecisionLatencyMS
-	result.report.CandidateRoutes = candidateIDs
-	result.report.DeterministicReplay = result.report.GeneratedDigest == result.report.ReplayDigest
-	result.report.RepositoryWrites = 0
-	result.report.UnsupportedConstructs = "calls, loops, imports, external effects, multiple inputs"
-	populateCompletenessReceipt(&result.report, "")
-	return Result{Report: result.report, Source: string(result.source)}, nil
+	return prepared.selectedResult(source, choice)
 }
 
 func goTypeForEntity(entity string) (string, bool) {
@@ -308,13 +142,13 @@ func generateRoute(packageName, activityName, activityID, inputType, outputType,
 	return generateRouteParameters(packageName, activityName, activityID, []InputParameter{{Name: "input", Type: inputType}}, outputType, body, route)
 }
 
-func generateRouteParameters(packageName, activityName, activityID string, parameters []InputParameter, outputType, body, route string) (generatedRoute, error) {
-	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, err := renderParameters(packageName, activityName, activityID, parameters, outputType, body, route)
+func generateRouteParameters(packageName, activityName, activityID string, parameters []InputParameter, outputType, body, route string, records ...RecordType) (generatedRoute, error) {
+	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, err := renderParameters(packageName, activityName, activityID, parameters, outputType, body, route, records...)
 	if err != nil {
 		return generatedRoute{}, err
 	}
 	equivalenceRule := routeEquivalenceRule(route)
-	equivalence, err := routeEquivalenceParameters(packageName, activityName, parameters, outputType, body, generated, equivalenceRule)
+	equivalence, err := routeEquivalenceParameters(packageName, activityName, parameters, outputType, body, generated, equivalenceRule, records...)
 	if err != nil {
 		return generatedRoute{}, err
 	}
@@ -332,7 +166,7 @@ func generateRouteParameters(packageName, activityName, activityID string, param
 	}
 	return generatedRoute{source: generated, report: Report{
 		Schema: schema, Decision: "PASS", Activity: activityName, ActivityID: activityID,
-		InputType: parameterTypeLabel(parameters), InputParameters: inputParameters, OutputType: outputType,
+		InputType: parameterTypeLabel(parameters), InputParameters: inputParameters, OutputType: outputType, RecordTypes: records,
 		Route: route, EquivalenceRule: equivalenceRule,
 		SourceConstructs: sourceConstructs, LoweredConstructs: loweredConstructs,
 		SourceSemanticUnits: sourceUnits, LoweredSemanticUnits: loweredUnits,
@@ -354,65 +188,6 @@ func routeEquivalenceRule(route string) string {
 
 func render(packageName, activityName, activityID, inputType, outputType, body, route string) ([]byte, int, int, int, int, error) {
 	return renderParameters(packageName, activityName, activityID, []InputParameter{{Name: "input", Type: inputType}}, outputType, body, route)
-}
-
-func renderParameters(packageName, activityName, activityID string, parameters []InputParameter, outputType, body, route string) ([]byte, int, int, int, int, error) {
-	wrapped := fmt.Sprintf("package %s\nfunc %s(%s) %s {\n%s\n}\n", packageName, activityName, parameterDeclaration(parameters), outputType, body)
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "body.goo", wrapped, parser.AllErrors)
-	if err != nil {
-		return nil, 0, 0, 0, 0, fmt.Errorf("parse computes body: %w", err)
-	}
-	function, ok := findFunction(file, activityName)
-	if !ok {
-		return nil, 0, 0, 0, 0, fmt.Errorf("activity body did not produce a function")
-	}
-	readonly := parameterNames(parameters)
-	sourceConstructs, err := validateBlockInputs(function.Body, readonly, readonly, false)
-	if err != nil {
-		return nil, 0, 0, 0, 0, err
-	}
-	if !blockTerminates(function.Body) {
-		return nil, 0, 0, 0, 0, fmt.Errorf("activity %q body must return on every control-flow path", activityName)
-	}
-	sourceUnits := semanticUnitCount(function.Body)
-	if route == guardReturnRoute {
-		if !lowerGuardReturn(function.Body) {
-			return nil, 0, 0, 0, 0, fmt.Errorf("activity %q does not match the guard-return route shape", activityName)
-		}
-	} else if route == mergeResultRoute {
-		if !lowerMergeResult(function.Body, outputType) {
-			return nil, 0, 0, 0, 0, fmt.Errorf("activity %q does not match the merge-result route shape", activityName)
-		}
-	} else if route != preserveRoute {
-		return nil, 0, 0, 0, 0, fmt.Errorf("unknown body-codegen route %q", route)
-	}
-	loweredConstructs, err := validateBlockInputs(function.Body, readonly, readonly, route == guardReturnRoute)
-	if err != nil {
-		return nil, 0, 0, 0, 0, err
-	}
-	if !blockTerminates(function.Body) {
-		return nil, 0, 0, 0, 0, fmt.Errorf("lowered activity %q body does not return on every control-flow path", activityName)
-	}
-	inferredIntegerLocals := normalizeIntegerLocalInitializers(packageName, file, fset)
-	loweredUnits := semanticUnitCount(function.Body) - inferredIntegerLocals
-	if err := typecheck(packageName, file, fset); err != nil {
-		return nil, 0, 0, 0, 0, fmt.Errorf("typecheck generated activity: %w", err)
-	}
-
-	var output bytes.Buffer
-	fmt.Fprintf(&output, "package %s\n\n", packageName)
-	fmt.Fprintf(&output, "//gooo:generated:start id=%q kind=\"activity\"\n", activityID)
-	if err := format.Node(&output, fset, function); err != nil {
-		return nil, 0, 0, 0, 0, fmt.Errorf("format generated activity: %w", err)
-	}
-	output.WriteByte('\n')
-	fmt.Fprintf(&output, "//gooo:generated:end id=%q kind=\"activity\"\n", activityID)
-	formatted, err := format.Source(output.Bytes())
-	if err != nil {
-		return nil, 0, 0, 0, 0, fmt.Errorf("format generated source: %w", err)
-	}
-	return formatted, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, nil
 }
 
 func candidateRoutes(packageName, activityName, body string) ([]decisionroute.Option, string, error) {
@@ -618,98 +393,6 @@ func validateBlock(block *ast.BlockStmt, inputName string, inherited map[string]
 	return validateBlockInputs(block, map[string]bool{inputName: true}, inherited, allowGuardReturn)
 }
 
-func validateBlockInputs(block *ast.BlockStmt, readonly, inherited map[string]bool, allowGuardReturn bool) (int, error) {
-	if block == nil {
-		return 0, fmt.Errorf("activity body has no block")
-	}
-	count := 0
-	locals := cloneNames(inherited)
-	for _, statement := range block.List {
-		count++
-		switch value := statement.(type) {
-		case *ast.DeclStmt:
-			declaration, ok := value.Decl.(*ast.GenDecl)
-			if !ok || declaration.Tok != token.VAR || len(declaration.Specs) != 1 {
-				return 0, fmt.Errorf("only one local let declaration is supported")
-			}
-			spec, ok := declaration.Specs[0].(*ast.ValueSpec)
-			if !ok || len(spec.Names) != 1 {
-				return 0, fmt.Errorf("let requires one local name")
-			}
-			name := spec.Names[0].Name
-			if spec.Type != nil {
-				typeName, supported := spec.Type.(*ast.Ident)
-				if name != "_goooResult" || !supported || (typeName.Name != "int64" && typeName.Name != "bool" && typeName.Name != "string") || len(spec.Values) != 0 {
-					return 0, fmt.Errorf("explicit local types are reserved for compiler-generated result joins")
-				}
-			} else if len(spec.Values) != 1 {
-				return 0, fmt.Errorf("let requires one inferred local value")
-			}
-			if readonly[name] || locals[name] {
-				return 0, fmt.Errorf("let name %q is already bound", name)
-			}
-			if len(spec.Values) == 1 {
-				if err := validateExpression(spec.Values[0]); err != nil {
-					return 0, err
-				}
-			}
-			locals[name] = true
-		case *ast.AssignStmt:
-			if value.Tok != token.ASSIGN || len(value.Lhs) != 1 || len(value.Rhs) != 1 {
-				return 0, fmt.Errorf("assignment requires one existing local and one value")
-			}
-			name, ok := value.Lhs[0].(*ast.Ident)
-			if !ok || readonly[name.Name] || !locals[name.Name] {
-				return 0, fmt.Errorf("assignment target must be an existing local")
-			}
-			if err := validateExpression(value.Rhs[0]); err != nil {
-				return 0, err
-			}
-		case *ast.IfStmt:
-			if value.Init != nil || (value.Else == nil && !allowGuardReturn) {
-				return 0, fmt.Errorf("if requires a condition and an explicit else branch")
-			}
-			if err := validateExpression(value.Cond); err != nil {
-				return 0, err
-			}
-			thenCount, err := validateBlockInputs(value.Body, readonly, locals, allowGuardReturn)
-			if err != nil {
-				return 0, err
-			}
-			count += thenCount
-			if value.Else == nil {
-				continue
-			}
-			switch otherwise := value.Else.(type) {
-			case *ast.BlockStmt:
-				elseCount, err := validateBlockInputs(otherwise, readonly, locals, allowGuardReturn)
-				if err != nil {
-					return 0, err
-				}
-				count += elseCount
-			case *ast.IfStmt:
-				elseCount, err := validateBlockInputs(&ast.BlockStmt{List: []ast.Stmt{otherwise}}, readonly, locals, allowGuardReturn)
-				if err != nil {
-					return 0, err
-				}
-				count += elseCount
-			default:
-				return 0, fmt.Errorf("else branch must be a block or if")
-			}
-		case *ast.ReturnStmt:
-			if len(value.Results) != 1 {
-				return 0, fmt.Errorf("return requires exactly one value")
-			}
-			if err := validateExpression(value.Results[0]); err != nil {
-				return 0, err
-			}
-		default:
-			return 0, fmt.Errorf("unsupported activity statement %T", statement)
-		}
-	}
-	return count, nil
-}
-
 func cloneNames(names map[string]bool) map[string]bool {
 	clone := make(map[string]bool, len(names))
 	maps.Copy(clone, names)
@@ -722,6 +405,10 @@ func validateExpression(expression ast.Expr) error {
 		return nil
 	case *ast.ParenExpr:
 		return validateExpression(value.X)
+	case *ast.SelectorExpr:
+		return validateExpression(value.X)
+	case *ast.CompositeLit:
+		return validateRecordExpression(value)
 	case *ast.UnaryExpr:
 		if value.Op != token.SUB && value.Op != token.NOT {
 			return fmt.Errorf("unsupported unary operator %s", value.Op)

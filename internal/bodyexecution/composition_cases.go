@@ -69,7 +69,7 @@ func (graph compositionGraph) inputRow(test CompositionCase) ([]json.RawMessage,
 				if !hasInput {
 					return nil, fmt.Errorf("root input %q requires an explicit value", key)
 				}
-				canonical, err := canonicalScalar(value, input.Type)
+				canonical, err := graph.canonicalValue(value, input.Type)
 				if err != nil {
 					return nil, fmt.Errorf("input %q: %w", key, err)
 				}
@@ -79,7 +79,7 @@ func (graph compositionGraph) inputRow(test CompositionCase) ([]json.RawMessage,
 			}
 		}
 		if value, present := test.Expected[node.Name]; present {
-			if _, err := canonicalScalar(value, node.OutputType); err != nil {
+			if _, err := graph.canonicalValue(value, node.OutputType); err != nil {
 				return nil, fmt.Errorf("expected %q: %w", node.Name, err)
 			}
 			expected++
