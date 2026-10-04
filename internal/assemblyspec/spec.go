@@ -14,6 +14,14 @@ type Spec struct {
 	Cases       []Case   `json:"cases"`
 	MaxAttempts int      `json:"max_attempts"`
 	Seed        string   `json:"seed,omitempty"`
+	Baseline    string   `json:"baseline,omitempty"`
+	Picked      []Pick   `json:"picked,omitempty"`
+}
+
+// Pick records an implementation relative to the immutable planning baseline.
+type Pick struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
 }
 
 type Choice struct {
@@ -58,6 +66,33 @@ func (s Spec) Validate() error {
 			return fmt.Errorf("unknown assembly choice kind %q", c.Kind)
 		}
 	}
+	if err := s.validateCheckpoint(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s Spec) validateCheckpoint() error {
+	if s.Baseline == "" && len(s.Picked) == 0 {
+		return nil
+	}
+	if !boundedText(s.Baseline, 128<<10) || len(s.Picked) != len(s.Choices) {
+		return fmt.Errorf("assembly checkpoint requires a baseline and one picked label per choice")
+	}
+	for i, c := range s.Choices {
+		first, second := "layout_forward", "layout_reverse"
+		switch c.Kind {
+		case "local_reference":
+			first, second = "reference_first", "reference_second"
+		case "assignment_target":
+			first, second = "assign_first", "assign_second"
+		case "root_order":
+			first, second = "schedule_forward", "schedule_reverse"
+		}
+		if s.Picked[i].ID != c.ID || (s.Picked[i].Label != first && s.Picked[i].Label != second) {
+			return fmt.Errorf("assembly picked labels must match declared choice order and kind")
+		}
+	}
 	return nil
 }
 
@@ -69,6 +104,7 @@ func (s Spec) Clone() *Spec {
 	clone := s
 	clone.Choices = append([]Choice(nil), s.Choices...)
 	clone.Cases = append([]Case(nil), s.Cases...)
+	clone.Picked = append([]Pick(nil), s.Picked...)
 	return &clone
 }
 

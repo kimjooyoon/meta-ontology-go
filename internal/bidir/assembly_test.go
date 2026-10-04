@@ -26,6 +26,17 @@ func TestAssemblySurvivesBXLawsAndCoreSemanticIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	testAssemblySurvivesBXLawsAndCoreSemanticIdentity(t, source)
+	checkpoint := strings.Replace(string(source), "assembling {", `assembling {
+    baseline "return input"
+    picked "base-local" -> "reference_second"
+    picked "condition-branches" -> "layout_forward"
+    picked "independent-declarations" -> "schedule_reverse"`, 1)
+	testAssemblySurvivesBXLawsAndCoreSemanticIdentity(t, []byte(checkpoint))
+}
+
+func testAssemblySurvivesBXLawsAndCoreSemanticIdentity(t *testing.T, source []byte) {
+	t.Helper()
 	document := assemblyDocument(t, source)
 	model, err := Get(document)
 	if err != nil {
@@ -75,6 +86,13 @@ func TestAssemblySurvivesBXLawsAndCoreSemanticIdentity(t *testing.T) {
 				t.Fatal("core IR dropped the typed assembly", node)
 			}
 			node.Assembly.Choices[0].Intent = "changed"
+			if len(node.Assembly.Picked) != 0 {
+				node.Assembly.Picked[0].Label = "reference_first"
+				fresh, _ := core.Graph.Node(node.ID)
+				if fresh.Assembly.Picked[0].Label == "reference_first" {
+					t.Fatal("graph lookup exposes mutable checkpoint storage")
+				}
+			}
 			fresh, _ := core.Graph.Node(node.ID)
 			if fresh.Assembly.Choices[0].Intent == "changed" {
 				t.Fatal("graph lookup exposes mutable assembly storage")

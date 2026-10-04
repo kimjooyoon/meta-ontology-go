@@ -17,7 +17,7 @@ activity Offset(Integer) -> Integer computes "return input - 2" assembling {
 }
 ```
 
-`computes` is the baseline. The choice permits reversing one subtraction. The
+Initially `computes` is the baseline. The choice permits reversing one subtraction. The
 cases cause the search to select `2-input`. A local model can rank the alternatives
 before finite checks. Omitting the model gives deterministic bounded search.
 
@@ -55,6 +55,8 @@ and request-owned arenas and workspaces.
 
 ```text
 activity ... computes <quoted-or-raw-body> assembling {
+    [baseline <quoted-original-body>
+     picked <quoted-choice-id> -> <quoted-option-label> ...]
     choice <quoted-id> <kind> at <quoted-occurrence>
         [alternative <quoted-local-name>] intent <quoted-intent>
     case <quoted-int64-input> -> <quoted-int64-expected>
@@ -76,8 +78,9 @@ expected values span int64. Formatting preserves decoded Korean/English intent.
 | `root_order` | First of two adjacent root statements | — |
 
 Occurrences start at zero in source order. Parent expressions precede children at
-a shared position; `else if` keeps condition order. Body edits can shift occurrences.
-Keep intent and cases aligned with those edits. Scope/type checks precede prediction.
+a shared position; `else if` keeps condition order. A saved checkpoint keeps these
+coordinates relative to `baseline`, even when selected statements move. Scope/type
+checks and checkpoint/body equivalence precede prediction.
 
 The body profile supports one `Integer` input/result, local integer/Boolean values,
 assignments, supported binary conditions and nested branches. Limits are 128 KiB
@@ -91,7 +94,8 @@ requires a model for sampling. Model context budgets may be narrower.
 Intent, alternatives, cases and budget participate in both bidirectional and core
 semantic fingerprints. Editing them changes the contract and retains the activity's
 stable ID. Formatting and detached cloning preserve it. Selections and runtime
-observations remain in their existing result records.
+observations remain in their existing result records. A checkpoint also carries
+the original planning body and ordered picked labels through those same IR/BX paths.
 
 An embedded assembly owns the complete plan. Omit external `--path-plan`, `--plan`
 and stream `document`; combining them returns an error. Library generation, context
@@ -110,3 +114,49 @@ calls, loops and additional types remain development tasks.
 
 Related: [recipes](source-path-recipes.md), [language direction](language-direction.ko.md),
 [worker](native-body-worker.md).
+
+## Continue developing from the selected body
+
+`body-codegen --json` returns `source` (Go) and, for source assembly, `gooo_source`
+(the complete reusable Gooo file). Its receipt records
+`source_format: gooo/source-assembly-checkpoint/v1` and the selected source digest.
+Only the chosen activity's `computes` token and `assembling` span change.
+
+```sh
+gooo body-codegen --json --activity Qualified \
+  examples/body-codegen/source-assembly.gooo.fixture > /tmp/generation.json
+gooo body-realize --source examples/body-codegen/source-assembly.gooo.fixture \
+  --generation /tmp/generation.json --out /tmp/gooo-realized
+gooo body-codegen --json --activity Qualified /tmp/gooo-realized/realized.gooo
+```
+
+The directory contains `original.gooo`, the exact `generation.json`, `realized.gooo`
+and `realization.json`. The command reconstructs the declared selection and finite
+observations without loading a model. It preserves a partial finite score as well
+as a complete one. Older source-assembly generation records are replayed using
+their original body-only format, then upgraded; both source digests are recorded.
+
+```gooo
+activity Offset(Integer) -> Integer computes "return (2 - input)" assembling {
+    baseline "return input - 2"
+    picked "offset-order" -> "layout_reverse"
+    choice "offset-order" operand_order at "0" intent "2에서 입력을 뺀다. Subtract input from two."
+    case "-1" -> "3"
+    case "4" -> "-2"
+    attempts "2"
+}
+```
+
+The baseline is a coordinate map; `computes` is the implementation now in use.
+Picked labels identify how that map produced the implementation. Name choices
+retain both names when the selected read changes; interacting choices retain the
+original palette even if one combination fails scope/type checks. Export and
+typed generation verify that the working body matches the recorded selection.
+
+Labels are `layout_forward/reverse` for operands and branches,
+`reference_first/second`, `assign_first/second`, and `schedule_forward/reverse`.
+`baseline` requires exactly one picked label per choice, in declaration order.
+The complete output remains bounded to 128 KiB. A new baseline starts a new plan:
+edit `computes`, remove the old `baseline`/`picked` fields, and align the choices
+and cases with that body. Re-generating an existing checkpoint runs fresh bounded
+search; known selections do not skip testing or guarantee broader intent coverage.
