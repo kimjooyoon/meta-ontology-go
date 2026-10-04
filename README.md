@@ -29,6 +29,7 @@ Gooo source + intent + permitted choices + finite expectations
 
 **Start here:** [direction and current progress, 한국어](docs/language-direction.ko.md)
 · [body generation](docs/language/body-codegen.md)
+· [Gooo source assembly](docs/source-assembly.md)
 · [small model integration](docs/three-choice-path-model.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
 
@@ -47,6 +48,11 @@ Both receive source-derived context, Korean/English intent and candidate
 structure. Gooo owns the alternatives and the budget.
 Broader natural-language discovery and reusable learned abstractions are the next
 language research questions.
+
+Activities can declare `assembling` alongside `computes`: intent, permitted source
+paths, finite input/output cases and the search budget live together in Gooo.
+`body-codegen`, context export, file execution and retained workers read the same
+contract. See [source assembly](docs/source-assembly.md) for model/deterministic use.
 
 We want the language to carry the assembly plan and its unfinished obligations
 along with the program. A useful improvement should complete more of the declared

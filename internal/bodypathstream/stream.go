@@ -41,7 +41,7 @@ type Request struct {
 	CorrelationID  string                       `json:"correlation_id"`
 	Source         string                       `json:"source"`
 	Activity       string                       `json:"activity"`
-	Document       json.RawMessage              `json:"document"`
+	Document       json.RawMessage              `json:"document,omitempty"`
 	Options        bodycodegen.TypedPathOptions `json:"options"`
 	ExecutionCases json.RawMessage              `json:"execution_cases,omitempty"`
 }

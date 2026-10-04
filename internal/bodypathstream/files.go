@@ -40,7 +40,7 @@ func RunFilesCommand(ctx context.Context, name string, args []string, stdout, st
 	f.SetOutput(stderr)
 	source := f.String("source", "", "original Gooo source file")
 	activity := f.String("activity", "", "source Integer -> Integer activity name")
-	plan := f.String("path-plan", "", "full typed plan or source recipe JSON")
+	plan := f.String("path-plan", "", "full typed plan or source recipe JSON; omit for source assembling")
 	cases := f.String("cases", "", "independent runtime expectations JSON")
 	options := f.String("options", "", "optional stream options JSON, including CI context")
 	model := f.String("model", "", "explicit local model.json; omit for deterministic construction")
@@ -50,7 +50,7 @@ func RunFilesCommand(ctx context.Context, name string, args []string, stdout, st
 	timing := f.Bool("timing", false, "save bounded wall phases and original-file SHA256 bindings")
 	verifyTiming := f.Bool("verify-timing", false, "check saved timing consistency and file bindings; requires only --out")
 	f.Usage = func() {
-		fmt.Fprintf(stderr, "usage: %s --source file.gooo --activity name --path-plan recipe.json --cases cases.json --out fresh-directory [options]\n", name)
+		fmt.Fprintf(stderr, "usage: %s --source file.gooo --activity name [--path-plan recipe.json] --cases cases.json --out fresh-directory [options]\n", name)
 		f.PrintDefaults()
 	}
 	if err := f.Parse(args); err != nil {
@@ -71,7 +71,7 @@ func RunFilesCommand(ctx context.Context, name string, args []string, stdout, st
 		fmt.Fprintln(stdout, "timing consistency and saved-file bindings: PASS")
 		return 0
 	}
-	if f.NArg() != 0 || *source == "" || *activity == "" || *plan == "" || *cases == "" ||
+	if f.NArg() != 0 || *source == "" || *activity == "" || *cases == "" ||
 		*out == "" || *repeat < 1 || *repeat > 16 {
 		f.Usage()
 		return 2
@@ -91,7 +91,7 @@ func RunFilesCommand(ctx context.Context, name string, args []string, stdout, st
 		path string
 		max  int64
 	}{{*source, 128 << 10}, {*plan, 256 << 10}, {*cases, 32 << 10}, {*options, 64 << 10}} {
-		if i == 3 && input.path == "" {
+		if (i == 1 || i == 3) && input.path == "" {
 			continue
 		}
 		b, err := readFileInput(input.path, input.max)

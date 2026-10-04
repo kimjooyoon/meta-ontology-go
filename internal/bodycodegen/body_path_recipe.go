@@ -38,6 +38,19 @@ type sourceRecipeChoice struct {
 // recipe from the authoritative activity. Expansion does no inference or search.
 // Its result is an ordinary owned path document, bound again during generation.
 func DecodeSourcePathDocument(ctx context.Context, filename string, source []byte, activity string, raw []byte) (pathplan.Document, error) {
+	assembly, err := SourceAssembly(ctx, filename, source, activity)
+	if err != nil {
+		return pathplan.Document{}, err
+	}
+	if assembly != nil {
+		if len(raw) != 0 {
+			return pathplan.Document{}, fmt.Errorf("source assembling contract already owns the plan; omit the external document")
+		}
+		return expandSourceRecipe(ctx, filename, source, activity, sourceAssemblyRecipe(assembly))
+	}
+	if len(raw) == 0 {
+		return pathplan.Document{}, fmt.Errorf("activity has no assembling contract; supply a path plan or recipe")
+	}
 	var header struct {
 		Schema string `json:"schema"`
 	}
@@ -66,13 +79,18 @@ func DecodeSourcePathDocument(ctx context.Context, filename string, source []byt
 }
 
 func expandSourceRecipe(ctx context.Context, filename string, source []byte, activity string, recipe sourcePathRecipe) (pathplan.Document, error) {
+	return expandSourceRecipeProjection(ctx, filename, source, activity, recipe, nil, true)
+}
+
+func expandSourceRecipeProjection(ctx context.Context, filename string, source []byte, activity string,
+	recipe sourcePathRecipe, projection *Result, bind bool) (pathplan.Document, error) {
 	if ctx == nil || len(source) == 0 || len(source) > 128<<10 || !utf8.Valid(source) {
 		return pathplan.Document{}, fmt.Errorf("recipe requires context and bounded UTF-8 Gooo source")
 	}
 	if err := ctx.Err(); err != nil {
 		return pathplan.Document{}, err
 	}
-	base, err := GenerateWithPlanner(ctx, filename, source, activity, "", "")
+	base, err := typedPathBindingProjection(ctx, filename, source, activity, projection)
 	if err != nil {
 		return pathplan.Document{}, err
 	}
@@ -111,8 +129,10 @@ func expandSourceRecipe(ctx context.Context, filename string, source []byte, act
 	if err != nil {
 		return pathplan.Document{}, err
 	}
-	if _, err = bindTypedPathSourceProjection(ctx, filename, source, activity, prepared, &BodyPathReceipt{}, &base); err != nil {
-		return pathplan.Document{}, fmt.Errorf("recipe source binding: %w", err)
+	if bind {
+		if _, err = bindTypedPathSourceProjection(ctx, filename, source, activity, prepared, &BodyPathReceipt{}, &base); err != nil {
+			return pathplan.Document{}, fmt.Errorf("recipe source binding: %w", err)
+		}
 	}
 	return document, nil
 }

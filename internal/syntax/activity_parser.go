@@ -71,5 +71,12 @@ func (p *Parser) parseActivity() *ActivityDecl {
 			p.error(DiagExpectedString, p.peek().Span, "expected quoted activity value program")
 		}
 	}
+	if p.at(TokenIdentifier) && p.peek().Value == "assembling" {
+		activity.Assembly = p.parseAssembly()
+		activity.Span.End = activity.Assembly.Span.End
+		if !activity.ValueProgramPresent {
+			p.error(DiagUnexpectedDeclaration, activity.Assembly.Span, "assembling requires an activity computes body")
+		}
+	}
 	return activity
 }
