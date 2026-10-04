@@ -3,28 +3,18 @@ package bodyexecution
 import (
 	"context"
 	"fmt"
+	"unicode/utf8"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
-	"unicode/utf8"
 )
 
 func prepareCompositionGraph(ctx context.Context, filename string, source []byte) (compositionGraph, error) {
 	var graph compositionGraph
-	if ctx == nil || len(source) == 0 || len(source) > 128<<10 || !utf8.Valid(source) {
-		return graph, fmt.Errorf("composition requires context and 1..128 KiB UTF-8 source")
-	}
-	if err := ctx.Err(); err != nil {
+	file, err := compositionSource(ctx, filename, source)
+	if err != nil {
 		return graph, err
-	}
-	file, diagnostics := syntax.ParseFile(filename, string(source))
-	if diagnostics.HasErrors() {
-		return graph, fmt.Errorf("composition source: %v", diagnostics)
-	}
-	for _, binding := range file.Bindings {
-		if binding.Feedback {
-			return graph, fmt.Errorf("composition requires in-invocation binds; feedback has a separate lifecycle")
-		}
 	}
 	document, err := bidir.DocumentFromSyntaxContext(ctx, file)
 	if err != nil {
@@ -45,6 +35,36 @@ func prepareCompositionGraph(ctx context.Context, filename string, source []byte
 	graph.plan = CompositionPlan{Schema: "gooo/body-composition-plan/v1",
 		TypedPlanSHA256: typed.Digest(), SemanticFingerprint: bidir.SemanticFingerprint(model),
 		Edges: make([]CompositionEdge, 0, len(typed.Edges))}
+	if err := graph.bindNodes(file, model, typed); err != nil {
+		return graph, err
+	}
+	if err := graph.bindEdges(typed); err != nil {
+		return graph, err
+	}
+	graph.plan.Activities = append([]CompositionActivity(nil), graph.nodes[:graph.count]...)
+	return graph, nil
+}
+
+func compositionSource(ctx context.Context, filename string, source []byte) (*syntax.File, error) {
+	if ctx == nil || len(source) == 0 || len(source) > 128<<10 || !utf8.Valid(source) {
+		return nil, fmt.Errorf("composition requires context and 1..128 KiB UTF-8 source")
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	file, diagnostics := syntax.ParseFile(filename, string(source))
+	if diagnostics.HasErrors() {
+		return nil, fmt.Errorf("composition source: %v", diagnostics)
+	}
+	for _, binding := range file.Bindings {
+		if binding.Feedback {
+			return nil, fmt.Errorf("composition requires in-invocation binds; feedback has a separate lifecycle")
+		}
+	}
+	return file, nil
+}
+
+func (graph *compositionGraph) bindNodes(file *syntax.File, model bidir.Model, typed bidir.TypedPlan) error {
 	for i, id := range typed.Activities {
 		for _, node := range model.Nodes {
 			if node.Kind == bidir.ActivityKind && node.ID == id {
@@ -53,30 +73,30 @@ func prepareCompositionGraph(ctx context.Context, filename string, source []byte
 			}
 		}
 		if err := graph.bindActivity(file, i); err != nil {
-			return graph, err
+			return err
 		}
-		for _, entity := range model.Nodes {
-			if entity.Kind != bidir.EntityKind {
-				continue
-			}
-			if entity.Name == graph.nodes[i].InputType {
-				graph.nodes[i].InputEntityID = string(entity.ID)
-			}
-			if entity.Name == graph.nodes[i].OutputType {
-				graph.nodes[i].OutputEntityID = string(entity.ID)
-			}
-			for p := range graph.nodes[i].Inputs {
-				if entity.Name == graph.nodes[i].Inputs[p].Type {
-					graph.nodes[i].Inputs[p].EntityID = string(entity.ID)
-				}
+		graph.nodes[i].bindEntityIDs(model)
+	}
+	return nil
+}
+
+func (node *CompositionActivity) bindEntityIDs(model bidir.Model) {
+	for _, entity := range model.Nodes {
+		if entity.Kind != bidir.EntityKind {
+			continue
+		}
+		if entity.Name == node.InputType {
+			node.InputEntityID = string(entity.ID)
+		}
+		if entity.Name == node.OutputType {
+			node.OutputEntityID = string(entity.ID)
+		}
+		for p := range node.Inputs {
+			if entity.Name == node.Inputs[p].Type {
+				node.Inputs[p].EntityID = string(entity.ID)
 			}
 		}
 	}
-	if err := graph.bindEdges(typed); err != nil {
-		return graph, err
-	}
-	graph.plan.Activities = append([]CompositionActivity(nil), graph.nodes[:graph.count]...)
-	return graph, nil
 }
 
 // Check all bodies and embedded plans before loading an optional model.
