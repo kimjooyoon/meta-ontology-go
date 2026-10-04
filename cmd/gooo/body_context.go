@@ -46,6 +46,23 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 			return bodyContextFailure(stdout, err)
 		}
 	}
+	assembly, err := bodycodegen.SourceAssembly(ctx, options.filename, source, options.activity)
+	if err != nil {
+		return bodyContextFailure(stdout, err)
+	}
+	if bodycodegen.IsRecordAssembly(assembly) {
+		if len(raw) != 0 {
+			return bodyContextFailure(stdout, fmt.Errorf("record source assembly owns its plan"))
+		}
+		result, err := bodycodegen.ExportRecordAssemblyContext(ctx, options.filename, source, options.activity, options.includePlan)
+		if err != nil {
+			return bodyContextFailure(stdout, err)
+		}
+		if err = json.NewEncoder(stdout).Encode(result); err != nil {
+			return bodyContextFailure(stdout, err)
+		}
+		return exitOK
+	}
 	document, err := bodycodegen.DecodeSourcePathDocument(ctx, options.filename, source, options.activity, raw)
 	if err != nil {
 		return bodyContextFailure(stdout, err)

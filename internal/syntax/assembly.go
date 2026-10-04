@@ -50,6 +50,16 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 				continue
 			}
 			d.Spec.Cases = append(d.Spec.Cases, assemblyspec.Case{Input: input, Expected: expected})
+		case "value_case":
+			input := p.assemblyValue()
+			p.expect(TokenArrow, "->", DiagExpectedArrow)
+			expected := p.assemblyValue()
+			if len(d.Spec.ValueCases) == 128 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds 128 value cases")
+				p.skipAssemblyRemainder()
+				continue
+			}
+			d.Spec.ValueCases = append(d.Spec.ValueCases, assemblyspec.ValueCase{Inputs: input, Expected: expected})
 		case "attempts":
 			value := p.assemblyInteger("attempt budget")
 			if seenAttempts || value < 1 || value > 64 {
@@ -135,6 +145,15 @@ func (p *Parser) assemblyInteger(label string) int64 {
 	return value
 }
 
+func (p *Parser) assemblyValue() string {
+	token := p.expectString()
+	value, err := assemblyspec.CanonicalValue(token.Name)
+	if err != nil {
+		p.error(DiagUnexpectedDeclaration, token.Span, err.Error())
+	}
+	return value
+}
+
 func (p *Parser) skipAssemblyRemainder() {
 	for !p.at(TokenRBrace) && !p.at(TokenEOF) {
 		p.advance()
@@ -165,6 +184,9 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 	for _, c := range d.Spec.Cases {
 		fmt.Fprintf(output, "    case %s -> %s\n", quoteString(strconv.FormatInt(c.Input, 10)),
 			quoteString(strconv.FormatInt(c.Expected, 10)))
+	}
+	for _, c := range d.Spec.ValueCases {
+		fmt.Fprintf(output, "    value_case %s -> %s\n", quoteString(c.Inputs), quoteString(c.Expected))
 	}
 	fmt.Fprintf(output, "    attempts %s\n", quoteString(strconv.Itoa(d.Spec.MaxAttempts)))
 	if d.Spec.Seed != "" {

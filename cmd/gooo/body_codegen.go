@@ -190,7 +190,13 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		return exitUsage
 	}
 	var result bodycodegen.Result
-	if pathPlanPath != "" || assembly != nil {
+	if bodycodegen.IsRecordAssembly(assembly) {
+		if pathPlanPath != "" || pathStepAttempts != 0 || pathFeedbackRounds != 0 || pathDiagnosisPath != "" || pathObservationPath != "" {
+			return reportBodyCodegenFailure(jsonMode, filename, activity, source,
+				fmt.Errorf("record field assembly uses its source budget and --path-model; omit external path options"), stdout, stderr)
+		}
+		result, err = generateRecordAssemblyCLI(ctx, filename, source, activity, pathModelPath)
+	} else if pathPlanPath != "" || assembly != nil {
 		var planBytes []byte
 		if pathPlanPath != "" {
 			var readErr error

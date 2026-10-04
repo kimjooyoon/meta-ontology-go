@@ -131,11 +131,7 @@ func (graph compositionGraph) hasAssembly() bool {
 
 func generateCompositionAssembly(ctx context.Context, filename string, source []byte,
 	activity string, generator *bodycodegen.TypedPathGenerator) (bodycodegen.Result, error) {
-	document, err := bodycodegen.DecodeSourcePathDocument(ctx, filename, source, activity, nil)
-	if err != nil {
-		return bodycodegen.Result{}, err
-	}
-	return generator.Generate(ctx, filename, source, activity, document, bodycodegen.TypedPathOptions{})
+	return generator.GenerateSourceAssembly(ctx, filename, source, activity)
 }
 
 func DecodeComposition(raw []byte) (Composition, error) {
@@ -199,7 +195,7 @@ func replayCompositionPlain(ctx context.Context, filename string, source []byte,
 	}
 	r, expected := prior.Report, replayed.Report
 	if prior.Source != replayed.Source || prior.GoooSource != "" || r.BodyPaths != nil || r.BodyFill != nil ||
-		r.BodySearch != nil || r.Route != "preserve" || r.Decision != "PASS" || !r.TypecheckPassed ||
+		r.BodySearch != nil || r.RecordAssembly != nil || r.Route != "preserve" || r.Decision != "PASS" || !r.TypecheckPassed ||
 		!r.DeterministicReplay || r.ActivityID != node.ID || r.SourceDigest != expected.SourceDigest ||
 		r.GeneratedDigest != expected.GeneratedDigest || r.ProgramDigest != expected.ProgramDigest ||
 		r.InputType != expected.InputType || r.OutputType != expected.OutputType ||
