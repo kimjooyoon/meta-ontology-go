@@ -119,8 +119,7 @@ func searchRecordAssembly(ctx context.Context, p recordAssemblyPlan, r *RecordAs
 			if contextError := ctx.Err(); contextError != nil {
 				return contextError
 			}
-			var typeError types.Error
-			if errors.As(err, &typeError) {
+			if _, ok := errors.AsType[types.Error](err); ok {
 				// Independently valid alternatives can remove every use of a
 				// local when combined. Keep this candidate's type observation,
 				// consume one attempt, and retain the best valid implementation.
