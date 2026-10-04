@@ -46,7 +46,7 @@ func (g *TypedPathGenerator) generateRecordAssembly(ctx context.Context, filenam
 	if g.info.Loaded {
 		info := g.Info()
 		r.Model = &info
-		r.Context = recordModelContext(plan.choices, info.FeatureVersion)
+		r.Context = recordPlanModelContext(plan, info.FeatureVersion)
 		if g.three == nil {
 			r.Context.Status, r.Context.Reason = "DECLINED_TO_DETERMINISTIC", "THREE_CHOICE_MODEL_REQUIRED"
 		}
@@ -59,6 +59,8 @@ func (g *TypedPathGenerator) generateRecordAssembly(ctx context.Context, filenam
 				err = g.three.PredictRecordInto(r.Context.Text, &workspace, &prediction)
 			case jointdecision.RecordSharedFeatureVersion:
 				err = g.three.PredictRecordSharedInto(r.Context.Text, &workspace, &prediction)
+			case jointdecision.RecordOriginSharedFeatureVersion:
+				err = g.three.PredictRecordOriginSharedInto(r.Context.Text, &workspace, &prediction)
 			default:
 				err = g.three.PredictInto(r.Context.Text, &workspace, &prediction)
 			}

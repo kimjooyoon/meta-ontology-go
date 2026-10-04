@@ -70,6 +70,11 @@ Record constructor fields can also declare alternative value expressions and
 typed JSON cases. Their assembly reports matching fields as well as complete
 cases, retaining partial results under a small attempt budget.
 [Field assembly example](docs/record-field-assembly.md).
+Local records support [sequential field writes and saved values](docs/record-field-updates.md).
+An optional [source value-flow export](docs/record-value-flow.md) follows those
+definitions through copies, branches and early returns. A separate small-model
+input version summarizes the relation in fixed arrays; training that version
+is the next measured step.
 
 We want the language to carry the assembly plan and its unfinished obligations
 along with the program. A useful improvement should complete more of the declared
