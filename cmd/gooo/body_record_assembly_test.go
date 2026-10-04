@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
@@ -26,5 +27,19 @@ func TestRecordSourceAssemblyCLIExportsAndConstructsWithoutExternalPlan(t *testi
 	if err := json.Unmarshal(output.Bytes(), &exported); err != nil || exported.ExpandedPlan == nil || exported.Context.Status != "ENCODED" ||
 		exported.ModelPredictions != 0 || exported.CandidateTests != 0 || exported.ContractSHA256 != result.Report.RecordAssembly.ContractSHA256 {
 		t.Fatal("record CLI context", err, string(output.Bytes()))
+	}
+}
+
+func TestRecordSourceContextCLIUsesRequestedFieldFeatures(t *testing.T) {
+	source := "../../examples/body-codegen/record-field-assembly.gooo.fixture"
+	var output, diagnostics bytes.Buffer
+	if code := run([]string{"body-context", "--feature-version", jointdecision.RecordFieldFeatureVersion,
+		"--activity", "Select", source}, &output, &diagnostics); code != exitOK {
+		t.Fatal(code, diagnostics.String(), output.String())
+	}
+	var exported bodycodegen.RecordAssemblyContextExport
+	if err := json.Unmarshal(output.Bytes(), &exported); err != nil || exported.Context.FeatureVersion != jointdecision.RecordFieldFeatureVersion ||
+		exported.Context.Schema != "gooo/record-field-expression-context/v1" || exported.ModelPredictions != 0 || exported.CandidateTests != 0 {
+		t.Fatal("explicit field CLI context", err, output.String())
 	}
 }
