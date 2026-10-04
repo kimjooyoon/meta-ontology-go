@@ -40,6 +40,11 @@ the body's lexical scope and pure-expression rules. It must have the declared
 field type. A field choice can use a local or parameter field, a text literal or
 a text expression. A mismatched Boolean expression receives a type diagnostic.
 
+Local records also support individual field assignments. Use `field_update` to
+select an assignment's right-hand side; its ordinal counts only field updates.
+This allows later fields to read earlier updated values. See
+[sequential updates and copied values](record-field-updates.md).
+
 `value_case` takes a JSON positional input array and a complete expected output
 record. Inputs may mix Integer, Boolean, Text and declared records. Every record
 field is required. Input and expected JSON are normalized into the assembly

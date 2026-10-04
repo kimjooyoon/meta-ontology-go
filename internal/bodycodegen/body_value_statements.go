@@ -73,6 +73,9 @@ func (e *integerBodyEvaluator) evaluateAssignment(value *ast.AssignStmt) error {
 	if len(value.Lhs) != 1 || len(value.Rhs) != 1 || value.Tok != token.ASSIGN {
 		return fmt.Errorf("unsupported generated assignment")
 	}
+	if field, ok := value.Lhs[0].(*ast.SelectorExpr); ok {
+		return e.evaluateRecordUpdate(field, value.Rhs[0])
+	}
 	name, ok := value.Lhs[0].(*ast.Ident)
 	if !ok {
 		return fmt.Errorf("unsupported generated assignment target")

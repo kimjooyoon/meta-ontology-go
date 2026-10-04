@@ -35,8 +35,8 @@ func validateBodyStatement(statement ast.Stmt, readonly, locals map[string]bool,
 		if value.Tok != token.ASSIGN || len(value.Lhs) != 1 || len(value.Rhs) != 1 {
 			return 0, fmt.Errorf("assignment requires one existing local and one value")
 		}
-		name, ok := value.Lhs[0].(*ast.Ident)
-		if !ok || readonly[name.Name] || !locals[name.Name] {
+		name, ok := assignmentLocalName(value.Lhs[0])
+		if !ok || readonly[name] || !locals[name] {
 			return 0, fmt.Errorf("assignment target must be an existing local")
 		}
 		return 0, validateExpression(value.Rhs[0])
