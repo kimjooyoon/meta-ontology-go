@@ -70,7 +70,7 @@ func (s Spec) Validate() error {
 			if !boundedText(c.Alternative, 128) {
 				return fmt.Errorf("assembly name choice %q requires an alternative local", c.ID)
 			}
-		case "field_value":
+		case "field_value", "field_update":
 			if !boundedText(c.Alternative, 512) || len(s.Cases) != 0 || len(s.ValueCases) == 0 || len(s.Choices) > 6 {
 				return fmt.Errorf("field assembly requires an alternative expression, 1..6 choices and value_case expectations")
 			}
@@ -80,8 +80,8 @@ func (s Spec) Validate() error {
 	}
 	if len(s.ValueCases) != 0 {
 		for _, choice := range s.Choices {
-			if choice.Kind != "field_value" {
-				return fmt.Errorf("value_case requires only field_value choices")
+			if choice.Kind != "field_value" && choice.Kind != "field_update" {
+				return fmt.Errorf("value_case requires only field_value or field_update choices")
 			}
 		}
 		for _, c := range s.ValueCases {
@@ -114,7 +114,7 @@ func (s Spec) validateCheckpoint() error {
 			first, second = "assign_first", "assign_second"
 		case "root_order":
 			first, second = "schedule_forward", "schedule_reverse"
-		case "field_value":
+		case "field_value", "field_update":
 			first, second = "value_first", "value_second"
 		}
 		if s.Picked[i].ID != c.ID || (s.Picked[i].Label != first && s.Picked[i].Label != second) {

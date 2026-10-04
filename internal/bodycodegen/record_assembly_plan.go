@@ -3,9 +3,7 @@ package bodycodegen
 import (
 	"context"
 	"fmt"
-	"go/ast"
 	"go/parser"
-	"go/token"
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
@@ -21,6 +19,7 @@ type recordAssemblyPlan struct {
 
 type recordValueSite struct {
 	start, end int
+	kind       string
 	choice     RecordValueChoice
 }
 
@@ -95,47 +94,23 @@ func prepareRecordAssembly(ctx context.Context, filename string, source []byte, 
 }
 
 func (p *recordAssemblyPlan) bindSites() error {
-	prefix := "package selection\nfunc selected(){\n"
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "record-body", prefix+p.body.body+"\n}", parser.AllErrors)
+	sites, err := recordAssemblySites(p.body)
 	if err != nil {
 		return err
 	}
-	var sites []recordValueSite
-	ast.Inspect(file, func(node ast.Node) bool {
-		literal, ok := node.(*ast.CompositeLit)
-		if !ok {
-			return true
-		}
-		name, ok := literal.Type.(*ast.Ident)
-		if !ok {
-			return true
-		}
-		record := recordTypeByName(p.body.records, name.Name)
-		if record == nil {
-			return true
-		}
-		for _, element := range literal.Elts {
-			pair := element.(*ast.KeyValueExpr)
-			key := pair.Key.(*ast.Ident).Name
-			for _, field := range record.Fields {
-				if field.Name == key {
-					start, end := fset.Position(pair.Value.Pos()).Offset-len(prefix), fset.Position(pair.Value.End()).Offset-len(prefix)
-					sites = append(sites, recordValueSite{start, end, RecordValueChoice{RecordID: record.ID,
-						FieldID: field.ID, Field: key, First: p.body.body[start:end]}})
-				}
+	used := make(map[int]bool)
+	for _, choice := range p.spec.Choices {
+		var matching []recordValueSite
+		for _, site := range sites {
+			if site.kind == choice.Kind {
+				matching = append(matching, site)
 			}
 		}
-		return true
-	})
-	sort.Slice(sites, func(i, j int) bool { return sites[i].start < sites[j].start })
-	var used [128]bool
-	for _, choice := range p.spec.Choices {
-		if choice.Occurrence >= len(sites) || used[choice.Occurrence] {
-			return fmt.Errorf("field choice needs a unique constructor field occurrence")
+		if choice.Occurrence >= len(matching) || used[matching[choice.Occurrence].start] {
+			return fmt.Errorf("field choice needs a unique %s occurrence", choice.Kind)
 		}
-		used[choice.Occurrence] = true
-		site := sites[choice.Occurrence]
+		site := matching[choice.Occurrence]
+		used[site.start] = true
 		site.choice.ID, site.choice.Occurrence, site.choice.Second = choice.ID, choice.Occurrence, choice.Alternative
 		site.choice.Intent = choice.Intent
 		if _, err := parser.ParseExpr(choice.Alternative); err != nil {
@@ -143,6 +118,10 @@ func (p *recordAssemblyPlan) bindSites() error {
 		}
 		p.sites, p.choices = append(p.sites, site), append(p.choices, site.choice)
 	}
+	return p.validateSiteSpans()
+}
+
+func (p recordAssemblyPlan) validateSiteSpans() error {
 	for i, a := range p.sites {
 		for _, b := range p.sites[:i] {
 			if a.start < b.end && b.start < a.end {

@@ -82,6 +82,11 @@ and reports `FIELD_MODEL_REQUIRES_RECORD_BODY`. Reconstruction makes zero new
 predictions. Each field is judged independently, so cross-field dependencies
 must be checked by the typed body and finite cases.
 
+The same model can rank [local field update alternatives](record-field-updates.md).
+Its expression context retains the exact expressions; local reaching definitions
+remain outside the trained feature map. Sequential dependence is evaluated
+by the source body for every attempted mask.
+
 ## Conditional bodies without an else
 
 Source-owned bodies also accept `if condition { ... }` followed by ordinary
