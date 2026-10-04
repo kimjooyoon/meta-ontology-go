@@ -20,8 +20,6 @@ func BenchmarkRecordOriginContext(b *testing.B) {
 	}
 	flow := recordValueFlow(plan)
 	raw, _ := json.Marshal(flow)
-	b.ReportMetric(float64(len(flow.Nodes)), "nodes")
-	b.ReportMetric(float64(len(raw)), "graph-bytes")
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
@@ -30,4 +28,6 @@ func BenchmarkRecordOriginContext(b *testing.B) {
 			b.Fatal(result.Reason)
 		}
 	}
+	b.ReportMetric(float64(len(flow.Nodes)), "nodes")
+	b.ReportMetric(float64(len(raw)), "graph-bytes")
 }

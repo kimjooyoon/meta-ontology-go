@@ -75,7 +75,7 @@ type recordFlowBuilder struct {
 	body       preparedBody
 	sites      []recordValueSite
 	fset       *token.FileSet
-	info       types.Info
+	info       *types.Info
 	base       int
 	nodes      [recordFlowNodeLimit]RecordFlowNode
 	count      int

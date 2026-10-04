@@ -16,7 +16,7 @@ func recordValueFlow(p recordAssemblyPlan) *RecordValueFlow {
 	r := &RecordValueFlow{Schema: recordFlowSchema, Status: "RESOLVED", ActivityID: p.body.activityID,
 		BodyView: view, BodySHA256: digest([]byte(p.body.body)), Scope: "typed symbolic value definitions, copies, choice alternatives and conditional joins; body-relative byte offsets retain same-length let/var spelling; no input values, cases, predictions or candidate execution"}
 	c := recordFlowBuilder{body: p.body, sites: p.sites, fset: token.NewFileSet(), view: view, bodyView: view,
-		info: types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}}
+		info: &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}}
 	fn, err := c.parse()
 	if err == nil {
 		state := c.parameters()
@@ -46,7 +46,7 @@ func (c *recordFlowBuilder) parse() (*ast.FuncDecl, error) {
 		return nil, err
 	}
 	normalizeIntegerLocalInitializers("selection", file, c.fset)
-	if _, err = new(types.Config).Check("selection", c.fset, []*ast.File{file}, &c.info); err != nil {
+	if _, err = new(types.Config).Check("selection", c.fset, []*ast.File{file}, c.info); err != nil {
 		return nil, err
 	}
 	return file.Decls[len(file.Decls)-1].(*ast.FuncDecl), nil
