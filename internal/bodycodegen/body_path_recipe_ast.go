@@ -13,6 +13,8 @@ func (b *recipeArena) expression(node ast.Expr, depth int) (int, error) {
 	if err := b.bounded(depth); err != nil {
 		return 0, err
 	}
+	node, normalized := normalizeConditionExpression(node)
+	b.normalizedCondition = b.normalizedCondition || normalized
 	value := bodyplan.Expr{}
 	switch e := node.(type) {
 	case *ast.ParenExpr:
@@ -70,6 +72,32 @@ func (b *recipeArena) expression(node ast.Expr, depth int) (int, error) {
 		b.inputIndex, b.inputSeen = index, true
 	}
 	return index, nil
+}
+
+// The typed arena has a deliberately small closed operator set. These exact
+// condition rewrites bring common Gooo/Go spellings into that set without
+// inventing new operators: they preserve the checked scalar result and child
+// structure after normalization.
+func normalizeConditionExpression(node ast.Expr) (ast.Expr, bool) {
+	switch expression := node.(type) {
+	case *ast.UnaryExpr:
+		if expression.Op == token.NOT {
+			return &ast.BinaryExpr{X: expression.X, Op: token.EQL,
+				Y: &ast.Ident{Name: "false", NamePos: expression.OpPos}}, true
+		}
+	case *ast.BinaryExpr:
+		switch expression.Op {
+		case token.GTR:
+			return &ast.BinaryExpr{X: expression.Y, Op: token.LSS, Y: expression.X, OpPos: expression.OpPos}, true
+		case token.GEQ:
+			return &ast.BinaryExpr{X: expression.Y, Op: token.LEQ, Y: expression.X, OpPos: expression.OpPos}, true
+		case token.NEQ:
+			equality := &ast.BinaryExpr{X: expression.X, Op: token.EQL, Y: expression.Y, OpPos: expression.OpPos}
+			return &ast.BinaryExpr{X: equality, Op: token.EQL,
+				Y: &ast.Ident{Name: "false", NamePos: expression.OpPos}, OpPos: expression.OpPos}, true
+		}
+	}
+	return node, false
 }
 
 func recipeOperation(op token.Token) string {

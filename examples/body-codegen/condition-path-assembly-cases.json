@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/body-runtime-cases/v1",
+  "cases": [
+    {"input": -100, "expected": -399},
+    {"input": -1, "expected": -3},
+    {"input": 0, "expected": 7},
+    {"input": 1, "expected": 11},
+    {"input": 2, "expected": 9},
+    {"input": 3, "expected": 19},
+    {"input": 4, "expected": 23},
+    {"input": 5, "expected": 21},
+    {"input": 6, "expected": 25},
+    {"input": 12, "expected": 49},
+    {"input": 100, "expected": 401}
+  ]
+}
