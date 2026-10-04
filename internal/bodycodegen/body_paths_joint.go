@@ -59,6 +59,10 @@ func loadTypedStructuralModel(name string) (typedPathModel, error) {
 		return typedPathModel{three: model}, err
 	}
 	if selector.Schema == jointdecision.SharedThreeSchema {
+		if selector.Feature == jointdecision.RecordSharedFeatureVersion {
+			model, err := jointdecision.LoadRecordSharedThree(name)
+			return typedPathModel{three: model}, err
+		}
 		model, err := jointdecision.LoadSharedThree(name)
 		return typedPathModel{three: model}, err
 	}

@@ -26,6 +26,9 @@ func bindRecordAssemblyScope(common *CompletenessReceipt, result Report) {
 		if r.Context != nil && r.Context.FeatureVersion == jointdecision.RecordFieldFeatureVersion {
 			common.Scope["decision_mode"] = "local_field_expression_prediction_then_finite_tdd"
 		}
+		if r.Context != nil && r.Context.FeatureVersion == jointdecision.RecordSharedFeatureVersion {
+			common.Scope["decision_mode"] = "local_shared_field_prediction_then_finite_tdd"
+		}
 	}
 }
 
