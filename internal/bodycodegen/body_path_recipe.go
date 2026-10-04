@@ -127,6 +127,7 @@ type recipeArena struct {
 	expressionCount, statementCount int
 	inputIndex                      int
 	inputSeen                       bool
+	normalizedCondition             bool
 }
 
 // The source signature declares input even when a constant body never reads it.

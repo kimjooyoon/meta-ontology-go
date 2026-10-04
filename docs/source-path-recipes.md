@@ -64,6 +64,33 @@ combination-specific failures remain recorded as type-rejected candidates.
 Root order preserves every statement and only exchanges the selected pair.
 Stable activity IDs continue to come from the source.
 
+## Common comparisons and negated conditions
+
+The bounded typed-body profile also accepts Go-style `>`, `>=`, `!=` and boolean
+`!` in source recipes. It lowers these spellings into existing typed operations:
+
+```text
+a > b   → b < a
+a >= b  → b <= a
+a != b  → (a == b) == false
+!test   → test == false
+```
+
+The source-binding receipt uses `normalized_condition_typed_body_tree/v1` when
+this normalization participates in a comparison. It still typechecks both
+projections and compares all local references, statement order, branch bodies,
+and remaining operators. This admits the four condition spellings without
+expanding the runtime's operation set.
+
+The [condition assembly example](../examples/body-codegen/condition-path-assembly.gooo.fixture)
+combines comparison, inequality and negation with two local values, an assignment
+inside an `if`, an alternate branch, a return expression and three declared
+assembly choices. Its Korean and English recipe and two separate finite suites
+are checked in beside the source. Run it without `--model` for deterministic
+construction; supply a compatible tiny three choice `--model` to measure its
+selection path. The emitted program is independently compiled and checked
+against its runtime cases by `body-path-run`.
+
 The source profile is one `Integer -> Integer` activity, with integer and boolean
 literals, local declarations, assignment, `if`/`else` blocks and `else if` chains, returns,
 and binary `+`, `-`, `*`, `<`, `<=`, `==`, `&&`, `||`. Negative integer literals
