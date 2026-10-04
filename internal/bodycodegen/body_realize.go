@@ -26,6 +26,9 @@ type Realization struct {
 // RealizeSourceAssembly replays observations and returns a reusable Gooo
 // checkpoint. Partial finite scores remain visible; no search or inference runs.
 func RealizeSourceAssembly(ctx context.Context, filename string, source []byte, prior Result) (Realization, error) {
+	if prior.Report.RecordAssembly != nil {
+		return realizeRecordAssembly(ctx, filename, source, prior)
+	}
 	document, err := DecodeSourcePathDocument(ctx, filename, source, prior.Report.Activity, nil)
 	if err != nil {
 		return Realization{}, err

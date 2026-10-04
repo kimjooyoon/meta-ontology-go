@@ -1,5 +1,9 @@
 # Author body assembly in Gooo
 
+For record output bodies, [field-value assembly](record-field-assembly.md) adds
+typed JSON cases and alternatives inside constructor fields. The Integer path
+profile below keeps its existing `case` and operand/reference choices.
+
 An activity can keep its baseline body, assembly intent, permitted paths and finite
 expectations in one declaration. `assembling` is a typed syntax node, preserved by
 bidirectional lowering into semantic IR. It expands through the existing recipe
