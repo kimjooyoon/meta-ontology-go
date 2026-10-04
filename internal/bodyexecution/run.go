@@ -10,7 +10,6 @@ import (
 	"go/token"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -36,6 +35,8 @@ type Observation struct {
 	CompilerSourceSHA       string                             `json:"declared_compiler_source_sha"`
 	ProducerSourceSHA       string                             `json:"producer_source_sha"`
 	GoToolSHA256            string                             `json:"go_tool_sha256"`
+	GoToolPath              string                             `json:"go_tool_path,omitempty"`
+	GoToolSelection         string                             `json:"go_tool_selection,omitempty"`
 	GoVersion               string                             `json:"go_version"`
 	ExecutableSHA256        string                             `json:"executable_sha256"`
 	Toolchain               ProcessObservation                 `json:"toolchain"`
@@ -138,17 +139,11 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 			r.SelectionDisjointInputs++
 		}
 	}
-	if goBinary == "" {
-		goBinary = "go"
-	}
-	goBinary, err = exec.LookPath(goBinary)
-	if err != nil {
-		return finish(fmt.Errorf("Go tool is unavailable"))
-	}
-	goBinary, err = filepath.Abs(goBinary)
+	goBinary, r.GoToolSelection, err = selectGoTool(goBinary)
 	if err != nil {
 		return finish(err)
 	}
+	r.GoToolPath = goBinary
 	phase.End(true)
 	phase = bodytiming.Start(ctx, "go_tool_hash")
 	r.GoToolSHA256, err = owner.bindFile(goBinary)

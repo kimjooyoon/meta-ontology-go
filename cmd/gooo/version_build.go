@@ -21,7 +21,7 @@ type versionSDKInfo struct {
 }
 
 // Build metadata describes the running executable. It does not observe the Go
-// executable that a later native request may choose from PATH or --go-bin.
+// executable selected by a later native request.
 type versionBuildInfo struct {
 	Schema            string         `json:"schema"`
 	Language          string         `json:"language"`
