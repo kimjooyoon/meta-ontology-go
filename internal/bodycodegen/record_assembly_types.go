@@ -49,6 +49,8 @@ type RecordValueChoice struct {
 
 type RecordAssemblyAttempt struct {
 	Mask         uint16 `json:"mask"`
+	Status       string `json:"status,omitempty"`
+	Reason       string `json:"reason,omitempty"`
 	Passed       int    `json:"passed"`
 	Total        int    `json:"total"`
 	FieldsPassed int    `json:"fields_passed"`
