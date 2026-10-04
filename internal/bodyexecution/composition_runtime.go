@@ -37,32 +37,34 @@ type CompositionTrace struct {
 }
 
 type CompositionRuntime struct {
-	Schema               string               `json:"schema"`
-	Stage                string               `json:"stage"`
-	Failure              string               `json:"failure,omitempty"`
-	CompositionSHA256    string               `json:"composition_sha256"`
-	OriginalSourceSHA256 string               `json:"original_source_sha256"`
-	SelectedSourceSHA256 string               `json:"selected_source_sha256"`
-	TypedPlanSHA256      string               `json:"typed_plan_sha256"`
-	GeneratedSHA256      string               `json:"generated_sha256"`
-	DriverSHA256         string               `json:"driver_sha256"`
-	RuntimeSuiteSHA256   string               `json:"runtime_suite_sha256"`
-	ExecutableSHA256     string               `json:"executable_sha256"`
-	GoToolSHA256         string               `json:"go_tool_sha256"`
-	GoToolSelection      string               `json:"go_tool_selection"`
-	GoVersion            string               `json:"go_version"`
-	ProducerSourceSHA    string               `json:"producer_source_sha"`
-	Toolchain            ProcessObservation   `json:"toolchain"`
-	Build                ProcessObservation   `json:"build"`
-	Runs                 []ProcessObservation `json:"runs"`
-	Traces               []CompositionTrace   `json:"traces"`
-	ProjectionReplayed   bool                 `json:"projection_replayed"`
-	RuntimeReplayed      bool                 `json:"runtime_replayed"`
-	FinitePassed         int                  `json:"finite_passed"`
-	FiniteTotal          int                  `json:"finite_total"`
-	ModelCalls           int                  `json:"model_calls"`
-	ElapsedNS            int64                `json:"elapsed_ns"`
-	Scope                string               `json:"scope"`
+	Schema               string                `json:"schema"`
+	Stage                string                `json:"stage"`
+	Failure              string                `json:"failure,omitempty"`
+	CompositionSHA256    string                `json:"composition_sha256"`
+	OriginalSourceSHA256 string                `json:"original_source_sha256"`
+	SelectedSourceSHA256 string                `json:"selected_source_sha256"`
+	TypedPlanSHA256      string                `json:"typed_plan_sha256"`
+	GeneratedSHA256      string                `json:"generated_sha256"`
+	DriverSHA256         string                `json:"driver_sha256"`
+	RuntimeSuiteSHA256   string                `json:"runtime_suite_sha256"`
+	ExecutableSHA256     string                `json:"executable_sha256"`
+	GoToolSHA256         string                `json:"go_tool_sha256"`
+	GoToolSelection      string                `json:"go_tool_selection"`
+	GoVersion            string                `json:"go_version"`
+	ProducerSourceSHA    string                `json:"producer_source_sha"`
+	Toolchain            ProcessObservation    `json:"toolchain"`
+	Build                ProcessObservation    `json:"build"`
+	Runs                 []ProcessObservation  `json:"runs"`
+	Traces               []CompositionTrace    `json:"traces"`
+	ProjectionReplayed   bool                  `json:"projection_replayed"`
+	RuntimeReplayed      bool                  `json:"runtime_replayed"`
+	FinitePassed         int                   `json:"finite_passed"`
+	FiniteTotal          int                   `json:"finite_total"`
+	ModelCalls           int                   `json:"model_calls"`
+	ElapsedNS            int64                 `json:"elapsed_ns"`
+	Scope                string                `json:"scope"`
+	Artifact             *ArtifactObservation  `json:"artifact,omitempty"`
+	ToolchainReference   *ToolchainObservation `json:"toolchain_reference,omitempty"`
 }
 
 // ExecuteComposition rebuilds a source-replayed graph and immediately runs it
@@ -70,13 +72,25 @@ type CompositionRuntime struct {
 // Generation-time model observations are retained separately, never re-attested.
 func ExecuteComposition(ctx context.Context, filename string, source []byte, prior Composition,
 	suite CompositionCases, goBinary string) (CompositionRuntime, error) {
-	start := time.Now()
-	r := CompositionRuntime{Schema: "gooo/body-composition-runtime/v1", Stage: "GRAPH_REPLAY",
+	return executeComposition(ctx, filename, source, prior, suite, goBinary, nil)
+}
+
+func initialCompositionRuntime(source []byte, prior Composition, suite CompositionCases) CompositionRuntime {
+	return CompositionRuntime{Schema: "gooo/body-composition-runtime/v1", Stage: "GRAPH_REPLAY",
 		CompositionSHA256: compositionDigest(prior), OriginalSourceSHA256: digest(source),
 		SelectedSourceSHA256: prior.SelectedSourceSHA256, TypedPlanSHA256: prior.Plan.TypedPlanSHA256,
 		GeneratedSHA256: prior.GeneratedSHA256, DriverSHA256: prior.DriverSHA256, RuntimeSuiteSHA256: compositionDigest(suite),
 		ProducerSourceSHA: producerSourceSHA(), Runs: make([]ProcessObservation, 0, 2), Traces: []CompositionTrace{},
 		Scope: "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"}
+}
+
+func executeComposition(ctx context.Context, filename string, source []byte, prior Composition,
+	suite CompositionCases, goBinary string, owner *Executor) (CompositionRuntime, error) {
+	start := time.Now()
+	r := initialCompositionRuntime(source, prior, suite)
+	if owner != nil {
+		r.Schema = "gooo/body-composition-runtime/v2"
+	}
 	finish := func(err error) (CompositionRuntime, error) {
 		r.ElapsedNS = time.Since(start).Nanoseconds()
 		if err != nil {
@@ -93,12 +107,12 @@ func ExecuteComposition(ctx context.Context, filename string, source []byte, pri
 	if err != nil {
 		return finish(err)
 	}
-	err = executeCompositionNative(ctx, graph, prior, suite, goBinary, &r)
+	err = executeCompositionNative(ctx, graph, prior, suite, goBinary, &r, owner)
 	return finish(err)
 }
 
 func executeCompositionNative(ctx context.Context, graph compositionGraph, prior Composition,
-	suite CompositionCases, goBinary string, r *CompositionRuntime) error {
+	suite CompositionCases, goBinary string, r *CompositionRuntime, owner *Executor) error {
 	r.ProjectionReplayed, r.Stage = true, "RUNTIME_CASES"
 	rows, err := graph.inputRows(suite)
 	if err != nil {
@@ -107,36 +121,33 @@ func executeCompositionNative(ctx context.Context, graph compositionGraph, prior
 	for _, test := range suite.Cases {
 		r.FiniteTotal += len(test.Expected)
 	}
-	goBinary, err = prepareCompositionTool(ctx, goBinary, r)
+	goBinary, err = prepareCompositionTool(ctx, goBinary, r, owner)
 	if err != nil {
 		return err
 	}
-	root, err := os.MkdirTemp("", "gooo-composition-runtime-")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(root)
-	executable, err := buildCompositionExecutable(ctx, root, prior.Source, prior.Driver, goBinary, r)
+	root, executable, release, err := compositionExecutableFor(ctx, prior, goBinary, r, owner)
+	defer release()
 	if err != nil {
 		return err
 	}
 	return observeCompositionRuns(ctx, root, executable, rows, graph, suite, r)
 }
 
-func prepareCompositionTool(ctx context.Context, requested string, r *CompositionRuntime) (string, error) {
+func prepareCompositionTool(ctx context.Context, requested string, r *CompositionRuntime, owner *Executor) (string, error) {
 	native := &Observation{ProducerSourceSHA: r.ProducerSourceSHA}
 	goBinary, selection, err := selectGoTool(requested)
 	r.GoToolSelection = selection
 	if err != nil {
 		return "", err
 	}
-	native.GoToolSHA256, err = fileDigest(goBinary)
+	native.GoToolSHA256, err = owner.bindFile(goBinary)
 	if err != nil {
 		return "", err
 	}
 	r.GoToolSHA256, r.Stage = native.GoToolSHA256, "TOOLCHAIN"
-	err = observeToolchain(ctx, goBinary, native, nil)
+	err = observeToolchain(ctx, goBinary, native, owner)
 	r.Toolchain, r.GoVersion = native.Toolchain, native.GoVersion
+	r.ToolchainReference = native.ToolchainReference
 	return goBinary, err
 }
 
