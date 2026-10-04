@@ -16,6 +16,7 @@ type RecordAssemblyContextExport struct {
 	ActivityID           string                `json:"activity_id"`
 	Choices              []RecordValueChoice   `json:"choices"`
 	Context              *RecordOrdinalContext `json:"context"`
+	ValueFlow            *RecordValueFlow      `json:"value_flow,omitempty"`
 	ExpandedPlan         *assemblyspec.Spec    `json:"expanded_plan,omitempty"`
 	ModelPredictions     int                   `json:"model_predictions"`
 	CandidateTests       int                   `json:"candidate_tests"`
@@ -28,9 +29,21 @@ func ExportRecordAssemblyContext(ctx context.Context, filename string, source []
 
 func ExportRecordAssemblyContextWithFeature(ctx context.Context, filename string, source []byte, activity string,
 	includePlan bool, version string) (RecordAssemblyContextExport, error) {
+	return exportRecordAssemblyContext(ctx, filename, source, activity, includePlan, version, false)
+}
+
+// ExportRecordAssemblyContextWithFlow adds source-derived definitions without
+// predicting, evaluating cases or changing an existing model feature contract.
+func ExportRecordAssemblyContextWithFlow(ctx context.Context, filename string, source []byte, activity string,
+	includePlan bool, version string) (RecordAssemblyContextExport, error) {
+	return exportRecordAssemblyContext(ctx, filename, source, activity, includePlan, version, true)
+}
+
+func exportRecordAssemblyContext(ctx context.Context, filename string, source []byte, activity string,
+	includePlan bool, version string, includeFlow bool) (RecordAssemblyContextExport, error) {
 	if version != "" && version != decision.SplitContextIntentFeatureVersion &&
 		version != decision.SemanticContextIntentFeatureVersion && version != jointdecision.RecordFieldFeatureVersion &&
-		version != jointdecision.RecordSharedFeatureVersion {
+		version != jointdecision.RecordSharedFeatureVersion && version != jointdecision.RecordOriginSharedFeatureVersion {
 		return RecordAssemblyContextExport{}, fmt.Errorf("unsupported record context feature version")
 	}
 	plan, err := prepareRecordAssembly(ctx, filename, source, activity)
@@ -38,11 +51,24 @@ func ExportRecordAssemblyContextWithFeature(ctx context.Context, filename string
 		return RecordAssemblyContextExport{}, err
 	}
 	contract, _ := plan.spec.Canonical()
+	var flow *RecordValueFlow
+	if includeFlow || version == jointdecision.RecordOriginSharedFeatureVersion {
+		flow = recordValueFlow(plan)
+	}
+	var modelContext *RecordOrdinalContext
+	if version == jointdecision.RecordOriginSharedFeatureVersion {
+		modelContext = recordOriginContext(plan.choices, flow)
+	} else {
+		modelContext = recordModelContext(plan.choices, version)
+	}
 	result := RecordAssemblyContextExport{Schema: "gooo/record-assembly-input-export/v1", OriginalSourceSHA256: digest(source),
 		ContractSHA256: digest([]byte(contract)), ActivityID: plan.body.activityID, Choices: append([]RecordValueChoice(nil), plan.choices...),
-		Context: recordModelContext(plan.choices, version), Scope: "explicit source-bound model context; shape and type preflight; zero predictions or candidate outcomes; optional expanded plan carries the separate finite cases"}
+		Context: modelContext, Scope: "explicit source-bound model context; shape and type preflight; zero predictions or candidate outcomes; optional expanded plan carries the separate finite cases"}
 	if includePlan {
 		result.ExpandedPlan = plan.spec.Clone()
 	}
-	return result, nil
+	if includeFlow {
+		result.ValueFlow = flow
+	}
+	return result, ctx.Err()
 }

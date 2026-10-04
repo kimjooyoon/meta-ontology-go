@@ -43,14 +43,15 @@ across two connected activities. Each run retains actual values and field IDs.
 Saved source/selection replay reconstructs the same assignments with zero
 predictions. An omitted model uses deterministic order.
 
-An optional shared-field model ranks exactly three declared alternatives in one
-prediction. Its current expression context contains complete field names,
+An optional v1 shared-field model ranks exactly three declared alternatives in one
+prediction. Its expression context contains complete field names,
 ordered alternatives and intent. It observes field reads such as `copy.state`,
 while reaching definitions, mutations and branch effects stay in the typed
 source and evaluator. Independent field probabilities cannot measure the
 completeness of a dependent program. Supplied cases measure that result after
-each candidate executes. This representation opens the next small model
-experiment: make current local definitions explicit in its input.
+each candidate executes. The separate [source value-flow contract](record-value-flow.md)
+now supplies current local definitions, copy origins, writes and branch joins
+to a new model input version. Its new weights remain a separate training study.
 
 Records keep fixed sixteen-slot string-header storage in finite interpretation
 and value structs in Go. No per-field mutable map is introduced. Existing limits
