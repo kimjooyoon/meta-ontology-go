@@ -9,15 +9,16 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 // Activity nodes. Assembly carries source intent, typed choices and finite cases;
 // execution observations are separate.
 type Node struct {
-	ID           ID
-	Kind         Kind
-	Namespace    Namespace
-	Name         string
-	Aliases      []string
-	Fields       []Field            `json:"fields,omitempty"`
-	ValueProgram string             `json:"value_program,omitempty"`
-	Assembly     *assemblyspec.Spec `json:"assembly,omitempty"`
-	Span         Span
+	ID            ID
+	Kind          Kind
+	Namespace     Namespace
+	Name          string
+	Aliases       []string
+	Fields        []Field            `json:"fields,omitempty"`
+	ValueProgram  string             `json:"value_program,omitempty"`
+	InputSequence []ID               `json:"input_sequence,omitempty"`
+	Assembly      *assemblyspec.Spec `json:"assembly,omitempty"`
+	Span          Span
 }
 
 func NewNode(kind Kind, id ID, namespace Namespace, name string) (Node, error) {

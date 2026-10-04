@@ -79,12 +79,13 @@ type Document struct {
 
 // Node is a semantic declaration. Display fields do not define identity.
 type Node struct {
-	ID         ID
-	Kind       Kind
-	Name       string
-	Namespace  string
-	Aliases    []string
-	Fields     []Field
-	Attributes map[string]string
-	Span       SourceSpan
+	ID            ID
+	Kind          Kind
+	Name          string
+	Namespace     string
+	Aliases       []string
+	Fields        []Field
+	Attributes    map[string]string
+	InputSequence []Reference `json:"InputSequence,omitempty"`
+	Span          SourceSpan
 }

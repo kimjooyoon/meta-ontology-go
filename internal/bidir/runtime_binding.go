@@ -67,7 +67,8 @@ func validateModelRuntimeBindings(model Model) error {
 		if !consumerOK || consumer.Kind != ActivityKind {
 			return fmt.Errorf("runtime binding %d: %w: consumer %s", index, semantic.ErrRuntimeBindingUnknownNode, binding.Consumer.Activity.ID)
 		}
-		if binding.Producer.Port.Name != semantic.RuntimeOutputPort || binding.Consumer.Port.Name != semantic.RuntimeInputPort {
+		consumerEntity, inputOK := modelInputEntity(model, consumer, binding.Consumer.Port.Name)
+		if binding.Producer.Port.Name != semantic.RuntimeOutputPort || !inputOK {
 			return fmt.Errorf("runtime binding %d: %w", index, semantic.ErrRuntimeBindingPort)
 		}
 		key := runtimeBindingKey(binding)
@@ -81,13 +82,11 @@ func validateModelRuntimeBindings(model Model) error {
 		}
 		incoming[incomingKey] = struct{}{}
 		producerOutputs := modelRuntimePorts(model, binding.Producer.Activity.ID, PredicateWasGeneratedBy, false)
-		consumerInputs := modelRuntimePorts(model, binding.Consumer.Activity.ID, PredicateUsed, true)
 		if modelRuntimePortArity(model, binding.Producer.Activity.ID, PredicateWasGeneratedBy, false) != 1 ||
-			modelRuntimePortArity(model, binding.Consumer.Activity.ID, PredicateUsed, true) != 1 ||
-			len(producerOutputs) != 1 || len(consumerInputs) != 1 {
-			return fmt.Errorf("runtime binding %d: %w: one input/output is required", index, semantic.ErrRuntimeBindingPort)
+			len(producerOutputs) != 1 {
+			return fmt.Errorf("runtime binding %d: %w: one producer output is required", index, semantic.ErrRuntimeBindingPort)
 		}
-		if producerOutputs[0] != consumerInputs[0] {
+		if producerOutputs[0] != consumerEntity {
 			return fmt.Errorf("runtime binding %d: %w", index, semantic.ErrRuntimeBindingTypeMismatch)
 		}
 		if binding.Entity != "" && binding.Entity != producerOutputs[0] {
@@ -124,8 +123,8 @@ func validateDocumentRuntimeBindingArity(document Document, namespace string, bi
 	if producerFound && len(producer.Outputs) != 1 {
 		return fmt.Errorf("runtime binding %d: %w: one producer output is required", index, semantic.ErrRuntimeBindingPort)
 	}
-	if consumerFound && len(consumer.Inputs) != 1 {
-		return fmt.Errorf("runtime binding %d: %w: one consumer input is required", index, semantic.ErrRuntimeBindingPort)
+	if _, ok := semantic.InputPortIndex(binding.Consumer.Port.Name, len(consumer.Inputs)); consumerFound && !ok {
+		return fmt.Errorf("runtime binding %d: %w: consumer input must identify its source position", index, semantic.ErrRuntimeBindingPort)
 	}
 	return nil
 }

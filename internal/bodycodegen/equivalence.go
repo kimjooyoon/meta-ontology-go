@@ -39,8 +39,12 @@ type canonicalSemanticForm struct {
 }
 
 func routeEquivalence(packageName, activityName, inputType, outputType, body string, generated []byte, rule string) (RouteEquivalenceReceipt, error) {
+	return routeEquivalenceParameters(packageName, activityName, []InputParameter{{Name: "input", Type: inputType}}, outputType, body, generated, rule)
+}
+
+func routeEquivalenceParameters(packageName, activityName string, parameters []InputParameter, outputType, body string, generated []byte, rule string) (RouteEquivalenceReceipt, error) {
 	sourceFileSet := token.NewFileSet()
-	sourceText := fmt.Sprintf("package %s\nfunc %s(input %s) %s {\n%s\n}\n", packageName, activityName, inputType, outputType, body)
+	sourceText := fmt.Sprintf("package %s\nfunc %s(%s) %s {\n%s\n}\n", packageName, activityName, parameterDeclaration(parameters), outputType, body)
 	sourceFile, err := parser.ParseFile(sourceFileSet, "source-body.goo", sourceText, parser.AllErrors)
 	if err != nil {
 		return RouteEquivalenceReceipt{}, fmt.Errorf("parse accepted source body for equivalence receipt: %w", err)
@@ -68,6 +72,18 @@ func routeEquivalence(packageName, activityName, inputType, outputType, body str
 	generatedForm, err := canonicalizeSemanticBody(generatedFileSet, generatedFunction.Body)
 	if err != nil {
 		return RouteEquivalenceReceipt{}, fmt.Errorf("canonicalize generated body: %w", err)
+	}
+	if len(parameters) > 1 {
+		sourceSignature, ok := formatNode(sourceFileSet, sourceFunction.Type)
+		if !ok {
+			return RouteEquivalenceReceipt{}, fmt.Errorf("format source signature")
+		}
+		generatedSignature, ok := formatNode(generatedFileSet, generatedFunction.Type)
+		if !ok {
+			return RouteEquivalenceReceipt{}, fmt.Errorf("format generated signature")
+		}
+		sourceForm = append([]byte(sourceSignature+"\x00"), sourceForm...)
+		generatedForm = append([]byte(generatedSignature+"\x00"), generatedForm...)
 	}
 	equivalent := bytes.Equal(sourceForm, generatedForm)
 	decision := "FAIL_CLOSED"

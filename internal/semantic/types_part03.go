@@ -37,6 +37,19 @@ func (n Node) Normalized() (Node, error) {
 	if err != nil {
 		return Node{}, err
 	}
+	if len(n.InputSequence) > 0 {
+		if n.Kind != Activity || len(n.InputSequence) < 2 {
+			return Node{}, fmt.Errorf("%w: input sequence requires a multi-input Activity", ErrInvalidNode)
+		}
+		n.InputSequence = append([]ID(nil), n.InputSequence...)
+		for i, input := range n.InputSequence {
+			id, err := ParseIdentity(input.String())
+			if err != nil {
+				return Node{}, fmt.Errorf("%w: input sequence: %v", ErrInvalidNode, err)
+			}
+			n.InputSequence[i] = id
+		}
+	}
 	if n.Assembly != nil {
 		if n.Kind != Activity || valueProgram == "" {
 			return Node{}, fmt.Errorf("%w: assembly requires an Activity value program", ErrInvalidNode)
