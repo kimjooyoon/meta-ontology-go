@@ -17,7 +17,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyContextUsage = "usage: gooo body-context [--plan <plan.json>] --activity <name> [--feature-version <version>] [--include-plan] <file.gooo>"
+const bodyContextUsage = "usage: gooo body-context [--plan <plan.json>] --activity <name> [--feature-version <version>] [--include-plan] [--value-flow] <file.gooo>"
 
 type bodyContextOutput struct {
 	bodycodegen.TypedPathContextExport
@@ -55,7 +55,11 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 		if len(raw) != 0 {
 			return bodyContextFailure(stdout, fmt.Errorf("record source assembly owns its plan"))
 		}
-		result, err := bodycodegen.ExportRecordAssemblyContextWithFeature(ctx, options.filename, source,
+		export := bodycodegen.ExportRecordAssemblyContextWithFeature
+		if options.valueFlow {
+			export = bodycodegen.ExportRecordAssemblyContextWithFlow
+		}
+		result, err := export(ctx, options.filename, source,
 			options.activity, options.includePlan, options.featureVersion)
 		if err != nil {
 			return bodyContextFailure(stdout, err)
@@ -64,6 +68,9 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 			return bodyContextFailure(stdout, err)
 		}
 		return exitOK
+	}
+	if options.valueFlow {
+		return bodyContextFailure(stdout, fmt.Errorf("value flow requires record source assembly"))
 	}
 	document, err := bodycodegen.DecodeSourcePathDocument(ctx, options.filename, source, options.activity, raw)
 	if err != nil {
@@ -87,7 +94,7 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 
 type bodyContextArgs struct {
 	plan, activity, filename, featureVersion string
-	includePlan                              bool
+	includePlan, valueFlow                   bool
 }
 
 func (o *bodyContextArgs) set(flag, value string) bool {
@@ -116,6 +123,11 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 				return o, false
 			}
 			o.includePlan = true
+		case "--value-flow":
+			if o.valueFlow {
+				return o, false
+			}
+			o.valueFlow = true
 		case "--plan", "--activity", "--feature-version":
 			if i+1 >= len(args) || !o.set(args[i], args[i+1]) {
 				return o, false
@@ -132,7 +144,8 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 		o.featureVersion = decision.SplitContextIntentFeatureVersion
 	}
 	valid := o.featureVersion == decision.SplitContextIntentFeatureVersion || o.featureVersion == decision.SemanticContextIntentFeatureVersion ||
-		o.featureVersion == jointdecision.RecordFieldFeatureVersion || o.featureVersion == jointdecision.RecordSharedFeatureVersion
+		o.featureVersion == jointdecision.RecordFieldFeatureVersion || o.featureVersion == jointdecision.RecordSharedFeatureVersion ||
+		o.featureVersion == jointdecision.RecordOriginSharedFeatureVersion
 	return o, o.activity != "" && o.filename != "" && valid
 }
 
