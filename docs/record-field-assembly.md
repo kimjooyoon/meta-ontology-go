@@ -78,6 +78,10 @@ native record graph execution.
 
 ## Read partial completion
 
+An ordered [case series](retained-composition.md) can execute different record
+inputs on one retained compiled graph. Its history keeps each suite's actual
+field values, expectations and current run cost.
+
 The report's `record_assembly` keeps every attempted mask and its case/field
 counts, plus the selected candidate's expected and actual values. Selection
 maximizes matching fields, then whole matching cases, then the earlier candidate
