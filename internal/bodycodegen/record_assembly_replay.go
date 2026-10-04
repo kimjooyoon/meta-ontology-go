@@ -49,11 +49,26 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 	if err = searchRecordAssembly(ctx, plan, expected); err != nil {
 		return Realization{}, err
 	}
-	if !reflect.DeepEqual(expected.Attempts, r.Attempts) || !reflect.DeepEqual(expected.Cases, r.Cases) ||
-		!reflect.DeepEqual(expected.Choices, r.Choices) || expected.SelectedMask != r.SelectedMask ||
-		expected.Passed != r.Passed || expected.Total != r.Total || expected.FieldsPassed != r.FieldsPassed ||
-		expected.FieldsTotal != r.FieldsTotal || expected.Status != r.Status {
-		return Realization{}, fmt.Errorf("record selection or finite field observations do not replay")
+	observedCases, err := canonicalRecordCaseValues(r.Cases)
+	if err != nil {
+		return Realization{}, err
+	}
+	checks := []struct {
+		name    string
+		matches bool
+	}{
+		{"attempted combinations", reflect.DeepEqual(expected.Attempts, r.Attempts)},
+		{"case values", reflect.DeepEqual(expected.Cases, observedCases)},
+		{"field choices", reflect.DeepEqual(expected.Choices, r.Choices)},
+		{"selected combination", expected.SelectedMask == r.SelectedMask},
+		{"case counts", expected.Passed == r.Passed && expected.Total == r.Total},
+		{"field counts", expected.FieldsPassed == r.FieldsPassed && expected.FieldsTotal == r.FieldsTotal},
+		{"finite status", expected.Status == r.Status},
+	}
+	for _, check := range checks {
+		if !check.matches {
+			return Realization{}, fmt.Errorf("record %s do not replay", check.name)
+		}
 	}
 	generated, err := emitRecordAssembly(ctx, filename, source, plan, expected)
 	if err != nil {
@@ -159,7 +174,13 @@ func verifyRecordCommonReceipt(report Report) error {
 			return fmt.Errorf("record completeness field or case counts differ")
 		}
 	}
-	raw, _ := json.Marshal(report.RecordAssembly)
+	observation := *report.RecordAssembly
+	var err error
+	observation.Cases, err = canonicalRecordCaseValues(observation.Cases)
+	if err != nil {
+		return err
+	}
+	raw, _ := json.Marshal(&observation)
 	// JSON decoding stores the nested scope as map[string]any on both sides.
 	rawScope, _ := json.Marshal(report.CompletenessReceipt.Scope["record_assembly"])
 	var scope map[string]any
