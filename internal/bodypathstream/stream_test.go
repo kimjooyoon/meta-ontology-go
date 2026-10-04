@@ -36,6 +36,14 @@ func successfulModel() fakeGenerator {
 
 func requestLine(t testing.TB, id, source string) []byte {
 	t.Helper()
+	// Transport tests replace generation, while source parsing remains real.
+	if source == "queued" || source == "quick" {
+		fixture, err := os.ReadFile("../../examples/body-codegen/typed-path-compound.gooo.fixture")
+		if err != nil {
+			t.Fatal(err)
+		}
+		source = string(fixture) + "\n// " + source
+	}
 	raw, err := os.ReadFile("../../examples/body-codegen/typed-path-compound-plan.json")
 	if err != nil {
 		t.Fatal(err)

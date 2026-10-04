@@ -20,10 +20,10 @@ import (
 
 const bodyCodegenUsage = "usage: gooo body-codegen [--json] " +
 	"[--sample-seed <seed> | --fill-plan <plan.json> [--tiny-model <model.json>] | --fill-search <plan.json> | " +
-	"--path-plan <plan.json> [--path-model <model.json>] [--path-step-attempts <1..64>] " +
+	"[--path-plan <plan.json>] [--path-model <model.json>] [--path-step-attempts <1..64>] " +
 	"[--path-diagnosis <diagnosis.json>] [--path-observation <observation.json>] " +
 	"[--path-feedback-rounds <1..16> [--path-feedback-ci <hint.json>] [--path-feedback-unfixed]]] " +
-	"--activity <name> <file.gooo>"
+	"--activity <name> <file.gooo> (uses source assembling when present)"
 const tinyModelDiagnosticLabel = "<tiny_model>"
 
 func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -162,9 +162,10 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		fmt.Fprintln(stderr, bodyCodegenUsage)
 		return exitUsage
 	}
-	if (pathPlanPath != "" && (sampleSeedSet || fillPlanPath != "" || searchPlanPath != "" || tinyModelPath != "")) ||
-		((pathModelPath != "" || pathStepAttempts != 0 || pathFeedbackRounds != 0 || pathFeedbackCI != "" ||
-			pathDiagnosisPath != "" || pathObservationPath != "") && pathPlanPath == "") ||
+	pathOptions := pathModelPath != "" || pathStepAttempts != 0 || pathFeedbackRounds != 0 || pathFeedbackCI != "" ||
+		pathDiagnosisPath != "" || pathObservationPath != ""
+	if ((pathPlanPath != "" || pathOptions) &&
+		(sampleSeedSet || fillPlanPath != "" || searchPlanPath != "" || tinyModelPath != "")) ||
 		(pathFeedbackRounds != 0 && (pathModelPath == "" || pathStepAttempts == 0)) ||
 		((pathFeedbackCI != "" || pathFeedbackUnfixed) && pathFeedbackRounds == 0) {
 		fmt.Fprintln(stderr, bodyCodegenUsage)
@@ -179,11 +180,24 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 	if err != nil {
 		return reportBodyCodegenFailure(jsonMode, filename, activity, nil, err, stdout, stderr)
 	}
+	assembly, err := bodycodegen.SourceAssembly(ctx, filename, source, activity)
+	if err != nil {
+		return reportBodyCodegenFailure(jsonMode, filename, activity, source, err, stdout, stderr)
+	}
+	if (pathOptions && pathPlanPath == "" && assembly == nil) ||
+		(assembly != nil && (sampleSeedSet || fillPlanPath != "" || searchPlanPath != "" || tinyModelPath != "")) {
+		fmt.Fprintln(stderr, bodyCodegenUsage)
+		return exitUsage
+	}
 	var result bodycodegen.Result
-	if pathPlanPath != "" {
-		planBytes, readErr := reader.ReadFile(pathPlanPath)
-		if readErr != nil {
-			return reportBodyCodegenFailure(jsonMode, pathPlanPath, activity, planBytes, readErr, stdout, stderr)
+	if pathPlanPath != "" || assembly != nil {
+		var planBytes []byte
+		if pathPlanPath != "" {
+			var readErr error
+			planBytes, readErr = reader.ReadFile(pathPlanPath)
+			if readErr != nil {
+				return reportBodyCodegenFailure(jsonMode, pathPlanPath, activity, planBytes, readErr, stdout, stderr)
+			}
 		}
 		document, decodeErr := bodycodegen.DecodeSourcePathDocument(ctx, filename, source, activity, planBytes)
 		if decodeErr != nil {

@@ -48,6 +48,11 @@ func cloneDeclaration(declaration Declaration) Declaration {
 		clone := *value
 		clone.Inputs = append([]NameRef(nil), value.Inputs...)
 		clone.Parameters = append([]NameRef(nil), value.Parameters...)
+		if value.Assembly != nil {
+			assembly := *value.Assembly
+			assembly.Spec = *value.Assembly.Spec.Clone()
+			clone.Assembly = &assembly
+		}
 		return &clone
 	case *PolicyDecl:
 		if value == nil {

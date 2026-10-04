@@ -37,6 +37,15 @@ func (n Node) Normalized() (Node, error) {
 	if err != nil {
 		return Node{}, err
 	}
+	if n.Assembly != nil {
+		if n.Kind != Activity || valueProgram == "" {
+			return Node{}, fmt.Errorf("%w: assembly requires an Activity value program", ErrInvalidNode)
+		}
+		if err := n.Assembly.Validate(); err != nil {
+			return Node{}, fmt.Errorf("%w: %v", ErrInvalidNode, err)
+		}
+		n.Assembly = n.Assembly.Clone()
+	}
 
 	n.ID = id
 	n.Namespace = ns

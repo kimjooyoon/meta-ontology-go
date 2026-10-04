@@ -59,6 +59,10 @@ func TestTypedPathCLIIsLocalWithConfiguredExternalProvider(t *testing.T) {
 }
 
 func TestTypedPathCLIRejectsAmbiguousModes(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/typed-path-compound.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, flags := range [][]string{
 		{"--path-model", "model.json"},
 		{"--path-plan", "plan.json", "--fill-plan", "fill.json"},
@@ -74,7 +78,7 @@ func TestTypedPathCLIRejectsAmbiguousModes(t *testing.T) {
 	} {
 		args := append(flags, "--activity", "Combined", "fixture.gooo")
 		var stdout, stderr bytes.Buffer
-		if code := runBodyCodegen(args, mapSourceReader{}, &stdout, &stderr); code != exitUsage {
+		if code := runBodyCodegen(args, mapSourceReader{"fixture.gooo": source}, &stdout, &stderr); code != exitUsage {
 			t.Fatalf("ambiguous mode accepted: %v: %d %s", flags, code, stderr.String())
 		}
 	}

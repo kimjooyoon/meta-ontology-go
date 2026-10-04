@@ -31,5 +31,8 @@ func (g Graph) ResolveName(namespace, name string) (Node, error) {
 func copyNode(node Node) Node {
 	node.Aliases = append([]string(nil), node.Aliases...)
 	node.Fields = copyFields(node.Fields)
+	if node.Assembly != nil {
+		node.Assembly = node.Assembly.Clone()
+	}
 	return node
 }

@@ -1,5 +1,8 @@
 # Small path recipes from Gooo source
 
+An activity can author this contract with [`assembling` in Gooo](source-assembly.md).
+External recipes remain available for activities without an embedded contract.
+
 `gooo/source-typed-path-recipe/v1` derives the typed base from a selected Gooo
 `computes` body. A recipe names the few places where construction may choose
 between two alternatives. This saves the caller from copying expressions,
