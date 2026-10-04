@@ -53,3 +53,10 @@ storage; these tensor sizes do not describe whole-process RAM.
 Dedicated training and execution comparisons are being developed in
 [the public research repository](https://github.com/kimjooyoon/gooo-neural-decision-experiments).
 This compiler interface alone does not establish trained model quality.
+
+## Conditional bodies without an else
+
+Source-owned bodies also accept `if condition { ... }` followed by ordinary
+statements, early guard returns and nested conditional updates. The absent
+branch falls through. The compiler retains the source form and requires the
+whole function to return on every path; branch locals stay inside their scope.
