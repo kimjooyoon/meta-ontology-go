@@ -2,7 +2,10 @@ package bodycodegen
 
 import (
 	"context"
+	"fmt"
 
+	decision "github.com/kimjooyoon/gooo-decision-runtime"
+	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
 	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 )
 
@@ -20,6 +23,15 @@ type RecordAssemblyContextExport struct {
 }
 
 func ExportRecordAssemblyContext(ctx context.Context, filename string, source []byte, activity string, includePlan bool) (RecordAssemblyContextExport, error) {
+	return ExportRecordAssemblyContextWithFeature(ctx, filename, source, activity, includePlan, "")
+}
+
+func ExportRecordAssemblyContextWithFeature(ctx context.Context, filename string, source []byte, activity string,
+	includePlan bool, version string) (RecordAssemblyContextExport, error) {
+	if version != "" && version != decision.SplitContextIntentFeatureVersion &&
+		version != decision.SemanticContextIntentFeatureVersion && version != jointdecision.RecordFieldFeatureVersion {
+		return RecordAssemblyContextExport{}, fmt.Errorf("unsupported record context feature version")
+	}
 	plan, err := prepareRecordAssembly(ctx, filename, source, activity)
 	if err != nil {
 		return RecordAssemblyContextExport{}, err
@@ -27,7 +39,7 @@ func ExportRecordAssemblyContext(ctx context.Context, filename string, source []
 	contract, _ := plan.spec.Canonical()
 	result := RecordAssemblyContextExport{Schema: "gooo/record-assembly-input-export/v1", OriginalSourceSHA256: digest(source),
 		ContractSHA256: digest([]byte(contract)), ActivityID: plan.body.activityID, Choices: append([]RecordValueChoice(nil), plan.choices...),
-		Context: recordOrdinalContext(plan.choices), Scope: "source-bound ordinal model context; shape and type preflight; zero predictions or candidate outcomes; optional expanded plan carries the separate finite cases"}
+		Context: recordModelContext(plan.choices, version), Scope: "explicit source-bound model context; shape and type preflight; zero predictions or candidate outcomes; optional expanded plan carries the separate finite cases"}
 	if includePlan {
 		result.ExpandedPlan = plan.spec.Clone()
 	}
