@@ -30,6 +30,7 @@ Gooo source + intent + permitted choices + finite expectations
 **Start here:** [direction and current progress, 한국어](docs/language-direction.ko.md)
 · [body generation](docs/language/body-codegen.md)
 · [Gooo source assembly](docs/source-assembly.md)
+· [compose activity bodies](docs/native-body-composition.md)
 · [small model integration](docs/three-choice-path-model.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
 
@@ -56,6 +57,10 @@ contract. See [source assembly](docs/source-assembly.md) for model/deterministic
 Generation also returns the selected Gooo source. `body-realize` replays a saved
 selection into a fresh directory, keeping its planning baseline and picked paths
 beside the working body so the next generation can use the same alternatives.
+`body-compose` connects several checked bodies through source-declared `bind`
+edges. One optional model is retained across integer assemblies; Integer,
+Boolean and Text activities then execute in a compiled graph with ordered
+intermediate input/output observations and finite expectation counts.
 
 We want the language to carry the assembly plan and its unfinished obligations
 along with the program. A useful improvement should complete more of the declared

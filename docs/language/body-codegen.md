@@ -8,6 +8,12 @@ For source assembly, JSON generation also includes a reusable `gooo_source`.
 replays a saved selection into a new directory and preserves the baseline paths
 for the next generation, including results with partial finite completeness.
 
+[`body-compose`](../native-body-composition.md) constructs and immediately
+executes several activities joined by explicit `bind` declarations. It preserves
+all selected checkpoints and records actual intermediate values across Integer,
+Boolean and Text bodies. Optional local ranking is retained across integer
+assembly activities; saved composition replay needs no model calls.
+
 For multiple requests in one process, use
 [`gooo body-path-stream`](../native-body-worker.md). It accepts source recipes,
 keeps an optional small model loaded and emits each result as soon as it is ready.
