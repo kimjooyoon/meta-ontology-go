@@ -55,7 +55,7 @@ func sourceAssemblyPlanningSource(ctx context.Context, filename string, source [
 	if err != nil || spec == nil || spec.Baseline == "" {
 		return source, err
 	}
-	file, diagnostics := syntax.ParseFile(filename, string(source))
+	file, diagnostics := ParseBodyFile(filename, source)
 	if diagnostics.HasErrors() {
 		return nil, fmt.Errorf("assembly checkpoint source: %v", diagnostics)
 	}

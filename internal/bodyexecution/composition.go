@@ -43,7 +43,7 @@ func GenerateComposition(ctx context.Context, filename string, source []byte,
 	graph, err := prepareCompositionGraph(ctx, filename, source)
 	result := Composition{Schema: "gooo/body-composition/v1", Stage: "PLAN", OriginalSourceSHA256: digest(source),
 		Plan: graph.plan, Steps: make([]CompositionStep, 0, graph.count),
-		Scope: "source-declared typed scalar graph; finite activity selection and independently compiled graph execution are separate observations"}
+		Scope: "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"}
 	finish := func(err error) (Composition, error) {
 		result.ElapsedNS = time.Since(start).Nanoseconds()
 		if err != nil {
@@ -202,7 +202,8 @@ func replayCompositionPlain(ctx context.Context, filename string, source []byte,
 		r.BodySearch != nil || r.Route != "preserve" || r.Decision != "PASS" || !r.TypecheckPassed ||
 		!r.DeterministicReplay || r.ActivityID != node.ID || r.SourceDigest != expected.SourceDigest ||
 		r.GeneratedDigest != expected.GeneratedDigest || r.ProgramDigest != expected.ProgramDigest ||
-		r.InputType != expected.InputType || r.OutputType != expected.OutputType || !reflect.DeepEqual(r.InputParameters, expected.InputParameters) {
+		r.InputType != expected.InputType || r.OutputType != expected.OutputType ||
+		!reflect.DeepEqual(r.InputParameters, expected.InputParameters) || !reflect.DeepEqual(r.RecordTypes, expected.RecordTypes) {
 		return fmt.Errorf("ordinary body projection differs from its source")
 	}
 	return nil

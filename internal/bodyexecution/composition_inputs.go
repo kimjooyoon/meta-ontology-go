@@ -36,14 +36,14 @@ func (graph *compositionGraph) bindActivity(file *syntax.File, i int) error {
 		if len(activity.Inputs) > 1 {
 			node.Inputs = make([]CompositionInput, len(activity.Inputs))
 			for p, input := range activity.Inputs {
-				if scalarGoType(input.Name) == "" {
-					return fmt.Errorf("composition activity %q supports Integer, Boolean and Text", node.Name)
+				if graph.valueGoType(input.Name) == "" {
+					return fmt.Errorf("composition activity %q requires a scalar or declared record", node.Name)
 				}
 				node.Inputs[p] = CompositionInput{Port: fmt.Sprintf("input%d", p), Type: input.Name, From: -1}
 			}
 		}
-		if scalarGoType(node.InputType) == "" || scalarGoType(node.OutputType) == "" {
-			return fmt.Errorf("composition activity %q supports Integer, Boolean and Text", node.Name)
+		if graph.valueGoType(node.InputType) == "" || graph.valueGoType(node.OutputType) == "" {
+			return fmt.Errorf("composition activity %q requires a scalar or declared record", node.Name)
 		}
 		if node.Assembling && (len(activity.Inputs) != 1 || node.InputType != "Integer" || node.OutputType != "Integer") {
 			return fmt.Errorf("composition assembly activity %q requires Integer -> Integer", node.Name)

@@ -16,11 +16,11 @@ func prepareCompositionGraph(ctx context.Context, filename string, source []byte
 	if err != nil {
 		return graph, err
 	}
-	document, err := bidir.DocumentFromSyntaxContext(ctx, file)
+	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, bidir.EntityFieldsV1Support())
 	if err != nil {
 		return graph, err
 	}
-	model, err := bidir.Get(document)
+	model, err := bidir.GetWithEntityFieldsSupport(document, bidir.EntityFieldsV1Support())
 	if err != nil {
 		return graph, err
 	}
@@ -35,6 +35,10 @@ func prepareCompositionGraph(ctx context.Context, filename string, source []byte
 	graph.plan = CompositionPlan{Schema: "gooo/body-composition-plan/v1",
 		TypedPlanSHA256: typed.Digest(), SemanticFingerprint: bidir.SemanticFingerprint(model),
 		Edges: make([]CompositionEdge, 0, len(typed.Edges))}
+	graph.plan.Records, err = bodycodegen.RecordTypesFromModel(model)
+	if err != nil {
+		return graph, err
+	}
 	if err := graph.bindNodes(file, model, typed); err != nil {
 		return graph, err
 	}
@@ -52,7 +56,7 @@ func compositionSource(ctx context.Context, filename string, source []byte) (*sy
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	file, diagnostics := syntax.ParseFile(filename, string(source))
+	file, diagnostics := bodycodegen.ParseBodyFile(filename, source)
 	if diagnostics.HasErrors() {
 		return nil, fmt.Errorf("composition source: %v", diagnostics)
 	}
