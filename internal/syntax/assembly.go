@@ -29,25 +29,10 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 			continue
 		}
 		field := p.advance()
+		if p.parseAssemblyCheckpointField(d, field, &seenBaseline) {
+			continue
+		}
 		switch field.Value {
-		case "baseline":
-			if seenBaseline {
-				p.error(DiagUnexpectedDeclaration, field.Span, "duplicate assembly baseline")
-			}
-			seenBaseline, d.Spec.Baseline = true, p.expectString().Name
-			if strings.TrimSpace(d.Spec.Baseline) == "" {
-				p.error(DiagUnexpectedDeclaration, field.Span, "assembly baseline must be nonempty")
-			}
-		case "picked":
-			id := p.expectString().Name
-			p.expect(TokenArrow, "->", DiagExpectedArrow)
-			label := p.expectString().Name
-			if len(d.Spec.Picked) == 16 {
-				p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds 16 picked labels")
-				p.skipAssemblyRemainder()
-				continue
-			}
-			d.Spec.Picked = append(d.Spec.Picked, assemblyspec.Pick{ID: id, Label: label})
 		case "choice":
 			if len(d.Spec.Choices) == 16 {
 				p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds 16 choices")
@@ -88,6 +73,32 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 		p.error(DiagUnexpectedDeclaration, d.Span, err.Error())
 	}
 	return d
+}
+
+func (p *Parser) parseAssemblyCheckpointField(d *AssemblyDecl, field Token, seenBaseline *bool) bool {
+	switch field.Value {
+	case "baseline":
+		if *seenBaseline {
+			p.error(DiagUnexpectedDeclaration, field.Span, "duplicate assembly baseline")
+		}
+		*seenBaseline, d.Spec.Baseline = true, p.expectString().Name
+		if strings.TrimSpace(d.Spec.Baseline) == "" {
+			p.error(DiagUnexpectedDeclaration, field.Span, "assembly baseline must be nonempty")
+		}
+	case "picked":
+		id := p.expectString().Name
+		p.expect(TokenArrow, "->", DiagExpectedArrow)
+		label := p.expectString().Name
+		if len(d.Spec.Picked) == 16 {
+			p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds 16 picked labels")
+			p.skipAssemblyRemainder()
+			return true
+		}
+		d.Spec.Picked = append(d.Spec.Picked, assemblyspec.Pick{ID: id, Label: label})
+	default:
+		return false
+	}
+	return true
 }
 
 func (p *Parser) parseAssemblyChoice() assemblyspec.Choice {
