@@ -5690,18 +5690,20 @@
       ]
     },
     {
-      "branch": "agent/gooo-source-imports-20261005",
+      "branch": "agent/gooo-source-import-declarations-20261005",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         "cmd/gooo/package_resolve_test.go",
         "docs/language/workspace-manifest.md",
-        "internal/packageruntime/build.go",
         "internal/packageruntime/compile.go",
-        "internal/packageruntime/compile_source.go",
-        "internal/packageruntime/declarations.go",
-        "internal/packageruntime/model.go",
-        "internal/packageruntime/type_resolution.go",
+        "internal/syntax/ast_part01.go",
+        "internal/syntax/ast_part04.go",
+        "internal/syntax/format_imports.go",
+        "internal/syntax/format_part01.go",
+        "internal/syntax/import_parser.go",
+        "internal/syntax/import_test.go",
+        "internal/syntax/parser_part02.go",
         "internal/verify/scope_part01.go"
       ]
     },

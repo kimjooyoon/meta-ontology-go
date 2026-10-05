@@ -18,6 +18,7 @@ activity AddOne(Integer) -> Integer computes "int.add:1"
 `)
 	writeWorkspaceSource(t, root, "main.gooo", `package app
 namespace app
+import "example/core"
 entity Integer id "workspace://app/integer"
 activity Clamp(Integer) -> Integer computes "int.add:1"
 `)
@@ -86,6 +87,7 @@ activity Normalize(Money) -> Money computes "identity"
 `)
 	writeWorkspaceSource(t, root, "app.gooo", `package app
 namespace app
+import "example/core"
 entity Receipt id "workspace://app/receipt"
 activity Charge(Money) -> Receipt computes "identity"
 `)
@@ -158,6 +160,8 @@ entity Money id "workspace://core-b/money"
 `)
 	writeWorkspaceSource(t, root, "app.gooo", `package app
 namespace app
+import "example/core-a"
+import "example/core-b"
 activity Run(Money) -> Money computes "identity"
 `)
 	manifestPath := writeWorkspaceManifest(t, root, `{
@@ -177,6 +181,67 @@ activity Run(Money) -> Money computes "identity"
 	}
 	if code != exitFailure || receipt.Decision != "FAIL_CLOSED" || !strings.Contains(receipt.Error, "PACKAGE_TYPE_AMBIGUOUS") || stderr.Len() != 0 {
 		t.Fatalf("ambiguous imported type did not fail closed: code=%d receipt=%+v stderr=%q", code, receipt, stderr.String())
+	}
+}
+
+func TestRunPackageResolveFailsClosedWhenSourceImportsDifferFromManifest(t *testing.T) {
+	root := t.TempDir()
+	writeWorkspaceSource(t, root, "main.gooo", `package app
+namespace app
+import "example/core"
+entity Integer id "workspace://app/integer"
+activity Run(Integer) -> Integer computes "identity"
+`)
+	manifestPath := writeWorkspaceManifest(t, root, `{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/app", "activity": "Run"},
+  "packages": [
+    {"path": "example/app", "name": "app", "imports": [], "sources": ["main.gooo"]},
+    {"path": "example/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
+  ]
+}`)
+	writeWorkspaceSource(t, root, "core.gooo", `package core
+namespace core
+entity Integer id "workspace://core/integer"
+`)
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"package", "resolve", "--json", manifestPath}, &stdout, &stderr)
+	var receipt workspaceResolutionReceipt
+	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
+		t.Fatalf("decode failure receipt: %v stdout=%q stderr=%q", err, stdout.String(), stderr.String())
+	}
+	if code != exitFailure || receipt.Decision != "FAIL_CLOSED" || !strings.Contains(receipt.Error, "PACKAGE_SOURCE_IMPORT_MISMATCH") || stderr.Len() != 0 {
+		t.Fatalf("source/manifest import mismatch did not fail closed: code=%d receipt=%+v stderr=%q", code, receipt, stderr.String())
+	}
+}
+
+func TestRunPackageResolveKeepsManifestOnlyImportCompatibility(t *testing.T) {
+	root := t.TempDir()
+	writeWorkspaceSource(t, root, "core.gooo", `package core
+namespace core
+entity Integer id "workspace://core/integer"
+`)
+	writeWorkspaceSource(t, root, "main.gooo", `package app
+namespace app
+entity Integer id "workspace://app/integer"
+activity Run(Integer) -> Integer computes "identity"
+`)
+	manifestPath := writeWorkspaceManifest(t, root, `{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/app", "activity": "Run"},
+  "packages": [
+    {"path": "example/app", "name": "app", "imports": ["example/core"], "sources": ["main.gooo"]},
+    {"path": "example/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
+  ]
+}`)
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"package", "resolve", "--json", manifestPath}, &stdout, &stderr)
+	var receipt workspaceResolutionReceipt
+	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
+		t.Fatalf("decode workspace receipt: %v stdout=%q stderr=%q", err, stdout.String(), stderr.String())
+	}
+	if code != exitOK || receipt.Decision != "PASS" || receipt.Result == nil || stderr.Len() != 0 {
+		t.Fatalf("manifest-only imports lost compatibility: code=%d receipt=%+v stderr=%q", code, receipt, stderr.String())
 	}
 }
 

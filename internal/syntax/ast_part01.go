@@ -19,6 +19,7 @@ type File struct {
 	// names for the two required headers.
 	Package   *PackageDecl
 	Namespace *NamespaceDecl
+	Imports   []ImportDecl
 
 	// Decls is the canonical declaration list. Declarations is populated with
 	// the same ordered values for callers that prefer the longer name.
@@ -56,6 +57,12 @@ type NamespaceDecl struct {
 }
 
 func (d *NamespaceDecl) SourceSpan() Span { return d.Span }
+
+// ImportDecl names a package path consumed by this source file.
+type ImportDecl struct {
+	Span Span
+	Path string
+}
 
 // NameRef is an identifier occurrence in an activity signature.
 type NameRef struct {

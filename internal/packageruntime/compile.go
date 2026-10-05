@@ -23,6 +23,7 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export) (compile
 	declarations := map[string]bool{}
 	var exports []Export
 	var sources []parsedPackageSource
+	sourceImports := map[string]bool{}
 	for _, source := range spec.Sources {
 		file, names, sourceExports, activities, err := compileSource(spec, source)
 		if err != nil {
@@ -42,6 +43,12 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export) (compile
 		sources = append(sources, parsedPackageSource{source: source, file: file, names: names})
 		compiled.image.Declarations += len(names)
 		compiled.activities = append(compiled.activities, activities...)
+		for _, importDecl := range file.Imports {
+			sourceImports[importDecl.Path] = true
+		}
+	}
+	if !sameImportSet(spec.Imports, sourceImports) {
+		return compiledPackage{}, reject("PACKAGE_SOURCE_IMPORT_MISMATCH", "%s source imports do not match the workspace manifest", spec.Path)
 	}
 	entityTypes := make(map[string]string)
 	for _, export := range exports {
@@ -90,4 +97,19 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export) (compile
 		Exports         []Export
 	}{spec.Path, compiled.image.Namespace, compiled.image.Sources, compiled.image.Exports})
 	return compiled, nil
+}
+
+func sameImportSet(manifestImports []string, sourceImports map[string]bool) bool {
+	if len(sourceImports) == 0 {
+		return true
+	}
+	if len(manifestImports) != len(sourceImports) {
+		return false
+	}
+	for _, importPath := range manifestImports {
+		if !sourceImports[importPath] {
+			return false
+		}
+	}
+	return true
 }
