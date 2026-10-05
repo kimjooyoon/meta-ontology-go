@@ -70,6 +70,24 @@ gooo body-codegen --json --activity Lift \
 The [partial holdout fixture](../examples/body-codegen/source-ir-fill-holdout-partial.gooo.fixture)
 keeps the training score full while recording one held-out mismatch as `PROGRESS`.
 
+Run the same source without a model to get a deterministic choice:
+
+```sh
+env -u GOOO_LAYA_URL -u GOOO_LAYA_API_KEY \
+  go run ./cmd/gooo body-codegen --json --activity Lift \
+  examples/body-codegen/source-ir-fill-holdout-partial.gooo.fixture
+```
+
+To compare a local Laya decision, start its `/v1/systemone` endpoint and set
+`GOOO_LAYA_URL` to that endpoint before running the same command. Gooo sends only
+the declared candidate choices and training cases to the chooser; holdout cases
+remain withheld until after selection. The report records whether the decision
+came from Laya or the deterministic fallback, plus training and holdout scores.
+For endpoint setup and the request/receipt shape, see
+[Laya decision provider](language/laya-decision-provider.md). A model choice is
+an ordering hint: the generated body still has to pass Gooo's typed checks and
+the declared cases.
+
 Run it with `gooo body-codegen --json --activity Lift
 examples/body-codegen/source-ir-fill.gooo.fixture`. Add `--tiny-model
 <model.json>` to route a manually declared finite decision through the local
