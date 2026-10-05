@@ -21,6 +21,12 @@ func init() {
 		".github/ci-governance.json",
 		"cmd/gooo/library_starter.go",
 		"cmd/gooo/main_part01.go",
+		"cmd/gooo/templates/library/README.md",
+		"cmd/gooo/templates/library/app.gooo",
+		"cmd/gooo/templates/library/body-fill-plans.json",
+		"cmd/gooo/templates/library/cases.json",
+		"cmd/gooo/templates/library/core.gooo",
+		"cmd/gooo/templates/library/gooo.workspace.json",
 		"docs/language/project-starters.md",
 		"internal/verify/scope_part01.go",
 	}
