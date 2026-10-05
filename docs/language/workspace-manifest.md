@@ -27,6 +27,14 @@ the workspace manifest:
 }
 ```
 
+Source files can state their package dependencies directly:
+
+```gooo
+package app
+namespace app
+import "example/core"
+```
+
 Resolution reads the listed `.gooo` sources, builds a deterministic dependency
 order, and emits a `gooo/package-runtime-result/v1` receipt with source and
 semantic digests. Unknown package imports and dependency cycles fail closed.
@@ -39,11 +47,14 @@ and output entity type to that ID. An activity can use an entity in
 its own package or an entity declared in one of its direct imports. Unknown or
 ambiguous imported types fail closed. When an entity exists locally, the local
 declaration takes precedence over imported entities with the same name.
+Across a package's source files, the union of source `import` declarations must
+match the manifest's `imports` list. A mismatch fails with
+`PACKAGE_SOURCE_IMPORT_MISMATCH` so source intent and the workspace graph cannot
+quietly drift apart.
 
-The manifest `imports` list is the current source of package dependencies;
-Gooo source syntax does not yet contain an import declaration or an activity
-call expression. Type resolution therefore checks activity signatures against
-the package's own entities and its directly imported packages. The receipt
+Gooo source imports identify package dependencies, while the workspace manifest
+still supplies package paths, source files, and the executable entry. Activity
+call expressions across packages are not yet part of the language. The receipt
 resolves declarations and the public type surface; it does not claim to execute
 generated Go code. The library starter includes a workspace manifest so package
 boundaries are visible from the first project command.

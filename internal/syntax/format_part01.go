@@ -40,8 +40,19 @@ func FormatWithEntityFieldsSupport(file *File, support EntityFieldsSupport) (str
 	}
 	var output strings.Builder
 	fmt.Fprintf(&output, "package %s\nnamespace %s\n", file.Package.Name, file.Namespace.Name)
-	if len(declarations) > 0 || len(file.Bindings) > 0 {
+	imports, err := formatImports(file.Imports)
+	if err != nil {
+		return "", err
+	}
+	for _, importPath := range imports {
+		fmt.Fprintf(&output, "import %s\n", quoteString(importPath))
+	}
+	if len(imports) > 0 && (len(declarations) > 0 || len(file.Bindings) > 0) {
 		output.WriteByte('\n')
+	} else if len(imports) == 0 && (len(declarations) > 0 || len(file.Bindings) > 0) {
+		output.WriteByte('\n')
+	}
+	if len(declarations) > 0 || len(file.Bindings) > 0 {
 		for index, declaration := range declarations {
 			if index > 0 {
 				output.WriteByte('\n')
