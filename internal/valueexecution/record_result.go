@@ -4,7 +4,9 @@ import "maps"
 
 // RecordFields is data only. Field names and required presence are checked
 // against the entity schema compiled from the Gooo source.
-type RecordFields map[string]string
+// RecordFields carries scalar values admitted by the compiled Gooo schema.
+// Current record transport supports string and Boolean fields.
+type RecordFields map[string]any
 
 type RecordEvidence struct {
 	ProducerActivityID  string             `json:"producer_activity_id"`

@@ -8,9 +8,9 @@ import (
 )
 
 // DecodeRecordInput rejects ambiguous JSON rather than choosing the last
-// duplicate field. Numbers, null, nested values, and arrays are not strings.
+// duplicate field. Only strings and Booleans are scalar record values.
 func DecodeRecordInput(raw []byte) (RecordFields, error) {
-	failure := failAt(ReasonExternalInputUnexpected, "INPUT", "decode-record-input", "input must be one object with unique string fields")
+	failure := failAt(ReasonExternalInputUnexpected, "INPUT", "decode-record-input", "input must be one object with unique string or Boolean fields")
 	if !utf8.Valid(raw) {
 		return nil, failure
 	}
@@ -33,11 +33,12 @@ func DecodeRecordInput(raw []byte) (RecordFields, error) {
 		if err := decoder.Decode(&value); err != nil {
 			return nil, failure
 		}
-		text, isString := value.(string)
-		if !isString {
+		switch value.(type) {
+		case string, bool:
+		default:
 			return nil, failure
 		}
-		fields[name] = text
+		fields[name] = value
 	}
 	if token, err := decoder.Token(); err != nil || token != json.Delim('}') {
 		return nil, failure

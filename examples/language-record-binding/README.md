@@ -17,10 +17,18 @@ result. Transport PASS means the declared dataflow executed, not that the
 claim is true. Semantic admission is UNASSESSED and every operation authority
 flag is false. Digest agreement proves content identity, not truth or consent.
 
-Version 1 supports required, single string fields only, matching the string
-field form used by the existing callback-extraction contract. Other types,
-optional/many fields, undeclared fields, missing fields, ambiguous JSON, unknown
-operations, cycles, and direct input to a bound activity fail closed.
+The existing example uses the EntityFields V1 profile. A separate V2 fixture
+demonstrates required, single Boolean fields alongside strings:
+
+```sh
+gooo run --json --entry Capture --record-input examples/language-record-binding/boolean-input.json examples/language-record-binding/boolean.gooo.fixture
+```
+
+The source-driven record executor decodes the Boolean as JSON `true` or
+`false`, preserves it through bindings, and checks its type against the Gooo
+source before execution. Optional/many fields, undeclared fields, missing
+fields, ambiguous JSON, unknown operations, cycles, and direct input to a bound
+activity fail closed.
 The existing integer `--input` path is unchanged.
 
 Native API and CLI regression tests use this exact source and input in GitHub
