@@ -34,6 +34,8 @@ Gooo source + intent + permitted choices + finite expectations
 · [small model integration](docs/three-choice-path-model.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
 
+· [workspace package graph](docs/language/workspace-manifest.md)
+
 Start a library contract with `gooo init --template library <directory>`. The
 template includes a public Gooo activity and finite examples, ready for
 `gooo check` and `gooo body-codegen`. See [project starters](docs/language/project-starters.md).

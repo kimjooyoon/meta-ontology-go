@@ -8,6 +8,7 @@ project's first deliverable is a reusable, source-level contract:
 gooo init --template library boundedint
 cd boundedint
 gooo check main.gooo
+gooo package resolve gooo.workspace.json
 gooo body-codegen --json --fill-plan body-fill-plan.json --activity Clamp main.gooo
 ```
 
@@ -26,6 +27,9 @@ best-scoring assignment when the fallback scores lower. Gooo still checks the
 selected body against the declared types and cases before showing the generated
 Go code.
 
-The starter deliberately has no dependency manifest or registry behavior yet.
-It gives library authors a checkable contract and generation path; package
-distribution and dependency resolution remain separate ecosystem work.
+The starter has no registry or package distribution behavior yet. It includes
+`gooo.workspace.json` to bind source files, package identity, entry,
+and declared dependency order. `gooo package resolve` produces the current
+package-runtime receipt. Source-level imports, cross-package symbol resolution,
+and package distribution remain separate ecosystem work; see the
+[workspace package graph](workspace-manifest.md) contract.
