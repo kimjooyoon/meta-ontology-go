@@ -110,8 +110,9 @@ func (p *Parser) parseAssemblySearch() *assemblyspec.Search {
 	search.Intent = p.expectString().Name
 	p.assemblyKeyword("max_candidates")
 	value := p.assemblyInteger("maximum candidate count")
-	if value < 0 || value > 16 {
+	if value < 2 || value > 16 {
 		p.error(DiagUnexpectedDeclaration, p.peek().Span, "IR search max_candidates must be 2..16")
+		return search
 	}
 	search.MaxCandidates = int(value)
 	return search
