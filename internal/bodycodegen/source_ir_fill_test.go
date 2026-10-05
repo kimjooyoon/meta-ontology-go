@@ -445,3 +445,83 @@ func TestSourceDerivedPredicateCutpointsIncludeUnobservedIntegerBoundaries(t *te
 		t.Fatalf("held-out boundary score did not map to its four-state metric: receipt=%+v dimension=%+v", receipt, holdout)
 	}
 }
+
+func TestLayaCanResolveTrainingTieWhileHoldoutRemainsWithheld(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-cutpoint.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := syntax.Parse(string(source))
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	candidates, _, err := generateSourceFillCandidates(spec.FillPlan, spec.Cases)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wanted := ""
+	for _, candidate := range candidates {
+		if candidate.Fills["condition"] == "input <= 0" && candidate.Fills["yes"] == "1" {
+			wanted = candidate.ID
+			break
+		}
+	}
+	if wanted == "" {
+		t.Fatal("the declared cutpoint grammar did not produce the intended nonpositive path")
+	}
+	var observed irBodyFillState
+	var observedFields map[string]json.RawMessage
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/systemone" {
+			http.NotFound(writer, request)
+			return
+		}
+		var payload struct {
+			State map[string]string `json:"state"`
+		}
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Errorf("decode Laya request: %v", err)
+			return
+		}
+		if err := json.Unmarshal([]byte(payload.State["request"]), &observed); err != nil {
+			t.Errorf("decode training-only Gooo chooser state: %v", err)
+			return
+		}
+		if err := json.Unmarshal([]byte(payload.State["request"]), &observedFields); err != nil {
+			t.Errorf("decode chooser state fields: %v", err)
+			return
+		}
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "cutpoint-test-model", "routing": map[string]any{"model": "cutpoint-test-model"},
+			"answers": map[string]any{"body_ir_fill": map[string]any{
+				"choice": wanted, "probabilities": map[string]float64{wanted: 1},
+			}},
+		})
+	}))
+	defer server.Close()
+
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "cutpoint.gooo", source, "NonPositive", spec,
+		server.URL+"/v1/systemone", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fill := result.Report.BodyFill
+	if fill == nil || fill.Decision.Provider != "laya" || fill.SelectedCandidateID != wanted ||
+		fill.TestCasesPassed != 2 || fill.HoldoutCasesPassed != 2 || fill.HoldoutCasesTotal != 2 ||
+		fill.HoldoutAccuracyPercent == nil || *fill.HoldoutAccuracyPercent != 100 || !result.Report.TypecheckPassed {
+		t.Fatalf("Laya-selected boundary did not pass typed generation and separate holdout evaluation: %+v", fill)
+	}
+	if observed.TestCaseCount != 2 || observed.TestSuiteSHA256 != fill.TestSuiteSHA256 ||
+		len(observed.Candidates) != len(candidates) || !slices.ContainsFunc(observed.Candidates, func(candidate IRBodyFillCandidateScore) bool {
+		return candidate.ID == wanted && candidate.TestCasesPassed == 2 && candidate.TestCasesTotal == 2
+	}) {
+		t.Fatalf("Laya did not receive the full tied candidate set with training-only evidence: observed=%+v", observed)
+	}
+	if _, hasHoldoutCases := observedFields["holdout_cases"]; hasHoldoutCases {
+		t.Fatalf("Laya request included withheld cases: %s", observedFields["holdout_cases"])
+	}
+	if dimension := bodyFillDimension(result, "body_fill_holdout_accuracy"); dimension.Status != "PASS" {
+		t.Fatalf("the model-selected generalization evidence was not reflected in completeness: %+v", dimension)
+	}
+}

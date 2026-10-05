@@ -227,6 +227,14 @@ measure generalization, and a configured Laya may use the declared intent to ran
 the tied candidates. This run had no local Laya endpoint, so no model choice or
 latency is claimed.
 
+The adapter regression test supplies a local protocol-compatible test server
+that selects `input <= 0`. It verifies the full path from the bounded Gooo
+grammar, through the chooser request, to typed source emission and the separate
+2/2 holdout result. The test server is a controlled response, not the Laya model;
+it establishes the integration contract and data boundary, not model quality.
+When Laya is running locally, rerun the same fixture with `GOOO_LAYA_URL` set
+to measure the actual choice and latency on your machine.
+
 ```sh
 go run ./cmd/gooo body-codegen --json --activity Select \
   examples/body-codegen/source-ir-fill-outside-range.gooo.fixture
