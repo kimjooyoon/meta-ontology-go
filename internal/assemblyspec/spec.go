@@ -38,6 +38,15 @@ type FillPlan struct {
 	Intent     string          `json:"intent"`
 	Holes      []FillHole      `json:"holes"`
 	Candidates []FillCandidate `json:"candidates"`
+	Generation *FillGeneration `json:"generation,omitempty"`
+}
+
+// FillGeneration declares a closed expression grammar and assignment-space cap
+// that Gooo applies to each declared hole using only source-owned training cases.
+type FillGeneration struct {
+	Grammar        string `json:"grammar"`
+	MaxExpressions int    `json:"max_expressions_per_hole"`
+	MaxCandidates  int    `json:"max_candidates"`
 }
 
 type FillHole struct {
@@ -165,8 +174,17 @@ func (s Spec) validateFillPlan() error {
 	if len(s.Cases) == 0 || len(s.HoldoutCases) != 0 || len(s.ValueCases) != 0 ||
 		len(s.Choices) != 0 || s.Search != nil || s.MaxAttempts != 0 || s.Seed != "" ||
 		s.Baseline != "" || len(s.Picked) != 0 || !boundedText(plan.Intent, 2000) ||
-		len(plan.Holes) < 2 || len(plan.Holes) > 8 || len(plan.Candidates) < 2 || len(plan.Candidates) > 16 {
-		return fmt.Errorf("source fill plan requires intent, 2..8 holes, 2..16 complete candidates and training cases; it cannot mix with other assembly modes")
+		len(plan.Holes) < 2 || len(plan.Holes) > 8 {
+		return fmt.Errorf("source fill plan requires intent, 2..8 holes and integer training cases; it cannot mix with other assembly modes")
+	}
+	if plan.Generation == nil {
+		if len(plan.Candidates) < 2 || len(plan.Candidates) > 16 {
+			return fmt.Errorf("source fill plan requires 2..16 complete candidates or a bounded derive clause")
+		}
+	} else if len(plan.Candidates) != 0 || plan.Generation.Grammar != "integer-offset-constant/v1" ||
+		plan.Generation.MaxExpressions < 2 || plan.Generation.MaxExpressions > 16 ||
+		plan.Generation.MaxCandidates < 2 || plan.Generation.MaxCandidates > 16 {
+		return fmt.Errorf("source fill derive requires the integer-offset-constant/v1 grammar, 2..16 expressions per hole and 2..16 complete candidates, with no manual candidates")
 	}
 	var holes [8]string
 	for index, hole := range plan.Holes {
@@ -177,6 +195,9 @@ func (s Spec) validateFillPlan() error {
 			return fmt.Errorf("source fill plan hole %q is duplicated", hole.ID)
 		}
 		holes[index] = hole.ID
+	}
+	if plan.Generation != nil {
+		return nil
 	}
 	var candidateIDs [16]string
 	for index, candidate := range plan.Candidates {
@@ -254,6 +275,10 @@ func (s Spec) Clone() *Spec {
 		plan := *s.FillPlan
 		plan.Holes = append([]FillHole(nil), s.FillPlan.Holes...)
 		plan.Candidates = append([]FillCandidate(nil), s.FillPlan.Candidates...)
+		if s.FillPlan.Generation != nil {
+			generation := *s.FillPlan.Generation
+			plan.Generation = &generation
+		}
 		for index := range plan.Candidates {
 			plan.Candidates[index].Fills = append([]HoleFilling(nil), s.FillPlan.Candidates[index].Fills...)
 		}

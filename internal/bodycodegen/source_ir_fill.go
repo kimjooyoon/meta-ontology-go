@@ -25,21 +25,35 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 	if err := spec.Validate(); err != nil {
 		return Result{}, fmt.Errorf("invalid source-declared IR body-fill plan: %w", err)
 	}
+	candidates := make([]IRBodyFillCandidate, len(spec.FillPlan.Candidates))
+	var generationReceipt *IRBodyFillCandidateGenerationReceipt
+	if spec.FillPlan.Generation != nil {
+		var err error
+		candidates, generationReceipt, err = generateSourceFillCandidates(spec.FillPlan, spec.Cases)
+		if err != nil {
+			return Result{}, err
+		}
+	}
+	if spec.FillPlan.Generation == nil {
+		for index, candidate := range spec.FillPlan.Candidates {
+			fills := make(map[string]string, len(candidate.Fills))
+			for _, fill := range candidate.Fills {
+				fills[fill.HoleID] = fill.Expression
+			}
+			candidates[index] = IRBodyFillCandidate{ID: candidate.ID, Fills: fills}
+		}
+	}
 	plan := IRBodyFillPlan{
 		Schema: bodyFillMultiPlanSchema, Intent: spec.FillPlan.Intent,
 		Holes:      make([]IRBodyFillHole, len(spec.FillPlan.Holes)),
-		Candidates: make([]IRBodyFillCandidate, len(spec.FillPlan.Candidates)),
+		Candidates: make([]IRBodyFillCandidate, len(candidates)),
 		TestCases:  make([]IRBodyFillTestCase, len(spec.Cases)),
 	}
 	for index, hole := range spec.FillPlan.Holes {
 		plan.Holes[index] = IRBodyFillHole{ID: hole.ID}
 	}
-	for index, candidate := range spec.FillPlan.Candidates {
-		fills := make(map[string]string, len(candidate.Fills))
-		for _, fill := range candidate.Fills {
-			fills[fill.HoleID] = fill.Expression
-		}
-		plan.Candidates[index] = IRBodyFillCandidate{ID: candidate.ID, Fills: fills}
+	for index, candidate := range candidates {
+		plan.Candidates[index] = candidate
 	}
 	for index, testCase := range spec.Cases {
 		plan.TestCases[index] = IRBodyFillTestCase{Input: testCase.Input, Expected: testCase.Expected}
@@ -54,6 +68,10 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 		return Result{}, err
 	}
 	result.GoooSource = string(output)
+	if generationReceipt != nil && result.Report.BodyFill != nil {
+		result.Report.BodyFill.CandidateGeneration = generationReceipt
+		populateCompletenessReceipt(&result.Report, "")
+	}
 	return result, nil
 }
 

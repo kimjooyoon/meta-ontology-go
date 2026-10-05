@@ -75,6 +75,35 @@ func TestSourceIRSearchSurvivesSemanticLoweringAndBindsHoldout(t *testing.T) {
 	}
 }
 
+func TestSourceFillDerivationSurvivesSemanticLoweringAndAffectsIdentity(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-derived.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := assemblyDocument(t, source)
+	core, err := LowerDocument(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var activity semantic.Node
+	for _, node := range core.Graph.Nodes() {
+		if node.Name == "Lift" {
+			activity = node
+			break
+		}
+	}
+	if activity.Assembly == nil || activity.Assembly.FillPlan == nil || activity.Assembly.FillPlan.Generation == nil ||
+		activity.Assembly.FillPlan.Generation.Grammar != "integer-offset-constant/v1" ||
+		activity.Assembly.FillPlan.Generation.MaxCandidates != 16 || len(activity.Assembly.FillPlan.Holes) != 2 {
+		t.Fatalf("source-owned derivation settings were lost during semantic lowering: %#v", activity.Assembly)
+	}
+	changed := assemblyDocument(t, []byte(strings.Replace(string(source), `max_candidates "16"`, `max_candidates "15"`, 1)))
+	changedCore, err := LowerDocument(changed)
+	if err != nil || core.StableHash() == changedCore.StableHash() {
+		t.Fatal("source-derived candidate cap did not participate in semantic identity", err)
+	}
+}
+
 func testAssemblySurvivesBXLawsAndCoreSemanticIdentity(t *testing.T, source []byte) {
 	t.Helper()
 	document := assemblyDocument(t, source)
