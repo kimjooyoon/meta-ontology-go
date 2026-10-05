@@ -12,7 +12,6 @@ Build a small Gooo program:
   gooo init my-app
   cd my-app
   gooo check main.gooo
-  gooo test main.gooo
 
 Generate Go from an activity:
   gooo body-codegen --json --activity Clamp main.gooo
@@ -23,7 +22,7 @@ rank choices already declared in Gooo; it cannot add code outside those choices.
 Commands:
   init             Create an app or library starter
   check            Parse and validate a Gooo source file
-  test             Run the finite cases declared in a Gooo source file
+  test             Check declared activity-output test markers
   run              Execute a selected activity
   body-codegen     Fill declared IR holes and generate Go
   generate         Generate a project from Gooo declarations
@@ -52,7 +51,6 @@ Example:
 
 Try it:
   gooo check main.gooo
-  gooo test main.gooo
 
 See docs/language-direction.ko.md and docs/language/language-semantic-model.md
 for the current language model and supported syntax.
@@ -95,10 +93,10 @@ Examples:
   gooo init hello-gooo
   gooo init --template library my-library
 
-Then run:
+Then check and generate:
   cd hello-gooo
   gooo check main.gooo
-  gooo test main.gooo
+  gooo body-codegen --json --activity Clamp main.gooo
 
 The starter is deterministic and does not require a model.
 `,
@@ -113,16 +111,20 @@ Example:
 Use --semantic to include semantic validation and --json for a machine-readable
 report. Checking does not execute the generated Go program.
 `,
-	"test": `Run declared Gooo examples
+	"test": `Check Gooo language-test markers
 
 Usage:
   gooo test [--json] <file.gooo>
 
-Example:
-  gooo test main.gooo
+Add a marker that names an activity and its expected output entity:
+  package sample
+  namespace sample
+  entity User id "sample://user"
+  entity BuildProducesUser id "gooo://test/activity/Build/output/User"
+  activity Build() -> User
 
-This reports the cases declared by the source. The result describes that finite
-suite, not the complete input domain.
+gooo test checks that Build declares User as its output entity. It does not
+test runtime values, side effects, or generated Go. See examples/language-test/README.md.
 `,
 	"run": `Run a Gooo activity
 
