@@ -96,6 +96,14 @@ if input < 0 { return __GOOO_BODY_HOLE_floor__ } else if input > 10 { return __G
   ]
 }
 `,
+	"gooo.workspace.json": `{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "boundedint", "activity": "Clamp"},
+  "packages": [
+    {"path": "boundedint", "name": "boundedint", "imports": [], "sources": ["main.gooo"]}
+  ]
+}
+`,
 	"README.md": `# boundedint
 
 This is a small Gooo-authored library contract. The public surface is the
@@ -108,6 +116,7 @@ Install the Gooo CLI and run these commands from this directory:
 ~~~sh
 go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
 gooo check main.gooo
+gooo package resolve gooo.workspace.json
 gooo body-codegen --json --fill-plan body-fill-plan.json --activity Clamp main.gooo
 ~~~
 
@@ -117,6 +126,9 @@ examples before emitting Go. Set GOOO_LAYA_URL to your local Laya
 model, Gooo uses the declared order as a deterministic fallback and adjusts to
 the best-scoring candidate when needed. The examples are a compact regression
 set, not a proof for every integer.
+
+The workspace manifest records the source and public entry. Package resolve
+prints its deterministic package graph receipt.
 `,
 }
 
@@ -184,6 +196,8 @@ func runWithInputCommandsOne(args []string, stdout, stderr io.Writer) (int, bool
 		return runSource(args[1:], OSFileReader{}, stdout, stderr), true
 	case "init":
 		return runInit(args[1:], stdout, stderr), true
+	case "package":
+		return runPackageCommand(args[1:], OSFileReader{}, stdout, stderr), true
 	case "compare":
 		return runCompareReplay(args[1:], OSFileReader{}, stdout, stderr), true
 	case "propose-repair":

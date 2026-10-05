@@ -5690,6 +5690,22 @@
       ]
     },
     {
+      "branch": "agent/gooo-workspace-package-manifest-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "README.md",
+        "cmd/gooo/check_part02_test.go",
+        "cmd/gooo/main_part01.go",
+        "cmd/gooo/package_resolve.go",
+        "cmd/gooo/package_resolve_test.go",
+        "cmd/gooo/usage.go",
+        "docs/language/project-starters.md",
+        "docs/language/workspace-manifest.md",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/ir-multihole-model-body-fill-20261005",
       "paths": [
         ".github/agent-scope-table.md",
