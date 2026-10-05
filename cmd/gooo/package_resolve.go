@@ -118,6 +118,29 @@ func runPackageCommand(args []string, reader SourceReader, stdout, stderr io.Wri
 	fmt.Fprintf(stdout, "resolved Gooo package graph: packages=%d entry=%s.%s init_order=%s digest=%s\n",
 		len(result.Image.Packages), result.Image.Entry.PackagePath, result.Image.Entry.Activity,
 		strings.Join(result.Image.InitOrder, ","), result.ResultDigest)
+	for _, pkg := range result.Image.Packages {
+		fmt.Fprintf(stdout, "\npackage %s (%s)\n", pkg.Path, pkg.Name)
+		if len(pkg.Imports) == 0 {
+			fmt.Fprintln(stdout, "  imports: (none)")
+		} else {
+			fmt.Fprintf(stdout, "  imports: %s\n", strings.Join(pkg.Imports, ", "))
+		}
+		for _, export := range pkg.Exports {
+			switch export.Kind {
+			case "entity":
+				fmt.Fprintf(stdout, "  entity %s id=%s\n", export.Name, export.ID)
+			case "activity":
+				fmt.Fprintf(stdout, "  activity %s(%s) -> %s\n", export.Name,
+					strings.Join(export.InputTypes, ", "), export.OutputType)
+			}
+		}
+		for _, binding := range pkg.Bindings {
+			fmt.Fprintf(stdout, "  binding %s.%s.%s -> %s.%s.%s (%s)\n",
+				binding.ProducerPackage, binding.ProducerActivity, binding.ProducerPort,
+				binding.ConsumerPackage, binding.ConsumerActivity, binding.ConsumerPort, binding.EntityID)
+		}
+	}
+	fmt.Fprintln(stdout, "\nNote: resolution checks package wiring; it does not execute activity bodies.")
 	return exitOK
 }
 

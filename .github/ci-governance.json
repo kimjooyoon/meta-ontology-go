@@ -5749,6 +5749,17 @@
         "internal/syntax/parser_part02.go",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/gooo-imported-activity-execution-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/package_resolve.go",
+        "cmd/gooo/package_resolve_test.go",
+        "docs/language/workspace-manifest.md",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
