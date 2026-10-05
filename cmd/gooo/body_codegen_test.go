@@ -76,6 +76,94 @@ activity Clamp(Integer) -> Integer computes "if input < 0 { return __GOOO_BODY_H
 	}
 }
 
+func TestRunBodyCodegenExecutesSourceDeclaredIRSearchWithoutPlanFile(t *testing.T) {
+	t.Setenv("GOOO_LAYA_URL", "")
+	t.Setenv("GOOO_LAYA_API_KEY", "")
+	source, err := os.ReadFile("../../examples/body-codegen/ir-search-source.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	reader := mapSourceReader{"search.gooo": source}
+	var stdout, stderr bytes.Buffer
+	code := runBodyCodegen([]string{"--json", "--activity", "ClampNegativeToZero", "search.gooo"},
+		reader, &stdout, &stderr)
+	if code != exitOK || stderr.Len() != 0 {
+		t.Fatalf("source-declared IR search = %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
+	}
+	var result struct {
+		Report struct {
+			BodySearch struct {
+				SelectedExpression      string  `json:"selected_expression"`
+				TrainingAccuracyPercent float64 `json:"training_accuracy_percent"`
+				HoldoutAccuracyPercent  float64 `json:"holdout_accuracy_percent"`
+				CandidateGeneration     struct {
+					GrammarCoveragePercent float64 `json:"grammar_coverage_percent"`
+					GrammarComplete        bool    `json:"grammar_complete"`
+				} `json:"candidate_generation"`
+			} `json:"body_search"`
+		} `json:"report"`
+		Source string `json:"source"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatal(err, stdout.String())
+	}
+	search := result.Report.BodySearch
+	if search.SelectedExpression != "0" || search.TrainingAccuracyPercent != 100 ||
+		search.HoldoutAccuracyPercent != 100 || !search.CandidateGeneration.GrammarComplete ||
+		search.CandidateGeneration.GrammarCoveragePercent != 100 || !strings.Contains(result.Source, "output = 0") {
+		t.Fatalf("source-declared IR search lost typed selection or scoped metrics: %#v source=%s", search, result.Source)
+	}
+}
+
+func TestRunBodyCodegenFillsSeveralTypedIRHolesFromOneDeclaredAssignment(t *testing.T) {
+	t.Setenv("GOOO_LAYA_URL", "")
+	t.Setenv("GOOO_LAYA_API_KEY", "")
+	fixture := `package sample
+namespace sample
+entity Integer id "sample://entity/integer"
+activity Lift(Integer) -> Integer computes ` + "`" + `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` + "`" + `
+`
+	plan := `{
+		"schema":"gooo/body-codegen-ir-fill-plan/v2",
+		"intent":"Add one to the input by choosing the base and increment together.",
+		"holes":[{"id":"seed"},{"id":"step"}],
+		"candidates":[
+			{"id":"compose","fills":{"seed":"input + 0","step":"1"}},
+			{"id":"double","fills":{"seed":"input * 2","step":"0"}},
+			{"id":"subtract","fills":{"seed":"input - 0","step":"-1"}}
+		],
+		"test_cases":[{"input":0,"expected":1},{"input":1,"expected":2},{"input":2,"expected":3}]
+	}`
+	reader := mapSourceReader{"fixture.gooo": []byte(fixture), "fill-plan.json": []byte(plan)}
+	var stdout, stderr bytes.Buffer
+	code := runBodyCodegen(
+		[]string{"--json", "--fill-plan", "fill-plan.json", "--activity", "Lift", "fixture.gooo"},
+		reader, &stdout, &stderr,
+	)
+	var report struct {
+		Report struct {
+			BodyFill struct {
+				Schema                string              `json:"schema"`
+				SelectedCandidateID   string              `json:"selected_candidate_id"`
+				FunctionalAccuracyPct float64             `json:"functional_accuracy_percent"`
+				HoleFills             []map[string]string `json:"hole_fills"`
+			} `json:"body_fill"`
+		} `json:"report"`
+		Source string `json:"source"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+		t.Fatalf("body-codegen did not return JSON: code=%d stdout=%q stderr=%q: %v", code, stdout.String(), stderr.String(), err)
+	}
+	if code != exitOK || stderr.Len() != 0 || report.Report.BodyFill.Schema != "gooo/body-codegen-ir-fill-plan/v2" ||
+		report.Report.BodyFill.SelectedCandidateID != "compose" || report.Report.BodyFill.FunctionalAccuracyPct != 100 ||
+		len(report.Report.BodyFill.HoleFills) != 2 || !strings.Contains(report.Source, "var base = (input + 0)") ||
+		!strings.Contains(report.Source, "var increment int64 = 1") || strings.Contains(report.Source, "__GOOO_BODY_HOLE_") {
+		t.Fatalf("multi-hole IR fill did not emit the full selected assignment: code=%d report=%#v source=%q stderr=%q", code, report.Report.BodyFill, report.Source, stderr.String())
+	}
+}
+
 func TestRunBodyCodegenFailsClosedForInvalidIRBodyFill(t *testing.T) {
 	t.Setenv("GOOO_LAYA_URL", "")
 	t.Setenv("GOOO_LAYA_API_KEY", "")

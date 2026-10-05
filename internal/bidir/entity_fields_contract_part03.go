@@ -30,8 +30,9 @@ func validateEntityFieldsProfileField(field Field, registry semantic.TypeRegistr
 		return classifyEntityFieldsTypeError(field, err)
 	}
 	stringType := typeID == semantic.BuiltinStringTypeID
-	booleanType := typeID == semantic.BuiltinBooleanTypeID && support.Profile.ID == syntax.EntityFieldsV2ProfileID
-	if !stringType && !booleanType {
+	booleanType := typeID == semantic.BuiltinBooleanTypeID && (support.Profile.ID == syntax.EntityFieldsV2ProfileID || support.Profile.ID == syntax.EntityFieldsV3ProfileID)
+	integerType := typeID == semantic.BuiltinIntegerTypeID && support.Profile.ID == syntax.EntityFieldsV3ProfileID
+	if !stringType && !booleanType && !integerType {
 		return entityFieldsProfileError(field, EntityFieldsUnsupportedTypeDiagnostic, fmt.Sprintf("resolved type %q is not in the bound profile", typeID))
 	}
 	if normalized.Presence != FieldPresenceRequired || normalized.Cardinality != FieldCardinalityOne {

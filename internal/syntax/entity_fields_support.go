@@ -65,3 +65,11 @@ func EntityFieldsV2Support() EntityFieldsSupport {
 		ID: EntityFieldsV2ProfileID, Version: EntityFieldsV2ProfileVersion, Digest: EntityFieldsV2ProfileDigest,
 	}}
 }
+
+// EntityFieldsV3Support adds required single Integer fields while preserving
+// the V2 Boolean and V1 string rules. Its digest binds the exact accepted types.
+func EntityFieldsV3Support() EntityFieldsSupport {
+	return EntityFieldsSupport{State: EntityFieldsSupported, Profile: EntityFieldsProfile{
+		ID: EntityFieldsV3ProfileID, Version: EntityFieldsV3ProfileVersion, Digest: EntityFieldsV3ProfileDigest,
+	}}
+}

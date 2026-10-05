@@ -124,7 +124,11 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 	result.Observation.Stage = "SOURCE_REPLAY"
 	phase.End(true)
 	phase = bodytiming.Start(ctx, "source_replay")
-	if err := bodycodegen.VerifyTypedPathProjection(ctx, filename, source, document, prior); err != nil {
+	if prior.Report.BodySearch != nil {
+		if err := bodycodegen.VerifyIRBodySearchProjection(ctx, filename, source, prior); err != nil {
+			return finish(err)
+		}
+	} else if err := bodycodegen.VerifyTypedPathProjection(ctx, filename, source, document, prior); err != nil {
 		return finish(err)
 	}
 	r := &result.Observation
@@ -225,6 +229,18 @@ func selectionObservedInput(document pathplan.Document, prior bodycodegen.Result
 	if prior.Report.BodyPaths != nil && prior.Report.BodyPaths.Observation != nil {
 		for _, round := range prior.Report.BodyPaths.Observation.Rounds {
 			if round.Observation != nil && round.Observation.Input == input {
+				return true
+			}
+		}
+	}
+	if prior.Report.BodySearch != nil {
+		for _, c := range prior.Report.BodySearch.TrainingCaseResults {
+			if c.Input == input {
+				return true
+			}
+		}
+		for _, c := range prior.Report.BodySearch.HoldoutCaseResults {
+			if c.Input == input {
 				return true
 			}
 		}

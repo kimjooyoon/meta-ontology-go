@@ -34,7 +34,32 @@ Gooo source + intent + permitted choices + finite expectations
 · [small model integration](docs/three-choice-path-model.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
 
+· [workspace package graph](docs/language/workspace-manifest.md)
+
+Start a two-package library workspace with `gooo init --template library
+<directory>`. It declares an imported activity binding and typed body-fill
+plans. `gooo package execute` accepts a local compact model for sequential
+activity fills through `--tiny-model`; without a provider it follows the
+declared deterministic order. See [project starters](docs/language/project-starters.md).
+
 ## First run
+
+To start a new project with a working Gooo declaration, declared alternatives
+and finite examples, run:
+
+```sh
+go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
+gooo init my-first-gooo
+cd my-first-gooo
+gooo check main.gooo
+gooo body-codegen --json --activity Clamp main.gooo
+```
+
+The generated project works without a model. Point `GOOO_LAYA_URL` at a local
+Laya `/v1/systemone` endpoint to let it rank the choices in the declaration.
+The model cannot introduce code outside those choices; type checking and the
+finite examples remain part of generation. See the generated README for the
+limits of the finite score.
 
 The checked-in example declares the baseline body, two legal alternatives, five
 finite input/output checks and an attempt limit in Gooo. From the repository root,
@@ -86,9 +111,10 @@ Boolean and Text activities then execute in a compiled graph with ordered
 intermediate input/output observations and finite expectation counts.
 Ordinary bodies support up to 16 ordered scalar inputs, including repeated types
 and partially bound joins. [Input-port example and runnable guide](docs/native-body-composition.md).
-String and Boolean records can be constructed, read and passed through
+String, Boolean and Integer records can be constructed, read and passed through
 composition binds as native value structs. Boolean fields become Go `bool` and
-stay typed across inputs, outputs and field observations. [Record body examples](docs/native-record-values.md).
+Integer fields become `int64`; both stay typed across inputs, outputs and field
+observations. [Record body examples](docs/native-record-values.md).
 Record constructor fields can also declare alternative value expressions and
 typed JSON cases. Their assembly reports matching fields as well as complete
 cases, retaining partial results under a small attempt budget.

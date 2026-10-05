@@ -61,6 +61,9 @@ func TestGenerateWithIRBodyFillLetsLayaChooseActualBodyAndScoresTests(t *testing
 		strings.Contains(result.Source, "__GOOO_BODY_HOLE_floor__") {
 		t.Fatalf("Laya choice was not materialized in the emitted body:\n%s", result.Source)
 	}
+	if result.GoooSource == "" || strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_floor__") {
+		t.Fatalf("selected Gooo source was not retained for package execution:\n%s", result.GoooSource)
+	}
 	receipt := result.Report.BodyFill
 	if receipt == nil || receipt.Decision.Mode != "laya" || receipt.SelectedCandidateID != "zero" ||
 		receipt.SelectedExpression != "0" {
@@ -113,6 +116,114 @@ func TestGenerateWithIRBodyFillLetsLayaChooseActualBodyAndScoresTests(t *testing
 	if receipt.IRPlanSHA256 == "" || receipt.TestSuiteSHA256 == "" || !result.Report.TypecheckPassed ||
 		!result.Report.DeterministicReplay {
 		t.Fatalf("body-fill proof fields are incomplete: report=%#v receipt=%#v", result.Report, receipt)
+	}
+}
+
+func TestGenerateWithIRBodyFillV2LetsLayaSelectSeveralBodyIRHoles(t *testing.T) {
+	fixture := []byte(`package body_fill_multi
+namespace body_fill_multi
+entity Integer id "body-fill-multi://integer"
+activity Lift(Integer) -> Integer computes ` + "`" + `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` + "`" + `
+`)
+	plan := IRBodyFillPlan{
+		Schema: bodyFillMultiPlanSchema,
+		Intent: "Add one to the input while expressing the base and increment as separate IR holes.",
+		Holes:  []IRBodyFillHole{{ID: "seed"}, {ID: "step"}},
+		Candidates: []IRBodyFillCandidate{
+			{ID: "compose", Fills: map[string]string{"seed": "input + 0", "step": "1"}},
+			{ID: "double", Fills: map[string]string{"seed": "input * 2", "step": "0"}},
+			{ID: "subtract", Fills: map[string]string{"seed": "input - 0", "step": "-1"}},
+		},
+		TestCases: []IRBodyFillTestCase{{Input: 0, Expected: 1}, {Input: 1, Expected: 2}, {Input: 2, Expected: 3}},
+	}
+	var observed irBodyFillState
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/systemone" {
+			http.NotFound(writer, request)
+			return
+		}
+		var payload struct {
+			State map[string]string `json:"state"`
+		}
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Errorf("decode Laya request: %v", err)
+			return
+		}
+		if err := json.Unmarshal([]byte(payload.State["request"]), &observed); err != nil {
+			t.Errorf("decode Gooo IR state: %v", err)
+			return
+		}
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "multi-fill-model", "routing": map[string]any{"model": "multi-fill-model"},
+			"answers": map[string]any{"body_ir_fill": map[string]any{
+				"choice": "compose", "probabilities": map[string]float64{"compose": 0.9, "double": 0.08, "subtract": 0.02},
+			}},
+		})
+	}))
+	defer server.Close()
+
+	result, err := GenerateWithIRBodyFill(context.Background(), "multi.gooo", fixture, "Lift", plan, server.URL+"/v1/systemone", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.Schema != bodyFillMultiPlanSchema || receipt.SelectedCandidateID != "compose" ||
+		receipt.FunctionalAccuracyPct != 100 || receipt.TestCasesPassed != 3 || receipt.TestCasesTotal != 3 {
+		t.Fatalf("multi-hole body was not measured and emitted completely: %#v", receipt)
+	}
+	if !strings.Contains(result.Source, "base = (input + 0)") || !strings.Contains(result.Source, "increment int64 = 1") ||
+		strings.Contains(result.Source, "__GOOO_BODY_HOLE_") {
+		t.Fatalf("selected assignment did not fill every IR hole:\n%s", result.Source)
+	}
+	if len(receipt.HoleFills) != 2 || receipt.HoleFills[0] != (IRBodyFillHoleFill{HoleID: "seed", Expression: "input + 0"}) ||
+		receipt.HoleFills[1] != (IRBodyFillHoleFill{HoleID: "step", Expression: "1"}) {
+		t.Fatalf("receipt did not identify each selected hole fill: %#v", receipt.HoleFills)
+	}
+	if observed.HoleID != "seed,step" || len(observed.HoleIDs) != 2 || observed.HoleIDs[0] != "seed" ||
+		observed.HoleIDs[1] != "step" || observed.TestCaseCount != 3 || len(observed.Candidates) != 3 {
+		t.Fatalf("Laya did not receive the complete multi-hole plan and finite scores: %#v", observed)
+	}
+}
+
+func TestValidateIRBodyFillV2RequiresExactDeclaredHoleAssignments(t *testing.T) {
+	base := IRBodyFillPlan{
+		Schema: bodyFillMultiPlanSchema, Intent: "Fill the declared pair.",
+		Holes: []IRBodyFillHole{{ID: "left"}, {ID: "right"}},
+		Candidates: []IRBodyFillCandidate{
+			{ID: "first", Fills: map[string]string{"left": "input + 0", "right": "1"}},
+			{ID: "second", Fills: map[string]string{"left": "input - 0", "right": "1"}},
+		},
+		TestCases: []IRBodyFillTestCase{{Input: 0, Expected: 1}},
+	}
+	if err := validateIRBodyFillPlan(base); err != nil {
+		t.Fatalf("valid multi-hole plan was rejected: %v", err)
+	}
+	missing := base
+	missing.Candidates = append([]IRBodyFillCandidate(nil), base.Candidates...)
+	missing.Candidates[0].Fills = map[string]string{"left": "input"}
+	if err := validateIRBodyFillPlan(missing); err == nil {
+		t.Fatal("multi-hole candidate with a missing assignment was accepted")
+	}
+	extra := base
+	extra.Candidates = append([]IRBodyFillCandidate(nil), base.Candidates...)
+	extra.Candidates[0].Fills = map[string]string{"left": "input", "right": "1", "extra": "0"}
+	if err := validateIRBodyFillPlan(extra); err == nil {
+		t.Fatal("multi-hole candidate with an undeclared assignment was accepted")
+	}
+	duplicate := base
+	duplicate.Holes = []IRBodyFillHole{{ID: "left"}, {ID: "left"}}
+	if err := validateIRBodyFillPlan(duplicate); err == nil {
+		t.Fatal("multi-hole plan with duplicate hole IDs was accepted")
+	}
+	chainedPlaceholder := base
+	chainedPlaceholder.Candidates = append([]IRBodyFillCandidate(nil), base.Candidates...)
+	chainedPlaceholder.Candidates[0].Fills = map[string]string{
+		"left": "__GOOO_BODY_HOLE_right__", "right": "1",
+	}
+	if err := validateIRBodyFillPlan(chainedPlaceholder); err == nil {
+		t.Fatal("one hole expression was allowed to smuggle in another hole token")
 	}
 }
 

@@ -16,6 +16,7 @@ func (f *File) Clone() *File {
 		namespaceDecl := *f.Namespace
 		clone.Namespace = &namespaceDecl
 	}
+	clone.Imports = append([]ImportDecl(nil), f.Imports...)
 	if f.Decls == nil && f.Declarations == nil {
 		clone.Bindings = append([]BindingDecl(nil), f.Bindings...)
 		return &clone

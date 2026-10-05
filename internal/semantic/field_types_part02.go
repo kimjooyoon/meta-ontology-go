@@ -40,6 +40,9 @@ func BuiltinStringType() TypeDef {
 func BuiltinBooleanType() TypeDef {
 	return TypeDef{ID: BuiltinBooleanTypeID, Namespace: BuiltinTypeNamespace, Name: BuiltinBooleanTypeName}
 }
+func BuiltinIntegerType() TypeDef {
+	return TypeDef{ID: BuiltinIntegerTypeID, Namespace: BuiltinTypeNamespace, Name: BuiltinIntegerTypeName}
+}
 
 // BuiltInStringType is an alternate spelling for callers using the usual
 // English capitalization of "built-in".
@@ -61,6 +64,9 @@ func NewTypeRegistry() TypeRegistry {
 		panic(err)
 	}
 	if err := registry.Register(BuiltinBooleanType()); err != nil {
+		panic(err)
+	}
+	if err := registry.Register(BuiltinIntegerType()); err != nil {
 		panic(err)
 	}
 	return registry

@@ -90,6 +90,27 @@ entity Gate id "records://gate" fields {
 		t.Fatalf("resolved Boolean field missing from semantic graph: %+v", entity)
 	}
 }
+
+func TestEntityFieldsV3AddsIntegerFields(t *testing.T) {
+	const source = `package records
+namespace records
+entity Counter id "records://counter" fields {
+  field total id "records://counter/total" type integer required one
+}`
+	support := syntax.EntityFieldsV3Support()
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport("counter.gooo", source, support)
+	if diagnostics.HasErrors() {
+		t.Fatal("V3 field syntax", diagnostics)
+	}
+	ir, err := LowerContextWithEntityFieldsSupport(context.Background(), file, support)
+	if err != nil {
+		t.Fatal("V3 integer lowering", err)
+	}
+	entity, found := ir.Graph.NodeByName(ir.Namespace, "Counter")
+	if !found || len(entity.Fields) != 1 || entity.Fields[0].TypeRef.ID != semantic.BuiltinIntegerTypeID {
+		t.Fatalf("resolved integer field missing from semantic graph: %+v", entity)
+	}
+}
 func assertEntityFieldsDeferred(t *testing.T, err error, span SourceSpan) {
 	t.Helper()
 	var deferred *EntityFieldsError

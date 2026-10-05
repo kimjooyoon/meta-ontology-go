@@ -31,7 +31,11 @@ func validateCLIProjectedFields(model generator.SemanticIR, support syntax.Entit
 				return fmt.Errorf("GOOO-EF-V1-GO-NAME-COLLISION: field name %q is duplicated", field.Name)
 			}
 			seenNames[field.Name] = struct{}{}
-			if field.TypeRefID != "urn:gooo:type:string" && !(support.Profile.ID == syntax.EntityFieldsV2ProfileID && field.TypeRefID == "urn:gooo:type:boolean") {
+			stringType := field.TypeRefID == "urn:gooo:type:string"
+			booleanType := field.TypeRefID == "urn:gooo:type:boolean" &&
+				(support.Profile.ID == syntax.EntityFieldsV2ProfileID || support.Profile.ID == syntax.EntityFieldsV3ProfileID)
+			integerType := field.TypeRefID == "urn:gooo:type:integer" && support.Profile.ID == syntax.EntityFieldsV3ProfileID
+			if !stringType && !booleanType && !integerType {
 				return fmt.Errorf("GOOO-EF-V1-UNSUPPORTED-TYPE: field %q type %q", field.ID, field.TypeRefID)
 			}
 			if field.Presence != "required" || field.Cardinality != "one" {

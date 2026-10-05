@@ -20,16 +20,17 @@ const bodySearchPlanSchema = "gooo/body-codegen-ir-search-plan/v1"
 // IRBodySearchPlan bounds candidate exploration. Holdout cases are withheld
 // from the chooser and measured only after the final candidate is committed.
 type IRBodySearchPlan struct {
-	Schema                   string                    `json:"schema"`
-	Intent                   string                    `json:"intent"`
-	HoleID                   string                    `json:"hole_id"`
-	Candidates               []IRBodyFillCandidate     `json:"candidates"`
-	TestCases                []IRBodyFillTestCase      `json:"test_cases"`
-	HoldoutTestCases         []IRBodyFillTestCase      `json:"holdout_test_cases,omitempty"`
-	MaxAttempts              int                       `json:"max_attempts"`
-	ProviderModel            string                    `json:"provider_model,omitempty"`
-	ExternalTrainingFeedback *ExternalTrainingFeedback `json:"external_training_feedback,omitempty"`
-	PromptProfile            string                    `json:"prompt_profile,omitempty"`
+	Schema                   string                           `json:"schema"`
+	Intent                   string                           `json:"intent"`
+	HoleID                   string                           `json:"hole_id"`
+	Candidates               []IRBodyFillCandidate            `json:"candidates"`
+	CandidateGeneration      *IRBodySearchCandidateGeneration `json:"candidate_generation,omitempty"`
+	TestCases                []IRBodyFillTestCase             `json:"test_cases"`
+	HoldoutTestCases         []IRBodyFillTestCase             `json:"holdout_test_cases,omitempty"`
+	MaxAttempts              int                              `json:"max_attempts"`
+	ProviderModel            string                           `json:"provider_model,omitempty"`
+	ExternalTrainingFeedback *ExternalTrainingFeedback        `json:"external_training_feedback,omitempty"`
+	PromptProfile            string                           `json:"prompt_profile,omitempty"`
 }
 
 // UnmarshalJSON rejects unknown fields and case-insensitive duplicate keys
@@ -63,38 +64,39 @@ type IRBodySearchAttempt struct {
 // IRBodySearchReceipt records candidate evidence and provider resolver activity.
 // ProviderOperations counts calls with an endpoint, including canceled calls, rather than HTTP requests.
 type IRBodySearchReceipt struct {
-	Schema                      string                               `json:"schema"`
-	IRPlanSHA256                string                               `json:"ir_plan_sha256"`
-	OriginalSourceDigest        string                               `json:"original_source_digest"`
-	TrainingSuiteSHA256         string                               `json:"training_suite_sha256"`
-	HoldoutSuiteSHA256          string                               `json:"holdout_suite_sha256,omitempty"`
-	SelectedCandidateID         string                               `json:"selected_candidate_id"`
-	SelectedExpression          string                               `json:"selected_expression"`
-	TrainingPassed              int                                  `json:"training_passed"`
-	TrainingTotal               int                                  `json:"training_total"`
-	TrainingAccuracyPercent     *float64                             `json:"training_accuracy_percent"`
-	TrainingCaseResults         []IRBodyFillCaseResult               `json:"training_case_results,omitempty"`
-	HoldoutPassed               int                                  `json:"holdout_passed"`
-	HoldoutTotal                int                                  `json:"holdout_total"`
-	HoldoutAccuracyPercent      *float64                             `json:"holdout_accuracy_percent"`
-	HoldoutCaseResults          []IRBodyFillCaseResult               `json:"holdout_case_results,omitempty"`
-	HoldoutError                string                               `json:"holdout_error,omitempty"`
-	Attempts                    []IRBodySearchAttempt                `json:"attempts"`
-	CandidateCount              int                                  `json:"candidate_count"`
-	AttemptedCandidates         int                                  `json:"attempted_candidates"`
-	EvaluatedCandidates         int                                  `json:"evaluated_candidates"`
-	ProviderOperations          int                                  `json:"provider_operations"`
-	UntestedCandidates          int                                  `json:"untested_candidates"`
-	BestObservedAccuracyPercent *float64                             `json:"best_observed_accuracy_percent"`
-	GlobalBestAccuracyPercent   *float64                             `json:"global_best_accuracy_percent"`
-	StopReason                  string                               `json:"stop_reason"`
-	Evaluator                   string                               `json:"evaluator"`
-	ProviderBudgetMS            float64                              `json:"provider_budget_ms"`
-	ProviderBudgetUsedMS        float64                              `json:"provider_budget_used_ms"`
-	DecisionLatencyMS           float64                              `json:"decision_latency_ms"`
-	TotalMS                     float64                              `json:"total_ms"`
-	ExternalTrainingFeedback    *IRBodySearchExternalFeedbackReceipt `json:"external_training_feedback,omitempty"`
-	PromptProfile               string                               `json:"prompt_profile,omitempty"`
+	Schema                      string                                  `json:"schema"`
+	IRPlanSHA256                string                                  `json:"ir_plan_sha256"`
+	OriginalSourceDigest        string                                  `json:"original_source_digest"`
+	TrainingSuiteSHA256         string                                  `json:"training_suite_sha256"`
+	HoldoutSuiteSHA256          string                                  `json:"holdout_suite_sha256,omitempty"`
+	SelectedCandidateID         string                                  `json:"selected_candidate_id"`
+	SelectedExpression          string                                  `json:"selected_expression"`
+	TrainingPassed              int                                     `json:"training_passed"`
+	TrainingTotal               int                                     `json:"training_total"`
+	TrainingAccuracyPercent     *float64                                `json:"training_accuracy_percent"`
+	TrainingCaseResults         []IRBodyFillCaseResult                  `json:"training_case_results,omitempty"`
+	HoldoutPassed               int                                     `json:"holdout_passed"`
+	HoldoutTotal                int                                     `json:"holdout_total"`
+	HoldoutAccuracyPercent      *float64                                `json:"holdout_accuracy_percent"`
+	HoldoutCaseResults          []IRBodyFillCaseResult                  `json:"holdout_case_results,omitempty"`
+	HoldoutError                string                                  `json:"holdout_error,omitempty"`
+	Attempts                    []IRBodySearchAttempt                   `json:"attempts"`
+	CandidateCount              int                                     `json:"candidate_count"`
+	CandidateGeneration         *IRBodySearchCandidateGenerationReceipt `json:"candidate_generation,omitempty"`
+	AttemptedCandidates         int                                     `json:"attempted_candidates"`
+	EvaluatedCandidates         int                                     `json:"evaluated_candidates"`
+	ProviderOperations          int                                     `json:"provider_operations"`
+	UntestedCandidates          int                                     `json:"untested_candidates"`
+	BestObservedAccuracyPercent *float64                                `json:"best_observed_accuracy_percent"`
+	GlobalBestAccuracyPercent   *float64                                `json:"global_best_accuracy_percent"`
+	StopReason                  string                                  `json:"stop_reason"`
+	Evaluator                   string                                  `json:"evaluator"`
+	ProviderBudgetMS            float64                                 `json:"provider_budget_ms"`
+	ProviderBudgetUsedMS        float64                                 `json:"provider_budget_used_ms"`
+	DecisionLatencyMS           float64                                 `json:"decision_latency_ms"`
+	TotalMS                     float64                                 `json:"total_ms"`
+	ExternalTrainingFeedback    *IRBodySearchExternalFeedbackReceipt    `json:"external_training_feedback,omitempty"`
+	PromptProfile               string                                  `json:"prompt_profile,omitempty"`
 }
 
 // IRBodySearchError preserves attempted candidates even when no projection can
@@ -136,6 +138,22 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	if err := validateIRBodySearchPlan(plan); err != nil {
 		return Result{}, err
 	}
+	candidateGeneration, err := generateIRBodySearchCandidates(&plan)
+	if err != nil {
+		return Result{}, err
+	}
+	if feedback := plan.ExternalTrainingFeedback; feedback != nil {
+		found := false
+		for _, candidate := range plan.Candidates {
+			if candidate.ID == feedback.CandidateID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return Result{}, fmt.Errorf("external training feedback candidate %q is not in the generated candidate set", feedback.CandidateID)
+		}
+	}
 	if err := validateExternalTrainingFeedback(plan, source); err != nil {
 		return Result{}, err
 	}
@@ -147,7 +165,7 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 		HoldoutTotal: len(plan.HoldoutTestCases), CandidateCount: len(plan.Candidates),
 		UntestedCandidates: len(plan.Candidates), Attempts: []IRBodySearchAttempt{},
 		Evaluator: bodyFillEvaluator, ProviderBudgetMS: float64(providerBudget) / float64(time.Millisecond),
-		PromptProfile: plan.PromptProfile,
+		PromptProfile: plan.PromptProfile, CandidateGeneration: candidateGeneration,
 	}
 	if plan.ExternalTrainingFeedback != nil {
 		receipt.ExternalTrainingFeedback = externalTrainingFeedbackReceipt(plan.ExternalTrainingFeedback)
@@ -412,8 +430,20 @@ func validateIRBodySearchPlan(plan IRBodySearchPlan) error {
 	if strings.TrimSpace(plan.Intent) == "" || utf8.RuneCountInString(plan.Intent) > 2000 || !validBodyFillIdentifier(plan.HoleID) {
 		return fmt.Errorf("IR body-search intent or hole id is invalid")
 	}
-	if len(plan.Candidates) < 2 || len(plan.Candidates) > 16 || plan.MaxAttempts < 1 || plan.MaxAttempts > len(plan.Candidates) {
-		return fmt.Errorf("IR body-search requires 2..16 candidates and 1..candidate-count max_attempts")
+	if plan.CandidateGeneration == nil {
+		if len(plan.Candidates) < 2 || len(plan.Candidates) > 16 || plan.MaxAttempts < 1 || plan.MaxAttempts > len(plan.Candidates) {
+			return fmt.Errorf("IR body-search requires 2..16 candidates and 1..candidate-count max_attempts")
+		}
+	} else {
+		if len(plan.Candidates) != 0 {
+			return fmt.Errorf("IR body-search candidate_generation cannot be combined with a declared candidates list")
+		}
+		if err := validateIRBodySearchCandidateGeneration(*plan.CandidateGeneration); err != nil {
+			return err
+		}
+		if plan.MaxAttempts < 1 || plan.MaxAttempts > plan.CandidateGeneration.MaxCandidates {
+			return fmt.Errorf("IR body-search max_attempts must be 1..candidate_generation.max_candidates")
+		}
 	}
 	if len(plan.TestCases) == 0 || len(plan.TestCases) > 4096 || len(plan.HoldoutTestCases) > 4096 {
 		return fmt.Errorf("IR body-search requires 1..4096 training cases and at most 4096 holdout cases")
@@ -444,7 +474,7 @@ func validateIRBodySearchPlan(plan IRBodySearchPlan) error {
 		if feedback.SourceDigest == "" || feedback.TrainingSuiteSHA256 == "" || feedback.CandidateID == "" {
 			return fmt.Errorf("external training feedback requires source_digest, training_suite_sha256, and candidate_id")
 		}
-		if !ids[feedback.CandidateID] {
+		if plan.CandidateGeneration == nil && !ids[feedback.CandidateID] {
 			return fmt.Errorf("external training feedback candidate %q is not declared", feedback.CandidateID)
 		}
 		if len(feedback.Observations) < 1 || len(feedback.Observations) > 4096 {

@@ -159,6 +159,23 @@ that the current runtime executes these bodies. The model selects a bounded
 construction route; the Gooo emitter, typechecker, and replay check retain
 authority over generated Go.
 
+For Gooo-source-declared IR candidate search, `gooo body-search-run` connects
+candidate selection directly to native execution:
+
+```sh
+gooo body-search-run \
+  --source examples/body-codegen/ir-search-source.gooo.fixture \
+  --activity ClampNegativeToZero \
+  --cases examples/body-codegen/ir-search-runtime-cases.json
+```
+
+The command finishes one generation request before compiling the selected Go
+program, then executes it twice against the independent runtime cases. It emits
+one JSON object containing the generation and runtime receipts. Laya is optional;
+without it, Gooo uses its stable candidate order. Selection training cases,
+withheld holdout cases and independent runtime cases retain separate scores, so
+the result shows which part of the pipeline was actually exercised.
+
 ## Source-bound structural paths with a local Go model
 
 `--path-plan` is a separate local experiment for composing typed structural
@@ -243,10 +260,10 @@ two combined scope failures. Its expected arithmetic is `5*input+2`, subtracting
 differs, so the example measures structural assembly and finite feedback rather
 than asserting semantic equivalence between the original and requested edit.
 
-## Filling a typed body IR hole
+## Filling typed body IR holes
 
-The separate `--fill-plan` experiment lets Laya select one listed expression to
-fill a hole in a Gooo-authored body skeleton. The activity keeps the control
+The separate `--fill-plan` experiment lets Laya select one listed expression or
+complete assignment to fill typed holes in a Gooo-authored body skeleton. The activity keeps the control
 flow and a typed hole; the plan supplies a natural-language intent, a finite
 list of expression candidates, and explicit input/output cases:
 
@@ -258,24 +275,48 @@ GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
   examples/body-codegen/ir-fill-clamp.gooo.fixture
 ```
 
-This first slice accepts one `Integer -> Integer` hole named
-`__GOOO_BODY_HOLE_<hole_id>__`, two to sixteen closed expression candidates,
-and one to 4096 integer test cases. Intent text is limited to 2000 Unicode
+The v1 plan accepts one `Integer -> Integer` hole named
+`__GOOO_BODY_HOLE_<hole_id>__`. The v2 plan accepts two to eight holes and
+declares two to sixteen complete assignments. Every assignment must fill every
+hole exactly once. A single decision selects the whole assignment, which lets
+the model consider how expression choices fit together while keeping each piece
+explicit in Gooo's IR skeleton. For example, `seed` and `step` can be selected
+together from the
+[multi-hole fixture](../../examples/body-codegen/ir-fill-multi-hole.gooo.fixture)
+and [plan](../../examples/body-codegen/ir-fill-multi-hole-plan.json):
+
+```sh
+go run ./cmd/gooo body-codegen --json --fill-plan \
+  examples/body-codegen/ir-fill-multi-hole-plan.json \
+  --activity Lift examples/body-codegen/ir-fill-multi-hole.gooo.fixture
+```
+
+Set `GOOO_LAYA_URL` to let Laya rank the declared assignments. Without a model,
+Gooo selects deterministically and still scores every assignment. The compact
+`--tiny-model` path currently supports v1 single-hole plans; v2 requires Laya or
+the deterministic route until the compact model is trained to compare complete
+multi-hole assignments.
+
+Both versions currently require an `Integer -> Integer` activity, closed
+expression candidates, and one to 4096 integer test cases. Intent text is
+limited to 2000 Unicode
 characters. Every JSON test case must explicitly provide non-null integer
 `input` and `expected` fields. Gooo typechecks every candidate and
 evaluates it with a closed, side-effect-free integer AST interpreter before
 asking Laya. Laya receives the Gooo
-body IR skeleton, the intent, candidate expressions, and each candidate's
+body IR skeleton, the intent, candidate assignments, and each candidate's
 measured test score. It can return only a listed candidate ID. Gooo then fills
-that IR hole, emits the final Go function, typechecks and replays it, and
-reports the emitted expression's exact pass fraction on the same suite. If the
+all declared IR holes in the selected assignment, emits the final Go function,
+typechecks and replays it, and reports the emitted body's exact pass fraction on
+the same suite. If the
 proposal scores below another declared candidate, Gooo emits the highest-scoring
 candidate instead; an equal-scoring Laya proposal is retained. The receipt keeps
 both the model proposal and the actual emitted candidate, so the deterministic
 test gate cannot hide a poor model selection.
-This fixture places the hole inside a conditional assignment to a local `let`
-binding, then returns that value, so it exercises condition, assignment, and
-return paths together. The model receives candidate score summaries plus the test count and digest;
+The v1 fixture places its hole inside a conditional assignment to a local `let`
+binding, then returns that value, exercising condition, assignment and return.
+The v2 fixture fills two local `let` expressions before returning their sum.
+The model receives candidate score summaries plus the test count and digest;
 the individual input/output cases stay in Gooo's local receipt.
 
 The `functional_accuracy_percent` field means passed cases divided by declared
@@ -286,7 +327,9 @@ candidate's score; `best_candidate_accuracy_percent` records the best score
 available in this candidate set, and `selection_regret_percentage_points`
 measures how far the proposal falls below it. Those values separate
 candidate-set coverage from Laya's selection quality on the declared suite.
-The completeness receipt adds `declared_suite_functional_accuracy` to the
+For v2, the receipt records each `hole_id` and selected expression in
+`hole_fills`; `selected_candidate_id` continues to identify the complete
+assignment. The completeness receipt adds `declared_suite_functional_accuracy` to the
 body-fill core and binds its plan identity to the fill-plan digest. Known
 failing cases keep completeness at `PROGRESS`, even when emitted code compiles.
 Reports identify the repaired evaluator as `gooo/bodycodegen-int64-ast-interpreter/v2`.
@@ -467,3 +510,39 @@ conditional results on the bounded Laya route, plus local assignment on the
 deterministic route. This adds scalar text behavior to the closed source-body
 profile; it does not add records, collections, multiple inputs, or dynamic
 model-authored code.
+
+### Letting Gooo construct the finite search space
+
+The `candidate_generation` option replaces the hand-written candidate list
+with a small, named Gooo expression grammar derived from training examples:
+
+```sh
+GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
+  go run ./cmd/gooo body-codegen --json --fill-search \
+  examples/body-codegen/ir-search-generated-candidates-plan.json \
+  --activity ClampNegativeToZero \
+  examples/body-codegen/ir-fill-clamp.gooo.fixture
+```
+
+For `integer-offset-constant/v1`, Gooo constructs deduplicated choices from
+the input, expected training constants, negated input, and input-plus/minus
+offsets observed in the training examples. `max_candidates` bounds the set to
+2..16 expressions. Laya may select only one of these typed IR expressions;
+Gooo checks and scores each selected expression before another model call.
+Without Laya, the same candidates are tried in their deterministic generated
+order.
+
+The receipt hashes the generated candidate set and reports how many expressions
+the finite grammar produced, retained, or omitted. `grammar_coverage_percent`
+measures coverage of this named grammar after applying the declared cap. It is
+not a percentage of user intent, all possible Gooo expressions, or correctness
+over the integer domain. Training examples shape the candidate set; holdout
+examples remain unavailable to Laya and are evaluated only after selection.
+This reduces manual candidate authoring while keeping code authority with the
+Gooo checker and evaluator. It does not infer a general-purpose program from
+natural language.
+
+The same grammar can be declared inside a Gooo `assembling` block, binding the
+intent, training cases, optional withheld holdout, and search budget to the
+source's semantic identity. See [source-declared IR search](../source-assembly.md#declare-a-typed-ir-search-in-the-gooo-source)
+and the runnable [Gooo fixture](../../examples/body-codegen/ir-search-source.gooo.fixture).

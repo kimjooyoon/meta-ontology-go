@@ -39,13 +39,20 @@ func (e *integerBodyEvaluator) evaluateRecordUpdate(target *ast.SelectorExpr, ex
 	}
 	for i := 0; i < value.Count; i++ {
 		if structure.Field(i).Name() == target.Sel.Name {
-			if structure.Field(i).Type() == types.Typ[types.Bool] {
+			switch structure.Field(i).Type() {
+			case types.Typ[types.Bool]:
 				boolean, ok := assigned.(bool)
 				if !ok {
 					return fmt.Errorf("Boolean record field assignment requires a Boolean")
 				}
 				value.Values[i].Boolean = boolean
-			} else {
+			case types.Typ[types.Int64]:
+				integer, ok := assigned.(int64)
+				if !ok {
+					return fmt.Errorf("integer record field assignment requires an integer")
+				}
+				value.Values[i].Integer = integer
+			default:
 				text, ok := assigned.(string)
 				if !ok {
 					return fmt.Errorf("text record field assignment requires text")

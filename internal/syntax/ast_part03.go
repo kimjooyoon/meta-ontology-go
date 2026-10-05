@@ -52,9 +52,10 @@ func (d *ActivityDecl) SourceSpan() Span { return d.Span }
 // BindingEndpoint identifies one of the two fixed runtime ports supported by
 // the first binding grammar slice.
 type BindingEndpoint struct {
-	Span     Span
-	Activity NameRef
-	Port     NameRef
+	Span         Span
+	PackageAlias string
+	Activity     NameRef
+	Port         NameRef
 }
 
 // BindingDecl records an explicit result-to-input edge. It is intentionally

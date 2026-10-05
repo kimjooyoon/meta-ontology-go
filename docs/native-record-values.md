@@ -36,7 +36,8 @@ sensitive and may be lowercase or uppercase identifiers. Each `string required
 one` field takes a Text value. The profile supports up to 16 records and 16
 fields per record. Optional/many fields and nested record fields need subsequent
 entity-profile work. Under EntityFields V2, `boolean required one` takes a
-Boolean value. Scalar activity parameters and results continue to use Integer,
+Boolean value. EntityFields V3 adds `integer required one`, represented as Go
+`int64`. Scalar activity parameters and results continue to use Integer,
 Boolean and Text.
 
 `input.title` reads a field. A local copy such as `let copy = input` can be
@@ -49,8 +50,8 @@ source field names. The report's `record_types` retains source names, stable
 IDs, scalar type IDs and generated names. Each route is typechecked
 and compared after restoring source names; the receipt binds the record
 contract and function signature. Body generation and composition use the
-separately versioned EntityFields V2 profile. Existing V1 entry points retain
-their string-only contract.
+separately versioned EntityFields V3 profile. Existing V1 and V2 entry points
+retain their string-only and string/Boolean contracts.
 
 ## Construct and execute the complete example
 
@@ -76,9 +77,10 @@ composition replay makes zero new predictions.
 
 External record inputs and expected record outputs must be complete JSON
 objects with exact source field names. String values are limited to 1,024
-UTF-8 bytes per field; Boolean values must be JSON `true` or `false`. JSON
-member order is presentation only. Missing, duplicate, extra, null or
-incorrectly typed fields retain an error before model loading.
+UTF-8 bytes per field; Boolean values must be JSON `true` or `false`; Integer
+values must be exact signed 64-bit JSON integers. JSON member order is
+presentation only. Missing, duplicate, extra, null or incorrectly typed fields
+retain an error before model loading.
 
 `runtime.json` includes `actual_fields` for record results and `input_fields`
 or each input port's `fields` for record inputs. Each entry retains `id`, `name`
@@ -91,14 +93,14 @@ These observations describe the authored cases and source profile. Registered
 runtime contracts. Record-valued learned assembly and cross-invocation
 feedback remain further work.
 
-## Boolean fields across source-driven execution
+## Typed fields across source-driven execution
 
-The EntityFields V2 profile also applies to `gooo run --record-input`. A
-required single `boolean` field is decoded from JSON as a Boolean, checked
-against its source type before any activity executes, and preserved as a JSON
-Boolean in each result's `fields`. The compiled field schema includes the
-stable type ID in its operation digest. V1 parser and lowering entry points
-remain available to callers that need the earlier profile.
+The EntityFields V3 profile also applies to `gooo run --record-input`. Required
+single `boolean` and `integer` fields are decoded from JSON with exact scalar
+types, checked against their source declarations before any activity executes,
+and preserved in each result's `fields`. The compiled field schema includes
+stable type IDs in its operation digest. V1 and V2 parser and lowering entry
+points remain available to callers that need earlier profiles.
 
 The runnable [Boolean record-binding source](../examples/language-record-binding/boolean.gooo.fixture)
 and [input](../examples/language-record-binding/boolean-input.json) carry a
@@ -106,9 +108,9 @@ and [input](../examples/language-record-binding/boolean-input.json) carry a
 exercises source-declared record transport while preserving the V1 syntax
 corpus fixture.
 
-The separate EntityFields V2 profile adds required single `boolean` fields to
-the compiler's Go projection, source-driven body-generation path and
-`body-compose` record transport.
+The separate EntityFields V3 profile adds required single `integer` fields to
+the compiler's Go projection, source-driven body-generation path,
+`body-compose` record transport and `gooo run --record-input`.
 
 ```gooo
 entity Boolean id "booleans://boolean"

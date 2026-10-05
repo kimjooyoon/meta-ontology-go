@@ -20,7 +20,7 @@ func (EntityFieldsSyntaxParser) ParseContext(ctx context.Context, uri, source st
 	if err := ctx.Err(); err != nil {
 		return ParseResult{}, err
 	}
-	support := syntax.EntityFieldsV2Support()
+	support := syntax.EntityFieldsV3Support()
 	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(uri, source, support)
 	return adaptSyntaxResultContextWithSupport(ctx, uri, source, file, diagnostics, support)
 }

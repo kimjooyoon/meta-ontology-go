@@ -1,0 +1,41 @@
+{
+  "schema": "gooo/workspace-body-fill-plans/v1",
+  "activities": [
+    {
+      "package_path": "example/core",
+      "activity": "Normalize",
+      "plan": {
+        "schema": "gooo/body-codegen-ir-fill-plan/v1",
+        "intent": "Add one to the input. 입력에 1을 더한다.",
+        "hole_id": "value",
+        "candidates": [
+          {"id": "increment", "expression": "input + 1"},
+          {"id": "identity", "expression": "input"}
+        ],
+        "test_cases": [
+          {"input": -4, "expected": -3},
+          {"input": 0, "expected": 1},
+          {"input": 7, "expected": 8}
+        ]
+      }
+    },
+    {
+      "package_path": "example/app",
+      "activity": "Main",
+      "plan": {
+        "schema": "gooo/body-codegen-ir-fill-plan/v1",
+        "intent": "Return the value produced by the imported normalization activity.",
+        "hole_id": "value",
+        "candidates": [
+          {"id": "identity", "expression": "input"},
+          {"id": "zero", "expression": "0"}
+        ],
+        "test_cases": [
+          {"input": -4, "expected": -4},
+          {"input": 0, "expected": 0},
+          {"input": 7, "expected": 7}
+        ]
+      }
+    }
+  ]
+}

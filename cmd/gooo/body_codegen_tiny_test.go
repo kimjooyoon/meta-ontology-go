@@ -62,6 +62,43 @@ activity Choose(Integer) -> Integer computes "if input < 0 { return __GOOO_BODY_
 	}
 }
 
+func TestRunBodyCodegenTinyModelAcceptsSourceOwnedMultiHolePlan(t *testing.T) {
+	t.Setenv("GOOO_LAYA_URL", "")
+	t.Setenv("GOOO_LAYA_API_KEY", "")
+	fixture, err := os.ReadFile("../../examples/body-codegen/source-ir-fill.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	modelPath := writeSyntheticTinyGoModel(t, "add")
+	var stdout, stderr bytes.Buffer
+	code := runBodyCodegen([]string{"--json", "--tiny-model", modelPath, "--activity", "Lift", "fixture.gooo"},
+		mapSourceReader{"fixture.gooo": fixture}, &stdout, &stderr)
+	if code != exitOK || stderr.Len() != 0 {
+		t.Fatalf("source-owned tiny-model fill failed: code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
+	}
+	var payload struct {
+		GoooSource string `json:"gooo_source"`
+		Report     struct {
+			BodyFill struct {
+				Selected string  `json:"selected_candidate_id"`
+				Accuracy float64 `json:"functional_accuracy_percent"`
+				Decision struct {
+					Provider string `json:"provider"`
+				} `json:"decision"`
+			} `json:"body_fill"`
+		} `json:"report"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Report.BodyFill.Selected == "" || payload.Report.BodyFill.Accuracy != 100 || payload.Report.BodyFill.Decision.Provider != "tiny_go" {
+		t.Fatalf("source plan did not yield a measured local decision: %+v", payload.Report.BodyFill)
+	}
+	if strings.Contains(payload.GoooSource, "source_fill") || strings.Contains(payload.GoooSource, "__GOOO_BODY_HOLE_") {
+		t.Fatalf("generated source retained pending plan instructions:\n%s", payload.GoooSource)
+	}
+}
+
 func TestRunBodyCodegenTinyModelFillsTypedPlanAndReportsSeparateAccounting(t *testing.T) {
 	t.Setenv("GOOO_LAYA_URL", "")
 	t.Setenv("GOOO_LAYA_API_KEY", "")

@@ -5676,6 +5676,256 @@
         "internal/meta/functionextractorrecipe/recipes.json",
         "internal/verify/scope_recipe_source_boundary_repair_20260929.go"
       ]
+    },
+    {
+      "branch": "agent/gooo-model-guided-ecosystem-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "README.md",
+        "cmd/gooo/check_part02_test.go",
+        "cmd/gooo/main_part01.go",
+        "cmd/gooo/usage.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-library-model-starter-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/library_starter.go",
+        "cmd/gooo/main_part01.go",
+        "cmd/gooo/templates/library/README.md",
+        "cmd/gooo/templates/library/app.gooo.template",
+        "cmd/gooo/templates/library/body-fill-plans.json",
+        "cmd/gooo/templates/library/cases.json",
+        "cmd/gooo/templates/library/core.gooo.template",
+        "cmd/gooo/templates/library/gooo.workspace.json",
+        "docs/language/project-starters.md",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-source-import-declarations-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/package_resolve_test.go",
+        "docs/language/workspace-manifest.md",
+        "internal/packageruntime/compile.go",
+        "internal/syntax/ast_part01.go",
+        "internal/syntax/ast_part04.go",
+        "internal/syntax/format_imports.go",
+        "internal/syntax/format_part01.go",
+        "internal/syntax/import_parser.go",
+        "internal/syntax/import_test.go",
+        "internal/syntax/parser_part02.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/ir-multihole-model-body-fill-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "README.md",
+        "cmd/gooo/body_codegen_test.go",
+        "cmd/gooo/main_part01.go",
+        "docs/language-direction.ko.md",
+        "docs/language/body-codegen.md",
+        "examples/body-codegen/ir-fill-multi-hole-plan.json",
+        "examples/body-codegen/ir-fill-multi-hole.gooo.fixture",
+        "internal/bodycodegen/body_fill.go",
+        "internal/bodycodegen/body_fill_test.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-imported-activity-bindings-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/package_resolve.go",
+        "cmd/gooo/package_resolve_test.go",
+        "docs/language/workspace-manifest.md",
+        "examples/package-imports/app.gooo.fixture",
+        "examples/package-imports/core.gooo.fixture",
+        "examples/package-imports/gooo.workspace.json",
+        "internal/packageruntime/bindings.go",
+        "internal/packageruntime/compile.go",
+        "internal/packageruntime/model.go",
+        "internal/syntax/ast_part01.go",
+        "internal/syntax/ast_part03.go",
+        "internal/syntax/binding_format.go",
+        "internal/syntax/binding_parser.go",
+        "internal/syntax/format_imports.go",
+        "internal/syntax/format_part01.go",
+        "internal/syntax/import_parser.go",
+        "internal/syntax/import_test.go",
+        "internal/syntax/parser_part02.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-imported-activity-execution-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/package_resolve.go",
+        "cmd/gooo/package_resolve_test.go",
+        "docs/language/workspace-manifest.md",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-body-package-execution-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/package_execute.go",
+        "cmd/gooo/package_execute_test.go",
+        "cmd/gooo/package_resolve.go",
+        "docs/language/workspace-manifest.md",
+        "examples/package-imports/app.gooo.fixture",
+        "examples/package-imports/body-plans.json",
+        "examples/package-imports/cases.json",
+        "examples/package-imports/core.gooo.fixture",
+        "internal/bodycodegen/body_fill.go",
+        "internal/bodycodegen/body_fill_test.go",
+        "internal/packageruntime/workspaceexecution/execute.go",
+        "internal/packageruntime/workspaceexecution/execute_test.go",
+        "internal/packageruntime/workspaceexecution/program.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-ir-autofill-search-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "docs/language/body-codegen.md",
+        "examples/body-codegen/ir-search-generated-candidates-plan.json",
+        "internal/bodycodegen/body_search.go",
+        "internal/bodycodegen/body_search_candidate_generation.go",
+        "internal/bodycodegen/body_search_candidate_generation_test.go",
+        "internal/bodycodegen/body_search_completeness.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-language-ecosystem-next-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/body_codegen.go",
+        "cmd/gooo/body_codegen_test.go",
+        "docs/language-direction.ko.md",
+        "docs/language/body-codegen.md",
+        "docs/source-assembly.md",
+        "examples/body-codegen/ir-search-source.gooo.fixture",
+        "internal/assemblyspec/spec.go",
+        "internal/bidir/assembly_test.go",
+        "internal/bodycodegen/body_search.go",
+        "internal/bodycodegen/body_search_candidate_generation_test.go",
+        "internal/bodycodegen/source_ir_search.go",
+        "internal/syntax/assembly.go",
+        "internal/syntax/assembly_test.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-body-search-execution-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/body_search_run.go",
+        "cmd/gooo/body_search_run_test.go",
+        "cmd/gooo/check_part02_test.go",
+        "cmd/gooo/emit_dispatch.go",
+        "cmd/gooo/usage.go",
+        "docs/language/body-codegen.md",
+        "docs/source-assembly.md",
+        "examples/body-codegen/ir-search-runtime-cases.json",
+        "internal/bodycodegen/body_search_replay.go",
+        "internal/bodyexecution/run.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-package-exec-tiny-model-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/package_execute.go",
+        "cmd/gooo/package_execute_test.go",
+        "cmd/gooo/package_execute_tiny_model_options_test.go",
+        "cmd/gooo/package_execute_tiny_model_test.go",
+        "cmd/gooo/templates/library/README.md",
+        "cmd/gooo/templates/library/body-fill-plans.json",
+        "docs/language/project-starters.md",
+        "docs/language/workspace-manifest.md",
+        "internal/packageruntime/workspaceexecution/execute.go",
+        "internal/verify/scope_gooo_package_exec_tiny_model.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-source-body-fill-v2-20261006",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/body_codegen.go",
+        "cmd/gooo/body_codegen_tiny_test.go",
+        "docs/source-assembly.md",
+        "examples/body-codegen/source-ir-fill.gooo.fixture",
+        "internal/assemblyspec/spec.go",
+        "internal/bodycodegen/body_fill.go",
+        "internal/bodycodegen/body_fill_tiny.go",
+        "internal/bodycodegen/source_ir_fill.go",
+        "internal/bodycodegen/source_ir_fill_test.go",
+        "internal/syntax/assembly.go",
+        "internal/syntax/assembly_test.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-meta-hole-candidate-generation-20261006",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/body_codegen.go",
+        "cmd/gooo/body_codegen_source_fill_test.go",
+        "docs/source-assembly.md",
+        "examples/body-codegen/source-ir-fill-derived.gooo.fixture",
+        "internal/assemblyspec/spec.go",
+        "internal/bidir/assembly_test.go",
+        "internal/bodycodegen/body_fill.go",
+        "internal/bodycodegen/completeness_receipt.go",
+        "internal/bodycodegen/source_fill_candidates.go",
+        "internal/bodycodegen/source_fill_candidates_test.go",
+        "internal/bodycodegen/source_ir_fill.go",
+        "internal/bodycodegen/source_ir_fill_test.go",
+        "internal/syntax/assembly.go",
+        "internal/syntax/assembly_test.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/gooo-hole-expression-grammars-20261006",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "docs/source-assembly.md",
+        "examples/body-codegen/source-ir-fill-conditional.gooo.fixture",
+        "internal/assemblyspec/spec.go",
+        "internal/bidir/assembly_test.go",
+        "internal/bodycodegen/completeness_receipt.go",
+        "internal/bodycodegen/source_fill_candidates.go",
+        "internal/bodycodegen/source_ir_fill_test.go",
+        "internal/syntax/assembly.go",
+        "internal/syntax/assembly_test.go",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
