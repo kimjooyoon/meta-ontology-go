@@ -1,6 +1,8 @@
 package syntax
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"testing"
 )
@@ -66,5 +68,24 @@ func TestEntityFieldsSupportRejectsUnknownStateAndProfileMismatch(t *testing.T) 
 				t.Fatalf("validation error = %v, want %v", err, test.want)
 			}
 		})
+	}
+}
+
+func TestEntityFieldsV2ProfileIsDistinctAndValidated(t *testing.T) {
+	v1 := EntityFieldsV1Support()
+	v2 := EntityFieldsV2Support()
+	if err := v1.Validate(); err != nil {
+		t.Fatal("V1 support changed", err)
+	}
+	if err := v2.Validate(); err != nil {
+		t.Fatal("V2 support invalid", err)
+	}
+	if v1.Profile == v2.Profile || v2.Profile.ID != EntityFieldsV2ProfileID || v2.Profile.Version != 2 {
+		t.Fatalf("V2 profile did not create a distinct contract: v1=%+v v2=%+v", v1.Profile, v2.Profile)
+	}
+	canonical := "id=gooo.entityfields.go-projection.v2\ntypes=urn:gooo:type:string,urn:gooo:type:boolean\npresence=required\ncardinality=one\nordering=source\n"
+	digest := sha256.Sum256([]byte(canonical))
+	if hex.EncodeToString(digest[:]) != EntityFieldsV2ProfileDigest {
+		t.Fatal("V2 profile digest does not match its canonical contract")
 	}
 }

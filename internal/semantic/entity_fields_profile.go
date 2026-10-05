@@ -24,9 +24,12 @@ type EntityFieldsProfile struct {
 }
 
 const (
-	EntityFieldsProfileID      = "gooo.entityfields.go-projection.v1"
-	EntityFieldsProfileVersion = 1
-	EntityFieldsProfileDigest  = "7e93032618d1250cd4ff480eb7b5d6832f79bfc6921e6b9eea104151db965ec0"
+	EntityFieldsProfileID        = "gooo.entityfields.go-projection.v1"
+	EntityFieldsProfileVersion   = 1
+	EntityFieldsProfileDigest    = "7e93032618d1250cd4ff480eb7b5d6832f79bfc6921e6b9eea104151db965ec0"
+	EntityFieldsV2ProfileID      = "gooo.entityfields.go-projection.v2"
+	EntityFieldsV2ProfileVersion = 2
+	EntityFieldsV2ProfileDigest  = "d890716e88e65947968cee26e2254c4df2133c8ea420a5cb487afb2fa080ef4c"
 )
 
 var (
@@ -46,13 +49,20 @@ func (p EntityFieldsProfile) Validate() error {
 	if p.ID == "" && p.Version == 0 && p.Digest == "" {
 		return ErrEntityFieldsUnboundProfile
 	}
-	if p.ID != EntityFieldsProfileID || p.Version != EntityFieldsProfileVersion {
-		return fmt.Errorf("%w: id=%q version=%d", ErrEntityFieldsProfileMismatch, p.ID, p.Version)
+	switch p.ID {
+	case EntityFieldsProfileID:
+		if p.Version == EntityFieldsProfileVersion && p.Digest == EntityFieldsProfileDigest {
+			return nil
+		}
+	case EntityFieldsV2ProfileID:
+		if p.Version == EntityFieldsV2ProfileVersion && p.Digest == EntityFieldsV2ProfileDigest {
+			return nil
+		}
 	}
-	if p.Digest != EntityFieldsProfileDigest {
+	if p.Digest != EntityFieldsProfileDigest && p.Digest != EntityFieldsV2ProfileDigest {
 		return fmt.Errorf("%w: %w", ErrEntityFieldsProfileMismatch, ErrEntityFieldsProfileDigestError)
 	}
-	return nil
+	return fmt.Errorf("%w: id=%q version=%d", ErrEntityFieldsProfileMismatch, p.ID, p.Version)
 }
 
 // EntityFieldsBinding couples the support state to the exact profile tuple.

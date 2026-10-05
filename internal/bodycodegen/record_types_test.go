@@ -1,6 +1,7 @@
 package bodycodegen
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -70,5 +71,32 @@ func TestRecordProjectionSupportsEveryEquivalentConditionalRoute(t *testing.T) {
 		if err != nil || !result.report.RouteEquivalence.Equivalent || !result.report.TypecheckPassed {
 			t.Fatalf("%s: %v", route, err)
 		}
+	}
+}
+
+func TestBooleanRecordFieldIsGeneratedAndFiniteCasesAreTyped(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/boolean-records.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	generator, err := NewTypedPathGenerator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := generator.GenerateSourceAssembly(context.Background(), "boolean.gooo", source, "Build")
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.RecordAssembly
+	if receipt == nil || receipt.Status != "COMPLETE_FINITE" || receipt.Passed != 2 || receipt.Total != 2 ||
+		!result.Report.TypecheckPassed || !strings.Contains(result.Source, " bool `json:\"enabled\"`") {
+		t.Fatalf("Boolean record field was not generated and observed as Boolean: receipt=%+v source=%s", receipt, result.Source)
+	}
+	if len(receipt.Cases) != 2 || !strings.Contains(string(receipt.Cases[0].Actual), `"enabled":true`) ||
+		!strings.Contains(string(receipt.Cases[1].Actual), `"enabled":false`) {
+		t.Fatalf("Boolean observations were not JSON booleans: %+v", receipt.Cases)
+	}
+	if len(receipt.Cases[0].Fields) != 1 || receipt.Cases[0].Fields[0].TypeID != "urn:gooo:type:boolean" {
+		t.Fatalf("field observation lost its semantic type: %+v", receipt.Cases[0].Fields)
 	}
 }

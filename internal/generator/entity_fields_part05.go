@@ -1,9 +1,5 @@
 package generator
 
-import (
-	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
-)
-
 func prepareEntityFields(ir SemanticIR) SemanticIR {
 	prepared := copyIR(ir)
 	for entityIndex := range prepared.Entities {
@@ -11,10 +7,10 @@ func prepareEntityFields(ir SemanticIR) SemanticIR {
 			field := &prepared.Entities[entityIndex].Fields[fieldIndex]
 			field.GoName = field.Name
 			field.GoType = "string"
+			if field.TypeRefID == entityFieldsBooleanTypeID {
+				field.GoType = "bool"
+			}
 		}
 	}
 	return prepared
-}
-func entityFieldsProfileMapping() syntax.EntityFieldsProfile {
-	return syntax.CurrentEntityFieldsSupport().Profile
 }

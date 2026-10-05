@@ -33,7 +33,7 @@ func executionPlanTypedMetadataPart01(text string) (string, []string, []string, 
 	if diagnostics.HasErrors() || file == nil {
 		return "", nil, nil, 0
 	}
-	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV1Support())
+	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV2Support())
 	if err != nil || len(document.BindingEdges) == 0 {
 		return "", nil, nil, 0
 	}

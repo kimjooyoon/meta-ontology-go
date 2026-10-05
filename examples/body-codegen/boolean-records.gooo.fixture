@@ -1,0 +1,12 @@
+package booleans
+namespace booleans
+entity Boolean id "booleans://boolean"
+entity Gate id "booleans://gate" fields {
+    field enabled id "booleans://gate/enabled" type boolean required one
+}
+activity Build(Boolean) -> Gate computes "return Gate{enabled: false}" assembling {
+    choice "enabled" field_value at "0" alternative "input" intent "전달한 판단값을 보존한다. Preserve the supplied decision."
+    value_case "[true]" -> "{\"enabled\":true}"
+    value_case "[false]" -> "{\"enabled\":false}"
+    attempts "2"
+}

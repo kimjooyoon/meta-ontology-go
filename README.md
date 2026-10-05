@@ -34,6 +34,29 @@ Gooo source + intent + permitted choices + finite expectations
 · [small model integration](docs/three-choice-path-model.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
 
+## First run
+
+The checked-in example declares the baseline body, two legal alternatives, five
+finite input/output checks and an attempt limit in Gooo. From the repository root,
+run it without a model:
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity Qualified \
+  examples/body-codegen/source-assembly.gooo.fixture
+```
+
+The result contains the selected Gooo source in `gooo_source`, generated Go in
+`source`, and a report with the route, finite checks, completeness and unresolved
+items. Repeating the command with the same source gives the same selection.
+
+To use a compatible local model, add `--path-model /path/to/model.json`. The model
+only ranks choices already declared in `assembling`; it does not invent a new
+plan or bypass type checking and finite evaluation. When the model is omitted,
+the same declared search uses deterministic ordering. The
+[worked example](docs/source-assembly.md) explains the Gooo syntax, limits and
+model profile. For a complete multi-activity run, including compilation and
+execution, see [native body composition](docs/native-body-composition.md).
+
 ## What we are developing
 
 The goal is to make program construction an inspectable language operation.
@@ -63,9 +86,10 @@ Boolean and Text activities then execute in a compiled graph with ordered
 intermediate input/output observations and finite expectation counts.
 Ordinary bodies support up to 16 ordered scalar inputs, including repeated types
 and partially bound joins. [Input-port example and runnable guide](docs/native-body-composition.md).
-Declared required-string records can be constructed, read and passed through
-those binds as native value structs. Field observations retain stable IDs and
-actual values. [Record body example](docs/native-record-values.md).
+Required-string records can be constructed, read and passed through composition
+binds as native value structs. A versioned profile also supports required
+Boolean fields in Go projection and body generation; they become Go `bool` and
+can be checked against true/false cases. [Record body examples](docs/native-record-values.md).
 Record constructor fields can also declare alternative value expressions and
 typed JSON cases. Their assembly reports matching fields as well as complete
 cases, retaining partial results under a small attempt budget.

@@ -1,8 +1,10 @@
 package bidir
 
 import (
+	"context"
 	"errors"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 	"reflect"
 	"strings"
 	"testing"
@@ -56,6 +58,36 @@ func TestEntityFieldsSupportedProfileRejectsUnsupportedInputs(t *testing.T) {
 	unsupported.Declarations[0].Fields[0].TypeRefUse = TypeRefUse{Form: TypeRefFormStableID, Spelling: string(customType.ID), ResolvedID: ID(customType.ID), Span: unsupported.Declarations[0].Fields[0].TypeRefSpan}
 	if _, err := getWithTypesAndEntityFieldsSupport(unsupported, customRegistry, support); err == nil || !strings.Contains(err.Error(), EntityFieldsUnsupportedTypeDiagnostic) {
 		t.Fatalf("unprofiled type error = %v", err)
+	}
+}
+
+func TestEntityFieldsV2AddsBooleanWhileV1RemainsBounded(t *testing.T) {
+	const source = `package records
+namespace records
+entity Gate id "records://gate" fields {
+  field enabled id "records://gate/enabled" type boolean required one
+}`
+	v1 := syntax.EntityFieldsV1Support()
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport("gate.gooo", source, v1)
+	if diagnostics.HasErrors() {
+		t.Fatal("field syntax should parse before profile type validation", diagnostics)
+	}
+	if _, err := LowerContextWithEntityFieldsSupport(context.Background(), file, v1); err == nil ||
+		!strings.Contains(err.Error(), EntityFieldsUnsupportedTypeDiagnostic) {
+		t.Fatalf("V1 accepted Boolean field: %v", err)
+	}
+	v2 := syntax.EntityFieldsV2Support()
+	file, diagnostics = syntax.ParseFileWithEntityFieldsSupport("gate.gooo", source, v2)
+	if diagnostics.HasErrors() {
+		t.Fatal("V2 parse", diagnostics)
+	}
+	ir, err := LowerContextWithEntityFieldsSupport(context.Background(), file, v2)
+	if err != nil {
+		t.Fatal("V2 lowering", err)
+	}
+	entity, found := ir.Graph.NodeByName(ir.Namespace, "Gate")
+	if !found || len(entity.Fields) != 1 || entity.Fields[0].TypeRef.ID != semantic.BuiltinBooleanTypeID {
+		t.Fatalf("resolved Boolean field missing from semantic graph: %+v", entity)
 	}
 }
 func assertEntityFieldsDeferred(t *testing.T, err error, span SourceSpan) {

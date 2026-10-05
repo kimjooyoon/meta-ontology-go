@@ -23,6 +23,7 @@ const (
 	entityFieldsUnrepresentableDiagnostic  = "GOOO-EF-V1-UNREPRESENTABLE"
 )
 const entityFieldsStringTypeID = "urn:gooo:type:string"
+const entityFieldsBooleanTypeID = "urn:gooo:type:boolean"
 
 type entityFieldsSupport = syntax.EntityFieldsSupport
 
