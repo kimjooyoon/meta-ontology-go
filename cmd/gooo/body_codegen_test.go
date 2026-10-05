@@ -115,7 +115,7 @@ return base + increment` + "`" + `
 	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
 		t.Fatalf("body-codegen did not return JSON: code=%d stdout=%q stderr=%q: %v", code, stdout.String(), stderr.String(), err)
 	}
-	if code != exitOK || stderr.Len() != 0 || report.BodyFill.Schema != bodyFillMultiPlanSchema ||
+	if code != exitOK || stderr.Len() != 0 || report.BodyFill.Schema != "gooo/body-codegen-ir-fill-plan/v2" ||
 		report.BodyFill.SelectedCandidateID != "compose" || report.BodyFill.FunctionalAccuracyPct != 100 ||
 		len(report.BodyFill.HoleFills) != 2 || !strings.Contains(report.Source, "var base = (input + 0)") ||
 		!strings.Contains(report.Source, "var increment int64 = 1") || strings.Contains(report.Source, "__GOOO_BODY_HOLE_") {
