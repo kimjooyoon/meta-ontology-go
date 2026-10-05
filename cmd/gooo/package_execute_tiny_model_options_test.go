@@ -53,7 +53,7 @@ func TestLibraryStarterRunsWithTheLocalTinyModel(t *testing.T) {
 	if code != exitOK || stderr.Len() != 0 {
 		t.Fatalf("library starter local model execution failed: code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
 	}
-	var receipt packageExecutionReceipt
+	var receipt tinyModelTestReceipt
 	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
 		t.Fatalf("decode library starter execution receipt: %v", err)
 	}

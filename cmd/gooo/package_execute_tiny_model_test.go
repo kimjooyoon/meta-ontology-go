@@ -6,9 +6,35 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
 )
+
+type tinyModelTestReceipt struct {
+	Decision string `json:"decision"`
+	Result   *struct {
+		BodyFills []struct {
+			Generation struct {
+				Report struct {
+					BodyFill *struct {
+						SelectedCandidateID string `json:"selected_candidate_id"`
+						Decision            struct {
+							Provider string `json:"provider"`
+						} `json:"decision"`
+						LocalModelPredictions int `json:"local_model_predictions"`
+						ExternalProviderCalls int `json:"external_provider_calls"`
+						Timing                struct {
+							TinyModelLoadMS *float64 `json:"tiny_model_load_ms"`
+						} `json:"timing"`
+					} `json:"body_fill"`
+				} `json:"report"`
+			} `json:"generation"`
+		} `json:"body_fills"`
+		Runtime struct {
+			FinitePassed    int  `json:"finite_passed"`
+			FiniteTotal     int  `json:"finite_total"`
+			RuntimeReplayed bool `json:"runtime_replayed"`
+		} `json:"runtime"`
+	} `json:"result"`
+}
 
 func TestRunPackageExecuteFillsImportedActivitiesWithOneTinyModel(t *testing.T) {
 	t.Setenv("GOOO_LAYA_URL", "")
@@ -60,7 +86,7 @@ bind core.Normalize.result -> Main.input
 	if code != exitOK || stderr.Len() != 0 {
 		t.Fatalf("tiny-model workspace execution failed: code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
 	}
-	var receipt packageExecutionReceipt
+	var receipt tinyModelTestReceipt
 	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
 		t.Fatalf("decode tiny-model workspace receipt: %v", err)
 	}
@@ -70,11 +96,11 @@ bind core.Normalize.result -> Main.input
 	}
 	for index, want := range []string{"increment", "add_zero"} {
 		fill := receipt.Result.BodyFills[index].Generation.Report.BodyFill
-		if fill == nil || fill.SelectedCandidateID != want || fill.Decision.Provider != decisionroute.ProviderTinyGo ||
+		if fill == nil || fill.SelectedCandidateID != want || fill.Decision.Provider != "tiny_go" ||
 			fill.LocalModelPredictions != 1 || fill.ExternalProviderCalls != 0 {
 			t.Fatalf("activity %d did not use the one loaded local model: %#v", index, fill)
 		}
-		loadTime := receipt.Result.BodyFills[index].Generation.Report.BodyFill.Timing.TinyModelLoadMS
+		loadTime := fill.Timing.TinyModelLoadMS
 		if (index == 0 && loadTime == nil) || (index > 0 && loadTime != nil) {
 			t.Fatalf("model-load timing must be attributed once: activity=%d timing=%#v", index, loadTime)
 		}
