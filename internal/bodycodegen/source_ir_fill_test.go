@@ -1,6 +1,7 @@
 package bodycodegen
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -199,6 +200,35 @@ func TestSourceIRBodyFillMeasuresHoldoutAfterLayaSelection(t *testing.T) {
 	dimension := bodyFillDimension(result, "body_fill_holdout_accuracy")
 	if dimension.Status != "PASS" || !containsString(result.Report.CompletenessReceipt.CoreDimensions, dimension.ID) {
 		t.Fatalf("held-out accuracy is missing from completeness metrics: %+v", dimension)
+	}
+}
+
+func TestSourceIRBodyFillHoldoutMismatchLowersCompleteness(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-holdout.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	modified := bytes.Replace(source, []byte(`holdout_case "5" -> "6"`), []byte(`holdout_case "5" -> "7"`), 1)
+	if bytes.Equal(source, modified) {
+		t.Fatal("holdout fixture expectation was not changed")
+	}
+	file, diagnostics := syntax.Parse(string(modified))
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "holdout-mismatch.gooo", modified, "Lift", spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fill := result.Report.BodyFill
+	if fill == nil || fill.TestCasesPassed != 2 || fill.TestCasesTotal != 2 ||
+		fill.HoldoutCasesPassed != 1 || fill.HoldoutCasesTotal != 2 || fill.HoldoutAccuracyPercent == nil || *fill.HoldoutAccuracyPercent != 50 {
+		t.Fatalf("held-out mismatch was not isolated from training accuracy: %+v", fill)
+	}
+	dimension := bodyFillDimension(result, "body_fill_holdout_accuracy")
+	if dimension.Status != "PROGRESS" {
+		t.Fatalf("partial holdout accuracy should remain visible as progress: %+v", dimension)
 	}
 }
 
