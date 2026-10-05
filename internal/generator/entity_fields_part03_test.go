@@ -71,3 +71,31 @@ func TestEntityFieldsSupportedReplayPreservesHandwrittenSlotBytes(t *testing.T) 
 		t.Fatalf("replay lost field or slot mappings: %#v", replayed.SourceMap)
 	}
 }
+
+func TestEntityFieldsV2ProjectsBooleanAsBoolAndKeepsProfileBinding(t *testing.T) {
+	ir := entityFieldsFixture()
+	ir.Entities[0].Fields[1].TypeRefID = entityFieldsBooleanTypeID
+	if _, err := GenerateEntityFieldsV1(ir, nil); err == nil || !strings.Contains(err.Error(), entityFieldsUnsupportedTypeDiagnostic) {
+		t.Fatalf("V1 accepted a Boolean field: %v", err)
+	}
+	result, err := GenerateEntityFieldsV2(ir, nil)
+	if err != nil {
+		t.Fatal("V2 generation", err)
+	}
+	if !strings.Contains(string(result.Source), "CustomerName bool") {
+		t.Fatalf("V2 field was not projected as bool:\n%s", result.Source)
+	}
+	var field *SourceMapping
+	for index := range result.SourceMap.Mappings {
+		if result.SourceMap.Mappings[index].SemanticID == ir.Entities[0].Fields[1].ID {
+			field = &result.SourceMap.Mappings[index]
+		}
+	}
+	if field == nil || field.TypeRefID != entityFieldsBooleanTypeID || field.ProfileID != syntax.EntityFieldsV2ProfileID || field.ProfileVersion != syntax.EntityFieldsV2ProfileVersion || field.ProfileDigest != syntax.EntityFieldsV2ProfileDigest {
+		t.Fatalf("V2 source mapping lost field type or profile identity: %+v", field)
+	}
+	projection, err := generateProjectionV1WithEntityFieldsSupport(New(Options{}), ir, nil, syntax.EntityFieldsV2Support())
+	if err != nil || projection.Metadata.EntityFields == nil || projection.Metadata.EntityFields.Profile.ID != syntax.EntityFieldsV2ProfileID {
+		t.Fatalf("V2 projection metadata lost its profile: %+v %v", projection.Metadata, err)
+	}
+}

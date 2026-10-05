@@ -368,6 +368,20 @@ arm64와 Linux에서 18,432개 입력의 첫 선택은 같았지만, 후순위�
 Gooo에서는 선언된 기준 함수와 실행 결과로 개선 근거를 자동 수집합니다.
 [원문별 채택 이유와 적용 범위](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/agile-language-research-20261003.ko.md).
 
+## 레코드의 불리언 필드 — 2026-10-05
+
+기존 레코드는 문자열 필드만 표현할 수 있어 `ready`나 `enabled` 같은 상태도
+문자열로 저장해야 했습니다. 이 제약을 풀기 위해 기존 계약을 바꾸지 않고
+필수 단일 `boolean` 필드만 추가하는 EntityFields V2를 만들었습니다. Gooo의
+필드 타입은 안정적인 `urn:gooo:type:boolean`으로 IR에 들어가고, 생성된 Go
+구조체에서는 `bool`이 됩니다. Gooo 선언에 둔 참·거짓 사례를 통해 후보 선택,
+타입 검사, JSON 관측을 확인합니다.
+
+현재 V2는 `gooo generate`의 Go 구조 투영과 독립 본문 생성·레코드 조립 경로에서
+사용합니다. `body-compose` 레코드 전송은 아직 V1 문자열 필드 계약을 유지합니다.
+새 타입이 기존 기록을 조용히 다시 해석하지 않도록 버전을 분리했습니다.
+[Gooo 예제와 실행 방법](native-record-values.md#boolean-fields-in-go-projection-and-body-generation).
+
 ## 참고하고 감사하는 연구
 
 - **Solar-Lezama 외, SKETCH (2006):** 부분 프로그램과 기능 명세를 함께 두고

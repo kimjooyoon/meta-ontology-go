@@ -55,11 +55,18 @@ func RecordDeclarations(records []RecordType, native bool) string {
 			if native {
 				name = field.GoName
 			}
-			fmt.Fprintf(&out, "%s string `json:%q`\n", name, field.Name)
+			fmt.Fprintf(&out, "%s %s `json:%q`\n", name, recordGoType(field.TypeID), field.Name)
 		}
 		fmt.Fprintf(&out, "}\n//gooo:generated:end id=%q kind=\"entity\"\n", record.ID)
 	}
 	return out.String()
+}
+
+func recordGoType(typeID string) string {
+	if typeID == "urn:gooo:type:boolean" {
+		return "bool"
+	}
+	return "string"
 }
 
 func lowerRecordNames(file *ast.File, information *types.Info, records []RecordType) error {

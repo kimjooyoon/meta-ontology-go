@@ -3,6 +3,7 @@ package bidir
 import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 	"strings"
 )
 
@@ -19,7 +20,7 @@ func classifyEntityFieldsModelError(err error, span SourceSpan) error {
 		return err
 	}
 }
-func validateEntityFieldsProfileField(field Field, registry semantic.TypeRegistry) error {
+func validateEntityFieldsProfileField(field Field, registry semantic.TypeRegistry, support EntityFieldsSupport) error {
 	normalized, err := normalizeField(field, field.Parent, EntityKind, registry)
 	if err != nil {
 		return classifyEntityFieldsTypeError(field, err)
@@ -28,7 +29,9 @@ func validateEntityFieldsProfileField(field Field, registry semantic.TypeRegistr
 	if err != nil {
 		return classifyEntityFieldsTypeError(field, err)
 	}
-	if typeID != semantic.BuiltinStringTypeID {
+	stringType := typeID == semantic.BuiltinStringTypeID
+	booleanType := typeID == semantic.BuiltinBooleanTypeID && support.Profile.ID == syntax.EntityFieldsV2ProfileID
+	if !stringType && !booleanType {
 		return entityFieldsProfileError(field, EntityFieldsUnsupportedTypeDiagnostic, fmt.Sprintf("resolved type %q is not in the bound profile", typeID))
 	}
 	if normalized.Presence != FieldPresenceRequired || normalized.Cardinality != FieldCardinalityOne {

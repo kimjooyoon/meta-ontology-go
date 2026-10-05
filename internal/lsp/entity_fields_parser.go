@@ -6,7 +6,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-// EntityFieldsSyntaxParser binds the V1 profile to the normal LSP adapter.
+// EntityFieldsSyntaxParser binds the current V2 profile to the normal LSP adapter.
 // It shares syntax spans, semantic lowering, symbols, and references with the
 // ordinary parser instead of inventing a field-specific protocol.
 type EntityFieldsSyntaxParser struct{}
@@ -20,7 +20,7 @@ func (EntityFieldsSyntaxParser) ParseContext(ctx context.Context, uri, source st
 	if err := ctx.Err(); err != nil {
 		return ParseResult{}, err
 	}
-	support := syntax.EntityFieldsV1Support()
+	support := syntax.EntityFieldsV2Support()
 	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(uri, source, support)
 	return adaptSyntaxResultContextWithSupport(ctx, uri, source, file, diagnostics, support)
 }

@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 	"sort"
 )
 
-func validateCLIProjectedFields(model generator.SemanticIR) error {
+func validateCLIProjectedFields(model generator.SemanticIR, support syntax.EntityFieldsSupport) error {
 	for _, entity := range model.Entities {
 		if len(entity.Fields) == 0 {
 			continue
@@ -30,7 +31,7 @@ func validateCLIProjectedFields(model generator.SemanticIR) error {
 				return fmt.Errorf("GOOO-EF-V1-GO-NAME-COLLISION: field name %q is duplicated", field.Name)
 			}
 			seenNames[field.Name] = struct{}{}
-			if field.TypeRefID != "urn:gooo:type:string" {
+			if field.TypeRefID != "urn:gooo:type:string" && !(support.Profile.ID == syntax.EntityFieldsV2ProfileID && field.TypeRefID == "urn:gooo:type:boolean") {
 				return fmt.Errorf("GOOO-EF-V1-UNSUPPORTED-TYPE: field %q type %q", field.ID, field.TypeRefID)
 			}
 			if field.Presence != "required" || field.Cardinality != "one" {

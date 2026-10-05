@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-// RecordType retains the source names, stable identities and value layout of
-// the existing required-string entity-fields profile.
+// RecordType retains source names, stable identities and the typed value layout.
 type RecordType struct {
 	Name   string        `json:"name"`
 	ID     string        `json:"id"`
@@ -25,7 +25,7 @@ type RecordField struct {
 	GoName string `json:"go_name"`
 }
 
-// RecordTypesFromModel accepts the already validated entity-fields V1 model.
+// RecordTypesFromModel accepts a model already validated under the body profile.
 // Native value construction additionally requires names usable in body syntax.
 func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 	var result []RecordType
@@ -44,8 +44,15 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 			if !recordIdentifier(field.Name) {
 				return nil, fmt.Errorf("record %q field %q requires an identifier in body syntax", node.Name, field.Name)
 			}
+			typeID := string(field.TypeRef.ID)
+			if typeID == "" {
+				typeID = string(field.TypeRefUse.ResolvedID)
+			}
+			if typeID != string(semantic.BuiltinStringTypeID) && typeID != string(semantic.BuiltinBooleanTypeID) {
+				return nil, fmt.Errorf("record %q field %q has unsupported type %q", node.Name, field.Name, typeID)
+			}
 			record.Fields = append(record.Fields, RecordField{Name: field.Name, ID: string(field.ID),
-				TypeID: string(field.TypeRef.ID), GoName: recordGoName("Field", string(field.ID))})
+				TypeID: typeID, GoName: recordGoName("Field", string(field.ID))})
 		}
 		result = append(result, record)
 	}
@@ -64,7 +71,7 @@ func recordGoName(kind, id string) string {
 // ParseBodyFile activates the existing field profile only for the pure body
 // entry points. The ordinary parser and other profiles keep their own contracts.
 func ParseBodyFile(filename string, source []byte) (*syntax.File, syntax.Diagnostics) {
-	return syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV1Support())
+	return syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV2Support())
 }
 
 func bodyEntityType(name string, records []RecordType) (string, bool) {
@@ -88,7 +95,7 @@ func supportedBodyType(name string, records []RecordType) bool {
 }
 
 func resolveBodyModel(file *syntax.File) (bidir.Model, []RecordType, error) {
-	support := bidir.EntityFieldsV1Support()
+	support := bidir.EntityFieldsV2Support()
 	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, support)
 	if err != nil {
 		return bidir.Model{}, nil, fmt.Errorf("lower activity identity: %w", err)

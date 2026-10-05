@@ -21,6 +21,22 @@ func TestSyntaxDiagnosticsPreserveEOFAndCRLFSpans(t *testing.T) {
 		t.Fatalf("diagnostic range = %#v", diagnostic.Range)
 	}
 }
+
+func TestEntityFieldsLanguageServiceAcceptsV2BooleanFields(t *testing.T) {
+	const source = `package records
+namespace records
+entity Gate id "records://gate" fields {
+    field enabled id "records://gate/enabled" type boolean required one
+}`
+	result, err := (EntityFieldsSyntaxParser{}).ParseContext(context.Background(), "gate.gooo", source)
+	if err != nil || len(result.Diagnostics) != 0 {
+		t.Fatalf("V2 Boolean field diagnostics=%+v err=%v", result.Diagnostics, err)
+	}
+	if len(result.Symbols) == 0 {
+		t.Fatal("language service omitted symbols for the accepted field")
+	}
+}
+
 func TestSyntaxDiagnosticsHandleInvalidUTF8Boundary(t *testing.T) {
 	bytes := []byte("package p\nnamespace n\nentity A id \"x\" ")
 	bytes = append(bytes, 0xff)

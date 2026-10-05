@@ -51,3 +51,17 @@ func EntityFieldsV1Support() EntityFieldsSupport {
 	support.State = EntityFieldsSupported
 	return support
 }
+
+// EntityFieldsV2Support adds required single Boolean fields while retaining
+// the V1 source ordering, identity, presence, and cardinality rules.
+// Its digest is SHA256 of these UTF-8 lines, each ending in LF:
+// id=gooo.entityfields.go-projection.v2
+// types=urn:gooo:type:string,urn:gooo:type:boolean
+// presence=required
+// cardinality=one
+// ordering=source
+func EntityFieldsV2Support() EntityFieldsSupport {
+	return EntityFieldsSupport{State: EntityFieldsSupported, Profile: EntityFieldsProfile{
+		ID: EntityFieldsV2ProfileID, Version: EntityFieldsV2ProfileVersion, Digest: EntityFieldsV2ProfileDigest,
+	}}
+}
