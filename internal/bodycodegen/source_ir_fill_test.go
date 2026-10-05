@@ -444,6 +444,24 @@ func TestSourceDerivedPredicateCutpointsIncludeUnobservedIntegerBoundaries(t *te
 		(receipt.HoldoutCasesPassed < 2 && holdout.Status != "PROGRESS") {
 		t.Fatalf("held-out boundary score did not map to its four-state metric: receipt=%+v dimension=%+v", receipt, holdout)
 	}
+	probes := receipt.BehavioralProbes
+	if probes == nil || probes.Schema != irBodyFillBehavioralProbeSchema ||
+		!slices.Contains(probes.ProbeInputs, 0) || slices.Contains(probes.ProbeInputs, -10) || slices.Contains(probes.ProbeInputs, 10) ||
+		probes.CandidateRunsCompleted != probes.CandidateCount || probes.CandidateRunsFailed != 0 ||
+		probes.CandidatePairsEvaluated != probes.CandidatePairsTotal || probes.CandidatePairsDistinguished == 0 ||
+		probes.ProbeInputsWithDisagreement == 0 || probes.ProbeInputsSHA256 == "" {
+		t.Fatalf("automatic probes did not reveal and measure bounded candidate distinctions: %+v", probes)
+	}
+	wantDistinguishability := float64(probes.CandidatePairsDistinguished) * 100 / float64(probes.CandidatePairsEvaluated)
+	if probes.CandidatePairDistinguishabilityPercent != wantDistinguishability {
+		t.Fatalf("candidate pair distinguishability=%v, want %v", probes.CandidatePairDistinguishabilityPercent, wantDistinguishability)
+	}
+	probeCoverage := bodyFillDimension(result, "body_fill_candidate_probe_coverage")
+	if probeCoverage.Status != "PASS" || probeCoverage.Numerator != probes.CandidateCount*len(probes.ProbeInputs) ||
+		probeCoverage.Denominator != probes.CandidateCount*probes.ProbeInputsTotal ||
+		!containsString(result.Report.CompletenessReceipt.CoreDimensions, probeCoverage.ID) {
+		t.Fatalf("candidate probe evaluation coverage was not exposed as a completeness dimension: %+v", probeCoverage)
+	}
 }
 
 func TestSourceDerivedPredicateCutpointsHandleInt64Edges(t *testing.T) {
@@ -559,6 +577,9 @@ func TestLayaCanResolveTrainingTieWhileHoldoutRemainsWithheld(t *testing.T) {
 	}
 	if _, hasHoldoutCases := observedFields["holdout_cases"]; hasHoldoutCases {
 		t.Fatalf("Laya request included withheld cases: %s", observedFields["holdout_cases"])
+	}
+	if _, hasBehavioralProbes := observedFields["behavioral_probes"]; hasBehavioralProbes {
+		t.Fatalf("post-selection behavioral probes were sent to Laya: %s", observedFields["behavioral_probes"])
 	}
 	if dimension := bodyFillDimension(result, "body_fill_holdout_accuracy"); dimension.Status != "PASS" {
 		t.Fatalf("the model-selected generalization evidence was not reflected in completeness: %+v", dimension)

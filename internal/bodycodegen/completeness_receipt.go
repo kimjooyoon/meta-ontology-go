@@ -143,6 +143,21 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 			dimension.Status = "PROGRESS"
 		}
 		dimensions = append(dimensions, dimension)
+		if probes := fill.BehavioralProbes; probes != nil {
+			probeEvaluationsTotal := probes.CandidateCount * probes.ProbeInputsTotal
+			probeEvaluationsCompleted := probes.CandidateRunsCompleted * len(probes.ProbeInputs)
+			probeCoverage := completenessDimension("body_fill_candidate_probe_coverage",
+				probeEvaluationsCompleted, probeEvaluationsTotal,
+				"candidate-by-input observations executed over deterministic training-derived integer probes",
+				"This measures automatic diagnostic probe execution coverage; candidate disagreement is not correctness or intent evidence.",
+				[]string{"body_fill.behavioral_probes.schema:" + probes.Schema,
+					"body_fill.behavioral_probes.inputs_sha256:" + probes.ProbeInputsSHA256,
+					"body_fill.behavioral_probes.candidate_runs_failed:" + strconv.Itoa(probes.CandidateRunsFailed),
+					"body_fill.behavioral_probes.distinguished_pairs:" + strconv.Itoa(probes.CandidatePairsDistinguished),
+					"body_fill.behavioral_probes.probe_inputs_with_disagreement:" + strconv.Itoa(probes.ProbeInputsWithDisagreement)}, false)
+			dimensions = append(dimensions, probeCoverage)
+			core = append(core, probeCoverage.ID)
+		}
 		if fill.HoldoutCasesTotal > 0 {
 			holdout := completenessDimension("body_fill_holdout_accuracy",
 				fill.HoldoutCasesPassed, fill.HoldoutCasesTotal,

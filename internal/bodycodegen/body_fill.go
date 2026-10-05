@@ -93,6 +93,7 @@ type IRBodyFillCaseResult struct {
 
 type IRBodyFillTiming struct {
 	IRPlanBuildMS      float64  `json:"ir_plan_build_ms"`
+	BehavioralProbeMS  float64  `json:"behavioral_probe_ms"`
 	TinyModelLoadMS    *float64 `json:"tiny_model_load_ms,omitempty"`
 	ProviderDecisionMS float64  `json:"provider_decision_ms"`
 	LayaDecisionMS     float64  `json:"laya_decision_ms"`
@@ -101,6 +102,23 @@ type IRBodyFillTiming struct {
 	TotalMS            float64  `json:"total_ms"`
 	ExecutionModel     string   `json:"execution_model"`
 	DecisionStage      string   `json:"decision_stage"`
+}
+
+type IRBodyFillBehavioralProbeReceipt struct {
+	Schema                                 string  `json:"schema"`
+	ProbeInputs                            []int64 `json:"probe_inputs"`
+	ProbeInputsSHA256                      string  `json:"probe_inputs_sha256"`
+	ProbeInputsTotal                       int     `json:"probe_inputs_total"`
+	ProbeInputsOmitted                     int     `json:"probe_inputs_omitted"`
+	CandidateCount                         int     `json:"candidate_count"`
+	CandidateRunsCompleted                 int     `json:"candidate_runs_completed"`
+	CandidateRunsFailed                    int     `json:"candidate_runs_failed"`
+	CandidatePairsDistinguished            int     `json:"candidate_pairs_distinguished"`
+	CandidatePairsEvaluated                int     `json:"candidate_pairs_evaluated"`
+	CandidatePairsTotal                    int     `json:"candidate_pairs_total"`
+	CandidatePairDistinguishabilityPercent float64 `json:"candidate_pair_distinguishability_percent"`
+	ProbeInputsWithDisagreement            int     `json:"probe_inputs_with_disagreement"`
+	Scope                                  string  `json:"scope"`
 }
 
 type IRBodyFillReceipt struct {
@@ -121,6 +139,7 @@ type IRBodyFillReceipt struct {
 	SelectionAdjustment        string                                `json:"selection_adjustment"`
 	Decision                   decisionroute.Receipt                 `json:"decision"`
 	CandidateScores            []IRBodyFillCandidateScore            `json:"candidate_scores"`
+	BehavioralProbes           *IRBodyFillBehavioralProbeReceipt     `json:"behavioral_probes,omitempty"`
 	TestSuiteSHA256            string                                `json:"test_suite_sha256"`
 	TestCasesPassed            int                                   `json:"test_cases_passed"`
 	TestCasesTotal             int                                   `json:"test_cases_total"`
@@ -279,6 +298,7 @@ func generateWithIRBodyFillOptions(
 	planStarted := time.Now()
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
 	candidateBodies := make(map[string]string, len(plan.Candidates))
+	candidateSources := make(map[string][]byte, len(plan.Candidates))
 	for _, candidate := range plan.Candidates {
 		fills := bodyFillCandidateFills(plan, candidate)
 		candidateBody := body
@@ -300,6 +320,7 @@ func generateWithIRBodyFillOptions(
 			return Result{}, fmt.Errorf("evaluate candidate %q: %w", candidate.ID, err)
 		}
 		candidateBodies[candidate.ID] = candidateBody
+		candidateSources[candidate.ID] = []byte(generated.source)
 		accuracy := float64(passed) * 100 / float64(len(plan.TestCases))
 		candidateExpression := candidate.Expression
 		if plan.Schema == bodyFillMultiPlanSchema {
@@ -444,6 +465,12 @@ func generateWithIRBodyFillOptions(
 		value := float64(holdoutPassed) * 100 / float64(len(plan.HoldoutTestCases))
 		holdoutAccuracy = &value
 	}
+	behavioralProbeStarted := time.Now()
+	behavioralProbes, err := measureIRBodyFillBehavioralProbes(activityName, candidateSources, plan.TestCases)
+	if err != nil {
+		return Result{}, fmt.Errorf("measure candidate behavior on synthetic probes: %w", err)
+	}
+	behavioralProbeMS := float64(time.Since(behavioralProbeStarted)) / float64(time.Millisecond)
 	localPredictions, externalCalls, externalCallsKnown := bodyFillProviderAccounting(decision)
 	tinyDecisionMS, layaDecisionMS := 0.0, 0.0
 	var tinyModelLoadMS *float64
@@ -469,7 +496,8 @@ func generateWithIRBodyFillOptions(
 		SelectionRegretPP:   best.AccuracyPercent - proposedScore.AccuracyPercent,
 		SelectionAdjustment: selectionAdjustment,
 		Decision:            decision, CandidateScores: scores,
-		TestSuiteSHA256: testSuiteSHA256, TestCasesPassed: passed,
+		BehavioralProbes: behavioralProbes,
+		TestSuiteSHA256:  testSuiteSHA256, TestCasesPassed: passed,
 		TestCasesTotal: len(plan.TestCases), FunctionalAccuracyPct: accuracy,
 		HoldoutSuiteSHA256: holdoutSuiteSHA256, HoldoutCasesPassed: holdoutPassed,
 		HoldoutCasesTotal: len(plan.HoldoutTestCases), HoldoutAccuracyPercent: holdoutAccuracy,
@@ -480,7 +508,7 @@ func generateWithIRBodyFillOptions(
 		SelectedCaseResults:        caseResults,
 		AccuracyScope:              "exact observed accuracy over the declared finite test suite; not a full-domain proof",
 		Timing: IRBodyFillTiming{
-			IRPlanBuildMS: planBuildMS, TinyModelLoadMS: tinyModelLoadMS,
+			IRPlanBuildMS: planBuildMS, BehavioralProbeMS: behavioralProbeMS, TinyModelLoadMS: tinyModelLoadMS,
 			ProviderDecisionMS: decisionMS,
 			LayaDecisionMS:     layaDecisionMS, TinyDecisionMS: tinyDecisionMS,
 			FinalEmissionMS: emissionMS,

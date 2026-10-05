@@ -235,6 +235,17 @@ it establishes the integration contract and data boundary, not model quality.
 When Laya is running locally, rerun the same fixture with `GOOO_LAYA_URL` set
 to measure the actual choice and latency on your machine.
 
+After selection, Gooo also derives up to 128 synthetic probe inputs from the
+training values (nearby integers and interior midpoints) and compares every
+candidate's observed outputs. Neither holdout rows nor expected outputs enter
+this diagnostic, and its result is computed too late to affect the chooser.
+`body_fill_candidate_probe_coverage` reports evaluated candidate/input pairs
+against the full generated probe space; the receipt separately counts candidate
+pairs that differ on at least one retained probe and their distinguishability
+percentage. These are candidate-diversity and measurement-coverage signals, not
+correctness scores. The receipt includes
+the retained inputs and their digest, and records probe evaluation time.
+
 ```sh
 go run ./cmd/gooo body-codegen --json --activity Select \
   examples/body-codegen/source-ir-fill-outside-range.gooo.fixture
