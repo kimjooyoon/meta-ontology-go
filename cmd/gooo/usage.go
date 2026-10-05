@@ -152,6 +152,10 @@ Usage:
 
 Example:
   gooo generate main.gooo --out generated
+
+When the source declares typed runtime binds, generation also writes a
+validated runtime-plan.json into the output directory. Pass --runtime-plan to
+choose another relative filename.
 `,
 	"format": `Format Gooo source
 

@@ -31,7 +31,6 @@ func TestGeneratedRuntimePlanReplaysFromCleanProjectedWorkspaces(t *testing.T) {
 	generateCode := runGenerate([]string{
 		sourcePath,
 		"--out", generatedRoot,
-		"--runtime-plan", "runtime-plan.json",
 	}, runSourceReaderWithFiles{sourcePath: source}, EntityFieldsCLIParser{}, &generateStdout, &generateStderr)
 	if generateCode != exitOK || generateStderr.Len() != 0 {
 		t.Fatalf("generate code=%d stderr=%q stdout=%q", generateCode, generateStderr.String(), generateStdout.String())

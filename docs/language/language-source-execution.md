@@ -29,6 +29,13 @@ path; it fails closed with `SOURCE_RUNTIME_BINDINGS_UNSUPPORTED`. Supply an
 explicit `--input` to select the value-plan path, which validates and executes
 the declared edges for supported registered operations.
 
+For a generated runtime-bound source, `gooo generate <file.gooo> --out <dir>`
+emits `runtime-plan.json` automatically when the source declares typed binds.
+Use `--runtime-plan <name>` only to change that artifact's relative filename.
+When executing the source with `--input`, pass the generated artifact with
+`--runtime-plan <dir>/runtime-plan.json` to attach source, semantic, and typed
+plan identity to the execution receipt.
+
 ## Claims intentionally absent
 
 Registered-value operation execution, handwritten Go-body execution, external
