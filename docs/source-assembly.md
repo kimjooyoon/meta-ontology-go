@@ -160,6 +160,25 @@ budget or the end of the generated candidate set.
 This source-owned mode cannot be combined with path-choice fields, a second
 external plan, or record-field assembly in the same activity.
 
+To run the whole source-owned search path in one command, including a native
+build and two executions of the selected program, use `body-search-run`:
+
+```sh
+gooo body-search-run \
+  --source examples/body-codegen/ir-search-source.gooo.fixture \
+  --activity ClampNegativeToZero \
+  --cases examples/body-codegen/ir-search-runtime-cases.json
+```
+
+When `GOOO_LAYA_URL` is set, Gooo asks Laya to rank candidates in order and
+validates each proposed choice against the training cases. Without Laya, it
+follows the same stable candidate order. The JSON response keeps generation and
+execution receipts together: `training_passed/training_total` measures declared
+selection examples, `holdout_passed/holdout_total` measures the withheld source
+examples, and `execution.observation.cases` measures the independent runtime
+suite. The three denominators stay separate; passing finite examples does not
+establish intent understanding or all-input correctness.
+
 Related: [recipes](source-path-recipes.md), [language direction](language-direction.ko.md),
 [worker](native-body-worker.md).
 

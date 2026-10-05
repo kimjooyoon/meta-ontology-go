@@ -159,6 +159,23 @@ that the current runtime executes these bodies. The model selects a bounded
 construction route; the Gooo emitter, typechecker, and replay check retain
 authority over generated Go.
 
+For Gooo-source-declared IR candidate search, `gooo body-search-run` connects
+candidate selection directly to native execution:
+
+```sh
+gooo body-search-run \
+  --source examples/body-codegen/ir-search-source.gooo.fixture \
+  --activity ClampNegativeToZero \
+  --cases examples/body-codegen/ir-search-runtime-cases.json
+```
+
+The command finishes one generation request before compiling the selected Go
+program, then executes it twice against the independent runtime cases. It emits
+one JSON object containing the generation and runtime receipts. Laya is optional;
+without it, Gooo uses its stable candidate order. Selection training cases,
+withheld holdout cases and independent runtime cases retain separate scores, so
+the result shows which part of the pipeline was actually exercised.
+
 ## Source-bound structural paths with a local Go model
 
 `--path-plan` is a separate local experiment for composing typed structural

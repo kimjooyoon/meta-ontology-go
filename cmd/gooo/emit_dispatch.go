@@ -23,6 +23,8 @@ func runExtensionCommand(args []string, stdout, stderr io.Writer) int {
 		return runReceiptSchema(args[1:], stdout, stderr)
 	case "body-execute":
 		return runBodyExecute(args[1:], stdout, stderr)
+	case "body-search-run":
+		return runBodySearch(args[1:], stdout, stderr)
 	case "body-realize":
 		return runBodyRealize(args[1:], stdout, stderr)
 	case "body-compose":
