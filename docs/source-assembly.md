@@ -9,6 +9,40 @@ expectations in one declaration. `assembling` is a typed syntax node, preserved 
 bidirectional lowering into semantic IR. It expands through the existing recipe
 arena and optional-model/TDD pipeline.
 
+For multi-hole IR body generation, Gooo can also own a finite set of complete
+assignments. A model ranks the assignments as one decision; it cannot invent new
+expressions. Every selected hole is checked against the declared integer cases,
+then the generated Go is typechecked. Without a model, the same bounded selector
+uses deterministic scoring. The emitted Gooo source contains the chosen body and
+does not retain a pending `source_fill` instruction.
+
+```gooo
+activity Lift(Integer) -> Integer computes `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` assembling {
+    source_fill intent "Represent input plus one as a base and increment." {
+        hole "seed"
+        hole "step"
+        candidate "add_one" {
+            fill "seed" "input + 0"
+            fill "step" "1"
+        }
+        candidate "double" {
+            fill "seed" "input * 2"
+            fill "step" "0"
+        }
+    }
+    case "0" -> "1"
+    case "2" -> "3"
+}
+```
+
+Run it with `gooo body-codegen --json --activity Lift
+examples/body-codegen/source-ir-fill.gooo.fixture`. Add `--tiny-model
+<model.json>` to route that finite decision through the local compact Gooo model.
+The receipt reports the selected candidate, per-case results, and completeness
+dimensions; the percentage describes only these declared examples, not all inputs.
+
 ```gooo
 package offsets
 namespace offsets
@@ -65,6 +99,10 @@ activity ... computes <quoted-or-raw-body> assembling {
         [alternative <quoted-local-name>] intent <quoted-intent>
     [search hole <quoted-hole-id> grammar <quoted-grammar>
         intent <quoted-intent> max_candidates <quoted-count>]
+    [source_fill intent <quoted-intent> {
+        hole <quoted-id> ...
+        candidate <quoted-id> { fill <quoted-hole-id> <quoted-expression> ... } ...
+    }]
     case <quoted-int64-input> -> <quoted-int64-expected>
     [holdout_case <quoted-int64-input> -> <quoted-int64-expected> ...]
     attempts <quoted-budget>
@@ -75,6 +113,9 @@ activity ... computes <quoted-or-raw-body> assembling {
 Canonical formatting puts each choice on one line. Whitespace/comments separate
 fields. Quoted decimal numbers follow the existing policy grammar. Input and
 expected values span int64. Formatting preserves decoded Korean/English intent.
+`source_fill` requires 2–8 holes, 2–16 candidates, and exactly one fill per hole
+in declaration order for every candidate. It is mutually exclusive with path
+choices, search, checkpoints, sampling seeds, and attempt budgets.
 
 | Kind | Source site selected by `at` | Additional field |
 | --- | --- | --- |

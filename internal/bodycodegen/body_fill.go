@@ -210,9 +210,6 @@ func generateWithIRBodyFillOptions(
 	if err := validateIRBodyFillPlan(plan); err != nil {
 		return Result{}, err
 	}
-	if usingTinyGo && plan.Schema == bodyFillMultiPlanSchema {
-		return Result{}, fmt.Errorf("tiny_go body fill currently supports one expression hole; use Laya or the deterministic fallback for a multi-hole plan")
-	}
 	if err := decisionroute.ValidateProviderModel(plan.ProviderModel); err != nil {
 		return Result{}, fmt.Errorf("body-fill provider model: %w", err)
 	}
@@ -321,7 +318,11 @@ func generateWithIRBodyFillOptions(
 	requestOptions := make([]decisionroute.Option, 0, len(plan.Candidates))
 	modelCandidates := bodyFillModelCandidates(holes, plan.Candidates)
 	if usingTinyGo {
-		requestOptions, err = tinyGoBodyFillOptions(modelCandidates)
+		primaryHole := ""
+		if plan.Schema == bodyFillMultiPlanSchema && len(holes) > 0 {
+			primaryHole = holes[0].ID
+		}
+		requestOptions, err = tinyGoBodyFillOptionsForHole(plan.Candidates, primaryHole)
 		if err != nil {
 			return Result{}, err
 		}

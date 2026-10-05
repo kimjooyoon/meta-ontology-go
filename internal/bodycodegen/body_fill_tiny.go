@@ -24,10 +24,18 @@ type IRBodyFillOptions struct {
 }
 
 func tinyGoBodyFillOptions(candidates []IRBodyFillCandidate) ([]decisionroute.Option, error) {
+	return tinyGoBodyFillOptionsForHole(candidates, "")
+}
+
+func tinyGoBodyFillOptionsForHole(candidates []IRBodyFillCandidate, holeID string) ([]decisionroute.Option, error) {
 	options := make([]decisionroute.Option, 0, len(candidates))
 	seen := make(map[string]struct{}, len(candidates))
 	for _, candidate := range candidates {
-		operation, err := tinyGoRootOperation(candidate.Expression)
+		expression := candidate.Expression
+		if holeID != "" {
+			expression = candidate.Fills[holeID]
+		}
+		operation, err := tinyGoRootOperation(expression)
 		if err != nil {
 			return nil, fmt.Errorf("candidate %q cannot map to a tiny_go operation: %w", candidate.ID, err)
 		}
@@ -35,9 +43,13 @@ func tinyGoBodyFillOptions(candidates []IRBodyFillCandidate) ([]decisionroute.Op
 			return nil, fmt.Errorf("tiny_go candidate operations must be unique: %q", operation)
 		}
 		seen[operation] = struct{}{}
+		description := fmt.Sprintf("Emit exactly this expression: %s.", expression)
+		if holeID != "" {
+			description = fmt.Sprintf("Select the declared assignment whose %s hole is %s.", holeID, expression)
+		}
 		options = append(options, decisionroute.Option{
 			ID: candidate.ID, Operation: operation,
-			Description: fmt.Sprintf("Emit exactly this expression: %s.", candidate.Expression),
+			Description: description,
 		})
 	}
 	return options, nil
