@@ -72,34 +72,51 @@ var libraryStarterFiles = map[string]string{
 namespace boundedint
 entity Integer id "boundedint://integer"
 
-activity Clamp(Integer) -> Integer computes "if input < 0 { return 0 } else if input < 10 { return input } else { return 10 }" assembling {
-    choice "lower-bound" branch_layout at "0" intent "음수 입력은 0으로 제한한다. Clamp negative inputs to zero."
-    choice "upper-bound" operand_order at "1" intent "10보다 큰 입력은 10으로 제한한다. Clamp inputs above ten to ten."
-    case "-1" -> "0"
-    case "5" -> "5"
-    case "11" -> "10"
-    attempts "4"
+activity Clamp(Integer) -> Integer computes ` + "`" + `
+if input < 0 { return __GOOO_BODY_HOLE_floor__ } else if input > 10 { return __GOOO_BODY_HOLE_ceiling__ } else { return input }
+` + "`" + `
+`,
+	"body-fill-plan.json": `{
+  "schema": "gooo/body-codegen-ir-fill-plan/v2",
+  "intent": "Clamp an integer to the inclusive range 0 through 10. 0 이상 10 이하 범위로 제한한다.",
+  "holes": [
+    {"id": "floor"},
+    {"id": "ceiling"}
+  ],
+  "candidates": [
+    {"id": "clamp-to-range", "fills": {"floor": "0", "ceiling": "10"}},
+    {"id": "inverted-range", "fills": {"floor": "10", "ceiling": "0"}}
+  ],
+  "test_cases": [
+    {"input": -1, "expected": 0},
+    {"input": 0, "expected": 0},
+    {"input": 5, "expected": 5},
+    {"input": 10, "expected": 10},
+    {"input": 11, "expected": 10}
+  ]
 }
 `,
 	"README.md": `# boundedint
 
 This is a small Gooo-authored library contract. The public surface is the
-Clamp(Integer) -> Integer activity; its finite cases travel with the source so
-contributors can check behavior before generating an implementation.
+Clamp(Integer) -> Integer activity. Gooo marks two expression holes in its body
+and the plan lists complete assignments for both holes, plus finite examples.
+Laya may rank only those complete assignments.
 
 Install the Gooo CLI and run these commands from this directory:
 
 ~~~sh
 go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
 gooo check main.gooo
-gooo body-codegen --json --activity Clamp main.gooo
+gooo body-codegen --json --fill-plan body-fill-plan.json --activity Clamp main.gooo
 ~~~
 
-body-codegen emits a candidate from the declared Gooo contract. The finite
-cases are checked against that candidate; they are a compact regression set,
-not a proof for every integer. With no Laya service, route selection is
-deterministic. A configured local Laya service can rank only routes already
-declared in the source.
+body-codegen typechecks and scores each complete assignment on the finite
+examples before emitting Go. Set GOOO_LAYA_URL to your local Laya
+/v1/systemone endpoint to let the model choose among the candidates. Without a
+model, Gooo uses the declared order as a deterministic fallback and adjusts to
+the best-scoring candidate when needed. The examples are a compact regression
+set, not a proof for every integer.
 `,
 }
 
