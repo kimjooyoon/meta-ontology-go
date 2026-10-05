@@ -30,13 +30,14 @@ const irBodyFillDecisionBudget = 8 * time.Second
 // holes in a Gooo activity body. V1 has one hole; V2 selects one complete,
 // declared assignment across several holes as a single model decision.
 type IRBodyFillPlan struct {
-	Schema        string                `json:"schema"`
-	Intent        string                `json:"intent"`
-	HoleID        string                `json:"hole_id"`
-	Holes         []IRBodyFillHole      `json:"holes,omitempty"`
-	ProviderModel string                `json:"provider_model,omitempty"`
-	Candidates    []IRBodyFillCandidate `json:"candidates"`
-	TestCases     []IRBodyFillTestCase  `json:"test_cases"`
+	Schema           string                `json:"schema"`
+	Intent           string                `json:"intent"`
+	HoleID           string                `json:"hole_id"`
+	Holes            []IRBodyFillHole      `json:"holes,omitempty"`
+	ProviderModel    string                `json:"provider_model,omitempty"`
+	Candidates       []IRBodyFillCandidate `json:"candidates"`
+	TestCases        []IRBodyFillTestCase  `json:"test_cases"`
+	HoldoutTestCases []IRBodyFillTestCase  `json:"holdout_test_cases,omitempty"`
 }
 
 type IRBodyFillHole struct {
@@ -124,6 +125,11 @@ type IRBodyFillReceipt struct {
 	TestCasesPassed            int                                   `json:"test_cases_passed"`
 	TestCasesTotal             int                                   `json:"test_cases_total"`
 	FunctionalAccuracyPct      float64                               `json:"functional_accuracy_percent"`
+	HoldoutSuiteSHA256         string                                `json:"holdout_suite_sha256,omitempty"`
+	HoldoutCasesPassed         int                                   `json:"holdout_cases_passed"`
+	HoldoutCasesTotal          int                                   `json:"holdout_cases_total"`
+	HoldoutAccuracyPercent     *float64                              `json:"holdout_accuracy_percent"`
+	HoldoutCaseResults         []IRBodyFillCaseResult                `json:"holdout_case_results,omitempty"`
 	LocalModelPredictions      int                                   `json:"local_model_predictions"`
 	ExternalProviderCalls      int                                   `json:"external_provider_calls"`
 	ExternalProviderCallsKnown bool                                  `json:"external_provider_calls_known"`
@@ -424,6 +430,20 @@ func generateWithIRBodyFillOptions(
 		return Result{}, fmt.Errorf("evaluate selected generated body: %w", err)
 	}
 	accuracy := float64(passed) * 100 / float64(len(plan.TestCases))
+	var holdoutResults []IRBodyFillCaseResult
+	var holdoutAccuracy *float64
+	var holdoutSuiteSHA256 string
+	holdoutPassed := 0
+	if len(plan.HoldoutTestCases) > 0 {
+		holdoutResults, holdoutPassed, err = evaluateIntegerCases([]byte(result.Source), activityName, plan.HoldoutTestCases)
+		if err != nil {
+			return Result{}, fmt.Errorf("evaluate selected generated body on held-out cases: %w", err)
+		}
+		holdoutBytes, _ := json.Marshal(plan.HoldoutTestCases)
+		holdoutSuiteSHA256 = digest(holdoutBytes)
+		value := float64(holdoutPassed) * 100 / float64(len(plan.HoldoutTestCases))
+		holdoutAccuracy = &value
+	}
 	localPredictions, externalCalls, externalCallsKnown := bodyFillProviderAccounting(decision)
 	tinyDecisionMS, layaDecisionMS := 0.0, 0.0
 	var tinyModelLoadMS *float64
@@ -451,6 +471,9 @@ func generateWithIRBodyFillOptions(
 		Decision:            decision, CandidateScores: scores,
 		TestSuiteSHA256: testSuiteSHA256, TestCasesPassed: passed,
 		TestCasesTotal: len(plan.TestCases), FunctionalAccuracyPct: accuracy,
+		HoldoutSuiteSHA256: holdoutSuiteSHA256, HoldoutCasesPassed: holdoutPassed,
+		HoldoutCasesTotal: len(plan.HoldoutTestCases), HoldoutAccuracyPercent: holdoutAccuracy,
+		HoldoutCaseResults:    holdoutResults,
 		LocalModelPredictions: localPredictions, ExternalProviderCalls: externalCalls,
 		ExternalProviderCallsKnown: externalCallsKnown,
 		Evaluator:                  bodyFillEvaluator,
@@ -495,8 +518,17 @@ func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
 	if len(plan.Candidates) < 2 || len(plan.Candidates) > 16 {
 		return fmt.Errorf("IR body-fill plan requires 2..16 candidates")
 	}
-	if len(plan.TestCases) == 0 || len(plan.TestCases) > 4096 {
-		return fmt.Errorf("IR body-fill plan requires 1..4096 integer test cases")
+	if len(plan.TestCases) == 0 || len(plan.TestCases) > 4096 || len(plan.HoldoutTestCases) > 4096 {
+		return fmt.Errorf("IR body-fill plan requires 1..4096 training cases and at most 4096 holdout cases")
+	}
+	trainingInputs := make(map[int64]bool, len(plan.TestCases))
+	for _, testCase := range plan.TestCases {
+		trainingInputs[testCase.Input] = true
+	}
+	for _, testCase := range plan.HoldoutTestCases {
+		if trainingInputs[testCase.Input] {
+			return fmt.Errorf("holdout input %d also appears in training cases", testCase.Input)
+		}
 	}
 	seen := make(map[string]bool, len(plan.Candidates))
 	for _, candidate := range plan.Candidates {

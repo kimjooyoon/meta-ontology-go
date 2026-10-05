@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -121,6 +122,83 @@ return base + increment` + "`" + ` assembling {
 	}
 	if len(observed.Candidates) != len(candidates) || observed.Candidates[0].ID == "" {
 		t.Fatalf("Laya did not receive the compiler-enumerated assignment set: got=%d want=%d", len(observed.Candidates), len(candidates))
+	}
+}
+
+func TestSourceIRBodyFillMeasuresHoldoutAfterLayaSelection(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-holdout.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := syntax.Parse(string(source))
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	candidates, _, err := generateSourceFillCandidates(spec.FillPlan, spec.Cases)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wanted := ""
+	for _, candidate := range candidates {
+		if candidate.Fills["seed"] == "input" && candidate.Fills["step"] == "1" {
+			wanted = candidate.ID
+			break
+		}
+	}
+	if wanted == "" {
+		t.Fatal("training-only grammar did not derive the input-plus-one assignment")
+	}
+	observedTrainingCases := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/systemone" {
+			http.NotFound(writer, request)
+			return
+		}
+		var payload struct {
+			State map[string]string `json:"state"`
+		}
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Errorf("decode Laya request: %v", err)
+			return
+		}
+		var state struct {
+			TestCaseCount int `json:"test_case_count"`
+		}
+		if err := json.Unmarshal([]byte(payload.State["request"]), &state); err != nil {
+			t.Errorf("decode Laya source-fill state: %v", err)
+			return
+		}
+		observedTrainingCases = state.TestCaseCount
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "source-fill-holdout-test", "routing": map[string]any{"model": "source-fill-holdout-test"},
+			"answers": map[string]any{"body_ir_fill": map[string]any{
+				"choice": wanted, "probabilities": map[string]float64{wanted: 1},
+			}},
+		})
+	}))
+	defer server.Close()
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "holdout-fill.gooo", source, "Lift", spec,
+		server.URL+"/v1/systemone", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fill := result.Report.BodyFill
+	if fill == nil || fill.TestCasesTotal != 2 || fill.TestCasesPassed != 2 ||
+		fill.HoldoutCasesTotal != 2 || fill.HoldoutCasesPassed != 2 || fill.HoldoutAccuracyPercent == nil || *fill.HoldoutAccuracyPercent != 100 {
+		t.Fatalf("training and held-out accuracy were not measured independently: %+v", fill)
+	}
+	if observedTrainingCases != 2 || fill.HoldoutSuiteSHA256 == "" {
+		t.Fatalf("Laya received holdout evidence or the report did not bind it: training_cases=%d fill=%+v", observedTrainingCases, fill)
+	}
+	overlap := spec.Clone()
+	overlap.HoldoutCases[0].Input = overlap.Cases[0].Input
+	if err := overlap.Validate(); err == nil || !strings.Contains(err.Error(), "also appears in training cases") {
+		t.Fatalf("overlapping source training and holdout inputs were accepted: %v", err)
+	}
+	dimension := bodyFillDimension(result, "body_fill_holdout_accuracy")
+	if dimension.Status != "PASS" || !containsString(result.Report.CompletenessReceipt.CoreDimensions, dimension.ID) {
+		t.Fatalf("held-out accuracy is missing from completeness metrics: %+v", dimension)
 	}
 }
 

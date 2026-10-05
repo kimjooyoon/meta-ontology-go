@@ -336,6 +336,14 @@ Reports identify the repaired evaluator as `gooo/bodycodegen-int64-ast-interpret
 The checked-in plan includes `int64` minimum and maximum values as well as
 inputs on both sides of zero.
 
+Source-owned multi-hole fills may also declare `holdout_case` rows. Their inputs
+must be disjoint from training inputs. Candidate scores and the Laya request use
+training cases only; after selection, the final body is checked against the held-out
+cases and the receipt adds `body_fill_holdout_accuracy` as a separate completeness
+dimension. The score is exact for that held-out set and is not a proof over the full
+integer domain. Holdout input/output values stay in the local report; the chooser
+receives neither those values nor a holdout score.
+
 Candidate expressions retain their grouping when inserted into a larger
 expression: filling `2 * HOLE` with `input + 1` emits `2 * (input + 1)`.
 The evaluator uses Go typechecker bindings and constant values. Local names

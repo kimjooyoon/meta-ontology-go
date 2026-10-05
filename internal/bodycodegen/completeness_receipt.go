@@ -143,6 +143,19 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 			dimension.Status = "PROGRESS"
 		}
 		dimensions = append(dimensions, dimension)
+		if fill.HoldoutCasesTotal > 0 {
+			holdout := completenessDimension("body_fill_holdout_accuracy",
+				fill.HoldoutCasesPassed, fill.HoldoutCasesTotal,
+				"held-out cases matched by the final emitted body after candidate selection",
+				"Held-out cases are withheld from the chooser and training score; this is an observed finite check, not an all-domain proof.",
+				[]string{"body_fill.holdout_suite_sha256:" + fill.HoldoutSuiteSHA256,
+					"body_fill.ir_plan_sha256:" + fill.IRPlanSHA256, "generated_digest:" + report.GeneratedDigest}, false)
+			if fill.HoldoutCasesPassed == 0 {
+				holdout.Status = "PROGRESS"
+			}
+			dimensions = append(dimensions, holdout)
+			core = append(core, holdout.ID)
+		}
 		if generated := fill.CandidateGeneration; generated != nil {
 			grammar := completenessDimension("body_fill_candidate_grammar_coverage",
 				generated.ExpressionsRetainedTotal, generated.ExpressionCandidatesTotal,
@@ -469,6 +482,7 @@ func nextCompletenessOperation(id string) string {
 		"search_candidate_observation":       "MEASURE_UNTESTED_CANDIDATES_IN_A_SEPARATE_EXHAUSTIVE_BASELINE",
 		"search_candidate_scoring":           "REPAIR_UNSCORED_CANDIDATES_AND_MEASURE_A_SEPARATE_BASELINE",
 		"declared_suite_functional_accuracy": "EXPAND_OR_REPAIR_BODY_CANDIDATES_AGAINST_DECLARED_TESTS_AND_VALIDATE_HELD_OUT_BEHAVIOR",
+		"body_fill_holdout_accuracy":         "REVIEW_HELD_OUT_MISMATCHES_AND_EXPAND_THE_DECLARED_TYPED_GRAMMAR_WITHOUT_LEAKING_HOLDOUTS_INTO_CANDIDATE_SELECTION",
 		"declared_record_case_accuracy":      "COMPARE_RECORD_ALTERNATIVES_AGAINST_DECLARED_TYPED_CASES",
 		"declared_record_field_accuracy":     "COMPLETE_UNMATCHED_DECLARED_RECORD_FIELDS_WITHIN_THE_ATTEMPT_BUDGET",
 		"declaration_coverage":               "BIND_THE_REQUESTED_ACTIVITY_TO_A_STABLE_SOURCE_ID",

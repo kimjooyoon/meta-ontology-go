@@ -49,13 +49,24 @@ source_fill intent "Represent input plus one as a base and increment." {
 }
 ```
 
-The closed grammar uses only the source's declared cases to enumerate integer
-expressions. Gooo builds complete assignments in deterministic lexicographic order,
-up to the assignment cap. Its receipt reports both expression grammar coverage and
-the fraction of the complete assignment space actually enumerated. If the cap
+The closed grammar uses the source's declared training cases to enumerate integer
+expressions. Optional `holdout_case` rows stay out of candidate scores and model
+requests; Gooo measures them against the final selected body after generation.
+Training and holdout accuracy appear separately, so a finite training score cannot
+hide a held-out regression. Gooo builds complete assignments in deterministic
+lexicographic order, up to the assignment cap. Its receipt reports expression
+grammar coverage and the fraction of the complete assignment space actually
+enumerated. If the cap
 truncates that space, the completeness dimension stays `PROGRESS`; a model can only
 rank the enumerated prefix. See
 `examples/body-codegen/source-ir-fill-derived.gooo.fixture` for a runnable example.
+The [holdout fixture](../examples/body-codegen/source-ir-fill-holdout.gooo.fixture)
+shows training and held-out accuracy separately:
+
+```sh
+gooo body-codegen --json --activity Lift \
+  examples/body-codegen/source-ir-fill-holdout.gooo.fixture
+```
 
 Run it with `gooo body-codegen --json --activity Lift
 examples/body-codegen/source-ir-fill.gooo.fixture`. Add `--tiny-model
