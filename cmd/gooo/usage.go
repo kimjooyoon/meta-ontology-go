@@ -135,10 +135,12 @@ Example:
   gooo run --entry Clamp --input input.json main.gooo
 
 Without --input or --record-input, this resolves the activity declaration and
-reports its typed inputs and output; it does not evaluate computes or generated
-Go. With an explicit input, the value-plan path executes only registered value
-operations and declared typed binds. ` + "`--runtime-plan`" + ` binds that run to a
-validated runtime-plan artifact. Use --json for a machine-readable receipt.
+reports its typed inputs and output only when the source has no runtime binds;
+it does not evaluate computes or generated Go. A bound source without input
+fails closed with SOURCE_RUNTIME_BINDINGS_UNSUPPORTED. With an explicit input,
+the value-plan path executes registered value operations and declared typed
+binds. ` + "`--runtime-plan`" + ` binds that run to a validated runtime-plan
+artifact. Use --json for a machine-readable receipt.
 
 See docs/language/language-source-execution.md and
 docs/language/language-package-execution.md for the two execution scopes.

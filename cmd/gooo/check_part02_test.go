@@ -42,7 +42,8 @@ func TestHelpShowsQuickStartAndCommandGuide(t *testing.T) {
 		!strings.Contains(stdout.String(), "reports its typed inputs and output") ||
 		!strings.Contains(stdout.String(), "With an explicit input") ||
 		!strings.Contains(stdout.String(), "value-plan path executes") ||
-		!strings.Contains(stdout.String(), "declared typed binds") {
+		!strings.Contains(stdout.String(), "value-plan path executes registered value operations") ||
+		!strings.Contains(stdout.String(), "SOURCE_RUNTIME_BINDINGS_UNSUPPORTED") {
 		t.Fatalf("run guide does not distinguish declaration and value execution: code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 }

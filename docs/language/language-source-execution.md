@@ -24,6 +24,11 @@ Unknown entries and invalid syntax return exit code 1 with an explicit
 `FAIL_CLOSED` receipt. Unknown top decisions are not accepted as a fixed point;
 the meta evaluator lowers resolution instead.
 
+A source that declares runtime `bind` edges cannot use this declaration-only
+path; it fails closed with `SOURCE_RUNTIME_BINDINGS_UNSUPPORTED`. Supply an
+explicit `--input` to select the value-plan path, which validates and executes
+the declared edges for supported registered operations.
+
 ## Claims intentionally absent
 
 Registered-value operation execution, handwritten Go-body execution, external
