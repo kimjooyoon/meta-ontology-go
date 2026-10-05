@@ -429,7 +429,7 @@ func generateWithIRBodyFillOptions(
 	planBytes, _ := json.Marshal(plan)
 	var holeFills []IRBodyFillHoleFill
 	if plan.Schema == bodyFillMultiPlanSchema {
-		holeFills = bodyFillHoleResults(holes, bodyFillCandidateFills(plan, *selected))
+		holeFills = bodyFillHoleResults(holes, bodyFillCandidateFills(plan, selected))
 	}
 	result.Report.BodyFill = &IRBodyFillReceipt{
 		Schema: plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
