@@ -5723,6 +5723,31 @@
         "internal/bodycodegen/body_fill_test.go",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/gooo-imported-activity-bindings-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/package_resolve_test.go",
+        "docs/language/workspace-manifest.md",
+        "examples/package-imports/app.gooo",
+        "examples/package-imports/core.gooo",
+        "examples/package-imports/gooo.workspace.json",
+        "internal/packageruntime/bindings.go",
+        "internal/packageruntime/compile.go",
+        "internal/packageruntime/model.go",
+        "internal/syntax/ast_part01.go",
+        "internal/syntax/ast_part03.go",
+        "internal/syntax/binding_format.go",
+        "internal/syntax/binding_parser.go",
+        "internal/syntax/format_imports.go",
+        "internal/syntax/format_part01.go",
+        "internal/syntax/import_parser.go",
+        "internal/syntax/import_test.go",
+        "internal/syntax/parser_part02.go",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

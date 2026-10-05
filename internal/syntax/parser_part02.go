@@ -39,6 +39,7 @@ func (p *Parser) parseFile() *File {
 		p.error(DiagExpectedNamespace, p.peek().Span, "expected namespace declaration")
 	}
 	seenImports := map[string]bool{}
+	seenImportAliases := map[string]bool{}
 
 	for {
 		p.skipIllegal()
@@ -63,6 +64,12 @@ func (p *Parser) parseFile() *File {
 				p.error(DiagUnexpectedDeclaration, importDecl.Span, "duplicate package import "+importDecl.Path)
 			}
 			seenImports[importDecl.Path] = true
+			if importDecl.Alias != "" {
+				if seenImportAliases[importDecl.Alias] {
+					p.error(DiagUnexpectedDeclaration, importDecl.Span, "duplicate package import alias "+importDecl.Alias)
+				}
+				seenImportAliases[importDecl.Alias] = true
+			}
 			file.Imports = append(file.Imports, importDecl)
 		case p.at(TokenIdentifier) && p.peek().Value == "bind":
 			file.Bindings = append(file.Bindings, p.parseBinding())

@@ -44,8 +44,12 @@ func FormatWithEntityFieldsSupport(file *File, support EntityFieldsSupport) (str
 	if err != nil {
 		return "", err
 	}
-	for _, importPath := range imports {
-		fmt.Fprintf(&output, "import %s\n", quoteString(importPath))
+	for _, importDecl := range imports {
+		if importDecl.Alias != "" {
+			fmt.Fprintf(&output, "import %s %s\n", importDecl.Alias, quoteString(importDecl.Path))
+		} else {
+			fmt.Fprintf(&output, "import %s\n", quoteString(importDecl.Path))
+		}
 	}
 	if len(imports) > 0 && (len(declarations) > 0 || len(file.Bindings) > 0) {
 		output.WriteByte('\n')

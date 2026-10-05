@@ -79,7 +79,16 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export) (compile
 		exports[index].OutputType = resolvedOutput
 	}
 	for _, source := range sources {
-		fileWithTypes := appendEntityTypeEnvironment(source.file, typeEnvironment)
+		bindings, err := resolveImportedBindings(spec, source.file, exports, dependencies)
+		if err != nil {
+			return compiledPackage{}, err
+		}
+		compiled.image.Bindings = append(compiled.image.Bindings, bindings...)
+	}
+	for _, source := range sources {
+		fileForLowering := source.file.Clone()
+		fileForLowering.Bindings = localBindings(fileForLowering.Bindings)
+		fileWithTypes := appendEntityTypeEnvironment(fileForLowering, typeEnvironment)
 		ir, err := bidir.Lower(fileWithTypes)
 		if err != nil {
 			return compiledPackage{}, reject("PACKAGE_SOURCE_INVALID", "lower source %q: %v", source.source.Filename, err)
@@ -95,7 +104,8 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export) (compile
 		Path, Namespace string
 		Sources         []SourceImage
 		Exports         []Export
-	}{spec.Path, compiled.image.Namespace, compiled.image.Sources, compiled.image.Exports})
+		Bindings        []PackageBinding
+	}{spec.Path, compiled.image.Namespace, compiled.image.Sources, compiled.image.Exports, compiled.image.Bindings})
 	return compiled, nil
 }
 

@@ -38,14 +38,29 @@ type SourceImage struct {
 }
 
 type PackageImage struct {
-	Path           string        `json:"path"`
-	Name           string        `json:"name"`
-	Namespace      string        `json:"namespace"`
-	Imports        []string      `json:"imports"`
-	Exports        []Export      `json:"exports"`
-	Sources        []SourceImage `json:"sources"`
-	Declarations   int           `json:"declarations"`
-	SemanticDigest string        `json:"semantic_digest"`
+	Path           string           `json:"path"`
+	Name           string           `json:"name"`
+	Namespace      string           `json:"namespace"`
+	Imports        []string         `json:"imports"`
+	Exports        []Export         `json:"exports"`
+	Bindings       []PackageBinding `json:"bindings,omitempty"`
+	Sources        []SourceImage    `json:"sources"`
+	Declarations   int              `json:"declarations"`
+	SemanticDigest string           `json:"semantic_digest"`
+}
+
+// PackageBinding is a checked edge from an imported activity output to a
+// local activity input. It describes the package-level execution graph; it
+// does not claim that generated code has executed.
+type PackageBinding struct {
+	ProducerPackage  string `json:"producer_package"`
+	ProducerActivity string `json:"producer_activity"`
+	ProducerPort     string `json:"producer_port"`
+	ConsumerPackage  string `json:"consumer_package"`
+	ConsumerActivity string `json:"consumer_activity"`
+	ConsumerPort     string `json:"consumer_port"`
+	EntityID         string `json:"entity_id"`
+	Feedback         bool   `json:"feedback,omitempty"`
 }
 
 // Export is the statically resolved public surface of a Gooo package.

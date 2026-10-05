@@ -1,6 +1,9 @@
 package syntax
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestImportsParseCloneAndFormatInStableOrder(t *testing.T) {
 	source := `package app
@@ -36,6 +39,30 @@ entity Text id "urn:gooo:text"
 	}
 }
 
+func TestQualifiedImportedBindingAndAliasedImportFormat(t *testing.T) {
+	source := `package app
+namespace app
+import core "example/core"
+entity Text id "urn:gooo:text"
+activity Main(Text) -> Text computes "return input"
+bind core.Normalize.result -> Main.input
+`
+	file, diagnostics := Parse(source)
+	if diagnostics.HasErrors() || len(file.Imports) != 1 || len(file.Bindings) != 1 {
+		t.Fatalf("qualified import binding did not parse: diagnostics=%v file=%#v", diagnostics, file)
+	}
+	if file.Imports[0].Alias != "core" || file.Bindings[0].Producer.PackageAlias != "core" || file.Bindings[0].Producer.Activity.Name != "Normalize" {
+		t.Fatalf("qualified package endpoint was not retained: %#v %#v", file.Imports, file.Bindings[0])
+	}
+	formatted, err := Format(file)
+	if err != nil {
+		t.Fatalf("format aliased import: %v", err)
+	}
+	if !strings.Contains(formatted, `import core "example/core"`) || !strings.Contains(formatted, "bind core.Normalize.result -> Main.input") {
+		t.Fatalf("formatted source lost package alias or qualified binding: %s", formatted)
+	}
+}
+
 func TestDuplicateSourceImportsAreRejected(t *testing.T) {
 	file, diagnostics := Parse(`package app
 namespace app
@@ -44,5 +71,16 @@ import "core"
 `)
 	if file == nil || !diagnostics.HasErrors() {
 		t.Fatalf("duplicate source imports were accepted: diagnostics=%v file=%#v", diagnostics, file)
+	}
+}
+
+func TestDuplicateImportAliasesAreRejected(t *testing.T) {
+	file, diagnostics := Parse(`package app
+namespace app
+import core "example/core"
+import core "example/other"
+`)
+	if file == nil || !diagnostics.HasErrors() {
+		t.Fatalf("duplicate import aliases were accepted: diagnostics=%v file=%#v", diagnostics, file)
 	}
 }
