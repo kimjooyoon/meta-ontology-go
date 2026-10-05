@@ -5859,6 +5859,8 @@
         ".github/ci-governance.json",
         "cmd/gooo/package_execute.go",
         "cmd/gooo/package_execute_test.go",
+        "cmd/gooo/package_execute_tiny_model_options_test.go",
+        "cmd/gooo/package_execute_tiny_model_test.go",
         "cmd/gooo/templates/library/README.md",
         "cmd/gooo/templates/library/body-fill-plans.json",
         "docs/language/project-starters.md",
