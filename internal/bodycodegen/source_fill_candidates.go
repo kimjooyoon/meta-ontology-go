@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/big"
 	"slices"
 	"strconv"
 
@@ -170,9 +171,94 @@ func generateSourceFillExpressions(declaration assemblyspec.FillHoleGrammar, cas
 		return generateIntegerPredicateExpressions(declaration.MaxExpressions, cases, false)
 	case "integer-predicate-composition/v1":
 		return generateIntegerPredicateExpressions(declaration.MaxExpressions, cases, true)
+	case "integer-predicate-outside-range/v1":
+		return generateIntegerOutsideRangeExpressions(declaration.MaxExpressions, cases)
+	case "integer-predicate-cutpoint/v1":
+		return generateIntegerPredicateCutpointExpressions(declaration.MaxExpressions, cases)
 	default:
 		return nil, 0, false, fmt.Errorf("unsupported source-fill grammar %q", declaration.Grammar)
 	}
+}
+
+// generateIntegerPredicateCutpointExpressions includes the observed inputs and
+// interior integer midpoints between adjacent inputs. Midpoints represent
+// thresholds that cannot be named by an observed value alone.
+func generateIntegerPredicateCutpointExpressions(maxExpressions int, cases []assemblyspec.Case) ([]string, int, bool, error) {
+	inputs := make([]int64, len(cases))
+	for index, testCase := range cases {
+		inputs[index] = testCase.Input
+	}
+	slices.Sort(inputs)
+	uniqueInputs := slices.Compact(inputs)
+	midpoints := make([]int64, 0, max(len(uniqueInputs)-1, 0)*2)
+	two := big.NewInt(2)
+	for index := 0; index+1 < len(uniqueInputs); index++ {
+		lower := big.NewInt(uniqueInputs[index])
+		upper := big.NewInt(uniqueInputs[index+1])
+		gap := new(big.Int).Sub(upper, lower)
+		if gap.Cmp(big.NewInt(1)) <= 0 {
+			continue
+		}
+		half, remainder := new(big.Int), new(big.Int)
+		half.QuoRem(gap, two, remainder)
+		floorMidpoint := new(big.Int).Add(lower, half).Int64()
+		midpoints = append(midpoints, floorMidpoint)
+		if remainder.Sign() != 0 {
+			midpoints = append(midpoints, floorMidpoint+1)
+		}
+	}
+	thresholds := append(slices.Clone(midpoints), uniqueInputs...)
+	expressions := []string{"true", "false"}
+	for _, operator := range []string{"<", "<=", ">", ">="} {
+		for _, threshold := range thresholds {
+			expressions = append(expressions, "input "+operator+" "+strconv.FormatInt(threshold, 10))
+		}
+	}
+	enumerated := len(expressions)
+	if len(expressions) > maxExpressions {
+		expressions = expressions[:maxExpressions]
+	}
+	return expressions, enumerated, len(expressions) == enumerated, nil
+}
+
+// generateIntegerOutsideRangeExpressions derives bounded predicates that select
+// values below or above a source-declared interval. Adjacent cutpoint pairs are
+// listed first so small expression caps still include useful local boundaries.
+func generateIntegerOutsideRangeExpressions(maxExpressions int, cases []assemblyspec.Case) ([]string, int, bool, error) {
+	inputs := make([]int64, len(cases))
+	for index, testCase := range cases {
+		inputs[index] = testCase.Input
+	}
+	slices.Sort(inputs)
+	uniqueInputs := slices.Compact(inputs)
+	if len(uniqueInputs) < 2 {
+		return nil, 0, false, fmt.Errorf("outside-range grammar needs at least two distinct training inputs")
+	}
+	pairs := make([][2]int, 0, len(uniqueInputs)*(len(uniqueInputs)-1)/2)
+	for left := 0; left+1 < len(uniqueInputs); left++ {
+		pairs = append(pairs, [2]int{left, left + 1})
+	}
+	for distance := 2; distance < len(uniqueInputs); distance++ {
+		for left := 0; left+distance < len(uniqueInputs); left++ {
+			pairs = append(pairs, [2]int{left, left + distance})
+		}
+	}
+	expressions := make([]string, 0, len(pairs)*4)
+	for _, pair := range pairs {
+		lower := strconv.FormatInt(uniqueInputs[pair[0]], 10)
+		upper := strconv.FormatInt(uniqueInputs[pair[1]], 10)
+		expressions = append(expressions,
+			"(input < "+lower+") || (input > "+upper+")",
+			"(input <= "+lower+") || (input >= "+upper+")",
+			"(input < "+lower+") || (input >= "+upper+")",
+			"(input <= "+lower+") || (input > "+upper+")",
+		)
+	}
+	enumerated := len(expressions)
+	if len(expressions) > maxExpressions {
+		expressions = expressions[:maxExpressions]
+	}
+	return expressions, enumerated, len(expressions) == enumerated, nil
 }
 
 // generateIntegerPredicateExpressions defines a finite grammar from the distinct

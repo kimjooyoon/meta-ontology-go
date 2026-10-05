@@ -45,9 +45,10 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 	}
 	plan := IRBodyFillPlan{
 		Schema: bodyFillMultiPlanSchema, Intent: spec.FillPlan.Intent,
-		Holes:      make([]IRBodyFillHole, len(spec.FillPlan.Holes)),
-		Candidates: make([]IRBodyFillCandidate, len(candidates)),
-		TestCases:  make([]IRBodyFillTestCase, len(spec.Cases)),
+		Holes:            make([]IRBodyFillHole, len(spec.FillPlan.Holes)),
+		Candidates:       make([]IRBodyFillCandidate, len(candidates)),
+		TestCases:        make([]IRBodyFillTestCase, len(spec.Cases)),
+		HoldoutTestCases: make([]IRBodyFillTestCase, len(spec.HoldoutCases)),
 	}
 	for index, hole := range spec.FillPlan.Holes {
 		plan.Holes[index] = IRBodyFillHole{ID: hole.ID}
@@ -57,6 +58,9 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 	}
 	for index, testCase := range spec.Cases {
 		plan.TestCases[index] = IRBodyFillTestCase{Input: testCase.Input, Expected: testCase.Expected}
+	}
+	for index, testCase := range spec.HoldoutCases {
+		plan.HoldoutTestCases[index] = IRBodyFillTestCase{Input: testCase.Input, Expected: testCase.Expected}
 	}
 	result, err := GenerateWithIRBodyFillWithOptions(ctx, filename, source, activity, plan, endpoint, apiKey, options)
 	if err != nil {

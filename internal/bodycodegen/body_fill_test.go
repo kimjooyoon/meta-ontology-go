@@ -109,7 +109,7 @@ func TestGenerateWithIRBodyFillLetsLayaChooseActualBodyAndScoresTests(t *testing
 		t.Fatalf("Laya request included verbose test inputs instead of the score-and-digest summary: %#v", observedFields)
 	}
 	if receipt.Timing.ExecutionModel != "synchronous_sequential_no_background_codegen_goroutines" ||
-		receipt.Timing.DecisionStage != "after_typed_ir_plan_and_candidate_test_scores_before_final_emission" ||
+		receipt.Timing.DecisionStage != "after_typed_ir_plan_training_scores_and_behavior_probes_before_final_emission" ||
 		receipt.Timing.TotalMS < receipt.Timing.LayaDecisionMS {
 		t.Fatalf("Laya call order/timing was not recorded: %#v", receipt.Timing)
 	}

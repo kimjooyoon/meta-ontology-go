@@ -1,0 +1,16 @@
+package sample
+namespace sample
+entity Integer id "sample://integer"
+activity Lift(Integer) -> Integer computes `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` assembling {
+    source_fill intent "Add one to every integer input." {
+        hole "seed"
+        hole "step"
+        derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "16"
+    }
+    case "0" -> "1"
+    case "2" -> "3"
+    holdout_case "5" -> "6"
+    holdout_case "10" -> "11"
+}

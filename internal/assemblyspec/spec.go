@@ -178,11 +178,20 @@ func (s Spec) Validate() error {
 
 func (s Spec) validateFillPlan() error {
 	plan := s.FillPlan
-	if len(s.Cases) == 0 || len(s.HoldoutCases) != 0 || len(s.ValueCases) != 0 ||
+	if len(s.Cases) == 0 || len(s.ValueCases) != 0 ||
 		len(s.Choices) != 0 || s.Search != nil || s.MaxAttempts != 0 || s.Seed != "" ||
 		s.Baseline != "" || len(s.Picked) != 0 || !boundedText(plan.Intent, 2000) ||
 		len(plan.Holes) < 2 || len(plan.Holes) > 8 {
 		return fmt.Errorf("source fill plan requires intent, 2..8 holes and integer training cases; it cannot mix with other assembly modes")
+	}
+	trainingInputs := make(map[int64]bool, len(s.Cases))
+	for _, testCase := range s.Cases {
+		trainingInputs[testCase.Input] = true
+	}
+	for _, testCase := range s.HoldoutCases {
+		if trainingInputs[testCase.Input] {
+			return fmt.Errorf("source fill holdout input %d also appears in training cases", testCase.Input)
+		}
 	}
 	if plan.Generation == nil {
 		if len(plan.Candidates) < 2 || len(plan.Candidates) > 16 {
@@ -240,7 +249,9 @@ func (s Spec) validateFillPlan() error {
 }
 
 func supportedFillGrammar(grammar string) bool {
-	return grammar == "integer-offset-constant/v1" || grammar == "integer-predicate/v1" || grammar == "integer-predicate-composition/v1"
+	return grammar == "integer-offset-constant/v1" || grammar == "integer-predicate/v1" ||
+		grammar == "integer-predicate-composition/v1" || grammar == "integer-predicate-outside-range/v1" ||
+		grammar == "integer-predicate-cutpoint/v1"
 }
 
 func (s Spec) validateCheckpoint() error {
