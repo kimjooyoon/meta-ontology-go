@@ -110,3 +110,71 @@ func TestCompositionRecordObjectsAreCompleteAndExact(t *testing.T) {
 		t.Fatal("JSON field presentation order changed record value", err)
 	}
 }
+
+func TestCompositionTransportsBooleanRecordFieldsAsJSONBooleans(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/boolean-record-composition.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile("../../examples/body-codegen/boolean-record-composition-cases.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	suite, err := DecodeCompositionCases(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prior, err := GenerateComposition(context.Background(), "boolean-records.gooo", source, suite, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(prior.Plan.Records) != 1 || len(prior.Plan.Records[0].Fields) != 1 ||
+		prior.Plan.Records[0].Fields[0].TypeID != "urn:gooo:type:boolean" {
+		t.Fatalf("record type was not retained: %+v", prior.Plan.Records)
+	}
+	graph, err := prepareCompositionGraph(context.Background(), "boolean-records.gooo", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, invalid := range []string{`{"enabled":"true"}`, `{"enabled":null}`, `{"enabled":1}`, `{}`, `{"enabled":true,"extra":false}`} {
+		if _, err := graph.canonicalValue([]byte(invalid), "Gate"); err == nil {
+			t.Fatalf("accepted invalid Boolean record: %s", invalid)
+		}
+	}
+	invalidSuite := suite
+	invalidSuite.Cases = append([]CompositionCase(nil), suite.Cases...)
+	invalidSuite.Cases[0].Inputs = map[string]json.RawMessage{"Build": json.RawMessage(`"true"`)}
+	if _, err := GenerateComposition(context.Background(), "boolean-records.gooo", source, invalidSuite, "missing-model.json"); err == nil || strings.Contains(err.Error(), "missing-model.json") {
+		t.Fatalf("invalid Boolean type reached model loading: %v", err)
+	}
+	run, err := ExecuteComposition(context.Background(), "boolean-records.gooo", source, prior, suite, nativeTool())
+	if err != nil || run.FinitePassed != 4 || run.FiniteTotal != 4 || !run.RuntimeReplayed || run.ModelCalls != 0 {
+		t.Fatalf("Boolean record composition: %v %+v", err, run)
+	}
+	for caseIndex, trace := range run.Traces {
+		if len(trace.Deliveries) != 2 {
+			t.Fatalf("case %d deliveries=%d", caseIndex, len(trace.Deliveries))
+		}
+		expectedBuild, err := graph.canonicalValue(suite.Cases[caseIndex].Expected["Build"], "Gate")
+		if err != nil {
+			t.Fatal(err)
+		}
+		expectedRelay, err := graph.canonicalValue(suite.Cases[caseIndex].Expected["Relay"], "Gate")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(trace.Deliveries[0].Actual) != string(expectedBuild) ||
+			string(trace.Deliveries[1].Input) != string(trace.Deliveries[0].Actual) ||
+			string(trace.Deliveries[1].Actual) != string(expectedRelay) {
+			t.Fatalf("case %d failed to deliver typed Boolean values: %+v", caseIndex, trace.Deliveries)
+		}
+		want := "true"
+		if caseIndex == 1 {
+			want = "false"
+		}
+		if len(trace.Deliveries[0].ActualFields) != 1 || string(trace.Deliveries[0].ActualFields[0].Value) != want ||
+			len(trace.Deliveries[1].InputFields) != 1 || string(trace.Deliveries[1].InputFields[0].Value) != string(trace.Deliveries[0].ActualFields[0].Value) {
+			t.Fatalf("case %d lost Boolean field observations: %+v", caseIndex, trace.Deliveries)
+		}
+	}
+}
