@@ -89,3 +89,15 @@ func TestEntityFieldsV2ProfileIsDistinctAndValidated(t *testing.T) {
 		t.Fatal("V2 profile digest does not match its canonical contract")
 	}
 }
+
+func TestEntityFieldsV3ProfileBindsIntegerType(t *testing.T) {
+	v3 := EntityFieldsV3Support()
+	if err := v3.Validate(); err != nil {
+		t.Fatal("V3 support invalid", err)
+	}
+	canonical := "id=gooo.entityfields.go-projection.v3\ntypes=urn:gooo:type:string,urn:gooo:type:boolean,urn:gooo:type:integer\npresence=required\ncardinality=one\nordering=source\n"
+	digest := sha256.Sum256([]byte(canonical))
+	if hex.EncodeToString(digest[:]) != EntityFieldsV3ProfileDigest {
+		t.Fatal("V3 profile digest does not match its canonical contract")
+	}
+}

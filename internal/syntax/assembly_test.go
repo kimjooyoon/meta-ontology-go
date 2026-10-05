@@ -22,6 +22,57 @@ func TestAssemblyParseFormatCloneAndSpans(t *testing.T) {
     baseline "return input - 2"
     picked "offset" -> "layout_reverse"`, 1)
 	testAssemblyParseFormatCloneAndSpans(t, checkpoint)
+	search := `package assembly
+namespace assembly
+entity Integer id "assembly://integer"
+activity Clamp(Integer) -> Integer computes "return __GOOO_BODY_HOLE_floor__" assembling {
+    search hole "floor" grammar "integer-offset-constant/v1" intent "Map the training domain." max_candidates "16"
+    case "-1" -> "0"
+    case "1" -> "1"
+    holdout_case "-2" -> "0"
+    attempts "4"
+}`
+	testAssemblyParseFormatCloneAndSpans(t, search)
+	fill := `package assembly
+namespace assembly
+entity Integer id "assembly://integer"
+activity Lift(Integer) -> Integer computes ` + "`" + `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` + "`" + ` assembling {
+    source_fill intent "Compose a base and a small increment." {
+        hole "seed"
+        hole "step"
+        candidate "add_one" {
+            fill "seed" "input + 0"
+            fill "step" "1"
+        }
+        candidate "double" {
+            fill "seed" "input * 2"
+            fill "step" "0"
+        }
+    }
+    case "0" -> "1"
+    case "2" -> "3"
+}`
+	testAssemblyParseFormatCloneAndSpans(t, fill)
+	derived := strings.Replace(fill, `candidate "add_one" {`+"\n"+
+		`            fill "seed" "input + 0"`+"\n"+
+		`            fill "step" "1"`+"\n"+
+		`        }`+"\n"+
+		`        candidate "double" {`+"\n"+
+		`            fill "seed" "input * 2"`+"\n"+
+		`            fill "step" "0"`+"\n"+
+		`        }`+"\n", `derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "16"`+"\n", 1)
+	testAssemblyParseFormatCloneAndSpans(t, derived)
+	mixed := strings.Replace(derived,
+		`derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "16"`,
+		"derive assignments max_candidates \"16\" {\n"+
+			"            hole \"seed\" grammar \"integer-offset-constant/v1\" max_expressions \"8\"\n"+
+			"            hole \"step\" grammar \"integer-predicate/v1\" max_expressions \"8\"\n"+
+			"        }", 1)
+	// The grammar declarations are type-checked by body generation; syntax parsing
+	// still owns their canonical source representation and clone behavior.
+	testAssemblyParseFormatCloneAndSpans(t, mixed)
 }
 
 func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
@@ -49,10 +100,38 @@ func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
 		t.Fatal("assembly formatting is not a fixed point", err)
 	}
 	clone := file.Clone().Declarations[1].(*ActivityDecl)
-	clone.Assembly.Spec.Choices[0].Intent = "changed"
-	clone.Assembly.Spec.Cases[0].Expected = 0
-	if activity.Assembly.Spec.Choices[0].Intent == "changed" || activity.Assembly.Spec.Cases[0].Expected == 0 {
-		t.Fatal("syntax clone shares assembly storage")
+	if clone.Assembly.Spec.FillPlan != nil {
+		if clone.Assembly.Spec.FillPlan.Generation != nil {
+			clone.Assembly.Spec.FillPlan.Generation.MaxCandidates++
+			if activity.Assembly.Spec.FillPlan.Generation.MaxCandidates == clone.Assembly.Spec.FillPlan.Generation.MaxCandidates {
+				t.Fatal("syntax clone shares source fill generation storage")
+			}
+			if len(clone.Assembly.Spec.FillPlan.Generation.HoleGrammars) > 0 {
+				clone.Assembly.Spec.FillPlan.Generation.HoleGrammars[0].Grammar = "changed"
+				if activity.Assembly.Spec.FillPlan.Generation.HoleGrammars[0].Grammar == "changed" {
+					t.Fatal("syntax clone shares per-hole grammar storage")
+				}
+			}
+		} else {
+			clone.Assembly.Spec.FillPlan.Candidates[0].Fills[0].Expression = "changed"
+			if activity.Assembly.Spec.FillPlan.Candidates[0].Fills[0].Expression == "changed" {
+				t.Fatal("syntax clone shares source fill plan storage")
+			}
+		}
+	} else if clone.Assembly.Spec.Search != nil {
+		originalIntent := activity.Assembly.Spec.Search.Intent
+		originalHoldout := activity.Assembly.Spec.HoldoutCases[0].Expected
+		clone.Assembly.Spec.Search.Intent = "changed"
+		clone.Assembly.Spec.HoldoutCases[0].Expected = 5
+		if activity.Assembly.Spec.Search.Intent != originalIntent || activity.Assembly.Spec.HoldoutCases[0].Expected != originalHoldout {
+			t.Fatal("syntax clone shares search assembly storage")
+		}
+	} else {
+		clone.Assembly.Spec.Choices[0].Intent = "changed"
+		clone.Assembly.Spec.Cases[0].Expected = 0
+		if activity.Assembly.Spec.Choices[0].Intent == "changed" || activity.Assembly.Spec.Cases[0].Expected == 0 {
+			t.Fatal("syntax clone shares assembly storage")
+		}
 	}
 	if len(clone.Assembly.Spec.Picked) != 0 {
 		clone.Assembly.Spec.Picked[0].Label = "layout_forward"
@@ -97,6 +176,61 @@ func TestAssemblyRejectsIncompleteOrAmbiguousDeclarations(t *testing.T) {
 		prefix := assemblySource[:strings.Index(assemblySource, "assembling")]
 		if _, diagnostics := Parse(prefix + "assembling { " + block + " }"); !diagnostics.HasErrors() {
 			t.Fatal("missing or over-budget assembly accepted")
+		}
+	}
+}
+
+func TestAssemblyIRSearchRejectsMixedAndLeakingContracts(t *testing.T) {
+	source := `package assembly
+namespace assembly
+entity Integer id "assembly://integer"
+activity Clamp(Integer) -> Integer computes "return __GOOO_BODY_HOLE_floor__" assembling {
+    search hole "floor" grammar "integer-offset-constant/v1" intent "Map values." max_candidates "8"
+    case "-1" -> "0"
+    holdout_case "1" -> "1"
+    attempts "4"
+}`
+	for _, mutation := range []struct{ from, to string }{
+		{`grammar "integer-offset-constant/v1"`, `grammar "arbitrary-go/v1"`},
+		{`max_candidates "8"`, `max_candidates "1"`},
+		{`intent "Map values."`, `intent ""`},
+		{`hole "floor"`, `hole "bad-id!"`},
+		{`holdout_case "1" -> "1"`, `holdout_case "-1" -> "1"`},
+		{`attempts "4"`, `attempts "9"`},
+		{`attempts "4"`, `attempts "4" choice "x" operand_order at "0" intent "mixed"`},
+	} {
+		changed := strings.Replace(source, mutation.from, mutation.to, 1)
+		if _, diagnostics := Parse(changed); !diagnostics.HasErrors() {
+			t.Fatalf("invalid IR search contract accepted: %q -> %q", mutation.from, mutation.to)
+		}
+	}
+}
+
+func TestSourceFillDerivationRejectsOpenOrUnboundedContracts(t *testing.T) {
+	source := `package sample
+namespace sample
+entity Integer id "sample://integer"
+activity Lift(Integer) -> Integer computes ` + "`" + `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` + "`" + ` assembling {
+    source_fill intent "Compose a finite assignment." {
+        hole "seed"
+        hole "step"
+        derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "8"
+    }
+    case "0" -> "1"
+}`
+	for _, mutation := range []struct{ from, to string }{
+		{`integer-offset-constant/v1`, `arbitrary-go/v1`},
+		{`max_expressions "8"`, `max_expressions "1"`},
+		{`max_candidates "8"`, `max_candidates "1"`},
+		{`max_candidates "8"`, `max_candidates "17"`},
+		{`derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "8"`,
+			`derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "8" candidate "manual" { fill "seed" "input" fill "step" "1" }`},
+	} {
+		changed := strings.Replace(source, mutation.from, mutation.to, 1)
+		if _, diagnostics := Parse(changed); !diagnostics.HasErrors() {
+			t.Fatalf("invalid source-fill generation contract accepted: %q -> %q", mutation.from, mutation.to)
 		}
 	}
 }

@@ -54,7 +54,7 @@ func buildGenerateArtifacts(options generateOptions, input generateInput, jsonMo
 		if err != nil {
 			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.runtimePlanFilename, "io.runtime-plan-path", "runtime plan path", err, input.file)
 		}
-		document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(input.file, syntax.EntityFieldsV2Support())
+		document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(input.file, syntax.EntityFieldsV3Support())
 		if err != nil {
 			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.filename, "runtime-plan.lower", "runtime plan lowering", err, input.file)
 		}

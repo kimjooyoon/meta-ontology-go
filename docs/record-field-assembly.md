@@ -50,6 +50,30 @@ record. Inputs may mix Integer, Boolean, Text and declared records. Every record
 field is required. Input and expected JSON are normalized into the assembly
 contract, so formatting changes keep the same observations.
 
+Boolean record fields use the same typed alternatives and completeness counts.
+The runnable [Boolean field example](../examples/body-codegen/boolean-field-assembly.gooo.fixture)
+assembles two Boolean fields and a Text label from activity inputs. Its four
+cases cover true/false combinations and report 12/12 expected fields; a string
+alternative for a Boolean field is rejected during source preflight.
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity Build \
+  examples/body-codegen/boolean-field-assembly.gooo.fixture
+```
+
+Integer fields use the semantic `integer` type and project to Go `int64`. This
+body-generation path binds EntityFields V3, which adds Integer while retaining
+the string and Boolean field rules.
+The [integer field example](../examples/body-codegen/integer-field-assembly.gooo.fixture)
+adds one to an input, preserves Boolean and Text siblings, and measures all
+three fields across positive, zero-result and larger-value cases. A mismatched
+Text alternative is rejected before evaluation.
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity Build \
+  examples/body-codegen/integer-field-assembly.gooo.fixture
+```
+
 ## Generate, inspect and execute
 
 From a checkout with Go 1.27.1:
@@ -129,7 +153,8 @@ attempt count and field completion together before attributing a speed benefit.
 
 - 1..6 disjoint binary field choices and 1..64 attempts.
 - 1..128 typed selection cases; 1..16 activity inputs.
-- Required string record fields, using the existing 16-field record profile.
+- Required single integer, string and Boolean record fields under the explicit
+  EntityFields V3 body profile, using the existing 16-field bound.
 - Source up to 128 KiB; each JSON value up to 32 KiB; each supplied text up to
   1,024 UTF-8 bytes.
 - Pure body conditions, expressions and whole-local assignments follow the
@@ -137,8 +162,8 @@ attempt count and field completion together before attributing a speed benefit.
   subsequent language work.
 
 Native Go records are value structs. The finite evaluator uses a fixed array of
-16 string headers with a nominal record identity. Copying a local copies those
-headers independently; strings retain ordinary immutable storage.
+16 typed scalar slots with a nominal record identity. Copying a local copies
+those slots independently; strings retain ordinary immutable storage.
 
 The next learning target is reusable field decisions: source-owned alternatives,
 small bilingual intent and the observed field improvements. A useful model

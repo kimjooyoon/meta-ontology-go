@@ -24,6 +24,7 @@ const (
 )
 const entityFieldsStringTypeID = "urn:gooo:type:string"
 const entityFieldsBooleanTypeID = "urn:gooo:type:boolean"
+const entityFieldsIntegerTypeID = "urn:gooo:type:integer"
 
 type entityFieldsSupport = syntax.EntityFieldsSupport
 

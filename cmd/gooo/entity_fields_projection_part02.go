@@ -39,9 +39,10 @@ func validateCLIEntityFieldsSupport(support syntax.EntityFieldsSupport) error {
 	if support.Profile.ID == "" && support.Profile.Version == 0 && support.Profile.Digest == "" {
 		return errors.New("GOOO-EF-V1-UNBOUND-PROFILE: profile is unbound")
 	}
-	if support.Profile.ID != syntax.EntityFieldsProfileID && support.Profile.ID != syntax.EntityFieldsV2ProfileID ||
+	if support.Profile.ID != syntax.EntityFieldsProfileID && support.Profile.ID != syntax.EntityFieldsV2ProfileID && support.Profile.ID != syntax.EntityFieldsV3ProfileID ||
 		support.Profile.ID == syntax.EntityFieldsProfileID && support.Profile.Version != syntax.EntityFieldsProfileVersion ||
-		support.Profile.ID == syntax.EntityFieldsV2ProfileID && support.Profile.Version != syntax.EntityFieldsV2ProfileVersion {
+		support.Profile.ID == syntax.EntityFieldsV2ProfileID && support.Profile.Version != syntax.EntityFieldsV2ProfileVersion ||
+		support.Profile.ID == syntax.EntityFieldsV3ProfileID && support.Profile.Version != syntax.EntityFieldsV3ProfileVersion {
 		return errors.New("GOOO-EF-V1-PROFILE-MISMATCH: profile identity or version does not match")
 	}
 	if err := support.Profile.Validate(); err != nil {

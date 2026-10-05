@@ -1,0 +1,22 @@
+{
+  "schema": "gooo/body-codegen-ir-search-plan/v1",
+  "intent": "Return zero for negative integers and preserve zero or positive integers.",
+  "hole_id": "floor",
+  "candidate_generation": {
+    "schema": "gooo/body-codegen-ir-candidate-generation/v1",
+    "grammar": "integer-offset-constant/v1",
+    "max_candidates": 16
+  },
+  "test_cases": [
+    { "input": -2, "expected": 0 },
+    { "input": -1, "expected": 0 },
+    { "input": 0, "expected": 0 },
+    { "input": 1, "expected": 1 },
+    { "input": 2, "expected": 2 }
+  ],
+  "holdout_test_cases": [
+    { "input": -9223372036854775808, "expected": 0 },
+    { "input": 9223372036854775807, "expected": 9223372036854775807 }
+  ],
+  "max_attempts": 8
+}

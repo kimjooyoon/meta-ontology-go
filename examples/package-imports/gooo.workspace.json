@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "example/app",
+    "activity": "Main"
+  },
+  "packages": [
+    {
+      "path": "example/app",
+      "name": "app",
+      "imports": [
+        "example/core"
+      ],
+      "sources": [
+        "app.gooo.fixture"
+      ]
+    },
+    {
+      "path": "example/core",
+      "name": "core",
+      "imports": [],
+      "sources": [
+        "core.gooo.fixture"
+      ]
+    }
+  ]
+}

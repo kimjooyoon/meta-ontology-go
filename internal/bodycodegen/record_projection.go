@@ -66,6 +66,9 @@ func recordGoType(typeID string) string {
 	if typeID == "urn:gooo:type:boolean" {
 		return "bool"
 	}
+	if typeID == "urn:gooo:type:integer" {
+		return "int64"
+	}
 	return "string"
 }
 

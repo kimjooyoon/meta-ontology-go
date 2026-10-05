@@ -37,10 +37,25 @@ func bodySearchCompletenessDimensions(search *IRBodySearchReceipt, generatedDige
 		scoring.Status = "PROGRESS"
 	}
 	core := []string{training.ID}
+	dimensions := []CompletenessDimension{training, holdout, coverage, scoring}
+	if search.CandidateGeneration != nil {
+		generated := search.CandidateGeneration
+		grammar := completenessDimension("search_candidate_grammar_coverage", generated.CandidatesRetained,
+			generated.CandidatesEnumerated,
+			"retained candidates divided by unique expressions enumerated in the named bounded grammar",
+			"Full grammar coverage only closes enumeration for this candidate grammar; it does not establish intent or whole-domain correctness.",
+			[]string{"body_search.candidate_generation.grammar:" + generated.Grammar,
+				"body_search.candidate_generation.candidate_set_sha256:" + generated.CandidateSetSHA256}, false)
+		if !generated.GrammarComplete {
+			grammar.Status = "PROGRESS"
+		}
+		dimensions = append(dimensions, grammar)
+		core = append(core, grammar.ID)
+	}
 	if search.HoldoutTotal > 0 {
 		core = append(core, holdout.ID)
 	}
-	return []CompletenessDimension{training, holdout, coverage, scoring}, core
+	return dimensions, core
 }
 
 func bodySearchProviderSummary(search *IRBodySearchReceipt) (string, string) {

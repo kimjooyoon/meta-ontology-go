@@ -30,6 +30,9 @@ const (
 	EntityFieldsV2ProfileID      = "gooo.entityfields.go-projection.v2"
 	EntityFieldsV2ProfileVersion = 2
 	EntityFieldsV2ProfileDigest  = "d890716e88e65947968cee26e2254c4df2133c8ea420a5cb487afb2fa080ef4c"
+	EntityFieldsV3ProfileID      = "gooo.entityfields.go-projection.v3"
+	EntityFieldsV3ProfileVersion = 3
+	EntityFieldsV3ProfileDigest  = "a41e79696fe46d18b0d2d74c0a687b9898397e71e340a9bcd432534fd6df476b"
 )
 
 var (
@@ -58,8 +61,12 @@ func (p EntityFieldsProfile) Validate() error {
 		if p.Version == EntityFieldsV2ProfileVersion && p.Digest == EntityFieldsV2ProfileDigest {
 			return nil
 		}
+	case EntityFieldsV3ProfileID:
+		if p.Version == EntityFieldsV3ProfileVersion && p.Digest == EntityFieldsV3ProfileDigest {
+			return nil
+		}
 	}
-	if p.Digest != EntityFieldsProfileDigest && p.Digest != EntityFieldsV2ProfileDigest {
+	if p.Digest != EntityFieldsProfileDigest && p.Digest != EntityFieldsV2ProfileDigest && p.Digest != EntityFieldsV3ProfileDigest {
 		return fmt.Errorf("%w: %w", ErrEntityFieldsProfileMismatch, ErrEntityFieldsProfileDigestError)
 	}
 	return fmt.Errorf("%w: id=%q version=%d", ErrEntityFieldsProfileMismatch, p.ID, p.Version)

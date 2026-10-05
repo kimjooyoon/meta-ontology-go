@@ -42,7 +42,7 @@ func entityFieldsProjectionMalformedCases() []struct {
 			node.Fields[0].TypeRef.ID = "urn:gooo:type:integer"
 			ir.Graph = semantic.NewGraph()
 			_ = ir.AddNode(node)
-		}, want: "UNKNOWN-TYPE"},
+		}, want: "UNSUPPORTED-TYPE"},
 		{name: "unbound profile", edit: func(_ *semantic.IR, _ *bidir.Model, support *syntax.EntityFieldsSupport) {
 			support.Profile = syntax.EntityFieldsProfile{}
 		}, want: "UNBOUND-PROFILE"},

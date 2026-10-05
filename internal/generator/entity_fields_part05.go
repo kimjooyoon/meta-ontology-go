@@ -9,6 +9,8 @@ func prepareEntityFields(ir SemanticIR) SemanticIR {
 			field.GoType = "string"
 			if field.TypeRefID == entityFieldsBooleanTypeID {
 				field.GoType = "bool"
+			} else if field.TypeRefID == entityFieldsIntegerTypeID {
+				field.GoType = "int64"
 			}
 		}
 	}

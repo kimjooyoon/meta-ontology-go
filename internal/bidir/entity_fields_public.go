@@ -17,6 +17,10 @@ func EntityFieldsV1Support() EntityFieldsSupport { return syntax.EntityFieldsV1S
 // separately versioned V2 profile.
 func EntityFieldsV2Support() EntityFieldsSupport { return syntax.EntityFieldsV2Support() }
 
+// EntityFieldsV3Support enables required single integer fields under the
+// versioned EntityFields V3 contract.
+func EntityFieldsV3Support() EntityFieldsSupport { return syntax.EntityFieldsV3Support() }
+
 // DocumentFromSyntaxWithEntityFieldsSupport adapts a profile-bound AST.
 func DocumentFromSyntaxWithEntityFieldsSupport(file *syntax.File, support EntityFieldsSupport) (Document, error) {
 	return documentFromSyntaxWithEntityFieldsSupport(file, support)

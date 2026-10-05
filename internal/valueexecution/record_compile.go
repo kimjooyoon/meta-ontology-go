@@ -36,14 +36,14 @@ type RecordPlan struct {
 	order               []string
 }
 
-// CompileRecordPlan supports source-declared required, single string and Boolean fields.
+// CompileRecordPlan supports source-declared required, single integer, string and Boolean fields.
 // It transports data, including claims, without judging or authorizing claims.
 func CompileRecordPlan(filename string, source []byte) (RecordPlan, error) {
-	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV2Support())
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV3Support())
 	if file == nil || diagnostics.HasErrors() {
 		return RecordPlan{}, failAt(ReasonSourceParseFailed, "PARSE", "parse-record-source", "record source syntax is invalid")
 	}
-	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, bidir.EntityFieldsV2Support())
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, bidir.EntityFieldsV3Support())
 	if err != nil {
 		return RecordPlan{}, failAt(ReasonSemanticBindingFailed, "LOWER", "lower-record-source", err.Error())
 	}
@@ -123,7 +123,7 @@ func compileRecordFields(ir semantic.IR, name string) ([]RecordField, error) {
 	for _, field := range entity.Fields {
 		typeID := field.TypeRef.ID
 		if field.Presence != semantic.Required || field.Cardinality != semantic.One ||
-			(typeID != semantic.BuiltinStringTypeID && typeID != semantic.BuiltinBooleanTypeID) || field.ID.String() == "" || seen[field.Name] {
+			(typeID != semantic.BuiltinStringTypeID && typeID != semantic.BuiltinBooleanTypeID && typeID != semantic.BuiltinIntegerTypeID) || field.ID.String() == "" || seen[field.Name] {
 			return nil, failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "require-supported-single-record-fields", name+"."+field.Name)
 		}
 		seen[field.Name] = true

@@ -1,0 +1,8 @@
+package app
+namespace example_app
+
+import core "example/core"
+
+activity Main(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__"
+
+bind core.Normalize.result -> Main.input

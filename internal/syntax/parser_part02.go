@@ -38,6 +38,8 @@ func (p *Parser) parseFile() *File {
 	} else {
 		p.error(DiagExpectedNamespace, p.peek().Span, "expected namespace declaration")
 	}
+	seenImports := map[string]bool{}
+	seenImportAliases := map[string]bool{}
 
 	for {
 		p.skipIllegal()
@@ -56,6 +58,19 @@ func (p *Parser) parseFile() *File {
 		case p.at(TokenActivity):
 			file.Decls = append(file.Decls, p.parseActivity())
 			file.Declarations = file.Decls
+		case p.at(TokenIdentifier) && p.peek().Value == "import":
+			importDecl := p.parseImport()
+			if seenImports[importDecl.Path] {
+				p.error(DiagUnexpectedDeclaration, importDecl.Span, "duplicate package import "+importDecl.Path)
+			}
+			seenImports[importDecl.Path] = true
+			if importDecl.Alias != "" {
+				if seenImportAliases[importDecl.Alias] {
+					p.error(DiagUnexpectedDeclaration, importDecl.Span, "duplicate package import alias "+importDecl.Alias)
+				}
+				seenImportAliases[importDecl.Alias] = true
+			}
+			file.Imports = append(file.Imports, importDecl)
 		case p.at(TokenIdentifier) && p.peek().Value == "bind":
 			file.Bindings = append(file.Bindings, p.parseBinding())
 		case p.at(TokenIdentifier) && p.peek().Value == "policy":

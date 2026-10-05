@@ -143,6 +143,37 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 			dimension.Status = "PROGRESS"
 		}
 		dimensions = append(dimensions, dimension)
+		if generated := fill.CandidateGeneration; generated != nil {
+			grammar := completenessDimension("body_fill_candidate_grammar_coverage",
+				generated.ExpressionsRetainedTotal, generated.ExpressionCandidatesTotal,
+				"per-hole expressions retained from the declared bounded grammar",
+				"A complete grammar score covers only each named expression grammar derived from training examples; it does not establish intent or all-domain semantics.",
+				[]string{"body_fill.candidate_generation.grammar:" + generated.Grammar,
+					"body_fill.candidate_generation.candidate_set_sha256:" + generated.CandidateSetSHA256}, false)
+			for _, hole := range generated.HoleGrammars {
+				grammar.Evidence = append(grammar.Evidence, "hole:"+hole.HoleID+",grammar:"+hole.Grammar+
+					",retained:"+strconv.Itoa(hole.ExpressionsRetained)+",total:"+strconv.Itoa(hole.ExpressionCandidatesTotal))
+			}
+			if !generated.GrammarComplete {
+				grammar.Status = "PROGRESS"
+			}
+			assignmentDenominator := int(generated.AssignmentSpaceSize)
+			if uint64(assignmentDenominator) != generated.AssignmentSpaceSize {
+				assignmentDenominator = int(^uint(0) >> 1)
+			}
+			assignments := completenessDimension("body_fill_assignment_space_coverage",
+				generated.AssignmentsRetained, assignmentDenominator,
+				"complete assignments enumerated from the source-declared per-hole expression sets",
+				"This reports the lexicographic prefix explored under the explicit assignment cap; omitted assignments may contain better candidates.",
+				[]string{"body_fill.candidate_generation.assignments_omitted:" + strconv.FormatUint(generated.AssignmentsOmitted, 10),
+					"body_fill.candidate_generation.assignment_coverage_percent:" + strconv.FormatFloat(generated.AssignmentCoveragePercent, 'f', 4, 64)}, false)
+			if generated.AssignmentsOmitted > 0 {
+				assignments.Status = "PROGRESS"
+			}
+			dimensions = append(dimensions, grammar, assignments)
+			core = append(core, grammar.ID, assignments.ID)
+			allowedInvestment = "Gooo-derived typed expression candidates from source-owned examples, optional model ranking among complete assignments, and measured finite-suite evidence; no human approval or authorization is required"
+		}
 		dimensions = append(dimensions, completenessDimension("provider_execution_accounting",
 			boolCount(fill.ExternalProviderCallsKnown), 1,
 			"body-fill provider executions classified as local predictions or external calls",

@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "boundedint/app", "activity": "Main"},
+  "packages": [
+    {"path": "boundedint/app", "name": "app", "imports": ["boundedint/core"], "sources": ["app.gooo"]},
+    {"path": "boundedint/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
+  ]
+}

@@ -21,16 +21,24 @@ func (p *Parser) parseBinding() BindingDecl {
 }
 
 func (p *Parser) parseBindingEndpoint() BindingEndpoint {
-	activity := p.expectIdentifier("binding activity", DiagExpectedIdentifier)
+	first := p.expectIdentifier("binding activity or package alias", DiagExpectedIdentifier)
 	p.expect(TokenDot, ".", DiagExpectedDot)
-	port := p.expectIdentifier("binding port", DiagExpectedIdentifier)
-	end := activity.Span.End
-	if !port.Span.IsEmpty() {
+	second := p.expectIdentifier("binding activity or port", DiagExpectedIdentifier)
+	packageAlias := ""
+	activity := first
+	port := second
+	end := second.Span.End
+	if p.at(TokenDot) {
+		p.advance()
+		packageAlias = first.Name
+		activity = second
+		port = p.expectIdentifier("binding port", DiagExpectedIdentifier)
 		end = port.Span.End
 	}
 	return BindingEndpoint{
-		Span:     startSpan(p.filename, activity.Span.Start, end),
-		Activity: activity,
-		Port:     port,
+		Span:         startSpan(p.filename, first.Span.Start, end),
+		PackageAlias: packageAlias,
+		Activity:     activity,
+		Port:         port,
 	}
 }

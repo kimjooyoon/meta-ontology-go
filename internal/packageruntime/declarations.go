@@ -3,20 +3,31 @@ package packageruntime
 import "github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 
 func sourceDeclarations(packagePath, filename string, declarations []syntax.Declaration) (
-	[]string, []EntryPlan,
+	[]string, []Export, []EntryPlan,
 ) {
 	names := make([]string, 0, len(declarations))
+	exports := make([]Export, 0, len(declarations))
 	activities := make([]EntryPlan, 0)
 	for _, declaration := range declarations {
 		switch value := declaration.(type) {
 		case *syntax.EntityDecl:
 			names = append(names, value.Name)
+			exports = append(exports, Export{Name: value.Name, Kind: "entity", ID: value.ID})
 		case *syntax.ActivityDecl:
 			names = append(names, value.Name)
 			activities = append(activities, activityPlan(packagePath, filename, value))
+			inputTypes := make([]string, len(value.Inputs))
+			for index, input := range value.Inputs {
+				inputTypes[index] = input.Name
+			}
+			outputType := value.Output
+			if outputType == "" {
+				outputType = value.Result.Name
+			}
+			exports = append(exports, Export{Name: value.Name, Kind: "activity", InputTypes: inputTypes, OutputType: outputType})
 		}
 	}
-	return names, activities
+	return names, exports, activities
 }
 
 func activityPlan(packagePath, filename string, activity *syntax.ActivityDecl) EntryPlan {
