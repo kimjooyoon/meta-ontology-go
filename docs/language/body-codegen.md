@@ -493,3 +493,34 @@ conditional results on the bounded Laya route, plus local assignment on the
 deterministic route. This adds scalar text behavior to the closed source-body
 profile; it does not add records, collections, multiple inputs, or dynamic
 model-authored code.
+
+### Letting Gooo construct the finite search space
+
+The `candidate_generation` option replaces the hand-written candidate list
+with a small, named Gooo expression grammar derived from training examples:
+
+```sh
+GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
+  go run ./cmd/gooo body-codegen --json --fill-search \
+  examples/body-codegen/ir-search-generated-candidates-plan.json \
+  --activity ClampNegativeToZero \
+  examples/body-codegen/ir-fill-clamp.gooo.fixture
+```
+
+For `integer-offset-constant/v1`, Gooo constructs deduplicated choices from
+the input, expected training constants, negated input, and input-plus/minus
+offsets observed in the training examples. `max_candidates` bounds the set to
+2..16 expressions. Laya may select only one of these typed IR expressions;
+Gooo checks and scores each selected expression before another model call.
+Without Laya, the same candidates are tried in their deterministic generated
+order.
+
+The receipt hashes the generated candidate set and reports how many expressions
+the finite grammar produced, retained, or omitted. `grammar_coverage_percent`
+measures coverage of this named grammar after applying the declared cap. It is
+not a percentage of user intent, all possible Gooo expressions, or correctness
+over the integer domain. Training examples shape the candidate set; holdout
+examples remain unavailable to Laya and are evaluated only after selection.
+This reduces manual candidate authoring while keeping code authority with the
+Gooo checker and evaluator. It does not infer a general-purpose program from
+natural language.
