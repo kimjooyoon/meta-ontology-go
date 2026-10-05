@@ -199,7 +199,24 @@ derive assignments max_candidates "16" {
 `input` and the distinct training inputs. `integer-predicate-composition/v1` adds
 pairwise `input == value` clauses joined with `||` and closed ranges formed by
 `input >= lower && input <= upper`. It does not add nesting or arbitrary Boolean
-formulas.
+formulas. `integer-predicate-outside-range/v1` derives bounded two-sided guards
+such as `input < lower || input > upper` and the three inclusive-boundary variants.
+It enumerates adjacent cutpoint pairs first, so a small expression cap can retain
+useful local windows. The
+[outside-range fixture](../examples/body-codegen/source-ir-fill-outside-range.gooo.fixture)
+assembles an `if` guard for values outside zero through ten and measures separate
+unseen inputs on both sides of that interval.
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity Select \
+  examples/body-codegen/source-ir-fill-outside-range.gooo.fixture
+```
+
+The report includes per-hole grammar coverage, the complete-assignment coverage
+under its cap, selected condition/value, and separate holdout accuracy. With this
+fixture, the deterministic fallback selects `(input < 0) || (input > 10)`, scoring
+4/4 declared cases and 3/3 held-out cases. The finite score does not prove every
+integer input or an unstated intent.
 `integer-offset-constant/v1` derives the bounded integer expressions described
 above. These are finite source-derived grammars, not unrestricted Go or proofs
 over every integer. The receipt reports the pre-cap expression count, retained

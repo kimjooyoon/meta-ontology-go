@@ -249,7 +249,8 @@ func (s Spec) validateFillPlan() error {
 }
 
 func supportedFillGrammar(grammar string) bool {
-	return grammar == "integer-offset-constant/v1" || grammar == "integer-predicate/v1" || grammar == "integer-predicate-composition/v1"
+	return grammar == "integer-offset-constant/v1" || grammar == "integer-predicate/v1" ||
+		grammar == "integer-predicate-composition/v1" || grammar == "integer-predicate-outside-range/v1"
 }
 
 func (s Spec) validateCheckpoint() error {

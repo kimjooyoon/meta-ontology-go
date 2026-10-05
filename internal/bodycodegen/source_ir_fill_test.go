@@ -382,3 +382,34 @@ activity Select(Integer) -> Integer computes ` + "`" + `if __GOOO_BODY_HOLE_cond
 		t.Fatalf("expected a disjoint-input predicate, got generated source: %s", result.Source)
 	}
 }
+
+func TestSourceDerivedOutsideRangeFindsConditionalWindow(t *testing.T) {
+	inputs := []assemblyspec.Case{{Input: -2}, {Input: 0}, {Input: 10}, {Input: 12}}
+	conditions, total, complete, err := generateIntegerOutsideRangeExpressions(8, inputs)
+	if err != nil || total != 24 || complete || len(conditions) != 8 ||
+		!slices.Contains(conditions, "(input < 0) || (input > 10)") {
+		t.Fatalf("outside-range grammar did not retain its bounded interval candidate: conditions=%v total=%d complete=%v err=%v", conditions, total, complete, err)
+	}
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-outside-range.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := syntax.Parse(string(source))
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "outside-range.gooo", source, "Select", spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.FunctionalAccuracyPct != 100 || receipt.TestCasesPassed != 4 || receipt.HoldoutCasesPassed != 3 ||
+		receipt.HoldoutAccuracyPercent == nil || *receipt.HoldoutAccuracyPercent != 100 || !result.Report.TypecheckPassed ||
+		!strings.Contains(result.Source, "(input < 0) || (input > 10)") {
+		t.Fatalf("outside-range composition did not typecheck and match train/holdout cases: report=%+v source=%s", receipt, result.Source)
+	}
+	if dimension := bodyFillDimension(result, "body_fill_holdout_accuracy"); dimension.Status != "PASS" {
+		t.Fatalf("outside-range holdout completeness was not reported: %+v", dimension)
+	}
+}
