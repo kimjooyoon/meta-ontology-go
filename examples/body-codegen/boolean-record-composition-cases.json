@@ -1,0 +1,13 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"Build": true},
+      "expected": {"Build": {"enabled": true}, "Relay": {"enabled": true}}
+    },
+    {
+      "inputs": {"Build": false},
+      "expected": {"Build": {"enabled": false}, "Relay": {"enabled": false}}
+    }
+  ]
+}

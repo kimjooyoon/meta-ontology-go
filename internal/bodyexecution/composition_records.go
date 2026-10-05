@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 type CompositionRecordField struct {
@@ -51,7 +52,11 @@ func canonicalRecord(raw []byte, record bodycodegen.RecordType) (json.RawMessage
 		if !present {
 			return nil, fmt.Errorf("record %q requires field %q", record.Name, field.Name)
 		}
-		canonical, err := canonicalScalar(value, "Text")
+		fieldType, ok := compositionRecordFieldScalar(field.TypeID)
+		if !ok {
+			return nil, fmt.Errorf("record %q field %q has unsupported type %q", record.Name, field.Name, field.TypeID)
+		}
+		canonical, err := canonicalScalar(value, fieldType)
 		if err != nil {
 			return nil, fmt.Errorf("record %q field %q: %w", record.Name, field.Name, err)
 		}
@@ -61,6 +66,17 @@ func canonicalRecord(raw []byte, record bodycodegen.RecordType) (json.RawMessage
 		return nil, fmt.Errorf("record %q contains an undeclared field", record.Name)
 	}
 	return json.Marshal(values)
+}
+
+func compositionRecordFieldScalar(typeID string) (string, bool) {
+	switch typeID {
+	case string(semantic.BuiltinStringTypeID):
+		return "Text", true
+	case string(semantic.BuiltinBooleanTypeID):
+		return "Boolean", true
+	default:
+		return "", false
+	}
 }
 
 func recordObject(raw []byte) (map[string]json.RawMessage, error) {

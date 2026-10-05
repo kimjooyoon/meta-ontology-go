@@ -377,9 +377,10 @@ Gooo에서는 선언된 기준 함수와 실행 결과로 개선 근거를 자�
 구조체에서는 `bool`이 됩니다. Gooo 선언에 둔 참·거짓 사례를 통해 후보 선택,
 타입 검사, JSON 관측을 확인합니다.
 
-현재 V2는 `gooo generate`의 Go 구조 투영과 독립 본문 생성·레코드 조립 경로에서
-사용합니다. `body-compose` 레코드 전송은 아직 V1 문자열 필드 계약을 유지합니다.
-새 타입이 기존 기록을 조용히 다시 해석하지 않도록 버전을 분리했습니다.
+V2는 `gooo generate`의 Go 구조 투영, 독립 본문 생성, `body-compose` 레코드
+전송에서 사용합니다. 입력·바인딩 전달·실제 필드 관측·기대값에서도 Boolean을
+JSON Boolean으로 유지합니다. 새 타입이 기존 V1 기록을 조용히 다시 해석하지
+않도록 버전을 분리했습니다.
 [Gooo 예제와 실행 방법](native-record-values.md#boolean-fields-in-go-projection-and-body-generation).
 
 ## 참고하고 감사하는 연구

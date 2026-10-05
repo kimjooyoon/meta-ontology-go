@@ -1,0 +1,9 @@
+package booleanrecords
+namespace booleanrecords
+entity Boolean id "booleanrecords://boolean"
+entity Gate id "booleanrecords://gate" fields {
+    field enabled id "booleanrecords://gate/enabled" type boolean required one
+}
+activity Build(Boolean) -> Gate computes "return Gate{enabled: input}"
+activity Relay(Gate) -> Gate computes "return input"
+bind Build.result -> Relay.input
