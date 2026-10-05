@@ -33,10 +33,17 @@ semantic digests. Unknown package imports and dependency cycles fail closed.
 The JSON receipt also reports the selected entry and the current zero-effect
 boundary.
 
-This connects workspace source files to package identity and dependency
-ordering. It does not yet let a Gooo source file import or call another
-package's declarations; the `imports` list is currently package graph input,
-not a source-level name-resolution feature. The receipt resolves declarations
-and entry shape; it does not claim to execute generated Go code. The library
-starter includes a workspace manifest so package boundaries are visible from
-the first project command.
+Each package result now includes its statically resolved `exports` list.
+Entities are exported with their stable IDs; activity exports bind every input
+and output entity type to that ID. An activity can use an entity in
+its own package or an entity declared in one of its direct imports. Unknown or
+ambiguous imported types fail closed. When an entity exists locally, the local
+declaration takes precedence over imported entities with the same name.
+
+The manifest `imports` list is the current source of package dependencies;
+Gooo source syntax does not yet contain an import declaration or an activity
+call expression. Type resolution therefore checks activity signatures against
+the package's own entities and its directly imported packages. The receipt
+resolves declarations and the public type surface; it does not claim to execute
+generated Go code. The library starter includes a workspace manifest so package
+boundaries are visible from the first project command.
