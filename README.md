@@ -49,11 +49,16 @@ and finite examples, run:
 
 ```sh
 go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
+gooo help
+gooo help language
 gooo init my-first-gooo
 cd my-first-gooo
 gooo check main.gooo
+gooo test main.gooo
 gooo body-codegen --json --activity Clamp main.gooo
 ```
+
+`gooo --help` shows the quick start; `gooo <command> --help` opens a focused guide for documented commands. Other commands keep their command-specific usage output.
 
 The generated project works without a model. Point `GOOO_LAYA_URL` at a local
 Laya `/v1/systemone` endpoint to let it rank the choices in the declaration.
