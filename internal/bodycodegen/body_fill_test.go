@@ -61,6 +61,9 @@ func TestGenerateWithIRBodyFillLetsLayaChooseActualBodyAndScoresTests(t *testing
 		strings.Contains(result.Source, "__GOOO_BODY_HOLE_floor__") {
 		t.Fatalf("Laya choice was not materialized in the emitted body:\n%s", result.Source)
 	}
+	if result.GoooSource == "" || strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_floor__") {
+		t.Fatalf("selected Gooo source was not retained for package execution:\n%s", result.GoooSource)
+	}
 	receipt := result.Report.BodyFill
 	if receipt == nil || receipt.Decision.Mode != "laya" || receipt.SelectedCandidateID != "zero" ||
 		receipt.SelectedExpression != "0" {

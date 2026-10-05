@@ -416,6 +416,7 @@ func generateWithIRBodyFillOptions(
 	if err != nil {
 		return Result{}, fmt.Errorf("emit selected Gooo IR body: %w", err)
 	}
+	result.GoooSource = string(completedSource)
 	caseResults, passed, err := evaluateIntegerCases([]byte(result.Source), activityName, plan.TestCases)
 	if err != nil {
 		return Result{}, fmt.Errorf("evaluate selected generated body: %w", err)

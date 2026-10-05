@@ -1,0 +1,14 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "example/core:Normalize": 7
+      },
+      "expected": {
+        "example/core:Normalize": 8,
+        "example/app:Main": 8
+      }
+    }
+  ]
+}
