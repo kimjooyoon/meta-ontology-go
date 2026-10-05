@@ -53,6 +53,16 @@ activity Clamp(Integer) -> Integer computes "int.add:1"
 	}
 }
 
+func TestWorkspaceSourcePathAcceptsGoooFixtures(t *testing.T) {
+	got, err := workspaceSourcePath("examples/package-imports/app.gooo.fixture")
+	if err != nil || got != "examples/package-imports/app.gooo.fixture" {
+		t.Fatalf("workspace fixture path was rejected or changed: got=%q err=%v", got, err)
+	}
+	if _, err := workspaceSourcePath("examples/package-imports/app.txt"); err == nil {
+		t.Fatal("workspace accepted a source with an unsupported extension")
+	}
+}
+
 func TestRunPackageResolveFailsClosedOnUnknownImport(t *testing.T) {
 	root := t.TempDir()
 	writeWorkspaceSource(t, root, "main.gooo", `package app

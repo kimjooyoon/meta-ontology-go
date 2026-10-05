@@ -5729,10 +5729,11 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        "cmd/gooo/package_resolve.go",
         "cmd/gooo/package_resolve_test.go",
         "docs/language/workspace-manifest.md",
-        "examples/package-imports/app.gooo",
-        "examples/package-imports/core.gooo",
+        "examples/package-imports/app.gooo.fixture",
+        "examples/package-imports/core.gooo.fixture",
         "examples/package-imports/gooo.workspace.json",
         "internal/packageruntime/bindings.go",
         "internal/packageruntime/compile.go",

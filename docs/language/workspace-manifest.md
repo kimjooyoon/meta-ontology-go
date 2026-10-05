@@ -9,7 +9,9 @@ gooo package resolve --json gooo.workspace.json
 ```
 
 The cross-package binding example at `examples/package-imports` uses this
-command directly:
+command directly. The workspace reader accepts regular `.gooo` sources and
+`.gooo.fixture` files for runnable examples that are not part of the language
+conformance corpus:
 
 ```sh
 gooo package resolve --json examples/package-imports/gooo.workspace.json
