@@ -17,6 +17,11 @@ conformance corpus:
 gooo package resolve --json examples/package-imports/gooo.workspace.json
 ```
 
+Without `--json`, resolution prints each package's imports and exported
+entities and activities, then lists checked imported-activity bindings. This
+view helps inspect a workspace before consuming its JSON receipt. Both forms
+resolve the package graph only; they do not run activity bodies.
+
 Version 1 records an entry activity and packages. Each package has a stable
 path, a Gooo package name, imports by package path, and source paths relative to
 the workspace manifest:

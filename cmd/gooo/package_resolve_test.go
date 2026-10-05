@@ -182,6 +182,45 @@ bind core.Normalize.result -> Main.input
 	t.Fatalf("workspace result omitted app package: %+v", receipt.Result.Image.Packages)
 }
 
+func TestRunPackageResolveExplainsExportsAndImportedBindings(t *testing.T) {
+	root := t.TempDir()
+	writeWorkspaceSource(t, root, "core.gooo", `package core
+namespace core
+entity Text id "workspace://core/text"
+activity Normalize(Text) -> Text computes "identity"
+`)
+	writeWorkspaceSource(t, root, "app.gooo", `package app
+namespace app
+import core "example/core"
+activity Main(Text) -> Text computes "identity"
+bind core.Normalize.result -> Main.input
+`)
+	manifestPath := writeWorkspaceManifest(t, root, `{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/app", "activity": "Main"},
+  "packages": [
+    {"path": "example/app", "name": "app", "imports": ["example/core"], "sources": ["app.gooo"]},
+    {"path": "example/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
+  ]
+}`)
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"package", "resolve", manifestPath}, &stdout, &stderr); code != exitOK || stderr.Len() != 0 {
+		t.Fatalf("workspace resolution failed: code=%d stderr=%q", code, stderr.String())
+	}
+	for _, want := range []string{
+		"package example/core (core)",
+		"entity Text id=workspace://core/text",
+		"activity Normalize(workspace://core/text) -> workspace://core/text",
+		"package example/app (app)",
+		"binding example/core.Normalize.result -> example/app.Main.input (workspace://core/text)",
+		"does not execute activity bodies",
+	} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Fatalf("package explanation omitted %q:\n%s", want, stdout.String())
+		}
+	}
+}
+
 func TestRunPackageResolveRejectsMismatchedImportedActivityBinding(t *testing.T) {
 	root := t.TempDir()
 	writeWorkspaceSource(t, root, "core.gooo", `package core
