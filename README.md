@@ -55,9 +55,17 @@ gooo init my-first-gooo
 cd my-first-gooo
 gooo check main.gooo
 gooo body-codegen --json --activity Clamp main.gooo
+gooo discover --query "What can Gooo generate here?" main.gooo
 ```
 
 `gooo --help` shows the quick start; `gooo <command> --help` opens a focused guide for documented commands. Other commands keep their command-specific usage output.
+
+`gooo discover` maps a question to the deterministic JEV capability catalog
+and binds the result to the supplied source. Its receipt reports which evidence
+exists and keeps code generation, runtime behavior, and reverse observation
+unresolved until those steps are measured separately. It does not call a model
+or execute the program. Use `--json` to consume the trail and completeness
+receipt from another tool.
 
 `gooo test` checks explicit activity-output markers, not input/output values. See the [language test example](examples/language-test/README.md) before adding one.
 

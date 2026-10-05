@@ -16,6 +16,9 @@ Build a small Gooo program:
 Generate Go from an activity:
   gooo body-codegen --json --activity Clamp main.gooo
 
+Explore a source-bound capability without executing it:
+  gooo discover --query "What can Gooo generate here?" --json main.gooo
+
 The compiler works without a language model. A local Laya service can optionally
 rank choices already declared in Gooo; it cannot add code outside those choices.
 
@@ -26,13 +29,14 @@ Commands:
   run              Resolve an activity or execute a supported value plan
   body-codegen     Fill declared IR holes and generate Go
   generate         Generate a project from Gooo declarations
+  discover         Map a natural-language question to a source-bound capability
   format, fix      Format or repair Gooo source
   inspect, query   Inspect declarations and semantic relationships
   package          Check and execute a multi-file Gooo workspace
   version          Show the compiler version and build information
 
 Use ` + "`gooo help <topic>`" + ` for guides and examples.
-Topics: start, language, models, body-codegen, init, check, test, run,
+Topics: start, language, models, body-codegen, discover, init, check, test, run,
         generate, format, package, inspect, query, version, commands
 `
 
@@ -83,6 +87,19 @@ typed candidates declared by the plan. A finite test score is not a proof over
 every possible input.
 
 See docs/language/body-codegen.md and docs/source-assembly.md.
+`,
+	"discover": `Discover a capability from natural language and Gooo source
+
+Usage:
+  gooo discover [--json] --query <question> <file.gooo>
+
+This deterministic JEV integration binds the question to the exact Gooo source
+and normalized semantic IR. It does not call a model, generate code, execute
+the source, or authorize work. The shared completeness receipt records the
+discovery observation while leaving generation, independent use cases, runtime
+execution, and reverse observation unresolved.
+
+See docs/declared-completeness-receipt.md.
 `,
 	"init": `Create a starter project
 
