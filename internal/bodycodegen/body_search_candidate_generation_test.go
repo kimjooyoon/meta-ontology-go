@@ -55,7 +55,7 @@ func TestIRBodySearchCandidateGenerationReportsTruncationAsIncomplete(t *testing
 func TestGenerateWithIRBodySearchUsesGeneratedIRCandidatesAndScoresFinalBody(t *testing.T) {
 	source := readIRBodySearchFixture(t)
 	plan := generatedCandidateSearchPlan(16)
-	plan.MaxAttempts = 8
+	plan.MaxAttempts = 16
 	plan.HoldoutTestCases = []IRBodyFillTestCase{
 		{Input: -9223372036854775808, Expected: 0},
 		{Input: 9223372036854775807, Expected: 9223372036854775807},

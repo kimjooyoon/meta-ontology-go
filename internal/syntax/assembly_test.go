@@ -22,6 +22,17 @@ func TestAssemblyParseFormatCloneAndSpans(t *testing.T) {
     baseline "return input - 2"
     picked "offset" -> "layout_reverse"`, 1)
 	testAssemblyParseFormatCloneAndSpans(t, checkpoint)
+	search := `package assembly
+namespace assembly
+entity Integer id "assembly://integer"
+activity Clamp(Integer) -> Integer computes "return __GOOO_BODY_HOLE_floor__" assembling {
+    search hole "floor" grammar "integer-offset-constant/v1" intent "Map the training domain." max_candidates "16"
+    case "-1" -> "0"
+    case "1" -> "1"
+    holdout_case "-2" -> "0"
+    attempts "4"
+}`
+	testAssemblyParseFormatCloneAndSpans(t, search)
 }
 
 func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
@@ -49,10 +60,20 @@ func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
 		t.Fatal("assembly formatting is not a fixed point", err)
 	}
 	clone := file.Clone().Declarations[1].(*ActivityDecl)
-	clone.Assembly.Spec.Choices[0].Intent = "changed"
-	clone.Assembly.Spec.Cases[0].Expected = 0
-	if activity.Assembly.Spec.Choices[0].Intent == "changed" || activity.Assembly.Spec.Cases[0].Expected == 0 {
-		t.Fatal("syntax clone shares assembly storage")
+	if clone.Assembly.Spec.Search != nil {
+		originalIntent := activity.Assembly.Spec.Search.Intent
+		originalHoldout := activity.Assembly.Spec.HoldoutCases[0].Expected
+		clone.Assembly.Spec.Search.Intent = "changed"
+		clone.Assembly.Spec.HoldoutCases[0].Expected = 5
+		if activity.Assembly.Spec.Search.Intent != originalIntent || activity.Assembly.Spec.HoldoutCases[0].Expected != originalHoldout {
+			t.Fatal("syntax clone shares search assembly storage")
+		}
+	} else {
+		clone.Assembly.Spec.Choices[0].Intent = "changed"
+		clone.Assembly.Spec.Cases[0].Expected = 0
+		if activity.Assembly.Spec.Choices[0].Intent == "changed" || activity.Assembly.Spec.Cases[0].Expected == 0 {
+			t.Fatal("syntax clone shares assembly storage")
+		}
 	}
 	if len(clone.Assembly.Spec.Picked) != 0 {
 		clone.Assembly.Spec.Picked[0].Label = "layout_forward"
@@ -97,6 +118,32 @@ func TestAssemblyRejectsIncompleteOrAmbiguousDeclarations(t *testing.T) {
 		prefix := assemblySource[:strings.Index(assemblySource, "assembling")]
 		if _, diagnostics := Parse(prefix + "assembling { " + block + " }"); !diagnostics.HasErrors() {
 			t.Fatal("missing or over-budget assembly accepted")
+		}
+	}
+}
+
+func TestAssemblyIRSearchRejectsMixedAndLeakingContracts(t *testing.T) {
+	source := `package assembly
+namespace assembly
+entity Integer id "assembly://integer"
+activity Clamp(Integer) -> Integer computes "return __GOOO_BODY_HOLE_floor__" assembling {
+    search hole "floor" grammar "integer-offset-constant/v1" intent "Map values." max_candidates "8"
+    case "-1" -> "0"
+    holdout_case "1" -> "1"
+    attempts "4"
+}`
+	for _, mutation := range []struct{ from, to string }{
+		{`grammar "integer-offset-constant/v1"`, `grammar "arbitrary-go/v1"`},
+		{`max_candidates "8"`, `max_candidates "1"`},
+		{`intent "Map values."`, `intent ""`},
+		{`hole "floor"`, `hole "bad-id!"`},
+		{`holdout_case "1" -> "1"`, `holdout_case "-1" -> "1"`},
+		{`attempts "4"`, `attempts "9"`},
+		{`attempts "4"`, `attempts "4" choice "x" operand_order at "0" intent "mixed"`},
+	} {
+		changed := strings.Replace(source, mutation.from, mutation.to, 1)
+		if _, diagnostics := Parse(changed); !diagnostics.HasErrors() {
+			t.Fatalf("invalid IR search contract accepted: %q -> %q", mutation.from, mutation.to)
 		}
 	}
 }

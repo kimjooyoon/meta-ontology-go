@@ -190,7 +190,14 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		return exitUsage
 	}
 	var result bodycodegen.Result
-	if bodycodegen.IsRecordAssembly(assembly) {
+	if bodycodegen.IsSourceIRSearch(assembly) {
+		if pathPlanPath != "" || pathOptions || pathModelPath != "" {
+			return reportBodyCodegenFailure(jsonMode, filename, activity, source,
+				fmt.Errorf("source IR search owns its candidate grammar and cases; omit external path options"), stdout, stderr)
+		}
+		result, err = bodycodegen.GenerateWithSourceIRSearch(ctx, filename, source, activity, assembly,
+			os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"))
+	} else if bodycodegen.IsRecordAssembly(assembly) {
 		if pathPlanPath != "" || pathStepAttempts != 0 || pathFeedbackRounds != 0 || pathDiagnosisPath != "" || pathObservationPath != "" {
 			return reportBodyCodegenFailure(jsonMode, filename, activity, source,
 				fmt.Errorf("record field assembly uses its source budget and --path-model; omit external path options"), stdout, stderr)
