@@ -104,6 +104,36 @@ func TestSourceFillDerivationSurvivesSemanticLoweringAndAffectsIdentity(t *testi
 	}
 }
 
+func TestPerHoleSourceFillGrammarsSurviveSemanticLoweringAndAffectIdentity(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-conditional.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := assemblyDocument(t, source)
+	core, err := LowerDocument(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var activity semantic.Node
+	for _, node := range core.Graph.Nodes() {
+		if node.Name == "Lift" {
+			activity = node
+			break
+		}
+	}
+	if activity.Assembly == nil || activity.Assembly.FillPlan == nil || activity.Assembly.FillPlan.Generation == nil ||
+		len(activity.Assembly.FillPlan.Generation.HoleGrammars) != 2 ||
+		activity.Assembly.FillPlan.Generation.HoleGrammars[0].Grammar != "integer-predicate/v1" ||
+		activity.Assembly.FillPlan.Generation.HoleGrammars[1].Grammar != "integer-offset-constant/v1" {
+		t.Fatalf("per-hole expression types were lost during semantic lowering: %#v", activity.Assembly)
+	}
+	changed := assemblyDocument(t, []byte(strings.Replace(string(source), `max_expressions "8"`, `max_expressions "9"`, 1)))
+	changedCore, err := LowerDocument(changed)
+	if err != nil || core.StableHash() == changedCore.StableHash() {
+		t.Fatal("per-hole grammar bounds did not participate in semantic identity", err)
+	}
+}
+
 func testAssemblySurvivesBXLawsAndCoreSemanticIdentity(t *testing.T, source []byte) {
 	t.Helper()
 	document := assemblyDocument(t, source)

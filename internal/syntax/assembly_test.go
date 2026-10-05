@@ -64,6 +64,15 @@ return base + increment` + "`" + ` assembling {
 		`            fill "step" "0"`+"\n"+
 		`        }`+"\n", `derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "16"`+"\n", 1)
 	testAssemblyParseFormatCloneAndSpans(t, derived)
+	mixed := strings.Replace(derived,
+		`derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "16"`,
+		"derive assignments max_candidates \"16\" {\n"+
+			"            hole \"seed\" grammar \"integer-offset-constant/v1\" max_expressions \"8\"\n"+
+			"            hole \"step\" grammar \"integer-predicate/v1\" max_expressions \"8\"\n"+
+			"        }", 1)
+	// The grammar declarations are type-checked by body generation; syntax parsing
+	// still owns their canonical source representation and clone behavior.
+	testAssemblyParseFormatCloneAndSpans(t, mixed)
 }
 
 func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
@@ -96,6 +105,12 @@ func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
 			clone.Assembly.Spec.FillPlan.Generation.MaxCandidates++
 			if activity.Assembly.Spec.FillPlan.Generation.MaxCandidates == clone.Assembly.Spec.FillPlan.Generation.MaxCandidates {
 				t.Fatal("syntax clone shares source fill generation storage")
+			}
+			if len(clone.Assembly.Spec.FillPlan.Generation.HoleGrammars) > 0 {
+				clone.Assembly.Spec.FillPlan.Generation.HoleGrammars[0].Grammar = "changed"
+				if activity.Assembly.Spec.FillPlan.Generation.HoleGrammars[0].Grammar == "changed" {
+					t.Fatal("syntax clone shares per-hole grammar storage")
+				}
 			}
 		} else {
 			clone.Assembly.Spec.FillPlan.Candidates[0].Fills[0].Expression = "changed"
