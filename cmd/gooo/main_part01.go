@@ -67,71 +67,6 @@ https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/language/body-codeg
 `,
 }
 
-var libraryStarterFiles = map[string]string{
-	"main.gooo": `package boundedint
-namespace boundedint
-entity Integer id "boundedint://integer"
-
-activity Clamp(Integer) -> Integer computes ` + "`" + `
-if input < 0 { return __GOOO_BODY_HOLE_floor__ } else if input > 10 { return __GOOO_BODY_HOLE_ceiling__ } else { return input }
-` + "`" + `
-`,
-	"body-fill-plan.json": `{
-  "schema": "gooo/body-codegen-ir-fill-plan/v2",
-  "intent": "Clamp an integer to the inclusive range 0 through 10. 0 이상 10 이하 범위로 제한한다.",
-  "holes": [
-    {"id": "floor"},
-    {"id": "ceiling"}
-  ],
-  "candidates": [
-    {"id": "clamp-to-range", "fills": {"floor": "0", "ceiling": "10"}},
-    {"id": "inverted-range", "fills": {"floor": "10", "ceiling": "0"}}
-  ],
-  "test_cases": [
-    {"input": -1, "expected": 0},
-    {"input": 0, "expected": 0},
-    {"input": 5, "expected": 5},
-    {"input": 10, "expected": 10},
-    {"input": 11, "expected": 10}
-  ]
-}
-`,
-	"gooo.workspace.json": `{
-  "schema": "gooo/package-workspace-manifest/v1",
-  "entry": {"package_path": "boundedint", "activity": "Clamp"},
-  "packages": [
-    {"path": "boundedint", "name": "boundedint", "imports": [], "sources": ["main.gooo"]}
-  ]
-}
-`,
-	"README.md": `# boundedint
-
-This is a small Gooo-authored library contract. The public surface is the
-Clamp(Integer) -> Integer activity. Gooo marks two expression holes in its body
-and the plan lists complete assignments for both holes, plus finite examples.
-Laya may rank only those complete assignments.
-
-Install the Gooo CLI and run these commands from this directory:
-
-~~~sh
-go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
-gooo check main.gooo
-gooo package resolve gooo.workspace.json
-gooo body-codegen --json --fill-plan body-fill-plan.json --activity Clamp main.gooo
-~~~
-
-body-codegen typechecks and scores each complete assignment on the finite
-examples before emitting Go. Set GOOO_LAYA_URL to your local Laya
-/v1/systemone endpoint to let the model choose among the candidates. Without a
-model, Gooo uses the declared order as a deterministic fallback and adjusts to
-the best-scoring candidate when needed. The examples are a compact regression
-set, not a proof for every integer.
-
-The workspace manifest records the source and public entry. Package resolve
-prints its deterministic package graph receipt.
-`,
-}
-
 func runInit(args []string, stdout, stderr io.Writer) int {
 	template := "app"
 	if len(args) >= 2 && args[0] == "--template" {
@@ -171,8 +106,13 @@ func runInit(args []string, stdout, stderr io.Writer) int {
 		}
 		created = append(created, path)
 	}
-	fmt.Fprintf(stdout, "Created Gooo starter in %s\n", destination)
-	fmt.Fprintf(stdout, "Next: cd %s && gooo check main.gooo\n", destination)
+	if template == "library" {
+		fmt.Fprintf(stdout, "Created Gooo library starter in %s\n", destination)
+		fmt.Fprintf(stdout, "Next: cd %s && gooo package execute --json --cases cases.json --body-plans body-fill-plans.json gooo.workspace.json\n", destination)
+	} else {
+		fmt.Fprintf(stdout, "Created Gooo starter in %s\n", destination)
+		fmt.Fprintf(stdout, "Next: cd %s && gooo check main.gooo\n", destination)
+	}
 	return exitOK
 }
 

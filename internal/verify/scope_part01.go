@@ -16,6 +16,20 @@ func init() {
 }
 
 func init() {
+	branchScopeAllowlist["agent/gooo-library-model-starter-20261005"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/gooo/library_starter.go",
+		"cmd/gooo/main_part01.go",
+		"cmd/gooo/templates/library/README.md",
+		"cmd/gooo/templates/library/app.gooo.template",
+		"cmd/gooo/templates/library/body-fill-plans.json",
+		"cmd/gooo/templates/library/cases.json",
+		"cmd/gooo/templates/library/core.gooo.template",
+		"cmd/gooo/templates/library/gooo.workspace.json",
+		"docs/language/project-starters.md",
+		"internal/verify/scope_part01.go",
+	}
 	branchScopeAllowlist["agent/gooo-body-package-execution-20261005"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
