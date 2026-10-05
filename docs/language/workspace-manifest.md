@@ -103,7 +103,10 @@ declared cases, then Laya may select among those listed candidates through
 `GOOO_LAYA_URL`; with no provider configured, selection stays deterministic.
 Gooo fills the chosen body before package code generation and execution, and the
 receipt records each fill's input-source digest, selected candidate, and
-finite-case score. The model call runs synchronously after the typed plan is
+finite-case score. `--tiny-model <model.json>` loads the local compact model
+once and uses it for each sequential one-hole fill; this option cannot be mixed
+with Laya endpoint or credential settings. Without a configured provider,
+selection remains deterministic. The model call runs synchronously after the typed plan is
 built and before the generated package is compiled. To connect Laya, set
 `GOOO_LAYA_URL` to its `/v1/systemone` endpoint for the same command. Fill
 receipts record provider decision time; native build and run observations

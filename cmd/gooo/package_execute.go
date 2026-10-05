@@ -8,14 +8,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageExecuteUsage = "usage: gooo package execute [--json] --cases <cases.json> [--body-plans <plans.json>] [--assembly-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
+const packageExecuteUsage = "usage: gooo package execute [--json] --cases <cases.json> [--body-plans <plans.json>] [--assembly-model <model.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
 
 type packageBodyFillPlanSet struct {
 	Schema     string                     `json:"schema"`
@@ -40,7 +42,7 @@ type packageExecutionReceipt struct {
 
 func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	args, jsonMode := parseJSONFlag(args)
-	casesPath, plansPath, assemblyModelPath, goBinary, manifestPath := "", "", "", "", ""
+	casesPath, plansPath, assemblyModelPath, tinyModelPath, goBinary, manifestPath := "", "", "", "", "", ""
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
 		case "--cases":
@@ -56,6 +58,13 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 				return exitUsage
 			}
 			assemblyModelPath = args[index+1]
+			index++
+		case "--tiny-model":
+			if tinyModelPath != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
+				fmt.Fprintln(stderr, packageExecuteUsage)
+				return exitUsage
+			}
+			tinyModelPath = args[index+1]
 			index++
 		case "--body-plans":
 			if plansPath != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
@@ -78,6 +87,10 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 			}
 			manifestPath = args[index]
 		}
+	}
+	if tinyModelPath != "" && plansPath == "" {
+		fmt.Fprintln(stderr, packageExecuteUsage)
+		return exitUsage
 	}
 	if casesPath == "" || manifestPath == "" {
 		fmt.Fprintln(stderr, packageExecuteUsage)
@@ -146,6 +159,21 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 			plans[key] = entry.Plan
 		}
 	}
+	var bodyFillOptions bodycodegen.IRBodyFillOptions
+	layaEndpoint, layaAPIKey := os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY")
+	if tinyModelPath != "" {
+		if layaEndpoint != "" || layaAPIKey != "" {
+			return fail(fmt.Errorf("--tiny-model cannot be combined with GOOO_LAYA_URL or GOOO_LAYA_API_KEY"), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
+		}
+		modelLoadStarted := time.Now()
+		provider, loadErr := decisionroute.LoadTinyGoProvider(tinyModelPath)
+		modelLoadMS := float64(time.Since(modelLoadStarted)) / float64(time.Millisecond)
+		if loadErr != nil {
+			return fail(fmt.Errorf("tiny_go model could not be loaded"), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
+		}
+		bodyFillOptions = bodycodegen.IRBodyFillOptions{TinyGoProvider: provider, TinyModelLoadMS: &modelLoadMS}
+		layaEndpoint, layaAPIKey = "", ""
+	}
 	runtimeManifest := packageruntime.Manifest{Schema: packageruntime.ManifestSchema, Entry: manifest.Entry}
 	root := filepath.Dir(manifestPath)
 	sourceCount, sourceBytes := 0, 0
@@ -177,8 +205,8 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 		runtimeManifest.Packages = append(runtimeManifest.Packages, pkg)
 	}
 	result, err := workspaceexecution.ExecuteWorkspaceWithOptions(context.Background(), runtimeManifest, suite, workspaceexecution.ExecuteOptions{
-		AssemblyModelPath: assemblyModelPath, GoBinary: goBinary, BodyFillPlans: plans,
-		LayaEndpoint: os.Getenv("GOOO_LAYA_URL"), LayaAPIKey: os.Getenv("GOOO_LAYA_API_KEY"),
+		AssemblyModelPath: assemblyModelPath, GoBinary: goBinary, BodyFillPlans: plans, BodyFillOptions: bodyFillOptions,
+		LayaEndpoint: layaEndpoint, LayaAPIKey: layaAPIKey,
 	})
 	if err != nil {
 		return fail(err, workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
