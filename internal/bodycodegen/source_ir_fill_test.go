@@ -413,3 +413,35 @@ func TestSourceDerivedOutsideRangeFindsConditionalWindow(t *testing.T) {
 		t.Fatalf("outside-range holdout completeness was not reported: %+v", dimension)
 	}
 }
+
+func TestSourceDerivedPredicateCutpointsIncludeUnobservedIntegerBoundaries(t *testing.T) {
+	conditions, total, complete, err := generateIntegerPredicateCutpointExpressions(8,
+		[]assemblyspec.Case{{Input: -10}, {Input: 10}})
+	if err != nil || total != 14 || complete || len(conditions) != 8 ||
+		!slices.Contains(conditions, "input < 0") || !slices.Contains(conditions, "input <= 0") {
+		t.Fatalf("cutpoint grammar did not derive both interior boundaries with honest coverage: conditions=%v total=%d complete=%v err=%v", conditions, total, complete, err)
+	}
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-cutpoint.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := syntax.Parse(string(source))
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "cutpoint.gooo", source, "NonPositive", spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.FunctionalAccuracyPct != 100 || receipt.TestCasesPassed != 2 || receipt.HoldoutCasesTotal != 2 ||
+		receipt.HoldoutAccuracyPercent == nil || !result.Report.TypecheckPassed {
+		t.Fatalf("cutpoint candidate composition did not preserve separate train and holdout evidence: report=%+v source=%s", receipt, result.Source)
+	}
+	holdout := bodyFillDimension(result, "body_fill_holdout_accuracy")
+	if holdout.Denominator != 2 || (receipt.HoldoutCasesPassed == 2 && holdout.Status != "PASS") ||
+		(receipt.HoldoutCasesPassed < 2 && holdout.Status != "PROGRESS") {
+		t.Fatalf("held-out boundary score did not map to its four-state metric: receipt=%+v dimension=%+v", receipt, holdout)
+	}
+}

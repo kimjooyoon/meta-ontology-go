@@ -1,0 +1,17 @@
+package sample
+namespace sample
+entity Integer id "sample://integer"
+activity NonPositive(Integer) -> Integer computes `if __GOOO_BODY_HOLE_condition__ { return __GOOO_BODY_HOLE_yes__ } else { return 0 }` assembling {
+    source_fill intent "Return one for nonpositive input and zero for positive input." {
+        hole "condition"
+        hole "yes"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "integer-predicate-cutpoint/v1" max_expressions "12"
+            hole "yes" grammar "integer-offset-constant/v1" max_expressions "2"
+        }
+    }
+    case "-10" -> "1"
+    case "10" -> "0"
+    holdout_case "0" -> "1"
+    holdout_case "5" -> "0"
+}

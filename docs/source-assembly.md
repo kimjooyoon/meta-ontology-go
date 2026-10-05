@@ -206,6 +206,26 @@ useful local windows. The
 [outside-range fixture](../examples/body-codegen/source-ir-fill-outside-range.gooo.fixture)
 assembles an `if` guard for values outside zero through ten and measures separate
 unseen inputs on both sides of that interval.
+`integer-predicate-cutpoint/v1` adds the floor and ceiling integer midpoint for
+each gap between observed inputs, so a sparse suite can propose a boundary that
+was never itself a training value. It reports the full bounded cutpoint space and
+any retained prefix; a holdout case at the ambiguous boundary can distinguish
+equally scoring predicates. The
+[cutpoint fixture](../examples/body-codegen/source-ir-fill-cutpoint.gooo.fixture)
+uses `-10` and `10` for training and withholds the zero boundary.
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity NonPositive \
+  examples/body-codegen/source-ir-fill-cutpoint.gooo.fixture
+```
+
+With no provider, the deterministic route selects `input < 0`: it matches both
+training cases, but only one of the two holdouts. The alternative `input <= 0`
+also matches both training cases and matches both holdouts. This exposes a useful
+division of work: the finite suite establishes the tie, withheld observations
+measure generalization, and a configured Laya may use the declared intent to rank
+the tied candidates. This run had no local Laya endpoint, so no model choice or
+latency is claimed.
 
 ```sh
 go run ./cmd/gooo body-codegen --json --activity Select \
