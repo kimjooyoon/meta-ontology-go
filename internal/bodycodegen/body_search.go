@@ -142,9 +142,6 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	if err != nil {
 		return Result{}, err
 	}
-	if plan.MaxAttempts > len(plan.Candidates) {
-		return Result{}, fmt.Errorf("IR body-search max_attempts %d exceeds generated candidate count %d", plan.MaxAttempts, len(plan.Candidates))
-	}
 	if feedback := plan.ExternalTrainingFeedback; feedback != nil {
 		found := false
 		for _, candidate := range plan.Candidates {

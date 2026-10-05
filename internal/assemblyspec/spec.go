@@ -10,13 +10,24 @@ import (
 )
 
 type Spec struct {
-	Choices     []Choice    `json:"choices"`
-	Cases       []Case      `json:"cases"`
-	ValueCases  []ValueCase `json:"value_cases,omitempty"`
-	MaxAttempts int         `json:"max_attempts"`
-	Seed        string      `json:"seed,omitempty"`
-	Baseline    string      `json:"baseline,omitempty"`
-	Picked      []Pick      `json:"picked,omitempty"`
+	Choices      []Choice    `json:"choices"`
+	Cases        []Case      `json:"cases"`
+	HoldoutCases []Case      `json:"holdout_cases,omitempty"`
+	ValueCases   []ValueCase `json:"value_cases,omitempty"`
+	MaxAttempts  int         `json:"max_attempts"`
+	Seed         string      `json:"seed,omitempty"`
+	Baseline     string      `json:"baseline,omitempty"`
+	Picked       []Pick      `json:"picked,omitempty"`
+	Search       *Search     `json:"search,omitempty"`
+}
+
+// Search declares a bounded IR expression grammar whose candidates Gooo derives
+// from the activity's training cases. It contains no executable model output.
+type Search struct {
+	HoleID        string `json:"hole_id"`
+	Grammar       string `json:"grammar"`
+	Intent        string `json:"intent"`
+	MaxCandidates int    `json:"max_candidates"`
 }
 
 // Pick records an implementation relative to the immutable planning baseline.
@@ -45,10 +56,32 @@ type ValueCase struct {
 }
 
 func (s Spec) Validate() error {
-	if len(s.Choices) < 1 || len(s.Choices) > 16 || len(s.Cases)+len(s.ValueCases) < 1 ||
-		len(s.Cases)+len(s.ValueCases) > 128 ||
+	if len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases) < 1 ||
+		len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases) > 128 ||
 		s.MaxAttempts < 1 || s.MaxAttempts > 64 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
 		return fmt.Errorf("assembly requires 1..16 choices, 1..128 cases and 1..64 attempts")
+	}
+	if s.Search != nil {
+		if len(s.Cases) == 0 || len(s.Choices) != 0 || len(s.ValueCases) != 0 ||
+			s.Baseline != "" || len(s.Picked) != 0 || s.Seed != "" ||
+			!identifier(s.Search.HoleID) || s.Search.Grammar != "integer-offset-constant/v1" ||
+			!boundedText(s.Search.Intent, 2000) || s.Search.MaxCandidates < 2 || s.Search.MaxCandidates > 16 ||
+			s.MaxAttempts > s.Search.MaxCandidates {
+			return fmt.Errorf("IR search assembly requires a hole, supported grammar, intent, 2..16 candidates, bounded cases and attempts, and no path choices/checkpoint")
+		}
+		training := make(map[int64]bool, len(s.Cases))
+		for _, c := range s.Cases {
+			training[c.Input] = true
+		}
+		for _, c := range s.HoldoutCases {
+			if training[c.Input] {
+				return fmt.Errorf("IR search holdout input %d also appears in training cases", c.Input)
+			}
+		}
+		return nil
+	}
+	if len(s.HoldoutCases) != 0 || len(s.Choices) < 1 || len(s.Choices) > 16 {
+		return fmt.Errorf("assembly requires 1..16 choices and holdout cases are available only to IR search")
 	}
 	var seen [16]string
 	for i, c := range s.Choices {
@@ -128,12 +161,31 @@ func boundedText(text string, limit int) bool {
 	return strings.TrimSpace(text) != "" && len(text) <= limit && utf8.ValidString(text)
 }
 
+func identifier(value string) bool {
+	if value == "" || !((value[0] >= 'a' && value[0] <= 'z') || (value[0] >= 'A' && value[0] <= 'Z') || value[0] == '_') {
+		return false
+	}
+	for index := 1; index < len(value); index++ {
+		char := value[index]
+		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
+			(char >= '0' && char <= '9') || char == '_') {
+			return false
+		}
+	}
+	return len(value) <= 128
+}
+
 func (s Spec) Clone() *Spec {
 	clone := s
 	clone.Choices = append([]Choice(nil), s.Choices...)
 	clone.Cases = append([]Case(nil), s.Cases...)
 	clone.ValueCases = append([]ValueCase(nil), s.ValueCases...)
 	clone.Picked = append([]Pick(nil), s.Picked...)
+	if s.Search != nil {
+		search := *s.Search
+		clone.Search = &search
+	}
+	clone.HoldoutCases = append([]Case(nil), s.HoldoutCases...)
 	return &clone
 }
 

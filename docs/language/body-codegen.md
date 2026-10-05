@@ -524,3 +524,8 @@ examples remain unavailable to Laya and are evaluated only after selection.
 This reduces manual candidate authoring while keeping code authority with the
 Gooo checker and evaluator. It does not infer a general-purpose program from
 natural language.
+
+The same grammar can be declared inside a Gooo `assembling` block, binding the
+intent, training cases, optional withheld holdout, and search budget to the
+source's semantic identity. See [source-declared IR search](../source-assembly.md#declare-a-typed-ir-search-in-the-gooo-source)
+and the runnable [Gooo fixture](../../examples/body-codegen/ir-search-source.gooo.fixture).

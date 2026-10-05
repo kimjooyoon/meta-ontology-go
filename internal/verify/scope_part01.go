@@ -27,6 +27,27 @@ func init() {
 }
 
 func init() {
+	branchScopeAllowlist["agent/gooo-language-ecosystem-next-20261005"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/gooo/body_codegen.go",
+		"cmd/gooo/body_codegen_test.go",
+		"docs/language-direction.ko.md",
+		"docs/language/body-codegen.md",
+		"docs/source-assembly.md",
+		"examples/body-codegen/ir-search-source.gooo.fixture",
+		"internal/assemblyspec/spec.go",
+		"internal/bidir/assembly_test.go",
+		"internal/bodycodegen/body_search.go",
+		"internal/bodycodegen/body_search_candidate_generation_test.go",
+		"internal/bodycodegen/source_ir_search.go",
+		"internal/syntax/assembly.go",
+		"internal/syntax/assembly_test.go",
+		"internal/verify/scope_part01.go",
+	}
+}
+
+func init() {
 	branchScopeAllowlist["agent/gooo-library-model-starter-20261005"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -33,6 +34,45 @@ func TestAssemblySurvivesBXLawsAndCoreSemanticIdentity(t *testing.T) {
     picked "condition-branches" -> "layout_forward"
     picked "independent-declarations" -> "schedule_reverse"`, 1)
 	testAssemblySurvivesBXLawsAndCoreSemanticIdentity(t, []byte(checkpoint))
+}
+
+func TestSourceIRSearchSurvivesSemanticLoweringAndBindsHoldout(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/ir-search-source.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := assemblyDocument(t, source)
+	core, err := LowerDocument(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var activityNode semantic.Node
+	foundActivity := false
+	for _, node := range core.Graph.Nodes() {
+		if node.Name == "ClampNegativeToZero" {
+			activityNode = node
+			foundActivity = true
+			break
+		}
+	}
+	if !foundActivity || activityNode.Assembly == nil || activityNode.Assembly.Search == nil ||
+		activityNode.Assembly.Search.Grammar != "integer-offset-constant/v1" ||
+		len(activityNode.Assembly.Cases) != 5 || len(activityNode.Assembly.HoldoutCases) != 2 {
+		t.Fatalf("typed source search contract did not survive semantic lowering: %#v", activityNode)
+	}
+	changed := assemblyDocument(t, []byte(strings.Replace(string(source),
+		`holdout_case "-9223372036854775808" -> "0"`,
+		`holdout_case "-9223372036854775808" -> "1"`, 1)))
+	changedCore, err := LowerDocument(changed)
+	if err != nil || core.StableHash() == changedCore.StableHash() {
+		t.Fatal("source-declared holdout edit did not change semantic identity", err)
+	}
+	activityNode.Assembly.Search.Intent = "detached edit"
+	activityNode.Assembly.HoldoutCases[0].Expected = 99
+	fresh, found := core.Graph.Node(activityNode.ID)
+	if !found || fresh.Assembly.Search.Intent == "detached edit" || fresh.Assembly.HoldoutCases[0].Expected == 99 {
+		t.Fatal("graph lookup exposed mutable source-search contract storage")
+	}
 }
 
 func testAssemblySurvivesBXLawsAndCoreSemanticIdentity(t *testing.T, source []byte) {
