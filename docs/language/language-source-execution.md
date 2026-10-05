@@ -34,7 +34,11 @@ emits `runtime-plan.json` automatically when the source declares typed binds.
 Use `--runtime-plan <name>` only to change that artifact's relative filename.
 When executing the source with `--input`, pass the generated artifact with
 `--runtime-plan <dir>/runtime-plan.json` to attach source, semantic, and typed
-plan identity to the execution receipt.
+plan identity to the execution receipt. If that file is named
+`runtime-plan.json` in the current working directory, `gooo run` discovers and
+validates it for a bound source without requiring the flag. Explicit
+`--runtime-plan` always takes precedence. A plan file in the working directory
+is ignored for sources with no typed runtime binds.
 
 ## Claims intentionally absent
 

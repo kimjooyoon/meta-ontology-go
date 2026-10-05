@@ -84,7 +84,7 @@ func TestRunSourceVerifiesRuntimePlanContractBeforeExecution(t *testing.T) {
 		"runtime-plan.json": runtimePlan,
 	}
 	var stdout, stderr bytes.Buffer
-	code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "--runtime-plan", "runtime-plan.json", "fixture.gooo"}, reader, &stdout, &stderr)
+	code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "fixture.gooo"}, reader, &stdout, &stderr)
 	if code != exitOK || stderr.Len() != 0 {
 		t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
 	}

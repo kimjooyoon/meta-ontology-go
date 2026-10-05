@@ -139,8 +139,9 @@ reports its typed inputs and output only when the source has no runtime binds;
 it does not evaluate computes or generated Go. A bound source without input
 fails closed with SOURCE_RUNTIME_BINDINGS_UNSUPPORTED. With an explicit input,
 the value-plan path executes registered value operations and declared typed
-binds. ` + "`--runtime-plan`" + ` binds that run to a validated runtime-plan
-artifact. Use --json for a machine-readable receipt.
+binds. For bound sources it uses runtime-plan.json from the current directory
+when present; ` + "`--runtime-plan`" + ` selects a different validated artifact.
+Use --json for a machine-readable receipt.
 
 See docs/language/language-source-execution.md and
 docs/language/language-package-execution.md for the two execution scopes.
