@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"strings"
 )
 
 //go:embed templates/library/*
@@ -25,7 +26,8 @@ func readLibraryStarterFiles() map[string]string {
 		if err != nil {
 			panic(fmt.Sprintf("read embedded Gooo library starter file %q: %v", entry.Name(), err))
 		}
-		files[entry.Name()] = string(content)
+		name := strings.TrimSuffix(entry.Name(), ".template")
+		files[name] = string(content)
 	}
 	return files
 }
