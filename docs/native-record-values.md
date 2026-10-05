@@ -5,9 +5,9 @@ completion observations. See [record field assembly](record-field-assembly.md).
 
 An entity's existing `fields` declaration can describe a value carried by pure
 activity bodies. A body can read a field, construct a complete named record,
-copy it to a local or return it. `body-compose` currently accepts required
-single-string fields, passes the actual generated value through an explicit
-typed `bind`, and records each field's stable ID and value.
+copy it to a local or return it. `body-compose` accepts required single string
+and Boolean fields, passes the actual generated value through an explicit typed
+`bind`, and records each field's stable ID and typed value.
 
 Think of the record as a small labelled tray: each field has a place and an
 identity. The connection passes the whole tray to the next activity. The native
@@ -35,8 +35,9 @@ Use every declared field exactly once, with named keys. Field names are case
 sensitive and may be lowercase or uppercase identifiers. Each `string required
 one` field takes a Text value. The profile supports up to 16 records and 16
 fields per record. Optional/many fields and nested record fields need subsequent
-entity-profile work. Scalar activity parameters and results continue to use
-Integer, Boolean and Text.
+entity-profile work. Under EntityFields V2, `boolean required one` takes a
+Boolean value. Scalar activity parameters and results continue to use Integer,
+Boolean and Text.
 
 `input.title` reads a field. A local copy such as `let copy = input` can be
 replaced with a new complete record. Parameters stay read-only; assignments
@@ -45,11 +46,11 @@ loops and external effects keep their separate language boundaries.
 
 Stable entity and field IDs determine exported native names. JSON keys keep
 source field names. The report's `record_types` retains source names, stable
-IDs, nominal string type IDs and generated names. Each route is typechecked
+IDs, scalar type IDs and generated names. Each route is typechecked
 and compared after restoring source names; the receipt binds the record
-contract and function signature. Pure body entry points select the existing
-V1 field profile. Other frontend entry points keep their explicit field
-activation contract.
+contract and function signature. Body generation and composition use the
+separately versioned EntityFields V2 profile. Existing V1 entry points retain
+their string-only contract.
 
 ## Construct and execute the complete example
 
@@ -74,10 +75,10 @@ operations without attaching record types to the scalar function. Saved
 composition replay makes zero new predictions.
 
 External record inputs and expected record outputs must be complete JSON
-objects with exact source field names and explicit strings of at most 1,024
-UTF-8 bytes per field. JSON member order is presentation only. Missing,
-duplicate, extra, null or incorrectly typed fields retain an error before
-model loading.
+objects with exact source field names. String values are limited to 1,024
+UTF-8 bytes per field; Boolean values must be JSON `true` or `false`. JSON
+member order is presentation only. Missing, duplicate, extra, null or
+incorrectly typed fields retain an error before model loading.
 
 `runtime.json` includes `actual_fields` for record results and `input_fields`
 or each input port's `fields` for record inputs. Each entry retains `id`, `name`
@@ -93,9 +94,8 @@ feedback remain further work.
 ## Boolean fields in Go projection and body generation
 
 The separate EntityFields V2 profile adds required single `boolean` fields to
-the compiler's Go projection and source-driven body-generation path. V1 remains
-unchanged. The current `body-compose` record transport still accepts its
-original string-only contract.
+the compiler's Go projection, source-driven body-generation path and
+`body-compose` record transport. V1 remains unchanged.
 
 ```gooo
 entity Boolean id "booleans://boolean"
@@ -121,5 +121,20 @@ The generated record uses a Go `bool`; finite-case observations retain JSON
 booleans and the field receipt carries the stable Boolean type ID. The optional
 local model can rank only the declared field-value alternative. Without it, the
 same bounded search uses deterministic ordering. `gooo generate` also projects
-this profile to a Go field of type `bool`. `body-compose` record transport is
-still V1 and string-only.
+this profile to a Go field of type `bool`. In `body-compose`, external record
+input, bound record delivery, actual field observations and expected outputs
+all retain Boolean values as JSON booleans.
+
+The [composition example](../examples/body-codegen/boolean-record-composition.gooo.fixture)
+passes both `true` and `false` through an explicitly bound record:
+
+```sh
+gooo body-compose \
+  --source examples/body-codegen/boolean-record-composition.gooo.fixture \
+  --cases examples/body-codegen/boolean-record-composition-cases.json \
+  --out boolean-record-results
+```
+
+The two cases expect four values across `Build` and `Relay`; a successful run
+reports `finite_passed: 4`, `finite_total: 4`, and `model_calls: 0` for runtime
+replay.
