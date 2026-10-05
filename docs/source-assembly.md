@@ -156,10 +156,13 @@ derive assignments max_candidates "16" {
 ```
 
 `integer-predicate/v1` derives `true`, `false`, and bounded comparisons between
-`input` and the distinct training inputs. `integer-offset-constant/v1` derives the
-bounded integer expressions described above. These are finite source-derived
-grammars, not unrestricted Go or proofs over every integer. The receipt reports
-retained expressions per hole, total grammar coverage, assignment count and any
+`input` and the distinct training inputs. `integer-predicate-composition/v1` adds
+pairwise `input == value` clauses joined with `||` and `&&`, allowing a bounded
+disjoint-input condition. It does not add nesting or arbitrary Boolean formulas.
+`integer-offset-constant/v1` derives the bounded integer expressions described
+above. These are finite source-derived grammars, not unrestricted Go or proofs
+over every integer. The receipt reports the pre-cap expression count, retained
+expressions per hole, total grammar coverage, assignment count and any
 assignments omitted by the cap. The compiler typechecks each complete assignment,
 scores it against the declared cases, and can send the complete choices to Laya
 for ranking; deterministic fallback uses the same scored choices.
