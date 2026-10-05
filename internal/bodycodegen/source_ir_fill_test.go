@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -212,5 +214,49 @@ activity Lift(Integer) -> Integer computes ` + "`" + `if __GOOO_BODY_HOLE_condit
 	assignmentDimension := bodyFillDimension(result, "body_fill_assignment_space_coverage")
 	if grammarDimension.Status != "PROGRESS" || assignmentDimension.Status != "PASS" {
 		t.Fatalf("completeness receipt did not account for the bounded search: %+v %+v", grammarDimension, assignmentDimension)
+	}
+}
+
+func TestSourceDerivedPredicateCompositionFindsDisjointCases(t *testing.T) {
+	candidates, total, complete, err := generateIntegerPredicateExpressions(8, []assemblyspec.Case{
+		{Input: -2}, {Input: 0}, {Input: 2},
+	}, true)
+	if err != nil || complete || total != 29 || !slices.Contains(candidates, "(input >= -2) && (input <= 0)") {
+		t.Fatalf("bounded grammar omitted its closed-range condition: candidates=%v total=%d complete=%v err=%v", candidates, total, complete, err)
+	}
+	source := `package sample
+namespace sample
+entity Integer id "sample://integer"
+activity Select(Integer) -> Integer computes ` + "`" + `if __GOOO_BODY_HOLE_condition__ { return __GOOO_BODY_HOLE_yes__ } else { return 0 }` + "`" + ` assembling {
+    source_fill intent "Return one for either selected input." {
+        hole "condition"
+        hole "yes"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "integer-predicate-composition/v1" max_expressions "8"
+            hole "yes" grammar "integer-offset-constant/v1" max_expressions "2"
+        }
+    }
+    case "-2" -> "1"
+    case "0" -> "0"
+    case "2" -> "1"
+}`
+	file, diagnostics := syntax.Parse(source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "composed-condition.gooo", []byte(source), "Select", spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Report.BodyFill == nil || result.Report.BodyFill.FunctionalAccuracyPct != 100 || !result.Report.TypecheckPassed {
+		t.Fatalf("composed predicate did not satisfy declared cases and typecheck: %+v", result.Report.BodyFill)
+	}
+	generation := result.Report.BodyFill.CandidateGeneration
+	if generation == nil || generation.Grammar != "per-hole" || generation.GrammarComplete || generation.HoleGrammars[0].Grammar != "integer-predicate-composition/v1" || generation.HoleGrammars[0].ExpressionCandidatesTotal <= 8 || generation.HoleGrammars[0].ExpressionsRetained != 8 {
+		t.Fatalf("bounded composition grammar coverage was not measured: %+v", generation)
+	}
+	if !strings.Contains(result.Source, "||") {
+		t.Fatalf("expected a disjoint-input predicate, got generated source: %s", result.Source)
 	}
 }
