@@ -137,6 +137,10 @@ return base + increment` + "`" + `
 	}
 	var observed irBodyFillState
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/systemone" {
+			http.NotFound(writer, request)
+			return
+		}
 		var payload struct {
 			State map[string]string `json:"state"`
 		}

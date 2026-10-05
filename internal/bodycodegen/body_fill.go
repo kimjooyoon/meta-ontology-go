@@ -402,6 +402,10 @@ func generateWithIRBodyFillOptions(
 		selectionAdjustment = "replaced_with_best_scoring_candidate"
 	}
 	selectedBody := candidateBodies[selected.ID]
+	originalSelected, ok := candidateByID(plan.Candidates, selected.ID)
+	if !ok {
+		return Result{}, fmt.Errorf("selected body-fill candidate %q is absent from the source plan", selected.ID)
+	}
 	completedSource, err := replaceActivityProgram(source, activity.ValueProgramSpan, selectedBody)
 	if err != nil {
 		return Result{}, err
@@ -430,7 +434,7 @@ func generateWithIRBodyFillOptions(
 	planBytes, _ := json.Marshal(plan)
 	var holeFills []IRBodyFillHoleFill
 	if plan.Schema == bodyFillMultiPlanSchema {
-		holeFills = bodyFillHoleResults(holes, bodyFillCandidateFills(plan, selected))
+		holeFills = bodyFillHoleResults(holes, bodyFillCandidateFills(plan, originalSelected))
 	}
 	result.Report.BodyFill = &IRBodyFillReceipt{
 		Schema: plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
