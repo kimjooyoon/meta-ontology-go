@@ -195,7 +195,7 @@ func generateIntegerPredicateExpressions(maxExpressions int, cases []assemblyspe
 	if compose {
 		// Include a compact, useful subset first: pairwise equality clauses let a
 		// source fill express disjoint accepted inputs with a small, auditable space.
-		for left := 0; left < len(uniqueInputs); left++ {
+		for left := range uniqueInputs {
 			for right := left + 1; right < len(uniqueInputs); right++ {
 				a := "input == " + strconv.FormatInt(uniqueInputs[left], 10)
 				b := "input == " + strconv.FormatInt(uniqueInputs[right], 10)
