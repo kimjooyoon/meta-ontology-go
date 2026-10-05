@@ -100,6 +100,9 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export) (compile
 }
 
 func sameImportSet(manifestImports []string, sourceImports map[string]bool) bool {
+	if len(sourceImports) == 0 {
+		return true
+	}
 	if len(manifestImports) != len(sourceImports) {
 		return false
 	}

@@ -47,10 +47,11 @@ and output entity type to that ID. An activity can use an entity in
 its own package or an entity declared in one of its direct imports. Unknown or
 ambiguous imported types fail closed. When an entity exists locally, the local
 declaration takes precedence over imported entities with the same name.
-Across a package's source files, the union of source `import` declarations must
-match the manifest's `imports` list. A mismatch fails with
-`PACKAGE_SOURCE_IMPORT_MISMATCH` so source intent and the workspace graph cannot
-quietly drift apart.
+When source files declare imports, their union must match the manifest's
+`imports` list. A mismatch fails with `PACKAGE_SOURCE_IMPORT_MISMATCH` so source
+intent and the workspace graph cannot quietly drift apart. Existing workspaces
+that keep imports only in the manifest remain supported until their source is
+updated.
 
 Gooo source imports identify package dependencies, while the workspace manifest
 still supplies package paths, source files, and the executable entry. Activity

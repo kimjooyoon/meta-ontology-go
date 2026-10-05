@@ -215,6 +215,36 @@ entity Integer id "workspace://core/integer"
 	}
 }
 
+func TestRunPackageResolveKeepsManifestOnlyImportCompatibility(t *testing.T) {
+	root := t.TempDir()
+	writeWorkspaceSource(t, root, "core.gooo", `package core
+namespace core
+entity Integer id "workspace://core/integer"
+`)
+	writeWorkspaceSource(t, root, "main.gooo", `package app
+namespace app
+entity Integer id "workspace://app/integer"
+activity Run(Integer) -> Integer computes "identity"
+`)
+	manifestPath := writeWorkspaceManifest(t, root, `{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/app", "activity": "Run"},
+  "packages": [
+    {"path": "example/app", "name": "app", "imports": ["example/core"], "sources": ["main.gooo"]},
+    {"path": "example/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
+  ]
+}`)
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"package", "resolve", "--json", manifestPath}, &stdout, &stderr)
+	var receipt workspaceResolutionReceipt
+	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
+		t.Fatalf("decode workspace receipt: %v stdout=%q stderr=%q", err, stdout.String(), stderr.String())
+	}
+	if code != exitOK || receipt.Decision != "PASS" || receipt.Result == nil || stderr.Len() != 0 {
+		t.Fatalf("manifest-only imports lost compatibility: code=%d receipt=%+v stderr=%q", code, receipt, stderr.String())
+	}
+}
+
 func writeWorkspaceSource(t *testing.T, root, name, source string) {
 	t.Helper()
 	if err := os.WriteFile(filepath.Join(root, name), []byte(source), 0o644); err != nil {
