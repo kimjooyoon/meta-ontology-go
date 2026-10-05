@@ -167,30 +167,47 @@ func generateSourceFillExpressions(declaration assemblyspec.FillHoleGrammar, cas
 		}
 		return expressions, receipt.CandidatesEnumerated, receipt.GrammarComplete, nil
 	case "integer-predicate/v1":
-		expressions := []string{"true", "false"}
-		seen := map[string]bool{"true": true, "false": true}
-		inputs := make([]int64, len(cases))
-		for index, testCase := range cases {
-			inputs[index] = testCase.Input
-		}
-		slices.Sort(inputs)
-		uniqueInputs := slices.Compact(inputs)
-		for _, operator := range []string{"<", "<=", ">", ">=", "==", "!="} {
-			for _, input := range uniqueInputs {
-				literal := strconv.FormatInt(input, 10)
-				expression := "input " + operator + " " + literal
-				if !seen[expression] {
-					seen[expression] = true
-					expressions = append(expressions, expression)
-				}
-			}
-		}
-		enumerated := len(expressions)
-		if len(expressions) > declaration.MaxExpressions {
-			expressions = expressions[:declaration.MaxExpressions]
-		}
-		return expressions, enumerated, len(expressions) == enumerated, nil
+		return generateIntegerPredicateExpressions(declaration.MaxExpressions, cases, false)
+	case "integer-predicate-composition/v1":
+		return generateIntegerPredicateExpressions(declaration.MaxExpressions, cases, true)
 	default:
 		return nil, 0, false, fmt.Errorf("unsupported source-fill grammar %q", declaration.Grammar)
 	}
+}
+
+// generateIntegerPredicateExpressions defines a finite grammar from the distinct
+// source examples. Composition enumerates every ordered atom pair with && and ||;
+// its receipt therefore makes any source cap visible instead of implying coverage.
+func generateIntegerPredicateExpressions(maxExpressions int, cases []assemblyspec.Case, compose bool) ([]string, int, bool, error) {
+	inputs := make([]int64, len(cases))
+	for index, testCase := range cases {
+		inputs[index] = testCase.Input
+	}
+	slices.Sort(inputs)
+	uniqueInputs := slices.Compact(inputs)
+	atoms := []string{"true", "false"}
+	for _, operator := range []string{"<", "<=", ">", ">=", "==", "!="} {
+		for _, input := range uniqueInputs {
+			atoms = append(atoms, "input "+operator+" "+strconv.FormatInt(input, 10))
+		}
+	}
+	compositions := make([]string, 0)
+	if compose {
+		// Include a compact, useful subset first: pairwise equality clauses let a
+		// source fill express disjoint accepted inputs with a small, auditable space.
+		for left := 0; left < len(uniqueInputs); left++ {
+			for right := left + 1; right < len(uniqueInputs); right++ {
+				a := "input == " + strconv.FormatInt(uniqueInputs[left], 10)
+				b := "input == " + strconv.FormatInt(uniqueInputs[right], 10)
+				compositions = append(compositions, "("+a+") || ("+b+")")
+				compositions = append(compositions, "("+a+") && ("+b+")")
+			}
+		}
+	}
+	expressions := append(compositions, atoms...)
+	enumerated := len(expressions)
+	if len(expressions) > maxExpressions {
+		expressions = expressions[:maxExpressions]
+	}
+	return expressions, enumerated, len(expressions) == enumerated, nil
 }
