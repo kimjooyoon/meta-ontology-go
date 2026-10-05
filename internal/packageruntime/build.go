@@ -15,12 +15,14 @@ func Build(manifest Manifest) (Image, error) {
 	}
 	image := Image{Schema: ImageSchema, InitOrder: order}
 	activities := make([]EntryPlan, 0)
+	exportsByPath := make(map[string][]Export, len(order))
 	for _, packagePath := range order {
-		compiled, compileErr := compilePackage(byPath[packagePath])
+		compiled, compileErr := compilePackage(byPath[packagePath], exportsByPath)
 		if compileErr != nil {
 			return Image{}, compileErr
 		}
 		image.Packages = append(image.Packages, compiled.image)
+		exportsByPath[packagePath] = compiled.image.Exports
 		activities = append(activities, compiled.activities...)
 	}
 	entry, err := resolveEntry(normalized.Entry, byPath, activities)

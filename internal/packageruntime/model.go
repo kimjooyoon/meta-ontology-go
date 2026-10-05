@@ -42,9 +42,20 @@ type PackageImage struct {
 	Name           string        `json:"name"`
 	Namespace      string        `json:"namespace"`
 	Imports        []string      `json:"imports"`
+	Exports        []Export      `json:"exports"`
 	Sources        []SourceImage `json:"sources"`
 	Declarations   int           `json:"declarations"`
 	SemanticDigest string        `json:"semantic_digest"`
+}
+
+// Export is the statically resolved public surface of a Gooo package.
+// Activity input and output types use canonical package-path-qualified names.
+type Export struct {
+	Name       string   `json:"name"`
+	Kind       string   `json:"kind"`
+	ID         string   `json:"id,omitempty"`
+	InputTypes []string `json:"input_types,omitempty"`
+	OutputType string   `json:"output_type,omitempty"`
 }
 
 type EntryPlan struct {
