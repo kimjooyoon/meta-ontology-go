@@ -74,6 +74,8 @@ func compositionRecordFieldScalar(typeID string) (string, bool) {
 		return "Text", true
 	case string(semantic.BuiltinBooleanTypeID):
 		return "Boolean", true
+	case string(semantic.BuiltinIntegerTypeID):
+		return "Integer", true
 	default:
 		return "", false
 	}

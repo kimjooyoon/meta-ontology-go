@@ -178,3 +178,29 @@ func TestCompositionTransportsBooleanRecordFieldsAsJSONBooleans(t *testing.T) {
 		}
 	}
 }
+
+func TestCompositionTransportsIntegerRecordFieldsExactly(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/integer-field-assembly.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	suite := CompositionCases{Schema: "gooo/body-composition-cases/v1", Cases: []CompositionCase{
+		{Inputs: map[string]json.RawMessage{"Build.input0": json.RawMessage("9007199254740993"), "Build.input1": json.RawMessage("true"), "Build.input2": json.RawMessage(`"exact"`)},
+			Expected: map[string]json.RawMessage{
+				"Build": json.RawMessage(`{"total":9007199254740994,"enabled":true,"label":"exact"}`),
+				"Echo":  json.RawMessage(`{"total":9007199254740995,"enabled":true,"label":"exact"}`),
+			}},
+	}}
+	prior, err := GenerateComposition(context.Background(), "integer.gooo", source, suite, "")
+	if err != nil {
+		t.Fatal("integer composition generation", err)
+	}
+	run, err := ExecuteComposition(context.Background(), "integer.gooo", source, prior, suite, nativeTool())
+	if err != nil || run.FinitePassed != 2 || run.FiniteTotal != 2 || !run.RuntimeReplayed {
+		t.Fatalf("integer composition was not exact and replayable: run=%+v err=%v", run, err)
+	}
+	if len(run.Traces) != 1 || len(run.Traces[0].Deliveries) != 2 ||
+		string(run.Traces[0].Deliveries[1].Actual) != `{"enabled":true,"label":"exact","total":9007199254740995}` {
+		t.Fatalf("integer runtime value changed: %+v", run.Traces)
+	}
+}

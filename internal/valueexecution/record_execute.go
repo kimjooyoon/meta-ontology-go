@@ -94,6 +94,10 @@ func validateRecordFields(schema []RecordField, fields RecordFields) error {
 			if _, ok := value.(bool); !ok {
 				return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
 			}
+		case string(semantic.BuiltinIntegerTypeID):
+			if _, ok := value.(int64); !ok {
+				return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
+			}
 		default:
 			return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
 		}
