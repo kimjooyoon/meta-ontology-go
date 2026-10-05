@@ -21,7 +21,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	return runWithInput(args, os.Stdin, stdout, stderr)
 }
 
-const initUsage = "usage: gooo init <new-directory>"
+const initUsage = "usage: gooo init [--template app|library] <new-directory>"
 
 var starterFiles = map[string]string{
 	"main.gooo": `package starter
@@ -67,7 +67,55 @@ https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/language/body-codeg
 `,
 }
 
+var libraryStarterFiles = map[string]string{
+	"main.gooo": `package boundedint
+namespace boundedint
+entity Integer id "boundedint://integer"
+
+activity Clamp(Integer) -> Integer computes "if input < 0 { return 0 } else if input < 10 { return input } else { return 10 }" assembling {
+    choice "lower-bound" branch_layout at "0" intent "음수 입력은 0으로 제한한다. Clamp negative inputs to zero."
+    choice "upper-bound" operand_order at "1" intent "10보다 큰 입력은 10으로 제한한다. Clamp inputs above ten to ten."
+    case "-1" -> "0"
+    case "5" -> "5"
+    case "11" -> "10"
+    attempts "4"
+}
+`,
+	"README.md": `# boundedint
+
+This is a small Gooo-authored library contract. The public surface is the
+Clamp(Integer) -> Integer activity; its finite cases travel with the source so
+contributors can check behavior before generating an implementation.
+
+Install the Gooo CLI and run these commands from this directory:
+
+~~~sh
+go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
+gooo check main.gooo
+gooo body-codegen --json --activity Clamp main.gooo
+~~~
+
+body-codegen emits a candidate from the declared Gooo contract. The finite
+cases are checked against that candidate; they are a compact regression set,
+not a proof for every integer. With no Laya service, route selection is
+deterministic. A configured local Laya service can rank only routes already
+declared in the source.
+`,
+}
+
 func runInit(args []string, stdout, stderr io.Writer) int {
+	template := "app"
+	if len(args) >= 2 && args[0] == "--template" {
+		template = args[1]
+		args = args[2:]
+	}
+	files := starterFiles
+	if template == "library" {
+		files = libraryStarterFiles
+	} else if template != "app" {
+		fmt.Fprintf(stderr, "gooo init: unknown template %q (choose app or library)\n", template)
+		return exitUsage
+	}
 	if len(args) != 1 || strings.TrimSpace(args[0]) == "" || strings.HasPrefix(args[0], "-") {
 		fmt.Fprintln(stderr, initUsage)
 		return exitUsage
@@ -81,8 +129,8 @@ func runInit(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "gooo init: create %s: %v\n", destination, err)
 		return exitFailure
 	}
-	created := make([]string, 0, len(starterFiles))
-	for name, content := range starterFiles {
+	created := make([]string, 0, len(files))
+	for name, content := range files {
 		path := filepath.Join(destination, name)
 		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 			for _, previous := range created {
