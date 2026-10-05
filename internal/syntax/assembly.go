@@ -128,6 +128,7 @@ func (p *Parser) parseAssemblyFillPlan() *assemblyspec.FillPlan {
 	p.assemblyKeyword("intent")
 	plan := &assemblyspec.FillPlan{Intent: p.expectString().Name}
 	p.expect(TokenLBrace, "{", DiagUnexpectedDeclaration)
+	seenDerive := false
 	for !p.at(TokenRBrace) && !p.at(TokenEOF) {
 		field := p.expectIdentifier("source fill declaration", DiagExpectedIdentifier)
 		switch field.Name {
@@ -138,6 +139,28 @@ func (p *Parser) parseAssemblyFillPlan() *assemblyspec.FillPlan {
 				continue
 			}
 			plan.Holes = append(plan.Holes, assemblyspec.FillHole{ID: p.expectString().Name})
+		case "derive":
+			if seenDerive {
+				p.error(DiagUnexpectedDeclaration, field.Span, "duplicate source fill derive clause")
+			}
+			seenDerive = true
+			p.assemblyKeyword("grammar")
+			generation := &assemblyspec.FillGeneration{Grammar: p.expectString().Name}
+			p.assemblyKeyword("max_expressions")
+			maxExpressions := p.assemblyInteger("maximum expressions per hole")
+			if maxExpressions < 2 || maxExpressions > 16 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "source fill max_expressions must be 2..16")
+			} else {
+				generation.MaxExpressions = int(maxExpressions)
+			}
+			p.assemblyKeyword("max_candidates")
+			maxCandidates := p.assemblyInteger("maximum complete candidates")
+			if maxCandidates < 2 || maxCandidates > 16 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "source fill max_candidates must be 2..16")
+			} else {
+				generation.MaxCandidates = int(maxCandidates)
+			}
+			plan.Generation = generation
 		case "candidate":
 			if len(plan.Candidates) == 16 {
 				p.error(DiagUnexpectedDeclaration, field.Span, "source fill plan exceeds 16 candidates")
@@ -274,6 +297,11 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 		fmt.Fprintf(output, "    source_fill intent %s {\n", quoteString(plan.Intent))
 		for _, hole := range plan.Holes {
 			fmt.Fprintf(output, "        hole %s\n", quoteString(hole.ID))
+		}
+		if plan.Generation != nil {
+			fmt.Fprintf(output, "        derive grammar %s max_expressions %s max_candidates %s\n",
+				quoteString(plan.Generation.Grammar), quoteString(strconv.Itoa(plan.Generation.MaxExpressions)),
+				quoteString(strconv.Itoa(plan.Generation.MaxCandidates)))
 		}
 		for _, candidate := range plan.Candidates {
 			fmt.Fprintf(output, "        candidate %s {\n", quoteString(candidate.ID))

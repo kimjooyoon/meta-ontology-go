@@ -2,6 +2,9 @@ package bodycodegen
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -41,5 +44,125 @@ func TestGenerateWithSourceIRBodyFillUsesDeclaredCandidatesDeterministically(t *
 	}
 	if replay.Declarations[1].(*syntax.ActivityDecl).Assembly != nil {
 		t.Fatal("replay source still requires a model choice")
+	}
+}
+
+func TestSourceDerivedAssignmentsReachLayaAsCompleteChoices(t *testing.T) {
+	source := `package sample
+namespace sample
+entity Integer id "sample://integer"
+activity Lift(Integer) -> Integer computes ` + "`" + `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` + "`" + ` assembling {
+    source_fill intent "Compose input plus one from two derived parts." {
+        hole "seed"
+        hole "step"
+        derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "16"
+    }
+    case "0" -> "1"
+    case "2" -> "3"
+}`
+	file, diagnostics := syntax.Parse(source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	candidates, _, err := generateSourceFillCandidates(spec.FillPlan, spec.Cases)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wanted := ""
+	for _, candidate := range candidates {
+		if candidate.Fills["seed"] == "input" && candidate.Fills["step"] == "1" {
+			wanted = candidate.ID
+			break
+		}
+	}
+	if wanted == "" {
+		t.Fatal("the declared grammar did not derive the input-plus-one assignment")
+	}
+	var observed struct {
+		Candidates []IRBodyFillCandidateScore `json:"candidate_scores"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/systemone" {
+			http.NotFound(writer, request)
+			return
+		}
+		var payload struct {
+			State map[string]string `json:"state"`
+		}
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Errorf("decode Laya request: %v", err)
+			return
+		}
+		if err := json.Unmarshal([]byte(payload.State["request"]), &observed); err != nil {
+			t.Errorf("decode complete Gooo assignments: %v", err)
+			return
+		}
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "source-fill-test-model", "routing": map[string]any{"model": "source-fill-test-model"},
+			"answers": map[string]any{"body_ir_fill": map[string]any{
+				"choice": wanted, "probabilities": map[string]float64{wanted: 1},
+			}},
+		})
+	}))
+	defer server.Close()
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "derived-fill.gooo", []byte(source), "Lift", spec,
+		server.URL+"/v1/systemone", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Report.BodyFill == nil || result.Report.BodyFill.SelectedCandidateID != wanted ||
+		result.Report.BodyFill.Decision.Provider != "laya" || result.Report.BodyFill.FunctionalAccuracyPct != 100 {
+		t.Fatalf("Laya did not select and verify the source-derived complete assignment: %+v", result.Report.BodyFill)
+	}
+	if len(observed.Candidates) != len(candidates) || observed.Candidates[0].ID == "" {
+		t.Fatalf("Laya did not receive the compiler-enumerated assignment set: got=%d want=%d", len(observed.Candidates), len(candidates))
+	}
+}
+
+func TestGenerateWithSourceIRBodyFillDerivesBoundedCompleteAssignments(t *testing.T) {
+	source := `package sample
+namespace sample
+entity Integer id "sample://integer"
+activity Lift(Integer) -> Integer computes ` + "`" + `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` + "`" + ` assembling {
+    source_fill intent "Compose input plus one from two derived parts." {
+        hole "seed"
+        hole "step"
+        derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "16"
+    }
+    case "0" -> "1"
+    case "2" -> "3"
+}`
+	file, diagnostics := syntax.Parse(source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "derived-fill.gooo", []byte(source), "Lift", spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.CandidateGeneration == nil || receipt.SelectedCandidateID == "" || receipt.FunctionalAccuracyPct != 100 {
+		t.Fatalf("derived assignment was not generated, selected and measured: %+v", receipt)
+	}
+	generated := receipt.CandidateGeneration
+	if generated.Grammar != "integer-offset-constant/v1" || !generated.GrammarComplete || generated.GrammarCoveragePercent != 100 ||
+		generated.AssignmentSpaceSize <= uint64(generated.AssignmentsRetained) || generated.AssignmentsRetained != 16 ||
+		generated.AssignmentsOmitted == 0 || generated.CandidateSetSHA256 == "" {
+		t.Fatalf("bounded grammar or assignment truncation was not made explicit: %+v", generated)
+	}
+	grammarDimension := bodyFillDimension(result, "body_fill_candidate_grammar_coverage")
+	assignmentDimension := bodyFillDimension(result, "body_fill_assignment_space_coverage")
+	if grammarDimension.Status != "PASS" || assignmentDimension.Status != "PROGRESS" ||
+		!containsString(result.Report.CompletenessReceipt.CoreDimensions, assignmentDimension.ID) {
+		t.Fatalf("completeness receipt hid source-derived search bounds: grammar=%+v assignments=%+v", grammarDimension, assignmentDimension)
+	}
+	if strings.Contains(result.GoooSource, "derive grammar") || strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") {
+		t.Fatalf("generated Gooo source retained unresolved generation or hole declarations:\n%s", result.GoooSource)
 	}
 }

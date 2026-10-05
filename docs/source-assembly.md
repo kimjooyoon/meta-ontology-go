@@ -9,9 +9,10 @@ expectations in one declaration. `assembling` is a typed syntax node, preserved 
 bidirectional lowering into semantic IR. It expands through the existing recipe
 arena and optional-model/TDD pipeline.
 
-For multi-hole IR body generation, Gooo can also own a finite set of complete
-assignments. A model ranks the assignments as one decision; it cannot invent new
-expressions. Every selected hole is checked against the declared integer cases,
+For multi-hole IR body generation, Gooo can own a finite set of complete
+assignments or derive expressions and their combinations from a closed grammar.
+A model ranks the complete assignments as one decision; it cannot add expressions
+outside that set. Every selected hole is checked against the declared integer cases,
 then the generated Go is typechecked. Without a model, the same bounded selector
 uses deterministic scoring. The emitted Gooo source contains the chosen body and
 does not retain a pending `source_fill` instruction.
@@ -37,9 +38,31 @@ return base + increment` assembling {
 }
 ```
 
+To have Gooo derive the expressions and candidate assignments, replace the manual
+`candidate` blocks with a bounded `derive` declaration:
+
+```gooo
+source_fill intent "Represent input plus one as a base and increment." {
+    hole "seed"
+    hole "step"
+    derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "16"
+}
+```
+
+The closed grammar uses only the source's declared cases to enumerate integer
+expressions. Gooo builds complete assignments in deterministic lexicographic order,
+up to the assignment cap. Its receipt reports both expression grammar coverage and
+the fraction of the complete assignment space actually enumerated. If the cap
+truncates that space, the completeness dimension stays `PROGRESS`; a model can only
+rank the enumerated prefix. See
+`examples/body-codegen/source-ir-fill-derived.gooo.fixture` for a runnable example.
+
 Run it with `gooo body-codegen --json --activity Lift
 examples/body-codegen/source-ir-fill.gooo.fixture`. Add `--tiny-model
-<model.json>` to route that finite decision through the local compact Gooo model.
+<model.json>` to route a manually declared finite decision through the local
+compact Gooo model. The derived integer-expression grammar currently uses Laya
+when configured or deterministic selection otherwise; the compact model's
+operation-only output cannot represent its larger assignment vocabulary.
 The receipt reports the selected candidate, per-case results, and completeness
 dimensions; the percentage describes only these declared examples, not all inputs.
 
@@ -102,10 +125,12 @@ activity ... computes <quoted-or-raw-body> assembling {
     [source_fill intent <quoted-intent> {
         hole <quoted-id> ...
         candidate <quoted-id> { fill <quoted-hole-id> <quoted-expression> ... } ...
+        | derive grammar <quoted-grammar> max_expressions <quoted-count>
+            max_candidates <quoted-count>
     }]
     case <quoted-int64-input> -> <quoted-int64-expected>
     [holdout_case <quoted-int64-input> -> <quoted-int64-expected> ...]
-    attempts <quoted-budget>
+    [attempts <quoted-budget>]
     [seed <quoted-seed>]
 }
 ```
@@ -113,8 +138,10 @@ activity ... computes <quoted-or-raw-body> assembling {
 Canonical formatting puts each choice on one line. Whitespace/comments separate
 fields. Quoted decimal numbers follow the existing policy grammar. Input and
 expected values span int64. Formatting preserves decoded Korean/English intent.
-`source_fill` requires 2–8 holes, 2–16 candidates, and exactly one fill per hole
-in declaration order for every candidate. It is mutually exclusive with path
+`source_fill` requires 2–8 holes, and either 2–16 candidates with exactly one fill
+per hole in declaration order, or one bounded `derive` clause with 2–16 expressions
+per hole and 2–16 complete assignments. Manual candidates and `derive` are mutually
+exclusive. It is mutually exclusive with path
 choices, search, checkpoints, sampling seeds, and attempt budgets.
 
 | Kind | Source site selected by `at` | Additional field |

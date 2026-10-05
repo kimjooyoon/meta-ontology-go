@@ -55,6 +55,15 @@ return base + increment` + "`" + ` assembling {
     case "2" -> "3"
 }`
 	testAssemblyParseFormatCloneAndSpans(t, fill)
+	derived := strings.Replace(fill, `candidate "add_one" {`+"\n"+
+		`            fill "seed" "input + 0"`+"\n"+
+		`            fill "step" "1"`+"\n"+
+		`        }`+"\n"+
+		`        candidate "double" {`+"\n"+
+		`            fill "seed" "input * 2"`+"\n"+
+		`            fill "step" "0"`+"\n"+
+		`        }`+"\n", `derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "16"`+"\n", 1)
+	testAssemblyParseFormatCloneAndSpans(t, derived)
 }
 
 func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
@@ -83,9 +92,16 @@ func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
 	}
 	clone := file.Clone().Declarations[1].(*ActivityDecl)
 	if clone.Assembly.Spec.FillPlan != nil {
-		clone.Assembly.Spec.FillPlan.Candidates[0].Fills[0].Expression = "changed"
-		if activity.Assembly.Spec.FillPlan.Candidates[0].Fills[0].Expression == "changed" {
-			t.Fatal("syntax clone shares source fill plan storage")
+		if clone.Assembly.Spec.FillPlan.Generation != nil {
+			clone.Assembly.Spec.FillPlan.Generation.MaxCandidates++
+			if activity.Assembly.Spec.FillPlan.Generation.MaxCandidates == clone.Assembly.Spec.FillPlan.Generation.MaxCandidates {
+				t.Fatal("syntax clone shares source fill generation storage")
+			}
+		} else {
+			clone.Assembly.Spec.FillPlan.Candidates[0].Fills[0].Expression = "changed"
+			if activity.Assembly.Spec.FillPlan.Candidates[0].Fills[0].Expression == "changed" {
+				t.Fatal("syntax clone shares source fill plan storage")
+			}
 		}
 	} else if clone.Assembly.Spec.Search != nil {
 		originalIntent := activity.Assembly.Spec.Search.Intent
@@ -171,6 +187,35 @@ activity Clamp(Integer) -> Integer computes "return __GOOO_BODY_HOLE_floor__" as
 		changed := strings.Replace(source, mutation.from, mutation.to, 1)
 		if _, diagnostics := Parse(changed); !diagnostics.HasErrors() {
 			t.Fatalf("invalid IR search contract accepted: %q -> %q", mutation.from, mutation.to)
+		}
+	}
+}
+
+func TestSourceFillDerivationRejectsOpenOrUnboundedContracts(t *testing.T) {
+	source := `package sample
+namespace sample
+entity Integer id "sample://integer"
+activity Lift(Integer) -> Integer computes ` + "`" + `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` + "`" + ` assembling {
+    source_fill intent "Compose a finite assignment." {
+        hole "seed"
+        hole "step"
+        derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "8"
+    }
+    case "0" -> "1"
+}`
+	for _, mutation := range []struct{ from, to string }{
+		{`integer-offset-constant/v1`, `arbitrary-go/v1`},
+		{`max_expressions "8"`, `max_expressions "1"`},
+		{`max_candidates "8"`, `max_candidates "1"`},
+		{`max_candidates "8"`, `max_candidates "17"`},
+		{`derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "8"`,
+			`derive grammar "integer-offset-constant/v1" max_expressions "8" max_candidates "8" candidate "manual" { fill "seed" "input" fill "step" "1" }`},
+	} {
+		changed := strings.Replace(source, mutation.from, mutation.to, 1)
+		if _, diagnostics := Parse(changed); !diagnostics.HasErrors() {
+			t.Fatalf("invalid source-fill generation contract accepted: %q -> %q", mutation.from, mutation.to)
 		}
 	}
 }

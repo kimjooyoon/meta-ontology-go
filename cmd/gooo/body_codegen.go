@@ -202,6 +202,10 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		}
 		var bodyFillOptions bodycodegen.IRBodyFillOptions
 		if tinyModelPath != "" {
+			if assembly.FillPlan.Generation != nil {
+				return reportBodyCodegenFailure(jsonMode, filename, activity, source,
+					fmt.Errorf("tiny_go cannot rank this derived expression grammar; use configured Laya or deterministic selection"), stdout, stderr)
+			}
 			modelLoadStarted := time.Now()
 			provider, loadErr := decisionroute.LoadTinyGoProvider(tinyModelPath)
 			modelLoadMS := float64(time.Since(modelLoadStarted)) / float64(time.Millisecond)

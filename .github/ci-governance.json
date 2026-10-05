@@ -5887,6 +5887,28 @@
         "internal/syntax/assembly_test.go",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/gooo-meta-hole-candidate-generation-20261006",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/body_codegen.go",
+        "cmd/gooo/body_codegen_source_fill_test.go",
+        "docs/source-assembly.md",
+        "examples/body-codegen/source-ir-fill-derived.gooo.fixture",
+        "internal/assemblyspec/spec.go",
+        "internal/bidir/assembly_test.go",
+        "internal/bodycodegen/body_fill.go",
+        "internal/bodycodegen/completeness_receipt.go",
+        "internal/bodycodegen/source_fill_candidates.go",
+        "internal/bodycodegen/source_fill_candidates_test.go",
+        "internal/bodycodegen/source_ir_fill.go",
+        "internal/bodycodegen/source_ir_fill_test.go",
+        "internal/syntax/assembly.go",
+        "internal/syntax/assembly_test.go",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
