@@ -91,11 +91,24 @@ These observations describe the authored cases and source profile. Registered
 runtime contracts. Record-valued learned assembly and cross-invocation
 feedback remain further work.
 
-## Boolean fields in Go projection and body generation
+## Boolean fields across source-driven execution
+
+The EntityFields V2 profile also applies to `gooo run --record-input`. A
+required single `boolean` field is decoded from JSON as a Boolean, checked
+against its source type before any activity executes, and preserved as a JSON
+Boolean in each result's `fields`. The compiled field schema includes the
+stable type ID in its operation digest. V1 parser and lowering entry points
+remain available to callers that need the earlier profile.
+
+The runnable [Boolean record-binding source](../examples/language-record-binding/boolean.gooo.fixture)
+and [input](../examples/language-record-binding/boolean-input.json) carry a
+`Complete` Boolean alongside the existing strings. This separate example
+exercises source-declared record transport while preserving the V1 syntax
+corpus fixture.
 
 The separate EntityFields V2 profile adds required single `boolean` fields to
 the compiler's Go projection, source-driven body-generation path and
-`body-compose` record transport. V1 remains unchanged.
+`body-compose` record transport.
 
 ```gooo
 entity Boolean id "booleans://boolean"
