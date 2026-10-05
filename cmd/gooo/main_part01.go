@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/languageprofile"
 )
@@ -17,6 +20,85 @@ func main() { os.Exit(runWithInput(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
 func run(args []string, stdout, stderr io.Writer) int {
 	return runWithInput(args, os.Stdin, stdout, stderr)
 }
+
+const initUsage = "usage: gooo init <new-directory>"
+
+var starterFiles = map[string]string{
+	"main.gooo": `package starter
+namespace starter
+entity Integer id "starter://integer"
+
+activity Clamp(Integer) -> Integer computes "if input < 0 { return 0 } else if input < 10 { return input } else { return 10 }" assembling {
+    choice "lower-bound" branch_layout at "0" intent "음수는 0으로 제한한다. Clamp negative values to zero."
+    choice "upper-bound" operand_order at "1" intent "10을 넘는 값은 10으로 제한한다. Clamp values above ten to ten."
+    case "-1" -> "0"
+    case "5" -> "5"
+    case "11" -> "10"
+    attempts "4"
+}
+`,
+	"README.md": `# Gooo starter
+
+This project keeps its activity contract in [main.gooo](main.gooo). The
+assembling block declares permitted source choices and a small finite
+input/output suite. Gooo uses that contract for deterministic generation; a
+local Laya service can optionally rank the eligible choices.
+
+## Check and generate
+
+Install the Gooo CLI, then run these commands from this directory:
+
+~~~sh
+go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@latest
+gooo check main.gooo
+gooo body-codegen --json --activity Clamp main.gooo
+~~~
+
+Generation prints a receipt to standard output and does not edit this project.
+Without a model, the compiler uses its deterministic choice. To let local Laya
+rank only the declared alternatives, set GOOO_LAYA_URL to its
+/v1/systemone endpoint before running the same command. The model
+cannot add choices or bypass type checking and the declared cases.
+
+The finite score describes only these three examples; it is not a proof for all
+integer inputs. See the compiler's body generation guide for the model setup and
+the limits of this experiment:
+https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/language/body-codegen.md
+`,
+}
+
+func runInit(args []string, stdout, stderr io.Writer) int {
+	if len(args) != 1 || strings.TrimSpace(args[0]) == "" || strings.HasPrefix(args[0], "-") {
+		fmt.Fprintln(stderr, initUsage)
+		return exitUsage
+	}
+	destination := filepath.Clean(args[0])
+	if destination == "." || destination == string(filepath.Separator) {
+		fmt.Fprintf(stderr, "gooo init: destination must be a new directory, got %q\n", args[0])
+		return exitFailure
+	}
+	if err := os.Mkdir(destination, 0o755); err != nil {
+		fmt.Fprintf(stderr, "gooo init: create %s: %v\n", destination, err)
+		return exitFailure
+	}
+	created := make([]string, 0, len(starterFiles))
+	for name, content := range starterFiles {
+		path := filepath.Join(destination, name)
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			for _, previous := range created {
+				_ = os.Remove(previous)
+			}
+			_ = os.Remove(destination)
+			fmt.Fprintf(stderr, "gooo init: write %s: %v\n", path, err)
+			return exitFailure
+		}
+		created = append(created, path)
+	}
+	fmt.Fprintf(stdout, "Created Gooo starter in %s\n", destination)
+	fmt.Fprintf(stdout, "Next: cd %s && gooo check main.gooo\n", destination)
+	return exitOK
+}
+
 func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		printUsage(stderr)
@@ -35,6 +117,8 @@ func runWithInputCommandsOne(args []string, stdout, stderr io.Writer) (int, bool
 	switch args[0] {
 	case "run":
 		return runSource(args[1:], OSFileReader{}, stdout, stderr), true
+	case "init":
+		return runInit(args[1:], stdout, stderr), true
 	case "compare":
 		return runCompareReplay(args[1:], OSFileReader{}, stdout, stderr), true
 	case "propose-repair":

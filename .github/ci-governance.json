@@ -5676,6 +5676,18 @@
         "internal/meta/functionextractorrecipe/recipes.json",
         "internal/verify/scope_recipe_source_boundary_repair_20260929.go"
       ]
+    },
+    {
+      "branch": "agent/gooo-model-guided-ecosystem-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "README.md",
+        "cmd/gooo/check_part02_test.go",
+        "cmd/gooo/main_part01.go",
+        "cmd/gooo/usage.go",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
