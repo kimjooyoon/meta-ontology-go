@@ -22,7 +22,7 @@ func TestRunDispatchesCheckAndUsage(t *testing.T) {
 }
 
 func TestHelpShowsQuickStartAndCommandGuide(t *testing.T) {
-	for _, args := range [][]string{{"help"}, {"--help"}, {"body-codegen", "--help"}} {
+	for _, args := range [][]string{{"help"}, {"--help"}, {"body-codegen", "--help"}, {"run", "--help"}} {
 		var stdout, stderr bytes.Buffer
 		if code := run(args, &stdout, &stderr); code != exitOK {
 			t.Fatalf("help %v failed: code=%d stdout=%q stderr=%q", args, code, stdout.String(), stderr.String())
@@ -35,6 +35,15 @@ func TestHelpShowsQuickStartAndCommandGuide(t *testing.T) {
 	if code := run([]string{"help", "body-codegen"}, &stdout, &stderr); code != exitOK ||
 		!strings.Contains(stdout.String(), "typed candidates declared by the plan") {
 		t.Fatalf("body-codegen guide missing bounded model explanation: code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	stdout.Reset()
+	stderr.Reset()
+	if code := run([]string{"help", "run"}, &stdout, &stderr); code != exitOK ||
+		!strings.Contains(stdout.String(), "reports its typed inputs and output") ||
+		!strings.Contains(stdout.String(), "With an explicit input") ||
+		!strings.Contains(stdout.String(), "value-plan path executes") ||
+		!strings.Contains(stdout.String(), "declared typed binds") {
+		t.Fatalf("run guide does not distinguish declaration and value execution: code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 }
 

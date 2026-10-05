@@ -61,6 +61,8 @@ gooo body-codegen --json --activity Clamp main.gooo
 
 `gooo test` checks explicit activity-output markers, not input/output values. See the [language test example](examples/language-test/README.md) before adding one.
 
+`gooo run --entry <activity> file.gooo` without input records the activity's typed declaration; it does not evaluate its body. Provide `--input` or `--record-input` to enter the separately bounded registered-operation runtime. See [source execution scopes](docs/language/language-source-execution.md).
+
 The generated project works without a model. Point `GOOO_LAYA_URL` at a local
 Laya `/v1/systemone` endpoint to let it rank the choices in the declaration.
 The model cannot introduce code outside those choices; type checking and the

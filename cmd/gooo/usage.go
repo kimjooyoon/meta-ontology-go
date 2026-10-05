@@ -23,7 +23,7 @@ Commands:
   init             Create an app or library starter
   check            Parse and validate a Gooo source file
   test             Check declared activity-output test markers
-  run              Execute a selected activity
+  run              Resolve an activity or execute a supported value plan
   body-codegen     Fill declared IR holes and generate Go
   generate         Generate a project from Gooo declarations
   format, fix      Format or repair Gooo source
@@ -126,7 +126,7 @@ Add a marker that names an activity and its expected output entity:
 gooo test checks that Build declares User as its output entity. It does not
 test runtime values, side effects, or generated Go. See examples/language-test/README.md.
 `,
-	"run": `Run a Gooo activity
+	"run": `Resolve or execute a Gooo activity
 
 Usage:
   gooo run [--json] --entry <activity> [--input <input.json> | --record-input <record.json>] [--runtime-plan <runtime-plan.json>] [--iterations N] <file.gooo|package-directory>
@@ -134,7 +134,14 @@ Usage:
 Example:
   gooo run --entry Clamp --input input.json main.gooo
 
-Use --json for a machine-readable execution report.
+Without --input or --record-input, this resolves the activity declaration and
+reports its typed inputs and output; it does not evaluate computes or generated
+Go. With an explicit input, the value-plan path executes only registered value
+operations and declared typed binds. ` + "`--runtime-plan`" + ` binds that run to a
+validated runtime-plan artifact. Use --json for a machine-readable receipt.
+
+See docs/language/language-source-execution.md and
+docs/language/language-package-execution.md for the two execution scopes.
 `,
 	"generate": `Generate a project from Gooo declarations
 
