@@ -170,7 +170,7 @@ return base + increment` + "`" + `
 		receipt.FunctionalAccuracyPct != 100 || receipt.TestCasesPassed != 3 || receipt.TestCasesTotal != 3 {
 		t.Fatalf("multi-hole body was not measured and emitted completely: %#v", receipt)
 	}
-	if !strings.Contains(result.Source, "base = (input + 0)") || !strings.Contains(result.Source, "increment = 1") ||
+	if !strings.Contains(result.Source, "base = (input + 0)") || !strings.Contains(result.Source, "increment int64 = 1") ||
 		strings.Contains(result.Source, "__GOOO_BODY_HOLE_") {
 		t.Fatalf("selected assignment did not fill every IR hole:\n%s", result.Source)
 	}
