@@ -14,8 +14,9 @@ const recordForwardProgram = "record.forward:v1"
 const RecordTransportScope = "RECORD_TRANSPORT_ONLY"
 
 type RecordField struct {
-	Name string `json:"name"`
-	ID   string `json:"id"`
+	Name   string `json:"name"`
+	ID     string `json:"id"`
+	TypeID string `json:"type_id"`
 }
 
 type recordProgram struct {
@@ -35,14 +36,14 @@ type RecordPlan struct {
 	order               []string
 }
 
-// CompileRecordPlan supports source-declared required, single string fields.
+// CompileRecordPlan supports source-declared required, single string and Boolean fields.
 // It transports data, including claims, without judging or authorizing claims.
 func CompileRecordPlan(filename string, source []byte) (RecordPlan, error) {
-	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV1Support())
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV2Support())
 	if file == nil || diagnostics.HasErrors() {
 		return RecordPlan{}, failAt(ReasonSourceParseFailed, "PARSE", "parse-record-source", "record source syntax is invalid")
 	}
-	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, bidir.EntityFieldsV1Support())
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, bidir.EntityFieldsV2Support())
 	if err != nil {
 		return RecordPlan{}, failAt(ReasonSemanticBindingFailed, "LOWER", "lower-record-source", err.Error())
 	}
@@ -120,12 +121,13 @@ func compileRecordFields(ir semantic.IR, name string) ([]RecordField, error) {
 	fields := make([]RecordField, 0, len(entity.Fields))
 	seen := map[string]bool{}
 	for _, field := range entity.Fields {
+		typeID := field.TypeRef.ID
 		if field.Presence != semantic.Required || field.Cardinality != semantic.One ||
-			field.TypeRef.ID != semantic.BuiltinStringTypeID || field.ID.String() == "" || seen[field.Name] {
-			return nil, failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "require-single-string-record-fields", name+"."+field.Name)
+			(typeID != semantic.BuiltinStringTypeID && typeID != semantic.BuiltinBooleanTypeID) || field.ID.String() == "" || seen[field.Name] {
+			return nil, failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "require-supported-single-record-fields", name+"."+field.Name)
 		}
 		seen[field.Name] = true
-		fields = append(fields, RecordField{Name: field.Name, ID: field.ID.String()})
+		fields = append(fields, RecordField{Name: field.Name, ID: field.ID.String(), TypeID: string(typeID)})
 	}
 	slices.SortFunc(fields, func(left, right RecordField) int { return strings.Compare(left.Name, right.Name) })
 	return fields, nil
