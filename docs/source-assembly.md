@@ -166,7 +166,9 @@ over every integer. The receipt reports the pre-cap expression count, retained
 expressions per hole, total grammar coverage, assignment count and any
 assignments omitted by the cap. The compiler typechecks each complete assignment,
 scores it against the declared cases, and can send the complete choices to Laya
-for ranking; deterministic fallback uses the same scored choices.
+for ranking; deterministic fallback uses the same scored choices. The
+[composed-condition fixture](../examples/body-codegen/source-ir-fill-composed-condition.gooo.fixture)
+shows disjoint input selection with the bounded composition grammar.
 
 | Kind | Source site selected by `at` | Additional field |
 | --- | --- | --- |

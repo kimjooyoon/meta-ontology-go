@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -224,28 +225,16 @@ func TestSourceDerivedPredicateCompositionFindsDisjointCases(t *testing.T) {
 	if err != nil || complete || total != 29 || !slices.Contains(candidates, "(input >= -2) && (input <= 0)") {
 		t.Fatalf("bounded grammar omitted its closed-range condition: candidates=%v total=%d complete=%v err=%v", candidates, total, complete, err)
 	}
-	source := `package sample
-namespace sample
-entity Integer id "sample://integer"
-activity Select(Integer) -> Integer computes ` + "`" + `if __GOOO_BODY_HOLE_condition__ { return __GOOO_BODY_HOLE_yes__ } else { return 0 }` + "`" + ` assembling {
-    source_fill intent "Return one for either selected input." {
-        hole "condition"
-        hole "yes"
-        derive assignments max_candidates "16" {
-            hole "condition" grammar "integer-predicate-composition/v1" max_expressions "8"
-            hole "yes" grammar "integer-offset-constant/v1" max_expressions "2"
-        }
-    }
-    case "-2" -> "1"
-    case "0" -> "0"
-    case "2" -> "1"
-}`
-	file, diagnostics := syntax.Parse(source)
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-composed-condition.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := syntax.Parse(string(source))
 	if diagnostics.HasErrors() {
 		t.Fatal(diagnostics)
 	}
 	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
-	result, err := GenerateWithSourceIRBodyFill(context.Background(), "composed-condition.gooo", []byte(source), "Select", spec, "", "", IRBodyFillOptions{})
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "composed-condition.gooo", source, "Select", spec, "", "", IRBodyFillOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
