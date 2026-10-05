@@ -36,6 +36,23 @@ Gooo source + intent + permitted choices + finite expectations
 
 ## First run
 
+To start a new project with a working Gooo declaration, declared alternatives
+and finite examples, run:
+
+```sh
+go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@latest
+gooo init my-first-gooo
+cd my-first-gooo
+gooo check main.gooo
+gooo body-codegen --json --activity Clamp main.gooo
+```
+
+The generated project works without a model. Point `GOOO_LAYA_URL` at a local
+Laya `/v1/systemone` endpoint to let it rank the choices in the declaration.
+The model cannot introduce code outside those choices; type checking and the
+finite examples remain part of generation. See the generated README for the
+limits of the finite score.
+
 The checked-in example declares the baseline body, two legal alternatives, five
 finite input/output checks and an attempt limit in Gooo. From the repository root,
 run it without a model:
