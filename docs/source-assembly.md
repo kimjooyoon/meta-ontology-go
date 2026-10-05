@@ -235,16 +235,33 @@ it establishes the integration contract and data boundary, not model quality.
 When Laya is running locally, rerun the same fixture with `GOOO_LAYA_URL` set
 to measure the actual choice and latency on your machine.
 
-After selection, Gooo also derives up to 128 synthetic probe inputs from the
-training values (nearby integers and interior midpoints) and compares every
-candidate's observed outputs. Neither holdout rows nor expected outputs enter
-this diagnostic, and its result is computed too late to affect the chooser.
+Before selection, Gooo derives up to 128 synthetic probe inputs from training
+values (nearby integers and interior midpoints) and evaluates every candidate at
+those points. It passes each candidate's output profile to the chooser with no
+expected probe outputs. Declared holdout inputs are removed from the probe set;
+holdout rows and expected values are not sent. Laya can use the profiles with
+Gooo intent to distinguish candidates whose training scores tie. The profiles
+are behavioral observations, not correctness evidence.
+
 `body_fill_candidate_probe_coverage` reports evaluated candidate/input pairs
 against the full generated probe space; the receipt separately counts candidate
 pairs that differ on at least one retained probe and their distinguishability
 percentage. These are candidate-diversity and measurement-coverage signals, not
-correctness scores. The receipt includes
-the retained inputs and their digest, and records probe evaluation time.
+correctness scores. The receipt includes retained probe inputs and candidate
+outputs with their digest, and records probe evaluation time.
+
+The [probe-choice fixture](../examples/body-codegen/source-ir-fill-probe-choice.gooo.fixture)
+declares `input > 0` and `input >= 0` as tied candidates. Its training cases are
+`-10 -> 0` and `10 -> 1`; the held-out input is `5`, while synthetic probe `0`
+distinguishes the two candidates without exposing that holdout row. The
+protocol-level Laya test verifies that the chooser receives both output profiles
+and selects the inclusive candidate. It validates Gooo's data flow and decision
+contract, not the real model's ability to interpret the intent.
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity NonNegative \
+  examples/body-codegen/source-ir-fill-probe-choice.gooo.fixture
+```
 
 ```sh
 go run ./cmd/gooo body-codegen --json --activity Select \

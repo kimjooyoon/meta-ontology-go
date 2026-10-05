@@ -446,10 +446,11 @@ func TestSourceDerivedPredicateCutpointsIncludeUnobservedIntegerBoundaries(t *te
 	}
 	probes := receipt.BehavioralProbes
 	if probes == nil || probes.Schema != irBodyFillBehavioralProbeSchema ||
-		!slices.Contains(probes.ProbeInputs, 0) || slices.Contains(probes.ProbeInputs, -10) || slices.Contains(probes.ProbeInputs, 10) ||
+		slices.Contains(probes.ProbeInputs, 0) || slices.Contains(probes.ProbeInputs, 5) ||
+		slices.Contains(probes.ProbeInputs, -10) || slices.Contains(probes.ProbeInputs, 10) ||
 		probes.CandidateRunsCompleted != probes.CandidateCount || probes.CandidateRunsFailed != 0 ||
 		probes.CandidatePairsEvaluated != probes.CandidatePairsTotal || probes.CandidatePairsDistinguished == 0 ||
-		probes.ProbeInputsWithDisagreement == 0 || probes.ProbeInputsSHA256 == "" {
+		probes.ProbeInputsWithDisagreement == 0 || probes.ProbeProfileSHA256 == "" {
 		t.Fatalf("automatic probes did not reveal and measure bounded candidate distinctions: %+v", probes)
 	}
 	wantDistinguishability := float64(probes.CandidatePairsDistinguished) * 100 / float64(probes.CandidatePairsEvaluated)
@@ -542,7 +543,7 @@ func TestLayaCanResolveTrainingTieWhileHoldoutRemainsWithheld(t *testing.T) {
 			return
 		}
 		if err := json.Unmarshal([]byte(payload.State["request"]), &observed); err != nil {
-			t.Errorf("decode training-only Gooo chooser state: %v", err)
+			t.Errorf("decode Gooo chooser state: %v", err)
 			return
 		}
 		if err := json.Unmarshal([]byte(payload.State["request"]), &observedFields); err != nil {
@@ -575,13 +576,121 @@ func TestLayaCanResolveTrainingTieWhileHoldoutRemainsWithheld(t *testing.T) {
 	}) {
 		t.Fatalf("Laya did not receive the full tied candidate set with training-only evidence: observed=%+v", observed)
 	}
+	if observed.BehavioralProbes == nil {
+		t.Fatal("Laya chooser state omitted training-derived candidate behavior profiles")
+	}
+	if slices.Contains(observed.BehavioralProbes.ProbeInputs, 0) || slices.Contains(observed.BehavioralProbes.ProbeInputs, 5) ||
+		!slices.ContainsFunc(observed.BehavioralProbes.CandidateProfiles, func(profile IRBodyFillCandidateProbeProfile) bool {
+			return profile.CandidateID == wanted && len(profile.Outputs) == len(observed.BehavioralProbes.ProbeInputs)
+		}) {
+		t.Fatalf("Laya chooser did not receive training-derived profiles with holdout inputs excluded: %+v", observed.BehavioralProbes)
+	}
 	if _, hasHoldoutCases := observedFields["holdout_cases"]; hasHoldoutCases {
 		t.Fatalf("Laya request included withheld cases: %s", observedFields["holdout_cases"])
 	}
-	if _, hasBehavioralProbes := observedFields["behavioral_probes"]; hasBehavioralProbes {
-		t.Fatalf("post-selection behavioral probes were sent to Laya: %s", observedFields["behavioral_probes"])
+	if _, hasTrainingRows := observedFields["test_cases"]; hasTrainingRows {
+		t.Fatalf("Laya request included expected training values instead of scores and output profiles: %s", observedFields["test_cases"])
 	}
 	if dimension := bodyFillDimension(result, "body_fill_holdout_accuracy"); dimension.Status != "PASS" {
 		t.Fatalf("the model-selected generalization evidence was not reflected in completeness: %+v", dimension)
+	}
+}
+
+func TestLayaUsesBehaviorProfilesFromTrainingDerivedProbes(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-probe-choice.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := syntax.Parse(string(source))
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	candidates := make([]IRBodyFillCandidate, len(spec.FillPlan.Candidates))
+	wanted, strict := "", ""
+	for index, candidate := range spec.FillPlan.Candidates {
+		fills := make(map[string]string, len(candidate.Fills))
+		for _, fill := range candidate.Fills {
+			fills[fill.HoleID] = fill.Expression
+		}
+		candidates[index] = IRBodyFillCandidate{ID: candidate.ID, Fills: fills}
+		switch fills["condition"] {
+		case "input >= 0":
+			wanted = candidate.ID
+		case "input > 0":
+			strict = candidate.ID
+		}
+	}
+	if wanted == "" || strict == "" {
+		t.Fatalf("fixture must provide strict and inclusive zero-boundary candidates: %+v", candidates)
+	}
+	var observed irBodyFillState
+	var observedFields map[string]json.RawMessage
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/systemone" {
+			http.NotFound(writer, request)
+			return
+		}
+		var payload struct {
+			State map[string]string `json:"state"`
+		}
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Errorf("decode Laya request: %v", err)
+			return
+		}
+		if err := json.Unmarshal([]byte(payload.State["request"]), &observed); err != nil {
+			t.Errorf("decode chooser state: %v", err)
+			return
+		}
+		if err := json.Unmarshal([]byte(payload.State["request"]), &observedFields); err != nil {
+			t.Errorf("decode chooser state fields: %v", err)
+			return
+		}
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "probe-profile-test-model", "routing": map[string]any{"model": "probe-profile-test-model"},
+			"answers": map[string]any{"body_ir_fill": map[string]any{
+				"choice": wanted, "probabilities": map[string]float64{wanted: 1},
+			}},
+		})
+	}))
+	defer server.Close()
+
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "probe-choice.gooo", source, "NonNegative", spec,
+		server.URL+"/v1/systemone", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fill := result.Report.BodyFill
+	if fill == nil || fill.Decision.Provider != "laya" || fill.SelectedCandidateID != wanted ||
+		fill.TestCasesPassed != 2 || fill.HoldoutCasesPassed != 1 || fill.HoldoutCasesTotal != 1 {
+		t.Fatalf("chooser did not apply the inclusive boundary candidate and preserve holdout evaluation: %+v", fill)
+	}
+	probes := observed.BehavioralProbes
+	zeroIndex := -1
+	if probes != nil {
+		zeroIndex = slices.Index(probes.ProbeInputs, 0)
+	}
+	if probes == nil || zeroIndex < 0 || slices.Contains(probes.ProbeInputs, 5) ||
+		!slices.ContainsFunc(probes.CandidateProfiles, func(profile IRBodyFillCandidateProbeProfile) bool {
+			if profile.CandidateID == wanted && zeroIndex < len(profile.Outputs) {
+				return profile.Outputs[zeroIndex] == 1
+			}
+			return false
+		}) || !slices.ContainsFunc(probes.CandidateProfiles, func(profile IRBodyFillCandidateProbeProfile) bool {
+		if profile.CandidateID == strict && zeroIndex < len(profile.Outputs) {
+			return profile.Outputs[zeroIndex] == 0
+		}
+		return false
+	}) {
+		t.Fatalf("training-derived output profiles did not expose the zero-boundary difference: %+v", probes)
+	}
+	if _, hasTrainingRows := observedFields["test_cases"]; hasTrainingRows {
+		t.Fatalf("chooser received expected training outputs rather than scores: %s", observedFields["test_cases"])
+	}
+	if _, hasHoldoutRows := observedFields["holdout_cases"]; hasHoldoutRows {
+		t.Fatalf("chooser received holdout rows: %s", observedFields["holdout_cases"])
+	}
+	if dimension := bodyFillDimension(result, "body_fill_candidate_probe_coverage"); dimension.Status != "PASS" {
+		t.Fatalf("probe evaluation completeness was not reported: %+v", dimension)
 	}
 }

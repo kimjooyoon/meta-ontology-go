@@ -12,26 +12,24 @@ const irBodyFillBehavioralProbeSchema = "gooo/ir-body-fill-behavioral-probe/v1"
 const irBodyFillBehavioralProbeCap = 128
 
 // measureIRBodyFillBehavioralProbes compares candidate behavior on a bounded,
-// deterministic set derived only from training inputs. It runs after candidate
-// selection and never treats probe outputs as expected answers.
+// deterministic set derived only from training inputs. It never treats probe
+// outputs as expected answers and does not consume holdout data.
 func measureIRBodyFillBehavioralProbes(activity string, candidateSources map[string][]byte,
-	training []IRBodyFillTestCase,
+	training, holdout []IRBodyFillTestCase,
 ) (*IRBodyFillBehavioralProbeReceipt, error) {
-	allInputs := deriveIRBodyFillBehavioralProbeInputs(training)
-	inputs := retainIRBodyFillBehavioralProbes(allInputs, irBodyFillBehavioralProbeCap)
-	encodedInputs, err := json.Marshal(inputs)
-	if err != nil {
-		return nil, err
+	holdoutInputs := make([]int64, len(holdout))
+	for index, testCase := range holdout {
+		holdoutInputs[index] = testCase.Input
 	}
-	digest := sha256.Sum256(encodedInputs)
+	allInputs := deriveIRBodyFillBehavioralProbeInputs(training, holdoutInputs...)
+	inputs := retainIRBodyFillBehavioralProbes(allInputs, irBodyFillBehavioralProbeCap)
 	receipt := &IRBodyFillBehavioralProbeReceipt{
 		Schema:             irBodyFillBehavioralProbeSchema,
 		ProbeInputs:        inputs,
-		ProbeInputsSHA256:  "sha256:" + hex.EncodeToString(digest[:]),
 		ProbeInputsTotal:   len(allInputs),
 		ProbeInputsOmitted: len(allInputs) - len(inputs),
 		CandidateCount:     len(candidateSources),
-		Scope:              "synthetic integer inputs derived only from training inputs and evaluated after selection; outputs are compared across declared candidates without an expected-value oracle, and do not measure intent or correctness",
+		Scope:              "synthetic integer inputs derived only from training inputs with declared holdout inputs excluded; candidate outputs have no expected-value oracle and measure behavioral distinctions, not intent or correctness",
 	}
 	if len(inputs) == 0 {
 		return receipt, nil
@@ -57,6 +55,9 @@ func measureIRBodyFillBehavioralProbes(activity string, candidateSources map[str
 			values[index] = result.Actual
 		}
 		outputs[id] = values
+		receipt.CandidateProfiles = append(receipt.CandidateProfiles, IRBodyFillCandidateProbeProfile{
+			CandidateID: id, Outputs: slices.Clone(values),
+		})
 		receipt.CandidateRunsCompleted++
 	}
 	for probeIndex := range inputs {
@@ -92,15 +93,27 @@ func measureIRBodyFillBehavioralProbes(activity string, candidateSources map[str
 		receipt.CandidatePairDistinguishabilityPercent = float64(receipt.CandidatePairsDistinguished) * 100 /
 			float64(receipt.CandidatePairsEvaluated)
 	}
+	encodedProfile, err := json.Marshal(struct {
+		Inputs     []int64                           `json:"inputs"`
+		Candidates []IRBodyFillCandidateProbeProfile `json:"candidates"`
+	}{Inputs: inputs, Candidates: receipt.CandidateProfiles})
+	if err != nil {
+		return nil, err
+	}
+	digest := sha256.Sum256(encodedProfile)
+	receipt.ProbeProfileSHA256 = "sha256:" + hex.EncodeToString(digest[:])
 	return receipt, nil
 }
 
-func deriveIRBodyFillBehavioralProbeInputs(training []IRBodyFillTestCase) []int64 {
+func deriveIRBodyFillBehavioralProbeInputs(training []IRBodyFillTestCase, excludedInputs ...int64) []int64 {
 	inputs := make([]int64, len(training))
 	trainingInputs := make(map[int64]struct{}, len(training))
 	for index, testCase := range training {
 		inputs[index] = testCase.Input
 		trainingInputs[testCase.Input] = struct{}{}
+	}
+	for _, input := range excludedInputs {
+		trainingInputs[input] = struct{}{}
 	}
 	slices.Sort(inputs)
 	inputs = slices.Compact(inputs)

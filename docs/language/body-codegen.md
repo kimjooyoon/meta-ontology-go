@@ -316,8 +316,17 @@ test gate cannot hide a poor model selection.
 The v1 fixture places its hole inside a conditional assignment to a local `let`
 binding, then returns that value, exercising condition, assignment and return.
 The v2 fixture fills two local `let` expressions before returning their sum.
-The model receives candidate score summaries plus the test count and digest;
-the individual input/output cases stay in Gooo's local receipt.
+The model receives candidate score summaries, the training count and digest,
+and per-candidate output profiles on up to 128 synthetic integer probes derived
+from training inputs. Declared holdout inputs are excluded from those probes;
+the chooser receives neither holdout rows nor expected probe outputs. The profile
+lets Laya reason about candidate behavior alongside Gooo intent without treating
+any synthetic output as a correctness oracle. Individual training and holdout
+input/output rows stay in Gooo's local receipt.
+
+See the [2026-10-06 local Laya observation](laya-local-observation-2026-10-06.md)
+for one measured run, including latency, deterministic fallback, and the limits
+of the CPU observation.
 
 The `functional_accuracy_percent` field means passed cases divided by declared
 cases. It is an exact score for that finite suite under the named bounded AST

@@ -1,0 +1,20 @@
+package sample
+namespace sample
+entity Integer id "sample://integer"
+activity NonNegative(Integer) -> Integer computes `if __GOOO_BODY_HOLE_condition__ { return __GOOO_BODY_HOLE_yes__ } else { return 0 }` assembling {
+    source_fill intent "Return one for nonnegative input and zero for negative input." {
+        hole "condition"
+        hole "yes"
+        candidate "strict_positive" {
+            fill "condition" "input > 0"
+            fill "yes" "1"
+        }
+        candidate "nonnegative" {
+            fill "condition" "input >= 0"
+            fill "yes" "1"
+        }
+    }
+    case "-10" -> "0"
+    case "10" -> "1"
+    holdout_case "5" -> "1"
+}
