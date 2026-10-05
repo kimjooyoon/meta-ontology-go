@@ -1,7 +1,6 @@
 package bodycodegen
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -217,9 +216,9 @@ func TestSourceIRBodyFillHoldoutMismatchLowersCompleteness(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	modified := bytes.Replace(source, []byte(`holdout_case "5" -> "6"`), []byte(`holdout_case "5" -> "7"`), 1)
-	if bytes.Equal(source, modified) {
-		t.Fatal("holdout fixture expectation was not changed")
+	modified, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-holdout-partial.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
 	}
 	file, diagnostics := syntax.Parse(string(modified))
 	if diagnostics.HasErrors() {

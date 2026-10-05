@@ -67,6 +67,8 @@ shows training and held-out accuracy separately:
 gooo body-codegen --json --activity Lift \
   examples/body-codegen/source-ir-fill-holdout.gooo.fixture
 ```
+The [partial holdout fixture](../examples/body-codegen/source-ir-fill-holdout-partial.gooo.fixture)
+keeps the training score full while recording one held-out mismatch as `PROGRESS`.
 
 Run it with `gooo body-codegen --json --activity Lift
 examples/body-codegen/source-ir-fill.gooo.fixture`. Add `--tiny-model
