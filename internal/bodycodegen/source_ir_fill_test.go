@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -216,6 +218,12 @@ activity Lift(Integer) -> Integer computes ` + "`" + `if __GOOO_BODY_HOLE_condit
 }
 
 func TestSourceDerivedPredicateCompositionFindsDisjointCases(t *testing.T) {
+	candidates, total, complete, err := generateIntegerPredicateExpressions(8, []assemblyspec.Case{
+		{Input: -2}, {Input: 0}, {Input: 2},
+	}, true)
+	if err != nil || complete || total != 29 || !slices.Contains(candidates, "(input >= -2) && (input <= 0)") {
+		t.Fatalf("bounded grammar omitted its closed-range condition: candidates=%v total=%d complete=%v err=%v", candidates, total, complete, err)
+	}
 	source := `package sample
 namespace sample
 entity Integer id "sample://integer"

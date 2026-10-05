@@ -193,14 +193,20 @@ func generateIntegerPredicateExpressions(maxExpressions int, cases []assemblyspe
 	}
 	compositions := make([]string, 0)
 	if compose {
-		// Include a compact, useful subset first: pairwise equality clauses let a
-		// source fill express disjoint accepted inputs with a small, auditable space.
+		// Include disjoint equality clauses and closed input ranges first so small
+		// per-hole caps still retain useful multi-condition predicates.
 		for left := range uniqueInputs {
 			for right := left + 1; right < len(uniqueInputs); right++ {
 				a := "input == " + strconv.FormatInt(uniqueInputs[left], 10)
 				b := "input == " + strconv.FormatInt(uniqueInputs[right], 10)
 				compositions = append(compositions, "("+a+") || ("+b+")")
-				compositions = append(compositions, "("+a+") && ("+b+")")
+			}
+		}
+		for left := range uniqueInputs {
+			for right := left; right < len(uniqueInputs); right++ {
+				lower := "input >= " + strconv.FormatInt(uniqueInputs[left], 10)
+				upper := "input <= " + strconv.FormatInt(uniqueInputs[right], 10)
+				compositions = append(compositions, "("+lower+") && ("+upper+")")
 			}
 		}
 	}
