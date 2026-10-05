@@ -4,6 +4,8 @@ import (
 	"maps"
 	"slices"
 	"unicode/utf8"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 type RecordExecution struct {
@@ -79,7 +81,20 @@ func validateRecordFields(schema []RecordField, fields RecordFields) error {
 	}
 	for _, field := range schema {
 		value, present := fields[field.Name]
-		if !present || !utf8.ValidString(value) {
+		if !present {
+			return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
+		}
+		switch field.TypeID {
+		case string(semantic.BuiltinStringTypeID):
+			text, ok := value.(string)
+			if !ok || !utf8.ValidString(text) {
+				return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
+			}
+		case string(semantic.BuiltinBooleanTypeID):
+			if _, ok := value.(bool); !ok {
+				return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
+			}
+		default:
 			return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
 		}
 	}

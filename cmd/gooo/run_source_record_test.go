@@ -9,11 +9,11 @@ import (
 
 func recordCLIReader(t *testing.T) runSourceReaderWithFiles {
 	t.Helper()
-	source, err := os.ReadFile("../../examples/language-record-binding/main.gooo")
+	source, err := os.ReadFile("../../examples/language-record-binding/boolean.gooo.fixture")
 	if err != nil {
 		t.Fatal(err)
 	}
-	input, err := os.ReadFile("../../examples/language-record-binding/input.json")
+	input, err := os.ReadFile("../../examples/language-record-binding/boolean-input.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,8 @@ func TestRunSourceRecordInputExecutesDeclaredGraph(t *testing.T) {
 		t.Fatalf("decode=%v stdout=%s stderr=%s", err, stdout.String(), stderr.String())
 	}
 	if code != exitOK || stderr.Len() != 0 || report.Decision != "PASS" || report.SemanticAdmission != "UNASSESSED" ||
-		report.Execution.ApplyCalls != 3 || report.Execution.Deliveries != 2 || report.Execution.Results["Report"].Fields["State"] != "UNKNOWN" {
+		report.Execution.ApplyCalls != 3 || report.Execution.Deliveries != 2 || report.Execution.Results["Report"].Fields["State"] != "UNKNOWN" ||
+		report.Execution.Results["Report"].Fields["Complete"] != false {
 		t.Fatalf("code=%d report=%+v stderr=%s", code, report, stderr.String())
 	}
 }

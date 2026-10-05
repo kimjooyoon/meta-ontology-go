@@ -7,15 +7,17 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 func recordExample(t *testing.T) ([]byte, RecordFields) {
 	t.Helper()
-	source, err := os.ReadFile("../../examples/language-record-binding/main.gooo")
+	source, err := os.ReadFile("../../examples/language-record-binding/boolean.gooo.fixture")
 	if err != nil {
 		t.Fatal(err)
 	}
-	raw, err := os.ReadFile("../../examples/language-record-binding/input.json")
+	raw, err := os.ReadFile("../../examples/language-record-binding/boolean-input.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +50,7 @@ func TestRecordPlanExecutesSourceBoundFanout(t *testing.T) {
 		if !maps.Equal(result.Fields, fields) || result.RootInputDigest != root.RootInputDigest ||
 			result.RootActivity != "Capture" || result.SourceDigest != plan.SourceDigest ||
 			result.SemanticFingerprint != plan.SemanticFingerprint || result.InputOrigin != "CALLER_SUPPLIED_DATA" ||
-			result.Authority != (OperationAuthority{}) || !validDigest(result.ResultDigest) {
+			result.Authority != (OperationAuthority{}) || !validDigest(result.ResultDigest) || result.Fields["Complete"] != false {
 			t.Fatalf("result %s=%+v", name, result)
 		}
 		if name != "Capture" && result.ParentResultDigest != root.ResultDigest {
@@ -89,7 +91,6 @@ func TestRecordPlanRejectsUnsupportedSource(t *testing.T) {
 	text := string(source)
 	cases := []string{
 		strings.Replace(text, "record.forward:v1", "record.approve:v1", 1),
-		strings.Replace(text, "type string required one", "type bool required one", 1),
 		strings.Replace(text, "type string required one", "type string optional one", 1),
 		strings.Replace(text, "type string required one", "type string required many", 1),
 		text + "\nbind Capture.result -> Review.input\n",
@@ -127,13 +128,43 @@ func TestRecordResultIsOpaqueAndSourceBound(t *testing.T) {
 	}
 }
 
-func TestRecordInputRejectsAmbiguousOrNonStringJSON(t *testing.T) {
+func TestRecordInputRejectsAmbiguousOrNonScalarJSON(t *testing.T) {
 	for _, raw := range []string{
-		"null", "[]", "1", `{"State":null}`, `{"State":1}`, `{"State":[]}`,
+		"null", "[]", "1", `{"State":null}`, `{"State":1}`, `{"State":[]}`, `{"State":{}}`,
 		`{"State":"UNKNOWN","State":"CLOSED"}`, `{"State":"UNKNOWN"} {}`,
 	} {
 		if _, err := DecodeRecordInput([]byte(raw)); err == nil {
 			t.Fatalf("accepted %s", raw)
 		}
+	}
+}
+
+func TestRecordPlanValidatesBooleanFieldsAgainstSourceType(t *testing.T) {
+	source, fields := recordExample(t)
+	plan, err := CompileRecordPlan("main.gooo", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	booleanTypeID := ""
+	for _, field := range plan.programs["Capture"].fields {
+		if field.Name == "Complete" {
+			booleanTypeID = field.TypeID
+		}
+	}
+	if booleanTypeID != string(semantic.BuiltinBooleanTypeID) {
+		t.Fatalf("boolean type id=%q", booleanTypeID)
+	}
+	wrongType := maps.Clone(fields)
+	wrongType["Complete"] = "false"
+	if result, err := plan.Execute(map[string]RecordFields{"Capture": wrongType}); err == nil || result.ApplyCalls != 0 {
+		t.Fatalf("wrong type executed: result=%+v err=%v", result, err)
+	}
+	fields["Complete"] = true
+	result, err := plan.Execute(map[string]RecordFields{"Capture": fields})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Results["Report"].Fields["Complete"] != true {
+		t.Fatalf("Boolean value not transported: %+v", result.Results["Report"].Fields)
 	}
 }
