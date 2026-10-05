@@ -7,7 +7,7 @@ import (
 	"unicode"
 )
 
-func validateSupportedField(entity Entity, index int, field Field, used map[string]string, seenNames map[string]string, sourceURI string, previousStart int, hasPrevious bool) error {
+func validateSupportedField(entity Entity, index int, field Field, used map[string]string, seenNames map[string]string, sourceURI string, previousStart int, hasPrevious, allowBoolean bool) error {
 	context := fmt.Sprintf("entity %q field %d", entity.ID, index)
 	if field.ID == "" || field.Name == "" || field.Parent == "" || field.TypeRefID == "" || field.Presence == "" || field.Cardinality == "" {
 		return entityFieldsError(entityFieldsIncompleteDiagnostic, field, context+" is missing a required identity, name, type, shape, or parent")
@@ -32,7 +32,11 @@ func validateSupportedField(entity Entity, index int, field Field, used map[stri
 	if field.GoName != "" && field.GoName != field.Name {
 		return entityFieldsError(entityFieldsUnrepresentableDiagnostic, field, "Go name must be exactly Field.Name")
 	}
-	if field.GoType != "" && field.GoType != "string" {
+	expectedGoType := "string"
+	if field.TypeRefID == entityFieldsBooleanTypeID && allowBoolean {
+		expectedGoType = "bool"
+	}
+	if field.GoType != "" && field.GoType != expectedGoType {
 		return entityFieldsError(entityFieldsUnrepresentableDiagnostic, field, "Go type is derived from the profile and cannot be overridden")
 	}
 	if !isGoIdentifier(field.Name) {
@@ -42,7 +46,7 @@ func validateSupportedField(entity Entity, index int, field Field, used map[stri
 		return entityFieldsError(entityFieldsGoNameCollisionDiagnostic, field, fmt.Sprintf("Go name is already used by field %q", previous))
 	}
 	seenNames[field.Name] = field.ID
-	if field.TypeRefID != entityFieldsStringTypeID {
+	if field.TypeRefID != entityFieldsStringTypeID && !(allowBoolean && field.TypeRefID == entityFieldsBooleanTypeID) {
 		return entityFieldsError(entityFieldsUnsupportedTypeDiagnostic, field, fmt.Sprintf("resolved type %q is not in the bound profile", field.TypeRefID))
 	}
 	if field.Presence != "required" || field.Cardinality != "one" {

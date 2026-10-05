@@ -13,6 +13,10 @@ import (
 // profile. Ordinary Get, Put, and Lower keep their deferred defaults.
 func EntityFieldsV1Support() EntityFieldsSupport { return syntax.EntityFieldsV1Support() }
 
+// EntityFieldsV2Support enables required single Boolean fields under the
+// separately versioned V2 profile.
+func EntityFieldsV2Support() EntityFieldsSupport { return syntax.EntityFieldsV2Support() }
+
 // DocumentFromSyntaxWithEntityFieldsSupport adapts a profile-bound AST.
 func DocumentFromSyntaxWithEntityFieldsSupport(file *syntax.File, support EntityFieldsSupport) (Document, error) {
 	return documentFromSyntaxWithEntityFieldsSupport(file, support)

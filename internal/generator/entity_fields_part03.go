@@ -2,9 +2,10 @@ package generator
 
 import (
 	"fmt"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-func validateSupportedEntityFields(ir SemanticIR) error {
+func validateSupportedEntityFields(ir SemanticIR, profileID string) error {
 	used := make(map[string]string, len(ir.Entities)+len(ir.Activities))
 	for _, entity := range ir.Entities {
 		if previous, exists := used[entity.ID]; exists {
@@ -34,7 +35,7 @@ func validateSupportedEntityFields(ir SemanticIR) error {
 		var previousStart int
 		var hasPrevious bool
 		for index, field := range entity.Fields {
-			if err := validateSupportedField(entity, index, field, used, seenNames, sourceURI, previousStart, hasPrevious); err != nil {
+			if err := validateSupportedField(entity, index, field, used, seenNames, sourceURI, previousStart, hasPrevious, profileID == syntax.EntityFieldsV2ProfileID); err != nil {
 				return err
 			}
 			if sourceURI == "" {

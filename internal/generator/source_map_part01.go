@@ -1,6 +1,8 @@
 package generator
 
-func makeSourceMap(source []byte, ir SemanticIR) (SourceMap, error) {
+import "github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+
+func makeSourceMap(source []byte, ir SemanticIR, profile syntax.EntityFieldsProfile) (SourceMap, error) {
 	markers, err := parseMarkers(source)
 	if err != nil {
 		return SourceMap{}, err
@@ -11,7 +13,7 @@ func makeSourceMap(source []byte, ir SemanticIR) (SourceMap, error) {
 	entities, activities := sourceMapNodes(ir)
 	result := SourceMap{Mappings: make([]SourceMapping, 0, len(markers.Regions))}
 	for _, region := range markers.Regions {
-		if err := appendSourceMapRegion(&result, source, region, entities, activities); err != nil {
+		if err := appendSourceMapRegion(&result, source, region, entities, activities, profile); err != nil {
 			return SourceMap{}, err
 		}
 	}
@@ -28,7 +30,7 @@ func sourceMapNodes(ir SemanticIR) (map[string]Entity, map[string]Activity) {
 	}
 	return entities, activities
 }
-func appendSourceMapRegion(result *SourceMap, source []byte, region generatedRegion, entities map[string]Entity, activities map[string]Activity) error {
+func appendSourceMapRegion(result *SourceMap, source []byte, region generatedRegion, entities map[string]Entity, activities map[string]Activity, profile syntax.EntityFieldsProfile) error {
 	result.Mappings = append(result.Mappings, SourceMapping{
 		SemanticID: region.ID,
 		Kind:       region.Kind,
@@ -37,7 +39,7 @@ func appendSourceMapRegion(result *SourceMap, source []byte, region generatedReg
 		Generated:  rangeForOffsets(source, region.Start, region.End),
 	})
 	if entity, ok := entities[region.ID]; ok && len(entity.Fields) > 0 {
-		if err := appendEntityFieldMappings(result, source, region, entity); err != nil {
+		if err := appendEntityFieldMappings(result, source, region, entity, profile); err != nil {
 			return err
 		}
 	}

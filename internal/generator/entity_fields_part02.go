@@ -14,10 +14,12 @@ func validateEntityFieldsSupport(support syntax.EntityFieldsSupport) error {
 	if support.Profile.ID == "" && support.Profile.Version == 0 && support.Profile.Digest == "" {
 		return entityFieldsError(entityFieldsUnboundProfileDiagnostic, Field{}, "profile is unbound")
 	}
-	if support.Profile.ID != syntax.EntityFieldsProfileID || support.Profile.Version != syntax.EntityFieldsProfileVersion {
+	if support.Profile.ID != syntax.EntityFieldsProfileID && support.Profile.ID != syntax.EntityFieldsV2ProfileID ||
+		support.Profile.ID == syntax.EntityFieldsProfileID && support.Profile.Version != syntax.EntityFieldsProfileVersion ||
+		support.Profile.ID == syntax.EntityFieldsV2ProfileID && support.Profile.Version != syntax.EntityFieldsV2ProfileVersion {
 		return entityFieldsError(entityFieldsProfileMismatchDiagnostic, Field{}, "profile identity or version does not match")
 	}
-	if support.Profile.Digest != syntax.EntityFieldsProfileDigest {
+	if err := support.Profile.Validate(); err != nil {
 		return entityFieldsError(entityFieldsProfileDigestDiagnostic, Field{}, "profile digest does not match")
 	}
 	return nil
@@ -33,7 +35,7 @@ func validateEntityFieldsInput(ir SemanticIR, support syntax.EntityFieldsSupport
 	if support.State == syntax.EntityFieldsDeferred {
 		return entityFieldsError(entityFieldsDeferredDiagnostic, first, "entity fields are deferred and unsupported by the public generator")
 	}
-	return validateSupportedEntityFields(ir)
+	return validateSupportedEntityFields(ir, support.Profile.ID)
 }
 func semanticIRHasFields(ir SemanticIR) bool {
 	for _, entity := range ir.Entities {

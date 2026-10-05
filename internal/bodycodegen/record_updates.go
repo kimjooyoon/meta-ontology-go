@@ -7,7 +7,7 @@ import (
 )
 
 // Syntactic local validation precedes ordinary Go checking of the receiver's
-// nominal record type, declared field and assigned Text value.
+// nominal record type, declared field and assigned scalar value.
 func assignmentLocalName(target ast.Expr) (string, bool) {
 	if selector, ok := target.(*ast.SelectorExpr); ok {
 		target = ast.Unparen(selector.X)
@@ -33,17 +33,25 @@ func (e *integerBodyEvaluator) evaluateRecordUpdate(target *ast.SelectorExpr, ex
 	if err != nil {
 		return err
 	}
-	text, ok := assigned.(string)
-	if !ok {
-		return fmt.Errorf("record field assignment requires text")
-	}
 	structure, ok := object.Type().Underlying().(*types.Struct)
 	if !ok || structure.NumFields() != value.Count {
 		return fmt.Errorf("field assignment has a different record layout")
 	}
 	for i := 0; i < value.Count; i++ {
 		if structure.Field(i).Name() == target.Sel.Name {
-			value.Values[i] = text
+			if structure.Field(i).Type() == types.Typ[types.Bool] {
+				boolean, ok := assigned.(bool)
+				if !ok {
+					return fmt.Errorf("Boolean record field assignment requires a Boolean")
+				}
+				value.Values[i].Boolean = boolean
+			} else {
+				text, ok := assigned.(string)
+				if !ok {
+					return fmt.Errorf("text record field assignment requires text")
+				}
+				value.Values[i].Text = text
+			}
 			e.environment[object] = value
 			return nil
 		}

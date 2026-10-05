@@ -15,12 +15,17 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 )
 
-// A value copies at most sixteen field string headers. Local whole-value
-// assignments do not alias mutable maps or pointers to another record value.
+// Scalar slots keep records value-shaped and bounded; local copies never alias.
+type recordBodyScalar struct {
+	Text    string
+	Boolean bool
+	Kind    uint8
+}
+
 type recordBodyValue struct {
 	Type   string
 	Count  int
-	Values [16]string
+	Values [16]recordBodyScalar
 }
 
 func zeroRecordBodyValue(t types.Type) (recordBodyValue, error) {
@@ -32,12 +37,18 @@ func zeroRecordBodyValue(t types.Type) (recordBodyValue, error) {
 	if !ok || structure.NumFields() < 1 || structure.NumFields() > 16 {
 		return recordBodyValue{}, fmt.Errorf("record layout exceeds value bounds")
 	}
-	for field := range structure.Fields() {
-		if field.Type() != types.Typ[types.String] {
-			return recordBodyValue{}, fmt.Errorf("record fields must be strings")
+	value := recordBodyValue{Type: named.Obj().Name(), Count: structure.NumFields()}
+	for field := 0; field < structure.NumFields(); field++ {
+		switch structure.Field(field).Type() {
+		case types.Typ[types.String]:
+			value.Values[field].Kind = 1
+		case types.Typ[types.Bool]:
+			value.Values[field].Kind = 2
+		default:
+			return recordBodyValue{}, fmt.Errorf("record field type is outside the scalar profile")
 		}
 	}
-	return recordBodyValue{Type: named.Obj().Name(), Count: structure.NumFields()}, nil
+	return value, nil
 }
 
 func (e *integerBodyEvaluator) evaluateRecordLiteral(literal *ast.CompositeLit) (any, error) {
@@ -51,7 +62,7 @@ func (e *integerBodyEvaluator) evaluateRecordLiteral(literal *ast.CompositeLit) 
 		if !ok {
 			return nil, fmt.Errorf("record evaluator requires named fields")
 		}
-		text, err := e.evaluateExpression(pair.Value)
+		assigned, err := e.evaluateExpression(pair.Value)
 		if err != nil {
 			return nil, err
 		}
@@ -61,11 +72,19 @@ func (e *integerBodyEvaluator) evaluateRecordLiteral(literal *ast.CompositeLit) 
 		}
 		for i := 0; i < structure.NumFields(); i++ {
 			if structure.Field(i).Name() == key.Name {
-				field, ok := text.(string)
-				if !ok {
-					return nil, fmt.Errorf("record field requires text")
+				if structure.Field(i).Type() == types.Typ[types.Bool] {
+					boolean, ok := assigned.(bool)
+					if !ok {
+						return nil, fmt.Errorf("record field requires a Boolean")
+					}
+					value.Values[i].Boolean = boolean
+				} else {
+					text, ok := assigned.(string)
+					if !ok {
+						return nil, fmt.Errorf("record field requires text")
+					}
+					value.Values[i].Text = text
 				}
-				value.Values[i] = field
 			}
 		}
 	}
@@ -84,7 +103,10 @@ func (e *integerBodyEvaluator) evaluateRecordField(selector *ast.SelectorExpr) (
 	structure := e.information.Types[selector.X].Type.Underlying().(*types.Struct)
 	for i := 0; i < structure.NumFields(); i++ {
 		if structure.Field(i).Name() == selector.Sel.Name {
-			return record.Values[i], nil
+			if structure.Field(i).Type() == types.Typ[types.Bool] {
+				return record.Values[i].Boolean, nil
+			}
+			return record.Values[i].Text, nil
 		}
 	}
 	return nil, fmt.Errorf("record field is not declared")
@@ -162,11 +184,17 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 	}
 	wanted := expected.(recordBodyValue)
 	result := RecordAssemblyCase{Inputs: json.RawMessage(c.Inputs), Expected: json.RawMessage(c.Expected), Passed: actual == wanted}
-	object := make(map[string]string, len(record.Fields))
+	object := make(map[string]any, len(record.Fields))
 	for i, field := range record.Fields {
-		object[field.Name] = actual.Values[i]
-		result.Fields = append(result.Fields, RecordAssemblyField{ID: field.ID, Name: field.Name, Expected: wanted.Values[i],
-			Actual: actual.Values[i], Passed: actual.Values[i] == wanted.Values[i]})
+		actualValue := recordScalarJSONValue(actual.Values[i])
+		expectedValue := recordScalarJSONValue(wanted.Values[i])
+		object[field.Name] = actualValue
+		typeID := ""
+		if field.TypeID == "urn:gooo:type:boolean" {
+			typeID = field.TypeID
+		}
+		result.Fields = append(result.Fields, RecordAssemblyField{ID: field.ID, Name: field.Name, TypeID: typeID, Expected: fmt.Sprint(expectedValue),
+			Actual: fmt.Sprint(actualValue), Passed: actual.Values[i] == wanted.Values[i]})
 	}
 	result.Actual, _ = json.Marshal(object)
 	return result, nil
@@ -194,11 +222,19 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 			if !ok {
 				return nil, fmt.Errorf("record field %q is missing", field.Name)
 			}
-			text, err := decodeRecordCaseValue(fieldRaw, types.Typ[types.String], records)
+			fieldType := types.Type(types.Typ[types.String])
+			if field.TypeID == "urn:gooo:type:boolean" {
+				fieldType = types.Typ[types.Bool]
+			}
+			decoded, err := decodeRecordCaseValue(fieldRaw, fieldType, records)
 			if err != nil {
 				return nil, err
 			}
-			value.Values[i] = text.(string)
+			if fieldType == types.Typ[types.Bool] {
+				value.Values[i].Boolean = decoded.(bool)
+			} else {
+				value.Values[i].Text = decoded.(string)
+			}
 		}
 		return value, nil
 	}
@@ -219,4 +255,11 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 		}
 	}
 	return nil, fmt.Errorf("value does not match %s or exceeds its text bound", t)
+}
+
+func recordScalarJSONValue(value recordBodyScalar) any {
+	if value.Kind == 2 {
+		return value.Boolean
+	}
+	return value.Text
 }

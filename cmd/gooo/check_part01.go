@@ -41,7 +41,7 @@ func (SyntaxSourceParser) ParseFile(filename, source string) (*syntax.File, synt
 type EntityFieldsCLIParser struct{}
 
 func (EntityFieldsCLIParser) ParseFile(filename, source string) (*syntax.File, syntax.Diagnostics) {
-	return syntax.ParseFileWithEntityFieldsSupport(filename, source, syntax.EntityFieldsV1Support())
+	return syntax.ParseFileWithEntityFieldsSupport(filename, source, syntax.EntityFieldsV2Support())
 }
 func runCheck(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
 	args, jsonMode := parseJSONFlag(args)
