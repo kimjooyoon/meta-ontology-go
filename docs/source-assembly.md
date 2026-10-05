@@ -69,6 +69,11 @@ gooo body-codegen --json --activity Lift \
 ```
 The [partial holdout fixture](../examples/body-codegen/source-ir-fill-holdout-partial.gooo.fixture)
 keeps the training score full while recording one held-out mismatch as `PROGRESS`.
+For a branch-shaped body, the
+[conditional holdout fixture](../examples/body-codegen/source-ir-fill-conditional-holdout.gooo.fixture)
+lets the bounded grammars assemble a condition and a branch value independently.
+Its four training inputs distinguish the zero boundary; two unseen inputs check
+both sides of the branch after selection.
 
 Run the same source without a model to get a deterministic choice:
 
@@ -77,6 +82,10 @@ env -u GOOO_LAYA_URL -u GOOO_LAYA_API_KEY \
   go run ./cmd/gooo body-codegen --json --activity Lift \
   examples/body-codegen/source-ir-fill-holdout-partial.gooo.fixture
 ```
+
+Run the conditional case the same way by substituting
+`source-ir-fill-conditional-holdout.gooo.fixture` for the example path above.
+It reports 4/4 training cases and 2/2 held-out cases for the deterministic choice.
 
 To compare a local Laya decision, start its `/v1/systemone` endpoint and set
 `GOOO_LAYA_URL` to that endpoint before running the same command. Gooo sends only
