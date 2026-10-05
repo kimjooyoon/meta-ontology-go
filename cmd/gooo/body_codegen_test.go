@@ -104,22 +104,24 @@ return base + increment` + "`" + `
 		reader, &stdout, &stderr,
 	)
 	var report struct {
-		BodyFill struct {
-			Schema                string              `json:"schema"`
-			SelectedCandidateID   string              `json:"selected_candidate_id"`
-			FunctionalAccuracyPct float64             `json:"functional_accuracy_percent"`
-			HoleFills             []map[string]string `json:"hole_fills"`
-		} `json:"body_fill"`
+		Report struct {
+			BodyFill struct {
+				Schema                string              `json:"schema"`
+				SelectedCandidateID   string              `json:"selected_candidate_id"`
+				FunctionalAccuracyPct float64             `json:"functional_accuracy_percent"`
+				HoleFills             []map[string]string `json:"hole_fills"`
+			} `json:"body_fill"`
+		} `json:"report"`
 		Source string `json:"source"`
 	}
 	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
 		t.Fatalf("body-codegen did not return JSON: code=%d stdout=%q stderr=%q: %v", code, stdout.String(), stderr.String(), err)
 	}
-	if code != exitOK || stderr.Len() != 0 || report.BodyFill.Schema != "gooo/body-codegen-ir-fill-plan/v2" ||
-		report.BodyFill.SelectedCandidateID != "compose" || report.BodyFill.FunctionalAccuracyPct != 100 ||
-		len(report.BodyFill.HoleFills) != 2 || !strings.Contains(report.Source, "var base = (input + 0)") ||
+	if code != exitOK || stderr.Len() != 0 || report.Report.BodyFill.Schema != "gooo/body-codegen-ir-fill-plan/v2" ||
+		report.Report.BodyFill.SelectedCandidateID != "compose" || report.Report.BodyFill.FunctionalAccuracyPct != 100 ||
+		len(report.Report.BodyFill.HoleFills) != 2 || !strings.Contains(report.Source, "var base = (input + 0)") ||
 		!strings.Contains(report.Source, "var increment int64 = 1") || strings.Contains(report.Source, "__GOOO_BODY_HOLE_") {
-		t.Fatalf("multi-hole IR fill did not emit the full selected assignment: code=%d report=%#v source=%q stderr=%q", code, report.BodyFill, report.Source, stderr.String())
+		t.Fatalf("multi-hole IR fill did not emit the full selected assignment: code=%d report=%#v source=%q stderr=%q", code, report.Report.BodyFill, report.Source, stderr.String())
 	}
 }
 
