@@ -9,6 +9,7 @@ import (
 	"go/parser"
 	"go/scanner"
 	"go/token"
+	"maps"
 	"strconv"
 	"strings"
 	"time"
@@ -577,9 +578,7 @@ func bodyFillModelCandidates(holes []IRBodyFillHole, candidates []IRBodyFillCand
 			continue
 		}
 		fills := make(map[string]string, len(candidate.Fills))
-		for key, value := range candidate.Fills {
-			fills[key] = value
-		}
+		maps.Copy(fills, candidate.Fills)
 		if len(fills) == 0 && len(holes) == 1 {
 			fills[holes[0].ID] = candidate.Expression
 		}
