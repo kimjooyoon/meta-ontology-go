@@ -208,6 +208,15 @@ func TestSourceIRBodyFillHoldoutMismatchLowersCompleteness(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	originalFile, originalDiagnostics := syntax.Parse(string(source))
+	if originalDiagnostics.HasErrors() {
+		t.Fatal(originalDiagnostics)
+	}
+	originalSpec := originalFile.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	original, err := GenerateWithSourceIRBodyFill(context.Background(), "holdout-original.gooo", source, "Lift", originalSpec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	modified := bytes.Replace(source, []byte(`holdout_case "5" -> "6"`), []byte(`holdout_case "5" -> "7"`), 1)
 	if bytes.Equal(source, modified) {
 		t.Fatal("holdout fixture expectation was not changed")
@@ -225,6 +234,12 @@ func TestSourceIRBodyFillHoldoutMismatchLowersCompleteness(t *testing.T) {
 	if fill == nil || fill.TestCasesPassed != 2 || fill.TestCasesTotal != 2 ||
 		fill.HoldoutCasesPassed != 1 || fill.HoldoutCasesTotal != 2 || fill.HoldoutAccuracyPercent == nil || *fill.HoldoutAccuracyPercent != 50 {
 		t.Fatalf("held-out mismatch was not isolated from training accuracy: %+v", fill)
+	}
+	originalFill := original.Report.BodyFill
+	if originalFill == nil || fill.TestSuiteSHA256 != originalFill.TestSuiteSHA256 ||
+		fill.IRPlanSHA256 == originalFill.IRPlanSHA256 || fill.HoldoutSuiteSHA256 == originalFill.HoldoutSuiteSHA256 ||
+		fill.SelectedCandidateID != originalFill.SelectedCandidateID || !slices.Equal(fill.CandidateScores, originalFill.CandidateScores) {
+		t.Fatalf("changing holdout evidence altered training selection or failed to change bound identities: original=%+v modified=%+v", originalFill, fill)
 	}
 	dimension := bodyFillDimension(result, "body_fill_holdout_accuracy")
 	if dimension.Status != "PROGRESS" {
