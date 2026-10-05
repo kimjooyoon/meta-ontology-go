@@ -156,8 +156,8 @@ func workspaceSourcePath(source string) (string, error) {
 	if clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
 		return "", fmt.Errorf("workspace source path %q must stay inside the workspace", source)
 	}
-	if filepath.Ext(clean) != ".gooo" {
-		return "", fmt.Errorf("workspace source path %q must name a .gooo file", source)
+	if !strings.HasSuffix(clean, ".gooo") && !strings.HasSuffix(clean, ".gooo.fixture") {
+		return "", fmt.Errorf("workspace source path %q must name a .gooo source or .gooo.fixture", source)
 	}
 	return clean, nil
 }

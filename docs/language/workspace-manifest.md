@@ -8,6 +8,15 @@ gooo package resolve gooo.workspace.json
 gooo package resolve --json gooo.workspace.json
 ```
 
+The cross-package binding example at `examples/package-imports` uses this
+command directly. The workspace reader accepts regular `.gooo` sources and
+`.gooo.fixture` files for runnable examples that are not part of the language
+conformance corpus:
+
+```sh
+gooo package resolve --json examples/package-imports/gooo.workspace.json
+```
+
 Version 1 records an entry activity and packages. Each package has a stable
 path, a Gooo package name, imports by package path, and source paths relative to
 the workspace manifest:
@@ -35,6 +44,13 @@ namespace app
 import "example/core"
 ```
 
+An alias can name a package in an explicit activity binding:
+
+```gooo
+import core "example/core"
+bind core.Normalize.result -> Main.input
+```
+
 Resolution reads the listed `.gooo` sources, builds a deterministic dependency
 order, and emits a `gooo/package-runtime-result/v1` receipt with source and
 semantic digests. Unknown package imports and dependency cycles fail closed.
@@ -55,7 +71,14 @@ updated.
 
 Gooo source imports identify package dependencies, while the workspace manifest
 still supplies package paths, source files, and the executable entry. Activity
-call expressions across packages are not yet part of the language. The receipt
-resolves declarations and the public type surface; it does not claim to execute
-generated Go code. The library starter includes a workspace manifest so package
-boundaries are visible from the first project command.
+call expressions across packages are not yet part of the language. `package
+resolve` can resolve an explicit imported-activity binding against the imported
+package's exported activity and the local consumer. The output and input must
+carry the same stable entity ID. Its receipt records producer and consumer
+packages, activities, ports, and entity ID under the consumer package's
+`bindings` list. Unknown aliases, activities, ports, and type mismatches fail
+closed. At this stage, imported producers can feed local consumers; other
+cross-package edge shapes remain unsupported. The receipt describes checked
+package wiring and does not claim to execute generated Go code. The library
+starter includes a workspace manifest so package boundaries are visible from
+the first project command.

@@ -1,0 +1,8 @@
+package app
+namespace example_app
+
+import core "example/core"
+
+activity Main(Text) -> Text computes "identity"
+
+bind core.Normalize.result -> Main.input

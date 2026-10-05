@@ -60,8 +60,9 @@ func (d *NamespaceDecl) SourceSpan() Span { return d.Span }
 
 // ImportDecl names a package path consumed by this source file.
 type ImportDecl struct {
-	Span Span
-	Path string
+	Span  Span
+	Alias string
+	Path  string
 }
 
 // NameRef is an identifier occurrence in an activity signature.

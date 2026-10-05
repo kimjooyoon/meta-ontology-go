@@ -53,6 +53,16 @@ activity Clamp(Integer) -> Integer computes "int.add:1"
 	}
 }
 
+func TestWorkspaceSourcePathAcceptsGoooFixtures(t *testing.T) {
+	got, err := workspaceSourcePath("examples/package-imports/app.gooo.fixture")
+	if err != nil || got != "examples/package-imports/app.gooo.fixture" {
+		t.Fatalf("workspace fixture path was rejected or changed: got=%q err=%v", got, err)
+	}
+	if _, err := workspaceSourcePath("examples/package-imports/app.txt"); err == nil {
+		t.Fatal("workspace accepted a source with an unsupported extension")
+	}
+}
+
 func TestRunPackageResolveFailsClosedOnUnknownImport(t *testing.T) {
 	root := t.TempDir()
 	writeWorkspaceSource(t, root, "main.gooo", `package app
@@ -122,6 +132,87 @@ activity Charge(Money) -> Receipt computes "identity"
 		t.Fatalf("app package did not expose resolved activity types: %+v", pkg.Exports)
 	}
 	t.Fatalf("workspace result did not include app package: %+v", receipt.Result.Image.Packages)
+}
+
+func TestRunPackageResolveChecksImportedActivityBinding(t *testing.T) {
+	root := t.TempDir()
+	writeWorkspaceSource(t, root, "core.gooo", `package core
+namespace core
+entity Text id "workspace://core/text"
+activity Normalize(Text) -> Text computes "identity"
+`)
+	writeWorkspaceSource(t, root, "app.gooo", `package app
+namespace app
+import core "example/core"
+activity Main(Text) -> Text computes "identity"
+bind core.Normalize.result -> Main.input
+`)
+	manifestPath := writeWorkspaceManifest(t, root, `{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/app", "activity": "Main"},
+  "packages": [
+    {"path": "example/app", "name": "app", "imports": ["example/core"], "sources": ["app.gooo"]},
+    {"path": "example/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
+  ]
+}`)
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"package", "resolve", "--json", manifestPath}, &stdout, &stderr); code != exitOK || stderr.Len() != 0 {
+		t.Fatalf("imported activity binding did not resolve: code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
+	}
+	var receipt workspaceResolutionReceipt
+	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
+		t.Fatalf("decode receipt: %v", err)
+	}
+	if receipt.Result == nil {
+		t.Fatalf("workspace receipt has no result: %+v", receipt)
+	}
+	for _, pkg := range receipt.Result.Image.Packages {
+		if pkg.Path != "example/app" {
+			continue
+		}
+		if len(pkg.Bindings) != 1 {
+			t.Fatalf("expected one cross-package edge, got %+v", pkg.Bindings)
+		}
+		binding := pkg.Bindings[0]
+		if binding.ProducerPackage != "example/core" || binding.ProducerActivity != "Normalize" || binding.ProducerPort != "result" || binding.ConsumerPackage != "example/app" || binding.ConsumerActivity != "Main" || binding.ConsumerPort != "input" || binding.EntityID != "workspace://core/text" {
+			t.Fatalf("unexpected cross-package edge: %+v", binding)
+		}
+		return
+	}
+	t.Fatalf("workspace result omitted app package: %+v", receipt.Result.Image.Packages)
+}
+
+func TestRunPackageResolveRejectsMismatchedImportedActivityBinding(t *testing.T) {
+	root := t.TempDir()
+	writeWorkspaceSource(t, root, "core.gooo", `package core
+namespace core
+entity Text id "workspace://core/text"
+activity Normalize(Text) -> Text computes "identity"
+`)
+	writeWorkspaceSource(t, root, "app.gooo", `package app
+namespace app
+import core "example/core"
+entity Boolean id "workspace://app/boolean"
+activity Main(Boolean) -> Boolean computes "identity"
+bind core.Normalize.result -> Main.input
+`)
+	manifestPath := writeWorkspaceManifest(t, root, `{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/app", "activity": "Main"},
+  "packages": [
+    {"path": "example/app", "name": "app", "imports": ["example/core"], "sources": ["app.gooo"]},
+    {"path": "example/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
+  ]
+}`)
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"package", "resolve", "--json", manifestPath}, &stdout, &stderr)
+	var receipt workspaceResolutionReceipt
+	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
+		t.Fatalf("decode failure receipt: %v stdout=%q", err, stdout.String())
+	}
+	if code != exitFailure || receipt.Decision != "FAIL_CLOSED" || !strings.Contains(receipt.Error, "PACKAGE_BINDING_TYPE_MISMATCH") || stderr.Len() != 0 {
+		t.Fatalf("mismatched cross-package edge did not fail closed: code=%d receipt=%+v stderr=%q", code, receipt, stderr.String())
+	}
 }
 
 func TestRunPackageResolveFailsClosedOnUnknownActivityType(t *testing.T) {
