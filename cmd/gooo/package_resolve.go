@@ -56,7 +56,7 @@ func runPackageCommand(args []string, reader SourceReader, stdout, stderr io.Wri
 	if err != nil {
 		return packageResolutionFailure(jsonMode, manifestPath, err, stderr, stdout)
 	}
-	if len(manifestBytes) > maxInputBytes {
+	if int64(len(manifestBytes)) > maxInputBytes {
 		return packageResolutionFailure(jsonMode, manifestPath, inputLimitError(maxInputBytes), stderr, stdout)
 	}
 	manifest, err := decodeWorkspaceManifest(manifestBytes)
