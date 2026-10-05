@@ -243,10 +243,10 @@ two combined scope failures. Its expected arithmetic is `5*input+2`, subtracting
 differs, so the example measures structural assembly and finite feedback rather
 than asserting semantic equivalence between the original and requested edit.
 
-## Filling a typed body IR hole
+## Filling typed body IR holes
 
-The separate `--fill-plan` experiment lets Laya select one listed expression to
-fill a hole in a Gooo-authored body skeleton. The activity keeps the control
+The separate `--fill-plan` experiment lets Laya select one listed expression or
+complete assignment to fill typed holes in a Gooo-authored body skeleton. The activity keeps the control
 flow and a typed hole; the plan supplies a natural-language intent, a finite
 list of expression candidates, and explicit input/output cases:
 
@@ -258,24 +258,48 @@ GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
   examples/body-codegen/ir-fill-clamp.gooo.fixture
 ```
 
-This first slice accepts one `Integer -> Integer` hole named
-`__GOOO_BODY_HOLE_<hole_id>__`, two to sixteen closed expression candidates,
-and one to 4096 integer test cases. Intent text is limited to 2000 Unicode
+The v1 plan accepts one `Integer -> Integer` hole named
+`__GOOO_BODY_HOLE_<hole_id>__`. The v2 plan accepts two to eight holes and
+declares two to sixteen complete assignments. Every assignment must fill every
+hole exactly once. A single decision selects the whole assignment, which lets
+the model consider how expression choices fit together while keeping each piece
+explicit in Gooo's IR skeleton. For example, `seed` and `step` can be selected
+together from the
+[multi-hole fixture](../../examples/body-codegen/ir-fill-multi-hole.gooo.fixture)
+and [plan](../../examples/body-codegen/ir-fill-multi-hole-plan.json):
+
+```sh
+go run ./cmd/gooo body-codegen --json --fill-plan \
+  examples/body-codegen/ir-fill-multi-hole-plan.json \
+  --activity Lift examples/body-codegen/ir-fill-multi-hole.gooo.fixture
+```
+
+Set `GOOO_LAYA_URL` to let Laya rank the declared assignments. Without a model,
+Gooo selects deterministically and still scores every assignment. The compact
+`--tiny-model` path currently supports v1 single-hole plans; v2 requires Laya or
+the deterministic route until the compact model is trained to compare complete
+multi-hole assignments.
+
+Both versions currently require an `Integer -> Integer` activity, closed
+expression candidates, and one to 4096 integer test cases. Intent text is
+limited to 2000 Unicode
 characters. Every JSON test case must explicitly provide non-null integer
 `input` and `expected` fields. Gooo typechecks every candidate and
 evaluates it with a closed, side-effect-free integer AST interpreter before
 asking Laya. Laya receives the Gooo
-body IR skeleton, the intent, candidate expressions, and each candidate's
+body IR skeleton, the intent, candidate assignments, and each candidate's
 measured test score. It can return only a listed candidate ID. Gooo then fills
-that IR hole, emits the final Go function, typechecks and replays it, and
-reports the emitted expression's exact pass fraction on the same suite. If the
+all declared IR holes in the selected assignment, emits the final Go function,
+typechecks and replays it, and reports the emitted body's exact pass fraction on
+the same suite. If the
 proposal scores below another declared candidate, Gooo emits the highest-scoring
 candidate instead; an equal-scoring Laya proposal is retained. The receipt keeps
 both the model proposal and the actual emitted candidate, so the deterministic
 test gate cannot hide a poor model selection.
-This fixture places the hole inside a conditional assignment to a local `let`
-binding, then returns that value, so it exercises condition, assignment, and
-return paths together. The model receives candidate score summaries plus the test count and digest;
+The v1 fixture places its hole inside a conditional assignment to a local `let`
+binding, then returns that value, exercising condition, assignment and return.
+The v2 fixture fills two local `let` expressions before returning their sum.
+The model receives candidate score summaries plus the test count and digest;
 the individual input/output cases stay in Gooo's local receipt.
 
 The `functional_accuracy_percent` field means passed cases divided by declared
@@ -286,7 +310,9 @@ candidate's score; `best_candidate_accuracy_percent` records the best score
 available in this candidate set, and `selection_regret_percentage_points`
 measures how far the proposal falls below it. Those values separate
 candidate-set coverage from Laya's selection quality on the declared suite.
-The completeness receipt adds `declared_suite_functional_accuracy` to the
+For v2, the receipt records each `hole_id` and selected expression in
+`hole_fills`; `selected_candidate_id` continues to identify the complete
+assignment. The completeness receipt adds `declared_suite_functional_accuracy` to the
 body-fill core and binds its plan identity to the fill-plan digest. Known
 failing cases keep completeness at `PROGRESS`, even when emitted code compiles.
 Reports identify the repaired evaluator as `gooo/bodycodegen-int64-ast-interpreter/v2`.

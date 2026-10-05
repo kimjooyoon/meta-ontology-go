@@ -1,0 +1,6 @@
+package body_fill_multi
+namespace body_fill_multi
+entity Integer id "body-fill-multi://integer"
+activity Lift(Integer) -> Integer computes `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment`

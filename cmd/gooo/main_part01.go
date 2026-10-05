@@ -49,7 +49,7 @@ local Laya service can optionally rank the eligible choices.
 Install the Gooo CLI, then run these commands from this directory:
 
 ~~~sh
-go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@latest
+go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
 gooo check main.gooo
 gooo body-codegen --json --activity Clamp main.gooo
 ~~~
