@@ -105,6 +105,8 @@ func TestRunSourceRejectsStaleRuntimePlanBeforeExecution(t *testing.T) {
 namespace runtimebinding
 entity Integer id "gooo://runtime-binding/entity/integer"
 activity Produce(Integer) -> Integer computes "int.add:1"
+activity Consume(Integer) -> Integer computes "int.add:1"
+bind Produce.result -> Consume.input
 `)
 	file, diagnostics := syntax.ParseFile("fixture.gooo", string(source))
 	if diagnostics.HasErrors() || file == nil {
@@ -114,16 +116,24 @@ activity Produce(Integer) -> Integer computes "int.add:1"
 	if err != nil {
 		t.Fatal(err)
 	}
-	runtimePlan, err := buildRuntimePlanData(source, ir)
+	sourceDocument, err := bidir.DocumentFromSyntax(file)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var document runtimePlanDocument
-	if err := json.Unmarshal(runtimePlan, &document); err != nil {
+	typedPlan, err := bidir.CompileTypedPlan(sourceDocument)
+	if err != nil {
 		t.Fatal(err)
 	}
-	document.SourceDigest = "sha256:stale"
-	stalePlan, err := json.Marshal(document)
+	runtimePlan, err := buildRuntimePlanDataWithTypedPlan(source, ir, typedPlan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var planDocument runtimePlanDocument
+	if err := json.Unmarshal(runtimePlan, &planDocument); err != nil {
+		t.Fatal(err)
+	}
+	planDocument.SourceDigest = "sha256:stale"
+	stalePlan, err := json.Marshal(planDocument)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +143,7 @@ activity Produce(Integer) -> Integer computes "int.add:1"
 		"runtime-plan.json": stalePlan,
 	}
 	var stdout, stderr bytes.Buffer
-	code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "--runtime-plan", "runtime-plan.json", "fixture.gooo"}, reader, &stdout, &stderr)
+	code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "fixture.gooo"}, reader, &stdout, &stderr)
 	if code != exitFailure || stderr.Len() != 0 {
 		t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
 	}
