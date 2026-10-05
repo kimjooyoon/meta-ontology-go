@@ -446,6 +446,45 @@ func TestSourceDerivedPredicateCutpointsIncludeUnobservedIntegerBoundaries(t *te
 	}
 }
 
+func TestSourceDerivedPredicateCutpointsHandleInt64Edges(t *testing.T) {
+	minInt64 := int64(-1 << 63)
+	maxInt64 := int64(1<<63 - 1)
+	tests := []struct {
+		name             string
+		inputs           []int64
+		midpointLessThan []string
+	}{
+		{name: "full int64 span", inputs: []int64{minInt64, maxInt64}, midpointLessThan: []string{"input < -1", "input < 0"}},
+		{name: "negative odd gap", inputs: []int64{-5, -2}, midpointLessThan: []string{"input < -4", "input < -3"}},
+		{name: "upper edge", inputs: []int64{maxInt64 - 2, maxInt64}, midpointLessThan: []string{"input < 9223372036854775806"}},
+		{name: "adjacent lower edge", inputs: []int64{minInt64, minInt64 + 1}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cases := []assemblyspec.Case{{Input: test.inputs[0]}, {Input: test.inputs[1]}}
+			conditions, total, complete, err := generateIntegerPredicateCutpointExpressions(128, cases)
+			if err != nil || !complete || len(conditions) != total {
+				t.Fatalf("edge cutpoint grammar did not fully enumerate its finite expression set: count=%d total=%d complete=%v err=%v", len(conditions), total, complete, err)
+			}
+			seen := make(map[string]struct{}, len(conditions))
+			for _, condition := range conditions {
+				if _, duplicate := seen[condition]; duplicate {
+					t.Fatalf("edge inputs produced duplicate expression %q", condition)
+				}
+				seen[condition] = struct{}{}
+			}
+			for _, expression := range test.midpointLessThan {
+				if !slices.Contains(conditions, expression) {
+					t.Errorf("missing safe midpoint expression %q in %v", expression, conditions)
+				}
+			}
+			if wantTotal := (2+len(test.midpointLessThan))*4 + 2; total != wantTotal {
+				t.Fatalf("finite grammar count=%d, want %d for endpoints plus midpoint thresholds", total, wantTotal)
+			}
+		})
+	}
+}
+
 func TestLayaCanResolveTrainingTieWhileHoldoutRemainsWithheld(t *testing.T) {
 	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-cutpoint.gooo.fixture")
 	if err != nil {
