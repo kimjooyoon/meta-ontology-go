@@ -5688,6 +5688,23 @@
         "cmd/gooo/usage.go",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/ir-multihole-model-body-fill-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "README.md",
+        "cmd/gooo/body_codegen_test.go",
+        "cmd/gooo/main_part01.go",
+        "docs/language-direction.ko.md",
+        "docs/language/body-codegen.md",
+        "examples/body-codegen/ir-fill-multi-hole-plan.json",
+        "examples/body-codegen/ir-fill-multi-hole.gooo.fixture",
+        "internal/bodycodegen/body_fill.go",
+        "internal/bodycodegen/body_fill_test.go",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

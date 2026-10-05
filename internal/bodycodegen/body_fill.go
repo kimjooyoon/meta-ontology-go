@@ -9,6 +9,7 @@ import (
 	"go/parser"
 	"go/scanner"
 	"go/token"
+	"maps"
 	"strconv"
 	"strings"
 	"time"
@@ -20,25 +21,32 @@ import (
 )
 
 const bodyFillPlanSchema = "gooo/body-codegen-ir-fill-plan/v1"
+const bodyFillMultiPlanSchema = "gooo/body-codegen-ir-fill-plan/v2"
 const bodyFillStateSchema = "gooo/body-codegen-ir-fill-state/v1"
 const bodyFillEvaluator = "gooo/bodycodegen-int64-ast-interpreter/v2"
 const irBodyFillDecisionBudget = 8 * time.Second
 
-// IRBodyFillPlan supplies finite, typed expression candidates for one explicit
-// hole in a Gooo activity body. Gooo owns the body skeleton and emitter; an
-// optional decision provider may choose only one of these expressions.
+// IRBodyFillPlan supplies finite, typed expression candidates for explicit
+// holes in a Gooo activity body. V1 has one hole; V2 selects one complete,
+// declared assignment across several holes as a single model decision.
 type IRBodyFillPlan struct {
 	Schema        string                `json:"schema"`
 	Intent        string                `json:"intent"`
 	HoleID        string                `json:"hole_id"`
+	Holes         []IRBodyFillHole      `json:"holes,omitempty"`
 	ProviderModel string                `json:"provider_model,omitempty"`
 	Candidates    []IRBodyFillCandidate `json:"candidates"`
 	TestCases     []IRBodyFillTestCase  `json:"test_cases"`
 }
 
+type IRBodyFillHole struct {
+	ID string `json:"id"`
+}
+
 type IRBodyFillCandidate struct {
-	ID         string `json:"id"`
-	Expression string `json:"expression"`
+	ID         string            `json:"id"`
+	Expression string            `json:"expression,omitempty"`
+	Fills      map[string]string `json:"fills,omitempty"`
 }
 
 // IRBodyFillTestCase is a finite, explicit integer contract used to measure
@@ -104,6 +112,7 @@ type IRBodyFillReceipt struct {
 	ProposedAccuracyPct        float64                    `json:"proposed_accuracy_percent"`
 	SelectedCandidateID        string                     `json:"selected_candidate_id"`
 	SelectedExpression         string                     `json:"selected_expression"`
+	HoleFills                  []IRBodyFillHoleFill       `json:"hole_fills,omitempty"`
 	BestCandidateID            string                     `json:"best_candidate_id"`
 	BestAccuracyPercent        float64                    `json:"best_candidate_accuracy_percent"`
 	SelectionRegretPP          float64                    `json:"selection_regret_percentage_points"`
@@ -123,6 +132,11 @@ type IRBodyFillReceipt struct {
 	Timing                     IRBodyFillTiming           `json:"timing"`
 }
 
+type IRBodyFillHoleFill struct {
+	HoleID     string `json:"hole_id"`
+	Expression string `json:"expression"`
+}
+
 type irBodyFillState struct {
 	Schema          string                     `json:"schema"`
 	Stage           string                     `json:"stage"`
@@ -132,6 +146,7 @@ type irBodyFillState struct {
 	OutputType      string                     `json:"output_type"`
 	Intent          string                     `json:"intent"`
 	HoleID          string                     `json:"hole_id"`
+	HoleIDs         []string                   `json:"hole_ids,omitempty"`
 	BodyIR          string                     `json:"body_ir"`
 	TestCaseCount   int                        `json:"test_case_count"`
 	TestSuiteSHA256 string                     `json:"test_suite_sha256"`
@@ -140,9 +155,8 @@ type irBodyFillState struct {
 
 // GenerateWithIRBodyFill builds the typed hole plan synchronously from a Gooo
 // activity, calls the existing Laya/default path once after that plan is
-// complete, fills the hole from the declared candidate set, and only then emits
-// the final Go projection. The v1 experiment is limited to one Integer ->
-// Integer hole.
+// complete, fills its declared hole assignment, and only then emits the final
+// Go projection. Both plan versions currently target Integer -> Integer bodies.
 func GenerateWithIRBodyFill(
 	ctx context.Context,
 	filename string,
@@ -196,6 +210,9 @@ func generateWithIRBodyFillOptions(
 	if err := validateIRBodyFillPlan(plan); err != nil {
 		return Result{}, err
 	}
+	if usingTinyGo && plan.Schema == bodyFillMultiPlanSchema {
+		return Result{}, fmt.Errorf("tiny_go body fill currently supports one expression hole; use Laya or the deterministic fallback for a multi-hole plan")
+	}
 	if err := decisionroute.ValidateProviderModel(plan.ProviderModel); err != nil {
 		return Result{}, fmt.Errorf("body-fill provider model: %w", err)
 	}
@@ -223,7 +240,7 @@ func generateWithIRBodyFillOptions(
 		return Result{}, fmt.Errorf("activity %q has no computes body", activityName)
 	}
 	if len(activity.Inputs) != 1 || activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" {
-		return Result{}, fmt.Errorf("IR body fill v1 requires one Integer input and one Integer output")
+		return Result{}, fmt.Errorf("IR body fill currently requires one Integer input and one Integer output")
 	}
 	modelDocument, err := bidir.DocumentFromSyntax(file)
 	if err != nil {
@@ -248,17 +265,25 @@ func generateWithIRBodyFillOptions(
 	if err != nil {
 		return Result{}, err
 	}
-	holeToken := bodyFillHoleToken(plan.HoleID)
-	if countIdentifier(body, holeToken) != 1 {
-		return Result{}, fmt.Errorf("activity %q must contain exactly one IR body hole %q", activityName, holeToken)
+	holes := bodyFillPlanHoles(plan)
+	for _, hole := range holes {
+		holeToken := bodyFillHoleToken(hole.ID)
+		if countIdentifier(body, holeToken) != 1 {
+			return Result{}, fmt.Errorf("activity %q must contain exactly one IR body hole %q", activityName, holeToken)
+		}
 	}
 	planStarted := time.Now()
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
 	candidateBodies := make(map[string]string, len(plan.Candidates))
 	for _, candidate := range plan.Candidates {
-		candidateBody, err := replaceIdentifier(body, holeToken, candidate.Expression)
-		if err != nil {
-			return Result{}, fmt.Errorf("fill candidate %q: %w", candidate.ID, err)
+		fills := bodyFillCandidateFills(plan, candidate)
+		candidateBody := body
+		for _, hole := range holes {
+			expression := fills[hole.ID]
+			candidateBody, err = replaceIdentifier(candidateBody, bodyFillHoleToken(hole.ID), expression)
+			if err != nil {
+				return Result{}, fmt.Errorf("fill candidate %q at hole %q: %w", candidate.ID, hole.ID, err)
+			}
 		}
 		generated, err := generateRoute(
 			file.Package.Name, activityName, activityID, "int64", "int64", candidateBody, preserveRoute,
@@ -272,8 +297,12 @@ func generateWithIRBodyFillOptions(
 		}
 		candidateBodies[candidate.ID] = candidateBody
 		accuracy := float64(passed) * 100 / float64(len(plan.TestCases))
+		candidateExpression := candidate.Expression
+		if plan.Schema == bodyFillMultiPlanSchema {
+			candidateExpression = bodyFillCandidateDescription(holes, fills)
+		}
 		scores = append(scores, IRBodyFillCandidateScore{
-			ID: candidate.ID, Expression: candidate.Expression, TypecheckPassed: true,
+			ID: candidate.ID, Expression: candidateExpression, TypecheckPassed: true,
 			TestCasesPassed: passed, TestCasesTotal: len(plan.TestCases), AccuracyPercent: accuracy,
 		})
 	}
@@ -283,20 +312,21 @@ func generateWithIRBodyFillOptions(
 	stateBytes, err := json.Marshal(irBodyFillState{
 		Schema: bodyFillStateSchema, Stage: "ir_ready_before_body_emission",
 		Activity: activityName, ActivityID: activityID, InputType: "Integer", OutputType: "Integer",
-		Intent: plan.Intent, HoleID: plan.HoleID, BodyIR: body,
+		Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes), HoleIDs: bodyFillHoleIDs(plan, holes), BodyIR: body,
 		TestCaseCount: len(plan.TestCases), TestSuiteSHA256: testSuiteSHA256, Candidates: scores,
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("encode Gooo IR body-fill state: %w", err)
 	}
 	requestOptions := make([]decisionroute.Option, 0, len(plan.Candidates))
+	modelCandidates := bodyFillModelCandidates(holes, plan.Candidates)
 	if usingTinyGo {
-		requestOptions, err = tinyGoBodyFillOptions(plan.Candidates)
+		requestOptions, err = tinyGoBodyFillOptions(modelCandidates)
 		if err != nil {
 			return Result{}, err
 		}
 	} else {
-		for _, candidate := range plan.Candidates {
+		for _, candidate := range modelCandidates {
 			score := scoreByID(scores, candidate.ID)
 			requestOptions = append(requestOptions, decisionroute.Option{
 				ID: candidate.ID,
@@ -305,15 +335,19 @@ func generateWithIRBodyFillOptions(
 			})
 		}
 	}
+	instructions := "Fill the single typed expression hole in the supplied Gooo body IR. Choose only a listed candidate. " +
+		"Use the intent and declared test evidence; do not invent code or modify any other IR node."
+	if plan.Schema == bodyFillMultiPlanSchema {
+		instructions = "Fill every typed expression hole in the supplied Gooo body IR using one complete listed candidate assignment. " +
+			"Choose only a listed assignment. Use the intent and declared test evidence; do not invent code or modify any other IR node."
+	}
 	request := decisionroute.Request{
 		Schema: decisionroute.RequestSchema, State: string(stateBytes),
 		ProviderModel: plan.ProviderModel,
 		Question: decisionroute.Question{
-			ID: "body_ir_fill",
-			Instructions: "Fill the single typed expression hole in the supplied Gooo body IR. " +
-				"Choose only a listed candidate. " +
-				"Use the intent and declared test evidence; do not invent code or modify any other IR node.",
-			Options: requestOptions,
+			ID:           "body_ir_fill",
+			Instructions: instructions,
+			Options:      requestOptions,
 		},
 		Fallback: plan.Candidates[0].ID,
 	}
@@ -355,7 +389,7 @@ func generateWithIRBodyFillOptions(
 			return Result{}, err
 		}
 	}
-	proposed, ok := candidateByID(plan.Candidates, decision.Selected)
+	proposed, ok := candidateByID(modelCandidates, decision.Selected)
 	if !ok {
 		return Result{}, fmt.Errorf("body-fill decision selected undeclared candidate %q", decision.Selected)
 	}
@@ -364,10 +398,14 @@ func generateWithIRBodyFillOptions(
 	selected := proposed
 	selectionAdjustment := "proposal_retained"
 	if proposedScore.TestCasesPassed < best.TestCasesPassed {
-		selected, _ = candidateByID(plan.Candidates, best.ID)
+		selected, _ = candidateByID(modelCandidates, best.ID)
 		selectionAdjustment = "replaced_with_best_scoring_candidate"
 	}
 	selectedBody := candidateBodies[selected.ID]
+	originalSelected, ok := candidateByID(plan.Candidates, selected.ID)
+	if !ok {
+		return Result{}, fmt.Errorf("selected body-fill candidate %q is absent from the source plan", selected.ID)
+	}
 	completedSource, err := replaceActivityProgram(source, activity.ValueProgramSpan, selectedBody)
 	if err != nil {
 		return Result{}, err
@@ -394,11 +432,16 @@ func generateWithIRBodyFillOptions(
 		layaDecisionMS = decisionMS
 	}
 	planBytes, _ := json.Marshal(plan)
+	var holeFills []IRBodyFillHoleFill
+	if plan.Schema == bodyFillMultiPlanSchema {
+		holeFills = bodyFillHoleResults(holes, bodyFillCandidateFills(plan, originalSelected))
+	}
 	result.Report.BodyFill = &IRBodyFillReceipt{
-		Schema: bodyFillPlanSchema, Intent: plan.Intent, HoleID: plan.HoleID,
-		HoleToken: holeToken, IRPlanSHA256: digest(planBytes),
+		Schema: plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
+		HoleToken: bodyFillHoleToken(holes[0].ID), IRPlanSHA256: digest(planBytes),
 		ProposedCandidateID: proposed.ID, ProposedAccuracyPct: proposedScore.AccuracyPercent,
 		SelectedCandidateID: selected.ID, SelectedExpression: selected.Expression,
+		HoleFills:       holeFills,
 		BestCandidateID: best.ID, BestAccuracyPercent: best.AccuracyPercent,
 		SelectionRegretPP:   best.AccuracyPercent - proposedScore.AccuracyPercent,
 		SelectionAdjustment: selectionAdjustment,
@@ -425,14 +468,26 @@ func generateWithIRBodyFillOptions(
 }
 
 func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
-	if plan.Schema != bodyFillPlanSchema {
-		return fmt.Errorf("IR body-fill plan schema must be %q", bodyFillPlanSchema)
+	if plan.Schema != bodyFillPlanSchema && plan.Schema != bodyFillMultiPlanSchema {
+		return fmt.Errorf("IR body-fill plan schema must be %q or %q", bodyFillPlanSchema, bodyFillMultiPlanSchema)
 	}
 	if strings.TrimSpace(plan.Intent) == "" || utf8.RuneCountInString(plan.Intent) > 2000 {
 		return fmt.Errorf("IR body-fill intent must contain 1..2000 characters")
 	}
-	if !validBodyFillIdentifier(plan.HoleID) {
-		return fmt.Errorf("IR body-fill hole id %q is invalid", plan.HoleID)
+	holes := bodyFillPlanHoles(plan)
+	if plan.Schema == bodyFillPlanSchema {
+		if !validBodyFillIdentifier(plan.HoleID) || len(plan.Holes) != 0 {
+			return fmt.Errorf("IR body-fill v1 requires one valid hole_id and no holes array")
+		}
+	} else if plan.HoleID != "" || len(holes) < 2 || len(holes) > 8 {
+		return fmt.Errorf("IR body-fill v2 requires 2..8 holes and no hole_id")
+	}
+	seenHoles := make(map[string]bool, len(holes))
+	for _, hole := range holes {
+		if !validBodyFillIdentifier(hole.ID) || seenHoles[hole.ID] {
+			return fmt.Errorf("IR body-fill hole id %q is invalid or duplicated", hole.ID)
+		}
+		seenHoles[hole.ID] = true
 	}
 	if len(plan.Candidates) < 2 || len(plan.Candidates) > 16 {
 		return fmt.Errorf("IR body-fill plan requires 2..16 candidates")
@@ -446,18 +501,102 @@ func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
 			return fmt.Errorf("IR body-fill candidate id %q is invalid or duplicated", candidate.ID)
 		}
 		seen[candidate.ID] = true
-		if strings.TrimSpace(candidate.Expression) == "" || utf8.RuneCountInString(candidate.Expression) > 512 {
-			return fmt.Errorf("IR body-fill candidate %q expression must contain 1..512 characters", candidate.ID)
+		fills := bodyFillCandidateFills(plan, candidate)
+		if len(fills) != len(holes) {
+			return fmt.Errorf("IR body-fill candidate %q must fill every declared hole exactly once", candidate.ID)
 		}
-		expression, err := parser.ParseExpr(candidate.Expression)
-		if err != nil {
-			return fmt.Errorf("parse IR body-fill candidate %q: %w", candidate.ID, err)
+		if plan.Schema == bodyFillPlanSchema && len(candidate.Fills) != 0 {
+			return fmt.Errorf("IR body-fill v1 candidate %q cannot declare a fills map", candidate.ID)
 		}
-		if err := validateExpression(expression); err != nil {
-			return fmt.Errorf("IR body-fill candidate %q uses an unsupported expression: %w", candidate.ID, err)
+		if plan.Schema == bodyFillMultiPlanSchema && candidate.Expression != "" {
+			return fmt.Errorf("IR body-fill v2 candidate %q must use fills, not expression", candidate.ID)
+		}
+		for _, hole := range holes {
+			expressionSource, ok := fills[hole.ID]
+			if !ok || strings.TrimSpace(expressionSource) == "" || utf8.RuneCountInString(expressionSource) > 512 {
+				return fmt.Errorf("IR body-fill candidate %q expression for hole %q must contain 1..512 characters", candidate.ID, hole.ID)
+			}
+			for _, declaredHole := range holes {
+				if countIdentifier(expressionSource, bodyFillHoleToken(declaredHole.ID)) != 0 {
+					return fmt.Errorf("IR body-fill candidate %q expression for hole %q cannot introduce another hole token", candidate.ID, hole.ID)
+				}
+			}
+			expression, err := parser.ParseExpr(expressionSource)
+			if err != nil {
+				return fmt.Errorf("parse IR body-fill candidate %q hole %q: %w", candidate.ID, hole.ID, err)
+			}
+			if err := validateExpression(expression); err != nil {
+				return fmt.Errorf("IR body-fill candidate %q hole %q uses an unsupported expression: %w", candidate.ID, hole.ID, err)
+			}
 		}
 	}
 	return nil
+}
+
+func bodyFillPlanHoles(plan IRBodyFillPlan) []IRBodyFillHole {
+	if plan.Schema == bodyFillPlanSchema {
+		return []IRBodyFillHole{{ID: plan.HoleID}}
+	}
+	return plan.Holes
+}
+
+func bodyFillCandidateFills(plan IRBodyFillPlan, candidate IRBodyFillCandidate) map[string]string {
+	if plan.Schema == bodyFillPlanSchema {
+		return map[string]string{plan.HoleID: candidate.Expression}
+	}
+	return candidate.Fills
+}
+
+func bodyFillCandidateDescription(holes []IRBodyFillHole, fills map[string]string) string {
+	parts := make([]string, 0, len(holes))
+	for _, hole := range holes {
+		parts = append(parts, hole.ID+"="+fills[hole.ID])
+	}
+	return strings.Join(parts, "; ")
+}
+
+func bodyFillHoleSummary(holes []IRBodyFillHole) string {
+	ids := make([]string, 0, len(holes))
+	for _, hole := range holes {
+		ids = append(ids, hole.ID)
+	}
+	return strings.Join(ids, ",")
+}
+
+func bodyFillHoleIDs(plan IRBodyFillPlan, holes []IRBodyFillHole) []string {
+	if plan.Schema == bodyFillPlanSchema {
+		return nil
+	}
+	ids := make([]string, 0, len(holes))
+	for _, hole := range holes {
+		ids = append(ids, hole.ID)
+	}
+	return ids
+}
+
+func bodyFillModelCandidates(holes []IRBodyFillHole, candidates []IRBodyFillCandidate) []IRBodyFillCandidate {
+	result := make([]IRBodyFillCandidate, 0, len(candidates))
+	for _, candidate := range candidates {
+		if len(holes) == 1 && len(candidate.Fills) == 0 {
+			result = append(result, candidate)
+			continue
+		}
+		fills := make(map[string]string, len(candidate.Fills))
+		maps.Copy(fills, candidate.Fills)
+		if len(fills) == 0 && len(holes) == 1 {
+			fills[holes[0].ID] = candidate.Expression
+		}
+		result = append(result, IRBodyFillCandidate{ID: candidate.ID, Expression: bodyFillCandidateDescription(holes, fills)})
+	}
+	return result
+}
+
+func bodyFillHoleResults(holes []IRBodyFillHole, fills map[string]string) []IRBodyFillHoleFill {
+	result := make([]IRBodyFillHoleFill, 0, len(holes))
+	for _, hole := range holes {
+		result = append(result, IRBodyFillHoleFill{HoleID: hole.ID, Expression: fills[hole.ID]})
+	}
+	return result
 }
 
 func bodyFillHoleToken(id string) string { return "__GOOO_BODY_HOLE_" + id + "__" }

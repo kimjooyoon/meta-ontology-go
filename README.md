@@ -40,7 +40,7 @@ To start a new project with a working Gooo declaration, declared alternatives
 and finite examples, run:
 
 ```sh
-go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@latest
+go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
 gooo init my-first-gooo
 cd my-first-gooo
 gooo check main.gooo
