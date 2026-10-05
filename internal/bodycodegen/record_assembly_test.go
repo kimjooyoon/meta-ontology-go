@@ -50,6 +50,63 @@ func TestRecordAssemblySelectsTypedFieldsAndReplaysCheckpoint(t *testing.T) {
 	}
 }
 
+func TestBooleanRecordFieldAssemblyPreservesTypedValues(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/boolean-field-assembly.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	generator, err := NewTypedPathGenerator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := generator.GenerateSourceAssembly(context.Background(), "boolean-record.gooo", source, "Build")
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.RecordAssembly
+	if receipt == nil || receipt.Status != "COMPLETE_FINITE" || receipt.SelectedMask != 7 ||
+		receipt.Passed != 4 || receipt.Total != 4 || receipt.FieldsPassed != 12 || receipt.FieldsTotal != 12 || receipt.ModelCalls != 0 {
+		t.Fatalf("Boolean record assembly did not complete the declared cases: %+v", receipt)
+	}
+	booleanType := "urn:gooo:type:boolean"
+	for _, record := range result.Report.RecordTypes {
+		if record.Name != "Gate" {
+			continue
+		}
+		for _, field := range record.Fields {
+			if field.Name == "enabled" || field.Name == "reviewed" {
+				if field.TypeID != booleanType {
+					t.Fatalf("field %s lost Boolean type: %+v", field.Name, field)
+				}
+			}
+		}
+	}
+	for index, observation := range receipt.Cases {
+		var actual map[string]any
+		if err := json.Unmarshal(observation.Actual, &actual); err != nil {
+			t.Fatal(err)
+		}
+		if _, ok := actual["enabled"].(bool); !ok {
+			t.Fatalf("case %d encoded enabled as %T: %s", index, actual["enabled"], observation.Actual)
+		}
+		if _, ok := actual["reviewed"].(bool); !ok {
+			t.Fatalf("case %d encoded reviewed as %T: %s", index, actual["reviewed"], observation.Actual)
+		}
+	}
+	if !strings.Contains(result.GoooSource, `picked "enabled" -> "value_second"`) ||
+		!strings.Contains(result.Source, "bool") {
+		t.Fatalf("selected source does not retain Boolean alternatives: %s", result.GoooSource)
+	}
+	replayed, err := RealizeSourceAssembly(context.Background(), "boolean-record.gooo", source, result)
+	if err != nil || replayed.ModelCalls != 0 || replayed.Source != result.GoooSource {
+		t.Fatalf("Boolean assembly checkpoint replay differs: replay=%+v err=%v", replayed, err)
+	}
+	bad := []byte(strings.Replace(string(source), `alternative "input0"`, `alternative "\"bad\""`, 1))
+	if err := ValidateSourceAssembly(context.Background(), "boolean-record-bad.gooo", bad, "Build"); err == nil {
+		t.Fatal("string expression accepted for Boolean record field")
+	}
+}
+
 func TestRecordAssemblyPartialScoreAndSourcePreflight(t *testing.T) {
 	source := recordAssemblyFixture(t)
 	g, _ := NewTypedPathGenerator("")
