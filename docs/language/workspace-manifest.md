@@ -6,6 +6,9 @@ by Gooo's package runtime. Resolve a workspace with:
 ```sh
 gooo package resolve gooo.workspace.json
 gooo package resolve --json gooo.workspace.json
+gooo package execute --json --cases examples/package-imports/cases.json \
+  --body-plans examples/package-imports/body-plans.json \
+  examples/package-imports/gooo.workspace.json
 ```
 
 The cross-package binding example at `examples/package-imports` uses this
@@ -82,8 +85,26 @@ package's exported activity and the local consumer. The output and input must
 carry the same stable entity ID. Its receipt records producer and consumer
 packages, activities, ports, and entity ID under the consumer package's
 `bindings` list. Unknown aliases, activities, ports, and type mismatches fail
-closed. At this stage, imported producers can feed local consumers; other
-cross-package edge shapes remain unsupported. The receipt describes checked
-package wiring and does not claim to execute generated Go code. The library
-starter includes a workspace manifest so package boundaries are visible from
-the first project command.
+closed. Imported producers can feed local consumers. `package resolve` only
+checks that wiring. `package execute` takes a finite case file, lowers the
+entry's explicit producer chain into a typed activity graph, generates each
+body in that chain, compiles the resulting Go, and runs it twice. Unrelated
+activities in the workspace are left out of the execution graph. Case keys use
+`<package-path>:<activity>`;
+root inputs use that key, multi-input roots append `.<input-port>`, and expected
+outputs use the activity key. The receipt preserves package-to-lowered-activity
+identity and reports observed finite-case accuracy. This path requires 2 to 16
+activities on the entry's explicitly connected producer chain and supported
+scalar or declared-record values. Ordinary bodies follow their declared Gooo
+bodies deterministically; `--assembly-model` is an optional local model for assembling source-declared
+body plans. An optional `--body-plans` file supplies typed body-hole candidates
+for selected activities. Gooo scores each complete candidate against its
+declared cases, then Laya may select among those listed candidates through
+`GOOO_LAYA_URL`; with no provider configured, selection stays deterministic.
+Gooo fills the chosen body before package code generation and execution, and the
+receipt records each fill's input-source digest, selected candidate, and
+finite-case score. The model call runs synchronously after the typed plan is
+built and before the generated package is compiled. To connect Laya, set
+`GOOO_LAYA_URL` to its `/v1/systemone` endpoint for the same command. Fill
+receipts record provider decision time; native build and run observations
+record wall time, CPU time, and peak resident memory when the host exposes them.

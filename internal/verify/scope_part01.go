@@ -14,3 +14,24 @@ func init() {
 		"internal/verify/scope_part01.go",
 	}
 }
+
+func init() {
+	branchScopeAllowlist["agent/gooo-body-package-execution-20261005"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/gooo/package_execute.go",
+		"cmd/gooo/package_execute_test.go",
+		"cmd/gooo/package_resolve.go",
+		"docs/language/workspace-manifest.md",
+		"examples/package-imports/app.gooo.fixture",
+		"examples/package-imports/body-plans.json",
+		"examples/package-imports/cases.json",
+		"examples/package-imports/core.gooo.fixture",
+		"internal/bodycodegen/body_fill.go",
+		"internal/bodycodegen/body_fill_test.go",
+		"internal/packageruntime/workspaceexecution/execute.go",
+		"internal/packageruntime/workspaceexecution/execute_test.go",
+		"internal/packageruntime/workspaceexecution/program.go",
+		"internal/verify/scope_part01.go",
+	}
+}

@@ -1,6 +1,6 @@
 package core
 namespace example_core
 
-entity Text id "example://core/text"
+entity Integer id "example://core/integer"
 
-activity Normalize(Text) -> Text computes "identity"
+activity Normalize(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__"
