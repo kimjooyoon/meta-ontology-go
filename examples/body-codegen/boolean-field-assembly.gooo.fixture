@@ -1,0 +1,21 @@
+package booleanassembly
+namespace booleanassembly
+
+entity Boolean id "booleanassembly://boolean"
+entity Text id "booleanassembly://text"
+entity Gate id "booleanassembly://gate" fields {
+    field enabled id "booleanassembly://gate/enabled" type boolean required one
+    field reviewed id "booleanassembly://gate/reviewed" type boolean required one
+    field label id "booleanassembly://gate/label" type string required one
+}
+
+activity Build(Boolean, Boolean, Text) -> Gate computes "return Gate{enabled: false, reviewed: false, label: \"pending\"}" assembling {
+    choice "enabled" field_value at "0" alternative "input0" intent "전달된 활성 여부를 보존한다. Preserve the supplied enabled value."
+    choice "reviewed" field_value at "1" alternative "input1" intent "전달된 검토 여부를 보존한다. Preserve the supplied reviewed value."
+    choice "label" field_value at "2" alternative "input2" intent "전달된 라벨을 보존한다. Preserve the supplied label."
+    value_case "[true,false,\"ready\"]" -> "{\"enabled\":true,\"reviewed\":false,\"label\":\"ready\"}"
+    value_case "[false,true,\"checked\"]" -> "{\"enabled\":false,\"reviewed\":true,\"label\":\"checked\"}"
+    value_case "[true,true,\"both\"]" -> "{\"enabled\":true,\"reviewed\":true,\"label\":\"both\"}"
+    value_case "[false,false,\"none\"]" -> "{\"enabled\":false,\"reviewed\":false,\"label\":\"none\"}"
+    attempts "8"
+}
