@@ -48,7 +48,7 @@ func (g Generator) generateWithEntityFieldsSupport(input SemanticIR, previous []
 		return Result{}, err
 	}
 
-	sourceMap, err := makeSourceMap(source, ir)
+	sourceMap, err := makeSourceMap(source, ir, support.Profile)
 	if err != nil {
 		return Result{}, err
 	}

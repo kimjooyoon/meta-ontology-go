@@ -21,10 +21,12 @@ func validateEntityFieldsSupport(support EntityFieldsSupport) error {
 	if profile.ID == "" && profile.Version == 0 && profile.Digest == "" {
 		return entityFieldsError(EntityFieldsUnboundProfileDiagnostic, "EntityFields profile is unbound", SourceSpan{}, ErrEntityFieldsUnboundProfile)
 	}
-	if profile.ID != syntax.EntityFieldsProfileID || profile.Version != syntax.EntityFieldsProfileVersion {
+	if profile.ID != syntax.EntityFieldsProfileID && profile.ID != syntax.EntityFieldsV2ProfileID ||
+		profile.ID == syntax.EntityFieldsProfileID && profile.Version != syntax.EntityFieldsProfileVersion ||
+		profile.ID == syntax.EntityFieldsV2ProfileID && profile.Version != syntax.EntityFieldsV2ProfileVersion {
 		return entityFieldsError(EntityFieldsProfileMismatchDiagnostic, "EntityFields profile identity or version does not match", SourceSpan{}, ErrEntityFieldsProfileMismatch)
 	}
-	if profile.Digest != syntax.EntityFieldsProfileDigest {
+	if err := profile.Validate(); err != nil {
 		return entityFieldsError(EntityFieldsProfileDigestDiagnostic, "EntityFields profile digest does not match", SourceSpan{}, ErrEntityFieldsProfileDigest)
 	}
 	return nil
@@ -65,7 +67,7 @@ func validateEntityFieldsModel(nodes []Node, registry semantic.TypeRegistry, sup
 			if err := validateSourceField(field, node.ID, registry); err != nil {
 				return err
 			}
-			if err := validateEntityFieldsProfileField(field, registry); err != nil {
+			if err := validateEntityFieldsProfileField(field, registry, support); err != nil {
 				return err
 			}
 		}

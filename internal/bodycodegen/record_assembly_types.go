@@ -68,6 +68,7 @@ type RecordAssemblyCase struct {
 type RecordAssemblyField struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
+	TypeID   string `json:"type_id,omitempty"`
 	Expected string `json:"expected"`
 	Actual   string `json:"actual"`
 	Passed   bool   `json:"passed"`

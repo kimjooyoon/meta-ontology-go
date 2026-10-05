@@ -63,9 +63,10 @@ Boolean and Text activities then execute in a compiled graph with ordered
 intermediate input/output observations and finite expectation counts.
 Ordinary bodies support up to 16 ordered scalar inputs, including repeated types
 and partially bound joins. [Input-port example and runnable guide](docs/native-body-composition.md).
-Declared required-string records can be constructed, read and passed through
-those binds as native value structs. Field observations retain stable IDs and
-actual values. [Record body example](docs/native-record-values.md).
+Required-string records can be constructed, read and passed through composition
+binds as native value structs. A versioned profile also supports required
+Boolean fields in Go projection and body generation; they become Go `bool` and
+can be checked against true/false cases. [Record body examples](docs/native-record-values.md).
 Record constructor fields can also declare alternative value expressions and
 typed JSON cases. Their assembly reports matching fields as well as complete
 cases, retaining partial results under a small attempt budget.

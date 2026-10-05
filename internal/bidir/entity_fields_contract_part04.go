@@ -38,7 +38,7 @@ func validateEntityFieldsDocument(document Document, namespace string, registry 
 			if err := validateSourceField(field, owner, registry); err != nil {
 				return err
 			}
-			if err := validateEntityFieldsProfileField(field, registry); err != nil {
+			if err := validateEntityFieldsProfileField(field, registry, support); err != nil {
 				return err
 			}
 		}

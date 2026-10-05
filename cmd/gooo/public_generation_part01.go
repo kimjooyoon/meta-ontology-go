@@ -118,7 +118,7 @@ func validatePublicRetentionPolicy(file *syntax.File) error {
 	if file == nil {
 		return errors.New("retention policy is missing")
 	}
-	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsV1Support())
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsV2Support())
 	if err != nil {
 		return fmt.Errorf("retention policy lowering failed: %w", err)
 	}

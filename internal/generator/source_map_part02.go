@@ -2,14 +2,14 @@ package generator
 
 import (
 	"fmt"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-func appendEntityFieldMappings(result *SourceMap, source []byte, region generatedRegion, entity Entity) error {
+func appendEntityFieldMappings(result *SourceMap, source []byte, region generatedRegion, entity Entity, profile syntax.EntityFieldsProfile) error {
 	ranges, err := generatedFieldRanges(source, region, entity)
 	if err != nil {
 		return err
 	}
-	profile := entityFieldsProfileMapping()
 	for fieldIndex, field := range entity.Fields {
 		result.Mappings = append(result.Mappings, SourceMapping{
 			SemanticID:     field.ID,

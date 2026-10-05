@@ -59,7 +59,7 @@ func projectionIRFromBidirModelWithSupport(ir semantic.IR, sourceModel bidir.Mod
 	if semanticIRHasFields(ir) {
 		switch support.State {
 		case syntax.EntityFieldsSupported:
-			if err := validateCLIProjectedFields(model); err != nil {
+			if err := validateCLIProjectedFields(model, support); err != nil {
 				return generator.SemanticIR{}, err
 			}
 		default:

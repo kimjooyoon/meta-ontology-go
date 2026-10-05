@@ -37,6 +37,9 @@ func (d TypeDef) Validate() error {
 func BuiltinStringType() TypeDef {
 	return TypeDef{ID: BuiltinStringTypeID, Namespace: BuiltinTypeNamespace, Name: BuiltinStringTypeName}
 }
+func BuiltinBooleanType() TypeDef {
+	return TypeDef{ID: BuiltinBooleanTypeID, Namespace: BuiltinTypeNamespace, Name: BuiltinBooleanTypeName}
+}
 
 // BuiltInStringType is an alternate spelling for callers using the usual
 // English capitalization of "built-in".
@@ -55,6 +58,9 @@ type TypeRegistry struct {
 func NewTypeRegistry() TypeRegistry {
 	registry := TypeRegistry{}
 	if err := registry.Register(BuiltinStringType()); err != nil {
+		panic(err)
+	}
+	if err := registry.Register(BuiltinBooleanType()); err != nil {
 		panic(err)
 	}
 	return registry
