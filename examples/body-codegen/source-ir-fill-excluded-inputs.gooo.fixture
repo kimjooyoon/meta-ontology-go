@@ -1,0 +1,17 @@
+package sample
+namespace sample
+entity Integer id "sample://integer"
+activity Exclude(Integer) -> Integer computes `if __GOOO_BODY_HOLE_condition__ { return 1 } else { return __GOOO_BODY_HOLE_special__ }` assembling {
+    source_fill intent "Return zero for the two excluded inputs and one otherwise." {
+        hole "condition"
+        hole "special"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "integer-predicate-composition/v1" max_expressions "16"
+            hole "special" grammar "integer-offset-constant/v1" max_expressions "2"
+        }
+    }
+    case "-1" -> "0"
+    case "0" -> "1"
+    case "2" -> "0"
+    case "3" -> "1"
+}

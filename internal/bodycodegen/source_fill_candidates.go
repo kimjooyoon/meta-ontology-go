@@ -203,6 +203,13 @@ func generateIntegerPredicateExpressions(maxExpressions int, cases []assemblyspe
 			}
 		}
 		for left := range uniqueInputs {
+			for right := left + 1; right < len(uniqueInputs); right++ {
+				a := "input != " + strconv.FormatInt(uniqueInputs[left], 10)
+				b := "input != " + strconv.FormatInt(uniqueInputs[right], 10)
+				compositions = append(compositions, "("+a+") && ("+b+")")
+			}
+		}
+		for left := range uniqueInputs {
 			for right := left; right < len(uniqueInputs); right++ {
 				lower := "input >= " + strconv.FormatInt(uniqueInputs[left], 10)
 				upper := "input <= " + strconv.FormatInt(uniqueInputs[right], 10)

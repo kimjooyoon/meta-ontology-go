@@ -157,9 +157,13 @@ derive assignments max_candidates "16" {
 
 `integer-predicate/v1` derives `true`, `false`, and bounded comparisons between
 `input` and the distinct training inputs. `integer-predicate-composition/v1` adds
-pairwise `input == value` clauses joined with `||` and closed ranges formed by
-`input >= lower && input <= upper`. It does not add nesting or arbitrary Boolean
-formulas.
+pairwise `input == value` clauses joined with `||`, closed ranges formed by
+`input >= lower && input <= upper`, and pairwise exclusions such as
+`input != first && input != second`. These finite compositions make common
+multi-condition paths expressible without introducing arbitrary Boolean formulas
+or nesting. See the
+[excluded-input fixture](../examples/body-codegen/source-ir-fill-excluded-inputs.gooo.fixture)
+for an activity that returns a special result for two excluded inputs.
 `integer-offset-constant/v1` derives the bounded integer expressions described
 above. These are finite source-derived grammars, not unrestricted Go or proofs
 over every integer. The receipt reports the pre-cap expression count, retained
