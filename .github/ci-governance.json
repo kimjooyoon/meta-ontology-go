@@ -5411,6 +5411,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        "cmd/gooo/library_starter.go",
         "cmd/gooo/main_part01.go",
         "cmd/gooo/stage_accepted_revision.go",
         "examples/language-syntax-roundtrip/corpus.json",
