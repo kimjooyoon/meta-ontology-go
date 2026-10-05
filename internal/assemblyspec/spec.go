@@ -5,6 +5,7 @@ package assemblyspec
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"unicode/utf8"
 )
@@ -19,6 +20,7 @@ type Spec struct {
 	Baseline     string      `json:"baseline,omitempty"`
 	Picked       []Pick      `json:"picked,omitempty"`
 	Search       *Search     `json:"search,omitempty"`
+	FillPlan     *FillPlan   `json:"fill_plan,omitempty"`
 }
 
 // Search declares a bounded IR expression grammar whose candidates Gooo derives
@@ -28,6 +30,28 @@ type Search struct {
 	Grammar       string `json:"grammar"`
 	Intent        string `json:"intent"`
 	MaxCandidates int    `json:"max_candidates"`
+}
+
+// FillPlan declares complete candidate assignments for multiple typed holes.
+// Models can rank these assignments but cannot add or rewrite expressions.
+type FillPlan struct {
+	Intent     string          `json:"intent"`
+	Holes      []FillHole      `json:"holes"`
+	Candidates []FillCandidate `json:"candidates"`
+}
+
+type FillHole struct {
+	ID string `json:"id"`
+}
+
+type FillCandidate struct {
+	ID    string        `json:"id"`
+	Fills []HoleFilling `json:"fills"`
+}
+
+type HoleFilling struct {
+	HoleID     string `json:"hole_id"`
+	Expression string `json:"expression"`
 }
 
 // Pick records an implementation relative to the immutable planning baseline.
@@ -57,8 +81,13 @@ type ValueCase struct {
 
 func (s Spec) Validate() error {
 	if len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases) < 1 ||
-		len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases) > 128 ||
-		s.MaxAttempts < 1 || s.MaxAttempts > 64 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
+		len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases) > 128 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
+		return fmt.Errorf("assembly requires 1..16 choices, 1..128 cases and 1..64 attempts")
+	}
+	if s.FillPlan != nil {
+		return s.validateFillPlan()
+	}
+	if s.MaxAttempts < 1 || s.MaxAttempts > 64 {
 		return fmt.Errorf("assembly requires 1..16 choices, 1..128 cases and 1..64 attempts")
 	}
 	if s.Search != nil {
@@ -131,6 +160,42 @@ func (s Spec) Validate() error {
 	return nil
 }
 
+func (s Spec) validateFillPlan() error {
+	plan := s.FillPlan
+	if len(s.Cases) == 0 || len(s.HoldoutCases) != 0 || len(s.ValueCases) != 0 ||
+		len(s.Choices) != 0 || s.Search != nil || s.MaxAttempts != 0 || s.Seed != "" ||
+		s.Baseline != "" || len(s.Picked) != 0 || !boundedText(plan.Intent, 2000) ||
+		len(plan.Holes) < 2 || len(plan.Holes) > 8 || len(plan.Candidates) < 2 || len(plan.Candidates) > 16 {
+		return fmt.Errorf("source fill plan requires intent, 2..8 holes, 2..16 complete candidates and training cases; it cannot mix with other assembly modes")
+	}
+	var holes [8]string
+	for index, hole := range plan.Holes {
+		if !identifier(hole.ID) {
+			return fmt.Errorf("source fill plan hole %q has an invalid id", hole.ID)
+		}
+		if slices.Contains(holes[:index], hole.ID) {
+			return fmt.Errorf("source fill plan hole %q is duplicated", hole.ID)
+		}
+		holes[index] = hole.ID
+	}
+	var candidateIDs [16]string
+	for index, candidate := range plan.Candidates {
+		if !identifier(candidate.ID) || len(candidate.Fills) != len(plan.Holes) {
+			return fmt.Errorf("source fill candidate %q must have a valid id and fill every declared hole", candidate.ID)
+		}
+		if slices.Contains(candidateIDs[:index], candidate.ID) {
+			return fmt.Errorf("source fill candidate %q is duplicated", candidate.ID)
+		}
+		candidateIDs[index] = candidate.ID
+		for fillIndex, fill := range candidate.Fills {
+			if fill.HoleID != plan.Holes[fillIndex].ID || !boundedText(fill.Expression, 4096) {
+				return fmt.Errorf("source fill candidate %q must fill holes once in declaration order with bounded expressions", candidate.ID)
+			}
+		}
+	}
+	return nil
+}
+
 func (s Spec) validateCheckpoint() error {
 	if s.Baseline == "" && len(s.Picked) == 0 {
 		return nil
@@ -184,6 +249,15 @@ func (s Spec) Clone() *Spec {
 	if s.Search != nil {
 		search := *s.Search
 		clone.Search = &search
+	}
+	if s.FillPlan != nil {
+		plan := *s.FillPlan
+		plan.Holes = append([]FillHole(nil), s.FillPlan.Holes...)
+		plan.Candidates = append([]FillCandidate(nil), s.FillPlan.Candidates...)
+		for index := range plan.Candidates {
+			plan.Candidates[index].Fills = append([]HoleFilling(nil), s.FillPlan.Candidates[index].Fills...)
+		}
+		clone.FillPlan = &plan
 	}
 	clone.HoldoutCases = append([]Case(nil), s.HoldoutCases...)
 	return &clone

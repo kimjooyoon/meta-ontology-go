@@ -95,4 +95,21 @@ func init() {
 		"internal/packageruntime/workspaceexecution/program.go",
 		"internal/verify/scope_part01.go",
 	}
+	branchScopeAllowlist["agent/gooo-source-body-fill-v2-20261006"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/gooo/body_codegen.go",
+		"cmd/gooo/body_codegen_tiny_test.go",
+		"docs/source-assembly.md",
+		"examples/body-codegen/source-ir-fill.gooo.fixture",
+		"internal/assemblyspec/spec.go",
+		"internal/bodycodegen/body_fill.go",
+		"internal/bodycodegen/body_fill_tiny.go",
+		"internal/bodycodegen/source_ir_fill.go",
+		"internal/bodycodegen/source_ir_fill_test.go",
+		"internal/syntax/assembly.go",
+		"internal/syntax/assembly_test.go",
+		"internal/verify/scope_part01.go",
+	}
+
 }

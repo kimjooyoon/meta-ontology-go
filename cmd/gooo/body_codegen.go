@@ -158,7 +158,7 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 	}
 	if activity == "" || filename == "" || (sampleSeedSet && (fillPlanPath != "" || searchPlanPath != "")) ||
 		(fillPlanPath != "" && searchPlanPath != "") ||
-		(tinyModelPath != "" && (fillPlanPath == "" || searchPlanPath != "" || sampleSeedSet)) {
+		(tinyModelPath != "" && (searchPlanPath != "" || sampleSeedSet)) {
 		fmt.Fprintln(stderr, bodyCodegenUsage)
 		return exitUsage
 	}
@@ -184,13 +184,36 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 	if err != nil {
 		return reportBodyCodegenFailure(jsonMode, filename, activity, source, err, stdout, stderr)
 	}
+	if tinyModelPath != "" && fillPlanPath == "" && !bodycodegen.IsSourceIRBodyFill(assembly) {
+		fmt.Fprintln(stderr, bodyCodegenUsage)
+		return exitUsage
+	}
 	if (pathOptions && pathPlanPath == "" && assembly == nil) ||
-		(assembly != nil && (sampleSeedSet || fillPlanPath != "" || searchPlanPath != "" || tinyModelPath != "")) {
+		(assembly != nil && (sampleSeedSet || fillPlanPath != "" || searchPlanPath != "" ||
+			(tinyModelPath != "" && !bodycodegen.IsSourceIRBodyFill(assembly)))) {
 		fmt.Fprintln(stderr, bodyCodegenUsage)
 		return exitUsage
 	}
 	var result bodycodegen.Result
-	if bodycodegen.IsSourceIRSearch(assembly) {
+	if bodycodegen.IsSourceIRBodyFill(assembly) {
+		if pathPlanPath != "" || pathOptions || pathModelPath != "" {
+			return reportBodyCodegenFailure(jsonMode, filename, activity, source,
+				fmt.Errorf("source IR body fill owns its holes, candidates and cases; omit external plan and path options"), stdout, stderr)
+		}
+		var bodyFillOptions bodycodegen.IRBodyFillOptions
+		if tinyModelPath != "" {
+			modelLoadStarted := time.Now()
+			provider, loadErr := decisionroute.LoadTinyGoProvider(tinyModelPath)
+			modelLoadMS := float64(time.Since(modelLoadStarted)) / float64(time.Millisecond)
+			if loadErr != nil {
+				return reportBodyCodegenFailure(jsonMode, tinyModelDiagnosticLabel, activity, source,
+					fmt.Errorf("tiny_go model could not be loaded"), stdout, stderr)
+			}
+			bodyFillOptions = bodycodegen.IRBodyFillOptions{TinyGoProvider: provider, TinyModelLoadMS: &modelLoadMS}
+		}
+		result, err = bodycodegen.GenerateWithSourceIRBodyFill(ctx, filename, source, activity, assembly,
+			os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY"), bodyFillOptions)
+	} else if bodycodegen.IsSourceIRSearch(assembly) {
 		if pathPlanPath != "" || pathOptions || pathModelPath != "" {
 			return reportBodyCodegenFailure(jsonMode, filename, activity, source,
 				fmt.Errorf("source IR search owns its candidate grammar and cases; omit external path options"), stdout, stderr)

@@ -21,7 +21,7 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 	keyword := p.advance()
 	d := &AssemblyDecl{Span: keyword.Span}
 	p.expect(TokenLBrace, "{", DiagUnexpectedDeclaration)
-	seenAttempts, seenSeed, seenBaseline, seenSearch := false, false, false, false
+	seenAttempts, seenSeed, seenBaseline, seenSearch, seenFillPlan := false, false, false, false, false
 	for !p.at(TokenRBrace) && !p.at(TokenEOF) {
 		if !p.at(TokenIdentifier) {
 			p.error(DiagUnexpectedDeclaration, p.peek().Span, "expected an assembly field")
@@ -66,6 +66,12 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 			}
 			seenSearch = true
 			d.Spec.Search = p.parseAssemblySearch()
+		case "source_fill":
+			if seenFillPlan {
+				p.error(DiagUnexpectedDeclaration, field.Span, "duplicate source body-fill plan")
+			}
+			seenFillPlan = true
+			d.Spec.FillPlan = p.parseAssemblyFillPlan()
 		case "value_case":
 			input := p.assemblyValue()
 			p.expect(TokenArrow, "->", DiagExpectedArrow)
@@ -116,6 +122,49 @@ func (p *Parser) parseAssemblySearch() *assemblyspec.Search {
 	}
 	search.MaxCandidates = int(value)
 	return search
+}
+
+func (p *Parser) parseAssemblyFillPlan() *assemblyspec.FillPlan {
+	p.assemblyKeyword("intent")
+	plan := &assemblyspec.FillPlan{Intent: p.expectString().Name}
+	p.expect(TokenLBrace, "{", DiagUnexpectedDeclaration)
+	for !p.at(TokenRBrace) && !p.at(TokenEOF) {
+		field := p.expectIdentifier("source fill declaration", DiagExpectedIdentifier)
+		switch field.Name {
+		case "hole":
+			if len(plan.Holes) == 8 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "source fill plan exceeds 8 holes")
+				p.skipAssemblyRemainder()
+				continue
+			}
+			plan.Holes = append(plan.Holes, assemblyspec.FillHole{ID: p.expectString().Name})
+		case "candidate":
+			if len(plan.Candidates) == 16 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "source fill plan exceeds 16 candidates")
+				p.skipAssemblyRemainder()
+				continue
+			}
+			candidate := assemblyspec.FillCandidate{ID: p.expectString().Name}
+			p.expect(TokenLBrace, "{", DiagUnexpectedDeclaration)
+			for !p.at(TokenRBrace) && !p.at(TokenEOF) {
+				fillField := p.expectIdentifier("candidate fill", DiagExpectedIdentifier)
+				if fillField.Name != "fill" {
+					p.error(DiagUnexpectedDeclaration, fillField.Span, "expected candidate fill")
+					p.advance()
+					continue
+				}
+				candidate.Fills = append(candidate.Fills, assemblyspec.HoleFilling{
+					HoleID: p.expectString().Name, Expression: p.expectString().Name,
+				})
+			}
+			p.expect(TokenRBrace, "}", DiagUnexpectedDeclaration)
+			plan.Candidates = append(plan.Candidates, candidate)
+		default:
+			p.error(DiagUnexpectedDeclaration, field.Span, "unknown source fill declaration "+field.Name)
+		}
+	}
+	p.expect(TokenRBrace, "}", DiagUnexpectedDeclaration)
+	return plan
 }
 
 func (p *Parser) parseAssemblyCheckpointField(d *AssemblyDecl, field Token, seenBaseline *bool) bool {
@@ -220,6 +269,21 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 			quoteString(search.HoleID), quoteString(search.Grammar), quoteString(search.Intent),
 			quoteString(strconv.Itoa(search.MaxCandidates)))
 	}
+	if d.Spec.FillPlan != nil {
+		plan := d.Spec.FillPlan
+		fmt.Fprintf(output, "    source_fill intent %s {\n", quoteString(plan.Intent))
+		for _, hole := range plan.Holes {
+			fmt.Fprintf(output, "        hole %s\n", quoteString(hole.ID))
+		}
+		for _, candidate := range plan.Candidates {
+			fmt.Fprintf(output, "        candidate %s {\n", quoteString(candidate.ID))
+			for _, fill := range candidate.Fills {
+				fmt.Fprintf(output, "            fill %s %s\n", quoteString(fill.HoleID), quoteString(fill.Expression))
+			}
+			output.WriteString("        }\n")
+		}
+		output.WriteString("    }\n")
+	}
 	for _, c := range d.Spec.Cases {
 		fmt.Fprintf(output, "    case %s -> %s\n", quoteString(strconv.FormatInt(c.Input, 10)),
 			quoteString(strconv.FormatInt(c.Expected, 10)))
@@ -231,7 +295,9 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 	for _, c := range d.Spec.ValueCases {
 		fmt.Fprintf(output, "    value_case %s -> %s\n", quoteString(c.Inputs), quoteString(c.Expected))
 	}
-	fmt.Fprintf(output, "    attempts %s\n", quoteString(strconv.Itoa(d.Spec.MaxAttempts)))
+	if d.Spec.FillPlan == nil {
+		fmt.Fprintf(output, "    attempts %s\n", quoteString(strconv.Itoa(d.Spec.MaxAttempts)))
+	}
 	if d.Spec.Seed != "" {
 		fmt.Fprintf(output, "    seed %s\n", quoteString(d.Spec.Seed))
 	}

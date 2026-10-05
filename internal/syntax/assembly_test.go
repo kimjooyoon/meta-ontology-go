@@ -33,6 +33,28 @@ activity Clamp(Integer) -> Integer computes "return __GOOO_BODY_HOLE_floor__" as
     attempts "4"
 }`
 	testAssemblyParseFormatCloneAndSpans(t, search)
+	fill := `package assembly
+namespace assembly
+entity Integer id "assembly://integer"
+activity Lift(Integer) -> Integer computes ` + "`" + `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` + "`" + ` assembling {
+    source_fill intent "Compose a base and a small increment." {
+        hole "seed"
+        hole "step"
+        candidate "add_one" {
+            fill "seed" "input + 0"
+            fill "step" "1"
+        }
+        candidate "double" {
+            fill "seed" "input * 2"
+            fill "step" "0"
+        }
+    }
+    case "0" -> "1"
+    case "2" -> "3"
+}`
+	testAssemblyParseFormatCloneAndSpans(t, fill)
 }
 
 func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
@@ -60,7 +82,12 @@ func testAssemblyParseFormatCloneAndSpans(t *testing.T, assemblySource string) {
 		t.Fatal("assembly formatting is not a fixed point", err)
 	}
 	clone := file.Clone().Declarations[1].(*ActivityDecl)
-	if clone.Assembly.Spec.Search != nil {
+	if clone.Assembly.Spec.FillPlan != nil {
+		clone.Assembly.Spec.FillPlan.Candidates[0].Fills[0].Expression = "changed"
+		if activity.Assembly.Spec.FillPlan.Candidates[0].Fills[0].Expression == "changed" {
+			t.Fatal("syntax clone shares source fill plan storage")
+		}
+	} else if clone.Assembly.Spec.Search != nil {
 		originalIntent := activity.Assembly.Spec.Search.Intent
 		originalHoldout := activity.Assembly.Spec.HoldoutCases[0].Expected
 		clone.Assembly.Spec.Search.Intent = "changed"
