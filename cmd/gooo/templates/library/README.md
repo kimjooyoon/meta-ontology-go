@@ -13,6 +13,19 @@ gooo package resolve gooo.workspace.json
 gooo package execute --json --cases cases.json --body-plans body-fill-plans.json gooo.workspace.json
 ~~~
 
+The body plans also accept a local compact arithmetic model:
+
+~~~sh
+gooo package execute --json --cases cases.json --body-plans body-fill-plans.json \
+  --tiny-model path/to/model.json gooo.workspace.json
+~~~
+
+`--tiny-model` loads one local model for the sequential activity fills. It cannot
+be combined with `GOOO_LAYA_URL` or `GOOO_LAYA_API_KEY`. Without it, Laya is
+used when configured; otherwise the declared candidate order is selected
+deterministically. The local model currently supports the starter's one-hole
+integer plans. Unsupported plan shapes or operators produce a diagnostic.
+
 The execute command follows the declared binding, fills both bodies, compiles
 the generated Go, and runs it against the named case. Gooo scores each
 candidate before emission. Set GOOO_LAYA_URL to a local Laya /v1/systemone

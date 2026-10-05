@@ -36,9 +36,11 @@ Gooo source + intent + permitted choices + finite expectations
 
 · [workspace package graph](docs/language/workspace-manifest.md)
 
-Start a library contract with `gooo init --template library <directory>`. The
-template includes a public Gooo activity and finite examples, ready for
-`gooo check` and `gooo body-codegen`. See [project starters](docs/language/project-starters.md).
+Start a two-package library workspace with `gooo init --template library
+<directory>`. It declares an imported activity binding and typed body-fill
+plans. `gooo package execute` accepts a local compact model for sequential
+activity fills through `--tiny-model`; without a provider it follows the
+declared deterministic order. See [project starters](docs/language/project-starters.md).
 
 ## First run
 

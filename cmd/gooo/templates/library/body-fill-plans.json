@@ -10,7 +10,7 @@
         "hole_id": "value",
         "candidates": [
           {"id": "increment", "expression": "input + 1"},
-          {"id": "identity", "expression": "input"}
+          {"id": "multiply_one", "expression": "input * 1"}
         ],
         "test_cases": [
           {"input": -4, "expected": -3},
@@ -27,8 +27,8 @@
         "intent": "Return the value produced by the imported normalization activity.",
         "hole_id": "value",
         "candidates": [
-          {"id": "identity", "expression": "input"},
-          {"id": "zero", "expression": "0"}
+          {"id": "add_zero", "expression": "input + 0"},
+          {"id": "multiply_zero", "expression": "input * 0"}
         ],
         "test_cases": [
           {"input": -4, "expected": -4},

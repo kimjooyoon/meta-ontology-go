@@ -32,6 +32,7 @@ type ExecuteOptions struct {
 	AssemblyModelPath string
 	GoBinary          string
 	BodyFillPlans     map[string]bodycodegen.IRBodyFillPlan
+	BodyFillOptions   bodycodegen.IRBodyFillOptions
 	LayaEndpoint      string
 	LayaAPIKey        string
 }
@@ -57,6 +58,7 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 	current := []byte(program.Source)
 	fills := make([]BodyFillStep, 0, len(options.BodyFillPlans))
 	knownPlans := make(map[string]bool, len(options.BodyFillPlans))
+	bodyFillOptions := options.BodyFillOptions
 	for _, activity := range program.Activities {
 		key := packageActivityKey(activity.PackagePath, activity.Activity)
 		plan, exists := options.BodyFillPlans[key]
@@ -64,11 +66,12 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 			continue
 		}
 		knownPlans[key] = true
-		generation, fillErr := bodycodegen.GenerateWithIRBodyFill(ctx, "workspace.gooo", current,
-			activity.LoweredName, plan, options.LayaEndpoint, options.LayaAPIKey)
+		generation, fillErr := bodycodegen.GenerateWithIRBodyFillWithOptions(ctx, "workspace.gooo", current,
+			activity.LoweredName, plan, options.LayaEndpoint, options.LayaAPIKey, bodyFillOptions)
 		if fillErr != nil {
 			return Result{}, fmt.Errorf("activity %s body fill: %w", key, fillErr)
 		}
+		bodyFillOptions.TinyModelLoadMS = nil
 		if generation.GoooSource == "" || generation.Report.BodyFill == nil {
 			return Result{}, fmt.Errorf("activity %s body fill returned no replayable Gooo source", key)
 		}
