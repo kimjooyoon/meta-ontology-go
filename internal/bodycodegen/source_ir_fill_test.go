@@ -166,3 +166,51 @@ return base + increment` + "`" + ` assembling {
 		t.Fatalf("generated Gooo source retained unresolved generation or hole declarations:\n%s", result.GoooSource)
 	}
 }
+
+func TestSourceDerivedPerHoleGrammarsComposeConditionalBody(t *testing.T) {
+	source := `package sample
+namespace sample
+entity Integer id "sample://integer"
+activity Lift(Integer) -> Integer computes ` + "`" + `if __GOOO_BODY_HOLE_condition__ { return __GOOO_BODY_HOLE_yes__ } else { return 0 }` + "`" + ` assembling {
+    source_fill intent "Return one for nonpositive input; return zero otherwise." {
+        hole "condition"
+        hole "yes"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "integer-predicate/v1" max_expressions "8"
+            hole "yes" grammar "integer-offset-constant/v1" max_expressions "2"
+        }
+    }
+    case "-1" -> "1"
+    case "0" -> "1"
+    case "2" -> "0"
+}`
+	file, diagnostics := syntax.Parse(source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "conditional-fill.gooo", []byte(source), "Lift", spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.FunctionalAccuracyPct != 100 || !result.Report.TypecheckPassed {
+		t.Fatalf("typed per-hole generation failed finite suite or Go typecheck: %+v", receipt)
+	}
+	generation := receipt.CandidateGeneration
+	if generation == nil || generation.Grammar != "per-hole" || len(generation.HoleGrammars) != 2 ||
+		generation.HoleGrammars[0].Grammar != "integer-predicate/v1" ||
+		generation.HoleGrammars[1].Grammar != "integer-offset-constant/v1" ||
+		generation.GrammarComplete || generation.AssignmentSpaceSize != 16 || generation.AssignmentsRetained != 16 ||
+		generation.AssignmentsOmitted != 0 || generation.HoleGrammars[0].GrammarCoveragePercent >= 100 {
+		t.Fatalf("per-hole grammar and full assignment space were not reported: %+v", generation)
+	}
+	if !strings.Contains(result.Source, "if input < 2") || !strings.Contains(result.Source, "return 1") {
+		t.Fatalf("generated body did not compose the selected predicate and value: %s", result.Source)
+	}
+	grammarDimension := bodyFillDimension(result, "body_fill_candidate_grammar_coverage")
+	assignmentDimension := bodyFillDimension(result, "body_fill_assignment_space_coverage")
+	if grammarDimension.Status != "PROGRESS" || assignmentDimension.Status != "PASS" {
+		t.Fatalf("completeness receipt did not account for the bounded search: %+v %+v", grammarDimension, assignmentDimension)
+	}
+}

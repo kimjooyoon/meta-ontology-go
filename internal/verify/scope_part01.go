@@ -132,4 +132,19 @@ func init() {
 		"internal/verify/scope_part01.go",
 	}
 
+	branchScopeAllowlist["agent/gooo-hole-expression-grammars-20261006"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"docs/source-assembly.md",
+		"examples/body-codegen/source-ir-fill-conditional.gooo.fixture",
+		"internal/assemblyspec/spec.go",
+		"internal/bidir/assembly_test.go",
+		"internal/bodycodegen/completeness_receipt.go",
+		"internal/bodycodegen/source_fill_candidates.go",
+		"internal/bodycodegen/source_ir_fill_test.go",
+		"internal/syntax/assembly.go",
+		"internal/syntax/assembly_test.go",
+		"internal/verify/scope_part01.go",
+	}
+
 }

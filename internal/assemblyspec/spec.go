@@ -44,9 +44,16 @@ type FillPlan struct {
 // FillGeneration declares a closed expression grammar and assignment-space cap
 // that Gooo applies to each declared hole using only source-owned training cases.
 type FillGeneration struct {
+	Grammar        string            `json:"grammar"`
+	MaxExpressions int               `json:"max_expressions_per_hole"`
+	MaxCandidates  int               `json:"max_candidates"`
+	HoleGrammars   []FillHoleGrammar `json:"hole_grammars,omitempty"`
+}
+
+type FillHoleGrammar struct {
+	HoleID         string `json:"hole_id"`
 	Grammar        string `json:"grammar"`
-	MaxExpressions int    `json:"max_expressions_per_hole"`
-	MaxCandidates  int    `json:"max_candidates"`
+	MaxExpressions int    `json:"max_expressions"`
 }
 
 type FillHole struct {
@@ -181,10 +188,25 @@ func (s Spec) validateFillPlan() error {
 		if len(plan.Candidates) < 2 || len(plan.Candidates) > 16 {
 			return fmt.Errorf("source fill plan requires 2..16 complete candidates or a bounded derive clause")
 		}
-	} else if len(plan.Candidates) != 0 || plan.Generation.Grammar != "integer-offset-constant/v1" ||
-		plan.Generation.MaxExpressions < 2 || plan.Generation.MaxExpressions > 16 ||
-		plan.Generation.MaxCandidates < 2 || plan.Generation.MaxCandidates > 16 {
-		return fmt.Errorf("source fill derive requires the integer-offset-constant/v1 grammar, 2..16 expressions per hole and 2..16 complete candidates, with no manual candidates")
+	} else {
+		if len(plan.Candidates) != 0 || plan.Generation.MaxCandidates < 2 || plan.Generation.MaxCandidates > 16 {
+			return fmt.Errorf("source fill derive requires 2..16 complete candidates and no manual candidates")
+		}
+		if len(plan.Generation.HoleGrammars) == 0 {
+			if !supportedFillGrammar(plan.Generation.Grammar) || plan.Generation.MaxExpressions < 2 || plan.Generation.MaxExpressions > 16 {
+				return fmt.Errorf("source fill derive requires a supported grammar and 2..16 expressions per hole")
+			}
+		} else {
+			if plan.Generation.Grammar != "" || plan.Generation.MaxExpressions != 0 || len(plan.Generation.HoleGrammars) != len(plan.Holes) {
+				return fmt.Errorf("source fill per-hole derive requires exactly one grammar per hole and no shared grammar")
+			}
+			for index, grammar := range plan.Generation.HoleGrammars {
+				if grammar.HoleID != plan.Holes[index].ID || !supportedFillGrammar(grammar.Grammar) ||
+					grammar.MaxExpressions < 2 || grammar.MaxExpressions > 16 {
+					return fmt.Errorf("source fill per-hole derive entries must match hole order and use a supported grammar with 2..16 expressions")
+				}
+			}
+		}
 	}
 	var holes [8]string
 	for index, hole := range plan.Holes {
@@ -215,6 +237,10 @@ func (s Spec) validateFillPlan() error {
 		}
 	}
 	return nil
+}
+
+func supportedFillGrammar(grammar string) bool {
+	return grammar == "integer-offset-constant/v1" || grammar == "integer-predicate/v1"
 }
 
 func (s Spec) validateCheckpoint() error {
@@ -277,6 +303,7 @@ func (s Spec) Clone() *Spec {
 		plan.Candidates = append([]FillCandidate(nil), s.FillPlan.Candidates...)
 		if s.FillPlan.Generation != nil {
 			generation := *s.FillPlan.Generation
+			generation.HoleGrammars = append([]FillHoleGrammar(nil), s.FillPlan.Generation.HoleGrammars...)
 			plan.Generation = &generation
 		}
 		for index := range plan.Candidates {

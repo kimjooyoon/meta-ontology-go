@@ -144,6 +144,24 @@ per hole and 2–16 complete assignments. Manual candidates and `derive` are mut
 exclusive. It is mutually exclusive with path
 choices, search, checkpoints, sampling seeds, and attempt budgets.
 
+When holes need different expression types, declare a grammar for each hole:
+
+```gooo
+derive assignments max_candidates "16" {
+    hole "condition" grammar "integer-predicate/v1" max_expressions "8"
+    hole "result" grammar "integer-offset-constant/v1" max_expressions "2"
+}
+```
+
+`integer-predicate/v1` derives `true`, `false`, and bounded comparisons between
+`input` and the distinct training inputs. `integer-offset-constant/v1` derives the
+bounded integer expressions described above. These are finite source-derived
+grammars, not unrestricted Go or proofs over every integer. The receipt reports
+retained expressions per hole, total grammar coverage, assignment count and any
+assignments omitted by the cap. The compiler typechecks each complete assignment,
+scores it against the declared cases, and can send the complete choices to Laya
+for ranking; deterministic fallback uses the same scored choices.
+
 | Kind | Source site selected by `at` | Additional field |
 | --- | --- | --- |
 | `operand_order` | Binary expression | — |

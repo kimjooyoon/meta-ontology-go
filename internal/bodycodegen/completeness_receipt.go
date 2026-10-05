@@ -145,11 +145,15 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		dimensions = append(dimensions, dimension)
 		if generated := fill.CandidateGeneration; generated != nil {
 			grammar := completenessDimension("body_fill_candidate_grammar_coverage",
-				generated.ExpressionsRetainedPerHole, generated.ExpressionCandidatesEnumerated,
+				generated.ExpressionsRetainedTotal, generated.ExpressionCandidatesTotal,
 				"per-hole expressions retained from the declared bounded grammar",
-				"A complete grammar score covers only the named expression grammar derived from training examples; it does not establish intent or all-domain semantics.",
+				"A complete grammar score covers only each named expression grammar derived from training examples; it does not establish intent or all-domain semantics.",
 				[]string{"body_fill.candidate_generation.grammar:" + generated.Grammar,
 					"body_fill.candidate_generation.candidate_set_sha256:" + generated.CandidateSetSHA256}, false)
+			for _, hole := range generated.HoleGrammars {
+				grammar.Evidence = append(grammar.Evidence, "hole:"+hole.HoleID+",grammar:"+hole.Grammar+
+					",retained:"+strconv.Itoa(hole.ExpressionsRetained)+",total:"+strconv.Itoa(hole.ExpressionCandidatesTotal))
+			}
 			if !generated.GrammarComplete {
 				grammar.Status = "PROGRESS"
 			}
