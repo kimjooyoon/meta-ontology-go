@@ -99,3 +99,25 @@ func TestEntityFieldsV2ProjectsBooleanAsBoolAndKeepsProfileBinding(t *testing.T)
 		t.Fatalf("V2 projection metadata lost its profile: %+v %v", projection.Metadata, err)
 	}
 }
+
+func TestEntityFieldsV3ProjectsIntegerAsInt64AndKeepsProfileBinding(t *testing.T) {
+	ir := entityFieldsFixture()
+	ir.Entities[0].Fields[1].TypeRefID = entityFieldsIntegerTypeID
+	result, err := GenerateEntityFieldsV3(ir, nil)
+	if err != nil {
+		t.Fatal("V3 generation", err)
+	}
+	if !strings.Contains(string(result.Source), "CustomerName int64") {
+		t.Fatalf("V3 integer field was not projected as int64:\n%s", result.Source)
+	}
+	for _, mapping := range result.SourceMap.Mappings {
+		if mapping.SemanticID == ir.Entities[0].Fields[1].ID {
+			if mapping.TypeRefID != entityFieldsIntegerTypeID || mapping.ProfileID != syntax.EntityFieldsV3ProfileID ||
+				mapping.ProfileVersion != syntax.EntityFieldsV3ProfileVersion || mapping.ProfileDigest != syntax.EntityFieldsV3ProfileDigest {
+				t.Fatalf("V3 source mapping lost integer or profile identity: %+v", mapping)
+			}
+			return
+		}
+	}
+	t.Fatal("V3 integer field source mapping is missing")
+}

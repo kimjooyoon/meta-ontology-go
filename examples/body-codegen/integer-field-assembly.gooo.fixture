@@ -1,0 +1,26 @@
+package integerassembly
+namespace integerassembly
+
+entity Integer id "integerassembly://integer"
+entity Boolean id "integerassembly://boolean"
+entity Text id "integerassembly://text"
+entity Stats id "integerassembly://stats" fields {
+    field total id "integerassembly://stats/total" type integer required one
+    field enabled id "integerassembly://stats/enabled" type boolean required one
+    field label id "integerassembly://stats/label" type string required one
+}
+
+activity Build(Integer, Boolean, Text) -> Stats computes "return Stats{total: 0, enabled: false, label: \"pending\"}" assembling {
+    choice "total" field_value at "0" alternative "input0 + 1" intent "입력 수량에 하나를 더한다. Add one to the supplied count."
+    choice "enabled" field_value at "1" alternative "input1" intent "전달된 활성 여부를 보존한다. Preserve the supplied enabled value."
+    choice "label" field_value at "2" alternative "input2" intent "전달된 라벨을 보존한다. Preserve the supplied label."
+    value_case "[0,true,\"first\"]" -> "{\"total\":1,\"enabled\":true,\"label\":\"first\"}"
+    value_case "[-1,false,\"zero\"]" -> "{\"total\":0,\"enabled\":false,\"label\":\"zero\"}"
+    value_case "[41,true,\"answer\"]" -> "{\"total\":42,\"enabled\":true,\"label\":\"answer\"}"
+    attempts "8"
+}
+
+activity Echo(Stats) -> Stats computes `let copy = input
+copy.total = copy.total + 1
+return copy`
+bind Build.result -> Echo.input

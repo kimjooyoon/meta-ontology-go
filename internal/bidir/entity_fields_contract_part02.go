@@ -21,9 +21,10 @@ func validateEntityFieldsSupport(support EntityFieldsSupport) error {
 	if profile.ID == "" && profile.Version == 0 && profile.Digest == "" {
 		return entityFieldsError(EntityFieldsUnboundProfileDiagnostic, "EntityFields profile is unbound", SourceSpan{}, ErrEntityFieldsUnboundProfile)
 	}
-	if profile.ID != syntax.EntityFieldsProfileID && profile.ID != syntax.EntityFieldsV2ProfileID ||
+	if profile.ID != syntax.EntityFieldsProfileID && profile.ID != syntax.EntityFieldsV2ProfileID && profile.ID != syntax.EntityFieldsV3ProfileID ||
 		profile.ID == syntax.EntityFieldsProfileID && profile.Version != syntax.EntityFieldsProfileVersion ||
-		profile.ID == syntax.EntityFieldsV2ProfileID && profile.Version != syntax.EntityFieldsV2ProfileVersion {
+		profile.ID == syntax.EntityFieldsV2ProfileID && profile.Version != syntax.EntityFieldsV2ProfileVersion ||
+		profile.ID == syntax.EntityFieldsV3ProfileID && profile.Version != syntax.EntityFieldsV3ProfileVersion {
 		return entityFieldsError(EntityFieldsProfileMismatchDiagnostic, "EntityFields profile identity or version does not match", SourceSpan{}, ErrEntityFieldsProfileMismatch)
 	}
 	if err := profile.Validate(); err != nil {

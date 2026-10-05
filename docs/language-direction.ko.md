@@ -381,7 +381,18 @@ V2는 `gooo generate`의 Go 구조 투영, 독립 본문 생성, `body-compose` 
 전송에서 사용합니다. 입력·바인딩 전달·실제 필드 관측·기대값에서도 Boolean을
 JSON Boolean으로 유지합니다. 새 타입이 기존 V1 기록을 조용히 다시 해석하지
 않도록 버전을 분리했습니다.
-[Gooo 예제와 실행 방법](native-record-values.md#boolean-fields-in-go-projection-and-body-generation).
+[Gooo 예제와 실행 방법](native-record-values.md#typed-fields-across-source-driven-execution).
+
+## 레코드의 정수 필드 — 2026-10-05
+
+레코드에서 수량이나 점수 같은 수치를 문자열로 표현하지 않도록 EntityFields
+V3에 필수 단일 `integer` 필드를 추가했습니다. 이 타입은 안정적인
+`urn:gooo:type:integer`로 의미 모델에 기록되고 Go에서는 `int64`가 됩니다.
+Gooo의 조립 사례는 입력값을 계산해 레코드에 넣고, 2^53을 넘는 값의 JSON
+입력부터 연결 실행까지 정밀도가 유지되는지 확인합니다.
+
+V3은 V1의 문자열과 V2의 불리언을 유지하면서 정수 타입을 더합니다. V1/V2
+프로필 기록은 그대로 구분됩니다. [정수 레코드 예제와 실행 안내](native-record-values.md#typed-fields-across-source-driven-execution).
 
 ## 참고하고 감사하는 연구
 

@@ -48,7 +48,7 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 			if typeID == "" {
 				typeID = string(field.TypeRefUse.ResolvedID)
 			}
-			if typeID != string(semantic.BuiltinStringTypeID) && typeID != string(semantic.BuiltinBooleanTypeID) {
+			if typeID != string(semantic.BuiltinStringTypeID) && typeID != string(semantic.BuiltinBooleanTypeID) && typeID != string(semantic.BuiltinIntegerTypeID) {
 				return nil, fmt.Errorf("record %q field %q has unsupported type %q", node.Name, field.Name, typeID)
 			}
 			record.Fields = append(record.Fields, RecordField{Name: field.Name, ID: string(field.ID),
@@ -71,7 +71,7 @@ func recordGoName(kind, id string) string {
 // ParseBodyFile activates the existing field profile only for the pure body
 // entry points. The ordinary parser and other profiles keep their own contracts.
 func ParseBodyFile(filename string, source []byte) (*syntax.File, syntax.Diagnostics) {
-	return syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV2Support())
+	return syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV3Support())
 }
 
 func bodyEntityType(name string, records []RecordType) (string, bool) {
@@ -95,7 +95,7 @@ func supportedBodyType(name string, records []RecordType) bool {
 }
 
 func resolveBodyModel(file *syntax.File) (bidir.Model, []RecordType, error) {
-	support := bidir.EntityFieldsV2Support()
+	support := bidir.EntityFieldsV3Support()
 	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, support)
 	if err != nil {
 		return bidir.Model{}, nil, fmt.Errorf("lower activity identity: %w", err)

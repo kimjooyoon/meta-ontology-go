@@ -22,6 +22,8 @@ const BuiltinStringTypeID ID = "urn:gooo:type:string"
 const BuiltinStringTypeName = "string"
 const BuiltinBooleanTypeID ID = "urn:gooo:type:boolean"
 const BuiltinBooleanTypeName = "boolean"
+const BuiltinIntegerTypeID ID = "urn:gooo:type:integer"
+const BuiltinIntegerTypeName = "integer"
 
 // TypeRef names a nominal semantic type. ID is the identity boundary. The
 // optional Namespace and Name fields are lookup hints only and never

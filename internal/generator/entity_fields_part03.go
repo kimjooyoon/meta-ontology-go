@@ -35,7 +35,9 @@ func validateSupportedEntityFields(ir SemanticIR, profileID string) error {
 		var previousStart int
 		var hasPrevious bool
 		for index, field := range entity.Fields {
-			if err := validateSupportedField(entity, index, field, used, seenNames, sourceURI, previousStart, hasPrevious, profileID == syntax.EntityFieldsV2ProfileID); err != nil {
+			if err := validateSupportedField(entity, index, field, used, seenNames, sourceURI, previousStart, hasPrevious,
+				profileID == syntax.EntityFieldsV2ProfileID || profileID == syntax.EntityFieldsV3ProfileID,
+				profileID == syntax.EntityFieldsV3ProfileID); err != nil {
 				return err
 			}
 			if sourceURI == "" {

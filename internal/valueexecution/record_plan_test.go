@@ -130,12 +130,40 @@ func TestRecordResultIsOpaqueAndSourceBound(t *testing.T) {
 
 func TestRecordInputRejectsAmbiguousOrNonScalarJSON(t *testing.T) {
 	for _, raw := range []string{
-		"null", "[]", "1", `{"State":null}`, `{"State":1}`, `{"State":[]}`, `{"State":{}}`,
+		"null", "[]", "1", `{"State":null}`, `{"State":1.5}`, `{"State":9223372036854775808}`, `{"State":[]}`, `{"State":{}}`,
 		`{"State":"UNKNOWN","State":"CLOSED"}`, `{"State":"UNKNOWN"} {}`,
 	} {
 		if _, err := DecodeRecordInput([]byte(raw)); err == nil {
 			t.Fatalf("accepted %s", raw)
 		}
+	}
+}
+
+func TestRecordPlanPreservesExactIntegerFieldValues(t *testing.T) {
+	const source = `package integerrecords
+namespace integerrecords
+entity Measurement id "records://measurement" fields {
+  field count id "records://measurement/count" type integer required one
+  field label id "records://measurement/label" type string required one
+}
+activity Capture(Measurement) -> Measurement computes "record.forward:v1"
+`
+	plan, err := CompileRecordPlan("integer.gooo", []byte(source))
+	if err != nil {
+		t.Fatal(err)
+	}
+	fields, err := DecodeRecordInput([]byte(`{"count":9007199254740993,"label":"exact"}`))
+	if err != nil || fields["count"] != int64(9007199254740993) {
+		t.Fatalf("integer input lost precision: fields=%#v err=%v", fields, err)
+	}
+	execution, err := plan.Execute(map[string]RecordFields{"Capture": fields})
+	if err != nil || execution.Results["Capture"].Fields["count"] != int64(9007199254740993) {
+		t.Fatalf("integer record was not transported exactly: execution=%+v err=%v", execution, err)
+	}
+	wrongType := maps.Clone(fields)
+	wrongType["count"] = "9007199254740993"
+	if rejected, err := plan.Execute(map[string]RecordFields{"Capture": wrongType}); err == nil || rejected.ApplyCalls != 0 {
+		t.Fatalf("text was accepted for an integer field: execution=%+v err=%v", rejected, err)
 	}
 }
 

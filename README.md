@@ -86,9 +86,10 @@ Boolean and Text activities then execute in a compiled graph with ordered
 intermediate input/output observations and finite expectation counts.
 Ordinary bodies support up to 16 ordered scalar inputs, including repeated types
 and partially bound joins. [Input-port example and runnable guide](docs/native-body-composition.md).
-String and Boolean records can be constructed, read and passed through
+String, Boolean and Integer records can be constructed, read and passed through
 composition binds as native value structs. Boolean fields become Go `bool` and
-stay typed across inputs, outputs and field observations. [Record body examples](docs/native-record-values.md).
+Integer fields become `int64`; both stay typed across inputs, outputs and field
+observations. [Record body examples](docs/native-record-values.md).
 Record constructor fields can also declare alternative value expressions and
 typed JSON cases. Their assembly reports matching fields as well as complete
 cases, retaining partial results under a small attempt budget.

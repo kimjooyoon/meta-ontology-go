@@ -19,6 +19,7 @@ import (
 type recordBodyScalar struct {
 	Text    string
 	Boolean bool
+	Integer int64
 	Kind    uint8
 }
 
@@ -44,6 +45,8 @@ func zeroRecordBodyValue(t types.Type) (recordBodyValue, error) {
 			value.Values[field].Kind = 1
 		case types.Typ[types.Bool]:
 			value.Values[field].Kind = 2
+		case types.Typ[types.Int64]:
+			value.Values[field].Kind = 3
 		default:
 			return recordBodyValue{}, fmt.Errorf("record field type is outside the scalar profile")
 		}
@@ -72,13 +75,20 @@ func (e *integerBodyEvaluator) evaluateRecordLiteral(literal *ast.CompositeLit) 
 		}
 		for i := 0; i < structure.NumFields(); i++ {
 			if structure.Field(i).Name() == key.Name {
-				if structure.Field(i).Type() == types.Typ[types.Bool] {
+				switch structure.Field(i).Type() {
+				case types.Typ[types.Bool]:
 					boolean, ok := assigned.(bool)
 					if !ok {
 						return nil, fmt.Errorf("record field requires a Boolean")
 					}
 					value.Values[i].Boolean = boolean
-				} else {
+				case types.Typ[types.Int64]:
+					integer, ok := assigned.(int64)
+					if !ok {
+						return nil, fmt.Errorf("record field requires an integer")
+					}
+					value.Values[i].Integer = integer
+				default:
 					text, ok := assigned.(string)
 					if !ok {
 						return nil, fmt.Errorf("record field requires text")
@@ -103,10 +113,14 @@ func (e *integerBodyEvaluator) evaluateRecordField(selector *ast.SelectorExpr) (
 	structure := e.information.Types[selector.X].Type.Underlying().(*types.Struct)
 	for i := 0; i < structure.NumFields(); i++ {
 		if structure.Field(i).Name() == selector.Sel.Name {
-			if structure.Field(i).Type() == types.Typ[types.Bool] {
+			switch structure.Field(i).Type() {
+			case types.Typ[types.Bool]:
 				return record.Values[i].Boolean, nil
+			case types.Typ[types.Int64]:
+				return record.Values[i].Integer, nil
+			default:
+				return record.Values[i].Text, nil
 			}
-			return record.Values[i].Text, nil
 		}
 	}
 	return nil, fmt.Errorf("record field is not declared")
@@ -190,7 +204,7 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 		expectedValue := recordScalarJSONValue(wanted.Values[i])
 		object[field.Name] = actualValue
 		typeID := ""
-		if field.TypeID == "urn:gooo:type:boolean" {
+		if field.TypeID == "urn:gooo:type:boolean" || field.TypeID == "urn:gooo:type:integer" {
 			typeID = field.TypeID
 		}
 		result.Fields = append(result.Fields, RecordAssemblyField{ID: field.ID, Name: field.Name, TypeID: typeID, Expected: fmt.Sprint(expectedValue),
@@ -225,14 +239,19 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 			fieldType := types.Type(types.Typ[types.String])
 			if field.TypeID == "urn:gooo:type:boolean" {
 				fieldType = types.Typ[types.Bool]
+			} else if field.TypeID == "urn:gooo:type:integer" {
+				fieldType = types.Typ[types.Int64]
 			}
 			decoded, err := decodeRecordCaseValue(fieldRaw, fieldType, records)
 			if err != nil {
 				return nil, err
 			}
-			if fieldType == types.Typ[types.Bool] {
+			switch fieldType {
+			case types.Typ[types.Bool]:
 				value.Values[i].Boolean = decoded.(bool)
-			} else {
+			case types.Typ[types.Int64]:
+				value.Values[i].Integer = decoded.(int64)
+			default:
 				value.Values[i].Text = decoded.(string)
 			}
 		}
@@ -258,6 +277,9 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 }
 
 func recordScalarJSONValue(value recordBodyScalar) any {
+	if value.Kind == 3 {
+		return value.Integer
+	}
 	if value.Kind == 2 {
 		return value.Boolean
 	}

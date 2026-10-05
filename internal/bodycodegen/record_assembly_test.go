@@ -107,6 +107,57 @@ func TestBooleanRecordFieldAssemblyPreservesTypedValues(t *testing.T) {
 	}
 }
 
+func TestIntegerRecordFieldAssemblyPreservesTypedValues(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/integer-field-assembly.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	generator, err := NewTypedPathGenerator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := generator.GenerateSourceAssembly(context.Background(), "integer-record.gooo", source, "Build")
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.RecordAssembly
+	if receipt == nil || receipt.Status != "COMPLETE_FINITE" || receipt.SelectedMask != 7 ||
+		receipt.Passed != 3 || receipt.Total != 3 || receipt.FieldsPassed != 9 || receipt.FieldsTotal != 9 || receipt.ModelCalls != 0 {
+		t.Fatalf("integer record assembly did not complete the declared cases: %+v", receipt)
+	}
+	integerType := "urn:gooo:type:integer"
+	for _, record := range result.Report.RecordTypes {
+		if record.Name != "Stats" {
+			continue
+		}
+		for _, field := range record.Fields {
+			if field.Name == "total" && field.TypeID != integerType {
+				t.Fatalf("integer field lost semantic type: %+v", field)
+			}
+		}
+	}
+	for index, observation := range receipt.Cases {
+		var actual map[string]any
+		if err := json.Unmarshal(observation.Actual, &actual); err != nil {
+			t.Fatal(err)
+		}
+		if actual["total"] != float64([]int{1, 0, 42}[index]) {
+			t.Fatalf("case %d encoded total incorrectly: %s", index, observation.Actual)
+		}
+	}
+	if !strings.Contains(result.Source, "int64") || !strings.Contains(result.GoooSource, `picked "total" -> "value_second"`) {
+		t.Fatalf("selected source does not retain integer field semantics: %s", result.GoooSource)
+	}
+	replayed, err := RealizeSourceAssembly(context.Background(), "integer-record.gooo", source, result)
+	if err != nil || replayed.ModelCalls != 0 || replayed.Source != result.GoooSource {
+		t.Fatalf("integer assembly checkpoint replay differs: replay=%+v err=%v", replayed, err)
+	}
+	bad := []byte(strings.Replace(string(source), `alternative "input0 + 1"`, `alternative "\"wrong\""`, 1))
+	if err := ValidateSourceAssembly(context.Background(), "integer-record-bad.gooo", bad, "Build"); err == nil {
+		t.Fatal("string expression accepted for integer record field")
+	}
+}
+
 func TestRecordAssemblyPartialScoreAndSourcePreflight(t *testing.T) {
 	source := recordAssemblyFixture(t)
 	g, _ := NewTypedPathGenerator("")
