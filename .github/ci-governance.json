@@ -5690,6 +5690,16 @@
       ]
     },
     {
+      "branch": "agent/gooo-library-model-starter-20261005",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/main_part01.go",
+        "docs/language/project-starters.md",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/gooo-source-import-declarations-20261005",
       "paths": [
         ".github/agent-scope-table.md",

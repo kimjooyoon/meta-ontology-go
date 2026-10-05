@@ -68,67 +68,110 @@ https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/language/body-codeg
 }
 
 var libraryStarterFiles = map[string]string{
-	"main.gooo": `package boundedint
-namespace boundedint
+	"core.gooo": `package core
+namespace boundedint_core
 entity Integer id "boundedint://integer"
 
-activity Clamp(Integer) -> Integer computes ` + "`" + `
-if input < 0 { return __GOOO_BODY_HOLE_floor__ } else if input > 10 { return __GOOO_BODY_HOLE_ceiling__ } else { return input }
-` + "`" + `
+activity Normalize(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__"
 `,
-	"body-fill-plan.json": `{
-  "schema": "gooo/body-codegen-ir-fill-plan/v2",
-  "intent": "Clamp an integer to the inclusive range 0 through 10. 0 이상 10 이하 범위로 제한한다.",
-  "holes": [
-    {"id": "floor"},
-    {"id": "ceiling"}
-  ],
-  "candidates": [
-    {"id": "clamp-to-range", "fills": {"floor": "0", "ceiling": "10"}},
-    {"id": "inverted-range", "fills": {"floor": "10", "ceiling": "0"}}
-  ],
-  "test_cases": [
-    {"input": -1, "expected": 0},
-    {"input": 0, "expected": 0},
-    {"input": 5, "expected": 5},
-    {"input": 10, "expected": 10},
-    {"input": 11, "expected": 10}
+	"app.gooo": `package app
+namespace boundedint_app
+import core "boundedint/core"
+
+activity Main(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__"
+
+bind core.Normalize.result -> Main.input
+`,
+	"body-fill-plans.json": `{
+  "schema": "gooo/workspace-body-fill-plans/v1",
+  "activities": [
+    {
+      "package_path": "boundedint/core",
+      "activity": "Normalize",
+      "plan": {
+        "schema": "gooo/body-codegen-ir-fill-plan/v1",
+        "intent": "Add one to the input. 입력에 1을 더한다.",
+        "hole_id": "value",
+        "candidates": [
+          {"id": "increment", "expression": "input + 1"},
+          {"id": "identity", "expression": "input"}
+        ],
+        "test_cases": [
+          {"input": -4, "expected": -3},
+          {"input": 0, "expected": 1},
+          {"input": 7, "expected": 8}
+        ]
+      }
+    },
+    {
+      "package_path": "boundedint/app",
+      "activity": "Main",
+      "plan": {
+        "schema": "gooo/body-codegen-ir-fill-plan/v1",
+        "intent": "Return the value produced by the imported normalization activity.",
+        "hole_id": "value",
+        "candidates": [
+          {"id": "identity", "expression": "input"},
+          {"id": "zero", "expression": "0"}
+        ],
+        "test_cases": [
+          {"input": -4, "expected": -4},
+          {"input": 0, "expected": 0},
+          {"input": 7, "expected": 7}
+        ]
+      }
+    }
   ]
 }
 `,
 	"gooo.workspace.json": `{
   "schema": "gooo/package-workspace-manifest/v1",
-  "entry": {"package_path": "boundedint", "activity": "Clamp"},
+  "entry": {"package_path": "boundedint/app", "activity": "Main"},
   "packages": [
-    {"path": "boundedint", "name": "boundedint", "imports": [], "sources": ["main.gooo"]}
+    {"path": "boundedint/app", "name": "app", "imports": ["boundedint/core"], "sources": ["app.gooo"]},
+    {"path": "boundedint/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
+  ]
+}
+`,
+	"cases.json": `{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"boundedint/core:Normalize": 7},
+      "expected": {
+        "boundedint/core:Normalize": 8,
+        "boundedint/app:Main": 8
+      }
+    }
   ]
 }
 `,
 	"README.md": `# boundedint
 
-This is a small Gooo-authored library contract. The public surface is the
-Clamp(Integer) -> Integer activity. Gooo marks two expression holes in its body
-and the plan lists complete assignments for both holes, plus finite examples.
-Laya may rank only those complete assignments.
+This starter is a small Gooo package graph. The core package declares
+Normalize(Integer) -> Integer; the app package imports it and binds its result
+to Main. Each activity has one typed body hole. The plan lists the candidate
+expressions and finite examples that Gooo uses to score them.
 
 Install the Gooo CLI and run these commands from this directory:
 
 ~~~sh
 go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
-gooo check main.gooo
 gooo package resolve gooo.workspace.json
-gooo body-codegen --json --fill-plan body-fill-plan.json --activity Clamp main.gooo
+gooo package execute --json --cases cases.json --body-plans body-fill-plans.json gooo.workspace.json
 ~~~
 
-body-codegen typechecks and scores each complete assignment on the finite
-examples before emitting Go. Set GOOO_LAYA_URL to your local Laya
-/v1/systemone endpoint to let the model choose among the candidates. Without a
-model, Gooo uses the declared order as a deterministic fallback and adjusts to
-the best-scoring candidate when needed. The examples are a compact regression
-set, not a proof for every integer.
+The execute command follows the declared binding, fills both bodies, compiles
+the generated Go, and runs it against the named case. Gooo scores each
+candidate before emission. Set GOOO_LAYA_URL to a local Laya /v1/systemone
+endpoint to let the model choose only among listed candidates. Without a model,
+candidate selection is deterministic. Gooo typechecks the completed bodies and
+reports finite observed accuracy; these examples do not prove behavior for all
+integer inputs.
 
-The workspace manifest records the source and public entry. Package resolve
-prints its deterministic package graph receipt.
+The workspace manifest records package imports and the public entry. Package
+resolve prints the deterministic graph receipt; package execute adds generated
+native execution and a replayable receipt for the chosen body fills.
 `,
 }
 
@@ -171,8 +214,13 @@ func runInit(args []string, stdout, stderr io.Writer) int {
 		}
 		created = append(created, path)
 	}
-	fmt.Fprintf(stdout, "Created Gooo starter in %s\n", destination)
-	fmt.Fprintf(stdout, "Next: cd %s && gooo check main.gooo\n", destination)
+	if template == "library" {
+		fmt.Fprintf(stdout, "Created Gooo library starter in %s\n", destination)
+		fmt.Fprintf(stdout, "Next: cd %s && gooo package execute --json --cases cases.json --body-plans body-fill-plans.json gooo.workspace.json\n", destination)
+	} else {
+		fmt.Fprintf(stdout, "Created Gooo starter in %s\n", destination)
+		fmt.Fprintf(stdout, "Next: cd %s && gooo check main.gooo\n", destination)
+	}
 	return exitOK
 }
 
