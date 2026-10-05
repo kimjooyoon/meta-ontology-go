@@ -59,7 +59,7 @@ the source, or authorize work. The shared completeness receipt records the
 discovery observation while leaving generation, independent use cases, runtime
 execution, and reverse observation unresolved.
 
-See docs/declared-completeness-receipt.md.
+See docs/language/capability-discovery.md.
 `,
 	"init": `Create a starter project
 

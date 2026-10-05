@@ -32,6 +32,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [Gooo source assembly](docs/source-assembly.md)
 · [compose activity bodies](docs/native-body-composition.md)
 · [small model integration](docs/three-choice-path-model.md)
+· [capability discovery](docs/language/capability-discovery.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
 
 · [workspace package graph](docs/language/workspace-manifest.md)
