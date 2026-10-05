@@ -13,6 +13,17 @@ func init() {
 		"docs/language/workspace-manifest.md",
 		"internal/verify/scope_part01.go",
 	}
+	branchScopeAllowlist["agent/gooo-ir-autofill-search-20261005"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"docs/language/body-codegen.md",
+		"examples/body-codegen/ir-search-generated-candidates-plan.json",
+		"internal/bodycodegen/body_search.go",
+		"internal/bodycodegen/body_search_candidate_generation.go",
+		"internal/bodycodegen/body_search_candidate_generation_test.go",
+		"internal/bodycodegen/body_search_completeness.go",
+		"internal/verify/scope_part01.go",
+	}
 }
 
 func init() {
