@@ -144,6 +144,8 @@ per hole and 2–16 complete assignments. Manual candidates and `derive` are mut
 exclusive. It is mutually exclusive with path
 choices, search, checkpoints, sampling seeds, and attempt budgets.
 
+### When holes need different expression types
+
 When holes need different expression types, declare a grammar for each hole:
 
 ```gooo
