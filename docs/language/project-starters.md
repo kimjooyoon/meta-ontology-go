@@ -5,8 +5,8 @@ The default `app` starter is a single activity. Choose `library` to start with
 two Gooo packages connected by an imported activity binding:
 
 ```sh
-gooo init --template library boundedint
-cd boundedint
+gooo init --template library --module example.org/team/forecast forecast
+cd forecast
 gooo package resolve gooo.workspace.json
 gooo package execute --json --cases cases.json gooo.workspace.json
 ```
@@ -19,9 +19,10 @@ gooo package execute --json --cases cases.json --tiny-model path/to/model.json \
   gooo.workspace.json
 ```
 
+The `--module` value becomes the workspace package prefix and source identity.
 The library template declares `Normalize(Integer) -> Integer` in
-`boundedint/core`, then imports and binds that activity to `Main` in
-`boundedint/app`. Normalize's `assembling` block declares two typed holes that
+`example.org/team/forecast/core`, then imports and binds that activity to
+`Main` in `example.org/team/forecast/app`. Normalize's `assembling` block declares two typed holes that
 form one assignment: a base expression and a step. It also lists complete
 candidate assignments and finite examples. `gooo package execute` reads that
 plan from the Gooo source, fills the holes together, checks each candidate, and

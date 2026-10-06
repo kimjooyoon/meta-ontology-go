@@ -43,7 +43,7 @@ Use --check to report whether formatting is needed without changing the file.
 	"package": `Work with a multi-file Gooo workspace
 
 Start from a library template:
-  gooo init --template library my-library
+  gooo init --template library --module example.org/team/my-library my-library
 
 For workspace manifests and execution, see docs/language/workspace-manifest.md
 and docs/language/language-package-execution.md.
