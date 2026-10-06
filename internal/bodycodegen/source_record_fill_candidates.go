@@ -129,11 +129,11 @@ func (c recordFillGrammarContext) composedPredicateExpressions(maxExpressions in
 }
 
 func recordPredicateSelector(expression string) string {
-	if index := strings.Index(expression, " == "); index >= 0 {
-		return expression[:index]
+	if selector, _, ok := strings.Cut(expression, " == "); ok {
+		return selector
 	}
-	if index := strings.Index(expression, " != "); index >= 0 {
-		return expression[:index]
+	if selector, _, ok := strings.Cut(expression, " != "); ok {
+		return selector
 	}
 	return expression
 }
