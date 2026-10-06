@@ -50,7 +50,7 @@ func toolchainLinks(surfaces []artifactSurface, head string) int {
 }
 
 func releaseLinks(artifact artifactEnvelope) int {
-	if artifact.Summary.ToolchainBindings != 3 {
+	if artifact.Summary.ToolchainBindings != 4 {
 		return 0
 	}
 	links := 0

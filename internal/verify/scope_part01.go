@@ -253,5 +253,7 @@ func init() {
 		"internal/meta/languagereadiness/toolchainrelease/indicator_drivers.go",
 		"internal/meta/languagereadiness/toolchainrelease/target.go",
 		"internal/verify/scope_part01.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/artifact_link_values.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/artifact_values.go",
 	}
 }

@@ -51,6 +51,6 @@ func releaseFixture(head string) []byte {
 		"report_digest": fixtureDigest("f"), "repository_writes": 0,
 		"summary": map[string]any{"cases_satisfied": 26, "cases_total": 26,
 			"readiness_bps": 10000, "platform_receipts": 4,
-			"operating_systems": 3, "toolchain_bindings": 3},
+			"operating_systems": 3, "toolchain_bindings": 4},
 		"cases": cases})
 }
