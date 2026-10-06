@@ -49,6 +49,10 @@ ranking does not yet support this record-valued plan schema.
 The source can also derive record candidates from its declared `value_case`s
 instead of listing each assignment. Per-hole `record-field-predicate/v1`
 enumerates equality and inequality checks over observed scalar inputs;
+`record-field-predicate-composition/v1` also enumerates pairwise `&&` and `||`
+combinations, preferring predicates that read different fields. It uses no
+arbitrary formulas or nested Boolean syntax, and its completeness denominator
+includes the full finite pairwise grammar before the per-hole cap.
 `record-string-literal/v1`, `record-integer-literal/v1`, and
 `record-boolean-literal/v1` draw typed literals from the expected output record.
 The assignment cap and omitted search space appear in the same completeness
@@ -65,6 +69,9 @@ Run it without Laya to use the deterministic best-scoring candidate:
 go run ./cmd/gooo body-codegen --json --activity ReviewCandidate \
   examples/body-codegen/source-ir-fill-record-derived.gooo.fixture
 ```
+
+[`source-ir-fill-record-composed.gooo.fixture`](../../examples/body-codegen/source-ir-fill-record-composed.gooo.fixture)
+shows the bounded two-field predicate grammar in a complete record body-fill.
 
 For multiple requests in one process, use
 [`gooo body-path-stream`](../native-body-worker.md). It accepts source recipes,

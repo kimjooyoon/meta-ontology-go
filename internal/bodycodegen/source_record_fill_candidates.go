@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
@@ -12,10 +13,11 @@ import (
 )
 
 const (
-	recordFieldPredicateGrammar = "record-field-predicate/v1"
-	recordStringLiteralGrammar  = "record-string-literal/v1"
-	recordIntegerLiteralGrammar = "record-integer-literal/v1"
-	recordBooleanLiteralGrammar = "record-boolean-literal/v1"
+	recordFieldPredicateGrammar       = "record-field-predicate/v1"
+	recordPredicateCompositionGrammar = "record-field-predicate-composition/v1"
+	recordStringLiteralGrammar        = "record-string-literal/v1"
+	recordIntegerLiteralGrammar       = "record-integer-literal/v1"
+	recordBooleanLiteralGrammar       = "record-boolean-literal/v1"
 )
 
 // generateSourceRecordFillCandidates derives a finite, source-bounded expression
@@ -61,6 +63,8 @@ func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGramm
 	switch grammar.Grammar {
 	case recordFieldPredicateGrammar:
 		return c.predicateExpressions(grammar.MaxExpressions)
+	case recordPredicateCompositionGrammar:
+		return c.composedPredicateExpressions(grammar.MaxExpressions)
 	case recordStringLiteralGrammar:
 		return c.outputLiteralExpressions(grammar.MaxExpressions, semantic.BuiltinStringTypeID)
 	case recordIntegerLiteralGrammar:
@@ -73,12 +77,74 @@ func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGramm
 }
 
 func (c recordFillGrammarContext) predicateExpressions(maxExpressions int) ([]string, int, bool, error) {
+	atoms, err := c.predicateAtoms()
+	if err != nil {
+		return nil, 0, false, err
+	}
+	return retainRecordFillExpressions(atoms, maxExpressions)
+}
+
+func (c recordFillGrammarContext) composedPredicateExpressions(maxExpressions int) ([]string, int, bool, error) {
+	atoms, err := c.predicateAtoms()
+	if err != nil {
+		return nil, 0, false, err
+	}
+	count := len(atoms)
+	maxInt := int(^uint(0) >> 1)
+	if count != 0 && count > maxInt/count {
+		return nil, 0, false, fmt.Errorf("record predicate composition space exceeds the supported counter range")
+	}
+	enumerated := count * count
+	if enumerated < 2 {
+		return nil, enumerated, false, fmt.Errorf("record predicate composition grammar produced fewer than two distinct expressions")
+	}
+	expressions := make([]string, 0, min(maxExpressions, enumerated))
+	appendPairs := func(distinctSelectors bool) {
+		for left := range atoms {
+			for right := left + 1; right < len(atoms) && len(expressions) < maxExpressions; right++ {
+				leftSelector, rightSelector := recordPredicateSelector(atoms[left]), recordPredicateSelector(atoms[right])
+				if (leftSelector != rightSelector) != distinctSelectors {
+					continue
+				}
+				for _, operator := range []string{"&&", "||"} {
+					if len(expressions) == maxExpressions {
+						break
+					}
+					expressions = append(expressions, "("+atoms[left]+") "+operator+" ("+atoms[right]+")")
+				}
+			}
+		}
+	}
+	// Cross-field compositions come first, so a small cap preserves useful
+	// interaction between independently observed parts of a record.
+	appendPairs(true)
+	appendPairs(false)
+	for _, atom := range atoms {
+		if len(expressions) == maxExpressions {
+			break
+		}
+		expressions = append(expressions, atom)
+	}
+	return expressions, enumerated, len(expressions) == enumerated, nil
+}
+
+func recordPredicateSelector(expression string) string {
+	if selector, _, ok := strings.Cut(expression, " == "); ok {
+		return selector
+	}
+	if selector, _, ok := strings.Cut(expression, " != "); ok {
+		return selector
+	}
+	return expression
+}
+
+func (c recordFillGrammarContext) predicateAtoms() ([]string, error) {
 	expressions := make([]string, 0)
 	seen := map[string]bool{}
 	for _, valueCase := range c.cases {
 		inputs, err := decodeRecordFillInputTuple(valueCase.Inputs, len(c.activity.Inputs))
 		if err != nil {
-			return nil, 0, false, err
+			return nil, err
 		}
 		for inputIndex, declaration := range c.activity.Inputs {
 			root := "input"
@@ -95,16 +161,16 @@ func (c recordFillGrammarContext) predicateExpressions(maxExpressions int) ([]st
 			}
 			record := recordTypeByName(c.records, typeName)
 			if record == nil {
-				return nil, 0, false, fmt.Errorf("record predicate grammar cannot resolve input type %q", typeName)
+				return nil, fmt.Errorf("record predicate grammar cannot resolve input type %q", typeName)
 			}
 			var fields map[string]json.RawMessage
 			if err := json.Unmarshal(inputs[inputIndex], &fields); err != nil || fields == nil {
-				return nil, 0, false, fmt.Errorf("record predicate case input %d must be a JSON object", inputIndex)
+				return nil, fmt.Errorf("record predicate case input %d must be a JSON object", inputIndex)
 			}
 			for _, field := range record.Fields {
 				raw, exists := fields[field.Name]
 				if !exists {
-					return nil, 0, false, fmt.Errorf("record predicate case is missing input field %q", field.Name)
+					return nil, fmt.Errorf("record predicate case is missing input field %q", field.Name)
 				}
 				literal, ok := recordFillLiteral(raw, field.TypeID)
 				if ok {
@@ -113,7 +179,7 @@ func (c recordFillGrammarContext) predicateExpressions(maxExpressions int) ([]st
 			}
 		}
 	}
-	return retainRecordFillExpressions(expressions, maxExpressions)
+	return expressions, nil
 }
 
 func appendRecordPredicates(expressions *[]string, seen map[string]bool, selector, literal string) {

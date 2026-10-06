@@ -186,6 +186,48 @@ func TestSourceRecordIRBodyFillDerivesTypedCandidatesFromValueCases(t *testing.T
 	}
 }
 
+func TestSourceRecordIRBodyFillDerivesPairwiseComposedConditions(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-composed.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := ParseBodyFile("record-fill-composed.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	var activity *syntax.ActivityDecl
+	for _, declaration := range file.Declarations {
+		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == "ReviewCandidate" {
+			activity = candidate
+			break
+		}
+	}
+	if activity == nil {
+		t.Fatal("composed record body-fill activity not found")
+	}
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill-composed.gooo", source,
+		"ReviewCandidate", &activity.Assembly.Spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.FunctionalAccuracyPct != 100 || receipt.TestCasesPassed != 2 ||
+		receipt.HoldoutAccuracyPercent == nil || *receipt.HoldoutAccuracyPercent != 100 ||
+		!result.Report.TypecheckPassed || !result.Report.DeterministicReplay {
+		t.Fatalf("composed record predicate did not generate and replay: receipt=%+v report=%+v", receipt, result.Report)
+	}
+	generation := receipt.CandidateGeneration
+	if generation == nil || generation.HoleGrammars[0].Grammar != recordPredicateCompositionGrammar ||
+		generation.HoleGrammars[0].ExpressionCandidatesTotal != 100 || generation.HoleGrammars[0].ExpressionsRetained != 8 ||
+		generation.AssignmentSpaceSize != 32 || generation.AssignmentsRetained != 16 || generation.AssignmentCoveragePercent != 50 {
+		t.Fatalf("pairwise grammar and assignment completeness were not reported: %+v", generation)
+	}
+	if !strings.Contains(result.GoooSource, `input.state == \"ready\"`) ||
+		!strings.Contains(result.GoooSource, "input.reviewed == true") || !strings.Contains(result.GoooSource, "&&") {
+		t.Fatalf("generated Gooo body did not compose the two typed record fields: %s", result.GoooSource)
+	}
+}
+
 func TestSourceRecordIRBodyFillLetsLayaRankDerivedCandidates(t *testing.T) {
 	source, activity := readDerivedRecordBodyFillFixture(t)
 	calls := 0

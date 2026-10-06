@@ -292,7 +292,12 @@ shows disjoint input selection with the bounded composition grammar.
 
 Record `value_case` fills can use a closed per-hole grammar as well. Use
 `record-field-predicate/v1` to derive equality/inequality checks from observed
-scalar input fields, and `record-string-literal/v1`,
+scalar input fields. `record-field-predicate-composition/v1` adds pairwise `&&`
+and `||` combinations between those predicates, preferring comparisons from
+different fields before same-field pairs. It does not generate nested or
+arbitrary Boolean expressions. Both grammars report the complete finite
+expression count and the retained prefix under `max_expressions`. Use
+`record-string-literal/v1`,
 `record-integer-literal/v1`, or `record-boolean-literal/v1` to derive typed
 literals from expected output fields. Gooo forms the bounded Cartesian product,
 typechecks and scores each complete body, then may ask Laya to rank it. The
@@ -304,6 +309,8 @@ selected body on disjoint inputs. These values are excluded from candidate
 derivation and model requests; only the final body is evaluated against them.
 The receipt reports training and holdout results separately, and the finite
 holdout score is not a proof of behavior outside those rows.
+The [composed record fixture](../examples/body-codegen/source-ir-fill-record-composed.gooo.fixture)
+combines readiness and review predicates to select a record-valued result.
 
 | Kind | Source site selected by `at` | Additional field |
 | --- | --- | --- |
