@@ -2,10 +2,27 @@
   "schema": "gooo/body-composition-cases/v1",
   "cases": [
     {
+      "inputs": {"{{module}}/core:Normalize": -4},
+      "expected": {
+        "{{module}}/core:Normalize": -3,
+        "{{module}}/core:Clamp": 0,
+        "{{module}}/app:Main": 0
+      }
+    },
+    {
       "inputs": {"{{module}}/core:Normalize": 7},
       "expected": {
         "{{module}}/core:Normalize": 8,
+        "{{module}}/core:Clamp": 8,
         "{{module}}/app:Main": 8
+      }
+    },
+    {
+      "inputs": {"{{module}}/core:Normalize": 12},
+      "expected": {
+        "{{module}}/core:Normalize": 13,
+        "{{module}}/core:Clamp": 10,
+        "{{module}}/app:Main": 10
       }
     }
   ]
