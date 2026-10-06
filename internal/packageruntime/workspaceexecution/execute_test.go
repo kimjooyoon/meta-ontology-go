@@ -73,6 +73,55 @@ func TestExecuteWorkspaceBuildsAndRunsImportedActivityBodies(t *testing.T) {
 	}
 }
 
+func TestExecuteWorkspaceCarriesTypedDomainRecordsAcrossBindings(t *testing.T) {
+	manifest := packageruntime.Manifest{
+		Schema: packageruntime.ManifestSchema,
+		Entry:  packageruntime.EntrySpec{PackagePath: "example/app", Activity: "Main"},
+		Packages: []packageruntime.PackageSpec{
+			{Path: "example/app", Name: "app", Imports: []string{"example/domain"}, Sources: []packageruntime.Source{{
+				Filename: "app.gooo", Content: `package app
+namespace app
+import domain "example/domain"
+activity Main(Candidate) -> Review computes ` + "`" + `return Review{candidate_id: input.candidate_id, decision: "accepted"}` + "`" + `
+bind domain.Submit.result -> Main.input
+`,
+			}}},
+			{Path: "example/domain", Name: "domain", Sources: []packageruntime.Source{{
+				Filename: "domain.gooo", Content: `package domain
+namespace domain
+entity Candidate id "example://domain/candidate" fields {
+    field candidate_id id "example://domain/candidate/id" type integer required one
+    field title id "example://domain/candidate/title" type string required one
+}
+entity Review id "example://domain/review" fields {
+    field candidate_id id "example://domain/review/candidate-id" type integer required one
+    field decision id "example://domain/review/decision" type string required one
+}
+activity Submit(Candidate) -> Candidate computes "return input"
+`,
+			}}},
+		},
+	}
+	input, _ := json.Marshal(map[string]any{"candidate_id": 41, "title": "queue"})
+	review, _ := json.Marshal(map[string]any{"candidate_id": 41, "decision": "accepted"})
+	suite := bodyexecution.CompositionCases{Schema: "gooo/body-composition-cases/v1", Cases: []bodyexecution.CompositionCase{{
+		Inputs: map[string]json.RawMessage{"example/domain:Submit": input},
+		Expected: map[string]json.RawMessage{
+			"example/domain:Submit": input,
+			"example/app:Main":      review,
+		},
+	}}}
+	result, err := ExecuteWorkspace(context.Background(), manifest, suite, "", "")
+	if err != nil {
+		t.Fatalf("execute typed record activity graph: %v (stage %s, failure %s)", err, result.Runtime.Stage, result.Runtime.Failure)
+	}
+	if result.Runtime.Stage != "COMPLETE" || !result.Runtime.ProjectionReplayed || !result.Runtime.RuntimeReplayed ||
+		result.Runtime.FinitePassed != 2 || result.Runtime.FiniteTotal != 2 || len(result.Runtime.Traces) != 1 ||
+		len(result.Runtime.Traces[0].Deliveries) != 2 {
+		t.Fatalf("typed record flow evidence is incomplete: %+v", result.Runtime)
+	}
+}
+
 func TestPrepareRejectsCrossPackageEntityNameCollision(t *testing.T) {
 	manifest := importedActivityWorkspace()
 	manifest.Packages[0].Sources = []packageruntime.Source{{Filename: "app.gooo", Content: `package app

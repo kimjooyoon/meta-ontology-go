@@ -1,0 +1,14 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "example/domain:Submit": {"candidate_id": 41, "title": "queue"}
+      },
+      "expected": {
+        "example/domain:Submit": {"candidate_id": 41, "title": "queue"},
+        "example/app:Main": {"candidate_id": 41, "decision": "accepted"}
+      }
+    }
+  ]
+}

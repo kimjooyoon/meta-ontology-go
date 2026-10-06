@@ -1,6 +1,8 @@
 package packageruntime
 
 import (
+	"context"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -89,7 +91,7 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export) (compile
 		fileForLowering := source.file.Clone()
 		fileForLowering.Bindings = localBindings(fileForLowering.Bindings)
 		fileWithTypes := appendEntityTypeEnvironment(fileForLowering, typeEnvironment)
-		ir, err := bidir.Lower(fileWithTypes)
+		ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), fileWithTypes, bidir.EntityFieldsV3Support())
 		if err != nil {
 			return compiledPackage{}, reject("PACKAGE_SOURCE_INVALID", "lower source %q: %v", source.source.Filename, err)
 		}

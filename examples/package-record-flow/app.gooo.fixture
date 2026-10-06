@@ -1,0 +1,7 @@
+package app
+namespace app
+
+import domain "example/domain"
+
+activity Main(Candidate) -> Review computes `return Review{candidate_id: input.candidate_id, decision: "accepted"}`
+bind domain.Submit.result -> Main.input
