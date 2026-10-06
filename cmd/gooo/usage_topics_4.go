@@ -1,0 +1,37 @@
+package main
+
+var topicHelpGroup4 = map[string]string{
+	"inspect": `Inspect source declarations
+
+Usage:
+  gooo inspect <file.gooo>
+
+The result summarizes declarations and stable semantic identifiers.
+`,
+	"query": `Query Gooo declarations
+
+Usage:
+  gooo query [--json] <file.gooo> [--id <stable-id>] [--kind <kind>] [--predicate <relation>]
+
+Example:
+  gooo query --json main.gooo --kind activity
+`,
+	"version": `Show Gooo version
+
+Usage:
+  gooo version [--build] [--json]
+
+Use --build to include compiler build information.
+`,
+	"commands": `Core commands
+
+  init, check, test, run, body-codegen, generate, emit
+  format, fix, inspect, query, graph, receipt-schema
+  package, body-compose, body-execute, body-search-run, body-realize
+  profile, debug, decide, invoke, lsp, version
+
+Use ` + "`gooo help <command>`" + ` for a guide to a core command. Advanced
+revision, provenance, repair, and self-improvement commands are listed in the
+repository README and implemented as specialized workflows.
+`,
+}

@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution"
@@ -68,6 +70,16 @@ func runSourceValuePlan(options runSourceOptions, source []byte, reader SourceRe
 	plan, err := valueexecution.CompilePlan(options.filename, source)
 	if err != nil {
 		return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
+	}
+	if options.runtimePlan == "" && plan.RuntimeBindingCount() > 0 {
+		const defaultRuntimePlan = "runtime-plan.json"
+		if _, err := reader.ReadFile(defaultRuntimePlan); err == nil {
+			options.runtimePlan = defaultRuntimePlan
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, valueexecution.Failure{
+				Code: valueexecution.ReasonSourceReadFailed, Stage: "PLAN", Step: "discover-runtime-plan", Detail: err.Error(),
+			})
+		}
 	}
 	runtimePlanDigest := ""
 	var runtimePlanArtifact runtimePlanDocument

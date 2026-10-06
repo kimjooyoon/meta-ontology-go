@@ -22,7 +22,7 @@ import (
 
 const bodyFillPlanSchema = "gooo/body-codegen-ir-fill-plan/v1"
 const bodyFillMultiPlanSchema = "gooo/body-codegen-ir-fill-plan/v2"
-const bodyFillStateSchema = "gooo/body-codegen-ir-fill-state/v1"
+const bodyFillStateSchema = "gooo/body-codegen-ir-fill-state/v2"
 const bodyFillEvaluator = "gooo/bodycodegen-int64-ast-interpreter/v2"
 const irBodyFillDecisionBudget = 8 * time.Second
 
@@ -30,13 +30,14 @@ const irBodyFillDecisionBudget = 8 * time.Second
 // holes in a Gooo activity body. V1 has one hole; V2 selects one complete,
 // declared assignment across several holes as a single model decision.
 type IRBodyFillPlan struct {
-	Schema        string                `json:"schema"`
-	Intent        string                `json:"intent"`
-	HoleID        string                `json:"hole_id"`
-	Holes         []IRBodyFillHole      `json:"holes,omitempty"`
-	ProviderModel string                `json:"provider_model,omitempty"`
-	Candidates    []IRBodyFillCandidate `json:"candidates"`
-	TestCases     []IRBodyFillTestCase  `json:"test_cases"`
+	Schema           string                `json:"schema"`
+	Intent           string                `json:"intent"`
+	HoleID           string                `json:"hole_id"`
+	Holes            []IRBodyFillHole      `json:"holes,omitempty"`
+	ProviderModel    string                `json:"provider_model,omitempty"`
+	Candidates       []IRBodyFillCandidate `json:"candidates"`
+	TestCases        []IRBodyFillTestCase  `json:"test_cases"`
+	HoldoutTestCases []IRBodyFillTestCase  `json:"holdout_test_cases,omitempty"`
 }
 
 type IRBodyFillHole struct {
@@ -92,6 +93,7 @@ type IRBodyFillCaseResult struct {
 
 type IRBodyFillTiming struct {
 	IRPlanBuildMS      float64  `json:"ir_plan_build_ms"`
+	BehavioralProbeMS  float64  `json:"behavioral_probe_ms"`
 	TinyModelLoadMS    *float64 `json:"tiny_model_load_ms,omitempty"`
 	ProviderDecisionMS float64  `json:"provider_decision_ms"`
 	LayaDecisionMS     float64  `json:"laya_decision_ms"`
@@ -100,6 +102,29 @@ type IRBodyFillTiming struct {
 	TotalMS            float64  `json:"total_ms"`
 	ExecutionModel     string   `json:"execution_model"`
 	DecisionStage      string   `json:"decision_stage"`
+}
+
+type IRBodyFillBehavioralProbeReceipt struct {
+	Schema                                 string                            `json:"schema"`
+	ProbeInputs                            []int64                           `json:"probe_inputs"`
+	ProbeProfileSHA256                     string                            `json:"probe_profile_sha256"`
+	CandidateProfiles                      []IRBodyFillCandidateProbeProfile `json:"candidate_profiles"`
+	ProbeInputsTotal                       int                               `json:"probe_inputs_total"`
+	ProbeInputsOmitted                     int                               `json:"probe_inputs_omitted"`
+	CandidateCount                         int                               `json:"candidate_count"`
+	CandidateRunsCompleted                 int                               `json:"candidate_runs_completed"`
+	CandidateRunsFailed                    int                               `json:"candidate_runs_failed"`
+	CandidatePairsDistinguished            int                               `json:"candidate_pairs_distinguished"`
+	CandidatePairsEvaluated                int                               `json:"candidate_pairs_evaluated"`
+	CandidatePairsTotal                    int                               `json:"candidate_pairs_total"`
+	CandidatePairDistinguishabilityPercent float64                           `json:"candidate_pair_distinguishability_percent"`
+	ProbeInputsWithDisagreement            int                               `json:"probe_inputs_with_disagreement"`
+	Scope                                  string                            `json:"scope"`
+}
+
+type IRBodyFillCandidateProbeProfile struct {
+	CandidateID string  `json:"candidate_id"`
+	Outputs     []int64 `json:"outputs"`
 }
 
 type IRBodyFillReceipt struct {
@@ -120,10 +145,16 @@ type IRBodyFillReceipt struct {
 	SelectionAdjustment        string                                `json:"selection_adjustment"`
 	Decision                   decisionroute.Receipt                 `json:"decision"`
 	CandidateScores            []IRBodyFillCandidateScore            `json:"candidate_scores"`
+	BehavioralProbes           *IRBodyFillBehavioralProbeReceipt     `json:"behavioral_probes,omitempty"`
 	TestSuiteSHA256            string                                `json:"test_suite_sha256"`
 	TestCasesPassed            int                                   `json:"test_cases_passed"`
 	TestCasesTotal             int                                   `json:"test_cases_total"`
 	FunctionalAccuracyPct      float64                               `json:"functional_accuracy_percent"`
+	HoldoutSuiteSHA256         string                                `json:"holdout_suite_sha256,omitempty"`
+	HoldoutCasesPassed         int                                   `json:"holdout_cases_passed"`
+	HoldoutCasesTotal          int                                   `json:"holdout_cases_total"`
+	HoldoutAccuracyPercent     *float64                              `json:"holdout_accuracy_percent"`
+	HoldoutCaseResults         []IRBodyFillCaseResult                `json:"holdout_case_results,omitempty"`
 	LocalModelPredictions      int                                   `json:"local_model_predictions"`
 	ExternalProviderCalls      int                                   `json:"external_provider_calls"`
 	ExternalProviderCallsKnown bool                                  `json:"external_provider_calls_known"`
@@ -139,19 +170,20 @@ type IRBodyFillHoleFill struct {
 }
 
 type irBodyFillState struct {
-	Schema          string                     `json:"schema"`
-	Stage           string                     `json:"stage"`
-	Activity        string                     `json:"activity"`
-	ActivityID      string                     `json:"activity_id"`
-	InputType       string                     `json:"input_type"`
-	OutputType      string                     `json:"output_type"`
-	Intent          string                     `json:"intent"`
-	HoleID          string                     `json:"hole_id"`
-	HoleIDs         []string                   `json:"hole_ids,omitempty"`
-	BodyIR          string                     `json:"body_ir"`
-	TestCaseCount   int                        `json:"test_case_count"`
-	TestSuiteSHA256 string                     `json:"test_suite_sha256"`
-	Candidates      []IRBodyFillCandidateScore `json:"candidate_scores"`
+	Schema           string                            `json:"schema"`
+	Stage            string                            `json:"stage"`
+	Activity         string                            `json:"activity"`
+	ActivityID       string                            `json:"activity_id"`
+	InputType        string                            `json:"input_type"`
+	OutputType       string                            `json:"output_type"`
+	Intent           string                            `json:"intent"`
+	HoleID           string                            `json:"hole_id"`
+	HoleIDs          []string                          `json:"hole_ids,omitempty"`
+	BodyIR           string                            `json:"body_ir"`
+	TestCaseCount    int                               `json:"test_case_count"`
+	TestSuiteSHA256  string                            `json:"test_suite_sha256"`
+	Candidates       []IRBodyFillCandidateScore        `json:"candidate_scores"`
+	BehavioralProbes *IRBodyFillBehavioralProbeReceipt `json:"behavioral_probes,omitempty"`
 }
 
 // GenerateWithIRBodyFill builds the typed hole plan synchronously from a Gooo
@@ -273,6 +305,7 @@ func generateWithIRBodyFillOptions(
 	planStarted := time.Now()
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
 	candidateBodies := make(map[string]string, len(plan.Candidates))
+	candidateSources := make(map[string][]byte, len(plan.Candidates))
 	for _, candidate := range plan.Candidates {
 		fills := bodyFillCandidateFills(plan, candidate)
 		candidateBody := body
@@ -294,6 +327,7 @@ func generateWithIRBodyFillOptions(
 			return Result{}, fmt.Errorf("evaluate candidate %q: %w", candidate.ID, err)
 		}
 		candidateBodies[candidate.ID] = candidateBody
+		candidateSources[candidate.ID] = []byte(generated.source)
 		accuracy := float64(passed) * 100 / float64(len(plan.TestCases))
 		candidateExpression := candidate.Expression
 		if plan.Schema == bodyFillMultiPlanSchema {
@@ -304,6 +338,12 @@ func generateWithIRBodyFillOptions(
 			TestCasesPassed: passed, TestCasesTotal: len(plan.TestCases), AccuracyPercent: accuracy,
 		})
 	}
+	behavioralProbeStarted := time.Now()
+	behavioralProbes, err := measureIRBodyFillBehavioralProbes(activityName, candidateSources, plan.TestCases, plan.HoldoutTestCases)
+	if err != nil {
+		return Result{}, fmt.Errorf("measure candidate behavior on synthetic probes: %w", err)
+	}
+	behavioralProbeMS := float64(time.Since(behavioralProbeStarted)) / float64(time.Millisecond)
 	planBuildMS := float64(time.Since(planStarted)) / float64(time.Millisecond)
 	testBytes, _ := json.Marshal(plan.TestCases)
 	testSuiteSHA256 := digest(testBytes)
@@ -312,6 +352,7 @@ func generateWithIRBodyFillOptions(
 		Activity: activityName, ActivityID: activityID, InputType: "Integer", OutputType: "Integer",
 		Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes), HoleIDs: bodyFillHoleIDs(plan, holes), BodyIR: body,
 		TestCaseCount: len(plan.TestCases), TestSuiteSHA256: testSuiteSHA256, Candidates: scores,
+		BehavioralProbes: behavioralProbes,
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("encode Gooo IR body-fill state: %w", err)
@@ -338,10 +379,12 @@ func generateWithIRBodyFillOptions(
 		}
 	}
 	instructions := "Fill the single typed expression hole in the supplied Gooo body IR. Choose only a listed candidate. " +
-		"Use the intent and declared test evidence; do not invent code or modify any other IR node."
+		"Use the intent, declared training evidence, and generated candidate behavior profiles; probes have no expected answers. " +
+		"Do not invent code or modify any other IR node."
 	if plan.Schema == bodyFillMultiPlanSchema {
 		instructions = "Fill every typed expression hole in the supplied Gooo body IR using one complete listed candidate assignment. " +
-			"Choose only a listed assignment. Use the intent and declared test evidence; do not invent code or modify any other IR node."
+			"Choose only a listed assignment. Use the intent, declared training evidence, and generated candidate behavior profiles; " +
+			"probes have no expected answers. Do not invent code or modify any other IR node."
 	}
 	request := decisionroute.Request{
 		Schema: decisionroute.RequestSchema, State: string(stateBytes),
@@ -424,6 +467,20 @@ func generateWithIRBodyFillOptions(
 		return Result{}, fmt.Errorf("evaluate selected generated body: %w", err)
 	}
 	accuracy := float64(passed) * 100 / float64(len(plan.TestCases))
+	var holdoutResults []IRBodyFillCaseResult
+	var holdoutAccuracy *float64
+	var holdoutSuiteSHA256 string
+	holdoutPassed := 0
+	if len(plan.HoldoutTestCases) > 0 {
+		holdoutResults, holdoutPassed, err = evaluateIntegerCases([]byte(result.Source), activityName, plan.HoldoutTestCases)
+		if err != nil {
+			return Result{}, fmt.Errorf("evaluate selected generated body on held-out cases: %w", err)
+		}
+		holdoutBytes, _ := json.Marshal(plan.HoldoutTestCases)
+		holdoutSuiteSHA256 = digest(holdoutBytes)
+		value := float64(holdoutPassed) * 100 / float64(len(plan.HoldoutTestCases))
+		holdoutAccuracy = &value
+	}
 	localPredictions, externalCalls, externalCallsKnown := bodyFillProviderAccounting(decision)
 	tinyDecisionMS, layaDecisionMS := 0.0, 0.0
 	var tinyModelLoadMS *float64
@@ -449,21 +506,25 @@ func generateWithIRBodyFillOptions(
 		SelectionRegretPP:   best.AccuracyPercent - proposedScore.AccuracyPercent,
 		SelectionAdjustment: selectionAdjustment,
 		Decision:            decision, CandidateScores: scores,
-		TestSuiteSHA256: testSuiteSHA256, TestCasesPassed: passed,
+		BehavioralProbes: behavioralProbes,
+		TestSuiteSHA256:  testSuiteSHA256, TestCasesPassed: passed,
 		TestCasesTotal: len(plan.TestCases), FunctionalAccuracyPct: accuracy,
+		HoldoutSuiteSHA256: holdoutSuiteSHA256, HoldoutCasesPassed: holdoutPassed,
+		HoldoutCasesTotal: len(plan.HoldoutTestCases), HoldoutAccuracyPercent: holdoutAccuracy,
+		HoldoutCaseResults:    holdoutResults,
 		LocalModelPredictions: localPredictions, ExternalProviderCalls: externalCalls,
 		ExternalProviderCallsKnown: externalCallsKnown,
 		Evaluator:                  bodyFillEvaluator,
 		SelectedCaseResults:        caseResults,
 		AccuracyScope:              "exact observed accuracy over the declared finite test suite; not a full-domain proof",
 		Timing: IRBodyFillTiming{
-			IRPlanBuildMS: planBuildMS, TinyModelLoadMS: tinyModelLoadMS,
+			IRPlanBuildMS: planBuildMS, BehavioralProbeMS: behavioralProbeMS, TinyModelLoadMS: tinyModelLoadMS,
 			ProviderDecisionMS: decisionMS,
 			LayaDecisionMS:     layaDecisionMS, TinyDecisionMS: tinyDecisionMS,
 			FinalEmissionMS: emissionMS,
 			TotalMS:         float64(time.Since(totalStarted)) / float64(time.Millisecond),
 			ExecutionModel:  "synchronous_sequential_no_background_codegen_goroutines",
-			DecisionStage:   "after_typed_ir_plan_and_candidate_test_scores_before_final_emission",
+			DecisionStage:   "after_typed_ir_plan_training_scores_and_behavior_probes_before_final_emission",
 		},
 	}
 	populateCompletenessReceipt(&result.Report, "")
@@ -495,8 +556,17 @@ func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
 	if len(plan.Candidates) < 2 || len(plan.Candidates) > 16 {
 		return fmt.Errorf("IR body-fill plan requires 2..16 candidates")
 	}
-	if len(plan.TestCases) == 0 || len(plan.TestCases) > 4096 {
-		return fmt.Errorf("IR body-fill plan requires 1..4096 integer test cases")
+	if len(plan.TestCases) == 0 || len(plan.TestCases) > 4096 || len(plan.HoldoutTestCases) > 4096 {
+		return fmt.Errorf("IR body-fill plan requires 1..4096 training cases and at most 4096 holdout cases")
+	}
+	trainingInputs := make(map[int64]bool, len(plan.TestCases))
+	for _, testCase := range plan.TestCases {
+		trainingInputs[testCase.Input] = true
+	}
+	for _, testCase := range plan.HoldoutTestCases {
+		if trainingInputs[testCase.Input] {
+			return fmt.Errorf("holdout input %d also appears in training cases", testCase.Input)
+		}
 	}
 	seen := make(map[string]bool, len(plan.Candidates))
 	for _, candidate := range plan.Candidates {

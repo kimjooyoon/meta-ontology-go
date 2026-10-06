@@ -316,8 +316,17 @@ test gate cannot hide a poor model selection.
 The v1 fixture places its hole inside a conditional assignment to a local `let`
 binding, then returns that value, exercising condition, assignment and return.
 The v2 fixture fills two local `let` expressions before returning their sum.
-The model receives candidate score summaries plus the test count and digest;
-the individual input/output cases stay in Gooo's local receipt.
+The model receives candidate score summaries, the training count and digest,
+and per-candidate output profiles on up to 128 synthetic integer probes derived
+from training inputs. Declared holdout inputs are excluded from those probes;
+the chooser receives neither holdout rows nor expected probe outputs. The profile
+lets Laya reason about candidate behavior alongside Gooo intent without treating
+any synthetic output as a correctness oracle. Individual training and holdout
+input/output rows stay in Gooo's local receipt.
+
+See the [2026-10-06 local Laya observation](laya-local-observation-2026-10-06.md)
+for one measured run, including latency, deterministic fallback, and the limits
+of the CPU observation.
 
 The `functional_accuracy_percent` field means passed cases divided by declared
 cases. It is an exact score for that finite suite under the named bounded AST
@@ -335,6 +344,14 @@ failing cases keep completeness at `PROGRESS`, even when emitted code compiles.
 Reports identify the repaired evaluator as `gooo/bodycodegen-int64-ast-interpreter/v2`.
 The checked-in plan includes `int64` minimum and maximum values as well as
 inputs on both sides of zero.
+
+Source-owned multi-hole fills may also declare `holdout_case` rows. Their inputs
+must be disjoint from training inputs. Candidate scores and the Laya request use
+training cases only; after selection, the final body is checked against the held-out
+cases and the receipt adds `body_fill_holdout_accuracy` as a separate completeness
+dimension. The score is exact for that held-out set and is not a proof over the full
+integer domain. Holdout input/output values stay in the local report; the chooser
+receives neither those values nor a holdout score.
 
 Candidate expressions retain their grouping when inserted into a larger
 expression: filling `2 * HOLE` with `input + 1` emits `2 * (input + 1)`.
