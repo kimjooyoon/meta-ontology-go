@@ -326,6 +326,24 @@ atoms; `max_expressions` retains a deterministic prefix. The
 [relation-composition fixture](../examples/body-codegen/source-ir-fill-record-relation-composition.gooo.fixture)
 matches records on both key and active state, while keeping its 8-of-16 grammar
 coverage distinct from complete assignment coverage and withheld-case results.
+`record-field-relation-composition/v2` adds bounded three-atom conditions over
+three or more same-typed input-field relations. It enumerates both binary tree
+shapes for each pair of Boolean operators, then includes the v1 pair and atomic
+fallbacks in the same finite denominator. Triples using more independent
+selector pairs and fields appear first. The expression cap retains a stable
+prefix; a partial prefix remains `PROGRESS`, and the receipt reports its exact
+coverage separately from complete assignments and holdout results. The
+[three-input fixture](../examples/body-codegen/source-ir-fill-record-relation-triples.gooo.fixture)
+accepts three records only when their keys agree; it reports the full
+196-expression denominator and retains eight triadic conditions. Candidate
+coverage is separate from the 16 complete condition/value assignments and
+training/holdout observations.
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity MatchAll \
+  examples/body-codegen/source-ir-fill-record-relation-triples.gooo.fixture
+```
+
 Use
 `record-string-literal/v1`,
 `record-integer-literal/v1`, or `record-boolean-literal/v1` to derive typed

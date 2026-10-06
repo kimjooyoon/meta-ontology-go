@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -446,6 +448,115 @@ func TestSourceRecordIRBodyFillComposesRelationsBetweenRecordInputs(t *testing.T
 	}
 	if strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") || strings.Contains(result.GoooSource, "source_fill") {
 		t.Fatalf("generated Gooo source retained body-fill instructions: %s", result.GoooSource)
+	}
+}
+
+func TestSourceRecordIRBodyFillComposesThreeRelationsAcrossRecordInputs(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-relation-triples.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := ParseBodyFile("record-relation-triples.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	var activity *syntax.ActivityDecl
+	for _, declaration := range file.Declarations {
+		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == "MatchAll" {
+			activity = candidate
+			break
+		}
+	}
+	if activity == nil {
+		t.Fatal("three-relation body-fill activity not found")
+	}
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-relation-triples.gooo", source,
+		"MatchAll", &activity.Assembly.Spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.FunctionalAccuracyPct != 100 || receipt.TestCasesPassed != 4 || receipt.TestCasesTotal != 4 ||
+		receipt.HoldoutAccuracyPercent == nil || *receipt.HoldoutAccuracyPercent != 100 ||
+		receipt.HoldoutCasesPassed != 2 || receipt.HoldoutCasesTotal != 2 ||
+		!result.Report.TypecheckPassed || !result.Report.DeterministicReplay {
+		t.Fatalf("three-relation record fill did not generate and replay: receipt=%+v report=%+v", receipt, result.Report)
+	}
+	generation := receipt.CandidateGeneration
+	if generation == nil || len(generation.HoleGrammars) != 2 ||
+		generation.HoleGrammars[0].Grammar != recordFieldRelationCompositionV2Grammar ||
+		generation.HoleGrammars[0].ExpressionCandidatesTotal != 196 ||
+		generation.HoleGrammars[0].ExpressionsRetained != 8 || generation.HoleGrammars[0].GrammarComplete ||
+		generation.AssignmentSpaceSize != 16 || generation.AssignmentsRetained != 16 ||
+		generation.AssignmentsOmitted != 0 || generation.AssignmentCoveragePercent != 100 {
+		t.Fatalf("three-relation capped grammar completeness was not exact: %+v", generation)
+	}
+	var selectedCondition string
+	for _, fill := range receipt.HoleFills {
+		if fill.HoleID == "condition" {
+			selectedCondition = fill.Expression
+		}
+	}
+	wantCondition := "((input0.key == input1.key) && (input0.key == input2.key)) && (input1.key == input2.key)"
+	if selectedCondition != wantCondition || !strings.Contains(result.GoooSource, selectedCondition) {
+		t.Fatalf("selected three-relation expression = %q, want %q; source=%s", selectedCondition, wantCondition, result.GoooSource)
+	}
+	if strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") || strings.Contains(result.GoooSource, "source_fill") {
+		t.Fatalf("generated Gooo source retained body-fill instructions: %s", result.GoooSource)
+	}
+}
+
+func TestRecordRelationCompositionV2ReportsTruncatedFiniteGrammar(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-relation-triples.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := ParseBodyFile("record-relation-triples.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	_, records, err := resolveBodyModel(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var activity *syntax.ActivityDecl
+	for _, declaration := range file.Declarations {
+		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == "MatchAll" {
+			activity = candidate
+			break
+		}
+	}
+	if activity == nil {
+		t.Fatal("three-relation body-fill activity not found")
+	}
+	context := recordFillGrammarContext{activity: activity, records: records, output: recordTypeByName(records, activity.Output)}
+	full, fullTotal, fullComplete, err := context.expressions(assemblyspec.FillHoleGrammar{
+		Grammar: recordFieldRelationCompositionV2Grammar, MaxExpressions: 256,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fullTotal != 196 || len(full) != fullTotal || !fullComplete {
+		t.Fatalf("full relation-triple grammar has incorrect completeness: total=%d retained=%d complete=%t", fullTotal, len(full), fullComplete)
+	}
+	grammar := assemblyspec.FillHoleGrammar{Grammar: recordFieldRelationCompositionV2Grammar, MaxExpressions: 8}
+	first, total, complete, err := context.expressions(grammar)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, secondTotal, secondComplete, err := context.expressions(grammar)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if total != 196 || secondTotal != total || complete || secondComplete || len(first) != 8 || !slices.Equal(first, second) {
+		t.Fatalf("truncated grammar is not deterministic or exact: first=%v total=%d complete=%t second=%v total=%d complete=%t",
+			first, total, complete, second, secondTotal, secondComplete)
+	}
+	if count, err := recordFieldRelationCompositionV2Count(2); err != nil || count != 4 {
+		t.Fatalf("two-atom relation fallback count = %d, %v; want 4", count, err)
+	}
+	if _, err := recordFieldRelationCompositionV2Count(int(^uint(0) >> 1)); err == nil {
+		t.Fatal("overflowing relation-triple grammar count was accepted")
 	}
 }
 
