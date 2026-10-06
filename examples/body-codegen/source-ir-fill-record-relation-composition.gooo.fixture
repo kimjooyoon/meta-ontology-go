@@ -1,0 +1,37 @@
+package recordrelationcomposition
+namespace recordrelationcomposition
+
+entity Candidate id "recordrelationcomposition://candidate" fields {
+    field key id "recordrelationcomposition://candidate/key" type string required one
+    field active id "recordrelationcomposition://candidate/active" type boolean required one
+}
+
+entity Request id "recordrelationcomposition://request" fields {
+    field key id "recordrelationcomposition://request/key" type string required one
+    field active id "recordrelationcomposition://request/active" type boolean required one
+}
+
+entity Decision id "recordrelationcomposition://decision" fields {
+    field accepted id "recordrelationcomposition://decision/accepted" type boolean required one
+}
+
+activity Match(Candidate, Request) -> Decision computes `if __GOOO_BODY_HOLE_condition__ {
+    return Decision{accepted: __GOOO_BODY_HOLE_accepted__}
+} else {
+    return Decision{accepted: false}
+}` assembling {
+    source_fill intent "Accept when the key and active state match across the two records." {
+        hole "condition"
+        hole "accepted"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "record-field-relation-composition/v1" max_expressions "8"
+            hole "accepted" grammar "record-boolean-literal/v1" max_expressions "2"
+        }
+    }
+    value_case "[{\"key\":\"alpha\",\"active\":true},{\"key\":\"alpha\",\"active\":true}]" -> "{\"accepted\":true}"
+    value_case "[{\"key\":\"alpha\",\"active\":true},{\"key\":\"alpha\",\"active\":false}]" -> "{\"accepted\":false}"
+    value_case "[{\"key\":\"alpha\",\"active\":false},{\"key\":\"alpha\",\"active\":false}]" -> "{\"accepted\":true}"
+    value_case "[{\"key\":\"alpha\",\"active\":false},{\"key\":\"beta\",\"active\":false}]" -> "{\"accepted\":false}"
+    holdout_value_case "[{\"key\":\"theta\",\"active\":true},{\"key\":\"theta\",\"active\":true}]" -> "{\"accepted\":true}"
+    holdout_value_case "[{\"key\":\"theta\",\"active\":false},{\"key\":\"theta\",\"active\":true}]" -> "{\"accepted\":false}"
+}

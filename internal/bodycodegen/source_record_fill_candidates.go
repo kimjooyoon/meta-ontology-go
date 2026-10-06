@@ -14,14 +14,15 @@ import (
 )
 
 const (
-	recordFieldPredicateGrammar         = "record-field-predicate/v1"
-	recordFieldPredicateV2Grammar       = "record-field-predicate/v2"
-	recordFieldRelationGrammar          = "record-field-relation/v1"
-	recordPredicateCompositionGrammar   = "record-field-predicate-composition/v1"
-	recordPredicateCompositionV2Grammar = "record-field-predicate-composition/v2"
-	recordStringLiteralGrammar          = "record-string-literal/v1"
-	recordIntegerLiteralGrammar         = "record-integer-literal/v1"
-	recordBooleanLiteralGrammar         = "record-boolean-literal/v1"
+	recordFieldPredicateGrammar           = "record-field-predicate/v1"
+	recordFieldPredicateV2Grammar         = "record-field-predicate/v2"
+	recordFieldRelationGrammar            = "record-field-relation/v1"
+	recordFieldRelationCompositionGrammar = "record-field-relation-composition/v1"
+	recordPredicateCompositionGrammar     = "record-field-predicate-composition/v1"
+	recordPredicateCompositionV2Grammar   = "record-field-predicate-composition/v2"
+	recordStringLiteralGrammar            = "record-string-literal/v1"
+	recordIntegerLiteralGrammar           = "record-integer-literal/v1"
+	recordBooleanLiteralGrammar           = "record-boolean-literal/v1"
 )
 
 // generateSourceRecordFillCandidates derives a finite, source-bounded expression
@@ -71,6 +72,8 @@ func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGramm
 		return c.predicateExpressions(grammar.MaxExpressions, true)
 	case recordFieldRelationGrammar:
 		return c.fieldRelationExpressions(grammar.MaxExpressions)
+	case recordFieldRelationCompositionGrammar:
+		return c.composedFieldRelationExpressions(grammar.MaxExpressions)
 	case recordPredicateCompositionGrammar:
 		return c.composedPredicateExpressions(grammar.MaxExpressions, false)
 	case recordPredicateCompositionV2Grammar:
@@ -91,18 +94,44 @@ func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGramm
 // relationships between values supplied by the caller rather than memorizing
 // individual observed values.
 func (c recordFillGrammarContext) fieldRelationExpressions(maxExpressions int) ([]string, int, bool, error) {
-	type selector struct {
-		expression string
-		typeID     string
+	selectors, err := c.fieldRelationSelectors()
+	if err != nil {
+		return nil, 0, false, err
 	}
-	selectors := make([]selector, 0)
+	enumerated := forEachRecordFieldRelation(selectors, func(_ int, _ recordFieldRelationAtom) bool { return true })
+	if enumerated < 2 {
+		return nil, enumerated, false, fmt.Errorf("record relation grammar produced fewer than two distinct expressions")
+	}
+	expressions := make([]string, 0, min(maxExpressions, enumerated))
+	forEachRecordFieldRelation(selectors, func(_ int, atom recordFieldRelationAtom) bool {
+		if len(expressions) < maxExpressions {
+			expressions = append(expressions, atom.expression)
+		}
+		return true
+	})
+	return expressions, enumerated, len(expressions) == enumerated, nil
+}
+
+type recordFieldRelationSelector struct {
+	expression string
+	typeID     string
+}
+
+type recordFieldRelationAtom struct {
+	expression string
+	left       string
+	right      string
+}
+
+func (c recordFillGrammarContext) fieldRelationSelectors() ([]recordFieldRelationSelector, error) {
+	selectors := make([]recordFieldRelationSelector, 0)
 	for inputIndex, input := range c.activity.Inputs {
 		if scalarTypeID(input.Name) != "" {
 			continue
 		}
 		record := recordTypeByName(c.records, input.Name)
 		if record == nil {
-			return nil, 0, false, fmt.Errorf("record relation grammar cannot resolve input type %q", input.Name)
+			return nil, fmt.Errorf("record relation grammar cannot resolve input type %q", input.Name)
 		}
 		root := "input"
 		if len(c.activity.Inputs) > 1 {
@@ -114,12 +143,14 @@ func (c recordFillGrammarContext) fieldRelationExpressions(maxExpressions int) (
 				field.TypeID != string(semantic.BuiltinIntegerTypeID) {
 				continue
 			}
-			selectors = append(selectors, selector{expression: root + "." + field.Name, typeID: field.TypeID})
+			selectors = append(selectors, recordFieldRelationSelector{expression: root + "." + field.Name, typeID: field.TypeID})
 		}
 	}
+	return selectors, nil
+}
 
-	expressions := make([]string, 0, maxExpressions)
-	enumerated := 0
+func forEachRecordFieldRelation(selectors []recordFieldRelationSelector, visit func(int, recordFieldRelationAtom) bool) int {
+	count := 0
 	for leftIndex, left := range selectors {
 		for _, right := range selectors[leftIndex+1:] {
 			if left.typeID != right.typeID {
@@ -130,17 +161,70 @@ func (c recordFillGrammarContext) fieldRelationExpressions(maxExpressions int) (
 				operators = []string{"<", "<=", ">", ">=", "==", "!="}
 			}
 			for _, operator := range operators {
-				enumerated++
-				if len(expressions) < maxExpressions {
-					expressions = append(expressions, left.expression+" "+operator+" "+right.expression)
+				atom := recordFieldRelationAtom{
+					expression: left.expression + " " + operator + " " + right.expression,
+					left:       left.expression, right: right.expression,
 				}
+				if !visit(count, atom) {
+					return count + 1
+				}
+				count++
 			}
 		}
 	}
-	if enumerated < 2 {
-		return nil, enumerated, false, fmt.Errorf("record relation grammar produced fewer than two distinct expressions")
+	return count
+}
+
+func (c recordFillGrammarContext) composedFieldRelationExpressions(maxExpressions int) ([]string, int, bool, error) {
+	selectors, err := c.fieldRelationSelectors()
+	if err != nil {
+		return nil, 0, false, err
+	}
+	atomCount := forEachRecordFieldRelation(selectors, func(_ int, _ recordFieldRelationAtom) bool { return true })
+	maxInt := int(^uint(0) >> 1)
+	if atomCount < 2 {
+		return nil, atomCount, false, fmt.Errorf("record relation composition grammar produced fewer than two distinct expressions")
+	}
+	if atomCount > maxInt/atomCount {
+		return nil, 0, false, fmt.Errorf("record relation composition space exceeds the supported counter range")
+	}
+	enumerated := atomCount * atomCount
+	expressions := make([]string, 0, min(maxExpressions, enumerated))
+	appendPair := func(left, right recordFieldRelationAtom) {
+		for _, operator := range []string{"&&", "||"} {
+			if len(expressions) == maxExpressions {
+				return
+			}
+			expressions = append(expressions, "("+left.expression+") "+operator+" ("+right.expression+")")
+		}
+	}
+	for _, preferDisjoint := range []bool{true, false} {
+		forEachRecordFieldRelation(selectors, func(leftIndex int, left recordFieldRelationAtom) bool {
+			forEachRecordFieldRelation(selectors, func(rightIndex int, right recordFieldRelationAtom) bool {
+				if rightIndex <= leftIndex || recordFieldRelationsDisjoint(left, right) != preferDisjoint {
+					return true
+				}
+				appendPair(left, right)
+				return len(expressions) < maxExpressions
+			})
+			return len(expressions) < maxExpressions
+		})
+		if len(expressions) == maxExpressions {
+			break
+		}
+	}
+	if len(expressions) < maxExpressions {
+		forEachRecordFieldRelation(selectors, func(_ int, atom recordFieldRelationAtom) bool {
+			expressions = append(expressions, atom.expression)
+			return len(expressions) < maxExpressions
+		})
 	}
 	return expressions, enumerated, len(expressions) == enumerated, nil
+}
+
+func recordFieldRelationsDisjoint(left, right recordFieldRelationAtom) bool {
+	return left.left != right.left && left.left != right.right &&
+		left.right != right.left && left.right != right.right
 }
 
 func (c recordFillGrammarContext) predicateExpressions(maxExpressions int, integerOrder bool) ([]string, int, bool, error) {

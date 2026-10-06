@@ -238,6 +238,14 @@ Laya가 고른 내용은 다시 생성·평가되며, 결정론적 실행에서�
 [record 관계 fixture](../examples/body-codegen/source-ir-fill-record-relations.gooo.fixture)를
 추가했습니다. 이 점수는 그 유한 사례의 동작만 설명하며 모든 키나 데이터에 대한
 정확성을 뜻하지 않습니다.
+`record-field-relation-composition/v1`은 두 필드 관계를 `&&` 또는 `||`로
+결합하고, 네 개의 서로 다른 필드를 비교하는 조합을 먼저 제안합니다. 전체
+원자 관계와 쌍별 조합 수를 분모에 두고 `max_expressions`로 보유한 접두 후보를
+제한하므로, 조합 공간과 대입 공간의 완전성을 따로 볼 수 있습니다. 새
+[관계 조합 fixture](../examples/body-codegen/source-ir-fill-record-relation-composition.gooo.fixture)는
+키와 활성 상태가 모두 같은 경우만 승인하고, 학습 4건과 보류 2건을 별도로
+측정합니다. 이 문법은 중첩 조건을 만들지 않으며 보류 점수도 전체 입력에 대한
+정확성을 뜻하지 않습니다.
 `holdout_value_case`는 후보 생성과 Laya 요청에서 제외하고 선택한 본문을
 확정한 뒤 별도로 평가합니다. 따라서 학습 사례 점수와 보류 사례 점수를
 구분하지만, 보류 사례 몇 건만으로 모든 입력에 대한 정확성을 주장하지 않습니다.

@@ -394,6 +394,61 @@ func TestSourceRecordIRBodyFillDerivesRelationsBetweenRecordInputs(t *testing.T)
 	}
 }
 
+func TestSourceRecordIRBodyFillComposesRelationsBetweenRecordInputs(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-relation-composition.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := ParseBodyFile("record-relation-composition.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	var activity *syntax.ActivityDecl
+	for _, declaration := range file.Declarations {
+		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == "Match" {
+			activity = candidate
+			break
+		}
+	}
+	if activity == nil {
+		t.Fatal("record relation composition body-fill activity not found")
+	}
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-relation-composition.gooo", source,
+		"Match", &activity.Assembly.Spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.FunctionalAccuracyPct != 100 || receipt.TestCasesPassed != 4 || receipt.TestCasesTotal != 4 ||
+		receipt.HoldoutAccuracyPercent == nil || *receipt.HoldoutAccuracyPercent != 100 ||
+		receipt.HoldoutCasesPassed != 2 || receipt.HoldoutCasesTotal != 2 ||
+		!result.Report.TypecheckPassed || !result.Report.DeterministicReplay {
+		t.Fatalf("composed record relations did not generate and replay: receipt=%+v report=%+v", receipt, result.Report)
+	}
+	generation := receipt.CandidateGeneration
+	if generation == nil || len(generation.HoleGrammars) != 2 ||
+		generation.HoleGrammars[0].Grammar != recordFieldRelationCompositionGrammar ||
+		generation.HoleGrammars[0].ExpressionCandidatesTotal != 16 ||
+		generation.HoleGrammars[0].ExpressionsRetained != 8 || generation.HoleGrammars[0].GrammarComplete ||
+		generation.AssignmentSpaceSize != 16 || generation.AssignmentsRetained != 16 ||
+		generation.AssignmentsOmitted != 0 || generation.AssignmentCoveragePercent != 100 {
+		t.Fatalf("relation-composition search bounds were not reported exactly: %+v", generation)
+	}
+	var selectedCondition string
+	for _, fill := range receipt.HoleFills {
+		if fill.HoleID == "condition" {
+			selectedCondition = fill.Expression
+		}
+	}
+	wantCondition := "(input0.key == input1.key) && (input0.active == input1.active)"
+	if selectedCondition != wantCondition || !strings.Contains(result.GoooSource, selectedCondition) {
+		t.Fatalf("selected record relation composition = %q, want %q; source=%s", selectedCondition, wantCondition, result.GoooSource)
+	}
+	if strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") || strings.Contains(result.GoooSource, "source_fill") {
+		t.Fatalf("generated Gooo source retained body-fill instructions: %s", result.GoooSource)
+	}
+}
+
 func TestSourceRecordIRBodyFillLetsLayaRankDerivedCandidates(t *testing.T) {
 	source, activity := readDerivedRecordBodyFillFixture(t)
 	calls := 0
