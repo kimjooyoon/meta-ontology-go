@@ -369,7 +369,7 @@ func TestTinyGoRecordFillRejectsAssignmentsWithoutSeparatingHoleBeforeInference(
 			}
 		}
 	}
-	plan, _, err := sourceIRBodyFillPlan("record-fill.gooo", source, "ReviewCandidate", &spec)
+	plan, _, err := sourceIRBodyFillPlan("record-fill.gooo", source, "ReviewCandidate", spec)
 	if err != nil {
 		t.Fatal(err)
 	}
