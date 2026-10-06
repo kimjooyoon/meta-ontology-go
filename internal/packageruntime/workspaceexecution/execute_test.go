@@ -340,15 +340,10 @@ activity Main(Candidate) -> Review computes ` + "`" + `if __GOOO_BODY_HOLE_condi
         hole "condition"
         hole "accepted"
         hole "rejected"
-        candidate "ready_is_accepted" {
-            fill "condition" "input.state == \"ready\""
-            fill "accepted" "\"accepted\""
-            fill "rejected" "\"rejected\""
-        }
-        candidate "ready_is_rejected" {
-            fill "condition" "input.state != \"ready\""
-            fill "accepted" "\"accepted\""
-            fill "rejected" "\"rejected\""
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "record-field-predicate/v1" max_expressions "4"
+            hole "accepted" grammar "record-string-literal/v1" max_expressions "2"
+            hole "rejected" grammar "record-string-literal/v1" max_expressions "2"
         }
     }
     value_case "[{\"candidate_id\":41,\"state\":\"ready\"}]" -> "{\"candidate_id\":41,\"decision\":\"accepted\"}"
@@ -361,8 +356,8 @@ bind domain.Submit.result -> Main.input
 				Filename: "domain.gooo", Content: `package domain
 namespace domain
 entity Candidate id "example://domain/candidate" fields {
-    field candidate_id id "example://domain/candidate/id" type integer required one
     field state id "example://domain/candidate/state" type string required one
+    field candidate_id id "example://domain/candidate/id" type integer required one
 }
 entity Review id "example://domain/review" fields {
     field candidate_id id "example://domain/review/candidate-id" type integer required one
@@ -399,20 +394,36 @@ activity Submit(Candidate) -> Candidate computes "return input"
 			return
 		}
 		var state struct {
-			InputType  string `json:"input_type"`
-			OutputType string `json:"output_type"`
-			TestCount  int    `json:"test_case_count"`
+			InputType  string                                 `json:"input_type"`
+			OutputType string                                 `json:"output_type"`
+			TestCount  int                                    `json:"test_case_count"`
+			Candidates []bodycodegen.IRBodyFillCandidateScore `json:"candidate_scores"`
 		}
-		if json.Unmarshal([]byte(payload.State["request"]), &state) != nil || state.InputType != "Candidate" ||
-			state.OutputType != "Review" || state.TestCount != 2 || len(payload.Questions["body_ir_fill"].Criteria) != 2 {
+		if err := json.Unmarshal([]byte(payload.State["request"]), &state); err != nil {
+			t.Errorf("decode generated candidate state: %v request=%s", err, payload.State["request"])
+			http.Error(writer, "typed record IR missing from model request", http.StatusBadRequest)
+			return
+		}
+		if state.InputType != "Candidate" || state.OutputType != "Review" || state.TestCount != 2 ||
+			len(state.Candidates) != 16 || len(payload.Questions["body_ir_fill"].Criteria) != 16 ||
+			strings.Contains(payload.State["request"], `"candidate_id":41`) {
+			t.Errorf("unexpected generated candidate request: input=%s output=%s cases=%d candidates=%d criteria=%d has_raw_case=%v request=%s",
+				state.InputType, state.OutputType, state.TestCount, len(state.Candidates), len(payload.Questions["body_ir_fill"].Criteria),
+				strings.Contains(payload.State["request"], `"candidate_id":41`), payload.State["request"])
 			http.Error(writer, "typed record IR missing from model request", http.StatusBadRequest)
 			return
 		}
 		calls.Add(1)
+		best := state.Candidates[0]
+		for _, candidate := range state.Candidates[1:] {
+			if candidate.AccuracyPercent > best.AccuracyPercent {
+				best = candidate
+			}
+		}
 		_ = json.NewEncoder(writer).Encode(map[string]any{
 			"model": "record-model", "routing": map[string]any{"model": "record-model"},
 			"answers": map[string]any{"body_ir_fill": map[string]any{
-				"choice": "ready_is_accepted", "probabilities": map[string]float64{"ready_is_accepted": 1},
+				"choice": best.ID, "probabilities": map[string]float64{best.ID: 1},
 			}},
 		})
 	}))
@@ -423,7 +434,8 @@ activity Submit(Candidate) -> Candidate computes "return input"
 		t.Fatalf("execute model-composed record activity graph: %v", err)
 	}
 	if calls.Load() != 1 || len(result.BodyFills) != 1 || result.BodyFills[0].Generation.Report.BodyFill == nil ||
-		result.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID != "ready_is_accepted" ||
+		result.BodyFills[0].Generation.Report.BodyFill.CandidateGeneration == nil || len(result.BodyFills[0].Generation.Report.BodyFill.CandidateScores) != 16 ||
+		result.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID == "" ||
 		result.BodyFills[0].Generation.Report.BodyFill.Decision.Provider != "laya" ||
 		result.BodyFills[0].Generation.Report.BodyFill.FunctionalAccuracyPct != 100 ||
 		result.Runtime.FinitePassed != 4 || result.Runtime.FiniteTotal != 4 || !result.Runtime.RuntimeReplayed {

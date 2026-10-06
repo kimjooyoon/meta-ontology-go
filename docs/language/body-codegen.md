@@ -38,12 +38,28 @@ Without a model endpoint, Gooo deterministically keeps the highest-scoring
 declared assignment. Set `GOOO_LAYA_URL` to a Laya `/v1/systemone` endpoint to
 let the model choose among eligible assignments. Its request includes the
 typed Gooo body, candidate summaries and finite-case scores; it omits raw case
-values. The receipt records the proposed and final candidates, each record
-case result, and whether Gooo replaced an inferior proposal with the
-best-scoring candidate. Record body fill currently supports required single
-string, boolean and integer record fields, one declared record result, and pure
-body expressions. Local TinyGo ranking does not yet support this record-valued
-plan schema.
+objects. Derived candidate expressions can still contain literals observed in
+those cases, because those are part of the choices Laya ranks. The receipt
+records the proposed and final candidates, each record case result, and whether
+Gooo replaced an inferior proposal with the best-scoring candidate. Record body
+fill currently supports required single string, boolean and integer record
+fields, one declared record result, and pure body expressions. Local TinyGo
+ranking does not yet support this record-valued plan schema.
+
+The source can also derive record candidates from its declared `value_case`s
+instead of listing each assignment. Per-hole `record-field-predicate/v1`
+enumerates equality and inequality checks over observed scalar inputs;
+`record-string-literal/v1`, `record-integer-literal/v1`, and
+`record-boolean-literal/v1` draw typed literals from the expected output record.
+The assignment cap and omitted search space appear in the same completeness
+receipt as integer derivation. See
+[`source-ir-fill-record-derived.gooo.fixture`](../../examples/body-codegen/source-ir-fill-record-derived.gooo.fixture).
+Run it without Laya to use the deterministic best-scoring candidate:
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity ReviewCandidate \
+  examples/body-codegen/source-ir-fill-record-derived.gooo.fixture
+```
 
 For multiple requests in one process, use
 [`gooo body-path-stream`](../native-body-worker.md). It accepts source recipes,

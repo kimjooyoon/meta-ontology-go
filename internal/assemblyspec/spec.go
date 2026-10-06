@@ -186,8 +186,8 @@ func (s Spec) validateFillPlan() error {
 		return fmt.Errorf("source fill plan requires intent, 2..8 holes and either integer cases or typed record value cases; it cannot mix with other assembly modes")
 	}
 	if recordCases {
-		if len(s.HoldoutCases) != 0 || plan.Generation != nil {
-			return fmt.Errorf("record source fill currently requires explicit candidates and has no integer holdout cases")
+		if len(s.HoldoutCases) != 0 {
+			return fmt.Errorf("record source fill has no integer holdout cases")
 		}
 		for _, testCase := range s.ValueCases {
 			inputs, err := CanonicalValue(testCase.Inputs)
@@ -218,7 +218,7 @@ func (s Spec) validateFillPlan() error {
 			return fmt.Errorf("source fill derive requires 2..16 complete candidates and no manual candidates")
 		}
 		if len(plan.Generation.HoleGrammars) == 0 {
-			if !supportedFillGrammar(plan.Generation.Grammar) || plan.Generation.MaxExpressions < 2 || plan.Generation.MaxExpressions > 16 {
+			if !fillGrammarAllowed(plan.Generation.Grammar, recordCases) || plan.Generation.MaxExpressions < 2 || plan.Generation.MaxExpressions > 16 {
 				return fmt.Errorf("source fill derive requires a supported grammar and 2..16 expressions per hole")
 			}
 		} else {
@@ -226,7 +226,7 @@ func (s Spec) validateFillPlan() error {
 				return fmt.Errorf("source fill per-hole derive requires exactly one grammar per hole and no shared grammar")
 			}
 			for index, grammar := range plan.Generation.HoleGrammars {
-				if grammar.HoleID != plan.Holes[index].ID || !supportedFillGrammar(grammar.Grammar) ||
+				if grammar.HoleID != plan.Holes[index].ID || !fillGrammarAllowed(grammar.Grammar, recordCases) ||
 					grammar.MaxExpressions < 2 || grammar.MaxExpressions > 16 {
 					return fmt.Errorf("source fill per-hole derive entries must match hole order and use a supported grammar with 2..16 expressions")
 				}
@@ -267,7 +267,21 @@ func (s Spec) validateFillPlan() error {
 func supportedFillGrammar(grammar string) bool {
 	return grammar == "integer-offset-constant/v1" || grammar == "integer-predicate/v1" ||
 		grammar == "integer-predicate-composition/v1" || grammar == "integer-predicate-outside-range/v1" ||
-		grammar == "integer-predicate-cutpoint/v1"
+		grammar == "integer-predicate-cutpoint/v1" || grammar == "record-field-predicate/v1" ||
+		grammar == "record-string-literal/v1" || grammar == "record-integer-literal/v1" ||
+		grammar == "record-boolean-literal/v1"
+}
+
+func fillGrammarAllowed(grammar string, recordCases bool) bool {
+	if recordCases {
+		return recordFillGrammar(grammar)
+	}
+	return supportedFillGrammar(grammar) && !recordFillGrammar(grammar)
+}
+
+func recordFillGrammar(grammar string) bool {
+	return grammar == "record-field-predicate/v1" || grammar == "record-string-literal/v1" ||
+		grammar == "record-integer-literal/v1" || grammar == "record-boolean-literal/v1"
 }
 
 func (s Spec) validateCheckpoint() error {

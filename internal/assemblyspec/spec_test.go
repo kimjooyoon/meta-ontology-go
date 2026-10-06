@@ -59,6 +59,33 @@ func TestAssemblyFiniteAndTextBudgets(t *testing.T) {
 	}
 }
 
+func TestRecordSourceFillAllowsOnlyTypedRecordGrammars(t *testing.T) {
+	spec := Spec{
+		ValueCases: []ValueCase{
+			{Inputs: `[{"state":"ready"}]`, Expected: `{"decision":"accepted"}`},
+			{Inputs: `[{"state":"queued"}]`, Expected: `{"decision":"rejected"}`},
+		},
+		FillPlan: &FillPlan{
+			Intent: "route record states",
+			Holes:  []FillHole{{ID: "condition"}, {ID: "accepted"}, {ID: "rejected"}},
+			Generation: &FillGeneration{MaxCandidates: 16, HoleGrammars: []FillHoleGrammar{
+				{HoleID: "condition", Grammar: "record-field-predicate/v1", MaxExpressions: 4},
+				{HoleID: "accepted", Grammar: "record-string-literal/v1", MaxExpressions: 2},
+				{HoleID: "rejected", Grammar: "record-string-literal/v1", MaxExpressions: 2},
+			}},
+		},
+	}
+	if err := spec.Validate(); err != nil {
+		t.Fatalf("typed record candidate derivation rejected: %v", err)
+	}
+
+	invalid := spec.Clone()
+	invalid.FillPlan.Generation.HoleGrammars[0].Grammar = "integer-predicate/v1"
+	if err := invalid.Validate(); err == nil {
+		t.Fatal("integer grammar mixed into record value cases")
+	}
+}
+
 func TestAssemblyCheckpointCanonicalSelectionAndClone(t *testing.T) {
 	s := validSpec()
 	s.Baseline = "return input - 2"

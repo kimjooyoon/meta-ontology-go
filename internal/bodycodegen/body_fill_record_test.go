@@ -31,6 +31,25 @@ func readRecordBodyFillFixture(t *testing.T) ([]byte, *syntax.ActivityDecl) {
 	return nil, nil
 }
 
+func readDerivedRecordBodyFillFixture(t *testing.T) ([]byte, *syntax.ActivityDecl) {
+	t.Helper()
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-derived.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := ParseBodyFile("record-fill-derived.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	for _, declaration := range file.Declarations {
+		if activity, ok := declaration.(*syntax.ActivityDecl); ok && activity.Name == "ReviewCandidate" {
+			return source, activity
+		}
+	}
+	t.Fatal("derived record body-fill activity not found")
+	return nil, nil
+}
+
 func TestSourceRecordIRBodyFillLetsLayaSelectTypedDomainLogic(t *testing.T) {
 	source, activity := readRecordBodyFillFixture(t)
 	var observed struct {
@@ -131,5 +150,92 @@ func TestSourceRecordIRBodyFillRejectsIllTypedCandidateBeforeLaya(t *testing.T) 
 		"ReviewCandidate", spec, server.URL+"/v1/systemone", "", IRBodyFillOptions{})
 	if err == nil || !strings.Contains(err.Error(), "candidate \"ready_is_accepted\"") || calls != 0 {
 		t.Fatalf("ill-typed candidate was not rejected before model selection: calls=%d err=%v", calls, err)
+	}
+}
+
+func TestSourceRecordIRBodyFillDerivesTypedCandidatesFromValueCases(t *testing.T) {
+	source, activity := readDerivedRecordBodyFillFixture(t)
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill-derived.gooo", source,
+		"ReviewCandidate", &activity.Assembly.Spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.CandidateGeneration == nil || receipt.FunctionalAccuracyPct != 100 ||
+		receipt.TestCasesPassed != 2 || receipt.TestCasesTotal != 2 || len(receipt.CandidateScores) != 16 ||
+		!result.Report.TypecheckPassed || !result.Report.DeterministicReplay {
+		t.Fatalf("derived record candidates did not compose and replay: %+v report=%+v", receipt, result.Report)
+	}
+	generation := receipt.CandidateGeneration
+	if generation.Grammar != "per-hole" || generation.AssignmentSpaceSize != 16 || generation.AssignmentsRetained != 16 ||
+		generation.AssignmentsOmitted != 0 || generation.AssignmentCoveragePercent != 100 || generation.GrammarComplete ||
+		len(generation.HoleGrammars) != 3 || generation.HoleGrammars[0].Grammar != recordFieldPredicateGrammar ||
+		generation.HoleGrammars[0].ExpressionCandidatesTotal != 8 || generation.HoleGrammars[0].ExpressionsRetained != 4 ||
+		generation.HoleGrammars[0].GrammarCoveragePercent != 50 ||
+		generation.HoleGrammars[1].Grammar != recordStringLiteralGrammar || generation.HoleGrammars[2].Grammar != recordStringLiteralGrammar {
+		t.Fatalf("record-derived grammar coverage was not reported exactly: %+v", generation)
+	}
+	if !strings.Contains(result.GoooSource, `input.state == \"ready\"`) {
+		t.Fatalf("derived Gooo body did not use the observed record field: %s", result.GoooSource)
+	}
+	if strings.Contains(result.GoooSource, "derive assignments") || strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") ||
+		strings.Contains(result.GoooSource, "source_fill") {
+		t.Fatalf("generated Gooo source retained meta instructions: %s", result.GoooSource)
+	}
+}
+
+func TestSourceRecordIRBodyFillLetsLayaRankDerivedCandidates(t *testing.T) {
+	source, activity := readDerivedRecordBodyFillFixture(t)
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet && request.URL.Path == "/health" {
+			_ = json.NewEncoder(writer).Encode(map[string]any{"revisions": map[string]string{"record-grammar-model": "0123456789abcdef0123456789abcdef"}})
+			return
+		}
+		var payload struct {
+			State map[string]string `json:"state"`
+		}
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/systemone" {
+			http.Error(writer, "invalid derived candidate request", http.StatusNotFound)
+			return
+		}
+		calls++
+		if json.NewDecoder(request.Body).Decode(&payload) != nil {
+			http.Error(writer, "invalid derived candidate request", http.StatusBadRequest)
+			return
+		}
+		var state struct {
+			TestCaseCount int                        `json:"test_case_count"`
+			Candidates    []IRBodyFillCandidateScore `json:"candidate_scores"`
+		}
+		if json.Unmarshal([]byte(payload.State["request"]), &state) != nil ||
+			state.TestCaseCount != 2 || len(state.Candidates) != 16 || strings.Contains(payload.State["request"], `"candidate_id":41`) {
+			http.Error(writer, "model request omitted derived candidates or included raw cases", http.StatusBadRequest)
+			return
+		}
+		best := state.Candidates[0]
+		for _, candidate := range state.Candidates[1:] {
+			if candidate.AccuracyPercent > best.AccuracyPercent {
+				best = candidate
+			}
+		}
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "record-grammar-model", "routing": map[string]any{"model": "record-grammar-model"},
+			"answers": map[string]any{"body_ir_fill": map[string]any{
+				"choice": best.ID, "probabilities": map[string]float64{best.ID: 1},
+			}},
+		})
+	}))
+	defer server.Close()
+
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill-derived.gooo", source,
+		"ReviewCandidate", &activity.Assembly.Spec, server.URL+"/v1/systemone", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if calls != 1 || result.Report.BodyFill == nil || result.Report.BodyFill.CandidateGeneration == nil ||
+		result.Report.BodyFill.Decision.Provider != "laya" || result.Report.BodyFill.FunctionalAccuracyPct != 100 ||
+		result.Report.BodyFill.ProposedCandidateID == "" || result.Report.BodyFill.SelectedCandidateID != result.Report.BodyFill.ProposedCandidateID {
+		t.Fatalf("Laya did not select from the derived record grammar: calls=%d receipt=%+v", calls, result.Report.BodyFill)
 	}
 }

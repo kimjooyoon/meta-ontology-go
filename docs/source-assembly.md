@@ -288,6 +288,16 @@ for ranking; deterministic fallback uses the same scored choices. The
 [composed-condition fixture](../examples/body-codegen/source-ir-fill-composed-condition.gooo.fixture)
 shows disjoint input selection with the bounded composition grammar.
 
+Record `value_case` fills can use a closed per-hole grammar as well. Use
+`record-field-predicate/v1` to derive equality/inequality checks from observed
+scalar input fields, and `record-string-literal/v1`,
+`record-integer-literal/v1`, or `record-boolean-literal/v1` to derive typed
+literals from expected output fields. Gooo forms the bounded Cartesian product,
+typechecks and scores each complete body, then may ask Laya to rank it. The
+[record-derived fixture](../examples/body-codegen/source-ir-fill-record-derived.gooo.fixture)
+shows the declaration and cases. Its completeness claim is limited to the
+declared finite grammar and examples, not all possible domain values.
+
 | Kind | Source site selected by `at` | Additional field |
 | --- | --- | --- |
 | `operand_order` | Binary expression | — |
