@@ -98,6 +98,15 @@ remains outside the search. The
 builds a two-sided score condition, typechecks it, replays it, and scores
 separate holdout records. Version 1 keeps its original candidate order and
 equality-only atoms.
+`record-field-relation/v1` adds comparisons between distinct fields on declared
+record inputs. It compares only fields with the same scalar type: string and
+Boolean fields get equality/inequality, while Integer fields also get ordered
+comparisons. Selectors keep their input and field declaration order; the
+receipt reports the complete relation grammar and retained prefix. Unlike
+literal predicates, these expressions compare caller-supplied values directly.
+The [record relation fixture](../../examples/body-codegen/source-ir-fill-record-relations.gooo.fixture)
+derives `input0.key == input1.key`, checks four training pairs, and measures two
+separate holdouts.
 `record-string-literal/v1`, `record-integer-literal/v1`, and
 `record-boolean-literal/v1` draw typed literals from the expected output record.
 The assignment cap and omitted search space appear in the same completeness

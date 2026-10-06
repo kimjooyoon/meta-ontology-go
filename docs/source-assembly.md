@@ -312,6 +312,12 @@ space with same-field pairs. The complete denominator and retained count remain
 visible, and v1 keeps its previous order. The
 [integer-range fixture](../examples/body-codegen/source-ir-fill-record-integer-range.gooo.fixture)
 builds and replays a bounded interval using training and separate holdout cases.
+`record-field-relation/v1` derives comparisons between distinct, same-typed
+fields across the declared record inputs, including direct `input0.field` to
+`input1.field` comparisons. It preserves source input/field order, limits the
+operators by field type, and records the complete relation count and retained
+prefix. The [record relation fixture](../examples/body-codegen/source-ir-fill-record-relations.gooo.fixture)
+uses key equality to classify a request without learning a key literal.
 Use
 `record-string-literal/v1`,
 `record-integer-literal/v1`, or `record-boolean-literal/v1` to derive typed
