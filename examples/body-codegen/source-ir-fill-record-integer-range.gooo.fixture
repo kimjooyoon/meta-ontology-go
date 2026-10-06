@@ -7,23 +7,28 @@ entity Candidate id "recordintegerrange://candidate" fields {
 
 entity Decision id "recordintegerrange://decision" fields {
     field accepted id "recordintegerrange://decision/accepted" type boolean required one
+    field note id "recordintegerrange://decision/note" type string required one
 }
 
 activity WithinPreferredRange(Candidate) -> Decision computes `if __GOOO_BODY_HOLE_condition__ {
-    return Decision{accepted: true}
+    return Decision{accepted: true, note: __GOOO_BODY_HOLE_accepted_note__}
 } else {
-    return Decision{accepted: false}
+    return Decision{accepted: false, note: __GOOO_BODY_HOLE_rejected_note__}
 }` assembling {
     source_fill intent "Accept candidates whose score is inside the preferred interval." {
         hole "condition"
+        hole "accepted_note"
+        hole "rejected_note"
         derive assignments max_candidates "16" {
             hole "condition" grammar "record-field-predicate-composition/v2" max_expressions "16"
+            hole "accepted_note" grammar "record-string-literal/v1" max_expressions "2"
+            hole "rejected_note" grammar "record-string-literal/v1" max_expressions "2"
         }
     }
-    value_case "[{\"score\":0}]" -> "{\"accepted\":false}"
-    value_case "[{\"score\":1}]" -> "{\"accepted\":true}"
-    value_case "[{\"score\":2}]" -> "{\"accepted\":true}"
-    value_case "[{\"score\":3}]" -> "{\"accepted\":false}"
-    holdout_value_case "[{\"score\":-1}]" -> "{\"accepted\":false}"
-    holdout_value_case "[{\"score\":4}]" -> "{\"accepted\":false}"
+    value_case "[{\"score\":0}]" -> "{\"accepted\":false,\"note\":\"score-evaluated\"}"
+    value_case "[{\"score\":1}]" -> "{\"accepted\":true,\"note\":\"score-evaluated\"}"
+    value_case "[{\"score\":2}]" -> "{\"accepted\":true,\"note\":\"score-evaluated\"}"
+    value_case "[{\"score\":3}]" -> "{\"accepted\":false,\"note\":\"score-evaluated\"}"
+    holdout_value_case "[{\"score\":-1}]" -> "{\"accepted\":false,\"note\":\"score-evaluated\"}"
+    holdout_value_case "[{\"score\":4}]" -> "{\"accepted\":false,\"note\":\"score-evaluated\"}"
 }
