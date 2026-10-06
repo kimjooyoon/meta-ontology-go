@@ -31,6 +31,13 @@ the declared edges for supported registered operations.
 
 For a generated runtime-bound source, `gooo generate <file.gooo> --out <dir>`
 emits `runtime-plan.json` automatically when the source declares typed binds.
+The generated Go file also includes one deterministic `GoooCompose...`
+function per connected group of explicit `bind` edges. It calls the activity
+functions in validated dependency order, forwards each bound result to its
+declared consumer, accepts unbound inputs as parameters, and returns terminal
+outputs. No edge is inferred. The activity implementation slots remain the
+place where domain behavior is supplied; the composition function describes
+data flow, not successful domain execution.
 Use `--runtime-plan <name>` only to change that artifact's relative filename.
 When executing the source with `--input`, pass the generated artifact with
 `--runtime-plan <dir>/runtime-plan.json` to attach source, semantic, and typed

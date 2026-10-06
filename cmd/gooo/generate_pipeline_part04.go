@@ -42,6 +42,23 @@ func generateWithDeadlineCore(file *syntax.File, previous []byte, timeout time.D
 				return
 			}
 		}
+		if len(ir.RuntimeBindings) > 0 {
+			document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV3Support())
+			if err != nil {
+				result <- generationResult{err: fmt.Errorf("runtime composition document adaptation failed: %w", err)}
+				return
+			}
+			typedPlan, err := bidir.CompileTypedPlan(document)
+			if err != nil {
+				result <- generationResult{err: fmt.Errorf("runtime composition typed plan failed: %w", err)}
+				return
+			}
+			model, err = appendRuntimeComposition(model, typedPlan)
+			if err != nil {
+				result <- generationResult{err: fmt.Errorf("runtime composition projection failed: %w", err)}
+				return
+			}
+		}
 		var generated generator.Result
 		if semanticIRHasFields(ir) {
 			generated, err = generator.GenerateWithEntityFieldsSupport(model, previous, syntax.EntityFieldsV3Support())
