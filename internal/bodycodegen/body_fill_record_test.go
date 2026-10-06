@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
