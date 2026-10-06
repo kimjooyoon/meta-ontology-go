@@ -551,7 +551,8 @@ Boolean, Integer 필드를 Go의 `*string`, `*bool`, `*int64`로 투영합니다
 수 있으며 capability discovery와 활동 bind 계획도 이 프로필을 읽습니다. record
 본문 조립·실행은 필수 필드만 받습니다.
 [V4 예제](../examples/entity-fields-v4/main.gooo.fixture)와
-[필드 지원 범위](entity-fields-support.md#optional-scalar-fields-in-the-public-cli)를
+[V4 지원 범위](entity-fields-v4.md),
+[V1 지원 관측](entity-fields-support.md)을
 확인할 수 있습니다.
 
 ## 기록형 IR 본문에서 자체 모델 사용 — 2026-10-07
