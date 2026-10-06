@@ -6375,7 +6375,7 @@
         "internal/assemblyspec/spec_test.go",
         "internal/bodycodegen/body_fill_record_test.go",
         "internal/bodycodegen/source_record_fill_candidates.go",
-        "internal/verify/scope_part01.go"
+        "internal/verify/scope_part04.go"
       ]
     }
   ],
