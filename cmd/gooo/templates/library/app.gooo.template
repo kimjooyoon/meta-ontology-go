@@ -1,6 +1,6 @@
 package app
-namespace boundedint_app
-import core "boundedint/core"
+namespace {{namespace}}_app
+import core "{{module}}/core"
 
 activity Main(Integer) -> Integer computes "return input"
 

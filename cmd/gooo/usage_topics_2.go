@@ -17,18 +17,20 @@ See docs/language/capability-discovery.md.
 	"init": `Create a starter project
 
 Usage:
-  gooo init [--template app|library] <new-directory>
+  gooo init [--template app|library] [--module <path>] <new-directory>
 
 Examples:
   gooo init hello-gooo
   gooo init --template library my-library
+  gooo init --template library --module github.com/acme/my-library my-library
 
 Then check and generate:
   cd hello-gooo
   gooo check main.gooo
   gooo body-codegen --json --activity Clamp main.gooo
 
-The starter is deterministic and does not require a model.
+The starter is deterministic and does not require a model. A library module
+path customizes the generated workspace and source identity.
 `,
 	"check": `Check Gooo source
 

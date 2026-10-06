@@ -1,4 +1,4 @@
-# boundedint
+# {{module}}
 
 This starter is a small Gooo package graph. The core package declares
 Normalize(Integer) -> Integer; the app package imports it and binds its result

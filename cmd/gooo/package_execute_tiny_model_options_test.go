@@ -79,7 +79,7 @@ func TestLibraryStarterRunsWithTheLocalTinyModel(t *testing.T) {
 	root := t.TempDir()
 	workspace := filepath.Join(root, "boundedint")
 	var initOutput, initError bytes.Buffer
-	if code := runInit([]string{"--template", "library", workspace}, &initOutput, &initError); code != exitOK {
+	if code := runInit([]string{"--template", "library", "--module", "github.com/acme/forecast", workspace}, &initOutput, &initError); code != exitOK {
 		t.Fatalf("library starter init failed: code=%d stdout=%q stderr=%q", code, initOutput.String(), initError.String())
 	}
 	modelPath := writeSyntheticTinyGoModel(t, "add")
@@ -110,7 +110,7 @@ func TestLibraryStarterRunsDeterministicallyWithoutAModel(t *testing.T) {
 	root := t.TempDir()
 	workspace := filepath.Join(root, "boundedint")
 	var initOutput, initError bytes.Buffer
-	if code := runInit([]string{"--template", "library", workspace}, &initOutput, &initError); code != exitOK {
+	if code := runInit([]string{"--template", "library", "--module", "github.com/acme/forecast", workspace}, &initOutput, &initError); code != exitOK {
 		t.Fatalf("library starter init failed: code=%d stdout=%q stderr=%q", code, initOutput.String(), initError.String())
 	}
 	var stdout, stderr bytes.Buffer

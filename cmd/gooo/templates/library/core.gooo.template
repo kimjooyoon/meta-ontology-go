@@ -1,6 +1,6 @@
 package core
-namespace boundedint_core
-entity Integer id "boundedint://integer"
+namespace {{namespace}}_core
+entity Integer id "gooo://{{module}}/integer"
 
 activity Normalize(Integer) -> Integer computes `let base = __GOOO_BODY_HOLE_seed__
 let increment = __GOOO_BODY_HOLE_step__
