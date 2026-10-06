@@ -255,5 +255,10 @@ func init() {
 		"internal/verify/scope_part01.go",
 		"internal/meta/languageassurance/verticalsliceclosureshadow/artifact_link_values.go",
 		"internal/meta/languageassurance/verticalsliceclosureshadow/artifact_values.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v47.json",
 	}
 }

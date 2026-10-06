@@ -6027,6 +6027,13 @@
         "cmd/gooo/version_test.go",
         "docs/external/gooo-release-publication-v3.md",
         "examples/toolchain-cross-platform-release/corpus.json",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/artifact_link_values.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/artifact_values.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v47.json",
         "internal/meta/languageassurance/verticalsliceclosureshadow/fixture_toolchain_test.go",
         "internal/meta/languagereadiness/toolchaincli/assert_json.go",
         "internal/meta/languagereadiness/toolchaincli/assert_positive.go",
@@ -6037,8 +6044,6 @@
         "internal/meta/languagereadiness/toolchainrelease/fixture_test.go",
         "internal/meta/languagereadiness/toolchainrelease/indicator_drivers.go",
         "internal/meta/languagereadiness/toolchainrelease/target.go",
-        "internal/meta/languageassurance/verticalsliceclosureshadow/artifact_link_values.go",
-        "internal/meta/languageassurance/verticalsliceclosureshadow/artifact_values.go",
         "internal/verify/scope_part01.go"
       ]
     }
