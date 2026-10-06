@@ -106,6 +106,45 @@ return result`)
 	}
 }
 
+func TestTinyGoMultiHoleSelectionFindsASeparatingHoleBeyondTheFirst(t *testing.T) {
+	fixture := []byte("package tiny_multi\nnamespace tiny_multi\nentity Integer id \"tiny-multi://integer\"\n" +
+		"activity Lift(Integer) -> Integer computes `let base = __GOOO_BODY_HOLE_seed__\nlet step = __GOOO_BODY_HOLE_step__\nreturn base + step`\n")
+	plan := IRBodyFillPlan{
+		Schema: bodyFillMultiPlanSchema, Intent: "Scale the input or keep it, then choose a step.",
+		Holes: []IRBodyFillHole{{ID: "seed"}, {ID: "step"}},
+		Candidates: []IRBodyFillCandidate{
+			{ID: "scale", Fills: map[string]string{"seed": "input + 0", "step": "input * 2"}},
+			{ID: "offset", Fills: map[string]string{"seed": "input + 1", "step": "input - 0"}},
+		},
+		TestCases: []IRBodyFillTestCase{{Input: 0, Expected: 0}, {Input: 1, Expected: 3}},
+	}
+	provider := &recordingTinyGoBodyFillProvider{operation: decisionroute.TinyGoOperationMultiply}
+	result, err := generateWithIRBodyFillOptions(context.Background(), "tiny-multi.gooo", fixture, "Lift",
+		plan, "", "", IRBodyFillOptions{}, provider)
+	if err != nil {
+		t.Fatalf("multi-hole tiny_go body fill: %v", err)
+	}
+	fill := result.Report.BodyFill
+	if provider.calls != 1 || fill == nil || fill.TinyModelFocusHole != "step" ||
+		fill.ProposedCandidateID != "scale" || fill.SelectedCandidateID != "scale" ||
+		provider.request.Question.Options[0].Operation != decisionroute.TinyGoOperationMultiply ||
+		provider.request.Question.Options[1].Operation != decisionroute.TinyGoOperationSubtract {
+		t.Fatalf("TinyGo did not focus the first separating hole and preserve the whole assignment: receipt=%+v options=%+v calls=%d",
+			fill, provider.request.Question.Options, provider.calls)
+	}
+}
+
+func TestTinyGoMultiHoleSelectionRejectsAssignmentsWithNoSeparatingHole(t *testing.T) {
+	holes := []IRBodyFillHole{{ID: "seed"}, {ID: "step"}}
+	candidates := []IRBodyFillCandidate{
+		{ID: "left", Fills: map[string]string{"seed": "input + 1", "step": "input * 2"}},
+		{ID: "right", Fills: map[string]string{"seed": "input + 2", "step": "input * 3"}},
+	}
+	if _, err := tinyGoBodyFillFocusHole(holes, candidates); err == nil {
+		t.Fatal("assignments indistinguishable by each individual hole were accepted")
+	}
+}
+
 func TestTinyGoBodyFillRejectsUnsupportedDuplicateAndIllTypedCandidatesBeforeProvider(t *testing.T) {
 	fixture := tinyBodyFillFixture(`if __GOOO_BODY_HOLE_floor__ { return input } else { return 0 }`)
 	tests := []struct {
