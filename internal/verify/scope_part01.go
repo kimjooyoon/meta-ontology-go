@@ -65,6 +65,7 @@ func init() {
 		"examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture",
 		"internal/bodycodegen/body_fill_record.go",
 		"internal/bodycodegen/body_fill_record_test.go",
+		"internal/bodycodegen/body_fill_record_tiny_test.go",
 		"internal/bodycodegen/body_fill_tiny.go",
 		"internal/verify/scope_part01.go",
 	}
