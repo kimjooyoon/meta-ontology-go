@@ -162,7 +162,9 @@ func TestSourceRecordIRBodyFillDerivesTypedCandidatesFromValueCases(t *testing.T
 	}
 	receipt := result.Report.BodyFill
 	if receipt == nil || receipt.CandidateGeneration == nil || receipt.FunctionalAccuracyPct != 100 ||
-		receipt.TestCasesPassed != 2 || receipt.TestCasesTotal != 2 || len(receipt.CandidateScores) != 16 ||
+		receipt.TestCasesPassed != 2 || receipt.TestCasesTotal != 2 || receipt.HoldoutCasesPassed != 2 ||
+		receipt.HoldoutCasesTotal != 2 || receipt.HoldoutAccuracyPercent == nil || *receipt.HoldoutAccuracyPercent != 100 ||
+		len(receipt.SelectedValueHoldoutCaseResults) != 2 || len(receipt.CandidateScores) != 16 ||
 		!result.Report.TypecheckPassed || !result.Report.DeterministicReplay {
 		t.Fatalf("derived record candidates did not compose and replay: %+v report=%+v", receipt, result.Report)
 	}
@@ -209,7 +211,8 @@ func TestSourceRecordIRBodyFillLetsLayaRankDerivedCandidates(t *testing.T) {
 			Candidates    []IRBodyFillCandidateScore `json:"candidate_scores"`
 		}
 		if json.Unmarshal([]byte(payload.State["request"]), &state) != nil ||
-			state.TestCaseCount != 2 || len(state.Candidates) != 16 || strings.Contains(payload.State["request"], `"candidate_id":41`) {
+			state.TestCaseCount != 2 || len(state.Candidates) != 16 || strings.Contains(payload.State["request"], `"candidate_id":41`) ||
+			strings.Contains(payload.State["request"], `"candidate_id":43`) || strings.Contains(payload.State["request"], `"candidate_id":44`) {
 			http.Error(writer, "model request omitted derived candidates or included raw cases", http.StatusBadRequest)
 			return
 		}
@@ -235,6 +238,8 @@ func TestSourceRecordIRBodyFillLetsLayaRankDerivedCandidates(t *testing.T) {
 	}
 	if calls != 1 || result.Report.BodyFill == nil || result.Report.BodyFill.CandidateGeneration == nil ||
 		result.Report.BodyFill.Decision.Provider != "laya" || result.Report.BodyFill.FunctionalAccuracyPct != 100 ||
+		result.Report.BodyFill.HoldoutCasesPassed != 2 || result.Report.BodyFill.HoldoutCasesTotal != 2 ||
+		result.Report.BodyFill.HoldoutAccuracyPercent == nil || *result.Report.BodyFill.HoldoutAccuracyPercent != 100 ||
 		result.Report.BodyFill.ProposedCandidateID == "" || result.Report.BodyFill.SelectedCandidateID != result.Report.BodyFill.ProposedCandidateID {
 		t.Fatalf("Laya did not select from the derived record grammar: calls=%d receipt=%+v", calls, result.Report.BodyFill)
 	}

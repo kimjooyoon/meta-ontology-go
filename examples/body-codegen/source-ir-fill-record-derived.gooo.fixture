@@ -28,4 +28,6 @@ activity ReviewCandidate(Candidate) -> Review computes `if __GOOO_BODY_HOLE_cond
     }
     value_case "[{\"candidate_id\":41,\"state\":\"ready\"}]" -> "{\"candidate_id\":41,\"decision\":\"accepted\"}"
     value_case "[{\"candidate_id\":42,\"state\":\"queued\"}]" -> "{\"candidate_id\":42,\"decision\":\"rejected\"}"
+    holdout_value_case "[{\"candidate_id\":43,\"state\":\"ready\"}]" -> "{\"candidate_id\":43,\"decision\":\"accepted\"}"
+    holdout_value_case "[{\"candidate_id\":44,\"state\":\"queued\"}]" -> "{\"candidate_id\":44,\"decision\":\"rejected\"}"
 }

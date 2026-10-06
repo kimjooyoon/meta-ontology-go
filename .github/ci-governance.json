@@ -6215,7 +6215,7 @@
       ]
     },
     {
-      "branch": "agent/gooo-record-fill-derivation-20261006",
+      "branch": "agent/gooo-record-holdout-cases-20261006",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
@@ -6225,13 +6225,16 @@
         "examples/body-codegen/source-ir-fill-record-derived.gooo.fixture",
         "internal/assemblyspec/spec.go",
         "internal/assemblyspec/spec_test.go",
+        "internal/bodycodegen/body_fill.go",
+        "internal/bodycodegen/body_fill_record.go",
         "internal/bodycodegen/body_fill_record_test.go",
         "internal/bodycodegen/source_fill_candidates.go",
         "internal/bodycodegen/source_ir_fill.go",
         "internal/bodycodegen/source_record_fill_candidates.go",
-        "internal/verify/scope_part01.go",
+        "internal/bodycodegen/source_record_fill_candidates_test.go",
         "internal/packageruntime/workspaceexecution/execute_test.go",
-        "internal/bodycodegen/source_record_fill_candidates_test.go"
+        "internal/syntax/assembly.go",
+        "internal/verify/scope_part01.go"
       ]
     }
   ],

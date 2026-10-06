@@ -33,15 +33,16 @@ const irBodyFillDecisionBudget = 8 * time.Second
 // holes in a Gooo activity body. V1 has one hole; V2 selects a complete,
 // integer-tested assignment; the record plan uses typed value cases.
 type IRBodyFillPlan struct {
-	Schema           string                   `json:"schema"`
-	Intent           string                   `json:"intent"`
-	HoleID           string                   `json:"hole_id"`
-	Holes            []IRBodyFillHole         `json:"holes,omitempty"`
-	ProviderModel    string                   `json:"provider_model,omitempty"`
-	Candidates       []IRBodyFillCandidate    `json:"candidates"`
-	TestCases        []IRBodyFillTestCase     `json:"test_cases"`
-	HoldoutTestCases []IRBodyFillTestCase     `json:"holdout_test_cases,omitempty"`
-	ValueCases       []assemblyspec.ValueCase `json:"value_cases,omitempty"`
+	Schema            string                   `json:"schema"`
+	Intent            string                   `json:"intent"`
+	HoleID            string                   `json:"hole_id"`
+	Holes             []IRBodyFillHole         `json:"holes,omitempty"`
+	ProviderModel     string                   `json:"provider_model,omitempty"`
+	Candidates        []IRBodyFillCandidate    `json:"candidates"`
+	TestCases         []IRBodyFillTestCase     `json:"test_cases"`
+	HoldoutTestCases  []IRBodyFillTestCase     `json:"holdout_test_cases,omitempty"`
+	ValueCases        []assemblyspec.ValueCase `json:"value_cases,omitempty"`
+	ValueHoldoutCases []assemblyspec.ValueCase `json:"value_holdout_cases,omitempty"`
 }
 
 type IRBodyFillHole struct {
@@ -162,42 +163,43 @@ type IRBodyFillCandidateProbeProfile struct {
 }
 
 type IRBodyFillReceipt struct {
-	Schema                     string                                `json:"schema"`
-	Intent                     string                                `json:"intent"`
-	HoleID                     string                                `json:"hole_id"`
-	HoleToken                  string                                `json:"hole_token"`
-	IRPlanSHA256               string                                `json:"ir_plan_sha256"`
-	ProposedCandidateID        string                                `json:"proposed_candidate_id"`
-	ProposedAccuracyPct        float64                               `json:"proposed_accuracy_percent"`
-	SelectedCandidateID        string                                `json:"selected_candidate_id"`
-	SelectedExpression         string                                `json:"selected_expression"`
-	HoleFills                  []IRBodyFillHoleFill                  `json:"hole_fills,omitempty"`
-	TinyModelFocusHole         string                                `json:"tiny_model_focus_hole,omitempty"`
-	CandidateGeneration        *IRBodyFillCandidateGenerationReceipt `json:"candidate_generation,omitempty"`
-	BestCandidateID            string                                `json:"best_candidate_id"`
-	BestAccuracyPercent        float64                               `json:"best_candidate_accuracy_percent"`
-	SelectionRegretPP          float64                               `json:"selection_regret_percentage_points"`
-	SelectionAdjustment        string                                `json:"selection_adjustment"`
-	Decision                   decisionroute.Receipt                 `json:"decision"`
-	CandidateScores            []IRBodyFillCandidateScore            `json:"candidate_scores"`
-	BehavioralProbes           *IRBodyFillBehavioralProbeReceipt     `json:"behavioral_probes,omitempty"`
-	TestSuiteSHA256            string                                `json:"test_suite_sha256"`
-	TestCasesPassed            int                                   `json:"test_cases_passed"`
-	TestCasesTotal             int                                   `json:"test_cases_total"`
-	FunctionalAccuracyPct      float64                               `json:"functional_accuracy_percent"`
-	HoldoutSuiteSHA256         string                                `json:"holdout_suite_sha256,omitempty"`
-	HoldoutCasesPassed         int                                   `json:"holdout_cases_passed"`
-	HoldoutCasesTotal          int                                   `json:"holdout_cases_total"`
-	HoldoutAccuracyPercent     *float64                              `json:"holdout_accuracy_percent"`
-	HoldoutCaseResults         []IRBodyFillCaseResult                `json:"holdout_case_results,omitempty"`
-	LocalModelPredictions      int                                   `json:"local_model_predictions"`
-	ExternalProviderCalls      int                                   `json:"external_provider_calls"`
-	ExternalProviderCallsKnown bool                                  `json:"external_provider_calls_known"`
-	Evaluator                  string                                `json:"evaluator"`
-	SelectedCaseResults        []IRBodyFillCaseResult                `json:"selected_case_results"`
-	SelectedValueCaseResults   []RecordAssemblyCase                  `json:"selected_value_case_results,omitempty"`
-	AccuracyScope              string                                `json:"accuracy_scope"`
-	Timing                     IRBodyFillTiming                      `json:"timing"`
+	Schema                          string                                `json:"schema"`
+	Intent                          string                                `json:"intent"`
+	HoleID                          string                                `json:"hole_id"`
+	HoleToken                       string                                `json:"hole_token"`
+	IRPlanSHA256                    string                                `json:"ir_plan_sha256"`
+	ProposedCandidateID             string                                `json:"proposed_candidate_id"`
+	ProposedAccuracyPct             float64                               `json:"proposed_accuracy_percent"`
+	SelectedCandidateID             string                                `json:"selected_candidate_id"`
+	SelectedExpression              string                                `json:"selected_expression"`
+	HoleFills                       []IRBodyFillHoleFill                  `json:"hole_fills,omitempty"`
+	TinyModelFocusHole              string                                `json:"tiny_model_focus_hole,omitempty"`
+	CandidateGeneration             *IRBodyFillCandidateGenerationReceipt `json:"candidate_generation,omitempty"`
+	BestCandidateID                 string                                `json:"best_candidate_id"`
+	BestAccuracyPercent             float64                               `json:"best_candidate_accuracy_percent"`
+	SelectionRegretPP               float64                               `json:"selection_regret_percentage_points"`
+	SelectionAdjustment             string                                `json:"selection_adjustment"`
+	Decision                        decisionroute.Receipt                 `json:"decision"`
+	CandidateScores                 []IRBodyFillCandidateScore            `json:"candidate_scores"`
+	BehavioralProbes                *IRBodyFillBehavioralProbeReceipt     `json:"behavioral_probes,omitempty"`
+	TestSuiteSHA256                 string                                `json:"test_suite_sha256"`
+	TestCasesPassed                 int                                   `json:"test_cases_passed"`
+	TestCasesTotal                  int                                   `json:"test_cases_total"`
+	FunctionalAccuracyPct           float64                               `json:"functional_accuracy_percent"`
+	HoldoutSuiteSHA256              string                                `json:"holdout_suite_sha256,omitempty"`
+	HoldoutCasesPassed              int                                   `json:"holdout_cases_passed"`
+	HoldoutCasesTotal               int                                   `json:"holdout_cases_total"`
+	HoldoutAccuracyPercent          *float64                              `json:"holdout_accuracy_percent"`
+	HoldoutCaseResults              []IRBodyFillCaseResult                `json:"holdout_case_results,omitempty"`
+	LocalModelPredictions           int                                   `json:"local_model_predictions"`
+	ExternalProviderCalls           int                                   `json:"external_provider_calls"`
+	ExternalProviderCallsKnown      bool                                  `json:"external_provider_calls_known"`
+	Evaluator                       string                                `json:"evaluator"`
+	SelectedCaseResults             []IRBodyFillCaseResult                `json:"selected_case_results"`
+	SelectedValueCaseResults        []RecordAssemblyCase                  `json:"selected_value_case_results,omitempty"`
+	SelectedValueHoldoutCaseResults []RecordAssemblyCase                  `json:"selected_value_holdout_case_results,omitempty"`
+	AccuracyScope                   string                                `json:"accuracy_scope"`
+	Timing                          IRBodyFillTiming                      `json:"timing"`
 }
 
 type IRBodyFillHoleFill struct {

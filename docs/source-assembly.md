@@ -170,6 +170,8 @@ activity ... computes <quoted-or-raw-body> assembling {
     }]
     case <quoted-int64-input> -> <quoted-int64-expected>
     [holdout_case <quoted-int64-input> -> <quoted-int64-expected> ...]
+    [value_case <quoted-canonical-inputs> -> <quoted-canonical-record> ...]
+    [holdout_value_case <quoted-canonical-inputs> -> <quoted-canonical-record> ...]
     [attempts <quoted-budget>]
     [seed <quoted-seed>]
 }
@@ -296,7 +298,12 @@ literals from expected output fields. Gooo forms the bounded Cartesian product,
 typechecks and scores each complete body, then may ask Laya to rank it. The
 [record-derived fixture](../examples/body-codegen/source-ir-fill-record-derived.gooo.fixture)
 shows the declaration and cases. Its completeness claim is limited to the
-declared finite grammar and examples, not all possible domain values.
+declared finite grammar and training examples, not all possible domain values.
+For source-fill record plans, add `holdout_value_case` rows to measure the
+selected body on disjoint inputs. These values are excluded from candidate
+derivation and model requests; only the final body is evaluated against them.
+The receipt reports training and holdout results separately, and the finite
+holdout score is not a proof of behavior outside those rows.
 
 | Kind | Source site selected by `at` | Additional field |
 | --- | --- | --- |
