@@ -97,7 +97,7 @@ func TestTinyGoRecordFillGroupsCandidatesByOperationAndScoresWithinGroup(t *test
 	result, provider := runGroupedTinyGoRecordBodyFill(t)
 	receipt := result.Report.BodyFill
 	if provider.calls != 1 || receipt == nil || receipt.TinyModelFocusHole != "condition" ||
-		receipt.ProposedCandidateID != "accept-correct" || receipt.SelectedCandidateID != "accept-correct" ||
+		receipt.ProposedCandidateID != "accept_correct" || receipt.SelectedCandidateID != "accept_correct" ||
 		receipt.TestCasesPassed != 2 || receipt.TestCasesTotal != 2 || receipt.HoldoutCasesPassed != 2 {
 		t.Fatalf("operation class did not resolve to the best compatible complete assignment: calls=%d receipt=%+v", provider.calls, receipt)
 	}
@@ -121,9 +121,9 @@ func runGroupedTinyGoRecordBodyFill(t *testing.T) (Result, *recordingTinyGoBodyF
 		t.Fatal(err)
 	}
 	plan.Candidates = []IRBodyFillCandidate{
-		{ID: "accept-correct", Fills: map[string]string{"condition": `input.reviewed && input.state == "ready"`, "accepted": `"accepted"`}},
-		{ID: "accept-wrong-label", Fills: map[string]string{"condition": `input.reviewed && input.state == "ready"`, "accepted": `"approved"`}},
-		{ID: "or-condition", Fills: map[string]string{"condition": `input.reviewed || input.state == "ready"`, "accepted": `"accepted"`}},
+		{ID: "accept_correct", Fills: map[string]string{"condition": `input.reviewed && input.state == "ready"`, "accepted": `"accepted"`}},
+		{ID: "accept_wrong_label", Fills: map[string]string{"condition": `input.reviewed && input.state == "ready"`, "accepted": `"approved"`}},
+		{ID: "or_condition", Fills: map[string]string{"condition": `input.reviewed || input.state == "ready"`, "accepted": `"accepted"`}},
 	}
 	provider := &recordingTinyGoBodyFillProvider{operation: decisionroute.TinyGoOperationAnd}
 	result, err := generateWithIRBodyFillOptions(context.Background(), "record-fill-tiny.gooo", source,
