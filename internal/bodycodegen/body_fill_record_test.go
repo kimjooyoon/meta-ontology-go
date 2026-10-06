@@ -339,8 +339,9 @@ func TestSourceRecordIRBodyFillUsesTinyGoForUniqueGeneratedOperations(t *testing
 			condition = fill.Expression
 		}
 	}
+	// This low-level entry point keeps source_fill; the CLI test verifies that the source wrapper removes it.
 	if !strings.Contains(condition, "&&") || !strings.Contains(result.GoooSource, `input.state == \"ready\"`) ||
-		strings.Contains(result.GoooSource, "source_fill") || strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") ||
+		strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") ||
 		strings.Contains(provider.request.State, `"reviewed":false`) {
 		t.Fatalf("TinyGo assignment, emitted Gooo, or case boundary was wrong: condition=%q source=%s", condition, result.GoooSource)
 	}
