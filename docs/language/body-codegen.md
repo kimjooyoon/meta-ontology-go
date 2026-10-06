@@ -115,6 +115,17 @@ not build nested conditions. The
 [relation composition fixture](../../examples/body-codegen/source-ir-fill-record-relation-composition.gooo.fixture)
 generates key-and-state matching across two records, retains 8 of 16
 expressions, and reports the separate training, holdout and assignment coverage.
+For three-field-relation combinations, use
+`record-field-relation-composition/v2`. It enumerates three distinct relation
+atoms with both binary tree shapes and all four `&&`/`||` operator pairs, then
+includes the complete v1 pair and atomic fallback spaces. Candidate ordering
+prefers triples with more distinct selector pairs and fields. The denominator
+is exact; `max_expressions` records the retained prefix and leaves grammar
+coverage partial when capped. The
+[three-input relation fixture](../../examples/body-codegen/source-ir-fill-record-relation-triples.gooo.fixture)
+checks three matching keys with four training and two withheld records, and
+reports the full 196-expression denominator, the retained 8-expression prefix,
+and all 16 complete condition/value assignments.
 `record-string-literal/v1`, `record-integer-literal/v1`, and
 `record-boolean-literal/v1` draw typed literals from the expected output record.
 The assignment cap and omitted search space appear in the same completeness

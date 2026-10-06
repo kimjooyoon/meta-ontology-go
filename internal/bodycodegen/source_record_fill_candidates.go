@@ -14,15 +14,16 @@ import (
 )
 
 const (
-	recordFieldPredicateGrammar           = "record-field-predicate/v1"
-	recordFieldPredicateV2Grammar         = "record-field-predicate/v2"
-	recordFieldRelationGrammar            = "record-field-relation/v1"
-	recordFieldRelationCompositionGrammar = "record-field-relation-composition/v1"
-	recordPredicateCompositionGrammar     = "record-field-predicate-composition/v1"
-	recordPredicateCompositionV2Grammar   = "record-field-predicate-composition/v2"
-	recordStringLiteralGrammar            = "record-string-literal/v1"
-	recordIntegerLiteralGrammar           = "record-integer-literal/v1"
-	recordBooleanLiteralGrammar           = "record-boolean-literal/v1"
+	recordFieldPredicateGrammar             = "record-field-predicate/v1"
+	recordFieldPredicateV2Grammar           = "record-field-predicate/v2"
+	recordFieldRelationGrammar              = "record-field-relation/v1"
+	recordFieldRelationCompositionGrammar   = "record-field-relation-composition/v1"
+	recordFieldRelationCompositionV2Grammar = "record-field-relation-composition/v2"
+	recordPredicateCompositionGrammar       = "record-field-predicate-composition/v1"
+	recordPredicateCompositionV2Grammar     = "record-field-predicate-composition/v2"
+	recordStringLiteralGrammar              = "record-string-literal/v1"
+	recordIntegerLiteralGrammar             = "record-integer-literal/v1"
+	recordBooleanLiteralGrammar             = "record-boolean-literal/v1"
 )
 
 // generateSourceRecordFillCandidates derives a finite, source-bounded expression
@@ -74,6 +75,8 @@ func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGramm
 		return c.fieldRelationExpressions(grammar.MaxExpressions)
 	case recordFieldRelationCompositionGrammar:
 		return c.composedFieldRelationExpressions(grammar.MaxExpressions)
+	case recordFieldRelationCompositionV2Grammar:
+		return c.composedFieldRelationExpressionsV2(grammar.MaxExpressions)
 	case recordPredicateCompositionGrammar:
 		return c.composedPredicateExpressions(grammar.MaxExpressions, false)
 	case recordPredicateCompositionV2Grammar:
@@ -220,6 +223,155 @@ func (c recordFillGrammarContext) composedFieldRelationExpressions(maxExpression
 		})
 	}
 	return expressions, enumerated, len(expressions) == enumerated, nil
+}
+
+// composedFieldRelationExpressionsV2 extends the pair grammar with all
+// three-atom parenthesizations. Triple candidates come first, ordered by the
+// number of distinct selector pairs and then selector fields they use. Pair
+// candidates and atoms remain in the grammar as simpler fallbacks. The exact
+// denominator counts 8 expressions per distinct atom triple, both operators
+// for each distinct atom pair, and every atom once.
+func (c recordFillGrammarContext) composedFieldRelationExpressionsV2(maxExpressions int) ([]string, int, bool, error) {
+	selectors, err := c.fieldRelationSelectors()
+	if err != nil {
+		return nil, 0, false, err
+	}
+	atoms := make([]recordFieldRelationAtom, 0)
+	atomCount := forEachRecordFieldRelation(selectors, func(_ int, atom recordFieldRelationAtom) bool {
+		atoms = append(atoms, atom)
+		return true
+	})
+	if atomCount < 2 {
+		return nil, atomCount, false, fmt.Errorf("record relation composition v2 grammar produced fewer than two distinct relations")
+	}
+	enumerated, err := recordFieldRelationCompositionV2Count(atomCount)
+	if err != nil {
+		return nil, 0, false, err
+	}
+	expressions := make([]string, 0, min(maxExpressions, enumerated))
+
+	for distinctPairs := 3; distinctPairs >= 1 && len(expressions) < maxExpressions; distinctPairs-- {
+		for distinctSelectors := 6; distinctSelectors >= 2 && len(expressions) < maxExpressions; distinctSelectors-- {
+			for first := 0; first < len(atoms) && len(expressions) < maxExpressions; first++ {
+				for second := first + 1; second < len(atoms) && len(expressions) < maxExpressions; second++ {
+					for third := second + 1; third < len(atoms) && len(expressions) < maxExpressions; third++ {
+						triple := [3]recordFieldRelationAtom{atoms[first], atoms[second], atoms[third]}
+						if recordFieldRelationTriplePairCount(triple) != distinctPairs ||
+							recordFieldRelationTripleSelectorCount(triple) != distinctSelectors {
+							continue
+						}
+						for _, leftOperator := range []string{"&&", "||"} {
+							for _, rightOperator := range []string{"&&", "||"} {
+								left := "((" + triple[0].expression + ") " + leftOperator + " (" + triple[1].expression + ")) " + rightOperator + " (" + triple[2].expression + ")"
+								right := "(" + triple[0].expression + ") " + leftOperator + " ((" + triple[1].expression + ") " + rightOperator + " (" + triple[2].expression + "))"
+								expressions = append(expressions, left, right)
+								if len(expressions) >= maxExpressions {
+									expressions = expressions[:maxExpressions]
+									break
+								}
+							}
+							if len(expressions) >= maxExpressions {
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	appendPair := func(left, right recordFieldRelationAtom) {
+		for _, operator := range []string{"&&", "||"} {
+			if len(expressions) == maxExpressions {
+				return
+			}
+			expressions = append(expressions, "("+left.expression+") "+operator+" ("+right.expression+")")
+		}
+	}
+	for _, preferDisjoint := range []bool{true, false} {
+		for leftIndex, left := range atoms {
+			for rightIndex := leftIndex + 1; rightIndex < len(atoms); rightIndex++ {
+				right := atoms[rightIndex]
+				if recordFieldRelationsDisjoint(left, right) != preferDisjoint {
+					continue
+				}
+				appendPair(left, right)
+				if len(expressions) == maxExpressions {
+					break
+				}
+			}
+			if len(expressions) == maxExpressions {
+				break
+			}
+		}
+		if len(expressions) == maxExpressions {
+			break
+		}
+	}
+	for _, atom := range atoms {
+		if len(expressions) == maxExpressions {
+			break
+		}
+		expressions = append(expressions, atom.expression)
+	}
+	return expressions, enumerated, len(expressions) == enumerated, nil
+}
+
+func recordFieldRelationCompositionV2Count(atomCount int) (int, error) {
+	maxInt := int(^uint(0) >> 1)
+	if atomCount < 0 || atomCount != 0 && atomCount > maxInt/atomCount {
+		return 0, fmt.Errorf("record relation composition v2 space exceeds the supported counter range")
+	}
+	count := atomCount * atomCount
+	if atomCount < 3 {
+		return count, nil
+	}
+	factors := [3]int{atomCount, atomCount - 1, atomCount - 2}
+	for _, divisor := range []int{2, 3} {
+		for index, factor := range factors {
+			if factor%divisor == 0 {
+				factors[index] /= divisor
+				break
+			}
+		}
+	}
+	triples := factors[0]
+	for _, factor := range factors[1:] {
+		if factor != 0 && triples > maxInt/factor {
+			return 0, fmt.Errorf("record relation composition v2 space exceeds the supported counter range")
+		}
+		triples *= factor
+	}
+	if triples > maxInt/8 {
+		return 0, fmt.Errorf("record relation composition v2 space exceeds the supported counter range")
+	}
+	triples *= 8
+	if count > maxInt-triples {
+		return 0, fmt.Errorf("record relation composition v2 space exceeds the supported counter range")
+	}
+	return count + triples, nil
+}
+
+func recordFieldRelationTriplePairCount(triple [3]recordFieldRelationAtom) int {
+	count := 0
+	seen := make(map[[2]string]bool, 3)
+	for _, atom := range triple {
+		pair := [2]string{atom.left, atom.right}
+		if !seen[pair] {
+			seen[pair] = true
+			count++
+		}
+	}
+	return count
+}
+
+func recordFieldRelationTripleSelectorCount(triple [3]recordFieldRelationAtom) int {
+	selectors := make(map[string]bool, 6)
+	for _, atom := range triple {
+		selectors[atom.left] = true
+		selectors[atom.right] = true
+	}
+	return len(selectors)
 }
 
 func recordFieldRelationsDisjoint(left, right recordFieldRelationAtom) bool {
