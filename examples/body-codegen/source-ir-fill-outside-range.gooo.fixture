@@ -1,0 +1,20 @@
+package sample
+namespace sample
+entity Integer id "sample://integer"
+activity Select(Integer) -> Integer computes `if __GOOO_BODY_HOLE_condition__ { return __GOOO_BODY_HOLE_yes__ } else { return 0 }` assembling {
+    source_fill intent "Return one outside the interval from zero to ten." {
+        hole "condition"
+        hole "yes"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "integer-predicate-outside-range/v1" max_expressions "8"
+            hole "yes" grammar "integer-offset-constant/v1" max_expressions "2"
+        }
+    }
+    case "-2" -> "1"
+    case "0" -> "0"
+    case "10" -> "0"
+    case "12" -> "1"
+    holdout_case "-100" -> "1"
+    holdout_case "5" -> "0"
+    holdout_case "20" -> "1"
+}
