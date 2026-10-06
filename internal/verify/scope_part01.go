@@ -105,6 +105,15 @@ func init() {
 		"internal/packageruntime/workspaceexecution/program.go",
 		"internal/verify/scope_part01.go",
 	}
+	branchScopeAllowlist["agent/gooo-domain-record-runtime-20261006"] = []string{
+		".github/agent-scope-table.md", ".github/ci-governance.json",
+		"docs/language/workspace-manifest.md",
+		"examples/package-record-flow/app.gooo.fixture", "examples/package-record-flow/cases.json",
+		"examples/package-record-flow/domain.gooo.fixture", "examples/package-record-flow/gooo.workspace.json",
+		"internal/packageruntime/compile.go", "internal/packageruntime/compile_source.go",
+		"internal/packageruntime/workspaceexecution/execute_test.go",
+		"internal/packageruntime/workspaceexecution/program.go", "internal/verify/scope_part01.go",
+	}
 	branchScopeAllowlist["agent/gooo-source-body-fill-v2-20261006"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",

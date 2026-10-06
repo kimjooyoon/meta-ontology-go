@@ -115,3 +115,21 @@ built and before the generated package is compiled. To connect Laya, set
 `GOOO_LAYA_URL` to its `/v1/systemone` endpoint for the same command. Fill
 receipts record provider decision time; native build and run observations
 record wall time, CPU time, and peak resident memory when the host exposes them.
+
+Declared records are parsed with the explicit EntityFields V3 profile throughout
+package resolution, IR lowering, and workspace flattening. For example,
+`examples/package-record-flow` sends a `Candidate` record from an imported
+`Submit` activity into an app-owned body that constructs a typed `Review` record.
+Run it with:
+
+```sh
+go run ./cmd/gooo package execute --json \
+  --cases examples/package-record-flow/cases.json \
+  examples/package-record-flow/gooo.workspace.json
+```
+
+Finite cases check the actual record values at both activities, then runtime
+replay checks that the generated Go projection produces the same result again.
+EntityFields V3 currently covers required single string, boolean, and integer
+fields; optional, repeated, nested, and arbitrary user-defined field types are
+outside this support boundary.

@@ -57,7 +57,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		sources := append([]packageruntime.Source(nil), spec.Sources...)
 		sort.Slice(sources, func(i, j int) bool { return sources[i].Filename < sources[j].Filename })
 		for _, source := range sources {
-			file, diagnostics := syntax.ParseFile(source.Filename, source.Content)
+			file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(source.Filename, source.Content, syntax.EntityFieldsV3Support())
 			if diagnostics.HasErrors() || file == nil {
 				return Program{}, fmt.Errorf("workspace source %q has syntax errors", source.Filename)
 			}
@@ -201,7 +201,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		Namespace: &syntax.NamespaceDecl{Name: "gooo_workspace"},
 		Decls:     declarations, Declarations: declarations, Bindings: bindings,
 	}
-	source, err := syntax.Format(flattened)
+	source, err := syntax.FormatWithEntityFieldsSupport(flattened, syntax.EntityFieldsV3Support())
 	if err != nil {
 		return Program{}, fmt.Errorf("format lowered workspace graph: %w", err)
 	}
