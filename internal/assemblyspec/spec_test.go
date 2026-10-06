@@ -78,6 +78,11 @@ func TestRecordSourceFillAllowsOnlyTypedRecordGrammars(t *testing.T) {
 	if err := spec.Validate(); err != nil {
 		t.Fatalf("typed record candidate derivation rejected: %v", err)
 	}
+	composed := spec.Clone()
+	composed.FillPlan.Generation.HoleGrammars[0].Grammar = "record-field-predicate-composition/v1"
+	if err := composed.Validate(); err != nil {
+		t.Fatalf("composed record predicate derivation rejected: %v", err)
+	}
 
 	invalid := spec.Clone()
 	invalid.FillPlan.Generation.HoleGrammars[0].Grammar = "integer-predicate/v1"
