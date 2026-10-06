@@ -315,17 +315,15 @@ func TestSourceRecordIRBodyFillDerivesIntegerRangeComposition(t *testing.T) {
 		t.Fatalf("integer-range record predicate did not generate and replay: receipt=%+v report=%+v", receipt, result.Report)
 	}
 	generation := receipt.CandidateGeneration
-	if generation == nil || len(generation.HoleGrammars) != 3 ||
-		generation.HoleGrammars[0].Grammar != recordPredicateCompositionV2Grammar ||
-		generation.HoleGrammars[0].ExpressionCandidatesTotal != 576 ||
-		generation.HoleGrammars[0].ExpressionsRetained != 16 || generation.HoleGrammars[0].GrammarComplete ||
-		generation.HoleGrammars[1].Grammar != recordStringLiteralGrammar ||
-		generation.HoleGrammars[1].ExpressionCandidatesTotal != 1 ||
-		generation.HoleGrammars[1].ExpressionsRetained != 1 || !generation.HoleGrammars[1].GrammarComplete ||
-		generation.HoleGrammars[2].Grammar != recordStringLiteralGrammar ||
-		generation.HoleGrammars[2].ExpressionCandidatesTotal != 1 ||
-		generation.HoleGrammars[2].ExpressionsRetained != 1 || !generation.HoleGrammars[2].GrammarComplete ||
-		generation.AssignmentSpaceSize != 16 || generation.AssignmentsRetained != 16 || generation.AssignmentsOmitted != 0 {
+	if generation == nil || len(generation.HoleGrammars) != 2 ||
+		generation.HoleGrammars[0].Grammar != recordBooleanLiteralGrammar ||
+		generation.HoleGrammars[0].ExpressionCandidatesTotal != 2 ||
+		generation.HoleGrammars[0].ExpressionsRetained != 2 || !generation.HoleGrammars[0].GrammarComplete ||
+		generation.HoleGrammars[1].Grammar != recordPredicateCompositionV2Grammar ||
+		generation.HoleGrammars[1].ExpressionCandidatesTotal != 576 ||
+		generation.HoleGrammars[1].ExpressionsRetained != 16 || generation.HoleGrammars[1].GrammarComplete ||
+		generation.AssignmentSpaceSize != 32 || generation.AssignmentsRetained != 16 || generation.AssignmentsOmitted != 16 ||
+		generation.AssignmentCoveragePercent != 50 {
 		t.Fatalf("bounded range grammar completeness was not reported: %+v", generation)
 	}
 	var selectedCondition string

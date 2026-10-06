@@ -11,23 +11,21 @@ entity Decision id "recordintegerrange://decision" fields {
 }
 
 activity WithinPreferredRange(Candidate) -> Decision computes `if __GOOO_BODY_HOLE_condition__ {
-    return Decision{accepted: true, note: __GOOO_BODY_HOLE_accepted_note__}
+    return Decision{accepted: __GOOO_BODY_HOLE_accepted__, note: "score-evaluated"}
 } else {
-    return Decision{accepted: false, note: __GOOO_BODY_HOLE_rejected_note__}
+    return Decision{accepted: false, note: "score-evaluated"}
 }` assembling {
     source_fill intent "Accept candidates whose score is inside the preferred interval." {
+        hole "accepted"
         hole "condition"
-        hole "accepted_note"
-        hole "rejected_note"
         derive assignments max_candidates "16" {
+            hole "accepted" grammar "record-boolean-literal/v1" max_expressions "2"
             hole "condition" grammar "record-field-predicate-composition/v2" max_expressions "16"
-            hole "accepted_note" grammar "record-string-literal/v1" max_expressions "2"
-            hole "rejected_note" grammar "record-string-literal/v1" max_expressions "2"
         }
     }
-    value_case "[{\"score\":0}]" -> "{\"accepted\":false,\"note\":\"score-evaluated\"}"
     value_case "[{\"score\":1}]" -> "{\"accepted\":true,\"note\":\"score-evaluated\"}"
     value_case "[{\"score\":2}]" -> "{\"accepted\":true,\"note\":\"score-evaluated\"}"
+    value_case "[{\"score\":0}]" -> "{\"accepted\":false,\"note\":\"score-evaluated\"}"
     value_case "[{\"score\":3}]" -> "{\"accepted\":false,\"note\":\"score-evaluated\"}"
     holdout_value_case "[{\"score\":-1}]" -> "{\"accepted\":false,\"note\":\"score-evaluated\"}"
     holdout_value_case "[{\"score\":4}]" -> "{\"accepted\":false,\"note\":\"score-evaluated\"}"
