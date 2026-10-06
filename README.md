@@ -38,10 +38,11 @@ Gooo source + intent + permitted choices + finite expectations
 · [workspace package graph](docs/language/workspace-manifest.md)
 
 Start a two-package library workspace with `gooo init --template library
-<directory>`. It declares an imported activity binding and typed body-fill
-plans. `gooo package execute` accepts a local compact model for sequential
-activity fills through `--tiny-model`; without a provider it follows the
-declared deterministic order. See [project starters](docs/language/project-starters.md).
+<directory>`. Its Gooo source declares an imported activity binding and a
+multi-hole body-fill plan. `gooo package execute` reads that plan directly from
+the source and accepts a local compact model through `--tiny-model`; without a
+provider it chooses deterministically from the same declared assignments. See
+[project starters](docs/language/project-starters.md).
 
 ## First run
 

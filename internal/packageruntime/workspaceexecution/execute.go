@@ -56,30 +56,9 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 		return Result{}, err
 	}
 	current := []byte(program.Source)
-	fills := make([]BodyFillStep, 0, len(options.BodyFillPlans))
-	knownPlans := make(map[string]bool, len(options.BodyFillPlans))
-	bodyFillOptions := options.BodyFillOptions
-	for _, activity := range program.Activities {
-		key := packageActivityKey(activity.PackagePath, activity.Activity)
-		plan, exists := options.BodyFillPlans[key]
-		if !exists {
-			continue
-		}
-		knownPlans[key] = true
-		generation, fillErr := bodycodegen.GenerateWithIRBodyFillWithOptions(ctx, "workspace.gooo", current,
-			activity.LoweredName, plan, options.LayaEndpoint, options.LayaAPIKey, bodyFillOptions)
-		if fillErr != nil {
-			return Result{}, fmt.Errorf("activity %s body fill: %w", key, fillErr)
-		}
-		bodyFillOptions.TinyModelLoadMS = nil
-		if generation.GoooSource == "" || generation.Report.BodyFill == nil {
-			return Result{}, fmt.Errorf("activity %s body fill returned no replayable Gooo source", key)
-		}
-		fills = append(fills, BodyFillStep{Activity: activity, InputSourceSHA256: sourceSHA256(current), Generation: generation})
-		current = []byte(generation.GoooSource)
-	}
-	if len(knownPlans) != len(options.BodyFillPlans) {
-		return Result{}, fmt.Errorf("body-fill plans contain an activity not declared in the workspace")
+	current, fills, err := applyBodyFills(ctx, program, current, options)
+	if err != nil {
+		return Result{}, err
 	}
 	composition, err := bodyexecution.GenerateComposition(ctx, "workspace.gooo", current, translated, options.AssemblyModelPath)
 	if err != nil {

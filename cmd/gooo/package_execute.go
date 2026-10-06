@@ -88,10 +88,6 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 			manifestPath = args[index]
 		}
 	}
-	if tinyModelPath != "" && plansPath == "" {
-		fmt.Fprintln(stderr, packageExecuteUsage)
-		return exitUsage
-	}
 	if casesPath == "" || manifestPath == "" {
 		fmt.Fprintln(stderr, packageExecuteUsage)
 		return exitUsage

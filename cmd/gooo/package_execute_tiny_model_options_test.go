@@ -36,6 +36,43 @@ activity Main(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__"
 	}
 }
 
+func TestRunPackageExecuteRejectsUnusedTinyModelWhenGoooSourceHasNoFillPlan(t *testing.T) {
+	t.Setenv("GOOO_LAYA_URL", "")
+	t.Setenv("GOOO_LAYA_API_KEY", "")
+	root := t.TempDir()
+	writeWorkspaceSource(t, root, "core.gooo.fixture", `package core
+namespace core
+entity Integer id "core://integer"
+activity Normalize(Integer) -> Integer computes "return input"
+`)
+	writeWorkspaceSource(t, root, "app.gooo.fixture", `package app
+namespace app
+import core "example/core"
+activity Main(Integer) -> Integer computes "return input"
+bind core.Normalize.result -> Main.input
+`)
+	manifestPath := writeWorkspaceManifest(t, root, `{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/app", "activity": "Main"},
+  "packages": [
+    {"path": "example/app", "name": "app", "imports": ["example/core"], "sources": ["app.gooo.fixture"]},
+    {"path": "example/core", "name": "core", "imports": [], "sources": ["core.gooo.fixture"]}
+  ]
+}`)
+	casesPath := filepath.Join(root, "cases.json")
+	if err := os.WriteFile(casesPath, []byte(`{"schema":"gooo/body-composition-cases/v1","cases":[{"inputs":{"example/core:Normalize":7},"expected":{"example/core:Normalize":7,"example/app:Main":7}}]}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	modelPath := writeSyntheticTinyGoModel(t, "add")
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"package", "execute", "--json", "--cases", casesPath,
+		"--tiny-model", modelPath, manifestPath}, &stdout, &stderr)
+	if code != exitFailure || !strings.Contains(stdout.String(), "workspace declares no body-fill plan") ||
+		strings.Contains(stdout.String()+stderr.String(), modelPath) {
+		t.Fatalf("unused compact model was not rejected without leaking its path: code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+}
+
 func TestLibraryStarterRunsWithTheLocalTinyModel(t *testing.T) {
 	t.Setenv("GOOO_LAYA_URL", "")
 	t.Setenv("GOOO_LAYA_API_KEY", "")
@@ -48,7 +85,7 @@ func TestLibraryStarterRunsWithTheLocalTinyModel(t *testing.T) {
 	modelPath := writeSyntheticTinyGoModel(t, "add")
 	var stdout, stderr bytes.Buffer
 	code := run([]string{"package", "execute", "--json", "--cases", filepath.Join(workspace, "cases.json"),
-		"--body-plans", filepath.Join(workspace, "body-fill-plans.json"), "--tiny-model", modelPath,
+		"--tiny-model", modelPath,
 		filepath.Join(workspace, "gooo.workspace.json")}, &stdout, &stderr)
 	if code != exitOK || stderr.Len() != 0 {
 		t.Fatalf("library starter local model execution failed: code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
@@ -57,11 +94,13 @@ func TestLibraryStarterRunsWithTheLocalTinyModel(t *testing.T) {
 	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
 		t.Fatalf("decode library starter execution receipt: %v", err)
 	}
-	if receipt.Decision != "PASS" || receipt.Result == nil || len(receipt.Result.BodyFills) != 2 ||
-		receipt.Result.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID != "compose" ||
-		receipt.Result.BodyFills[1].Generation.Report.BodyFill.SelectedCandidateID != "add_zero" ||
+	if receipt.Decision != "PASS" || receipt.Result == nil || len(receipt.Result.BodyFills) != 1 ||
+		receipt.Result.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID != "add_one" ||
 		receipt.Result.Runtime.FinitePassed != 2 || receipt.Result.Runtime.FiniteTotal != 2 || !receipt.Result.Runtime.RuntimeReplayed {
-		t.Fatalf("library starter did not prove both model-filled package activities: %#v", receipt)
+		t.Fatalf("library starter did not prove the model-filled source-owned activity: %#v", receipt)
+	}
+	if _, err := os.Stat(filepath.Join(workspace, "body-fill-plans.json")); !os.IsNotExist(err) {
+		t.Fatalf("library starter still depends on an external body-fill plan: stat err=%v", err)
 	}
 }
 
@@ -76,7 +115,6 @@ func TestLibraryStarterRunsDeterministicallyWithoutAModel(t *testing.T) {
 	}
 	var stdout, stderr bytes.Buffer
 	code := run([]string{"package", "execute", "--json", "--cases", filepath.Join(workspace, "cases.json"),
-		"--body-plans", filepath.Join(workspace, "body-fill-plans.json"),
 		filepath.Join(workspace, "gooo.workspace.json")}, &stdout, &stderr)
 	if code != exitOK || stderr.Len() != 0 {
 		t.Fatalf("library starter deterministic execution failed: code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
@@ -85,9 +123,8 @@ func TestLibraryStarterRunsDeterministicallyWithoutAModel(t *testing.T) {
 	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
 		t.Fatalf("decode deterministic library execution receipt: %v", err)
 	}
-	if receipt.Decision != "PASS" || receipt.Result == nil || len(receipt.Result.BodyFills) != 2 ||
-		receipt.Result.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID != "compose" ||
-		receipt.Result.BodyFills[1].Generation.Report.BodyFill.SelectedCandidateID != "add_zero" ||
+	if receipt.Decision != "PASS" || receipt.Result == nil || len(receipt.Result.BodyFills) != 1 ||
+		receipt.Result.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID != "add_one" ||
 		receipt.Result.Runtime.FinitePassed != 2 || receipt.Result.Runtime.FiniteTotal != 2 || !receipt.Result.Runtime.RuntimeReplayed {
 		t.Fatalf("library starter did not preserve deterministic execution: %#v", receipt)
 	}
