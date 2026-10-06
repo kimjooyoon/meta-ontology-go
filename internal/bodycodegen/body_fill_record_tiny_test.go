@@ -11,6 +11,13 @@ import (
 )
 
 func TestSourceRecordIRBodyFillUsesTinyGoForUniqueGeneratedOperations(t *testing.T) {
+	result, plan, generation, provider, modelLoadMS := runTinyGoRecordBodyFill(t)
+	assertTinyGoRecordBodyFill(t, result, plan, generation, provider, modelLoadMS)
+}
+
+func runTinyGoRecordBodyFill(t *testing.T) (Result, IRBodyFillPlan, *IRBodyFillCandidateGenerationReceipt,
+	*recordingTinyGoBodyFillProvider, float64) {
+	t.Helper()
 	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture")
 	if err != nil {
 		t.Fatal(err)
@@ -41,6 +48,12 @@ func TestSourceRecordIRBodyFillUsesTinyGoForUniqueGeneratedOperations(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
+	return result, plan, generation, provider, modelLoadMS
+}
+
+func assertTinyGoRecordBodyFill(t *testing.T, result Result, plan IRBodyFillPlan,
+	generation *IRBodyFillCandidateGenerationReceipt, provider *recordingTinyGoBodyFillProvider, modelLoadMS float64) {
+	t.Helper()
 	receipt := result.Report.BodyFill
 	if receipt == nil || provider.calls != 1 || provider.request.Intent != plan.Intent ||
 		receipt.Decision.Provider != decisionroute.ProviderTinyGo || receipt.TinyModelFocusHole != "condition" ||
