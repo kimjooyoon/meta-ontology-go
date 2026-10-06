@@ -107,6 +107,14 @@ literal predicates, these expressions compare caller-supplied values directly.
 The [record relation fixture](../../examples/body-codegen/source-ir-fill-record-relations.gooo.fixture)
 derives `input0.key == input1.key`, checks four training pairs, and measures two
 separate holdouts.
+`record-field-relation-composition/v1` combines two distinct relation atoms
+with `&&` or `||`, prioritizing pairs that compare four independent fields.
+Its finite denominator includes all pairwise combinations and the atomic
+relations; `max_expressions` retains a deterministic prefix. The grammar does
+not build nested conditions. The
+[relation composition fixture](../../examples/body-codegen/source-ir-fill-record-relation-composition.gooo.fixture)
+generates key-and-state matching across two records, retains 8 of 16
+expressions, and reports the separate training, holdout and assignment coverage.
 `record-string-literal/v1`, `record-integer-literal/v1`, and
 `record-boolean-literal/v1` draw typed literals from the expected output record.
 The assignment cap and omitted search space appear in the same completeness

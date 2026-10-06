@@ -318,6 +318,14 @@ fields across the declared record inputs, including direct `input0.field` to
 operators by field type, and records the complete relation count and retained
 prefix. The [record relation fixture](../examples/body-codegen/source-ir-fill-record-relations.gooo.fixture)
 uses key equality to classify a request without learning a key literal.
+Use `record-field-relation-composition/v1` to combine two distinct relations
+between input fields with `&&` or `||`. The bounded grammar prioritizes pairs
+that use four independent fields, then considers overlapping pairs and atomic
+relations. Its denominator is the full pairwise composition space plus the
+atoms; `max_expressions` retains a deterministic prefix. The
+[relation-composition fixture](../examples/body-codegen/source-ir-fill-record-relation-composition.gooo.fixture)
+matches records on both key and active state, while keeping its 8-of-16 grammar
+coverage distinct from complete assignment coverage and withheld-case results.
 Use
 `record-string-literal/v1`,
 `record-integer-literal/v1`, or `record-boolean-literal/v1` to derive typed
