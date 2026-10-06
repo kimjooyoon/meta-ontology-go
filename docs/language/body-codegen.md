@@ -126,6 +126,17 @@ coverage partial when capped. The
 checks three matching keys with four training and two withheld records, and
 reports the full 196-expression denominator, the retained 8-expression prefix,
 and all 16 complete condition/value assignments.
+For four-field-relation combinations, use
+`record-field-relation-composition/v3`. It enumerates all five binary-tree
+shapes and all eight `&&`/`||` operator assignments for each distinct quartet,
+then includes the full v2 triple, pair and atomic fallback spaces. Ordering
+prefers quartets that connect more distinct selector pairs and fields. With 12
+relation atoms, the exact denominator is 21,704. The
+[`four-input relation fixture`](../../examples/body-codegen/source-ir-fill-record-relation-quads.gooo.fixture)
+retains eight conditions, checks four training rows and two separate holdouts,
+and records omitted grammar candidates separately from the 16 complete body
+assignments. This bounded grammar does not generate arbitrary Boolean programs
+or establish behavior beyond the declared cases.
 `record-string-literal/v1`, `record-integer-literal/v1`, and
 `record-boolean-literal/v1` draw typed literals from the expected output record.
 The assignment cap and omitted search space appear in the same completeness

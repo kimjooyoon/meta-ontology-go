@@ -108,6 +108,11 @@ func TestRecordSourceFillAllowsOnlyTypedRecordGrammars(t *testing.T) {
 	if err := relationTriples.Validate(); err != nil {
 		t.Fatalf("three-relation record derivation rejected: %v", err)
 	}
+	relationQuads := spec.Clone()
+	relationQuads.FillPlan.Generation.HoleGrammars[0].Grammar = "record-field-relation-composition/v3"
+	if err := relationQuads.Validate(); err != nil {
+		t.Fatalf("four-relation record derivation rejected: %v", err)
+	}
 
 	invalid := spec.Clone()
 	invalid.FillPlan.Generation.HoleGrammars[0].Grammar = "integer-predicate/v1"

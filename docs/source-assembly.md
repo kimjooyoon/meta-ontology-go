@@ -344,6 +344,22 @@ go run ./cmd/gooo body-codegen --json --activity MatchAll \
   examples/body-codegen/source-ir-fill-record-relation-triples.gooo.fixture
 ```
 
+`record-field-relation-composition/v3` adds four distinct relation atoms. For
+each quartet it generates all five binary-tree shapes with all eight Boolean
+operator assignments, then includes the complete v2 triple, pair and atomic
+fallback spaces. The exact denominator is
+`40 × C(atom_count, 4) + v2_count`; for 12 relation atoms, it is 21,704.
+`max_expressions` keeps a deterministic prefix and the receipt reports when
+that prefix covers only part of the finite grammar. The
+[four-input fixture](../examples/body-codegen/source-ir-fill-record-relation-quads.gooo.fixture)
+builds a key-agreement body for four records and evaluates training cases apart
+from holdouts.
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity MatchAll \
+  examples/body-codegen/source-ir-fill-record-relation-quads.gooo.fixture
+```
+
 Use
 `record-string-literal/v1`,
 `record-integer-literal/v1`, or `record-boolean-literal/v1` to derive typed

@@ -293,6 +293,7 @@ func supportedFillGrammar(grammar string) bool {
 		grammar == "record-field-relation/v1" ||
 		grammar == "record-field-relation-composition/v1" ||
 		grammar == "record-field-relation-composition/v2" ||
+		grammar == "record-field-relation-composition/v3" ||
 		grammar == "record-field-predicate-composition/v1" ||
 		grammar == "record-field-predicate-composition/v2" ||
 		grammar == "record-string-literal/v1" || grammar == "record-integer-literal/v1" ||
@@ -311,6 +312,7 @@ func recordFillGrammar(grammar string) bool {
 		grammar == "record-field-relation/v1" ||
 		grammar == "record-field-relation-composition/v1" ||
 		grammar == "record-field-relation-composition/v2" ||
+		grammar == "record-field-relation-composition/v3" ||
 		grammar == "record-field-predicate-composition/v1" ||
 		grammar == "record-field-predicate-composition/v2" ||
 		grammar == "record-string-literal/v1" ||
