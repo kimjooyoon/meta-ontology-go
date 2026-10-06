@@ -54,3 +54,16 @@ func TestRecordIntegerOrderPredicateOperatorsAreVersionedAndTyped(t *testing.T) 
 		}
 	}
 }
+
+func TestRecordIntegerRangeCompositionsPrioritizeObservedIntervals(t *testing.T) {
+	var atoms []string
+	seen := map[string]bool{}
+	for _, value := range []string{"-1", "0", "1", "2"} {
+		appendRecordPredicates(&atoms, seen, "input.score", value, true)
+	}
+	got := recordIntegerRangeExpressions(atoms, 16)
+	want := "(input.score >= 0) && (input.score <= 1)"
+	if len(got) != 16 || !slices.Contains(got, want) {
+		t.Fatalf("bounded integer interval candidates omitted %q: %#v", want, got)
+	}
+}

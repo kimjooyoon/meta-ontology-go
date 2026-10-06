@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -13,12 +14,13 @@ import (
 )
 
 const (
-	recordFieldPredicateGrammar       = "record-field-predicate/v1"
-	recordFieldPredicateV2Grammar     = "record-field-predicate/v2"
-	recordPredicateCompositionGrammar = "record-field-predicate-composition/v1"
-	recordStringLiteralGrammar        = "record-string-literal/v1"
-	recordIntegerLiteralGrammar       = "record-integer-literal/v1"
-	recordBooleanLiteralGrammar       = "record-boolean-literal/v1"
+	recordFieldPredicateGrammar         = "record-field-predicate/v1"
+	recordFieldPredicateV2Grammar       = "record-field-predicate/v2"
+	recordPredicateCompositionGrammar   = "record-field-predicate-composition/v1"
+	recordPredicateCompositionV2Grammar = "record-field-predicate-composition/v2"
+	recordStringLiteralGrammar          = "record-string-literal/v1"
+	recordIntegerLiteralGrammar         = "record-integer-literal/v1"
+	recordBooleanLiteralGrammar         = "record-boolean-literal/v1"
 )
 
 // generateSourceRecordFillCandidates derives a finite, source-bounded expression
@@ -67,7 +69,9 @@ func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGramm
 	case recordFieldPredicateV2Grammar:
 		return c.predicateExpressions(grammar.MaxExpressions, true)
 	case recordPredicateCompositionGrammar:
-		return c.composedPredicateExpressions(grammar.MaxExpressions)
+		return c.composedPredicateExpressions(grammar.MaxExpressions, false)
+	case recordPredicateCompositionV2Grammar:
+		return c.composedPredicateExpressions(grammar.MaxExpressions, true)
 	case recordStringLiteralGrammar:
 		return c.outputLiteralExpressions(grammar.MaxExpressions, semantic.BuiltinStringTypeID)
 	case recordIntegerLiteralGrammar:
@@ -87,8 +91,8 @@ func (c recordFillGrammarContext) predicateExpressions(maxExpressions int, integ
 	return retainRecordFillExpressions(atoms, maxExpressions)
 }
 
-func (c recordFillGrammarContext) composedPredicateExpressions(maxExpressions int) ([]string, int, bool, error) {
-	atoms, err := c.predicateAtoms(false)
+func (c recordFillGrammarContext) composedPredicateExpressions(maxExpressions int, integerOrder bool) ([]string, int, bool, error) {
+	atoms, err := c.predicateAtoms(integerOrder)
 	if err != nil {
 		return nil, 0, false, err
 	}
@@ -102,33 +106,140 @@ func (c recordFillGrammarContext) composedPredicateExpressions(maxExpressions in
 		return nil, enumerated, false, fmt.Errorf("record predicate composition grammar produced fewer than two distinct expressions")
 	}
 	expressions := make([]string, 0, min(maxExpressions, enumerated))
-	appendPairs := func(distinctSelectors bool) {
-		for left := range atoms {
-			for right := left + 1; right < len(atoms) && len(expressions) < maxExpressions; right++ {
-				leftSelector, rightSelector := recordPredicateSelector(atoms[left]), recordPredicateSelector(atoms[right])
-				if (leftSelector != rightSelector) != distinctSelectors {
-					continue
-				}
-				for _, operator := range []string{"&&", "||"} {
-					if len(expressions) == maxExpressions {
-						break
-					}
-					expressions = append(expressions, "("+atoms[left]+") "+operator+" ("+atoms[right]+")")
-				}
-			}
+	seen := make(map[string]bool, maxExpressions)
+	appendExpression := func(expression string) {
+		if len(expressions) < maxExpressions && !seen[expression] {
+			seen[expression] = true
+			expressions = append(expressions, expression)
 		}
 	}
-	// Cross-field compositions come first, so a small cap preserves useful
-	// interaction between independently observed parts of a record.
-	appendPairs(true)
-	appendPairs(false)
+	if integerOrder {
+		// The v2 cap alternates cross-field conditions with same-field integer
+		// intervals. This keeps a small grammar useful for both record routing
+		// and numeric range decisions.
+		crossField := recordPredicatePairExpressions(atoms, true, maxExpressions)
+		integerRanges := recordIntegerRangeExpressions(atoms, maxExpressions)
+		for index := 0; len(expressions) < maxExpressions && (index < len(crossField) || index < len(integerRanges)); index++ {
+			if index < len(crossField) {
+				appendExpression(crossField[index])
+			}
+			if index < len(integerRanges) {
+				appendExpression(integerRanges[index])
+			}
+		}
+		for _, expression := range crossField {
+			appendExpression(expression)
+		}
+		for _, expression := range integerRanges {
+			appendExpression(expression)
+		}
+		for _, expression := range recordPredicatePairExpressions(atoms, false, maxExpressions) {
+			appendExpression(expression)
+		}
+	} else {
+		// Keep the v1 cross-field-first candidate sequence stable.
+		for _, expression := range recordPredicatePairExpressions(atoms, true, maxExpressions) {
+			appendExpression(expression)
+		}
+		for _, expression := range recordPredicatePairExpressions(atoms, false, maxExpressions) {
+			appendExpression(expression)
+		}
+	}
 	for _, atom := range atoms {
 		if len(expressions) == maxExpressions {
 			break
 		}
-		expressions = append(expressions, atom)
+		appendExpression(atom)
 	}
 	return expressions, enumerated, len(expressions) == enumerated, nil
+}
+
+func recordPredicatePairExpressions(atoms []string, distinctSelectors bool, maxExpressions int) []string {
+	expressions := make([]string, 0, min(maxExpressions, len(atoms)))
+	for left := range atoms {
+		for right := left + 1; right < len(atoms) && len(expressions) < maxExpressions; right++ {
+			leftSelector, rightSelector := recordPredicateSelector(atoms[left]), recordPredicateSelector(atoms[right])
+			if (leftSelector != rightSelector) != distinctSelectors {
+				continue
+			}
+			for _, operator := range []string{"&&", "||"} {
+				if len(expressions) == maxExpressions {
+					break
+				}
+				expressions = append(expressions, "("+atoms[left]+") "+operator+" ("+atoms[right]+")")
+			}
+		}
+	}
+	return expressions
+}
+
+func recordIntegerRangeExpressions(atoms []string, maxExpressions int) []string {
+	type selectorThresholds map[int64]map[string]string
+	bySelector := make(map[string]selectorThresholds)
+	for _, atom := range atoms {
+		selector, operator, threshold, ok := recordIntegerPredicateParts(atom)
+		if !ok || (operator != "<" && operator != "<=" && operator != ">" && operator != ">=") {
+			continue
+		}
+		if bySelector[selector] == nil {
+			bySelector[selector] = make(selectorThresholds)
+		}
+		if bySelector[selector][threshold] == nil {
+			bySelector[selector][threshold] = make(map[string]string)
+		}
+		bySelector[selector][threshold][operator] = atom
+	}
+
+	selectors := make([]string, 0, len(bySelector))
+	for selector := range bySelector {
+		selectors = append(selectors, selector)
+	}
+	sort.Strings(selectors)
+	expressions := make([]string, 0, maxExpressions)
+	for _, selector := range selectors {
+		thresholds := make([]int64, 0, len(bySelector[selector]))
+		for threshold := range bySelector[selector] {
+			thresholds = append(thresholds, threshold)
+		}
+		sort.Slice(thresholds, func(i, j int) bool { return thresholds[i] < thresholds[j] })
+		for lowerIndex, lower := range thresholds {
+			for upperIndex := lowerIndex + 1; upperIndex < len(thresholds); upperIndex++ {
+				upper := thresholds[upperIndex]
+				for _, lowerOperator := range []string{">=", ">"} {
+					lowerExpression := bySelector[selector][lower][lowerOperator]
+					if lowerExpression == "" {
+						continue
+					}
+					for _, upperOperator := range []string{"<=", "<"} {
+						upperExpression := bySelector[selector][upper][upperOperator]
+						if upperExpression == "" {
+							continue
+						}
+						expressions = append(expressions, "("+lowerExpression+") && ("+upperExpression+")")
+						if len(expressions) == maxExpressions {
+							return expressions
+						}
+					}
+				}
+			}
+		}
+	}
+	return expressions
+}
+
+func recordIntegerPredicateParts(expression string) (selector, operator string, threshold int64, ok bool) {
+	for _, candidate := range []string{" <= ", " >= ", " < ", " > "} {
+		left, right, found := strings.Cut(expression, candidate)
+		if !found {
+			continue
+		}
+		value, err := strconv.ParseInt(strings.TrimSpace(right), 10, 64)
+		if err != nil || strings.TrimSpace(left) == "" {
+			return "", "", 0, false
+		}
+		return strings.TrimSpace(left), strings.TrimSpace(candidate), value, true
+	}
+	return "", "", 0, false
 }
 
 func recordPredicateSelector(expression string) string {
