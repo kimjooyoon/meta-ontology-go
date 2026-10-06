@@ -19,6 +19,32 @@ read-only while local `let` values may be assigned. See the
 [multiple-input example and case keys](../native-body-composition.md) and
 [record construction and actual value delivery](../native-record-values.md).
 
+### Model-guided record body fill
+
+Gooo source can declare candidate expressions for a record-valued activity
+body. The compiler checks each complete assignment against the record shape
+and declared `value_case` examples, then lets Laya choose only among those
+source-owned candidates. It emits the selected Gooo body and evaluates the
+finite record cases again. For example,
+[`source-ir-fill-record.gooo.fixture`](../../examples/body-codegen/source-ir-fill-record.gooo.fixture)
+uses `Candidate.state` to construct an accepted or rejected `Review`:
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity ReviewCandidate \
+  examples/body-codegen/source-ir-fill-record.gooo.fixture
+```
+
+Without a model endpoint, Gooo deterministically keeps the highest-scoring
+declared assignment. Set `GOOO_LAYA_URL` to a Laya `/v1/systemone` endpoint to
+let the model choose among eligible assignments. Its request includes the
+typed Gooo body, candidate summaries and finite-case scores; it omits raw case
+values. The receipt records the proposed and final candidates, each record
+case result, and whether Gooo replaced an inferior proposal with the
+best-scoring candidate. Record body fill currently supports required single
+string, boolean and integer record fields, one declared record result, and pure
+body expressions. Local TinyGo ranking does not yet support this record-valued
+plan schema.
+
 For multiple requests in one process, use
 [`gooo body-path-stream`](../native-body-worker.md). It accepts source recipes,
 keeps an optional small model loaded and emits each result as soon as it is ready.

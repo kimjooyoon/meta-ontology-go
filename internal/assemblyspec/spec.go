@@ -178,11 +178,27 @@ func (s Spec) Validate() error {
 
 func (s Spec) validateFillPlan() error {
 	plan := s.FillPlan
-	if len(s.Cases) == 0 || len(s.ValueCases) != 0 ||
+	recordCases := len(s.ValueCases) > 0
+	if len(s.Cases) == 0 && !recordCases || len(s.Cases) > 0 && recordCases ||
 		len(s.Choices) != 0 || s.Search != nil || s.MaxAttempts != 0 || s.Seed != "" ||
 		s.Baseline != "" || len(s.Picked) != 0 || !boundedText(plan.Intent, 2000) ||
 		len(plan.Holes) < 2 || len(plan.Holes) > 8 {
-		return fmt.Errorf("source fill plan requires intent, 2..8 holes and integer training cases; it cannot mix with other assembly modes")
+		return fmt.Errorf("source fill plan requires intent, 2..8 holes and either integer cases or typed record value cases; it cannot mix with other assembly modes")
+	}
+	if recordCases {
+		if len(s.HoldoutCases) != 0 || plan.Generation != nil {
+			return fmt.Errorf("record source fill currently requires explicit candidates and has no integer holdout cases")
+		}
+		for _, testCase := range s.ValueCases {
+			inputs, err := CanonicalValue(testCase.Inputs)
+			if err != nil || inputs != testCase.Inputs {
+				return fmt.Errorf("record source fill inputs must be bounded canonical JSON")
+			}
+			expected, err := CanonicalValue(testCase.Expected)
+			if err != nil || expected != testCase.Expected {
+				return fmt.Errorf("record source fill expected values must be bounded canonical JSON")
+			}
+		}
 	}
 	trainingInputs := make(map[int64]bool, len(s.Cases))
 	for _, testCase := range s.Cases {

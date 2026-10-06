@@ -6193,6 +6193,26 @@
         "scripts/domain-completeness/types.go",
         "scripts/language-utility-evidence/main.sh"
       ]
+    },
+    {
+      "branch": "agent/gooo-record-model-fill-20261006",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "docs/language-direction.ko.md",
+        "docs/language/body-codegen.md",
+        "examples/body-codegen/source-ir-fill-record.gooo.fixture",
+        "examples/package-record-flow/app.gooo.fixture",
+        "examples/package-record-flow/cases.json",
+        "examples/package-record-flow/domain.gooo.fixture",
+        "internal/assemblyspec/spec.go",
+        "internal/bodycodegen/body_fill.go",
+        "internal/bodycodegen/body_fill_record.go",
+        "internal/bodycodegen/body_fill_record_test.go",
+        "internal/bodycodegen/source_ir_fill.go",
+        "internal/packageruntime/workspaceexecution/execute_test.go",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

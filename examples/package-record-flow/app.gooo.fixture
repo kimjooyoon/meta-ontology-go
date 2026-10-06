@@ -3,5 +3,27 @@ namespace app
 
 import domain "example/domain"
 
-activity Main(Candidate) -> Review computes `return Review{candidate_id: input.candidate_id, decision: "accepted"}`
+activity Main(Candidate) -> Review computes `if __GOOO_BODY_HOLE_condition__ {
+    return Review{candidate_id: input.candidate_id, decision: __GOOO_BODY_HOLE_accepted__}
+} else {
+    return Review{candidate_id: input.candidate_id, decision: __GOOO_BODY_HOLE_rejected__}
+}` assembling {
+    source_fill intent "Accept candidates in the ready state and reject all other states." {
+        hole "condition"
+        hole "accepted"
+        hole "rejected"
+        candidate "ready_is_accepted" {
+            fill "condition" "input.state == \"ready\""
+            fill "accepted" "\"accepted\""
+            fill "rejected" "\"rejected\""
+        }
+        candidate "ready_is_rejected" {
+            fill "condition" "input.state != \"ready\""
+            fill "accepted" "\"accepted\""
+            fill "rejected" "\"rejected\""
+        }
+    }
+    value_case "[{\"candidate_id\":41,\"state\":\"ready\"}]" -> "{\"candidate_id\":41,\"decision\":\"accepted\"}"
+    value_case "[{\"candidate_id\":42,\"state\":\"queued\"}]" -> "{\"candidate_id\":42,\"decision\":\"rejected\"}"
+}
 bind domain.Submit.result -> Main.input
