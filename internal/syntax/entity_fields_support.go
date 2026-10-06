@@ -73,3 +73,12 @@ func EntityFieldsV3Support() EntityFieldsSupport {
 		ID: EntityFieldsV3ProfileID, Version: EntityFieldsV3ProfileVersion, Digest: EntityFieldsV3ProfileDigest,
 	}}
 }
+
+// EntityFieldsV4Support preserves V3 scalar types and adds optional single
+// scalar fields. The Go projection represents an absent optional value as nil
+// through a pointer to the declared scalar type.
+func EntityFieldsV4Support() EntityFieldsSupport {
+	return EntityFieldsSupport{State: EntityFieldsSupported, Profile: EntityFieldsProfile{
+		ID: EntityFieldsV4ProfileID, Version: EntityFieldsV4ProfileVersion, Digest: EntityFieldsV4ProfileDigest,
+	}}
+}

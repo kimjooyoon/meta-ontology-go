@@ -1,0 +1,14 @@
+package optionalrecords
+namespace optionalrecords
+
+entity Profile id "records://profile" fields {
+    field DisplayName id "records://profile/display-name" type string required one
+    field Nickname id "records://profile/nickname" type string optional one
+    field Active id "records://profile/active" type boolean optional one
+    field Score id "records://profile/score" type integer optional one
+}
+
+activity Preserve(Profile) -> Profile computes "return input"
+activity Review(Profile) -> Profile computes "return input"
+
+bind Preserve.result -> Review.input

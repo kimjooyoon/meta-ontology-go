@@ -15,7 +15,7 @@ func generateWithDeadlineCore(file *syntax.File, previous []byte, timeout time.D
 	}
 	result := make(chan generationResult, 1)
 	go func() {
-		ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsV3Support())
+		ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsV4Support())
 		if err != nil {
 			result <- generationResult{err: fmt.Errorf("semantic lowering failed: %w", err)}
 			return
@@ -26,17 +26,17 @@ func generateWithDeadlineCore(file *syntax.File, previous []byte, timeout time.D
 			return
 		}
 		if semanticIRHasFields(ir) {
-			document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV3Support())
+			document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV4Support())
 			if err != nil {
 				result <- generationResult{err: fmt.Errorf("BX document adaptation failed: %w", err)}
 				return
 			}
-			sourceModel, err := bidir.GetWithEntityFieldsSupport(document, syntax.EntityFieldsV3Support())
+			sourceModel, err := bidir.GetWithEntityFieldsSupport(document, syntax.EntityFieldsV4Support())
 			if err != nil {
 				result <- generationResult{err: fmt.Errorf("BX model projection failed: %w", err)}
 				return
 			}
-			model, err = projectionIRFromBidirModelWithSupport(ir, sourceModel, syntax.EntityFieldsV3Support())
+			model, err = projectionIRFromBidirModelWithSupport(ir, sourceModel, syntax.EntityFieldsV4Support())
 			if err != nil {
 				result <- generationResult{err: fmt.Errorf("generator field adapter failed: %w", err)}
 				return
@@ -49,7 +49,7 @@ func generateWithDeadlineCore(file *syntax.File, previous []byte, timeout time.D
 		}
 		var generated generator.Result
 		if semanticIRHasFields(ir) {
-			generated, err = generator.GenerateWithEntityFieldsSupport(model, previous, syntax.EntityFieldsV3Support())
+			generated, err = generator.GenerateWithEntityFieldsSupport(model, previous, syntax.EntityFieldsV4Support())
 		} else {
 			generated, err = generator.Generate(model, previous)
 		}

@@ -16,7 +16,7 @@ func runtimeCompositionModel(file *syntax.File, ir semantic.IR, model generator.
 	if len(ir.RuntimeBindings) == 0 {
 		return model, nil
 	}
-	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV3Support())
+	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV4Support())
 	if err != nil {
 		return generator.SemanticIR{}, fmt.Errorf("document adaptation: %w", err)
 	}

@@ -111,6 +111,52 @@ entity Counter id "records://counter" fields {
 		t.Fatalf("resolved integer field missing from semantic graph: %+v", entity)
 	}
 }
+
+func TestEntityFieldsV4AddsOptionalSingleScalarFields(t *testing.T) {
+	const source = `package records
+namespace records
+entity Profile id "records://profile" fields {
+  field nickname id "records://profile/nickname" type string optional one
+  field active id "records://profile/active" type boolean optional one
+  field score id "records://profile/score" type integer optional one
+}`
+	v3 := syntax.EntityFieldsV3Support()
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport("profile.gooo", source, v3)
+	if diagnostics.HasErrors() {
+		t.Fatal("V3 parser should retain the optional field syntax tree", diagnostics)
+	}
+	if _, err := LowerContextWithEntityFieldsSupport(context.Background(), file, v3); err == nil ||
+		!strings.Contains(err.Error(), EntityFieldsUnsupportedShapeDiagnostic) {
+		t.Fatalf("V3 accepted optional fields: %v", err)
+	}
+	v4 := syntax.EntityFieldsV4Support()
+	file, diagnostics = syntax.ParseFileWithEntityFieldsSupport("profile.gooo", source, v4)
+	if diagnostics.HasErrors() {
+		t.Fatal("V4 parse", diagnostics)
+	}
+	ir, err := LowerContextWithEntityFieldsSupport(context.Background(), file, v4)
+	if err != nil {
+		t.Fatal("V4 lowering", err)
+	}
+	entity, found := ir.Graph.NodeByName(ir.Namespace, "Profile")
+	if !found || len(entity.Fields) != 3 {
+		t.Fatalf("V4 optional fields missing from semantic graph: %+v", entity)
+	}
+	for _, field := range entity.Fields {
+		if field.Presence != FieldPresenceOptional || field.Cardinality != FieldCardinalityOne {
+			t.Fatalf("V4 field lost optional-one shape: %+v", field)
+		}
+	}
+	manySource := strings.Replace(source, "type string optional one", "type string optional many", 1)
+	manyFile, manyDiagnostics := syntax.ParseFileWithEntityFieldsSupport("profile.gooo", manySource, v4)
+	if manyDiagnostics.HasErrors() {
+		t.Fatal("V4 parser should preserve unsupported cardinality for semantic diagnostics", manyDiagnostics)
+	}
+	if _, err := LowerContextWithEntityFieldsSupport(context.Background(), manyFile, v4); err == nil ||
+		!strings.Contains(err.Error(), EntityFieldsUnsupportedShapeDiagnostic) {
+		t.Fatalf("V4 accepted optional-many field: %v", err)
+	}
+}
 func assertEntityFieldsDeferred(t *testing.T, err error, span SourceSpan) {
 	t.Helper()
 	var deferred *EntityFieldsError

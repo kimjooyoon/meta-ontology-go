@@ -7,7 +7,7 @@ import (
 	"unicode"
 )
 
-func validateSupportedField(entity Entity, index int, field Field, used map[string]string, seenNames map[string]string, sourceURI string, previousStart int, hasPrevious, allowBoolean, allowInteger bool) error {
+func validateSupportedField(entity Entity, index int, field Field, used map[string]string, seenNames map[string]string, sourceURI string, previousStart int, hasPrevious, allowBoolean, allowInteger, allowOptional bool) error {
 	context := fmt.Sprintf("entity %q field %d", entity.ID, index)
 	if field.ID == "" || field.Name == "" || field.Parent == "" || field.TypeRefID == "" || field.Presence == "" || field.Cardinality == "" {
 		return entityFieldsError(entityFieldsIncompleteDiagnostic, field, context+" is missing a required identity, name, type, shape, or parent")
@@ -38,6 +38,9 @@ func validateSupportedField(entity Entity, index int, field Field, used map[stri
 	} else if field.TypeRefID == entityFieldsIntegerTypeID && allowInteger {
 		expectedGoType = "int64"
 	}
+	if field.Presence == "optional" && allowOptional {
+		expectedGoType = "*" + expectedGoType
+	}
 	if field.GoType != "" && field.GoType != expectedGoType {
 		return entityFieldsError(entityFieldsUnrepresentableDiagnostic, field, "Go type is derived from the profile and cannot be overridden")
 	}
@@ -51,8 +54,9 @@ func validateSupportedField(entity Entity, index int, field Field, used map[stri
 	if field.TypeRefID != entityFieldsStringTypeID && !(allowBoolean && field.TypeRefID == entityFieldsBooleanTypeID) && !(allowInteger && field.TypeRefID == entityFieldsIntegerTypeID) {
 		return entityFieldsError(entityFieldsUnsupportedTypeDiagnostic, field, fmt.Sprintf("resolved type %q is not in the bound profile", field.TypeRefID))
 	}
-	if field.Presence != "required" || field.Cardinality != "one" {
-		return entityFieldsError(entityFieldsUnsupportedShapeDiagnostic, field, "only required × one is in the bound profile")
+	validPresence := field.Presence == "required" || allowOptional && field.Presence == "optional"
+	if !validPresence || field.Cardinality != "one" {
+		return entityFieldsError(entityFieldsUnsupportedShapeDiagnostic, field, "the bound profile does not support this presence/cardinality shape")
 	}
 	if err := validateFieldSource(entity, field, sourceURI, previousStart, hasPrevious); err != nil {
 		return err

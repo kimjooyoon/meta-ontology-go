@@ -1,6 +1,6 @@
 # Gooo가 만들고 있는 언어와 작은 모델
 
-업데이트: 2026-10-06. Gooo 소스 안에서 유한 IR 후보 문법, 훈련·홀드아웃 사례와 시도 예산을 함께 선언해 실행할 수 있습니다.
+업데이트: 2026-10-07. Gooo 소스 안에서 유한 IR 후보 문법, 훈련·홀드아웃 사례와 시도 예산을 함께 선언해 실행할 수 있습니다.
 
 **지금의 위치:** Gooo로 허용된 코드 조립 경로를 표현하고, 자체 소형 모델이
 시도할 순서를 제안하며, 실행 결과를 다음 판단과 개발에 연결하고 있습니다.
@@ -205,9 +205,11 @@ IR은 원본 선언을 컴파일러가 다루기 쉬운 구조로 옮긴 중간 
 `Candidate{title: input1, state: "ready"}`처럼 모든 필드를 명시해 구성하고,
 다음 본문에서 `input.title`을 읽습니다. 생성된 프로그램은 선언 순서의 Go
 구조체를 사용하며, 관측에는 각 필드의 안정적 식별자와 실제 값을 남깁니다.
-레코드 필드는 V1의 필수 문자열을 유지하면서 V2의 필수 Boolean, V3의 필수
-Integer를 지원합니다. 이 버전 구분은 기존 기록의 해석을 바꾸지 않습니다.
-다른 필드 타입과 중첩 기록은 아직 후속 언어 확장 범위입니다.
+레코드 본문 실행은 V1의 필수 문자열, V2의 필수 Boolean, V3의 필수 Integer를
+지원합니다. 이 버전 구분은 기존 기록의 해석을 바꾸지 않습니다. 정적 Go 투영은
+V4에서 선택형 단일 문자열·Boolean·Integer 필드를 포인터로 나타내어 값이
+없음과 빈 문자열·`false`·`0`을 구별합니다. 본문 생성과 기록 실행은 아직 V3
+계약을 사용하므로 선택형 필드를 직접 읽고 쓰는 경로는 다음 확장 과제입니다.
 [선언·본문·실제 값 관측](native-record-values.md).
 
 이제 모델 선택 경로도 같은 도메인 기록을 다룹니다. `source_fill` 안에
@@ -538,6 +540,19 @@ Gooo의 조립 사례는 입력값을 계산해 레코드에 넣고, 2^53을 넘
 
 V3은 V1의 문자열과 V2의 불리언을 유지하면서 정수 타입을 더합니다. V1/V2
 프로필 기록은 그대로 구분됩니다. [정수 레코드 예제와 실행 안내](native-record-values.md#typed-fields-across-source-driven-execution).
+
+## 선택형 레코드 필드 — 2026-10-07
+
+도메인 값에는 없을 수도 있는 정보가 있습니다. V4는 `optional one` 문자열,
+Boolean, Integer 필드를 Go의 `*string`, `*bool`, `*int64`로 투영합니다.
+따라서 부재와 `""`, `false`, `0`을 구별할 수 있습니다. 의미 투영의 source map은
+원본 필드 span·안정 ID·프로필 지문을 보존하고 생성 manifest는 그 source map
+지문과 Go 산출물을 연결합니다. 현재는 `gooo check`와 `gooo generate`에서 사용할
+수 있으며 capability discovery와 활동 bind 계획도 이 프로필을 읽습니다. record
+본문 조립·실행은 필수 필드만 받습니다.
+[V4 예제](../examples/entity-fields-v4/main.gooo.fixture)와
+[필드 지원 범위](entity-fields-support.md#optional-scalar-fields-in-the-public-cli)를
+확인할 수 있습니다.
 
 ## 기록형 IR 본문에서 자체 모델 사용 — 2026-10-07
 
