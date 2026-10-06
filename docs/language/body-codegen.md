@@ -52,7 +52,12 @@ enumerates equality and inequality checks over observed scalar inputs;
 `record-string-literal/v1`, `record-integer-literal/v1`, and
 `record-boolean-literal/v1` draw typed literals from the expected output record.
 The assignment cap and omitted search space appear in the same completeness
-receipt as integer derivation. See
+receipt as integer derivation. Put independent record examples in
+`holdout_value_case` rows. They are not used to derive expressions, score
+candidates, or form Laya's request; Gooo evaluates the final selected body
+against them after selection and reports a separate holdout accuracy and suite
+digest. This measures only those withheld rows and does not establish
+full-domain behavior. See
 [`source-ir-fill-record-derived.gooo.fixture`](../../examples/body-codegen/source-ir-fill-record-derived.gooo.fixture).
 Run it without Laya to use the deterministic best-scoring candidate:
 

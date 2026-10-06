@@ -82,6 +82,16 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 				continue
 			}
 			d.Spec.ValueCases = append(d.Spec.ValueCases, assemblyspec.ValueCase{Inputs: input, Expected: expected})
+		case "holdout_value_case":
+			input := p.assemblyValue()
+			p.expect(TokenArrow, "->", DiagExpectedArrow)
+			expected := p.assemblyValue()
+			if len(d.Spec.ValueHoldoutCases) == 128 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds 128 holdout value cases")
+				p.skipAssemblyRemainder()
+				continue
+			}
+			d.Spec.ValueHoldoutCases = append(d.Spec.ValueHoldoutCases, assemblyspec.ValueCase{Inputs: input, Expected: expected})
 		case "attempts":
 			value := p.assemblyInteger("attempt budget")
 			if seenAttempts || value < 1 || value > 64 {
@@ -364,6 +374,9 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 	}
 	for _, c := range d.Spec.ValueCases {
 		fmt.Fprintf(output, "    value_case %s -> %s\n", quoteString(c.Inputs), quoteString(c.Expected))
+	}
+	for _, c := range d.Spec.ValueHoldoutCases {
+		fmt.Fprintf(output, "    holdout_value_case %s -> %s\n", quoteString(c.Inputs), quoteString(c.Expected))
 	}
 	if d.Spec.FillPlan == nil {
 		fmt.Fprintf(output, "    attempts %s\n", quoteString(strconv.Itoa(d.Spec.MaxAttempts)))

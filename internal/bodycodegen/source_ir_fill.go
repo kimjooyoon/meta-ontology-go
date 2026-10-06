@@ -77,6 +77,7 @@ func sourceIRBodyFillPlan(filename string, source []byte, activity string, spec 
 	if len(spec.ValueCases) > 0 {
 		plan.Schema = bodyFillRecordPlanSchema
 		plan.ValueCases = append([]assemblyspec.ValueCase(nil), spec.ValueCases...)
+		plan.ValueHoldoutCases = append([]assemblyspec.ValueCase(nil), spec.ValueHoldoutCases...)
 	}
 	for index, hole := range spec.FillPlan.Holes {
 		plan.Holes[index] = IRBodyFillHole{ID: hole.ID}

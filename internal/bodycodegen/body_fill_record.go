@@ -17,7 +17,7 @@ import (
 
 func validateRecordIRBodyFillPlan(plan IRBodyFillPlan) error {
 	if strings.TrimSpace(plan.Intent) == "" || utf8.RuneCountInString(plan.Intent) > 2000 ||
-		len(plan.ValueCases) == 0 || len(plan.ValueCases) > 128 || len(plan.TestCases) != 0 ||
+		len(plan.ValueCases) == 0 || len(plan.ValueCases)+len(plan.ValueHoldoutCases) > 128 || len(plan.TestCases) != 0 ||
 		len(plan.HoldoutTestCases) != 0 || plan.HoleID != "" || len(plan.Holes) < 1 || len(plan.Holes) > 8 ||
 		len(plan.Candidates) < 2 || len(plan.Candidates) > 16 {
 		return fmt.Errorf("record IR body-fill plan requires intent, 1..8 holes, 2..16 candidates and 1..128 value cases")
@@ -62,6 +62,23 @@ func validateRecordIRBodyFillPlan(plan IRBodyFillPlan) error {
 		expected, err := assemblyspec.CanonicalValue(testCase.Expected)
 		if err != nil || expected != testCase.Expected {
 			return fmt.Errorf("record IR body-fill expected values must be bounded canonical JSON")
+		}
+	}
+	trainingInputs := make(map[string]bool, len(plan.ValueCases))
+	for _, testCase := range plan.ValueCases {
+		trainingInputs[testCase.Inputs] = true
+	}
+	for _, testCase := range plan.ValueHoldoutCases {
+		inputs, err := assemblyspec.CanonicalValue(testCase.Inputs)
+		if err != nil || inputs != testCase.Inputs {
+			return fmt.Errorf("record IR body-fill holdout inputs must be bounded canonical JSON")
+		}
+		expected, err := assemblyspec.CanonicalValue(testCase.Expected)
+		if err != nil || expected != testCase.Expected {
+			return fmt.Errorf("record IR body-fill holdout expected values must be bounded canonical JSON")
+		}
+		if trainingInputs[testCase.Inputs] {
+			return fmt.Errorf("record IR body-fill holdout input %s also appears in training cases", testCase.Inputs)
 		}
 	}
 	return nil
@@ -248,6 +265,25 @@ func generateWithRecordIRBodyFillOptions(
 		}
 	}
 	accuracy := float64(passed) * 100 / float64(len(plan.ValueCases))
+	var holdoutResults []RecordAssemblyCase
+	var holdoutPassed int
+	var holdoutAccuracy *float64
+	var holdoutSuiteSHA256 string
+	if len(plan.ValueHoldoutCases) > 0 {
+		holdoutResults, err = evaluateRecordAssembly(ctx, []byte(result.Source), activityName, records, plan.ValueHoldoutCases)
+		if err != nil {
+			return Result{}, fmt.Errorf("evaluate selected generated record body on holdout cases: %w", err)
+		}
+		for _, caseResult := range holdoutResults {
+			if caseResult.Passed {
+				holdoutPassed++
+			}
+		}
+		value := float64(holdoutPassed) * 100 / float64(len(plan.ValueHoldoutCases))
+		holdoutAccuracy = &value
+		holdoutBytes, _ := json.Marshal(plan.ValueHoldoutCases)
+		holdoutSuiteSHA256 = digest(holdoutBytes)
+	}
 	selectedBodySource, err := sourceWithoutIRBodyFill(filename, []byte(result.GoooSource), activityName)
 	if err != nil {
 		// External plans do not carry a source-owned fill clause.
@@ -270,10 +306,13 @@ func generateWithRecordIRBodyFillOptions(
 		SelectionRegretPP:   best.AccuracyPercent - proposedScore.AccuracyPercent,
 		SelectionAdjustment: selectionAdjustment, Decision: decision, CandidateScores: scores,
 		TestSuiteSHA256: digest(testBytes), TestCasesPassed: passed, TestCasesTotal: len(plan.ValueCases),
+		HoldoutSuiteSHA256: holdoutSuiteSHA256, HoldoutCasesPassed: holdoutPassed,
+		HoldoutCasesTotal: len(plan.ValueHoldoutCases), HoldoutAccuracyPercent: holdoutAccuracy,
 		FunctionalAccuracyPct: accuracy, ExternalProviderCalls: externalCalls,
 		ExternalProviderCallsKnown: externalCallsKnown, LocalModelPredictions: localPredictions,
 		Evaluator: "gooo/bodycodegen-record-value-interpreter/v1", SelectedValueCaseResults: selectedCases,
-		AccuracyScope: "exact observed record equality over the declared finite value cases; not a full-domain proof",
+		SelectedValueHoldoutCaseResults: holdoutResults,
+		AccuracyScope:                   "exact observed record equality over training value cases; holdout value cases are measured separately when present; neither is a full-domain proof",
 		Timing: IRBodyFillTiming{IRPlanBuildMS: planBuildMS, ProviderDecisionMS: decisionMS,
 			LayaDecisionMS: layaMS, TinyDecisionMS: tinyMS, FinalEmissionMS: emissionMS,
 			TotalMS:        float64(time.Since(started)) / float64(time.Millisecond),

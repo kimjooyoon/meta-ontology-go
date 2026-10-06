@@ -11,16 +11,17 @@ import (
 )
 
 type Spec struct {
-	Choices      []Choice    `json:"choices"`
-	Cases        []Case      `json:"cases"`
-	HoldoutCases []Case      `json:"holdout_cases,omitempty"`
-	ValueCases   []ValueCase `json:"value_cases,omitempty"`
-	MaxAttempts  int         `json:"max_attempts"`
-	Seed         string      `json:"seed,omitempty"`
-	Baseline     string      `json:"baseline,omitempty"`
-	Picked       []Pick      `json:"picked,omitempty"`
-	Search       *Search     `json:"search,omitempty"`
-	FillPlan     *FillPlan   `json:"fill_plan,omitempty"`
+	Choices           []Choice    `json:"choices"`
+	Cases             []Case      `json:"cases"`
+	HoldoutCases      []Case      `json:"holdout_cases,omitempty"`
+	ValueCases        []ValueCase `json:"value_cases,omitempty"`
+	ValueHoldoutCases []ValueCase `json:"value_holdout_cases,omitempty"`
+	MaxAttempts       int         `json:"max_attempts"`
+	Seed              string      `json:"seed,omitempty"`
+	Baseline          string      `json:"baseline,omitempty"`
+	Picked            []Pick      `json:"picked,omitempty"`
+	Search            *Search     `json:"search,omitempty"`
+	FillPlan          *FillPlan   `json:"fill_plan,omitempty"`
 }
 
 // Search declares a bounded IR expression grammar whose candidates Gooo derives
@@ -96,8 +97,8 @@ type ValueCase struct {
 }
 
 func (s Spec) Validate() error {
-	if len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases) < 1 ||
-		len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases) > 128 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
+	if len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases) < 1 ||
+		len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases) > 128 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
 		return fmt.Errorf("assembly requires 1..16 choices, 1..128 cases and 1..64 attempts")
 	}
 	if s.FillPlan != nil {
@@ -107,7 +108,7 @@ func (s Spec) Validate() error {
 		return fmt.Errorf("assembly requires 1..16 choices, 1..128 cases and 1..64 attempts")
 	}
 	if s.Search != nil {
-		if len(s.Cases) == 0 || len(s.Choices) != 0 || len(s.ValueCases) != 0 ||
+		if len(s.Cases) == 0 || len(s.Choices) != 0 || len(s.ValueCases)+len(s.ValueHoldoutCases) != 0 ||
 			s.Baseline != "" || len(s.Picked) != 0 || s.Seed != "" ||
 			!identifier(s.Search.HoleID) || s.Search.Grammar != "integer-offset-constant/v1" ||
 			!boundedText(s.Search.Intent, 2000) || s.Search.MaxCandidates < 2 || s.Search.MaxCandidates > 16 ||
@@ -149,14 +150,17 @@ func (s Spec) Validate() error {
 				return fmt.Errorf("assembly name choice %q requires an alternative local", c.ID)
 			}
 		case "field_value", "field_update":
-			if !boundedText(c.Alternative, 512) || len(s.Cases) != 0 || len(s.ValueCases) == 0 || len(s.Choices) > 6 {
+			if !boundedText(c.Alternative, 512) || len(s.Cases) != 0 || len(s.ValueCases) == 0 || len(s.ValueHoldoutCases) != 0 || len(s.Choices) > 6 {
 				return fmt.Errorf("field assembly requires an alternative expression, 1..6 choices and value_case expectations")
 			}
 		default:
 			return fmt.Errorf("unknown assembly choice kind %q", c.Kind)
 		}
 	}
-	if len(s.ValueCases) != 0 {
+	if len(s.ValueCases) != 0 || len(s.ValueHoldoutCases) != 0 {
+		if len(s.ValueHoldoutCases) != 0 {
+			return fmt.Errorf("holdout_value_case is available only for source_fill plans")
+		}
 		for _, choice := range s.Choices {
 			if choice.Kind != "field_value" && choice.Kind != "field_update" {
 				return fmt.Errorf("value_case requires only field_value or field_update choices")
@@ -187,8 +191,9 @@ func (s Spec) validateFillPlan() error {
 	}
 	if recordCases {
 		if len(s.HoldoutCases) != 0 {
-			return fmt.Errorf("record source fill has no integer holdout cases")
+			return fmt.Errorf("record source fill uses holdout_value_case, not holdout_case")
 		}
+		trainingInputs := make(map[string]bool, len(s.ValueCases))
 		for _, testCase := range s.ValueCases {
 			inputs, err := CanonicalValue(testCase.Inputs)
 			if err != nil || inputs != testCase.Inputs {
@@ -198,7 +203,23 @@ func (s Spec) validateFillPlan() error {
 			if err != nil || expected != testCase.Expected {
 				return fmt.Errorf("record source fill expected values must be bounded canonical JSON")
 			}
+			trainingInputs[testCase.Inputs] = true
 		}
+		for _, testCase := range s.ValueHoldoutCases {
+			inputs, err := CanonicalValue(testCase.Inputs)
+			if err != nil || inputs != testCase.Inputs {
+				return fmt.Errorf("record source fill holdout inputs must be bounded canonical JSON")
+			}
+			expected, err := CanonicalValue(testCase.Expected)
+			if err != nil || expected != testCase.Expected {
+				return fmt.Errorf("record source fill holdout expected values must be bounded canonical JSON")
+			}
+			if trainingInputs[testCase.Inputs] {
+				return fmt.Errorf("record source fill holdout input %s also appears in training cases", testCase.Inputs)
+			}
+		}
+	} else if len(s.ValueHoldoutCases) != 0 {
+		return fmt.Errorf("holdout_value_case requires record value_case training examples")
 	}
 	trainingInputs := make(map[int64]bool, len(s.Cases))
 	for _, testCase := range s.Cases {
@@ -333,6 +354,7 @@ func (s Spec) Clone() *Spec {
 	clone.Choices = append([]Choice(nil), s.Choices...)
 	clone.Cases = append([]Case(nil), s.Cases...)
 	clone.ValueCases = append([]ValueCase(nil), s.ValueCases...)
+	clone.ValueHoldoutCases = append([]ValueCase(nil), s.ValueHoldoutCases...)
 	clone.Picked = append([]Pick(nil), s.Picked...)
 	if s.Search != nil {
 		search := *s.Search

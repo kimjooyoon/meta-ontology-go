@@ -86,6 +86,35 @@ func TestRecordSourceFillAllowsOnlyTypedRecordGrammars(t *testing.T) {
 	}
 }
 
+func TestRecordSourceFillHoldoutsAreCanonicalDisjointAndCloned(t *testing.T) {
+	spec := Spec{
+		ValueCases:        []ValueCase{{Inputs: `[{"state":"ready"}]`, Expected: `{"decision":"yes"}`}},
+		ValueHoldoutCases: []ValueCase{{Inputs: `[{"state":"queued"}]`, Expected: `{"decision":"no"}`}},
+		FillPlan: &FillPlan{Intent: "route by state", Holes: []FillHole{{ID: "condition"}, {ID: "yes"}},
+			Candidates: []FillCandidate{{ID: "a", Fills: []HoleFilling{{HoleID: "condition", Expression: `input.state == "ready"`}, {HoleID: "yes", Expression: `"yes"`}}},
+				{ID: "b", Fills: []HoleFilling{{HoleID: "condition", Expression: `input.state != "ready"`}, {HoleID: "yes", Expression: `"no"`}}}}},
+	}
+	if err := spec.Validate(); err != nil {
+		t.Fatalf("disjoint record holdout rejected: %v", err)
+	}
+	clone := spec.Clone()
+	clone.ValueHoldoutCases[0].Expected = `{"decision":"changed"}`
+	if spec.ValueHoldoutCases[0].Expected != `{"decision":"no"}` {
+		t.Fatal("record holdout clone shares caller storage")
+	}
+	for _, mutate := range []func(*Spec){
+		func(s *Spec) { s.ValueHoldoutCases[0].Inputs = s.ValueCases[0].Inputs },
+		func(s *Spec) { s.ValueHoldoutCases[0].Expected = `{"decision": "no"}` },
+		func(s *Spec) { s.FillPlan = nil },
+	} {
+		invalid := spec.Clone()
+		mutate(invalid)
+		if err := invalid.Validate(); err == nil {
+			t.Fatal("invalid record holdout accepted", invalid)
+		}
+	}
+}
+
 func TestAssemblyCheckpointCanonicalSelectionAndClone(t *testing.T) {
 	s := validSpec()
 	s.Baseline = "return input - 2"
