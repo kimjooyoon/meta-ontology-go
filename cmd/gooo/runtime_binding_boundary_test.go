@@ -2,6 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"go/types"
 	"strings"
 	"testing"
 
@@ -42,6 +46,7 @@ func TestGeneratorEmitsDeterministicCompositionForExplicitBindings(t *testing.T)
 	if strings.Contains(string(generated.result.Source), "GoooCompose") != strings.Contains(sourceWithRuntimeBinding, "bind ") {
 		t.Fatal("composition emission must follow explicit source bindings only")
 	}
+	assertGeneratedGoTypeChecks(t, generated.result.Source)
 }
 
 func TestGeneratedRuntimePlanCarriesValidatedTypedOrder(t *testing.T) {
@@ -102,5 +107,18 @@ bind MakeSecond.result -> Combine.input1
 		if !strings.Contains(string(generated.result.Source), expected) {
 			t.Fatalf("generated Go missing multi-input composition fragment %q:\n%s", expected, generated.result.Source)
 		}
+	}
+	assertGeneratedGoTypeChecks(t, generated.result.Source)
+}
+
+func assertGeneratedGoTypeChecks(t *testing.T, source []byte) {
+	t.Helper()
+	fileSet := token.NewFileSet()
+	file, err := parser.ParseFile(fileSet, "generated.gooo.go", source, parser.ParseComments)
+	if err != nil {
+		t.Fatalf("generated composition Go does not parse: %v\n%s", err, source)
+	}
+	if _, err := new(types.Config).Check(file.Name.Name, fileSet, []*ast.File{file}, nil); err != nil {
+		t.Fatalf("generated composition Go does not type-check: %v\n%s", err, source)
 	}
 }
