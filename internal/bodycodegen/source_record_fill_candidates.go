@@ -16,6 +16,7 @@ import (
 const (
 	recordFieldPredicateGrammar         = "record-field-predicate/v1"
 	recordFieldPredicateV2Grammar       = "record-field-predicate/v2"
+	recordFieldRelationGrammar          = "record-field-relation/v1"
 	recordPredicateCompositionGrammar   = "record-field-predicate-composition/v1"
 	recordPredicateCompositionV2Grammar = "record-field-predicate-composition/v2"
 	recordStringLiteralGrammar          = "record-string-literal/v1"
@@ -68,6 +69,8 @@ func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGramm
 		return c.predicateExpressions(grammar.MaxExpressions, false)
 	case recordFieldPredicateV2Grammar:
 		return c.predicateExpressions(grammar.MaxExpressions, true)
+	case recordFieldRelationGrammar:
+		return c.fieldRelationExpressions(grammar.MaxExpressions)
 	case recordPredicateCompositionGrammar:
 		return c.composedPredicateExpressions(grammar.MaxExpressions, false)
 	case recordPredicateCompositionV2Grammar:
@@ -81,6 +84,63 @@ func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGramm
 	default:
 		return nil, 0, false, fmt.Errorf("unsupported record source-fill grammar %q", grammar.Grammar)
 	}
+}
+
+// fieldRelationExpressions derives comparisons between distinct fields on
+// declared record inputs. Unlike literal predicates, these candidates express
+// relationships between values supplied by the caller rather than memorizing
+// individual observed values.
+func (c recordFillGrammarContext) fieldRelationExpressions(maxExpressions int) ([]string, int, bool, error) {
+	type selector struct {
+		expression string
+		typeID     string
+	}
+	selectors := make([]selector, 0)
+	for inputIndex, input := range c.activity.Inputs {
+		if scalarTypeID(input.Name) != "" {
+			continue
+		}
+		record := recordTypeByName(c.records, input.Name)
+		if record == nil {
+			return nil, 0, false, fmt.Errorf("record relation grammar cannot resolve input type %q", input.Name)
+		}
+		root := "input"
+		if len(c.activity.Inputs) > 1 {
+			root = fmt.Sprintf("input%d", inputIndex)
+		}
+		for _, field := range record.Fields {
+			if field.TypeID != string(semantic.BuiltinStringTypeID) &&
+				field.TypeID != string(semantic.BuiltinBooleanTypeID) &&
+				field.TypeID != string(semantic.BuiltinIntegerTypeID) {
+				continue
+			}
+			selectors = append(selectors, selector{expression: root + "." + field.Name, typeID: field.TypeID})
+		}
+	}
+
+	expressions := make([]string, 0, maxExpressions)
+	enumerated := 0
+	for leftIndex, left := range selectors {
+		for _, right := range selectors[leftIndex+1:] {
+			if left.typeID != right.typeID {
+				continue
+			}
+			operators := []string{"==", "!="}
+			if left.typeID == string(semantic.BuiltinIntegerTypeID) {
+				operators = []string{"<", "<=", ">", ">=", "==", "!="}
+			}
+			for _, operator := range operators {
+				enumerated++
+				if len(expressions) < maxExpressions {
+					expressions = append(expressions, left.expression+" "+operator+" "+right.expression)
+				}
+			}
+		}
+	}
+	if enumerated < 2 {
+		return nil, enumerated, false, fmt.Errorf("record relation grammar produced fewer than two distinct expressions")
+	}
+	return expressions, enumerated, len(expressions) == enumerated, nil
 }
 
 func (c recordFillGrammarContext) predicateExpressions(maxExpressions int, integerOrder bool) ([]string, int, bool, error) {

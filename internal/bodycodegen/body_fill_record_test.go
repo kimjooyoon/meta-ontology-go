@@ -340,6 +340,60 @@ func TestSourceRecordIRBodyFillDerivesIntegerRangeComposition(t *testing.T) {
 	}
 }
 
+func TestSourceRecordIRBodyFillDerivesRelationsBetweenRecordInputs(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-relations.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := ParseBodyFile("record-fill-relations.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	var activity *syntax.ActivityDecl
+	for _, declaration := range file.Declarations {
+		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == "Compare" {
+			activity = candidate
+			break
+		}
+	}
+	if activity == nil {
+		t.Fatal("record relation body-fill activity not found")
+	}
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill-relations.gooo", source,
+		"Compare", &activity.Assembly.Spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.FunctionalAccuracyPct != 100 || receipt.TestCasesPassed != 4 || receipt.TestCasesTotal != 4 ||
+		receipt.HoldoutAccuracyPercent == nil || *receipt.HoldoutAccuracyPercent != 100 ||
+		receipt.HoldoutCasesPassed != 2 || receipt.HoldoutCasesTotal != 2 ||
+		!result.Report.TypecheckPassed || !result.Report.DeterministicReplay {
+		t.Fatalf("record field relation did not generate and replay: receipt=%+v report=%+v", receipt, result.Report)
+	}
+	generation := receipt.CandidateGeneration
+	if generation == nil || len(generation.HoleGrammars) != 2 ||
+		generation.HoleGrammars[1].Grammar != recordFieldRelationGrammar ||
+		generation.HoleGrammars[1].ExpressionCandidatesTotal != 8 ||
+		generation.HoleGrammars[1].ExpressionsRetained != 8 || !generation.HoleGrammars[1].GrammarComplete ||
+		generation.AssignmentSpaceSize != 16 || generation.AssignmentsRetained != 16 ||
+		generation.AssignmentsOmitted != 0 || generation.AssignmentCoveragePercent != 100 {
+		t.Fatalf("record relation completeness was not reported exactly: %+v", generation)
+	}
+	var selectedCondition string
+	for _, fill := range receipt.HoleFills {
+		if fill.HoleID == "condition" {
+			selectedCondition = fill.Expression
+		}
+	}
+	if selectedCondition != "input0.key == input1.key" || !strings.Contains(result.GoooSource, selectedCondition) {
+		t.Fatalf("selected record relation = %q; source=%s", selectedCondition, result.GoooSource)
+	}
+	if strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") || strings.Contains(result.GoooSource, "source_fill") {
+		t.Fatalf("generated Gooo source retained body-fill instructions: %s", result.GoooSource)
+	}
+}
+
 func TestSourceRecordIRBodyFillLetsLayaRankDerivedCandidates(t *testing.T) {
 	source, activity := readDerivedRecordBodyFillFixture(t)
 	calls := 0
