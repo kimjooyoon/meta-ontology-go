@@ -8,7 +8,24 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
+
+func runtimeCompositionModel(file *syntax.File, ir semantic.IR, model generator.SemanticIR) (generator.SemanticIR, error) {
+	if len(ir.RuntimeBindings) == 0 {
+		return model, nil
+	}
+	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV3Support())
+	if err != nil {
+		return generator.SemanticIR{}, fmt.Errorf("document adaptation: %w", err)
+	}
+	plan, err := bidir.CompileTypedPlan(document)
+	if err != nil {
+		return generator.SemanticIR{}, fmt.Errorf("typed plan: %w", err)
+	}
+	return appendRuntimeComposition(model, plan)
+}
 
 // appendRuntimeComposition projects only explicit, already type-checked bind
 // edges into deterministic Go orchestration functions. It does not infer edges
