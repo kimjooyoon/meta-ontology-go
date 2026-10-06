@@ -88,7 +88,7 @@ activity Combine(Integer, Integer) -> Integer computes "return __GOOO_BODY_HOLE_
 		scores["difference"].TestCasesPassed != 0 || scores["difference"].AccuracyPercent != 0 {
 		t.Fatalf("candidate metrics do not distinguish the declared body choices: %#v", scores)
 	}
-	if !strings.Contains(result.Source, "func Combine(input0, input1 int64)") || strings.Contains(result.Source, "__GOOO_BODY_HOLE_value__") {
+	if !strings.Contains(result.Source, "func Combine(input0 int64, input1 int64)") || strings.Contains(result.Source, "__GOOO_BODY_HOLE_value__") {
 		t.Fatalf("generated body did not preserve both source parameters:\n%s", result.Source)
 	}
 	if !strings.EqualFold(observed.InputType, "Integer") || len(observed.InputTypes) != 2 || observed.InputTypes[0] != "Integer" || observed.InputTypes[1] != "Integer" {
