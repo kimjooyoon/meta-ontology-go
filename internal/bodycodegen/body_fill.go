@@ -10,6 +10,7 @@ import (
 	"go/scanner"
 	"go/token"
 	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -54,25 +55,53 @@ type IRBodyFillCandidate struct {
 // the selected body's observed functional accuracy. It is not a proof over all
 // int64 values.
 type IRBodyFillTestCase struct {
-	Input    int64 `json:"input"`
-	Expected int64 `json:"expected"`
+	Input    int64   `json:"input"`
+	Inputs   []int64 `json:"inputs,omitempty"`
+	Expected int64   `json:"expected"`
 }
 
 func (testCase *IRBodyFillTestCase) UnmarshalJSON(data []byte) error {
 	var fields struct {
-		Input    *int64 `json:"input"`
-		Expected *int64 `json:"expected"`
+		Input    *int64  `json:"input"`
+		Inputs   []int64 `json:"inputs"`
+		Expected *int64  `json:"expected"`
 	}
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&fields); err != nil {
 		return err
 	}
-	if fields.Input == nil || fields.Expected == nil {
-		return fmt.Errorf("IR body-fill test case requires explicit integer input and expected values")
+	if fields.Expected == nil || fields.Input == nil && len(fields.Inputs) == 0 || len(fields.Inputs) > 16 {
+		return fmt.Errorf("IR body-fill test case requires explicit integer input(s) and expected value")
 	}
-	*testCase = IRBodyFillTestCase{Input: *fields.Input, Expected: *fields.Expected}
+	if fields.Input == nil {
+		fields.Input = new(int64)
+		*fields.Input = fields.Inputs[0]
+	} else if len(fields.Inputs) > 0 && fields.Inputs[0] != *fields.Input {
+		return fmt.Errorf("IR body-fill test case input must equal the first inputs value")
+	}
+	*testCase = IRBodyFillTestCase{Input: *fields.Input, Inputs: append([]int64(nil), fields.Inputs...), Expected: *fields.Expected}
 	return nil
+}
+
+func (testCase IRBodyFillTestCase) MarshalJSON() ([]byte, error) {
+	if len(testCase.Inputs) > 0 {
+		return json.Marshal(struct {
+			Inputs   []int64 `json:"inputs"`
+			Expected int64   `json:"expected"`
+		}{Inputs: testCase.Inputs, Expected: testCase.Expected})
+	}
+	return json.Marshal(struct {
+		Input    int64 `json:"input"`
+		Expected int64 `json:"expected"`
+	}{Input: testCase.Input, Expected: testCase.Expected})
+}
+
+func (testCase IRBodyFillTestCase) inputValues() []int64 {
+	if len(testCase.Inputs) > 0 {
+		return testCase.Inputs
+	}
+	return []int64{testCase.Input}
 }
 
 type IRBodyFillCandidateScore struct {
@@ -85,10 +114,11 @@ type IRBodyFillCandidateScore struct {
 }
 
 type IRBodyFillCaseResult struct {
-	Input    int64 `json:"input"`
-	Expected int64 `json:"expected"`
-	Actual   int64 `json:"actual"`
-	Passed   bool  `json:"passed"`
+	Input    int64   `json:"input"`
+	Inputs   []int64 `json:"inputs,omitempty"`
+	Expected int64   `json:"expected"`
+	Actual   int64   `json:"actual"`
+	Passed   bool    `json:"passed"`
 }
 
 type IRBodyFillTiming struct {
@@ -107,6 +137,7 @@ type IRBodyFillTiming struct {
 type IRBodyFillBehavioralProbeReceipt struct {
 	Schema                                 string                            `json:"schema"`
 	ProbeInputs                            []int64                           `json:"probe_inputs"`
+	ProbeVectors                           [][]int64                         `json:"probe_vectors,omitempty"`
 	ProbeProfileSHA256                     string                            `json:"probe_profile_sha256"`
 	CandidateProfiles                      []IRBodyFillCandidateProbeProfile `json:"candidate_profiles"`
 	ProbeInputsTotal                       int                               `json:"probe_inputs_total"`
@@ -175,6 +206,7 @@ type irBodyFillState struct {
 	Activity         string                            `json:"activity"`
 	ActivityID       string                            `json:"activity_id"`
 	InputType        string                            `json:"input_type"`
+	InputTypes       []string                          `json:"input_types,omitempty"`
 	OutputType       string                            `json:"output_type"`
 	Intent           string                            `json:"intent"`
 	HoleID           string                            `json:"hole_id"`
@@ -189,7 +221,7 @@ type irBodyFillState struct {
 // GenerateWithIRBodyFill builds the typed hole plan synchronously from a Gooo
 // activity, calls the existing Laya/default path once after that plan is
 // complete, fills its declared hole assignment, and only then emits the final
-// Go projection. Both plan versions currently target Integer -> Integer bodies.
+// Go projection. Both plan versions target one-to-sixteen-input Integer bodies.
 func GenerateWithIRBodyFill(
 	ctx context.Context,
 	filename string,
@@ -269,8 +301,18 @@ func generateWithIRBodyFillOptions(
 	if !activity.ValueProgramPresent || activity.ValueProgram == "" {
 		return Result{}, fmt.Errorf("activity %q has no computes body", activityName)
 	}
-	if len(activity.Inputs) != 1 || activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" {
-		return Result{}, fmt.Errorf("IR body fill currently requires one Integer input and one Integer output")
+	if len(activity.Inputs) < 1 || len(activity.Inputs) > 16 || activity.Output != "Integer" {
+		return Result{}, fmt.Errorf("IR body fill requires 1..16 Integer inputs and one Integer output")
+	}
+	for _, input := range activity.Inputs {
+		if input.Name != "Integer" {
+			return Result{}, fmt.Errorf("IR body fill currently requires Integer inputs and one Integer output")
+		}
+	}
+	for _, testCase := range append(append([]IRBodyFillTestCase(nil), plan.TestCases...), plan.HoldoutTestCases...) {
+		if len(testCase.inputValues()) != len(activity.Inputs) {
+			return Result{}, fmt.Errorf("IR body-fill case input arity %d does not match activity input arity %d", len(testCase.inputValues()), len(activity.Inputs))
+		}
 	}
 	modelDocument, err := bidir.DocumentFromSyntax(file)
 	if err != nil {
@@ -316,8 +358,8 @@ func generateWithIRBodyFillOptions(
 				return Result{}, fmt.Errorf("fill candidate %q at hole %q: %w", candidate.ID, hole.ID, err)
 			}
 		}
-		generated, err := generateRoute(
-			file.Package.Name, activityName, activityID, "int64", "int64", candidateBody, preserveRoute,
+		generated, err := generateRouteParameters(
+			file.Package.Name, activityName, activityID, bodyFillInputParameters(activity.Inputs), "int64", candidateBody, preserveRoute,
 		)
 		if err != nil {
 			return Result{}, fmt.Errorf("candidate %q is not a valid typed body: %w", candidate.ID, err)
@@ -349,7 +391,7 @@ func generateWithIRBodyFillOptions(
 	testSuiteSHA256 := digest(testBytes)
 	stateBytes, err := json.Marshal(irBodyFillState{
 		Schema: bodyFillStateSchema, Stage: "ir_ready_before_body_emission",
-		Activity: activityName, ActivityID: activityID, InputType: "Integer", OutputType: "Integer",
+		Activity: activityName, ActivityID: activityID, InputType: "Integer", InputTypes: bodyFillInputTypes(activity.Inputs), OutputType: "Integer",
 		Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes), HoleIDs: bodyFillHoleIDs(plan, holes), BodyIR: body,
 		TestCaseCount: len(plan.TestCases), TestSuiteSHA256: testSuiteSHA256, Candidates: scores,
 		BehavioralProbes: behavioralProbes,
@@ -559,13 +601,23 @@ func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
 	if len(plan.TestCases) == 0 || len(plan.TestCases) > 4096 || len(plan.HoldoutTestCases) > 4096 {
 		return fmt.Errorf("IR body-fill plan requires 1..4096 training cases and at most 4096 holdout cases")
 	}
-	trainingInputs := make(map[int64]bool, len(plan.TestCases))
+	caseArity := 0
+	trainingInputs := make(map[string]bool, len(plan.TestCases))
 	for _, testCase := range plan.TestCases {
-		trainingInputs[testCase.Input] = true
+		inputs := testCase.inputValues()
+		if len(inputs) < 1 || len(inputs) > 16 || caseArity != 0 && len(inputs) != caseArity {
+			return fmt.Errorf("IR body-fill training cases must provide a consistent 1..16 input values")
+		}
+		caseArity = len(inputs)
+		trainingInputs[bodyFillInputKey(inputs)] = true
 	}
 	for _, testCase := range plan.HoldoutTestCases {
-		if trainingInputs[testCase.Input] {
-			return fmt.Errorf("holdout input %d also appears in training cases", testCase.Input)
+		inputs := testCase.inputValues()
+		if len(inputs) != caseArity {
+			return fmt.Errorf("IR body-fill holdout cases must match training input arity %d", caseArity)
+		}
+		if trainingInputs[bodyFillInputKey(inputs)] {
+			return fmt.Errorf("holdout inputs %v also appear in training cases", inputs)
 		}
 	}
 	seen := make(map[string]bool, len(plan.Candidates))
@@ -604,6 +656,52 @@ func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
 		}
 	}
 	return nil
+}
+
+func bodyFillInputTypes(inputs []syntax.NameRef) []string {
+	if len(inputs) < 2 {
+		return nil
+	}
+	types := make([]string, len(inputs))
+	for index, input := range inputs {
+		types[index] = input.Name
+	}
+	return types
+}
+
+func bodyFillInputParameters(inputs []syntax.NameRef) []InputParameter {
+	parameters := make([]InputParameter, len(inputs))
+	for index := range inputs {
+		name := "input"
+		if len(inputs) > 1 {
+			name = fmt.Sprintf("input%d", index)
+		}
+		parameters[index] = InputParameter{Name: name, Type: "int64"}
+	}
+	return parameters
+}
+
+func bodyFillInputKey(inputs []int64) string {
+	encoded, _ := json.Marshal(inputs)
+	return string(encoded)
+}
+
+func bodyFillCaseKey(testCase IRBodyFillTestCase) string {
+	return fmt.Sprintf("%s:%d", bodyFillInputKey(testCase.inputValues()), testCase.Expected)
+}
+
+func equalIRBodyFillCaseResults(left, right []IRBodyFillCaseResult) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index].Input != right[index].Input || !slices.Equal(left[index].Inputs, right[index].Inputs) ||
+			left[index].Expected != right[index].Expected || left[index].Actual != right[index].Actual ||
+			left[index].Passed != right[index].Passed {
+			return false
+		}
+	}
+	return true
 }
 
 func bodyFillPlanHoles(plan IRBodyFillPlan) []IRBodyFillHole {

@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/body-codegen-ir-fill-plan/v1",
+  "intent": "Add the first and second integer inputs.",
+  "hole_id": "value",
+  "candidates": [
+    {"id": "sum", "expression": "input0 + input1"},
+    {"id": "difference", "expression": "input0 - input1"}
+  ],
+  "test_cases": [
+    {"inputs": [2, 3], "expected": 5},
+    {"inputs": [-1, 4], "expected": 3}
+  ],
+  "holdout_test_cases": [
+    {"inputs": [7, 11], "expected": 18}
+  ]
+}

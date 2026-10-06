@@ -302,11 +302,32 @@ by this model and are rejected before inference. Source-derived grammar candidat
 sets also remain on Laya or deterministic selection. The model never invents a
 fill, and every selected assignment still passes Gooo's type and finite-case checks.
 
-Both versions currently require an `Integer -> Integer` activity, closed
-expression candidates, and one to 4096 integer test cases. Intent text is
-limited to 2000 Unicode
-characters. Every JSON test case must explicitly provide non-null integer
-`input` and `expected` fields. Gooo typechecks every candidate and
+Both plan versions support activities with one to sixteen `Integer` inputs and
+one `Integer` output. Unary cases retain the `input` field. Multi-input cases
+provide a positional `inputs` array matching the activity's `input0`, `input1`,
+... parameters:
+
+```sh
+GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
+  go run ./cmd/gooo body-codegen --json --fill-plan \
+  examples/body-codegen/multi-input-fill-plan.json \
+  --activity Combine examples/body-codegen/multi-input-fill.gooo.fixture
+```
+
+This fixture asks the model to choose between sum and difference for two inputs.
+Gooo scores both candidates on the supplied vectors before the model call,
+records the input types and vector probes in the decision context, then checks
+the emitted body against training and holdout vectors. Probe vectors perturb one
+input at a time and exclude all declared holdout vectors. Probe disagreement
+measures whether alternatives differ on those constructed inputs; it does not
+measure intent correctness. Without a configured model, candidate order remains
+deterministic.
+
+All plans require closed expression candidates and one to 4096 training cases,
+with at most 4096 holdout cases. Each case provides either an integer `input` or
+an integer `inputs` array, plus integer `expected`; when both input forms are
+present, `input` must equal the first array value. Intent text is limited to
+2000 Unicode characters. Gooo typechecks every candidate and
 evaluates it with a closed, side-effect-free integer AST interpreter before
 asking Laya. Laya receives the Gooo
 body IR skeleton, the intent, candidate assignments, and each candidate's
