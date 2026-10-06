@@ -358,8 +358,8 @@ func generateWithIRBodyFillOptions(
 				return Result{}, fmt.Errorf("fill candidate %q at hole %q: %w", candidate.ID, hole.ID, err)
 			}
 		}
-		generated, err := generateRoute(
-			file.Package.Name, activityName, activityID, "int64", "int64", candidateBody, preserveRoute,
+		generated, err := generateRouteParameters(
+			file.Package.Name, activityName, activityID, bodyFillInputParameters(activity.Inputs), "int64", candidateBody, preserveRoute,
 		)
 		if err != nil {
 			return Result{}, fmt.Errorf("candidate %q is not a valid typed body: %w", candidate.ID, err)
@@ -667,6 +667,18 @@ func bodyFillInputTypes(inputs []syntax.NameRef) []string {
 		types[index] = input.Name
 	}
 	return types
+}
+
+func bodyFillInputParameters(inputs []syntax.NameRef) []InputParameter {
+	parameters := make([]InputParameter, len(inputs))
+	for index := range inputs {
+		name := "input"
+		if len(inputs) > 1 {
+			name = fmt.Sprintf("input%d", index)
+		}
+		parameters[index] = InputParameter{Name: name, Type: "int64"}
+	}
+	return parameters
 }
 
 func bodyFillInputKey(inputs []int64) string {
