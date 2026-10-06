@@ -19,6 +19,7 @@ const (
 	recordFieldRelationGrammar              = "record-field-relation/v1"
 	recordFieldRelationCompositionGrammar   = "record-field-relation-composition/v1"
 	recordFieldRelationCompositionV2Grammar = "record-field-relation-composition/v2"
+	recordFieldRelationCompositionV3Grammar = "record-field-relation-composition/v3"
 	recordPredicateCompositionGrammar       = "record-field-predicate-composition/v1"
 	recordPredicateCompositionV2Grammar     = "record-field-predicate-composition/v2"
 	recordStringLiteralGrammar              = "record-string-literal/v1"
@@ -77,6 +78,8 @@ func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGramm
 		return c.composedFieldRelationExpressions(grammar.MaxExpressions)
 	case recordFieldRelationCompositionV2Grammar:
 		return c.composedFieldRelationExpressionsV2(grammar.MaxExpressions)
+	case recordFieldRelationCompositionV3Grammar:
+		return c.composedFieldRelationExpressionsV3(grammar.MaxExpressions)
 	case recordPredicateCompositionGrammar:
 		return c.composedPredicateExpressions(grammar.MaxExpressions, false)
 	case recordPredicateCompositionV2Grammar:

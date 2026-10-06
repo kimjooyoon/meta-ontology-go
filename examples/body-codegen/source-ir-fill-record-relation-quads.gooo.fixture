@@ -1,0 +1,43 @@
+package recordrelationquads
+namespace recordrelationquads
+
+entity First id "recordrelationquads://entity/first" fields {
+    field key id "recordrelationquads://entity/first/key" type string required one
+}
+
+entity Second id "recordrelationquads://entity/second" fields {
+    field key id "recordrelationquads://entity/second/key" type string required one
+}
+
+entity Third id "recordrelationquads://entity/third" fields {
+    field key id "recordrelationquads://entity/third/key" type string required one
+}
+
+entity Fourth id "recordrelationquads://entity/fourth" fields {
+    field key id "recordrelationquads://entity/fourth/key" type string required one
+}
+
+entity Decision id "recordrelationquads://entity/decision" fields {
+    field accepted id "recordrelationquads://entity/decision/accepted" type boolean required one
+}
+
+activity MatchAll(First, Second, Third, Fourth) -> Decision computes `if __GOOO_BODY_HOLE_condition__ {
+	return Decision{accepted: __GOOO_BODY_HOLE_accepted__}
+}
+
+return Decision{accepted: false}` assembling {
+    source_fill intent "Accept only when all four input keys agree." {
+        hole "condition"
+        hole "accepted"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "record-field-relation-composition/v3" max_expressions "8"
+            hole "accepted" grammar "record-boolean-literal/v1" max_expressions "2"
+        }
+    }
+    value_case "[{\"key\":\"alpha\"},{\"key\":\"alpha\"},{\"key\":\"alpha\"},{\"key\":\"alpha\"}]" -> "{\"accepted\":true}"
+    value_case "[{\"key\":\"alpha\"},{\"key\":\"beta\"},{\"key\":\"alpha\"},{\"key\":\"alpha\"}]" -> "{\"accepted\":false}"
+    value_case "[{\"key\":\"alpha\"},{\"key\":\"alpha\"},{\"key\":\"beta\"},{\"key\":\"alpha\"}]" -> "{\"accepted\":false}"
+    value_case "[{\"key\":\"alpha\"},{\"key\":\"alpha\"},{\"key\":\"alpha\"},{\"key\":\"beta\"}]" -> "{\"accepted\":false}"
+    holdout_value_case "[{\"key\":\"theta\"},{\"key\":\"theta\"},{\"key\":\"theta\"},{\"key\":\"theta\"}]" -> "{\"accepted\":true}"
+    holdout_value_case "[{\"key\":\"theta\"},{\"key\":\"theta\"},{\"key\":\"sigma\"},{\"key\":\"theta\"}]" -> "{\"accepted\":false}"
+}
