@@ -262,5 +262,6 @@ func init() {
 		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v47.json",
 		"internal/meta/syntaxregistration/denominator.go",
 		"internal/meta/syntaxregistration/denominator_test.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/evaluate_test.go",
 	}
 }

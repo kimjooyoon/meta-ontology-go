@@ -6032,6 +6032,7 @@
         "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
         "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
         "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evaluate_test.go",
         "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
         "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v47.json",
         "internal/meta/languageassurance/verticalsliceclosureshadow/fixture_toolchain_test.go",

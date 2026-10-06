@@ -8,7 +8,7 @@ func TestExactEvidenceClosesSixBoundaries(t *testing.T) {
 		t.Fatal(err)
 	}
 	if report.Decision != DecisionShadowPass ||
-		report.Summary.BoundariesSatisfied != 6 || report.Summary.LinksSatisfied != 12 ||
+		report.Summary.BoundariesSatisfied != 6 || report.Summary.LinksSatisfied != 13 ||
 		report.Summary.BeforeOperating != 10 || report.Summary.ProjectedOperating != 11 ||
 		report.RepositoryWrites != 0 || report.PromotionApplied != 0 {
 		t.Fatalf("report = %#v", report)
