@@ -112,6 +112,23 @@ type Investment struct {
 	Budget           SystemBudget `json:"system_budget"`
 	Observed         SystemCost   `json:"observed_system_cost"`
 	ComparisonStatus string       `json:"comparison_status"`
+	Comparison       *Comparison  `json:"comparison,omitempty"`
+}
+
+type Comparison struct {
+	BaselineSubject string           `json:"baseline_subject_sha"`
+	BaselineDigest  string           `json:"baseline_receipt_digest"`
+	Status          string           `json:"status"`
+	Dimensions      []DimensionDelta `json:"dimensions"`
+}
+
+type DimensionDelta struct {
+	ID             string `json:"id"`
+	Status         string `json:"status"`
+	NumeratorDelta int    `json:"numerator_delta"`
+	Denominator    int    `json:"denominator"`
+	BaselineStatus string `json:"baseline_status"`
+	CurrentStatus  string `json:"current_status"`
 }
 
 type ProfileModel struct {

@@ -3,6 +3,8 @@ namespace domain_completeness
 
 entity BoundaryCoverage id "gooo://meta/domain-completeness/dimension/boundary-coverage"
 entity BoundaryEvidence id "gooo://meta/domain-completeness/evidence/boundary"
+entity ComparisonBaseline id "gooo://meta/domain-completeness/comparison/baseline"
+entity ComparisonDelta id "gooo://meta/domain-completeness/comparison/delta"
 entity DeclarationCoverage id "gooo://meta/domain-completeness/dimension/declaration-coverage"
 entity DeclarationEvidence id "gooo://meta/domain-completeness/evidence/declaration"
 entity DomainCompletenessReceipt id "gooo://meta/domain-completeness/receipt/v1"
@@ -21,6 +23,7 @@ entity UseCaseCoverage id "gooo://meta/domain-completeness/dimension/use-case-co
 entity UseCaseEvidence id "gooo://meta/domain-completeness/evidence/use-case"
 
 activity AssembleDomainCompletenessVector(DeclarationCoverage, GenerationCoverage, ReverseObservationCoverage, UseCaseCoverage, BoundaryCoverage, ProvenanceIntegrity) -> DomainCompletenessVector computes "gooo.metric.domain-completeness.vector:v1"
+activity CompareDomainCompletenessVectors(DomainCompletenessReceipt, ComparisonBaseline) -> ComparisonDelta computes "gooo.metric.domain-completeness.vector-delta.v1"
 activity EmitDomainCompletenessReceipt(DomainCompletenessVector) -> DomainCompletenessReceipt computes "gooo.receipt.domain-completeness:v1"
 activity MeasureBoundaryCoverage(BoundaryEvidence) -> BoundaryCoverage computes "gooo.metric.domain-completeness.boundary-coverage.v1"
 activity MeasureDeclarationCoverage(DeclarationEvidence) -> DeclarationCoverage computes "gooo.metric.domain-completeness.declaration-coverage.v1"

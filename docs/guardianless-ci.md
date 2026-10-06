@@ -138,5 +138,13 @@ This profile measures the repository's declared language-utility portfolio.
 It does not claim universal language completeness, external adoption, or
 gooo-jev completeness. Its first receipt has no profile-bound historical vector,
 so cross-run comparison remains UNKNOWN until an exact compatible baseline
-receipt is available. The vector is descriptive and does not add a blocking CI
-check.
+receipt is supplied. The evaluator now accepts an optional `-baseline` receipt
+and compares axes only when the receipt digest, profile and generated semantic
+hashes, repository identity, metric IDs, units, and denominators match. Its
+Gooo profile declares this vector comparison as a meta activity. A changed
+denominator or incompatible profile stays UNKNOWN; axes with unresolved
+evidence remain UNKNOWN while independently complete axes can still compare.
+The report records per-axis numerator deltas and baseline receipt identity.
+This is descriptive and does not add a blocking CI check. The evidence workflow
+does not yet download historical artifacts automatically, so a caller must
+provide an exact retained receipt to enable longitudinal comparison.
