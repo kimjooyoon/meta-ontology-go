@@ -2,6 +2,6 @@ package app
 namespace boundedint_app
 import core "boundedint/core"
 
-activity Main(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__"
+activity Main(Integer) -> Integer computes "return input"
 
 bind core.Normalize.result -> Main.input

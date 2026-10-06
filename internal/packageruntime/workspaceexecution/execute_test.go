@@ -170,3 +170,103 @@ activity Normalize(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__
 		}
 	}
 }
+
+func TestExecuteWorkspaceUsesSourceDeclaredFillPlanWithLayaAndDeterministicFallback(t *testing.T) {
+	manifest := packageruntime.Manifest{
+		Schema: packageruntime.ManifestSchema,
+		Entry:  packageruntime.EntrySpec{PackagePath: "example/app", Activity: "Main"},
+		Packages: []packageruntime.PackageSpec{
+			{Path: "example/app", Name: "app", Imports: []string{"example/core"}, Sources: []packageruntime.Source{{
+				Filename: "app.gooo", Content: `package app
+namespace app
+import core "example/core"
+activity Main(Integer) -> Integer computes "return input"
+bind core.Normalize.result -> Main.input
+`,
+			}}},
+			{Path: "example/core", Name: "core", Sources: []packageruntime.Source{{
+				Filename: "core.gooo", Content: `package core
+namespace core
+entity Integer id "example://core/integer"
+activity Normalize(Integer) -> Integer computes ` + "`" + `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment` + "`" + ` assembling {
+    source_fill intent "Represent input plus one as a base value and a step." {
+        hole "seed"
+        hole "step"
+        candidate "add_one" {
+            fill "seed" "input + 0"
+            fill "step" "1"
+        }
+        candidate "subtract_zero_then_add" {
+            fill "seed" "input - 0"
+            fill "step" "1"
+        }
+    }
+    case "-4" -> "-3"
+    case "0" -> "1"
+    case "7" -> "8"
+}
+`,
+			}}},
+		},
+	}
+	seven, _ := json.Marshal(7)
+	eight, _ := json.Marshal(8)
+	suite := bodyexecution.CompositionCases{Schema: "gooo/body-composition-cases/v1", Cases: []bodyexecution.CompositionCase{{
+		Inputs:   map[string]json.RawMessage{"example/core:Normalize": seven},
+		Expected: map[string]json.RawMessage{"example/core:Normalize": eight, "example/app:Main": eight},
+	}}}
+	var calls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet && request.URL.Path == "/health" {
+			_ = json.NewEncoder(writer).Encode(map[string]any{"revisions": map[string]string{"fixture-model": "0123456789abcdef0123456789abcdef"}})
+			return
+		}
+		var input struct {
+			Questions map[string]struct {
+				Criteria map[string]string `json:"criteria"`
+			} `json:"questions"`
+		}
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/systemone" ||
+			json.NewDecoder(request.Body).Decode(&input) != nil {
+			http.Error(writer, "invalid choice request", http.StatusBadRequest)
+			return
+		}
+		criteria := input.Questions["body_ir_fill"].Criteria
+		if _, ok := criteria["subtract_zero_then_add"]; !ok {
+			http.Error(writer, "source-declared assignment missing", http.StatusBadRequest)
+			return
+		}
+		calls.Add(1)
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "fixture-model", "routing": map[string]any{"model": "fixture-model"},
+			"answers": map[string]any{"body_ir_fill": map[string]any{"choice": "subtract_zero_then_add"}},
+		})
+	}))
+	defer server.Close()
+	modelResult, err := ExecuteWorkspaceWithOptions(context.Background(), manifest, suite, ExecuteOptions{LayaEndpoint: server.URL + "/v1/systemone"})
+	if err != nil {
+		t.Fatalf("execute Gooo source-declared body fill through Laya: %v", err)
+	}
+	if calls.Load() != 1 || len(modelResult.BodyFills) != 1 || modelResult.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID != "subtract_zero_then_add" ||
+		modelResult.BodyFills[0].Generation.Report.BodyFill.Decision.Provider != "laya" || modelResult.Runtime.FinitePassed != 2 ||
+		modelResult.Runtime.FiniteTotal != 2 || !modelResult.Runtime.RuntimeReplayed || strings.Contains(modelResult.BodyFills[0].Generation.GoooSource, "source_fill") {
+		t.Fatalf("Gooo source plan was not consumed, selected, and executed: calls=%d fills=%+v runtime=%+v", calls.Load(), modelResult.BodyFills, modelResult.Runtime)
+	}
+	_, err = ExecuteWorkspaceWithOptions(context.Background(), manifest, suite, ExecuteOptions{
+		BodyFillPlans: map[string]bodycodegen.IRBodyFillPlan{"example/core:Normalize": {}},
+	})
+	if err == nil || !strings.Contains(err.Error(), "both a Gooo source fill plan and an external body-fill plan") {
+		t.Fatalf("source and external plan ambiguity did not fail closed: %v", err)
+	}
+	fallbackResult, err := ExecuteWorkspaceWithOptions(context.Background(), manifest, suite, ExecuteOptions{})
+	if err != nil {
+		t.Fatalf("execute Gooo source-declared body fill without a model: %v", err)
+	}
+	if len(fallbackResult.BodyFills) != 1 || fallbackResult.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID != "add_one" ||
+		fallbackResult.BodyFills[0].Generation.Report.BodyFill.Decision.Provider != "deterministic" ||
+		fallbackResult.Runtime.FinitePassed != 2 || fallbackResult.Runtime.FiniteTotal != 2 || !fallbackResult.Runtime.RuntimeReplayed {
+		t.Fatalf("Gooo source plan did not use deterministic fallback: fills=%+v runtime=%+v", fallbackResult.BodyFills, fallbackResult.Runtime)
+	}
+}

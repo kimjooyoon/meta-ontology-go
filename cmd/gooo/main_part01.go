@@ -108,7 +108,7 @@ func runInit(args []string, stdout, stderr io.Writer) int {
 	}
 	if template == "library" {
 		fmt.Fprintf(stdout, "Created Gooo library starter in %s\n", destination)
-		fmt.Fprintf(stdout, "Next: cd %s && gooo package execute --json --cases cases.json --body-plans body-fill-plans.json gooo.workspace.json\n", destination)
+		fmt.Fprintf(stdout, "Next: cd %s && gooo package execute --json --cases cases.json gooo.workspace.json\n", destination)
 	} else {
 		fmt.Fprintf(stdout, "Created Gooo starter in %s\n", destination)
 		fmt.Fprintf(stdout, "Next: cd %s && gooo check main.gooo\n", destination)

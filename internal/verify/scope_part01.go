@@ -168,4 +168,22 @@ func init() {
 		"internal/verify/scope_part01.go",
 	}
 
+	branchScopeAllowlist["agent/gooo-source-owned-workspace-bodyfill-20261006"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"README.md",
+		"cmd/gooo/main_part01.go",
+		"cmd/gooo/package_execute_tiny_model_options_test.go",
+		"cmd/gooo/templates/library/README.md",
+		"cmd/gooo/templates/library/app.gooo.template",
+		"cmd/gooo/templates/library/body-fill-plans.json",
+		"cmd/gooo/templates/library/core.gooo.template",
+		"docs/language/project-starters.md",
+		"docs/language/workspace-manifest.md",
+		"internal/packageruntime/workspaceexecution/execute.go",
+		"internal/packageruntime/workspaceexecution/execute_test.go",
+		"internal/packageruntime/workspaceexecution/program.go",
+		"internal/verify/scope_part01.go",
+	}
+
 }

@@ -97,16 +97,20 @@ identity and reports observed finite-case accuracy. This path requires 2 to 16
 activities on the entry's explicitly connected producer chain and supported
 scalar or declared-record values. Ordinary bodies follow their declared Gooo
 bodies deterministically; `--assembly-model` is an optional local model for assembling source-declared
-body plans. An optional `--body-plans` file supplies typed body-hole candidates
-for selected activities. Gooo scores each complete candidate against its
-declared cases, then Laya may select among those listed candidates through
-`GOOO_LAYA_URL`; with no provider configured, selection stays deterministic.
-Gooo fills the chosen body before package code generation and execution, and the
-receipt records each fill's input-source digest, selected candidate, and
-finite-case score. `--tiny-model <model.json>` loads the local compact model
-once and uses it for each sequential one-hole fill; this option cannot be mixed
-with Laya endpoint or credential settings. Without a configured provider,
-selection remains deterministic. The model call runs synchronously after the typed plan is
+body plans. A source-owned `source_fill` plan in an activity's Gooo
+`assembling` block supplies typed body-hole candidates directly from source; an
+optional `--body-plans` file remains available for activities without such a
+declaration. An activity cannot receive both plan forms. Gooo scores each
+complete candidate against its declared cases, then Laya may select among
+those listed candidates through `GOOO_LAYA_URL`; with no provider configured,
+selection stays deterministic. Gooo fills the chosen body before package code
+generation and execution, and the receipt records each fill's input-source
+digest, selected candidate, and finite-case score. `--tiny-model <model.json>`
+loads the local compact model once and uses it for sequential fills; for a
+multi-hole plan, its current mapping is limited to distinct supported root
+operations in each candidate's first declared hole. This option cannot be
+mixed with Laya endpoint or credential settings. Without a configured
+provider, selection remains deterministic. The model call runs synchronously after the typed plan is
 built and before the generated package is compiled. To connect Laya, set
 `GOOO_LAYA_URL` to its `/v1/systemone` endpoint for the same command. Fill
 receipts record provider decision time; native build and run observations
