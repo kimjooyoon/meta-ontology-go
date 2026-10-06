@@ -83,6 +83,8 @@ func validateProfile(model ProfileModel) error {
 	prefix := "gooo://meta/domain-completeness"
 	expectedEntities := map[string]string{
 		"BoundaryEvidence":                   prefix + "/evidence/boundary",
+		"ComparisonBaseline":                 prefix + "/comparison/baseline",
+		"ComparisonDelta":                    prefix + "/comparison/delta",
 		"BoundaryCoverage":                   prefix + "/dimension/boundary-coverage",
 		"DeclarationEvidence":                prefix + "/evidence/declaration",
 		"DeclarationCoverage":                prefix + "/dimension/declaration-coverage",
@@ -129,6 +131,10 @@ func validateProfile(model ProfileModel) error {
 	expectedActivities["ReplayDomainCompletenessReceipt"] = Activity{
 		Name: "ReplayDomainCompletenessReceipt", Inputs: []string{"DomainCompletenessReceipt"},
 		Output: "DomainCompletenessReceipt", ValueProgram: "gooo.replay.domain-completeness:v1",
+	}
+	expectedActivities["CompareDomainCompletenessVectors"] = Activity{
+		Name: "CompareDomainCompletenessVectors", Inputs: []string{"DomainCompletenessReceipt", "ComparisonBaseline"},
+		Output: "ComparisonDelta", ValueProgram: "gooo.metric.domain-completeness.vector-delta.v1",
 	}
 	if len(model.Activities) != len(expectedActivities) {
 		return fmt.Errorf("profile activity denominator is %d, want %d", len(model.Activities), len(expectedActivities))

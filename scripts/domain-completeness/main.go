@@ -14,6 +14,7 @@ func main() {
 	profilePath := flag.String("profile", "scripts/domain-completeness/profile.gooo", "Gooo domain profile")
 	contractPath := flag.String("contract", "examples/language-utility/contract.json", "language utility contract")
 	evidenceDir := flag.String("evidence", "", "exact language utility evidence directory")
+	baselinePath := flag.String("baseline", "", "optional prior domain completeness receipt for exact-scope comparison")
 	subject := flag.String("subject", "", "exact source commit SHA")
 	runID := flag.Int64("run-id", 0, "exact workflow run ID")
 	attempt := flag.Int("run-attempt", 0, "exact workflow run attempt")
@@ -25,7 +26,7 @@ func main() {
 	if *evidenceDir == "" || *outputPath == "" || *programPath == "" {
 		exitError(fmt.Errorf("-evidence, -output, and -program are required"))
 	}
-	report, program, err := evaluate(*profilePath, *contractPath, *evidenceDir, *subject, *runID, *attempt)
+	report, program, err := evaluate(*profilePath, *contractPath, *evidenceDir, *baselinePath, *subject, *runID, *attempt)
 	if err != nil {
 		exitError(err)
 	}

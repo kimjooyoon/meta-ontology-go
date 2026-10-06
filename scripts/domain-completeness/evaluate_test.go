@@ -118,3 +118,33 @@ func TestReportDigestIsDeterministic(t *testing.T) {
 		t.Fatalf("report digests differ: %s and %s", first, second)
 	}
 }
+
+func TestCompareReportsRequiresSameProfileAndExactPopulation(t *testing.T) {
+	baseline := Report{
+		Schema: ReceiptSchema, ProfileID: ProfileID, SubjectSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		Contract:   ContractRef{SemanticHash: "profile"},
+		Generated:  GeneratedRef{SemanticHash: "profile", SemanticsEqual: true},
+		Snapshot:   Snapshot{Repository: "owner/repo", SubjectSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+		Dimensions: []Dimension{{ID: "use_case_coverage", MetricID: "metric", Unit: "use_cases", Status: "PROGRESS", Numerator: 2, Denominator: 4}},
+	}
+	baseline.Digest, _ = reportDigest(baseline)
+	current := baseline
+	current.SubjectSHA = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+	current.Snapshot.SubjectSHA = current.SubjectSHA
+	current.Dimensions = []Dimension{{ID: "use_case_coverage", MetricID: "metric", Unit: "use_cases", Status: "PROGRESS", Numerator: 3, Denominator: 4}}
+	comparison := compareReports(current, baseline, true)
+	if comparison.Status != "COMPARABLE" || len(comparison.Dimensions) != 1 || comparison.Dimensions[0].NumeratorDelta != 1 {
+		t.Fatalf("compatible comparison = %#v", comparison)
+	}
+	current.Dimensions[0].Denominator = 5
+	comparison = compareReports(current, baseline, true)
+	if comparison.Status != "UNKNOWN_INCOMPATIBLE_BASELINE" {
+		t.Fatalf("different denominator comparison = %#v", comparison)
+	}
+	current.Dimensions[0].Denominator = 4
+	current.Dimensions[0].UnknownUnits = 1
+	comparison = compareReports(current, baseline, true)
+	if comparison.Status != "PARTIAL" || comparison.Dimensions[0].Status != "UNKNOWN_UNRESOLVED_EVIDENCE" {
+		t.Fatalf("unknown evidence comparison = %#v", comparison)
+	}
+}

@@ -69,7 +69,7 @@ type loadedInputs struct {
 }
 
 func evaluate(
-	profilePath, contractPath, evidenceDir, subject string, runID int64, attempt int,
+	profilePath, contractPath, evidenceDir, baselinePath, subject string, runID int64, attempt int,
 ) (Report, []byte, error) {
 	profileRaw, err := os.ReadFile(profilePath)
 	if err != nil {
@@ -87,6 +87,18 @@ func evaluate(
 	semanticsEqual := generatedSemanticHash == profileModel.SemanticHash
 	profileDigest := digestBytes(profileRaw)
 	inputs := loadInputs(contractPath, evidenceDir)
+	var baseline Report
+	if baselinePath != "" {
+		baselineRaw, readErr := os.ReadFile(baselinePath)
+		if readErr != nil {
+			return Report{}, nil, fmt.Errorf("read baseline receipt: %w", readErr)
+		}
+		inputs.inputFiles++
+		inputs.inputBytes += int64(len(baselineRaw))
+		if err := json.Unmarshal(baselineRaw, &baseline); err != nil {
+			return Report{}, nil, fmt.Errorf("decode baseline receipt: %w", err)
+		}
+	}
 	inputs.inputFiles++
 	inputs.inputBytes += int64(len(profileRaw))
 	repositoryWrites := max(inputs.observation.RepositoryWrites, inputs.inventory.RepositoryWrites)
@@ -133,8 +145,15 @@ func evaluate(
 	if !semanticsEqual {
 		inputs.issues = append(inputs.issues, "generated profile semantic hash differs from source profile")
 	}
+	comparison := compareReports(report, baseline, baselinePath != "")
+	report.Investment.ComparisonStatus = comparison.Status
+	if comparison.Status == "COMPARABLE" || comparison.Status == "PARTIAL" {
+		report.Investment.Comparison = &comparison
+	}
 	if inputs.inputFiles > maximumEvidenceFiles || inputs.inputBytes > maximumEvidenceBytes {
 		inputs.issues = append(inputs.issues, "evidence input exceeds the system budget")
+		report.Investment.ComparisonStatus = "UNKNOWN_SYSTEM_BUDGET_EXCEEDED"
+		report.Investment.Comparison = nil
 	}
 	report.Dimensions = measureDimensions(profileModel, inputs, subject, semanticsEqual, runID, attempt)
 	report.Summary = summarize(report.Dimensions)
@@ -142,6 +161,60 @@ func evaluate(
 		decide(report.Dimensions, inputs.issues, inputs.evidenceState)
 	report.Digest, err = reportDigest(report)
 	return report, generated, err
+}
+
+func compareReports(current, baseline Report, supplied bool) Comparison {
+	result := Comparison{Status: "UNKNOWN_NO_PROFILE_BOUND_PRIOR_RECEIPT", Dimensions: []DimensionDelta{}}
+	if !supplied {
+		return result
+	}
+	result.Status = "UNKNOWN_INCOMPATIBLE_BASELINE"
+	baselineDigest, err := reportDigest(baseline)
+	if err != nil || baseline.Digest == "" || baselineDigest != baseline.Digest ||
+		baseline.Schema != current.Schema || baseline.ProfileID != current.ProfileID ||
+		baseline.Contract.SemanticHash != current.Contract.SemanticHash ||
+		baseline.Generated.SemanticHash != current.Generated.SemanticHash ||
+		baseline.Snapshot.Repository != current.Snapshot.Repository ||
+		baseline.SubjectSHA == "" || baseline.SubjectSHA == current.SubjectSHA ||
+		baseline.Snapshot.Repository == "" || baseline.Generated.SemanticsEqual != current.Generated.SemanticsEqual ||
+		baseline.Snapshot.SubjectSHA != baseline.SubjectSHA ||
+		len(baseline.Dimensions) != len(current.Dimensions) {
+		return result
+	}
+	byID := make(map[string]Dimension, len(baseline.Dimensions))
+	for _, dimension := range baseline.Dimensions {
+		if _, duplicate := byID[dimension.ID]; duplicate || dimension.ID == "" {
+			return result
+		}
+		byID[dimension.ID] = dimension
+	}
+	for _, dimension := range current.Dimensions {
+		prior, exists := byID[dimension.ID]
+		if !exists || prior.MetricID != dimension.MetricID || prior.Unit != dimension.Unit ||
+			prior.Denominator != dimension.Denominator || prior.Denominator <= 0 ||
+			prior.Numerator < 0 || prior.Numerator > prior.Denominator || prior.UnknownUnits < 0 || prior.RefutedUnits < 0 ||
+			dimension.Numerator < 0 || dimension.Numerator > dimension.Denominator {
+			return Comparison{Status: "UNKNOWN_INCOMPATIBLE_BASELINE", Dimensions: []DimensionDelta{}}
+		}
+		axisStatus := "COMPARABLE"
+		if prior.UnknownUnits > 0 || dimension.UnknownUnits > 0 || prior.Status == "UNKNOWN" || dimension.Status == "UNKNOWN" ||
+			prior.Status == "FAIL_CLOSED" || dimension.Status == "FAIL_CLOSED" {
+			axisStatus = "UNKNOWN_UNRESOLVED_EVIDENCE"
+		}
+		result.Dimensions = append(result.Dimensions, DimensionDelta{
+			ID: dimension.ID, Status: axisStatus, NumeratorDelta: dimension.Numerator - prior.Numerator,
+			Denominator: dimension.Denominator, BaselineStatus: prior.Status, CurrentStatus: dimension.Status,
+		})
+	}
+	result.Status = "COMPARABLE"
+	for _, delta := range result.Dimensions {
+		if delta.Status != "COMPARABLE" {
+			result.Status = "PARTIAL"
+		}
+	}
+	result.BaselineSubject = baseline.SubjectSHA
+	result.BaselineDigest = baseline.Digest
+	return result
 }
 
 func loadInputs(contractPath, evidenceDir string) loadedInputs {
