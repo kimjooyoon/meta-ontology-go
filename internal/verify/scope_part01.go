@@ -55,6 +55,19 @@ func init() {
 		"internal/packageruntime/workspaceexecution/execute_test.go",
 		"internal/verify/scope_part01.go",
 	}
+	branchScopeAllowlist["agent/gooo-tinygo-record-body-fill-20261007"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/gooo/body_codegen.go",
+		"cmd/gooo/body_codegen_tiny_test.go",
+		"docs/language-direction.ko.md",
+		"docs/language/body-codegen.md",
+		"examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture",
+		"internal/bodycodegen/body_fill_record.go",
+		"internal/bodycodegen/body_fill_record_test.go",
+		"internal/bodycodegen/body_fill_tiny.go",
+		"internal/verify/scope_part01.go",
+	}
 	branchScopeAllowlist["agent/gooo-imported-activity-execution-20261005"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",

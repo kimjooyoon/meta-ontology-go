@@ -17,7 +17,7 @@ type tinyGoBodyFillResolver interface {
 }
 
 // IRBodyFillOptions selects an optional local model for one body-fill call.
-// A nil TinyGoProvider preserves the existing Laya/default behavior.
+// A nil TinyGoProvider preserves external-model or deterministic selection.
 type IRBodyFillOptions struct {
 	TinyGoProvider  *decisionroute.TinyGoProvider
 	TinyModelLoadMS *float64
@@ -56,9 +56,9 @@ func tinyGoBodyFillOptionsForHole(candidates []IRBodyFillCandidate, holeID strin
 }
 
 // tinyGoBodyFillFocusHole chooses a hole whose supported root operations
-// uniquely map every complete multi-hole assignment to a TinyGo class. The
-// TinyGo model only predicts one of its eight operation labels, so assignments
-// that cannot be distinguished this way remain unsupported by this model path.
+// uniquely map every complete assignment to a TinyGo class. The TinyGo model
+// only predicts one of its eight operation labels, so assignments that cannot
+// be distinguished this way remain unsupported by this model path.
 func tinyGoBodyFillFocusHole(holes []IRBodyFillHole, candidates []IRBodyFillCandidate) (string, error) {
 	for _, hole := range holes {
 		seen := make(map[string]struct{}, len(candidates))
@@ -84,7 +84,7 @@ func tinyGoBodyFillFocusHole(holes []IRBodyFillHole, candidates []IRBodyFillCand
 			return hole.ID, nil
 		}
 	}
-	return "", fmt.Errorf("tiny_go multi-hole selection requires one hole whose supported root operations uniquely distinguish every complete assignment")
+	return "", fmt.Errorf("tiny_go assignment selection requires one hole whose supported root operations uniquely distinguish every complete assignment")
 }
 
 func tinyGoRootOperation(expression string) (string, error) {
