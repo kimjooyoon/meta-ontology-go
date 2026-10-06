@@ -371,3 +371,12 @@ func init() {
 		"internal/verify/scope_part01.go",
 	}
 }
+
+func init() {
+	branchScopeAllowlist["agent/gooo-range-slices-sort-20261007"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"internal/bodycodegen/source_record_fill_candidates.go",
+		"internal/verify/scope_part01.go",
+	}
+}

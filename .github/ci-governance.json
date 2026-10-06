@@ -6302,6 +6302,15 @@
         "internal/bodycodegen/source_record_fill_candidates_test.go",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/gooo-range-slices-sort-20261007",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/bodycodegen/source_record_fill_candidates.go",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
