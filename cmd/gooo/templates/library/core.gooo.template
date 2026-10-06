@@ -2,4 +2,6 @@ package core
 namespace boundedint_core
 entity Integer id "boundedint://integer"
 
-activity Normalize(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__"
+activity Normalize(Integer) -> Integer computes `let base = __GOOO_BODY_HOLE_seed__
+let increment = __GOOO_BODY_HOLE_step__
+return base + increment`

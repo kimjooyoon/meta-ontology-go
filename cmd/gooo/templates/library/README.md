@@ -2,8 +2,9 @@
 
 This starter is a small Gooo package graph. The core package declares
 Normalize(Integer) -> Integer; the app package imports it and binds its result
-to Main. Each activity has one typed body hole. The plan lists the candidate
-expressions and finite examples that Gooo uses to score them.
+to Main. Normalize has two typed body holes, for a base expression and a step.
+Each candidate fills both holes as one assignment, so the example demonstrates
+how Gooo composes a body from a bounded IR plan.
 
 Install the Gooo CLI and run these commands from this directory:
 
@@ -23,11 +24,15 @@ gooo package execute --json --cases cases.json --body-plans body-fill-plans.json
 `--tiny-model` loads one local model for the sequential activity fills. It cannot
 be combined with `GOOO_LAYA_URL` or `GOOO_LAYA_API_KEY`. Without it, Laya is
 used when configured; otherwise the declared candidate order is selected
-deterministically. The local model currently supports the starter's one-hole
-integer plans. Unsupported plan shapes or operators produce a diagnostic.
+deterministically. The local model can rank Normalize's multi-hole assignment
+because each candidate has a distinct supported root operation in its first
+hole. The model predicts that operation; Gooo maps it to a declared complete
+assignment. It does not jointly score later holes or invent fills. Unsupported
+or ambiguous plan shapes produce a diagnostic.
 
-The execute command follows the declared binding, fills both bodies, compiles
-the generated Go, and runs it against the named case. Gooo scores each
+The execute command follows the declared binding, fills both Normalize holes
+and the Main hole, compiles the generated Go, and runs it against the named
+case. Gooo scores each
 candidate before emission. Set GOOO_LAYA_URL to a local Laya /v1/systemone
 endpoint to let the model choose only among listed candidates. Without a model,
 candidate selection is deterministic. Gooo typechecks the completed bodies and
