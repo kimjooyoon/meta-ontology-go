@@ -36,6 +36,12 @@ func GenerateEntityFieldsV3(ir SemanticIR, previous []byte) (Result, error) {
 	return GenerateWithEntityFieldsSupport(ir, previous, syntax.EntityFieldsV3Support())
 }
 
+// GenerateEntityFieldsV4 projects required and optional single scalar fields
+// under the separately versioned EntityFields V4 contract.
+func GenerateEntityFieldsV4(ir SemanticIR, previous []byte) (Result, error) {
+	return GenerateWithEntityFieldsSupport(ir, previous, syntax.EntityFieldsV4Support())
+}
+
 // GenerateFrom is a compatibility-friendly one-shot API. Inputs may be a
 // SemanticIR, a SemanticIRProvider, or a structurally compatible semantic
 // graph supplied by an adapter. The return source and source map are kept

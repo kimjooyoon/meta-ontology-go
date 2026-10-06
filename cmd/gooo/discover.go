@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -56,7 +57,7 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	if err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_READ_FAILED", err.Error())
 	}
-	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV3Support())
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV4Support())
 	if diagnostics.HasErrors() || file == nil {
 		message := "source parser did not produce a declaration"
 		if diagnosticErr := diagnostics.Error(); diagnosticErr != nil {
@@ -64,7 +65,7 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 		}
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_PARSE_FAILED", message)
 	}
-	ir, err := bidir.Lower(file)
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsV4Support())
 	if err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_LOWER_FAILED", err.Error())
 	}

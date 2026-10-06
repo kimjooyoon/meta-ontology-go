@@ -101,3 +101,19 @@ func TestEntityFieldsV3ProfileBindsIntegerType(t *testing.T) {
 		t.Fatal("V3 profile digest does not match its canonical contract")
 	}
 }
+
+func TestEntityFieldsV4ProfileBindsOptionalPointerRepresentation(t *testing.T) {
+	v3 := EntityFieldsV3Support()
+	v4 := EntityFieldsV4Support()
+	if err := v4.Validate(); err != nil {
+		t.Fatal("V4 support invalid", err)
+	}
+	if v4.Profile == v3.Profile || v4.Profile.ID != EntityFieldsV4ProfileID || v4.Profile.Version != EntityFieldsV4ProfileVersion {
+		t.Fatalf("V4 profile did not create a distinct contract: v3=%+v v4=%+v", v3.Profile, v4.Profile)
+	}
+	canonical := "id=gooo.entityfields.go-projection.v4\ntypes=urn:gooo:type:string,urn:gooo:type:boolean,urn:gooo:type:integer\npresence=required,optional\ncardinality=one\nordering=source\noptional-representation=pointer\n"
+	digest := sha256.Sum256([]byte(canonical))
+	if hex.EncodeToString(digest[:]) != EntityFieldsV4ProfileDigest {
+		t.Fatal("V4 profile digest does not match its canonical contract")
+	}
+}
