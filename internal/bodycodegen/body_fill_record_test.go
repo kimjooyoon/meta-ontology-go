@@ -1,0 +1,135 @@
+package bodycodegen
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"strings"
+	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+)
+
+func readRecordBodyFillFixture(t *testing.T) ([]byte, *syntax.ActivityDecl) {
+	t.Helper()
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := ParseBodyFile("record-fill.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	for _, declaration := range file.Declarations {
+		if activity, ok := declaration.(*syntax.ActivityDecl); ok && activity.Name == "ReviewCandidate" {
+			return source, activity
+		}
+	}
+	t.Fatal("record body-fill activity not found")
+	return nil, nil
+}
+
+func TestSourceRecordIRBodyFillLetsLayaSelectTypedDomainLogic(t *testing.T) {
+	source, activity := readRecordBodyFillFixture(t)
+	var observed struct {
+		InputType  string                     `json:"input_type"`
+		OutputType string                     `json:"output_type"`
+		BodyIR     string                     `json:"body_ir"`
+		TestCases  int                        `json:"test_case_count"`
+		Candidates []IRBodyFillCandidateScore `json:"candidate_scores"`
+	}
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/systemone" {
+			http.NotFound(writer, request)
+			return
+		}
+		calls++
+		var payload struct {
+			Questions map[string]struct {
+				Options []struct {
+					ID string `json:"id"`
+				} `json:"options"`
+			} `json:"questions"`
+			State map[string]string `json:"state"`
+		}
+		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+			t.Errorf("decode Laya request: %v", err)
+			http.Error(writer, "bad request", http.StatusBadRequest)
+			return
+		}
+		if err := json.Unmarshal([]byte(payload.State["request"]), &observed); err != nil {
+			t.Errorf("decode Gooo record-fill state: %v", err)
+			http.Error(writer, "bad state", http.StatusBadRequest)
+			return
+		}
+		if !strings.Contains(observed.BodyIR, "__GOOO_BODY_HOLE_condition__") ||
+			observed.InputType != "Candidate" || observed.OutputType != "Review" || observed.TestCases != 2 ||
+			len(observed.Candidates) != 2 || strings.Contains(payload.State["request"], `"candidate_id":1`) {
+			t.Errorf("Laya did not receive typed source state with scores but without raw value cases: %#v", observed)
+		}
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "record-fill-model", "routing": map[string]any{"model": "record-fill-model"},
+			"answers": map[string]any{"body_ir_fill": map[string]any{
+				"choice": "ready_is_accepted", "probabilities": map[string]float64{"ready_is_accepted": 1},
+			}},
+		})
+	}))
+	defer server.Close()
+
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill.gooo", source,
+		"ReviewCandidate", &activity.Assembly.Spec, server.URL+"/v1/systemone", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if calls != 1 || receipt == nil || receipt.Decision.Provider != "laya" ||
+		receipt.SelectedCandidateID != "ready_is_accepted" || receipt.ProposedAccuracyPct != 100 ||
+		receipt.TestCasesPassed != 2 || receipt.TestCasesTotal != 2 || receipt.FunctionalAccuracyPct != 100 ||
+		len(receipt.SelectedValueCaseResults) != 2 || !result.Report.TypecheckPassed || !result.Report.DeterministicReplay {
+		t.Fatalf("Laya-selected record body was not independently checked: calls=%d receipt=%+v report=%+v", calls, receipt, result.Report)
+	}
+	if receipt.CandidateScores[1].AccuracyPercent != 0 || receipt.SelectedValueCaseResults[0].Actual == nil ||
+		strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") || strings.Contains(result.GoooSource, "source_fill") {
+		t.Fatalf("record choices, outcomes or resulting source were incomplete: source=%s receipt=%+v", result.GoooSource, receipt)
+	}
+}
+
+func TestSourceRecordIRBodyFillUsesDeterministicBestCaseFallback(t *testing.T) {
+	source, activity := readRecordBodyFillFixture(t)
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill.gooo", source,
+		"ReviewCandidate", &activity.Assembly.Spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.Decision.Provider != "deterministic" || receipt.ExternalProviderCalls != 0 ||
+		receipt.SelectedCandidateID != "ready_is_accepted" || receipt.FunctionalAccuracyPct != 100 ||
+		!result.Report.TypecheckPassed || !result.Report.DeterministicReplay {
+		t.Fatalf("record fill fallback did not choose the best finite candidate: %+v", receipt)
+	}
+}
+
+func TestSourceRecordIRBodyFillRejectsIllTypedCandidateBeforeLaya(t *testing.T) {
+	source, activity := readRecordBodyFillFixture(t)
+	spec := activity.Assembly.Spec.Clone()
+	for index := range spec.FillPlan.Candidates[0].Fills {
+		if spec.FillPlan.Candidates[0].Fills[index].HoleID == "condition" {
+			spec.FillPlan.Candidates[0].Fills[index].Expression = `input.candidate_id`
+		}
+	}
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		calls++
+		http.Error(writer, "model must not see an ill-typed candidate", http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	_, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill.gooo", source,
+		"ReviewCandidate", spec, server.URL+"/v1/systemone", "", IRBodyFillOptions{})
+	if err == nil || !strings.Contains(err.Error(), "candidate \"ready_is_accepted\"") || calls != 0 {
+		t.Fatalf("ill-typed candidate was not rejected before model selection: calls=%d err=%v", calls, err)
+	}
+}

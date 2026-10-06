@@ -3,7 +3,7 @@ namespace domain
 
 entity Candidate id "example://domain/candidate" fields {
     field candidate_id id "example://domain/candidate/id" type integer required one
-    field title id "example://domain/candidate/title" type string required one
+    field state id "example://domain/candidate/state" type string required one
 }
 
 entity Review id "example://domain/review" fields {

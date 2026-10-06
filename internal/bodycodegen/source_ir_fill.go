@@ -50,6 +50,10 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 		TestCases:        make([]IRBodyFillTestCase, len(spec.Cases)),
 		HoldoutTestCases: make([]IRBodyFillTestCase, len(spec.HoldoutCases)),
 	}
+	if len(spec.ValueCases) > 0 {
+		plan.Schema = bodyFillRecordPlanSchema
+		plan.ValueCases = append([]assemblyspec.ValueCase(nil), spec.ValueCases...)
+	}
 	for index, hole := range spec.FillPlan.Holes {
 		plan.Holes[index] = IRBodyFillHole{ID: hole.ID}
 	}

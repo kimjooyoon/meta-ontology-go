@@ -256,6 +256,8 @@ return base + increment` + "`" + ` assembling {
     case "0" -> "1"
     case "7" -> "8"
 }
+
+
 `,
 			}}},
 		},
@@ -317,5 +319,115 @@ return base + increment` + "`" + ` assembling {
 		fallbackResult.BodyFills[0].Generation.Report.BodyFill.Decision.Provider != "deterministic" ||
 		fallbackResult.Runtime.FinitePassed != 2 || fallbackResult.Runtime.FiniteTotal != 2 || !fallbackResult.Runtime.RuntimeReplayed {
 		t.Fatalf("Gooo source plan did not use deterministic fallback: fills=%+v runtime=%+v", fallbackResult.BodyFills, fallbackResult.Runtime)
+	}
+}
+
+func TestExecuteWorkspaceUsesLayaForTypedRecordBodyFill(t *testing.T) {
+	manifest := packageruntime.Manifest{
+		Schema: packageruntime.ManifestSchema,
+		Entry:  packageruntime.EntrySpec{PackagePath: "example/app", Activity: "Main"},
+		Packages: []packageruntime.PackageSpec{
+			{Path: "example/app", Name: "app", Imports: []string{"example/domain"}, Sources: []packageruntime.Source{{
+				Filename: "app.gooo", Content: `package app
+namespace app
+import domain "example/domain"
+activity Main(Candidate) -> Review computes ` + "`" + `if __GOOO_BODY_HOLE_condition__ {
+    return Review{candidate_id: input.candidate_id, decision: __GOOO_BODY_HOLE_accepted__}
+} else {
+    return Review{candidate_id: input.candidate_id, decision: __GOOO_BODY_HOLE_rejected__}
+}` + "`" + ` assembling {
+    source_fill intent "Accept ready candidates and reject all others." {
+        hole "condition"
+        hole "accepted"
+        hole "rejected"
+        candidate "ready_is_accepted" {
+            fill "condition" "input.state == \"ready\""
+            fill "accepted" "\"accepted\""
+            fill "rejected" "\"rejected\""
+        }
+        candidate "ready_is_rejected" {
+            fill "condition" "input.state != \"ready\""
+            fill "accepted" "\"accepted\""
+            fill "rejected" "\"rejected\""
+        }
+    }
+    value_case "[{\"candidate_id\":41,\"state\":\"ready\"}]" -> "{\"candidate_id\":41,\"decision\":\"accepted\"}"
+    value_case "[{\"candidate_id\":42,\"state\":\"queued\"}]" -> "{\"candidate_id\":42,\"decision\":\"rejected\"}"
+}
+bind domain.Submit.result -> Main.input
+`,
+			}}},
+			{Path: "example/domain", Name: "domain", Sources: []packageruntime.Source{{
+				Filename: "domain.gooo", Content: `package domain
+namespace domain
+entity Candidate id "example://domain/candidate" fields {
+    field candidate_id id "example://domain/candidate/id" type integer required one
+    field state id "example://domain/candidate/state" type string required one
+}
+entity Review id "example://domain/review" fields {
+    field candidate_id id "example://domain/review/candidate-id" type integer required one
+    field decision id "example://domain/review/decision" type string required one
+}
+activity Submit(Candidate) -> Candidate computes "return input"
+`,
+			}}},
+		},
+	}
+	ready, _ := json.Marshal(map[string]any{"candidate_id": 41, "state": "ready"})
+	queued, _ := json.Marshal(map[string]any{"candidate_id": 42, "state": "queued"})
+	accept, _ := json.Marshal(map[string]any{"candidate_id": 41, "decision": "accepted"})
+	reject, _ := json.Marshal(map[string]any{"candidate_id": 42, "decision": "rejected"})
+	suite := bodyexecution.CompositionCases{Schema: "gooo/body-composition-cases/v1", Cases: []bodyexecution.CompositionCase{
+		{Inputs: map[string]json.RawMessage{"example/domain:Submit": ready}, Expected: map[string]json.RawMessage{"example/domain:Submit": ready, "example/app:Main": accept}},
+		{Inputs: map[string]json.RawMessage{"example/domain:Submit": queued}, Expected: map[string]json.RawMessage{"example/domain:Submit": queued, "example/app:Main": reject}},
+	}}
+	var calls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet && request.URL.Path == "/health" {
+			_ = json.NewEncoder(writer).Encode(map[string]any{"revisions": map[string]string{"record-model": "0123456789abcdef0123456789abcdef"}})
+			return
+		}
+		var payload struct {
+			State     map[string]string `json:"state"`
+			Questions map[string]struct {
+				Criteria map[string]string `json:"criteria"`
+			} `json:"questions"`
+		}
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/systemone" ||
+			json.NewDecoder(request.Body).Decode(&payload) != nil {
+			http.Error(writer, "invalid record-fill choice request", http.StatusBadRequest)
+			return
+		}
+		var state struct {
+			InputType  string `json:"input_type"`
+			OutputType string `json:"output_type"`
+			TestCount  int    `json:"test_case_count"`
+		}
+		if json.Unmarshal([]byte(payload.State["request"]), &state) != nil || state.InputType != "Candidate" ||
+			state.OutputType != "Review" || state.TestCount != 2 || len(payload.Questions["body_ir_fill"].Criteria) != 2 {
+			http.Error(writer, "typed record IR missing from model request", http.StatusBadRequest)
+			return
+		}
+		calls.Add(1)
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"model": "record-model", "routing": map[string]any{"model": "record-model"},
+			"answers": map[string]any{"body_ir_fill": map[string]any{
+				"choice": "ready_is_accepted", "probabilities": map[string]float64{"ready_is_accepted": 1},
+			}},
+		})
+	}))
+	defer server.Close()
+
+	result, err := ExecuteWorkspaceWithOptions(context.Background(), manifest, suite, ExecuteOptions{LayaEndpoint: server.URL + "/v1/systemone"})
+	if err != nil {
+		t.Fatalf("execute model-composed record activity graph: %v", err)
+	}
+	if calls.Load() != 1 || len(result.BodyFills) != 1 || result.BodyFills[0].Generation.Report.BodyFill == nil ||
+		result.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID != "ready_is_accepted" ||
+		result.BodyFills[0].Generation.Report.BodyFill.Decision.Provider != "laya" ||
+		result.BodyFills[0].Generation.Report.BodyFill.FunctionalAccuracyPct != 100 ||
+		result.Runtime.FinitePassed != 4 || result.Runtime.FiniteTotal != 4 || !result.Runtime.RuntimeReplayed {
+		t.Fatalf("model-composed record execution did not retain generation and runtime evidence: calls=%d selected=%+v runtime=%+v",
+			calls.Load(), result.BodyFills[0].Generation.Report.BodyFill, result.Runtime)
 	}
 }

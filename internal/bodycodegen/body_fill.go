@@ -16,6 +16,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -23,22 +24,24 @@ import (
 
 const bodyFillPlanSchema = "gooo/body-codegen-ir-fill-plan/v1"
 const bodyFillMultiPlanSchema = "gooo/body-codegen-ir-fill-plan/v2"
+const bodyFillRecordPlanSchema = "gooo/body-codegen-ir-fill-plan/v3-record"
 const bodyFillStateSchema = "gooo/body-codegen-ir-fill-state/v2"
 const bodyFillEvaluator = "gooo/bodycodegen-int64-ast-interpreter/v2"
 const irBodyFillDecisionBudget = 8 * time.Second
 
 // IRBodyFillPlan supplies finite, typed expression candidates for explicit
-// holes in a Gooo activity body. V1 has one hole; V2 selects one complete,
-// declared assignment across several holes as a single model decision.
+// holes in a Gooo activity body. V1 has one hole; V2 selects a complete,
+// integer-tested assignment; the record plan uses typed value cases.
 type IRBodyFillPlan struct {
-	Schema           string                `json:"schema"`
-	Intent           string                `json:"intent"`
-	HoleID           string                `json:"hole_id"`
-	Holes            []IRBodyFillHole      `json:"holes,omitempty"`
-	ProviderModel    string                `json:"provider_model,omitempty"`
-	Candidates       []IRBodyFillCandidate `json:"candidates"`
-	TestCases        []IRBodyFillTestCase  `json:"test_cases"`
-	HoldoutTestCases []IRBodyFillTestCase  `json:"holdout_test_cases,omitempty"`
+	Schema           string                   `json:"schema"`
+	Intent           string                   `json:"intent"`
+	HoleID           string                   `json:"hole_id"`
+	Holes            []IRBodyFillHole         `json:"holes,omitempty"`
+	ProviderModel    string                   `json:"provider_model,omitempty"`
+	Candidates       []IRBodyFillCandidate    `json:"candidates"`
+	TestCases        []IRBodyFillTestCase     `json:"test_cases"`
+	HoldoutTestCases []IRBodyFillTestCase     `json:"holdout_test_cases,omitempty"`
+	ValueCases       []assemblyspec.ValueCase `json:"value_cases,omitempty"`
 }
 
 type IRBodyFillHole struct {
@@ -192,6 +195,7 @@ type IRBodyFillReceipt struct {
 	ExternalProviderCallsKnown bool                                  `json:"external_provider_calls_known"`
 	Evaluator                  string                                `json:"evaluator"`
 	SelectedCaseResults        []IRBodyFillCaseResult                `json:"selected_case_results"`
+	SelectedValueCaseResults   []RecordAssemblyCase                  `json:"selected_value_case_results,omitempty"`
 	AccuracyScope              string                                `json:"accuracy_scope"`
 	Timing                     IRBodyFillTiming                      `json:"timing"`
 }
@@ -275,6 +279,10 @@ func generateWithIRBodyFillOptions(
 	}
 	if err := validateIRBodyFillPlan(plan); err != nil {
 		return Result{}, err
+	}
+	if plan.Schema == bodyFillRecordPlanSchema {
+		return generateWithRecordIRBodyFillOptions(ctx, filename, source, activityName, plan, endpoint, apiKey,
+			options, tinyProvider)
 	}
 	if err := decisionroute.ValidateProviderModel(plan.ProviderModel); err != nil {
 		return Result{}, fmt.Errorf("body-fill provider model: %w", err)
@@ -579,6 +587,9 @@ func generateWithIRBodyFillOptions(
 }
 
 func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
+	if plan.Schema == bodyFillRecordPlanSchema {
+		return validateRecordIRBodyFillPlan(plan)
+	}
 	if plan.Schema != bodyFillPlanSchema && plan.Schema != bodyFillMultiPlanSchema {
 		return fmt.Errorf("IR body-fill plan schema must be %q or %q", bodyFillPlanSchema, bodyFillMultiPlanSchema)
 	}
