@@ -73,3 +73,34 @@ func TestGeneratedRuntimePlanCarriesValidatedTypedOrder(t *testing.T) {
 		t.Fatalf("typed runtime plan metadata = %#v, want digest %s and %d activities", got, typedPlan.Digest(), len(typedPlan.Activities))
 	}
 }
+
+func TestGeneratorRoutesMultipleExplicitInputsByPortIndex(t *testing.T) {
+	const source = `package multi
+namespace multi
+entity First id "multi://entity/first"
+entity Second id "multi://entity/second"
+entity Combined id "multi://entity/combined"
+activity MakeFirst(First) -> First
+activity MakeSecond(Second) -> Second
+activity Combine(First, Second) -> Combined
+bind MakeFirst.result -> Combine.input0
+bind MakeSecond.result -> Combine.input1
+`
+	file, diagnostics := syntax.ParseFile("multi.gooo", source)
+	if diagnostics.HasErrors() || file == nil {
+		t.Fatalf("multi-input parse diagnostics=%v file=%#v", diagnostics, file)
+	}
+	generated, err := generateWithDeadlineCore(file, nil, commandDeadline)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expected := range []string{
+		"func GoooComposeMakeFirstMakeSecondCombine(input0 First, input1 Second) Combined",
+		"runtime2_0 := Combine(runtime0_0, runtime1_0)",
+		"return runtime2_0",
+	} {
+		if !strings.Contains(string(generated.result.Source), expected) {
+			t.Fatalf("generated Go missing multi-input composition fragment %q:\n%s", expected, generated.result.Source)
+		}
+	}
+}
