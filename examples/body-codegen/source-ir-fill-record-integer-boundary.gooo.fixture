@@ -1,0 +1,32 @@
+package recordintegerboundary
+namespace recordintegerboundary
+
+entity Candidate id "recordintegerboundary://candidate" fields {
+    field score id "recordintegerboundary://candidate/score" type integer required one
+}
+
+entity Review id "recordintegerboundary://review" fields {
+    field decision id "recordintegerboundary://review/decision" type string required one
+}
+
+activity ReviewCandidate(Candidate) -> Review computes `if __GOOO_BODY_HOLE_condition__ {
+    return Review{decision: "accepted"}
+} else {
+    return Review{decision: __GOOO_BODY_HOLE_rejected__}
+}` assembling {
+    source_fill intent "Accept candidates with a positive score." {
+        hole "rejected"
+        hole "condition"
+        derive assignments max_candidates "16" {
+            hole "rejected" grammar "record-string-literal/v1" max_expressions "2"
+            hole "condition" grammar "record-field-predicate/v2" max_expressions "16"
+        }
+    }
+    value_case "[{\"score\":-2}]" -> "{\"decision\":\"rejected\"}"
+    value_case "[{\"score\":-1}]" -> "{\"decision\":\"rejected\"}"
+    value_case "[{\"score\":0}]" -> "{\"decision\":\"rejected\"}"
+    value_case "[{\"score\":1}]" -> "{\"decision\":\"accepted\"}"
+    value_case "[{\"score\":2}]" -> "{\"decision\":\"accepted\"}"
+    holdout_value_case "[{\"score\":-3}]" -> "{\"decision\":\"rejected\"}"
+    holdout_value_case "[{\"score\":3}]" -> "{\"decision\":\"accepted\"}"
+}

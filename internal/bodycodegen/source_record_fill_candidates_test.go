@@ -1,6 +1,7 @@
 package bodycodegen
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
@@ -27,5 +28,29 @@ func TestRecordFillLiteralUsesDeclaredScalarType(t *testing.T) {
 				t.Fatalf("record literal = %q, %v; want %q, %v", got, ok, test.want, test.ok)
 			}
 		})
+	}
+}
+
+func TestRecordIntegerOrderPredicateOperatorsAreVersionedAndTyped(t *testing.T) {
+	var ordered []string
+	appendRecordPredicates(&ordered, map[string]bool{}, "input.score", "7", true)
+	wantOrdered := []string{
+		"input.score < 7", "input.score <= 7", "input.score > 7", "input.score >= 7",
+		"input.score == 7", "input.score != 7",
+	}
+	if !slices.Equal(ordered, wantOrdered) {
+		t.Fatalf("ordered record predicates = %#v, want %#v", ordered, wantOrdered)
+	}
+
+	var categorical []string
+	appendRecordPredicates(&categorical, map[string]bool{}, "input.state", `"ready"`, false)
+	if !slices.Equal(categorical, []string{`input.state == "ready"`, `input.state != "ready"`}) {
+		t.Fatalf("categorical predicates gained ordering operators: %#v", categorical)
+	}
+
+	for _, expression := range wantOrdered {
+		if selector := recordPredicateSelector(expression); selector != "input.score" {
+			t.Errorf("predicate selector for %q = %q, want input.score", expression, selector)
+		}
 	}
 }

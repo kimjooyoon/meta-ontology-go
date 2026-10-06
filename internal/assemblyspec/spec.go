@@ -289,6 +289,7 @@ func supportedFillGrammar(grammar string) bool {
 	return grammar == "integer-offset-constant/v1" || grammar == "integer-predicate/v1" ||
 		grammar == "integer-predicate-composition/v1" || grammar == "integer-predicate-outside-range/v1" ||
 		grammar == "integer-predicate-cutpoint/v1" || grammar == "record-field-predicate/v1" ||
+		grammar == "record-field-predicate/v2" ||
 		grammar == "record-field-predicate-composition/v1" ||
 		grammar == "record-string-literal/v1" || grammar == "record-integer-literal/v1" ||
 		grammar == "record-boolean-literal/v1"
@@ -302,7 +303,8 @@ func fillGrammarAllowed(grammar string, recordCases bool) bool {
 }
 
 func recordFillGrammar(grammar string) bool {
-	return grammar == "record-field-predicate/v1" || grammar == "record-field-predicate-composition/v1" ||
+	return grammar == "record-field-predicate/v1" || grammar == "record-field-predicate/v2" ||
+		grammar == "record-field-predicate-composition/v1" ||
 		grammar == "record-string-literal/v1" ||
 		grammar == "record-integer-literal/v1" || grammar == "record-boolean-literal/v1"
 }

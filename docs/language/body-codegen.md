@@ -79,6 +79,15 @@ enumerates equality and inequality checks over observed scalar inputs;
 combinations, preferring predicates that read different fields. It uses no
 arbitrary formulas or nested Boolean syntax, and its completeness denominator
 includes the full finite pairwise grammar before the per-hole cap.
+The versioned `record-field-predicate/v2` adds `<`, `<=`, `>`, and `>=` for
+Integer inputs and integer fields while keeping v1's equality-only candidate
+set stable. Its comparison thresholds come from observed training values; it
+does not invent unobserved midpoints. Multiple comparison holes can be combined
+by control flow already declared in `computes`, and the complete assignment
+space remains explicit in the receipt. The
+[`integer boundary fixture`](../../examples/body-codegen/source-ir-fill-record-integer-boundary.gooo.fixture)
+generates a positive-score predicate, then checks separate training and holdout
+records.
 `record-string-literal/v1`, `record-integer-literal/v1`, and
 `record-boolean-literal/v1` draw typed literals from the expected output record.
 The assignment cap and omitted search space appear in the same completeness
