@@ -12,6 +12,7 @@ on:
       - examples/self-improvement-observation/observation.gooo
       - go.mod
       - go.sum
+      - .github/workflows/self-improvement-compiler-compatibility.yml
       - internal/meta/compatibilitypolicy/**
       - internal/meta/compilercompatibility/**
       - internal/meta/generation/semantic_public_generation.go
@@ -29,6 +30,7 @@ on:
       - examples/self-improvement-observation/observation.gooo
       - go.mod
       - go.sum
+      - .github/workflows/self-improvement-compiler-compatibility.yml
       - internal/meta/compatibilitypolicy/**
       - internal/meta/compilercompatibility/**
       - internal/meta/generation/semantic_public_generation.go
@@ -45,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      PREDECESSOR_SHA: 9ade37e64409fc7cdd599993b3231e1f792d1160
+      PREDECESSOR_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
       GOTOOLCHAIN: local
       GOFLAGS: -mod=readonly
     steps:
@@ -56,7 +58,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Check out the exact v17 predecessor
+      - name: Check out the exact PR base or previous push revision
         shell: bash
         run: |
           set -euo pipefail

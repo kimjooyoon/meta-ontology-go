@@ -32,6 +32,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [Gooo source assembly](docs/source-assembly.md)
 · [compose activity bodies](docs/native-body-composition.md)
 · [small model integration](docs/three-choice-path-model.md)
+· [capability discovery](docs/language/capability-discovery.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
 
 · [workspace package graph](docs/language/workspace-manifest.md)
@@ -49,11 +50,27 @@ and finite examples, run:
 
 ```sh
 go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
+gooo help
+gooo help language
 gooo init my-first-gooo
 cd my-first-gooo
 gooo check main.gooo
 gooo body-codegen --json --activity Clamp main.gooo
+gooo discover --query "What can Gooo generate here?" main.gooo
 ```
+
+`gooo --help` shows the quick start; `gooo <command> --help` opens a focused guide for documented commands. Other commands keep their command-specific usage output.
+
+`gooo discover` maps a question to the deterministic JEV capability catalog
+and binds the result to the supplied source. Its receipt reports which evidence
+exists and keeps code generation, runtime behavior, and reverse observation
+unresolved until those steps are measured separately. It does not call a model
+or execute the program. Use `--json` to consume the trail and completeness
+receipt from another tool.
+
+`gooo test` checks explicit activity-output markers, not input/output values. See the [language test example](examples/language-test/README.md) before adding one.
+
+`gooo run --entry <activity> file.gooo` without input records the activity's typed declaration; it does not evaluate its body. Provide `--input` or `--record-input` to enter the separately bounded registered-operation runtime. See [source execution scopes](docs/language/language-source-execution.md).
 
 The generated project works without a model. Point `GOOO_LAYA_URL` at a local
 Laya `/v1/systemone` endpoint to let it rank the choices in the declaration.

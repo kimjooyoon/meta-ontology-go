@@ -154,10 +154,16 @@ frontier while adding runtime observations.
 
 ## Remaining work for issue #1023
 
-The shared declaration/generated structure and closed typed-path runtime/reverse
-producer now have executable evidence. Natural-language capability discovery and
-the broader runtime profiles still need to use this common receipt and bind
-independent inputs, source revisions, tool identities and observation artifacts.
-Comparison currently covers the closed typed-path generation/runtime profiles;
-broader domain comparisons and independently observed workflow coverage remain
-open obligations under #1023.
+The shared declaration/generated structure, typed-path runtime/reverse producer,
+and a first natural-language capability-discovery integration now use the common
+receipt. `gooo discover --query <question> <file.gooo>` calls the pinned JEV
+capability catalog deterministically, binds its query/trail digests to the exact
+source and normalized semantic IR, and emits the same generated receipt schema.
+The receipt deliberately leaves independent use-case execution, generation,
+permission/network observations, and reverse observation unresolved; a catalog
+match is not a semantic success score.
+
+Broader runtime profiles still need to bind independent inputs, source revisions,
+tool identities, and observation artifacts. Comparison currently covers the
+closed typed-path generation/runtime profiles; broader domain comparisons and
+independently observed workflow coverage remain open obligations under #1023.
