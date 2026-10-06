@@ -23,9 +23,18 @@ read-only while local `let` values may be assigned. See the
 
 Gooo source can declare candidate expressions for a record-valued activity
 body. The compiler checks each complete assignment against the record shape
-and declared `value_case` examples, then lets Laya choose only among those
-source-owned candidates. It emits the selected Gooo body and evaluates the
-finite record cases again. For example,
+and declared `value_case` examples, then emits only a listed assignment. The
+default chooser is deterministic. An optional local `--tiny-model` path can
+select assignments when a hole exposes at least two distinct supported
+operations. The local model sees the source intent and predicts one of its eight
+operation labels. Gooo keeps assignments whose focused hole has that operation,
+then uses finite training scores to choose within the group. It does not send
+record cases or candidate summaries to the model. If no hole offers more than
+one supported operation class, generation fails before inference. An optional
+`GOOO_LAYA_URL` endpoint remains available for experiments that need an
+external chooser. In every path, Gooo typechecks the complete assignments,
+scores them on declared cases, emits the selected body and evaluates the finite
+record cases again. For example,
 [`source-ir-fill-record.gooo.fixture`](../../examples/body-codegen/source-ir-fill-record.gooo.fixture)
 uses `Candidate.state` to construct an accepted or rejected `Review`:
 
@@ -35,16 +44,33 @@ go run ./cmd/gooo body-codegen --json --activity ReviewCandidate \
 ```
 
 Without a model endpoint, Gooo deterministically keeps the highest-scoring
-declared assignment. Set `GOOO_LAYA_URL` to a Laya `/v1/systemone` endpoint to
-let the model choose among eligible assignments. Its request includes the
-typed Gooo body, candidate summaries and finite-case scores; it omits raw case
-objects. Derived candidate expressions can still contain literals observed in
-those cases, because those are part of the choices Laya ranks. The receipt
-records the proposed and final candidates, each record case result, and whether
-Gooo replaced an inferior proposal with the best-scoring candidate. Record body
-fill currently supports required single string, boolean and integer record
-fields, one declared record result, and pure body expressions. Local TinyGo
-ranking does not yet support this record-valued plan schema.
+declared assignment. To use the own-model path with source-derived record
+candidates, try
+[`source-ir-fill-record-tiny.gooo.fixture`](../../examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture):
+
+```sh
+gooo body-codegen --json --tiny-model /path/to/model.json \
+  --activity ReviewCandidate \
+  examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture
+```
+
+The `model.json` and its `weights.bin` must come from a compatible local TinyGo
+bundle. The example gives the model an `and`/`or` choice over two typed record
+fields while Gooo derives candidate bodies, checks types and measures two
+training rows plus two separate holdout rows whose `queued` state was not used
+to derive candidates. The receipt reports the selected
+operation, focused hole, model timings, finite accuracy, and the two retained
+assignments out of the four declared combinations. A model proposal that scores
+below another candidate is still replaced by Gooo's best-scoring choice.
+Record body fill supports required single string, boolean and integer fields,
+one declared record result, and pure body expressions.
+
+For external model experiments, set `GOOO_LAYA_URL` to a Laya `/v1/systemone`
+endpoint. Its request includes the typed Gooo body, candidate summaries and
+finite-case scores; it omits raw case objects. Derived expressions can contain
+literals observed in those cases because those are the choices being ranked.
+The receipt records the proposal, final candidate, each record case result, and
+whether Gooo replaced an inferior proposal with the best-scoring candidate.
 
 The source can also derive record candidates from its declared `value_case`s
 instead of listing each assignment. Per-hole `record-field-predicate/v1`

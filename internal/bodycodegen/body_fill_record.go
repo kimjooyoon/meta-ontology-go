@@ -94,8 +94,12 @@ func generateWithRecordIRBodyFillOptions(
 	options IRBodyFillOptions,
 	tinyProvider tinyGoBodyFillResolver,
 ) (Result, error) {
-	if tinyProvider != nil {
-		return Result{}, fmt.Errorf("tiny_go model does not yet support record-valued body-fill cases")
+	if ctx == nil {
+		return Result{}, fmt.Errorf("record body-fill context is required")
+	}
+	usingTinyGo := tinyProvider != nil
+	if usingTinyGo && (endpoint != "" || apiKey != "" || plan.ProviderModel != "") {
+		return Result{}, fmt.Errorf("tiny_go record body fill cannot be combined with Laya endpoint, API key, or provider model")
 	}
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
@@ -204,32 +208,78 @@ func generateWithRecordIRBodyFillOptions(
 		return Result{}, fmt.Errorf("encode record Gooo IR body-fill state: %w", err)
 	}
 	modelCandidates := bodyFillModelCandidates(holes, plan.Candidates)
+	tinyModelFocusHole := ""
+	requestOptions := make([]decisionroute.Option, 0, len(modelCandidates))
+	if usingTinyGo {
+		tinyModelFocusHole, err = tinyGoBodyFillFocusHole(holes, plan.Candidates)
+		if err != nil {
+			return Result{}, err
+		}
+		requestOptions, err = tinyGoRecordBodyFillOptionsForHole(plan.Candidates, tinyModelFocusHole)
+		if err != nil {
+			return Result{}, err
+		}
+	} else {
+		for _, candidate := range modelCandidates {
+			score := scoreByID(scores, candidate.ID)
+			requestOptions = append(requestOptions, decisionroute.Option{
+				ID: candidate.ID, Description: fmt.Sprintf("Use this complete body assignment: %s. It matches %d of %d declared record cases (%.2f%%).",
+					candidate.Expression, score.TestCasesPassed, score.TestCasesTotal, score.AccuracyPercent),
+			})
+		}
+	}
+	instructions := "Fill every typed expression hole in this Gooo body using one complete listed assignment. Choose only a listed assignment. Use the source intent and finite record case scores; do not invent code or edit another IR node."
+	if usingTinyGo {
+		instructions = "Classify the source intent into one offered operation label for the focused hole. Gooo keeps only complete assignments in that operation class, then selects the highest-scoring compatible assignment. Do not invent code or edit another IR node."
+	}
 	request := decisionroute.Request{
 		Schema: decisionroute.RequestSchema, State: string(stateBytes), ProviderModel: plan.ProviderModel,
 		Question: decisionroute.Question{
-			ID:           "body_ir_fill",
-			Instructions: "Fill every typed expression hole in this Gooo body using one complete listed assignment. Choose only a listed assignment. Use the source intent and finite record case scores; do not invent code or edit another IR node.",
-			Options:      make([]decisionroute.Option, 0, len(modelCandidates)),
+			ID: "body_ir_fill", Instructions: instructions, Options: requestOptions,
 		}, Fallback: plan.Candidates[0].ID,
 	}
-	for _, candidate := range modelCandidates {
-		score := scoreByID(scores, candidate.ID)
-		request.Question.Options = append(request.Question.Options, decisionroute.Option{
-			ID: candidate.ID, Description: fmt.Sprintf("Use this complete body assignment: %s. It matches %d of %d declared record cases (%.2f%%).",
-				candidate.Expression, score.TestCasesPassed, score.TestCasesTotal, score.AccuracyPercent),
-		})
+	if usingTinyGo {
+		request.Intent = plan.Intent
+		request.Fallback = requestOptions[0].ID
 	}
 	decisionStarted := time.Now()
 	decisionContext, cancel := context.WithTimeout(ctx, irBodyFillDecisionBudget)
-	decision, err := decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
+	var decision decisionroute.Receipt
+	if usingTinyGo {
+		decision, err = tinyProvider.Resolve(decisionContext, request)
+	} else {
+		decision, err = decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
+	}
 	cancel()
 	decisionMS := float64(time.Since(decisionStarted)) / float64(time.Millisecond)
 	if err != nil {
 		return Result{}, fmt.Errorf("select Gooo record body-fill candidate: %w", err)
 	}
-	proposed, ok := candidateByID(modelCandidates, decision.Selected)
+	if usingTinyGo {
+		if decision.Provider != decisionroute.ProviderTinyGo {
+			return Result{}, fmt.Errorf("tiny_go chooser returned provider %q", decision.Provider)
+		}
+		expectedRequestSHA256, validateErr := decisionroute.Validate(request)
+		if validateErr != nil {
+			return Result{}, fmt.Errorf("validate typed tiny_go record request: %w", validateErr)
+		}
+		if !validTinyGoDecisionReceipt(decision, expectedRequestSHA256, request) {
+			return Result{}, fmt.Errorf("tiny_go chooser returned incomplete or mismatched model provenance")
+		}
+		if err := ctx.Err(); err != nil {
+			return Result{}, err
+		}
+	}
+	proposedID := decision.Selected
+	if usingTinyGo {
+		proposedID, err = tinyGoRecordCandidateForOperation(tinyModelFocusHole, decision.Selected, plan.Candidates, scores)
+		if err != nil {
+			return Result{}, err
+		}
+	}
+	proposed, ok := candidateByID(modelCandidates, proposedID)
 	if !ok {
-		return Result{}, fmt.Errorf("record body-fill decision selected undeclared candidate %q", decision.Selected)
+		return Result{}, fmt.Errorf("record body-fill decision selected undeclared candidate %q", proposedID)
 	}
 	best := bestBodyFillCandidate(scores)
 	proposedScore := scoreByID(scores, proposed.ID)
@@ -292,7 +342,12 @@ func generateWithRecordIRBodyFillOptions(
 	result.GoooSource = string(selectedBodySource)
 	localPredictions, externalCalls, externalCallsKnown := bodyFillProviderAccounting(decision)
 	layaMS, tinyMS := 0.0, 0.0
-	if decision.Provider == "laya" {
+	var tinyModelLoadMS *float64
+	switch decision.Provider {
+	case decisionroute.ProviderTinyGo:
+		tinyMS = decisionMS
+		tinyModelLoadMS = options.TinyModelLoadMS
+	case "laya":
 		layaMS = decisionMS
 	}
 	planBytes, _ := json.Marshal(plan)
@@ -301,8 +356,9 @@ func generateWithRecordIRBodyFillOptions(
 		HoleToken: bodyFillHoleToken(holes[0].ID), IRPlanSHA256: digest(planBytes),
 		ProposedCandidateID: proposed.ID, ProposedAccuracyPct: proposedScore.AccuracyPercent,
 		SelectedCandidateID: selected.ID, SelectedExpression: selected.Expression,
-		HoleFills:       bodyFillHoleResults(holes, bodyFillCandidateFills(plan, originalSelected)),
-		BestCandidateID: best.ID, BestAccuracyPercent: best.AccuracyPercent,
+		HoleFills:          bodyFillHoleResults(holes, bodyFillCandidateFills(plan, originalSelected)),
+		TinyModelFocusHole: tinyModelFocusHole,
+		BestCandidateID:    best.ID, BestAccuracyPercent: best.AccuracyPercent,
 		SelectionRegretPP:   best.AccuracyPercent - proposedScore.AccuracyPercent,
 		SelectionAdjustment: selectionAdjustment, Decision: decision, CandidateScores: scores,
 		TestSuiteSHA256: digest(testBytes), TestCasesPassed: passed, TestCasesTotal: len(plan.ValueCases),
@@ -313,7 +369,7 @@ func generateWithRecordIRBodyFillOptions(
 		Evaluator: "gooo/bodycodegen-record-value-interpreter/v1", SelectedValueCaseResults: selectedCases,
 		SelectedValueHoldoutCaseResults: holdoutResults,
 		AccuracyScope:                   "exact observed record equality over training value cases; holdout value cases are measured separately when present; neither is a full-domain proof",
-		Timing: IRBodyFillTiming{IRPlanBuildMS: planBuildMS, ProviderDecisionMS: decisionMS,
+		Timing: IRBodyFillTiming{IRPlanBuildMS: planBuildMS, TinyModelLoadMS: tinyModelLoadMS, ProviderDecisionMS: decisionMS,
 			LayaDecisionMS: layaMS, TinyDecisionMS: tinyMS, FinalEmissionMS: emissionMS,
 			TotalMS:        float64(time.Since(started)) / float64(time.Millisecond),
 			ExecutionModel: "synchronous_sequential_no_background_codegen_goroutines",

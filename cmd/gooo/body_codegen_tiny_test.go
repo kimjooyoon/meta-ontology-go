@@ -99,6 +99,58 @@ func TestRunBodyCodegenTinyModelAcceptsSourceOwnedMultiHolePlan(t *testing.T) {
 	}
 }
 
+func TestRunBodyCodegenTinyModelSupportsSourceGeneratedRecordAssignments(t *testing.T) {
+	t.Setenv("GOOO_LAYA_URL", "")
+	t.Setenv("GOOO_LAYA_API_KEY", "")
+	fixture, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	modelPath := writeSyntheticTinyGoModel(t, "and")
+	var stdout, stderr bytes.Buffer
+	code := runBodyCodegen([]string{"--json", "--tiny-model", modelPath, "--activity", "ReviewCandidate", "record.gooo"},
+		mapSourceReader{"record.gooo": fixture}, &stdout, &stderr)
+	if code != exitOK || stderr.Len() != 0 {
+		t.Fatalf("TinyGo-derived record fill failed: code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
+	}
+	var payload struct {
+		GoooSource string `json:"gooo_source"`
+		Report     struct {
+			BodyFill struct {
+				Focus      string  `json:"tiny_model_focus_hole"`
+				Selected   string  `json:"selected_candidate_id"`
+				Accuracy   float64 `json:"functional_accuracy_percent"`
+				LocalCalls int     `json:"local_model_predictions"`
+				External   int     `json:"external_provider_calls"`
+				Decision   struct {
+					Provider string `json:"provider"`
+					Mode     string `json:"mode"`
+					Applied  *bool  `json:"tiny_go_prediction_applied"`
+				} `json:"decision"`
+				Generation struct {
+					Retained int     `json:"assignments_retained"`
+					Omitted  uint64  `json:"assignments_omitted"`
+					Coverage float64 `json:"assignment_coverage_percent"`
+				} `json:"candidate_generation"`
+			} `json:"body_fill"`
+			Completeness struct {
+				Scope map[string]any `json:"scope"`
+			} `json:"completeness_receipt"`
+		} `json:"report"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
+		t.Fatalf("decode TinyGo record result: %v; output=%s", err, stdout.String())
+	}
+	fill := payload.Report.BodyFill
+	if fill.Focus != "condition" || fill.Selected == "" || fill.Accuracy != 100 || fill.LocalCalls != 1 || fill.External != 0 ||
+		fill.Decision.Provider != "tiny_go" || fill.Decision.Mode != "tiny_go" || fill.Decision.Applied == nil || !*fill.Decision.Applied ||
+		fill.Generation.Retained != 2 || fill.Generation.Omitted != 2 || fill.Generation.Coverage != 50 ||
+		payload.Report.Completeness.Scope["decision_provider"] != "tiny_go" || !strings.Contains(payload.GoooSource, "&&") ||
+		strings.Contains(payload.GoooSource, "source_fill") || strings.Contains(payload.GoooSource, "__GOOO_BODY_HOLE_") {
+		t.Fatalf("TinyGo did not select, measure and emit the Gooo record assignment: %+v source=%s", fill, payload.GoooSource)
+	}
+}
+
 func TestRunBodyCodegenTinyModelFillsTypedPlanAndReportsSeparateAccounting(t *testing.T) {
 	t.Setenv("GOOO_LAYA_URL", "")
 	t.Setenv("GOOO_LAYA_API_KEY", "")

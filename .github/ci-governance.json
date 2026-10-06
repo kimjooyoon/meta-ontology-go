@@ -6215,6 +6215,22 @@
       ]
     },
     {
+      "branch": "agent/gooo-tinygo-record-body-fill-20261007",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/body_codegen.go",
+        "cmd/gooo/body_codegen_tiny_test.go",
+        "docs/language-direction.ko.md",
+        "docs/language/body-codegen.md",
+        "examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture",
+        "internal/bodycodegen/body_fill_record.go",
+        "internal/bodycodegen/body_fill_record_tiny_test.go",
+        "internal/bodycodegen/body_fill_tiny.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/gooo-record-holdout-cases-20261006",
       "paths": [
         ".github/agent-scope-table.md",

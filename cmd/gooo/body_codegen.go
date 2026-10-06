@@ -19,11 +19,11 @@ import (
 )
 
 const bodyCodegenUsage = "usage: gooo body-codegen [--json] " +
-	"[--sample-seed <seed> | --fill-plan <plan.json> [--tiny-model <model.json>] | --fill-search <plan.json> | " +
+	"[--sample-seed <seed> | --fill-plan <plan.json> | --fill-search <plan.json> | " +
 	"[--path-plan <plan.json>] [--path-model <model.json>] [--path-step-attempts <1..64>] " +
 	"[--path-diagnosis <diagnosis.json>] [--path-observation <observation.json>] " +
 	"[--path-feedback-rounds <1..16> [--path-feedback-ci <hint.json>] [--path-feedback-unfixed]]] " +
-	"--activity <name> <file.gooo> (uses source assembling when present)"
+	"[--tiny-model <model.json>] --activity <name> <file.gooo> (TinyGo requires an external fill plan or source `source_fill` declaration)"
 const tinyModelDiagnosticLabel = "<tiny_model>"
 
 func runBodyCodegen(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -202,10 +202,6 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		}
 		var bodyFillOptions bodycodegen.IRBodyFillOptions
 		if tinyModelPath != "" {
-			if assembly.FillPlan.Generation != nil {
-				return reportBodyCodegenFailure(jsonMode, filename, activity, source,
-					fmt.Errorf("tiny_go cannot rank this derived expression grammar; use configured Laya or deterministic selection"), stdout, stderr)
-			}
 			modelLoadStarted := time.Now()
 			provider, loadErr := decisionroute.LoadTinyGoProvider(tinyModelPath)
 			modelLoadMS := float64(time.Since(modelLoadStarted)) / float64(time.Millisecond)
