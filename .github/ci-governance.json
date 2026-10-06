@@ -6044,6 +6044,8 @@
         "internal/meta/languagereadiness/toolchainrelease/fixture_test.go",
         "internal/meta/languagereadiness/toolchainrelease/indicator_drivers.go",
         "internal/meta/languagereadiness/toolchainrelease/target.go",
+        "internal/meta/syntaxregistration/denominator.go",
+        "internal/meta/syntaxregistration/denominator_test.go",
         "internal/verify/scope_part01.go"
       ]
     }
