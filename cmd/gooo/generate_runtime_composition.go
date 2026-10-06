@@ -86,21 +86,29 @@ func runtimeCompositionActivity(ordered []string, activities map[string]generato
 		}
 		component[id] = true
 	}
-	incoming := make(map[string]bidir.BindingEdge)
-	outgoing := make(map[string]bidir.BindingEdge)
+	incoming := make(map[string]map[int]bidir.BindingEdge)
+	outgoing := make(map[string]bool)
+	sourceIndexes := make(map[string]int)
 	var canonical strings.Builder
 	for _, edge := range edges {
 		if !component[string(edge.SourceActivity)] || !component[string(edge.TargetActivity)] {
 			continue
 		}
-		if edge.SourcePort != "result" || edge.TargetPort != "input" {
-			return generator.Activity{}, fmt.Errorf("unsupported generated binding ports %q -> %q", edge.SourcePort, edge.TargetPort)
+		sourceIndex, ok := runtimeBindingPortIndex(activities[string(edge.SourceActivity)].Outputs, edge.SourcePort, false)
+		if !ok {
+			return generator.Activity{}, fmt.Errorf("generated binding source port %q has no Go output on %q", edge.SourcePort, edge.SourceActivity)
 		}
-		if len(activities[string(edge.SourceActivity)].Outputs) != 1 || len(activities[string(edge.TargetActivity)].Inputs) != 1 {
-			return generator.Activity{}, fmt.Errorf("generated bind currently requires one output and one input on %q -> %q", edge.SourceActivity, edge.TargetActivity)
+		targetIndex, ok := runtimeBindingPortIndex(activities[string(edge.TargetActivity)].Inputs, edge.TargetPort, true)
+		if !ok {
+			return generator.Activity{}, fmt.Errorf("generated binding target port %q has no Go input on %q", edge.TargetPort, edge.TargetActivity)
 		}
-		incoming[string(edge.TargetActivity)] = edge
-		outgoing[string(edge.SourceActivity)] = edge
+		target := string(edge.TargetActivity)
+		if incoming[target] == nil {
+			incoming[target] = make(map[int]bidir.BindingEdge)
+		}
+		incoming[target][targetIndex] = edge
+		sourceIndexes[runtimeCompositionEdgeKey(edge)] = sourceIndex
+		outgoing[string(edge.SourceActivity)] = true
 		fmt.Fprintf(&canonical, "%s:%s>%s:%s\n", edge.SourceActivity, edge.SourcePort, edge.TargetActivity, edge.TargetPort)
 	}
 	var name strings.Builder
@@ -117,7 +125,7 @@ func runtimeCompositionActivity(ordered []string, activities map[string]generato
 	for _, id := range ordered {
 		activity := activities[id]
 		for portIndex, port := range activity.Inputs {
-			if edge, bound := incoming[id]; bound && portIndex == 0 && edge.TargetPort == "input" {
+			if _, bound := incoming[id][portIndex]; bound {
 				continue
 			}
 			port.GoName = fmt.Sprintf("input%d", len(inputs))
@@ -130,8 +138,9 @@ func runtimeCompositionActivity(ordered []string, activities map[string]generato
 		activity := activities[id]
 		args := make([]string, len(activity.Inputs))
 		for portIndex := range activity.Inputs {
-			if edge, bound := incoming[id]; bound && portIndex == 0 && edge.TargetPort == "input" {
-				args[portIndex] = values[string(edge.SourceActivity)][0]
+			if edge, bound := incoming[id][portIndex]; bound {
+				sourceIndex := sourceIndexes[runtimeCompositionEdgeKey(edge)]
+				args[portIndex] = values[string(edge.SourceActivity)][sourceIndex]
 			} else {
 				args[portIndex] = inputs[inputIndex].GoName
 				inputIndex++
@@ -150,7 +159,7 @@ func runtimeCompositionActivity(ordered []string, activities map[string]generato
 	}
 	outputs := make([]generator.Port, 0)
 	for _, id := range ordered {
-		if _, bound := outgoing[id]; bound {
+		if outgoing[id] {
 			continue
 		}
 		for portIndex, output := range activities[id].Outputs {
@@ -164,7 +173,7 @@ func runtimeCompositionActivity(ordered []string, activities map[string]generato
 		// used to construct output ports.
 		terminal := make([]string, 0, len(outputs))
 		for _, id := range ordered {
-			if _, bound := outgoing[id]; !bound {
+			if !outgoing[id] {
 				terminal = append(terminal, values[id]...)
 			}
 		}
@@ -181,4 +190,28 @@ func runtimeCompositionActivity(ordered []string, activities map[string]generato
 		ID: id, Name: name.String(), GoName: name.String(), Inputs: inputs, Outputs: outputs,
 		Slots: []generator.Slot{{ID: id + "/implementation", Name: "implementation", Default: body.String(), Source: span}}, Source: span,
 	}, nil
+}
+
+func runtimeCompositionEdgeKey(edge bidir.BindingEdge) string {
+	return fmt.Sprintf("%s:%s>%s:%s", edge.SourceActivity, edge.SourcePort, edge.TargetActivity, edge.TargetPort)
+}
+
+func runtimeBindingPortIndex(ports []generator.Port, name string, input bool) (int, bool) {
+	if input {
+		if index, ok := semantic.InputPortIndex(name, len(ports)); ok {
+			return index, true
+		}
+	} else if len(ports) == 1 && name == "result" {
+		return 0, true
+	}
+	match := -1
+	for index, port := range ports {
+		if strings.EqualFold(port.Name, name) || strings.EqualFold(port.GoName, name) {
+			if match >= 0 {
+				return 0, false
+			}
+			match = index
+		}
+	}
+	return match, match >= 0
 }
