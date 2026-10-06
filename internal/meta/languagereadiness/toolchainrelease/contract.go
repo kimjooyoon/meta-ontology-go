@@ -12,8 +12,8 @@ const (
 	ResolutionInvariant   = "INVARIANT"
 	CaseSatisfied         = "SATISFIED"
 	CaseNotSatisfied      = "NOT_SATISFIED"
-	TargetCount           = 3
-	CaseCount             = 20
+	TargetCount           = 4
+	CaseCount             = 26
 	OutcomeCount          = 3
 	DriverCount           = 16
 	GuardrailCount        = 20

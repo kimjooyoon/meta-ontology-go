@@ -1,5 +1,7 @@
 package toolchainrelease
 
+import "fmt"
+
 type CorpusCase struct {
 	ID       string `json:"id"`
 	TargetID string `json:"target_id,omitempty"`
@@ -21,7 +23,7 @@ func expectedCases() []CorpusCase {
 		)
 	}
 	return append(cases,
-		CorpusCase{ID: "release-set-completeness", Kind: "RELEASE_SET", Expected: "3_OF_3_TARGETS"},
-		CorpusCase{ID: "release-checksum-manifest", Kind: "CHECKSUM_MANIFEST", Expected: "3_SORTED_SHA256_ENTRIES"},
+		CorpusCase{ID: "release-set-completeness", Kind: "RELEASE_SET", Expected: fmt.Sprintf("%d_OF_%d_TARGETS", TargetCount, TargetCount)},
+		CorpusCase{ID: "release-checksum-manifest", Kind: "CHECKSUM_MANIFEST", Expected: fmt.Sprintf("%d_SORTED_SHA256_ENTRIES", TargetCount)},
 	)
 }

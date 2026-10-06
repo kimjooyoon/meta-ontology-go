@@ -231,3 +231,27 @@ func init() {
 		"internal/verify/scope_part01.go",
 	}
 }
+
+func init() {
+	branchScopeAllowlist["agent/gooo-native-darwin-arm64-release-20261006"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/gooo-release-publish.yml",
+		".github/workflows/gooo-release-readiness.yml",
+		"cmd/gooo/version.go",
+		"cmd/gooo/version_test.go",
+		"docs/external/gooo-release-publication-v3.md",
+		"examples/toolchain-cross-platform-release/corpus.json",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/fixture_toolchain_test.go",
+		"internal/meta/languagereadiness/toolchaincli/assert_json.go",
+		"internal/meta/languagereadiness/toolchaincli/assert_positive.go",
+		"internal/meta/languagereadiness/toolchaincli/fixture_output_test.go",
+		"internal/meta/languagereadiness/toolchainrelease/case_registry.go",
+		"internal/meta/languagereadiness/toolchainrelease/contract.go",
+		"internal/meta/languagereadiness/toolchainrelease/evaluate.go",
+		"internal/meta/languagereadiness/toolchainrelease/fixture_test.go",
+		"internal/meta/languagereadiness/toolchainrelease/indicator_drivers.go",
+		"internal/meta/languagereadiness/toolchainrelease/target.go",
+		"internal/verify/scope_part01.go",
+	}
+}
