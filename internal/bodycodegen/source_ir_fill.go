@@ -29,7 +29,11 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 	var generationReceipt *IRBodyFillCandidateGenerationReceipt
 	if spec.FillPlan.Generation != nil {
 		var err error
-		candidates, generationReceipt, err = generateSourceFillCandidates(spec.FillPlan, spec.Cases)
+		if len(spec.ValueCases) > 0 {
+			candidates, generationReceipt, err = generateSourceRecordFillCandidates(filename, source, activity, spec.FillPlan, spec.ValueCases)
+		} else {
+			candidates, generationReceipt, err = generateSourceFillCandidates(spec.FillPlan, spec.Cases)
+		}
 		if err != nil {
 			return Result{}, err
 		}

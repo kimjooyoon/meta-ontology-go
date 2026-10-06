@@ -1,0 +1,31 @@
+package recordfillderived
+namespace recordfillderived
+
+entity Candidate id "recordfillderived://candidate" fields {
+    field state id "recordfillderived://candidate/state" type string required one
+    field candidate_id id "recordfillderived://candidate/id" type integer required one
+}
+
+entity Review id "recordfillderived://review" fields {
+    field candidate_id id "recordfillderived://review/candidate-id" type integer required one
+    field decision id "recordfillderived://review/decision" type string required one
+}
+
+activity ReviewCandidate(Candidate) -> Review computes `if __GOOO_BODY_HOLE_condition__ {
+    return Review{candidate_id: input.candidate_id, decision: __GOOO_BODY_HOLE_accepted__}
+} else {
+    return Review{candidate_id: input.candidate_id, decision: __GOOO_BODY_HOLE_rejected__}
+}` assembling {
+    source_fill intent "Accept ready candidates and reject candidates in other states." {
+        hole "condition"
+        hole "accepted"
+        hole "rejected"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "record-field-predicate/v1" max_expressions "4"
+            hole "accepted" grammar "record-string-literal/v1" max_expressions "2"
+            hole "rejected" grammar "record-string-literal/v1" max_expressions "2"
+        }
+    }
+    value_case "[{\"candidate_id\":41,\"state\":\"ready\"}]" -> "{\"candidate_id\":41,\"decision\":\"accepted\"}"
+    value_case "[{\"candidate_id\":42,\"state\":\"queued\"}]" -> "{\"candidate_id\":42,\"decision\":\"rejected\"}"
+}
