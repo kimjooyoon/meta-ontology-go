@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/parser"
-	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
