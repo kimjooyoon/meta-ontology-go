@@ -54,13 +54,24 @@ func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity st
 	if _, err := configuration.Check(file.Name.Name, fset, []*ast.File{file}, &information); err != nil {
 		return nil, 0, fmt.Errorf("typecheck integer evaluator input: %w", err)
 	}
-	if function.Type.Params == nil || len(function.Type.Params.List) != 1 ||
-		len(function.Type.Params.List[0].Names) != 1 {
-		return nil, 0, fmt.Errorf("integer evaluator requires one named input")
+	if function.Type.Params == nil {
+		return nil, 0, fmt.Errorf("integer evaluator requires named inputs")
 	}
-	input := information.Defs[function.Type.Params.List[0].Names[0]]
-	if input == nil || input.Type() != types.Typ[types.Int64] {
-		return nil, 0, fmt.Errorf("integer evaluator input must be int64")
+	var inputs []types.Object
+	for _, field := range function.Type.Params.List {
+		if len(field.Names) == 0 {
+			return nil, 0, fmt.Errorf("integer evaluator requires named inputs")
+		}
+		for _, name := range field.Names {
+			input := information.Defs[name]
+			if input == nil || input.Type() != types.Typ[types.Int64] {
+				return nil, 0, fmt.Errorf("integer evaluator requires named int64 inputs")
+			}
+			inputs = append(inputs, input)
+		}
+	}
+	if len(inputs) == 0 || len(inputs) > 16 {
+		return nil, 0, fmt.Errorf("integer evaluator requires 1..16 named inputs")
 	}
 	evaluator := integerBodyEvaluator{context: ctx, information: information}
 	results := make([]IRBodyFillCaseResult, 0, len(cases))
@@ -69,28 +80,37 @@ func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity st
 		if err := ctx.Err(); err != nil {
 			return nil, 0, err
 		}
-		evaluator.environment = map[types.Object]any{input: testCase.Input}
+		values := testCase.inputValues()
+		if len(values) != len(inputs) {
+			return nil, 0, fmt.Errorf("input arity %d does not match evaluator arity %d", len(values), len(inputs))
+		}
+		evaluator.environment = make(map[types.Object]any, len(inputs))
+		for index, input := range inputs {
+			evaluator.environment[input] = values[index]
+		}
 		value, returned, err := evaluator.evaluateBlock(function.Body)
 		if err := ctx.Err(); err != nil {
 			return nil, 0, err
 		}
 		if err != nil {
-			return nil, 0, fmt.Errorf("input %d: %w", testCase.Input, err)
+			return nil, 0, fmt.Errorf("inputs %v: %w", values, err)
 		}
 		if !returned {
-			return nil, 0, fmt.Errorf("input %d did not return", testCase.Input)
+			return nil, 0, fmt.Errorf("inputs %v did not return", values)
 		}
 		actual, ok := value.(int64)
 		if !ok {
-			return nil, 0, fmt.Errorf("input %d returned %T, want int64", testCase.Input, value)
+			return nil, 0, fmt.Errorf("inputs %v returned %T, want int64", values, value)
 		}
 		match := actual == testCase.Expected
 		if match {
 			passed++
 		}
-		results = append(results, IRBodyFillCaseResult{
-			Input: testCase.Input, Expected: testCase.Expected, Actual: actual, Passed: match,
-		})
+		caseResult := IRBodyFillCaseResult{Input: values[0], Expected: testCase.Expected, Actual: actual, Passed: match}
+		if len(values) > 1 {
+			caseResult.Inputs = append([]int64(nil), values...)
+		}
+		results = append(results, caseResult)
 	}
 	return results, passed, nil
 }

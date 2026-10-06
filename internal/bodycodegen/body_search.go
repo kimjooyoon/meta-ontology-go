@@ -480,9 +480,9 @@ func validateIRBodySearchPlan(plan IRBodySearchPlan) error {
 		if len(feedback.Observations) < 1 || len(feedback.Observations) > 4096 {
 			return fmt.Errorf("external training feedback requires 1..4096 observations")
 		}
-		cases := make(map[IRBodyFillTestCase]bool, len(plan.TestCases))
+		cases := make(map[string]bool, len(plan.TestCases))
 		for _, testCase := range plan.TestCases {
-			cases[testCase] = true
+			cases[bodyFillCaseKey(testCase)] = true
 		}
 		seen := make(map[int64]bool, len(feedback.Observations))
 		for _, observation := range feedback.Observations {
@@ -490,7 +490,7 @@ func validateIRBodySearchPlan(plan IRBodySearchPlan) error {
 				return fmt.Errorf("external training feedback contains duplicate input %d", observation.Input)
 			}
 			seen[observation.Input] = true
-			if !cases[IRBodyFillTestCase{Input: observation.Input, Expected: observation.Expected}] {
+			if !cases[bodyFillCaseKey(IRBodyFillTestCase{Input: observation.Input, Expected: observation.Expected})] {
 				return fmt.Errorf("external training observation input %d and expected value are not a declared training case", observation.Input)
 			}
 			if observation.Passed != (observation.Actual == observation.Expected) {

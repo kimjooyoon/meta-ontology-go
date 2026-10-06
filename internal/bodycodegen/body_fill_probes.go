@@ -4,8 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"math"
 	"math/big"
 	"slices"
+	"sort"
 )
 
 const irBodyFillBehavioralProbeSchema = "gooo/ir-body-fill-behavioral-probe/v1"
@@ -17,6 +19,9 @@ const irBodyFillBehavioralProbeCap = 128
 func measureIRBodyFillBehavioralProbes(activity string, candidateSources map[string][]byte,
 	training, holdout []IRBodyFillTestCase,
 ) (*IRBodyFillBehavioralProbeReceipt, error) {
+	if len(training) > 0 && len(training[0].inputValues()) > 1 {
+		return measureIRBodyFillBehavioralProbeVectors(activity, candidateSources, training, holdout)
+	}
 	holdoutInputs := make([]int64, len(holdout))
 	for index, testCase := range holdout {
 		holdoutInputs[index] = testCase.Input
@@ -103,6 +108,138 @@ func measureIRBodyFillBehavioralProbes(activity string, candidateSources map[str
 	digest := sha256.Sum256(encodedProfile)
 	receipt.ProbeProfileSHA256 = "sha256:" + hex.EncodeToString(digest[:])
 	return receipt, nil
+}
+
+func measureIRBodyFillBehavioralProbeVectors(activity string, candidateSources map[string][]byte,
+	training, holdout []IRBodyFillTestCase,
+) (*IRBodyFillBehavioralProbeReceipt, error) {
+	allVectors := deriveIRBodyFillBehavioralProbeVectors(training, holdout)
+	vectors := retainIRBodyFillBehavioralProbeVectors(allVectors, irBodyFillBehavioralProbeCap)
+	receipt := &IRBodyFillBehavioralProbeReceipt{
+		Schema:             "gooo/ir-body-fill-behavioral-probe/v2",
+		ProbeVectors:       vectors,
+		ProbeInputsTotal:   len(allVectors),
+		ProbeInputsOmitted: len(allVectors) - len(vectors),
+		CandidateCount:     len(candidateSources),
+		Scope:              "synthetic integer input vectors perturb one declared input at a time from training cases; declared holdout vectors are excluded; outputs have no expected-value oracle and measure distinctions, not intent or correctness",
+	}
+	if len(vectors) == 0 {
+		return receipt, nil
+	}
+	probeCases := make([]IRBodyFillTestCase, len(vectors))
+	for index, vector := range vectors {
+		probeCases[index] = IRBodyFillTestCase{Input: vector[0], Inputs: slices.Clone(vector)}
+	}
+	candidateIDs := make([]string, 0, len(candidateSources))
+	for id := range candidateSources {
+		candidateIDs = append(candidateIDs, id)
+	}
+	slices.Sort(candidateIDs)
+	outputs := make(map[string][]int64, len(candidateIDs))
+	for _, id := range candidateIDs {
+		results, _, evalErr := evaluateIntegerCases(candidateSources[id], activity, probeCases)
+		if evalErr != nil || len(results) != len(vectors) {
+			receipt.CandidateRunsFailed++
+			continue
+		}
+		values := make([]int64, len(results))
+		for index, result := range results {
+			values[index] = result.Actual
+		}
+		outputs[id] = values
+		receipt.CandidateProfiles = append(receipt.CandidateProfiles, IRBodyFillCandidateProbeProfile{
+			CandidateID: id, Outputs: slices.Clone(values),
+		})
+		receipt.CandidateRunsCompleted++
+	}
+	for probeIndex := range vectors {
+		values := make(map[int64]struct{}, len(outputs))
+		for _, candidateOutputs := range outputs {
+			values[candidateOutputs[probeIndex]] = struct{}{}
+		}
+		if len(values) > 1 {
+			receipt.ProbeInputsWithDisagreement++
+		}
+	}
+	receipt.CandidatePairsTotal = len(candidateIDs) * (len(candidateIDs) - 1) / 2
+	for left := 0; left < len(candidateIDs); left++ {
+		leftOutputs, leftOK := outputs[candidateIDs[left]]
+		if !leftOK {
+			continue
+		}
+		for right := left + 1; right < len(candidateIDs); right++ {
+			rightOutputs, rightOK := outputs[candidateIDs[right]]
+			if !rightOK {
+				continue
+			}
+			receipt.CandidatePairsEvaluated++
+			for index := range vectors {
+				if leftOutputs[index] != rightOutputs[index] {
+					receipt.CandidatePairsDistinguished++
+					break
+				}
+			}
+		}
+	}
+	if receipt.CandidatePairsEvaluated > 0 {
+		receipt.CandidatePairDistinguishabilityPercent = float64(receipt.CandidatePairsDistinguished) * 100 /
+			float64(receipt.CandidatePairsEvaluated)
+	}
+	encodedProfile, err := json.Marshal(struct {
+		Vectors    [][]int64                         `json:"vectors"`
+		Candidates []IRBodyFillCandidateProbeProfile `json:"candidates"`
+	}{Vectors: vectors, Candidates: receipt.CandidateProfiles})
+	if err != nil {
+		return nil, err
+	}
+	digest := sha256.Sum256(encodedProfile)
+	receipt.ProbeProfileSHA256 = "sha256:" + hex.EncodeToString(digest[:])
+	return receipt, nil
+}
+
+func deriveIRBodyFillBehavioralProbeVectors(training, holdout []IRBodyFillTestCase) [][]int64 {
+	excluded := make(map[string]struct{}, len(training)+len(holdout))
+	for _, testCase := range append(append([]IRBodyFillTestCase(nil), training...), holdout...) {
+		excluded[bodyFillInputKey(testCase.inputValues())] = struct{}{}
+	}
+	probes := make(map[string][]int64)
+	for _, testCase := range training {
+		base := testCase.inputValues()
+		for index, value := range base {
+			for _, delta := range []int64{-1, 1} {
+				if delta < 0 && value == math.MinInt64 || delta > 0 && value == math.MaxInt64 {
+					continue
+				}
+				candidate := slices.Clone(base)
+				candidate[index] += delta
+				key := bodyFillInputKey(candidate)
+				if _, exists := excluded[key]; !exists {
+					probes[key] = candidate
+				}
+			}
+		}
+	}
+	result := make([][]int64, 0, len(probes))
+	for _, vector := range probes {
+		result = append(result, vector)
+	}
+	sort.Slice(result, func(i, j int) bool { return slices.Compare(result[i], result[j]) < 0 })
+	return result
+}
+
+func retainIRBodyFillBehavioralProbeVectors(vectors [][]int64, limit int) [][]int64 {
+	if len(vectors) <= limit {
+		return slices.Clone(vectors)
+	}
+	if limit <= 1 {
+		return [][]int64{slices.Clone(vectors[0])}
+	}
+	retained := make([][]int64, limit)
+	for index := range retained {
+		position := index * (len(vectors) - 1) / (limit - 1)
+		retained[index] = slices.Clone(vectors[position])
+	}
+	return retained
 }
 
 func deriveIRBodyFillBehavioralProbeInputs(training []IRBodyFillTestCase, excludedInputs ...int64) []int64 {
