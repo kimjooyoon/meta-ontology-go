@@ -194,7 +194,7 @@ func recordIntegerRangeExpressions(atoms []string, maxExpressions int) []string 
 	for selector := range bySelector {
 		selectors = append(selectors, selector)
 	}
-	sort.Strings(selectors)
+	slices.Sort(selectors)
 	expressions := make([]string, 0, maxExpressions)
 	for _, selector := range selectors {
 		thresholds := make([]int64, 0, len(bySelector[selector]))
