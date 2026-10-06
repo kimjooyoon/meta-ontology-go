@@ -213,8 +213,21 @@ domain_args=(
   -output "$domain_root/receipt.json"
   -program "$domain_root/program.gooo"
 )
-go run ./scripts/domain-completeness "${domain_args[@]}"
-go run ./scripts/domain-completeness "${domain_args[@]}" -check
+go run ./scripts/domain-completeness "${domain_args[@]}" -auto-baseline
+domain_replay_args=("${domain_args[@]}" -check)
+baseline_cache="$domain_root/receipt.json.baseline.json"
+if [ -s "$baseline_cache" ]; then
+  domain_replay_args+=(
+    -baseline "$baseline_cache"
+    -baseline-artifact-id "$(jq -r '.investment.comparison.baseline_artifact_id' "$domain_root/receipt.json")"
+    -baseline-artifact-digest "$(jq -r '.investment.comparison.baseline_artifact_digest' "$domain_root/receipt.json")"
+    -baseline-artifact-name "$(jq -r '.investment.comparison.baseline_artifact_name' "$domain_root/receipt.json")"
+    -baseline-artifact-bytes "$(jq -r '.investment.comparison.baseline_artifact_bytes' "$domain_root/receipt.json")"
+  )
+else
+  domain_replay_args+=(-comparison-status "$(jq -r '.investment.comparison_status' "$domain_root/receipt.json")")
+fi
+go run ./scripts/domain-completeness "${domain_replay_args[@]}"
 go run ./cmd/gooo check "$domain_root/program.gooo"
 
 phase="SUMMARY"
@@ -236,6 +249,7 @@ phase="SUMMARY"
   echo "- next operation: $domain_next"
   echo "- receipt: $domain_digest"
   echo "- system evidence files/budget, bytes/budget, repository writes, human actions: $domain_cost"
+  jq -r '"- historical comparison: \(.investment.comparison_status)" + (if .investment.comparison == null then "" else " against run \(.investment.comparison.baseline_workflow_run_id) attempt \(.investment.comparison.baseline_run_attempt) at \(.investment.comparison.baseline_subject_sha)" end)' "$domain_root/receipt.json"
   echo
   echo '### Debugging evidence'
   jq -r '"- replay: \(.replay.equal) / \(.replay.schema)\n- runtime observations: \(.summary.resource_observations)\n- source digests: \(.runtime_observations[0].source_raw_digest), \(.runtime_observations[1].source_raw_digest)\n- semantic digests: \(.runtime_observations[0].source_semantic_digest), \(.runtime_observations[1].source_semantic_digest)\n- binary digest: \(.runtime_observations[0].binary_digest)\n- arguments: \(.runtime_observations[0].arguments | join(" ")) ; \(.runtime_observations[1].arguments | join(" "))\n- subject SHA: \(.runtime_observations[0].subject_sha)\n- output digests: \(.runtime_observations[0].output_digest), \(.runtime_observations[1].output_digest)\n- wall_ns/wall_ms: \(.runtime_observations[0].wall_ns)/\(.runtime_observations[0].wall_ms), \(.runtime_observations[1].wall_ns)/\(.runtime_observations[1].wall_ms)\n- peak RSS KiB: \(.runtime_observations[0].peak_rss_kib), \(.runtime_observations[1].peak_rss_kib)\n- build wall_ms/RSS KiB: \(.build.wall_ms)/\(.build.peak_rss_kib)\n- evaluator build wall_ms/RSS KiB: \(.evaluator_build.wall_ms)/\(.evaluator_build.peak_rss_kib)\n- test wall_ms/RSS KiB: \(.test.wall_ms)/\(.test.peak_rss_kib)\n- cache states: \(.build.cache_state) ; \(.evaluator_build.cache_state) ; \(.test.cache_state)\n- Go runtime receipts: \(.summary.compiler.go127_runtimes)\n- Gooo graph activities/edges: \(.graph.activity_count)/\(.graph.edge_count)\n- Gooo debug activities, outputs, used/generated edges: \(.graph.debug_activity_count)/\(.graph.debug_output_count)/\(.graph.debug_used_edge_count)/\(.graph.debug_generated_edge_count)"' "$out/evidence/debugging.json"

@@ -116,10 +116,16 @@ type Investment struct {
 }
 
 type Comparison struct {
-	BaselineSubject string           `json:"baseline_subject_sha"`
-	BaselineDigest  string           `json:"baseline_receipt_digest"`
-	Status          string           `json:"status"`
-	Dimensions      []DimensionDelta `json:"dimensions"`
+	BaselineSubject        string           `json:"baseline_subject_sha"`
+	BaselineDigest         string           `json:"baseline_receipt_digest"`
+	BaselineRunID          int64            `json:"baseline_workflow_run_id"`
+	BaselineAttempt        int              `json:"baseline_run_attempt"`
+	BaselineArtifactID     int64            `json:"baseline_artifact_id,omitempty"`
+	BaselineArtifactDigest string           `json:"baseline_artifact_digest,omitempty"`
+	BaselineArtifactName   string           `json:"baseline_artifact_name,omitempty"`
+	BaselineArtifactBytes  int64            `json:"baseline_artifact_bytes,omitempty"`
+	Status                 string           `json:"status"`
+	Dimensions             []DimensionDelta `json:"dimensions"`
 }
 
 type DimensionDelta struct {

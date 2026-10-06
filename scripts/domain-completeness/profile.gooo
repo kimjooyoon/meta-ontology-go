@@ -32,3 +32,4 @@ activity MeasureProvenanceIntegrity(ProvenanceEvidence) -> ProvenanceIntegrity c
 activity MeasureReverseObservationCoverage(ReverseObservationEvidence) -> ReverseObservationCoverage computes "gooo.metric.domain-completeness.reverse-observation-coverage.v1"
 activity MeasureUseCaseCoverage(UseCaseEvidence) -> UseCaseCoverage computes "gooo.metric.domain-completeness.use-case-coverage.v1"
 activity ReplayDomainCompletenessReceipt(DomainCompletenessReceipt) -> DomainCompletenessReceipt computes "gooo.replay.domain-completeness:v1"
+activity FindPriorDomainCompletenessReceipt(DomainProfile) -> ComparisonBaseline computes "gooo.evidence.latest-compatible-domain-receipt.v1"

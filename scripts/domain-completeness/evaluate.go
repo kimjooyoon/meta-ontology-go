@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -69,34 +70,41 @@ type loadedInputs struct {
 }
 
 func evaluate(
-	profilePath, contractPath, evidenceDir, baselinePath, subject string, runID int64, attempt int,
-) (Report, []byte, error) {
+	profilePath, contractPath, evidenceDir, baselinePath string, autoBaseline bool, baselineSource baselineArtifact,
+	comparisonStatus, subject string, runID int64, attempt int,
+) (Report, []byte, []byte, baselineArtifact, error) {
 	profileRaw, err := os.ReadFile(profilePath)
 	if err != nil {
-		return Report{}, nil, fmt.Errorf("read profile: %w", err)
+		return Report{}, nil, nil, baselineArtifact{}, fmt.Errorf("read profile: %w", err)
 	}
 	profileModel, err := compileProfile(profilePath, profileRaw)
 	if err != nil {
-		return Report{}, nil, err
+		return Report{}, nil, nil, baselineArtifact{}, err
 	}
 	generated := []byte(renderProfile(profileModel))
 	generatedSemanticHash, err := semanticHash(profilePath+".generated", generated)
 	if err != nil {
-		return Report{}, nil, err
+		return Report{}, nil, nil, baselineArtifact{}, err
 	}
 	semanticsEqual := generatedSemanticHash == profileModel.SemanticHash
 	profileDigest := digestBytes(profileRaw)
 	inputs := loadInputs(contractPath, evidenceDir)
 	var baseline Report
+	var baselineRaw []byte
+	selectedArtifact := baselineSource
 	if baselinePath != "" {
 		baselineRaw, readErr := os.ReadFile(baselinePath)
 		if readErr != nil {
-			return Report{}, nil, fmt.Errorf("read baseline receipt: %w", readErr)
+			return Report{}, nil, nil, baselineArtifact{}, fmt.Errorf("read baseline receipt: %w", readErr)
 		}
 		inputs.inputFiles++
-		inputs.inputBytes += int64(len(baselineRaw))
+		if selectedArtifact.SizeInBytes > 0 {
+			inputs.inputBytes += selectedArtifact.SizeInBytes
+		} else {
+			inputs.inputBytes += int64(len(baselineRaw))
+		}
 		if err := json.Unmarshal(baselineRaw, &baseline); err != nil {
-			return Report{}, nil, fmt.Errorf("decode baseline receipt: %w", err)
+			return Report{}, nil, nil, baselineArtifact{}, fmt.Errorf("decode baseline receipt: %w", err)
 		}
 	}
 	inputs.inputFiles++
@@ -145,22 +153,43 @@ func evaluate(
 	if !semanticsEqual {
 		inputs.issues = append(inputs.issues, "generated profile semantic hash differs from source profile")
 	}
-	comparison := compareReports(report, baseline, baselinePath != "")
-	report.Investment.ComparisonStatus = comparison.Status
-	if comparison.Status == "COMPARABLE" || comparison.Status == "PARTIAL" {
-		report.Investment.Comparison = &comparison
-	}
 	if inputs.inputFiles > maximumEvidenceFiles || inputs.inputBytes > maximumEvidenceBytes {
 		inputs.issues = append(inputs.issues, "evidence input exceeds the system budget")
-		report.Investment.ComparisonStatus = "UNKNOWN_SYSTEM_BUDGET_EXCEEDED"
-		report.Investment.Comparison = nil
 	}
 	report.Dimensions = measureDimensions(profileModel, inputs, subject, semanticsEqual, runID, attempt)
 	report.Summary = summarize(report.Dimensions)
 	report.Decision, report.Reason, report.NextOperation, report.FirstUnresolved =
 		decide(report.Dimensions, inputs.issues, inputs.evidenceState)
+	if baselinePath == "" && autoBaseline {
+		candidate, candidateRaw, artifact, discoveryErr := discoverBaseline(context.Background(), report)
+		if discoveryErr != nil {
+			report.Investment.ComparisonStatus = "UNKNOWN_BASELINE_UNAVAILABLE"
+		} else {
+			baseline, baselineRaw, selectedArtifact = candidate, candidateRaw, artifact
+			inputs.inputFiles++
+			inputs.inputBytes += selectedArtifact.SizeInBytes
+			report.Investment.Observed.EvidenceFiles = inputs.inputFiles
+			report.Investment.Observed.EvidenceBytes = inputs.inputBytes
+		}
+	}
+	comparison := compareReports(report, baseline, baselinePath != "" || selectedArtifact.ID != 0)
+	if selectedArtifact.ID != 0 {
+		comparison.BaselineArtifactID = selectedArtifact.ID
+		comparison.BaselineArtifactDigest = selectedArtifact.Digest
+		comparison.BaselineArtifactName = selectedArtifact.Name
+		comparison.BaselineArtifactBytes = selectedArtifact.SizeInBytes
+	}
+	if selectedArtifact.ID == 0 && comparisonStatus != "" {
+		comparison.Status = comparisonStatus
+	} else if selectedArtifact.ID == 0 && autoBaseline && baselinePath == "" {
+		comparison.Status = report.Investment.ComparisonStatus
+	}
+	report.Investment.ComparisonStatus = comparison.Status
+	if comparison.Status == "COMPARABLE" || comparison.Status == "PARTIAL" {
+		report.Investment.Comparison = &comparison
+	}
 	report.Digest, err = reportDigest(report)
-	return report, generated, err
+	return report, generated, baselineRaw, selectedArtifact, err
 }
 
 func compareReports(current, baseline Report, supplied bool) Comparison {
@@ -176,7 +205,7 @@ func compareReports(current, baseline Report, supplied bool) Comparison {
 		baseline.Generated.SemanticHash != current.Generated.SemanticHash ||
 		baseline.Snapshot.Repository != current.Snapshot.Repository ||
 		baseline.SubjectSHA == "" || baseline.SubjectSHA == current.SubjectSHA ||
-		baseline.Snapshot.Repository == "" || baseline.Generated.SemanticsEqual != current.Generated.SemanticsEqual ||
+		baseline.Snapshot.Repository == "" || !baseline.Generated.SemanticsEqual || !current.Generated.SemanticsEqual ||
 		baseline.Snapshot.SubjectSHA != baseline.SubjectSHA ||
 		len(baseline.Dimensions) != len(current.Dimensions) {
 		return result
@@ -214,6 +243,8 @@ func compareReports(current, baseline Report, supplied bool) Comparison {
 	}
 	result.BaselineSubject = baseline.SubjectSHA
 	result.BaselineDigest = baseline.Digest
+	result.BaselineRunID = baseline.Snapshot.WorkflowRun
+	result.BaselineAttempt = baseline.Snapshot.RunAttempt
 	return result
 }
 
