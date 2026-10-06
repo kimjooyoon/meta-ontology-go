@@ -136,6 +136,10 @@ func validateProfile(model ProfileModel) error {
 		Name: "CompareDomainCompletenessVectors", Inputs: []string{"DomainCompletenessReceipt", "ComparisonBaseline"},
 		Output: "ComparisonDelta", ValueProgram: "gooo.metric.domain-completeness.vector-delta.v1",
 	}
+	expectedActivities["FindPriorDomainCompletenessReceipt"] = Activity{
+		Name: "FindPriorDomainCompletenessReceipt", Inputs: []string{"DomainProfile"},
+		Output: "ComparisonBaseline", ValueProgram: "gooo.evidence.latest-compatible-domain-receipt.v1",
+	}
 	if len(model.Activities) != len(expectedActivities) {
 		return fmt.Errorf("profile activity denominator is %d, want %d", len(model.Activities), len(expectedActivities))
 	}
