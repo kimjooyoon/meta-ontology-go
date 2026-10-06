@@ -305,7 +305,7 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	receipt.TrainingCaseResults, receipt.TrainingPassed = finalTraining, finalPassed
 	trainingAccuracy := float64(finalPassed) * 100 / float64(receipt.TrainingTotal)
 	receipt.TrainingAccuracyPercent = &trainingAccuracy
-	if finalPassed != bestPassed || !slices.Equal(finalTraining, bestCases) {
+	if finalPassed != bestPassed || !equalIRBodyFillCaseResults(finalTraining, bestCases) {
 		return fail("EMISSION_SCORE_MISMATCH", fmt.Errorf("emitted training observations differ from the selected candidate"))
 	}
 	// The selection is now final. Holdout results never feed a choice request.

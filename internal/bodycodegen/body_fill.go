@@ -10,6 +10,7 @@ import (
 	"go/scanner"
 	"go/token"
 	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -675,6 +676,20 @@ func bodyFillInputKey(inputs []int64) string {
 
 func bodyFillCaseKey(testCase IRBodyFillTestCase) string {
 	return fmt.Sprintf("%s:%d", bodyFillInputKey(testCase.inputValues()), testCase.Expected)
+}
+
+func equalIRBodyFillCaseResults(left, right []IRBodyFillCaseResult) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index].Input != right[index].Input || !slices.Equal(left[index].Inputs, right[index].Inputs) ||
+			left[index].Expected != right[index].Expected || left[index].Actual != right[index].Actual ||
+			left[index].Passed != right[index].Passed {
+			return false
+		}
+	}
+	return true
 }
 
 func bodyFillPlanHoles(plan IRBodyFillPlan) []IRBodyFillHole {
