@@ -88,6 +88,16 @@ space remains explicit in the receipt. The
 [`integer boundary fixture`](../../examples/body-codegen/source-ir-fill-record-integer-boundary.gooo.fixture)
 generates a positive-score predicate, then checks separate training and holdout
 records.
+`record-field-predicate-composition/v2` composes those ordered atoms with
+pairwise `&&` and `||`. Its bounded prefix interleaves cross-field predicates
+with same-field integer intervals, so a small cap can retain both record
+routing and range candidates. The receipt still reports the full pairwise
+grammar size and the retained prefix; a generated interval that is not retained
+remains outside the search. The
+[`integer range fixture`](../../examples/body-codegen/source-ir-fill-record-integer-range.gooo.fixture)
+builds a two-sided score condition, typechecks it, replays it, and scores
+separate holdout records. Version 1 keeps its original candidate order and
+equality-only atoms.
 `record-string-literal/v1`, `record-integer-literal/v1`, and
 `record-boolean-literal/v1` draw typed literals from the expected output record.
 The assignment cap and omitted search space appear in the same completeness

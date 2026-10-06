@@ -305,6 +305,14 @@ disjoint `holdout_value_case` rows after selection. The
 [integer-boundary fixture](../examples/body-codegen/source-ir-fill-record-integer-boundary.gooo.fixture)
 builds an `input.score > 0` guard from five training records and evaluates two
 separate boundary holdouts. Use
+`record-field-predicate-composition/v2` to compose ordered integer atoms with
+pairwise `&&` or `||`. Its capped candidate prefix alternates cross-field
+combinations and same-field interval predicates, then fills the remaining
+space with same-field pairs. The complete denominator and retained count remain
+visible, and v1 keeps its previous order. The
+[integer-range fixture](../examples/body-codegen/source-ir-fill-record-integer-range.gooo.fixture)
+builds and replays a bounded interval using training and separate holdout cases.
+Use
 `record-string-literal/v1`,
 `record-integer-literal/v1`, or `record-boolean-literal/v1` to derive typed
 literals from expected output fields. Gooo forms the bounded Cartesian product,

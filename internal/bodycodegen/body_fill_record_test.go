@@ -283,6 +283,59 @@ func TestSourceRecordIRBodyFillDerivesPairwiseComposedConditions(t *testing.T) {
 	}
 }
 
+func TestSourceRecordIRBodyFillDerivesIntegerRangeComposition(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-integer-range.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := ParseBodyFile("record-fill-integer-range.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	var activity *syntax.ActivityDecl
+	for _, declaration := range file.Declarations {
+		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == "WithinPreferredRange" {
+			activity = candidate
+			break
+		}
+	}
+	if activity == nil {
+		t.Fatal("integer-range record body-fill activity not found")
+	}
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill-integer-range.gooo", source,
+		"WithinPreferredRange", &activity.Assembly.Spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.BodyFill
+	if receipt == nil || receipt.FunctionalAccuracyPct != 100 || receipt.TestCasesPassed != 4 || receipt.TestCasesTotal != 4 ||
+		receipt.HoldoutAccuracyPercent == nil || *receipt.HoldoutAccuracyPercent != 100 ||
+		receipt.HoldoutCasesPassed != 2 || receipt.HoldoutCasesTotal != 2 ||
+		!result.Report.TypecheckPassed || !result.Report.DeterministicReplay {
+		t.Fatalf("integer-range record predicate did not generate and replay: receipt=%+v report=%+v", receipt, result.Report)
+	}
+	generation := receipt.CandidateGeneration
+	if generation == nil || len(generation.HoleGrammars) != 1 ||
+		generation.HoleGrammars[0].Grammar != recordPredicateCompositionV2Grammar ||
+		generation.HoleGrammars[0].ExpressionCandidatesTotal != 576 ||
+		generation.HoleGrammars[0].ExpressionsRetained != 16 || generation.HoleGrammars[0].GrammarComplete ||
+		generation.AssignmentSpaceSize != 16 || generation.AssignmentsRetained != 16 || generation.AssignmentsOmitted != 0 {
+		t.Fatalf("bounded range grammar completeness was not reported: %+v", generation)
+	}
+	var selectedCondition string
+	for _, fill := range receipt.HoleFills {
+		if fill.HoleID == "condition" {
+			selectedCondition = fill.Expression
+		}
+	}
+	if !strings.Contains(selectedCondition, " && ") {
+		t.Fatalf("generated body did not select a bounded integer interval: %q; receipt=%+v", selectedCondition, receipt)
+	}
+	if strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") || strings.Contains(result.GoooSource, "source_fill") {
+		t.Fatalf("generated Gooo source retained body-fill instructions: %s", result.GoooSource)
+	}
+}
+
 func TestSourceRecordIRBodyFillLetsLayaRankDerivedCandidates(t *testing.T) {
 	source, activity := readDerivedRecordBodyFillFixture(t)
 	calls := 0
