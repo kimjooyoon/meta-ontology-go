@@ -56,49 +56,9 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 		return Result{}, err
 	}
 	current := []byte(program.Source)
-	fills := make([]BodyFillStep, 0, len(options.BodyFillPlans)+len(program.sourceFillSpecs))
-	knownPlans := make(map[string]bool, len(options.BodyFillPlans))
-	knownSourcePlans := make(map[string]bool, len(program.sourceFillSpecs))
-	bodyFillOptions := options.BodyFillOptions
-	for _, activity := range program.Activities {
-		key := packageActivityKey(activity.PackagePath, activity.Activity)
-		plan, exists := options.BodyFillPlans[key]
-		sourceSpec := program.sourceFillSpecs[key]
-		if exists && sourceSpec != nil {
-			return Result{}, fmt.Errorf("activity %s declares both a Gooo source fill plan and an external body-fill plan", key)
-		}
-		if !exists && sourceSpec == nil {
-			continue
-		}
-		var generation bodycodegen.Result
-		var fillErr error
-		if sourceSpec != nil {
-			knownSourcePlans[key] = true
-			generation, fillErr = bodycodegen.GenerateWithSourceIRBodyFill(ctx, "workspace.gooo", current,
-				activity.LoweredName, sourceSpec, options.LayaEndpoint, options.LayaAPIKey, bodyFillOptions)
-		} else {
-			knownPlans[key] = true
-			generation, fillErr = bodycodegen.GenerateWithIRBodyFillWithOptions(ctx, "workspace.gooo", current,
-				activity.LoweredName, plan, options.LayaEndpoint, options.LayaAPIKey, bodyFillOptions)
-		}
-		if fillErr != nil {
-			return Result{}, fmt.Errorf("activity %s body fill: %w", key, fillErr)
-		}
-		bodyFillOptions.TinyModelLoadMS = nil
-		if generation.GoooSource == "" || generation.Report.BodyFill == nil {
-			return Result{}, fmt.Errorf("activity %s body fill returned no replayable Gooo source", key)
-		}
-		fills = append(fills, BodyFillStep{Activity: activity, InputSourceSHA256: sourceSHA256(current), Generation: generation})
-		current = []byte(generation.GoooSource)
-	}
-	if len(knownPlans) != len(options.BodyFillPlans) {
-		return Result{}, fmt.Errorf("body-fill plans contain an activity not declared in the workspace")
-	}
-	if len(knownSourcePlans) != len(program.sourceFillSpecs) {
-		return Result{}, fmt.Errorf("a Gooo source body-fill plan targets an activity outside the executable workspace path")
-	}
-	if options.BodyFillOptions.TinyGoProvider != nil && len(fills) == 0 {
-		return Result{}, fmt.Errorf("tiny_go model was supplied but the workspace declares no body-fill plan")
+	current, fills, err := applyBodyFills(ctx, program, current, options)
+	if err != nil {
+		return Result{}, err
 	}
 	composition, err := bodyexecution.GenerateComposition(ctx, "workspace.gooo", current, translated, options.AssemblyModelPath)
 	if err != nil {
