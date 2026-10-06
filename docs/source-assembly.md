@@ -49,13 +49,53 @@ source_fill intent "Represent input plus one as a base and increment." {
 }
 ```
 
-The closed grammar uses only the source's declared cases to enumerate integer
-expressions. Gooo builds complete assignments in deterministic lexicographic order,
-up to the assignment cap. Its receipt reports both expression grammar coverage and
-the fraction of the complete assignment space actually enumerated. If the cap
+The closed grammar uses the source's declared training cases to enumerate integer
+expressions. Optional `holdout_case` rows stay out of candidate scores and model
+requests; Gooo measures them against the final selected body after generation.
+Training and holdout accuracy appear separately, so a finite training score cannot
+hide a held-out regression. Gooo builds complete assignments in deterministic
+lexicographic order, up to the assignment cap. Its receipt reports expression
+grammar coverage and the fraction of the complete assignment space actually
+enumerated. If the cap
 truncates that space, the completeness dimension stays `PROGRESS`; a model can only
 rank the enumerated prefix. See
 `examples/body-codegen/source-ir-fill-derived.gooo.fixture` for a runnable example.
+The [holdout fixture](../examples/body-codegen/source-ir-fill-holdout.gooo.fixture)
+shows training and held-out accuracy separately:
+
+```sh
+gooo body-codegen --json --activity Lift \
+  examples/body-codegen/source-ir-fill-holdout.gooo.fixture
+```
+The [partial holdout fixture](../examples/body-codegen/source-ir-fill-holdout-partial.gooo.fixture)
+keeps the training score full while recording one held-out mismatch as `PROGRESS`.
+For a branch-shaped body, the
+[conditional holdout fixture](../examples/body-codegen/source-ir-fill-conditional-holdout.gooo.fixture)
+lets the bounded grammars assemble a condition and a branch value independently.
+Its four training inputs distinguish the zero boundary; two unseen inputs check
+both sides of the branch after selection.
+
+Run the same source without a model to get a deterministic choice:
+
+```sh
+env -u GOOO_LAYA_URL -u GOOO_LAYA_API_KEY \
+  go run ./cmd/gooo body-codegen --json --activity Lift \
+  examples/body-codegen/source-ir-fill-holdout-partial.gooo.fixture
+```
+
+Run the conditional case the same way by substituting
+`source-ir-fill-conditional-holdout.gooo.fixture` for the example path above.
+It reports 4/4 training cases and 2/2 held-out cases for the deterministic choice.
+
+To compare a local Laya decision, start its `/v1/systemone` endpoint and set
+`GOOO_LAYA_URL` to that endpoint before running the same command. Gooo sends only
+the declared candidate choices and training cases to the chooser; holdout cases
+remain withheld until after selection. The report records whether the decision
+came from Laya or the deterministic fallback, plus training and holdout scores.
+For endpoint setup and the request/receipt shape, see
+[Laya decision provider](language/laya-decision-provider.md). A model choice is
+an ordering hint: the generated body still has to pass Gooo's typed checks and
+the declared cases.
 
 Run it with `gooo body-codegen --json --activity Lift
 examples/body-codegen/source-ir-fill.gooo.fixture`. Add `--tiny-model
@@ -156,13 +196,97 @@ derive assignments max_candidates "16" {
 ```
 
 `integer-predicate/v1` derives `true`, `false`, and bounded comparisons between
-`input` and the distinct training inputs. `integer-offset-constant/v1` derives the
-bounded integer expressions described above. These are finite source-derived
-grammars, not unrestricted Go or proofs over every integer. The receipt reports
-retained expressions per hole, total grammar coverage, assignment count and any
+`input` and the distinct training inputs. `integer-predicate-composition/v1` adds
+pairwise `input == value` clauses joined with `||`, closed ranges formed by
+`input >= lower && input <= upper`, and pairwise exclusions such as
+`input != first && input != second`. These finite compositions make common
+multi-condition paths expressible without adding arbitrary Boolean formulas or
+nesting. The
+[excluded-input fixture](../examples/body-codegen/source-ir-fill-excluded-inputs.gooo.fixture)
+returns a special result for two excluded inputs.
+`integer-predicate-outside-range/v1` derives bounded two-sided guards
+such as `input < lower || input > upper` and the three inclusive-boundary variants.
+It enumerates adjacent cutpoint pairs first, so a small expression cap can retain
+useful local windows. The
+[outside-range fixture](../examples/body-codegen/source-ir-fill-outside-range.gooo.fixture)
+assembles an `if` guard for values outside zero through ten and measures separate
+unseen inputs on both sides of that interval.
+`integer-predicate-cutpoint/v1` adds the floor and ceiling integer midpoint for
+each gap between observed inputs, so a sparse suite can propose a boundary that
+was never itself a training value. It reports the full bounded cutpoint space and
+any retained prefix; a holdout case at the ambiguous boundary can distinguish
+equally scoring predicates. The
+[cutpoint fixture](../examples/body-codegen/source-ir-fill-cutpoint.gooo.fixture)
+uses `-10` and `10` for training and withholds the zero boundary.
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity NonPositive \
+  examples/body-codegen/source-ir-fill-cutpoint.gooo.fixture
+```
+
+With no provider, the deterministic route selects `input < 0`: it matches both
+training cases, but only one of the two holdouts. The alternative `input <= 0`
+also matches both training cases and matches both holdouts. This exposes a useful
+division of work: the finite suite establishes the tie, withheld observations
+measure generalization, and a configured Laya may use the declared intent to rank
+the tied candidates. This run had no local Laya endpoint, so no model choice or
+latency is claimed.
+
+The adapter regression test supplies a local protocol-compatible test server
+that selects `input <= 0`. It verifies the full path from the bounded Gooo
+grammar, through the chooser request, to typed source emission and the separate
+2/2 holdout result. The test server is a controlled response, not the Laya model;
+it establishes the integration contract and data boundary, not model quality.
+When Laya is running locally, rerun the same fixture with `GOOO_LAYA_URL` set
+to measure the actual choice and latency on your machine.
+
+Before selection, Gooo derives up to 128 synthetic probe inputs from training
+values (nearby integers and interior midpoints) and evaluates every candidate at
+those points. It passes each candidate's output profile to the chooser with no
+expected probe outputs. Declared holdout inputs are removed from the probe set;
+holdout rows and expected values are not sent. Laya can use the profiles with
+Gooo intent to distinguish candidates whose training scores tie. The profiles
+are behavioral observations, not correctness evidence.
+
+`body_fill_candidate_probe_coverage` reports evaluated candidate/input pairs
+against the full generated probe space; the receipt separately counts candidate
+pairs that differ on at least one retained probe and their distinguishability
+percentage. These are candidate-diversity and measurement-coverage signals, not
+correctness scores. The receipt includes retained probe inputs and candidate
+outputs with their digest, and records probe evaluation time.
+
+The [probe-choice fixture](../examples/body-codegen/source-ir-fill-probe-choice.gooo.fixture)
+declares `input > 0` and `input >= 0` as tied candidates. Its training cases are
+`-10 -> 0` and `10 -> 1`; the held-out input is `5`, while synthetic probe `0`
+distinguishes the two candidates without exposing that holdout row. The
+protocol-level Laya test verifies that the chooser receives both output profiles
+and selects the inclusive candidate. It validates Gooo's data flow and decision
+contract, not the real model's ability to interpret the intent.
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity NonNegative \
+  examples/body-codegen/source-ir-fill-probe-choice.gooo.fixture
+```
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity Select \
+  examples/body-codegen/source-ir-fill-outside-range.gooo.fixture
+```
+
+The report includes per-hole grammar coverage, the complete-assignment coverage
+under its cap, selected condition/value, and separate holdout accuracy. With this
+fixture, the deterministic fallback selects `(input < 0) || (input > 10)`, scoring
+4/4 declared cases and 3/3 held-out cases. The finite score does not prove every
+integer input or an unstated intent.
+`integer-offset-constant/v1` derives the bounded integer expressions described
+above. These are finite source-derived grammars, not unrestricted Go or proofs
+over every integer. The receipt reports the pre-cap expression count, retained
+expressions per hole, total grammar coverage, assignment count and any
 assignments omitted by the cap. The compiler typechecks each complete assignment,
 scores it against the declared cases, and can send the complete choices to Laya
-for ranking; deterministic fallback uses the same scored choices.
+for ranking; deterministic fallback uses the same scored choices. The
+[composed-condition fixture](../examples/body-codegen/source-ir-fill-composed-condition.gooo.fixture)
+shows disjoint input selection with the bounded composition grammar.
 
 | Kind | Source site selected by `at` | Additional field |
 | --- | --- | --- |

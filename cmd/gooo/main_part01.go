@@ -117,6 +117,15 @@ func runInit(args []string, stdout, stderr io.Writer) int {
 }
 
 func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int {
+	if topic, requested := helpRequest(args); requested {
+		topicWords := strings.Fields(topic)
+		_, hasGuide := topicHelp[strings.Join(topicWords, " ")]
+		if hasGuide || len(args) < 2 || args[0] == "help" || args[0] == "--help" || args[0] == "-h" {
+			return runHelp(topicWords, stdout, stderr)
+		}
+		// Preserve command-specific help implemented by commands that have not
+		// yet moved into this guide index.
+	}
 	if len(args) == 0 {
 		printUsage(stderr)
 		return exitUsage
@@ -168,6 +177,8 @@ func runWithInputCommandsOne(args []string, stdout, stderr io.Writer) (int, bool
 		return runCheck(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
 	case "decide":
 		return runDecide(args[1:], OSFileReader{}, stdout, stderr), true
+	case "discover":
+		return runDiscover(args[1:], OSFileReader{}, stdout, stderr), true
 	case "generate":
 		return runGenerate(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
 	case "body-context":

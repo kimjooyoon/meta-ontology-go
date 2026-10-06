@@ -16,8 +16,43 @@ func TestRunDispatchesCheckAndUsage(t *testing.T) {
 	}
 	stdout.Reset()
 	stderr.Reset()
-	if code := run(nil, &stdout, &stderr); code != exitUsage || stderr.String() != "usage: gooo <init|run|package|compare|propose-repair|consume-repair|revise-source|revise-from-handoff|evaluate-revision|verify-revision-contract|run-accepted-revision|compare-accepted-revision|stage-accepted-revision|profile|debug|test|emit|receipt-schema|check|decide|generate|body-codegen|body-path-stream|body-path-run|body-execute|body-search-run|body-realize|body-compose|completeness-delta|body-context|roundtrip|query|inspect|graph|claim|analyze|format|fix|provenance|selective-ci|invoke|lsp|version> [args]\n" {
+	if code := run(nil, &stdout, &stderr); code != exitUsage || stderr.String() != rootHelp {
 		t.Fatalf("root usage = code %d, stderr %q", code, stderr.String())
+	}
+}
+
+func TestHelpShowsQuickStartAndCommandGuide(t *testing.T) {
+	for _, args := range [][]string{{"help"}, {"--help"}, {"body-codegen", "--help"}, {"run", "--help"}} {
+		var stdout, stderr bytes.Buffer
+		if code := run(args, &stdout, &stderr); code != exitOK {
+			t.Fatalf("help %v failed: code=%d stdout=%q stderr=%q", args, code, stdout.String(), stderr.String())
+		}
+		if stdout.Len() == 0 || stderr.Len() != 0 {
+			t.Fatalf("help %v did not write a guide to stdout: stdout=%q stderr=%q", args, stdout.String(), stderr.String())
+		}
+	}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"help", "body-codegen"}, &stdout, &stderr); code != exitOK ||
+		!strings.Contains(stdout.String(), "typed candidates declared by the plan") {
+		t.Fatalf("body-codegen guide missing bounded model explanation: code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	stdout.Reset()
+	stderr.Reset()
+	if code := run([]string{"help", "run"}, &stdout, &stderr); code != exitOK ||
+		!strings.Contains(stdout.String(), "reports its typed inputs and output") ||
+		!strings.Contains(stdout.String(), "With an explicit input") ||
+		!strings.Contains(stdout.String(), "value-plan path executes") ||
+		!strings.Contains(stdout.String(), "value-plan path executes registered value operations") ||
+		!strings.Contains(stdout.String(), "SOURCE_RUNTIME_BINDINGS_UNSUPPORTED") {
+		t.Fatalf("run guide does not distinguish declaration and value execution: code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestHelpRejectsUnknownTopicWithNextStep(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"help", "no-such-topic"}, &stdout, &stderr); code != exitUsage ||
+		!strings.Contains(stderr.String(), "run `gooo help` for available topics") {
+		t.Fatalf("unknown topic result: code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 }
 

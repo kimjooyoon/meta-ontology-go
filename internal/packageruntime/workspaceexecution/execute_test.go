@@ -165,7 +165,7 @@ activity Normalize(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__
 		if step.Generation.Report.BodyFill.Decision.Provider != "laya" || step.Generation.GoooSource == "" ||
 			step.Generation.Report.BodyFill.FunctionalAccuracyPct != 100 ||
 			step.Generation.Report.BodyFill.Timing.ExecutionModel != "synchronous_sequential_no_background_codegen_goroutines" ||
-			step.Generation.Report.BodyFill.Timing.DecisionStage != "after_typed_ir_plan_and_candidate_test_scores_before_final_emission" {
+			step.Generation.Report.BodyFill.Timing.DecisionStage != "after_typed_ir_plan_training_scores_and_behavior_probes_before_final_emission" {
 			t.Fatalf("model body-fill provenance or accuracy missing: %#v", step)
 		}
 	}
