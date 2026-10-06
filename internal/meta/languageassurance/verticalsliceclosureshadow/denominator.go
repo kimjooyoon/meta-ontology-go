@@ -15,7 +15,7 @@ import (
 
 func decodeDenominator(raw []byte) (denominator, error) {
 	digest := digestBytes(raw)
-	if digest != DenominatorDigest && digest != DenominatorMigrationDigest && digest != DenominatorMigrationV23Digest && digest != DenominatorMigrationV24Digest && digest != DenominatorMigrationV25Digest && digest != DenominatorMigrationV26Digest && digest != DenominatorMigrationV27Digest && digest != DenominatorMigrationV28Digest && digest != DenominatorMigrationV29Digest && digest != DenominatorMigrationV30Digest && digest != DenominatorMigrationV31Digest && digest != DenominatorMigrationV32Digest && digest != DenominatorMigrationV33Digest && digest != DenominatorMigrationV34Digest && digest != DenominatorMigrationV35Digest && digest != DenominatorMigrationV36Digest && digest != DenominatorMigrationV37Digest && digest != DenominatorMigrationV38Digest && digest != DenominatorMigrationV39Digest && digest != DenominatorMigrationV40Digest && digest != DenominatorMigrationV41Digest && digest != DenominatorMigrationV42Digest && digest != DenominatorMigrationV43Digest && digest != DenominatorMigrationV44Digest && digest != DenominatorMigrationV45Digest && digest != DenominatorMigrationV46Digest {
+	if digest != DenominatorDigest && digest != DenominatorMigrationDigest && digest != DenominatorMigrationV23Digest && digest != DenominatorMigrationV24Digest && digest != DenominatorMigrationV25Digest && digest != DenominatorMigrationV26Digest && digest != DenominatorMigrationV27Digest && digest != DenominatorMigrationV28Digest && digest != DenominatorMigrationV29Digest && digest != DenominatorMigrationV30Digest && digest != DenominatorMigrationV31Digest && digest != DenominatorMigrationV32Digest && digest != DenominatorMigrationV33Digest && digest != DenominatorMigrationV34Digest && digest != DenominatorMigrationV35Digest && digest != DenominatorMigrationV36Digest && digest != DenominatorMigrationV37Digest && digest != DenominatorMigrationV38Digest && digest != DenominatorMigrationV39Digest && digest != DenominatorMigrationV40Digest && digest != DenominatorMigrationV41Digest && digest != DenominatorMigrationV42Digest && digest != DenominatorMigrationV43Digest && digest != DenominatorMigrationV44Digest && digest != DenominatorMigrationV45Digest && digest != DenominatorMigrationV46Digest && digest != DenominatorMigrationV47Digest {
 		return denominator{}, fmt.Errorf("denominator digest mismatch")
 	}
 	var value denominator
@@ -60,7 +60,8 @@ func validateDenominator(value denominator) error {
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v43" && value.Version == 43) ||
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v44" && value.Version == 44) ||
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v45" && value.Version == 45) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v46" && value.Version == 46)
+		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v46" && value.Version == 46) ||
+		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v47" && value.Version == 47)
 	if value.Schema != "gooo/vertical-slice-boundary-denominator/v1" ||
 		!validHeader || len(value.Boundaries) != len(expected) {
 		return fmt.Errorf("denominator header mismatch")
@@ -72,7 +73,11 @@ func validateDenominator(value denominator) error {
 		}
 		links += spec.LinkTarget
 	}
-	if links != linkTotal {
+	expectedLinks := linkTotal
+	if value.Version <= 46 {
+		expectedLinks = 12
+	}
+	if links != expectedLinks {
 		return fmt.Errorf("denominator link total mismatch")
 	}
 	return nil
@@ -80,6 +85,10 @@ func validateDenominator(value denominator) error {
 
 func expectedBoundarySpecsForVersion(version int) []boundarySpec {
 	expected := expectedBoundarySpecs()
+	if version >= 21 && version <= 46 {
+		expected[5].Target = 20
+		expected[5].LinkTarget = 3
+	}
 	switch version {
 	case 45:
 		expected[0].Target = 77
@@ -97,7 +106,7 @@ func expectedBoundarySpecs() []boundarySpec {
 		{"use-cases", toolchainusecases.ReportSchema, "execute-versioned-use-cases", 3, 1},
 		{"toolchain", toolchainconformance.Schema, toolchainconformance.ExpectedMetaOperation,
 			toolchainconformance.ExpectedCaseCount, 3},
-		{"release", toolchainrelease.ReportSchema, toolchainrelease.MetaOperation, 20, 3},
+		{"release", toolchainrelease.ReportSchema, toolchainrelease.MetaOperation, 26, 4},
 	}
 }
 

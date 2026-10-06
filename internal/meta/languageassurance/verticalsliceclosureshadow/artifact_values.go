@@ -44,9 +44,9 @@ func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
 			summary.ProofsPassed == summary.ProofsTotal &&
 			summary.TamperRejections == 13 && summary.TamperTotal == 13)
 	case "release":
-		return summary.CasesSatisfied, status(summary.CasesSatisfied == 20 &&
-			summary.CasesTotal == 20 && len(artifact.Cases) == 20 &&
-			summary.ReadinessBPS == 10000 && summary.PlatformReceipts == 3 &&
+		return summary.CasesSatisfied, status(summary.CasesSatisfied == 26 &&
+			summary.CasesTotal == 26 && len(artifact.Cases) == 26 &&
+			summary.ReadinessBPS == 10000 && summary.PlatformReceipts == 4 &&
 			summary.OperatingSystems == 3 && allReleaseCasesExact(artifact.Cases))
 	default:
 		return 0, StatusBlocked
