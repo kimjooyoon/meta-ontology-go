@@ -8,7 +8,8 @@ import (
 )
 
 // DecodeRecordInput rejects ambiguous JSON rather than choosing the last
-// duplicate field. Record values are strings, Booleans or signed integers.
+// duplicate field. It decodes scalar values; the compiled schema determines
+// which fields may be omitted. JSON null is never an absent value.
 func DecodeRecordInput(raw []byte) (RecordFields, error) {
 	failure := failAt(ReasonExternalInputUnexpected, "INPUT", "decode-record-input", "input must be one object with unique string, Boolean or integer fields")
 	if !utf8.Valid(raw) {

@@ -76,12 +76,24 @@ func (plan RecordPlan) validateInputs(inputs map[string]RecordFields) error {
 }
 
 func validateRecordFields(schema []RecordField, fields RecordFields) error {
-	if fields == nil || len(fields) != len(schema) {
-		return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", "record must contain exactly the declared fields")
+	if fields == nil {
+		return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", "record must include required fields and contain only declared fields")
+	}
+	declared := make(map[string]RecordField, len(schema))
+	for _, field := range schema {
+		declared[field.Name] = field
+	}
+	for name := range fields {
+		if _, found := declared[name]; !found {
+			return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", name)
+		}
 	}
 	for _, field := range schema {
 		value, present := fields[field.Name]
 		if !present {
+			if field.Presence == semantic.Optional {
+				continue
+			}
 			return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
 		}
 		switch field.TypeID {

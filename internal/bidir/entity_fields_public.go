@@ -21,6 +21,10 @@ func EntityFieldsV2Support() EntityFieldsSupport { return syntax.EntityFieldsV2S
 // versioned EntityFields V3 contract.
 func EntityFieldsV3Support() EntityFieldsSupport { return syntax.EntityFieldsV3Support() }
 
+// EntityFieldsV4Support adds optional single scalar fields while retaining
+// the V3 string, Boolean and integer rules.
+func EntityFieldsV4Support() EntityFieldsSupport { return syntax.EntityFieldsV4Support() }
+
 // DocumentFromSyntaxWithEntityFieldsSupport adapts a profile-bound AST.
 func DocumentFromSyntaxWithEntityFieldsSupport(file *syntax.File, support EntityFieldsSupport) (Document, error) {
 	return documentFromSyntaxWithEntityFieldsSupport(file, support)

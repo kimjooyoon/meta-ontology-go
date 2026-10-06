@@ -95,17 +95,18 @@ feedback remain further work.
 
 ## Typed fields across source-driven execution
 
-The EntityFields V3 profile also applies to `gooo run --record-input`. Required
-single `boolean` and `integer` fields are decoded from JSON with exact scalar
-types, checked against their source declarations before any activity executes,
-and preserved in each result's `fields`. The compiled field schema includes
-stable type IDs in its operation digest. V1 and V2 parser and lowering entry
-points remain available to callers that need earlier profiles.
+`gooo run --record-input` uses EntityFields V4. Required and optional single
+`string`, `boolean` and `integer` fields are decoded from JSON with exact scalar
+types and checked against their source declarations before any activity
+executes. An omitted optional key stays absent in each result's `fields`; an
+explicit empty string, `false` or `0` stays present. Extra keys and JSON `null`
+are rejected. The compiled field schema includes stable type IDs and presence
+in its operation digest. V1-V3 parser and lowering entry points remain
+available to callers that need earlier profiles.
 
-The public `gooo check` and `gooo generate` commands now use EntityFields V4,
-which additionally projects optional single scalar fields to Go pointers.
-Optional fields are not accepted by record-body codegen or `run --record-input`
-yet; those routes remain on the V3 required-single-field contract.
+The public `gooo check` and `gooo generate` commands use EntityFields V4, which
+also projects optional single scalar fields to Go pointers. Record-body codegen
+and `body-compose` remain on the V3 required-single-field contract.
 
 The runnable [Boolean record-binding source](../examples/language-record-binding/boolean.gooo.fixture)
 and [input](../examples/language-record-binding/boolean-input.json) carry a
@@ -113,9 +114,21 @@ and [input](../examples/language-record-binding/boolean-input.json) carry a
 exercises source-declared record transport while preserving the V1 syntax
 corpus fixture.
 
-The separate EntityFields V3 profile adds required single `integer` fields to
-the compiler's Go projection, source-driven body-generation path,
-`body-compose` record transport and `gooo run --record-input`.
+The [optional record-binding source](../examples/language-record-binding/optional.gooo.fixture)
+and [input](../examples/language-record-binding/optional-input.json) omit
+`Note`, while preserving an explicit empty `Label`, `Complete: false` and
+`Count: 0` through a typed record edge. Try it with:
+
+```sh
+gooo run --json --entry Capture --record-input \
+  examples/language-record-binding/optional-input.json \
+  examples/language-record-binding/optional.gooo.fixture
+```
+
+The EntityFields V3 profile added required single `integer` fields to the Go
+projection and source-driven body-generation and `body-compose` paths. The V4
+`gooo run --record-input` path also transports optional scalar fields while
+preserving absence separately from an explicit zero value.
 
 ```gooo
 entity Boolean id "booleans://boolean"
