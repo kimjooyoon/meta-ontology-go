@@ -5989,6 +5989,16 @@
         "internal/meta/publictrust/generated/evaluator.go",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/gooo-native-toolchain-diagnostic-20261006",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "docs/language/project-starters.md",
+        "internal/bodyexecution/toolchain.go",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

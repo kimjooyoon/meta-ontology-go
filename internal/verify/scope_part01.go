@@ -205,3 +205,13 @@ func init() {
 	}
 
 }
+
+func init() {
+	branchScopeAllowlist["agent/gooo-native-toolchain-diagnostic-20261006"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"docs/language/project-starters.md",
+		"internal/bodyexecution/toolchain.go",
+		"internal/verify/scope_part01.go",
+	}
+}

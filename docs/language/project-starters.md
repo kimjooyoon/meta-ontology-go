@@ -46,3 +46,13 @@ dependency order. `gooo package resolve` prints the checked graph; `gooo
 package execute` follows the explicit producer chain and runs its generated
 native program. Package distribution through a registry is not part of this
 starter. See the [workspace package graph](workspace-manifest.md) contract.
+
+Native execution needs Go 1.27.1 for the same operating system and architecture
+as the Gooo executable. For example, a `darwin/amd64` Gooo binary running under
+Rosetta needs a `darwin/amd64` Go toolchain, even on an Apple Silicon Mac. If Go
+is installed elsewhere or the default `go` points to another architecture, pass
+the matching executable explicitly:
+
+```sh
+gooo package execute --json --cases cases.json --go /path/to/matching/go gooo.workspace.json
+```
