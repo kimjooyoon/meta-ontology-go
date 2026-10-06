@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-func TestGeneratorProjectsRuntimeBindingsUntilExplicitPlanDelivery(t *testing.T) {
+func TestGeneratorEmitsDeterministicCompositionForExplicitBindings(t *testing.T) {
 	file, diagnostics := syntax.ParseFile("binding.gooo", sourceWithRuntimeBinding)
 	if diagnostics.HasErrors() || file == nil {
 		t.Fatalf("binding parse diagnostics=%v file=%#v", diagnostics, file)
@@ -23,6 +24,23 @@ func TestGeneratorProjectsRuntimeBindingsUntilExplicitPlanDelivery(t *testing.T)
 	}
 	if _, err := buildRuntimePlanData([]byte(sourceWithRuntimeBinding), ir); err != nil {
 		t.Fatalf("runtime plan build error=%v", err)
+	}
+	generated, err := generateWithDeadlineCore(file, nil, commandDeadline)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expected := range []string{
+		"func GoooComposeProduceConsume(input0 Order) Order",
+		"runtime0_0 := Produce(input0)",
+		"runtime1_0 := Consume(runtime0_0)",
+		"return runtime1_0",
+	} {
+		if !strings.Contains(string(generated.result.Source), expected) {
+			t.Fatalf("generated Go missing composition fragment %q:\n%s", expected, generated.result.Source)
+		}
+	}
+	if strings.Contains(string(generated.result.Source), "GoooCompose") != strings.Contains(sourceWithRuntimeBinding, "bind ") {
+		t.Fatal("composition emission must follow explicit source bindings only")
 	}
 }
 

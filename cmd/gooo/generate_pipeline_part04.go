@@ -42,6 +42,11 @@ func generateWithDeadlineCore(file *syntax.File, previous []byte, timeout time.D
 				return
 			}
 		}
+		model, err = runtimeCompositionModel(file, ir, model)
+		if err != nil {
+			result <- generationResult{err: fmt.Errorf("runtime composition projection failed: %w", err)}
+			return
+		}
 		var generated generator.Result
 		if semanticIRHasFields(ir) {
 			generated, err = generator.GenerateWithEntityFieldsSupport(model, previous, syntax.EntityFieldsV3Support())
