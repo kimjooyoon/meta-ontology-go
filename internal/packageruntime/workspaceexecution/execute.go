@@ -97,6 +97,9 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 	if len(knownSourcePlans) != len(program.sourceFillSpecs) {
 		return Result{}, fmt.Errorf("a Gooo source body-fill plan targets an activity outside the executable workspace path")
 	}
+	if options.BodyFillOptions.TinyGoProvider != nil && len(fills) == 0 {
+		return Result{}, fmt.Errorf("tiny_go model was supplied but the workspace declares no body-fill plan")
+	}
 	composition, err := bodyexecution.GenerateComposition(ctx, "workspace.gooo", current, translated, options.AssemblyModelPath)
 	if err != nil {
 		return Result{}, fmt.Errorf("generate workspace activity bodies: %w", err)

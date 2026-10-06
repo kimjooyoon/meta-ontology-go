@@ -184,6 +184,7 @@ func init() {
 		"internal/packageruntime/workspaceexecution/execute_test.go",
 		"internal/packageruntime/workspaceexecution/program.go",
 		"internal/verify/scope_part01.go",
+		"cmd/gooo/package_execute.go",
 	}
 
 }

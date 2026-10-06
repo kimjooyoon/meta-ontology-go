@@ -36,6 +36,43 @@ activity Main(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__"
 	}
 }
 
+func TestRunPackageExecuteRejectsUnusedTinyModelWhenGoooSourceHasNoFillPlan(t *testing.T) {
+	t.Setenv("GOOO_LAYA_URL", "")
+	t.Setenv("GOOO_LAYA_API_KEY", "")
+	root := t.TempDir()
+	writeWorkspaceSource(t, root, "core.gooo.fixture", `package core
+namespace core
+entity Integer id "core://integer"
+activity Normalize(Integer) -> Integer computes "return input"
+`)
+	writeWorkspaceSource(t, root, "app.gooo.fixture", `package app
+namespace app
+import core "example/core"
+activity Main(Integer) -> Integer computes "return input"
+bind core.Normalize.result -> Main.input
+`)
+	manifestPath := writeWorkspaceManifest(t, root, `{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/app", "activity": "Main"},
+  "packages": [
+    {"path": "example/app", "name": "app", "imports": ["example/core"], "sources": ["app.gooo.fixture"]},
+    {"path": "example/core", "name": "core", "imports": [], "sources": ["core.gooo.fixture"]}
+  ]
+}`)
+	casesPath := filepath.Join(root, "cases.json")
+	if err := os.WriteFile(casesPath, []byte(`{"schema":"gooo/body-composition-cases/v1","cases":[{"inputs":{"example/core:Normalize":7},"expected":{"example/core:Normalize":7,"example/app:Main":7}}]}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	modelPath := writeSyntheticTinyGoModel(t, "add")
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"package", "execute", "--json", "--cases", casesPath,
+		"--tiny-model", modelPath, manifestPath}, &stdout, &stderr)
+	if code != exitFailure || !strings.Contains(stdout.String(), "workspace declares no body-fill plan") ||
+		strings.Contains(stdout.String()+stderr.String(), modelPath) {
+		t.Fatalf("unused compact model was not rejected without leaking its path: code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+}
+
 func TestLibraryStarterRunsWithTheLocalTinyModel(t *testing.T) {
 	t.Setenv("GOOO_LAYA_URL", "")
 	t.Setenv("GOOO_LAYA_API_KEY", "")
