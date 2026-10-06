@@ -31,6 +31,25 @@ func readRecordBodyFillFixture(t *testing.T) ([]byte, *syntax.ActivityDecl) {
 	return nil, nil
 }
 
+func readDerivedRecordBodyFillFixture(t *testing.T) ([]byte, *syntax.ActivityDecl) {
+	t.Helper()
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-derived.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := ParseBodyFile("record-fill-derived.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	for _, declaration := range file.Declarations {
+		if activity, ok := declaration.(*syntax.ActivityDecl); ok && activity.Name == "ReviewCandidate" {
+			return source, activity
+		}
+	}
+	t.Fatal("derived record body-fill activity not found")
+	return nil, nil
+}
+
 func TestSourceRecordIRBodyFillLetsLayaSelectTypedDomainLogic(t *testing.T) {
 	source, activity := readRecordBodyFillFixture(t)
 	var observed struct {
@@ -135,24 +154,7 @@ func TestSourceRecordIRBodyFillRejectsIllTypedCandidateBeforeLaya(t *testing.T) 
 }
 
 func TestSourceRecordIRBodyFillDerivesTypedCandidatesFromValueCases(t *testing.T) {
-	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-derived.gooo.fixture")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, diagnostics := ParseBodyFile("record-fill-derived.gooo", source)
-	if diagnostics.HasErrors() {
-		t.Fatal(diagnostics)
-	}
-	var activity *syntax.ActivityDecl
-	for _, declaration := range file.Declarations {
-		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == "ReviewCandidate" {
-			activity = candidate
-			break
-		}
-	}
-	if activity == nil {
-		t.Fatal("derived record body-fill activity not found")
-	}
+	source, activity := readDerivedRecordBodyFillFixture(t)
 	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill-derived.gooo", source,
 		"ReviewCandidate", &activity.Assembly.Spec, "", "", IRBodyFillOptions{})
 	if err != nil {
@@ -183,24 +185,7 @@ func TestSourceRecordIRBodyFillDerivesTypedCandidatesFromValueCases(t *testing.T
 }
 
 func TestSourceRecordIRBodyFillLetsLayaRankDerivedCandidates(t *testing.T) {
-	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-derived.gooo.fixture")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, diagnostics := ParseBodyFile("record-fill-derived.gooo", source)
-	if diagnostics.HasErrors() {
-		t.Fatal(diagnostics)
-	}
-	var activity *syntax.ActivityDecl
-	for _, declaration := range file.Declarations {
-		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == "ReviewCandidate" {
-			activity = candidate
-			break
-		}
-	}
-	if activity == nil {
-		t.Fatal("derived record body-fill activity not found")
-	}
+	source, activity := readDerivedRecordBodyFillFixture(t)
 	calls := 0
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if request.Method == http.MethodGet && request.URL.Path == "/health" {
