@@ -4,4 +4,4 @@ import core "{{module}}/core"
 
 activity Main(Integer) -> Integer computes "return input"
 
-bind core.Normalize.result -> Main.input
+bind core.Clamp.result -> Main.input

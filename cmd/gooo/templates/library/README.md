@@ -1,10 +1,12 @@
 # {{module}}
 
 This starter is a small Gooo package graph. The core package declares
-Normalize(Integer) -> Integer; the app package imports it and binds its result
-to Main. Normalize's `assembling` block declares a complete two-hole assignment:
-a base expression and a step. The candidates and their finite examples live in
-Gooo source, so the workspace executes without a separate body-plan JSON file.
+Normalize(Integer) -> Integer and Clamp(Integer) -> Integer; the app package
+imports core and exposes Main. The explicit chain increments an input, clamps
+the result to the closed interval 0..10, and returns it. Normalize's
+`assembling` block declares a complete two-hole assignment: a base expression
+and a step. The candidates and their finite examples live in Gooo source, so
+the workspace executes without a separate body-plan JSON file.
 
 Install the Gooo CLI and run these commands from this directory:
 
@@ -29,12 +31,13 @@ Gooo source. The compact model maps a supported root operation in Normalize's
 first hole to a distinct assignment; it does not jointly reason over later
 holes or invent fills.
 
-The execute command follows the declared binding, fills both Normalize holes,
-compiles the generated Go, and runs it against the named case. Gooo scores each
-candidate before emission, checks the selected body, and reports a replayable
-receipt with finite observed accuracy. These examples do not prove behavior
-for all integer inputs. Unsupported or ambiguous compact-model plan shapes
-produce a diagnostic.
+The execute command follows both declared bindings, fills Normalize's two
+holes, compiles the generated Go, and runs three cases through the whole chain.
+The cases cover values below, inside, and above the clamp range. Gooo scores
+each candidate before emission, checks the selected body, and reports a
+replayable receipt with finite observed accuracy. These examples do not prove
+behavior for all integer inputs. Unsupported or ambiguous compact-model plan
+shapes produce a diagnostic.
 
 The workspace manifest records package imports and the public entry. Package
 resolve prints the deterministic graph receipt; package execute adds generated

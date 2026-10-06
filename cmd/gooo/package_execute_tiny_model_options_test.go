@@ -96,7 +96,7 @@ func TestLibraryStarterRunsWithTheLocalTinyModel(t *testing.T) {
 	}
 	if receipt.Decision != "PASS" || receipt.Result == nil || len(receipt.Result.BodyFills) != 1 ||
 		receipt.Result.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID != "add_one" ||
-		receipt.Result.Runtime.FinitePassed != 2 || receipt.Result.Runtime.FiniteTotal != 2 || !receipt.Result.Runtime.RuntimeReplayed {
+		receipt.Result.Runtime.FinitePassed != 9 || receipt.Result.Runtime.FiniteTotal != 9 || !receipt.Result.Runtime.RuntimeReplayed {
 		t.Fatalf("library starter did not prove the model-filled source-owned activity: %#v", receipt)
 	}
 	if _, err := os.Stat(filepath.Join(workspace, "body-fill-plans.json")); !os.IsNotExist(err) {
@@ -125,7 +125,7 @@ func TestLibraryStarterRunsDeterministicallyWithoutAModel(t *testing.T) {
 	}
 	if receipt.Decision != "PASS" || receipt.Result == nil || len(receipt.Result.BodyFills) != 1 ||
 		receipt.Result.BodyFills[0].Generation.Report.BodyFill.SelectedCandidateID != "add_one" ||
-		receipt.Result.Runtime.FinitePassed != 2 || receipt.Result.Runtime.FiniteTotal != 2 || !receipt.Result.Runtime.RuntimeReplayed {
+		receipt.Result.Runtime.FinitePassed != 9 || receipt.Result.Runtime.FiniteTotal != 9 || !receipt.Result.Runtime.RuntimeReplayed {
 		t.Fatalf("library starter did not preserve deterministic execution: %#v", receipt)
 	}
 }

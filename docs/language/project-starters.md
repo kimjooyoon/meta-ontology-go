@@ -20,14 +20,16 @@ gooo package execute --json --cases cases.json --tiny-model path/to/model.json \
 ```
 
 The `--module` value becomes the workspace package prefix and source identity.
-The library template declares `Normalize(Integer) -> Integer` in
-`example.org/team/forecast/core`, then imports and binds that activity to
-`Main` in `example.org/team/forecast/app`. Normalize's `assembling` block declares two typed holes that
-form one assignment: a base expression and a step. It also lists complete
-candidate assignments and finite examples. `gooo package execute` reads that
-plan from the Gooo source, fills the holes together, checks each candidate, and
-runs the package case from `Normalize(7)` through `Main`. The examples provide
-a small regression set, not a proof over all inputs.
+The library template declares `Normalize(Integer) -> Integer` and
+`Clamp(Integer) -> Integer` in `example.org/team/forecast/core`, then imports
+core and binds Clamp to `Main` in `example.org/team/forecast/app`. Normalize
+feeds Clamp through a second explicit bind. Normalize's `assembling` block
+declares two typed holes that form one assignment: a base expression and a
+step. It also lists complete candidate assignments and finite examples.
+`gooo package execute` reads that plan from the Gooo source, fills the holes
+together, checks each candidate, and runs cases below, inside, and above the
+clamp interval through the full chain. The examples provide a small regression
+set, not a proof over all inputs.
 
 The Gooo sources define the package APIs, import, activity binding, and the
 body-fill plan itself. Gooo scores each candidate before emission. When a local
