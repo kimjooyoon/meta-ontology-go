@@ -153,7 +153,9 @@ profile, generated semantics, metric IDs, units, or denominators do not match
 the current vector and continues to an older candidate. The collector verifies
 the artifact digest and checks the receipt's repository, commit, run ID, and
 attempt before using it. It includes downloaded bytes in the system budget and
-pins the selected receipt and artifact identity for deterministic replay.
-Expired or missing artifacts leave the comparison UNKNOWN. CI grants this
+pins the selected receipt and artifact identity for deterministic replay. The
+receipt distinguishes unavailable history from a retained history that is
+incompatible with the current profile or population, and records the reason
+code. Expired or missing artifacts leave the comparison UNKNOWN. CI grants this
 read-only collector `actions: read`; comparison does not write repository state
 or affect promotion.

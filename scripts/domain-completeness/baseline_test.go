@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -87,6 +88,15 @@ func TestDiscoverBaselineDownloadsExactPriorDevReceipt(t *testing.T) {
 	if receipt.SubjectSHA != headSHA || receipt.Snapshot.WorkflowRun != runID || receipt.Snapshot.RunAttempt != 2 ||
 		receipt.Digest != baseline.Digest || decoded.Digest != baseline.Digest || artifact.ID != artifactID || int(artifact.SizeInBytes) != len(archive) {
 		t.Fatalf("selected baseline identity = %#v, artifact=%#v", receipt.Snapshot, artifact)
+	}
+	incompatibleCurrent := current
+	incompatibleCurrent.Contract.SemanticHash = "new-profile"
+	incompatibleCurrent.Generated.SemanticHash = "new-profile"
+	_, _, _, err = discoverBaseline(context.Background(), incompatibleCurrent)
+	var discoveryErr baselineDiscoveryError
+	if !errors.As(err, &discoveryErr) || discoveryErr.status != "UNKNOWN_NO_COMPATIBLE_BASELINE" ||
+		discoveryErr.reason != "RETAINED_RECEIPTS_DO_NOT_MATCH_PROFILE_OR_POPULATION" {
+		t.Fatalf("incompatible baseline result = %#v, error=%v", discoveryErr, err)
 	}
 }
 

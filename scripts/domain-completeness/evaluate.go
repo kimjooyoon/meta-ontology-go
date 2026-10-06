@@ -71,7 +71,7 @@ type loadedInputs struct {
 
 func evaluate(
 	profilePath, contractPath, evidenceDir, baselinePath string, autoBaseline bool, baselineSource baselineArtifact,
-	comparisonStatus, subject string, runID int64, attempt int,
+	comparisonStatus, comparisonReason, subject string, runID int64, attempt int,
 ) (Report, []byte, []byte, baselineArtifact, error) {
 	profileRaw, err := os.ReadFile(profilePath)
 	if err != nil {
@@ -163,7 +163,13 @@ func evaluate(
 	if baselinePath == "" && autoBaseline {
 		candidate, candidateRaw, artifact, discoveryErr := discoverBaseline(context.Background(), report)
 		if discoveryErr != nil {
-			report.Investment.ComparisonStatus = "UNKNOWN_BASELINE_UNAVAILABLE"
+			if discovery, ok := discoveryErr.(baselineDiscoveryError); ok {
+				report.Investment.ComparisonStatus = discovery.status
+				report.Investment.ComparisonReason = discovery.reason
+			} else {
+				report.Investment.ComparisonStatus = "UNKNOWN_BASELINE_UNAVAILABLE"
+				report.Investment.ComparisonReason = "BASELINE_DISCOVERY_FAILED"
+			}
 		} else {
 			baseline, baselineRaw, selectedArtifact = candidate, candidateRaw, artifact
 			inputs.inputFiles++
@@ -181,6 +187,7 @@ func evaluate(
 	}
 	if selectedArtifact.ID == 0 && comparisonStatus != "" {
 		comparison.Status = comparisonStatus
+		report.Investment.ComparisonReason = comparisonReason
 	} else if selectedArtifact.ID == 0 && autoBaseline && baselinePath == "" {
 		comparison.Status = report.Investment.ComparisonStatus
 	}

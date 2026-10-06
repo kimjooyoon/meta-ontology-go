@@ -50,10 +50,21 @@ type baselineArtifact struct {
 	Digest      string `json:"digest"`
 }
 
+type baselineDiscoveryError struct {
+	status string
+	reason string
+}
+
+func (err baselineDiscoveryError) Error() string { return err.reason }
+
+func unavailableBaseline(reason string) error {
+	return baselineDiscoveryError{status: "UNKNOWN_BASELINE_UNAVAILABLE", reason: reason}
+}
+
 func discoverBaseline(ctx context.Context, current Report) (Report, []byte, baselineArtifact, error) {
 	repository, currentRunID, currentSubject := current.Snapshot.Repository, current.Snapshot.WorkflowRun, current.SubjectSHA
 	if repository == "" || currentRunID <= 0 || !canonicalSubject(currentSubject) || os.Getenv("GITHUB_TOKEN") == "" {
-		return Report{}, nil, baselineArtifact{}, fmt.Errorf("exact repository, run, commit, and GITHUB_TOKEN are required")
+		return Report{}, nil, baselineArtifact{}, unavailableBaseline("EXACT_RUN_CONTEXT_OR_READ_TOKEN_MISSING")
 	}
 	baseURL := strings.TrimRight(os.Getenv("GITHUB_API_URL"), "/")
 	if baseURL == "" {
@@ -65,9 +76,10 @@ func discoverBaseline(ctx context.Context, current Report) (Report, []byte, base
 	endpoint := fmt.Sprintf("%s/repos/%s/actions/workflows/language-utility-evidence.yml/runs?%s", baseURL, repository, query.Encode())
 	var runs baselineRunList
 	if err := githubJSON(ctx, client, token, endpoint, &runs); err != nil {
-		return Report{}, nil, baselineArtifact{}, err
+		return Report{}, nil, baselineArtifact{}, unavailableBaseline("WORKFLOW_RUN_HISTORY_UNAVAILABLE")
 	}
 	checked := 0
+	validatedReceipt := false
 	for _, run := range runs.Runs {
 		if run.ID <= 0 || run.ID == currentRunID || run.HeadSHA == currentSubject || run.HeadBranch != "dev" || run.Event != "push" ||
 			run.Status != "completed" || run.Conclusion != "success" || !canonicalSubject(run.HeadSHA) {
@@ -81,10 +93,10 @@ func discoverBaseline(ctx context.Context, current Report) (Report, []byte, base
 		artifactEndpoint := fmt.Sprintf("%s/repos/%s/actions/runs/%d/artifacts?per_page=100", baseURL, repository, run.ID)
 		var artifacts baselineArtifactList
 		if err := githubJSON(ctx, client, token, artifactEndpoint, &artifacts); err != nil {
-			return Report{}, nil, baselineArtifact{}, err
+			return Report{}, nil, baselineArtifact{}, unavailableBaseline("RUN_ARTIFACT_INDEX_UNAVAILABLE")
 		}
 		if artifacts.TotalCount > len(artifacts.Artifacts) {
-			return Report{}, nil, baselineArtifact{}, fmt.Errorf("artifact page for run %d is incomplete", run.ID)
+			return Report{}, nil, baselineArtifact{}, unavailableBaseline("RUN_ARTIFACT_PAGE_INCOMPLETE")
 		}
 		artifact, found := exactBaselineArtifact(artifacts.Artifacts, expectedName)
 		if !found {
@@ -116,6 +128,7 @@ func discoverBaseline(ctx context.Context, current Report) (Report, []byte, base
 			receipt.Snapshot.Repository != repository {
 			continue
 		}
+		validatedReceipt = true
 		comparison := compareReports(current, receipt, true)
 		if comparison.Status != "COMPARABLE" && comparison.Status != "PARTIAL" {
 			continue
@@ -124,7 +137,14 @@ func discoverBaseline(ctx context.Context, current Report) (Report, []byte, base
 			run.ID, run.RunAttempt, run.HeadSHA, artifact.ID, artifact.Digest)
 		return receipt, receiptRaw, artifact, nil
 	}
-	return Report{}, nil, baselineArtifact{}, fmt.Errorf("no compatible retained receipt found in the newest 20 successful dev pushes")
+	if validatedReceipt {
+		return Report{}, nil, baselineArtifact{}, baselineDiscoveryError{
+			status: "UNKNOWN_NO_COMPATIBLE_BASELINE", reason: "RETAINED_RECEIPTS_DO_NOT_MATCH_PROFILE_OR_POPULATION",
+		}
+	}
+	return Report{}, nil, baselineArtifact{}, baselineDiscoveryError{
+		status: "UNKNOWN_BASELINE_UNAVAILABLE", reason: "NO_RETAINED_EXACT_HEAD_RECEIPT_IN_RECENT_DEV_PUSHES",
+	}
 }
 
 func exactBaselineArtifact(artifacts []baselineArtifact, expected string) (baselineArtifact, bool) {

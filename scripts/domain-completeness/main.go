@@ -17,6 +17,7 @@ func main() {
 	baselinePath := flag.String("baseline", "", "optional prior domain completeness receipt for exact-scope comparison")
 	autoBaseline := flag.Bool("auto-baseline", false, "discover an exact-scope historical receipt from successful dev runs")
 	comparisonStatus := flag.String("comparison-status", "", "preserve a prior UNKNOWN comparison result during deterministic replay")
+	comparisonReason := flag.String("comparison-reason", "", "preserve a prior UNKNOWN comparison reason during deterministic replay")
 	baselineArtifactID := flag.Int64("baseline-artifact-id", 0, "selected historical Actions artifact ID")
 	baselineArtifactDigest := flag.String("baseline-artifact-digest", "", "selected historical Actions artifact digest")
 	baselineArtifactName := flag.String("baseline-artifact-name", "", "selected historical Actions artifact name")
@@ -33,7 +34,7 @@ func main() {
 	}
 	source := baselineArtifact{ID: *baselineArtifactID, Digest: *baselineArtifactDigest, Name: *baselineArtifactName, SizeInBytes: *baselineArtifactBytes}
 	report, program, baselineRaw, selectedArtifact, err := evaluate(
-		*profilePath, *contractPath, *evidenceDir, *baselinePath, *autoBaseline, source, *comparisonStatus, *subject, *runID, *attempt)
+		*profilePath, *contractPath, *evidenceDir, *baselinePath, *autoBaseline, source, *comparisonStatus, *comparisonReason, *subject, *runID, *attempt)
 	if err != nil {
 		exitError(err)
 	}

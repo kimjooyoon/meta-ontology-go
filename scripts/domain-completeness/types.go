@@ -112,6 +112,7 @@ type Investment struct {
 	Budget           SystemBudget `json:"system_budget"`
 	Observed         SystemCost   `json:"observed_system_cost"`
 	ComparisonStatus string       `json:"comparison_status"`
+	ComparisonReason string       `json:"comparison_reason"`
 	Comparison       *Comparison  `json:"comparison,omitempty"`
 }
 
