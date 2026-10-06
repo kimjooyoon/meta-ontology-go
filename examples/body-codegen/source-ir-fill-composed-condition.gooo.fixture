@@ -1,0 +1,16 @@
+package sample
+namespace sample
+entity Integer id "sample://integer"
+activity Select(Integer) -> Integer computes `if __GOOO_BODY_HOLE_condition__ { return __GOOO_BODY_HOLE_yes__ } else { return 0 }` assembling {
+    source_fill intent "Return one for either selected input." {
+        hole "condition"
+        hole "yes"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "integer-predicate-composition/v1" max_expressions "8"
+            hole "yes" grammar "integer-offset-constant/v1" max_expressions "2"
+        }
+    }
+    case "-2" -> "1"
+    case "0" -> "0"
+    case "2" -> "1"
+}

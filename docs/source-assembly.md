@@ -197,9 +197,14 @@ derive assignments max_candidates "16" {
 
 `integer-predicate/v1` derives `true`, `false`, and bounded comparisons between
 `input` and the distinct training inputs. `integer-predicate-composition/v1` adds
-pairwise `input == value` clauses joined with `||` and closed ranges formed by
-`input >= lower && input <= upper`. It does not add nesting or arbitrary Boolean
-formulas. `integer-predicate-outside-range/v1` derives bounded two-sided guards
+pairwise `input == value` clauses joined with `||`, closed ranges formed by
+`input >= lower && input <= upper`, and pairwise exclusions such as
+`input != first && input != second`. These finite compositions make common
+multi-condition paths expressible without adding arbitrary Boolean formulas or
+nesting. The
+[excluded-input fixture](../examples/body-codegen/source-ir-fill-excluded-inputs.gooo.fixture)
+returns a special result for two excluded inputs.
+`integer-predicate-outside-range/v1` derives bounded two-sided guards
 such as `input < lower || input > upper` and the three inclusive-boundary variants.
 It enumerates adjacent cutpoint pairs first, so a small expression cap can retain
 useful local windows. The
@@ -279,7 +284,9 @@ over every integer. The receipt reports the pre-cap expression count, retained
 expressions per hole, total grammar coverage, assignment count and any
 assignments omitted by the cap. The compiler typechecks each complete assignment,
 scores it against the declared cases, and can send the complete choices to Laya
-for ranking; deterministic fallback uses the same scored choices.
+for ranking; deterministic fallback uses the same scored choices. The
+[composed-condition fixture](../examples/body-codegen/source-ir-fill-composed-condition.gooo.fixture)
+shows disjoint input selection with the bounded composition grammar.
 
 | Kind | Source site selected by `at` | Additional field |
 | --- | --- | --- |

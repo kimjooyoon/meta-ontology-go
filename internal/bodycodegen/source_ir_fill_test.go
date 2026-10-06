@@ -343,7 +343,7 @@ func TestSourceDerivedPredicateCompositionFindsDisjointCases(t *testing.T) {
 	candidates, total, complete, err := generateIntegerPredicateExpressions(8, []assemblyspec.Case{
 		{Input: -2}, {Input: 0}, {Input: 2},
 	}, true)
-	if err != nil || complete || total != 29 || !slices.Contains(candidates, "(input >= -2) && (input <= 0)") {
+	if err != nil || complete || total != 32 || !slices.Contains(candidates, "(input >= -2) && (input <= 0)") {
 		t.Fatalf("bounded grammar omitted its closed-range condition: candidates=%v total=%d complete=%v err=%v", candidates, total, complete, err)
 	}
 	source := `package sample
@@ -380,6 +380,39 @@ activity Select(Integer) -> Integer computes ` + "`" + `if __GOOO_BODY_HOLE_cond
 	}
 	if !strings.Contains(result.Source, "||") {
 		t.Fatalf("expected a disjoint-input predicate, got generated source: %s", result.Source)
+	}
+}
+
+func TestSourceDerivedPredicateCompositionFindsPairwiseExclusions(t *testing.T) {
+	candidates, total, complete, err := generateIntegerPredicateExpressions(16, []assemblyspec.Case{
+		{Input: -1}, {Input: 0}, {Input: 2},
+	}, true)
+	want := "(input != -1) && (input != 2)"
+	if err != nil || complete || total != 32 || !slices.Contains(candidates, want) {
+		t.Fatalf("bounded grammar omitted its pairwise exclusion: candidates=%v total=%d complete=%v err=%v", candidates, total, complete, err)
+	}
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-excluded-inputs.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := syntax.Parse(string(source))
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	spec := file.Declarations[1].(*syntax.ActivityDecl).Assembly.Spec.Clone()
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "excluded-inputs.gooo", source, "Exclude", spec, "", "", IRBodyFillOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Report.BodyFill == nil || result.Report.BodyFill.FunctionalAccuracyPct != 100 || !result.Report.TypecheckPassed {
+		t.Fatalf("excluded-input path did not satisfy declared cases and typecheck: %+v", result.Report.BodyFill)
+	}
+	if strings.Contains(result.GoooSource, "derive assignments") || strings.Contains(result.GoooSource, "__GOOO_BODY_HOLE_") {
+		t.Fatalf("generated Gooo source retained unresolved generation instructions: %s", result.GoooSource)
+	}
+	coverage := bodyFillDimension(result, "body_fill_assignment_space_coverage")
+	if coverage.Status != "PROGRESS" {
+		t.Fatalf("truncated grammar assignments were not reflected in completeness: %+v", coverage)
 	}
 }
 
