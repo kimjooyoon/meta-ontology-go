@@ -47,12 +47,13 @@ func buildGenerateArtifacts(options generateOptions, input generateInput, jsonMo
 	runtimePlanPath := ""
 	var runtimePlanData []byte
 	if len(generation.ir.RuntimeBindings) > 0 {
-		if options.runtimePlanFilename == "" {
-			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.filename, "runtime-plan.required", "runtime plan required for runtime bindings", errRuntimePlanRequired, input.file)
+		runtimePlanFilename := options.runtimePlanFilename
+		if runtimePlanFilename == "" {
+			runtimePlanFilename = "runtime-plan.json"
 		}
-		runtimePlanPath, err = resolveOutputPath(root, options.runtimePlanFilename)
+		runtimePlanPath, err = resolveOutputPath(root, runtimePlanFilename)
 		if err != nil {
-			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.runtimePlanFilename, "io.runtime-plan-path", "runtime plan path", err, input.file)
+			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, runtimePlanFilename, "io.runtime-plan-path", "runtime plan path", err, input.file)
 		}
 		document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(input.file, syntax.EntityFieldsV3Support())
 		if err != nil {

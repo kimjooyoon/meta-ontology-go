@@ -14,4 +14,7 @@ tool (
 	github.com/kimjooyoon/meta-ontology-go/scripts/verify
 )
 
-require github.com/kimjooyoon/gooo-decision-runtime v0.2.24-experimental
+require (
+	github.com/kimjooyoon/gooo-decision-runtime v0.2.24-experimental
+	github.com/kimjooyoon/gooo-jev v0.0.0-20260928032625-e146e6dbb34a
+)
