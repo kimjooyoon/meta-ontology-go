@@ -14,6 +14,7 @@ import (
 
 const (
 	recordFieldPredicateGrammar       = "record-field-predicate/v1"
+	recordFieldPredicateV2Grammar     = "record-field-predicate/v2"
 	recordPredicateCompositionGrammar = "record-field-predicate-composition/v1"
 	recordStringLiteralGrammar        = "record-string-literal/v1"
 	recordIntegerLiteralGrammar       = "record-integer-literal/v1"
@@ -62,7 +63,9 @@ type recordFillGrammarContext struct {
 func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGrammar) ([]string, int, bool, error) {
 	switch grammar.Grammar {
 	case recordFieldPredicateGrammar:
-		return c.predicateExpressions(grammar.MaxExpressions)
+		return c.predicateExpressions(grammar.MaxExpressions, false)
+	case recordFieldPredicateV2Grammar:
+		return c.predicateExpressions(grammar.MaxExpressions, true)
 	case recordPredicateCompositionGrammar:
 		return c.composedPredicateExpressions(grammar.MaxExpressions)
 	case recordStringLiteralGrammar:
@@ -76,8 +79,8 @@ func (c recordFillGrammarContext) expressions(grammar assemblyspec.FillHoleGramm
 	}
 }
 
-func (c recordFillGrammarContext) predicateExpressions(maxExpressions int) ([]string, int, bool, error) {
-	atoms, err := c.predicateAtoms()
+func (c recordFillGrammarContext) predicateExpressions(maxExpressions int, integerOrder bool) ([]string, int, bool, error) {
+	atoms, err := c.predicateAtoms(integerOrder)
 	if err != nil {
 		return nil, 0, false, err
 	}
@@ -85,7 +88,7 @@ func (c recordFillGrammarContext) predicateExpressions(maxExpressions int) ([]st
 }
 
 func (c recordFillGrammarContext) composedPredicateExpressions(maxExpressions int) ([]string, int, bool, error) {
-	atoms, err := c.predicateAtoms()
+	atoms, err := c.predicateAtoms(false)
 	if err != nil {
 		return nil, 0, false, err
 	}
@@ -129,16 +132,15 @@ func (c recordFillGrammarContext) composedPredicateExpressions(maxExpressions in
 }
 
 func recordPredicateSelector(expression string) string {
-	if selector, _, ok := strings.Cut(expression, " == "); ok {
-		return selector
-	}
-	if selector, _, ok := strings.Cut(expression, " != "); ok {
-		return selector
+	for _, operator := range []string{" <= ", " >= ", " == ", " != ", " < ", " > "} {
+		if selector, _, ok := strings.Cut(expression, operator); ok {
+			return selector
+		}
 	}
 	return expression
 }
 
-func (c recordFillGrammarContext) predicateAtoms() ([]string, error) {
+func (c recordFillGrammarContext) predicateAtoms(integerOrder bool) ([]string, error) {
 	expressions := make([]string, 0)
 	seen := map[string]bool{}
 	for _, valueCase := range c.cases {
@@ -155,7 +157,8 @@ func (c recordFillGrammarContext) predicateAtoms() ([]string, error) {
 			if scalarTypeID(typeName) != "" {
 				literal, ok := recordFillLiteral(inputs[inputIndex], scalarTypeID(typeName))
 				if ok {
-					appendRecordPredicates(&expressions, seen, root, literal)
+					ordered := integerOrder && scalarTypeID(typeName) == string(semantic.BuiltinIntegerTypeID)
+					appendRecordPredicates(&expressions, seen, root, literal, ordered)
 				}
 				continue
 			}
@@ -174,7 +177,8 @@ func (c recordFillGrammarContext) predicateAtoms() ([]string, error) {
 				}
 				literal, ok := recordFillLiteral(raw, field.TypeID)
 				if ok {
-					appendRecordPredicates(&expressions, seen, root+"."+field.Name, literal)
+					ordered := integerOrder && field.TypeID == string(semantic.BuiltinIntegerTypeID)
+					appendRecordPredicates(&expressions, seen, root+"."+field.Name, literal, ordered)
 				}
 			}
 		}
@@ -182,8 +186,12 @@ func (c recordFillGrammarContext) predicateAtoms() ([]string, error) {
 	return expressions, nil
 }
 
-func appendRecordPredicates(expressions *[]string, seen map[string]bool, selector, literal string) {
-	for _, operator := range []string{"==", "!="} {
+func appendRecordPredicates(expressions *[]string, seen map[string]bool, selector, literal string, integerOrder bool) {
+	operators := []string{"==", "!="}
+	if integerOrder {
+		operators = []string{"<", "<=", ">", ">=", "==", "!="}
+	}
+	for _, operator := range operators {
 		expression := selector + " " + operator + " " + literal
 		if !seen[expression] {
 			seen[expression] = true

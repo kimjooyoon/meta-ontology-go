@@ -297,6 +297,14 @@ and `||` combinations between those predicates, preferring comparisons from
 different fields before same-field pairs. It does not generate nested or
 arbitrary Boolean expressions. Both grammars report the complete finite
 expression count and the retained prefix under `max_expressions`. Use
+`record-field-predicate/v2` when an integer input or record field needs ordered
+comparisons. It adds `<`, `<=`, `>`, and `>=` over observed integer values while
+leaving v1 unchanged. The selected comparison is still bounded by the declared
+training values and candidate cap; Gooo records omitted expressions and checks
+disjoint `holdout_value_case` rows after selection. The
+[integer-boundary fixture](../examples/body-codegen/source-ir-fill-record-integer-boundary.gooo.fixture)
+builds an `input.score > 0` guard from five training records and evaluates two
+separate boundary holdouts. Use
 `record-string-literal/v1`,
 `record-integer-literal/v1`, or `record-boolean-literal/v1` to derive typed
 literals from expected output fields. Gooo forms the bounded Cartesian product,
