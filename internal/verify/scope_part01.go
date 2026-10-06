@@ -147,4 +147,15 @@ func init() {
 		"internal/verify/scope_part01.go",
 	}
 
+	branchScopeAllowlist["agent/gooo-library-multihole-starter-20261006"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/gooo/package_execute_tiny_model_options_test.go",
+		"cmd/gooo/templates/library/README.md",
+		"cmd/gooo/templates/library/body-fill-plans.json",
+		"cmd/gooo/templates/library/core.gooo.template",
+		"docs/language/project-starters.md",
+		"internal/verify/scope_part01.go",
+	}
+
 }

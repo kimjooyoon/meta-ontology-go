@@ -5,12 +5,16 @@
       "package_path": "boundedint/core",
       "activity": "Normalize",
       "plan": {
-        "schema": "gooo/body-codegen-ir-fill-plan/v1",
-        "intent": "Add one to the input. 입력에 1을 더한다.",
-        "hole_id": "value",
+        "schema": "gooo/body-codegen-ir-fill-plan/v2",
+        "intent": "Add one to the input by choosing a base expression and an increment together. 기준식과 증가량을 함께 골라 입력에 1을 더한다.",
+        "holes": [
+          {"id": "seed"},
+          {"id": "step"}
+        ],
         "candidates": [
-          {"id": "increment", "expression": "input + 1"},
-          {"id": "multiply_one", "expression": "input * 1"}
+          {"id": "compose", "fills": {"seed": "input + 0", "step": "1"}},
+          {"id": "double", "fills": {"seed": "input * 2", "step": "0"}},
+          {"id": "subtract", "fills": {"seed": "input - 0", "step": "-1"}}
         ],
         "test_cases": [
           {"input": -4, "expected": -3},
