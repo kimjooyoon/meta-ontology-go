@@ -169,6 +169,7 @@ type IRBodyFillReceipt struct {
 	SelectedCandidateID        string                                `json:"selected_candidate_id"`
 	SelectedExpression         string                                `json:"selected_expression"`
 	HoleFills                  []IRBodyFillHoleFill                  `json:"hole_fills,omitempty"`
+	TinyModelFocusHole         string                                `json:"tiny_model_focus_hole,omitempty"`
 	CandidateGeneration        *IRBodyFillCandidateGenerationReceipt `json:"candidate_generation,omitempty"`
 	BestCandidateID            string                                `json:"best_candidate_id"`
 	BestAccuracyPercent        float64                               `json:"best_candidate_accuracy_percent"`
@@ -401,12 +402,15 @@ func generateWithIRBodyFillOptions(
 	}
 	requestOptions := make([]decisionroute.Option, 0, len(plan.Candidates))
 	modelCandidates := bodyFillModelCandidates(holes, plan.Candidates)
+	tinyModelFocusHole := ""
 	if usingTinyGo {
-		primaryHole := ""
-		if plan.Schema == bodyFillMultiPlanSchema && len(holes) > 0 {
-			primaryHole = holes[0].ID
+		if plan.Schema == bodyFillMultiPlanSchema {
+			tinyModelFocusHole, err = tinyGoBodyFillFocusHole(holes, plan.Candidates)
+			if err != nil {
+				return Result{}, err
+			}
 		}
-		requestOptions, err = tinyGoBodyFillOptionsForHole(plan.Candidates, primaryHole)
+		requestOptions, err = tinyGoBodyFillOptionsForHole(plan.Candidates, tinyModelFocusHole)
 		if err != nil {
 			return Result{}, err
 		}
@@ -543,8 +547,9 @@ func generateWithIRBodyFillOptions(
 		HoleToken: bodyFillHoleToken(holes[0].ID), IRPlanSHA256: digest(planBytes),
 		ProposedCandidateID: proposed.ID, ProposedAccuracyPct: proposedScore.AccuracyPercent,
 		SelectedCandidateID: selected.ID, SelectedExpression: selected.Expression,
-		HoleFills:       holeFills,
-		BestCandidateID: best.ID, BestAccuracyPercent: best.AccuracyPercent,
+		HoleFills:          holeFills,
+		TinyModelFocusHole: tinyModelFocusHole,
+		BestCandidateID:    best.ID, BestAccuracyPercent: best.AccuracyPercent,
 		SelectionRegretPP:   best.AccuracyPercent - proposedScore.AccuracyPercent,
 		SelectionAdjustment: selectionAdjustment,
 		Decision:            decision, CandidateScores: scores,

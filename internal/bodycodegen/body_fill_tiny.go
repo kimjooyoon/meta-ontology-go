@@ -55,6 +55,38 @@ func tinyGoBodyFillOptionsForHole(candidates []IRBodyFillCandidate, holeID strin
 	return options, nil
 }
 
+// tinyGoBodyFillFocusHole chooses a hole whose supported root operations
+// uniquely map every complete multi-hole assignment to a TinyGo class. The
+// TinyGo model only predicts one of its eight operation labels, so assignments
+// that cannot be distinguished this way remain unsupported by this model path.
+func tinyGoBodyFillFocusHole(holes []IRBodyFillHole, candidates []IRBodyFillCandidate) (string, error) {
+	for _, hole := range holes {
+		seen := make(map[string]struct{}, len(candidates))
+		usable := true
+		for _, candidate := range candidates {
+			expression, ok := candidate.Fills[hole.ID]
+			if !ok {
+				usable = false
+				break
+			}
+			operation, err := tinyGoRootOperation(expression)
+			if err != nil {
+				usable = false
+				break
+			}
+			if _, duplicate := seen[operation]; duplicate {
+				usable = false
+				break
+			}
+			seen[operation] = struct{}{}
+		}
+		if usable {
+			return hole.ID, nil
+		}
+	}
+	return "", fmt.Errorf("tiny_go multi-hole selection requires one hole whose supported root operations uniquely distinguish every complete assignment")
+}
+
 func tinyGoRootOperation(expression string) (string, error) {
 	parsed, err := parser.ParseExpr(expression)
 	if err != nil {

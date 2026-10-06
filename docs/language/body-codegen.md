@@ -293,14 +293,16 @@ go run ./cmd/gooo body-codegen --json --fill-plan \
 
 Set `GOOO_LAYA_URL` to let Laya rank the declared assignments. Without a model,
 Gooo selects deterministically and still scores every assignment. The compact
-`--tiny-model` path also accepts v2 plans when every complete assignment has a
-distinct supported root operation in its first declared hole. The current model
-predicts one of eight operation labels from the intent; Gooo maps that label to
-the assignment through that first-hole expression. It does not score the remaining
-holes jointly, so assignments that share that operation cannot be distinguished
-by this model and are rejected before inference. Source-derived grammar candidate
-sets also remain on Laya or deterministic selection. The model never invents a
-fill, and every selected assignment still passes Gooo's type and finite-case checks.
+`--tiny-model` path also accepts v2 plans when at least one hole gives every
+complete assignment a distinct supported root operation. Gooo picks the first
+such hole in declaration order and records it as `tiny_model_focus_hole`. The
+current model predicts one of eight operation labels from the intent; Gooo maps
+that label to a complete assignment through the focused hole's expression. It
+does not score the remaining holes jointly, so assignments that cannot be
+distinguished through any one hole are rejected before inference. Source-derived
+grammar candidate sets also remain on Laya or deterministic selection. The model
+never invents a fill, and every selected assignment still passes Gooo's type and
+finite-case checks.
 
 Both plan versions support activities with one to sixteen `Integer` inputs and
 one `Integer` output. Unary cases retain the `input` field. Multi-input cases
