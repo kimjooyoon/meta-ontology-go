@@ -18,24 +18,7 @@ func TestSourceRecordIRBodyFillUsesTinyGoForUniqueGeneratedOperations(t *testing
 func runTinyGoRecordBodyFill(t *testing.T) (Result, IRBodyFillPlan, *IRBodyFillCandidateGenerationReceipt,
 	*recordingTinyGoBodyFillProvider, float64) {
 	t.Helper()
-	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, diagnostics := ParseBodyFile("record-fill-tiny.gooo", source)
-	if diagnostics.HasErrors() {
-		t.Fatal(diagnostics)
-	}
-	var activity *syntax.ActivityDecl
-	for _, declaration := range file.Declarations {
-		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == "ReviewCandidate" {
-			activity = candidate
-			break
-		}
-	}
-	if activity == nil || activity.Assembly == nil {
-		t.Fatal("TinyGo record body-fill activity not found")
-	}
+	source, activity := readTinyGoRecordBodyFillFixture(t)
 	plan, generation, err := sourceIRBodyFillPlan("record-fill-tiny.gooo", source,
 		"ReviewCandidate", &activity.Assembly.Spec)
 	if err != nil {
@@ -49,6 +32,25 @@ func runTinyGoRecordBodyFill(t *testing.T) (Result, IRBodyFillPlan, *IRBodyFillC
 		t.Fatal(err)
 	}
 	return result, plan, generation, provider, modelLoadMS
+}
+
+func readTinyGoRecordBodyFillFixture(t *testing.T) ([]byte, *syntax.ActivityDecl) {
+	t.Helper()
+	source, err := os.ReadFile("../../examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := ParseBodyFile("record-fill-tiny.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+	for _, declaration := range file.Declarations {
+		if activity, ok := declaration.(*syntax.ActivityDecl); ok && activity.Name == "ReviewCandidate" {
+			return source, activity
+		}
+	}
+	t.Fatal("TinyGo record body-fill activity not found")
+	return nil, nil
 }
 
 func assertTinyGoRecordBodyFill(t *testing.T, result Result, plan IRBodyFillPlan,
@@ -91,7 +93,48 @@ func assertTinyGoRecordBodyFill(t *testing.T, result Result, plan IRBodyFillPlan
 	}
 }
 
-func TestTinyGoRecordFillRejectsAssignmentsWithoutSeparatingHoleBeforeInference(t *testing.T) {
+func TestTinyGoRecordFillGroupsCandidatesByOperationAndScoresWithinGroup(t *testing.T) {
+	result, provider := runGroupedTinyGoRecordBodyFill(t)
+	receipt := result.Report.BodyFill
+	if provider.calls != 1 || receipt == nil || receipt.TinyModelFocusHole != "condition" ||
+		receipt.ProposedCandidateID != "accept-correct" || receipt.SelectedCandidateID != "accept-correct" ||
+		receipt.TestCasesPassed != 2 || receipt.TestCasesTotal != 2 || receipt.HoldoutCasesPassed != 2 {
+		t.Fatalf("operation class did not resolve to the best compatible complete assignment: calls=%d receipt=%+v", provider.calls, receipt)
+	}
+	if len(provider.request.Question.Options) != 2 ||
+		provider.request.Question.Options[0].ID != decisionroute.TinyGoOperationAnd ||
+		provider.request.Question.Options[1].ID != decisionroute.TinyGoOperationOr {
+		t.Fatalf("shared operation classes were not collapsed into distinct choices: %+v", provider.request.Question.Options)
+	}
+	if len(receipt.CandidateScores) != 3 || receipt.CandidateScores[0].TestCasesPassed != 2 ||
+		receipt.CandidateScores[1].TestCasesPassed != 1 || receipt.CandidateScores[2].TestCasesPassed != 1 {
+		t.Fatalf("complete assignments were not scored before grouped selection: %+v", receipt.CandidateScores)
+	}
+}
+
+func runGroupedTinyGoRecordBodyFill(t *testing.T) (Result, *recordingTinyGoBodyFillProvider) {
+	t.Helper()
+	source, activity := readTinyGoRecordBodyFillFixture(t)
+	plan, _, err := sourceIRBodyFillPlan("record-fill-tiny.gooo", source,
+		"ReviewCandidate", &activity.Assembly.Spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan.Candidates = []IRBodyFillCandidate{
+		{ID: "accept-correct", Fills: map[string]string{"condition": `input.reviewed && input.state == "ready"`, "accepted": `"accepted"`}},
+		{ID: "accept-wrong-label", Fills: map[string]string{"condition": `input.reviewed && input.state == "ready"`, "accepted": `"approved"`}},
+		{ID: "or-condition", Fills: map[string]string{"condition": `input.reviewed || input.state == "ready"`, "accepted": `"accepted"`}},
+	}
+	provider := &recordingTinyGoBodyFillProvider{operation: decisionroute.TinyGoOperationAnd}
+	result, err := generateWithIRBodyFillOptions(context.Background(), "record-fill-tiny.gooo", source,
+		"ReviewCandidate", plan, "", "", IRBodyFillOptions{}, provider)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return result, provider
+}
+
+func TestTinyGoRecordFillRejectsAssignmentsWithoutOperationClassBeforeInference(t *testing.T) {
 	source, activity := readRecordBodyFillFixture(t)
 	spec := activity.Assembly.Spec.Clone()
 	for candidateIndex := range spec.FillPlan.Candidates {
@@ -112,7 +155,7 @@ func TestTinyGoRecordFillRejectsAssignmentsWithoutSeparatingHoleBeforeInference(
 	provider := &recordingTinyGoBodyFillProvider{operation: decisionroute.TinyGoOperationEqual}
 	_, err = generateWithIRBodyFillOptions(context.Background(), "record-fill.gooo", source, "ReviewCandidate",
 		plan, "", "", IRBodyFillOptions{}, provider)
-	if err == nil || !strings.Contains(err.Error(), "uniquely distinguish every complete assignment") || provider.calls != 0 {
-		t.Fatalf("TinyGo ran without a separating typed operation: calls=%d err=%v", provider.calls, err)
+	if err == nil || !strings.Contains(err.Error(), "at least two distinct supported root operations") || provider.calls != 0 {
+		t.Fatalf("TinyGo ran without distinct typed operation classes: calls=%d err=%v", provider.calls, err)
 	}
 }

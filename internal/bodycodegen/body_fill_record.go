@@ -215,7 +215,7 @@ func generateWithRecordIRBodyFillOptions(
 		if err != nil {
 			return Result{}, err
 		}
-		requestOptions, err = tinyGoBodyFillOptionsForHole(plan.Candidates, tinyModelFocusHole)
+		requestOptions, err = tinyGoRecordBodyFillOptionsForHole(plan.Candidates, tinyModelFocusHole)
 		if err != nil {
 			return Result{}, err
 		}
@@ -230,7 +230,7 @@ func generateWithRecordIRBodyFillOptions(
 	}
 	instructions := "Fill every typed expression hole in this Gooo body using one complete listed assignment. Choose only a listed assignment. Use the source intent and finite record case scores; do not invent code or edit another IR node."
 	if usingTinyGo {
-		instructions = "Classify the source intent into one offered operation label. Gooo maps that label to the complete listed assignment and checks it against typed candidates and declared cases. Do not invent code or edit another IR node."
+		instructions = "Classify the source intent into one offered operation label for the focused hole. Gooo keeps only complete assignments in that operation class, then selects the highest-scoring compatible assignment. Do not invent code or edit another IR node."
 	}
 	request := decisionroute.Request{
 		Schema: decisionroute.RequestSchema, State: string(stateBytes), ProviderModel: plan.ProviderModel,
@@ -240,6 +240,7 @@ func generateWithRecordIRBodyFillOptions(
 	}
 	if usingTinyGo {
 		request.Intent = plan.Intent
+		request.Fallback = requestOptions[0].ID
 	}
 	decisionStarted := time.Now()
 	decisionContext, cancel := context.WithTimeout(ctx, irBodyFillDecisionBudget)
@@ -269,9 +270,16 @@ func generateWithRecordIRBodyFillOptions(
 			return Result{}, err
 		}
 	}
-	proposed, ok := candidateByID(modelCandidates, decision.Selected)
+	proposedID := decision.Selected
+	if usingTinyGo {
+		proposedID, err = tinyGoRecordCandidateForOperation(tinyModelFocusHole, decision.Selected, plan.Candidates, scores)
+		if err != nil {
+			return Result{}, err
+		}
+	}
+	proposed, ok := candidateByID(modelCandidates, proposedID)
 	if !ok {
-		return Result{}, fmt.Errorf("record body-fill decision selected undeclared candidate %q", decision.Selected)
+		return Result{}, fmt.Errorf("record body-fill decision selected undeclared candidate %q", proposedID)
 	}
 	best := bestBodyFillCandidate(scores)
 	proposedScore := scoreByID(scores, proposed.ID)

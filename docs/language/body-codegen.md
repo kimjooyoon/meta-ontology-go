@@ -25,11 +25,12 @@ Gooo source can declare candidate expressions for a record-valued activity
 body. The compiler checks each complete assignment against the record shape
 and declared `value_case` examples, then emits only a listed assignment. The
 default chooser is deterministic. An optional local `--tiny-model` path can
-select assignments when one hole gives every candidate a distinct supported
-operation. The local model sees the source intent and predicts one of its eight
-operation labels; Gooo maps that label to the complete assignment. It does not
-send record cases or candidate summaries to the model. If no hole uniquely
-separates the assignments, generation fails before inference. An optional
+select assignments when a hole exposes at least two distinct supported
+operations. The local model sees the source intent and predicts one of its eight
+operation labels. Gooo keeps assignments whose focused hole has that operation,
+then uses finite training scores to choose within the group. It does not send
+record cases or candidate summaries to the model. If no hole offers more than
+one supported operation class, generation fails before inference. An optional
 `GOOO_LAYA_URL` endpoint remains available for experiments that need an
 external chooser. In every path, Gooo typechecks the complete assignments,
 scores them on declared cases, emits the selected body and evaluates the finite

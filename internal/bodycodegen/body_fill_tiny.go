@@ -55,10 +55,9 @@ func tinyGoBodyFillOptionsForHole(candidates []IRBodyFillCandidate, holeID strin
 	return options, nil
 }
 
-// tinyGoBodyFillFocusHole chooses a hole whose supported root operations
-// uniquely map every complete assignment to a TinyGo class. The TinyGo model
-// only predicts one of its eight operation labels, so assignments that cannot
-// be distinguished this way remain unsupported by this model path.
+// tinyGoBodyFillFocusHole chooses a hole whose operation labels partition the
+// complete assignments into at least two groups. Gooo resolves assignments
+// within the predicted group using their finite training scores.
 func tinyGoBodyFillFocusHole(holes []IRBodyFillHole, candidates []IRBodyFillCandidate) (string, error) {
 	for _, hole := range holes {
 		seen := make(map[string]struct{}, len(candidates))
@@ -74,17 +73,64 @@ func tinyGoBodyFillFocusHole(holes []IRBodyFillHole, candidates []IRBodyFillCand
 				usable = false
 				break
 			}
-			if _, duplicate := seen[operation]; duplicate {
-				usable = false
-				break
-			}
 			seen[operation] = struct{}{}
 		}
-		if usable {
+		if usable && len(seen) > 1 {
 			return hole.ID, nil
 		}
 	}
-	return "", fmt.Errorf("tiny_go assignment selection requires one hole whose supported root operations uniquely distinguish every complete assignment")
+	return "", fmt.Errorf("tiny_go record assignment selection requires a hole with at least two distinct supported root operations")
+}
+
+func tinyGoRecordBodyFillOptionsForHole(candidates []IRBodyFillCandidate, holeID string) ([]decisionroute.Option, error) {
+	options := make([]decisionroute.Option, 0, len(candidates))
+	seen := make(map[string]struct{}, len(candidates))
+	for _, candidate := range candidates {
+		expression, ok := candidate.Fills[holeID]
+		if !ok {
+			return nil, fmt.Errorf("candidate %q has no fill for tiny_go focus hole %q", candidate.ID, holeID)
+		}
+		operation, err := tinyGoRootOperation(expression)
+		if err != nil {
+			return nil, fmt.Errorf("candidate %q cannot map to a tiny_go operation: %w", candidate.ID, err)
+		}
+		if _, duplicate := seen[operation]; duplicate {
+			continue
+		}
+		seen[operation] = struct{}{}
+		options = append(options, decisionroute.Option{
+			ID: operation, Operation: operation,
+			Description: fmt.Sprintf("Keep complete assignments whose %s hole uses this operation.", holeID),
+		})
+	}
+	if len(options) < 2 {
+		return nil, fmt.Errorf("tiny_go record focus hole %q does not offer multiple operation classes", holeID)
+	}
+	return options, nil
+}
+
+func tinyGoRecordCandidateForOperation(holeID, operation string, candidates []IRBodyFillCandidate,
+	scores []IRBodyFillCandidateScore) (string, error) {
+	selectedID := ""
+	selectedCases := -1
+	for _, candidate := range candidates {
+		expression, ok := candidate.Fills[holeID]
+		if !ok {
+			continue
+		}
+		candidateOperation, err := tinyGoRootOperation(expression)
+		if err != nil || candidateOperation != operation {
+			continue
+		}
+		score := scoreByID(scores, candidate.ID)
+		if score.TestCasesPassed > selectedCases {
+			selectedID, selectedCases = candidate.ID, score.TestCasesPassed
+		}
+	}
+	if selectedID == "" {
+		return "", fmt.Errorf("tiny_go operation %q has no compatible complete record assignment", operation)
+	}
+	return selectedID, nil
 }
 
 func tinyGoRootOperation(expression string) (string, error) {
