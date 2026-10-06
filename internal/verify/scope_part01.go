@@ -63,6 +63,16 @@ func init() {
 }
 
 func init() {
+	branchScopeAllowlist["agent/gooo-language-docs-current-20261006"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"docs/language-direction.ko.md",
+		"docs/language/body-codegen.md",
+		"internal/verify/scope_part01.go",
+	}
+}
+
+func init() {
 	branchScopeAllowlist["agent/gooo-library-model-starter-20261005"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
