@@ -201,6 +201,20 @@ a claimed completion whose evidence has not been validated. Changes to this
 Gooo classifier change the profile semantic hash, so earlier receipts with the
 previous rule are incompatible comparison baselines.
 
+The Gooo activity `CanCompareDomainCompletenessAxes` also owns axis comparison
+eligibility. Its ordered inputs are the prior/current unknown counts,
+prior/current refuted counts, and prior/current status strings. Both statuses
+must be `PASS` or `PROGRESS`, and all four counts must be zero. The adapter
+first checks receipt identity, matching scope and denominators, and valid
+counts, then calls the generated Boolean rule. Every receipt run verifies this
+projection against the source alongside the status and outcome projections.
+
+An unresolved axis has `numerator_delta: null` in JSON. A comparable axis can
+report a positive, zero, or negative delta, including `0/N` as its baseline.
+Consumers should inspect the comparison status and accept a numeric delta only
+for `COMPARABLE`. The changed profile semantic hash prevents comparisons with
+receipts whose classification or comparison rule differs.
+
 Without a separate domain contract, declaration coverage is `UNKNOWN` with a
 zero denominator; the target source is not allowed to define its own scope. With
 `--domain-contract <contract.gooo>`, the compiler compares the contract's
