@@ -509,11 +509,13 @@ jobs:
 
           - Reuse a saved Gooo package program on new inputs with package replay. This path makes zero new model calls.
           - Feed source-owned or externally planned construction to a Gooo explanation tool with package execute --construction-receipt.
+          - Distinguish the recorded model proposal from the final selected record-field construction, including partial first proposals.
           - Track earlier body-fill cases, holdouts and probes when distinguishing new runtime inputs from construction inputs.
 
           Start with the [imported-package example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/package-imports/README.md) or the [saved-program example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/package-diagnostic-replay/README.md).
           Native package execution requires a Go 1.27.1 toolchain on the host. Pass --go when its executable is outside PATH.
           Gooo explanations return next-operation suggestions as data; the calling tool decides how to consume them.
+          The [own-model observation](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/research/release-065-dogfood-20261008/summary.json) retains paired construction, replay, and proposal-label correction records with their measurement scope.
 
           ## Release evidence
 
