@@ -53,7 +53,7 @@ func TestCompositionInputSeparationFollowsIntermediateValues(t *testing.T) {
 	graph := compositionGraph{count: 2}
 	graph.nodes[0] = CompositionActivity{ID: "first", InputType: "Integer"}
 	graph.nodes[1] = CompositionActivity{ID: "second", InputType: "Integer", Assembling: true}
-	seen := compositionSelectionInputs{1: map[string]struct{}{"[7]": {}}}
+	seen := compositionSelectionInputs{nodes: [compositionLimit]map[string]struct{}{1: {"[7]": {}}}}
 	trace := CompositionTrace{Deliveries: []CompositionDelivery{
 		{ActivityID: "first", Input: json.RawMessage(`9007199254740993`), Actual: json.RawMessage(`7`)},
 		{ActivityID: "second", Input: json.RawMessage(`7`), Actual: json.RawMessage(`8`)},

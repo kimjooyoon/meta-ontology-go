@@ -34,9 +34,6 @@ func MeasureEarlierFillInputs(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return unknown
 	}
-	if len(graph.plan.Preparations) > 0 {
-		return graph.unobservedCallInputs(suite)
-	}
 	seen, err := graph.selectionInputs(ctx, filename, source, prior)
 	if err != nil {
 		return unknown
@@ -83,7 +80,7 @@ func (graph *compositionGraph) includeEarlierFill(prior Composition, sets *compo
 			keys = append(keys, key)
 		}
 		slices.Sort(keys)
-		sets[i], graph.nodes[i].Assembling = set, true
+		sets.nodes[i], graph.nodes[i].Assembling = set, true
 		return ConstructionInputStage{ActivityID: node.ID, SourceSHA256: report.BodyFill.OriginalSourceDigest,
 			PlanSHA256: report.BodyFill.IRPlanSHA256, InputSetSHA256: compositionDigest(keys), UniqueInputs: len(set)}, nil
 	}

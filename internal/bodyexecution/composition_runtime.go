@@ -34,41 +34,45 @@ type CompositionPortDelivery struct {
 }
 
 type CompositionTrace struct {
-	CaseIndex  int                   `json:"case_index"`
-	Deliveries []CompositionDelivery `json:"deliveries"`
+	CaseIndex            int                    `json:"case_index"`
+	Deliveries           []CompositionDelivery  `json:"deliveries"`
+	CalledInputsObserved bool                   `json:"called_inputs_observed,omitempty"`
+	Calls                []CompositionCallInput `json:"calls,omitempty"`
 }
 
 type CompositionRuntime struct {
-	Schema               string                     `json:"schema"`
-	Stage                string                     `json:"stage"`
-	Failure              string                     `json:"failure,omitempty"`
-	CompositionSHA256    string                     `json:"composition_sha256"`
-	OriginalSourceSHA256 string                     `json:"original_source_sha256"`
-	SelectedSourceSHA256 string                     `json:"selected_source_sha256"`
-	TypedPlanSHA256      string                     `json:"typed_plan_sha256"`
-	GeneratedSHA256      string                     `json:"generated_sha256"`
-	DriverSHA256         string                     `json:"driver_sha256"`
-	RuntimeSuiteSHA256   string                     `json:"runtime_suite_sha256"`
-	ExecutableSHA256     string                     `json:"executable_sha256"`
-	GoToolSHA256         string                     `json:"go_tool_sha256"`
-	GoToolSelection      string                     `json:"go_tool_selection"`
-	GoVersion            string                     `json:"go_version"`
-	ProducerSourceSHA    string                     `json:"producer_source_sha"`
-	ProducerModule       *buildidentity.Module      `json:"producer_module,omitempty"`
-	Toolchain            ProcessObservation         `json:"toolchain"`
-	Build                ProcessObservation         `json:"build"`
-	Runs                 []ProcessObservation       `json:"runs"`
-	Traces               []CompositionTrace         `json:"traces"`
-	ProjectionReplayed   bool                       `json:"projection_replayed"`
-	RuntimeReplayed      bool                       `json:"runtime_replayed"`
-	FinitePassed         int                        `json:"finite_passed"`
-	FiniteTotal          int                        `json:"finite_total"`
-	InputSeparation      CompositionInputSeparation `json:"input_separation"`
-	ModelCalls           int                        `json:"model_calls"`
-	ElapsedNS            int64                      `json:"elapsed_ns"`
-	Scope                string                     `json:"scope"`
-	Artifact             *ArtifactObservation       `json:"artifact,omitempty"`
-	ToolchainReference   *ToolchainObservation      `json:"toolchain_reference,omitempty"`
+	Schema                   string                     `json:"schema"`
+	Stage                    string                     `json:"stage"`
+	Failure                  string                     `json:"failure,omitempty"`
+	CompositionSHA256        string                     `json:"composition_sha256"`
+	OriginalSourceSHA256     string                     `json:"original_source_sha256"`
+	SelectedSourceSHA256     string                     `json:"selected_source_sha256"`
+	TypedPlanSHA256          string                     `json:"typed_plan_sha256"`
+	GeneratedSHA256          string                     `json:"generated_sha256"`
+	DriverSHA256             string                     `json:"driver_sha256"`
+	ObservedProjectionSHA256 string                     `json:"observed_projection_sha256,omitempty"`
+	ObservedDriverSHA256     string                     `json:"observed_driver_sha256,omitempty"`
+	RuntimeSuiteSHA256       string                     `json:"runtime_suite_sha256"`
+	ExecutableSHA256         string                     `json:"executable_sha256"`
+	GoToolSHA256             string                     `json:"go_tool_sha256"`
+	GoToolSelection          string                     `json:"go_tool_selection"`
+	GoVersion                string                     `json:"go_version"`
+	ProducerSourceSHA        string                     `json:"producer_source_sha"`
+	ProducerModule           *buildidentity.Module      `json:"producer_module,omitempty"`
+	Toolchain                ProcessObservation         `json:"toolchain"`
+	Build                    ProcessObservation         `json:"build"`
+	Runs                     []ProcessObservation       `json:"runs"`
+	Traces                   []CompositionTrace         `json:"traces"`
+	ProjectionReplayed       bool                       `json:"projection_replayed"`
+	RuntimeReplayed          bool                       `json:"runtime_replayed"`
+	FinitePassed             int                        `json:"finite_passed"`
+	FiniteTotal              int                        `json:"finite_total"`
+	InputSeparation          CompositionInputSeparation `json:"input_separation"`
+	ModelCalls               int                        `json:"model_calls"`
+	ElapsedNS                int64                      `json:"elapsed_ns"`
+	Scope                    string                     `json:"scope"`
+	Artifact                 *ArtifactObservation       `json:"artifact,omitempty"`
+	ToolchainReference       *ToolchainObservation      `json:"toolchain_reference,omitempty"`
 }
 
 // ExecuteComposition rebuilds a source-replayed graph and immediately runs it
@@ -215,9 +219,9 @@ func runCompositionProcess(ctx context.Context, root, executable string, input [
 }
 
 func (graph compositionGraph) nativeTraces(output []byte, suite CompositionCases) ([]CompositionTrace, int, error) {
-	var rows [][]json.RawMessage
-	if err := json.Unmarshal(output, &rows); err != nil || len(rows) != len(suite.Cases) {
-		return nil, 0, fmt.Errorf("compiled composition output case count differs")
+	rows, calls, err := graph.nativeCallRows(output, len(suite.Cases))
+	if err != nil {
+		return nil, 0, err
 	}
 	traces := make([]CompositionTrace, len(rows))
 	passed := 0
@@ -226,6 +230,9 @@ func (graph compositionGraph) nativeTraces(output []byte, suite CompositionCases
 			return nil, 0, fmt.Errorf("compiled composition output activity count differs")
 		}
 		trace := CompositionTrace{CaseIndex: c, Deliveries: make([]CompositionDelivery, graph.count)}
+		if calls != nil {
+			trace.CalledInputsObserved, trace.Calls = true, calls[c]
+		}
 		for i, node := range graph.nodes[:graph.count] {
 			actual, err := graph.canonicalValue(row[i], node.OutputType)
 			if err != nil {

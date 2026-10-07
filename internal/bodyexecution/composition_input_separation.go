@@ -22,7 +22,7 @@ type CompositionInputSeparation struct {
 
 func unknownCompositionInputSeparation(reason string) CompositionInputSeparation {
 	return CompositionInputSeparation{Status: "UNKNOWN", Reason: reason,
-		Scope: "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"}
+		Scope: "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"}
 }
 
 type compositionInputObservation struct {
@@ -32,32 +32,12 @@ type compositionInputObservation struct {
 
 func (graph compositionGraph) measureInputSeparation(ctx context.Context, filename string, source []byte,
 	prior Composition, suite CompositionCases, traces []CompositionTrace) CompositionInputSeparation {
-	if len(graph.plan.Preparations) > 0 {
-		return graph.unobservedCallInputs(suite)
-	}
 	result := unknownCompositionInputSeparation("NO_DISJOINT_INPUTS")
 	seen, err := graph.selectionInputs(ctx, filename, source, prior)
 	if err != nil {
 		return unknownCompositionInputSeparation("SELECTION_INPUTS_UNAVAILABLE")
 	}
 	return graph.measureKnownInputSeparation(suite, traces, seen, result)
-}
-
-func (graph compositionGraph) unobservedCallInputs(suite CompositionCases) CompositionInputSeparation {
-	result := unknownCompositionInputSeparation("CALLED_ASSEMBLY_INPUTS_NOT_OBSERVED")
-	result.Scope = "unique root-input tuples observed; constructed helper call arguments are not traced, so separation from helper selection cases remains unknown; finite output checks remain separate"
-	rows, err := graph.inputRows(suite)
-	if err != nil {
-		return result
-	}
-	unique := make(map[string]bool, len(rows))
-	for _, row := range rows {
-		raw, _ := json.Marshal(row)
-		unique[string(raw)] = true
-	}
-	result.UniqueInputs, result.UnknownInputs = len(unique), len(unique)
-	result.DuplicateRows = len(rows) - len(unique)
-	return result
 }
 
 func (graph compositionGraph) measureKnownInputSeparation(suite CompositionCases, traces []CompositionTrace,
@@ -101,7 +81,11 @@ func (graph compositionGraph) measureKnownInputSeparation(suite CompositionCases
 		result.DisjointCasesPassed = 0
 		return result
 	}
-	return finishInputSeparation(result)
+	result = finishInputSeparation(result)
+	if result.UnknownInputs > 0 && seen.unobservedConstructionCalls {
+		result.Reason = "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED"
+	}
+	return result
 }
 
 func finishInputSeparation(result CompositionInputSeparation) CompositionInputSeparation {
@@ -121,6 +105,22 @@ func (graph compositionGraph) classifyInputTrace(seen compositionSelectionInputs
 	if len(trace.Deliveries) != graph.count || !graph.hasAssembly() {
 		return compositionInputObservation{kind: "unknown"}
 	}
+	observed := false
+	classify := func(node CompositionActivity, inputs []json.RawMessage, set map[string]struct{}, indirect bool) {
+		observed = true
+		key, err := graph.selectionInputKey(node, inputs)
+		if err != nil || len(set) == 0 {
+			if result.kind != "overlap" {
+				result.kind = "unknown"
+			}
+			return
+		}
+		if _, overlap := set[key]; overlap {
+			result.kind = "overlap"
+		} else if indirect && result.kind != "overlap" {
+			result.kind = "unknown"
+		}
+	}
 	for i, delivery := range trace.Deliveries {
 		if delivery.ActivityID != graph.nodes[i].ID {
 			return compositionInputObservation{kind: "unknown"}
@@ -138,16 +138,20 @@ func (graph compositionGraph) classifyInputTrace(seen compositionSelectionInputs
 				inputs[p] = input.Value
 			}
 		}
-		key, err := graph.selectionInputKey(graph.nodes[i], inputs)
-		if err != nil || len(seen[i]) == 0 {
-			if result.kind != "overlap" {
-				result.kind = "unknown"
-			}
-			continue
+		classify(graph.nodes[i], inputs, seen.nodes[i], seen.unobservedConstructionCalls)
+	}
+	if len(graph.plan.Preparations) > 0 && !trace.CalledInputsObserved {
+		return compositionInputObservation{kind: "unknown", passed: result.passed}
+	}
+	for _, call := range trace.Calls {
+		node, ok := graph.called[call.ActivityID]
+		if !ok || graph.index(call.RootActivityID) < 0 {
+			return compositionInputObservation{kind: "unknown"}
 		}
-		if _, overlap := seen[i][key]; overlap {
-			result.kind = "overlap"
-		}
+		classify(node, call.Inputs, seen.called[node.ID], seen.unobservedConstructionCalls)
+	}
+	if !observed {
+		result.kind = "unknown"
 	}
 	return result
 }

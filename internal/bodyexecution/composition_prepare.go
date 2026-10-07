@@ -54,6 +54,15 @@ func prepareCompositionGraphForEntry(ctx context.Context, filename string, sourc
 	if err := graph.bindCallConstruction(ctx, filename, source, model); err != nil {
 		return graph, err
 	}
+	graph.called = make(map[string]CompositionActivity, len(graph.plan.Preparations))
+	for _, helper := range graph.plan.Preparations {
+		node := CompositionActivity{Name: helper.Name, ID: helper.ID, InputFrom: -1}
+		if err := graph.bindActivityInputs(file, &node, false); err != nil {
+			return graph, err
+		}
+		node.bindEntityIDs(model)
+		graph.called[helper.ID] = node
+	}
 	graph.plan.Activities = append([]CompositionActivity(nil), graph.nodes[:graph.count]...)
 	return graph, nil
 }

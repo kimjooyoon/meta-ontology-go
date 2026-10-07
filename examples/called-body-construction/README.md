@@ -83,11 +83,17 @@ before their own selection. The package `--assembly-model` route guides supporte
 choice profiles. `body-compose --fill-model` supports called source fills; the
 package `--tiny-model` adapter still targets its earlier workspace fill stage.
 
-The runtime traces graph activities. It does not yet retain every helper-call
-argument tuple. Consequently, input separation reports
-`UNKNOWN / CALLED_ASSEMBLY_INPUTS_NOT_OBSERVED`, even when graph outputs pass.
-New root inputs may map to previously observed helper inputs. Construction case
-coverage and native output checks retain their own denominators.
+Fresh runtime observations now retain constructed helper arguments in
+`traces[].calls`. The four inputs here are disjoint from the diagnostic helper's
+five declared selection inputs. Input separation counts whole root cases and
+compares the actual helper arguments, including int64 values above 2^53.
+Construction case coverage and native output checks retain their own denominators.
+Earlier published receipts describe their original compiler's narrower scope.
+
+When one assembling helper calls another during candidate scoring, that earlier
+argument history is still unobserved. Fresh inputs in such constructions remain
+`UNKNOWN / CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED`. A skipped helper call also
+earns no new-input credit. See the [measurement contract](../../docs/native-body-composition.md#input-separation).
 
 Each helper is selected against its own declared cases. A later caller failure
 does not automatically reopen an earlier helper choice. The native regression
@@ -107,9 +113,11 @@ define which dependent constructions can be retained when a helper changes.
 함수를 여러 곳에서 불러도 부품을 매번 다시 조립하지 않습니다.
 
 각 부품에서 무엇을 시도했고 몇 사례를 만족했는지 기록이 남습니다. 최종 앱의
-실행 결과와 부품의 조립 점수는 따로 읽습니다. 아직 보조 함수에 전달된 모든
-인자를 기록하지 않으므로, 새로운 입력에서도 잘 되는지에 대한 지표는 미확인으로
-남깁니다. 실제로 관측한 범위부터 조금씩 넓히는 메타프로그래밍 경로입니다.
+실행 결과와 부품의 조립 점수는 따로 읽습니다. 실행 중 보조 함수에 전달된 인자를
+기록하므로, 새 앱 입력이 기존 부품 사례와 겹치는지도 확인할 수 있습니다.
+다른 부품의 후보를 평가하는 동안 발생한 간접 호출 이력은 아직 기록되지 않아
+그 경로의 입력 독립성은 미확인으로 남습니다. 실제로 관측한 범위부터 조금씩
+넓히는 메타프로그래밍 경로입니다.
 
 ## Recorded own-model construction
 
@@ -128,9 +136,9 @@ independently executed caller.
 
 The Gooo explainer separately interpreted the model's two helper attempts as
 `CONTINUE_CANDIDATES` and `OBSERVE_NEW_INPUTS`, with zero new model calls.
-Input-only replay returned three observations with 0/0 expectations. All called
-construction runs retain unknown input separation because helper arguments are
-not traced. The complete deterministic, model and replay routes generated the
+Input-only replay returned three observations with 0/0 expectations. In that
+original study, input separation remained unknown because its compiler did not
+trace helper arguments. The complete deterministic, model and replay routes generated the
 same program.
 
 Prediction took 16,584 ns; setup took 0.733292 ms with 2,096 bytes of tensors.
@@ -140,3 +148,32 @@ one core including child work; host utilization and the model's separate CPU
 increment were not sampled. These are single sequential local observations
 after tests, with uncontrolled caches. Training exposure and external adoption
 remain unmeasured.
+
+### Fresh called-input observations
+
+The [follow-up study](../../docs/research/called-input-observation-20261008/summary.json)
+uses clean compiler `d5130460356646f964d01a619f0db62f166f0ea5` and the same model,
+source, choices and expectations. Each root case records one actual helper call.
+
+| Route | Helper attempts | Caller expectations | Disjoint root cases passed | New model calls | Whole command wall time |
+| --- | ---: | --- | --- | ---: | ---: |
+| Deterministic | 4 | 4/4 | 4/4 | 0 | 0.34 s |
+| Own model | 2 | 4/4 | 4/4 | 1 | 0.36 s |
+| Saved replay | 2 retained | 4/4 | 4/4 | 0 | 0.32 s |
+| Prior study receipt replay | 2 retained | 4/4 | 4/4 | 0 | 0.33 s |
+| Own model + checkpoint policy | 1 | 2/4 | 2/4 | 1 | 0.54 s |
+
+The prior receipt replays without changing its construction. Its new runtime
+observation supplies the previously missing helper arguments. Input-only replay
+observes one overlapping and two disjoint root inputs, while its accuracy stays
+unknown because no expectations were supplied. The compiler's regression cases
+also cover a new root that becomes an old helper input, a skipped call, repeated
+and nested calls, conflicting duplicate expectations, record inputs and a caller
+failure with `0/1` disjoint cases passed.
+
+This model invocation spent 12,042 ns in prediction and 0.734625 ms in setup,
+with 2,096 bytes of tensors. Whole-command maximum RSS was 86,720,512 bytes;
+0.16 s user plus 0.11 s system over 0.36 s wall gives a rounded average of 75%
+of one core, including child work. These single measurements retain uncontrolled
+host activity and caches. Host CPU utilization, model-only CPU increment,
+training independence and external reproduction remain unmeasured.

@@ -30,8 +30,8 @@ func TestCalledBodyConstructionRecordAndObservation(t *testing.T) {
 		t.Fatal("called body was not constructed before its caller", prior.Plan)
 	}
 	native, err := ExecuteComposition(ctx, "called.gooo", source, prior, suite, nativeTool())
-	if err != nil || native.FinitePassed != 4 || native.InputSeparation.Status != "UNKNOWN" ||
-		native.InputSeparation.Reason != "CALLED_ASSEMBLY_INPUTS_NOT_OBSERVED" || native.InputSeparation.UnknownInputs != 4 {
+	if err != nil || native.FinitePassed != 4 || native.InputSeparation.Status != "PASS" ||
+		native.InputSeparation.DisjointCasesPassed != 4 || native.InputSeparation.DisjointInputs != 4 {
 		t.Fatal("called construction execution or input scope", err, native)
 	}
 	rows, err := ObserveConstruction(ctx, source, prior)
@@ -94,6 +94,9 @@ activity Main(Integer) -> Integer computes "let left = Wrap(input); let right = 
 		t.Fatal(err, native)
 	}
 	prior.Preparations[0], prior.Preparations[1] = prior.Preparations[1], prior.Preparations[0]
+	if len(native.Traces[0].Calls) != 4 || native.InputSeparation.Reason != "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED" {
+		t.Fatal("nested repeated calls or earlier observation boundary disappeared", native)
+	}
 	if VerifyComposition(ctx, "nested.gooo", source, prior) == nil {
 		t.Fatal("changed helper order replayed")
 	}
@@ -199,5 +202,8 @@ activity Main(Integer) -> Integer computes "let result = Choose(input); return r
 	native, err := ExecuteComposition(ctx, "ambiguous.gooo", source, prior, suite, nativeTool())
 	if err != nil || native.FinitePassed != 0 || native.FiniteTotal != 1 || !native.RuntimeReplayed {
 		t.Fatal("helper case success became caller correctness", err, native)
+	}
+	if native.InputSeparation.DisjointInputs != 1 || native.InputSeparation.DisjointCasesPassed != 0 || native.InputSeparation.Status != "PROGRESS" {
+		t.Fatal("caller failure on a new helper input disappeared", native.InputSeparation)
 	}
 }
