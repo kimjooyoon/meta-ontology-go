@@ -22,6 +22,8 @@ type Result struct {
 	Scope          string                           `json:"scope"`
 	Replay         *ReplayEvidence                  `json:"replay,omitempty"`
 	AssemblyPolicy *WorkspaceAssemblyPolicy         `json:"assembly_policy,omitempty"`
+	PolicyHistory  []*WorkspaceAssemblyPolicy       `json:"assembly_policy_history,omitempty"`
+	Continuation   *ContinuationEvidence            `json:"continuation,omitempty"`
 }
 
 type BodyFillStep struct {
