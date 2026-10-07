@@ -60,3 +60,28 @@ output expectations, and the saved model-selected program replayed at 8/8 with
 zero new inference calls. Prediction took 19.3 microseconds, with model setup
 recorded separately at 0.79 milliseconds. This is one paired task observation;
 broader accuracy, calibration and speed remain unmeasured.
+
+The [0.6.5 development-candidate observation](../../docs/research/release-065-dogfood-20261008/summary.json)
+repeats this task and feeds its saved replay receipt to the
+[Gooo assembly explainer](../assembly-explainer/README.md). It records 19.9
+microseconds for prediction and 0.497 milliseconds for model setup, with 2,096
+resident tensor bytes. Native outputs matched 8/8; four unique root inputs were
+disjoint from the recorded construction observations. Model-training exposure
+remains unknown.
+
+This use exposed an omitted `proposed` label in the construction observer. The
+corrected record distinguishes the model's first, partial choice from the final
+selected choice. Both original and corrected receipts are retained. The Gooo
+explanations and selection counts stayed the same, with zero new inference calls
+during interpretation. The explainer consumes the saved receipt as follows:
+
+```sh
+gooo package execute --json --construction-receipt diagnostic-execution.json \
+  examples/assembly-explainer/gooo.workspace.json
+```
+
+One pre-run host CPU interval was 7.6% busy; four session intervals ranged from
+6.3% to 17.3%. These include other processes, compilation and gaps. Whole-command
+RSS was about 82–83 MiB in this session, separately from model tensor storage.
+The study retains raw timing output and measurement scope; this single pair
+does not isolate the model's CPU contribution or establish a timing advantage.
