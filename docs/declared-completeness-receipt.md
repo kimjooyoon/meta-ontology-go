@@ -163,8 +163,10 @@ capability catalog deterministically, binds its query/trail digests to the exact
 source and normalized semantic IR, and emits the same generated receipt schema.
 Adding `--generation` replays a saved source-owned projection and binds its
 artifact and activity identity. Generation coverage uses expected activity
-signatures from a separate domain contract; native runtime and reverse
-observations remain separate evidence. See the
+signatures from a separate domain contract. `--execute-cases` creates fresh
+native runtime and reverse observations, retaining their full envelope and
+parent receipt. Independent use-case coverage counts unique inputs absent from
+selection, with all supplied expectations matched in both executions. See the
 [connected discovery example](language/capability-discovery.md#connect-an-existing-generation).
 
 The domain profile now drives the measurement roster and its order from the

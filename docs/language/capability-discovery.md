@@ -4,8 +4,8 @@
 deterministic JEV catalog best matches a natural-language query? It binds the
 query and observation trail to the supplied `.gooo` source. An optional saved
 generation artifact can be replayed against that source, using the compiler's
-pure projection and finite-case checks. Discovery calls no model and starts no
-native program or external toolchain.
+pure projection and finite-case checks. `--execute-cases` additionally performs
+a native build and two bounded executions. These paths make no model calls.
 
 ```sh
 gooo discover --query "How do I generate a canonical .gooo declaration?" \
@@ -82,6 +82,47 @@ observations. The domain contract measures declared scope only; it does not
 define philosophical completeness or demonstrate real-world demand. See
 [declared completeness receipts](../declared-completeness-receipt.md) and
 [body generation](body-codegen.md) for the next stages.
+
+## Observe the generated program
+
+After saving the generation above, supply explicit native execution cases:
+
+```sh
+go run ./cmd/gooo discover --json --query "Generate Gooo code" \
+  --domain-contract examples/capability-discovery/generation-domain.gooo.fixture \
+  --generation /tmp/gooo-generation.json \
+  --execute-cases examples/capability-discovery/runtime-cases.json \
+  examples/body-codegen/ir-search-source.gooo.fixture
+```
+
+This command replays the source-owned selection, builds the closed
+`Integer -> Integer` projection with Go 1.27.1, and runs the input sequence in
+two separate processes. Add `--go-bin <path>` to select a local tool explicitly.
+The runtime stage uses the existing 60-second operation budget and two-second
+per-execution limits; its temporary workspace is removed afterward.
+
+The example declares six inputs absent from this generation's training and
+selection-holdout cases. The result reports generation **1/2**, independent
+input expectations **6/6**, and reverse links **6/6**. These denominators measure
+different obligations. `Pending` still has no generated artifact, so overall
+completion remains `PROGRESS`. The nested `runtime` envelope retains the exact
+generation parent receipt, source/artifact/toolchain identities, actual outputs,
+two execution observations, and measured child resource use.
+
+Independent input coverage counts each distinct input once. Every supplied
+expectation for that input must match; conflicting duplicate expectations count
+as one unmatched input. Cases already used in selection or its oracle feedback
+do not enter this denominator. Selection-only inputs yield `UNKNOWN 0/0`, while
+observed zero matches yield `PROGRESS 0/N`. Independence from model training
+remains unobserved. Coverage applies to this activity and these inputs.
+
+A build or execution error returns a nonzero exit code and retains the failed
+stage in the report. Completed executions with mismatching expectations retain
+their partial scores. Text output shows the runtime stage and independent-input
+count; JSON includes the full observations. Fresh time and resource measurements
+can vary between runs.
+
+## Repository utility portfolio
 
 The billing discovery example, which supplies no generation artifact, is also
 the seventh case in the versioned language-utility portfolio. CI runs the same query twice, compares the full
