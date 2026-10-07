@@ -18,11 +18,23 @@ type recordSiteCollector struct {
 }
 
 func recordAssemblySites(body preparedBody) ([]recordValueSite, error) {
-	prefix := "package selection\n" + RecordDeclarations(body.records, false) +
-		"func selected(" + parameterDeclaration(body.parameters) + ") " + body.outputType + "{\n"
+	calls, _, _, err := body.resolvePureCalls(body.body)
+	if err != nil {
+		return nil, err
+	}
+	records := body.records
+	suffix := "\n}"
+	if len(calls) > 0 {
+		records = body.allRecords
+	}
+	for _, call := range calls {
+		suffix += "\n" + call.declaration()
+	}
+	prefix := "package selection\n" + RecordDeclarations(records, false) +
+		"func " + body.activity.Name + "(" + parameterDeclaration(body.parameters) + ") " + body.outputType + "{\n"
 	c := recordSiteCollector{body: body, base: len(prefix), fset: token.NewFileSet(),
 		info: types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}}
-	file, err := parser.ParseFile(c.fset, "record-body", prefix+body.body+"\n}", parser.AllErrors)
+	file, err := parser.ParseFile(c.fset, "record-body", prefix+body.body+suffix, parser.AllErrors)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +42,8 @@ func recordAssemblySites(body preparedBody) ([]recordValueSite, error) {
 	if _, err = new(types.Config).Check("selection", c.fset, []*ast.File{file}, &c.info); err != nil {
 		return nil, fmt.Errorf("field site types: %w", err)
 	}
-	ast.Inspect(file, c.visit)
+	function, _ := findFunction(file, body.activity.Name)
+	ast.Inspect(function.Body, c.visit)
 	sort.Slice(c.sites, func(i, j int) bool { return c.sites[i].start < c.sites[j].start })
 	return c.sites, nil
 }

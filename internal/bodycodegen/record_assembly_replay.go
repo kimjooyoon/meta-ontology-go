@@ -104,7 +104,8 @@ func realizeRecordAssemblyProjection(ctx context.Context, filename string, sourc
 	if generated.Source != prior.Source || generated.GoooSource != prior.GoooSource || expected.SelectedSourceSHA256 != r.SelectedSourceSHA256 ||
 		a.ActivityID != b.ActivityID || a.SourceDigest != b.SourceDigest || a.ProgramDigest != b.ProgramDigest ||
 		a.GeneratedDigest != b.GeneratedDigest || a.GeneratedDigest != a.ReplayDigest || a.InputType != b.InputType || a.OutputType != b.OutputType ||
-		!reflect.DeepEqual(a.InputParameters, b.InputParameters) || !reflect.DeepEqual(a.RecordTypes, b.RecordTypes) {
+		!reflect.DeepEqual(a.InputParameters, b.InputParameters) || !reflect.DeepEqual(a.RecordTypes, b.RecordTypes) ||
+		!reflect.DeepEqual(a.CallClosure, b.CallClosure) {
 		return Realization{}, fmt.Errorf("record selected source, typed signature or projection differs")
 	}
 	if err = verifyRecordCommonReceipt(prior.Report); err != nil {

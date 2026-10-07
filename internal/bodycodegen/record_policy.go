@@ -15,6 +15,7 @@ type preparedRecordPolicy struct {
 	function    *ast.FuncDecl
 	information types.Info
 	input       types.Object
+	functions   map[types.Object]*ast.FuncDecl
 	receipt     *RecordAssemblyControl
 }
 
@@ -100,6 +101,7 @@ func (p *preparedRecordPolicy) prepareEvaluator() error {
 		return fmt.Errorf("assembly policy projection has no single-input function")
 	}
 	p.input = p.information.Defs[p.function.Type.Params.List[0].Names[0]]
+	p.functions = pureEvaluatorFunctions(file, p.information)
 	return nil
 }
 
@@ -113,7 +115,7 @@ func (p *preparedRecordPolicy) decide(ctx context.Context, counts RecordPolicyCo
 		return RecordPolicyDecision{}, err
 	}
 	e := integerBodyEvaluator{context: ctx, information: p.information,
-		environment: map[types.Object]any{p.input: input}}
+		environment: map[types.Object]any{p.input: input}, functions: p.functions}
 	value, returned, err := e.evaluateBlock(p.function.Body)
 	if err != nil || !returned {
 		return RecordPolicyDecision{}, fmt.Errorf("assembly policy did not return: %v", err)

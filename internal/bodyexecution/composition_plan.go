@@ -38,6 +38,7 @@ type CompositionEdge struct {
 
 type CompositionPlan struct {
 	Schema              string                   `json:"schema"`
+	EntryActivity       string                   `json:"entry_activity,omitempty"`
 	TypedPlanSHA256     string                   `json:"typed_plan_sha256"`
 	SemanticFingerprint string                   `json:"semantic_fingerprint"`
 	Activities          []CompositionActivity    `json:"activities"`

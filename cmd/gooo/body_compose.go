@@ -18,7 +18,7 @@ import (
 const bodyComposeUsage = "usage: gooo body-compose --source <source.gooo> " +
 	"(--cases <cases.json> | --case-series <series.json>) [--repeat <1..16>] " +
 	"[--model <model.json>] [--fill-model <model.json>] [--composition <composition.json>] [--go-bin <go1.27.1>] [--out <new-directory>] " +
-	"[--assembly-policy <policy.gooo> --policy-activity <name>] [--resume-composition <composition.json>]"
+	"[--assembly-policy <policy.gooo> --policy-activity <name>] [--resume-composition <composition.json>] [--entry <activity>]"
 
 type bodyCompositionOutput struct {
 	GeneratedNow   bool                                 `json:"generated_now"`
@@ -42,6 +42,7 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 	flags := map[string]string{"--source": "", "--cases": "", "--case-series": "", "--repeat": "", "--model": "", "--fill-model": "", "--composition": "", "--go-bin": "", "--out": ""}
 	flags["--assembly-policy"], flags["--policy-activity"] = "", ""
 	flags["--resume-composition"] = ""
+	flags["--entry"] = ""
 	for i := 0; i < len(args); i += 2 {
 		value, ok := flags[args[i]]
 		if !ok || value != "" || i+1 >= len(args) || args[i+1] == "" || strings.HasPrefix(args[i+1], "--") {
@@ -65,6 +66,10 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 	}
 	if flags["--resume-composition"] != "" && (flags["--assembly-policy"] == "" || flags["--composition"] != "" ||
 		flags["--model"] != "" || flags["--fill-model"] != "") {
+		fmt.Fprintln(stderr, bodyComposeUsage)
+		return exitUsage
+	}
+	if flags["--entry"] != "" && (flags["--composition"] != "" || flags["--resume-composition"] != "") {
 		fmt.Fprintln(stderr, bodyComposeUsage)
 		return exitUsage
 	}
@@ -93,13 +98,16 @@ func executeBodyComposition(ctx context.Context, flags map[string]string, stdout
 	if len(suites)*repeat > 16 {
 		return fail(fmt.Errorf("composition allows at most 16 executions per request"))
 	}
-	if series != nil {
-		if err := bodyexecution.ValidateCompositionSuites(ctx, flags["--source"], source, suites); err != nil {
+	if series != nil && flags["--composition"] == "" && flags["--resume-composition"] == "" {
+		if err := bodyexecution.ValidateCompositionSuitesForEntry(ctx, flags["--source"], source, suites, flags["--entry"]); err != nil {
 			return fail(err)
 		}
 	}
 	output := bodyCompositionOutput{GeneratedNow: flags["--composition"] == "", CaseSeries: series}
 	output.Composition, err = buildOrReadBodyComposition(ctx, flags, source, suites[0])
+	if err == nil && series != nil && (flags["--composition"] != "" || flags["--resume-composition"] != "") {
+		err = bodyexecution.ValidateCompositionSuitesForEntry(ctx, flags["--source"], source, suites, output.Composition.Plan.EntryActivity)
+	}
 	if err == nil {
 		if series != nil || repeat > 1 {
 			output.RuntimeHistory, err = executeCompositionHistory(ctx, flags, source, output.Composition, suites, repeat)

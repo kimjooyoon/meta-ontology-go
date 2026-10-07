@@ -271,14 +271,16 @@ cases and fields, newly observed inputs, rejected attempts, model calls, elapsed
 time, and human interventions with their denominators. Growing the grammar is a
 separate language change and needs a new comparison against the old space.
 
-Use this tool-building work to choose language features. For example, the
-[pure body profile](../language/body-codegen.md) currently rejects function calls;
-activity reuse is expressed through declared composition bindings. If a small
-tool needs a library operation inside a branch, first retain that unsupported
-program and its intended cases. Then design its typed call semantics and native
-projection. Preserve the source-level operation and meaning independently of
-which model proposes it. Model training should follow such concrete construction
-tasks, retaining the source, attempted decisions, counterexamples and outcomes.
+Use this tool-building work to choose language features. The diagnostic tool's
+repeated partial-completion condition motivated [pure activity
+calls](../../examples/pure-activity-calls/README.md): a fixed Gooo helper can now
+be reused inside a branch, with typed arguments, its own local bindings, bounded
+call relationships and native projection. The same mechanism lets a Gooo assembly
+policy reuse a continuation predicate. These calls currently resolve within one
+source. Package-qualified calls are a next integration task; their binding and
+replay need to preserve package and activity identity. Model training should
+follow such concrete construction tasks, retaining the source, attempted
+decisions, counterexamples and outcomes.
 
 Publish a short Korean and English walkthrough of the connected tool, its
 failed case and its replay. An independent developer should be able to follow it

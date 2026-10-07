@@ -241,7 +241,12 @@ An inferred local initialized from an integer constant uses `int64`, keeping
 Integer locals aligned with the DSL type. This rule applies at local bindings;
 it adds no conversions at activity input or output boundaries. Boolean and
 Text locals retain Go's `bool` and `string` inference.
-Function calls, imports, loops and external effects fail
+Fixed pure activities declared in the same source can be called by name with
+typed positional arguments. Their acyclic call closure is included in generation
+and replay; see [pure activity reuse](../../examples/pure-activity-calls/README.md).
+`body-compose --entry Name` executes one entry and its explicit producers while
+its pure callees receive arguments from expressions. Recursive, indirect,
+external and assembling-callee calls, imports, loops and external effects fail
 closed. The generated result is written to stdout; this command does not
 mutate the repository.
 

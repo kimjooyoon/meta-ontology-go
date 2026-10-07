@@ -40,7 +40,7 @@ func buildOrReadBodyComposition(ctx context.Context, flags map[string]string, so
 		}
 		return bodyexecution.DecodeComposition(raw)
 	}
-	options := bodyexecution.CompositionOptions{ModelPath: flags["--model"], FillModelPath: flags["--fill-model"]}
+	options := bodyexecution.CompositionOptions{ModelPath: flags["--model"], FillModelPath: flags["--fill-model"], EntryActivity: flags["--entry"]}
 	var err error
 	options.RecordPolicy, err = readRecordAssemblyPolicy(flags)
 	if err != nil {

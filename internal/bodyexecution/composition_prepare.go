@@ -11,6 +11,10 @@ import (
 )
 
 func prepareCompositionGraph(ctx context.Context, filename string, source []byte) (compositionGraph, error) {
+	return prepareCompositionGraphForEntry(ctx, filename, source, "")
+}
+
+func prepareCompositionGraphForEntry(ctx context.Context, filename string, source []byte, entry string) (compositionGraph, error) {
 	var graph compositionGraph
 	file, err := compositionSource(ctx, filename, source)
 	if err != nil {
@@ -25,7 +29,7 @@ func prepareCompositionGraph(ctx context.Context, filename string, source []byte
 	if err != nil {
 		return graph, err
 	}
-	typed, err := bidir.CompileTypedPlan(document)
+	typed, err := compileCompositionEntry(document, model, entry)
 	if err != nil {
 		return graph, err
 	}
@@ -34,6 +38,7 @@ func prepareCompositionGraph(ctx context.Context, filename string, source []byte
 	}
 	graph.count = len(typed.Activities)
 	graph.plan = CompositionPlan{Schema: "gooo/body-composition-plan/v1",
+		EntryActivity:   entry,
 		TypedPlanSHA256: typed.Digest(), SemanticFingerprint: bidir.SemanticFingerprint(model),
 		Edges: make([]CompositionEdge, 0, len(typed.Edges))}
 	graph.plan.Records, err = bodycodegen.RecordTypesFromModel(model)

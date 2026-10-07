@@ -12,6 +12,9 @@ import (
 )
 
 func compositionStepFunction(generation bodycodegen.Result, node CompositionActivity, index int) (string, error) {
+	if generation.Report.CallClosure != nil {
+		return compositionCallFunctions(generation, node, index)
+	}
 	if len(generation.Report.RecordTypes) == 0 {
 		return compositionFunction(generation.Source, node.Name, index)
 	}

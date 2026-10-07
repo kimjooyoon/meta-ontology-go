@@ -62,6 +62,7 @@ type Report struct {
 	BodySearch             *IRBodySearchReceipt    `json:"body_search,omitempty"`
 	BodyPaths              *BodyPathReceipt        `json:"body_paths,omitempty"`
 	RecordAssembly         *RecordAssemblyReceipt  `json:"record_assembly,omitempty"`
+	CallClosure            *PureCallClosure        `json:"call_closure,omitempty"`
 	CandidateRoutes        []string                `json:"candidate_routes"`
 	EquivalenceRule        string                  `json:"equivalence_rule"`
 	SourceConstructs       int                     `json:"source_constructs"`
@@ -91,7 +92,8 @@ type RouteSelectionReceipt struct {
 
 // Generate compiles one .gooo activity body into a marked Go source region.
 // The accepted body subset is local declarations/assignments, conditionals,
-// and returns over scalar or declared record values. Calls and effects fail closed.
+// and returns over scalar or declared record values, with fixed pure callees.
+// Recursive, indirect and external calls are outside this profile.
 func Generate(filename string, source []byte, activityName string) (Result, error) {
 	return GenerateWithPlanner(context.Background(), filename, source, activityName, "", "")
 }
@@ -144,12 +146,17 @@ func generateRoute(packageName, activityName, activityID, inputType, outputType,
 }
 
 func generateRouteParameters(packageName, activityName, activityID string, parameters []InputParameter, outputType, body, route string, records ...RecordType) (generatedRoute, error) {
-	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, err := renderParameters(packageName, activityName, activityID, parameters, outputType, body, route, records...)
+	return generateRouteWithCalls(packageName, activityName, activityID, parameters, outputType, body, route, nil, records)
+}
+
+func generateRouteWithCalls(packageName, activityName, activityID string, parameters []InputParameter,
+	outputType, body, route string, calls []pureCallFunction, records []RecordType) (generatedRoute, error) {
+	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, err := renderParametersWithCalls(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
 	if err != nil {
 		return generatedRoute{}, err
 	}
 	equivalenceRule := routeEquivalenceRule(route)
-	equivalence, err := routeEquivalenceParameters(packageName, activityName, parameters, outputType, body, generated, equivalenceRule, records...)
+	equivalence, err := routeEquivalenceWithCalls(packageName, activityName, parameters, outputType, body, generated, equivalenceRule, calls, records)
 	if err != nil {
 		return generatedRoute{}, err
 	}
@@ -402,6 +409,8 @@ func cloneNames(names map[string]bool) map[string]bool {
 
 func validateExpression(expression ast.Expr) error {
 	switch value := expression.(type) {
+	case *ast.CallExpr:
+		return validatePureCallExpression(value)
 	case *ast.Ident, *ast.BasicLit:
 		return nil
 	case *ast.ParenExpr:
