@@ -8,7 +8,8 @@ import (
 )
 
 // ValidateSourceIRSearch checks the finite grammar and at least one typed
-// candidate without scoring cases, selecting a result, or calling a provider.
+// candidate. The residual grammar observes pure training-input probes; preflight
+// does not select a final body or call a provider.
 func ValidateSourceIRSearch(ctx context.Context, filename string, source []byte, activity string,
 	spec *assemblyspec.Spec) error {
 	if ctx == nil {
@@ -24,7 +25,7 @@ func ValidateSourceIRSearch(ctx context.Context, filename string, source []byte,
 	if err := validateIRBodySearchPlan(plan); err != nil {
 		return err
 	}
-	if _, err = generateIRBodySearchCandidates(&plan); err != nil {
+	if _, err = generateIRBodySearchCandidatesForSource(ctx, filename, source, activity, &plan); err != nil {
 		return err
 	}
 	file, _, id, body, err := prepareBodySearch(filename, source, activity, plan.HoleID)

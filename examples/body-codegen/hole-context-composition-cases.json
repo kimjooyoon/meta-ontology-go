@@ -1,0 +1,9 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs":{"Increment":2},"expected":{"Increment":3,"Amplify":12,"Project":63}},
+    {"inputs":{"Increment":10},"expected":{"Increment":11,"Amplify":28,"Project":143}},
+    {"inputs":{"Increment":100},"expected":{"Increment":101,"Amplify":208,"Project":1043}},
+    {"inputs":{"Increment":9007199254740993},"expected":{"Increment":9007199254740994,"Amplify":18014398509481994,"Project":90071992547409973}}
+  ]
+}

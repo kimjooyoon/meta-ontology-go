@@ -722,6 +722,14 @@ Gooo checks and scores each selected expression before another model call.
 Without Laya, the same candidates are tried in their deterministic generated
 order.
 
+The opt-in `integer-hole-residual/v1` grammar also observes the body around the
+hole. It proposes constants and affine expressions from training-only zero/one
+hole probes, then retains the legacy seeds. This supports nested arithmetic and
+local variables such as `return input + hole`. Probe evidence is recorded and
+recomputed during replay; full-body evaluation still measures each proposal.
+The profile is bounded to one Integer input, one hole, 1..128 scalar training
+cases and 2..16 retained candidates. [Construction rules and limitations](../source-assembly.md#construct-a-value-inside-an-existing-body).
+
 The receipt hashes the generated candidate set and reports how many expressions
 the finite grammar produced, retained, or omitted. `grammar_coverage_percent`
 measures coverage of this named grammar after applying the declared cap. It is

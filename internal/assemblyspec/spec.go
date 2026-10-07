@@ -110,7 +110,7 @@ func (s Spec) Validate() error {
 	if s.Search != nil {
 		if len(s.Cases) == 0 || len(s.Choices) != 0 || len(s.ValueCases)+len(s.ValueHoldoutCases) != 0 ||
 			s.Baseline != "" || len(s.Picked) != 0 || s.Seed != "" ||
-			!identifier(s.Search.HoleID) || s.Search.Grammar != "integer-offset-constant/v1" ||
+			!identifier(s.Search.HoleID) || (s.Search.Grammar != "integer-offset-constant/v1" && s.Search.Grammar != "integer-hole-residual/v1") ||
 			!boundedText(s.Search.Intent, 2000) || s.Search.MaxCandidates < 2 || s.Search.MaxCandidates > 16 ||
 			s.MaxAttempts > s.Search.MaxCandidates {
 			return fmt.Errorf("IR search assembly requires a hole, supported grammar, intent, 2..16 candidates, bounded cases and attempts, and no path choices/checkpoint")
