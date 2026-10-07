@@ -1,6 +1,14 @@
 package main
 
 var topicHelpGroup4 = map[string]string{
+	"body-refine": `Run a Gooo policy between bounded construction rounds
+
+` + bodyRefineUsage + `
+
+The policy owns continuation and retained-round decisions. Feedback cases guide
+the loop; optional evaluation cases run after selection. Each round and the
+selected program are saved for replay. See examples/assembly-feedback/README.md.
+`,
 	"inspect": `Inspect source declarations
 
 Usage:
@@ -27,7 +35,7 @@ Use --build to include compiler build information.
 
   init, check, test, run, body-codegen, generate, emit
   format, fix, inspect, query, graph, receipt-schema
-  package, body-compose, body-execute, body-search-run, body-realize
+  package, body-compose, body-execute, body-search-run, body-realize, body-refine
   profile, debug, decide, invoke, lsp, version
 
 Use ` + "`gooo help <command>`" + ` for a guide to a core command. Advanced
