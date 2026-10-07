@@ -1,0 +1,19 @@
+package counts
+namespace counts
+
+entity AssemblyObservation id "gooo://tools/assembly-observation" fields {
+    field matched id "gooo://tools/assembly-observation/matched" type integer required one
+    field total id "gooo://tools/assembly-observation/total" type integer required one
+    field best id "gooo://tools/assembly-observation/best" type integer required one
+    field scored id "gooo://tools/assembly-observation/scored" type integer required one
+    field budget id "gooo://tools/assembly-observation/budget" type integer required one
+}
+
+entity Explanation id "gooo://tools/assembly-explanation" fields {
+    field state id "gooo://tools/assembly-explanation/state" type string required one
+    field next_operation id "gooo://tools/assembly-explanation/next-operation" type string required one
+    field message id "gooo://tools/assembly-explanation/message" type string required one
+}
+
+entity Boolean id "gooo://tools/boolean"
+activity CanContinue(AssemblyObservation) -> Boolean computes `return input.scored < input.budget`

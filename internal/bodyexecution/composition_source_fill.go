@@ -11,6 +11,7 @@ import (
 )
 
 type CompositionOptions struct {
+	EntryActivity string
 	ModelPath     string
 	FillModelPath string
 	RecordPolicy  *bodycodegen.RecordAssemblyPolicy

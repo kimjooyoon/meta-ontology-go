@@ -17,7 +17,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageExecuteUsage = "usage: gooo package execute [--json] (--cases <cases.json> | --inputs <inputs.json> | --construction-receipt <execution.json>) [--body-plans <plans.json>] [--assembly-model <model.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
+const packageExecuteUsage = "usage: gooo package execute [--json] (--cases <cases.json> | --inputs <inputs.json> | --construction-receipt <execution.json>) [--body-plans <plans.json>] [--assembly-model <model.json>] [--assembly-policy-workspace <policy.workspace.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
 
 type packageBodyFillPlanSet struct {
 	Schema     string                     `json:"schema"`
@@ -59,7 +59,7 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 
 func parsePackageExecuteArgs(args []string) (map[string]string, string, error) {
 	flags := map[string]string{"--cases": "", "--inputs": "", "--construction-receipt": "",
-		"--body-plans": "", "--assembly-model": "", "--tiny-model": "", "--go": ""}
+		"--body-plans": "", "--assembly-model": "", "--assembly-policy-workspace": "", "--tiny-model": "", "--go": ""}
 	manifest, inputModes := "", 0
 	for i := 0; i < len(args); i++ {
 		if previous, ok := flags[args[i]]; ok {
@@ -166,6 +166,10 @@ func packageExecuteOptions(reader SourceReader, flags map[string]string) (worksp
 		return options, err
 	}
 	options.BodyFillPlans = plans
+	options.AssemblyPolicy, err = readPackageAssemblyPolicy(reader, flags["--assembly-policy-workspace"])
+	if err != nil {
+		return options, err
+	}
 	if path := flags["--tiny-model"]; path != "" {
 		if options.LayaEndpoint != "" || options.LayaAPIKey != "" {
 			return options, fmt.Errorf("--tiny-model cannot be combined with GOOO_LAYA_URL or GOOO_LAYA_API_KEY")

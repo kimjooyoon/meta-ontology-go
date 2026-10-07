@@ -31,6 +31,9 @@ func ResumeComposition(ctx context.Context, filename string, source []byte, prio
 	if err != nil {
 		return Composition{}, fmt.Errorf("resume composition: %w", err)
 	}
+	if len(prior.Preparations) > 0 {
+		return Composition{}, fmt.Errorf("continuation of constructed call dependencies requires a new construction")
+	}
 	if err = bodycodegen.ValidateRecordAssemblyPolicy(ctx, policy); err != nil {
 		return Composition{}, err
 	}

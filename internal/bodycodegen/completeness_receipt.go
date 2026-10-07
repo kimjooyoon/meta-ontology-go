@@ -319,6 +319,10 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 	if report.RecordAssembly != nil {
 		bindRecordAssemblyScope(receipt, report)
 	}
+	if report.CallClosure != nil {
+		receipt.Scope["call_closure"] = report.CallClosure
+		receipt.Scope["domain_scope"] = "one pure typed Gooo activity with source-declared fixed callees; bounded acyclic call closure"
+	}
 	return receipt
 }
 

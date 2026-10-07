@@ -14,6 +14,9 @@ type integerBodyEvaluator struct {
 	context     context.Context
 	information types.Info
 	environment map[types.Object]any
+	functions   map[types.Object]*ast.FuncDecl
+	callDepth   int
+	callCount   *int
 }
 
 // evaluateIntegerCases interprets only the already typechecked, pure integer
@@ -73,7 +76,7 @@ func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity st
 	if len(inputs) == 0 || len(inputs) > 16 {
 		return nil, 0, fmt.Errorf("integer evaluator requires 1..16 named inputs")
 	}
-	evaluator := integerBodyEvaluator{context: ctx, information: information}
+	evaluator := integerBodyEvaluator{context: ctx, information: information, functions: pureEvaluatorFunctions(file, information)}
 	results := make([]IRBodyFillCaseResult, 0, len(cases))
 	passed := 0
 	for _, testCase := range cases {
@@ -85,6 +88,7 @@ func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity st
 			return nil, 0, fmt.Errorf("input arity %d does not match evaluator arity %d", len(values), len(inputs))
 		}
 		evaluator.environment = make(map[types.Object]any, len(inputs))
+		evaluator.callCount = nil
 		for index, input := range inputs {
 			evaluator.environment[input] = values[index]
 		}
@@ -160,6 +164,8 @@ func (e *integerBodyEvaluator) evaluateExpression(expression ast.Expr) (any, err
 		return coerceBodyValue(value, typed.Type)
 	}
 	switch value := expression.(type) {
+	case *ast.CallExpr:
+		return e.evaluatePureCall(value)
 	case *ast.CompositeLit:
 		return e.evaluateRecordLiteral(value)
 	case *ast.SelectorExpr:

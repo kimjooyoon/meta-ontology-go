@@ -271,14 +271,30 @@ cases and fields, newly observed inputs, rejected attempts, model calls, elapsed
 time, and human interventions with their denominators. Growing the grammar is a
 separate language change and needs a new comparison against the old space.
 
-Use this tool-building work to choose language features. For example, the
-[pure body profile](../language/body-codegen.md) currently rejects function calls;
-activity reuse is expressed through declared composition bindings. If a small
-tool needs a library operation inside a branch, first retain that unsupported
-program and its intended cases. Then design its typed call semantics and native
-projection. Preserve the source-level operation and meaning independently of
-which model proposes it. Model training should follow such concrete construction
-tasks, retaining the source, attempted decisions, counterexamples and outcomes.
+Use this tool-building work to choose language features. The diagnostic tool's
+repeated partial-completion condition motivated [pure activity
+calls](../../examples/pure-activity-calls/README.md): a fixed Gooo helper can now
+be reused inside a branch, with typed arguments, its own local bindings, bounded
+call relationships and native projection. The same mechanism lets a Gooo assembly
+policy reuse a continuation predicate. [Workspace calls](../../examples/package-body-calls/README.md)
+now resolve local-package functions and imported helpers through the calling
+file's aliases. Their records map original package/activity identities to lowered
+names, and replay reconstructs the same closure. The next useful step is to apply
+these libraries to another real tool and keep the newly exposed gaps. Model training should
+follow such concrete construction tasks, retaining the source, attempted
+decisions, counterexamples and outcomes.
+
+The [package assembly-policy tool](../../examples/package-assembly-policy/README.md)
+now applies that reuse to the construction controller itself. Its Gooo policy
+imports a shared continuation predicate, reads actual candidate observations and
+controls construction of a different workspace. Policy source packages accompany
+the saved result for reconstruction. A paired own-model run and a deliberate early
+stop retain both complete and partial finite outcomes. This extends reusable
+metaprogramming within the current record-choice profile. [Called-body
+construction](../../examples/called-body-construction/README.md) now constructs
+source-declared helper bodies in dependency order before projecting their callers.
+The attempts remain independently inspectable. Automatic scheduling and retaining
+dependent caller constructions after a helper changes remain further work.
 
 Publish a short Korean and English walkthrough of the connected tool, its
 failed case and its replay. An independent developer should be able to follow it

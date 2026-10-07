@@ -209,6 +209,7 @@ func evaluateRecordAssembly(ctx context.Context, source []byte, activity string,
 	if _, err = new(types.Config).Check(file.Name.Name, fset, []*ast.File{file}, &e.information); err != nil {
 		return nil, err
 	}
+	e.functions = pureEvaluatorFunctions(file, e.information)
 	var inputs []types.Object
 	for _, parameter := range function.Type.Params.List {
 		for _, name := range parameter.Names {
@@ -241,6 +242,7 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 		return RecordAssemblyCase{}, fmt.Errorf("value_case input must have exactly %d positional values", len(inputs))
 	}
 	e.environment = make(map[types.Object]any, len(inputs))
+	e.callCount = nil
 	for i, input := range inputs {
 		value, err := decodeRecordCaseValue(raw[i], input.Type(), records)
 		if err != nil {

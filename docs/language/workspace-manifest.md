@@ -165,6 +165,16 @@ built and before the generated package is compiled. To connect Laya, set
 receipts record provider decision time; native build and run observations
 record wall time, CPU time, and peak resident memory when the host exposes them.
 
+`--assembly-policy-workspace <policy.workspace.json>` connects a separate Gooo
+policy package to record-choice construction. Its fixed entry consumes the typed
+assembly-observation record after each scored attempt and returns a supported
+next operation. It may call imported pure helpers. The result retains the policy's
+source manifest and lowered program in `assembly_policy`; saved replay reconstructs
+them and the decisions without opening policy or model files. See the
+[connected package example](../../examples/package-assembly-policy/README.md)
+for deterministic/model construction, partial stopping and replay. Candidate
+permissions and budgets remain those declared by the target source.
+
 For an ordinary language tool, use `--inputs <inputs.json>` instead of `--cases`.
 The input document has schema `gooo/body-composition-inputs/v1` and an `inputs`
 array of named root-input maps. No expected output is supplied. Plain output is

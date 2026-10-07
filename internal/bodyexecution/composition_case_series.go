@@ -34,10 +34,14 @@ func DecodeCompositionCaseSeries(raw []byte) (CompositionCaseSeries, error) {
 // ValidateCompositionSuites checks the ordered series against one source graph
 // before generation. Every suite's root values and named expectations are typed.
 func ValidateCompositionSuites(ctx context.Context, filename string, source []byte, suites []CompositionCases) error {
+	return ValidateCompositionSuitesForEntry(ctx, filename, source, suites, "")
+}
+
+func ValidateCompositionSuitesForEntry(ctx context.Context, filename string, source []byte, suites []CompositionCases, entry string) error {
 	if len(suites) < 1 || len(suites) > 16 {
 		return fmt.Errorf("composition requires 1..16 suites")
 	}
-	graph, err := prepareCompositionGraph(ctx, filename, source)
+	graph, err := prepareCompositionGraphForEntry(ctx, filename, source, entry)
 	if err != nil {
 		return err
 	}

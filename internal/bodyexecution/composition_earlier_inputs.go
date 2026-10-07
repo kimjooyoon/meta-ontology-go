@@ -30,9 +30,12 @@ func MeasureEarlierFillInputs(ctx context.Context, filename string, source []byt
 		runtime.OriginalSourceSHA256 != digest(source) || runtime.RuntimeSuiteSHA256 != compositionDigest(suite) {
 		return unknown
 	}
-	graph, err := prepareCompositionGraph(ctx, filename, source)
+	graph, err := prepareCompositionGraphForEntry(ctx, filename, source, prior.Plan.EntryActivity)
 	if err != nil {
 		return unknown
+	}
+	if len(graph.plan.Preparations) > 0 {
+		return graph.unobservedCallInputs(suite)
 	}
 	seen, err := graph.selectionInputs(ctx, filename, source, prior)
 	if err != nil {

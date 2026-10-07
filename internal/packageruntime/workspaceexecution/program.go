@@ -27,6 +27,7 @@ type Program struct {
 	Source          string               `json:"lowered_gooo_source"`
 	Scope           string               `json:"scope"`
 	EntityAliases   []EntityAlias        `json:"entity_aliases,omitempty"`
+	PureCalls       *WorkspacePureCalls  `json:"pure_calls,omitempty"`
 	sourceFillSpecs map[string]*assemblyspec.Spec
 	recordNames     workspaceRecordNames
 }
@@ -76,6 +77,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 			}
 		}
 	}
+	callNames := indexWorkspaceCalls(files, activityNames)
 	activityDeclarations := map[string]*syntax.ActivityDecl{}
 	activityOrder := make([]string, 0, len(allActivityRefs))
 	type pendingBinding struct {
@@ -150,11 +152,17 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 	if len(needed) > 16 {
 		return Program{}, fmt.Errorf("workspace entry execution path supports at most 16 activities; got %d", len(needed))
 	}
+	allNeeded, pureCalls, err := callNames.expand(needed)
+	if err != nil {
+		return Program{}, err
+	}
 	activeRefs := make([]ActivityRef, 0, len(needed))
 	refsByName := make(map[string]ActivityRef, len(needed))
 	for _, ref := range allActivityRefs {
 		if needed[packageActivityKey(ref.PackagePath, ref.Activity)] {
 			activeRefs = append(activeRefs, ref)
+		}
+		if allNeeded[packageActivityKey(ref.PackagePath, ref.Activity)] {
 			refsByName[ref.LoweredName] = ref
 		}
 	}
@@ -167,7 +175,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		return Program{}, err
 	}
 	for _, key := range activityOrder {
-		if needed[key] {
+		if allNeeded[key] {
 			declarations = append(declarations, activityDeclarations[key])
 		}
 	}
@@ -205,10 +213,14 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 	if !ok {
 		return Program{}, fmt.Errorf("workspace entry activity disappeared during lowering")
 	}
+	scope := "explicitly bound workspace activity bodies lowered to one typed Gooo graph; execution requires finite cases and native Go compilation"
+	if pureCalls != nil {
+		scope = "entry and explicit bind producers with source-resolved pure activity calls; original package identities map to lowered names; finite native observations"
+	}
 	return Program{Schema: "gooo/workspace-body-program/v1", Workspace: image, Entry: entry,
 		Activities: activities, Source: source, sourceFillSpecs: sourceFillSpecs,
-		EntityAliases: recordNames.aliases, recordNames: recordNames,
-		Scope: "explicitly bound workspace activity bodies lowered to one typed Gooo graph; execution requires finite cases and native Go compilation"}, nil
+		EntityAliases: recordNames.aliases, recordNames: recordNames, PureCalls: pureCalls,
+		Scope: scope}, nil
 }
 
 func sameEntityShape(left, right *syntax.EntityDecl) bool {

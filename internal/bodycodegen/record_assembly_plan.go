@@ -169,8 +169,7 @@ func (p recordAssemblyPlan) candidate(mask uint16) (generatedRoute, error) {
 	if err != nil {
 		return generatedRoute{}, err
 	}
-	return generateRouteParameters(p.body.packageName, p.body.activity.Name, p.body.activityID,
-		p.body.parameters, p.body.outputType, body, preserveRoute, p.body.records...)
+	return p.body.generateBody(body, preserveRoute)
 }
 
 func (p recordAssemblyPlan) validateAlternatives(ctx context.Context) error {
