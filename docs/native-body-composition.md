@@ -303,6 +303,13 @@ and receipt replay can repeat that work. The native runtime makes zero model
 calls. This example exercises a deterministic language extension; it does not
 measure a learned model's prediction accuracy.
 
+The [recorded comparison](research/hole-context-20261007/summary.json) at compiler
+`44b16c3e` observes 0/12 native expectations with the legacy grammar and 12/12
+with the contextual grammar; saved replay also observes 12/12. The change alters
+the candidate space. One sequential pair on a shared host establishes this
+example's construction behavior; it does not establish a general speed or
+model-quality advantage. Raw receipts retain the unsuccessful baseline.
+
 ## Current boundaries
 
 The graph supports 1..16 activities with 1..16 inputs and one result each.
