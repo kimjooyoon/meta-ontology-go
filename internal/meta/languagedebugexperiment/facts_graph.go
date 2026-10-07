@@ -8,11 +8,11 @@ var canonicalDebugActivities = []string{
 }
 
 func expectedGraphActivityCount() int {
-	return languageutility.ExpectedCellCount() + len(canonicalDebugActivities)
+	return languageutility.ExpectedGraphActivityCount(len(canonicalDebugActivities))
 }
 
 func expectedGraphEdgeCount() int {
-	return expectedGraphActivityCount() * 2
+	return languageutility.ExpectedGraphEdgeCount(expectedGraphActivityCount())
 }
 
 func validDebugGraph(graph GraphObservation) bool {

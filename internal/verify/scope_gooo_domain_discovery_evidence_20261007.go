@@ -11,6 +11,7 @@ func init() {
 		"internal/meta/languagedebugexperiment/facts_validation.go",
 		"internal/meta/languagedebugexperiment/fixture_test.go",
 		"internal/meta/languageutility/contract.go",
+		"internal/meta/languageutility/debug_binding.go",
 		"internal/meta/languageutility/evaluate.go",
 		"internal/meta/languageutility/evaluate_test.go",
 		"internal/meta/languageutility/fixture_test.go",

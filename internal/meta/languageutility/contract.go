@@ -73,3 +73,11 @@ func ValidateContract(value Contract) error {
 func ExpectedCellCount() int {
 	return CanonicalUseCaseCount * len(CanonicalStages)
 }
+
+func ExpectedGraphActivityCount(additionalActivities int) int {
+	return ExpectedCellCount() + additionalActivities
+}
+
+func ExpectedGraphEdgeCount(activityCount int) int {
+	return activityCount * 2
+}
