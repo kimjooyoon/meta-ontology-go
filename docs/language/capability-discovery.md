@@ -22,11 +22,13 @@ gooo discover --json --query "How can I issue a billing receipt?" \
 ```
 
 The receipt compares stable declaration IDs, kinds, namespaces, entity fields,
-and typed activity inputs and outputs. It ignores display names and activity
-bodies, so renaming an entity does not erase coverage and a declared body does
-not count as tested behavior. A missing or differently shaped declaration is
-`PROGRESS`; the evidence lists the uncovered IDs. The exact contract bytes and
-its normalized semantic digest are bound into the report and receipt.
+and typed activity ports. Input types are compared in declaration order, so
+`Merge(Integer, Text)` does not cover `Merge(Text, Integer)`. It ignores display
+names and activity bodies, so renaming an entity does not erase coverage and a
+declared body does not count as tested behavior. A missing or differently shaped
+declaration is `PROGRESS`; the evidence lists uncovered IDs and ordered-port
+mismatches. The exact contract bytes and its normalized semantic digest are
+bound into the report and receipt.
 
 Add `--json` to receive a machine-readable trail and the shared completeness
 receipt. Its `catalog_match` dimension describes a catalog result only; it is
