@@ -518,6 +518,7 @@ jobs:
           Native package execution requires a Go 1.27.1 toolchain on the host. Pass --go when its executable is outside PATH.
           Saved replay retains prior choices. Continuation after a constructed helper changes still needs a fresh construction. Argument histories during candidate scoring of dependent helpers remain unobserved, so their runtime input separation stays unknown.
           The [paired own-model observation](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/research/called-input-observation-20261008/summary.json) records two model-guided attempts versus four deterministic attempts on one task. Whole commands took 0.36 s and 0.34 s respectively. Those compiler-pinned local observations do not establish a general speed advantage or independent adoption.
+          The [0.6.6 candidate walkthrough](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/research/release-066-dogfood-20261008/README.md) runs a newly generated starter, a called helper, historical replay and a Gooo explanation of a partial result with the new binary.
 
           ## Release evidence
 

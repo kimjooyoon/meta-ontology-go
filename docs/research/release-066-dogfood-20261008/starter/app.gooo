@@ -1,0 +1,5 @@
+package app
+namespace example_org_release066_diagnostic_app
+import diagnostics "example.org/release066/diagnostic/diagnostics"
+activity Main(Diagnostic) -> Text computes `return input.code + ": " + input.message + " [" + input.action + "]"`
+bind diagnostics.Diagnose.result -> Main.input
