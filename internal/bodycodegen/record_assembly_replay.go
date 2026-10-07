@@ -56,7 +56,15 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 		return Realization{}, err
 	}
 	expected.Ranking = append([]uint16(nil), r.Ranking...)
-	if err = searchRecordAssembly(ctx, plan, expected); err != nil {
+	var policy *preparedRecordPolicy
+	if r.Control != nil {
+		policy, err = prepareRecordPolicy(ctx, r.Control.Policy)
+		if err != nil {
+			return Realization{}, err
+		}
+		expected.Control = policy.receipt
+	}
+	if err = searchRecordAssemblyWithPolicy(ctx, plan, expected, policy); err != nil {
 		return Realization{}, err
 	}
 	observedCases, err := canonicalRecordCaseValues(r.Cases)
@@ -74,6 +82,7 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 		{"case counts", expected.Passed == r.Passed && expected.Total == r.Total},
 		{"field counts", expected.FieldsPassed == r.FieldsPassed && expected.FieldsTotal == r.FieldsTotal},
 		{"finite status", expected.Status == r.Status},
+		{"policy decisions", reflect.DeepEqual(expected.Control, r.Control)},
 	}
 	for _, check := range checks {
 		if !check.matches {

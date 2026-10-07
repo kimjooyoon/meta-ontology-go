@@ -13,6 +13,7 @@ import (
 type CompositionOptions struct {
 	ModelPath     string
 	FillModelPath string
+	RecordPolicy  *bodycodegen.RecordAssemblyPolicy
 }
 
 // Setup is observed once per composition. Per-activity receipts retain the

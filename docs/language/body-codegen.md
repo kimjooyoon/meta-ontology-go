@@ -21,6 +21,13 @@ read-only while local `let` values may be assigned. See the
 
 ### Model-guided record body fill
 
+For source-declared record choices, [`body-compose --assembly-policy`](../../examples/assembly-policy/README.md)
+can execute a Gooo explanation activity between scored candidates. The policy
+receives observed counts and controls continuation or selection of an observed
+candidate. Its source and decisions are retained for replay with zero new model
+calls. Deterministic ordering and an optional compact model share the same
+declared alternatives, finite checks and attempt budget.
+
 Gooo source can declare candidate expressions for a record-valued activity
 body. The compiler checks each complete assignment against the record shape
 and declared `value_case` examples, then emits only a listed assignment. The

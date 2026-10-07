@@ -32,6 +32,7 @@ type RecordAssemblyReceipt struct {
 	Ranking              []uint16                       `json:"ranking"`
 	GenerationNS         int64                          `json:"generation_ns"`
 	Scope                string                         `json:"scope"`
+	Control              *RecordAssemblyControl         `json:"control,omitempty"`
 }
 
 type RecordValueChoice struct {
