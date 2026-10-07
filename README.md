@@ -77,8 +77,9 @@ or execute the program. Use `--json` to consume the trail and completeness
 receipt from another tool.
 Add [`--generation`](docs/language/capability-discovery.md#connect-an-existing-generation)
 to replay a saved source-owned construction and measure its generated activity
-coverage against a separate Gooo contract. Native runtime observations are the
-next evidence stage.
+coverage against a separate Gooo contract. Add `--execute-cases <cases.json>`
+to build and run that projection twice, linking fresh runtime observations and
+unique inputs absent from selection to the same receipt.
 
 `gooo test` checks explicit activity-output markers, not input/output values. See the [language test example](examples/language-test/README.md) before adding one.
 
