@@ -280,8 +280,8 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 			Actual: actualValue, Passed: actualScalar == expectedScalar}
 		if field.Presence == "optional" {
 			fieldResult.Presence = field.Presence
-			fieldResult.ExpectedPresent = boolPointer(expectedScalar.Present)
-			fieldResult.ActualPresent = boolPointer(actualScalar.Present)
+			fieldResult.ExpectedPresent = new(expectedScalar.Present)
+			fieldResult.ActualPresent = new(actualScalar.Present)
 		}
 		result.Fields = append(result.Fields, fieldResult)
 		if actualScalar.Present || field.Presence != "optional" {
@@ -375,5 +375,3 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 func recordScalarJSONValue(value recordBodyScalar) any {
 	return recordBodyScalarValue(value)
 }
-
-func boolPointer(value bool) *bool { return &value }

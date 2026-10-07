@@ -22,8 +22,11 @@ data and does not execute authored record-body code.
 optional values remain unsupported. Pure record-body codegen and
 `body-compose` accept optional single scalar fields as typed pointers for
 copy-and-transport bodies. Missing keys remain absent across explicit binds;
-`""`, `false` and `0` remain present. Learned field assembly does not yet
-synthesize new optional values. `gooo package resolve` and `gooo package execute`
+`""`, `false` and `0` remain present. Record-field assembly can also synthesize
+optional values from source-declared typed alternatives and select them against
+bounded finite cases. A local model can rank those prevalidated alternatives;
+it cannot introduce expressions, and the finite completeness receipt describes
+only the supplied cases. `gooo package resolve` and `gooo package execute`
 also accept V4 fields throughout workspace parsing, IR lowering and flattening.
 The [optional package-flow example](../examples/package-optional-record-flow/README.md)
 checks that absent fields and explicit zero values survive an imported activity
