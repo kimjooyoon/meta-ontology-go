@@ -1,0 +1,294 @@
+{
+  "schema": "gooo/module-build-origin-study/v1",
+  "observed_at_utc": "2026-10-07T18:12:19.793Z",
+  "before_requested_revision": "25df294860e1cfdff8e419bc2cf25390a52043b7",
+  "after_requested_revision": "1b39843fca5808b662c657f84f45c089a14dd88b",
+  "installation": "Public Go module installation with Go 1.27.1 into temporary GOBIN directories; native compiler metadata read from each installed binary.",
+  "module_prefix": "example.org/team/diagnostic",
+  "new_training": false,
+  "model_training_exposure": "UNKNOWN",
+  "model_origin": "https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary",
+  "scope": "One installed diagnostic task, existing own model, unchanged source files and a copied project directory. Eight finite output expectations per generation/replay; three input-only rows have no accuracy label. A separate Clamp activity has seven finite expectations. Module coordinates are embedded observations, not a Git resolution or executable attestation. Caches and host load uncontrolled; no speed or general-correctness comparison.",
+  "before": {
+    "decision": "PASS",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": null,
+    "generated_sha256": "sha256:10f55f10a0ace3482d716ca8ebd1ad760e5609133c8c137cbf7ba91ffaede4ef",
+    "passed": 8,
+    "total": 8,
+    "rows": 4,
+    "runtime_model_calls": 0,
+    "replay_model_calls": null,
+    "retained_assembly": {
+      "selected_mask": 3,
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 13,
+          "fields_total": 15
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15
+        }
+      ],
+      "model_calls": 1,
+      "predict_ns": 13666,
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.707459,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      }
+    }
+  },
+  "after": {
+    "decision": "PASS",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.5-dev.0.20261007180852-1b39843fca58",
+      "sum": "h1:4ZXG9AtQ9rBJjz5pXmVHZ73q2foKjaliiiP7B9Lymg8="
+    },
+    "generated_sha256": "sha256:10f55f10a0ace3482d716ca8ebd1ad760e5609133c8c137cbf7ba91ffaede4ef",
+    "passed": 8,
+    "total": 8,
+    "rows": 4,
+    "runtime_model_calls": 0,
+    "replay_model_calls": null,
+    "retained_assembly": {
+      "selected_mask": 3,
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 13,
+          "fields_total": 15
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15
+        }
+      ],
+      "model_calls": 1,
+      "predict_ns": 12834,
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.647167,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      }
+    }
+  },
+  "legacy_replay": {
+    "decision": "PASS",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.5-dev.0.20261007180852-1b39843fca58",
+      "sum": "h1:4ZXG9AtQ9rBJjz5pXmVHZ73q2foKjaliiiP7B9Lymg8="
+    },
+    "generated_sha256": "sha256:10f55f10a0ace3482d716ca8ebd1ad760e5609133c8c137cbf7ba91ffaede4ef",
+    "passed": 8,
+    "total": 8,
+    "rows": 4,
+    "runtime_model_calls": 0,
+    "replay_model_calls": 0,
+    "retained_assembly": {
+      "selected_mask": 3,
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 13,
+          "fields_total": 15
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15
+        }
+      ],
+      "model_calls": 1,
+      "predict_ns": 13666,
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.707459,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      }
+    }
+  },
+  "input_only": {
+    "decision": "OBSERVED",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.5-dev.0.20261007180852-1b39843fca58",
+      "sum": "h1:4ZXG9AtQ9rBJjz5pXmVHZ73q2foKjaliiiP7B9Lymg8="
+    },
+    "generated_sha256": "sha256:10f55f10a0ace3482d716ca8ebd1ad760e5609133c8c137cbf7ba91ffaede4ef",
+    "passed": 0,
+    "total": 0,
+    "rows": 3,
+    "runtime_model_calls": 0,
+    "replay_model_calls": 0,
+    "retained_assembly": {
+      "selected_mask": 3,
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 13,
+          "fields_total": 15
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15
+        }
+      ],
+      "model_calls": 1,
+      "predict_ns": 13666,
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.707459,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      }
+    }
+  },
+  "single_activity": {
+    "activity": "Clamp",
+    "passed": 7,
+    "total": 7,
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.5-dev.0.20261007180852-1b39843fca58",
+      "sum": "h1:4ZXG9AtQ9rBJjz5pXmVHZ73q2foKjaliiiP7B9Lymg8="
+    },
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "toolchain": "go version go1.27.1 darwin/arm64",
+    "go_tool_sha256": "sha256:132b69336a1f809932a8a20b0201dbbb980e86e3a323ae32e893639d83d71598",
+    "path_scope": "Published raw run uses a temporary Go executable symlink. An earlier direct-path run also matched 7/7; these are the same cases, not additional coverage."
+  },
+  "build_identity": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.5-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.1",
+    "module_version": "v0.6.5-dev.0.20261007180852-1b39843fca58",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.5-dev.0.20261007180852-1b39843fca58",
+      "sum": "h1:4ZXG9AtQ9rBJjz5pXmVHZ73q2foKjaliiiP7B9Lymg8="
+    },
+    "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "source_status": "UNOBSERVED_VCS",
+    "vcs_revision": "unobserved",
+    "vcs_modified": "unobserved",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.24-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.1"
+  },
+  "interpretation": "Before the fix, native receipts omitted the observed main-module version and checksum. Afterward build JSON, package execution, old-receipt replay and single-body completeness scope retain the current module. All paths retain UNBOUND_LOCAL_SOURCE for absent Git metadata. The new model call again proposes mask 7 before selection reaches mask 3; old-receipt replay retains historical inference while making zero new calls.",
+  "reproduction": [
+    "Install cmd/gooo at the before revision with Go 1.27.1; create a diagnostic starter with the recorded module prefix.",
+    "Execute its cases.json with --assembly-model MODEL_JSON and save before.json; preserve the complete project.",
+    "Install cmd/gooo at the after revision; record version --build --json and go version -m.",
+    "Execute the same project and model as after.json; package replay before.json with its cases.json, then with inputs.json.",
+    "Run body-path-run for Clamp from source-assembly.gooo.fixture and source-assembly-clamp-cases.json at the after revision, with one repeat and the native Go 1.27.1 tool."
+  ],
+  "artifacts": {
+    "before.json": {
+      "bytes": 79803,
+      "sha256": "1fb07b5bc2d269a12a6b5822221e9cd8e484378de308c35e8e59f3fe11c540a9"
+    },
+    "after.json": {
+      "bytes": 79976,
+      "sha256": "720f2575d5f7042ff80a7fa99cad5a1e64f1a2ef18d14fd67d7e1562b0fcf034"
+    },
+    "replay.json": {
+      "bytes": 80403,
+      "sha256": "8f62d5c89cb681027694b388c28e3a9c628243c1a7f86de96ee08e49d5383bd9"
+    },
+    "inputs.json": {
+      "bytes": 78051,
+      "sha256": "1f06bf7b49106783d8663cb6696fffca4232770c052783b80569cbc5e062e4a3"
+    },
+    "single-runtime.json": {
+      "bytes": 51713,
+      "sha256": "c5c0debb39779e472e35409ae6a87068e92b9342ca1dcff87320ca512b18edd1"
+    },
+    "build-identity.json": {
+      "bytes": 675,
+      "sha256": "54f2a0d1f4558bfedb57cb2a438d6353c7891234591ac01769b5e89c3ac5b8a7"
+    },
+    "build-info.txt": {
+      "bytes": 646,
+      "sha256": "3dff2faae29c608d8f37ccec82076ff03dc2bef4ecd609908228926151cd2555"
+    },
+    "before-build-info.txt": {
+      "bytes": 646,
+      "sha256": "6bba53b7986b2016261920f85641ee0e5486cf8e679a58bb8d7df4a0958b7b5b"
+    }
+  },
+  "before_module_from_binary": {
+    "path": "github.com/kimjooyoon/meta-ontology-go",
+    "version": "v0.6.5-dev.0.20261007174112-25df294860e1",
+    "sum": "h1:Q3T4B9HJ+cbJl9JL9oqeobZmff19pocAet10bCAXVZw="
+  },
+  "after_module_from_binary": {
+    "path": "github.com/kimjooyoon/meta-ontology-go",
+    "version": "v0.6.5-dev.0.20261007180852-1b39843fca58",
+    "sum": "h1:4ZXG9AtQ9rBJjz5pXmVHZ73q2foKjaliiiP7B9Lymg8="
+  },
+  "observed_executable": {
+    "bytes": 22584226,
+    "sha256": "c1bd071f1e8d236c0ac1c2e622bad23ed5dda7d0ea384d16d5b2b841cdea60fb"
+  }
+}

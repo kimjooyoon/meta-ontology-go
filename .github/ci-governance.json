@@ -7169,6 +7169,32 @@
         "docs/research/diagnostic-starter-20261008/summary.json",
         "internal/verify/scope_gooo_diagnostic_starter_20261008.go"
       ]
+    },
+    {
+      "branch": "agent/gooo-module-build-origin-20261008",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/version_build.go",
+        "cmd/gooo/version_module_test.go",
+        "docs/language/project-starters.md",
+        "docs/research/module-build-origin-20261008/after.json",
+        "docs/research/module-build-origin-20261008/before-build-info.txt",
+        "docs/research/module-build-origin-20261008/before.json",
+        "docs/research/module-build-origin-20261008/build-identity.json",
+        "docs/research/module-build-origin-20261008/build-info.txt",
+        "docs/research/module-build-origin-20261008/inputs.json",
+        "docs/research/module-build-origin-20261008/replay.json",
+        "docs/research/module-build-origin-20261008/single-runtime.json",
+        "docs/research/module-build-origin-20261008/summary.json",
+        "internal/bodyexecution/composition_runtime.go",
+        "internal/bodyexecution/producer_module_test.go",
+        "internal/bodyexecution/receipt.go",
+        "internal/bodyexecution/run.go",
+        "internal/buildidentity/module.go",
+        "internal/buildidentity/module_test.go",
+        "internal/verify/scope_gooo_module_build_origin_20261008.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
