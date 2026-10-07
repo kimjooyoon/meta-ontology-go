@@ -37,11 +37,11 @@ func surfaceFixture(id, schema, head string, cases int) map[string]any {
 
 func releaseFixture(head string) []byte {
 	cases := []any{}
-	for _, target := range []string{"linux-amd64", "darwin-amd64", "windows-amd64"} {
+	for _, target := range []string{"linux-amd64", "darwin-amd64", "darwin-arm64", "windows-amd64"} {
 		cases = append(cases, map[string]any{"id": target + "-go127-toolchain",
 			"target_id": target, "observed": "go1.27.1", "expected": "go1.27.1"})
 	}
-	for index := range 17 {
+	for index := range 22 {
 		cases = append(cases, map[string]any{"id": fmt.Sprintf("case-%02d", index),
 			"observed": "EXACT", "expected": "EXACT"})
 	}
@@ -49,8 +49,8 @@ func releaseFixture(head string) []byte {
 		"schema":   "gooo/toolchain-cross-platform-release-report/v1",
 		"decision": "PASS", "resolution": "EXACT", "head_sha": head,
 		"report_digest": fixtureDigest("f"), "repository_writes": 0,
-		"summary": map[string]any{"cases_satisfied": 20, "cases_total": 20,
-			"readiness_bps": 10000, "platform_receipts": 3,
-			"operating_systems": 3, "toolchain_bindings": 3},
+		"summary": map[string]any{"cases_satisfied": 26, "cases_total": 26,
+			"readiness_bps": 10000, "platform_receipts": 4,
+			"operating_systems": 3, "toolchain_bindings": 4},
 		"cases": cases})
 }

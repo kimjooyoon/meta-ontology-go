@@ -1,0 +1,131 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "declared": 4,
+          "documented": 1,
+          "implemented": 4,
+          "stale": false
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "PROGRESS",
+          "next_operation": "DOCUMENT_MISSING",
+          "message": "예제가 없는 기능이 남았습니다."
+        },
+        "gooo/tools/render:Render": "PROGRESS | DOCUMENT_MISSING | 예제가 없는 기능이 남았습니다."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "declared": 4,
+          "documented": 4,
+          "implemented": 4,
+          "stale": false
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "PASS",
+          "next_operation": "CHECK_NEW_FEATURES",
+          "message": "선언한 기능과 예제가 일치합니다."
+        },
+        "gooo/tools/render:Render": "PASS | CHECK_NEW_FEATURES | 선언한 기능과 예제가 일치합니다."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "declared": 0,
+          "documented": 0,
+          "implemented": 0,
+          "stale": true
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "UNKNOWN",
+          "next_operation": "DECLARE_FEATURES",
+          "message": "기능 목록을 선언하세요."
+        },
+        "gooo/tools/render:Render": "UNKNOWN | DECLARE_FEATURES | 기능 목록을 선언하세요."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "declared": 4,
+          "documented": 4,
+          "implemented": 4,
+          "stale": true
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "PROGRESS",
+          "next_operation": "UPDATE_EXAMPLES",
+          "message": "구현과 예제를 다시 맞추세요."
+        },
+        "gooo/tools/render:Render": "PROGRESS | UPDATE_EXAMPLES | 구현과 예제를 다시 맞추세요."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "declared": 4,
+          "documented": 1,
+          "implemented": 2,
+          "stale": false
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "PROGRESS",
+          "next_operation": "IMPLEMENT_DECLARATIONS",
+          "message": "선언한 기능의 구현이 남았습니다."
+        },
+        "gooo/tools/render:Render": "PROGRESS | IMPLEMENT_DECLARATIONS | 선언한 기능의 구현이 남았습니다."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "declared": 4,
+          "documented": 5,
+          "implemented": 4,
+          "stale": false
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "FAIL_CLOSED",
+          "next_operation": "RECONCILE_COUNTS",
+          "message": "관측 수치를 확인하세요."
+        },
+        "gooo/tools/render:Render": "FAIL_CLOSED | RECONCILE_COUNTS | 관측 수치를 확인하세요."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "declared": 9007199254740993,
+          "documented": 9007199254740992,
+          "implemented": 9007199254740993,
+          "stale": false
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "PROGRESS",
+          "next_operation": "DOCUMENT_MISSING",
+          "message": "예제가 없는 기능이 남았습니다."
+        },
+        "gooo/tools/render:Render": "PROGRESS | DOCUMENT_MISSING | 예제가 없는 기능이 남았습니다."
+      }
+    }
+  ]
+}

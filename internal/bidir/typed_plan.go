@@ -55,8 +55,9 @@ func (plan TypedPlan) Digest() string {
 	return "sha256:" + hex.EncodeToString(digest[:])
 }
 
-// CompileTypedPlan validates explicit binding edges and returns a canonical
-// topological plan. Unknown ports, duplicate edges, cycles, and ambiguous
+// CompileTypedPlan returns a canonical topological plan. One declared activity
+// is valid without edges; plans with multiple activities require explicit
+// binding edges. Unknown ports, duplicate edges, cycles, and ambiguous
 // activity references fail closed rather than being inferred.
 func CompileTypedPlan(document Document) (TypedPlan, error) {
 	activities := make(map[ID]Declaration)
@@ -78,6 +79,11 @@ func CompileTypedPlan(document Document) (TypedPlan, error) {
 		activities[id] = declaration
 	}
 	if len(document.BindingEdges) == 0 {
+		if len(activities) == 1 {
+			for id := range activities {
+				return TypedPlan{Activities: []ID{id}, Edges: []BindingEdge{}}, nil
+			}
+		}
 		return TypedPlan{}, fmt.Errorf("typed plan: no explicit binding edges")
 	}
 

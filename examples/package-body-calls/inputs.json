@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/body-composition-inputs/v1",
+  "inputs": [
+    {
+      "tools/diagnostics:Diagnose.input0": 1,
+      "tools/diagnostics:Diagnose.input1": 3,
+      "tools/diagnostics:Diagnose.input2": 1,
+      "tools/diagnostics:Diagnose.input3": "missing branch result"
+    },
+    {
+      "tools/diagnostics:Diagnose.input0": 0,
+      "tools/diagnostics:Diagnose.input1": 0,
+      "tools/diagnostics:Diagnose.input2": 0,
+      "tools/diagnostics:Diagnose.input3": ""
+    },
+    {
+      "tools/diagnostics:Diagnose.input0": 11,
+      "tools/diagnostics:Diagnose.input1": 11,
+      "tools/diagnostics:Diagnose.input2": 0,
+      "tools/diagnostics:Diagnose.input3": ""
+    }
+  ]
+}

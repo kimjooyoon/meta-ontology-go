@@ -51,5 +51,9 @@ func missingReceipt(receipt languagedebug.Receipt) bool {
 }
 
 func validGraph(graph GraphObservation) bool {
-	return graph.Schema == "gooo-graph/v1" && validDigest(graph.ProgramDigest) && validHexDigest(graph.GraphHash) && graph.ActivityCount == 44 && graph.EdgeCount == 88 && graph.DebugActivityCount == 2 && graph.DebugOutputCount == 2 && graph.DebugUsedEdgeCount == 2 && graph.DebugGeneratedEdgeCount == 2 && validDebugGraph(graph)
+	debugActivityCount := len(canonicalDebugActivities)
+	return graph.Schema == "gooo-graph/v1" && validDigest(graph.ProgramDigest) && validHexDigest(graph.GraphHash) &&
+		graph.ActivityCount == expectedGraphActivityCount() && graph.EdgeCount == expectedGraphEdgeCount() &&
+		graph.DebugActivityCount == debugActivityCount && graph.DebugOutputCount == debugActivityCount &&
+		graph.DebugUsedEdgeCount == debugActivityCount && graph.DebugGeneratedEdgeCount == debugActivityCount && validDebugGraph(graph)
 }

@@ -1,6 +1,6 @@
 {
   "schema": "gooo/language-utility-contract/v1",
-  "id": "gooo-language-utility-v1",
+  "id": "gooo-language-utility-v2",
   "stages": [
     {"id":"SOURCE_PRESENT","proof_choice":"foundation"},
     {"id":"SYNTAX_ACCEPTED","proof_choice":"foundation"},
@@ -16,7 +16,8 @@
     {"id":"artifact-emission","label":"Emit a user artifact from Gooo definitions"},
     {"id":"profiling","label":"Profile a Gooo activity"},
     {"id":"debugging","label":"Pause and inspect a Gooo activity"},
-    {"id":"package-execution","label":"Execute a multi-file Gooo package"}
+    {"id":"package-execution","label":"Execute a multi-file Gooo package"},
+    {"id":"capability-discovery","label":"Discover source-bound Gooo capabilities from a natural-language question"}
   ],
   "floors": {"closed_cells":39,"complete_use_cases":4},
   "not_claimed": [

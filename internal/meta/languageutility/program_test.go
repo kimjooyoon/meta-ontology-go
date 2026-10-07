@@ -10,7 +10,7 @@ func TestGeneratedMetaProgramContainsEveryUtilityCell(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Count(program, "activity Observe") != 42 {
+	if strings.Count(program, "activity Observe") != 49 {
 		t.Fatalf("observed cell activities = %d", strings.Count(program, "activity Observe"))
 	}
 	if !strings.Contains(program, "activity MeasureLanguageUtility") ||

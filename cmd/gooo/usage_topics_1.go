@@ -41,10 +41,12 @@ Example:
   gooo body-codegen --json --activity NonNegative examples/body-codegen/source-ir-fill-probe-choice.gooo.fixture
 
 The output includes generated Go, selected source, finite-case results, candidate
-coverage, and unresolved completeness dimensions. Without GOOO_LAYA_URL, candidate
-selection is deterministic. With Laya configured, the model chooses only among
-typed candidates declared by the plan. A finite test score is not a proof over
-every possible input.
+coverage, and unresolved completeness dimensions. Candidate selection can use
+deterministic ordering or a configured decision model. Models rank only
+typed candidates declared by the plan. The Gooo source defines the allowed
+alternatives and case obligations. Fixed pure activities in the same
+source can be called from a body; body-compose --entry selects an execution root.
+A finite test score covers the recorded inputs and expectations.
 
 See docs/language/body-codegen.md and docs/source-assembly.md.
 `,

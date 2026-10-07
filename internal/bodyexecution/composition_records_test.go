@@ -35,6 +35,13 @@ func TestCompositionNativeRecordsAndActualFieldIdentities(t *testing.T) {
 	if len(prior.Plan.Records) != 2 || len(prior.Steps[0].Generation.Report.RecordTypes) != 0 {
 		t.Fatal("record layouts missing or scalar assembly gained declarations")
 	}
+	for _, record := range prior.Plan.Records {
+		for _, field := range record.Fields {
+			if field.Presence != "" {
+				t.Fatalf("required V3 field gained optional metadata: %+v", field)
+			}
+		}
+	}
 	run, err := ExecuteComposition(context.Background(), "records.gooo", source, prior, suite, nativeTool())
 	if err != nil || run.FinitePassed != 36 || run.FiniteTotal != 36 || !run.RuntimeReplayed || run.ModelCalls != 0 {
 		t.Fatalf("native records: %v %+v", err, run)
@@ -202,5 +209,96 @@ func TestCompositionTransportsIntegerRecordFieldsExactly(t *testing.T) {
 	if len(run.Traces) != 1 || len(run.Traces[0].Deliveries) != 2 ||
 		string(run.Traces[0].Deliveries[1].Actual) != `{"enabled":true,"label":"exact","total":9007199254740995}` {
 		t.Fatalf("integer runtime value changed: %+v", run.Traces)
+	}
+}
+
+func TestCompositionOptionalRecordTransportPreservesAbsenceAndZeroValues(t *testing.T) {
+	source, err := os.ReadFile("../../examples/body-codegen/optional-record-transport.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile("../../examples/body-codegen/optional-record-transport-cases.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	suite, err := DecodeCompositionCases(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prior, err := GenerateComposition(context.Background(), "optional-records.gooo", source, suite, "")
+	if err != nil {
+		t.Fatal("optional record composition generation", err)
+	}
+	if len(prior.Plan.Records) != 1 || len(prior.Plan.Records[0].Fields) != 3 {
+		t.Fatalf("optional record layout missing: %+v", prior.Plan.Records)
+	}
+	for _, field := range prior.Plan.Records[0].Fields {
+		if field.Presence != "optional" {
+			t.Fatalf("field presence was not retained: %+v", field)
+		}
+	}
+	receiptScope, err := json.Marshal(prior.Steps[0].Generation.Report.CompletenessReceipt.Scope)
+	if err != nil || !bytes.Contains(receiptScope, []byte(`"record_body_scope"`)) ||
+		!bytes.Contains(receiptScope, []byte(`"presence":"optional"`)) {
+		t.Fatalf("completeness receipt omitted the optional record contract: %s (%v)", receiptScope, err)
+	}
+	run, err := ExecuteComposition(context.Background(), "optional-records.gooo", source, prior, suite, nativeTool())
+	if err != nil || run.FinitePassed != 12 || run.FiniteTotal != 12 || !run.RuntimeReplayed {
+		t.Fatalf("optional record values did not survive execution: err=%v runtime=%+v", err, run)
+	}
+	graph, err := prepareCompositionGraph(context.Background(), "optional-records.gooo", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for caseIndex, trace := range run.Traces {
+		if len(trace.Deliveries) != 3 {
+			t.Fatalf("case %d deliveries=%d", caseIndex, len(trace.Deliveries))
+		}
+		copy, relay, empty := trace.Deliveries[0], trace.Deliveries[1], trace.Deliveries[2]
+		if !bytes.Equal(copy.Actual, relay.Input) || !bytes.Equal(copy.Actual, relay.Actual) ||
+			!bytes.Equal(relay.Actual, empty.Input) || !bytes.Equal(empty.Actual, []byte(`{}`)) {
+			t.Fatalf("case %d changed the optional record across the bind: %+v", caseIndex, trace.Deliveries)
+		}
+		for _, observation := range [][]CompositionRecordField{copy.InputFields, copy.ActualFields,
+			relay.InputFields, relay.ActualFields, empty.InputFields, empty.ActualFields} {
+			if len(observation) != 3 {
+				t.Fatalf("case %d optional field observations=%d", caseIndex, len(observation))
+			}
+			for _, field := range observation {
+				if field.Presence != "optional" || field.Present == nil || field.ID == "" {
+					t.Fatalf("case %d lost optional field identity or presence: %+v", caseIndex, field)
+				}
+			}
+		}
+		for _, field := range empty.ActualFields {
+			if *field.Present || field.Value != nil {
+				t.Fatalf("case %d omitted field %q was materialized: %+v", caseIndex, field.Name, field)
+			}
+		}
+		present := map[string]bool{"note": caseIndex == 1 || caseIndex == 2, "complete": caseIndex != 0, "count": caseIndex == 1 || caseIndex == 2}
+		for _, field := range copy.ActualFields {
+			if *field.Present != present[field.Name] {
+				t.Fatalf("case %d field %q presence=%t", caseIndex, field.Name, *field.Present)
+			}
+			if !present[field.Name] && field.Value != nil {
+				t.Fatalf("case %d absent field %q has a value: %s", caseIndex, field.Name, field.Value)
+			}
+		}
+		if caseIndex == 1 {
+			for _, field := range copy.ActualFields {
+				if !*field.Present {
+					t.Fatalf("explicit zero field %q became absent", field.Name)
+				}
+				want := map[string]string{"note": `""`, "complete": "false", "count": "0"}[field.Name]
+				if string(field.Value) != want {
+					t.Fatalf("explicit zero field %q = %s, want %s", field.Name, field.Value, want)
+				}
+			}
+		}
+	}
+	for _, invalid := range []string{`{"note":null}`, `{"complete":0}`, `{"count":"0"}`, `{"unknown":"x"}`, `{"note":"x","note":"y"}`} {
+		if _, err := graph.canonicalValue([]byte(invalid), "Profile"); err == nil {
+			t.Fatalf("accepted invalid optional record: %s", invalid)
+		}
 	}
 }

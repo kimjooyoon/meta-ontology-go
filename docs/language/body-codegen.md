@@ -19,6 +19,158 @@ read-only while local `let` values may be assigned. See the
 [multiple-input example and case keys](../native-body-composition.md) and
 [record construction and actual value delivery](../native-record-values.md).
 
+### Model-guided record body fill
+
+For source-declared record choices, [`body-compose --assembly-policy`](../../examples/assembly-policy/README.md)
+can execute a Gooo explanation activity between scored candidates. The policy
+receives observed counts and controls continuation or selection of an observed
+candidate. Its source and decisions are retained for replay with zero new model
+calls. Deterministic ordering and an optional compact model share the same
+declared alternatives, finite checks and attempt budget.
+
+`body-compose --resume-composition` continues a saved record-choice composition
+under a new explicit Gooo policy. It verifies the earlier observations, retains
+the original ranking and cumulative attempt budget, and starts with the remaining
+candidates. This path loads no model. See the [checkpoint and continuation
+example](../../examples/assembly-policy/README.md#continue-a-saved-partial-construction)
+for supported graphs, history bounds, and replay accounting.
+
+Gooo source can declare candidate expressions for a record-valued activity
+body. The compiler checks each complete assignment against the record shape
+and declared `value_case` examples, then emits only a listed assignment. The
+default chooser is deterministic. An optional local `--tiny-model` path can
+select assignments when a hole exposes at least two distinct supported
+operations. The local model sees the source intent and predicts one of its eight
+operation labels. Gooo keeps assignments whose focused hole has that operation,
+then uses finite training scores to choose within the group. It does not send
+record cases or candidate summaries to the model. If no hole offers more than
+one supported operation class, generation fails before inference. An optional
+`GOOO_LAYA_URL` endpoint remains available for experiments that need an
+external chooser. In every path, Gooo typechecks the complete assignments,
+scores them on declared cases, emits the selected body and evaluates the finite
+record cases again. For example,
+[`source-ir-fill-record.gooo.fixture`](../../examples/body-codegen/source-ir-fill-record.gooo.fixture)
+uses `Candidate.state` to construct an accepted or rejected `Review`:
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity ReviewCandidate \
+  examples/body-codegen/source-ir-fill-record.gooo.fixture
+```
+
+Without a model endpoint, Gooo deterministically keeps the highest-scoring
+declared assignment. To use the own-model path with source-derived record
+candidates, try
+[`source-ir-fill-record-tiny.gooo.fixture`](../../examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture):
+
+```sh
+gooo body-codegen --json --tiny-model /path/to/model.json \
+  --activity ReviewCandidate \
+  examples/body-codegen/source-ir-fill-record-tiny.gooo.fixture
+```
+
+The `model.json` and its `weights.bin` must come from a compatible local TinyGo
+bundle. The example gives the model an `and`/`or` choice over two typed record
+fields while Gooo derives candidate bodies, checks types and measures two
+training rows plus two separate holdout rows whose `queued` state was not used
+to derive candidates. The receipt reports the selected
+operation, focused hole, model timings, finite accuracy, and the two retained
+assignments out of the four declared combinations. A model proposal that scores
+below another candidate is still replaced by Gooo's best-scoring choice.
+Record body fill supports required single string, boolean and integer fields,
+one declared record result, and pure body expressions.
+
+For external model experiments, set `GOOO_LAYA_URL` to a Laya `/v1/systemone`
+endpoint. Its request includes the typed Gooo body, candidate summaries and
+finite-case scores; it omits raw case objects. Derived expressions can contain
+literals observed in those cases because those are the choices being ranked.
+The receipt records the proposal, final candidate, each record case result, and
+whether Gooo replaced an inferior proposal with the best-scoring candidate.
+
+The source can also derive record candidates from its declared `value_case`s
+instead of listing each assignment. Per-hole `record-field-predicate/v1`
+enumerates equality and inequality checks over observed scalar inputs;
+`record-field-predicate-composition/v1` also enumerates pairwise `&&` and `||`
+combinations, preferring predicates that read different fields. It uses no
+arbitrary formulas or nested Boolean syntax, and its completeness denominator
+includes the full finite pairwise grammar before the per-hole cap.
+The versioned `record-field-predicate/v2` adds `<`, `<=`, `>`, and `>=` for
+Integer inputs and integer fields while keeping v1's equality-only candidate
+set stable. Its comparison thresholds come from observed training values; it
+does not invent unobserved midpoints. Multiple comparison holes can be combined
+by control flow already declared in `computes`, and the complete assignment
+space remains explicit in the receipt. The
+[`integer boundary fixture`](../../examples/body-codegen/source-ir-fill-record-integer-boundary.gooo.fixture)
+generates a positive-score predicate, then checks separate training and holdout
+records.
+`record-field-predicate-composition/v2` composes those ordered atoms with
+pairwise `&&` and `||`. Its bounded prefix interleaves cross-field predicates
+with same-field integer intervals, so a small cap can retain both record
+routing and range candidates. The receipt still reports the full pairwise
+grammar size and the retained prefix; a generated interval that is not retained
+remains outside the search. The
+[`integer range fixture`](../../examples/body-codegen/source-ir-fill-record-integer-range.gooo.fixture)
+builds a two-sided score condition, typechecks it, replays it, and scores
+separate holdout records. Version 1 keeps its original candidate order and
+equality-only atoms.
+`record-field-relation/v1` adds comparisons between distinct fields on declared
+record inputs. It compares only fields with the same scalar type: string and
+Boolean fields get equality/inequality, while Integer fields also get ordered
+comparisons. Selectors keep their input and field declaration order; the
+receipt reports the complete relation grammar and retained prefix. Unlike
+literal predicates, these expressions compare caller-supplied values directly.
+The [record relation fixture](../../examples/body-codegen/source-ir-fill-record-relations.gooo.fixture)
+derives `input0.key == input1.key`, checks four training pairs, and measures two
+separate holdouts.
+`record-field-relation-composition/v1` combines two distinct relation atoms
+with `&&` or `||`, prioritizing pairs that compare four independent fields.
+Its finite denominator includes all pairwise combinations and the atomic
+relations; `max_expressions` retains a deterministic prefix. The grammar does
+not build nested conditions. The
+[relation composition fixture](../../examples/body-codegen/source-ir-fill-record-relation-composition.gooo.fixture)
+generates key-and-state matching across two records, retains 8 of 16
+expressions, and reports the separate training, holdout and assignment coverage.
+For three-field-relation combinations, use
+`record-field-relation-composition/v2`. It enumerates three distinct relation
+atoms with both binary tree shapes and all four `&&`/`||` operator pairs, then
+includes the complete v1 pair and atomic fallback spaces. Candidate ordering
+prefers triples with more distinct selector pairs and fields. The denominator
+is exact; `max_expressions` records the retained prefix and leaves grammar
+coverage partial when capped. The
+[three-input relation fixture](../../examples/body-codegen/source-ir-fill-record-relation-triples.gooo.fixture)
+checks three matching keys with four training and two withheld records, and
+reports the full 196-expression denominator, the retained 8-expression prefix,
+and all 16 complete condition/value assignments.
+For four-field-relation combinations, use
+`record-field-relation-composition/v3`. It enumerates all five binary-tree
+shapes and all eight `&&`/`||` operator assignments for each distinct quartet,
+then includes the full v2 triple, pair and atomic fallback spaces. Ordering
+prefers quartets that connect more distinct selector pairs and fields. With 12
+relation atoms, the exact denominator is 21,704. The
+[`four-input relation fixture`](../../examples/body-codegen/source-ir-fill-record-relation-quads.gooo.fixture)
+retains eight conditions, checks four training rows and two separate holdouts,
+and records omitted grammar candidates separately from the 16 complete body
+assignments. This bounded grammar does not generate arbitrary Boolean programs
+or establish behavior beyond the declared cases.
+`record-string-literal/v1`, `record-integer-literal/v1`, and
+`record-boolean-literal/v1` draw typed literals from the expected output record.
+The assignment cap and omitted search space appear in the same completeness
+receipt as integer derivation. Put independent record examples in
+`holdout_value_case` rows. They are not used to derive expressions, score
+candidates, or form Laya's request; Gooo evaluates the final selected body
+against them after selection and reports a separate holdout accuracy and suite
+digest. This measures only those withheld rows and does not establish
+full-domain behavior. See
+[`source-ir-fill-record-derived.gooo.fixture`](../../examples/body-codegen/source-ir-fill-record-derived.gooo.fixture).
+Run it without Laya to use the deterministic best-scoring candidate:
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity ReviewCandidate \
+  examples/body-codegen/source-ir-fill-record-derived.gooo.fixture
+```
+
+[`source-ir-fill-record-composed.gooo.fixture`](../../examples/body-codegen/source-ir-fill-record-composed.gooo.fixture)
+shows the bounded two-field predicate grammar in a complete record body-fill.
+
 For multiple requests in one process, use
 [`gooo body-path-stream`](../native-body-worker.md). It accepts source recipes,
 keeps an optional small model loaded and emits each result as soon as it is ready.
@@ -89,7 +241,12 @@ An inferred local initialized from an integer constant uses `int64`, keeping
 Integer locals aligned with the DSL type. This rule applies at local bindings;
 it adds no conversions at activity input or output boundaries. Boolean and
 Text locals retain Go's `bool` and `string` inference.
-Function calls, imports, loops and external effects fail
+Fixed pure activities declared in the same source can be called by name with
+typed positional arguments. Their acyclic call closure is included in generation
+and replay; see [pure activity reuse](../../examples/pure-activity-calls/README.md).
+`body-compose --entry Name` executes one entry and its explicit producers while
+its pure callees receive arguments from expressions. Recursive, indirect,
+external and assembling-callee calls, imports, loops and external effects fail
 closed. The generated result is written to stdout; this command does not
 mutate the repository.
 
@@ -170,11 +327,18 @@ gooo body-search-run \
 ```
 
 The command finishes one generation request before compiling the selected Go
-program, then executes it twice against the independent runtime cases. It emits
+program, then executes it twice against the supplied runtime cases. It emits
 one JSON object containing the generation and runtime receipts. Laya is optional;
 without it, Gooo uses its stable candidate order. Selection training cases,
-withheld holdout cases and independent runtime cases retain separate scores, so
+withheld holdout cases and separately executed runtime cases retain separate scores, so
 the result shows which part of the pipeline was actually exercised.
+
+For saved generation results, `body-execute` also reads the source-owned search
+contract directly. Both routes replay the declared candidate set, selected
+expression and finite training/holdout observations before building. The
+bundled runtime cases reuse those source inputs, so their 7/7 matches establish
+execution consistency and have zero new inputs. See [the split generation and
+execution example](../source-assembly.md#declare-a-typed-ir-search-in-the-gooo-source).
 
 ## Source-bound structural paths with a local Go model
 
@@ -293,15 +457,43 @@ go run ./cmd/gooo body-codegen --json --fill-plan \
 
 Set `GOOO_LAYA_URL` to let Laya rank the declared assignments. Without a model,
 Gooo selects deterministically and still scores every assignment. The compact
-`--tiny-model` path currently supports v1 single-hole plans; v2 requires Laya or
-the deterministic route until the compact model is trained to compare complete
-multi-hole assignments.
+`--tiny-model` path also accepts v2 plans when at least one hole gives every
+complete assignment a distinct supported root operation. Gooo picks the first
+such hole in declaration order and records it as `tiny_model_focus_hole`. The
+current model predicts one of eight operation labels from the intent; Gooo maps
+that label to a complete assignment through the focused hole's expression. It
+does not score the remaining holes jointly, so assignments that cannot be
+distinguished through any one hole are rejected before inference. Source-derived
+grammar candidate sets also remain on Laya or deterministic selection. The model
+never invents a fill, and every selected assignment still passes Gooo's type and
+finite-case checks.
 
-Both versions currently require an `Integer -> Integer` activity, closed
-expression candidates, and one to 4096 integer test cases. Intent text is
-limited to 2000 Unicode
-characters. Every JSON test case must explicitly provide non-null integer
-`input` and `expected` fields. Gooo typechecks every candidate and
+Both plan versions support activities with one to sixteen `Integer` inputs and
+one `Integer` output. Unary cases retain the `input` field. Multi-input cases
+provide a positional `inputs` array matching the activity's `input0`, `input1`,
+... parameters:
+
+```sh
+GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
+  go run ./cmd/gooo body-codegen --json --fill-plan \
+  examples/body-codegen/multi-input-fill-plan.json \
+  --activity Combine examples/body-codegen/multi-input-fill.gooo.fixture
+```
+
+This fixture asks the model to choose between sum and difference for two inputs.
+Gooo scores both candidates on the supplied vectors before the model call,
+records the input types and vector probes in the decision context, then checks
+the emitted body against training and holdout vectors. Probe vectors perturb one
+input at a time and exclude all declared holdout vectors. Probe disagreement
+measures whether alternatives differ on those constructed inputs; it does not
+measure intent correctness. Without a configured model, candidate order remains
+deterministic.
+
+All plans require closed expression candidates and one to 4096 training cases,
+with at most 4096 holdout cases. Each case provides either an integer `input` or
+an integer `inputs` array, plus integer `expected`; when both input forms are
+present, `input` must equal the first array value. Intent text is limited to
+2000 Unicode characters. Gooo typechecks every candidate and
 evaluates it with a closed, side-effect-free integer AST interpreter before
 asking Laya. Laya receives the Gooo
 body IR skeleton, the intent, candidate assignments, and each candidate's
@@ -548,6 +740,14 @@ offsets observed in the training examples. `max_candidates` bounds the set to
 Gooo checks and scores each selected expression before another model call.
 Without Laya, the same candidates are tried in their deterministic generated
 order.
+
+The opt-in `integer-hole-residual/v1` grammar also observes the body around the
+hole. It proposes constants and affine expressions from training-only zero/one
+hole probes, then retains the legacy seeds. This supports nested arithmetic and
+local variables such as `return input + hole`. Probe evidence is recorded and
+recomputed during replay; full-body evaluation still measures each proposal.
+The profile is bounded to one Integer input, one hole, 1..128 scalar training
+cases and 2..16 retained candidates. [Construction rules and limitations](../source-assembly.md#construct-a-value-inside-an-existing-body).
 
 The receipt hashes the generated candidate set and reports how many expressions
 the finite grammar produced, retained, or omitted. `grammar_coverage_percent`

@@ -18,6 +18,7 @@ import (
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodytiming"
+	"github.com/kimjooyoon/meta-ontology-go/internal/buildidentity"
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 )
 
@@ -34,6 +35,7 @@ type Observation struct {
 	RuntimeSuiteSHA256      string                             `json:"runtime_suite_sha256"`
 	CompilerSourceSHA       string                             `json:"declared_compiler_source_sha"`
 	ProducerSourceSHA       string                             `json:"producer_source_sha"`
+	ProducerModule          *buildidentity.Module              `json:"producer_module,omitempty"`
 	GoToolSHA256            string                             `json:"go_tool_sha256"`
 	GoToolPath              string                             `json:"go_tool_path,omitempty"`
 	GoToolSelection         string                             `json:"go_tool_selection,omitempty"`
@@ -72,7 +74,8 @@ func initialResult(source []byte, prior bodycodegen.Result, parentReceipt []byte
 		OriginalSourceSHA256: digest(source), SelectedSourceSHA256: prior.Report.SourceDigest,
 		GeneratedSHA256: prior.Report.GeneratedDigest, ActivityID: prior.Report.ActivityID, PlanSHA256: prior.Report.PlanSHA256,
 		CompilerSourceSHA: prior.Report.CompilerSourceSHA, ProducerSourceSHA: producerSourceSHA(),
-		Runs: make([]ProcessObservation, 0, 2), Cases: make([]bodycodegen.IRBodyFillCaseResult, 0), DeclaredCases: len(cases),
+		ProducerModule: buildidentity.MainModule(),
+		Runs:           make([]ProcessObservation, 0, 2), Cases: make([]bodycodegen.IRBodyFillCaseResult, 0), DeclaredCases: len(cases),
 		Scope: "Independent compiled execution of one source-replayed Integer -> Integer projection; caller-supplied finite expectations; parent model observations are not re-attested; no inference or provider requests."}}
 	if len(parentReceipt) <= 1<<20 {
 		result.ParentReceipt = append([]byte(nil), parentReceipt...)
@@ -139,7 +142,7 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 	suite, _ := json.Marshal(cases)
 	r.RuntimeSuiteSHA256 = digest(suite)
 	for _, c := range cases {
-		if !selectionObservedInput(document, prior, c.Input) {
+		if !SelectionObservedInput(document, prior, c.Input) {
 			r.SelectionDisjointInputs++
 		}
 	}
@@ -220,9 +223,10 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 	return finish(nil)
 }
 
-// Source replay above validates every observation before it contributes to the
-// effective selection suite. Added oracle inputs cannot become holdout claims.
-func selectionObservedInput(document pathplan.Document, prior bodycodegen.Result, input int64) bool {
+// SelectionObservedInput checks the effective selection suite, including added
+// oracle observations. Callers must replay the source before using this result
+// as evidence. It says nothing about model-training exposure.
+func SelectionObservedInput(document pathplan.Document, prior bodycodegen.Result, input int64) bool {
 	if slices.ContainsFunc(document.TestCases, func(t pathplan.TestCase) bool { return t.Input == input }) {
 		return true
 	}

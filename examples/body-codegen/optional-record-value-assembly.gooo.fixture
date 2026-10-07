@@ -1,0 +1,39 @@
+package optionalassembly
+namespace optionalassembly
+entity Text id "optionalassembly://text"
+entity Boolean id "optionalassembly://boolean"
+entity Integer id "optionalassembly://integer"
+entity Request id "optionalassembly://request" fields {
+    field label id "optionalassembly://request/label" type string required one
+    field emit id "optionalassembly://request/emit" type boolean required one
+    field active id "optionalassembly://request/active" type boolean required one
+    field amount id "optionalassembly://request/amount" type integer required one
+}
+entity Result id "optionalassembly://result" fields {
+    field note id "optionalassembly://result/note" type string optional one
+    field active id "optionalassembly://result/active" type boolean optional one
+    field total id "optionalassembly://result/total" type integer optional one
+}
+activity Build(Request) -> Result computes `let note = input.label
+let active = input.active
+let amount = input.amount
+let result = Result{note: &note, active: &active, total: &amount}
+if input.emit {
+    result.note = nil
+    result.active = nil
+    result.total = nil
+} else {
+    result.note = nil
+    result.active = nil
+    result.total = nil
+}
+return result` assembling {
+    choice "note" field_update at "0" alternative "&note" intent "생성된 메모를 존재하는 선택값으로 넣는다. Synthesize a present optional note."
+    choice "active" field_update at "1" alternative "&active" intent "거짓도 존재하는 선택값으로 보존한다. Preserve false as a present optional value."
+    choice "total" field_update at "2" alternative "&amount" intent "0도 존재하는 선택값으로 보존한다. Preserve zero as a present optional value."
+    value_case "[{\"label\":\"\",\"emit\":true,\"active\":false,\"amount\":0}]" -> "{\"note\":\"\",\"active\":false,\"total\":0}"
+    value_case "[{\"label\":\"discard\",\"emit\":false,\"active\":true,\"amount\":42}]" -> "{}"
+    attempts "8"
+}
+activity Echo(Result) -> Result computes "return input"
+bind Build.result -> Echo.input

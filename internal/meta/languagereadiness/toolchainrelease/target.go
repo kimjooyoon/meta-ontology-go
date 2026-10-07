@@ -11,6 +11,7 @@ type Target struct {
 var targetRegistry = []Target{
 	{ID: "linux-amd64", Runner: "ubuntu-24.04", GOOS: "linux", GOARCH: "amd64", ArchiveFormat: "tar.gz"},
 	{ID: "darwin-amd64", Runner: "macos-15-intel", GOOS: "darwin", GOARCH: "amd64", ArchiveFormat: "tar.gz"},
+	{ID: "darwin-arm64", Runner: "macos-15", GOOS: "darwin", GOARCH: "arm64", ArchiveFormat: "tar.gz"},
 	{ID: "windows-amd64", Runner: "windows-2025", GOOS: "windows", GOARCH: "amd64", ArchiveFormat: "zip"},
 }
 

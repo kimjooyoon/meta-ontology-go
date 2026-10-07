@@ -35,6 +35,33 @@ func TestRunSourceRecordInputExecutesDeclaredGraph(t *testing.T) {
 	}
 }
 
+func TestRunSourceOptionalRecordInputPreservesAbsentAndZeroValues(t *testing.T) {
+	source, err := os.ReadFile("../../examples/language-record-binding/optional.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	input, err := os.ReadFile("../../examples/language-record-binding/optional-input.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	reader := runSourceReaderWithFiles{"optional.gooo": source, "optional.json": input}
+	var stdout, stderr bytes.Buffer
+	code := runSource([]string{"--json", "--entry", "Capture", "--record-input", "optional.json", "optional.gooo"}, reader, &stdout, &stderr)
+	var report recordPlanReport
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+		t.Fatalf("decode=%v stdout=%s stderr=%s", err, stdout.String(), stderr.String())
+	}
+	result := report.Execution.Results["Relay"].Fields
+	if code != exitOK || stderr.Len() != 0 || report.Decision != "PASS" ||
+		report.Execution.ApplyCalls != 2 || report.Execution.Deliveries != 1 ||
+		result["Name"] != "sample" || result["Label"] != "" || result["Complete"] != false || result["Count"] != float64(0) {
+		t.Fatalf("code=%d report=%+v stderr=%s", code, report, stderr.String())
+	}
+	if _, present := result["Note"]; present {
+		t.Fatalf("omitted optional field was materialized: %#v", result)
+	}
+}
+
 func TestRunSourceRecordFailuresNeverClaimAdmission(t *testing.T) {
 	for _, entry := range []string{"Review", "Missing"} {
 		reader := recordCLIReader(t)

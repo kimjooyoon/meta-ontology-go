@@ -1,0 +1,10 @@
+package read
+namespace read
+entity Integer id "record-namespaces://integer"
+entity Result id "record-namespaces://read/result" fields {
+    field value id "record-namespaces://read/value" type integer required one
+    field note id "record-namespaces://read/note" type string required one
+}
+activity Parse(Integer) -> Result computes `return Result{value: input + 1, note: "Result belongs to read"}`
+activity Unwrap(Result) -> Integer computes "return input.value"
+bind Parse.result -> Unwrap.input

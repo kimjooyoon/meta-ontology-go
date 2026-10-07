@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"Clamp": -4}, "expected": {"Clamp": 0}},
+    {"inputs": {"Clamp": 6}, "expected": {"Clamp": 6}},
+    {"inputs": {"Clamp": 14}, "expected": {"Clamp": 10}}
+  ]
+}

@@ -10,11 +10,13 @@ import (
 	"go/scanner"
 	"go/token"
 	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -22,22 +24,25 @@ import (
 
 const bodyFillPlanSchema = "gooo/body-codegen-ir-fill-plan/v1"
 const bodyFillMultiPlanSchema = "gooo/body-codegen-ir-fill-plan/v2"
+const bodyFillRecordPlanSchema = "gooo/body-codegen-ir-fill-plan/v3-record"
 const bodyFillStateSchema = "gooo/body-codegen-ir-fill-state/v2"
 const bodyFillEvaluator = "gooo/bodycodegen-int64-ast-interpreter/v2"
 const irBodyFillDecisionBudget = 8 * time.Second
 
 // IRBodyFillPlan supplies finite, typed expression candidates for explicit
-// holes in a Gooo activity body. V1 has one hole; V2 selects one complete,
-// declared assignment across several holes as a single model decision.
+// holes in a Gooo activity body. V1 has one hole; V2 selects a complete,
+// integer-tested assignment; the record plan uses typed value cases.
 type IRBodyFillPlan struct {
-	Schema           string                `json:"schema"`
-	Intent           string                `json:"intent"`
-	HoleID           string                `json:"hole_id"`
-	Holes            []IRBodyFillHole      `json:"holes,omitempty"`
-	ProviderModel    string                `json:"provider_model,omitempty"`
-	Candidates       []IRBodyFillCandidate `json:"candidates"`
-	TestCases        []IRBodyFillTestCase  `json:"test_cases"`
-	HoldoutTestCases []IRBodyFillTestCase  `json:"holdout_test_cases,omitempty"`
+	Schema            string                   `json:"schema"`
+	Intent            string                   `json:"intent"`
+	HoleID            string                   `json:"hole_id"`
+	Holes             []IRBodyFillHole         `json:"holes,omitempty"`
+	ProviderModel     string                   `json:"provider_model,omitempty"`
+	Candidates        []IRBodyFillCandidate    `json:"candidates"`
+	TestCases         []IRBodyFillTestCase     `json:"test_cases"`
+	HoldoutTestCases  []IRBodyFillTestCase     `json:"holdout_test_cases,omitempty"`
+	ValueCases        []assemblyspec.ValueCase `json:"value_cases,omitempty"`
+	ValueHoldoutCases []assemblyspec.ValueCase `json:"value_holdout_cases,omitempty"`
 }
 
 type IRBodyFillHole struct {
@@ -54,25 +59,53 @@ type IRBodyFillCandidate struct {
 // the selected body's observed functional accuracy. It is not a proof over all
 // int64 values.
 type IRBodyFillTestCase struct {
-	Input    int64 `json:"input"`
-	Expected int64 `json:"expected"`
+	Input    int64   `json:"input"`
+	Inputs   []int64 `json:"inputs,omitempty"`
+	Expected int64   `json:"expected"`
 }
 
 func (testCase *IRBodyFillTestCase) UnmarshalJSON(data []byte) error {
 	var fields struct {
-		Input    *int64 `json:"input"`
-		Expected *int64 `json:"expected"`
+		Input    *int64  `json:"input"`
+		Inputs   []int64 `json:"inputs"`
+		Expected *int64  `json:"expected"`
 	}
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&fields); err != nil {
 		return err
 	}
-	if fields.Input == nil || fields.Expected == nil {
-		return fmt.Errorf("IR body-fill test case requires explicit integer input and expected values")
+	if fields.Expected == nil || fields.Input == nil && len(fields.Inputs) == 0 || len(fields.Inputs) > 16 {
+		return fmt.Errorf("IR body-fill test case requires explicit integer input(s) and expected value")
 	}
-	*testCase = IRBodyFillTestCase{Input: *fields.Input, Expected: *fields.Expected}
+	if fields.Input == nil {
+		fields.Input = new(int64)
+		*fields.Input = fields.Inputs[0]
+	} else if len(fields.Inputs) > 0 && fields.Inputs[0] != *fields.Input {
+		return fmt.Errorf("IR body-fill test case input must equal the first inputs value")
+	}
+	*testCase = IRBodyFillTestCase{Input: *fields.Input, Inputs: append([]int64(nil), fields.Inputs...), Expected: *fields.Expected}
 	return nil
+}
+
+func (testCase IRBodyFillTestCase) MarshalJSON() ([]byte, error) {
+	if len(testCase.Inputs) > 0 {
+		return json.Marshal(struct {
+			Inputs   []int64 `json:"inputs"`
+			Expected int64   `json:"expected"`
+		}{Inputs: testCase.Inputs, Expected: testCase.Expected})
+	}
+	return json.Marshal(struct {
+		Input    int64 `json:"input"`
+		Expected int64 `json:"expected"`
+	}{Input: testCase.Input, Expected: testCase.Expected})
+}
+
+func (testCase IRBodyFillTestCase) inputValues() []int64 {
+	if len(testCase.Inputs) > 0 {
+		return testCase.Inputs
+	}
+	return []int64{testCase.Input}
 }
 
 type IRBodyFillCandidateScore struct {
@@ -85,10 +118,11 @@ type IRBodyFillCandidateScore struct {
 }
 
 type IRBodyFillCaseResult struct {
-	Input    int64 `json:"input"`
-	Expected int64 `json:"expected"`
-	Actual   int64 `json:"actual"`
-	Passed   bool  `json:"passed"`
+	Input    int64   `json:"input"`
+	Inputs   []int64 `json:"inputs,omitempty"`
+	Expected int64   `json:"expected"`
+	Actual   int64   `json:"actual"`
+	Passed   bool    `json:"passed"`
 }
 
 type IRBodyFillTiming struct {
@@ -107,6 +141,7 @@ type IRBodyFillTiming struct {
 type IRBodyFillBehavioralProbeReceipt struct {
 	Schema                                 string                            `json:"schema"`
 	ProbeInputs                            []int64                           `json:"probe_inputs"`
+	ProbeVectors                           [][]int64                         `json:"probe_vectors,omitempty"`
 	ProbeProfileSHA256                     string                            `json:"probe_profile_sha256"`
 	CandidateProfiles                      []IRBodyFillCandidateProbeProfile `json:"candidate_profiles"`
 	ProbeInputsTotal                       int                               `json:"probe_inputs_total"`
@@ -128,40 +163,44 @@ type IRBodyFillCandidateProbeProfile struct {
 }
 
 type IRBodyFillReceipt struct {
-	Schema                     string                                `json:"schema"`
-	Intent                     string                                `json:"intent"`
-	HoleID                     string                                `json:"hole_id"`
-	HoleToken                  string                                `json:"hole_token"`
-	IRPlanSHA256               string                                `json:"ir_plan_sha256"`
-	ProposedCandidateID        string                                `json:"proposed_candidate_id"`
-	ProposedAccuracyPct        float64                               `json:"proposed_accuracy_percent"`
-	SelectedCandidateID        string                                `json:"selected_candidate_id"`
-	SelectedExpression         string                                `json:"selected_expression"`
-	HoleFills                  []IRBodyFillHoleFill                  `json:"hole_fills,omitempty"`
-	CandidateGeneration        *IRBodyFillCandidateGenerationReceipt `json:"candidate_generation,omitempty"`
-	BestCandidateID            string                                `json:"best_candidate_id"`
-	BestAccuracyPercent        float64                               `json:"best_candidate_accuracy_percent"`
-	SelectionRegretPP          float64                               `json:"selection_regret_percentage_points"`
-	SelectionAdjustment        string                                `json:"selection_adjustment"`
-	Decision                   decisionroute.Receipt                 `json:"decision"`
-	CandidateScores            []IRBodyFillCandidateScore            `json:"candidate_scores"`
-	BehavioralProbes           *IRBodyFillBehavioralProbeReceipt     `json:"behavioral_probes,omitempty"`
-	TestSuiteSHA256            string                                `json:"test_suite_sha256"`
-	TestCasesPassed            int                                   `json:"test_cases_passed"`
-	TestCasesTotal             int                                   `json:"test_cases_total"`
-	FunctionalAccuracyPct      float64                               `json:"functional_accuracy_percent"`
-	HoldoutSuiteSHA256         string                                `json:"holdout_suite_sha256,omitempty"`
-	HoldoutCasesPassed         int                                   `json:"holdout_cases_passed"`
-	HoldoutCasesTotal          int                                   `json:"holdout_cases_total"`
-	HoldoutAccuracyPercent     *float64                              `json:"holdout_accuracy_percent"`
-	HoldoutCaseResults         []IRBodyFillCaseResult                `json:"holdout_case_results,omitempty"`
-	LocalModelPredictions      int                                   `json:"local_model_predictions"`
-	ExternalProviderCalls      int                                   `json:"external_provider_calls"`
-	ExternalProviderCallsKnown bool                                  `json:"external_provider_calls_known"`
-	Evaluator                  string                                `json:"evaluator"`
-	SelectedCaseResults        []IRBodyFillCaseResult                `json:"selected_case_results"`
-	AccuracyScope              string                                `json:"accuracy_scope"`
-	Timing                     IRBodyFillTiming                      `json:"timing"`
+	Schema                          string                                `json:"schema"`
+	OriginalSourceDigest            string                                `json:"original_source_digest"`
+	Intent                          string                                `json:"intent"`
+	HoleID                          string                                `json:"hole_id"`
+	HoleToken                       string                                `json:"hole_token"`
+	IRPlanSHA256                    string                                `json:"ir_plan_sha256"`
+	ProposedCandidateID             string                                `json:"proposed_candidate_id"`
+	ProposedAccuracyPct             float64                               `json:"proposed_accuracy_percent"`
+	SelectedCandidateID             string                                `json:"selected_candidate_id"`
+	SelectedExpression              string                                `json:"selected_expression"`
+	HoleFills                       []IRBodyFillHoleFill                  `json:"hole_fills,omitempty"`
+	TinyModelFocusHole              string                                `json:"tiny_model_focus_hole,omitempty"`
+	CandidateGeneration             *IRBodyFillCandidateGenerationReceipt `json:"candidate_generation,omitempty"`
+	BestCandidateID                 string                                `json:"best_candidate_id"`
+	BestAccuracyPercent             float64                               `json:"best_candidate_accuracy_percent"`
+	SelectionRegretPP               float64                               `json:"selection_regret_percentage_points"`
+	SelectionAdjustment             string                                `json:"selection_adjustment"`
+	Decision                        decisionroute.Receipt                 `json:"decision"`
+	CandidateScores                 []IRBodyFillCandidateScore            `json:"candidate_scores"`
+	BehavioralProbes                *IRBodyFillBehavioralProbeReceipt     `json:"behavioral_probes,omitempty"`
+	TestSuiteSHA256                 string                                `json:"test_suite_sha256"`
+	TestCasesPassed                 int                                   `json:"test_cases_passed"`
+	TestCasesTotal                  int                                   `json:"test_cases_total"`
+	FunctionalAccuracyPct           float64                               `json:"functional_accuracy_percent"`
+	HoldoutSuiteSHA256              string                                `json:"holdout_suite_sha256,omitempty"`
+	HoldoutCasesPassed              int                                   `json:"holdout_cases_passed"`
+	HoldoutCasesTotal               int                                   `json:"holdout_cases_total"`
+	HoldoutAccuracyPercent          *float64                              `json:"holdout_accuracy_percent"`
+	HoldoutCaseResults              []IRBodyFillCaseResult                `json:"holdout_case_results,omitempty"`
+	LocalModelPredictions           int                                   `json:"local_model_predictions"`
+	ExternalProviderCalls           int                                   `json:"external_provider_calls"`
+	ExternalProviderCallsKnown      bool                                  `json:"external_provider_calls_known"`
+	Evaluator                       string                                `json:"evaluator"`
+	SelectedCaseResults             []IRBodyFillCaseResult                `json:"selected_case_results"`
+	SelectedValueCaseResults        []RecordAssemblyCase                  `json:"selected_value_case_results,omitempty"`
+	SelectedValueHoldoutCaseResults []RecordAssemblyCase                  `json:"selected_value_holdout_case_results,omitempty"`
+	AccuracyScope                   string                                `json:"accuracy_scope"`
+	Timing                          IRBodyFillTiming                      `json:"timing"`
 }
 
 type IRBodyFillHoleFill struct {
@@ -175,6 +214,7 @@ type irBodyFillState struct {
 	Activity         string                            `json:"activity"`
 	ActivityID       string                            `json:"activity_id"`
 	InputType        string                            `json:"input_type"`
+	InputTypes       []string                          `json:"input_types,omitempty"`
 	OutputType       string                            `json:"output_type"`
 	Intent           string                            `json:"intent"`
 	HoleID           string                            `json:"hole_id"`
@@ -189,7 +229,7 @@ type irBodyFillState struct {
 // GenerateWithIRBodyFill builds the typed hole plan synchronously from a Gooo
 // activity, calls the existing Laya/default path once after that plan is
 // complete, fills its declared hole assignment, and only then emits the final
-// Go projection. Both plan versions currently target Integer -> Integer bodies.
+// Go projection. Both plan versions target one-to-sixteen-input Integer bodies.
 func GenerateWithIRBodyFill(
 	ctx context.Context,
 	filename string,
@@ -234,7 +274,7 @@ func generateWithIRBodyFillOptions(
 	if ctx == nil {
 		return Result{}, fmt.Errorf("body-fill context is required")
 	}
-	usingTinyGo := tinyProvider != nil
+	usingTinyGo := bodyFillUsesTinyGo(options, tinyProvider)
 	if usingTinyGo {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
@@ -242,6 +282,10 @@ func generateWithIRBodyFillOptions(
 	}
 	if err := validateIRBodyFillPlan(plan); err != nil {
 		return Result{}, err
+	}
+	if plan.Schema == bodyFillRecordPlanSchema {
+		return generateWithRecordIRBodyFillOptions(ctx, filename, source, activityName, plan, endpoint, apiKey,
+			options, tinyProvider)
 	}
 	if err := decisionroute.ValidateProviderModel(plan.ProviderModel); err != nil {
 		return Result{}, fmt.Errorf("body-fill provider model: %w", err)
@@ -269,8 +313,18 @@ func generateWithIRBodyFillOptions(
 	if !activity.ValueProgramPresent || activity.ValueProgram == "" {
 		return Result{}, fmt.Errorf("activity %q has no computes body", activityName)
 	}
-	if len(activity.Inputs) != 1 || activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" {
-		return Result{}, fmt.Errorf("IR body fill currently requires one Integer input and one Integer output")
+	if len(activity.Inputs) < 1 || len(activity.Inputs) > 16 || activity.Output != "Integer" {
+		return Result{}, fmt.Errorf("IR body fill requires 1..16 Integer inputs and one Integer output")
+	}
+	for _, input := range activity.Inputs {
+		if input.Name != "Integer" {
+			return Result{}, fmt.Errorf("IR body fill currently requires Integer inputs and one Integer output")
+		}
+	}
+	for _, testCase := range append(append([]IRBodyFillTestCase(nil), plan.TestCases...), plan.HoldoutTestCases...) {
+		if len(testCase.inputValues()) != len(activity.Inputs) {
+			return Result{}, fmt.Errorf("IR body-fill case input arity %d does not match activity input arity %d", len(testCase.inputValues()), len(activity.Inputs))
+		}
 	}
 	modelDocument, err := bidir.DocumentFromSyntax(file)
 	if err != nil {
@@ -316,8 +370,8 @@ func generateWithIRBodyFillOptions(
 				return Result{}, fmt.Errorf("fill candidate %q at hole %q: %w", candidate.ID, hole.ID, err)
 			}
 		}
-		generated, err := generateRoute(
-			file.Package.Name, activityName, activityID, "int64", "int64", candidateBody, preserveRoute,
+		generated, err := generateRouteParameters(
+			file.Package.Name, activityName, activityID, bodyFillInputParameters(activity.Inputs), "int64", candidateBody, preserveRoute,
 		)
 		if err != nil {
 			return Result{}, fmt.Errorf("candidate %q is not a valid typed body: %w", candidate.ID, err)
@@ -349,7 +403,7 @@ func generateWithIRBodyFillOptions(
 	testSuiteSHA256 := digest(testBytes)
 	stateBytes, err := json.Marshal(irBodyFillState{
 		Schema: bodyFillStateSchema, Stage: "ir_ready_before_body_emission",
-		Activity: activityName, ActivityID: activityID, InputType: "Integer", OutputType: "Integer",
+		Activity: activityName, ActivityID: activityID, InputType: "Integer", InputTypes: bodyFillInputTypes(activity.Inputs), OutputType: "Integer",
 		Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes), HoleIDs: bodyFillHoleIDs(plan, holes), BodyIR: body,
 		TestCaseCount: len(plan.TestCases), TestSuiteSHA256: testSuiteSHA256, Candidates: scores,
 		BehavioralProbes: behavioralProbes,
@@ -359,12 +413,15 @@ func generateWithIRBodyFillOptions(
 	}
 	requestOptions := make([]decisionroute.Option, 0, len(plan.Candidates))
 	modelCandidates := bodyFillModelCandidates(holes, plan.Candidates)
+	tinyModelFocusHole := ""
 	if usingTinyGo {
-		primaryHole := ""
-		if plan.Schema == bodyFillMultiPlanSchema && len(holes) > 0 {
-			primaryHole = holes[0].ID
+		if plan.Schema == bodyFillMultiPlanSchema {
+			tinyModelFocusHole, err = tinyGoBodyFillFocusHole(holes, plan.Candidates)
+			if err != nil {
+				return Result{}, err
+			}
 		}
-		requestOptions, err = tinyGoBodyFillOptionsForHole(plan.Candidates, primaryHole)
+		requestOptions, err = tinyGoBodyFillOptionsForHole(plan.Candidates, tinyModelFocusHole)
 		if err != nil {
 			return Result{}, err
 		}
@@ -406,12 +463,7 @@ func generateWithIRBodyFillOptions(
 	}
 	decisionStarted := time.Now()
 	decisionContext, cancel := context.WithTimeout(ctx, irBodyFillDecisionBudget)
-	var decision decisionroute.Receipt
-	if usingTinyGo {
-		decision, err = tinyProvider.Resolve(decisionContext, request)
-	} else {
-		decision, err = decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
-	}
+	decision, err := resolveBodyFillDecision(decisionContext, request, endpoint, apiKey, options, tinyProvider)
 	cancel()
 	decisionMS := float64(time.Since(decisionStarted)) / float64(time.Millisecond)
 	if err != nil {
@@ -497,12 +549,14 @@ func generateWithIRBodyFillOptions(
 		holeFills = bodyFillHoleResults(holes, bodyFillCandidateFills(plan, originalSelected))
 	}
 	result.Report.BodyFill = &IRBodyFillReceipt{
-		Schema: plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
+		OriginalSourceDigest: digest(source),
+		Schema:               plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
 		HoleToken: bodyFillHoleToken(holes[0].ID), IRPlanSHA256: digest(planBytes),
 		ProposedCandidateID: proposed.ID, ProposedAccuracyPct: proposedScore.AccuracyPercent,
 		SelectedCandidateID: selected.ID, SelectedExpression: selected.Expression,
-		HoleFills:       holeFills,
-		BestCandidateID: best.ID, BestAccuracyPercent: best.AccuracyPercent,
+		HoleFills:          holeFills,
+		TinyModelFocusHole: tinyModelFocusHole,
+		BestCandidateID:    best.ID, BestAccuracyPercent: best.AccuracyPercent,
 		SelectionRegretPP:   best.AccuracyPercent - proposedScore.AccuracyPercent,
 		SelectionAdjustment: selectionAdjustment,
 		Decision:            decision, CandidateScores: scores,
@@ -532,6 +586,9 @@ func generateWithIRBodyFillOptions(
 }
 
 func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
+	if plan.Schema == bodyFillRecordPlanSchema {
+		return validateRecordIRBodyFillPlan(plan)
+	}
 	if plan.Schema != bodyFillPlanSchema && plan.Schema != bodyFillMultiPlanSchema {
 		return fmt.Errorf("IR body-fill plan schema must be %q or %q", bodyFillPlanSchema, bodyFillMultiPlanSchema)
 	}
@@ -559,13 +616,23 @@ func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
 	if len(plan.TestCases) == 0 || len(plan.TestCases) > 4096 || len(plan.HoldoutTestCases) > 4096 {
 		return fmt.Errorf("IR body-fill plan requires 1..4096 training cases and at most 4096 holdout cases")
 	}
-	trainingInputs := make(map[int64]bool, len(plan.TestCases))
+	caseArity := 0
+	trainingInputs := make(map[string]bool, len(plan.TestCases))
 	for _, testCase := range plan.TestCases {
-		trainingInputs[testCase.Input] = true
+		inputs := testCase.inputValues()
+		if len(inputs) < 1 || len(inputs) > 16 || caseArity != 0 && len(inputs) != caseArity {
+			return fmt.Errorf("IR body-fill training cases must provide a consistent 1..16 input values")
+		}
+		caseArity = len(inputs)
+		trainingInputs[bodyFillInputKey(inputs)] = true
 	}
 	for _, testCase := range plan.HoldoutTestCases {
-		if trainingInputs[testCase.Input] {
-			return fmt.Errorf("holdout input %d also appears in training cases", testCase.Input)
+		inputs := testCase.inputValues()
+		if len(inputs) != caseArity {
+			return fmt.Errorf("IR body-fill holdout cases must match training input arity %d", caseArity)
+		}
+		if trainingInputs[bodyFillInputKey(inputs)] {
+			return fmt.Errorf("holdout inputs %v also appear in training cases", inputs)
 		}
 	}
 	seen := make(map[string]bool, len(plan.Candidates))
@@ -604,6 +671,52 @@ func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
 		}
 	}
 	return nil
+}
+
+func bodyFillInputTypes(inputs []syntax.NameRef) []string {
+	if len(inputs) < 2 {
+		return nil
+	}
+	types := make([]string, len(inputs))
+	for index, input := range inputs {
+		types[index] = input.Name
+	}
+	return types
+}
+
+func bodyFillInputParameters(inputs []syntax.NameRef) []InputParameter {
+	parameters := make([]InputParameter, len(inputs))
+	for index := range inputs {
+		name := "input"
+		if len(inputs) > 1 {
+			name = fmt.Sprintf("input%d", index)
+		}
+		parameters[index] = InputParameter{Name: name, Type: "int64"}
+	}
+	return parameters
+}
+
+func bodyFillInputKey(inputs []int64) string {
+	encoded, _ := json.Marshal(inputs)
+	return string(encoded)
+}
+
+func bodyFillCaseKey(testCase IRBodyFillTestCase) string {
+	return fmt.Sprintf("%s:%d", bodyFillInputKey(testCase.inputValues()), testCase.Expected)
+}
+
+func equalIRBodyFillCaseResults(left, right []IRBodyFillCaseResult) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index].Input != right[index].Input || !slices.Equal(left[index].Inputs, right[index].Inputs) ||
+			left[index].Expected != right[index].Expected || left[index].Actual != right[index].Actual ||
+			left[index].Passed != right[index].Passed {
+			return false
+		}
+	}
+	return true
 }
 
 func bodyFillPlanHoles(plan IRBodyFillPlan) []IRBodyFillHole {

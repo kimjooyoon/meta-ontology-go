@@ -4,7 +4,17 @@
 
 The semantic model is not credited because a Go type named `IR` exists. It is credited only when executable meta-code binds a fixed source set, lowers each source twice, normalizes both results, compares authoritative meaning, provenance, and exact evidence, then seals an effect receipt.
 
-The versioned denominator is 32 cases. The exact target is 32/32 and 10000 basis points. The source component contains 27 `.gooo` files and 428 physical lines proven by the upstream syntax receipt. The 31-line source-splitter decision-algebra program, 20-line rollback-integrity activation program, 20-line vertical-slice closure activation program, 17-line external-conformance activation program, and 16-line reproducibility-semantics experiment are credited only for lowering, normalization, and replay here; they do not establish runtime behavior or merge authority.
+Activity parameters are an ordered signature. Lowering preserves every declared
+slot in `InputSequence` for multi-input activities, including repeated entity
+types; the order participates in semantic equivalence and stable identity even
+when no body or runtime binding is present. PROV `Used` facts remain relations
+between an activity and its input entities, so their set representation may
+deduplicate repeated types. Validation requires every observed `Used` entity to
+belong to the declared signature, but the relation set does not define or erase
+parameter positions. The compiler does not infer signature order from body
+syntax.
+
+The current versioned denominator is 46 cases; the exact target is 46/46 and 10000 basis points. The source component binds its `.gooo` paths, digests and line counts from the independently validated upstream syntax receipt at evaluation time. The registered decision programs are credited here only for lowering, normalization and replay; they do not establish runtime behavior or merge authority.
 
 ## Stages
 

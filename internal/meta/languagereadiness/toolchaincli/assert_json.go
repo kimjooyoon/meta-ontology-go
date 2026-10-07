@@ -35,7 +35,7 @@ func validVersionJSON(raw string) bool {
 		return false
 	}
 	return value.SchemaVersion == "gooo-version/v1" && value.Language == "gooo" &&
-		value.Version == "0.6.0-dev" && value.Status == "development" &&
+		value.Version == "0.6.6-dev" && value.Status == "development" &&
 		value.SemanticIR != "" && value.SemanticCheck != "" && value.Graph != "" && value.FixPlan != ""
 }
 

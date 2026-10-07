@@ -18,6 +18,7 @@ type CompositionActivity struct {
 	GoFunction     string             `json:"go_function"`
 	InputFrom      int                `json:"input_from"`
 	Assembling     bool               `json:"assembling"`
+	Prepared       bool               `json:"prepared,omitempty"`
 	Inputs         []CompositionInput `json:"inputs,omitempty"`
 }
 
@@ -38,17 +39,26 @@ type CompositionEdge struct {
 
 type CompositionPlan struct {
 	Schema              string                   `json:"schema"`
+	EntryActivity       string                   `json:"entry_activity,omitempty"`
 	TypedPlanSHA256     string                   `json:"typed_plan_sha256"`
 	SemanticFingerprint string                   `json:"semantic_fingerprint"`
 	Activities          []CompositionActivity    `json:"activities"`
 	Edges               []CompositionEdge        `json:"edges"`
 	Records             []bodycodegen.RecordType `json:"record_types,omitempty"`
+	Preparations        []CompositionHelper      `json:"preparations,omitempty"`
+}
+
+type CompositionHelper struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
 }
 
 type compositionGraph struct {
-	plan  CompositionPlan
-	nodes [compositionLimit]CompositionActivity
-	count int
+	plan     CompositionPlan
+	nodes    [compositionLimit]CompositionActivity
+	count    int
+	deferred map[string]bool
+	called   map[string]CompositionActivity
 }
 
 func (graph *compositionGraph) index(id string) int {

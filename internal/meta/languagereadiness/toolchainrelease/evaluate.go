@@ -1,5 +1,7 @@
 package toolchainrelease
 
+import "fmt"
+
 func Evaluate(corpus Corpus, corpusDigest string, evidence []PlatformEvidence,
 	expectedHead, conceptDigest string, conceptBound bool) (Report, error) {
 	summary := Summary{CasesTotal: len(corpus.Cases), CodeBindings: 6,
@@ -19,11 +21,11 @@ func Evaluate(corpus Corpus, corpusDigest string, evidence []PlatformEvidence,
 	complete := summary.MissingReceipts == 0 && summary.DuplicateReceipts == 0 &&
 		summary.UnexpectedReceipts == 0 && summary.PlatformReceipts == TargetCount
 	observations["release-set-completeness"] = caseObservation{
-		Observed: "3_OF_3_TARGETS", Digest: corpusDigest, Ready: complete,
+		Observed: fmt.Sprintf("%d_OF_%d_TARGETS", TargetCount, TargetCount), Digest: corpusDigest, Ready: complete,
 	}
 	checksums := summary.ChecksumEntries == TargetCount && summary.ChecksumDrift == 0
 	observations["release-checksum-manifest"] = caseObservation{
-		Observed: "3_SORTED_SHA256_ENTRIES", Digest: receiptSetDigest(evidence), Ready: checksums,
+		Observed: fmt.Sprintf("%d_SORTED_SHA256_ENTRIES", TargetCount), Digest: receiptSetDigest(evidence), Ready: checksums,
 	}
 	cases, satisfied := evaluateCases(corpus, observations)
 	summary.CasesSatisfied = satisfied

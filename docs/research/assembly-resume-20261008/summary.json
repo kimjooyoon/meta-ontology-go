@@ -1,0 +1,777 @@
+{
+  "schema": "gooo/research-assembly-continuation/v1",
+  "observed_at_utc": "2026-10-07T18:55:25.452149+00:00",
+  "compiler": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.5-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.1",
+    "module_version": "v0.6.4-dev.0.20261007185415-f23bc3c29df5",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.4-dev.0.20261007185415-f23bc3c29df5"
+    },
+    "compiler_source_sha": "f23bc3c29df5e7869549347f6d5952917385bee5",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "f23bc3c29df5e7869549347f6d5952917385bee5",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.24-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.1"
+  },
+  "compiler_binary": {
+    "sha256": "b5ac81092358dc65400ded0eb5dc77e216c7cec445ce9c937609fc0136a4e8f2",
+    "bytes": 22570450
+  },
+  "environment": {
+    "os": "Darwin",
+    "release": "25.5.0",
+    "architecture": "arm64"
+  },
+  "sources": {
+    "examples/package-diagnostic-replay/diagnostics.gooo.fixture": {
+      "sha256": "119514b3f822dfb7fb0a2288ffbc5d14077b4f3e9a46df72a1d5567489718242",
+      "bytes": 2412
+    },
+    "examples/assembly-policy/checkpoint.gooo.fixture": {
+      "sha256": "45e0a407e5900d4c5d39564370b6c21028ff24d7545acc655316837145f1fb3a",
+      "bytes": 1150
+    },
+    "examples/assembly-explainer/main.gooo.fixture": {
+      "sha256": "32003343b2297192e96e2fe640cba83a92a41524b50e19553895df9e94dc148f",
+      "bytes": 2348
+    },
+    "examples/assembly-policy/cases.json": {
+      "sha256": "fd2442504ba7eacb4e3e6776a3f4478f5b878265af660af6c040cb6b7769ed83",
+      "bytes": 1502
+    },
+    "examples/assembly-policy/unsolved.gooo.fixture": {
+      "sha256": "5ef3ae4c90b1b07a36b4a8c7bcd36e74b3fc30cbf04abf664d0f881f626205f4",
+      "bytes": 2415
+    }
+  },
+  "model": {
+    "hub_revision": "https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary",
+    "observation": {
+      "schema": "gooo/retained-path-model/v1",
+      "loaded": true,
+      "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+      "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+      "resident_tensor_bytes": 2096,
+      "setup_ms": 0.594,
+      "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+      "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+      "feature_version": "triple_record_field_context_v1_shared_v1",
+      "arithmetic_version": "float32_separate_v1"
+    },
+    "new_training": false
+  },
+  "method": {
+    "order": [
+      "deterministic-checkpoint",
+      "deterministic-continued",
+      "model-checkpoint",
+      "model-continued",
+      "replay",
+      "unsolved-checkpoint",
+      "unsolved-continued",
+      "exhausted"
+    ],
+    "paired_scope": "Same diagnostic source, checkpoint/continuation Gooo policies, declared cases, eight-attempt total budget, compiler and native expectations; candidate ranking differs. Each checkpoint and continuation runs in a separate process.",
+    "continuation": "Explicit caller invocation; validates earlier observations and resumes the remaining saved ranking. No model path is supplied or loaded. Reconstruction time includes re-evaluating saved candidates.",
+    "negative_scope": "Separate unsolved source changes a declared value and keeps the obligations; followed through exhausted budget and a further continuation.",
+    "exit_codes": {
+      "deterministic-checkpoint": 0,
+      "deterministic-continued": 0,
+      "model-checkpoint": 0,
+      "model-continued": 0,
+      "replay": 0,
+      "unsolved-checkpoint": 0,
+      "unsolved-continued": 0,
+      "exhausted": 0
+    },
+    "exit_scope": "Zero denotes completed observation; partial case/native scores remain visible.",
+    "replay": "Loads the saved continued composition. Retained predictions and continuation counters describe history; no new inference.",
+    "training_exposure": "UNKNOWN",
+    "host_cpu_utilization": "NOT_SAMPLED",
+    "model_cpu_utilization_increment": "UNMEASURED",
+    "timing_scope": "One sequential observation per command including native Go compilation and execution; shared host and uncontrolled caches. No speedup, distribution or model-only CPU claim.",
+    "interventions": "Source, policies and cases were prepared by the maintainer. The eight explicit CLI operations completed without candidate edits or interactive approval. Autonomous task scheduling and external adoption are not measured."
+  },
+  "runs": {
+    "deterministic-checkpoint": {
+      "generated_now": true,
+      "original_source_sha256": "sha256:119514b3f822dfb7fb0a2288ffbc5d14077b4f3e9a46df72a1d5567489718242",
+      "generated_sha256": "sha256:4e601fff02aba5a27df39826624b4d9a356e632f3ff30d666f681c52b6098be6",
+      "construction": {
+        "status": "PARTIAL_FINITE",
+        "passed": 3,
+        "total": 5,
+        "fields_passed": 11,
+        "fields_total": 15,
+        "selected_mask": 0
+      },
+      "attempts": [
+        {
+          "mask": 0,
+          "passed": 3,
+          "total": 5
+        }
+      ],
+      "historical_model_calls": 0,
+      "historical_predict_ns": 0,
+      "new_model_calls": 0,
+      "model_loaded_for_this_command": false,
+      "continuation": null,
+      "entry": null,
+      "native_expectations": {
+        "passed": 2,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PROGRESS",
+          "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 2,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.3,
+        "user_seconds": 0.13,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 86245376
+      }
+    },
+    "deterministic-continued": {
+      "generated_now": true,
+      "original_source_sha256": "sha256:119514b3f822dfb7fb0a2288ffbc5d14077b4f3e9a46df72a1d5567489718242",
+      "generated_sha256": "sha256:2be7999eadc5f50c3061d37e7250a9fc182dd3bd05e505989f2ac0a66bb16077",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 0,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 1,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 2,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "historical_model_calls": 0,
+      "historical_predict_ns": 0,
+      "new_model_calls": 0,
+      "model_loaded_for_this_command": false,
+      "continuation": {
+        "parent_composition_sha256": "sha256:ac40125d7078fea905465168c0b4d305ef924d4affdc27943fc8f14cbf461604",
+        "activities": [
+          {
+            "activity": "Diagnose",
+            "retained_attempts": 1,
+            "added_attempts": 3
+          }
+        ],
+        "new_model_calls": 0
+      },
+      "entry": {
+        "attempt_index": 0,
+        "mask": 0,
+        "input": {
+          "matched": 3,
+          "total": 5,
+          "best": 3,
+          "scored": 1,
+          "budget": 8
+        },
+        "state": "PROGRESS",
+        "next_operation": "CONTINUE_CANDIDATES",
+        "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+        "continue": true
+      },
+      "native_expectations": {
+        "passed": 4,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PASS",
+          "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 4,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.33,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86999040
+      }
+    },
+    "model-checkpoint": {
+      "generated_now": true,
+      "original_source_sha256": "sha256:119514b3f822dfb7fb0a2288ffbc5d14077b4f3e9a46df72a1d5567489718242",
+      "generated_sha256": "sha256:0907eb3e98c4d2ccb3f8320ed0c5474b9a8849b954008907d431855edae50ccf",
+      "construction": {
+        "status": "PARTIAL_FINITE",
+        "passed": 3,
+        "total": 5,
+        "fields_passed": 13,
+        "fields_total": 15,
+        "selected_mask": 7
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 18250,
+      "new_model_calls": 1,
+      "model_loaded_for_this_command": true,
+      "continuation": null,
+      "entry": null,
+      "native_expectations": {
+        "passed": 2,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PROGRESS",
+          "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 2,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.52,
+        "user_seconds": 0.16,
+        "system_seconds": 0.12,
+        "maximum_rss_bytes": 87343104
+      }
+    },
+    "model-continued": {
+      "generated_now": true,
+      "original_source_sha256": "sha256:119514b3f822dfb7fb0a2288ffbc5d14077b4f3e9a46df72a1d5567489718242",
+      "generated_sha256": "sha256:2be7999eadc5f50c3061d37e7250a9fc182dd3bd05e505989f2ac0a66bb16077",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 18250,
+      "new_model_calls": 0,
+      "model_loaded_for_this_command": false,
+      "continuation": {
+        "parent_composition_sha256": "sha256:aedc975ac8eac499ff0b62097865338a4d9d231df33c90c30052c7f7af0a9a7a",
+        "activities": [
+          {
+            "activity": "Diagnose",
+            "retained_attempts": 1,
+            "added_attempts": 1
+          }
+        ],
+        "new_model_calls": 0
+      },
+      "entry": {
+        "attempt_index": 0,
+        "mask": 7,
+        "input": {
+          "matched": 3,
+          "total": 5,
+          "best": 3,
+          "scored": 1,
+          "budget": 8
+        },
+        "state": "PROGRESS",
+        "next_operation": "CONTINUE_CANDIDATES",
+        "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+        "continue": true
+      },
+      "native_expectations": {
+        "passed": 4,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PASS",
+          "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 4,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.4,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86818816
+      }
+    },
+    "replay": {
+      "generated_now": false,
+      "original_source_sha256": "sha256:119514b3f822dfb7fb0a2288ffbc5d14077b4f3e9a46df72a1d5567489718242",
+      "generated_sha256": "sha256:2be7999eadc5f50c3061d37e7250a9fc182dd3bd05e505989f2ac0a66bb16077",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 18250,
+      "new_model_calls": 0,
+      "model_loaded_for_this_command": false,
+      "continuation": {
+        "parent_composition_sha256": "sha256:aedc975ac8eac499ff0b62097865338a4d9d231df33c90c30052c7f7af0a9a7a",
+        "activities": [
+          {
+            "activity": "Diagnose",
+            "retained_attempts": 1,
+            "added_attempts": 1
+          }
+        ],
+        "new_model_calls": 0
+      },
+      "entry": {
+        "attempt_index": 0,
+        "mask": 7,
+        "input": {
+          "matched": 3,
+          "total": 5,
+          "best": 3,
+          "scored": 1,
+          "budget": 8
+        },
+        "state": "PROGRESS",
+        "next_operation": "CONTINUE_CANDIDATES",
+        "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+        "continue": true
+      },
+      "native_expectations": {
+        "passed": 4,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PASS",
+          "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 4,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.31,
+        "user_seconds": 0.14,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 87015424
+      }
+    },
+    "unsolved-checkpoint": {
+      "generated_now": true,
+      "original_source_sha256": "sha256:5ef3ae4c90b1b07a36b4a8c7bcd36e74b3fc30cbf04abf664d0f881f626205f4",
+      "generated_sha256": "sha256:81e588ccb3aaeaa6c44b2606eb8a962eba36300a03cf5f4a7452af95e809c958",
+      "construction": {
+        "status": "PARTIAL_FINITE",
+        "passed": 3,
+        "total": 5,
+        "fields_passed": 11,
+        "fields_total": 15,
+        "selected_mask": 7
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 17375,
+      "new_model_calls": 1,
+      "model_loaded_for_this_command": true,
+      "continuation": null,
+      "entry": null,
+      "native_expectations": {
+        "passed": 2,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PROGRESS",
+          "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 2,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.52,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86343680
+      }
+    },
+    "unsolved-continued": {
+      "generated_now": true,
+      "original_source_sha256": "sha256:5ef3ae4c90b1b07a36b4a8c7bcd36e74b3fc30cbf04abf664d0f881f626205f4",
+      "generated_sha256": "sha256:55fc7c15252b2bcf247e8cceb7c849635658a5c9043f4624d463d0c26398d565",
+      "construction": {
+        "status": "PARTIAL_FINITE",
+        "passed": 3,
+        "total": 5,
+        "fields_passed": 13,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 6,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 5,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 2,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 4,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 1,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 0,
+          "passed": 3,
+          "total": 5
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 17375,
+      "new_model_calls": 0,
+      "model_loaded_for_this_command": false,
+      "continuation": {
+        "parent_composition_sha256": "sha256:f736619d97f1c6f3216135504126063d607182978103f5c78c5d9fcb50f3b505",
+        "activities": [
+          {
+            "activity": "Diagnose",
+            "retained_attempts": 1,
+            "added_attempts": 7
+          }
+        ],
+        "new_model_calls": 0
+      },
+      "entry": {
+        "attempt_index": 0,
+        "mask": 7,
+        "input": {
+          "matched": 3,
+          "total": 5,
+          "best": 3,
+          "scored": 1,
+          "budget": 8
+        },
+        "state": "PROGRESS",
+        "next_operation": "CONTINUE_CANDIDATES",
+        "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+        "continue": true
+      },
+      "native_expectations": {
+        "passed": 2,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PROGRESS",
+          "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 2,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.52,
+        "user_seconds": 0.17,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 85245952
+      }
+    },
+    "exhausted": {
+      "generated_now": true,
+      "original_source_sha256": "sha256:5ef3ae4c90b1b07a36b4a8c7bcd36e74b3fc30cbf04abf664d0f881f626205f4",
+      "generated_sha256": "sha256:55fc7c15252b2bcf247e8cceb7c849635658a5c9043f4624d463d0c26398d565",
+      "construction": {
+        "status": "PARTIAL_FINITE",
+        "passed": 3,
+        "total": 5,
+        "fields_passed": 13,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 6,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 5,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 2,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 4,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 1,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 0,
+          "passed": 3,
+          "total": 5
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 17375,
+      "new_model_calls": 0,
+      "model_loaded_for_this_command": false,
+      "continuation": {
+        "parent_composition_sha256": "sha256:6157601ceed2fa418c90255cf0726c2ba4d82991dd8f5954d47aea566e4dc277",
+        "activities": [
+          {
+            "activity": "Diagnose",
+            "retained_attempts": 8,
+            "added_attempts": 0
+          }
+        ],
+        "new_model_calls": 0
+      },
+      "entry": {
+        "attempt_index": 7,
+        "mask": 0,
+        "input": {
+          "matched": 3,
+          "total": 5,
+          "best": 3,
+          "scored": 8,
+          "budget": 8
+        },
+        "state": "PROGRESS",
+        "next_operation": "EXPAND_DECLARED_CHOICES",
+        "message": "현재 후보와 예산에서 만족하지 못한 사례가 남았습니다.",
+        "continue": false
+      },
+      "native_expectations": {
+        "passed": 2,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PROGRESS",
+          "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 2,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.36,
+        "user_seconds": 0.18,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86540288
+      }
+    }
+  },
+  "raw_artifacts": {
+    "build.json": {
+      "sha256": "ddbeeb71e262316c7da566c2ddd56973965cb6bb300a66a90656289563254d84",
+      "bytes": 659
+    },
+    "deterministic-checkpoint.json": {
+      "sha256": "a9cb8cde2e765b6b342a82817734050fb2c62bad681d081ea7653b3ad6e63f31",
+      "bytes": 47943
+    },
+    "deterministic-checkpoint.time": {
+      "sha256": "dc775efaab6413c4d44ff8ef0b889dc1df2bc89165767e7e4dc7a258b4759a7b",
+      "bytes": 777
+    },
+    "deterministic-continued.json": {
+      "sha256": "52d173b30ca73646bdbffc110e6cbdbcbee97353f0fbfff1dc5b9b14ac663497",
+      "bytes": 51472
+    },
+    "deterministic-continued.time": {
+      "sha256": "0000251b3c492cec691715746f64e4248a4b98b25e487239dd13a2fd19add495",
+      "bytes": 777
+    },
+    "exhausted.json": {
+      "sha256": "5166f0878654c6393266be45df74884df5b2cfdc81831cfb12712b767ad96486",
+      "bytes": 58889
+    },
+    "exhausted.time": {
+      "sha256": "dbc259b9acb8841a822f0fa1adb56413631f707b0dc714225ea94e6a6d7962dc",
+      "bytes": 777
+    },
+    "model-checkpoint.json": {
+      "sha256": "52f0e3567e6c5edeff5ddcadaf28fef6f92e1aa3c4eff668604b477938101920",
+      "bytes": 50567
+    },
+    "model-checkpoint.time": {
+      "sha256": "1d67836bb3047bf813b838012e797576ebe23999858fb3aea43ba62efcda643e",
+      "bytes": 777
+    },
+    "model-continued.json": {
+      "sha256": "7e8a0f9b8b556a644f644e8aa5f097e741e39be0f73206e7fff81c8d7fc2c419",
+      "bytes": 53285
+    },
+    "model-continued.time": {
+      "sha256": "6c29c590363f412f21a95604d08afd33f28524b381f3c0157eb06dc085582643",
+      "bytes": 777
+    },
+    "replay.json": {
+      "sha256": "368ad59e0f79c968f2172c42712bc2f79b87eb7172311a59d124f1493fde6744",
+      "bytes": 53286
+    },
+    "replay.time": {
+      "sha256": "8edaaadc46d18f741a971a2702e752e92a232c28893f3d95f0a93f7fb613a776",
+      "bytes": 777
+    },
+    "unsolved-checkpoint.json": {
+      "sha256": "1850657b73ab46ba3b2e214ba4a94af5a7808eb98da9320e14b1ddfafa743ace",
+      "bytes": 50617
+    },
+    "unsolved-checkpoint.time": {
+      "sha256": "ed91469cc0f485ce6f4b497ee3e07a9a66e44382a082e2975ed2a35d25e580d8",
+      "bytes": 777
+    },
+    "unsolved-continued.json": {
+      "sha256": "ebbeccff5767867e409e86ff4b9e359b5f03a353d373102a06f7d4baf6763643",
+      "bytes": 55755
+    },
+    "unsolved-continued.time": {
+      "sha256": "58d2ba58ab013ec6a93a18abd42233056546cc3eb67be51625658d1aa0aee853",
+      "bytes": 777
+    }
+  }
+}

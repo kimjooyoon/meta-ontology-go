@@ -1,0 +1,139 @@
+{
+  "schema": "gooo/source-fill-dogfood-observation/v1",
+  "date": "2026-10-07",
+  "compiler_revision": "aff229a0e778af8bfbd1ac253d2b8777432d912b",
+  "model_repository": "asketeddy/gooo-ir-operator-tiny-v1",
+  "model_revision": "1d1741fe6b88d5121e7fdba45fd90cefdd9a6c91",
+  "variant": "qat_ternary",
+  "metadata_bytes": 1240,
+  "packed_weight_bytes": 2759,
+  "source": "examples/body-codegen/source-fill-composition.gooo.fixture",
+  "cases": "examples/body-codegen/source-fill-composition-cases.json",
+  "model_loads": 1,
+  "model_setup_ms": 0.164625,
+  "operation_predictions_correct": 0,
+  "operation_predictions_total": 2,
+  "activities": [
+    {
+      "activity": "Lift",
+      "expected_operation": "add",
+      "decision": {
+        "schema": "gooo/typed-decision-receipt/v1",
+        "mode": "deterministic_fallback",
+        "selected": "add_one",
+        "fallback_reason": "TINY_GO_OPERATION_NOT_OFFERED",
+        "provider": "tiny_go",
+        "tiny_go_variant": "qat_ternary",
+        "tiny_go_weights_sha256": "bd4444d5233f07c18168a4dfa0053afde180ce97e390a993e4e0fbb33fb88337",
+        "tiny_go_metadata_sha256": "4746fc7cbd2864e9536b43d779c7ecc39aa35f8f6f64943c73b951f9e967c8a7",
+        "tiny_go_predicted_operation": "equal",
+        "tiny_go_prediction_applied": false,
+        "probabilities": {
+          "add_one": 5.823736501042731e-05,
+          "double": 4.259846295151526e-11,
+          "subtract_one": 2.543954542488791e-05
+        },
+        "confidence": 0.9908117055892944,
+        "request_sha256": "sha256:bd9ccd45a168cc71190d313ae90a16d726330b37eacc75670c1bee86dd7b2147"
+      },
+      "selected_candidate": "add_one",
+      "selection_adjustment": "proposal_retained",
+      "prediction_call_ms": 0.028125,
+      "selection_passed": 3,
+      "selection_total": 3,
+      "holdout_passed": 1,
+      "holdout_total": 1
+    },
+    {
+      "activity": "Scale",
+      "expected_operation": "multiply",
+      "decision": {
+        "schema": "gooo/typed-decision-receipt/v1",
+        "mode": "tiny_go",
+        "selected": "add_one",
+        "provider": "tiny_go",
+        "tiny_go_variant": "qat_ternary",
+        "tiny_go_weights_sha256": "bd4444d5233f07c18168a4dfa0053afde180ce97e390a993e4e0fbb33fb88337",
+        "tiny_go_metadata_sha256": "4746fc7cbd2864e9536b43d779c7ecc39aa35f8f6f64943c73b951f9e967c8a7",
+        "tiny_go_predicted_operation": "add",
+        "tiny_go_prediction_applied": true,
+        "probabilities": {
+          "add_one": 0.6683771014213562,
+          "double": 3.7316192901926115e-05,
+          "subtract_one": 8.775572496233508e-06
+        },
+        "confidence": 0.6683771014213562,
+        "request_sha256": "sha256:4a690780e8e298cac5d04cf67f8d2175e40b4306f274390efeaeed776db0ae7c"
+      },
+      "selected_candidate": "double",
+      "selection_adjustment": "replaced_with_best_scoring_candidate",
+      "prediction_call_ms": 0.024958,
+      "selection_passed": 3,
+      "selection_total": 3,
+      "holdout_passed": 1,
+      "holdout_total": 1
+    }
+  ],
+  "runs": {
+    "model": {
+      "generation_ms": 6.812667,
+      "native_phase_ms": 495.245834,
+      "finite_passed": 15,
+      "finite_total": 15,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 5,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 3,
+        "disjoint_inputs": 2,
+        "disjoint_cases_passed": 2,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timed_command": {
+        "wall_seconds": 0.51,
+        "user_seconds": 0.14,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 85639168,
+        "scope": "macOS time -l command observation including native build/execution; not model-only RSS or host CPU utilization"
+      },
+      "generated_sha256": "sha256:7167fd0bed409bc8415517b5abda059c9d910a938587fd303b1ee932cf128bee"
+    },
+    "deterministic": {
+      "generation_ms": 7.810625,
+      "native_phase_ms": 315.077958,
+      "finite_passed": 15,
+      "finite_total": 15,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 5,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 3,
+        "disjoint_inputs": 2,
+        "disjoint_cases_passed": 2,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timed_command": {
+        "wall_seconds": 0.33,
+        "user_seconds": 0.14,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 86933504,
+        "scope": "macOS time -l command observation including native build/execution; not model-only RSS or host CPU utilization"
+      },
+      "generated_sha256": "sha256:7167fd0bed409bc8415517b5abda059c9d910a938587fd303b1ee932cf128bee"
+    }
+  },
+  "saved_replay": {
+    "model_files_present": false,
+    "new_model_calls": 0,
+    "finite_passed": 15,
+    "finite_total": 15,
+    "runtime_replayed": true
+  },
+  "setup_observation": "One earlier attempt selected Go 1.26.5 and stopped before native execution. Successful runs explicitly selected Go 1.27.1.",
+  "scope": "One model-first paired workload with two bilingual intents and five runtime inputs. Input separation covers construction observations only; model-training exposure is unknown. No model benefit or speed advantage demonstrated.",
+  "host_cpu_utilization_percent": null
+}

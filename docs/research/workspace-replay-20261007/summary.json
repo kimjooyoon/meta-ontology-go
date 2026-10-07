@@ -1,0 +1,256 @@
+{
+  "schema": "gooo/workspace-replay-study/v1",
+  "recorded_date": "2026-10-07",
+  "compiler_revision": "f16ab7c94c37a4528e233c36f8b3cf70fbf5aa7b",
+  "compiler_tree_clean_at_build": true,
+  "toolchain": "go1.27.1 darwin/arm64",
+  "workspace": "examples/package-diagnostic-replay/gooo.workspace.json",
+  "cases": "examples/package-diagnostic-replay/cases.json",
+  "fresh_inputs": "examples/package-diagnostic-replay/inputs.json",
+  "recipe_origin": "https://github.com/kimjooyoon/gooo-ecosystem-workbench/blob/d821c346/recipes/diagnostics.gooo",
+  "model_origin": "https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary",
+  "model_parameters": 2072,
+  "new_training": false,
+  "run_order": [
+    "deterministic",
+    "model",
+    "replay",
+    "inputs"
+  ],
+  "pairing": "Same source, five construction cases, eight permitted paths, budget eight and four runtime root inputs with eight output expectations. Only construction order differs in the first pair.",
+  "model_observation": "The first predicted mask 7 matched 13/15 construction fields and 3/5 complete cases. Finite continuation selected mask 3, which matched 15/15 fields and 5/5 cases. Ranking used two attempts versus four with deterministic ordering. The initial model prediction was incomplete despite its high reported probability.",
+  "replay_observation": "Same generated native projection in all four observations. Replay retains previous generation/model evidence and makes zero current model calls. Input-only replay uses three new rows without expected values and reports OBSERVED, not accuracy. No model path or provider setting is supplied to replay.",
+  "measurement_scope": "One sequential pair on a shared host, cache not reset, no repeated timing comparison. Whole command and child runtime metrics have separate scope; historical prediction timing in saved receipts is not a new replay prediction. macOS time -lp output is rounded and its maximum RSS is a process high-water observation, not total concurrent process memory.",
+  "host_cpu_utilization": "UNOBSERVED",
+  "model_training_exposure": "UNKNOWN",
+  "reproduction": [
+    "Build cmd/gooo from compiler_revision with Go 1.27.1.",
+    "Run package execute --json --cases CASES WORKSPACE with an explicit --go GO1_27_1; redirect output to execution.json.",
+    "For the model route add --assembly-model MODEL_JSON using the pinned shared QAT model; compare source digests and candidate budgets.",
+    "Run package replay --json --receipt execution.json --cases CASES WORKSPACE; omit all model options.",
+    "Run package replay --json --receipt execution.json --inputs FRESH_INPUTS WORKSPACE for actual values without an oracle."
+  ],
+  "observations": [
+    {
+      "label": "deterministic",
+      "raw_receipt": "deterministic.json",
+      "raw_receipt_sha256": "sha256:9d4bc52cfb3b798edcb6c7ce137c79d669b30d26953142d6a89fbe426217fa3b",
+      "decision": "PASS",
+      "finite_passed": 8,
+      "finite_total": 8,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "current_model_calls": 0,
+      "runtime_model_calls": 0,
+      "runtime_replayed": true,
+      "generated_sha256": "sha256:6759e278ace650e15ed290a42d9d49e761622f7b12f6a804c8257b2ee3c48713",
+      "command_wall_seconds": 0.85,
+      "command_user_seconds": 0.16,
+      "command_system_seconds": 0.12,
+      "command_peak_rss_bytes": 86360064,
+      "raw_time_lp": "real 0.85\nuser 0.16\nsys 0.12\n            86360064  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16300  page reclaims\n                 236  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 270  signals received\n                 126  voluntary context switches\n                3434  involuntary context switches\n           460925437  instructions retired\n           183158636  cycles elapsed\n            12993040  peak memory footprint\n",
+      "construction": {
+        "selection_attempts": 4,
+        "attempts": [
+          {
+            "mask": 0,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 11,
+            "fields_total": 15
+          },
+          {
+            "mask": 1,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 13,
+            "fields_total": 15
+          },
+          {
+            "mask": 2,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 13,
+            "fields_total": 15
+          },
+          {
+            "mask": 3,
+            "passed": 5,
+            "total": 5,
+            "fields_passed": 15,
+            "fields_total": 15
+          }
+        ],
+        "selected_mask": 3,
+        "finite_fields_passed": 15,
+        "finite_fields_total": 15,
+        "model_prediction_ns": 0,
+        "model": null,
+        "prediction": null
+      }
+    },
+    {
+      "label": "model",
+      "raw_receipt": "model.json",
+      "raw_receipt_sha256": "sha256:ebcccf318471ab0832d54bff2da417973cd1433b2f93d616769f12d0a0d050b3",
+      "decision": "PASS",
+      "finite_passed": 8,
+      "finite_total": 8,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "current_model_calls": 1,
+      "runtime_model_calls": 0,
+      "runtime_replayed": true,
+      "generated_sha256": "sha256:6759e278ace650e15ed290a42d9d49e761622f7b12f6a804c8257b2ee3c48713",
+      "command_wall_seconds": 0.35,
+      "command_user_seconds": 0.15,
+      "command_system_seconds": 0.1,
+      "command_peak_rss_bytes": 86294528,
+      "raw_time_lp": "real 0.35\nuser 0.15\nsys 0.10\n            86294528  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16390  page reclaims\n                 231  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 308  signals received\n                 152  voluntary context switches\n                3018  involuntary context switches\n           401244873  instructions retired\n           135881178  cycles elapsed\n            12403216  peak memory footprint\n",
+      "construction": {
+        "selection_attempts": 2,
+        "attempts": [
+          {
+            "mask": 7,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 13,
+            "fields_total": 15
+          },
+          {
+            "mask": 3,
+            "passed": 5,
+            "total": 5,
+            "fields_passed": 15,
+            "fields_total": 15
+          }
+        ],
+        "selected_mask": 3,
+        "finite_fields_passed": 15,
+        "finite_fields_total": 15,
+        "model_prediction_ns": 19333,
+        "model": {
+          "schema": "gooo/retained-path-model/v1",
+          "loaded": true,
+          "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+          "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+          "resident_tensor_bytes": 2096,
+          "setup_ms": 0.794042,
+          "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+          "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+          "feature_version": "triple_record_field_context_v1_shared_v1",
+          "arithmetic_version": "float32_separate_v1"
+        },
+        "prediction": {
+          "logits": [
+            -7.9075737,
+            -1.2027688,
+            -2.801236,
+            3.9035697,
+            -3.9035697,
+            2.801236,
+            1.2027688,
+            7.9075737
+          ],
+          "probabilities": [
+            1.832215e-14,
+            1.2209446e-08,
+            4.9921206e-10,
+            0.00033266356,
+            5.5056692e-11,
+            3.6688525e-05,
+            1.5000971e-06,
+            0.99962914
+          ],
+          "proposed_mask": 7
+        }
+      }
+    },
+    {
+      "label": "replay",
+      "raw_receipt": "replay.json",
+      "raw_receipt_sha256": "sha256:6fdee2fb0e144292d04a2655f0f16129cf45c92fe6ff8867e4cb3a8be9727665",
+      "decision": "PASS",
+      "finite_passed": 8,
+      "finite_total": 8,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "current_model_calls": 0,
+      "runtime_model_calls": 0,
+      "runtime_replayed": true,
+      "generated_sha256": "sha256:6759e278ace650e15ed290a42d9d49e761622f7b12f6a804c8257b2ee3c48713",
+      "command_wall_seconds": 0.34,
+      "command_user_seconds": 0.14,
+      "command_system_seconds": 0.1,
+      "command_peak_rss_bytes": 86720512,
+      "raw_time_lp": "real 0.34\nuser 0.14\nsys 0.10\n            86720512  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16041  page reclaims\n                 231  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 293  signals received\n                 189  voluntary context switches\n                3316  involuntary context switches\n           266879782  instructions retired\n           103080222  cycles elapsed\n            12403240  peak memory footprint\n"
+    },
+    {
+      "label": "inputs",
+      "raw_receipt": "inputs.json",
+      "raw_receipt_sha256": "sha256:dd2fc6029d2f6617a19e6353a044069a9a247c0fa3c2d743741dbb02f8fc3776",
+      "decision": "OBSERVED",
+      "finite_passed": 0,
+      "finite_total": 0,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "NO_RUNTIME_EXPECTATIONS",
+        "unique_inputs": 3,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 1,
+        "disjoint_inputs": 2,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "current_model_calls": 0,
+      "runtime_model_calls": 0,
+      "runtime_replayed": true,
+      "generated_sha256": "sha256:6759e278ace650e15ed290a42d9d49e761622f7b12f6a804c8257b2ee3c48713",
+      "command_wall_seconds": 0.35,
+      "command_user_seconds": 0.14,
+      "command_system_seconds": 0.1,
+      "command_peak_rss_bytes": 86769664,
+      "raw_time_lp": "real 0.35\nuser 0.14\nsys 0.10\n            86769664  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16111  page reclaims\n                 231  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 288  signals received\n                 130  voluntary context switches\n                3395  involuntary context switches\n           264624284  instructions retired\n           101630823  cycles elapsed\n            12599848  peak memory footprint\n"
+    }
+  ],
+  "local_validation": {
+    "serial_full_packages": "PASS: go test -p 1 ./internal/bodycodegen ./internal/bodyexecution ./internal/packageruntime/workspaceexecution ./cmd/gooo ./internal/verify -count=1",
+    "focused_race": "PASS: ReplayExternalBodyFill, ReplayWorkspace, RunPackageReplay and SelectsGoooBodyFillBefore across their owning packages",
+    "vet": "PASS: bodycodegen, bodyexecution, workspaceexecution and cmd/gooo",
+    "capacity_preflight": "PASS: nine changed/new handwritten files",
+    "initial_concurrent_run": {
+      "status": "FAIL",
+      "test": "TestExecuteWorkspaceUsesSourceDeclaredFillPlanWithLayaAndDeterministicFallback",
+      "observation": "bounded child failed (exit/timeout recorded), reported test duration 2.13 seconds",
+      "context": "The broad package test command and focused race command overlapped. No source or timeout change preceded the successful serial rerun. The exact cause of this child failure was not isolated."
+    }
+  }
+}

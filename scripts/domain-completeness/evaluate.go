@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/domaincompleteness"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageutility"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -60,33 +62,57 @@ type loadedInputs struct {
 	graph          graphSnapshot
 	finalGraphRaw  []byte
 	finalGraph     graphSnapshot
+	discovery      capabilityDiscoveryEvidence
 	evidenceRefs   []EvidenceRef
 	evidenceState  string
 	evidenceReason string
 	inputBytes     int64
 	inputFiles     int
+	inputPathSeen  map[string]bool
 	issues         []string
 }
 
 func evaluate(
-	profilePath, contractPath, evidenceDir, subject string, runID int64, attempt int,
-) (Report, []byte, error) {
+	profilePath, contractPath, evidenceDir, baselinePath string, autoBaseline bool, baselineSource baselineArtifact,
+	comparisonStatus, comparisonReason, subject string, runID int64, attempt int,
+) (Report, []byte, []byte, baselineArtifact, error) {
 	profileRaw, err := os.ReadFile(profilePath)
 	if err != nil {
-		return Report{}, nil, fmt.Errorf("read profile: %w", err)
+		return Report{}, nil, nil, baselineArtifact{}, fmt.Errorf("read profile: %w", err)
+	}
+	if err := domaincompleteness.VerifyGeneratedProjection(profilePath, profileRaw); err != nil {
+		return Report{}, nil, nil, baselineArtifact{}, err
 	}
 	profileModel, err := compileProfile(profilePath, profileRaw)
 	if err != nil {
-		return Report{}, nil, err
+		return Report{}, nil, nil, baselineArtifact{}, err
 	}
 	generated := []byte(renderProfile(profileModel))
 	generatedSemanticHash, err := semanticHash(profilePath+".generated", generated)
 	if err != nil {
-		return Report{}, nil, err
+		return Report{}, nil, nil, baselineArtifact{}, err
 	}
 	semanticsEqual := generatedSemanticHash == profileModel.SemanticHash
 	profileDigest := digestBytes(profileRaw)
 	inputs := loadInputs(contractPath, evidenceDir)
+	var baseline Report
+	var baselineRaw []byte
+	selectedArtifact := baselineSource
+	if baselinePath != "" {
+		baselineRaw, readErr := os.ReadFile(baselinePath)
+		if readErr != nil {
+			return Report{}, nil, nil, baselineArtifact{}, fmt.Errorf("read baseline receipt: %w", readErr)
+		}
+		inputs.inputFiles++
+		if selectedArtifact.SizeInBytes > 0 {
+			inputs.inputBytes += selectedArtifact.SizeInBytes
+		} else {
+			inputs.inputBytes += int64(len(baselineRaw))
+		}
+		if err := json.Unmarshal(baselineRaw, &baseline); err != nil {
+			return Report{}, nil, nil, baselineArtifact{}, fmt.Errorf("decode baseline receipt: %w", err)
+		}
+	}
 	inputs.inputFiles++
 	inputs.inputBytes += int64(len(profileRaw))
 	repositoryWrites := max(inputs.observation.RepositoryWrites, inputs.inventory.RepositoryWrites)
@@ -140,19 +166,107 @@ func evaluate(
 	report.Summary = summarize(report.Dimensions)
 	report.Decision, report.Reason, report.NextOperation, report.FirstUnresolved =
 		decide(report.Dimensions, inputs.issues, inputs.evidenceState)
+	if baselinePath == "" && autoBaseline {
+		candidate, candidateRaw, artifact, discoveryErr := discoverBaseline(context.Background(), report)
+		if discoveryErr != nil {
+			if discovery, ok := discoveryErr.(baselineDiscoveryError); ok {
+				report.Investment.ComparisonStatus = discovery.status
+				report.Investment.ComparisonReason = discovery.reason
+			} else {
+				report.Investment.ComparisonStatus = "UNKNOWN_BASELINE_UNAVAILABLE"
+				report.Investment.ComparisonReason = "BASELINE_DISCOVERY_FAILED"
+			}
+		} else {
+			baseline, baselineRaw, selectedArtifact = candidate, candidateRaw, artifact
+			inputs.inputFiles++
+			inputs.inputBytes += selectedArtifact.SizeInBytes
+			report.Investment.Observed.EvidenceFiles = inputs.inputFiles
+			report.Investment.Observed.EvidenceBytes = inputs.inputBytes
+		}
+	}
+	comparison := compareReports(report, baseline, baselinePath != "" || selectedArtifact.ID != 0)
+	if selectedArtifact.ID != 0 {
+		comparison.BaselineArtifactID = selectedArtifact.ID
+		comparison.BaselineArtifactDigest = selectedArtifact.Digest
+		comparison.BaselineArtifactName = selectedArtifact.Name
+		comparison.BaselineArtifactBytes = selectedArtifact.SizeInBytes
+	}
+	if selectedArtifact.ID == 0 && comparisonStatus != "" {
+		comparison.Status = comparisonStatus
+		report.Investment.ComparisonReason = comparisonReason
+	} else if selectedArtifact.ID == 0 && autoBaseline && baselinePath == "" {
+		comparison.Status = report.Investment.ComparisonStatus
+	}
+	report.Investment.ComparisonStatus = comparison.Status
+	if comparison.Status == "COMPARABLE" || comparison.Status == "PARTIAL" {
+		report.Investment.Comparison = &comparison
+	}
 	report.Digest, err = reportDigest(report)
-	return report, generated, err
+	return report, generated, baselineRaw, selectedArtifact, err
+}
+
+func compareReports(current, baseline Report, supplied bool) Comparison {
+	result := Comparison{Status: "UNKNOWN_NO_PROFILE_BOUND_PRIOR_RECEIPT", Dimensions: []DimensionDelta{}}
+	if !supplied {
+		return result
+	}
+	result.Status = "UNKNOWN_INCOMPATIBLE_BASELINE"
+	baselineDigest, err := reportDigest(baseline)
+	if err != nil || baseline.Digest == "" || baselineDigest != baseline.Digest ||
+		baseline.Schema != current.Schema || baseline.ProfileID != current.ProfileID ||
+		baseline.Contract.SemanticHash != current.Contract.SemanticHash ||
+		baseline.Generated.SemanticHash != current.Generated.SemanticHash ||
+		baseline.Snapshot.Repository != current.Snapshot.Repository ||
+		baseline.SubjectSHA == "" || baseline.SubjectSHA == current.SubjectSHA ||
+		baseline.Snapshot.Repository == "" || !baseline.Generated.SemanticsEqual || !current.Generated.SemanticsEqual ||
+		baseline.Snapshot.SubjectSHA != baseline.SubjectSHA ||
+		len(baseline.Dimensions) != len(current.Dimensions) {
+		return result
+	}
+	byID := make(map[string]Dimension, len(baseline.Dimensions))
+	for _, dimension := range baseline.Dimensions {
+		if _, duplicate := byID[dimension.ID]; duplicate || dimension.ID == "" {
+			return result
+		}
+		byID[dimension.ID] = dimension
+	}
+	for _, dimension := range current.Dimensions {
+		prior, exists := byID[dimension.ID]
+		if !exists || prior.MetricID != dimension.MetricID || prior.Unit != dimension.Unit ||
+			prior.Denominator != dimension.Denominator || !validComparisonCounts(prior) || !validComparisonCounts(dimension) {
+			return Comparison{Status: "UNKNOWN_INCOMPATIBLE_BASELINE", Dimensions: []DimensionDelta{}}
+		}
+		result.Dimensions = append(result.Dimensions, compareDimension(dimension, prior))
+	}
+	result.Status = "COMPARABLE"
+	for _, delta := range result.Dimensions {
+		if delta.Status != "COMPARABLE" {
+			result.Status = "PARTIAL"
+		}
+	}
+	result.BaselineSubject = baseline.SubjectSHA
+	result.BaselineDigest = baseline.Digest
+	result.BaselineRunID = baseline.Snapshot.WorkflowRun
+	result.BaselineAttempt = baseline.Snapshot.RunAttempt
+	return result
 }
 
 func loadInputs(contractPath, evidenceDir string) loadedInputs {
-	result := loadedInputs{evidenceState: "UNKNOWN", evidenceReason: "EVIDENCE_ARTIFACTS_NOT_READ"}
+	result := loadedInputs{evidenceState: "UNKNOWN", evidenceReason: "EVIDENCE_ARTIFACTS_NOT_READ", inputPathSeen: make(map[string]bool)}
 	read := func(path string) []byte {
 		value, err := os.ReadFile(path)
 		if err != nil {
 			return nil
 		}
-		result.inputFiles++
-		result.inputBytes += int64(len(value))
+		identity, identityErr := filepath.Abs(path)
+		if identityErr != nil {
+			identity = filepath.Clean(path)
+		}
+		if !result.inputPathSeen[identity] {
+			result.inputPathSeen[identity] = true
+			result.inputFiles++
+			result.inputBytes += int64(len(value))
+		}
 		return value
 	}
 	result.contractRaw = read(contractPath)
@@ -204,12 +318,26 @@ func loadInputs(contractPath, evidenceDir string) loadedInputs {
 			result.issues = append(result.issues, "invalid generated graph")
 		}
 	}
+	discoveryReportRaw := read(filepath.Join(evidenceDir, capabilityDiscoveryReportPath))
+	discoveryReplayRaw := read(filepath.Join(evidenceDir, capabilityDiscoveryReplayPath))
+	discoverySourceRaw := read(filepath.Join(evidenceDir, capabilityDiscoverySourceCopy))
+	discoveryContractRaw := read(filepath.Join(evidenceDir, capabilityDiscoveryContractCopy))
+	result.discovery = validateCapabilityDiscoveryEvidence(
+		discoveryReportRaw, discoveryReplayRaw, discoverySourceRaw, discoveryContractRaw,
+	)
+	if result.discovery.State == "PASS" {
+		state, reason := validateCapabilityDiscoveryCells(result.observation, discoveryReportRaw, discoveryReplayRaw)
+		if state != "PASS" {
+			result.discovery.State, result.discovery.Reason = state, reason
+		}
+	}
+	result.discovery.Refs = discoveryEvidenceRefs(discoveryReportRaw, discoveryReplayRaw, discoverySourceRaw, discoveryContractRaw)
+	if result.discovery.State == "FAIL_CLOSED" {
+		result.issues = append(result.issues, result.discovery.Reason)
+	}
 	result.evidenceRefs, result.evidenceState, result.evidenceReason = validateEvidenceReferences(evidenceDir, result.report)
 	for _, ref := range result.evidenceRefs {
-		if value, err := os.ReadFile(filepath.Join(evidenceDir, ref.Path)); err == nil {
-			result.inputFiles++
-			result.inputBytes += int64(len(value))
-		}
+		read(filepath.Join(evidenceDir, ref.Path))
 	}
 	return result
 }
@@ -264,31 +392,65 @@ func validateEvidenceReferences(evidenceDir string, report languageutility.Repor
 }
 
 func measureDimensions(profile ProfileModel, inputs loadedInputs, subject string, profileSemanticsEqual bool, runID int64, attempt int) []Dimension {
-	contract := inputs.contract
-	report := inputs.report
-	result := make([]Dimension, 0, len(dimensions))
-	for _, spec := range dimensions {
+	result := make([]Dimension, 0, len(profile.Dimensions))
+	for _, spec := range profile.Dimensions {
 		dimension := Dimension{
 			ID: spec.ID, MetricID: spec.MetricID, Unit: spec.Unit,
 			Status: "UNKNOWN", Evidence: []EvidenceRef{},
 		}
-		switch spec.ID {
-		case "declaration_coverage":
-			dimension = measureDeclarationCoverage(spec, contract, inputs.programRaw, inputs)
-		case "generation_coverage":
-			dimension = measureGenerationCoverage(spec, contract, report, inputs)
-		case "reverse_observation_coverage":
-			dimension = measureReverseObservationCoverage(spec, inputs)
-		case "use_case_coverage":
-			dimension = measureUseCaseCoverage(spec, contract, report, inputs)
-		case "boundary_coverage":
-			dimension = measureBoundaryCoverage(spec, inputs)
-		case "provenance_integrity":
-			dimension = measureProvenanceIntegrity(spec, profile, inputs, subject, profileSemanticsEqual, runID, attempt)
+		runtime, supported := dimensionRuntimes[spec.MetricID]
+		if !supported || runtime.Evaluate == nil {
+			dimension = failed(dimension, "PROFILE_METRIC_HANDLER_UNAVAILABLE", "REGISTER_PROFILE_METRIC_HANDLER")
+		} else {
+			dimension = runtime.Evaluate(spec, profile, inputs, subject, profileSemanticsEqual, runID, attempt)
 		}
 		result = append(result, dimension)
 	}
 	return result
+}
+
+type dimensionRuntime struct {
+	Unit     string
+	Evaluate func(dimensionSpec, ProfileModel, loadedInputs, string, bool, int64, int) Dimension
+}
+
+var dimensionRuntimes = map[string]dimensionRuntime{
+	"gooo.metric.domain-completeness.declaration-coverage.v1": {
+		Unit: "declarations",
+		Evaluate: func(spec dimensionSpec, _ ProfileModel, inputs loadedInputs, _ string, _ bool, _ int64, _ int) Dimension {
+			return measureDeclarationCoverage(spec, inputs.contract, inputs.programRaw, inputs)
+		},
+	},
+	"gooo.metric.domain-completeness.generation-coverage.v1": {
+		Unit: "use_cases",
+		Evaluate: func(spec dimensionSpec, _ ProfileModel, inputs loadedInputs, _ string, _ bool, _ int64, _ int) Dimension {
+			return measureGenerationCoverage(spec, inputs.contract, inputs.report, inputs)
+		},
+	},
+	"gooo.metric.domain-completeness.reverse-observation-coverage.v1": {
+		Unit: "observations",
+		Evaluate: func(spec dimensionSpec, _ ProfileModel, inputs loadedInputs, _ string, _ bool, _ int64, _ int) Dimension {
+			return measureReverseObservationCoverage(spec, inputs)
+		},
+	},
+	"gooo.metric.domain-completeness.use-case-coverage.v1": {
+		Unit: "use_cases",
+		Evaluate: func(spec dimensionSpec, _ ProfileModel, inputs loadedInputs, _ string, _ bool, _ int64, _ int) Dimension {
+			return measureUseCaseCoverage(spec, inputs.contract, inputs.report, inputs)
+		},
+	},
+	"gooo.metric.domain-completeness.boundary-coverage.v1": {
+		Unit: "boundaries",
+		Evaluate: func(spec dimensionSpec, _ ProfileModel, inputs loadedInputs, _ string, _ bool, _ int64, _ int) Dimension {
+			return measureBoundaryCoverage(spec, inputs)
+		},
+	},
+	"gooo.metric.domain-completeness.provenance-integrity.v1": {
+		Unit: "bindings",
+		Evaluate: func(spec dimensionSpec, profile ProfileModel, inputs loadedInputs, subject string, profileSemanticsEqual bool, runID int64, attempt int) Dimension {
+			return measureProvenanceIntegrity(spec, profile, inputs, subject, profileSemanticsEqual, runID, attempt)
+		},
+	},
 }
 
 func measureDeclarationCoverage(spec dimensionSpec, contract languageutility.Contract, program []byte, inputs loadedInputs) Dimension {
@@ -322,6 +484,7 @@ func measureDeclarationCoverage(spec dimensionSpec, contract languageutility.Con
 		}
 	}
 	dimension.Evidence = []EvidenceRef{{Role: "source-contract", Path: "examples/language-utility/contract.json", Digest: digestBytes(inputs.contractRaw)}}
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
 	dimension.Status = classify(dimension.Numerator, dimension.Denominator, 0, false)
 	if dimension.Status != "PASS" {
 		dimension.FirstUnresolved = &Frontier{Unit: "declared-cell", Stage: "SYNTAX_ACCEPTED", Reason: "GENERATED_ACTIVITY_MISSING", NextOperation: "REGENERATE_DECLARED_PROGRAM"}
@@ -335,6 +498,16 @@ func measureGenerationCoverage(spec dimensionSpec, contract languageutility.Cont
 		return unknown(dimension, "UTILITY_REPORT_MISSING", "GENERATE_UTILITY_REPORT")
 	}
 	for _, useCase := range contract.UseCases {
+		if useCase.ID == "capability-discovery" {
+			if inputs.discovery.State == "PASS" {
+				dimension.UnknownUnits++
+			} else if inputs.discovery.State == "FAIL_CLOSED" {
+				return failed(dimension, inputs.discovery.Reason, "REPAIR_CAPABILITY_DISCOVERY_RECEIPT")
+			} else {
+				dimension.UnknownUnits++
+			}
+			continue
+		}
 		var found *languageutility.CellResult
 		for index := range report.Cells {
 			cell := &report.Cells[index]
@@ -343,15 +516,26 @@ func measureGenerationCoverage(spec dimensionSpec, contract languageutility.Cont
 				break
 			}
 		}
-		if found == nil {
-			continue
-		}
-		if found.State == languageutility.StateClosed && found.EvidencePath != "" && found.EvidenceDigest != "" &&
-			inputs.evidenceState == "PASS" {
-			dimension.Numerator++
-		}
+		fulfilled, unobserved, refuted := generationCellCounts(found, inputs.evidenceState)
+		dimension.Numerator += fulfilled
+		dimension.UnknownUnits += unobserved
+		dimension.RefutedUnits += refuted
 	}
 	dimension.Evidence = append(dimension.Evidence, inputs.evidenceRefs...)
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
+	if dimension.RefutedUnits > 0 {
+		return failed(dimension, "GENERATION_EVIDENCE_REFUTED", "RETAIN_AND_REPAIR_COUNTEREXAMPLE")
+	}
+	if inputs.discovery.State != "PASS" {
+		dimension.Status = "UNKNOWN"
+		dimension.UnknownUnits = max(dimension.UnknownUnits, 1)
+		dimension.FirstUnresolved = &Frontier{Unit: "capability-discovery", Stage: "GENERATION_COVERAGE",
+			Reason: "DISCOVERY_RECEIPT_HAS_NO_GENERATED_CODE_ARTIFACT", NextOperation: "GENERATE_A_SOURCE_BOUND_CODE_ARTIFACT"}
+		return dimension
+	}
+	if dimension.UnknownUnits > 0 {
+		return unknown(dimension, "GENERATION_EVIDENCE_UNKNOWN", "COLLECT_GENERATION_EVIDENCE")
+	}
 	dimension.Status = classify(dimension.Numerator, dimension.Denominator, 0, false)
 	if dimension.Status != "PASS" {
 		dimension.FirstUnresolved = firstOpenCell(report, contract)
@@ -363,7 +547,7 @@ func measureGenerationCoverage(spec dimensionSpec, contract languageutility.Cont
 }
 
 func measureReverseObservationCoverage(spec dimensionSpec, inputs loadedInputs) Dimension {
-	dimension := newDimension(spec, 1)
+	dimension := newDimension(spec, 2)
 	if len(inputs.programRaw) == 0 || len(inputs.graphRaw) == 0 || len(inputs.finalGraphRaw) == 0 {
 		return unknown(dimension, "SOURCE_OR_REVERSE_GRAPH_MISSING", "GENERATE_AND_REOBSERVE_STRUCTURE")
 	}
@@ -375,6 +559,7 @@ func measureReverseObservationCoverage(spec dimensionSpec, inputs loadedInputs) 
 		{Role: "source-graph", Path: "gooo-graph.json", Digest: digestBytes(inputs.graphRaw)},
 		{Role: "reverse-observation", Path: "final-gooo-graph.json", Digest: digestBytes(inputs.finalGraphRaw)},
 	}
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
 	if !bytes.Equal(inputs.graphRaw, inputs.finalGraphRaw) {
 		if !equalGraph(inputs.graph, inputs.finalGraph) {
 			return failed(dimension, "REVERSE_GRAPH_MISMATCH", "REGENERATE_OR_REOBSERVE_STRUCTURE")
@@ -382,7 +567,21 @@ func measureReverseObservationCoverage(spec dimensionSpec, inputs loadedInputs) 
 	}
 	if equalGraph(inputs.graph, inputs.finalGraph) {
 		dimension.Numerator = 1
-		dimension.Status = "PASS"
+		if inputs.discovery.State != "PASS" {
+			dimension.UnknownUnits = 1
+			dimension.Status = "UNKNOWN"
+			dimension.FirstUnresolved = &Frontier{Unit: "capability-discovery", Stage: "REVERSE_OBSERVATION_COVERAGE",
+				Reason: inputs.discovery.Reason, NextOperation: "REVERSE_OBSERVE_A_DISCOVERY_BOUND_ARTIFACT"}
+			return dimension
+		}
+		reverse, ok := requireDiscoveryReceiptDimension(inputs.discovery.Report, "reverse_observation_coverage")
+		if !ok || reverse.Status != "UNKNOWN" {
+			return failed(dimension, "CAPABILITY_DISCOVERY_REVERSE_RECEIPT_CHANGED", "REPAIR_DISCOVERY_REVERSE_EVIDENCE")
+		}
+		dimension.UnknownUnits = 1
+		dimension.Status = "UNKNOWN"
+		dimension.FirstUnresolved = &Frontier{Unit: "capability-discovery", Stage: "REVERSE_OBSERVATION_COVERAGE",
+			Reason: reverse.Reason, NextOperation: "REVERSE_OBSERVE_A_DISCOVERY_BOUND_ARTIFACT"}
 		return dimension
 	}
 	return failed(dimension, "REVERSE_GRAPH_MISMATCH", "REGENERATE_OR_REOBSERVE_STRUCTURE")
@@ -397,21 +596,37 @@ func measureUseCaseCoverage(spec dimensionSpec, contract languageutility.Contrac
 	dimension.UnknownUnits = report.Summary.UnknownCells
 	dimension.RefutedUnits = report.Summary.RefutedCells
 	dimension.Evidence = []EvidenceRef{{Role: "use-case-outcomes", Path: "report.json", Digest: digestBytes(inputs.reportRaw)}}
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
 	if dimension.RefutedUnits > 0 {
 		return failed(dimension, "USE_CASE_EVIDENCE_REFUTED", "RETAIN_AND_REPAIR_COUNTEREXAMPLE")
 	}
 	if dimension.UnknownUnits > 0 {
 		return unknown(dimension, "USE_CASE_EVIDENCE_UNKNOWN", "RESOLVE_FIRST_UNKNOWN_USE_CASE")
 	}
-	dimension.Status = classify(dimension.Numerator, dimension.Denominator, 0, false)
+	unknownUnits := 0
+	if inputs.discovery.State == "PASS" {
+		realUseCase, ok := requireDiscoveryReceiptDimension(inputs.discovery.Report, "real_use_case_coverage")
+		if !ok || realUseCase.Status != "UNKNOWN" {
+			return failed(dimension, "CAPABILITY_DISCOVERY_USE_CASE_RECEIPT_CHANGED", "REPAIR_DISCOVERY_USE_CASE_EVIDENCE")
+		}
+		unknownUnits++
+		dimension.FirstUnresolved = &Frontier{Unit: "capability-discovery", Stage: "REAL_USE_CASE_COVERAGE",
+			Reason: realUseCase.Reason, NextOperation: "BIND_INDEPENDENT_INPUT_AND_EXPECTED_OUTPUT_CASES"}
+	} else {
+		unknownUnits++
+	}
+	dimension.UnknownUnits += unknownUnits
+	dimension.Status = classify(dimension.Numerator, dimension.Denominator, dimension.UnknownUnits, false)
 	if dimension.Status != "PASS" {
-		dimension.FirstUnresolved = firstOpenCell(report, contract)
+		if dimension.FirstUnresolved == nil {
+			dimension.FirstUnresolved = firstOpenCell(report, contract)
+		}
 	}
 	return dimension
 }
 
 func measureBoundaryCoverage(spec dimensionSpec, inputs loadedInputs) Dimension {
-	dimension := newDimension(spec, 5)
+	dimension := newDimension(spec, 6)
 	if len(inputs.inventoryRaw) == 0 || len(inputs.observationRaw) == 0 {
 		return unknown(dimension, "BOUNDARY_OBSERVATION_MISSING", "COLLECT_BOUNDARY_OBSERVATIONS")
 	}
@@ -426,6 +641,7 @@ func measureBoundaryCoverage(spec dimensionSpec, inputs loadedInputs) Dimension 
 		{Role: "repository-boundary", Path: "inventory.json", Digest: digestBytes(inputs.inventoryRaw)},
 		{Role: "observer-write-count", Path: "observation.json", Digest: digestBytes(inputs.observationRaw)},
 	}
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
 	for _, passed := range checks {
 		if passed {
 			dimension.Numerator++
@@ -433,10 +649,17 @@ func measureBoundaryCoverage(spec dimensionSpec, inputs loadedInputs) Dimension 
 			dimension.RefutedUnits++
 		}
 	}
+	if inputs.discovery.State == "PASS" {
+		dimension.Numerator++
+	} else if inputs.discovery.State == "FAIL_CLOSED" {
+		dimension.RefutedUnits++
+	} else {
+		dimension.UnknownUnits++
+	}
 	if dimension.RefutedUnits > 0 || inputs.observation.RepositoryWrites != 0 {
 		return failed(dimension, "READ_ONLY_BOUNDARY_REFUTED", "RESTORE_READ_ONLY_OBSERVER_BOUNDARY")
 	}
-	dimension.Status = classify(dimension.Numerator, dimension.Denominator, 0, false)
+	dimension.Status = classify(dimension.Numerator, dimension.Denominator, dimension.UnknownUnits, false)
 	if dimension.Status != "PASS" {
 		dimension.FirstUnresolved = &Frontier{Unit: "authority-boundary", Stage: "BOUNDARY_COVERAGE", Reason: "BOUNDARY_CHECK_INCOMPLETE", NextOperation: "COLLECT_BOUNDARY_OBSERVATIONS"}
 	}
@@ -444,7 +667,7 @@ func measureBoundaryCoverage(spec dimensionSpec, inputs loadedInputs) Dimension 
 }
 
 func measureProvenanceIntegrity(spec dimensionSpec, profile ProfileModel, inputs loadedInputs, subject string, profileSemanticsEqual bool, runID int64, attempt int) Dimension {
-	dimension := newDimension(spec, 8)
+	dimension := newDimension(spec, 9)
 	check := func(ok bool, missing bool) {
 		if missing {
 			dimension.UnknownUnits++
@@ -460,6 +683,7 @@ func measureProvenanceIntegrity(spec dimensionSpec, profile ProfileModel, inputs
 	programLoaded := len(inputs.programRaw) > 0
 	check(canonicalSubject(subject) && inputs.report.SubjectSHA == subject && inputs.observation.SubjectSHA == subject, !reportLoaded || !observationLoaded || subject == "")
 	check(inputs.progress.Contract.Digest == digestBytes(inputs.contractRaw), !contractLoaded || len(inputs.progressRaw) == 0)
+	check(inputs.discovery.State == "PASS", inputs.discovery.State == "UNKNOWN")
 	expectedProgram, programErr := languageutility.GenerateProgram(inputs.contract)
 	check(programErr == nil && bytes.Equal(inputs.programRaw, []byte(expectedProgram)) &&
 		inputs.report.ProgramDigest == digestBytes(inputs.programRaw), !contractLoaded || !programLoaded || !reportLoaded)
@@ -483,6 +707,7 @@ func measureProvenanceIntegrity(spec dimensionSpec, profile ProfileModel, inputs
 		{Role: "utility-report", Path: "report.json", Digest: digestBytes(inputs.reportRaw)},
 		{Role: "generated-program", Path: "program.gooo", Digest: digestBytes(inputs.programRaw)},
 	}
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
 	if dimension.RefutedUnits > 0 {
 		return failed(dimension, "PROVENANCE_BINDING_MISMATCH", "REGENERATE_EXACT_PROVENANCE_RECEIPT")
 	}
@@ -501,19 +726,9 @@ func newDimension(spec dimensionSpec, denominator int) Dimension {
 }
 
 func classify(numerator, denominator, unknown int, refuted bool) string {
-	if refuted || numerator < 0 || denominator < 0 || numerator > denominator {
-		return "FAIL_CLOSED"
-	}
-	if denominator <= 0 || unknown > 0 {
-		return "UNKNOWN"
-	}
-	if numerator == denominator {
-		return "PASS"
-	}
-	if numerator > 0 {
-		return "PROGRESS"
-	}
-	return "UNKNOWN"
+	return domaincompleteness.ClassifyDomainCompleteness(
+		int64(numerator), int64(denominator), int64(unknown), refuted,
+	)
 }
 
 func unknown(dimension Dimension, reason, operation string) Dimension {
@@ -552,28 +767,51 @@ func summarize(values []Dimension) Summary {
 }
 
 func decide(values []Dimension, issues []string, evidenceState string) (string, string, string, *Frontier) {
-	if len(issues) > 0 || evidenceState == "FAIL_CLOSED" {
-		return "FAIL_CLOSED", "DOMAIN_RECEIPT_INPUT_INVALID", "REPAIR_DOMAIN_RECEIPT_INPUTS", nil
+	invalidInput := len(issues) > 0 || evidenceState == "FAIL_CLOSED"
+	outcome := domaincompleteness.SelectDomainCompletenessOutcome(
+		invalidInput,
+		hasDimensionStatus(values, "FAIL_CLOSED"),
+		hasDimensionStatus(values, "UNKNOWN"),
+		hasDimensionStatus(values, "PROGRESS"),
+	)
+	switch outcome {
+	case "FAIL_CLOSED":
+		if invalidInput {
+			return outcome, "DOMAIN_RECEIPT_INPUT_INVALID", "REPAIR_DOMAIN_RECEIPT_INPUTS", nil
+		}
+		for _, value := range values {
+			if value.Status == outcome {
+				operation, frontier := nextOperation(value, "REPAIR_DOMAIN_EVIDENCE")
+				return outcome, "DOMAIN_EVIDENCE_CONTRADICTED", operation, frontier
+			}
+		}
+	case "UNKNOWN":
+		for _, value := range values {
+			if value.Status == outcome {
+				operation, frontier := nextOperation(value, "COLLECT_DOMAIN_EVIDENCE")
+				return outcome, "DOMAIN_EVIDENCE_INCOMPLETE", operation, frontier
+			}
+		}
+	case "PROGRESS":
+		for _, value := range values {
+			if value.Status == outcome {
+				operation, frontier := nextOperation(value, "RESOLVE_DOMAIN_GAP")
+				return outcome, "PROFILE_GAPS_REMAIN", operation, frontier
+			}
+		}
+	case "PASS":
+		return outcome, "ALL_REQUIRED_DIMENSIONS_CLOSED", "NO_ACTION", nil
 	}
+	return "FAIL_CLOSED", "DOMAIN_OUTCOME_UNSUPPORTED", "REPAIR_DOMAIN_PROFILE", nil
+}
+
+func hasDimensionStatus(values []Dimension, status string) bool {
 	for _, value := range values {
-		if value.Status == "FAIL_CLOSED" {
-			operation, frontier := nextOperation(value, "REPAIR_DOMAIN_EVIDENCE")
-			return "FAIL_CLOSED", "DOMAIN_EVIDENCE_CONTRADICTED", operation, frontier
+		if value.Status == status {
+			return true
 		}
 	}
-	for _, value := range values {
-		if value.Status == "UNKNOWN" {
-			operation, frontier := nextOperation(value, "COLLECT_DOMAIN_EVIDENCE")
-			return "UNKNOWN", "DOMAIN_EVIDENCE_INCOMPLETE", operation, frontier
-		}
-	}
-	for _, value := range values {
-		if value.Status == "PROGRESS" {
-			operation, frontier := nextOperation(value, "RESOLVE_DOMAIN_GAP")
-			return "PROGRESS", "PROFILE_GAPS_REMAIN", operation, frontier
-		}
-	}
-	return "PASS", "ALL_REQUIRED_DIMENSIONS_CLOSED", "NO_ACTION", nil
+	return false
 }
 
 func nextOperation(value Dimension, fallback string) (string, *Frontier) {

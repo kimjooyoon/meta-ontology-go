@@ -1,0 +1,10 @@
+package domain
+namespace domain
+
+entity Profile id "example://domain/profile" fields {
+    field note id "example://domain/profile/note" type string optional one
+    field complete id "example://domain/profile/complete" type boolean optional one
+    field count id "example://domain/profile/count" type integer optional one
+}
+
+activity Submit(Profile) -> Profile computes "return input"

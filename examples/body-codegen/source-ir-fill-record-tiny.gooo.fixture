@@ -1,0 +1,30 @@
+package recordfilltiny
+namespace recordfilltiny
+
+entity Candidate id "recordfilltiny://candidate" fields {
+    field state id "recordfilltiny://candidate/state" type string required one
+    field reviewed id "recordfilltiny://candidate/reviewed" type boolean required one
+}
+
+entity Review id "recordfilltiny://review" fields {
+    field decision id "recordfilltiny://review/decision" type string required one
+}
+
+activity ReviewCandidate(Candidate) -> Review computes `if __GOOO_BODY_HOLE_condition__ {
+    return Review{decision: __GOOO_BODY_HOLE_accepted__}
+} else {
+    return Review{decision: "rejected"}
+}` assembling {
+    source_fill intent "Accept only candidates that are ready and have passed review." {
+        hole "accepted"
+        hole "condition"
+        derive assignments max_candidates "2" {
+            hole "accepted" grammar "record-string-literal/v1" max_expressions "2"
+            hole "condition" grammar "record-field-predicate-composition/v1" max_expressions "2"
+        }
+    }
+    value_case "[{\"reviewed\":true,\"state\":\"ready\"}]" -> "{\"decision\":\"accepted\"}"
+    value_case "[{\"reviewed\":false,\"state\":\"ready\"}]" -> "{\"decision\":\"rejected\"}"
+    holdout_value_case "[{\"reviewed\":true,\"state\":\"queued\"}]" -> "{\"decision\":\"rejected\"}"
+    holdout_value_case "[{\"reviewed\":false,\"state\":\"queued\"}]" -> "{\"decision\":\"rejected\"}"
+}

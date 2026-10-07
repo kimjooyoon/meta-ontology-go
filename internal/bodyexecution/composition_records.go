@@ -11,9 +11,11 @@ import (
 )
 
 type CompositionRecordField struct {
-	ID    string          `json:"id"`
-	Name  string          `json:"name"`
-	Value json.RawMessage `json:"value"`
+	ID       string          `json:"id"`
+	Name     string          `json:"name"`
+	Value    json.RawMessage `json:"value"`
+	Presence string          `json:"presence,omitempty"`
+	Present  *bool           `json:"present,omitempty"`
 }
 
 func (graph compositionGraph) recordType(name string) (bodycodegen.RecordType, bool) {
@@ -47,9 +49,13 @@ func canonicalRecord(raw []byte, record bodycodegen.RecordType) (json.RawMessage
 	if err != nil {
 		return nil, fmt.Errorf("record %q: %w", record.Name, err)
 	}
+	canonicalValues := make(map[string]json.RawMessage, len(values))
 	for _, field := range record.Fields {
 		value, present := values[field.Name]
 		if !present {
+			if field.Presence == "optional" {
+				continue
+			}
 			return nil, fmt.Errorf("record %q requires field %q", record.Name, field.Name)
 		}
 		fieldType, ok := compositionRecordFieldScalar(field.TypeID)
@@ -60,12 +66,13 @@ func canonicalRecord(raw []byte, record bodycodegen.RecordType) (json.RawMessage
 		if err != nil {
 			return nil, fmt.Errorf("record %q field %q: %w", record.Name, field.Name, err)
 		}
-		values[field.Name] = canonical
+		canonicalValues[field.Name] = canonical
+		delete(values, field.Name)
 	}
-	if len(values) != len(record.Fields) {
+	if len(values) != 0 {
 		return nil, fmt.Errorf("record %q contains an undeclared field", record.Name)
 	}
-	return json.Marshal(values)
+	return json.Marshal(canonicalValues)
 }
 
 func compositionRecordFieldScalar(typeID string) (string, bool) {
@@ -122,6 +129,10 @@ func (graph compositionGraph) recordFieldValues(name string, raw []byte) []Compo
 	result := make([]CompositionRecordField, len(record.Fields))
 	for i, field := range record.Fields {
 		result[i] = CompositionRecordField{ID: field.ID, Name: field.Name, Value: values[field.Name]}
+		if field.Presence == "optional" {
+			present := values[field.Name] != nil
+			result[i].Presence, result[i].Present = "optional", &present
+		}
 	}
 	return result
 }

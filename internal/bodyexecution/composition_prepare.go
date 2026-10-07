@@ -11,28 +11,34 @@ import (
 )
 
 func prepareCompositionGraph(ctx context.Context, filename string, source []byte) (compositionGraph, error) {
+	return prepareCompositionGraphForEntry(ctx, filename, source, "")
+}
+
+func prepareCompositionGraphForEntry(ctx context.Context, filename string, source []byte, entry string) (compositionGraph, error) {
 	var graph compositionGraph
 	file, err := compositionSource(ctx, filename, source)
 	if err != nil {
 		return graph, err
 	}
-	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, bidir.EntityFieldsV3Support())
+	support := bodycodegen.BodyEntityFieldsSupport(file)
+	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, support)
 	if err != nil {
 		return graph, err
 	}
-	model, err := bidir.GetWithEntityFieldsSupport(document, bidir.EntityFieldsV3Support())
+	model, err := bidir.GetWithEntityFieldsSupport(document, support)
 	if err != nil {
 		return graph, err
 	}
-	typed, err := bidir.CompileTypedPlan(document)
+	typed, err := compileCompositionEntry(document, model, entry)
 	if err != nil {
 		return graph, err
 	}
-	if len(typed.Activities) < 2 || len(typed.Activities) > compositionLimit {
-		return graph, fmt.Errorf("composition requires 2..16 activities and explicit binds")
+	if len(typed.Activities) < 1 || len(typed.Activities) > compositionLimit {
+		return graph, fmt.Errorf("composition requires 1..16 declared activities")
 	}
 	graph.count = len(typed.Activities)
 	graph.plan = CompositionPlan{Schema: "gooo/body-composition-plan/v1",
+		EntryActivity:   entry,
 		TypedPlanSHA256: typed.Digest(), SemanticFingerprint: bidir.SemanticFingerprint(model),
 		Edges: make([]CompositionEdge, 0, len(typed.Edges))}
 	graph.plan.Records, err = bodycodegen.RecordTypesFromModel(model)
@@ -44,6 +50,18 @@ func prepareCompositionGraph(ctx context.Context, filename string, source []byte
 	}
 	if err := graph.bindEdges(typed); err != nil {
 		return graph, err
+	}
+	if err := graph.bindCallConstruction(ctx, filename, source, model); err != nil {
+		return graph, err
+	}
+	graph.called = make(map[string]CompositionActivity, len(graph.plan.Preparations))
+	for _, helper := range graph.plan.Preparations {
+		node := CompositionActivity{Name: helper.Name, ID: helper.ID, InputFrom: -1}
+		if err := graph.bindActivityInputs(file, &node, false); err != nil {
+			return graph, err
+		}
+		node.bindEntityIDs(model)
+		graph.called[helper.ID] = node
 	}
 	graph.plan.Activities = append([]CompositionActivity(nil), graph.nodes[:graph.count]...)
 	return graph, nil
@@ -103,15 +121,27 @@ func (node *CompositionActivity) bindEntityIDs(model bidir.Model) {
 	}
 }
 
-// Check all bodies and embedded plans before loading an optional model.
+// Check independent bodies before loading an optional model. Dependent bodies
+// are checked again when their called assembly prerequisites have been realized.
 func (graph compositionGraph) preflight(ctx context.Context, filename string, source []byte) error {
 	for _, node := range graph.nodes[:graph.count] {
-		if _, err := bodycodegen.GenerateWithPlanner(ctx, filename, source, node.Name, "", ""); err != nil {
-			return fmt.Errorf("activity %q: %w", node.Name, err)
+		if graph.deferred[node.Name] {
+			continue
 		}
 		if node.Assembling {
 			if err := bodycodegen.ValidateSourceAssembly(ctx, filename, source, node.Name); err != nil {
 				return fmt.Errorf("activity %q plan: %w", node.Name, err)
+			}
+			continue
+		}
+		if _, err := bodycodegen.GenerateWithPlanner(ctx, filename, source, node.Name, "", ""); err != nil {
+			return fmt.Errorf("activity %q: %w", node.Name, err)
+		}
+	}
+	for _, helper := range graph.plan.Preparations {
+		if !graph.deferred[helper.Name] {
+			if err := bodycodegen.ValidateSourceAssembly(ctx, filename, source, helper.Name); err != nil {
+				return fmt.Errorf("called activity %q plan: %w", helper.Name, err)
 			}
 		}
 	}

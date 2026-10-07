@@ -1,0 +1,9 @@
+package write
+namespace write
+import read "example/read"
+entity Result id "record-namespaces://write/result" fields {
+    field scaled id "record-namespaces://write/scaled" type integer required one
+}
+activity Render(Integer) -> Result computes `let local = Result{scaled: input * 2}
+return local`
+bind read.Unwrap.result -> Render.input

@@ -3,10 +3,11 @@ package languageutility
 import "fmt"
 
 const (
-	ContractSchema    = "gooo/language-utility-contract/v1"
-	ObservationSchema = "gooo/language-utility-observation/v1"
-	ReportSchema      = "gooo/language-utility-report/v1"
-	MetaOperation     = "measure-language-utility"
+	ContractSchema        = "gooo/language-utility-contract/v1"
+	ObservationSchema     = "gooo/language-utility-observation/v1"
+	ReportSchema          = "gooo/language-utility-report/v1"
+	MetaOperation         = "measure-language-utility"
+	CanonicalUseCaseCount = 7
 )
 
 var CanonicalStages = []StageSpec{
@@ -47,8 +48,8 @@ func ValidateContract(value Contract) error {
 	if value.Schema != ContractSchema || value.ID == "" {
 		return fmt.Errorf("language utility contract identity is invalid")
 	}
-	if len(value.Stages) != len(CanonicalStages) || len(value.UseCases) != 6 {
-		return fmt.Errorf("language utility denominator must be 6 x 7")
+	if len(value.Stages) != len(CanonicalStages) || len(value.UseCases) != CanonicalUseCaseCount {
+		return fmt.Errorf("language utility denominator must be 7 x 7")
 	}
 	for index, stage := range value.Stages {
 		if stage != CanonicalStages[index] {
@@ -62,9 +63,21 @@ func ValidateContract(value Contract) error {
 		}
 		seen[useCase.ID] = true
 	}
-	if value.Floors.ClosedCells < 0 || value.Floors.ClosedCells > 42 ||
-		value.Floors.CompleteUseCases < 0 || value.Floors.CompleteUseCases > 6 {
+	if value.Floors.ClosedCells < 0 || value.Floors.ClosedCells > len(value.UseCases)*len(value.Stages) ||
+		value.Floors.CompleteUseCases < 0 || value.Floors.CompleteUseCases > len(value.UseCases) {
 		return fmt.Errorf("language utility floors are invalid")
 	}
 	return nil
+}
+
+func ExpectedCellCount() int {
+	return CanonicalUseCaseCount * len(CanonicalStages)
+}
+
+func ExpectedGraphActivityCount(additionalActivities int) int {
+	return ExpectedCellCount() + additionalActivities
+}
+
+func ExpectedGraphEdgeCount(activityCount int) int {
+	return activityCount * 2
 }

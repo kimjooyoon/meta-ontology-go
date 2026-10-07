@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -19,12 +20,16 @@ type ActivityRef struct {
 }
 
 type Program struct {
-	Schema     string               `json:"schema"`
-	Workspace  packageruntime.Image `json:"workspace_image"`
-	Entry      ActivityRef          `json:"entry"`
-	Activities []ActivityRef        `json:"activities"`
-	Source     string               `json:"lowered_gooo_source"`
-	Scope      string               `json:"scope"`
+	Schema          string               `json:"schema"`
+	Workspace       packageruntime.Image `json:"workspace_image"`
+	Entry           ActivityRef          `json:"entry"`
+	Activities      []ActivityRef        `json:"activities"`
+	Source          string               `json:"lowered_gooo_source"`
+	Scope           string               `json:"scope"`
+	EntityAliases   []EntityAlias        `json:"entity_aliases,omitempty"`
+	PureCalls       *WorkspacePureCalls  `json:"pure_calls,omitempty"`
+	sourceFillSpecs map[string]*assemblyspec.Spec
+	recordNames     workspaceRecordNames
 }
 
 // Prepare validates the package manifest and flattens its reachable package
@@ -55,7 +60,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		sources := append([]packageruntime.Source(nil), spec.Sources...)
 		sort.Slice(sources, func(i, j int) bool { return sources[i].Filename < sources[j].Filename })
 		for _, source := range sources {
-			file, diagnostics := syntax.ParseFile(source.Filename, source.Content)
+			file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(source.Filename, source.Content, syntax.EntityFieldsV4Support())
 			if diagnostics.HasErrors() || file == nil {
 				return Program{}, fmt.Errorf("workspace source %q has syntax errors", source.Filename)
 			}
@@ -72,9 +77,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 			}
 		}
 	}
-	entities := map[string]string{}
-	entityDeclarations := map[string]*syntax.EntityDecl{}
-	entityDecls := map[string]bool{}
+	callNames := indexWorkspaceCalls(files, activityNames)
 	activityDeclarations := map[string]*syntax.ActivityDecl{}
 	activityOrder := make([]string, 0, len(allActivityRefs))
 	type pendingBinding struct {
@@ -90,19 +93,6 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 			imports := importAliases(spec.Path, file.Imports)
 			for _, declaration := range file.Declarations {
 				switch value := declaration.(type) {
-				case *syntax.EntityDecl:
-					if previous, exists := entities[value.Name]; exists && previous != value.ID {
-						return Program{}, fmt.Errorf("entity name %q has different stable IDs across workspace packages", value.Name)
-					}
-					entities[value.Name] = value.ID
-					if previous, exists := entityDeclarations[value.Name]; exists && !sameEntityShape(previous, value) {
-						return Program{}, fmt.Errorf("entity name %q has conflicting declarations across workspace packages", value.Name)
-					}
-					if !entityDecls[value.Name] {
-						declarations = append(declarations, declaration)
-						entityDecls[value.Name] = true
-						entityDeclarations[value.Name] = value
-					}
 				case *syntax.ActivityDecl:
 					key := packageActivityKey(spec.Path, value.Name)
 					value.Name = activityNames[spec.Path][value.Name]
@@ -157,22 +147,35 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 			}
 		}
 	}
-	if len(needed) < 2 {
-		return Program{}, fmt.Errorf("workspace entry requires at least one explicitly bound producer for body execution")
-	}
+	// The entry itself is an executable closure. Explicit binds add its producers;
+	// an independent language tool does not need an artificial input activity.
 	if len(needed) > 16 {
 		return Program{}, fmt.Errorf("workspace entry execution path supports at most 16 activities; got %d", len(needed))
+	}
+	allNeeded, pureCalls, err := callNames.expand(needed)
+	if err != nil {
+		return Program{}, err
 	}
 	activeRefs := make([]ActivityRef, 0, len(needed))
 	refsByName := make(map[string]ActivityRef, len(needed))
 	for _, ref := range allActivityRefs {
 		if needed[packageActivityKey(ref.PackagePath, ref.Activity)] {
 			activeRefs = append(activeRefs, ref)
+		}
+		if allNeeded[packageActivityKey(ref.PackagePath, ref.Activity)] {
 			refsByName[ref.LoweredName] = ref
 		}
 	}
+	recordNames, err := scopeWorkspaceRecords(ordered, files, image, refsByName)
+	if err != nil {
+		return Program{}, err
+	}
+	declarations, err = collectWorkspaceEntities(ordered, files)
+	if err != nil {
+		return Program{}, err
+	}
 	for _, key := range activityOrder {
-		if needed[key] {
+		if allNeeded[key] {
 			declarations = append(declarations, activityDeclarations[key])
 		}
 	}
@@ -181,15 +184,25 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 			bindings = append(bindings, binding.decl)
 		}
 	}
-	if len(bindings) == 0 {
+	if len(needed) > 1 && len(bindings) == 0 {
 		return Program{}, fmt.Errorf("workspace body execution requires at least one explicit activity binding")
+	}
+	sourceFillSpecs := make(map[string]*assemblyspec.Spec)
+	for _, key := range activityOrder {
+		if !needed[key] {
+			continue
+		}
+		activity := activityDeclarations[key]
+		if activity.Assembly != nil && activity.Assembly.Spec.FillPlan != nil {
+			sourceFillSpecs[key] = &activity.Assembly.Spec
+		}
 	}
 	flattened := &syntax.File{
 		Package:   &syntax.PackageDecl{Name: "gooo_workspace"},
 		Namespace: &syntax.NamespaceDecl{Name: "gooo_workspace"},
 		Decls:     declarations, Declarations: declarations, Bindings: bindings,
 	}
-	source, err := syntax.Format(flattened)
+	source, err := syntax.FormatWithEntityFieldsSupport(flattened, syntax.EntityFieldsV4Support())
 	if err != nil {
 		return Program{}, fmt.Errorf("format lowered workspace graph: %w", err)
 	}
@@ -200,9 +213,14 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 	if !ok {
 		return Program{}, fmt.Errorf("workspace entry activity disappeared during lowering")
 	}
+	scope := "explicitly bound workspace activity bodies lowered to one typed Gooo graph; execution requires finite cases and native Go compilation"
+	if pureCalls != nil {
+		scope = "entry and explicit bind producers with source-resolved pure activity calls; original package identities map to lowered names; finite native observations"
+	}
 	return Program{Schema: "gooo/workspace-body-program/v1", Workspace: image, Entry: entry,
-		Activities: activities, Source: source,
-		Scope: "explicitly bound workspace activity bodies lowered to one typed Gooo graph; execution requires finite cases and native Go compilation"}, nil
+		Activities: activities, Source: source, sourceFillSpecs: sourceFillSpecs,
+		EntityAliases: recordNames.aliases, recordNames: recordNames, PureCalls: pureCalls,
+		Scope: scope}, nil
 }
 
 func sameEntityShape(left, right *syntax.EntityDecl) bool {

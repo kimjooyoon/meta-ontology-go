@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"slices"
 
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
@@ -111,7 +110,7 @@ func replayTypedPathProjection(ctx context.Context, filename string, source []by
 		return err
 	}
 	selectedPassed, selectedTotal := bodyPathSelectedScore(p)
-	if !slices.Equal(results, p.NativeCases) || passed != selectedPassed || len(results) != selectedTotal {
+	if !equalIRBodyFillCaseResults(results, p.NativeCases) || passed != selectedPassed || len(results) != selectedTotal {
 		return fmt.Errorf("selected-body finite observations do not replay")
 	}
 	if completedSource != nil {

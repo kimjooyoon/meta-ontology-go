@@ -1,0 +1,14 @@
+package domain
+namespace domain
+
+entity Candidate id "example://domain/candidate" fields {
+    field candidate_id id "example://domain/candidate/id" type integer required one
+    field state id "example://domain/candidate/state" type string required one
+}
+
+entity Review id "example://domain/review" fields {
+    field candidate_id id "example://domain/review/candidate-id" type integer required one
+    field decision id "example://domain/review/decision" type string required one
+}
+
+activity Submit(Candidate) -> Candidate computes "return input"

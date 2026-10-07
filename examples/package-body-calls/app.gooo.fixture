@@ -1,0 +1,5 @@
+package app
+namespace app
+import diagnostics "tools/diagnostics"
+activity Main(Diagnostic) -> Text computes `return input.code + ": " + input.message + " [" + input.action + "]"`
+bind diagnostics.Diagnose.result -> Main.input

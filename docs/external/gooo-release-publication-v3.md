@@ -4,15 +4,14 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.0-dev
-version  = 0.6.0-dev
+tag      = v0.6.6-dev
+version  = 0.6.6-dev
 status   = development
 release  = prerelease
 latest   = false
 ```
 
-Previously published development tags `v0.1.0-dev` through `v0.5.0-dev` are
-outside this contract and remain immutable.
+Previously published development tags remain immutable; this contract creates a new tag rather than replacing an existing release.
 
 ## Meta authority
 
@@ -25,11 +24,11 @@ receipt.
 |---|---|---|
 | `VALIDATED_MERGE_EVIDENCE` | FOUNDATION | successful push-to-dev readiness run at the exact SHA |
 | `EXPERIMENTAL_RELEASE_IDENTITY` | FOUNDATION | exact tag, version, status, and schema |
-| `RELEASE_PAYLOAD` | COHERENCE | six payload files assembled from validated evidence |
-| `PAYLOAD_CHECKSUMS` | REGRESSION | seven non-checksum release files verify byte-exact |
+| `RELEASE_PAYLOAD` | COHERENCE | seven payload files assembled from validated evidence |
+| `PAYLOAD_CHECKSUMS` | REGRESSION | eight non-checksum release files verify byte-exact |
 | `ANNOTATED_TAG` | FOUNDATION | annotated tag resolves to the validated commit |
 | `DRAFT_PRERELEASE` | COHERENCE | draft prerelease is bound to the tag |
-| `DRAFT_ASSET_SET` | REGRESSION | draft contains the exact eight asset names |
+| `DRAFT_ASSET_SET` | REGRESSION | draft contains the exact nine asset names |
 | `PUBLISHED_PRERELEASE` | COHERENCE | draft becomes a non-latest published prerelease |
 
 Proof choices are fixed by the contract and cannot be selected after observing
@@ -37,21 +36,22 @@ which route is easier.
 
 ## Fixed assets
 
-The release asset denominator is exactly 8:
+The release asset denominator is exactly 9:
 
 1. `gooo-darwin-amd64.tar.gz`
-2. `gooo-linux-amd64.tar.gz`
-3. `gooo-windows-amd64.zip`
-4. `release-eligibility.json`
-5. `release-manifest.json`
-6. `release-report.json`
-7. `version.json`
-8. `SHA256SUMS`
+2. `gooo-darwin-arm64.tar.gz`
+3. `gooo-linux-amd64.tar.gz`
+4. `gooo-windows-amd64.zip`
+5. `release-eligibility.json`
+6. `release-manifest.json`
+7. `release-report.json`
+8. `version.json`
+9. `SHA256SUMS`
 
-`SHA256SUMS` contains exactly 7 entries, one for every other release asset. The
-manifest contains the six payload digests, the readiness run ID, exact source
+`SHA256SUMS` contains exactly 8 entries, one for every other release asset. The
+manifest contains the seven payload digests, the readiness run ID, exact source
 SHA, report and concept digests, publication meta-source digest, version, and
-tag. It does not contain its own digest.
+tag. The Darwin arm64 asset is built and replayed on a native macOS arm64 runner. It does not contain its own digest.
 
 ## Permission separation
 
@@ -96,7 +96,7 @@ only the upstream job conclusion.
 ## Publication and retry behavior
 
 The tag and release must not exist when publication starts. The workflow creates
-an annotated tag, stages a draft prerelease with all eight assets, verifies the
+an annotated tag, stages a draft prerelease with all nine assets, verifies the
 tag target and exact asset set, and only then publishes it. Existing tags or
 releases fail closed and are never overwritten.
 

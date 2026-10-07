@@ -85,7 +85,7 @@ const (
 	StatusBlocked   = "BLOCKED"
 
 	boundaryTotal        = 6
-	linkTotal            = 12
+	linkTotal            = 13
 	officialTotal        = 12
 	beforeOperating      = 10
 	projectedOperating   = 11
@@ -93,4 +93,6 @@ const (
 	projectedCoverageBPS = 9166
 	// DenominatorMigrationV46Digest binds the capability-79 denominator snapshot.
 	DenominatorMigrationV46Digest = "sha256:e4e6a4a603c035a1fded313beed3b0ed121a0fe93a80541f691845f44135e2a0"
+	// DenominatorMigrationV47Digest binds the expanded four-platform release denominator.
+	DenominatorMigrationV47Digest = "sha256:f2e749bb032eb8e83d3e467f049091ec18ecb4562517788b16697bd095597dd4"
 )

@@ -30,13 +30,14 @@ func validateEntityFieldsProfileField(field Field, registry semantic.TypeRegistr
 		return classifyEntityFieldsTypeError(field, err)
 	}
 	stringType := typeID == semantic.BuiltinStringTypeID
-	booleanType := typeID == semantic.BuiltinBooleanTypeID && (support.Profile.ID == syntax.EntityFieldsV2ProfileID || support.Profile.ID == syntax.EntityFieldsV3ProfileID)
-	integerType := typeID == semantic.BuiltinIntegerTypeID && support.Profile.ID == syntax.EntityFieldsV3ProfileID
+	booleanType := typeID == semantic.BuiltinBooleanTypeID && (support.Profile.ID == syntax.EntityFieldsV2ProfileID || support.Profile.ID == syntax.EntityFieldsV3ProfileID || support.Profile.ID == syntax.EntityFieldsV4ProfileID)
+	integerType := typeID == semantic.BuiltinIntegerTypeID && (support.Profile.ID == syntax.EntityFieldsV3ProfileID || support.Profile.ID == syntax.EntityFieldsV4ProfileID)
 	if !stringType && !booleanType && !integerType {
 		return entityFieldsProfileError(field, EntityFieldsUnsupportedTypeDiagnostic, fmt.Sprintf("resolved type %q is not in the bound profile", typeID))
 	}
-	if normalized.Presence != FieldPresenceRequired || normalized.Cardinality != FieldCardinalityOne {
-		return entityFieldsProfileError(field, EntityFieldsUnsupportedShapeDiagnostic, "only required × one is in the bound profile")
+	validPresence := normalized.Presence == FieldPresenceRequired || support.Profile.ID == syntax.EntityFieldsV4ProfileID && normalized.Presence == FieldPresenceOptional
+	if !validPresence || normalized.Cardinality != FieldCardinalityOne {
+		return entityFieldsProfileError(field, EntityFieldsUnsupportedShapeDiagnostic, "the bound profile does not support this presence/cardinality shape")
 	}
 	return nil
 }

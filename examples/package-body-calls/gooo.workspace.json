@@ -1,0 +1,37 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "app/explain",
+    "activity": "Main"
+  },
+  "packages": [
+    {
+      "path": "app/explain",
+      "name": "app",
+      "imports": [
+        "tools/diagnostics"
+      ],
+      "sources": [
+        "app.gooo.fixture"
+      ]
+    },
+    {
+      "path": "tools/diagnostics",
+      "name": "diagnostics",
+      "imports": [
+        "tools/rules"
+      ],
+      "sources": [
+        "diagnostics.gooo.fixture"
+      ]
+    },
+    {
+      "path": "tools/rules",
+      "name": "rules",
+      "imports": [],
+      "sources": [
+        "rules.gooo.fixture"
+      ]
+    }
+  ]
+}

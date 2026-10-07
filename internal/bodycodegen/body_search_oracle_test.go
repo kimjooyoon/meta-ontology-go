@@ -166,7 +166,7 @@ func TestIRBodySearchFinalBodyMatchesCompiledGoOracle(t *testing.T) {
 	}
 	receipt := result.Report.BodySearch
 	if receipt.SelectedCandidateID != "right" || receipt.TrainingPassed != 3 || receipt.HoldoutPassed != 2 ||
-		!slices.Equal(receipt.TrainingCaseResults, receipt.Attempts[1].CaseResults) {
+		!equalIRBodyFillCaseResults(receipt.TrainingCaseResults, receipt.Attempts[1].CaseResults) {
 		t.Fatalf("final emitted training evidence did not match the selected body: %#v", receipt)
 	}
 	oracleSource := "package main\nimport \"fmt\"\n" + withoutPackage(t, result.Source) + "\nfunc main() {\n"

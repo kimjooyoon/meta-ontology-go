@@ -26,11 +26,21 @@ type recordValueSite struct {
 func IsRecordAssembly(spec *assemblyspec.Spec) bool { return spec != nil && len(spec.ValueCases) != 0 }
 
 // ValidateSourceAssembly checks field alternatives and typed cases before any
-// optional model is loaded. Integer assembly keeps its existing document path.
+// optional model is loaded. Source IR search validates its grammar and bodies;
+// choice-based Integer assembly keeps its existing document path.
 func ValidateSourceAssembly(ctx context.Context, filename string, source []byte, activity string) error {
 	spec, err := SourceAssembly(ctx, filename, source, activity)
 	if err != nil {
 		return err
+	}
+	if IsSourceIRBodyFill(spec) {
+		// Reuse the bounded deterministic scorer to check every assignment and
+		// case before a composition loads any optional model.
+		_, err = GenerateWithSourceIRBodyFill(ctx, filename, source, activity, spec, "", "", IRBodyFillOptions{})
+		return err
+	}
+	if IsSourceIRSearch(spec) {
+		return ValidateSourceIRSearch(ctx, filename, source, activity, spec)
 	}
 	if IsRecordAssembly(spec) {
 		_, err = prepareRecordAssembly(ctx, filename, source, activity)
@@ -159,8 +169,7 @@ func (p recordAssemblyPlan) candidate(mask uint16) (generatedRoute, error) {
 	if err != nil {
 		return generatedRoute{}, err
 	}
-	return generateRouteParameters(p.body.packageName, p.body.activity.Name, p.body.activityID,
-		p.body.parameters, p.body.outputType, body, preserveRoute, p.body.records...)
+	return p.body.generateBody(body, preserveRoute)
 }
 
 func (p recordAssemblyPlan) validateAlternatives(ctx context.Context) error {

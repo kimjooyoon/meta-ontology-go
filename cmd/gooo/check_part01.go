@@ -35,13 +35,13 @@ func (SyntaxSourceParser) ParseFile(filename, source string) (*syntax.File, synt
 	return syntax.ParseFile(filename, source)
 }
 
-// EntityFieldsCLIParser is the public, exact V3 activation used by `gooo
+// EntityFieldsCLIParser is the public, exact V4 activation used by `gooo
 // check` and `gooo generate`. The generic test seam remains deferred so older
 // integrations cannot accidentally claim this capability.
 type EntityFieldsCLIParser struct{}
 
 func (EntityFieldsCLIParser) ParseFile(filename, source string) (*syntax.File, syntax.Diagnostics) {
-	return syntax.ParseFileWithEntityFieldsSupport(filename, source, syntax.EntityFieldsV3Support())
+	return syntax.ParseFileWithEntityFieldsSupport(filename, source, syntax.EntityFieldsV4Support())
 }
 func runCheck(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
 	args, jsonMode := parseJSONFlag(args)

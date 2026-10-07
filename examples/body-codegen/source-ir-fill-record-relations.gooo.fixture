@@ -1,0 +1,37 @@
+package recordfieldrelations
+namespace recordfieldrelations
+
+entity Candidate id "recordfieldrelations://candidate" fields {
+    field key id "recordfieldrelations://candidate/key" type string required one
+    field score id "recordfieldrelations://candidate/score" type integer required one
+}
+
+entity Request id "recordfieldrelations://request" fields {
+    field key id "recordfieldrelations://request/key" type string required one
+    field limit id "recordfieldrelations://request/limit" type integer required one
+}
+
+entity Decision id "recordfieldrelations://decision" fields {
+    field accepted id "recordfieldrelations://decision/accepted" type boolean required one
+}
+
+activity Compare(Candidate, Request) -> Decision computes `if __GOOO_BODY_HOLE_condition__ {
+    return Decision{accepted: __GOOO_BODY_HOLE_accepted__}
+} else {
+    return Decision{accepted: false}
+}` assembling {
+    source_fill intent "Accept a candidate when its key matches the request key." {
+        hole "accepted"
+        hole "condition"
+        derive assignments max_candidates "16" {
+            hole "accepted" grammar "record-boolean-literal/v1" max_expressions "2"
+            hole "condition" grammar "record-field-relation/v1" max_expressions "8"
+        }
+    }
+    value_case "[{\"key\":\"alpha\",\"score\":1},{\"key\":\"alpha\",\"limit\":100}]" -> "{\"accepted\":true}"
+    value_case "[{\"key\":\"beta\",\"score\":100},{\"key\":\"gamma\",\"limit\":1}]" -> "{\"accepted\":false}"
+    value_case "[{\"key\":\"delta\",\"score\":-1},{\"key\":\"delta\",\"limit\":1}]" -> "{\"accepted\":true}"
+    value_case "[{\"key\":\"epsilon\",\"score\":500},{\"key\":\"zeta\",\"limit\":0}]" -> "{\"accepted\":false}"
+    holdout_value_case "[{\"key\":\"eta\",\"score\":99},{\"key\":\"eta\",\"limit\":1}]" -> "{\"accepted\":true}"
+    holdout_value_case "[{\"key\":\"theta\",\"score\":0},{\"key\":\"iota\",\"limit\":1}]" -> "{\"accepted\":false}"
+}

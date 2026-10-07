@@ -29,6 +29,10 @@ jobs:
             runner: macos-15-intel
             goos: darwin
             goarch: amd64
+          - platform: darwin-arm64
+            runner: macos-15
+            goos: darwin
+            goarch: arm64
           - platform: windows-amd64
             runner: windows-2025
             goos: windows
@@ -95,7 +99,7 @@ jobs:
           cache: true
       - name: Bind exact candidate head
         run: test "$(git rev-parse HEAD)" = "$EXACT_SHA"
-      - name: Download all three exact-head receipts
+      - name: Download all four exact-head receipts
         uses: actions/download-artifact@v8
         with:
           pattern: gooo-release-platform-*-${{ env.EXACT_SHA }}
@@ -148,8 +152,8 @@ jobs:
             .schema == "gooo/toolchain-cross-platform-release-report/v1" and
             .decision == "PASS" and .resolution == "EXACT" and
             .head_sha == $sha and
-            .summary.platform_receipts == 3 and
-            .summary.cases_satisfied == 20 and .summary.cases_total == 20 and
+            .summary.platform_receipts == 4 and
+            .summary.cases_satisfied == 26 and .summary.cases_total == 26 and
             .summary.metric_bindings == 39 and
             .summary.unresolved == 0 and
             .summary.mutation_authorities == 0 and
@@ -183,7 +187,7 @@ jobs:
             mutation_allowed: false,
             cells: [
               {id:"EXACT_HEAD_BOUND",state:"CLOSED",resolution:"EXACT",proof_choice:"FOUNDATION",numerator:1,denominator:1},
-              {id:"PLATFORM_RECEIPTS",state:"CLOSED",resolution:"EXACT",proof_choice:"FOUNDATION",numerator:.summary.platform_receipts,denominator:3},
+              {id:"PLATFORM_RECEIPTS",state:"CLOSED",resolution:"EXACT",proof_choice:"FOUNDATION",numerator:.summary.platform_receipts,denominator:4},
               {id:"AGGREGATE_REPORT",state:"CLOSED",resolution:"EXACT",proof_choice:"COHERENCE",numerator:1,denominator:1},
               {id:"RELEASE_CASES",state:"CLOSED",resolution:"EXACT",proof_choice:"COHERENCE",numerator:.summary.cases_satisfied,denominator:.summary.cases_total},
               {id:"META_INDICATORS",state:"CLOSED",resolution:"EXACT",proof_choice:"COHERENCE",numerator:([.indicators[]|select(.satisfied)]|length),denominator:39},
@@ -199,7 +203,7 @@ jobs:
             summary: {total_work:7,closed:7,unknown:0,refuted:0,repository_writes:.repository_writes},
             indicators: [
               {metric_id:"gooo.metric.release.exact-head.v1",value:1,target:1,satisfied:true},
-              {metric_id:"gooo.metric.release.platform-receipts.v1",value:.summary.platform_receipts,target:3,satisfied:true},
+              {metric_id:"gooo.metric.release.platform-receipts.v1",value:.summary.platform_receipts,target:4,satisfied:true},
               {metric_id:"gooo.metric.release.aggregate-report.v1",value:1,target:1,satisfied:true},
               {metric_id:"gooo.metric.release.cases.v1",value:.summary.cases_satisfied,target:.summary.cases_total,satisfied:true},
               {metric_id:"gooo.metric.release.meta-indicators.v1",value:([.indicators[]|select(.satisfied)]|length),target:39,satisfied:true},

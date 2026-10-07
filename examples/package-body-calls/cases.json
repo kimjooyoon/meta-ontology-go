@@ -1,0 +1,69 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "tools/diagnostics:Diagnose.input0": 17,
+        "tools/diagnostics:Diagnose.input1": 21,
+        "tools/diagnostics:Diagnose.input2": 1,
+        "tools/diagnostics:Diagnose.input3": "네 필드가 남았습니다"
+      },
+      "expected": {
+        "tools/diagnostics:Diagnose": {
+          "code": "partial",
+          "message": "네 필드가 남았습니다",
+          "action": "repair-and-replay"
+        },
+        "app/explain:Main": "partial: 네 필드가 남았습니다 [repair-and-replay]"
+      }
+    },
+    {
+      "inputs": {
+        "tools/diagnostics:Diagnose.input0": 3,
+        "tools/diagnostics:Diagnose.input1": 5,
+        "tools/diagnostics:Diagnose.input2": 0,
+        "tools/diagnostics:Diagnose.input3": "two outputs differ"
+      },
+      "expected": {
+        "tools/diagnostics:Diagnose": {
+          "code": "partial",
+          "message": "two outputs differ",
+          "action": "expand-examples"
+        },
+        "app/explain:Main": "partial: two outputs differ [expand-examples]"
+      }
+    },
+    {
+      "inputs": {
+        "tools/diagnostics:Diagnose.input0": 8,
+        "tools/diagnostics:Diagnose.input1": 8,
+        "tools/diagnostics:Diagnose.input2": 0,
+        "tools/diagnostics:Diagnose.input3": ""
+      },
+      "expected": {
+        "tools/diagnostics:Diagnose": {
+          "code": "complete",
+          "message": "All observed fields matched.",
+          "action": "accept"
+        },
+        "app/explain:Main": "complete: All observed fields matched. [accept]"
+      }
+    },
+    {
+      "inputs": {
+        "tools/diagnostics:Diagnose.input0": 9007199254740994,
+        "tools/diagnostics:Diagnose.input1": 9007199254740993,
+        "tools/diagnostics:Diagnose.input2": 0,
+        "tools/diagnostics:Diagnose.input3": "count exceeds total"
+      },
+      "expected": {
+        "tools/diagnostics:Diagnose": {
+          "code": "invalid-counts",
+          "message": "count exceeds total",
+          "action": "fix-counts"
+        },
+        "app/explain:Main": "invalid-counts: count exceeds total [fix-counts]"
+      }
+    }
+  ]
+}

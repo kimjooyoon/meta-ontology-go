@@ -121,3 +121,37 @@ func TestEntityFieldsV3ProjectsIntegerAsInt64AndKeepsProfileBinding(t *testing.T
 	}
 	t.Fatal("V3 integer field source mapping is missing")
 }
+
+func TestEntityFieldsV4ProjectsOptionalScalarsAsPointers(t *testing.T) {
+	ir := entityFieldsFixture()
+	ir.Entities[0].Fields[0].Presence = "optional"
+	ir.Entities[0].Fields[1].TypeRefID = entityFieldsBooleanTypeID
+	ir.Entities[0].Fields[1].Presence = "optional"
+	result, err := GenerateEntityFieldsV4(ir, nil)
+	if err != nil {
+		t.Fatal("V4 generation", err)
+	}
+	source := strings.NewReplacer(" ", "", "\t", "", "\n", "").Replace(string(result.Source))
+	for _, want := range []string{"OrderNumber*string", "CustomerName*bool"} {
+		if !strings.Contains(source, want) {
+			t.Fatalf("V4 source is missing %q:\n%s", want, source)
+		}
+	}
+	for _, mapping := range result.SourceMap.Mappings {
+		if mapping.Kind != "field" {
+			continue
+		}
+		if mapping.ProfileID != syntax.EntityFieldsV4ProfileID || mapping.ProfileVersion != syntax.EntityFieldsV4ProfileVersion || mapping.ProfileDigest != syntax.EntityFieldsV4ProfileDigest {
+			t.Fatalf("V4 source map lost profile binding: %+v", mapping)
+		}
+	}
+	metadata, err := generateProjectionV1WithEntityFieldsSupport(New(Options{}), ir, nil, syntax.EntityFieldsV4Support())
+	if err != nil {
+		t.Fatal("V4 metadata", err)
+	}
+	if metadata.Metadata.EntityFields == nil || metadata.Metadata.EntityFields.Profile.ID != syntax.EntityFieldsV4ProfileID ||
+		metadata.Metadata.EntityFields.Profile.Version != syntax.EntityFieldsV4ProfileVersion ||
+		metadata.Metadata.EntityFields.Profile.Digest != syntax.EntityFieldsV4ProfileDigest {
+		t.Fatalf("V4 profile binding was not retained: %+v", metadata.Metadata.EntityFields)
+	}
+}

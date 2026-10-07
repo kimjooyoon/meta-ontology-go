@@ -1,0 +1,15 @@
+package optionalrecordbinding
+namespace optionalrecordbinding
+
+entity Observation id "gooo://record-binding/entity/optional-observation" fields {
+    field Name id "gooo://record-binding/field/optional-Name" type string required one
+    field Note id "gooo://record-binding/field/optional-Note" type string optional one
+    field Label id "gooo://record-binding/field/optional-Label" type string optional one
+    field Complete id "gooo://record-binding/field/optional-Complete" type boolean optional one
+    field Count id "gooo://record-binding/field/optional-Count" type integer optional one
+}
+
+activity Capture(Observation) -> Observation computes "record.forward:v1"
+activity Relay(Observation) -> Observation computes "record.forward:v1"
+
+bind Capture.result -> Relay.input

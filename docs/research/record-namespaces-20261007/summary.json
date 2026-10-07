@@ -1,0 +1,71 @@
+{
+  "schema": "gooo/research-record-namespaces/v1",
+  "observed_date": "2026-10-07",
+  "question": "Can two imported packages keep distinct Result record identities and execute one typed graph?",
+  "compiler": {
+    "revision": "da1c01a3ba1ad65f0d7cdc410fe8a2bd925248bc",
+    "working_tree_clean_at_build": true,
+    "toolchain": "go version go1.27.1 darwin/arm64"
+  },
+  "fixture": {
+    "manifest": "examples/package-record-namespaces/gooo.workspace.json",
+    "manifest_digest": "sha256:4d3dfd0b28d2c62e27ad8a6fc52c1283ee23a70b5f4b35e9065b00e732b5926b",
+    "cases": "examples/package-record-namespaces/cases.json",
+    "cases_digest": "sha256:182cf763335567f4dd6bfe0b18cb8d87604ff4bb9a4ea3eac45cf61772b8a29b"
+  },
+  "observation": {
+    "decision": "PASS",
+    "packages": 2,
+    "activities": 3,
+    "input_rows": 4,
+    "finite_outputs_passed": 12,
+    "finite_outputs_total": 12,
+    "record_aliases": [
+      {
+        "package_path": "example/read",
+        "name": "Result",
+        "entity_id": "record-namespaces://read/result",
+        "lowered_name": "GoooEntity05c040e58dab92a2940f4d1a7d1746d7766026de010b7f9dd3a6a8ec35caccd3"
+      },
+      {
+        "package_path": "example/write",
+        "name": "Result",
+        "entity_id": "record-namespaces://write/result",
+        "lowered_name": "GoooEntity97cf7101cef6c1168d3a0433212640c3af08af548699169743e0d051b4bd7bb2"
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "native_runs": 2,
+    "model_calls": 0,
+    "runtime_elapsed_ns": 478785334,
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "UNCLASSIFIED_INPUTS",
+      "unique_inputs": 4,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 4,
+      "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    }
+  },
+  "receipt": {
+    "path": "native.json",
+    "sha256": "0b03fc1bdd12363db3a167b1c3c8ca6227475f7bb1d4018587fbbde1d4b967b4",
+    "bytes": 71338
+  },
+  "reproduction": {
+    "working_directory": "repository root at the compiler revision",
+    "build": "go build -o /tmp/gooo-record-namespaces ./cmd/gooo",
+    "execute": "/tmp/gooo-record-namespaces package execute --json --cases examples/package-record-namespaces/cases.json --go /path/to/go1.27.1 examples/package-record-namespaces/gooo.workspace.json"
+  },
+  "limits": [
+    "One fixture with two record identities; twelve named outputs are a finite observation, not whole-language completeness.",
+    "No model used in this semantic name-resolution experiment.",
+    "Single local execution command with two fresh native runs; no comparative speed or host CPU utilization claim.",
+    "Input independence relative to construction examples is UNKNOWN for this fixture without assembling activities.",
+    "This checks scoped record construction; broader ontology substitution requires separate domains and explicit changed obligations."
+  ]
+}

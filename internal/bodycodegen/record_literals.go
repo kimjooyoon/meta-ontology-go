@@ -41,12 +41,21 @@ func validateRecordLiteral(literal *ast.CompositeLit, records []RecordType) erro
 			seen[key.Name] = true
 		}
 		for _, field := range record.Fields {
-			if !seen[field.Name] {
+			if !seen[field.Name] && field.Presence != "optional" {
 				return fmt.Errorf("record %q requires field %q", record.Name, field.Name)
 			}
 		}
-		if len(seen) != len(record.Fields) {
-			return fmt.Errorf("record %q contains an undeclared field", record.Name)
+		for name := range seen {
+			declared := false
+			for _, field := range record.Fields {
+				if name == field.Name {
+					declared = true
+					break
+				}
+			}
+			if !declared {
+				return fmt.Errorf("record %q contains an undeclared field", record.Name)
+			}
 		}
 		return nil
 	}

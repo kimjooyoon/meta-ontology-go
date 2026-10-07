@@ -12,6 +12,9 @@ func prepareEntityFields(ir SemanticIR) SemanticIR {
 			} else if field.TypeRefID == entityFieldsIntegerTypeID {
 				field.GoType = "int64"
 			}
+			if field.Presence == "optional" {
+				field.GoType = "*" + field.GoType
+			}
 		}
 	}
 	return prepared

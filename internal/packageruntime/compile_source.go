@@ -5,7 +5,7 @@ import (
 )
 
 func compileSource(spec PackageSpec, source Source) (*syntax.File, []string, []Export, []EntryPlan, error) {
-	file, diagnostics := syntax.ParseFile(source.Filename, source.Content)
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(source.Filename, source.Content, syntax.EntityFieldsV4Support())
 	if file == nil || diagnostics.HasErrors() {
 		return nil, nil, nil, nil,
 			reject("PACKAGE_SOURCE_INVALID", "source %q has syntax errors", source.Filename)

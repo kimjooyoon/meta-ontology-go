@@ -30,6 +30,18 @@ func (g *TypedPathGenerator) GenerateSourceAssembly(ctx context.Context, filenam
 }
 
 func (g *TypedPathGenerator) generateRecordAssembly(ctx context.Context, filename string, source []byte, activity string) (Result, error) {
+	return g.generateRecordAssemblyWithPolicy(ctx, filename, source, activity, nil)
+}
+
+// GenerateRecordAssemblyWithPolicy evaluates the explicit Gooo policy after each
+// scored candidate, before constructing another. The source budget stays fixed.
+func (g *TypedPathGenerator) GenerateRecordAssemblyWithPolicy(ctx context.Context, filename string, source []byte,
+	activity string, policy RecordAssemblyPolicy) (Result, error) {
+	return g.generateRecordAssemblyWithPolicy(ctx, filename, source, activity, &policy)
+}
+
+func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Context, filename string, source []byte,
+	activity string, policy *RecordAssemblyPolicy) (Result, error) {
 	started := time.Now()
 	if g == nil || g.info.Schema != "gooo/retained-path-model/v1" {
 		return Result{}, fmt.Errorf("record assembly generator required")
@@ -44,6 +56,14 @@ func (g *TypedPathGenerator) generateRecordAssembly(ctx context.Context, filenam
 		return Result{}, err
 	}
 	r := newRecordAssemblyReceipt(source, plan)
+	var controller *preparedRecordPolicy
+	if policy != nil {
+		controller, err = prepareRecordPolicy(ctx, *policy)
+		if err != nil {
+			return Result{}, err
+		}
+		r.Control = controller.receipt
+	}
 	r.ModelRequested = g.info.Loaded
 	if g.info.Loaded {
 		info := g.Info()
@@ -82,7 +102,7 @@ func (g *TypedPathGenerator) generateRecordAssembly(ctx context.Context, filenam
 			})
 		}
 	}
-	if err = searchRecordAssembly(ctx, plan, r); err != nil {
+	if err = searchRecordAssemblyWithPolicy(ctx, plan, r, controller); err != nil {
 		return Result{}, err
 	}
 	result, err := emitRecordAssembly(ctx, filename, source, plan, r)
@@ -106,8 +126,23 @@ func newRecordAssemblyReceipt(source []byte, p recordAssemblyPlan) *RecordAssemb
 }
 
 func searchRecordAssembly(ctx context.Context, p recordAssemblyPlan, r *RecordAssemblyReceipt) error {
+	return searchRecordAssemblyWithPolicy(ctx, p, r, nil)
+}
+
+func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r *RecordAssemblyReceipt, policy *preparedRecordPolicy) error {
 	best := -1
-	for _, mask := range r.Ranking {
+	var policyBest RecordAssemblyAttempt
+	var policyCases []RecordAssemblyCase
+	remaining := r.Ranking[len(r.Attempts):]
+	if len(r.Attempts) > 0 {
+		best = 0
+		var err error
+		policyBest, policyCases, remaining, err = resumeRecordSearch(ctx, p, r, policy)
+		if err != nil {
+			return err
+		}
+	}
+	for _, mask := range remaining {
 		if len(r.Attempts) >= p.spec.MaxAttempts {
 			break
 		}
@@ -137,12 +172,30 @@ func searchRecordAssembly(ctx context.Context, p recordAssemblyPlan, r *RecordAs
 		}
 		attempt := scoreRecordCases(mask, cases)
 		r.Attempts = append(r.Attempts, attempt)
+		if policy != nil && (policyCases == nil || attempt.Passed > policyBest.Passed ||
+			(attempt.Passed == policyBest.Passed && attempt.FieldsPassed > policyBest.FieldsPassed)) {
+			policyBest, policyCases = attempt, cases
+		}
 		if best < 0 || attempt.FieldsPassed > r.FieldsPassed || (attempt.FieldsPassed == r.FieldsPassed && attempt.Passed > r.Passed) {
 			best = len(r.Attempts) - 1
 			r.SelectedMask, r.Cases = mask, cases
 			r.Passed, r.Total, r.FieldsPassed, r.FieldsTotal = attempt.Passed, attempt.Total, attempt.FieldsPassed, attempt.FieldsTotal
 		}
-		if attempt.Passed == attempt.Total {
+		keepGoing := true
+		if policy != nil {
+			keepGoing, err = observeRecordPolicy(ctx, p, r, policy)
+			if err != nil {
+				return err
+			}
+			if r.Control.Decisions[len(r.Control.Decisions)-1].Operation == "USE_OBSERVED_CANDIDATE" {
+				// The policy's best count refers to whole cases. Preserve that
+				// meaning even when another candidate matches more individual fields.
+				r.SelectedMask, r.Cases = policyBest.Mask, policyCases
+				r.Passed, r.Total = policyBest.Passed, policyBest.Total
+				r.FieldsPassed, r.FieldsTotal = policyBest.FieldsPassed, policyBest.FieldsTotal
+			}
+		}
+		if !keepGoing || attempt.Passed == attempt.Total {
 			break
 		}
 	}

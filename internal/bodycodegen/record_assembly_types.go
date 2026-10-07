@@ -32,6 +32,9 @@ type RecordAssemblyReceipt struct {
 	Ranking              []uint16                       `json:"ranking"`
 	GenerationNS         int64                          `json:"generation_ns"`
 	Scope                string                         `json:"scope"`
+	Control              *RecordAssemblyControl         `json:"control,omitempty"`
+	ControlHistory       []RecordAssemblyControlStage   `json:"control_history,omitempty"`
+	Continuation         *RecordAssemblyContinuation    `json:"continuation,omitempty"`
 }
 
 type RecordValueChoice struct {
@@ -40,6 +43,8 @@ type RecordValueChoice struct {
 	RecordID   string `json:"record_id"`
 	FieldID    string `json:"field_id"`
 	Field      string `json:"field"`
+	TypeID     string `json:"type_id,omitempty"`
+	Presence   string `json:"presence,omitempty"`
 	Occurrence int    `json:"occurrence"`
 	Intent     string `json:"intent"`
 	First      string `json:"first"`
@@ -66,12 +71,15 @@ type RecordAssemblyCase struct {
 }
 
 type RecordAssemblyField struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	TypeID   string `json:"type_id,omitempty"`
-	Expected string `json:"expected"`
-	Actual   string `json:"actual"`
-	Passed   bool   `json:"passed"`
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	TypeID          string `json:"type_id,omitempty"`
+	Presence        string `json:"presence,omitempty"`
+	ExpectedPresent *bool  `json:"expected_present,omitempty"`
+	ActualPresent   *bool  `json:"actual_present,omitempty"`
+	Expected        string `json:"expected"`
+	Actual          string `json:"actual"`
+	Passed          bool   `json:"passed"`
 }
 
 // Context records the complete source input for its explicitly named model

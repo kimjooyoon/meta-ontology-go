@@ -17,7 +17,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageExecuteUsage = "usage: gooo package execute [--json] --cases <cases.json> [--body-plans <plans.json>] [--assembly-model <model.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
+const packageExecuteUsage = "usage: gooo package execute [--json] (--cases <cases.json> | --inputs <inputs.json> | --construction-receipt <execution.json>) [--body-plans <plans.json>] [--assembly-model <model.json>] [--assembly-policy-workspace <policy.workspace.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
 
 type packageBodyFillPlanSet struct {
 	Schema     string                     `json:"schema"`
@@ -31,189 +31,198 @@ type packageBodyFillPlanEntry struct {
 }
 
 type packageExecutionReceipt struct {
-	Schema         string                     `json:"schema"`
-	Decision       string                     `json:"decision"`
-	Manifest       string                     `json:"manifest"`
-	ManifestDigest string                     `json:"manifest_digest,omitempty"`
-	CasesDigest    string                     `json:"cases_digest,omitempty"`
-	Result         *workspaceexecution.Result `json:"result,omitempty"`
-	Error          string                     `json:"error,omitempty"`
+	Schema            string                     `json:"schema"`
+	Decision          string                     `json:"decision"`
+	Manifest          string                     `json:"manifest"`
+	ManifestDigest    string                     `json:"manifest_digest,omitempty"`
+	CasesDigest       string                     `json:"cases_digest,omitempty"`
+	InputsDigest      string                     `json:"inputs_digest,omitempty"`
+	Result            *workspaceexecution.Result `json:"result,omitempty"`
+	Error             string                     `json:"error,omitempty"`
+	ReplayedFrom      string                     `json:"replayed_from_sha256,omitempty"`
+	ConstructionInput *constructionInputEvidence `json:"construction_input,omitempty"`
 }
 
 func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	args, jsonMode := parseJSONFlag(args)
-	casesPath, plansPath, assemblyModelPath, tinyModelPath, goBinary, manifestPath := "", "", "", "", "", ""
-	for index := 0; index < len(args); index++ {
-		switch args[index] {
-		case "--cases":
-			if casesPath != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
-				fmt.Fprintln(stderr, packageExecuteUsage)
-				return exitUsage
-			}
-			casesPath = args[index+1]
-			index++
-		case "--assembly-model":
-			if assemblyModelPath != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
-				fmt.Fprintln(stderr, packageExecuteUsage)
-				return exitUsage
-			}
-			assemblyModelPath = args[index+1]
-			index++
-		case "--tiny-model":
-			if tinyModelPath != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
-				fmt.Fprintln(stderr, packageExecuteUsage)
-				return exitUsage
-			}
-			tinyModelPath = args[index+1]
-			index++
-		case "--body-plans":
-			if plansPath != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
-				fmt.Fprintln(stderr, packageExecuteUsage)
-				return exitUsage
-			}
-			plansPath = args[index+1]
-			index++
-		case "--go":
-			if goBinary != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
-				fmt.Fprintln(stderr, packageExecuteUsage)
-				return exitUsage
-			}
-			goBinary = args[index+1]
-			index++
-		default:
-			if strings.HasPrefix(args[index], "-") || manifestPath != "" {
-				fmt.Fprintln(stderr, packageExecuteUsage)
-				return exitUsage
-			}
-			manifestPath = args[index]
-		}
-	}
-	if tinyModelPath != "" && plansPath == "" {
+	flags, manifestPath, err := parsePackageExecuteArgs(args)
+	if err != nil {
 		fmt.Fprintln(stderr, packageExecuteUsage)
 		return exitUsage
 	}
-	if casesPath == "" || manifestPath == "" {
-		fmt.Fprintln(stderr, packageExecuteUsage)
-		return exitUsage
+	receipt, err := executePackage(context.Background(), reader, manifestPath, flags)
+	if err != nil {
+		receipt.Decision, receipt.Error = "FAIL_CLOSED", err.Error()
 	}
-	fail := func(cause error, manifestDigest, casesDigest string) int {
-		receipt := packageExecutionReceipt{Schema: "gooo/workspace-body-execution-receipt/v1", Decision: "FAIL_CLOSED",
-			Manifest: filepath.ToSlash(manifestPath), ManifestDigest: manifestDigest, CasesDigest: casesDigest, Error: cause.Error()}
-		if jsonMode {
-			_ = json.NewEncoder(stdout).Encode(receipt)
+	return writePackageExecution(receipt, err, jsonMode, stdout, stderr)
+}
+
+func parsePackageExecuteArgs(args []string) (map[string]string, string, error) {
+	flags := map[string]string{"--cases": "", "--inputs": "", "--construction-receipt": "",
+		"--body-plans": "", "--assembly-model": "", "--assembly-policy-workspace": "", "--tiny-model": "", "--go": ""}
+	manifest, inputModes := "", 0
+	for i := 0; i < len(args); i++ {
+		if previous, ok := flags[args[i]]; ok {
+			if previous != "" || i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" || strings.HasPrefix(args[i+1], "-") {
+				return nil, "", fmt.Errorf("missing or repeated execute option")
+			}
+			if args[i] == "--cases" || args[i] == "--inputs" || args[i] == "--construction-receipt" {
+				inputModes++
+			}
+			flags[args[i]] = args[i+1]
+			i++
+		} else if manifest == "" && !strings.HasPrefix(args[i], "-") && strings.TrimSpace(args[i]) != "" {
+			manifest = args[i]
 		} else {
-			fmt.Fprintf(stderr, "gooo package execute: %v\n", cause)
+			return nil, "", fmt.Errorf("unknown execute argument")
 		}
-		return exitFailure
 	}
+	if manifest == "" || inputModes != 1 {
+		return nil, "", fmt.Errorf("execute needs a workspace and one input mode")
+	}
+	return flags, manifest, nil
+}
+
+func executePackage(ctx context.Context, reader SourceReader, manifestPath string, flags map[string]string) (packageExecutionReceipt, error) {
+	receipt := packageExecutionReceipt{Schema: "gooo/workspace-body-execution-receipt/v1", Manifest: filepath.ToSlash(manifestPath)}
 	manifestBytes, err := readSource(reader, manifestPath)
 	if err != nil {
-		return fail(err, "", "")
+		return receipt, err
 	}
 	if int64(len(manifestBytes)) > maxInputBytes {
-		return fail(inputLimitError(maxInputBytes), "", "")
+		return receipt, inputLimitError(maxInputBytes)
 	}
+	receipt.ManifestDigest = workspaceDigest(manifestBytes)
 	manifest, err := decodeWorkspaceManifest(manifestBytes)
 	if err != nil {
-		return fail(err, workspaceDigest(manifestBytes), "")
+		return receipt, err
 	}
-	caseBytes, err := readSource(reader, casesPath)
+	suite, digest, observed, err := packageExecuteInputs(ctx, reader, flags, manifest.Entry)
+	receipt.ConstructionInput = observed
+	inputOnly := flags["--cases"] == ""
+	if inputOnly {
+		receipt.InputsDigest = digest
+	} else {
+		receipt.CasesDigest = digest
+	}
 	if err != nil {
-		return fail(err, workspaceDigest(manifestBytes), "")
+		return receipt, err
 	}
-	suite, err := bodyexecution.DecodeCompositionCases(caseBytes)
+	options, err := packageExecuteOptions(reader, flags)
 	if err != nil {
-		return fail(err, workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
+		return receipt, err
 	}
-	plans := map[string]bodycodegen.IRBodyFillPlan{}
-	if plansPath != "" {
-		planBytes, readErr := readSource(reader, plansPath)
-		if readErr != nil {
-			return fail(readErr, workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-		}
-		if len(planBytes) > 256<<10 {
-			return fail(fmt.Errorf("body-fill plan set exceeds %d bytes", 256<<10), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-		}
-		var planSet packageBodyFillPlanSet
-		decoder := json.NewDecoder(strings.NewReader(string(planBytes)))
-		decoder.DisallowUnknownFields()
-		if decodeErr := decoder.Decode(&planSet); decodeErr != nil {
-			return fail(fmt.Errorf("decode body-fill plan set: %w", decodeErr), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-		}
-		if decodeErr := decoder.Decode(&struct{}{}); decodeErr != io.EOF {
-			if decodeErr == nil {
-				decodeErr = fmt.Errorf("body-fill plan set contains trailing JSON")
-			}
-			return fail(decodeErr, workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-		}
-		if planSet.Schema != "gooo/workspace-body-fill-plans/v1" || len(planSet.Activities) == 0 || len(planSet.Activities) > 16 {
-			return fail(fmt.Errorf("body-fill plan set requires schema gooo/workspace-body-fill-plans/v1 and 1..16 activity plans"), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-		}
-		seenPlans := make(map[string]bool, len(planSet.Activities))
-		for _, entry := range planSet.Activities {
-			key := entry.PackagePath + ":" + entry.Activity
-			if strings.TrimSpace(entry.PackagePath) == "" || strings.TrimSpace(entry.Activity) == "" || seenPlans[key] {
-				return fail(fmt.Errorf("body-fill plan set has an empty or duplicate package activity"), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			seenPlans[key] = true
-			plans[key] = entry.Plan
+	runtimeManifest, err := loadPackageSources(reader, manifestPath, manifest)
+	if err != nil {
+		return receipt, err
+	}
+	result, err := workspaceexecution.ExecuteWorkspaceWithOptions(ctx, runtimeManifest, suite, options)
+	if err != nil {
+		return receipt, err
+	}
+	receipt.Result, receipt.Decision = &result, "PASS"
+	if result.Runtime.FinitePassed < result.Runtime.FiniteTotal {
+		receipt.Decision = "PROGRESS"
+	}
+	if inputOnly {
+		receipt.Decision = "OBSERVED"
+	}
+	return receipt, nil
+}
+
+func packageExecuteInputs(ctx context.Context, reader SourceReader, flags map[string]string, entry packageruntime.EntrySpec) (bodyexecution.CompositionCases, string, *constructionInputEvidence, error) {
+	path := flags["--cases"]
+	if path == "" {
+		path = flags["--inputs"]
+	}
+	construction := flags["--construction-receipt"] != ""
+	if construction {
+		path = flags["--construction-receipt"]
+	}
+	raw, err := readPackageInputBytes(reader, path, construction)
+	if err != nil {
+		return bodyexecution.CompositionCases{}, "", nil, err
+	}
+	var observed *constructionInputEvidence
+	if construction {
+		raw, observed, err = packageConstructionInputs(ctx, raw, entry)
+		if err != nil {
+			return bodyexecution.CompositionCases{}, "", nil, err
 		}
 	}
-	var bodyFillOptions bodycodegen.IRBodyFillOptions
-	layaEndpoint, layaAPIKey := os.Getenv("GOOO_LAYA_URL"), os.Getenv("GOOO_LAYA_API_KEY")
-	if tinyModelPath != "" {
-		if layaEndpoint != "" || layaAPIKey != "" {
-			return fail(fmt.Errorf("--tiny-model cannot be combined with GOOO_LAYA_URL or GOOO_LAYA_API_KEY"), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
+	decode := bodyexecution.DecodeCompositionCases
+	if flags["--cases"] == "" {
+		decode = bodyexecution.DecodeCompositionInputs
+	}
+	suite, err := decode(raw)
+	return suite, workspaceDigest(raw), observed, err
+}
+
+func packageExecuteOptions(reader SourceReader, flags map[string]string) (workspaceexecution.ExecuteOptions, error) {
+	options := workspaceexecution.ExecuteOptions{AssemblyModelPath: flags["--assembly-model"], GoBinary: flags["--go"],
+		LayaEndpoint: os.Getenv("GOOO_LAYA_URL"), LayaAPIKey: os.Getenv("GOOO_LAYA_API_KEY")}
+	plans, err := readPackageBodyPlans(reader, flags["--body-plans"])
+	if err != nil {
+		return options, err
+	}
+	options.BodyFillPlans = plans
+	options.AssemblyPolicy, err = readPackageAssemblyPolicy(reader, flags["--assembly-policy-workspace"])
+	if err != nil {
+		return options, err
+	}
+	if path := flags["--tiny-model"]; path != "" {
+		if options.LayaEndpoint != "" || options.LayaAPIKey != "" {
+			return options, fmt.Errorf("--tiny-model cannot be combined with GOOO_LAYA_URL or GOOO_LAYA_API_KEY")
 		}
-		modelLoadStarted := time.Now()
-		provider, loadErr := decisionroute.LoadTinyGoProvider(tinyModelPath)
-		modelLoadMS := float64(time.Since(modelLoadStarted)) / float64(time.Millisecond)
+		started := time.Now()
+		provider, loadErr := decisionroute.LoadTinyGoProvider(path)
+		loadMS := float64(time.Since(started)) / float64(time.Millisecond)
 		if loadErr != nil {
-			return fail(fmt.Errorf("tiny_go model could not be loaded"), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
+			return options, fmt.Errorf("tiny_go model could not be loaded")
 		}
-		bodyFillOptions = bodycodegen.IRBodyFillOptions{TinyGoProvider: provider, TinyModelLoadMS: &modelLoadMS}
-		layaEndpoint, layaAPIKey = "", ""
+		options.BodyFillOptions = bodycodegen.IRBodyFillOptions{TinyGoProvider: provider, TinyModelLoadMS: &loadMS}
 	}
-	runtimeManifest := packageruntime.Manifest{Schema: packageruntime.ManifestSchema, Entry: manifest.Entry}
-	root := filepath.Dir(manifestPath)
-	sourceCount, sourceBytes := 0, 0
-	for _, declared := range manifest.Packages {
-		pkg := packageruntime.PackageSpec{Path: declared.Path, Name: declared.Name, Imports: append([]string(nil), declared.Imports...)}
-		for _, sourcePath := range declared.Sources {
-			relative, pathErr := workspaceSourcePath(sourcePath)
-			if pathErr != nil {
-				return fail(pathErr, workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			sourceCount++
-			if sourceCount > workspaceMaxSourceCount {
-				return fail(fmt.Errorf("workspace declares more than %d source files", workspaceMaxSourceCount), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			filename := filepath.Join(root, relative)
-			content, readErr := readSource(reader, filename)
-			if readErr != nil {
-				return fail(fmt.Errorf("source %q: %w", sourcePath, readErr), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			sourceBytes += len(content)
-			if len(content) > workspaceMaxSourceBytes {
-				return fail(fmt.Errorf("source %q exceeds %d bytes", sourcePath, workspaceMaxSourceBytes), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			if sourceBytes > workspaceMaxSourceSetSize {
-				return fail(fmt.Errorf("workspace sources exceed %d bytes total", workspaceMaxSourceSetSize), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			pkg.Sources = append(pkg.Sources, packageruntime.Source{Filename: filepath.ToSlash(relative), Content: string(content)})
-		}
-		runtimeManifest.Packages = append(runtimeManifest.Packages, pkg)
+	return options, nil
+}
+
+func readPackageBodyPlans(reader SourceReader, path string) (map[string]bodycodegen.IRBodyFillPlan, error) {
+	plans := map[string]bodycodegen.IRBodyFillPlan{}
+	if path == "" {
+		return plans, nil
 	}
-	result, err := workspaceexecution.ExecuteWorkspaceWithOptions(context.Background(), runtimeManifest, suite, workspaceexecution.ExecuteOptions{
-		AssemblyModelPath: assemblyModelPath, GoBinary: goBinary, BodyFillPlans: plans, BodyFillOptions: bodyFillOptions,
-		LayaEndpoint: layaEndpoint, LayaAPIKey: layaAPIKey,
-	})
+	raw, err := readSource(reader, path)
 	if err != nil {
-		return fail(err, workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
+		return nil, err
 	}
-	receipt := packageExecutionReceipt{Schema: "gooo/workspace-body-execution-receipt/v1", Decision: "PASS",
-		Manifest: filepath.ToSlash(manifestPath), ManifestDigest: workspaceDigest(manifestBytes),
-		CasesDigest: workspaceDigest(caseBytes), Result: &result}
+	if len(raw) > 256<<10 {
+		return nil, fmt.Errorf("body-fill plan set exceeds %d bytes", 256<<10)
+	}
+	var planSet packageBodyFillPlanSet
+	decoder := json.NewDecoder(strings.NewReader(string(raw)))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&planSet); err != nil {
+		return nil, fmt.Errorf("decode body-fill plan set: %w", err)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		if err == nil {
+			err = fmt.Errorf("body-fill plan set contains trailing JSON")
+		}
+		return nil, err
+	}
+	if planSet.Schema != "gooo/workspace-body-fill-plans/v1" || len(planSet.Activities) == 0 || len(planSet.Activities) > 16 {
+		return nil, fmt.Errorf("body-fill plan set requires schema gooo/workspace-body-fill-plans/v1 and 1..16 activity plans")
+	}
+	for _, entry := range planSet.Activities {
+		key := entry.PackagePath + ":" + entry.Activity
+		if _, exists := plans[key]; strings.TrimSpace(entry.PackagePath) == "" || strings.TrimSpace(entry.Activity) == "" || exists {
+			return nil, fmt.Errorf("body-fill plan set has an empty or duplicate package activity")
+		}
+		plans[key] = entry.Plan
+	}
+	return plans, nil
+}
+
+func writePackageExecution(receipt packageExecutionReceipt, cause error, jsonMode bool, stdout, stderr io.Writer) int {
 	if jsonMode {
 		encoder := json.NewEncoder(stdout)
 		encoder.SetEscapeHTML(false)
@@ -221,10 +230,18 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 			fmt.Fprintf(stderr, "gooo package execute: write receipt: %v\n", err)
 			return exitFailure
 		}
-		return exitOK
+	} else if cause != nil {
+		fmt.Fprintf(stderr, "gooo package execute: %v\n", cause)
+	} else if receipt.Decision == "OBSERVED" {
+		return writePackageActualValues(stdout, stderr, *receipt.Result)
+	} else {
+		result := receipt.Result
+		fmt.Fprintf(stdout, "executed workspace entry: %s.%s activities=%d finite=%d/%d replayed=%t digest=%s\n",
+			result.Program.Entry.PackagePath, result.Program.Entry.Activity, len(result.Program.Activities),
+			result.Runtime.FinitePassed, result.Runtime.FiniteTotal, result.Runtime.RuntimeReplayed, result.Runtime.CompositionSHA256)
 	}
-	fmt.Fprintf(stdout, "executed workspace entry: %s.%s activities=%d finite=%d/%d replayed=%t digest=%s\n",
-		result.Program.Entry.PackagePath, result.Program.Entry.Activity, len(result.Program.Activities),
-		result.Runtime.FinitePassed, result.Runtime.FiniteTotal, result.Runtime.RuntimeReplayed, result.Runtime.CompositionSHA256)
+	if cause != nil {
+		return exitFailure
+	}
 	return exitOK
 }

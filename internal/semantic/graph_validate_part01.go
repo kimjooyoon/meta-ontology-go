@@ -58,9 +58,6 @@ func validateNodes(g Graph, issues *ValidationErrors) {
 				}
 			}
 			used := runtimePortEntities(g, normalized.ID, Used)
-			if len(used) != len(declared) {
-				issues.add("input-sequence", "ordered inputs and used facts disagree", normalized.ID, "")
-			}
 			for _, input := range used {
 				if !declared[input] {
 					issues.add("input-sequence", "ordered inputs omit a used fact", normalized.ID, input)

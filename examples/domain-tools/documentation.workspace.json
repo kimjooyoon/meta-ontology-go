@@ -1,0 +1,38 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "gooo/tools/render",
+    "activity": "Render"
+  },
+  "packages": [
+    {
+      "path": "gooo/tools/report",
+      "name": "report",
+      "imports": [],
+      "sources": [
+        "report.gooo.fixture"
+      ]
+    },
+    {
+      "path": "gooo/tools/policy",
+      "name": "policy",
+      "imports": [
+        "gooo/tools/report"
+      ],
+      "sources": [
+        "documentation.gooo.fixture"
+      ]
+    },
+    {
+      "path": "gooo/tools/render",
+      "name": "render",
+      "imports": [
+        "gooo/tools/report",
+        "gooo/tools/policy"
+      ],
+      "sources": [
+        "render.gooo.fixture"
+      ]
+    }
+  ]
+}
