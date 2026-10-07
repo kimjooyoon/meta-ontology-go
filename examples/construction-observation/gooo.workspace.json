@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/construction", "activity": "Lift"},
+  "packages": [{
+    "path": "example/construction",
+    "name": "construction",
+    "imports": [],
+    "sources": ["main.gooo.fixture"]
+  }]
+}

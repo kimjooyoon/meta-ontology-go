@@ -1,0 +1,131 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "matched": 0,
+          "total": 4,
+          "scored": 1,
+          "budget": 5
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "PROGRESS",
+          "next_operation": "CONTINUE_CANDIDATES",
+          "message": "만족하지 못한 사례가 남았습니다."
+        },
+        "gooo/tools/render:Render": "PROGRESS | CONTINUE_CANDIDATES | 만족하지 못한 사례가 남았습니다."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "matched": 4,
+          "total": 4,
+          "scored": 1,
+          "budget": 5
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "PASS",
+          "next_operation": "OBSERVE_NEW_INPUTS",
+          "message": "선언한 사례가 일치합니다."
+        },
+        "gooo/tools/render:Render": "PASS | OBSERVE_NEW_INPUTS | 선언한 사례가 일치합니다."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "matched": 0,
+          "total": 0,
+          "scored": 0,
+          "budget": 5
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "UNKNOWN",
+          "next_operation": "DECLARE_CASES",
+          "message": "판단할 사례를 선언하세요."
+        },
+        "gooo/tools/render:Render": "UNKNOWN | DECLARE_CASES | 판단할 사례를 선언하세요."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "matched": 0,
+          "total": 4,
+          "scored": 0,
+          "budget": 5
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "UNKNOWN",
+          "next_operation": "EVALUATE_CANDIDATES",
+          "message": "후보를 채점하세요."
+        },
+        "gooo/tools/render:Render": "UNKNOWN | EVALUATE_CANDIDATES | 후보를 채점하세요."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "matched": 2,
+          "total": 4,
+          "scored": 5,
+          "budget": 5
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "PROGRESS",
+          "next_operation": "EXPAND_CHOICES",
+          "message": "선택지를 확장하세요."
+        },
+        "gooo/tools/render:Render": "PROGRESS | EXPAND_CHOICES | 선택지를 확장하세요."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "matched": 5,
+          "total": 4,
+          "scored": 1,
+          "budget": 5
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "FAIL_CLOSED",
+          "next_operation": "RECONCILE_COUNTS",
+          "message": "관측 수치를 확인하세요."
+        },
+        "gooo/tools/render:Render": "FAIL_CLOSED | RECONCILE_COUNTS | 관측 수치를 확인하세요."
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/policy:Assess": {
+          "matched": 9007199254740992,
+          "total": 9007199254740993,
+          "scored": 1,
+          "budget": 5
+        }
+      },
+      "expected": {
+        "gooo/tools/policy:Assess": {
+          "state": "PROGRESS",
+          "next_operation": "CONTINUE_CANDIDATES",
+          "message": "만족하지 못한 사례가 남았습니다."
+        },
+        "gooo/tools/render:Render": "PROGRESS | CONTINUE_CANDIDATES | 만족하지 못한 사례가 남았습니다."
+      }
+    }
+  ]
+}

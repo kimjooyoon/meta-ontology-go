@@ -1,0 +1,394 @@
+{
+  "schema": "gooo/research-domain-tools/v1",
+  "observed_date": "2026-10-07",
+  "compiler": {
+    "revision": "7aa3ae51662a0859817204afe6906ba3b05d6d97",
+    "working_tree_clean_at_build": true,
+    "toolchain": "go version go1.27.1 darwin/arm64"
+  },
+  "question": "Can the same compiler and shared report/renderer execute two distinct Gooo domain policies, with replaceable deterministic/model construction ordering?",
+  "model": {
+    "schema": "gooo/retained-path-model/v1",
+    "loaded": true,
+    "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+    "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+    "resident_tensor_bytes": 2096,
+    "setup_ms": 0.741083,
+    "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+    "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+    "feature_version": "triple_record_field_context_v1_shared_v1",
+    "arithmetic_version": "float32_separate_v1",
+    "hub_revision": "5800946afb35506d66357ee3ea6f956f506795b9",
+    "hub_url": "https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary",
+    "new_training": false
+  },
+  "shared_packages": [
+    {
+      "package": "gooo/tools/report",
+      "sources": [
+        {
+          "filename": "report.gooo.fixture",
+          "source_digest": "sha256:ba5f28b202d44867e422d310e4a1dd492ef73914f67bb798fb317743e0cf3067",
+          "semantic_digest": "sha256:e23667ec53f0bb4b08e1112a0458c4da2d9e82448e78f4e00a8325e6903a6489",
+          "declarations": 2
+        }
+      ]
+    },
+    {
+      "package": "gooo/tools/render",
+      "sources": [
+        {
+          "filename": "render.gooo.fixture",
+          "source_digest": "sha256:c895840ce4d21be11a4550bf64237b538ef8de109fafc863e46ad755374d3e95",
+          "semantic_digest": "sha256:7e4c64c0339202b9e8064d953cf5ea62747b311436b4b645e2d7061a60a81d60",
+          "declarations": 1
+        }
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "domain": "assembly",
+      "route": "deterministic",
+      "receipt": "assembly-deterministic.json",
+      "receipt_sha256": "aafb9f759590d940f0300ac2bc6863c294352a951fc8a433ddc229ffd504962d",
+      "receipt_bytes": 89280,
+      "compiler_revision": "7aa3ae51662a0859817204afe6906ba3b05d6d97",
+      "workspace_digest": "sha256:5c2609c515937eaf1aaf4c19060c9f2c71e20966cea2159ecaefcc6b3aaa6761",
+      "source_sha256": "sha256:beed45f9353a333652c7a97a94cc7a886748fa16cc874852d821a035b31799c7",
+      "construction_contract_sha256": "sha256:549708bb78ea17721a9877a651c20f2ef215edc558861dd45967c5bf1001e453",
+      "construction_cases_sha256": "sha256:be094af3031c3a0e721218fa39151144e9592d820749764a117ed4b82ac960bf",
+      "runtime_cases_digest": "sha256:e0d98aff34c2d82511d0ed32574f89064439dc2bbeb2ea3bcab83feba0258afe",
+      "candidate_budget": 8,
+      "candidate_attempts": [
+        {
+          "mask": 0,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 6,
+          "fields_total": 9
+        },
+        {
+          "mask": 1,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 7,
+          "fields_total": 9
+        },
+        {
+          "mask": 2,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 7,
+          "fields_total": 9
+        },
+        {
+          "mask": 3,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 8,
+          "fields_total": 9
+        },
+        {
+          "mask": 4,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 7,
+          "fields_total": 9
+        },
+        {
+          "mask": 5,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 8,
+          "fields_total": 9
+        },
+        {
+          "mask": 6,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 8,
+          "fields_total": 9
+        },
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 3,
+          "fields_passed": 9,
+          "fields_total": 9
+        }
+      ],
+      "selected_mask": 7,
+      "model_proposed_mask": null,
+      "model_proposed_probability": null,
+      "model_calls": 0,
+      "predict_ns": 0,
+      "model_setup_ms": 0.000166,
+      "resident_tensor_bytes": 0,
+      "construction_cases_passed": 3,
+      "construction_cases_total": 3,
+      "construction_fields_passed": 9,
+      "construction_fields_total": 9,
+      "runtime_outputs_passed": 14,
+      "runtime_outputs_total": 14,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 7,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 7,
+        "disjoint_cases_passed": 7,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "runtime_replayed": true,
+      "native_runs": 2,
+      "generated_sha256": "sha256:1059cce56fc4fa21dd9fc002e104546cdb3a7da0f4c967003e03639d6ce152f6",
+      "command_resource_observation": {
+        "method": "macOS /usr/bin/time -l",
+        "wall_seconds": 0.92,
+        "user_seconds": 0.18,
+        "system_seconds": 0.12,
+        "maximum_resident_set_size_bytes": 86491136,
+        "raw": "0.92 real         0.18 user         0.12 sys\n            86491136  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16681  page reclaims\n                 231  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 307  signals received\n                 165  voluntary context switches\n                3432  involuntary context switches\n           655639921  instructions retired\n           224263831  cycles elapsed\n            12878352  peak memory footprint"
+      },
+      "host_cpu_utilization": "UNOBSERVED"
+    },
+    {
+      "domain": "assembly",
+      "route": "model",
+      "receipt": "assembly-model.json",
+      "receipt_sha256": "adbf6684f658ca9c7a37277aecaa1e1daf0d2774d557b326c4eb7ea8c014ee11",
+      "receipt_bytes": 91627,
+      "compiler_revision": "7aa3ae51662a0859817204afe6906ba3b05d6d97",
+      "workspace_digest": "sha256:5c2609c515937eaf1aaf4c19060c9f2c71e20966cea2159ecaefcc6b3aaa6761",
+      "source_sha256": "sha256:beed45f9353a333652c7a97a94cc7a886748fa16cc874852d821a035b31799c7",
+      "construction_contract_sha256": "sha256:549708bb78ea17721a9877a651c20f2ef215edc558861dd45967c5bf1001e453",
+      "construction_cases_sha256": "sha256:be094af3031c3a0e721218fa39151144e9592d820749764a117ed4b82ac960bf",
+      "runtime_cases_digest": "sha256:e0d98aff34c2d82511d0ed32574f89064439dc2bbeb2ea3bcab83feba0258afe",
+      "candidate_budget": 8,
+      "candidate_attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 3,
+          "fields_passed": 9,
+          "fields_total": 9
+        }
+      ],
+      "selected_mask": 7,
+      "model_proposed_mask": 7,
+      "model_proposed_probability": 0.9885128,
+      "model_calls": 1,
+      "predict_ns": 20834,
+      "model_setup_ms": 0.741083,
+      "resident_tensor_bytes": 2096,
+      "construction_cases_passed": 3,
+      "construction_cases_total": 3,
+      "construction_fields_passed": 9,
+      "construction_fields_total": 9,
+      "runtime_outputs_passed": 14,
+      "runtime_outputs_total": 14,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 7,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 7,
+        "disjoint_cases_passed": 7,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "runtime_replayed": true,
+      "native_runs": 2,
+      "generated_sha256": "sha256:1059cce56fc4fa21dd9fc002e104546cdb3a7da0f4c967003e03639d6ce152f6",
+      "command_resource_observation": {
+        "method": "macOS /usr/bin/time -l",
+        "wall_seconds": 0.38,
+        "user_seconds": 0.15,
+        "system_seconds": 0.11,
+        "maximum_resident_set_size_bytes": 86671360,
+        "raw": "0.38 real         0.15 user         0.11 sys\n            86671360  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16122  page reclaims\n                 231  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 287  signals received\n                 161  voluntary context switches\n                3243  involuntary context switches\n           468614835  instructions retired\n           152269092  cycles elapsed\n            13074960  peak memory footprint"
+      },
+      "host_cpu_utilization": "UNOBSERVED"
+    },
+    {
+      "domain": "documentation",
+      "route": "deterministic",
+      "receipt": "documentation-deterministic.json",
+      "receipt_sha256": "f45fd3ff6385f09c3bdcd38057cfa90f6814665ab17500ab043db593020c215d",
+      "receipt_bytes": 90994,
+      "compiler_revision": "7aa3ae51662a0859817204afe6906ba3b05d6d97",
+      "workspace_digest": "sha256:0db4493fb8c3aaefee9dfa885ef748cdbc10742acc279ce6d570dd04f1fed495",
+      "source_sha256": "sha256:87969b115f242f2bce06654c51411fb60b5aa840acca31591a7bbd45103f7648",
+      "construction_contract_sha256": "sha256:0e58d504bc97ed7d75c161b15364ed97f1915b5997be819a2dece0a7d2da953f",
+      "construction_cases_sha256": "sha256:a4001c7a8e146214b3f8c877eaa42077156c6f34c474e4b558062be6a99ea523",
+      "runtime_cases_digest": "sha256:d6272ccaafdb82a77bfc7e44641552d6765ccfadf6995cf7b4c6324067126808",
+      "candidate_budget": 8,
+      "candidate_attempts": [
+        {
+          "mask": 0,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 7,
+          "fields_total": 9
+        },
+        {
+          "mask": 1,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 8,
+          "fields_total": 9
+        },
+        {
+          "mask": 2,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 6,
+          "fields_total": 9
+        },
+        {
+          "mask": 3,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 7,
+          "fields_total": 9
+        },
+        {
+          "mask": 4,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 8,
+          "fields_total": 9
+        },
+        {
+          "mask": 5,
+          "passed": 3,
+          "total": 3,
+          "fields_passed": 9,
+          "fields_total": 9
+        }
+      ],
+      "selected_mask": 5,
+      "model_proposed_mask": null,
+      "model_proposed_probability": null,
+      "model_calls": 0,
+      "predict_ns": 0,
+      "model_setup_ms": 4.1e-05,
+      "resident_tensor_bytes": 0,
+      "construction_cases_passed": 3,
+      "construction_cases_total": 3,
+      "construction_fields_passed": 9,
+      "construction_fields_total": 9,
+      "runtime_outputs_passed": 14,
+      "runtime_outputs_total": 14,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 7,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 7,
+        "disjoint_cases_passed": 7,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "runtime_replayed": true,
+      "native_runs": 2,
+      "generated_sha256": "sha256:81921e647e0aa213a4fd03e9092cd33caae544f325766beba466c7f4dbc75019",
+      "command_resource_observation": {
+        "method": "macOS /usr/bin/time -l",
+        "wall_seconds": 0.4,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_resident_set_size_bytes": 86376448,
+        "raw": "0.40 real         0.16 user         0.11 sys\n            86376448  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16331  page reclaims\n                 231  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 348  signals received\n                 149  voluntary context switches\n                3298  involuntary context switches\n           590830877  instructions retired\n           183649856  cycles elapsed\n            12993064  peak memory footprint"
+      },
+      "host_cpu_utilization": "UNOBSERVED"
+    },
+    {
+      "domain": "documentation",
+      "route": "model",
+      "receipt": "documentation-model.json",
+      "receipt_sha256": "3768a872af2a2a4757bf252691ed48a956884e1f2e555a063594bdb2da4fafba",
+      "receipt_bytes": 93604,
+      "compiler_revision": "7aa3ae51662a0859817204afe6906ba3b05d6d97",
+      "workspace_digest": "sha256:0db4493fb8c3aaefee9dfa885ef748cdbc10742acc279ce6d570dd04f1fed495",
+      "source_sha256": "sha256:87969b115f242f2bce06654c51411fb60b5aa840acca31591a7bbd45103f7648",
+      "construction_contract_sha256": "sha256:0e58d504bc97ed7d75c161b15364ed97f1915b5997be819a2dece0a7d2da953f",
+      "construction_cases_sha256": "sha256:a4001c7a8e146214b3f8c877eaa42077156c6f34c474e4b558062be6a99ea523",
+      "runtime_cases_digest": "sha256:d6272ccaafdb82a77bfc7e44641552d6765ccfadf6995cf7b4c6324067126808",
+      "candidate_budget": 8,
+      "candidate_attempts": [
+        {
+          "mask": 7,
+          "passed": 2,
+          "total": 3,
+          "fields_passed": 8,
+          "fields_total": 9
+        },
+        {
+          "mask": 5,
+          "passed": 3,
+          "total": 3,
+          "fields_passed": 9,
+          "fields_total": 9
+        }
+      ],
+      "selected_mask": 5,
+      "model_proposed_mask": 7,
+      "model_proposed_probability": 0.99983287,
+      "model_calls": 1,
+      "predict_ns": 21500,
+      "model_setup_ms": 0.196458,
+      "resident_tensor_bytes": 2096,
+      "construction_cases_passed": 3,
+      "construction_cases_total": 3,
+      "construction_fields_passed": 9,
+      "construction_fields_total": 9,
+      "runtime_outputs_passed": 14,
+      "runtime_outputs_total": 14,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 7,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 7,
+        "disjoint_cases_passed": 7,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "runtime_replayed": true,
+      "native_runs": 2,
+      "generated_sha256": "sha256:81921e647e0aa213a4fd03e9092cd33caae544f325766beba466c7f4dbc75019",
+      "command_resource_observation": {
+        "method": "macOS /usr/bin/time -l",
+        "wall_seconds": 0.39,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_resident_set_size_bytes": 86491136,
+        "raw": "0.39 real         0.16 user         0.11 sys\n            86491136  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16371  page reclaims\n                 231  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 307  signals received\n                 157  voluntary context switches\n                3151  involuntary context switches\n           498617298  instructions retired\n           159819876  cycles elapsed\n            13009424  peak memory footprint"
+      },
+      "host_cpu_utilization": "UNOBSERVED"
+    }
+  ],
+  "comparison": {
+    "within_domain": "Identical source, candidate contract, construction and evaluation cases, compiler and budget; identical generated Go digest in each observed pair.",
+    "across_domains": "Shared report and renderer source bytes; different input IDs, fields, conditions, alternatives and expected behavior.",
+    "external_reproduction": "UNOBSERVED",
+    "model_training_exposure": "UNKNOWN",
+    "model_top_choice": "Assembly proposed mask 7 satisfied 3/3 construction cases; documentation proposed mask 7 satisfied 2/3 cases (8/9 fields), then mask 5 satisfied 3/3 (9/9).",
+    "timing_scope": "One sequential pair per domain, deterministic first, shared host and uncontrolled caches. No comparative speed conclusion or host CPU utilization estimate."
+  },
+  "limits": [
+    "Two caller-input policy tools; repository observation adapters are not part of this experiment.",
+    "Seven disjoint root inputs per domain and fourteen named activity outputs per run are finite observations.",
+    "This uses the supported record/body profile. Arbitrary ontology modules, general domain portability and behavioral equivalence outside the declared cases remain unproven.",
+    "The model ranks three binary field updates. It does not write arbitrary bodies or alter the type rules.",
+    "A high model probability is not calibrated task correctness; the documentation proposal scored 0.99983287 but missed one required field."
+  ],
+  "reproduction": "See examples/domain-tools/README.md. Use the compiler revision recorded here and the pinned model artifact; omit --assembly-model for deterministic ordering."
+}

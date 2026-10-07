@@ -1,0 +1,40 @@
+package policy
+namespace assembly
+
+import report "gooo/tools/report"
+
+entity AssemblyObservation id "gooo://domain-tools/assembly-observation" fields {
+    field matched id "gooo://domain-tools/assembly/matched" type integer required one
+    field total id "gooo://domain-tools/assembly/total" type integer required one
+    field scored id "gooo://domain-tools/assembly/scored" type integer required one
+    field budget id "gooo://domain-tools/assembly/budget" type integer required one
+}
+
+activity Assess(AssemblyObservation) -> Report computes `if input.matched < 0 || input.total < 0 || input.matched > input.total || input.scored < 0 || input.budget < input.scored {
+    return Report{state: "FAIL_CLOSED", next_operation: "RECONCILE_COUNTS", message: "관측 수치를 확인하세요."}
+}
+if input.total == 0 {
+    return Report{state: "UNKNOWN", next_operation: "DECLARE_CASES", message: "판단할 사례를 선언하세요."}
+}
+if input.scored == 0 {
+    return Report{state: "UNKNOWN", next_operation: "EVALUATE_CANDIDATES", message: "후보를 채점하세요."}
+}
+if input.matched == input.total {
+    return Report{state: "PASS", next_operation: "OBSERVE_NEW_INPUTS", message: "선언한 사례가 일치합니다."}
+}
+if input.scored == input.budget {
+    return Report{state: "PROGRESS", next_operation: "EXPAND_CHOICES", message: "선택지를 확장하세요."}
+}
+let result = Report{state: "", next_operation: "", message: ""}
+result.state = "PASS"
+result.next_operation = "STOP"
+result.message = "모든 사례를 만족했습니다."
+return result` assembling {
+    choice "partial-state" field_update at "0" alternative "\"PROGRESS\"" intent "부분 충족 상태를 기록한다. Use PROGRESS for incomplete cases."
+    choice "continue" field_update at "1" alternative "\"CONTINUE_CANDIDATES\"" intent "남은 예산으로 다른 후보를 시도한다. Continue candidates with remaining budget."
+    choice "explanation" field_update at "2" alternative "\"만족하지 못한 사례가 남았습니다.\"" intent "미충족 사례를 설명한다. Explain that unmatched cases remain."
+    value_case "[{\"matched\":0,\"total\":2,\"scored\":1,\"budget\":3}]" -> "{\"state\":\"PROGRESS\",\"next_operation\":\"CONTINUE_CANDIDATES\",\"message\":\"만족하지 못한 사례가 남았습니다.\"}"
+    value_case "[{\"matched\":2,\"total\":2,\"scored\":1,\"budget\":3}]" -> "{\"state\":\"PASS\",\"next_operation\":\"OBSERVE_NEW_INPUTS\",\"message\":\"선언한 사례가 일치합니다.\"}"
+    value_case "[{\"matched\":0,\"total\":0,\"scored\":0,\"budget\":3}]" -> "{\"state\":\"UNKNOWN\",\"next_operation\":\"DECLARE_CASES\",\"message\":\"판단할 사례를 선언하세요.\"}"
+    attempts "8"
+}

@@ -1,0 +1,8 @@
+package render
+namespace render
+
+import report "gooo/tools/report"
+import policy "gooo/tools/policy"
+
+activity Render(Report) -> Text computes `return input.state + " | " + input.next_operation + " | " + input.message`
+bind policy.Assess.result -> Render.input

@@ -131,9 +131,11 @@ Treat substitution as two different experiments:
 With model replacement, the definition of valid construction stays fixed.
 The selected program and its behavior may change under a bounded search budget;
 record that difference and check it. With domain replacement, explicitly record
-the changed meaning. Demonstrating this across two domains is a next experiment;
-the repository's current adapters and supported profiles define the available
-surface.
+the changed meaning. Two small [domain tools](../../examples/domain-tools/README.md)
+now share report and rendering packages while declaring different observation
+types and rules. Their paired deterministic/model runs retain the same candidates
+and checks. This demonstrates substitution within the supported record profiles;
+broader ontology substitution needs additional executable examples.
 
 Prioritize three small ecosystem tasks: explain a failed assembly, suggest a
 bounded repair from its counterexamples, and generate an executable example
@@ -151,6 +153,12 @@ A root case is disjoint only when every assembling activity receives a disjoint
 tuple. Duplicate root inputs contribute one case; all expectations supplied for
 that input must agree with execution. See the [runtime measurement
 contract](../native-body-composition.md#input-separation).
+
+Workspace source fills currently run before this composition measurement. Its
+input separation therefore describes the remaining assembling activities.
+[The combined construction example](../../examples/construction-observation/README.md)
+records a value already seen by an earlier fill stage; extending automatic
+input-separation accounting across all stages is an outstanding language-tool task.
 
 This measures new inputs relative to the recorded construction observations.
 Model-training exposure remains unknown. In the same way, native case success,

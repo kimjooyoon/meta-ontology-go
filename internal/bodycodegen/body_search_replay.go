@@ -26,6 +26,9 @@ func VerifyIRBodySearchProjection(ctx context.Context, filename string, source [
 		return fmt.Errorf("IR body-search activity identity differs")
 	}
 	hole := bodyFillHoleToken(plan.HoleID)
+	if err := replayIRSearchAttempts(ctx, file.Package.Name, body, prior, plan); err != nil {
+		return err
+	}
 	completedBody, err := replaceIdentifier(body, hole, search.SelectedExpression)
 	if err != nil {
 		return fmt.Errorf("IR body-search selected expression cannot be restored")

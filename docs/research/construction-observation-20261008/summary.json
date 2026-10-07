@@ -1,0 +1,128 @@
+{
+  "schema": "gooo/construction-observation-study/v1",
+  "observed_on": "2026-10-08 Asia/Seoul",
+  "compiler_revision": "03c9469f493f3060353cb41d623b355204b5f954",
+  "compiler_tree_dirty": false,
+  "go_version": "go1.27.1 darwin/arm64",
+  "mode": "deterministic construction and source-bound interpretation",
+  "model_calls": 0,
+  "artifacts": [
+    {
+      "path": "construction.json",
+      "sha256": "sha256:5ad33d92abd7e1223b11bee5621631c2f51bb02dfadfab36929f89c11aedb082",
+      "bytes": 70030
+    },
+    {
+      "path": "interpretation.json",
+      "sha256": "sha256:893836a89a7e9012fe78b5bc10a9ade752d6ba766dd8c7ab6881cf60caa57158",
+      "bytes": 52889
+    }
+  ],
+  "construction": {
+    "source_sha256": "sha256:785552b87959ee668412b1f50dbf9455b4945eaee142b98f44340619e01731a4",
+    "runtime_cases": 2,
+    "finite_activity_outputs_passed": 4,
+    "finite_activity_outputs_total": 4,
+    "native_runs": 2
+  },
+  "interpretation": {
+    "schema": "gooo/construction-input/v2",
+    "source_receipt_sha256": "sha256:5ad33d92abd7e1223b11bee5621631c2f51bb02dfadfab36929f89c11aedb082",
+    "rows": 5,
+    "source_fill_scored_set_rows": 3,
+    "ir_search_attempt_prefix_rows": 2,
+    "native_runs": 2,
+    "finite_runtime_expectations": 0,
+    "outputs": [
+      {
+        "profile": "source_fill",
+        "view": "scored_set",
+        "counts": {
+          "matched": 0,
+          "total": 3,
+          "best": 3,
+          "scored": 3,
+          "budget": 3
+        },
+        "explanation": {
+          "message": "더 많은 사례를 만족한 후보가 기록되어 있습니다.",
+          "next_operation": "USE_OBSERVED_CANDIDATE",
+          "state": "PROGRESS"
+        }
+      },
+      {
+        "profile": "source_fill",
+        "view": "scored_set",
+        "counts": {
+          "matched": 3,
+          "total": 3,
+          "best": 3,
+          "scored": 3,
+          "budget": 3
+        },
+        "explanation": {
+          "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+          "next_operation": "OBSERVE_NEW_INPUTS",
+          "state": "PASS"
+        }
+      },
+      {
+        "profile": "source_fill",
+        "view": "scored_set",
+        "counts": {
+          "matched": 0,
+          "total": 3,
+          "best": 3,
+          "scored": 3,
+          "budget": 3
+        },
+        "explanation": {
+          "message": "더 많은 사례를 만족한 후보가 기록되어 있습니다.",
+          "next_operation": "USE_OBSERVED_CANDIDATE",
+          "state": "PROGRESS"
+        }
+      },
+      {
+        "profile": "ir_search",
+        "view": "attempt_prefix",
+        "counts": {
+          "matched": 3,
+          "total": 5,
+          "best": 3,
+          "scored": 1,
+          "budget": 8
+        },
+        "explanation": {
+          "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+          "next_operation": "CONTINUE_CANDIDATES",
+          "state": "PROGRESS"
+        }
+      },
+      {
+        "profile": "ir_search",
+        "view": "attempt_prefix",
+        "counts": {
+          "matched": 5,
+          "total": 5,
+          "best": 5,
+          "scored": 2,
+          "budget": 8
+        },
+        "explanation": {
+          "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+          "next_operation": "OBSERVE_NEW_INPUTS",
+          "state": "PASS"
+        }
+      }
+    ]
+  },
+  "limits": [
+    "One bounded example; finite construction cases and runtime output expectations have separate denominators.",
+    "Source fill scores all candidates before selection. Search prefix rows expose only scores available through the recorded attempt.",
+    "The post-fill composition input_separation field covers its remaining assembling activities. The normalized zero supplied to Lift is already a Lift training input; the current workspace metric does not account for this earlier fill stage.",
+    "Holdout cases are rechecked during source replay and excluded from Gooo policy inputs.",
+    "Suggested next operations are returned as data. The interpretation receipt supplies no expected policy outputs and remains OBSERVED with 0/0 expectations.",
+    "Replay recomputes scores and projections; historical model calls, timings and ordering origin are not attested.",
+    "No model training, downloads, resource benchmark or external-use claim in this study."
+  ]
+}
