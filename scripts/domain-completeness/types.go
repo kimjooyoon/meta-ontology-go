@@ -132,7 +132,7 @@ type Comparison struct {
 type DimensionDelta struct {
 	ID             string `json:"id"`
 	Status         string `json:"status"`
-	NumeratorDelta int    `json:"numerator_delta"`
+	NumeratorDelta *int   `json:"numerator_delta"`
 	Denominator    int    `json:"denominator"`
 	BaselineStatus string `json:"baseline_status"`
 	CurrentStatus  string `json:"current_status"`

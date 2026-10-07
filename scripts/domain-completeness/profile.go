@@ -179,6 +179,10 @@ func validateProfile(model ProfileModel) error {
 		return fmt.Errorf("profile vector dimension denominator is %d, want %d", len(model.Dimensions), expectedDimensions)
 	}
 	expectedActivities := map[string]Activity{
+		"CanCompareDomainCompletenessAxes": {
+			Name: "CanCompareDomainCompletenessAxes", Inputs: []string{"Integer", "Integer", "Integer", "Integer", "Text", "Text"},
+			Output: "Boolean",
+		},
 		"EmitDomainCompletenessReceipt": {
 			Name: "EmitDomainCompletenessReceipt", Inputs: []string{"DomainCompletenessVector"},
 			Output: "DomainCompletenessReceipt", ValueProgram: "gooo.receipt.domain-completeness:v1",
@@ -211,7 +215,7 @@ func validateProfile(model ProfileModel) error {
 	for name, expected := range expectedActivities {
 		actual, exists := model.Activities[name]
 		programMismatch := actual.ValueProgram != expected.ValueProgram
-		if name == "ClassifyDomainCompleteness" || name == "SelectDomainCompletenessOutcome" {
+		if name == "ClassifyDomainCompleteness" || name == "SelectDomainCompletenessOutcome" || name == "CanCompareDomainCompletenessAxes" {
 			programMismatch = strings.TrimSpace(actual.ValueProgram) == ""
 		}
 		if !exists || actual.Output != expected.Output || programMismatch ||

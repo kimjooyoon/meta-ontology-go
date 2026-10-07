@@ -26,6 +26,7 @@ entity UseCaseCoverage id "gooo://meta/domain-completeness/dimension/use-case-co
 entity UseCaseEvidence id "gooo://meta/domain-completeness/evidence/use-case"
 
 activity AssembleDomainCompletenessVector(DeclarationCoverage, GenerationCoverage, ReverseObservationCoverage, UseCaseCoverage, BoundaryCoverage, ProvenanceIntegrity) -> DomainCompletenessVector computes "gooo.metric.domain-completeness.vector:v1"
+activity CanCompareDomainCompletenessAxes(Integer, Integer, Integer, Integer, Text, Text) -> Boolean computes `return input0 == 0 && input1 == 0 && input2 == 0 && input3 == 0 && (input4 == "PASS" || input4 == "PROGRESS") && (input5 == "PASS" || input5 == "PROGRESS")`
 activity ClassifyDomainCompleteness(Integer, Integer, Integer, Boolean) -> Text computes `if input3 || input0 < 0 || input1 < 0 || input2 < 0 || input0 > input1 {
 	return "FAIL_CLOSED"
 } else if input1 == 0 || input2 > 0 {

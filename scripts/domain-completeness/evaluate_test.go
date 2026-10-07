@@ -139,7 +139,7 @@ func TestCompareReportsRequiresSameProfileAndExactPopulation(t *testing.T) {
 	current.Snapshot.SubjectSHA = current.SubjectSHA
 	current.Dimensions = []Dimension{{ID: "use_case_coverage", MetricID: "metric", Unit: "use_cases", Status: "PROGRESS", Numerator: 3, Denominator: 4}}
 	comparison := compareReports(current, baseline, true)
-	if comparison.Status != "COMPARABLE" || len(comparison.Dimensions) != 1 || comparison.Dimensions[0].NumeratorDelta != 1 {
+	if comparison.Status != "COMPARABLE" || len(comparison.Dimensions) != 1 || comparison.Dimensions[0].NumeratorDelta == nil || *comparison.Dimensions[0].NumeratorDelta != 1 {
 		t.Fatalf("compatible comparison = %#v", comparison)
 	}
 	current.Dimensions[0].Denominator = 5
