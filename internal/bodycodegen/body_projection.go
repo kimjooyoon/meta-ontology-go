@@ -7,6 +7,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"strings"
 )
 
 type bodyProjection struct {
@@ -44,13 +45,14 @@ func prepareBodyProjection(packageName, activityName string, parameters []InputP
 func prepareBodyProjectionWithCalls(packageName, activityName string, parameters []InputParameter,
 	outputType, body string, calls []pureCallFunction, records []RecordType) (bodyProjection, error) {
 	p := bodyProjection{fset: token.NewFileSet(), calls: calls}
-	wrapped := fmt.Sprintf("package %s\n%sfunc %s(%s) %s {\n%s\n}\n", packageName,
-		RecordDeclarations(records, false), activityName, parameterDeclaration(parameters), outputType, body)
+	var wrapped strings.Builder
+	wrapped.WriteString(fmt.Sprintf("package %s\n%sfunc %s(%s) %s {\n%s\n}\n", packageName,
+		RecordDeclarations(records, false), activityName, parameterDeclaration(parameters), outputType, body))
 	for _, call := range calls {
-		wrapped += call.declaration()
+		wrapped.WriteString(call.declaration())
 	}
 	var err error
-	p.file, err = parser.ParseFile(p.fset, "body.goo", wrapped, parser.AllErrors)
+	p.file, err = parser.ParseFile(p.fset, "body.goo", wrapped.String(), parser.AllErrors)
 	if err != nil {
 		return p, fmt.Errorf("parse computes body: %w", err)
 	}
