@@ -774,28 +774,51 @@ func summarize(values []Dimension) Summary {
 }
 
 func decide(values []Dimension, issues []string, evidenceState string) (string, string, string, *Frontier) {
-	if len(issues) > 0 || evidenceState == "FAIL_CLOSED" {
-		return "FAIL_CLOSED", "DOMAIN_RECEIPT_INPUT_INVALID", "REPAIR_DOMAIN_RECEIPT_INPUTS", nil
+	invalidInput := len(issues) > 0 || evidenceState == "FAIL_CLOSED"
+	outcome := domaincompleteness.SelectDomainCompletenessOutcome(
+		invalidInput,
+		hasDimensionStatus(values, "FAIL_CLOSED"),
+		hasDimensionStatus(values, "UNKNOWN"),
+		hasDimensionStatus(values, "PROGRESS"),
+	)
+	switch outcome {
+	case "FAIL_CLOSED":
+		if invalidInput {
+			return outcome, "DOMAIN_RECEIPT_INPUT_INVALID", "REPAIR_DOMAIN_RECEIPT_INPUTS", nil
+		}
+		for _, value := range values {
+			if value.Status == outcome {
+				operation, frontier := nextOperation(value, "REPAIR_DOMAIN_EVIDENCE")
+				return outcome, "DOMAIN_EVIDENCE_CONTRADICTED", operation, frontier
+			}
+		}
+	case "UNKNOWN":
+		for _, value := range values {
+			if value.Status == outcome {
+				operation, frontier := nextOperation(value, "COLLECT_DOMAIN_EVIDENCE")
+				return outcome, "DOMAIN_EVIDENCE_INCOMPLETE", operation, frontier
+			}
+		}
+	case "PROGRESS":
+		for _, value := range values {
+			if value.Status == outcome {
+				operation, frontier := nextOperation(value, "RESOLVE_DOMAIN_GAP")
+				return outcome, "PROFILE_GAPS_REMAIN", operation, frontier
+			}
+		}
+	case "PASS":
+		return outcome, "ALL_REQUIRED_DIMENSIONS_CLOSED", "NO_ACTION", nil
 	}
+	return "FAIL_CLOSED", "DOMAIN_OUTCOME_UNSUPPORTED", "REPAIR_DOMAIN_PROFILE", nil
+}
+
+func hasDimensionStatus(values []Dimension, status string) bool {
 	for _, value := range values {
-		if value.Status == "FAIL_CLOSED" {
-			operation, frontier := nextOperation(value, "REPAIR_DOMAIN_EVIDENCE")
-			return "FAIL_CLOSED", "DOMAIN_EVIDENCE_CONTRADICTED", operation, frontier
+		if value.Status == status {
+			return true
 		}
 	}
-	for _, value := range values {
-		if value.Status == "UNKNOWN" {
-			operation, frontier := nextOperation(value, "COLLECT_DOMAIN_EVIDENCE")
-			return "UNKNOWN", "DOMAIN_EVIDENCE_INCOMPLETE", operation, frontier
-		}
-	}
-	for _, value := range values {
-		if value.Status == "PROGRESS" {
-			operation, frontier := nextOperation(value, "RESOLVE_DOMAIN_GAP")
-			return "PROGRESS", "PROFILE_GAPS_REMAIN", operation, frontier
-		}
-	}
-	return "PASS", "ALL_REQUIRED_DIMENSIONS_CLOSED", "NO_ACTION", nil
+	return false
 }
 
 func nextOperation(value Dimension, fallback string) (string, *Frontier) {

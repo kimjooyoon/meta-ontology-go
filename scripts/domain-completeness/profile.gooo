@@ -37,6 +37,15 @@ activity ClassifyDomainCompleteness(Integer, Integer, Integer, Boolean) -> Text 
 } else {
 	return "UNKNOWN"
 }`
+activity SelectDomainCompletenessOutcome(Boolean, Boolean, Boolean, Boolean) -> Text computes `if input0 || input1 {
+	return "FAIL_CLOSED"
+} else if input2 {
+	return "UNKNOWN"
+} else if input3 {
+	return "PROGRESS"
+} else {
+	return "PASS"
+}`
 activity CompareDomainCompletenessVectors(DomainCompletenessReceipt, ComparisonBaseline) -> ComparisonDelta computes "gooo.metric.domain-completeness.vector-delta.v1"
 activity EmitDomainCompletenessReceipt(DomainCompletenessVector) -> DomainCompletenessReceipt computes "gooo.receipt.domain-completeness:v1"
 activity MeasureBoundaryCoverage(BoundaryEvidence) -> BoundaryCoverage computes "gooo.metric.domain-completeness.boundary-coverage.v1"
