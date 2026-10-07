@@ -107,13 +107,14 @@ func (node *CompositionActivity) bindEntityIDs(model bidir.Model) {
 // Check all bodies and embedded plans before loading an optional model.
 func (graph compositionGraph) preflight(ctx context.Context, filename string, source []byte) error {
 	for _, node := range graph.nodes[:graph.count] {
-		if _, err := bodycodegen.GenerateWithPlanner(ctx, filename, source, node.Name, "", ""); err != nil {
-			return fmt.Errorf("activity %q: %w", node.Name, err)
-		}
 		if node.Assembling {
 			if err := bodycodegen.ValidateSourceAssembly(ctx, filename, source, node.Name); err != nil {
 				return fmt.Errorf("activity %q plan: %w", node.Name, err)
 			}
+			continue
+		}
+		if _, err := bodycodegen.GenerateWithPlanner(ctx, filename, source, node.Name, "", ""); err != nil {
+			return fmt.Errorf("activity %q: %w", node.Name, err)
 		}
 	}
 	return nil
