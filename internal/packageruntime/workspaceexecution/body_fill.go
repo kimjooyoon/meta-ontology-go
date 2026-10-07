@@ -23,6 +23,13 @@ func applyBodyFills(ctx context.Context, program Program, current []byte, option
 		if !exists && sourceSpec == nil {
 			continue
 		}
+		if exists {
+			var err error
+			plan, err = program.recordNames.rewriteFillPlan(activity.PackagePath, plan)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
 		generation, err := generateActivityBodyFill(ctx, current, activity, plan, sourceSpec, options, bodyFillOptions)
 		if err != nil {
 			return nil, nil, fmt.Errorf("activity %s body fill: %w", key, err)
