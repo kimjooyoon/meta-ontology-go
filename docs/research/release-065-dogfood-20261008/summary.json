@@ -1,0 +1,590 @@
+{
+  "schema": "gooo/release-dogfood-study/v1",
+  "recorded_date": "2026-10-08",
+  "initial_observed_at_utc": "2026-10-07T16:22:30.133188+00:00",
+  "release_candidate_version": "0.6.5-dev",
+  "release_publication_status_at_observation": "NOT_PUBLISHED",
+  "toolchain": "go version go1.27.1 darwin/arm64",
+  "initial_compiler_revision": "3bd67703133d261e24ad80c2f2cdbae946da1bc4",
+  "fixed_compiler_revision": "e30df95edd166c0815908200c2a6cc186437fbff",
+  "workspace": "examples/package-diagnostic-replay/gooo.workspace.json",
+  "cases": "examples/package-diagnostic-replay/cases.json",
+  "explanation_workspace": "examples/assembly-explainer/gooo.workspace.json",
+  "model_origin": "https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary",
+  "model_parameters": 2072,
+  "new_training": false,
+  "model_training_exposure": "UNKNOWN",
+  "run_order": [
+    "deterministic",
+    "model",
+    "replay",
+    "interpretation-before-fix",
+    "interpretation"
+  ],
+  "pairing": "Same source, five construction cases, eight permitted paths, budget eight, four runtime inputs and eight activity-output expectations. Initial deterministic/model pair changes candidate ordering. The later interpretation run uses the same saved replay receipt with the proposal-label correction.",
+  "model_observation": "The first proposed mask 7 matched 3/5 whole cases and 13/15 fields despite probability 0.99962914. Gooo continued to mask 3, matching 5/5 cases and 15/15 fields. Model ordering needed two attempts and deterministic ordering four. This one example does not establish calibration or general accuracy.",
+  "replay_observation": "Deterministic, model and replay produced the same native projection and 8/8 expected outputs. Four unique input tuples were disjoint from recorded construction observations. Replay retained the historical one-call model receipt and made zero current model calls.",
+  "dogfood_regression": {
+    "symptom": "The construction observer omitted the recorded proposal flag on record-choice attempts.",
+    "before_proposed": [
+      false,
+      false
+    ],
+    "after_proposed": [
+      true,
+      false
+    ],
+    "selected": [
+      false,
+      true
+    ],
+    "observed_counts_and_explanations_unchanged": true,
+    "fresh_inference_for_interpretation": 0,
+    "tests": [
+      "internal/bodyexecution/record_proposal_observation_test.go",
+      "cmd/gooo/package_construction_proposal_test.go"
+    ],
+    "scope": "The corrected flag describes the retained prediction, not a new inference or historical timing attestation. Actual interpretation reports OBSERVED with zero supplied runtime expectations."
+  },
+  "measurement_scope": "One sequential pair and one later interpretation rerun on a shared host; build caches not reset. High-resolution whole-command time includes process startup. macOS time -lp durations are rounded and maximum RSS is a process high-water observation, not aggregate concurrent memory. Child build/runtime metrics remain in each raw receipt. No comparative speed, causal CPU increase, external reproduction, broad correctness or task adoption claim.",
+  "host_cpu": {
+    "baseline": [
+      {
+        "user_percent": 4.43,
+        "system_percent": 3.16,
+        "idle_percent": 92.4,
+        "busy_percent": 7.6
+      }
+    ],
+    "session": [
+      {
+        "user_percent": 10.84,
+        "system_percent": 6.48,
+        "idle_percent": 82.66,
+        "busy_percent": 17.34
+      },
+      {
+        "user_percent": 8.16,
+        "system_percent": 4.49,
+        "idle_percent": 87.33,
+        "busy_percent": 12.67
+      },
+      {
+        "user_percent": 5.33,
+        "system_percent": 4.24,
+        "idle_percent": 90.41,
+        "busy_percent": 9.59
+      },
+      {
+        "user_percent": 3.52,
+        "system_percent": 2.78,
+        "idle_percent": 93.69,
+        "busy_percent": 6.31
+      }
+    ],
+    "scope": "One pre-run interval and four session intervals from macOS top at one-second spacing; first samples omitted. Whole-host usage includes other processes and gaps, and is not attributable to the tiny prediction. No repeated or idle-controlled comparison.",
+    "method": "macOS top at one-second spacing, first sample omitted from each invocation; busy = 100 - idle. Rounded source percentages can sum to slightly less than 100.",
+    "initial_command_span_seconds": 2.2989902919999996,
+    "sampling_session_seconds": 4.896802624999999,
+    "command_start_offsets_seconds": {
+      "deterministic": 4.1699999986377634e-07,
+      "model": 0.9630358750000001,
+      "replay": 1.367386667,
+      "interpretation": 1.7471839169999996
+    },
+    "post_fix_cpu_utilization": "UNOBSERVED"
+  },
+  "reproduction": [
+    "Build cmd/gooo from the initial compiler revision with Go 1.27.1; confirm version 0.6.5-dev.",
+    "Run package execute --json --go GO1_27_1 --cases CASES WORKSPACE and save deterministic.json.",
+    "Repeat with --assembly-model MODEL_JSON from the pinned model revision and save model.json.",
+    "Run package replay --json --go GO1_27_1 --receipt model.json --cases CASES WORKSPACE and save replay.json; omit model settings.",
+    "Run package execute --json --go GO1_27_1 --construction-receipt replay.json EXPLANATION_WORKSPACE and save interpretation-before-fix.json.",
+    "Build cmd/gooo from fixed_compiler_revision, then repeat the same interpretation using the unchanged replay.json; compare proposal flags, selections, counts and native explanation values."
+  ],
+  "observations": [
+    {
+      "label": "deterministic",
+      "raw_receipt": "deterministic.json",
+      "raw_receipt_sha256": "sha256:9432275b7a77cbee281f9f714d715ba707a04c442349fa0fdcffa6de49157555",
+      "compiler_revision": "3bd67703133d261e24ad80c2f2cdbae946da1bc4",
+      "compiler_tree_clean_at_build": true,
+      "decision": "PASS",
+      "finite_passed": 8,
+      "finite_total": 8,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_runs": 2,
+      "current_model_calls": 0,
+      "runtime_model_calls": 0,
+      "generated_sha256": "sha256:6759e278ace650e15ed290a42d9d49e761622f7b12f6a804c8257b2ee3c48713",
+      "command_wall_seconds": 0.962341458,
+      "time_lp_wall_seconds": 0.95,
+      "command_user_seconds": 0.16,
+      "command_system_seconds": 0.13,
+      "command_peak_rss_bytes": 86687744,
+      "raw_time_lp": "real 0.95\nuser 0.16\nsys 0.13\n            86687744  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               13133  page reclaims\n                3737  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 317  signals received\n                1265  voluntary context switches\n                7186  involuntary context switches\n           454996998  instructions retired\n           165991281  cycles elapsed\n            13091392  peak memory footprint\n",
+      "retained_construction": {
+        "selected_mask": 3,
+        "attempts": [
+          {
+            "mask": 0,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 11,
+            "fields_total": 15
+          },
+          {
+            "mask": 1,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 13,
+            "fields_total": 15
+          },
+          {
+            "mask": 2,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 13,
+            "fields_total": 15
+          },
+          {
+            "mask": 3,
+            "passed": 5,
+            "total": 5,
+            "fields_passed": 15,
+            "fields_total": 15
+          }
+        ],
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "model_calls": 0,
+        "predict_ns": 0,
+        "model": null,
+        "prediction": null,
+        "ranking": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "selection_attempts": 4
+      }
+    },
+    {
+      "label": "model",
+      "raw_receipt": "model.json",
+      "raw_receipt_sha256": "sha256:d383d9307f904fe50c90d85ff2f3c36e5ff627cb8259ff167d961a3f688b9ddd",
+      "compiler_revision": "3bd67703133d261e24ad80c2f2cdbae946da1bc4",
+      "compiler_tree_clean_at_build": true,
+      "decision": "PASS",
+      "finite_passed": 8,
+      "finite_total": 8,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_runs": 2,
+      "current_model_calls": 1,
+      "runtime_model_calls": 0,
+      "generated_sha256": "sha256:6759e278ace650e15ed290a42d9d49e761622f7b12f6a804c8257b2ee3c48713",
+      "command_wall_seconds": 0.4037346669999997,
+      "time_lp_wall_seconds": 0.39,
+      "command_user_seconds": 0.15,
+      "command_system_seconds": 0.11,
+      "command_peak_rss_bytes": 86343680,
+      "raw_time_lp": "real 0.39\nuser 0.15\nsys 0.11\n            86343680  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16579  page reclaims\n                 236  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 300  signals received\n                 130  voluntary context switches\n                3159  involuntary context switches\n           415377365  instructions retired\n           148865957  cycles elapsed\n            12812840  peak memory footprint\n",
+      "retained_construction": {
+        "selected_mask": 3,
+        "attempts": [
+          {
+            "mask": 7,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 13,
+            "fields_total": 15
+          },
+          {
+            "mask": 3,
+            "passed": 5,
+            "total": 5,
+            "fields_passed": 15,
+            "fields_total": 15
+          }
+        ],
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "model_calls": 1,
+        "predict_ns": 19917,
+        "model": {
+          "schema": "gooo/retained-path-model/v1",
+          "loaded": true,
+          "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+          "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+          "resident_tensor_bytes": 2096,
+          "setup_ms": 0.497,
+          "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+          "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+          "feature_version": "triple_record_field_context_v1_shared_v1",
+          "arithmetic_version": "float32_separate_v1"
+        },
+        "prediction": {
+          "logits": [
+            -7.9075737,
+            -1.2027688,
+            -2.801236,
+            3.9035697,
+            -3.9035697,
+            2.801236,
+            1.2027688,
+            7.9075737
+          ],
+          "probabilities": [
+            1.832215e-14,
+            1.2209446e-08,
+            4.9921206e-10,
+            0.00033266356,
+            5.5056692e-11,
+            3.6688525e-05,
+            1.5000971e-06,
+            0.99962914
+          ],
+          "proposed_mask": 7
+        },
+        "ranking": [
+          7,
+          3,
+          5,
+          6,
+          1,
+          2,
+          4,
+          0
+        ],
+        "selection_attempts": 2
+      }
+    },
+    {
+      "label": "replay",
+      "raw_receipt": "replay.json",
+      "raw_receipt_sha256": "sha256:d6bc5134455348c4b0eb94917e1e199ca33aab7f6b1e97435f15b0a9a7bad376",
+      "compiler_revision": "3bd67703133d261e24ad80c2f2cdbae946da1bc4",
+      "compiler_tree_clean_at_build": true,
+      "decision": "PASS",
+      "finite_passed": 8,
+      "finite_total": 8,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_runs": 2,
+      "current_model_calls": 0,
+      "runtime_model_calls": 0,
+      "generated_sha256": "sha256:6759e278ace650e15ed290a42d9d49e761622f7b12f6a804c8257b2ee3c48713",
+      "command_wall_seconds": 0.3791982500000004,
+      "time_lp_wall_seconds": 0.37,
+      "command_user_seconds": 0.14,
+      "command_system_seconds": 0.1,
+      "command_peak_rss_bytes": 86622208,
+      "raw_time_lp": "real 0.37\nuser 0.14\nsys 0.10\n            86622208  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16537  page reclaims\n                 238  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 311  signals received\n                 161  voluntary context switches\n                3562  involuntary context switches\n           285162026  instructions retired\n           112293431  cycles elapsed\n            12698152  peak memory footprint\n",
+      "retained_construction": {
+        "selected_mask": 3,
+        "attempts": [
+          {
+            "mask": 7,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 13,
+            "fields_total": 15
+          },
+          {
+            "mask": 3,
+            "passed": 5,
+            "total": 5,
+            "fields_passed": 15,
+            "fields_total": 15
+          }
+        ],
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "model_calls": 1,
+        "predict_ns": 19917,
+        "model": {
+          "schema": "gooo/retained-path-model/v1",
+          "loaded": true,
+          "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+          "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+          "resident_tensor_bytes": 2096,
+          "setup_ms": 0.497,
+          "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+          "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+          "feature_version": "triple_record_field_context_v1_shared_v1",
+          "arithmetic_version": "float32_separate_v1"
+        },
+        "prediction": {
+          "logits": [
+            -7.9075737,
+            -1.2027688,
+            -2.801236,
+            3.9035697,
+            -3.9035697,
+            2.801236,
+            1.2027688,
+            7.9075737
+          ],
+          "probabilities": [
+            1.832215e-14,
+            1.2209446e-08,
+            4.9921206e-10,
+            0.00033266356,
+            5.5056692e-11,
+            3.6688525e-05,
+            1.5000971e-06,
+            0.99962914
+          ],
+          "proposed_mask": 7
+        },
+        "ranking": [
+          7,
+          3,
+          5,
+          6,
+          1,
+          2,
+          4,
+          0
+        ],
+        "selection_attempts": 2
+      }
+    },
+    {
+      "label": "interpretation-before-fix",
+      "raw_receipt": "interpretation-before-fix.json",
+      "raw_receipt_sha256": "sha256:27dafa23424d8d661a1bad9bbdd3977d15c013525f423c7da8fc479b8b2b08b6",
+      "compiler_revision": "3bd67703133d261e24ad80c2f2cdbae946da1bc4",
+      "compiler_tree_clean_at_build": true,
+      "decision": "OBSERVED",
+      "finite_passed": 0,
+      "finite_total": 0,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "NO_RUNTIME_EXPECTATIONS",
+        "unique_inputs": 2,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 2,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_runs": 2,
+      "current_model_calls": 0,
+      "runtime_model_calls": 0,
+      "generated_sha256": "sha256:357ea9435aab23cd847bde1a4fe6e5f9b4fa21802942204536ee2fd3ba13cdec",
+      "command_wall_seconds": 0.551806375,
+      "time_lp_wall_seconds": 0.54,
+      "command_user_seconds": 0.14,
+      "command_system_seconds": 0.1,
+      "command_peak_rss_bytes": 86294528,
+      "raw_time_lp": "real 0.54\nuser 0.14\nsys 0.10\n            86294528  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16183  page reclaims\n                 236  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 314  signals received\n                 185  voluntary context switches\n                3304  involuntary context switches\n           335057043  instructions retired\n           121558365  cycles elapsed\n            13009424  peak memory footprint\n",
+      "construction_input": {
+        "schema": "gooo/construction-input/v2",
+        "receipt_sha256": "sha256:d6bc5134455348c4b0eb94917e1e199ca33aab7f6b1e97435f15b0a9a7bad376",
+        "source_sha256": "sha256:6db93a7c7b147124e687c8121342b59fde48378e102a7b09376a86a3715738ec",
+        "rows": [
+          {
+            "activity": "GoooPackage0ActivityDiagnose",
+            "activity_id": "gooo-workspace://activity/gooo-package0activity-diagnose",
+            "profile": "record_choices",
+            "view": "attempt_prefix",
+            "attempt_index": 0,
+            "candidate_mask": 7,
+            "selected": false,
+            "proposed": false,
+            "scoring_completed": true,
+            "input_index": 0,
+            "declared_budget": 8,
+            "candidate_count": 8,
+            "counts": {
+              "matched": 3,
+              "total": 5,
+              "best": 3,
+              "scored": 1,
+              "budget": 8
+            }
+          },
+          {
+            "activity": "GoooPackage0ActivityDiagnose",
+            "activity_id": "gooo-workspace://activity/gooo-package0activity-diagnose",
+            "profile": "record_choices",
+            "view": "attempt_prefix",
+            "attempt_index": 1,
+            "candidate_mask": 3,
+            "selected": true,
+            "proposed": false,
+            "scoring_completed": true,
+            "input_index": 1,
+            "declared_budget": 8,
+            "candidate_count": 8,
+            "counts": {
+              "matched": 5,
+              "total": 5,
+              "best": 5,
+              "scored": 2,
+              "budget": 8
+            }
+          }
+        ],
+        "model_calls": 0,
+        "scope": "recomputed whole training cases; attempt_prefix for search, scored_set for fills; unscored rows retain reasons without policy inputs; no model call or historical runtime/timing attestation"
+      },
+      "actual_explanations": [
+        [
+          {
+            "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+            "next_operation": "CONTINUE_CANDIDATES",
+            "state": "PROGRESS"
+          }
+        ],
+        [
+          {
+            "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+            "next_operation": "OBSERVE_NEW_INPUTS",
+            "state": "PASS"
+          }
+        ]
+      ]
+    },
+    {
+      "label": "interpretation",
+      "raw_receipt": "interpretation.json",
+      "raw_receipt_sha256": "sha256:bdb318aee60ed23e824911e0314b0be14720dd31334d8be62e3d0d3c3c2dafae",
+      "compiler_revision": "e30df95edd166c0815908200c2a6cc186437fbff",
+      "compiler_tree_clean_at_build": true,
+      "decision": "OBSERVED",
+      "finite_passed": 0,
+      "finite_total": 0,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "NO_RUNTIME_EXPECTATIONS",
+        "unique_inputs": 2,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 2,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_runs": 2,
+      "current_model_calls": 0,
+      "runtime_model_calls": 0,
+      "generated_sha256": "sha256:357ea9435aab23cd847bde1a4fe6e5f9b4fa21802942204536ee2fd3ba13cdec",
+      "command_wall_seconds": 1.154298417,
+      "time_lp_wall_seconds": 1.15,
+      "command_user_seconds": 0.15,
+      "command_system_seconds": 0.11,
+      "command_peak_rss_bytes": 86949888,
+      "raw_time_lp": "real 1.15\nuser 0.15\nsys 0.11\n            86949888  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               13704  page reclaims\n                2879  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 306  signals received\n                 918  voluntary context switches\n                6050  involuntary context switches\n           346502496  instructions retired\n           147041309  cycles elapsed\n            12599848  peak memory footprint\n",
+      "construction_input": {
+        "schema": "gooo/construction-input/v2",
+        "receipt_sha256": "sha256:d6bc5134455348c4b0eb94917e1e199ca33aab7f6b1e97435f15b0a9a7bad376",
+        "source_sha256": "sha256:6db93a7c7b147124e687c8121342b59fde48378e102a7b09376a86a3715738ec",
+        "rows": [
+          {
+            "activity": "GoooPackage0ActivityDiagnose",
+            "activity_id": "gooo-workspace://activity/gooo-package0activity-diagnose",
+            "profile": "record_choices",
+            "view": "attempt_prefix",
+            "attempt_index": 0,
+            "candidate_mask": 7,
+            "selected": false,
+            "proposed": true,
+            "scoring_completed": true,
+            "input_index": 0,
+            "declared_budget": 8,
+            "candidate_count": 8,
+            "counts": {
+              "matched": 3,
+              "total": 5,
+              "best": 3,
+              "scored": 1,
+              "budget": 8
+            }
+          },
+          {
+            "activity": "GoooPackage0ActivityDiagnose",
+            "activity_id": "gooo-workspace://activity/gooo-package0activity-diagnose",
+            "profile": "record_choices",
+            "view": "attempt_prefix",
+            "attempt_index": 1,
+            "candidate_mask": 3,
+            "selected": true,
+            "proposed": false,
+            "scoring_completed": true,
+            "input_index": 1,
+            "declared_budget": 8,
+            "candidate_count": 8,
+            "counts": {
+              "matched": 5,
+              "total": 5,
+              "best": 5,
+              "scored": 2,
+              "budget": 8
+            }
+          }
+        ],
+        "model_calls": 0,
+        "scope": "recomputed whole training cases; attempt_prefix for search, scored_set for fills; unscored rows retain reasons without policy inputs; no model call or historical runtime/timing attestation"
+      },
+      "actual_explanations": [
+        [
+          {
+            "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+            "next_operation": "CONTINUE_CANDIDATES",
+            "state": "PROGRESS"
+          }
+        ],
+        [
+          {
+            "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+            "next_operation": "OBSERVE_NEW_INPUTS",
+            "state": "PASS"
+          }
+        ]
+      ]
+    }
+  ]
+}

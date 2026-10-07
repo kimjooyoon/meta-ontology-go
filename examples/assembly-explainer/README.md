@@ -75,6 +75,12 @@ their reason and `scoring_completed: false`; they receive no policy input and
 their zeroed count fields carry no case measurement. A measured 0/N retains its
 positive denominator. `input_index` maps scored observations to policy outputs.
 
+For record choices, `proposed` identifies the mask in the retained model
+prediction, while `selected` identifies the final candidate after finite
+continuation. They can identify different rows. Deterministic enumeration has
+no model-proposed row. Interpretation checks the retained ranking and candidate
+scores without rerunning that historical model prediction.
+
 For body fills, every candidate is evaluated before selection. These rows use
 `view: scored_set`; all have the final scored-set size and observed best score.
 The declared capacity is the retained plan's candidate set size. `source_fill`

@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.4-dev
-version  = 0.6.4-dev
+tag      = v0.6.5-dev
+version  = 0.6.5-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -24,8 +24,8 @@ receipt.
 |---|---|---|
 | `VALIDATED_MERGE_EVIDENCE` | FOUNDATION | successful push-to-dev readiness run at the exact SHA |
 | `EXPERIMENTAL_RELEASE_IDENTITY` | FOUNDATION | exact tag, version, status, and schema |
-| `RELEASE_PAYLOAD` | COHERENCE | six payload files assembled from validated evidence |
-| `PAYLOAD_CHECKSUMS` | REGRESSION | seven non-checksum release files verify byte-exact |
+| `RELEASE_PAYLOAD` | COHERENCE | seven payload files assembled from validated evidence |
+| `PAYLOAD_CHECKSUMS` | REGRESSION | eight non-checksum release files verify byte-exact |
 | `ANNOTATED_TAG` | FOUNDATION | annotated tag resolves to the validated commit |
 | `DRAFT_PRERELEASE` | COHERENCE | draft prerelease is bound to the tag |
 | `DRAFT_ASSET_SET` | REGRESSION | draft contains the exact nine asset names |
