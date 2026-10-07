@@ -1,0 +1,819 @@
+{
+  "schema": "gooo/release-candidate-dogfood/v1",
+  "compiler": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.6-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.1",
+    "module_version": "v0.6.4-dev.0.20261007203643-da09721eaf4c",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.4-dev.0.20261007203643-da09721eaf4c"
+    },
+    "compiler_source_sha": "da09721eaf4cf835a6c620b5794fe3b95d3eb490",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "da09721eaf4cf835a6c620b5794fe3b95d3eb490",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.24-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.1"
+  },
+  "delivery_state_at_measurement": "LOCAL_CLEAN_CANDIDATE_NOT_PUBLISHED_RELEASE",
+  "model": {
+    "hub_revision": "https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary",
+    "new_training": false,
+    "new_weights_uploaded": false
+  },
+  "sources": {
+    "examples/called-body-construction/app.gooo.fixture": {
+      "sha256": "f9bd02a42315ced4799c7aba5da8b29bb06b0acce8b9d0384fea235c284a0e6d",
+      "bytes": 286
+    },
+    "examples/called-body-construction/cases.json": {
+      "sha256": "de7ca1d0470d01cb59cb43ea2bf5949e7521fd295515f9236ecc62f250b211f9",
+      "bytes": 1366
+    },
+    "examples/called-body-construction/diagnostics.gooo.fixture": {
+      "sha256": "d642e8a8282cbc232b49f8ff5915697b673636d1f8d9b2f6cec036eef46a79c2",
+      "bytes": 2426
+    },
+    "examples/called-body-construction/gooo.workspace.json": {
+      "sha256": "b7774605be0fd962176b0f7e034e781d7e3788b870ee1532422550def380cceb",
+      "bytes": 653
+    },
+    "examples/called-body-construction/inputs.json": {
+      "sha256": "a644b18178fd483e5f2de4ce46a0116fac9aeec6909d72f09fbe366d3642f148",
+      "bytes": 562
+    },
+    "examples/called-body-construction/rules.gooo.fixture": {
+      "sha256": "340cc73d6650b8013753a28f3c711aa6532cdd70924f76ef1e52a38fe805628d",
+      "bytes": 329
+    },
+    "examples/package-assembly-policy/checkpoint.gooo.fixture": {
+      "sha256": "ae44cb0dc1fcce8339b22674f215129d52317d029cd5cdaa98335330e66f59cc",
+      "bytes": 266
+    },
+    "examples/package-assembly-policy/checkpoint.workspace.json": {
+      "sha256": "7e0b1952d5e84f5923a2a9cbd67fef92620ad8e3134c6d80f1e6457bb32d4b54",
+      "bytes": 516
+    },
+    "examples/package-assembly-policy/counts.gooo.fixture": {
+      "sha256": "2c3d9821093dd74cde909a42d290245974dd6e3659b611dd400bb7d188aacab0",
+      "bytes": 1042
+    },
+    "examples/package-assembly-policy/gooo.workspace.json": {
+      "sha256": "d02500e037408cc0f4485152c71fbd6dc78780a8a8f12eed6f9783fd05f9d4a8",
+      "bytes": 509
+    },
+    "examples/package-assembly-policy/policy.gooo.fixture": {
+      "sha256": "b58ee5903d9432b2a0547ddd56c959920dc794f178b4b5bdea9b6925d2f6ef01",
+      "bytes": 1515
+    },
+    "examples/assembly-explainer/cases.json": {
+      "sha256": "c53fc2d58ab34e70ce7bf601b89d62b1db4e0fe045c5313efede8f94cae05433",
+      "bytes": 3261
+    },
+    "examples/assembly-explainer/gooo.workspace.json": {
+      "sha256": "ff88654cf2d414ba1bc26ab50db1a9cc4c093a5879427d94bd4123db2fb55281",
+      "bytes": 273
+    },
+    "examples/assembly-explainer/inputs.json": {
+      "sha256": "39fc943c4e3bcf48a472aec54fe33eb9aabe1ee29f5dff47bbbcbdee876b6e2c",
+      "bytes": 404
+    },
+    "examples/assembly-explainer/main.gooo.fixture": {
+      "sha256": "32003343b2297192e96e2fe640cba83a92a41524b50e19553895df9e94dc148f",
+      "bytes": 2348
+    }
+  },
+  "historical_receipt": {
+    "path": "docs/research/called-input-observation-20261008/model.json",
+    "sha256": "cbe9841702e04238fcd860ce478e830ff30149120bd047223c7531e885c80e46",
+    "bytes": 94812
+  },
+  "method": {
+    "execution_order": [
+      "starter-deterministic",
+      "starter-model",
+      "starter-input-replay",
+      "called-deterministic",
+      "called-model",
+      "historical-replay",
+      "called-checkpoint",
+      "checkpoint-explanation"
+    ],
+    "exit_codes": {
+      "starter-deterministic": 0,
+      "starter-model": 0,
+      "starter-input-replay": 0,
+      "called-deterministic": 0,
+      "called-model": 0,
+      "historical-replay": 0,
+      "called-checkpoint": 0,
+      "checkpoint-explanation": 0
+    },
+    "starter": "Created by this executable with init --template diagnostic --module example.org/release066/diagnostic; all six emitted files retained byte-for-byte as root members of starter.zip.",
+    "paired_scope": "Each deterministic/model pair uses identical source, choices, cases and budgets. Called pair uses the same Gooo continuation policy. Checkpoint uses a different stopping policy.",
+    "historical_replay": "Prior compiler receipt reconstructed by the new binary; no new inference. Retained assembly calls and prediction times describe the original construction.",
+    "checkpoint_explanation": "Gooo reads the actual partial candidate record and returns CONTINUE_CANDIDATES. This is a suggestion; the experiment does not dispatch a continuation. Saved continuation with called preparations is currently unsupported.",
+    "timing_scope": "One local sequential invocation per route after focused tests; includes native compilation and two native executions. Host activity and caches uncontrolled; no general speed claim.",
+    "cpu_scope": "Rounded process user plus system CPU time divided by wall time, including children; host utilization not sampled and model-only increment unmeasured.",
+    "input_scope": "Disjointness relative to recorded construction cases and probes. Nested candidate-scoring argument histories and model-training exposure remain unknown.",
+    "interventions": "Maintainer-authored sources/cases/policies; one init, two version queries and eight explicit workload invocations. No candidate edits or interactive approvals during these invocations. External reproduction/adoption and automatic scheduling not measured."
+  },
+  "runs": {
+    "starter-deterministic": {
+      "decision": "PASS",
+      "assemblies": [
+        {
+          "status": "COMPLETE_FINITE",
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15,
+          "selected_mask": 3,
+          "attempts": 4,
+          "model_calls_recorded": 0,
+          "predict_ns_recorded": 0
+        }
+      ],
+      "new_model_calls": 0,
+      "construction_history_retained": false,
+      "model_observation_retained": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "setup_ms": 0.000166,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+      },
+      "native_expectations": {
+        "passed": 8,
+        "total": 8
+      },
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_outputs": [
+        [
+          {
+            "action": "repair-and-replay",
+            "code": "partial",
+            "message": "네 필드가 남았습니다"
+          },
+          "partial: 네 필드가 남았습니다 [repair-and-replay]"
+        ],
+        [
+          {
+            "action": "expand-examples",
+            "code": "partial",
+            "message": "two outputs differ"
+          },
+          "partial: two outputs differ [expand-examples]"
+        ],
+        [
+          {
+            "action": "accept",
+            "code": "complete",
+            "message": "All observed fields matched."
+          },
+          "complete: All observed fields matched. [accept]"
+        ],
+        [
+          {
+            "action": "fix-counts",
+            "code": "invalid-counts",
+            "message": "count exceeds total"
+          },
+          "invalid-counts: count exceeds total [fix-counts]"
+        ]
+      ],
+      "observed_helper_calls": 0,
+      "generated_sha256": "sha256:430d82fb64cdce043555544ce26f6a33516fe01fd6612f2fb32ff6008fdc58f1",
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "resource_observation": {
+        "wall_seconds": 0.53,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86933504,
+        "average_cpu_percent_of_one_core": 50.94
+      }
+    },
+    "starter-model": {
+      "decision": "PASS",
+      "assemblies": [
+        {
+          "status": "COMPLETE_FINITE",
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15,
+          "selected_mask": 3,
+          "attempts": 2,
+          "model_calls_recorded": 1,
+          "predict_ns_recorded": 15875
+        }
+      ],
+      "new_model_calls": 1,
+      "construction_history_retained": false,
+      "model_observation_retained": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.4165,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      },
+      "native_expectations": {
+        "passed": 8,
+        "total": 8
+      },
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_outputs": [
+        [
+          {
+            "action": "repair-and-replay",
+            "code": "partial",
+            "message": "네 필드가 남았습니다"
+          },
+          "partial: 네 필드가 남았습니다 [repair-and-replay]"
+        ],
+        [
+          {
+            "action": "expand-examples",
+            "code": "partial",
+            "message": "two outputs differ"
+          },
+          "partial: two outputs differ [expand-examples]"
+        ],
+        [
+          {
+            "action": "accept",
+            "code": "complete",
+            "message": "All observed fields matched."
+          },
+          "complete: All observed fields matched. [accept]"
+        ],
+        [
+          {
+            "action": "fix-counts",
+            "code": "invalid-counts",
+            "message": "count exceeds total"
+          },
+          "invalid-counts: count exceeds total [fix-counts]"
+        ]
+      ],
+      "observed_helper_calls": 0,
+      "generated_sha256": "sha256:430d82fb64cdce043555544ce26f6a33516fe01fd6612f2fb32ff6008fdc58f1",
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "resource_observation": {
+        "wall_seconds": 0.34,
+        "user_seconds": 0.15,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 86179840,
+        "average_cpu_percent_of_one_core": 73.53
+      }
+    },
+    "starter-input-replay": {
+      "decision": "OBSERVED",
+      "assemblies": [
+        {
+          "status": "COMPLETE_FINITE",
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15,
+          "selected_mask": 3,
+          "attempts": 2,
+          "model_calls_recorded": 1,
+          "predict_ns_recorded": 15875
+        }
+      ],
+      "new_model_calls": 0,
+      "construction_history_retained": true,
+      "model_observation_retained": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.4165,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      },
+      "native_expectations": {
+        "passed": 0,
+        "total": 0
+      },
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "NO_RUNTIME_EXPECTATIONS",
+        "unique_inputs": 3,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 1,
+        "disjoint_inputs": 2,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_outputs": [
+        [
+          {
+            "action": "repair-and-replay",
+            "code": "partial",
+            "message": "missing branch result"
+          },
+          "partial: missing branch result [repair-and-replay]"
+        ],
+        [
+          {
+            "action": "add-examples",
+            "code": "unobserved",
+            "message": "Add expected observations."
+          },
+          "unobserved: Add expected observations. [add-examples]"
+        ],
+        [
+          {
+            "action": "accept",
+            "code": "complete",
+            "message": "All observed fields matched."
+          },
+          "complete: All observed fields matched. [accept]"
+        ]
+      ],
+      "observed_helper_calls": 0,
+      "generated_sha256": "sha256:430d82fb64cdce043555544ce26f6a33516fe01fd6612f2fb32ff6008fdc58f1",
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "resource_observation": {
+        "wall_seconds": 0.29,
+        "user_seconds": 0.13,
+        "system_seconds": 0.09,
+        "maximum_rss_bytes": 86687744,
+        "average_cpu_percent_of_one_core": 75.86
+      }
+    },
+    "called-deterministic": {
+      "decision": "PASS",
+      "assemblies": [
+        {
+          "status": "COMPLETE_FINITE",
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15,
+          "selected_mask": 3,
+          "attempts": 4,
+          "model_calls_recorded": 0,
+          "predict_ns_recorded": 0
+        }
+      ],
+      "new_model_calls": 0,
+      "construction_history_retained": false,
+      "model_observation_retained": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "setup_ms": 0.000125,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+      },
+      "native_expectations": {
+        "passed": 4,
+        "total": 4
+      },
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_outputs": [
+        [
+          "partial: 네 필드가 남았습니다 [repair-and-replay]"
+        ],
+        [
+          "partial: two outputs differ [expand-examples]"
+        ],
+        [
+          "complete: All observed fields matched. [accept]"
+        ],
+        [
+          "invalid-counts: count exceeds total [fix-counts]"
+        ]
+      ],
+      "observed_helper_calls": 4,
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "resource_observation": {
+        "wall_seconds": 0.61,
+        "user_seconds": 0.17,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86458368,
+        "average_cpu_percent_of_one_core": 45.9
+      }
+    },
+    "called-model": {
+      "decision": "PASS",
+      "assemblies": [
+        {
+          "status": "COMPLETE_FINITE",
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15,
+          "selected_mask": 3,
+          "attempts": 2,
+          "model_calls_recorded": 1,
+          "predict_ns_recorded": 76084
+        }
+      ],
+      "new_model_calls": 1,
+      "construction_history_retained": false,
+      "model_observation_retained": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.168666,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      },
+      "native_expectations": {
+        "passed": 4,
+        "total": 4
+      },
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_outputs": [
+        [
+          "partial: 네 필드가 남았습니다 [repair-and-replay]"
+        ],
+        [
+          "partial: two outputs differ [expand-examples]"
+        ],
+        [
+          "complete: All observed fields matched. [accept]"
+        ],
+        [
+          "invalid-counts: count exceeds total [fix-counts]"
+        ]
+      ],
+      "observed_helper_calls": 4,
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "resource_observation": {
+        "wall_seconds": 0.34,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 87326720,
+        "average_cpu_percent_of_one_core": 79.41
+      }
+    },
+    "historical-replay": {
+      "decision": "PASS",
+      "assemblies": [
+        {
+          "status": "COMPLETE_FINITE",
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15,
+          "selected_mask": 3,
+          "attempts": 2,
+          "model_calls_recorded": 1,
+          "predict_ns_recorded": 12042
+        }
+      ],
+      "new_model_calls": 0,
+      "construction_history_retained": true,
+      "model_observation_retained": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.734625,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      },
+      "native_expectations": {
+        "passed": 4,
+        "total": 4
+      },
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_outputs": [
+        [
+          "partial: 네 필드가 남았습니다 [repair-and-replay]"
+        ],
+        [
+          "partial: two outputs differ [expand-examples]"
+        ],
+        [
+          "complete: All observed fields matched. [accept]"
+        ],
+        [
+          "invalid-counts: count exceeds total [fix-counts]"
+        ]
+      ],
+      "observed_helper_calls": 4,
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "resource_observation": {
+        "wall_seconds": 0.28,
+        "user_seconds": 0.14,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 86425600,
+        "average_cpu_percent_of_one_core": 85.71
+      }
+    },
+    "called-checkpoint": {
+      "decision": "PROGRESS",
+      "assemblies": [
+        {
+          "status": "PARTIAL_FINITE",
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 13,
+          "fields_total": 15,
+          "selected_mask": 7,
+          "attempts": 1,
+          "model_calls_recorded": 1,
+          "predict_ns_recorded": 11959
+        }
+      ],
+      "new_model_calls": 1,
+      "construction_history_retained": false,
+      "model_observation_retained": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.165875,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      },
+      "native_expectations": {
+        "passed": 2,
+        "total": 4
+      },
+      "input_separation": {
+        "status": "PROGRESS",
+        "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 2,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_outputs": [
+        [
+          "partial: 네 필드가 남았습니다 [accept]"
+        ],
+        [
+          "partial: two outputs differ [accept]"
+        ],
+        [
+          "complete: All observed fields matched. [accept]"
+        ],
+        [
+          "invalid-counts: count exceeds total [fix-counts]"
+        ]
+      ],
+      "observed_helper_calls": 4,
+      "generated_sha256": "sha256:8456e21bd5b63087b48452f6ae7d8d7d044533599dc964761942cceeb20b4d37",
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "resource_observation": {
+        "wall_seconds": 0.51,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86114304,
+        "average_cpu_percent_of_one_core": 52.94
+      }
+    },
+    "checkpoint-explanation": {
+      "decision": "OBSERVED",
+      "assemblies": [],
+      "new_model_calls": 0,
+      "construction_history_retained": false,
+      "model_observation_retained": null,
+      "native_expectations": {
+        "passed": 0,
+        "total": 0
+      },
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "NO_RUNTIME_EXPECTATIONS",
+        "unique_inputs": 1,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 1,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "native_outputs": [
+        [
+          {
+            "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+            "next_operation": "CONTINUE_CANDIDATES",
+            "state": "PROGRESS"
+          }
+        ]
+      ],
+      "observed_helper_calls": 0,
+      "generated_sha256": "sha256:357ea9435aab23cd847bde1a4fe6e5f9b4fa21802942204536ee2fd3ba13cdec",
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "resource_observation": {
+        "wall_seconds": 0.9,
+        "user_seconds": 0.14,
+        "system_seconds": 0.12,
+        "maximum_rss_bytes": 86474752,
+        "average_cpu_percent_of_one_core": 28.89
+      }
+    }
+  },
+  "raw_artifacts": {
+    "build.json": {
+      "sha256": "a4d01ba5d3a8f102c67355e8453cd7993da52801095d4feb36bda5763860191c",
+      "bytes": 659
+    },
+    "called-checkpoint.json": {
+      "sha256": "a55f0b9aba29e1d0f13fee943a6b921dc46bc37ec11e29047f88c730ac4dc453",
+      "bytes": 89673
+    },
+    "called-checkpoint.time": {
+      "sha256": "84b2a3adc9cfa54ede315d3e5819b3501dd5c55e09ba711397f819aa3d39a631",
+      "bytes": 777
+    },
+    "called-deterministic.json": {
+      "sha256": "808381ba0166a8d8a5ab1590aea6c9fdf64a17d2a0737a144d6133ee459a36b1",
+      "bytes": 92660
+    },
+    "called-deterministic.time": {
+      "sha256": "82acfbbb27e0859c4d82cc72f306787210abc7aaa3dc864028f8421b398ec209",
+      "bytes": 777
+    },
+    "called-model.json": {
+      "sha256": "ffccfe207564d9ed1e9bec51b397369a58658b4127be1a4ee0d365577fc3c147",
+      "bytes": 94811
+    },
+    "called-model.time": {
+      "sha256": "bc0f16a2a29e5bccf1d5ca5bbb41615f6c7f260a7798ef2b6d9313e7a05e0c87",
+      "bytes": 777
+    },
+    "checkpoint-explanation.json": {
+      "sha256": "eec1ef5b1b56f668c0d694cce1a785e0a38c8b7a559512ca6a9f9b18803bcea1",
+      "bytes": 47151
+    },
+    "checkpoint-explanation.time": {
+      "sha256": "6102bef70bd23c8c39ae20ec7e6632ef1dacf04c9fb7b9634d320772fc3e4143",
+      "bytes": 777
+    },
+    "historical-replay.json": {
+      "sha256": "f4533544315a7130dd664306c9fa0c679bbacd5b0e6c0799ec10bffabf812111",
+      "bytes": 95239
+    },
+    "historical-replay.time": {
+      "sha256": "2a76b7633b9d5d5ce78bbe475157cf9869d3956fc9939ef6aa423e9c8fcdd2fd",
+      "bytes": 777
+    },
+    "starter-deterministic.json": {
+      "sha256": "f71abe716c901a778a05795ce4e48775f0f0d6f3f2017276adcb1677f1491a52",
+      "bytes": 77538
+    },
+    "starter-deterministic.time": {
+      "sha256": "540dcf6afb9173d89f22b39a05caecbbbbf954d853fe9e1d8101c052b11edb3e",
+      "bytes": 777
+    },
+    "starter-input-replay.json": {
+      "sha256": "b34f9b79ccdb0c4e1a40b4a978cb64426099a89d8fb9176a638402018294d918",
+      "bytes": 78188
+    },
+    "starter-input-replay.time": {
+      "sha256": "ee090cc074baf8be1a708e5d9848ec0e2a886087ae06f42f85ff1cbcc5d0fe11",
+      "bytes": 777
+    },
+    "starter-model.json": {
+      "sha256": "ab9535117930853069b61cbd64162a96093745bde8de834e31ea1e18e5037dca",
+      "bytes": 80172
+    },
+    "starter-model.time": {
+      "sha256": "51006e45df21c1e338dba56fd5f41b74ab27f6aba6c47b24b311e722e8746dab",
+      "bytes": 777
+    },
+    "starter.zip": {
+      "sha256": "2aaf6512e0e15370f8ebf12bd06a52e00e28400bfe6911e5d291a465dedcbefd",
+      "bytes": 3864
+    },
+    "version.json": {
+      "sha256": "9c1077688745067e7dfcd4f00e19ab0f162b1c96987b373743ea41ca3241c2db",
+      "bytes": 227
+    }
+  },
+  "generated_starter": {
+    "archive": "starter.zip",
+    "members": {
+      "README.md": {
+        "sha256": "4c77b0190d37db5c57a28bafaef707cf177415d61552d568668c92efadbeb369",
+        "bytes": 2604
+      },
+      "app.gooo": {
+        "sha256": "c9abe6c8372dc07f87961c0d40ec8fbe69c47980433fd74a723d95b50a7cb56a",
+        "bytes": 288
+      },
+      "cases.json": {
+        "sha256": "6d2fc6cb0c612154de22cee5358c6eb0531188208592937085e6fc0d97234335",
+        "bytes": 2852
+      },
+      "diagnostics.gooo": {
+        "sha256": "face53e3c39b6568ed8541780255aad5101420d924a317f1b81ea09883f68949",
+        "bytes": 2650
+      },
+      "gooo.workspace.json": {
+        "sha256": "64586d0a2196bba3d7146df850128721ececb0c7c2c52228540b078ce88b64ca",
+        "bytes": 574
+      },
+      "inputs.json": {
+        "sha256": "29e61b1ead10e26166388919a414791b2e547425fd14d41be814e04e0f73556f",
+        "bytes": 1018
+      }
+    },
+    "restoration": "Extract into an empty directory; member names and bytes match the original init output."
+  },
+  "evidence_packaging": {
+    "prior_head": "9c7167ba524da77a4c7175dbd03f04fc339a0db5",
+    "failed_ci": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/37685519652",
+    "cause": "The two raw .gooo observation files in starter/ were counted as unregistered repository language sources.",
+    "correction": "Archive the original generated project without changing member bytes, paths, measured receipts, compiler identity or corpus rules."
+  }
+}
