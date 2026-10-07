@@ -71,8 +71,10 @@ The closure accepts up to 32 activities including the root, 16 nested calls and
 4,096 calls per root invocation. The compiler rejects recursive cycles, unknown
 or indirect callees, external calls, and callees that still have an `assembling`
 contract. Current bodies use 1..16 scalar or supported record inputs and one
-result. This profile reuses fixed activities from one source; package-qualified
-body calls and model construction inside a callee need additional language work.
+result. Standalone generation resolves fixed activities from one source.
+[Workspace execution](../package-body-calls/README.md) also resolves local-package
+and imported helpers before lowering. Model construction inside a callee remains
+unsupported.
 Existing source-IR fill/search profiles retain their own expression constraints.
 
 ## Recorded use of the own compact model
@@ -114,5 +116,5 @@ small fixture does not establish a general model advantage or external adoption.
 이름뿐 아니라 실제 본문, 입력·출력 타입, 안정 ID와 호출 관계를 함께 기록합니다.
 모델은 선언된 코드 후보의 순서를 제안하고, 재사용하는 판단의 의미는 Gooo에
 남습니다. 실행 진입점을 지정하면 보조 활동에 따로 입력을 제공할 필요가 없습니다.
-다음 단계는 이 호출 관계를 패키지 경계까지 연결하고, 실제 도구에서 반복되는
-판단을 라이브러리로 옮기는 것입니다.
+[패키지 호출 예제](../package-body-calls/README.md)는 이 관계를 가져온 라이브러리까지
+연결합니다. 실제 도구에서 반복되는 판단을 작은 패키지로 옮길 수 있습니다.

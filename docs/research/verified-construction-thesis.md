@@ -276,9 +276,11 @@ repeated partial-completion condition motivated [pure activity
 calls](../../examples/pure-activity-calls/README.md): a fixed Gooo helper can now
 be reused inside a branch, with typed arguments, its own local bindings, bounded
 call relationships and native projection. The same mechanism lets a Gooo assembly
-policy reuse a continuation predicate. These calls currently resolve within one
-source. Package-qualified calls are a next integration task; their binding and
-replay need to preserve package and activity identity. Model training should
+policy reuse a continuation predicate. [Workspace calls](../../examples/package-body-calls/README.md)
+now resolve local-package functions and imported helpers through the calling
+file's aliases. Their records map original package/activity identities to lowered
+names, and replay reconstructs the same closure. The next useful step is to apply
+these libraries to another real tool and keep the newly exposed gaps. Model training should
 follow such concrete construction tasks, retaining the source, attempted
 decisions, counterexamples and outcomes.
 

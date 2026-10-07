@@ -62,7 +62,11 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 	if err != nil {
 		return Result{}, err
 	}
-	composition, err := bodyexecution.GenerateComposition(ctx, "workspace.gooo", current, translated, options.AssemblyModelPath)
+	compositionOptions := bodyexecution.CompositionOptions{ModelPath: options.AssemblyModelPath}
+	if program.PureCalls != nil {
+		compositionOptions.EntryActivity = program.Entry.LoweredName
+	}
+	composition, err := bodyexecution.GenerateCompositionWithOptions(ctx, "workspace.gooo", current, translated, compositionOptions)
 	if err != nil {
 		return Result{}, fmt.Errorf("generate workspace activity bodies: %w", err)
 	}
