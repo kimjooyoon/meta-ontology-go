@@ -85,6 +85,10 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	if err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_LOWER_FAILED", err.Error())
 	}
+	inputSequences, err := discoveryInputSequences(file, ir)
+	if err != nil {
+		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_PORT_SIGNATURE_FAILED", err.Error())
+	}
 	domainContract, contractFailure, err := loadDiscoveryDomainContract(reader, filename, source, domainContractPath)
 	if err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, domainContractPath, contractFailure, err.Error())
@@ -93,7 +97,7 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	if err := trail.Validate(); err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "CAPABILITY_TRAIL_INVALID", err.Error())
 	}
-	receipt := capabilityDiscoveryCompletenessReceipt(filename, source, ir, trail, domainContract)
+	receipt := capabilityDiscoveryCompletenessReceipt(filename, source, ir, inputSequences, trail, domainContract)
 	if err := completeness.Validate(receipt); err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "COMPLETENESS_RECEIPT_INVALID", err.Error())
 	}
@@ -127,11 +131,11 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	return exitOK
 }
 
-func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir semantic.IR, trail jev.CapabilityQueryTrail, domainContract *discoveryDomainContract) *completeness.CompletenessReceipt {
+func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir semantic.IR, inputSequences map[semantic.ID][]semantic.ID, trail jev.CapabilityQueryTrail, domainContract *discoveryDomainContract) *completeness.CompletenessReceipt {
 	sourceDigest := "sha256:" + cache.HashBytes(source).String()
 	semanticDigest := ir.StableHash()
 	matchStatus, matchNumerator := capabilityCatalogMatchState(trail.Response.Status)
-	declarationCoverage := discoveryDeclarationCoverage(ir, domainContract)
+	declarationCoverage := discoveryDeclarationCoverage(ir, inputSequences, domainContract)
 	dimensions := []completeness.CompletenessDimension{
 		declarationCoverage,
 		{ID: "capability_discovery_observation", Status: "PASS", Numerator: 1, Denominator: 1,

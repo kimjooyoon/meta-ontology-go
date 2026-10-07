@@ -162,11 +162,13 @@ source and normalized semantic IR, and emits the same generated receipt schema.
 Without a separate domain contract, declaration coverage is `UNKNOWN` with a
 zero denominator; the target source is not allowed to define its own scope. With
 `--domain-contract <contract.gooo>`, the compiler compares the contract's
-stable declaration IDs, kinds, namespaces, entity fields, and typed activity
-ports against the target and records both contract digests. That is declared
-scope coverage only. Activity-body correctness, independent use-case execution,
-generation, permission/network observations, and reverse observation remain
-separate; a catalog match is not a semantic success score.
+stable declaration IDs, kinds, namespaces, entity fields, and ordered typed
+activity ports against the target and records both contract digests. Reordering
+typed activity inputs is a shape mismatch and is identified in receipt
+evidence. That is declared scope coverage only. Activity-body correctness,
+independent use-case execution, generation, permission/network observations,
+and reverse observation remain separate; a catalog match is not a semantic
+success score.
 
 The CI language-utility contract v2 now includes one source-bound discovery
 case. It runs the same query twice and requires byte-identical report output,

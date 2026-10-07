@@ -144,6 +144,44 @@ activity Issue(Invoice) -> Receipt
 	}
 }
 
+func TestDiscoverPreservesOrderedTypedActivityInputsInDeclarationCoverage(t *testing.T) {
+	const source = `package billing
+namespace billing
+entity Integer id "billing://integer"
+entity Text id "billing://text"
+activity Merge(Integer, Text) -> Text computes "return input1"
+`
+	const contract = `package billing_contract
+namespace billing
+entity Integer id "billing://integer"
+entity Text id "billing://text"
+activity Merge(Text, Integer) -> Text
+`
+	reader := runSourceReaderWithFiles{
+		"main.gooo":   []byte(source),
+		"domain.gooo": []byte(contract),
+	}
+	var stdout, stderr bytes.Buffer
+	code := runDiscover([]string{"--json", "--query", "How do I merge a billing value?", "--domain-contract", "domain.gooo", "main.gooo"},
+		reader, &stdout, &stderr)
+	if code != exitOK || stderr.Len() != 0 {
+		t.Fatalf("discover code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
+	}
+	var report capabilityDiscoveryReport
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+		t.Fatal(err)
+	}
+	coverage := completenessDimension(report.Receipt, "declaration_coverage")
+	if coverage.Status != "PROGRESS" || coverage.Numerator != 2 || coverage.Denominator != 3 {
+		t.Fatalf("reversed typed ports were counted as the same declaration: %#v", coverage)
+	}
+	evidence := strings.Join(coverage.Evidence, "\n")
+	if !strings.Contains(evidence, `input_port_order_mismatches:[{"contract_input_order":["billing://text","billing://integer"]`) ||
+		!strings.Contains(evidence, `"source_input_order":["billing://integer","billing://text"]`) {
+		t.Fatalf("receipt did not explain the ordered-port mismatch: %q", evidence)
+	}
+}
+
 func dimensionStatus(receipt *completeness.CompletenessReceipt, id string) string {
 	return completenessDimension(receipt, id).Status
 }
