@@ -46,10 +46,42 @@ remain `UNKNOWN`. An observed 0/N result with candidates still available returns
 the budget, or request an expanded choice set. It returns the next operation as
 data; consuming that operation is a separate application step.
 
-These inputs are supplied observations. This small program does not read a
-generation receipt or establish the observations' provenance by itself. Use the
-original source and receipt when adapting a real assembly result. Changing the
-source conditions changes the tool; no Go classification branch needs editing.
+These fields can come from caller input or the construction receipt adapter
+below. Changing the source conditions changes the tool; no Go classification
+branch needs editing.
+
+## Interpret an actual construction receipt
+
+```sh
+gooo package execute --json \
+  --construction-receipt docs/research/domain-tools-20261007/documentation-model.json \
+  examples/assembly-explainer/gooo.workspace.json
+```
+
+The adapter reconstructs the saved source-owned record choices and their finite
+scores using the existing composition replay. Each attempted candidate becomes
+one input row for the Gooo entry. Counts use whole construction cases; they do
+not use the historical runtime counters or the number of matching record fields.
+The observation carries the original receipt hash, activity, candidate mask,
+attempt index and source-declared budget in `construction_input`.
+
+The example records a model's first candidate matching 2/3 cases, then a candidate
+matching 3/3. Gooo returns `CONTINUE_CANDIDATES` followed by `OBSERVE_NEW_INPUTS`.
+`best` includes only candidates already observed at that point. `scored` counts
+candidate attempts, including any type rejection, and `budget` is capped by the
+declared candidate space so an exhausted space cannot appear to have work left.
+
+This interpretation makes zero model calls. The target Gooo tool is compiled and
+executed twice with no supplied expected answers, so its outer result remains
+`OBSERVED` with 0/0 runtime expectations. The returned recommendations describe
+the recorded construction sequence; they do not execute a repair or establish
+correctness on new program inputs.
+
+The current adapter handles source-owned record-choice compositions with no
+preceding body-fill stage, and at most 128 attempted-candidate rows per request.
+It passes the five-field input contract to the target manifest's entry; this
+example uses a single ordinary entry activity. `--construction-receipt`,
+`--cases` and `--inputs` are mutually exclusive.
 
 ## Check the tool separately
 

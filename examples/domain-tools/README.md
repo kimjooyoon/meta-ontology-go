@@ -98,3 +98,12 @@ build/execution, reported about 86 MB maximum RSS. The summary retains exact
 process measurements; host CPU utilization was not sampled. The runs were single
 sequential pairs with uncontrolled caches, so this observation establishes the
 candidate counts and finite outcomes rather than a general speed advantage.
+
+## Let another Gooo tool explain the recorded attempts
+
+The [assembly explainer](../assembly-explainer/README.md#interpret-an-actual-construction-receipt)
+can consume these records directly with `package execute --construction-receipt`.
+The adapter reconstructs the candidate observations, then Gooo interprets each
+attempt using its source-defined rules. The saved documentation-model run yields
+“continue candidates” for its first 2/3 result and “observe new inputs” for the
+following 3/3 result, with zero additional model calls.
