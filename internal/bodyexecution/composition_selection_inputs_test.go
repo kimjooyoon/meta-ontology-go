@@ -25,7 +25,7 @@ func TestCompositionSelectionInputsIncludeSourceHoldout(t *testing.T) {
 	for input, want := range map[string]bool{"-2": true, "9223372036854775807": true,
 		"9007199254740992": false, "9007199254740993": false} {
 		key, err := graph.selectionInputKey(graph.nodes[0], []json.RawMessage{json.RawMessage(input)})
-		_, found := seen[0][key]
+		_, found := seen.nodes[0][key]
 		if err != nil || found != want {
 			t.Fatalf("source selection/holdout identity %s: %v %v", input, found, err)
 		}

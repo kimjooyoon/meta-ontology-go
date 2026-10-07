@@ -24,7 +24,9 @@ func TestPackageCalledBodyConstructionPolicyReplayAndExplanation(t *testing.T) {
 	}
 	r := receipt.Result
 	if r == nil || r.Runtime.FinitePassed != 4 || len(r.Composition.Preparations) != 1 ||
-		len(r.Program.Activities) != 1 || r.AssemblyPolicy == nil || r.Runtime.InputSeparation.Status != "UNKNOWN" {
+		len(r.Program.Activities) != 1 || r.AssemblyPolicy == nil || r.Runtime.InputSeparation.Status != "PASS" ||
+		r.Runtime.InputSeparation.DisjointCasesPassed != 4 || len(r.Runtime.Traces[3].Calls) != 1 ||
+		string(r.Runtime.Traces[3].Calls[0].Inputs[0]) != "9007199254740994" {
 		t.Fatal("called package body was not constructed", out.String())
 	}
 	record := r.Composition.Preparations[0].Generation.Report.RecordAssembly
@@ -58,7 +60,8 @@ func checkCalledPackageReplay(t *testing.T, root, path string) {
 	}
 	var replay packageExecutionReceipt
 	if err := json.Unmarshal(out.Bytes(), &replay); err != nil || replay.Result.Runtime.FinitePassed != 4 ||
-		replay.Result.Replay.ModelCalls != 0 || len(replay.Result.Composition.Preparations) != 1 {
+		replay.Result.Replay.ModelCalls != 0 || len(replay.Result.Composition.Preparations) != 1 ||
+		replay.Result.Runtime.InputSeparation.DisjointCasesPassed != 4 {
 		t.Fatal("called construction not retained on replay", err, out.String())
 	}
 }

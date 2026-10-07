@@ -62,6 +62,7 @@ func compositionArtifactKey(prior Composition, r *CompositionRuntime, goBinary s
 	env := childEnvironment()
 	sort.Strings(env)
 	raw, _ := json.Marshal([]any{"gooo/value-graph-driver/v1", prior.GeneratedSHA256, prior.DriverSHA256,
+		r.ObservedProjectionSHA256, r.ObservedDriverSHA256,
 		r.GoToolSHA256, goBinary, r.GoVersion, runtime.GOOS, runtime.GOARCH, r.ProducerSourceSHA, runtime.Version(), env})
 	return digest(raw)
 }
@@ -69,6 +70,13 @@ func compositionArtifactKey(prior Composition, r *CompositionRuntime, goBinary s
 func compositionExecutableFor(ctx context.Context, prior Composition, goBinary string,
 	r *CompositionRuntime, owner *Executor) (root, executable string, release func(), err error) {
 	release = func() {}
+	projection, driver, err := observedCompositionSources(prior)
+	if err != nil {
+		return "", "", release, err
+	}
+	if len(prior.Preparations) > 0 {
+		r.ObservedProjectionSHA256, r.ObservedDriverSHA256 = digest([]byte(projection)), digest([]byte(driver))
+	}
 	key := ""
 	if owner != nil {
 		key = compositionArtifactKey(prior, r, goBinary)
@@ -96,7 +104,7 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 		return "", "", release, err
 	}
 	release = func() { _ = os.RemoveAll(root) }
-	executable, err = buildCompositionExecutable(ctx, root, prior.Source, prior.Driver, goBinary, r)
+	executable, err = buildCompositionExecutable(ctx, root, projection, driver, goBinary, r)
 	if err != nil {
 		return root, executable, release, err
 	}

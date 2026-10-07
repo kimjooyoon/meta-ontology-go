@@ -255,6 +255,31 @@ feedback without input identities also leaves the measurement `UNKNOWN`.
 Model-training exposure remains unknown; this finite fraction describes only
 the recorded input boundary. The metric is descriptive and adds no CI gate.
 
+Called-body construction also records actual helper arguments at native function
+entry in `traces[].calls`, with the helper and enclosing graph activity IDs.
+`called_inputs_observed` distinguishes a completed observation with no executed
+call from a missing observation. New root values can therefore be classified as
+overlapping when the caller maps them to a previously seen helper input. Repeated
+and nested calls retain their execution order; every executed constructed input
+must be disjoint for a case to receive disjoint-input credit. A path that executes
+no constructed activity remains unknown.
+
+The runtime derives an instrumented projection and driver after replaying the
+saved construction. Their separate `observed_projection_sha256` and
+`observed_driver_sha256` bind that observation. The saved pure projection and its
+digest are preserved. Both native runs must produce identical outputs and call
+observations. The retained executor also keys its artifact by these observation
+digests and observes current arguments on each invocation.
+
+Calls made while scoring another assembling body's candidates are a remaining
+boundary. Their argument histories are not yet recorded. If such dependencies
+exist, an apparent new input remains `UNKNOWN` with
+`CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED`; a directly recorded overlap can still be
+identified. This preserves the difference between runtime observations and the
+input history used during construction. The call recorder bounds observations
+to 65,536 per root case, matching 16 graph activities with at most 4,096 calls
+each; the existing execution time and output-size limits also apply.
+
 Workspace execution also includes body fills completed before composition.
 The earlier fill's selected body is matched to the executed activity, and its
 training, holdout and probe tuples join the known-input sets. A new root can

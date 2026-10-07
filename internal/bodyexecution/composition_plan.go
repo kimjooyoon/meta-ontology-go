@@ -58,6 +58,7 @@ type compositionGraph struct {
 	nodes    [compositionLimit]CompositionActivity
 	count    int
 	deferred map[string]bool
+	called   map[string]CompositionActivity
 }
 
 func (graph *compositionGraph) index(id string) int {
