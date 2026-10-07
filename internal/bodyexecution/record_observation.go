@@ -91,6 +91,7 @@ func observeRecordAttempts(report bodycodegen.Report, budget int) []Construction
 	for i, a := range r.Attempts {
 		row := ConstructionObservation{Activity: report.Activity, ActivityID: report.ActivityID,
 			Profile: "record_choices", View: "attempt_prefix", AttemptIndex: &i, CandidateMask: &a.Mask,
+			Proposed: r.Prediction != nil && a.Mask == r.Prediction.Mask,
 			Selected: a.Mask == r.SelectedMask, AttemptStatus: a.Status, Reason: a.Reason,
 			DeclaredBudget: budget, CandidateCount: len(r.Ranking), ScoringCompleted: a.Total > 0}
 		if row.ScoringCompleted {
