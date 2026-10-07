@@ -63,6 +63,39 @@ The final three files form the actual runnable program; `main.go` contains the
 generated input delivery calls. Selected source checkpoints are retained in
 `realized.gooo` and can be the source of another composition request.
 
+## Source IR search across activities
+
+A source `search hole` contract can now participate in the same explicit-bind
+graph. Each activity enumerates its declared integer grammar, uses its own
+attempt budget and finite selection cases, then emits a checked body. Holdout
+cases are observed after selection. The selected expression and finite evidence
+are replayed before the completed source is handed to the next activity.
+
+```sh
+gooo body-compose \
+  --source examples/body-codegen/source-search-composition.gooo.fixture \
+  --cases examples/body-codegen/source-search-composition-cases.json \
+  --out /tmp/gooo-source-search-composition
+```
+
+The example connects negative-value normalization, an offset search and a
+Boolean check. Five runtime inputs carry 15 named expectations, including
+integers above JavaScript's exact-number range. `realized.gooo` contains the
+selected ordinary bodies; their consumed `search` blocks are removed. Original
+contracts and selection/holdout receipts stay in `original.gooo` and
+`composition.json`. A saved composition reconstructs every checkpoint and
+checks the selected expressions against the original candidate sets before
+executing, with zero model calls.
+
+For a single saved source-search generation, `body-realize --source ...
+--generation ... --out <new-directory>` produces the same kind of reusable checkpoint.
+
+This composition route uses deterministic ordering for source IR search.
+`--model` applies to choice-based scalar or record assembly in a mixed graph;
+a graph containing only source IR search rejects that option before loading a
+model. No provider is inferred from environment variables in `body-compose`.
+Multi-hole `source_fill` plans still use the separate `body-codegen` route.
+
 ## One activity without a synthetic bind
 
 A single activity is a complete executable plan by itself. Its case keys use
