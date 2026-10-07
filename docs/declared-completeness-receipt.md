@@ -167,8 +167,14 @@ output stable ID and evidence input type must match the profile contract. An
 unknown metric or disconnected measurement fails closed. This removes the
 separate Go-maintained list of dimensions, while the bounded measurement
 implementations themselves remain Go adapters rather than interpreted Gooo
-bodies. The source declaration controls which registered measurements are
-assembled and in what order.
+bodies. The four-state classification rule is now a body-bearing
+`ClassifyDomainCompleteness` activity in the same Gooo profile. Gooo generates
+the Go projection consumed by the measurement adapters, and every receipt run
+re-generates that body deterministically and rejects a byte mismatch before
+measuring. The source declaration therefore owns the roster, order, and
+PASS/PROGRESS/UNKNOWN/FAIL_CLOSED decision semantics; evidence acquisition and
+the six bounded metric evaluators remain Go adapters. The classifier's ordered
+inputs are numerator, denominator, unknown-unit count, and contradiction flag.
 
 Without a separate domain contract, declaration coverage is `UNKNOWN` with a
 zero denominator; the target source is not allowed to define its own scope. With

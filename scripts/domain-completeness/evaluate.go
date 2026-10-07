@@ -12,6 +12,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/domaincompleteness"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageutility"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -78,6 +79,9 @@ func evaluate(
 	profileRaw, err := os.ReadFile(profilePath)
 	if err != nil {
 		return Report{}, nil, nil, baselineArtifact{}, fmt.Errorf("read profile: %w", err)
+	}
+	if err := domaincompleteness.VerifyGeneratedProjection(profilePath, profileRaw); err != nil {
+		return Report{}, nil, nil, baselineArtifact{}, err
 	}
 	profileModel, err := compileProfile(profilePath, profileRaw)
 	if err != nil {
@@ -729,19 +733,9 @@ func newDimension(spec dimensionSpec, denominator int) Dimension {
 }
 
 func classify(numerator, denominator, unknown int, refuted bool) string {
-	if refuted || numerator < 0 || denominator < 0 || numerator > denominator {
-		return "FAIL_CLOSED"
-	}
-	if denominator <= 0 || unknown > 0 {
-		return "UNKNOWN"
-	}
-	if numerator == denominator {
-		return "PASS"
-	}
-	if numerator > 0 {
-		return "PROGRESS"
-	}
-	return "UNKNOWN"
+	return domaincompleteness.ClassifyDomainCompleteness(
+		int64(numerator), int64(denominator), int64(unknown), refuted,
+	)
 }
 
 func unknown(dimension Dimension, reason, operation string) Dimension {
