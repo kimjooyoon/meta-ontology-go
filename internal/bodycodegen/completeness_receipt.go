@@ -305,8 +305,12 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 	if len(report.RecordTypes) > 0 {
 		receipt.Scope["record_types"] = append([]RecordType(nil), report.RecordTypes...)
 		if hasOptionalRecordFields(report.RecordTypes) {
-			receipt.Scope["record_body_scope"] = "optional single scalar fields use typed pointers for copy and transport; learned optional-value synthesis is outside this profile"
-			receipt.NotClaimed = append(receipt.NotClaimed, "learned synthesis of optional record values")
+			if report.RecordAssembly != nil {
+				receipt.Scope["record_body_scope"] = "optional single scalar fields use typed pointers for copy, transport, and source-declared bounded field synthesis; finite case results report presence separately from zero values"
+			} else {
+				receipt.Scope["record_body_scope"] = "optional single scalar fields use typed pointers for copy and transport; source-declared field synthesis requires record assembly"
+				receipt.NotClaimed = append(receipt.NotClaimed, "source-declared synthesis of optional record values")
+			}
 		}
 	}
 	if report.BodyPaths != nil {

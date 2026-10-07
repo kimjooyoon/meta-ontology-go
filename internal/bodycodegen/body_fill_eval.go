@@ -165,6 +165,9 @@ func (e *integerBodyEvaluator) evaluateExpression(expression ast.Expr) (any, err
 	case *ast.SelectorExpr:
 		return e.evaluateRecordField(value)
 	case *ast.Ident:
+		if value.Name == "nil" {
+			return recordBodyOptionalScalar{}, nil
+		}
 		result, ok := e.environment[e.information.Uses[value]]
 		if !ok {
 			return nil, fmt.Errorf("unbound identifier %q", value.Name)
@@ -190,6 +193,16 @@ func (e *integerBodyEvaluator) evaluateExpression(expression ast.Expr) (any, err
 				return nil, fmt.Errorf("logical not operand is %T", operand)
 			}
 			return !truth, nil
+		case token.AND:
+			kind, optional, err := recordBodyScalarKind(typed.Type)
+			if err != nil || !optional {
+				return nil, fmt.Errorf("address-of expression is outside the optional scalar profile")
+			}
+			scalar, err := recordBodyScalarFromValue(operand, kind)
+			if err != nil {
+				return nil, err
+			}
+			return recordBodyOptionalScalar{Present: true, Value: scalar}, nil
 		default:
 			return nil, fmt.Errorf("unsupported generated unary operator %s", value.Op)
 		}

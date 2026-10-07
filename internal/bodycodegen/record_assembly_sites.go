@@ -73,6 +73,9 @@ func (c *recordSiteCollector) add(recordName, fieldName string, expression ast.E
 		}
 		start, end := c.fset.Position(expression.Pos()).Offset-c.base, c.fset.Position(expression.End()).Offset-c.base
 		choice := RecordValueChoice{RecordID: record.ID, FieldID: field.ID, Field: fieldName, First: c.body.body[start:end]}
+		if field.Presence == "optional" {
+			choice.TypeID, choice.Presence = field.TypeID, field.Presence
+		}
 		if kind == "field_update" {
 			choice.Kind = kind
 		}

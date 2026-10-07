@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Build": {"label": "", "emit": true, "active": false, "amount": 0}
+      },
+      "expected": {
+        "Build": {"note": "", "active": false, "total": 0},
+        "Echo": {"note": "", "active": false, "total": 0}
+      }
+    },
+    {
+      "inputs": {
+        "Build": {"label": "discard", "emit": false, "active": true, "amount": 42}
+      },
+      "expected": {
+        "Build": {},
+        "Echo": {}
+      }
+    }
+  ]
+}

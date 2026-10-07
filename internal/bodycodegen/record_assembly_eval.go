@@ -21,6 +21,12 @@ type recordBodyScalar struct {
 	Boolean bool
 	Integer int64
 	Kind    uint8
+	Present bool
+}
+
+type recordBodyOptionalScalar struct {
+	Present bool
+	Value   recordBodyScalar
 }
 
 type recordBodyValue struct {
@@ -40,18 +46,94 @@ func zeroRecordBodyValue(t types.Type) (recordBodyValue, error) {
 	}
 	value := recordBodyValue{Type: named.Obj().Name(), Count: structure.NumFields()}
 	for field := 0; field < structure.NumFields(); field++ {
-		switch structure.Field(field).Type() {
-		case types.Typ[types.String]:
-			value.Values[field].Kind = 1
-		case types.Typ[types.Bool]:
-			value.Values[field].Kind = 2
-		case types.Typ[types.Int64]:
-			value.Values[field].Kind = 3
-		default:
-			return recordBodyValue{}, fmt.Errorf("record field type is outside the scalar profile")
+		kind, optional, err := recordBodyScalarKind(structure.Field(field).Type())
+		if err != nil {
+			return recordBodyValue{}, err
 		}
+		value.Values[field] = recordBodyScalar{Kind: kind, Present: !optional}
 	}
 	return value, nil
+}
+
+func recordBodyScalarKind(valueType types.Type) (uint8, bool, error) {
+	optional := false
+	if pointer, ok := valueType.(*types.Pointer); ok {
+		optional = true
+		valueType = pointer.Elem()
+	}
+	basic, ok := valueType.Underlying().(*types.Basic)
+	if !ok {
+		return 0, optional, fmt.Errorf("record field type is outside the scalar profile")
+	}
+	switch basic.Kind() {
+	case types.String:
+		return 1, optional, nil
+	case types.Bool:
+		return 2, optional, nil
+	case types.Int64:
+		return 3, optional, nil
+	default:
+		return 0, optional, fmt.Errorf("record field type is outside the scalar profile")
+	}
+}
+
+func recordBodyScalarFromValue(value any, kind uint8) (recordBodyScalar, error) {
+	scalar := recordBodyScalar{Kind: kind, Present: true}
+	switch kind {
+	case 1:
+		text, ok := value.(string)
+		if !ok {
+			return recordBodyScalar{}, fmt.Errorf("record field requires text, got %T", value)
+		}
+		scalar.Text = text
+	case 2:
+		truth, ok := value.(bool)
+		if !ok {
+			return recordBodyScalar{}, fmt.Errorf("record field requires a Boolean, got %T", value)
+		}
+		scalar.Boolean = truth
+	case 3:
+		integer, ok := value.(int64)
+		if !ok {
+			return recordBodyScalar{}, fmt.Errorf("record field requires an integer, got %T", value)
+		}
+		scalar.Integer = integer
+	default:
+		return recordBodyScalar{}, fmt.Errorf("record field has an unsupported scalar kind")
+	}
+	return scalar, nil
+}
+
+func recordBodyScalarForField(value any, fieldType types.Type) (recordBodyScalar, error) {
+	kind, optional, err := recordBodyScalarKind(fieldType)
+	if err != nil {
+		return recordBodyScalar{}, err
+	}
+	if optional {
+		pointer, ok := value.(recordBodyOptionalScalar)
+		if !ok {
+			return recordBodyScalar{}, fmt.Errorf("optional record field assignment requires a pointer value or nil")
+		}
+		if !pointer.Present {
+			return recordBodyScalar{Kind: kind}, nil
+		}
+		return recordBodyScalarFromValue(recordBodyScalarValue(pointer.Value), kind)
+	}
+	if _, ok := value.(recordBodyOptionalScalar); ok {
+		return recordBodyScalar{}, fmt.Errorf("required record field assignment does not accept an optional value")
+	}
+	return recordBodyScalarFromValue(value, kind)
+}
+
+func recordBodyScalarValue(value recordBodyScalar) any {
+	switch value.Kind {
+	case 2:
+		return value.Boolean
+	case 3:
+		return value.Integer
+	default:
+		return value.Text
+	}
 }
 
 func (e *integerBodyEvaluator) evaluateRecordLiteral(literal *ast.CompositeLit) (any, error) {
@@ -75,25 +157,9 @@ func (e *integerBodyEvaluator) evaluateRecordLiteral(literal *ast.CompositeLit) 
 		}
 		for i := 0; i < structure.NumFields(); i++ {
 			if structure.Field(i).Name() == key.Name {
-				switch structure.Field(i).Type() {
-				case types.Typ[types.Bool]:
-					boolean, ok := assigned.(bool)
-					if !ok {
-						return nil, fmt.Errorf("record field requires a Boolean")
-					}
-					value.Values[i].Boolean = boolean
-				case types.Typ[types.Int64]:
-					integer, ok := assigned.(int64)
-					if !ok {
-						return nil, fmt.Errorf("record field requires an integer")
-					}
-					value.Values[i].Integer = integer
-				default:
-					text, ok := assigned.(string)
-					if !ok {
-						return nil, fmt.Errorf("record field requires text")
-					}
-					value.Values[i].Text = text
+				value.Values[i], err = recordBodyScalarForField(assigned, structure.Field(i).Type())
+				if err != nil {
+					return nil, err
 				}
 			}
 		}
@@ -113,14 +179,12 @@ func (e *integerBodyEvaluator) evaluateRecordField(selector *ast.SelectorExpr) (
 	structure := e.information.Types[selector.X].Type.Underlying().(*types.Struct)
 	for i := 0; i < structure.NumFields(); i++ {
 		if structure.Field(i).Name() == selector.Sel.Name {
-			switch structure.Field(i).Type() {
-			case types.Typ[types.Bool]:
-				return record.Values[i].Boolean, nil
-			case types.Typ[types.Int64]:
-				return record.Values[i].Integer, nil
-			default:
-				return record.Values[i].Text, nil
+			if _, optional, err := recordBodyScalarKind(structure.Field(i).Type()); err != nil {
+				return nil, err
+			} else if optional {
+				return recordBodyOptionalScalar{Present: record.Values[i].Present, Value: record.Values[i]}, nil
 			}
+			return recordBodyScalarValue(record.Values[i]), nil
 		}
 	}
 	return nil, fmt.Errorf("record field is not declared")
@@ -200,15 +264,29 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 	result := RecordAssemblyCase{Inputs: json.RawMessage(c.Inputs), Expected: json.RawMessage(c.Expected), Passed: actual == wanted}
 	object := make(map[string]any, len(record.Fields))
 	for i, field := range record.Fields {
-		actualValue := recordScalarJSONValue(actual.Values[i])
-		expectedValue := recordScalarJSONValue(wanted.Values[i])
-		object[field.Name] = actualValue
+		actualScalar, expectedScalar := actual.Values[i], wanted.Values[i]
+		actualValue, expectedValue := "ABSENT", "ABSENT"
+		if actualScalar.Present {
+			actualValue = fmt.Sprint(recordScalarJSONValue(actualScalar))
+		}
+		if expectedScalar.Present {
+			expectedValue = fmt.Sprint(recordScalarJSONValue(expectedScalar))
+		}
 		typeID := ""
 		if field.TypeID == "urn:gooo:type:boolean" || field.TypeID == "urn:gooo:type:integer" {
 			typeID = field.TypeID
 		}
-		result.Fields = append(result.Fields, RecordAssemblyField{ID: field.ID, Name: field.Name, TypeID: typeID, Expected: fmt.Sprint(expectedValue),
-			Actual: fmt.Sprint(actualValue), Passed: actual.Values[i] == wanted.Values[i]})
+		fieldResult := RecordAssemblyField{ID: field.ID, Name: field.Name, TypeID: typeID, Expected: expectedValue,
+			Actual: actualValue, Passed: actualScalar == expectedScalar}
+		if field.Presence == "optional" {
+			fieldResult.Presence = field.Presence
+			fieldResult.ExpectedPresent = boolPointer(expectedScalar.Present)
+			fieldResult.ActualPresent = boolPointer(actualScalar.Present)
+		}
+		result.Fields = append(result.Fields, fieldResult)
+		if actualScalar.Present || field.Presence != "optional" {
+			object[field.Name] = recordScalarJSONValue(actualScalar)
+		}
 	}
 	result.Actual, _ = json.Marshal(object)
 	return result, nil
@@ -224,8 +302,23 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 			return nil, fmt.Errorf("record type is not declared")
 		}
 		var object map[string]json.RawMessage
-		if err := json.Unmarshal(raw, &object); err != nil || len(object) != len(record.Fields) {
+		required := 0
+		for _, field := range record.Fields {
+			if field.Presence != "optional" {
+				required++
+			}
+		}
+		if err := json.Unmarshal(raw, &object); err != nil || len(object) < required || len(object) > len(record.Fields) {
 			return nil, fmt.Errorf("record requires exactly its declared fields")
+		}
+		declared := make(map[string]bool, len(record.Fields))
+		for _, field := range record.Fields {
+			declared[field.Name] = true
+		}
+		for name := range object {
+			if !declared[name] {
+				return nil, fmt.Errorf("record field %q is not declared", name)
+			}
 		}
 		value, err := zeroRecordBodyValue(t)
 		if err != nil {
@@ -234,6 +327,9 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 		for i, field := range record.Fields {
 			fieldRaw, ok := object[field.Name]
 			if !ok {
+				if field.Presence == "optional" {
+					continue
+				}
 				return nil, fmt.Errorf("record field %q is missing", field.Name)
 			}
 			fieldType := types.Type(types.Typ[types.String])
@@ -246,13 +342,13 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 			if err != nil {
 				return nil, err
 			}
-			switch fieldType {
-			case types.Typ[types.Bool]:
-				value.Values[i].Boolean = decoded.(bool)
-			case types.Typ[types.Int64]:
-				value.Values[i].Integer = decoded.(int64)
-			default:
-				value.Values[i].Text = decoded.(string)
+			kind, _, err := recordBodyScalarKind(fieldType)
+			if err != nil {
+				return nil, err
+			}
+			value.Values[i], err = recordBodyScalarFromValue(decoded, kind)
+			if err != nil {
+				return nil, err
 			}
 		}
 		return value, nil
@@ -277,11 +373,7 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 }
 
 func recordScalarJSONValue(value recordBodyScalar) any {
-	if value.Kind == 3 {
-		return value.Integer
-	}
-	if value.Kind == 2 {
-		return value.Boolean
-	}
-	return value.Text
+	return recordBodyScalarValue(value)
 }
+
+func boolPointer(value bool) *bool { return &value }

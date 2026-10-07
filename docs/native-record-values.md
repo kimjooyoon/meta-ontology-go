@@ -113,8 +113,11 @@ also projects optional single scalar fields to Go pointers. Pure record-body
 codegen and `body-compose` can copy these values and carry them over explicit
 binds. Runtime field observations retain the stable field ID and an explicit
 present flag, so absence remains distinct from an empty string, `false` or `0`.
-This bounded path does not synthesize optional values through learned field
-assembly.
+Source-declared record assembly can choose `nil` for absence or synthesize a
+present optional scalar from a typed local. Its finite receipt records expected
+and actual presence separately. The [optional synthesis example](record-field-assembly.md#synthesize-optional-fields)
+covers all three scalar types; its cases remain finite evidence rather than a
+whole-domain guarantee.
 
 The runnable [Boolean record-binding source](../examples/language-record-binding/boolean.gooo.fixture)
 and [input](../examples/language-record-binding/boolean-input.json) carry a
