@@ -67,6 +67,14 @@ records the current executable's module separately from the prior execution.
 These fields do not change the declared choices, finite scores or acceptance
 rules. The Go version running native child programs remains a separate value.
 
+The [module-install observation](../research/module-build-origin-20261008/summary.json)
+reinstalls the public compiler before and after this change. The existing own
+model still selects the same generated program with 8/8 expected outputs. The
+new compiler replays the older receipt at 8/8 and observes three input-only
+rows with zero new inference calls. A separate single-body run matches 7/7
+expectations and retains the same module in its completeness scope. Raw records,
+module build information and measurement limits are included in that study.
+
 ## Library construction and model choices
 
 To use the local compact model for the source-declared assignment, pass its
