@@ -97,7 +97,7 @@ func generateWithRecordIRBodyFillOptions(
 	if ctx == nil {
 		return Result{}, fmt.Errorf("record body-fill context is required")
 	}
-	usingTinyGo := tinyProvider != nil
+	usingTinyGo := bodyFillUsesTinyGo(options, tinyProvider)
 	if usingTinyGo && (endpoint != "" || apiKey != "" || plan.ProviderModel != "") {
 		return Result{}, fmt.Errorf("tiny_go record body fill cannot be combined with Laya endpoint, API key, or provider model")
 	}
@@ -244,12 +244,7 @@ func generateWithRecordIRBodyFillOptions(
 	}
 	decisionStarted := time.Now()
 	decisionContext, cancel := context.WithTimeout(ctx, irBodyFillDecisionBudget)
-	var decision decisionroute.Receipt
-	if usingTinyGo {
-		decision, err = tinyProvider.Resolve(decisionContext, request)
-	} else {
-		decision, err = decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
-	}
+	decision, err := resolveBodyFillDecision(decisionContext, request, endpoint, apiKey, options, tinyProvider)
 	cancel()
 	decisionMS := float64(time.Since(decisionStarted)) / float64(time.Millisecond)
 	if err != nil {
@@ -352,7 +347,8 @@ func generateWithRecordIRBodyFillOptions(
 	}
 	planBytes, _ := json.Marshal(plan)
 	result.Report.BodyFill = &IRBodyFillReceipt{
-		Schema: plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
+		OriginalSourceDigest: digest(source),
+		Schema:               plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
 		HoleToken: bodyFillHoleToken(holes[0].ID), IRPlanSHA256: digest(planBytes),
 		ProposedCandidateID: proposed.ID, ProposedAccuracyPct: proposedScore.AccuracyPercent,
 		SelectedCandidateID: selected.ID, SelectedExpression: selected.Expression,
