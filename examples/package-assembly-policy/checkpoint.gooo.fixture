@@ -1,0 +1,6 @@
+package policy
+namespace checkpoint
+
+import counts "tools/assembly-counts"
+
+activity Checkpoint(AssemblyObservation) -> Explanation computes `return Explanation{state: "PROGRESS", next_operation: "USE_OBSERVED_CANDIDATE", message: "첫 후보를 기록합니다."}`

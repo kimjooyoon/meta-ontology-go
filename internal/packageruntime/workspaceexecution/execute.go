@@ -13,14 +13,15 @@ import (
 )
 
 type Result struct {
-	Schema       string                           `json:"schema"`
-	Program      Program                          `json:"program"`
-	BodyFills    []BodyFillStep                   `json:"body_fills,omitempty"`
-	SourceSHA256 string                           `json:"execution_source_sha256"`
-	Composition  bodyexecution.Composition        `json:"composition"`
-	Runtime      bodyexecution.CompositionRuntime `json:"runtime"`
-	Scope        string                           `json:"scope"`
-	Replay       *ReplayEvidence                  `json:"replay,omitempty"`
+	Schema         string                           `json:"schema"`
+	Program        Program                          `json:"program"`
+	BodyFills      []BodyFillStep                   `json:"body_fills,omitempty"`
+	SourceSHA256   string                           `json:"execution_source_sha256"`
+	Composition    bodyexecution.Composition        `json:"composition"`
+	Runtime        bodyexecution.CompositionRuntime `json:"runtime"`
+	Scope          string                           `json:"scope"`
+	Replay         *ReplayEvidence                  `json:"replay,omitempty"`
+	AssemblyPolicy *WorkspaceAssemblyPolicy         `json:"assembly_policy,omitempty"`
 }
 
 type BodyFillStep struct {
@@ -31,6 +32,7 @@ type BodyFillStep struct {
 }
 
 type ExecuteOptions struct {
+	AssemblyPolicy    *packageruntime.Manifest
 	AssemblyModelPath string
 	GoBinary          string
 	BodyFillPlans     map[string]bodycodegen.IRBodyFillPlan
@@ -57,12 +59,16 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 	if err != nil {
 		return Result{}, err
 	}
+	policySnapshot, policy, err := prepareWorkspacePolicy(ctx, options.AssemblyPolicy)
+	if err != nil {
+		return Result{}, err
+	}
 	current := []byte(program.Source)
 	current, fills, err := applyBodyFills(ctx, program, current, options)
 	if err != nil {
 		return Result{}, err
 	}
-	compositionOptions := bodyexecution.CompositionOptions{ModelPath: options.AssemblyModelPath}
+	compositionOptions := bodyexecution.CompositionOptions{ModelPath: options.AssemblyModelPath, RecordPolicy: policy}
 	if program.PureCalls != nil {
 		compositionOptions.EntryActivity = program.Entry.LoweredName
 	}
@@ -72,7 +78,7 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 	}
 	runtime, err := bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, composition, translated, options.GoBinary)
 	result := Result{Schema: "gooo/workspace-body-execution/v1", Program: program, BodyFills: fills,
-		SourceSHA256: sourceSHA256(current), Composition: composition,
+		SourceSHA256: sourceSHA256(current), Composition: composition, AssemblyPolicy: policySnapshot,
 		Runtime: runtime, Scope: "typed imported activity bindings; generated Go compiled and run twice; finite named expectations only"}
 	if err != nil {
 		return result, fmt.Errorf("execute generated workspace bodies: %w", err)

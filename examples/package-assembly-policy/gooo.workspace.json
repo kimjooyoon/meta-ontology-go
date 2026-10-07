@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "tools/assembly-policy",
+    "activity": "Explain"
+  },
+  "packages": [
+    {
+      "path": "tools/assembly-policy",
+      "name": "policy",
+      "imports": [
+        "tools/assembly-counts"
+      ],
+      "sources": [
+        "policy.gooo.fixture"
+      ]
+    },
+    {
+      "path": "tools/assembly-counts",
+      "name": "counts",
+      "imports": [],
+      "sources": [
+        "counts.gooo.fixture"
+      ]
+    }
+  ]
+}

@@ -53,12 +53,15 @@ func ReplayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prio
 	if sourceSHA256(current) != prior.SourceSHA256 {
 		return Result{}, fmt.Errorf("saved workspace execution source differs")
 	}
+	if err := verifyWorkspacePolicy(ctx, prior); err != nil {
+		return Result{}, err
+	}
 	encoded, err := json.Marshal(prior)
 	if err != nil {
 		return Result{}, err
 	}
 	result := Result{Schema: prior.Schema, Program: program, BodyFills: prior.BodyFills,
-		SourceSHA256: prior.SourceSHA256, Composition: prior.Composition,
+		SourceSHA256: prior.SourceSHA256, Composition: prior.Composition, AssemblyPolicy: prior.AssemblyPolicy,
 		Replay: &ReplayEvidence{Schema: "gooo/workspace-body-replay/v1", PriorResultSHA256: sourceSHA256(encoded),
 			BodyFillsReplayed: len(prior.BodyFills), Scope: "saved decisions and source-bound candidates reconstructed without inference; old runtime observations are not reused"},
 		Scope: "saved workspace construction with two fresh native executions; current finite expectations or input-only observations"}

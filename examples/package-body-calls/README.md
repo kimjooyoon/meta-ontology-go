@@ -12,6 +12,10 @@ Three packages share a small diagnostic tool:
 This builds on the [diagnostic replay example](../package-diagnostic-replay/README.md)
 and the [fixed pure activity profile](../pure-activity-calls/README.md).
 
+The [package assembly policy](../package-assembly-policy/README.md) uses another
+Gooo workspace to decide whether these construction attempts should continue.
+Its own decision helper is imported from a reusable package.
+
 ## Construct, execute and keep the result
 
 From this compiler revision with Go 1.27.1:
