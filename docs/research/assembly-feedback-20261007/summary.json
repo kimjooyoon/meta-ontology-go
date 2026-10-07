@@ -1,0 +1,219 @@
+{
+  "schema": "gooo/assembly-feedback-study/v1",
+  "date": "2026-10-07",
+  "compiler_revision": "4218c33a906bb9d4161171d965645f31e49d20e2",
+  "compiler_tree_clean_at_build": true,
+  "toolchain": "go1.27.1 darwin/arm64",
+  "source": "examples/assembly-feedback/target.gooo.fixture",
+  "policy": "examples/assembly-feedback/policy.gooo.fixture",
+  "feedback_cases": "examples/assembly-feedback/feedback-cases.json",
+  "evaluation_cases": "examples/assembly-feedback/evaluation-cases.json",
+  "limits": {
+    "activity": "Select",
+    "maximum_attempts_per_round": 8,
+    "maximum_rounds": 4
+  },
+  "model": {
+    "repository": "asketeddy/gooo-record-shared-field-tiny-v1",
+    "revision": "5800946afb35506d66357ee3ea6f956f506795b9",
+    "path": "models/qat_ternary",
+    "parameter_count": 2072,
+    "weight_bytes": 446,
+    "training_performed_in_this_study": false,
+    "training_exposure_to_task": "UNKNOWN"
+  },
+  "arms": {
+    "deterministic": {
+      "raw": "deterministic.json",
+      "status": "PASS",
+      "feedback_status": "PASS",
+      "evaluation_status": "PASS",
+      "selected_round": 2,
+      "rounds": [
+        {
+          "budget": 2,
+          "feedback_passed": 6,
+          "feedback_total": 14,
+          "policy_action": "INCORPORATE",
+          "promoted_cases": 1,
+          "selection_attempts_recorded": 2,
+          "model_calls": 0,
+          "predict_ns": 0,
+          "model": {
+            "schema": "gooo/retained-path-model/v1",
+            "loaded": false,
+            "resident_tensor_bytes": 0,
+            "setup_ms": 0.00025,
+            "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+          },
+          "source_sha256": "sha256:98e9908e7fb69b681a849f47497f50d76f0c0f5f9b9ce49dba9bda67ab7f37dc",
+          "generated_sha256": "sha256:6d9d397a590e4fc2ac84a3458aa0479595171d5874f0436b8a4138a1b6c5137b"
+        },
+        {
+          "budget": 4,
+          "feedback_passed": 6,
+          "feedback_total": 14,
+          "policy_action": "CONTINUE",
+          "promoted_cases": 0,
+          "selection_attempts_recorded": 4,
+          "model_calls": 0,
+          "predict_ns": 0,
+          "model": {
+            "schema": "gooo/retained-path-model/v1",
+            "loaded": false,
+            "resident_tensor_bytes": 0,
+            "setup_ms": 0.000208,
+            "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+          },
+          "source_sha256": "sha256:8c86916e584726adf3174ff168161e8f6a821d167cb7f2468822222f29e6c23d",
+          "generated_sha256": "sha256:86f0d97b78eca61f044503f5b649cd97d46c3ee19ecef2fccd90264b5963b38f"
+        },
+        {
+          "budget": 8,
+          "feedback_passed": 14,
+          "feedback_total": 14,
+          "policy_action": "STOP",
+          "promoted_cases": 0,
+          "selection_attempts_recorded": 7,
+          "model_calls": 0,
+          "predict_ns": 0,
+          "model": {
+            "schema": "gooo/retained-path-model/v1",
+            "loaded": false,
+            "resident_tensor_bytes": 0,
+            "setup_ms": 0.000208,
+            "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+          },
+          "source_sha256": "sha256:5be664d33ff54d1166db0e782230d8c0bb606febfa9b0d752c3e3e6c064d307b",
+          "generated_sha256": "sha256:e2b808c885f74d5be67550a837d9f4851edd677f52988da1a4f9298d962bf280"
+        }
+      ],
+      "evaluation": {
+        "finite_passed": 6,
+        "finite_total": 6,
+        "input_separation": {
+          "status": "PASS",
+          "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+          "unique_inputs": 3,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 3,
+          "disjoint_cases_passed": 3,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        },
+        "model_calls": 0,
+        "runtime_replayed": true
+      },
+      "command_resources": {
+        "real_seconds": 2.81,
+        "user_seconds": 1.01,
+        "system_seconds": 0.74,
+        "maximum_rss_bytes": 87785472,
+        "mean_cpu_core_equivalents": 0.6228,
+        "scope": "macOS /usr/bin/time -lp for the complete command, including child builds and native execution; CPU ratio uses rounded time values and is not sampled host utilization",
+        "raw_time_output": "real 2.81\nuser 1.01\nsys 0.74\n            87785472  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n              104224  page reclaims\n                4083  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                1758  signals received\n                1225  voluntary context switches\n               23182  involuntary context switches\n          1482186735  instructions retired\n           640574274  cycles elapsed\n            15696424  peak memory footprint\n"
+      }
+    },
+    "model": {
+      "raw": "model.json",
+      "status": "PASS",
+      "feedback_status": "PASS",
+      "evaluation_status": "PASS",
+      "selected_round": 1,
+      "rounds": [
+        {
+          "budget": 2,
+          "feedback_passed": 6,
+          "feedback_total": 14,
+          "policy_action": "INCORPORATE",
+          "promoted_cases": 1,
+          "selection_attempts_recorded": 2,
+          "model_calls": 1,
+          "predict_ns": 16417,
+          "model": {
+            "schema": "gooo/retained-path-model/v1",
+            "loaded": true,
+            "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+            "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+            "resident_tensor_bytes": 2096,
+            "setup_ms": 1.057834,
+            "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+            "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+            "feature_version": "triple_record_field_context_v1_shared_v1",
+            "arithmetic_version": "float32_separate_v1"
+          },
+          "source_sha256": "sha256:98e9908e7fb69b681a849f47497f50d76f0c0f5f9b9ce49dba9bda67ab7f37dc",
+          "generated_sha256": "sha256:d7d2a8a828d82fe30afbd790f926cfd461dab1dea6efff82852459a669b63920"
+        },
+        {
+          "budget": 4,
+          "feedback_passed": 14,
+          "feedback_total": 14,
+          "policy_action": "STOP",
+          "promoted_cases": 0,
+          "selection_attempts_recorded": 4,
+          "model_calls": 1,
+          "predict_ns": 20625,
+          "model": {
+            "schema": "gooo/retained-path-model/v1",
+            "loaded": true,
+            "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+            "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+            "resident_tensor_bytes": 2096,
+            "setup_ms": 0.210291,
+            "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+            "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+            "feature_version": "triple_record_field_context_v1_shared_v1",
+            "arithmetic_version": "float32_separate_v1"
+          },
+          "source_sha256": "sha256:8c86916e584726adf3174ff168161e8f6a821d167cb7f2468822222f29e6c23d",
+          "generated_sha256": "sha256:e2b808c885f74d5be67550a837d9f4851edd677f52988da1a4f9298d962bf280"
+        }
+      ],
+      "evaluation": {
+        "finite_passed": 6,
+        "finite_total": 6,
+        "input_separation": {
+          "status": "PASS",
+          "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+          "unique_inputs": 3,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 3,
+          "disjoint_cases_passed": 3,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        },
+        "model_calls": 0,
+        "runtime_replayed": true
+      },
+      "command_resources": {
+        "real_seconds": 1.74,
+        "user_seconds": 0.72,
+        "system_seconds": 0.54,
+        "maximum_rss_bytes": 88113152,
+        "mean_cpu_core_equivalents": 0.7241,
+        "scope": "macOS /usr/bin/time -lp for the complete command, including child builds and native execution; CPU ratio uses rounded time values and is not sampled host utilization",
+        "raw_time_output": "real 1.74\nuser 0.72\nsys 0.54\n            88113152  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               79160  page reclaims\n                1166  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                1292  signals received\n                 676  voluntary context switches\n               16137  involuntary context switches\n          1038484588  instructions retired\n           442455903  cycles elapsed\n            14565928  peak memory footprint\n"
+      }
+    }
+  },
+  "saved_replay": {
+    "raw": "replay.json",
+    "finite_passed": 14,
+    "finite_total": 14,
+    "model_calls": 0,
+    "runtime_replayed": true
+  },
+  "interpretation": [
+    "Both arms began with the same source, grammar/choices, feedback, evaluation, Gooo policy and budget limits.",
+    "Both promoted one actual failed root-input case into source selection. Subsequent source contracts therefore reflect adaptive feedback.",
+    "The deterministic arm recorded 13 selection attempts over three rounds; the model arm recorded six over two rounds. Counts include repeated candidates across rounds and exclude replay/preflight work.",
+    "All seven feedback inputs and all three final-evaluation inputs matched their named output expectations after selection.",
+    "The final evaluation was not provided to the policy or constructor. Model-training exposure is unknown; this is one previously used task family.",
+    "One deterministic-first pair without cache reset does not establish a general speed, memory, or correctness advantage.",
+    "Host CPU utilization was not sampled. Command CPU time, maximum RSS, native process records, and individual model timings are retained.",
+    "An additional regression records PROGRESS 0/2 when the existing nested-hole grammar cannot express the required constant; expanding budget or cases does not imply general completion."
+  ]
+}
