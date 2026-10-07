@@ -16,11 +16,12 @@ func prepareCompositionGraph(ctx context.Context, filename string, source []byte
 	if err != nil {
 		return graph, err
 	}
-	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, bidir.EntityFieldsV3Support())
+	support := bodycodegen.BodyEntityFieldsSupport(file)
+	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, support)
 	if err != nil {
 		return graph, err
 	}
-	model, err := bidir.GetWithEntityFieldsSupport(document, bidir.EntityFieldsV3Support())
+	model, err := bidir.GetWithEntityFieldsSupport(document, support)
 	if err != nil {
 		return graph, err
 	}

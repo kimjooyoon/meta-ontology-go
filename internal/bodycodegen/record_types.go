@@ -19,10 +19,11 @@ type RecordType struct {
 }
 
 type RecordField struct {
-	Name   string `json:"name"`
-	ID     string `json:"id"`
-	TypeID string `json:"type_id"`
-	GoName string `json:"go_name"`
+	Name     string `json:"name"`
+	ID       string `json:"id"`
+	TypeID   string `json:"type_id"`
+	GoName   string `json:"go_name"`
+	Presence string `json:"presence,omitempty"`
 }
 
 // RecordTypesFromModel accepts a model already validated under the body profile.
@@ -51,8 +52,12 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 			if typeID != string(semantic.BuiltinStringTypeID) && typeID != string(semantic.BuiltinBooleanTypeID) && typeID != string(semantic.BuiltinIntegerTypeID) {
 				return nil, fmt.Errorf("record %q field %q has unsupported type %q", node.Name, field.Name, typeID)
 			}
+			presence := ""
+			if field.Presence == semantic.Optional {
+				presence = string(field.Presence)
+			}
 			record.Fields = append(record.Fields, RecordField{Name: field.Name, ID: string(field.ID),
-				TypeID: typeID, GoName: recordGoName("Field", string(field.ID))})
+				TypeID: typeID, GoName: recordGoName("Field", string(field.ID)), Presence: presence})
 		}
 		result = append(result, record)
 	}
@@ -71,7 +76,17 @@ func recordGoName(kind, id string) string {
 // ParseBodyFile activates the existing field profile only for the pure body
 // entry points. The ordinary parser and other profiles keep their own contracts.
 func ParseBodyFile(filename string, source []byte) (*syntax.File, syntax.Diagnostics) {
-	return syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV3Support())
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV3Support())
+	if !diagnostics.HasErrors() {
+		return file, diagnostics
+	}
+	// Preserve the V3 source profile for existing required-field programs. Only
+	// use V4 when V3 rejected the source and V4 accepts its optional scalar fields.
+	v4File, v4Diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV4Support())
+	if v4File != nil && !v4Diagnostics.HasErrors() {
+		return v4File, v4Diagnostics
+	}
+	return file, diagnostics
 }
 
 func bodyEntityType(name string, records []RecordType) (string, bool) {
@@ -95,7 +110,7 @@ func supportedBodyType(name string, records []RecordType) bool {
 }
 
 func resolveBodyModel(file *syntax.File) (bidir.Model, []RecordType, error) {
-	support := bidir.EntityFieldsV3Support()
+	support := bodyEntityFieldsSupport(file)
 	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, support)
 	if err != nil {
 		return bidir.Model{}, nil, fmt.Errorf("lower activity identity: %w", err)
@@ -106,4 +121,25 @@ func resolveBodyModel(file *syntax.File) (bidir.Model, []RecordType, error) {
 	}
 	records, err := RecordTypesFromModel(model)
 	return model, records, err
+}
+
+func bodyEntityFieldsSupport(file *syntax.File) bidir.EntityFieldsSupport {
+	for _, declaration := range file.Declarations {
+		entity, ok := declaration.(*syntax.EntityDecl)
+		if !ok {
+			continue
+		}
+		for _, field := range entity.Fields {
+			if field.Presence == syntax.FieldPresenceOptional {
+				return bidir.EntityFieldsV4Support()
+			}
+		}
+	}
+	return bidir.EntityFieldsV3Support()
+}
+
+// BodyEntityFieldsSupport selects V4 only when the source declares optional
+// fields, keeping existing required-field body fingerprints on V3.
+func BodyEntityFieldsSupport(file *syntax.File) bidir.EntityFieldsSupport {
+	return bodyEntityFieldsSupport(file)
 }

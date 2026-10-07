@@ -209,9 +209,10 @@ IR은 원본 선언을 컴파일러가 다루기 쉬운 구조로 옮긴 중간 
 지원합니다. 이 버전 구분은 기존 기록의 해석을 바꾸지 않습니다. V4는 선택형
 단일 문자열·Boolean·Integer 필드를 Go 투영에 반영하며, `gooo run --record-input`
 의 `record.forward` 경로도 이를 전달합니다. 누락 키는 누락으로
-남고 빈 문자열·`false`·`0`은 실제 값으로 보존됩니다. 본문 생성과 `body-compose`
-경로는 아직 필수 필드 계약을 사용하므로 선택형 필드의 본문 읽기·쓰기는 후속
-확장 과제입니다.
+남고 빈 문자열·`false`·`0`은 실제 값으로 보존됩니다. 본문 생성과 `body-compose`도
+V4 선택형 단일 스칼라 필드를 포인터 값으로 읽고, 레코드 복사와 명시적 `bind`로
+전달합니다. 관측 기록에는 안정 ID와 별도로 존재 여부가 남습니다. 선택형 필드를
+새로 합성하는 학습 조립은 아직 지원하지 않습니다.
 [선언·본문·실제 값 관측](native-record-values.md).
 
 이제 모델 선택 경로도 같은 도메인 기록을 다룹니다. `source_fill` 안에
@@ -557,10 +558,11 @@ V3은 V1의 문자열과 V2의 불리언을 유지하면서 정수 타입을 더
 Boolean, Integer 필드를 Go의 `*string`, `*bool`, `*int64`로 투영합니다.
 따라서 부재와 `""`, `false`, `0`을 구별할 수 있습니다. 의미 투영의 source map은
 원본 필드 span·안정 ID·프로필 지문을 보존하고 생성 manifest는 그 source map
-지문과 Go 산출물을 연결합니다. 현재는 `gooo check`와 `gooo generate`에서 사용할
-수 있으며 capability discovery와 활동 bind 계획도 이 프로필을 읽습니다.
-`run --record-input`은 선택 필드의 부재와 명시적 기본값을 구분해 전달합니다.
-record 본문 조립은 필수 필드만 받습니다.
+지문과 Go 산출물을 연결합니다. 현재는 `gooo check`, `gooo generate`,
+`run --record-input`과 record 본문 복사·조합에서 사용할 수 있으며 capability
+discovery와 활동 bind 계획도 이 프로필을 읽습니다. 부재는 생략된 JSON 키로
+표현하고 `null` 입력은 거부합니다. 본문 조립에서 새 선택값을 학습해 만드는 기능은
+아직 없습니다.
 [V4 예제](../examples/entity-fields-v4/main.gooo.fixture)와
 [V4 지원 범위](entity-fields-v4.md),
 [V1 지원 관측](entity-fields-support.md)을
