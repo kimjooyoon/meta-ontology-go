@@ -1,0 +1,28 @@
+package searchflow
+namespace searchflow
+entity Integer id "searchflow://integer"
+entity Boolean id "searchflow://boolean"
+
+activity Normalize(Integer) -> Integer computes "if input < 0 { return __GOOO_BODY_HOLE_floor__ }; return input" assembling {
+    search hole "floor" grammar "integer-offset-constant/v1" intent "음수는 0으로 보정한다. Normalize negative integers to zero." max_candidates "16"
+    case "-2" -> "0"
+    case "0" -> "0"
+    case "2" -> "2"
+    holdout_case "-9223372036854775808" -> "0"
+    holdout_case "9223372036854775807" -> "9223372036854775807"
+    attempts "8"
+}
+
+activity AddOffset(Integer) -> Integer computes "return input + __GOOO_BODY_HOLE_offset__" assembling {
+    search hole "offset" grammar "integer-offset-constant/v1" intent "입력에 2를 더한다. Add two to the input." max_candidates "16"
+    case "0" -> "2"
+    case "1" -> "3"
+    case "2" -> "4"
+    holdout_case "10" -> "12"
+    holdout_case "9223372036854775805" -> "9223372036854775807"
+    attempts "8"
+}
+
+activity Positive(Integer) -> Boolean computes "return input > 0"
+bind Normalize.result -> AddOffset.input
+bind AddOffset.result -> Positive.input

@@ -64,6 +64,9 @@ func GenerateComposition(ctx context.Context, filename string, source []byte,
 	if err := graph.preflight(ctx, filename, source); err != nil {
 		return finish(err)
 	}
+	if err := graph.validateModelRoute(ctx, filename, source, modelPath); err != nil {
+		return finish(err)
+	}
 	result.Stage = "ACTIVITY_GENERATION"
 	current, err := generateCompositionSteps(ctx, filename, source, graph, modelPath, &result)
 	if err != nil {
@@ -87,7 +90,7 @@ func GenerateComposition(ctx context.Context, filename string, source []byte,
 
 func generateCompositionSteps(ctx context.Context, filename string, source []byte,
 	graph compositionGraph, modelPath string, result *Composition) ([]byte, error) {
-	var generator *bodycodegen.TypedPathGenerator
+	generator := compositionAssemblyGenerator{modelPath: modelPath}
 	current := append([]byte(nil), source...)
 	for _, node := range graph.nodes[:graph.count] {
 		result.ActiveActivity = node.Name
@@ -97,15 +100,11 @@ func generateCompositionSteps(ctx context.Context, filename string, source []byt
 		var generation bodycodegen.Result
 		var err error
 		if node.Assembling {
-			if generator == nil {
-				generator, err = bodycodegen.NewTypedPathGenerator(modelPath)
-				if err != nil {
-					return nil, err
-				}
-				info := generator.Info()
+			generation, err = generator.generate(ctx, filename, current, node.Name)
+			if generator.retained != nil {
+				info := generator.retained.Info()
 				result.Model = &info
 			}
-			generation, err = generateCompositionAssembly(ctx, filename, current, node.Name, generator)
 		} else {
 			generation, err = bodycodegen.GenerateWithPlanner(ctx, filename, current, node.Name, "", "")
 		}
@@ -114,7 +113,11 @@ func generateCompositionSteps(ctx context.Context, filename string, source []byt
 		}
 		result.Steps = append(result.Steps, CompositionStep{InputSourceSHA256: digest(current), Generation: generation})
 		if node.Assembling {
-			current = []byte(generation.GoooSource)
+			realized, err := bodycodegen.RealizeSourceAssembly(ctx, filename, current, generation)
+			if err != nil {
+				return nil, fmt.Errorf("activity %q checkpoint: %w", node.Name, err)
+			}
+			current = []byte(realized.Source)
 		}
 	}
 	return current, nil
@@ -127,11 +130,6 @@ func (graph compositionGraph) hasAssembly() bool {
 		}
 	}
 	return false
-}
-
-func generateCompositionAssembly(ctx context.Context, filename string, source []byte,
-	activity string, generator *bodycodegen.TypedPathGenerator) (bodycodegen.Result, error) {
-	return generator.GenerateSourceAssembly(ctx, filename, source, activity)
 }
 
 func DecodeComposition(raw []byte) (Composition, error) {

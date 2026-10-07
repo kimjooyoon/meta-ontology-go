@@ -26,11 +26,15 @@ type recordValueSite struct {
 func IsRecordAssembly(spec *assemblyspec.Spec) bool { return spec != nil && len(spec.ValueCases) != 0 }
 
 // ValidateSourceAssembly checks field alternatives and typed cases before any
-// optional model is loaded. Integer assembly keeps its existing document path.
+// optional model is loaded. Source IR search validates its grammar and bodies;
+// choice-based Integer assembly keeps its existing document path.
 func ValidateSourceAssembly(ctx context.Context, filename string, source []byte, activity string) error {
 	spec, err := SourceAssembly(ctx, filename, source, activity)
 	if err != nil {
 		return err
+	}
+	if IsSourceIRSearch(spec) {
+		return ValidateSourceIRSearch(ctx, filename, source, activity, spec)
 	}
 	if IsRecordAssembly(spec) {
 		_, err = prepareRecordAssembly(ctx, filename, source, activity)

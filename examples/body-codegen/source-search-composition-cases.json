@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"Normalize": -3}, "expected": {"Normalize": 0, "AddOffset": 2, "Positive": true}},
+    {"inputs": {"Normalize": 0}, "expected": {"Normalize": 0, "AddOffset": 2, "Positive": true}},
+    {"inputs": {"Normalize": 8}, "expected": {"Normalize": 8, "AddOffset": 10, "Positive": true}},
+    {"inputs": {"Normalize": 9007199254740993}, "expected": {"Normalize": 9007199254740993, "AddOffset": 9007199254740995, "Positive": true}},
+    {"inputs": {"Normalize": 9223372036854775805}, "expected": {"Normalize": 9223372036854775805, "AddOffset": 9223372036854775807, "Positive": true}}
+  ]
+}
