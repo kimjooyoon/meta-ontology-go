@@ -31,14 +31,16 @@ activity Echo(Candidate) -> Candidate computes "return input"
 bind Propose.result -> Echo.input
 ```
 
-Use every declared field exactly once, with named keys. Field names are case
-sensitive and may be lowercase or uppercase identifiers. Each `string required
-one` field takes a Text value. The profile supports up to 16 records and 16
-fields per record. Optional/many fields and nested record fields need subsequent
-entity-profile work. Under EntityFields V2, `boolean required one` takes a
+Use named keys for declared fields. Field names are case sensitive and may be
+lowercase or uppercase identifiers. Required scalar fields must be supplied;
+optional single scalar fields may be omitted. The profile supports up to 16
+records and 16 fields per record. Repeated fields and nested record fields
+remain unsupported. Under EntityFields V2, `boolean required one` takes a
 Boolean value. EntityFields V3 adds `integer required one`, represented as Go
-`int64`. Scalar activity parameters and results continue to use Integer,
-Boolean and Text.
+`int64`. EntityFields V4 adds optional string, Boolean and integer fields,
+represented as `*string`, `*bool` and `*int64` with `omitempty` JSON tags.
+Scalar activity parameters and results continue to use Integer, Boolean and
+Text.
 
 `input.title` reads a field. A local copy such as `let copy = input` can be
 replaced with a new complete record. Parameters stay read-only; assignments
@@ -75,12 +77,13 @@ A disconnected request uses deterministic search. The same source can mix these
 operations without attaching record types to the scalar function. Saved
 composition replay makes zero new predictions.
 
-External record inputs and expected record outputs must be complete JSON
-objects with exact source field names. String values are limited to 1,024
-UTF-8 bytes per field; Boolean values must be JSON `true` or `false`; Integer
-values must be exact signed 64-bit JSON integers. JSON member order is
-presentation only. Missing, duplicate, extra, null or incorrectly typed fields
-retain an error before model loading.
+External record inputs and expected record outputs must be JSON objects with
+exact source field names. Required fields must appear; an omitted optional
+field is absent. JSON `null` is rejected for optional fields so absence is not
+confused with a supplied value. String values are limited to 1,024 UTF-8 bytes
+per field; Boolean values must be JSON `true` or `false`; Integer values must
+be exact signed 64-bit JSON integers. JSON member order is presentation only.
+Duplicate, extra or incorrectly typed fields fail before model loading.
 
 `runtime.json` includes `actual_fields` for record results and `input_fields`
 or each input port's `fields` for record inputs. Each entry retains `id`, `name`
@@ -105,8 +108,12 @@ in its operation digest. V1-V3 parser and lowering entry points remain
 available to callers that need earlier profiles.
 
 The public `gooo check` and `gooo generate` commands use EntityFields V4, which
-also projects optional single scalar fields to Go pointers. Record-body codegen
-and `body-compose` remain on the V3 required-single-field contract.
+also projects optional single scalar fields to Go pointers. Pure record-body
+codegen and `body-compose` can copy these values and carry them over explicit
+binds. Runtime field observations retain the stable field ID and an explicit
+present flag, so absence remains distinct from an empty string, `false` or `0`.
+This bounded path does not synthesize optional values through learned field
+assembly.
 
 The runnable [Boolean record-binding source](../examples/language-record-binding/boolean.gooo.fixture)
 and [input](../examples/language-record-binding/boolean-input.json) carry a
@@ -126,9 +133,25 @@ gooo run --json --entry Capture --record-input \
 ```
 
 The EntityFields V3 profile added required single `integer` fields to the Go
-projection and source-driven body-generation and `body-compose` paths. The V4
-`gooo run --record-input` path also transports optional scalar fields while
-preserving absence separately from an explicit zero value.
+projection and source-driven body-generation and `body-compose` paths. V4
+extends ordinary pure record-body generation and `body-compose` to optional
+single scalar fields for typed copy and transport, preserving absence separately
+from explicit zero values.
+
+The [optional body source](../examples/body-codegen/optional-record-transport.gooo.fixture)
+and [cases](../examples/body-codegen/optional-record-transport-cases.json)
+exercise absent fields, explicit `""`/`false`/`0`, partial presence and an
+integer beyond JavaScript's exact range across a declared bind:
+
+```sh
+gooo body-compose \
+  --source examples/body-codegen/optional-record-transport.gooo.fixture \
+  --cases examples/body-codegen/optional-record-transport-cases.json
+```
+
+Absent optional values are omitted from generated JSON. `null`, wrong scalar
+types, duplicate keys and undeclared fields fail during case validation before
+the model provider is loaded.
 
 ```gooo
 entity Boolean id "booleans://boolean"

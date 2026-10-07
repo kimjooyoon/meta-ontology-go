@@ -20,5 +20,7 @@ data and does not execute authored record-body code.
 
 `required × many`, `optional × many`, nested record fields and non-scalar
 optional values remain unsupported. Pure record-body codegen and
-`body-compose` still use the V3 required-single-field contract; optional record
-values are not yet supported in those body-generation paths.
+`body-compose` accept optional single scalar fields as typed pointers for
+copy-and-transport bodies. Missing keys remain absent across explicit binds;
+`""`, `false` and `0` remain present. Learned field assembly does not yet
+synthesize new optional values.

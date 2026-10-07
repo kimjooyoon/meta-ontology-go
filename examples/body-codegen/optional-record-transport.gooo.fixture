@@ -1,0 +1,19 @@
+package records
+namespace optional_transport
+
+entity Profile id "optional-transport://profile" fields {
+    field note id "optional-transport://profile/note" type string optional one
+    field complete id "optional-transport://profile/complete" type boolean optional one
+    field count id "optional-transport://profile/count" type integer optional one
+}
+
+activity Copy(Profile) -> Profile computes "return input"
+activity Relay(Profile) -> Profile computes `return Profile{
+    note: input.note,
+    complete: input.complete,
+    count: input.count,
+}`
+activity Empty(Profile) -> Profile computes "return Profile{}"
+
+bind Copy.result -> Relay.input
+bind Relay.result -> Empty.input

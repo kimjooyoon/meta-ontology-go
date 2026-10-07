@@ -284,7 +284,7 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		DecisionBasis: "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
 		Scope: map[string]any{
 			"receipt_declaration": completeness.ContractBinding(),
-			"domain_scope":        "one pure typed Gooo activity body in the closed body-codegen profile, with one Integer, Boolean, or Text input and one supported scalar result",
+			"domain_scope":        "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
 			"allowed_investment":  allowedInvestment,
 			"excluded_scope":      []string{"unstated natural-language intent", "independently sourced production workflows", "generated runtime behavior", "unrestricted Gooo body syntax", "route clarity or utility"},
 			"plan_sha256":         planSHA, "compiler_source_sha": compilerSHA,
@@ -302,6 +302,13 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		NotClaimed:       []string{"user-intent completeness", "real-workflow coverage", "generated runtime behavior", "full-domain semantics", "route quality", "universal language completeness"},
 		FailClosedReason: failReason,
 	}
+	if len(report.RecordTypes) > 0 {
+		receipt.Scope["record_types"] = append([]RecordType(nil), report.RecordTypes...)
+		if hasOptionalRecordFields(report.RecordTypes) {
+			receipt.Scope["record_body_scope"] = "optional single scalar fields use typed pointers for copy and transport; learned optional-value synthesis is outside this profile"
+			receipt.NotClaimed = append(receipt.NotClaimed, "learned synthesis of optional record values")
+		}
+	}
 	if report.BodyPaths != nil {
 		bindPathCompletenessScope(receipt, report)
 	}
@@ -309,6 +316,17 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		bindRecordAssemblyScope(receipt, report)
 	}
 	return receipt
+}
+
+func hasOptionalRecordFields(records []RecordType) bool {
+	for _, record := range records {
+		for _, field := range record.Fields {
+			if field.Presence == "optional" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func populateCompletenessReceipt(report *Report, failure string) {
