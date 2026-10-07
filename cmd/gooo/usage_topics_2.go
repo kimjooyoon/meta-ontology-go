@@ -25,20 +25,22 @@ See docs/language/capability-discovery.md.
 	"init": `Create a starter project
 
 Usage:
-  gooo init [--template app|library] [--module <path>] <new-directory>
+  gooo init [--template app|library|diagnostic] [--module <path>] <new-directory>
 
 Examples:
   gooo init hello-gooo
   gooo init --template library my-library
   gooo init --template library --module github.com/acme/my-library my-library
+  gooo init --template diagnostic my-diagnostic
 
 Then check and generate:
   cd hello-gooo
   gooo check main.gooo
   gooo body-codegen --json --activity Clamp main.gooo
 
-The starter is deterministic and does not require a model. A library module
-path customizes the generated workspace and source identity.
+The starters work without a model. Library and diagnostic module paths customize
+the generated workspace and source identity. The diagnostic starter assembles a
+Gooo tool from declared choices and includes saved-program replay instructions.
 `,
 	"check": `Check Gooo source
 

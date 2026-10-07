@@ -11,6 +11,48 @@ gooo package resolve gooo.workspace.json
 gooo package execute --json --cases cases.json gooo.workspace.json
 ```
 
+## Start a reusable diagnostic tool
+
+The `diagnostic` starter creates a Gooo tool that turns counts and diagnostic
+text into a suggested next operation. Its six files are embedded in the CLI:
+
+```sh
+gooo init --template diagnostic my-diagnostic
+cd my-diagnostic
+gooo package execute --json --cases cases.json gooo.workspace.json > execution.json
+gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
+```
+
+`diagnostics.gooo` owns the conditions, assignments, three record-field choices
+and five construction cases. `app.gooo` imports and formats the result. The
+supplied runtime suite checks eight activity outputs across four input rows.
+`inputs.json` provides three additional rows for actual use, without expected
+answers. Editing these input rows does not require another candidate search.
+The replayed program returns values such as
+`partial: missing branch result [repair-and-replay]` with zero new model calls.
+
+Choose a package prefix with `--module example.org/team/diagnostic`; this binds
+the imports, workspace paths, input keys and semantic IDs. The default prefix
+is `diagnostic`. You can move the complete project and its receipt together.
+Existing directories are preserved; start in a new directory.
+
+The default construction uses deterministic candidate ordering. Add
+`--assembly-model /path/to/model.json` to the first `package execute` invocation
+to use a compatible local three-field model. The generated README links a pinned
+2,072-parameter own-model release. Each attempt retains its finite case and field
+results. The suggested operation is returned as data for the caller to consume.
+
+The [recorded starter use](../research/diagnostic-starter-20261008/summary.json)
+created a custom-module project using the CLI, assembled it with deterministic
+ordering and the existing own model, then moved the project before replay.
+Both construction routes and saved replay matched 8/8 activity outputs. The
+model route tried two candidates and deterministic ordering four; its first
+proposal matched only 3/5 construction cases. Three input-only rows then returned
+diagnostic messages with zero new model calls. This is one local paired task;
+the raw receipts retain its exact source, model identity and measurement scope.
+
+## Library construction and model choices
+
 To use the local compact model for the source-declared assignment, pass its
 model metadata file:
 

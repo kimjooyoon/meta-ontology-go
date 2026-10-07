@@ -1,0 +1,69 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "{{module}}/diagnostics:Diagnose.input0": 17,
+        "{{module}}/diagnostics:Diagnose.input1": 21,
+        "{{module}}/diagnostics:Diagnose.input2": 1,
+        "{{module}}/diagnostics:Diagnose.input3": "네 필드가 남았습니다"
+      },
+      "expected": {
+        "{{module}}/diagnostics:Diagnose": {
+          "code": "partial",
+          "message": "네 필드가 남았습니다",
+          "action": "repair-and-replay"
+        },
+        "{{module}}/app:Main": "partial: 네 필드가 남았습니다 [repair-and-replay]"
+      }
+    },
+    {
+      "inputs": {
+        "{{module}}/diagnostics:Diagnose.input0": 3,
+        "{{module}}/diagnostics:Diagnose.input1": 5,
+        "{{module}}/diagnostics:Diagnose.input2": 0,
+        "{{module}}/diagnostics:Diagnose.input3": "two outputs differ"
+      },
+      "expected": {
+        "{{module}}/diagnostics:Diagnose": {
+          "code": "partial",
+          "message": "two outputs differ",
+          "action": "expand-examples"
+        },
+        "{{module}}/app:Main": "partial: two outputs differ [expand-examples]"
+      }
+    },
+    {
+      "inputs": {
+        "{{module}}/diagnostics:Diagnose.input0": 8,
+        "{{module}}/diagnostics:Diagnose.input1": 8,
+        "{{module}}/diagnostics:Diagnose.input2": 0,
+        "{{module}}/diagnostics:Diagnose.input3": ""
+      },
+      "expected": {
+        "{{module}}/diagnostics:Diagnose": {
+          "code": "complete",
+          "message": "All observed fields matched.",
+          "action": "accept"
+        },
+        "{{module}}/app:Main": "complete: All observed fields matched. [accept]"
+      }
+    },
+    {
+      "inputs": {
+        "{{module}}/diagnostics:Diagnose.input0": 9007199254740994,
+        "{{module}}/diagnostics:Diagnose.input1": 9007199254740993,
+        "{{module}}/diagnostics:Diagnose.input2": 0,
+        "{{module}}/diagnostics:Diagnose.input3": "count exceeds total"
+      },
+      "expected": {
+        "{{module}}/diagnostics:Diagnose": {
+          "code": "invalid-counts",
+          "message": "count exceeds total",
+          "action": "fix-counts"
+        },
+        "{{module}}/app:Main": "invalid-counts: count exceeds total [fix-counts]"
+      }
+    }
+  ]
+}
