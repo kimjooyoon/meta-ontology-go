@@ -18,7 +18,7 @@ import (
 const bodyComposeUsage = "usage: gooo body-compose --source <source.gooo> " +
 	"(--cases <cases.json> | --case-series <series.json>) [--repeat <1..16>] " +
 	"[--model <model.json>] [--fill-model <model.json>] [--composition <composition.json>] [--go-bin <go1.27.1>] [--out <new-directory>] " +
-	"[--assembly-policy <policy.gooo> --policy-activity <name>]"
+	"[--assembly-policy <policy.gooo> --policy-activity <name>] [--resume-composition <composition.json>]"
 
 type bodyCompositionOutput struct {
 	GeneratedNow   bool                                 `json:"generated_now"`
@@ -41,6 +41,7 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 	}
 	flags := map[string]string{"--source": "", "--cases": "", "--case-series": "", "--repeat": "", "--model": "", "--fill-model": "", "--composition": "", "--go-bin": "", "--out": ""}
 	flags["--assembly-policy"], flags["--policy-activity"] = "", ""
+	flags["--resume-composition"] = ""
 	for i := 0; i < len(args); i += 2 {
 		value, ok := flags[args[i]]
 		if !ok || value != "" || i+1 >= len(args) || args[i+1] == "" || strings.HasPrefix(args[i+1], "--") {
@@ -61,6 +62,11 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 			fmt.Fprintln(stderr, bodyComposeUsage)
 			return exitUsage
 		}
+	}
+	if flags["--resume-composition"] != "" && (flags["--assembly-policy"] == "" || flags["--composition"] != "" ||
+		flags["--model"] != "" || flags["--fill-model"] != "") {
+		fmt.Fprintln(stderr, bodyComposeUsage)
+		return exitUsage
 	}
 	return executeBodyComposition(ctx, flags, stdout, stderr)
 }
@@ -99,7 +105,11 @@ func executeBodyComposition(ctx context.Context, flags map[string]string, stdout
 		if err != nil {
 			return fail(err)
 		}
-		output.Composition, err = bodyexecution.GenerateCompositionWithOptions(ctx, flags["--source"], source, suites[0], options)
+		if flags["--resume-composition"] != "" {
+			output.Composition, err = resumeBodyComposition(ctx, flags, source, suites[0], *options.RecordPolicy)
+		} else {
+			output.Composition, err = bodyexecution.GenerateCompositionWithOptions(ctx, flags["--source"], source, suites[0], options)
+		}
 	} else {
 		var raw []byte
 		raw, err = readBodyExecutionFile(flags["--composition"], 32<<20)

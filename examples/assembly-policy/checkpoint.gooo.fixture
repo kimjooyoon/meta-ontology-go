@@ -1,0 +1,18 @@
+package checkpoint
+namespace checkpoint
+
+entity AssemblyObservation id "gooo://tools/assembly-observation" fields {
+    field matched id "gooo://tools/assembly-observation/matched" type integer required one
+    field total id "gooo://tools/assembly-observation/total" type integer required one
+    field best id "gooo://tools/assembly-observation/best" type integer required one
+    field scored id "gooo://tools/assembly-observation/scored" type integer required one
+    field budget id "gooo://tools/assembly-observation/budget" type integer required one
+}
+
+entity Explanation id "gooo://tools/assembly-explanation" fields {
+    field state id "gooo://tools/assembly-explanation/state" type string required one
+    field next_operation id "gooo://tools/assembly-explanation/next-operation" type string required one
+    field message id "gooo://tools/assembly-explanation/message" type string required one
+}
+
+activity Checkpoint(AssemblyObservation) -> Explanation computes `return Explanation{state: "PROGRESS", next_operation: "USE_OBSERVED_CANDIDATE", message: "현재까지 관측한 후보를 저장합니다. / Save the observed candidate."}`

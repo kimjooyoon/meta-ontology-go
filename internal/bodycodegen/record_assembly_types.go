@@ -33,6 +33,8 @@ type RecordAssemblyReceipt struct {
 	GenerationNS         int64                          `json:"generation_ns"`
 	Scope                string                         `json:"scope"`
 	Control              *RecordAssemblyControl         `json:"control,omitempty"`
+	ControlHistory       []RecordAssemblyControlStage   `json:"control_history,omitempty"`
+	Continuation         *RecordAssemblyContinuation    `json:"continuation,omitempty"`
 }
 
 type RecordValueChoice struct {

@@ -256,8 +256,13 @@ source-declared alternatives, and a fixed attempt budget. Have Gooo describe the
 next permitted operation; let the own compact model rank eligible choices where
 the current adapter supports them. The Go runner applies an explicit choice,
 runs the original obligations, and saves the new attempt. Replay uses the saved
-construction without new inference. Publishing this connected experiment is a
-planned deliverable; the current explainer returns advice.
+construction without new inference. The [connected record-choice
+experiment](../../examples/assembly-policy/README.md) now executes the Gooo policy
+between scored candidates. Its checkpoint and continuation route carries earlier
+observations into the remaining original ranking with zero new model calls.
+This revision makes an explicit follow-up invocation possible; the command caller
+still starts that invocation. Other assembly profiles and automatic scheduling
+need their own supported routes.
 
 Start with one reproducible failure and include a case where the declared space
 has no acceptable solution. Keep that unresolved result visible. Compare the

@@ -59,6 +59,9 @@ from the paired deterministic/model comparison of the original source.
 
 ## Meaning of the operations
 
+See [continuing a saved construction](#continue-a-saved-partial-construction)
+to apply these operations to an existing attempt history.
+
 | Gooo result | Construction action |
 | --- | --- |
 | `CONTINUE_CANDIDATES`, `EVALUATE_CANDIDATES` | Try the next unattempted candidate in the retained ordering, while the source budget remains |
@@ -107,3 +110,52 @@ These are single sequential observations including Go compilation and native
 execution with uncontrolled caches. Model-only CPU utilization and a general
 speed advantage remain unmeasured. The model is unchanged and its training
 exposure to these task families remains unknown.
+
+## Continue a saved partial construction
+
+Use the source-owned checkpoint policy to finish after the first scored candidate:
+
+```sh
+/tmp/gooo-assembly-policy body-compose \
+  --source examples/package-diagnostic-replay/diagnostics.gooo.fixture \
+  --cases examples/assembly-policy/cases.json \
+  --assembly-policy examples/assembly-policy/checkpoint.gooo.fixture \
+  --policy-activity Checkpoint --out /tmp/gooo-checkpoint
+
+/tmp/gooo-assembly-policy body-compose \
+  --source examples/package-diagnostic-replay/diagnostics.gooo.fixture \
+  --cases examples/assembly-policy/cases.json \
+  --resume-composition /tmp/gooo-checkpoint/composition.json \
+  --assembly-policy examples/assembly-explainer/main.gooo.fixture \
+  --policy-activity Explain --out /tmp/gooo-continued
+```
+
+The first command may include the optional own-model path. The second reads the
+saved ranking and uses no model file or inference. Gooo evaluates the new policy
+against the retained prefix before it considers another candidate. The original
+alternatives, finite cases and total attempt budget remain fixed. Exhausting that
+budget leaves the same partial result; changing the source starts a new experiment.
+
+The continuation verifies prior attempts and policy decisions, then records
+`control_history`, the new policy's `entry` decision, and retained/added attempt
+counts. Reconstruction evaluates historical candidates again; those evaluations
+are validation work, separate from newly considered candidates. Original model
+calls and prediction timing stay historical, while `continuation.new_model_calls`
+reports zero for the new operation. A subsequent `--composition` replay checks
+the complete saved history and runs the updated native program.
+
+Each composition carries a reference to its parent's canonical digest. Keep the
+parent file for comparison: this reference alone cannot establish its origin.
+History is bounded to 16 prior control stages per record activity. Continuation
+currently accepts graphs whose assembling activities all use record choices;
+ordinary bound activities are regenerated from source. Other assembly profiles
+return an explicit unsupported result. This is an explicit CLI continuation;
+the compiler does not schedule follow-up invocations itself.
+
+### 한국어: 남은 조립을 이어가기
+
+`Checkpoint`는 첫 후보의 관측을 저장하고, `Explain`은 그 기록을 읽어 다음
+후보를 시도할지 판단합니다. 작업대에 부품과 조립 기록을 남겨 두는 방식입니다.
+다시 시작할 때 모델을 불러오지 않아도 기존 후보 순서로 작업을 계속할 수 있습니다.
+앞서 쓴 예산과 실패한 후보도 그대로 계산합니다. 선언한 범위에 답이 없는 경우에는
+그 부족한 부분을 결과에 남기며, 새 부품을 추가하는 일은 별도의 소스 변경입니다.

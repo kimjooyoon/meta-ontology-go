@@ -148,6 +148,15 @@ func (p *preparedRecordPolicy) decodeDecision(counts RecordPolicyCounts, value a
 }
 
 func observeRecordPolicy(ctx context.Context, p recordAssemblyPlan, r *RecordAssemblyReceipt, policy *preparedRecordPolicy) (bool, error) {
+	decision, err := recordPolicyDecision(ctx, p, r, policy)
+	if err != nil {
+		return false, err
+	}
+	r.Control.Decisions = append(r.Control.Decisions, decision)
+	return decision.Continue, nil
+}
+
+func recordPolicyDecision(ctx context.Context, p recordAssemblyPlan, r *RecordAssemblyReceipt, policy *preparedRecordPolicy) (RecordPolicyDecision, error) {
 	counts := RecordPolicyCounts{Budget: min(p.spec.MaxAttempts, len(r.Ranking))}
 	for _, attempt := range r.Attempts {
 		if attempt.Total == 0 {
@@ -157,13 +166,16 @@ func observeRecordPolicy(ctx context.Context, p recordAssemblyPlan, r *RecordAss
 		counts.Scored++
 		counts.Best = max(counts.Best, attempt.Passed)
 	}
-	latest := r.Attempts[len(r.Attempts)-1]
+	latestIndex := len(r.Attempts) - 1
+	for latestIndex > 0 && r.Attempts[latestIndex].Total == 0 {
+		latestIndex--
+	}
+	latest := r.Attempts[latestIndex]
 	counts.Matched, counts.Total = latest.Passed, latest.Total
 	decision, err := policy.decide(ctx, counts)
 	if err != nil {
-		return false, err
+		return decision, err
 	}
-	decision.AttemptIndex, decision.Mask = len(r.Attempts)-1, latest.Mask
-	r.Control.Decisions = append(r.Control.Decisions, decision)
-	return decision.Continue, nil
+	decision.AttemptIndex, decision.Mask = latestIndex, latest.Mask
+	return decision, nil
 }
