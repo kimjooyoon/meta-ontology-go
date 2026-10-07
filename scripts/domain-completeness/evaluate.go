@@ -526,22 +526,25 @@ func measureGenerationCoverage(spec dimensionSpec, contract languageutility.Cont
 				break
 			}
 		}
-		if found == nil {
-			continue
-		}
-		if found.State == languageutility.StateClosed && found.EvidencePath != "" && found.EvidenceDigest != "" &&
-			inputs.evidenceState == "PASS" {
-			dimension.Numerator++
-		}
+		fulfilled, unobserved, refuted := generationCellCounts(found, inputs.evidenceState)
+		dimension.Numerator += fulfilled
+		dimension.UnknownUnits += unobserved
+		dimension.RefutedUnits += refuted
 	}
 	dimension.Evidence = append(dimension.Evidence, inputs.evidenceRefs...)
 	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
-	if inputs.discovery.State != "PASS" || dimension.UnknownUnits > 0 {
+	if dimension.RefutedUnits > 0 {
+		return failed(dimension, "GENERATION_EVIDENCE_REFUTED", "RETAIN_AND_REPAIR_COUNTEREXAMPLE")
+	}
+	if inputs.discovery.State != "PASS" {
 		dimension.Status = "UNKNOWN"
 		dimension.UnknownUnits = max(dimension.UnknownUnits, 1)
 		dimension.FirstUnresolved = &Frontier{Unit: "capability-discovery", Stage: "GENERATION_COVERAGE",
 			Reason: "DISCOVERY_RECEIPT_HAS_NO_GENERATED_CODE_ARTIFACT", NextOperation: "GENERATE_A_SOURCE_BOUND_CODE_ARTIFACT"}
 		return dimension
+	}
+	if dimension.UnknownUnits > 0 {
+		return unknown(dimension, "GENERATION_EVIDENCE_UNKNOWN", "COLLECT_GENERATION_EVIDENCE")
 	}
 	dimension.Status = classify(dimension.Numerator, dimension.Denominator, 0, false)
 	if dimension.Status != "PASS" {

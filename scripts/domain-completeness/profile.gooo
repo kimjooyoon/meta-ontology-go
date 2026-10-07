@@ -32,10 +32,8 @@ activity ClassifyDomainCompleteness(Integer, Integer, Integer, Boolean) -> Text 
 	return "UNKNOWN"
 } else if input0 == input1 {
 	return "PASS"
-} else if input0 > 0 {
-	return "PROGRESS"
 } else {
-	return "UNKNOWN"
+	return "PROGRESS"
 }`
 activity SelectDomainCompletenessOutcome(Boolean, Boolean, Boolean, Boolean) -> Text computes `if input0 || input1 {
 	return "FAIL_CLOSED"
