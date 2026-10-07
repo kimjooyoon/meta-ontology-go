@@ -282,5 +282,95 @@
       "This is a finite-example result; it does not prove general behavior or a latency advantage.",
       "Native timing includes toolchain selection, compilation and two executions, with inherited caches."
     ]
+  },
+  "automatic_input_separation_follow_up": {
+    "schema": "gooo/automatic-disjoint-case-observation/v1",
+    "compiler_source_sha": "5c9556e16444d5f10c205d1528777d1a33b32196",
+    "recipe": "Use bounded_record_follow_up source_recipe and runtime_cases_path with this compiler revision. Invoke body-compose once with the identified model and once without --model.",
+    "attempt_budget": 4,
+    "runs": [
+      {
+        "policy": "model",
+        "original_result_sha256": "6f461bd7fce008b8ee22bdf0f841298ce299ba0fec7870eca48a82c0af6e617f",
+        "selected_source_sha256": "sha256:10e3853970c49f2040f1a150ec1edc13c63fc8d1a123bbd4b789261dddcee972",
+        "selected_mask": 6,
+        "attempt_masks": [
+          5,
+          4,
+          7,
+          6
+        ],
+        "input_separation": {
+          "status": "PASS",
+          "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+          "unique_inputs": 7,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 5,
+          "disjoint_inputs": 2,
+          "disjoint_cases_passed": 2,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        },
+        "local_model_predictions": 1,
+        "predict_ns": 22292,
+        "generation_ns": 4151333,
+        "resident_tensor_bytes": 2096,
+        "model_setup_ms": 0.494917,
+        "model_weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "native_activity_outputs_passed": 14,
+        "native_activity_outputs_total": 14,
+        "native_elapsed_ns": 691014625,
+        "native_child_cpu_ns": 212452000,
+        "native_build_peak_rss_bytes": 85721088,
+        "native_stdout_sha256": [
+          "sha256:eb1cd023cdcd3455ccaa1b17b5895c1ca65981fa987ae8326a69de8657c78919",
+          "sha256:eb1cd023cdcd3455ccaa1b17b5895c1ca65981fa987ae8326a69de8657c78919"
+        ]
+      },
+      {
+        "policy": "deterministic",
+        "original_result_sha256": "4c8e4ec6ee29bed701f5443c497449127bdbee29495289aead890fa54670267e",
+        "selected_source_sha256": "sha256:23d5abcc140db27321f2674c07e276f88ba9bfcda85754522484a33eaccc14b3",
+        "selected_mask": 2,
+        "attempt_masks": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "input_separation": {
+          "status": "PROGRESS",
+          "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+          "unique_inputs": 7,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 5,
+          "disjoint_inputs": 2,
+          "disjoint_cases_passed": 1,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        },
+        "local_model_predictions": 0,
+        "predict_ns": 0,
+        "generation_ns": 2936416,
+        "resident_tensor_bytes": 0,
+        "model_setup_ms": 0.000292,
+        "model_weights_sha256": null,
+        "native_activity_outputs_passed": 6,
+        "native_activity_outputs_total": 14,
+        "native_elapsed_ns": 489598083,
+        "native_child_cpu_ns": 210826000,
+        "native_build_peak_rss_bytes": 86212608,
+        "native_stdout_sha256": [
+          "sha256:472165dac4b3393d5820eb526615f2196f8e8611b598e467e07bd33bbd9bca70",
+          "sha256:472165dac4b3393d5820eb526615f2196f8e8611b598e467e07bd33bbd9bca70"
+        ]
+      }
+    ],
+    "limits": [
+      "One workload with one run per policy; source and model identities match the bounded follow-up, but native timings are fresh observations.",
+      "Counts are unique whole input cases satisfying every supplied expectation, rather than activity-output counts.",
+      "Input separation is relative to source selection/holdout and recorded probes. Model-training exposure remains unknown.",
+      "Native elapsed includes source replay, toolchain selection, build and two runs; inherited caches and process startup differ. Host CPU utilization was not sampled."
+    ]
   }
 }
