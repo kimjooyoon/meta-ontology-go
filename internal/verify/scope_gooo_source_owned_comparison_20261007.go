@@ -6,6 +6,7 @@ func init() {
 		".github/ci-governance.json",
 		"docs/declared-completeness-receipt.md",
 		"docs/language-direction.ko.md",
+		"docs/research/comparison-dogfood-20261007.json",
 		"internal/domaincompleteness/comparison_generated.go",
 		"internal/domaincompleteness/projection.go",
 		"internal/verify/scope_gooo_source_owned_comparison_20261007.go",

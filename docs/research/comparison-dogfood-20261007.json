@@ -1,0 +1,135 @@
+{
+  "schema": "gooo/development-dogfood-observation/v1",
+  "observed_date": "2026-10-07",
+  "compiler_source_sha": "d9f3060e0291537ae0ac925c791a1c83562c0a99",
+  "workbench_source_sha": "d821c346fb77c78b9a7c2bf2f63f76aa5cd27e81",
+  "workload": "Gooo diagnostics for examples/partial-composition.json",
+  "environment": {
+    "os": "darwin",
+    "arch": "arm64",
+    "go": "go1.27.1"
+  },
+  "runs": [
+    {
+      "policy": "model",
+      "input_sha256": "01374dc3d4e85802c3122d3006480efc5878b103734fca4aae0aa0fd7ae5e3bf",
+      "original_result_sha256": "1219c0e5d0d2de0dcfad8df54679e2cd2cf3d92c1a48cee2781958481be17425",
+      "selected_source_sha256": "sha256:165bcabf75e709410ee64e8a9ddd813bb16cb790d1ce1d5a280a7ba30babc54b",
+      "selected_mask": 3,
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 13,
+          "fields_total": 15
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15
+        }
+      ],
+      "local_model_predictions": 1,
+      "predict_ns": 22334,
+      "generation_ns": 5835833,
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.326917,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      },
+      "diagnostic": {
+        "code": "partial",
+        "action": "repair-and-replay"
+      },
+      "native": {
+        "stage": "COMPLETE",
+        "elapsed_ns": 665564292,
+        "child_cpu_ns": 248968000,
+        "build_peak_rss_bytes": 86196224,
+        "finite_passed": 1,
+        "finite_total": 1,
+        "runtime_replayed": true,
+        "run_stdout_sha256": [
+          "sha256:dabd05cfb0404de9273ac9fb088c51b67d2c029dd15b16de8f70c307d7d594e4",
+          "sha256:dabd05cfb0404de9273ac9fb088c51b67d2c029dd15b16de8f70c307d7d594e4"
+        ]
+      }
+    },
+    {
+      "policy": "deterministic",
+      "input_sha256": "01374dc3d4e85802c3122d3006480efc5878b103734fca4aae0aa0fd7ae5e3bf",
+      "original_result_sha256": "8cd50e0cf4b83a28c3b0fd0815edd883a30038e2abce526eebb9cf33b62a4861",
+      "selected_source_sha256": "sha256:165bcabf75e709410ee64e8a9ddd813bb16cb790d1ce1d5a280a7ba30babc54b",
+      "selected_mask": 3,
+      "attempts": [
+        {
+          "mask": 0,
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 11,
+          "fields_total": 15
+        },
+        {
+          "mask": 1,
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 13,
+          "fields_total": 15
+        },
+        {
+          "mask": 2,
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 13,
+          "fields_total": 15
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15
+        }
+      ],
+      "local_model_predictions": 0,
+      "predict_ns": 0,
+      "generation_ns": 5566000,
+      "model": null,
+      "diagnostic": {
+        "code": "partial",
+        "action": "repair-and-replay"
+      },
+      "native": {
+        "stage": "COMPLETE",
+        "elapsed_ns": 296046500,
+        "child_cpu_ns": 185607000,
+        "build_peak_rss_bytes": 85950464,
+        "finite_passed": 1,
+        "finite_total": 1,
+        "runtime_replayed": true,
+        "run_stdout_sha256": [
+          "sha256:dabd05cfb0404de9273ac9fb088c51b67d2c029dd15b16de8f70c307d7d594e4",
+          "sha256:dabd05cfb0404de9273ac9fb088c51b67d2c029dd15b16de8f70c307d7d594e4"
+        ]
+      }
+    }
+  ],
+  "limits": [
+    "One paired workload with one run per policy; this is not a statistical performance comparison.",
+    "The input is a retained composition observation with 17/21 matching fields and one type rejection; it is not a fresh measurement of that original program.",
+    "Five selection cases are reused to choose the diagnostic body; their score is not independent accuracy.",
+    "Native elapsed time includes toolchain selection, build, and two executions; inherited caches differ between runs.",
+    "CPU values cover recorded native child processes; host CPU utilization was not sampled.",
+    "Outer go-run startup and a dependency download occurred on the model run and are excluded from these native observations."
+  ]
+}
