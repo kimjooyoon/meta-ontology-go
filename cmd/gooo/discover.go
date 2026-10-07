@@ -16,22 +16,26 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-const discoverUsage = "usage: gooo discover [--json] --query <question> <file.gooo>"
+const discoverUsage = "usage: gooo discover [--json] --query <question> [--domain-contract <contract.gooo>] <file.gooo>"
 
 type capabilityDiscoveryReport struct {
-	Schema     string                            `json:"schema"`
-	Decision   string                            `json:"decision"`
-	Query      jev.CapabilityQueryTrail          `json:"capability_trail"`
-	SourcePath string                            `json:"source_path"`
-	SourceHash string                            `json:"source_digest"`
-	Semantic   string                            `json:"semantic_digest"`
-	Receipt    *completeness.CompletenessReceipt `json:"completeness_receipt"`
+	Schema                 string                            `json:"schema"`
+	Decision               string                            `json:"decision"`
+	Query                  jev.CapabilityQueryTrail          `json:"capability_trail"`
+	SourcePath             string                            `json:"source_path"`
+	SourceHash             string                            `json:"source_digest"`
+	Semantic               string                            `json:"semantic_digest"`
+	DomainContractPath     string                            `json:"domain_contract_path,omitempty"`
+	DomainContractHash     string                            `json:"domain_contract_digest,omitempty"`
+	DomainContractSemantic string                            `json:"domain_contract_semantic_digest,omitempty"`
+	Receipt                *completeness.CompletenessReceipt `json:"completeness_receipt"`
 }
 
 func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	args, jsonMode := parseJSONFlag(args)
 	query := ""
 	filename := ""
+	domainContractPath := ""
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
 		case "--query":
@@ -40,6 +44,18 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 			}
 			index++
 			query = strings.TrimSpace(args[index])
+			if query == "" {
+				return reportDiscoverUsage(jsonMode, stdout, stderr)
+			}
+		case "--domain-contract":
+			if domainContractPath != "" || index+1 >= len(args) {
+				return reportDiscoverUsage(jsonMode, stdout, stderr)
+			}
+			index++
+			domainContractPath = strings.TrimSpace(args[index])
+			if domainContractPath == "" {
+				return reportDiscoverUsage(jsonMode, stdout, stderr)
+			}
 		case "--help", "-h":
 			_, _ = fmt.Fprintln(stdout, discoverUsage)
 			return exitOK
@@ -69,11 +85,15 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	if err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_LOWER_FAILED", err.Error())
 	}
+	domainContract, contractFailure, err := loadDiscoveryDomainContract(reader, filename, source, domainContractPath)
+	if err != nil {
+		return reportDiscoverFailure(jsonMode, stdout, stderr, domainContractPath, contractFailure, err.Error())
+	}
 	trail := jev.DiscoverCapabilityQueryTrail(query, string(source))
 	if err := trail.Validate(); err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "CAPABILITY_TRAIL_INVALID", err.Error())
 	}
-	receipt := capabilityDiscoveryCompletenessReceipt(filename, source, ir, trail)
+	receipt := capabilityDiscoveryCompletenessReceipt(filename, source, ir, trail, domainContract)
 	if err := completeness.Validate(receipt); err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "COMPLETENESS_RECEIPT_INVALID", err.Error())
 	}
@@ -81,6 +101,11 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 		Schema: "gooo/capability-discovery-report/v1", Decision: "PROGRESS", Query: trail,
 		SourcePath: filename, SourceHash: "sha256:" + cache.HashBytes(source).String(),
 		Semantic: ir.StableHash(), Receipt: receipt,
+	}
+	if domainContract != nil {
+		report.DomainContractPath = domainContract.Path
+		report.DomainContractHash = "sha256:" + cache.HashBytes(domainContract.Source).String()
+		report.DomainContractSemantic = domainContract.IR.StableHash()
 	}
 	if jsonMode {
 		encoder := json.NewEncoder(stdout)
@@ -102,27 +127,13 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	return exitOK
 }
 
-func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir semantic.IR, trail jev.CapabilityQueryTrail) *completeness.CompletenessReceipt {
+func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir semantic.IR, trail jev.CapabilityQueryTrail, domainContract *discoveryDomainContract) *completeness.CompletenessReceipt {
 	sourceDigest := "sha256:" + cache.HashBytes(source).String()
 	semanticDigest := ir.StableHash()
-	nodes := ir.Graph.Nodes()
-	declarations := 0
-	for _, node := range nodes {
-		if node.Kind == semantic.Entity || node.Kind == semantic.Activity {
-			declarations++
-		}
-	}
-	declarationStatus := "PASS"
-	declarationNumerator, declarationDenominator := declarations, declarations
-	if declarations == 0 {
-		declarationStatus = "UNKNOWN"
-		declarationNumerator, declarationDenominator = 0, 0
-	}
 	matchStatus, matchNumerator := capabilityCatalogMatchState(trail.Response.Status)
+	declarationCoverage := discoveryDeclarationCoverage(ir, domainContract)
 	dimensions := []completeness.CompletenessDimension{
-		{ID: "declaration_coverage", Status: declarationStatus, Numerator: declarationNumerator, Denominator: declarationDenominator,
-			Unit: "stable Gooo entity and activity declarations", Reason: "Counts declarations resolved into semantic IR for the exact source digest.",
-			Evidence: []string{"source_digest:" + sourceDigest, "semantic_digest:" + semanticDigest, "declarations:" + strconv.Itoa(declarations)}},
+		declarationCoverage,
 		{ID: "capability_discovery_observation", Status: "PASS", Numerator: 1, Denominator: 1,
 			Unit: "validated deterministic JEV discovery trails", Reason: "The JEV trail validates its query, declaration observation, route and evidence digests; a match is descriptive, not proof of implementation.",
 			Evidence: []string{"jev_query_digest:" + trail.Response.QueryDigest, "jev_evidence_digest:" + trail.EvidenceDigest,
@@ -139,10 +150,8 @@ func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir s
 		unknownCompletenessDimension("permission_boundary_coverage", "observed host permission profiles", "The discovery receipt does not observe operating-system permissions."),
 		unknownCompletenessDimension("network_boundary_coverage", "observed external network boundaries", "The discovery receipt does not observe external network configuration."),
 		{ID: "provenance_integrity", Status: "PASS", Numerator: 1, Denominator: 1,
-			Unit: "source, semantic IR and JEV trail identities bound in one receipt", Reason: "The receipt binds exact source bytes, normalized semantic IR, JEV query identity and trail evidence.",
-			Evidence: []string{"source_digest:" + sourceDigest, "semantic_digest:" + semanticDigest,
-				"jev_declaration_observation_digest:" + trail.Response.Declaration.SourceDigest,
-				"jev_query_digest:" + trail.Response.QueryDigest, "jev_evidence_digest:" + trail.EvidenceDigest}},
+			Unit: "source, semantic IR, optional domain contract and JEV trail identities bound in one receipt", Reason: "The receipt binds exact source bytes, normalized semantic IR, optional domain-contract bytes and semantic IR, JEV query identity and trail evidence.",
+			Evidence: discoveryProvenanceEvidence(sourceDigest, semanticDigest, trail, domainContract)},
 	}
 	core := make([]string, 0, len(dimensions))
 	statusCounts := map[string]int{"PASS": 0, "PROGRESS": 0, "UNKNOWN": 0, "FAIL_CLOSED": 0}
@@ -163,11 +172,12 @@ func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir s
 	}
 	return &completeness.CompletenessReceipt{
 		Schema: completeness.CompletenessReceiptSchema, ProfileID: "gooo-jev-capability-discovery/v1",
-		Decision: "PROGRESS", DecisionBasis: "A validated source-bound discovery observation exists; generation, independent runtime use cases and reverse observation remain open.",
+		Decision: "PROGRESS", DecisionBasis: "A validated source-bound discovery observation exists; declaration coverage is measured only when a separate Gooo domain contract supplies its denominator, while generation, independent runtime use cases and reverse observation remain open.",
 		Scope: map[string]any{
 			"receipt_declaration": completeness.ContractBinding(), "domain": "source-bound Gooo capability discovery",
 			"source_path": filename, "source_digest": sourceDigest, "semantic_digest": semanticDigest,
-			"query_digest": trail.Response.QueryDigest, "jev_evidence_digest": trail.EvidenceDigest,
+			"domain_contract": discoveryDomainContractScope(domainContract),
+			"query_digest":    trail.Response.QueryDigest, "jev_evidence_digest": trail.EvidenceDigest,
 			"capability_status": trail.Response.Status, "investment_limit": map[string]any{"queries": 1, "model_calls": 0, "generation_attempts": 0},
 			"excluded_scope": []string{"semantic correctness over all inputs", "generated runtime behavior", "permission authorization", "external network behavior"},
 		},
@@ -218,7 +228,7 @@ func nextCapabilityReceiptOperation(id string) string {
 	case "catalog_match":
 		return "refine_question_or_add_a_source_bound_capability"
 	case "declaration_coverage":
-		return "declare_a_domain_entity_or_activity_with_a_stable_id"
+		return "provide_a_separate_gooo_domain_contract_with_expected_stable_declarations"
 	case "execution_boundary_coverage":
 		return "restore_the_non_executing_and_non_authorizing_discovery_contract"
 	case "generation_coverage":
