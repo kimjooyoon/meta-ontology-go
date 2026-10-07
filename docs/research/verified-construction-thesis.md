@@ -231,7 +231,58 @@ provide context; external reproduction and useful completed tasks establish
 whether the construction process helps people. The proposed agent comparisons
 and commercial directions are hypotheses to revisit as that evidence grows.
 
-### Implementation order
+### October 8 checkpoint and next deliverable
+
+The first milestones now have small runnable artifacts. Use these as the entry
+point for the next contributor or user:
+
+| Starting point | Evidence already published | Next question |
+| --- | --- | --- |
+| [Diagnostic starter](../language/project-starters.md#start-a-reusable-diagnostic-tool) | A two-package Gooo tool, optional own-model assembly, and saved-program replay on new inputs | Can another developer adapt its rules and cases to a useful task? |
+| [Two domain tools](../../examples/domain-tools/README.md) | Assembly and documentation rules share a report interface; deterministic/model pairs retain their attempts and finite outputs | Which missing expression or reusable operation appears when a third domain is added? |
+| [Construction explainer](../../examples/construction-observation/README.md) | Gooo interprets retained construction attempts and returns a next operation | Can an explicit proposal be consumed to construct and check the next candidate? |
+
+The diagnostic starter is available on `dev` from commit
+`25df294860e1cfdff8e419bc2cf25390a52043b7`. The separately published
+[v0.6.5-dev release](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.5-dev)
+predates that template. Pin the source revision when reproducing a study.
+Maintainer runs, including runs of downloaded binaries and module installations,
+establish installation observations; external reproduction and adoption still
+need independent reports.
+
+The next construction experiment should connect the existing explainer to a
+bounded repair proposal. Give it a retained failed attempt, the remaining
+source-declared alternatives, and a fixed attempt budget. Have Gooo describe the
+next permitted operation; let the own compact model rank eligible choices where
+the current adapter supports them. The Go runner applies an explicit choice,
+runs the original obligations, and saves the new attempt. Replay uses the saved
+construction without new inference. Publishing this connected experiment is a
+planned deliverable; the current explainer returns advice.
+
+Start with one reproducible failure and include a case where the declared space
+has no acceptable solution. Keep that unresolved result visible. Compare the
+deterministic and model-ranked paths on the same space and budget. Report matched
+cases and fields, newly observed inputs, rejected attempts, model calls, elapsed
+time, and human interventions with their denominators. Growing the grammar is a
+separate language change and needs a new comparison against the old space.
+
+Use this tool-building work to choose language features. For example, the
+[pure body profile](../language/body-codegen.md) currently rejects function calls;
+activity reuse is expressed through declared composition bindings. If a small
+tool needs a library operation inside a branch, first retain that unsupported
+program and its intended cases. Then design its typed call semantics and native
+projection. Preserve the source-level operation and meaning independently of
+which model proposes it. Model training should follow such concrete construction
+tasks, retaining the source, attempted decisions, counterexamples and outcomes.
+
+Publish a short Korean and English walkthrough of the connected tool, its
+failed case and its replay. An independent developer should be able to follow it
+without reconstructing the research repository history. Their reproducible
+failure or useful task becomes input to the next language iteration. Commercial
+packaging can be evaluated from those observed uses; acquisition estimates and
+proposed user counts remain outside the technical success criteria.
+
+### Language development principles
 
 The contextual-hole example is a concrete instance of this sequence: a retained
 failure on `input + hole` exposed a missing candidate, and the optional
