@@ -35,6 +35,13 @@ candidates. This path loads no model. See the [checkpoint and continuation
 example](../../examples/assembly-policy/README.md#continue-a-saved-partial-construction)
 for supported graphs, history bounds, and replay accounting.
 
+Record-choice [called helpers can also continue](../../examples/dependent-continuation/README.md).
+Helpers resume in dependency order. When their bodies change, dependent record
+activities recheck attempted masks before applying the new policy. Historical
+source checkpoints bind earlier scores and model context; current counts
+distinguish retained masks, rechecks, and new masks. Replay verifies each round's
+actual helper construction. No new model is loaded during continuation.
+
 Gooo source can declare candidate expressions for a record-valued activity
 body. The compiler checks each complete assignment against the record shape
 and declared `value_case` examples, then emits only a listed assignment. The

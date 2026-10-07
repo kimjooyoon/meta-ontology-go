@@ -301,8 +301,13 @@ stop retain both complete and partial finite outcomes. This extends reusable
 metaprogramming within the current record-choice profile. [Called-body
 construction](../../examples/called-body-construction/README.md) now constructs
 source-declared helper bodies in dependency order before projecting their callers.
-The attempts remain independently inspectable. Automatic scheduling and retaining
-dependent caller constructions after a helper changes remain further work.
+The attempts remain independently inspectable. [Dependent continuation](../../examples/dependent-continuation/README.md)
+now resumes record-choice helpers before their callers in `body-compose`.
+Changed dependencies cause retained caller masks to be scored again, while
+earlier stages replay against saved source checkpoints. Historical model rankings
+are retained with zero new inference. This closes a concrete reuse gap exposed
+by building the diagnostic tool. Package-workspace continuation, other assembly
+profiles and automatic scheduling remain further work.
 
 Fresh called-body executions now retain the actual arguments delivered to each
 constructed helper. The [paired follow-up](called-input-observation-20261008/summary.json)

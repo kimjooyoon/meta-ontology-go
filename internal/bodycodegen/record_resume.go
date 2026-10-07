@@ -1,7 +1,6 @@
 package bodycodegen
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"reflect"
@@ -11,8 +10,8 @@ import (
 const recordControlStageLimit = 16
 
 // ResumeRecordAssembly verifies the saved generation, then applies a new Gooo
-// policy to the remaining original ranking. The pure target body must be
-// unchanged when an earlier composition activity has changed its checkpoint.
+// policy to the remaining original ranking. Changed dependencies recheck the
+// attempted prefix; the target contract and cumulative budget stay fixed.
 // Historical model observations are retained; this function loads no model.
 func ResumeRecordAssembly(ctx context.Context, filename string, priorSource, source []byte,
 	prior Result, policy RecordAssemblyPolicy) (Result, error) {
@@ -33,22 +32,26 @@ func ResumeRecordAssembly(ctx context.Context, filename string, priorSource, sou
 	if err != nil {
 		return Result{}, err
 	}
-	if !bytes.Equal(oldPlan.body.base.source, plan.body.base.source) {
-		return Result{}, fmt.Errorf("resume target body or typed declarations changed")
+	if err := compatibleRecordTarget(oldPlan, plan); err != nil {
+		return Result{}, err
 	}
 	old := prior.Report.RecordAssembly
 	r := newRecordAssemblyReceipt(source, plan)
-	if err := verifyRecordAssemblyRanking(old, r, plan); err != nil {
-		return Result{}, err
-	}
 	if len(old.ControlHistory) >= recordControlStageLimit {
 		return Result{}, fmt.Errorf("record continuation supports at most %d saved stages", recordControlStageLimit)
 	}
 	copyRecordModelObservation(r, old)
-	history := append([]RecordAssemblyControlStage(nil), old.ControlHistory...)
-	history = append(history, RecordAssemblyControlStage{Attempts: len(old.Attempts), SelectedMask: old.SelectedMask, Control: old.Control})
+	history := appendRecordHistory(old, priorSource, source)
+	plans, origin, err := recordHistoryPlans(ctx, filename, source, plan, history)
+	if err != nil {
+		return Result{}, err
+	}
+	if err := verifyRecordAssemblyRanking(old, r, plans[0]); err != nil {
+		return Result{}, err
+	}
+	r.RankingSourceSHA256 = origin
 	current := &RecordAssemblyControl{Policy: policy}
-	if err := replayRecordSearchStages(ctx, plan, r, history, current); err != nil {
+	if err := replayRecordSearchStages(ctx, plans, r, history, current); err != nil {
 		return Result{}, err
 	}
 	result, err := emitRecordAssembly(ctx, filename, source, plan, r)
@@ -77,7 +80,7 @@ func copyRecordModelObservation(dst, src *RecordAssemblyReceipt) {
 	}
 }
 
-func replayRecordSearchStages(ctx context.Context, plan recordAssemblyPlan, r *RecordAssemblyReceipt,
+func replayRecordSearchStages(ctx context.Context, plans []recordAssemblyPlan, r *RecordAssemblyReceipt,
 	history []RecordAssemblyControlStage, current *RecordAssemblyControl) error {
 	if len(history) > recordControlStageLimit || (len(history) > 0 && current == nil) {
 		return fmt.Errorf("record continuation requires bounded explicit control stages")
@@ -86,21 +89,30 @@ func replayRecordSearchStages(ctx context.Context, plan recordAssemblyPlan, r *R
 		if i > 0 && stage.Control == nil {
 			return fmt.Errorf("continued stage requires a Gooo policy")
 		}
-		if err := runRecordControlStage(ctx, plan, r, stage.Control); err != nil {
+		rechecked, err := transitionRecordDependencies(ctx, plans, i, r)
+		if err != nil {
 			return err
 		}
-		if len(r.Attempts) != stage.Attempts || r.SelectedMask != stage.SelectedMask || !reflect.DeepEqual(r.Control, stage.Control) {
+		if err := runRecordControlStage(ctx, plans[i], r, stage.Control); err != nil {
+			return err
+		}
+		if rechecked != stage.RecheckedAttempts || len(r.Attempts) != stage.Attempts || r.SelectedMask != stage.SelectedMask || !reflect.DeepEqual(r.Control, stage.Control) {
 			return fmt.Errorf("record control stage %d does not replay", i)
 		}
-		r.ControlHistory = append(r.ControlHistory, RecordAssemblyControlStage{
-			Attempts: len(r.Attempts), SelectedMask: r.SelectedMask, Control: r.Control})
+		stage.Control = r.Control
+		r.ControlHistory = append(r.ControlHistory, stage)
 	}
 	retained := len(r.Attempts)
-	if err := runRecordControlStage(ctx, plan, r, current); err != nil {
+	rechecked, err := transitionRecordDependencies(ctx, plans, len(history), r)
+	if err != nil {
+		return err
+	}
+	if err := runRecordControlStage(ctx, plans[len(history)], r, current); err != nil {
 		return err
 	}
 	if len(history) > 0 {
-		r.Continuation = &RecordAssemblyContinuation{RetainedAttempts: retained, AddedAttempts: len(r.Attempts) - retained}
+		r.Continuation = &RecordAssemblyContinuation{RetainedAttempts: retained,
+			RecheckedAttempts: rechecked, AddedAttempts: len(r.Attempts) - retained}
 	}
 	return nil
 }
@@ -132,18 +144,15 @@ func resumeRecordSearch(ctx context.Context, p recordAssemblyPlan, r *RecordAsse
 			best, found = attempt, true
 		}
 	}
-	if !found {
-		return best, nil, nil, fmt.Errorf("continued record has no scored candidate")
+	var cases []RecordAssemblyCase
+	if found {
+		var err error
+		_, cases, err = evaluateRecordMask(ctx, p, best.Mask)
+		if err != nil {
+			return best, nil, nil, err
+		}
 	}
-	candidate, err := p.candidate(best.Mask)
-	if err != nil {
-		return best, nil, nil, err
-	}
-	cases, err := evaluateRecordAssembly(ctx, candidate.source, p.body.activity.Name, p.body.records, p.spec.ValueCases)
-	if err != nil {
-		return best, nil, nil, err
-	}
-	if r.Passed == r.Total {
+	if r.Total > 0 && r.Passed == r.Total {
 		remaining = nil
 	}
 	if policy != nil {
@@ -152,7 +161,7 @@ func resumeRecordSearch(ctx context.Context, p recordAssemblyPlan, r *RecordAsse
 			return best, nil, nil, err
 		}
 		r.Control.Entry = &entry
-		if entry.Operation == "USE_OBSERVED_CANDIDATE" {
+		if found && entry.Operation == "USE_OBSERVED_CANDIDATE" {
 			r.SelectedMask, r.Cases = best.Mask, cases
 			r.Passed, r.Total, r.FieldsPassed, r.FieldsTotal = best.Passed, best.Total, best.FieldsPassed, best.FieldsTotal
 		}

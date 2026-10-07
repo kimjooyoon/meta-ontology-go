@@ -1,0 +1,40 @@
+{
+  "compiler_revision": "395fb538fae6c55edb173e660b22daef8544f01a",
+  "vcs_modified": false,
+  "go_version": "go version go1.27.1 darwin/arm64",
+  "host": {
+    "system": "Darwin",
+    "architecture": "arm64"
+  },
+  "binary_sha256": "738ebeb6d8f480588e97ff041d9c56cf1fba53ad5ca672d60d5465e6ba0cb1f0",
+  "version": {
+    "schema_version": "gooo-version/v1",
+    "language": "gooo",
+    "version": "0.6.6-dev",
+    "status": "development",
+    "semantic_ir": "semantic-ir/v1",
+    "semantic_check": "gooo-semantic-check/v1",
+    "graph": "gooo-graph/v1",
+    "fix_plan": "gooo-fix-plan/v1"
+  },
+  "build_info": [
+    "\tpath\tgithub.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+    "\tmod\tgithub.com/kimjooyoon/meta-ontology-go\tv0.6.4-dev.0.20261007221026-395fb538fae6\t",
+    "\tdep\tgithub.com/kimjooyoon/gooo-decision-runtime\tv0.2.24-experimental\th1:rlYu+jFfO88id/598ZfVKI9Qapcwxo7xtYW2dI7n254=",
+    "\tdep\tgithub.com/kimjooyoon/gooo-jev\tv0.0.0-20260928032625-e146e6dbb34a\th1:1/uDBg0hud6IiZzOhTKXokIWdmlnU4HdYz7TGl729+s=",
+    "\tbuild\t-buildmode=exe",
+    "\tbuild\t-compiler=gc",
+    "\tbuild\tCGO_ENABLED=1",
+    "\tbuild\tCGO_CFLAGS=",
+    "\tbuild\tCGO_CPPFLAGS=",
+    "\tbuild\tCGO_CXXFLAGS=",
+    "\tbuild\tCGO_LDFLAGS=",
+    "\tbuild\tGOARCH=arm64",
+    "\tbuild\tGOOS=darwin",
+    "\tbuild\tGOARM64=v8.0",
+    "\tbuild\tvcs=git",
+    "\tbuild\tvcs.revision=395fb538fae6c55edb173e660b22daef8544f01a",
+    "\tbuild\tvcs.time=2026-10-07T22:10:26Z",
+    "\tbuild\tvcs.modified=false"
+  ]
+}
