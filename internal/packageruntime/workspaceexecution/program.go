@@ -159,9 +159,8 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 			}
 		}
 	}
-	if len(needed) < 2 {
-		return Program{}, fmt.Errorf("workspace entry requires at least one explicitly bound producer for body execution")
-	}
+	// The entry itself is an executable closure. Explicit binds add its producers;
+	// an independent language tool does not need an artificial input activity.
 	if len(needed) > 16 {
 		return Program{}, fmt.Errorf("workspace entry execution path supports at most 16 activities; got %d", len(needed))
 	}
@@ -183,7 +182,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 			bindings = append(bindings, binding.decl)
 		}
 	}
-	if len(bindings) == 0 {
+	if len(needed) > 1 && len(bindings) == 0 {
 		return Program{}, fmt.Errorf("workspace body execution requires at least one explicit activity binding")
 	}
 	sourceFillSpecs := make(map[string]*assemblyspec.Spec)
