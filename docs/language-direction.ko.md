@@ -181,6 +181,16 @@ Gooo가 선언한 IR 후보 탐색은 생성 결과를 저장한 뒤 `body-execu
 쌓습니다. 사업 방향은 그 사용 경험을 바탕으로 판단합니다. 구체적인 개발 순서는
 [성장과 교체 실험 계획](research/verified-construction-thesis.md#grow-through-a-replaceable-construction-system)에 있습니다.
 
+지금은 이 순서를 작은 도구에 적용하고 있습니다. Gooo로 조립 결과를 설명하는
+[실행 예제](../examples/assembly-explainer/README.md), 실행 반례를 받아 다음
+시도를 정하는 [피드백 관측](research/assembly-feedback-20261007/summary.json),
+두 패키지가 같은 `Result` 이름을 사용해도 안정 ID로 구분해 연결하는
+[패키지 예제](../examples/package-record-namespaces/README.md)가 그 출발점입니다.
+패키지 예제의 4개 입력·12개 출력은 모두 기대값과 일치했고 모델 호출은 0회였습니다.
+이 결과를 토대로 다음에는 같은 컴파일러에 두 도메인의 선언과 판단 규칙을
+넣어보고, 새로 필요한 언어 기능을 구체적인 실패 사례에서 고릅니다.
+외부 개발자의 독립 재현과 실제 사용 성과는 관측이 생기는 대로 별도로 기록합니다.
+
 ## 어떤 작업을 쉽게 만들고 싶은가
 
 “이 조건에서는 이 값을 쓰고, 다른 조건에서는 저 연산을 하며, 결과는 이

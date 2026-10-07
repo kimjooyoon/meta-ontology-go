@@ -34,3 +34,8 @@ expressions, field alternatives, saved planning baselines and external body-fill
 candidates. Only activities in the entry's producer chain have their bodies
 prepared for execution. A model can rank supported declared choices after this
 deterministic name resolution; this example uses no inference.
+
+The [recorded run](../../docs/research/record-namespaces-20261007/summary.json)
+links the compiler revision, source digests and raw receipt: twelve named outputs
+matched across four input rows, with two fresh native runs and zero model calls.
+This measures the example's finite behavior and record identity separation.
