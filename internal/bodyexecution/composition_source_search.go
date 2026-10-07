@@ -33,14 +33,22 @@ func (g *compositionAssemblyGenerator) generate(ctx context.Context, filename st
 			return bodycodegen.Result{}, err
 		}
 	}
+	if g.options.RecordPolicy != nil && bodycodegen.IsRecordAssembly(spec) {
+		return g.retained.GenerateRecordAssemblyWithPolicy(ctx, filename, source, activity, *g.options.RecordPolicy)
+	}
 	return g.retained.GenerateSourceAssembly(ctx, filename, source, activity)
 }
 
 func (graph compositionGraph) validateModelRoute(ctx context.Context, filename string, source []byte, options CompositionOptions) error {
-	if options.ModelPath == "" && options.FillModelPath == "" {
+	if options.ModelPath == "" && options.FillModelPath == "" && options.RecordPolicy == nil {
 		return nil
 	}
-	var hasChoice, hasFill bool
+	if options.RecordPolicy != nil {
+		if err := bodycodegen.ValidateRecordAssemblyPolicy(ctx, *options.RecordPolicy); err != nil {
+			return err
+		}
+	}
+	var hasChoice, hasFill, hasRecord bool
 	for _, node := range graph.nodes[:graph.count] {
 		if !node.Assembling {
 			continue
@@ -49,6 +57,7 @@ func (graph compositionGraph) validateModelRoute(ctx context.Context, filename s
 		if err != nil {
 			return err
 		}
+		hasRecord = hasRecord || bodycodegen.IsRecordAssembly(spec)
 		if bodycodegen.IsSourceIRBodyFill(spec) {
 			hasFill = true
 		} else if !bodycodegen.IsSourceIRSearch(spec) {
@@ -60,6 +69,9 @@ func (graph compositionGraph) validateModelRoute(ctx context.Context, filename s
 	}
 	if options.FillModelPath != "" && !hasFill {
 		return fmt.Errorf("composition --fill-model requires a source_fill assembling activity")
+	}
+	if options.RecordPolicy != nil && !hasRecord {
+		return fmt.Errorf("composition --assembly-policy requires a record-choice assembling activity")
 	}
 	return nil
 }

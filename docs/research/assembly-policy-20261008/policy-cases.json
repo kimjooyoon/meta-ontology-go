@@ -1,0 +1,41 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Explain": {
+          "matched": 3,
+          "total": 5,
+          "best": 3,
+          "scored": 1,
+          "budget": 8
+        }
+      },
+      "expected": {
+        "Explain": {
+          "state": "PROGRESS",
+          "next_operation": "CONTINUE_CANDIDATES",
+          "message": "남은 예산에서 다른 후보를 관측할 수 있습니다."
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "matched": 5,
+          "total": 5,
+          "best": 5,
+          "scored": 2,
+          "budget": 8
+        }
+      },
+      "expected": {
+        "Explain": {
+          "state": "PASS",
+          "next_operation": "OBSERVE_NEW_INPUTS",
+          "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요."
+        }
+      }
+    }
+  ]
+}

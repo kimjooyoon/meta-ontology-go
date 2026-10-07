@@ -56,12 +56,27 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 		return Realization{}, err
 	}
 	expected.Ranking = append([]uint16(nil), r.Ranking...)
-	if err = searchRecordAssembly(ctx, plan, expected); err != nil {
+	var policy *preparedRecordPolicy
+	if r.Control != nil {
+		policy, err = prepareRecordPolicy(ctx, r.Control.Policy)
+		if err != nil {
+			return Realization{}, err
+		}
+		expected.Control = policy.receipt
+	}
+	if err = searchRecordAssemblyWithPolicy(ctx, plan, expected, policy); err != nil {
 		return Realization{}, err
 	}
+	if err = verifyRecordAssemblyObservations(expected, r); err != nil {
+		return Realization{}, err
+	}
+	return realizeRecordAssemblyProjection(ctx, filename, source, prior, plan, expected)
+}
+
+func verifyRecordAssemblyObservations(expected, r *RecordAssemblyReceipt) error {
 	observedCases, err := canonicalRecordCaseValues(r.Cases)
 	if err != nil {
-		return Realization{}, err
+		return err
 	}
 	checks := []struct {
 		name    string
@@ -74,12 +89,19 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 		{"case counts", expected.Passed == r.Passed && expected.Total == r.Total},
 		{"field counts", expected.FieldsPassed == r.FieldsPassed && expected.FieldsTotal == r.FieldsTotal},
 		{"finite status", expected.Status == r.Status},
+		{"policy decisions", reflect.DeepEqual(expected.Control, r.Control)},
 	}
 	for _, check := range checks {
 		if !check.matches {
-			return Realization{}, fmt.Errorf("record %s do not replay", check.name)
+			return fmt.Errorf("record %s do not replay", check.name)
 		}
 	}
+	return nil
+}
+
+func realizeRecordAssemblyProjection(ctx context.Context, filename string, source []byte, prior Result,
+	plan recordAssemblyPlan, expected *RecordAssemblyReceipt) (Realization, error) {
+	r := prior.Report.RecordAssembly
 	generated, err := emitRecordAssembly(ctx, filename, source, plan, expected)
 	if err != nil {
 		return Realization{}, err
