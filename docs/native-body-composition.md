@@ -139,6 +139,27 @@ replay repeat candidate evaluation. This is currently a reproducible constructio
 path, with no measured speed advantage. Finite scores describe only the declared
 cases; incomplete grammar exploration and unmatched cases remain visible.
 
+### Trained-model observation
+
+The [2026-10-07 paired observation](research/source-fill-dogfood-20261007.json)
+used the independently trained QAT operation model on this example. Its two
+operation predictions were `equal` and `add` for the expected `add` and
+`multiply`: 0/2 matched. Gooo's finite-case selection still produced 15/15 native
+outputs in both the model and deterministic arms. Each matched both unique
+runtime cases disjoint from construction observations. Model-training exposure
+is unknown. The model added no demonstrated benefit on this workload.
+
+Model setup took 0.165 ms and the two decision calls took 28.125 and 24.958 us.
+The model files totaled 3,999 bytes; they were deleted before a successful saved
+replay with zero new model calls. Whole-command user/system CPU time was
+0.14/0.10 seconds in each arm. Maximum RSS, including the native build/execution
+command observation, was about 81.7/82.9 MiB; host CPU utilization was not sampled.
+One model-first pair is too small and cache-sensitive to establish a resource
+improvement. [Model](research/source-fill-native-20261007/model-native.json),
+[deterministic](research/source-fill-native-20261007/deterministic-native.json) and
+[saved replay](research/source-fill-native-20261007/saved-replay.json) receipts
+retain the incorrect predictions and the corrected outputs together.
+
 ## One activity without a synthetic bind
 
 A single activity is a complete executable plan by itself. Its case keys use
