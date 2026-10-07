@@ -1,0 +1,291 @@
+{
+  "schema": "gooo/diagnostic-starter-study/v1",
+  "recorded_at_utc": "2026-10-07T16:46:38.811212+00:00",
+  "compiler_revision": "7269826eb7750a9a1e911831e4cb6c89078884c8",
+  "compiler_tree_clean_at_build": true,
+  "toolchain": "go version go1.27.1 darwin/arm64",
+  "template": "diagnostic",
+  "module": "example.org/growth/diagnostic",
+  "init_stdout": "Created Gooo diagnostic starter in workspace\nNext: cd workspace && gooo package execute --json --cases cases.json gooo.workspace.json\n",
+  "project_files_sha256": {
+    "README.md": "sha256:eb9c14d7ddee0e9c1e803714d539580697649cbb3a71234408eafaf6ca93fbe2",
+    "app.gooo": "sha256:4144f80444fff2f8bf303bd0a2fdc8c4ea91a542b2affbc37e39e0a18860173f",
+    "cases.json": "sha256:a161969a87c0eff0fd4d1e24e630c502adef67c1df7d2968315187f873ef6c35",
+    "diagnostics.gooo": "sha256:54fd2093ad96a2b969ef20c5468e62ac9a4c09b92e57614d3ee21d15827b2ca4",
+    "gooo.workspace.json": "sha256:018e06791913f216f0efd2d0427be6bb3068d528a11ec084f8a638bfe3337db8",
+    "inputs.json": "sha256:60a50f40878e4c3e112fd3a30ffe01fdb4aca59b7f013050e29bdf71e3f7bbc6"
+  },
+  "project_moved_before_replay": true,
+  "model_origin": "https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary",
+  "model_parameters": 2072,
+  "new_training": false,
+  "model_training_exposure": "UNKNOWN",
+  "host_cpu_utilization": "UNOBSERVED",
+  "run_order": [
+    "deterministic",
+    "model",
+    "replay",
+    "inputs"
+  ],
+  "observation": "A self-contained CLI starter produced the source-owned diagnostic tool with a custom module identity. Deterministic ordering took four attempts; the existing own model took two. Both and relocated saved replay matched 8/8 activity outputs. Three additional input rows returned source-owned suggestions with zero new inference and no supplied runtime expectations.",
+  "pairing": "Same generated source, five construction cases, eight permitted paths, budget eight and runtime cases; ordering differs. The first model proposal matched 3/5 cases and 13/15 fields. Continuation selected a 5/5, 15/15 candidate.",
+  "measurement_scope": "One deterministic-first sequential pair and saved replays on a shared host with uncontrolled build caches. Prediction/setup timing and resident model tensors have different scope from whole-command time and maximum process RSS. Raw child-process measurements are in each receipt. No comparative speed, causal CPU, general correctness, calibration or external adoption claim.",
+  "reproduction": [
+    "Build cmd/gooo from compiler_revision with Go 1.27.1.",
+    "Run gooo init --template diagnostic --module example.org/growth/diagnostic workspace. The six generated files are sufficient for this example.",
+    "Run package execute --json --go GO1_27_1 --cases workspace/cases.json workspace/gooo.workspace.json; save deterministic.json.",
+    "Repeat with --assembly-model MODEL_JSON from the pinned revision; save model.json and copy it to workspace/execution.json.",
+    "Move workspace to moved-workspace, then run package replay --json --go GO1_27_1 --receipt moved-workspace/execution.json --cases moved-workspace/cases.json moved-workspace/gooo.workspace.json.",
+    "Repeat saved replay with --inputs moved-workspace/inputs.json in place of --cases. Do not supply model options."
+  ],
+  "observations": [
+    {
+      "label": "deterministic",
+      "raw_receipt": "deterministic.json",
+      "raw_receipt_sha256": "sha256:aec1e56842f0fb659dfc0fd807e4730e84ac90ee74af2019e0076dea9ebe78f8",
+      "decision": "PASS",
+      "generated_sha256": "sha256:5794561eb52c98aa8ffc318f4d20f7a4a0fced8cd3746e2a41df3c6c560ab4f6",
+      "native_runs": 2,
+      "finite_passed": 8,
+      "finite_total": 8,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "current_model_calls": 0,
+      "runtime_model_calls": 0,
+      "retained_model_calls": 0,
+      "command_wall_seconds": 0.5887811669999996,
+      "command_user_seconds": 0.17,
+      "command_system_seconds": 0.11,
+      "command_peak_rss_bytes": 86638592,
+      "raw_time_lp": "real 0.58\nuser 0.17\nsys 0.11\n            86638592  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               19263  page reclaims\n                 233  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 307  signals received\n                 144  voluntary context switches\n                3874  involuntary context switches\n           456434378  instructions retired\n           161090344  cycles elapsed\n            12747304  peak memory footprint\n",
+      "construction": {
+        "attempts": [
+          {
+            "mask": 0,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 11,
+            "fields_total": 15
+          },
+          {
+            "mask": 1,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 13,
+            "fields_total": 15
+          },
+          {
+            "mask": 2,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 13,
+            "fields_total": 15
+          },
+          {
+            "mask": 3,
+            "passed": 5,
+            "total": 5,
+            "fields_passed": 15,
+            "fields_total": 15
+          }
+        ],
+        "selected_mask": 3,
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "model_calls": 0,
+        "predict_ns": 0,
+        "model": null,
+        "prediction": null,
+        "ranking": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "label": "model",
+      "raw_receipt": "model.json",
+      "raw_receipt_sha256": "sha256:02fa22876d530a5392f519f65bf8e7aa116f6b2cbc8ab09fe4e1d8e29fa5f92b",
+      "decision": "PASS",
+      "generated_sha256": "sha256:5794561eb52c98aa8ffc318f4d20f7a4a0fced8cd3746e2a41df3c6c560ab4f6",
+      "native_runs": 2,
+      "finite_passed": 8,
+      "finite_total": 8,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "current_model_calls": 1,
+      "runtime_model_calls": 0,
+      "retained_model_calls": 1,
+      "command_wall_seconds": 0.4024373749999999,
+      "command_user_seconds": 0.15,
+      "command_system_seconds": 0.11,
+      "command_peak_rss_bytes": 86016000,
+      "raw_time_lp": "real 0.39\nuser 0.15\nsys 0.11\n            86016000  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16553  page reclaims\n                 234  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 314  signals received\n                 174  voluntary context switches\n                3510  involuntary context switches\n           422505939  instructions retired\n           145085512  cycles elapsed\n            12730896  peak memory footprint\n",
+      "construction": {
+        "attempts": [
+          {
+            "mask": 7,
+            "passed": 3,
+            "total": 5,
+            "fields_passed": 13,
+            "fields_total": 15
+          },
+          {
+            "mask": 3,
+            "passed": 5,
+            "total": 5,
+            "fields_passed": 15,
+            "fields_total": 15
+          }
+        ],
+        "selected_mask": 3,
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "model_calls": 1,
+        "predict_ns": 19042,
+        "model": {
+          "schema": "gooo/retained-path-model/v1",
+          "loaded": true,
+          "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+          "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+          "resident_tensor_bytes": 2096,
+          "setup_ms": 0.769667,
+          "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+          "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+          "feature_version": "triple_record_field_context_v1_shared_v1",
+          "arithmetic_version": "float32_separate_v1"
+        },
+        "prediction": {
+          "logits": [
+            -7.9075737,
+            -1.2027688,
+            -2.801236,
+            3.9035697,
+            -3.9035697,
+            2.801236,
+            1.2027688,
+            7.9075737
+          ],
+          "probabilities": [
+            1.832215e-14,
+            1.2209446e-08,
+            4.9921206e-10,
+            0.00033266356,
+            5.5056692e-11,
+            3.6688525e-05,
+            1.5000971e-06,
+            0.99962914
+          ],
+          "proposed_mask": 7
+        },
+        "ranking": [
+          7,
+          3,
+          5,
+          6,
+          1,
+          2,
+          4,
+          0
+        ]
+      }
+    },
+    {
+      "label": "replay",
+      "raw_receipt": "replay.json",
+      "raw_receipt_sha256": "sha256:62ce1cdc4d962b1765f54f0b5714ec37d9a7c3c448b9da7c6ac1e0fb22989a1d",
+      "decision": "PASS",
+      "generated_sha256": "sha256:5794561eb52c98aa8ffc318f4d20f7a4a0fced8cd3746e2a41df3c6c560ab4f6",
+      "native_runs": 2,
+      "finite_passed": 8,
+      "finite_total": 8,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "current_model_calls": 0,
+      "runtime_model_calls": 0,
+      "retained_model_calls": 1,
+      "command_wall_seconds": 0.3928454590000001,
+      "command_user_seconds": 0.14,
+      "command_system_seconds": 0.11,
+      "command_peak_rss_bytes": 86573056,
+      "raw_time_lp": "real 0.38\nuser 0.14\nsys 0.11\n            86573056  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16231  page reclaims\n                 233  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 311  signals received\n                 149  voluntary context switches\n                3376  involuntary context switches\n           280900093  instructions retired\n           111574120  cycles elapsed\n            12747304  peak memory footprint\n",
+      "entry_outputs": [
+        "partial: 네 필드가 남았습니다 [repair-and-replay]",
+        "partial: two outputs differ [expand-examples]",
+        "complete: All observed fields matched. [accept]",
+        "invalid-counts: count exceeds total [fix-counts]"
+      ]
+    },
+    {
+      "label": "inputs",
+      "raw_receipt": "inputs.json",
+      "raw_receipt_sha256": "sha256:47d0e5966089c7ca9f6081a0ffce97bbc283719e6cfa9b7f014b6e64dfa81149",
+      "decision": "OBSERVED",
+      "generated_sha256": "sha256:5794561eb52c98aa8ffc318f4d20f7a4a0fced8cd3746e2a41df3c6c560ab4f6",
+      "native_runs": 2,
+      "finite_passed": 0,
+      "finite_total": 0,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "NO_RUNTIME_EXPECTATIONS",
+        "unique_inputs": 3,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 1,
+        "disjoint_inputs": 2,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "current_model_calls": 0,
+      "runtime_model_calls": 0,
+      "retained_model_calls": 1,
+      "command_wall_seconds": 0.3973882910000004,
+      "command_user_seconds": 0.15,
+      "command_system_seconds": 0.12,
+      "command_peak_rss_bytes": 85966848,
+      "raw_time_lp": "real 0.39\nuser 0.15\nsys 0.12\n            85966848  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16707  page reclaims\n                 233  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 269  signals received\n                 167  voluntary context switches\n                3006  involuntary context switches\n           278191954  instructions retired\n           106840672  cycles elapsed\n            12599824  peak memory footprint\n",
+      "entry_outputs": [
+        "partial: missing branch result [repair-and-replay]",
+        "unobserved: Add expected observations. [add-examples]",
+        "complete: All observed fields matched. [accept]"
+      ]
+    }
+  ]
+}

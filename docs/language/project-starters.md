@@ -42,6 +42,15 @@ to use a compatible local three-field model. The generated README links a pinned
 2,072-parameter own-model release. Each attempt retains its finite case and field
 results. The suggested operation is returned as data for the caller to consume.
 
+The [recorded starter use](../research/diagnostic-starter-20261008/summary.json)
+created a custom-module project using the CLI, assembled it with deterministic
+ordering and the existing own model, then moved the project before replay.
+Both construction routes and saved replay matched 8/8 activity outputs. The
+model route tried two candidates and deterministic ordering four; its first
+proposal matched only 3/5 construction cases. Three input-only rows then returned
+diagnostic messages with zero new model calls. This is one local paired task;
+the raw receipts retain its exact source, model identity and measurement scope.
+
 ## Library construction and model choices
 
 To use the local compact model for the source-declared assignment, pass its

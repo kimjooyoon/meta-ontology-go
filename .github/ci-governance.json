@@ -7162,6 +7162,11 @@
         "cmd/gooo/usage_topics_2.go",
         "docs/language-direction.ko.md",
         "docs/language/project-starters.md",
+        "docs/research/diagnostic-starter-20261008/deterministic.json",
+        "docs/research/diagnostic-starter-20261008/inputs.json",
+        "docs/research/diagnostic-starter-20261008/model.json",
+        "docs/research/diagnostic-starter-20261008/replay.json",
+        "docs/research/diagnostic-starter-20261008/summary.json",
         "internal/verify/scope_gooo_diagnostic_starter_20261008.go"
       ]
     }
