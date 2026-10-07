@@ -3,9 +3,7 @@ package bodycodegen
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"go/types"
 	"slices"
 	"time"
 
@@ -135,11 +133,13 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 	var policyCases []RecordAssemblyCase
 	remaining := r.Ranking[len(r.Attempts):]
 	if len(r.Attempts) > 0 {
-		best = 0
 		var err error
 		policyBest, policyCases, remaining, err = resumeRecordSearch(ctx, p, r, policy)
 		if err != nil {
 			return err
+		}
+		if policyCases != nil {
+			best = 0
 		}
 	}
 	for _, mask := range remaining {
@@ -149,29 +149,14 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		candidate, err := p.candidate(mask)
-		if err != nil {
-			if contextError := ctx.Err(); contextError != nil {
-				return contextError
-			}
-			if _, ok := errors.AsType[types.Error](err); ok {
-				// Independently valid alternatives can remove every use of a
-				// local when combined. Keep this candidate's type observation,
-				// consume one attempt, and retain the best valid implementation.
-				// No finite cases executed, so no case denominator is reported.
-				r.Attempts = append(r.Attempts, RecordAssemblyAttempt{
-					Mask: mask, Status: "TYPECHECK_FAILED", Reason: err.Error(),
-				})
-				continue
-			}
-			return err
-		}
-		cases, err := evaluateRecordAssembly(ctx, candidate.source, p.body.activity.Name, p.body.records, p.spec.ValueCases)
+		attempt, cases, err := evaluateRecordMask(ctx, p, mask)
 		if err != nil {
 			return err
 		}
-		attempt := scoreRecordCases(mask, cases)
 		r.Attempts = append(r.Attempts, attempt)
+		if attempt.Total == 0 {
+			continue
+		}
 		if policy != nil && (policyCases == nil || attempt.Passed > policyBest.Passed ||
 			(attempt.Passed == policyBest.Passed && attempt.FieldsPassed > policyBest.FieldsPassed)) {
 			policyBest, policyCases = attempt, cases

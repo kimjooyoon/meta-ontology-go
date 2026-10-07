@@ -152,6 +152,12 @@ ordinary bound activities are regenerated from source. Other assembly profiles
 return an explicit unsupported result. This is an explicit CLI continuation;
 the compiler does not schedule follow-up invocations itself.
 
+[Called record helpers](../dependent-continuation/README.md) also resume in
+dependency order. A changed helper causes retained caller masks to be rechecked
+before the new policy reads their scores. `rechecked_attempts` distinguishes this
+work from additional candidates; source-bound history reconstructs the original
+observations. The declaration's budget still counts distinct attempted masks.
+
 ### 한국어: 남은 조립을 이어가기
 
 `Checkpoint`는 첫 후보의 관측을 저장하고, `Explain`은 그 기록을 읽어 다음

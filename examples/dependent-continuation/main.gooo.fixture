@@ -1,0 +1,19 @@
+package continuation
+namespace continuation
+entity Integer id "continuation://integer"
+entity Box id "continuation://box" fields {
+    field value id "continuation://box/value" type integer required one
+}
+activity Seed(Integer) -> Box computes "return Box{value: input}" assembling {
+    choice "value" field_value at "0" alternative "input + 1" intent "Add one to the input."
+    value_case "[1]" -> "{\"value\":2}"
+    value_case "[2]" -> "{\"value\":3}"
+    attempts "2"
+}
+activity Wrap(Integer) -> Box computes "let next = Seed(input); return Box{value: next.value}" assembling {
+    choice "value" field_value at "0" alternative "next.value * 2" intent "Double the incremented input."
+    value_case "[1]" -> "{\"value\":4}"
+    value_case "[2]" -> "{\"value\":6}"
+    attempts "2"
+}
+activity Main(Integer) -> Integer computes "let left = Wrap(input); let right = Wrap(input + 1); return left.value + right.value"

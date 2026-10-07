@@ -16,9 +16,10 @@ type CompositionContinuation struct {
 }
 
 type RecordContinuationStep struct {
-	Activity         string `json:"activity"`
-	RetainedAttempts int    `json:"retained_attempts"`
-	AddedAttempts    int    `json:"added_attempts"`
+	Activity          string `json:"activity"`
+	RetainedAttempts  int    `json:"retained_attempts"`
+	AddedAttempts     int    `json:"added_attempts"`
+	RecheckedAttempts int    `json:"rechecked_attempts,omitempty"`
 }
 
 // ResumeComposition verifies the saved graph, resumes record-choice activities
@@ -31,9 +32,6 @@ func ResumeComposition(ctx context.Context, filename string, source []byte, prio
 	if err != nil {
 		return Composition{}, fmt.Errorf("resume composition: %w", err)
 	}
-	if len(prior.Preparations) > 0 {
-		return Composition{}, fmt.Errorf("continuation of constructed call dependencies requires a new construction")
-	}
 	if err = bodycodegen.ValidateRecordAssemblyPolicy(ctx, policy); err != nil {
 		return Composition{}, err
 	}
@@ -41,8 +39,14 @@ func ResumeComposition(ctx context.Context, filename string, source []byte, prio
 		return Composition{}, err
 	}
 	found := false
+	for _, step := range prior.Preparations {
+		if step.Generation.Report.RecordAssembly == nil {
+			return Composition{}, fmt.Errorf("resume composition currently requires record-choice assembly at %s", step.Generation.Report.Activity)
+		}
+		found = true
+	}
 	for i, node := range graph.nodes[:graph.count] {
-		if node.Assembling {
+		if node.Assembling && !node.Prepared {
 			if prior.Steps[i].Generation.Report.RecordAssembly == nil {
 				return Composition{}, fmt.Errorf("resume composition currently requires record-choice assembly at %s", node.Name)
 			}
@@ -70,11 +74,29 @@ func ResumeComposition(ctx context.Context, filename string, source []byte, prio
 func resumeCompositionSteps(ctx context.Context, filename string, source []byte, prior Composition,
 	graph compositionGraph, policy bodycodegen.RecordAssemblyPolicy, result *Composition) ([]byte, error) {
 	oldCurrent, current := source, source
+	for i, helper := range graph.plan.Preparations {
+		result.ActiveActivity = helper.Name
+		generation, err := bodycodegen.ResumeRecordAssembly(ctx, filename, oldCurrent, current, prior.Preparations[i].Generation, policy)
+		if err != nil {
+			return current, fmt.Errorf("resume called activity %s: %w", helper.Name, err)
+		}
+		result.Preparations = append(result.Preparations, CompositionStep{InputSourceSHA256: digest(current), Generation: generation})
+		realized, err := bodycodegen.RealizeCalledAssembly(ctx, filename, current, generation)
+		if err != nil {
+			return current, err
+		}
+		oldRealized, err := bodycodegen.RealizeCalledAssembly(ctx, filename, oldCurrent, prior.Preparations[i].Generation)
+		if err != nil {
+			return current, err
+		}
+		current, oldCurrent = []byte(realized.Source), []byte(oldRealized.Source)
+		appendRecordContinuation(result, generation)
+	}
 	for i, node := range graph.nodes[:graph.count] {
 		result.ActiveActivity = node.Name
 		var generation bodycodegen.Result
 		var err error
-		if node.Assembling {
+		if node.Assembling && !node.Prepared {
 			generation, err = bodycodegen.ResumeRecordAssembly(ctx, filename, oldCurrent, current, prior.Steps[i].Generation, policy)
 		} else {
 			generation, err = bodycodegen.GenerateWithPlanner(ctx, filename, current, node.Name, "", "")
@@ -83,18 +105,23 @@ func resumeCompositionSteps(ctx context.Context, filename string, source []byte,
 			return current, fmt.Errorf("resume activity %s: %w", node.Name, err)
 		}
 		result.Steps = append(result.Steps, CompositionStep{InputSourceSHA256: digest(current), Generation: generation})
-		if node.Assembling {
+		if node.Assembling && !node.Prepared {
 			realized, err := bodycodegen.RealizeSourceAssembly(ctx, filename, current, generation)
 			if err != nil {
 				return current, err
 			}
 			current, oldCurrent = []byte(realized.Source), []byte(prior.Steps[i].Generation.GoooSource)
-			counts := generation.Report.RecordAssembly.Continuation
-			result.Continuation.Activities = append(result.Continuation.Activities, RecordContinuationStep{
-				Activity: node.Name, RetainedAttempts: counts.RetainedAttempts, AddedAttempts: counts.AddedAttempts})
+			appendRecordContinuation(result, generation)
 		}
 	}
 	return current, nil
+}
+
+func appendRecordContinuation(result *Composition, generation bodycodegen.Result) {
+	counts := generation.Report.RecordAssembly.Continuation
+	result.Continuation.Activities = append(result.Continuation.Activities, RecordContinuationStep{
+		Activity: generation.Report.Activity, RetainedAttempts: counts.RetainedAttempts,
+		RecheckedAttempts: counts.RecheckedAttempts, AddedAttempts: counts.AddedAttempts})
 }
 
 func finishResumedComposition(source []byte, graph compositionGraph, result *Composition) error {
@@ -117,10 +144,11 @@ func finishResumedComposition(source []byte, graph compositionGraph, result *Com
 
 func verifyCompositionContinuation(prior Composition) error {
 	var expected []RecordContinuationStep
-	for _, step := range prior.Steps {
+	for _, step := range prior.ConstructionSteps() {
 		if record := step.Generation.Report.RecordAssembly; record != nil && record.Continuation != nil {
 			expected = append(expected, RecordContinuationStep{Activity: step.Generation.Report.Activity,
-				RetainedAttempts: record.Continuation.RetainedAttempts, AddedAttempts: record.Continuation.AddedAttempts})
+				RetainedAttempts: record.Continuation.RetainedAttempts, RecheckedAttempts: record.Continuation.RecheckedAttempts,
+				AddedAttempts: record.Continuation.AddedAttempts})
 		}
 	}
 	if prior.Continuation == nil {

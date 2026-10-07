@@ -149,6 +149,10 @@ func TestCalledBodyConstructionSourceFillAndSearch(t *testing.T) {
 			if err != nil || native.FinitePassed != 1 || native.ModelCalls != 0 {
 				t.Fatal("called profile did not replay", err, native)
 			}
+			_, policy := resumePolicyFixtures(t)
+			if _, err := ResumeComposition(ctx, "called.gooo", source, prior, suite, policy); err == nil || !strings.Contains(err.Error(), "record-choice") {
+				t.Fatal("unsupported helper continuation was silently dropped", err)
+			}
 		})
 	}
 }
@@ -162,8 +166,9 @@ func TestCalledBodyConstructionRejectsCyclesAndMissingPreparation(t *testing.T) 
 		t.Fatal(err)
 	}
 	stop, _ := resumePolicyFixtures(t)
-	if _, err := ResumeComposition(ctx, "called.gooo", source, prior, suite, stop); err == nil || !strings.Contains(err.Error(), "call dependencies") {
-		t.Fatal("called construction was silently dropped during continuation", err)
+	continued, err := ResumeComposition(ctx, "called.gooo", source, prior, suite, stop)
+	if err != nil || len(continued.Preparations) != 1 || VerifyComposition(ctx, "called.gooo", source, continued) != nil {
+		t.Fatal("called construction was lost during continuation", err)
 	}
 	prior.Preparations = nil
 	if VerifyComposition(ctx, "called.gooo", source, prior) == nil {

@@ -1,0 +1,65 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Main.input0": 17,
+        "Main.input1": 21,
+        "Main.input2": 1,
+        "Main.input3": "네 필드가 남았습니다"
+      },
+      "expected": {
+        "Main": {
+          "code": "partial",
+          "message": "네 필드가 남았습니다",
+          "action": "repair-and-replay"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Main.input0": 3,
+        "Main.input1": 5,
+        "Main.input2": 0,
+        "Main.input3": "two outputs differ"
+      },
+      "expected": {
+        "Main": {
+          "code": "partial",
+          "message": "two outputs differ",
+          "action": "expand-examples"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Main.input0": 8,
+        "Main.input1": 8,
+        "Main.input2": 0,
+        "Main.input3": ""
+      },
+      "expected": {
+        "Main": {
+          "code": "complete",
+          "message": "All observed fields matched.",
+          "action": "accept"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Main.input0": 9007199254740994,
+        "Main.input1": 9007199254740993,
+        "Main.input2": 0,
+        "Main.input3": "count exceeds total"
+      },
+      "expected": {
+        "Main": {
+          "code": "invalid-counts",
+          "message": "count exceeds total",
+          "action": "fix-counts"
+        }
+      }
+    }
+  ]
+}
