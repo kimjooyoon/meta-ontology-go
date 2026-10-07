@@ -1,0 +1,271 @@
+{
+  "schema": "gooo/workspace-continuation-study/v1",
+  "date": "2026-10-08",
+  "compiler_source_sha": "e411aafeaf674e61d6998197f6d80b94d155d0f1",
+  "measurement_scope": "One sequential local run per route and stage; caches and host activity uncontrolled; finite named cases only; no model retraining. New calls for resume and replay are separate from retained historical calls.",
+  "rows": [
+    {
+      "route": "deterministic",
+      "stage": "checkpoint",
+      "receipt_sha256": "c8e3ac2194f84b3fe235c57d3396f0d149f4f4451672fa59dc752e18fa995838",
+      "timing_sha256": "dc0fb3ce4f4ef4f101691bd652ef00308fc36c3ac1d95bd61f6a4002f7ee9ce3",
+      "decision": "PROGRESS",
+      "construction_cases": [
+        3,
+        5
+      ],
+      "construction_fields": [
+        11,
+        15
+      ],
+      "attempts": 1,
+      "native_cases": [
+        2,
+        4
+      ],
+      "policy_history_stages": 0,
+      "new_model_calls": 0,
+      "composition_generated_sha256": "sha256:9aaf09c1418c74665b56a3574b58e43973d3256e1be707533a5e2191047dc60c",
+      "wall_seconds": 0.49,
+      "user_seconds": 0.15,
+      "system_seconds": 0.1,
+      "max_rss_bytes": 85000192,
+      "input_separation": {
+        "status": "PROGRESS",
+        "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 2,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      }
+    },
+    {
+      "route": "deterministic",
+      "stage": "continued",
+      "receipt_sha256": "c719dd96578b70c385d8d5da5c5ee169cc27462ecaf498dff18c68c35ea3ef28",
+      "timing_sha256": "016fa088effe16adc1ade636ff4b1829e8849c80ca1bced2f89a16e57a2c4a4c",
+      "decision": "PASS",
+      "construction_cases": [
+        5,
+        5
+      ],
+      "construction_fields": [
+        15,
+        15
+      ],
+      "attempts": 4,
+      "native_cases": [
+        4,
+        4
+      ],
+      "policy_history_stages": 1,
+      "new_model_calls": 0,
+      "composition_generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "wall_seconds": 0.38,
+      "user_seconds": 0.19,
+      "system_seconds": 0.11,
+      "max_rss_bytes": 86114304,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "continuation": {
+        "parent_composition_sha256": "sha256:6932cc60631a2f553a7802d9012f2d3711db436440c8ab6217d71b2bd6405170",
+        "activities": [
+          {
+            "activity": "GoooPackage2ActivityDiagnose",
+            "retained_attempts": 1,
+            "added_attempts": 3
+          }
+        ],
+        "new_model_calls": 0
+      }
+    },
+    {
+      "route": "deterministic",
+      "stage": "replay",
+      "receipt_sha256": "8b1a3875c39c4be9ca16ba7c177c356cbc14e2f4e0dbddb26d6566c0b4c219ae",
+      "timing_sha256": "881127b331145d3cdf79b66d3fdf3fb3856f350354762c32008d236c486cf907",
+      "decision": "PASS",
+      "construction_cases": [
+        5,
+        5
+      ],
+      "construction_fields": [
+        15,
+        15
+      ],
+      "attempts": 4,
+      "native_cases": [
+        4,
+        4
+      ],
+      "policy_history_stages": 1,
+      "new_model_calls": 0,
+      "composition_generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "wall_seconds": 0.33,
+      "user_seconds": 0.16,
+      "system_seconds": 0.1,
+      "max_rss_bytes": 86900736,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      }
+    },
+    {
+      "route": "model",
+      "stage": "checkpoint",
+      "receipt_sha256": "c361c37a3b61afdc495f3c1947f40407e7cfbf6ce7ada57d9172c503e8a14e6a",
+      "timing_sha256": "b7c3d2c78aceffbdfc1afa551532ec3251f8168afae62e7cf067159860f940cd",
+      "decision": "PROGRESS",
+      "construction_cases": [
+        3,
+        5
+      ],
+      "construction_fields": [
+        13,
+        15
+      ],
+      "attempts": 1,
+      "native_cases": [
+        2,
+        4
+      ],
+      "policy_history_stages": 0,
+      "new_model_calls": 1,
+      "composition_generated_sha256": "sha256:8456e21bd5b63087b48452f6ae7d8d7d044533599dc964761942cceeb20b4d37",
+      "wall_seconds": 0.52,
+      "user_seconds": 0.17,
+      "system_seconds": 0.1,
+      "max_rss_bytes": 86999040,
+      "input_separation": {
+        "status": "PROGRESS",
+        "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 2,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "predict_ns": 16083,
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.775917,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      }
+    },
+    {
+      "route": "model",
+      "stage": "continued",
+      "receipt_sha256": "666eb0eed74a7a65d9d3cb302b186daf9ea486b52c06254677aaf6f46bc4a40a",
+      "timing_sha256": "a7629f730158456a628fdc3c3327495e84945405069468990eb35026ad9fc8ab",
+      "decision": "PASS",
+      "construction_cases": [
+        5,
+        5
+      ],
+      "construction_fields": [
+        15,
+        15
+      ],
+      "attempts": 2,
+      "native_cases": [
+        4,
+        4
+      ],
+      "policy_history_stages": 1,
+      "new_model_calls": 0,
+      "composition_generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "wall_seconds": 0.37,
+      "user_seconds": 0.2,
+      "system_seconds": 0.12,
+      "max_rss_bytes": 85377024,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "continuation": {
+        "parent_composition_sha256": "sha256:da0daecfb6949a14475884711447d1df7e22fa6afad4e4b83bcd13cc9c527627",
+        "activities": [
+          {
+            "activity": "GoooPackage2ActivityDiagnose",
+            "retained_attempts": 1,
+            "added_attempts": 1
+          }
+        ],
+        "new_model_calls": 0
+      }
+    },
+    {
+      "route": "model",
+      "stage": "replay",
+      "receipt_sha256": "6274be98238201e0149582fb680bb1f64b1950ed3ce94468f1a87cf96b0e4afd",
+      "timing_sha256": "0fd209732e58fd7762a172265bb791e385361c2270e15fed6e4ad3edc8dc8386",
+      "decision": "PASS",
+      "construction_cases": [
+        5,
+        5
+      ],
+      "construction_fields": [
+        15,
+        15
+      ],
+      "attempts": 2,
+      "native_cases": [
+        4,
+        4
+      ],
+      "policy_history_stages": 1,
+      "new_model_calls": 0,
+      "composition_generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "wall_seconds": 0.34,
+      "user_seconds": 0.16,
+      "system_seconds": 0.1,
+      "max_rss_bytes": 86278144,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      }
+    }
+  ]
+}
