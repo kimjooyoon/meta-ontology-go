@@ -154,6 +154,12 @@ tuple. Duplicate root inputs contribute one case; all expectations supplied for
 that input must agree with execution. See the [runtime measurement
 contract](../native-body-composition.md#input-separation).
 
+Workspace source fills currently run before this composition measurement. Its
+input separation therefore describes the remaining assembling activities.
+[The combined construction example](../../examples/construction-observation/README.md)
+records a value already seen by an earlier fill stage; extending automatic
+input-separation accounting across all stages is an outstanding language-tool task.
+
 This measures new inputs relative to the recorded construction observations.
 Model-training exposure remains unknown. In the same way, native case success,
 grammar coverage and declared-obligation coverage each retain their own units.

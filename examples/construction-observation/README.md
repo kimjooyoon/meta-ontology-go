@@ -21,6 +21,10 @@ from the required toolchain. Neither command requires a model download.
 The first command builds and runs the generated graph twice. Its two runtime
 inputs specify four activity outputs: `-9 → 0 → 1` and `11 → 11 → 12`. The
 construction suites and runtime expectations retain separate denominators.
+The current workspace `input_separation` field covers the composition after
+fills have been applied. In this example, the zero passed from `Normalize` to
+`Lift` already occurs in Lift's construction suite. Include that earlier stage
+when judging novelty across the whole program.
 
 The second command recomputes candidate scores from the saved source, then runs
 the Gooo explanation tool twice. For a fill candidate scoring 0/3 when another
@@ -34,3 +38,8 @@ returns suggested operations as data. Selection cases are the scope of each
 score; holdout observations remain outside these policy inputs. Replaying scores
 establishes consistency with the saved source. Historical model timings and
 the origin of the saved search order keep their original evidentiary limits.
+
+The [published run](../../docs/research/construction-observation-20261008/summary.json)
+retains the clean compiler revision, both raw receipts, four matched runtime
+outputs, five interpretation rows and zero model calls. Its explicit scope also
+records the workspace input-separation limitation above.
