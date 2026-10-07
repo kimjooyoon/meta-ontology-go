@@ -284,6 +284,15 @@ these libraries to another real tool and keep the newly exposed gaps. Model trai
 follow such concrete construction tasks, retaining the source, attempted
 decisions, counterexamples and outcomes.
 
+The [package assembly-policy tool](../../examples/package-assembly-policy/README.md)
+now applies that reuse to the construction controller itself. Its Gooo policy
+imports a shared continuation predicate, reads actual candidate observations and
+controls construction of a different workspace. Policy source packages accompany
+the saved result for reconstruction. A paired own-model run and a deliberate early
+stop retain both complete and partial finite outcomes. This extends reusable
+metaprogramming within the current record-choice profile; automatic scheduling
+and constructing helper bodies still need supported language routes.
+
 Publish a short Korean and English walkthrough of the connected tool, its
 failed case and its replay. An independent developer should be able to follow it
 without reconstructing the research repository history. Their reproducible

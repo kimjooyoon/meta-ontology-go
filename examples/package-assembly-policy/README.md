@@ -81,3 +81,34 @@ interpretation and separately compiled native policy outputs.
 제안하고, 정책은 실제 사례 결과를 보고 계속할지 결정합니다. 저장한 결과에는
 정책의 원본 패키지도 들어 있어, 나중에 모델 없이 같은 판단과 실행을 재구성할
 수 있습니다. 첫 후보에서 멈췄다면 충족하지 못한 사례도 함께 남습니다.
+
+## Recorded own-model use
+
+The [raw observation](../../docs/research/workspace-assembly-policy-20261008/summary.json)
+pins clean compiler `50c553d6d1b12bc5e6da4dc450e7319757cffdc9`, both policy
+workspaces, the target and cases, and the unchanged own QAT model.
+
+| Operation | Attempts | Construction cases | Fields | Native expectations | New inference calls |
+| --- | ---: | --- | --- | --- | ---: |
+| Deterministic + continue policy | 4 | 5/5 | 15/15 | 8/8 | 0 |
+| Own model + continue policy | 2 | 5/5 | 15/15 | 8/8 | 1 |
+| Saved model result replay | 2 retained | 5/5 retained | 15/15 retained | 8/8 | 0 |
+| Own model + checkpoint policy | 1 | 3/5 | 13/15 | 4/8 | 1 |
+| Saved checkpoint replay | 1 retained | 3/5 retained | 13/15 retained | 4/8 | 0 |
+
+The continuing policy received the model's first 3/5 result and returned
+`CONTINUE_CANDIDATES`; after the second result it returned `OBSERVE_NEW_INPUTS`.
+Both decisions agreed with a separately compiled native execution of the policy
+package (2/2). This measures agreement between the policy interpreter and native
+projection. The eight target expectations cover two outputs for four unique
+inputs, disjoint from recorded construction inputs. Model training exposure is
+unknown. The checkpoint policy deliberately retains an incomplete candidate.
+
+Prediction took 16,208 ns; model setup took 0.7595 ms with 2,096 bytes of tensors.
+The whole model command took 0.36 s wall, 0.16 s user and 0.11 s system time,
+with 88,276,992 bytes maximum RSS. Its rounded CPU/wall totals correspond to
+75% of one CPU core on average, including child work. Host utilization and the
+model's separate CPU increment were not sampled. These were sequential local
+observations with uncontrolled caches, after local tests completed. They establish
+the recorded outcomes and policy reuse; broader performance and external adoption
+require additional measurements.
