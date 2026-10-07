@@ -1,7 +1,25 @@
 package languagedebugexperiment
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageutility"
+
+var canonicalDebugActivities = []string{
+	"languageutility://activity/observe-debugging-deterministic-replay",
+	"languageutility://activity/observe-debugging-resource-observed",
+}
+
+func expectedGraphActivityCount() int {
+	return languageutility.ExpectedCellCount() + len(canonicalDebugActivities)
+}
+
+func expectedGraphEdgeCount() int {
+	return expectedGraphActivityCount() * 2
+}
+
 func validDebugGraph(graph GraphObservation) bool {
-	activities := map[string]bool{"languageutility://activity/observe-debugging-deterministic-replay": true, "languageutility://activity/observe-debugging-resource-observed": true}
+	activities := make(map[string]bool, len(canonicalDebugActivities))
+	for _, activity := range canonicalDebugActivities {
+		activities[activity] = true
+	}
 	if len(graph.DebugActivityIDs) != len(activities) {
 		return false
 	}

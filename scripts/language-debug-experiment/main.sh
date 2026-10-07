@@ -159,7 +159,10 @@ jq -n --arg schema "gooo-graph/v1" --arg program_digest "$program_digest" --arg 
   ([$g.relations[] | select((.predicate=="used" and is_debug(.subject)) or (.predicate=="wasGeneratedBy" and is_debug(.object))) | {relation:.predicate,subject:.subject,object:.object}] | sort_by(.relation,.subject,.object)) as $debug_causal_edges |
   {schema:$schema,program_digest:$program_digest,graph_hash:$graph_hash,activity_count:$activity_count,edge_count:$edge_count,debug_activity_count:$debug_activity_count,debug_output_count:$debug_output_count,debug_used_edge_count:$debug_used_edge_count,debug_generated_edge_count:$debug_generated_edge_count,debug_activity_ids:$debug_activity_ids,debug_causal_edges:$debug_causal_edges}
 ' > "$work/graph-observation.json"
-jq -e '.activity_count==51 and .edge_count==102 and .debug_activity_count==2 and .debug_output_count==2 and .debug_used_edge_count==2 and .debug_generated_edge_count==2' "$work/graph-observation.json"
+utility_cell_count="$(jq '(.use_cases | length) * (.stages | length)' examples/language-utility/contract.json)"
+jq -e --argjson utility_cells "$utility_cell_count" \
+  '.activity_count==($utility_cells + .debug_activity_count) and .edge_count==(.activity_count * 2) and .debug_activity_count==2 and .debug_output_count==2 and .debug_used_edge_count==2 and .debug_generated_edge_count==2' \
+  "$work/graph-observation.json"
 
 edges_for() {
   local activity_id="$1"
