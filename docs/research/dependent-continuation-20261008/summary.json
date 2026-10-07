@@ -1,0 +1,499 @@
+{
+  "schema": "gooo/dependent-continuation-study/v1",
+  "date": "2026-10-08",
+  "compiler_revision": "395fb538fae6c55edb173e660b22daef8544f01a",
+  "build_sha256": "c4acede4f944e8d9e6a45401d644f215b7c692a005e2a729a0963ae888576b52",
+  "status": "OBSERVED",
+  "sample_count": 9,
+  "runs": [
+    {
+      "name": "nested-checkpoint",
+      "raw_sha256": "47771f7f32ec6e97d211557ee2bbf5072e6ee32d5ac7c60d55492d07cca52969",
+      "timing_sha256": "591f423f9e96eb7e66b52c68c028ef74dd5071c95d5cc05c543779acdabe2fcb",
+      "generated_sha256": "sha256:f7f878b175bc87e76e857778a9a3a2b894a807a0a58f0a73473b102b3ee3a9fe",
+      "native_passed": 0,
+      "native_total": 2,
+      "runtime_model_calls": 0,
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 2,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 2,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timing_seconds": {
+        "real": 0.35,
+        "user": 0.15,
+        "sys": 0.11
+      },
+      "maximum_rss_bytes": 87080960,
+      "activities": [
+        {
+          "activity": "Seed",
+          "attempts": 1,
+          "passed": 0,
+          "total": 2,
+          "fields_passed": 0,
+          "fields_total": 2,
+          "selected_mask": 0,
+          "historical_model_calls": 0,
+          "historical_predict_ns": 0,
+          "continuation": null
+        },
+        {
+          "activity": "Wrap",
+          "attempts": 1,
+          "passed": 0,
+          "total": 2,
+          "fields_passed": 0,
+          "fields_total": 2,
+          "selected_mask": 0,
+          "historical_model_calls": 0,
+          "historical_predict_ns": 0,
+          "continuation": null
+        }
+      ],
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "setup_ms": 0.000291,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+      }
+    },
+    {
+      "name": "nested-continued",
+      "raw_sha256": "ab951cfa4cf7582dceaa00772b9f2c6f360da5073aca0dd712c8f11793a12bda",
+      "timing_sha256": "b01559bf8b7f1d40b88d91c0e6630c5bb22a77ce566b3821fa10a2e6cda865e2",
+      "generated_sha256": "sha256:b5987d3535560645b46a8552120fc9e757a94c7d86f404c7165d8e978f218fef",
+      "native_passed": 2,
+      "native_total": 2,
+      "runtime_model_calls": 0,
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 2,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 2,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timing_seconds": {
+        "real": 0.34,
+        "user": 0.17,
+        "sys": 0.1
+      },
+      "maximum_rss_bytes": 87949312,
+      "activities": [
+        {
+          "activity": "Seed",
+          "attempts": 2,
+          "passed": 2,
+          "total": 2,
+          "fields_passed": 2,
+          "fields_total": 2,
+          "selected_mask": 1,
+          "historical_model_calls": 0,
+          "historical_predict_ns": 0,
+          "continuation": {
+            "retained_attempts": 1,
+            "added_attempts": 1,
+            "new_model_calls": 0
+          }
+        },
+        {
+          "activity": "Wrap",
+          "attempts": 2,
+          "passed": 2,
+          "total": 2,
+          "fields_passed": 2,
+          "fields_total": 2,
+          "selected_mask": 1,
+          "historical_model_calls": 0,
+          "historical_predict_ns": 0,
+          "continuation": {
+            "retained_attempts": 1,
+            "added_attempts": 1,
+            "rechecked_attempts": 1,
+            "new_model_calls": 0
+          }
+        }
+      ],
+      "model": null
+    },
+    {
+      "name": "nested-replay",
+      "raw_sha256": "ed71e9030d6f7c7bc13b16a142af7f7c6d01b1f6cda82acf400a1f917a7cef71",
+      "timing_sha256": "6a59478b5a464e473d625de634fd4e4fd96e175814fcfe147ce3f73e0fa66102",
+      "generated_sha256": "sha256:b5987d3535560645b46a8552120fc9e757a94c7d86f404c7165d8e978f218fef",
+      "native_passed": 2,
+      "native_total": 2,
+      "runtime_model_calls": 0,
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 2,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 2,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timing_seconds": {
+        "real": 0.32,
+        "user": 0.14,
+        "sys": 0.1
+      },
+      "maximum_rss_bytes": 87162880,
+      "activities": [
+        {
+          "activity": "Seed",
+          "attempts": 2,
+          "passed": 2,
+          "total": 2,
+          "fields_passed": 2,
+          "fields_total": 2,
+          "selected_mask": 1,
+          "historical_model_calls": 0,
+          "historical_predict_ns": 0,
+          "continuation": {
+            "retained_attempts": 1,
+            "added_attempts": 1,
+            "new_model_calls": 0
+          }
+        },
+        {
+          "activity": "Wrap",
+          "attempts": 2,
+          "passed": 2,
+          "total": 2,
+          "fields_passed": 2,
+          "fields_total": 2,
+          "selected_mask": 1,
+          "historical_model_calls": 0,
+          "historical_predict_ns": 0,
+          "continuation": {
+            "retained_attempts": 1,
+            "added_attempts": 1,
+            "rechecked_attempts": 1,
+            "new_model_calls": 0
+          }
+        }
+      ],
+      "model": null
+    },
+    {
+      "name": "deterministic-checkpoint",
+      "raw_sha256": "29c672a87b489eac8bf5943a46b5b4ed42cf3860fd90cd32e163553c12881daa",
+      "timing_sha256": "0ab1dfdb3f138bfcefcf43bc37c30f99a8d8b56044ad565e7bd9fb3ab914705e",
+      "generated_sha256": "sha256:3a9fa6c0d980428b7e61da25c3dd97da3321df8014d4024ab27c754a59009847",
+      "native_passed": 2,
+      "native_total": 4,
+      "runtime_model_calls": 0,
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "input_separation": {
+        "status": "PROGRESS",
+        "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 2,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timing_seconds": {
+        "real": 0.54,
+        "user": 0.16,
+        "sys": 0.11
+      },
+      "maximum_rss_bytes": 86245376,
+      "activities": [
+        {
+          "activity": "Diagnose",
+          "attempts": 1,
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 11,
+          "fields_total": 15,
+          "selected_mask": 0,
+          "historical_model_calls": 0,
+          "historical_predict_ns": 0,
+          "continuation": null
+        }
+      ],
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "setup_ms": 8.3e-05,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+      }
+    },
+    {
+      "name": "deterministic-continued",
+      "raw_sha256": "e669d3b027391b505a0d0f848c65af30e504b85c8bdebc75dcc8719327722118",
+      "timing_sha256": "9ba45634b3e0e7103add35687a3c0284f2a7cc2b2c0c0db563e1fed76efe0f45",
+      "generated_sha256": "sha256:038c13e489d4526428e8d10e80622d5a8a9d3fcecaf3cb8162bbc2a34fd6c656",
+      "native_passed": 4,
+      "native_total": 4,
+      "runtime_model_calls": 0,
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timing_seconds": {
+        "real": 0.33,
+        "user": 0.19,
+        "sys": 0.1
+      },
+      "maximum_rss_bytes": 87212032,
+      "activities": [
+        {
+          "activity": "Diagnose",
+          "attempts": 4,
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15,
+          "selected_mask": 3,
+          "historical_model_calls": 0,
+          "historical_predict_ns": 0,
+          "continuation": {
+            "retained_attempts": 1,
+            "added_attempts": 3,
+            "new_model_calls": 0
+          }
+        }
+      ],
+      "model": null
+    },
+    {
+      "name": "deterministic-replay",
+      "raw_sha256": "565bd72e01be2a8279ac35ea81f40fa51a3fa4e2238882c2cb367ba8f93b6044",
+      "timing_sha256": "486f7ea37de61ec7d46de4ea72d2ec835ac2f439757173234020d33462d92d3c",
+      "generated_sha256": "sha256:038c13e489d4526428e8d10e80622d5a8a9d3fcecaf3cb8162bbc2a34fd6c656",
+      "native_passed": 4,
+      "native_total": 4,
+      "runtime_model_calls": 0,
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timing_seconds": {
+        "real": 0.3,
+        "user": 0.15,
+        "sys": 0.1
+      },
+      "maximum_rss_bytes": 85999616,
+      "activities": [
+        {
+          "activity": "Diagnose",
+          "attempts": 4,
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15,
+          "selected_mask": 3,
+          "historical_model_calls": 0,
+          "historical_predict_ns": 0,
+          "continuation": {
+            "retained_attempts": 1,
+            "added_attempts": 3,
+            "new_model_calls": 0
+          }
+        }
+      ],
+      "model": null
+    },
+    {
+      "name": "model-checkpoint",
+      "raw_sha256": "c0faa10953eea140b0572e53fefdcd298ab8b8c5b5d3be2bc5b4caaa0cd58ae2",
+      "timing_sha256": "d5d298de45bacaddfbaf13181ed42d454e6cfd59e993975401b27e9dd67d628d",
+      "generated_sha256": "sha256:fff6fc22baf8da18fb620a6d5446f3c94adeb28eb9ffe59094d6f8b331262445",
+      "native_passed": 2,
+      "native_total": 4,
+      "runtime_model_calls": 0,
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "input_separation": {
+        "status": "PROGRESS",
+        "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 2,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timing_seconds": {
+        "real": 0.53,
+        "user": 0.16,
+        "sys": 0.11
+      },
+      "maximum_rss_bytes": 85950464,
+      "activities": [
+        {
+          "activity": "Diagnose",
+          "attempts": 1,
+          "passed": 3,
+          "total": 5,
+          "fields_passed": 13,
+          "fields_total": 15,
+          "selected_mask": 7,
+          "historical_model_calls": 1,
+          "historical_predict_ns": 11375,
+          "continuation": null
+        }
+      ],
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.716167,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      }
+    },
+    {
+      "name": "model-continued",
+      "raw_sha256": "c5688980849f18a3d2e4ad008f224accf823e7082dba7a71b8ba6be3bed6c522",
+      "timing_sha256": "979cd3e7107d90c2c84188f20287a2c9b5263a137443156eb094934ed06127c8",
+      "generated_sha256": "sha256:038c13e489d4526428e8d10e80622d5a8a9d3fcecaf3cb8162bbc2a34fd6c656",
+      "native_passed": 4,
+      "native_total": 4,
+      "runtime_model_calls": 0,
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timing_seconds": {
+        "real": 0.35,
+        "user": 0.18,
+        "sys": 0.1
+      },
+      "maximum_rss_bytes": 86228992,
+      "activities": [
+        {
+          "activity": "Diagnose",
+          "attempts": 2,
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15,
+          "selected_mask": 3,
+          "historical_model_calls": 1,
+          "historical_predict_ns": 11375,
+          "continuation": {
+            "retained_attempts": 1,
+            "added_attempts": 1,
+            "new_model_calls": 0
+          }
+        }
+      ],
+      "model": null
+    },
+    {
+      "name": "model-replay",
+      "raw_sha256": "d1def37d9eb1ec7f65242e69d9d3d14c2b8ed8da2e48d60da77d42f1f0f6fad2",
+      "timing_sha256": "d92d3859855f240025321d54d07e911bffc7d3f523558fdf1f533c8861d76aab",
+      "generated_sha256": "sha256:038c13e489d4526428e8d10e80622d5a8a9d3fcecaf3cb8162bbc2a34fd6c656",
+      "native_passed": 4,
+      "native_total": 4,
+      "runtime_model_calls": 0,
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "timing_seconds": {
+        "real": 0.31,
+        "user": 0.14,
+        "sys": 0.09
+      },
+      "maximum_rss_bytes": 86065152,
+      "activities": [
+        {
+          "activity": "Diagnose",
+          "attempts": 2,
+          "passed": 5,
+          "total": 5,
+          "fields_passed": 15,
+          "fields_total": 15,
+          "selected_mask": 3,
+          "historical_model_calls": 1,
+          "historical_predict_ns": 11375,
+          "continuation": {
+            "retained_attempts": 1,
+            "added_attempts": 1,
+            "new_model_calls": 0
+          }
+        }
+      ],
+      "model": null
+    }
+  ],
+  "scope": [
+    "One sequential local observation per command; uncontrolled caches; no causal speed claim.",
+    "Continuation counts distinguish existing mask identities, dependency rechecks and new masks; historical replay work is additional.",
+    "The nested program exercises changed dependencies. The paired own-model diagnostic exercises retained ranking in a callable helper.",
+    "Runtime expectations and helper construction cases have separate denominators.",
+    "RSS and CPU times are whole-command observations including native compilation/execution; model-specific CPU utilization increase was not sampled.",
+    "External adoption, independent reproduction and training-set exposure remain unobserved.",
+    "No model weights changed or training was performed."
+  ]
+}

@@ -61,6 +61,11 @@ helper is therefore explicit, even if both stages selected the same mask.
 
 ## Scope and next use
 
+The [recorded walkthrough](../../docs/research/dependent-continuation-20261008/README.md)
+includes this nested program and the diagnostic helper in this directory. The
+diagnostic pair uses deterministic ordering and the unchanged own compact model,
+then continues and replays without another prediction.
+
 The supported route is `body-compose` with record-choice preparations and
 record-choice graph activities. Ordinary typed callers are projected again.
 Nested helpers and a helper used as both a bound producer and a function are
