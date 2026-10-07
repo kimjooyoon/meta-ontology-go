@@ -140,6 +140,7 @@ func validateProfile(model ProfileModel) error {
 		"ComparisonBaseline":                 prefix + "/comparison/baseline",
 		"ComparisonDelta":                    prefix + "/comparison/delta",
 		"BoundaryCoverage":                   prefix + "/dimension/boundary-coverage",
+		"Boolean":                            prefix + "/type/boolean",
 		"DeclarationEvidence":                prefix + "/evidence/declaration",
 		"DeclarationCoverage":                prefix + "/dimension/declaration-coverage",
 		"DomainCompletenessReceipt":          ReceiptSchema,
@@ -147,6 +148,7 @@ func validateProfile(model ProfileModel) error {
 		"DomainProfile":                      ProfileID,
 		"ExcludedGeneralPurposeCompleteness": prefix + "/excluded/general-purpose-completeness",
 		"ExcludedExternalAdoption":           prefix + "/excluded/external-adoption",
+		"Integer":                            prefix + "/type/integer",
 		"GenerationEvidence":                 prefix + "/evidence/generation",
 		"GenerationCoverage":                 prefix + "/dimension/generation-coverage",
 		"ProvenanceEvidence":                 prefix + "/evidence/provenance",
@@ -154,6 +156,7 @@ func validateProfile(model ProfileModel) error {
 		"ReadOnlySystemBudget":               prefix + "/budget/read-only-zero-human-actions",
 		"ReverseObservationEvidence":         prefix + "/evidence/reverse-observation",
 		"ReverseObservationCoverage":         prefix + "/dimension/reverse-observation-coverage",
+		"Text":                               prefix + "/type/text",
 		"UseCaseEvidence":                    prefix + "/evidence/use-case",
 		"UseCaseCoverage":                    prefix + "/dimension/use-case-coverage",
 	}
@@ -188,6 +191,10 @@ func validateProfile(model ProfileModel) error {
 			Name: "CompareDomainCompletenessVectors", Inputs: []string{"DomainCompletenessReceipt", "ComparisonBaseline"},
 			Output: "ComparisonDelta", ValueProgram: "gooo.metric.domain-completeness.vector-delta.v1",
 		},
+		"ClassifyDomainCompleteness": {
+			Name: "ClassifyDomainCompleteness", Inputs: []string{"Integer", "Integer", "Integer", "Boolean"},
+			Output: "Text",
+		},
 		"FindPriorDomainCompletenessReceipt": {
 			Name: "FindPriorDomainCompletenessReceipt", Inputs: []string{"DomainProfile"},
 			Output: "ComparisonBaseline", ValueProgram: "gooo.evidence.latest-compatible-domain-receipt.v1",
@@ -199,7 +206,11 @@ func validateProfile(model ProfileModel) error {
 	}
 	for name, expected := range expectedActivities {
 		actual, exists := model.Activities[name]
-		if !exists || actual.Output != expected.Output || actual.ValueProgram != expected.ValueProgram ||
+		programMismatch := actual.ValueProgram != expected.ValueProgram
+		if name == "ClassifyDomainCompleteness" {
+			programMismatch = strings.TrimSpace(actual.ValueProgram) == ""
+		}
+		if !exists || actual.Output != expected.Output || programMismatch ||
 			!equalStrings(actual.Inputs, expected.Inputs) {
 			return fmt.Errorf("profile activity %q does not match the receipt contract", name)
 		}
