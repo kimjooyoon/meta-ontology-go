@@ -75,6 +75,36 @@ result. This profile reuses fixed activities from one source; package-qualified
 body calls and model construction inside a callee need additional language work.
 Existing source-IR fill/search profiles retain their own expression constraints.
 
+## Recorded use of the own compact model
+
+The [raw study](../../docs/research/pure-activity-calls-20261008/summary.json)
+uses clean compiler `2a4408497d98dbe5bb293c01be266de4a0240b28` and the unchanged
+own QAT model linked above. Both `IsPartial` and the policy's `CanContinue` are
+Gooo source-defined functions.
+
+| Operation | Construction cases | Fields | Attempts | Separate native expectations | New model calls |
+| --- | --- | --- | --- | --- | --- |
+| Deterministic | 5/5 | 15/15 | 4 | 4/4 | 0 |
+| Own compact model | 5/5 | 15/15 | 2 | 4/4 | 1 |
+| Saved model result replay | 5/5 retained | 15/15 retained | 2 retained | 4/4 | 0 |
+| Model checkpoint | 3/5 | 13/15 | 1 | 2/4 | 1 |
+| Continued checkpoint | 5/5 | 15/15 | 1 retained + 1 added | 4/4 | 0 |
+
+Completed constructions produce the same Go program. The initial model proposal
+was partial; the saved ranking allowed another process to continue without the
+model file. Both the target helper and policy helper have recorded stable IDs,
+body digests and call edges. The checkpoint preserves 105/105 projection semantic
+units while satisfying 3/5 construction cases: these measures answer different
+questions and keep separate denominators.
+
+The paired model run recorded 18,917 ns prediction time, 0.576 ms setup and 2,096
+resident tensor bytes. The whole command took 0.32 s wall, 0.16 s user and 0.11 s
+system time with 85,360,640 bytes maximum RSS, including native Go compilation
+and execution. Focused race tests ran on the same host during this study; caches
+were uncontrolled. These timings describe this run. Host CPU utilization and the
+model's CPU increment were not sampled. Training exposure is unknown, and the
+small fixture does not establish a general model advantage or external adoption.
+
 ## 한국어: 판단에 이름을 붙여 재사용하기
 
 `IsPartial`은 “일부만 완료됐는가”를 계산하는 작은 Gooo 활동입니다. 다른
