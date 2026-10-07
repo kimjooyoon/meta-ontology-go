@@ -159,9 +159,14 @@ and a first natural-language capability-discovery integration now use the common
 receipt. `gooo discover --query <question> <file.gooo>` calls the pinned JEV
 capability catalog deterministically, binds its query/trail digests to the exact
 source and normalized semantic IR, and emits the same generated receipt schema.
-The receipt deliberately leaves independent use-case execution, generation,
-permission/network observations, and reverse observation unresolved; a catalog
-match is not a semantic success score.
+Without a separate domain contract, declaration coverage is `UNKNOWN` with a
+zero denominator; the target source is not allowed to define its own scope. With
+`--domain-contract <contract.gooo>`, the compiler compares the contract's
+stable declaration IDs, kinds, namespaces, entity fields, and typed activity
+ports against the target and records both contract digests. That is declared
+scope coverage only. Activity-body correctness, independent use-case execution,
+generation, permission/network observations, and reverse observation remain
+separate; a catalog match is not a semantic success score.
 
 Broader runtime profiles still need to bind independent inputs, source revisions,
 tool identities, and observation artifacts. Comparison currently covers the
