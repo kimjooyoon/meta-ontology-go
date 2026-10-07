@@ -16,6 +16,8 @@ type discoveryGeneration struct {
 	ActivityID       string `json:"activity_id"`
 	GeneratedDigest  string `json:"generated_digest"`
 	ProjectionReplay bool   `json:"projection_replayed"`
+	prior            bodycodegen.Result
+	parent           []byte
 }
 
 func loadDiscoveryGeneration(reader SourceReader, filename string, source []byte, path string) (*discoveryGeneration, error) {
@@ -26,7 +28,7 @@ func loadDiscoveryGeneration(reader SourceReader, filename string, source []byte
 	if err != nil {
 		return nil, err
 	}
-	prior, _, err := bodyexecution.DecodeGeneration(raw)
+	prior, parent, err := bodyexecution.DecodeGeneration(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +53,7 @@ func loadDiscoveryGeneration(reader SourceReader, filename string, source []byte
 		return nil, err
 	}
 	return &discoveryGeneration{Path: path, Digest: "sha256:" + sha256Hex(raw), ActivityID: prior.Report.ActivityID,
-		GeneratedDigest: prior.Report.GeneratedDigest, ProjectionReplay: true}, nil
+		GeneratedDigest: prior.Report.GeneratedDigest, ProjectionReplay: true, prior: prior, parent: parent}, nil
 }
 
 func discoveryGenerationCoverage(actual semantic.IR, inputs map[semantic.ID][]semantic.ID,
@@ -64,7 +66,7 @@ func discoveryGenerationCoverage(actual semantic.IR, inputs map[semantic.ID][]se
 		Unit:   "expected domain activity signatures with a source-replayed generated projection",
 		Reason: "The saved projection replays; a separate domain contract with expected activities is needed for a coverage denominator.",
 		Evidence: []string{"generation_artifact_digest:" + generation.Digest, "generated_digest:" + generation.GeneratedDigest,
-			"generated_activity_id:" + generation.ActivityID, "projection_replayed:true", "native_execution_observed:false"},
+			"generated_activity_id:" + generation.ActivityID, "projection_replayed:true", "projection_replay_native_execution:false"},
 	}
 	if contract == nil {
 		return dimension

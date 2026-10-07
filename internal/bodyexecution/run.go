@@ -139,7 +139,7 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 	suite, _ := json.Marshal(cases)
 	r.RuntimeSuiteSHA256 = digest(suite)
 	for _, c := range cases {
-		if !selectionObservedInput(document, prior, c.Input) {
+		if !SelectionObservedInput(document, prior, c.Input) {
 			r.SelectionDisjointInputs++
 		}
 	}
@@ -220,9 +220,10 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 	return finish(nil)
 }
 
-// Source replay above validates every observation before it contributes to the
-// effective selection suite. Added oracle inputs cannot become holdout claims.
-func selectionObservedInput(document pathplan.Document, prior bodycodegen.Result, input int64) bool {
+// SelectionObservedInput checks the effective selection suite, including added
+// oracle observations. Callers must replay the source before using this result
+// as evidence. It says nothing about model-training exposure.
+func SelectionObservedInput(document pathplan.Document, prior bodycodegen.Result, input int64) bool {
 	if slices.ContainsFunc(document.TestCases, func(t pathplan.TestCase) bool { return t.Input == input }) {
 		return true
 	}
