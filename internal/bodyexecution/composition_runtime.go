@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/buildidentity"
 )
 
 type CompositionDelivery struct {
@@ -52,6 +54,7 @@ type CompositionRuntime struct {
 	GoToolSelection      string                     `json:"go_tool_selection"`
 	GoVersion            string                     `json:"go_version"`
 	ProducerSourceSHA    string                     `json:"producer_source_sha"`
+	ProducerModule       *buildidentity.Module      `json:"producer_module,omitempty"`
 	Toolchain            ProcessObservation         `json:"toolchain"`
 	Build                ProcessObservation         `json:"build"`
 	Runs                 []ProcessObservation       `json:"runs"`
@@ -82,6 +85,7 @@ func initialCompositionRuntime(source []byte, prior Composition, suite Compositi
 		SelectedSourceSHA256: prior.SelectedSourceSHA256, TypedPlanSHA256: prior.Plan.TypedPlanSHA256,
 		GeneratedSHA256: prior.GeneratedSHA256, DriverSHA256: prior.DriverSHA256, RuntimeSuiteSHA256: compositionDigest(suite),
 		ProducerSourceSHA: producerSourceSHA(), Runs: make([]ProcessObservation, 0, 2), Traces: []CompositionTrace{},
+		ProducerModule:  buildidentity.MainModule(),
 		InputSeparation: unknownCompositionInputSeparation("RUNTIME_NOT_OBSERVED"),
 		Scope:           "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"}
 }
