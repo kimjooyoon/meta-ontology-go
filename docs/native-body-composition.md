@@ -288,6 +288,36 @@ request finishes; this first composition path has no executable cache. Native
 execution records build/run time, CPU time and process peak RSS. These values
 do not measure whole-computer CPU utilization or prove a speed gain.
 
+## Contextual hole construction
+
+The [Gooo fixture](../examples/body-codegen/hole-context-composition.gooo.fixture)
+connects three activities whose missing expressions occur inside existing bodies:
+`input + hole`, `(input + hole) * 2`, and a local-variable computation.
+Their source-owned `integer-hole-residual/v1` grammar constructs `1`, `3`, and
+`input * 4 + 3` from the declared training cases.
+
+```sh
+go run ./cmd/gooo body-compose \
+  --source examples/body-codegen/hole-context-composition.gooo.fixture \
+  --cases examples/body-codegen/hole-context-composition-cases.json
+```
+
+Run with a Go 1.27.1 toolchain; pass `--go-bin` when the Go binary on PATH differs.
+The native suite contains four input cases and twelve output expectations. Three
+inputs overlap construction observations; one input beyond 2^53 is disjoint at
+all three activities. Report these denominators separately. A generated search
+receipt records four pure probe evaluations per activity; composition preflight
+and receipt replay can repeat that work. The native runtime makes zero model
+calls. This example exercises a deterministic language extension; it does not
+measure a learned model's prediction accuracy.
+
+The [recorded comparison](research/hole-context-20261007/summary.json) at compiler
+`44b16c3e` observes 0/12 native expectations with the legacy grammar and 12/12
+with the contextual grammar; saved replay also observes 12/12. The change alters
+the candidate space. One sequential pair on a shared host establishes this
+example's construction behavior; it does not establish a general speed or
+model-quality advantage. Raw receipts retain the unsuccessful baseline.
+
 ## Current boundaries
 
 The graph supports 1..16 activities with 1..16 inputs and one result each.

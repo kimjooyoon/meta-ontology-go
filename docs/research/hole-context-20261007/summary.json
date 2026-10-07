@@ -1,0 +1,245 @@
+{
+  "schema": "gooo/hole-context-study/v1",
+  "recorded_date": "2026-10-07",
+  "compiler_revision": "44b16c3e5212730f9bd2f8a67e61b9131ba340ac",
+  "compiler_tree_clean_at_build": true,
+  "toolchain": "go1.27.1 darwin/arm64",
+  "source": "examples/body-codegen/hole-context-composition.gooo.fixture",
+  "cases": "examples/body-codegen/hole-context-composition-cases.json",
+  "legacy_source_derivation": "Replace all integer-hole-residual/v1 strings with integer-offset-constant/v1. All bodies, intent, cases, bindings and budgets remain unchanged.",
+  "pairing": "Same three-activity task and checks; candidate grammar changes. This compares language construction, not model ranking.",
+  "run_order": [
+    "legacy",
+    "contextual",
+    "replay"
+  ],
+  "repetitions": 1,
+  "model_calls_all_runs": 0,
+  "host_cpu_utilization": "UNOBSERVED",
+  "performance_limit": "Sequential one-pair observation on a shared host, warm caches not reset; development tests may run concurrently. Resource values describe these commands, not a controlled speed comparison. macOS time -lp values are rounded; RSS is its per-command process-tree high-water observation, not aggregate simultaneous memory.",
+  "probe_count_scope": "Each generation receipt counts its own training probe evaluations; preflight and replay repeat pure probes. Recorded probe counts are not whole-command totals. Replay retains prior selection-attempt evidence without making new selection attempts.",
+  "known_limits": [
+    "One scalar Integer input and one hole; 1..128 training cases; 2..16 retained candidates.",
+    "Zero/one observations are heuristics; nonlinear, branch-dependent and wrapped behavior must pass ordinary full-body scoring.",
+    "Training, holdout, native output expectations and unique disjoint input cases have different denominators.",
+    "No claim of natural-language understanding, model accuracy gain, all-domain correctness or external adoption."
+  ],
+  "negative_regressions": {
+    "file": "internal/bodycodegen/body_search_hole_context_test.go",
+    "test": "TestHoleContextSearchKeepsNonlinearGuessesPartial",
+    "body": "let factor = hole; return input + factor * factor",
+    "proposed_hole_value": 5,
+    "training_passed": 0,
+    "training_total": 2,
+    "scope": "Retained unit-test observation, not part of the three-activity native task."
+  },
+  "reproduction": [
+    "Build cmd/gooo from compiler_revision with Go 1.27.1.",
+    "Produce the legacy source using legacy_source_derivation.",
+    "Run body-compose --source SOURCE --cases examples/body-codegen/hole-context-composition-cases.json --go-bin GO1_27_1 for each source.",
+    "For the contextual run, use --out NEW_DIRECTORY. Replay with --composition NEW_DIRECTORY/composition.json and the original contextual source and cases."
+  ],
+  "observations": [
+    {
+      "label": "legacy",
+      "raw_receipt": "legacy.json",
+      "raw_receipt_sha256": "sha256:ae384a3f9e64db78b8dccb1ceea0dbb1e4aeb39e9463708175a0934fe8107c84",
+      "generated_now": true,
+      "steps": [
+        {
+          "selected_expression": "input",
+          "training_passed": 0,
+          "training_total": 2,
+          "holdout_passed": 0,
+          "holdout_total": 1,
+          "attempted_candidates": 6,
+          "provider_operations": 0,
+          "grammar": "integer-offset-constant/v1",
+          "candidates_enumerated": 6,
+          "candidates_retained": 6,
+          "recorded_probe_calls": 0
+        },
+        {
+          "selected_expression": "input",
+          "training_passed": 1,
+          "training_total": 2,
+          "holdout_passed": 0,
+          "holdout_total": 1,
+          "attempted_candidates": 8,
+          "provider_operations": 0,
+          "grammar": "integer-offset-constant/v1",
+          "candidates_enumerated": 8,
+          "candidates_retained": 8,
+          "recorded_probe_calls": 0
+        },
+        {
+          "selected_expression": "input",
+          "training_passed": 0,
+          "training_total": 2,
+          "holdout_passed": 0,
+          "holdout_total": 1,
+          "attempted_candidates": 8,
+          "provider_operations": 0,
+          "grammar": "integer-offset-constant/v1",
+          "candidates_enumerated": 8,
+          "candidates_retained": 8,
+          "recorded_probe_calls": 0
+        }
+      ],
+      "finite_passed": 0,
+      "finite_total": 12,
+      "input_separation": {
+        "status": "PROGRESS",
+        "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 3,
+        "disjoint_inputs": 1,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "runtime_replayed": true,
+      "runtime_model_calls": 0,
+      "command_wall_seconds": 1.3,
+      "command_user_seconds": 0.16,
+      "command_system_seconds": 0.13,
+      "command_peak_rss_bytes": 86786048,
+      "raw_time_lp": "real 1.30\nuser 0.16\nsys 0.13\n            86786048  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               18818  page reclaims\n                 239  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 233  signals received\n                 120  voluntary context switches\n                3243  involuntary context switches\n           220820980  instructions retired\n           128986541  cycles elapsed\n            12386832  peak memory footprint\n"
+    },
+    {
+      "label": "contextual",
+      "raw_receipt": "contextual.json",
+      "raw_receipt_sha256": "sha256:e9efe980ef5451aead1524a94b8832f21c136121ade25800bdb0b80b75640d85",
+      "generated_now": true,
+      "steps": [
+        {
+          "selected_expression": "1",
+          "training_passed": 2,
+          "training_total": 2,
+          "holdout_passed": 1,
+          "holdout_total": 1,
+          "attempted_candidates": 1,
+          "provider_operations": 0,
+          "grammar": "integer-hole-residual/v1",
+          "candidates_enumerated": 9,
+          "candidates_retained": 9,
+          "recorded_probe_calls": 4
+        },
+        {
+          "selected_expression": "3",
+          "training_passed": 2,
+          "training_total": 2,
+          "holdout_passed": 1,
+          "holdout_total": 1,
+          "attempted_candidates": 1,
+          "provider_operations": 0,
+          "grammar": "integer-hole-residual/v1",
+          "candidates_enumerated": 10,
+          "candidates_retained": 10,
+          "recorded_probe_calls": 4
+        },
+        {
+          "selected_expression": "input * 4 + 3",
+          "training_passed": 2,
+          "training_total": 2,
+          "holdout_passed": 1,
+          "holdout_total": 1,
+          "attempted_candidates": 4,
+          "provider_operations": 0,
+          "grammar": "integer-hole-residual/v1",
+          "candidates_enumerated": 13,
+          "candidates_retained": 13,
+          "recorded_probe_calls": 4
+        }
+      ],
+      "finite_passed": 12,
+      "finite_total": 12,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 3,
+        "disjoint_inputs": 1,
+        "disjoint_cases_passed": 1,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "runtime_replayed": true,
+      "runtime_model_calls": 0,
+      "command_wall_seconds": 0.49,
+      "command_user_seconds": 0.14,
+      "command_system_seconds": 0.11,
+      "command_peak_rss_bytes": 86835200,
+      "raw_time_lp": "real 0.49\nuser 0.14\nsys 0.11\n            86835200  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16540  page reclaims\n                 232  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 275  signals received\n                 163  voluntary context switches\n                3238  involuntary context switches\n           224949945  instructions retired\n           100253526  cycles elapsed\n            12861992  peak memory footprint\n"
+    },
+    {
+      "label": "replay",
+      "raw_receipt": "replay.json",
+      "raw_receipt_sha256": "sha256:de28237151f59f990cc09313282ad49db12f8be07fd98b2838d78458dc4d39ab",
+      "generated_now": false,
+      "steps": [
+        {
+          "selected_expression": "1",
+          "training_passed": 2,
+          "training_total": 2,
+          "holdout_passed": 1,
+          "holdout_total": 1,
+          "attempted_candidates": 1,
+          "provider_operations": 0,
+          "grammar": "integer-hole-residual/v1",
+          "candidates_enumerated": 9,
+          "candidates_retained": 9,
+          "recorded_probe_calls": 4
+        },
+        {
+          "selected_expression": "3",
+          "training_passed": 2,
+          "training_total": 2,
+          "holdout_passed": 1,
+          "holdout_total": 1,
+          "attempted_candidates": 1,
+          "provider_operations": 0,
+          "grammar": "integer-hole-residual/v1",
+          "candidates_enumerated": 10,
+          "candidates_retained": 10,
+          "recorded_probe_calls": 4
+        },
+        {
+          "selected_expression": "input * 4 + 3",
+          "training_passed": 2,
+          "training_total": 2,
+          "holdout_passed": 1,
+          "holdout_total": 1,
+          "attempted_candidates": 4,
+          "provider_operations": 0,
+          "grammar": "integer-hole-residual/v1",
+          "candidates_enumerated": 13,
+          "candidates_retained": 13,
+          "recorded_probe_calls": 4
+        }
+      ],
+      "finite_passed": 12,
+      "finite_total": 12,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 3,
+        "disjoint_inputs": 1,
+        "disjoint_cases_passed": 1,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "runtime_replayed": true,
+      "runtime_model_calls": 0,
+      "command_wall_seconds": 0.3,
+      "command_user_seconds": 0.13,
+      "command_system_seconds": 0.1,
+      "command_peak_rss_bytes": 86818816,
+      "raw_time_lp": "real 0.30\nuser 0.13\nsys 0.10\n            86818816  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16386  page reclaims\n                 231  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                 249  signals received\n                 135  voluntary context switches\n                3140  involuntary context switches\n           192738354  instructions retired\n            83985396  cycles elapsed\n            11321920  peak memory footprint\n"
+    }
+  ]
+}

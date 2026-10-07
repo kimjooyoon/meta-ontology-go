@@ -223,6 +223,15 @@ and commercial directions are hypotheses to revisit as that evidence grows.
 
 ### Implementation order
 
+The contextual-hole example is a concrete instance of this sequence: a retained
+failure on `input + hole` exposed a missing candidate, and the optional
+`integer-hole-residual/v1` grammar now derives proposals from the surrounding
+typed body. Its [runnable composition](../native-body-composition.md#contextual-hole-construction)
+keeps the same source-owned expectations and checks the resulting native outputs.
+Report this as a grammar change, not a model-ranking advantage: the candidate
+space has changed. Keep the old grammar as a baseline, publish nonlinear failures,
+and measure model substitution separately with the grammar fixed.
+
 1. Keep language semantics, candidate permissions, decision ranking, and
    verification obligations separately inspectable in Gooo and its receipts.
 2. Expand the reproducible task corpus only when each task has a stable source,
