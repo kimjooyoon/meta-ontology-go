@@ -411,7 +411,7 @@ func validateExpression(expression ast.Expr) error {
 	case *ast.CompositeLit:
 		return validateRecordExpression(value)
 	case *ast.UnaryExpr:
-		if value.Op != token.SUB && value.Op != token.NOT {
+		if value.Op != token.SUB && value.Op != token.NOT && value.Op != token.AND {
 			return fmt.Errorf("unsupported unary operator %s", value.Op)
 		}
 		return validateExpression(value.X)

@@ -1,0 +1,7 @@
+package app
+namespace app
+
+import domain "example/domain"
+
+activity Main(Profile) -> Profile computes "return input"
+bind domain.Submit.result -> Main.input

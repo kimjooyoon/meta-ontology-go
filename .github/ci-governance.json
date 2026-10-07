@@ -6486,6 +6486,40 @@
         "examples/capability-discovery/domain-contract.gooo.fixture",
         "internal/verify/scope_gooo_discovery_domain_contract_20261007.go"
       ]
+    },
+    {
+      "branch": "agent/package-execution-entityfields-v4-20261007",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/package_execute_test.go",
+        "docs/entity-fields-v4.md",
+        "docs/language-direction.ko.md",
+        "docs/language/workspace-manifest.md",
+        "docs/native-record-values.md",
+        "docs/record-field-assembly.md",
+        "examples/body-codegen/optional-record-value-assembly-cases.json",
+        "examples/body-codegen/optional-record-value-assembly.gooo.fixture",
+        "examples/package-optional-record-flow/README.md",
+        "examples/package-optional-record-flow/app.gooo.fixture",
+        "examples/package-optional-record-flow/cases.json",
+        "examples/package-optional-record-flow/domain.gooo.fixture",
+        "examples/package-optional-record-flow/gooo.workspace.json",
+        "internal/bodycodegen/body_fill_eval.go",
+        "internal/bodycodegen/bodycodegen.go",
+        "internal/bodycodegen/completeness_receipt.go",
+        "internal/bodycodegen/optional_record_value_assembly_test.go",
+        "internal/bodycodegen/record_assembly_context.go",
+        "internal/bodycodegen/record_assembly_eval.go",
+        "internal/bodycodegen/record_assembly_sites.go",
+        "internal/bodycodegen/record_assembly_types.go",
+        "internal/bodycodegen/record_updates.go",
+        "internal/bodyexecution/composition_optional_synthesis_test.go",
+        "internal/packageruntime/compile.go",
+        "internal/packageruntime/compile_source.go",
+        "internal/packageruntime/workspaceexecution/program.go",
+        "internal/verify/scope_gooo_package_execution_entityfields_v4_20261007.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

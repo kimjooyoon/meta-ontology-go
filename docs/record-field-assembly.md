@@ -45,10 +45,12 @@ select an assignment's right-hand side; its ordinal counts only field updates.
 This allows later fields to read earlier updated values. See
 [sequential updates and copied values](record-field-updates.md).
 
-`value_case` takes a JSON positional input array and a complete expected output
-record. Inputs may mix Integer, Boolean, Text and declared records. Every record
-field is required. Input and expected JSON are normalized into the assembly
-contract, so formatting changes keep the same observations.
+`value_case` takes a JSON positional input array and an expected output record.
+Inputs may mix Integer, Boolean, Text and declared records. Required fields
+must appear; optional output fields may be omitted to mean absent. Explicit
+`""`, `false` and `0` remain present values, and `null` is rejected. Input and
+expected JSON are normalized into the assembly contract, so formatting changes
+keep the same observations.
 
 Boolean record fields use the same typed alternatives and completeness counts.
 The runnable [Boolean field example](../examples/body-codegen/boolean-field-assembly.gooo.fixture)
@@ -72,6 +74,34 @@ Text alternative is rejected before evaluation.
 ```sh
 go run ./cmd/gooo body-codegen --json --activity Build \
   examples/body-codegen/integer-field-assembly.gooo.fixture
+```
+
+## Synthesize optional fields
+
+EntityFields V4 optional fields are Go pointers in the checked body. Field
+assembly can choose `nil` for absence or an address of a typed local such as
+`&label`, `&active` or `&amount` for a newly present value. Gooo typechecks each
+alternative before model loading and runs the bounded finite cases for each
+attempt. The field receipt reports `expected_present` and `actual_present`, so a
+present empty string, false Boolean or zero Integer cannot score as absent.
+
+The [optional synthesis fixture](../examples/body-codegen/optional-record-value-assembly.gooo.fixture)
+starts with absent values. Its source-owned cases require a present empty Text,
+present false Boolean and present zero Integer when `emit` is true, and no output
+keys when it is false. Deterministic search selects the complete typed
+combination; a compatible local model may rank the same prevalidated choices.
+The source-bound choice receipt carries optional type ID and presence, while
+model context carries the permitted expressions and intent and excludes finite
+case inputs and outputs. The model cannot introduce expressions and the finite
+cases do not prove unobserved inputs.
+
+```sh
+go run ./cmd/gooo body-codegen --json --activity Build \
+  examples/body-codegen/optional-record-value-assembly.gooo.fixture
+go run ./cmd/gooo body-compose \
+  --source examples/body-codegen/optional-record-value-assembly.gooo.fixture \
+  --cases examples/body-codegen/optional-record-value-assembly-cases.json \
+  --out /tmp/gooo-optional-record-value-assembly
 ```
 
 ## Generate, inspect and execute
@@ -153,8 +183,9 @@ attempt count and field completion together before attributing a speed benefit.
 
 - 1..6 disjoint binary field choices and 1..64 attempts.
 - 1..128 typed selection cases; 1..16 activity inputs.
-- Required single integer, string and Boolean record fields under the explicit
-  EntityFields V3 body profile, using the existing 16-field bound.
+- Required single integer, string and Boolean fields plus optional single
+  scalar fields under the explicit EntityFields V3/V4 body profiles, using the
+  existing 16-field bound.
 - Source up to 128 KiB; each JSON value up to 32 KiB; each supplied text up to
   1,024 UTF-8 bytes.
 - Pure body conditions, expressions and whole-local assignments follow the

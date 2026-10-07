@@ -15,11 +15,13 @@ func recordOrdinalContext(choices []RecordValueChoice) *RecordOrdinalContext {
 		Scope: "typed source-bound field expressions mapped to ordinal binary choices; frozen integer model transfer; cases and expected outputs excluded"}
 	for _, choice := range choices {
 		raw, _ := json.Marshal(struct {
-			Field  string `json:"field"`
-			First  string `json:"first"`
-			Second string `json:"second"`
-			Intent string `json:"intent"`
-		}{choice.FieldID, choice.First, choice.Second, choice.Intent})
+			Field    string `json:"field"`
+			TypeID   string `json:"type_id,omitempty"`
+			Presence string `json:"presence,omitempty"`
+			First    string `json:"first"`
+			Second   string `json:"second"`
+			Intent   string `json:"intent"`
+		}{choice.FieldID, choice.TypeID, choice.Presence, choice.First, choice.Second, choice.Intent})
 		r.Parts = append(r.Parts, string(raw))
 	}
 	if len(choices) != 3 {
