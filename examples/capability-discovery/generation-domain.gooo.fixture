@@ -1,0 +1,6 @@
+package expected_generation
+namespace bodycodegen
+
+entity Integer id "bodycodegen://entity/integer"
+activity ClampNegativeToZero(Integer) -> Integer
+activity Pending(Integer) -> Integer

@@ -16,7 +16,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-const discoverUsage = "usage: gooo discover [--json] --query <question> [--domain-contract <contract.gooo>] <file.gooo>"
+const discoverUsage = "usage: gooo discover [--json] --query <question> [--domain-contract <contract.gooo>] [--generation <body-codegen.json>] <file.gooo>"
 
 type capabilityDiscoveryReport struct {
 	Schema                 string                            `json:"schema"`
@@ -28,6 +28,7 @@ type capabilityDiscoveryReport struct {
 	DomainContractPath     string                            `json:"domain_contract_path,omitempty"`
 	DomainContractHash     string                            `json:"domain_contract_digest,omitempty"`
 	DomainContractSemantic string                            `json:"domain_contract_semantic_digest,omitempty"`
+	Generation             *discoveryGeneration              `json:"generation,omitempty"`
 	Receipt                *completeness.CompletenessReceipt `json:"completeness_receipt"`
 }
 
@@ -36,6 +37,7 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	query := ""
 	filename := ""
 	domainContractPath := ""
+	generationPath := ""
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
 		case "--query":
@@ -54,6 +56,15 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 			index++
 			domainContractPath = strings.TrimSpace(args[index])
 			if domainContractPath == "" {
+				return reportDiscoverUsage(jsonMode, stdout, stderr)
+			}
+		case "--generation":
+			if generationPath != "" || index+1 >= len(args) {
+				return reportDiscoverUsage(jsonMode, stdout, stderr)
+			}
+			index++
+			generationPath = strings.TrimSpace(args[index])
+			if generationPath == "" {
 				return reportDiscoverUsage(jsonMode, stdout, stderr)
 			}
 		case "--help", "-h":
@@ -97,14 +108,18 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	if err := trail.Validate(); err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "CAPABILITY_TRAIL_INVALID", err.Error())
 	}
-	receipt := capabilityDiscoveryCompletenessReceipt(filename, source, ir, inputSequences, trail, domainContract)
+	generation, err := loadDiscoveryGeneration(reader, filename, source, generationPath)
+	if err != nil {
+		return reportDiscoverFailure(jsonMode, stdout, stderr, generationPath, "GENERATION_REPLAY_FAILED", err.Error())
+	}
+	receipt := capabilityDiscoveryCompletenessReceipt(filename, source, ir, inputSequences, trail, domainContract, generation)
 	if err := completeness.Validate(receipt); err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "COMPLETENESS_RECEIPT_INVALID", err.Error())
 	}
 	report := capabilityDiscoveryReport{
 		Schema: "gooo/capability-discovery-report/v1", Decision: "PROGRESS", Query: trail,
 		SourcePath: filename, SourceHash: "sha256:" + cache.HashBytes(source).String(),
-		Semantic: ir.StableHash(), Receipt: receipt,
+		Semantic: ir.StableHash(), Generation: generation, Receipt: receipt,
 	}
 	if domainContract != nil {
 		report.DomainContractPath = domainContract.Path
@@ -123,6 +138,16 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 		trail.Response.Status, trail.Intent, receipt.FirstUnresolved.ID, filename); err != nil {
 		return exitFailure
 	}
+	if generation != nil {
+		for _, dimension := range receipt.Dimensions {
+			if dimension.ID == "generation_coverage" {
+				if _, err := fmt.Fprintf(stdout, "generation replay: %s\ngeneration coverage: %s %d/%d\n",
+					generation.ActivityID, dimension.Status, dimension.Numerator, dimension.Denominator); err != nil {
+					return exitFailure
+				}
+			}
+		}
+	}
 	for _, capability := range trail.Response.Capabilities {
 		if _, err := fmt.Fprintf(stdout, "- %s [%s]: %s\n", capability.ID, capability.State, capability.Description); err != nil {
 			return exitFailure
@@ -131,7 +156,7 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	return exitOK
 }
 
-func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir semantic.IR, inputSequences map[semantic.ID][]semantic.ID, trail jev.CapabilityQueryTrail, domainContract *discoveryDomainContract) *completeness.CompletenessReceipt {
+func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir semantic.IR, inputSequences map[semantic.ID][]semantic.ID, trail jev.CapabilityQueryTrail, domainContract *discoveryDomainContract, generation *discoveryGeneration) *completeness.CompletenessReceipt {
 	sourceDigest := "sha256:" + cache.HashBytes(source).String()
 	semanticDigest := ir.StableHash()
 	matchStatus, matchNumerator := capabilityCatalogMatchState(trail.Response.Status)
@@ -145,7 +170,7 @@ func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir s
 		{ID: "catalog_match", Status: matchStatus, Numerator: matchNumerator, Denominator: 1,
 			Unit: "requested capabilities found in the JEV catalog", Reason: capabilityMatchReason(trail.Response.Status),
 			Evidence: []string{"jev_status:" + string(trail.Response.Status), "query_digest:" + trail.Response.QueryDigest}},
-		unknownCompletenessDimension("generation_coverage", "generated artifacts bound to the discovered declaration", "Capability discovery does not generate code."),
+		discoveryGenerationCoverage(ir, inputSequences, domainContract, generation),
 		unknownCompletenessDimension("reverse_observation_coverage", "generated runtime observations mapped back to source", "Discovery does not execute or reverse-observe generated artifacts."),
 		unknownCompletenessDimension("real_use_case_coverage", "independently replayed input and output cases", "A catalog answer is not an independent use case or behavior result."),
 		{ID: "execution_boundary_coverage", Status: boundaryObservationStatus(trail), Numerator: boolInt(trail.Response.NonExecuting && trail.Response.NonAuthorizing), Denominator: 1,
@@ -157,6 +182,11 @@ func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir s
 			Unit: "source, semantic IR, optional domain contract and JEV trail identities bound in one receipt", Reason: "The receipt binds exact source bytes, normalized semantic IR, optional domain-contract bytes and semantic IR, JEV query identity and trail evidence.",
 			Evidence: discoveryProvenanceEvidence(sourceDigest, semanticDigest, trail, domainContract)},
 	}
+	if generation != nil {
+		last := &dimensions[len(dimensions)-1]
+		last.Evidence = append(last.Evidence, "generation_artifact_digest:"+generation.Digest,
+			"generated_digest:"+generation.GeneratedDigest, "generated_activity_id:"+generation.ActivityID)
+	}
 	core := make([]string, 0, len(dimensions))
 	statusCounts := map[string]int{"PASS": 0, "PROGRESS": 0, "UNKNOWN": 0, "FAIL_CLOSED": 0}
 	unresolved := make([]completeness.UnresolvedCompletenessClaim, 0)
@@ -164,9 +194,13 @@ func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir s
 		core = append(core, dimension.ID)
 		statusCounts[dimension.Status]++
 		if dimension.Status != "PASS" {
+			next := nextCapabilityReceiptOperation(dimension.ID)
+			if dimension.ID == "generation_coverage" && generation != nil && dimension.Denominator == 0 {
+				next = "provide_a_separate_gooo_domain_contract_with_expected_activity_signatures"
+			}
 			unresolved = append(unresolved, completeness.UnresolvedCompletenessClaim{
 				ID: dimension.ID, Status: dimension.Status, Reason: dimension.Reason,
-				NextOperation: nextCapabilityReceiptOperation(dimension.ID),
+				NextOperation: next,
 			})
 		}
 	}
@@ -174,7 +208,7 @@ func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir s
 	if len(unresolved) > 0 {
 		first = &unresolved[0]
 	}
-	return &completeness.CompletenessReceipt{
+	receipt := &completeness.CompletenessReceipt{
 		Schema: completeness.CompletenessReceiptSchema, ProfileID: "gooo-jev-capability-discovery/v1",
 		Decision: "PROGRESS", DecisionBasis: "A validated source-bound discovery observation exists; declaration coverage is measured only when a separate Gooo domain contract supplies its denominator, while generation, independent runtime use cases and reverse observation remain open.",
 		Scope: map[string]any{
@@ -191,6 +225,12 @@ func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir s
 			"Suggestions and follow-up questions are not semantic completeness evidence.",
 			"This receipt records discovery only; it does not claim generation, execution or reverse observation."},
 	}
+	if generation != nil {
+		receipt.Scope["generation"] = generation
+		receipt.DecisionBasis = "Discovery and a saved generation artifact were replayed against the supplied source; generation coverage uses expected activity signatures from the separate domain contract. Independent runtime observations remain open."
+		receipt.NotClaimed[2] = "Projection replay checks the saved construction and finite selection observations; native execution, independent cases and historical model calls need their own evidence."
+	}
+	return receipt
 }
 
 func capabilityCatalogMatchState(status jev.CapabilityQueryState) (string, int) {

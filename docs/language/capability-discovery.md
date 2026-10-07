@@ -2,9 +2,10 @@
 
 `gooo discover` answers a narrow question: which declared capability in the
 deterministic JEV catalog best matches a natural-language query? It binds the
-query and observation trail to the supplied `.gooo` source. It does not infer
-new language features from the source, call a language model, generate code, or
-run a program.
+query and observation trail to the supplied `.gooo` source. An optional saved
+generation artifact can be replayed against that source, using the compiler's
+pure projection and finite-case checks. Discovery calls no model and starts no
+native program or external toolchain.
 
 ```sh
 gooo discover --query "How do I generate a canonical .gooo declaration?" \
@@ -45,18 +46,45 @@ not a measure of whether Gooo implements the requested behavior.
 - `PROGRESS` is the receipt decision while required evidence remains open.
   The receipt intentionally has no aggregate completeness score.
 
-For every discovery, generation coverage, independent use-case coverage, and
-reverse-observation coverage remain `UNKNOWN`. They need separate evidence:
-generated artifacts bound to a declaration; independent inputs with expected
-outputs; and runtime observations mapped back to the originating source. A
+## Connect an existing generation
+
+Save a source-owned IR search or typed path result and attach it to discovery:
+
+```sh
+env GOOO_LAYA_URL= GOOO_LAYA_API_KEY= go run ./cmd/gooo body-codegen --json \
+  --activity ClampNegativeToZero examples/body-codegen/ir-search-source.gooo.fixture \
+  > /tmp/gooo-generation.json
+go run ./cmd/gooo discover --json --query "Generate Gooo code" \
+  --domain-contract examples/capability-discovery/generation-domain.gooo.fixture \
+  --generation /tmp/gooo-generation.json \
+  examples/body-codegen/ir-search-source.gooo.fixture
+```
+
+The separate contract expects `ClampNegativeToZero` and `Pending`. The receipt
+reports **generation coverage 1/2**: the first activity has a source-replayed
+projection; the second still needs one. Stable IDs and ordered typed signatures
+must match. The report binds the exact saved JSON digest, generated Go digest,
+and activity ID. Changing the source, selected finite observations, or emitted
+projection causes an error instead of producing a coverage result.
+
+With no expected activity contract, the saved projection can still replay, but
+generation coverage remains `UNKNOWN` with denominator zero. A successful
+projection is a construction observation: even a candidate with zero matching
+finite cases can be faithfully replayed. Its behavioral score remains in the
+generation report. Discovery checks supported source-owned `assembling`
+results; other generation routes need their own replay support.
+
+Without `--generation`, generation coverage remains `UNKNOWN`. Independent
+use-case coverage and reverse observation require runtime evidence: independent
+inputs with expected outputs, mapped back to the originating source. A
 catalog suggestion or a repeated fixture is not a substitute for those
 observations. The domain contract measures declared scope only; it does not
 define philosophical completeness or demonstrate real-world demand. See
 [declared completeness receipts](../declared-completeness-receipt.md) and
 [body generation](body-codegen.md) for the next stages.
 
-The source-bound discovery example is also the seventh case in the versioned
-language-utility portfolio. CI runs the same query twice, compares the full
+The billing discovery example, which supplies no generation artifact, is also
+the seventh case in the versioned language-utility portfolio. CI runs the same query twice, compares the full
 reports byte-for-byte, and verifies the query trail against the copied source
 and separate domain contract before adding it to the domain-completeness
 receipt. The observed path closes source, syntax, semantic, outcome, replay,
