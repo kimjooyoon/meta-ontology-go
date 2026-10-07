@@ -159,6 +159,17 @@ and a first natural-language capability-discovery integration now use the common
 receipt. `gooo discover --query <question> <file.gooo>` calls the pinned JEV
 capability catalog deterministically, binds its query/trail digests to the exact
 source and normalized semantic IR, and emits the same generated receipt schema.
+
+The domain profile now drives the measurement roster and its order from the
+`AssembleDomainCompletenessVector` input sequence. Each `Measure...` activity's
+`computes` identifier selects a registered, versioned evaluator adapter; its
+output stable ID and evidence input type must match the profile contract. An
+unknown metric or disconnected measurement fails closed. This removes the
+separate Go-maintained list of dimensions, while the bounded measurement
+implementations themselves remain Go adapters rather than interpreted Gooo
+bodies. The source declaration controls which registered measurements are
+assembled and in what order.
+
 Without a separate domain contract, declaration coverage is `UNKNOWN` with a
 zero denominator; the target source is not allowed to define its own scope. With
 `--domain-contract <contract.gooo>`, the compiler compares the contract's

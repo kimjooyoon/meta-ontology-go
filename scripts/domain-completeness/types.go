@@ -143,6 +143,7 @@ type ProfileModel struct {
 	Namespace    string
 	Entities     map[string]Entity
 	Activities   map[string]Activity
+	Dimensions   []dimensionSpec
 	SemanticHash string
 	SourceDigest string
 }

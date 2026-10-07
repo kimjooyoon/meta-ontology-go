@@ -398,31 +398,65 @@ func validateEvidenceReferences(evidenceDir string, report languageutility.Repor
 }
 
 func measureDimensions(profile ProfileModel, inputs loadedInputs, subject string, profileSemanticsEqual bool, runID int64, attempt int) []Dimension {
-	contract := inputs.contract
-	report := inputs.report
-	result := make([]Dimension, 0, len(dimensions))
-	for _, spec := range dimensions {
+	result := make([]Dimension, 0, len(profile.Dimensions))
+	for _, spec := range profile.Dimensions {
 		dimension := Dimension{
 			ID: spec.ID, MetricID: spec.MetricID, Unit: spec.Unit,
 			Status: "UNKNOWN", Evidence: []EvidenceRef{},
 		}
-		switch spec.ID {
-		case "declaration_coverage":
-			dimension = measureDeclarationCoverage(spec, contract, inputs.programRaw, inputs)
-		case "generation_coverage":
-			dimension = measureGenerationCoverage(spec, contract, report, inputs)
-		case "reverse_observation_coverage":
-			dimension = measureReverseObservationCoverage(spec, inputs)
-		case "use_case_coverage":
-			dimension = measureUseCaseCoverage(spec, contract, report, inputs)
-		case "boundary_coverage":
-			dimension = measureBoundaryCoverage(spec, inputs)
-		case "provenance_integrity":
-			dimension = measureProvenanceIntegrity(spec, profile, inputs, subject, profileSemanticsEqual, runID, attempt)
+		runtime, supported := dimensionRuntimes[spec.MetricID]
+		if !supported || runtime.Evaluate == nil {
+			dimension = failed(dimension, "PROFILE_METRIC_HANDLER_UNAVAILABLE", "REGISTER_PROFILE_METRIC_HANDLER")
+		} else {
+			dimension = runtime.Evaluate(spec, profile, inputs, subject, profileSemanticsEqual, runID, attempt)
 		}
 		result = append(result, dimension)
 	}
 	return result
+}
+
+type dimensionRuntime struct {
+	Unit     string
+	Evaluate func(dimensionSpec, ProfileModel, loadedInputs, string, bool, int64, int) Dimension
+}
+
+var dimensionRuntimes = map[string]dimensionRuntime{
+	"gooo.metric.domain-completeness.declaration-coverage.v1": {
+		Unit: "declarations",
+		Evaluate: func(spec dimensionSpec, _ ProfileModel, inputs loadedInputs, _ string, _ bool, _ int64, _ int) Dimension {
+			return measureDeclarationCoverage(spec, inputs.contract, inputs.programRaw, inputs)
+		},
+	},
+	"gooo.metric.domain-completeness.generation-coverage.v1": {
+		Unit: "use_cases",
+		Evaluate: func(spec dimensionSpec, _ ProfileModel, inputs loadedInputs, _ string, _ bool, _ int64, _ int) Dimension {
+			return measureGenerationCoverage(spec, inputs.contract, inputs.report, inputs)
+		},
+	},
+	"gooo.metric.domain-completeness.reverse-observation-coverage.v1": {
+		Unit: "observations",
+		Evaluate: func(spec dimensionSpec, _ ProfileModel, inputs loadedInputs, _ string, _ bool, _ int64, _ int) Dimension {
+			return measureReverseObservationCoverage(spec, inputs)
+		},
+	},
+	"gooo.metric.domain-completeness.use-case-coverage.v1": {
+		Unit: "use_cases",
+		Evaluate: func(spec dimensionSpec, _ ProfileModel, inputs loadedInputs, _ string, _ bool, _ int64, _ int) Dimension {
+			return measureUseCaseCoverage(spec, inputs.contract, inputs.report, inputs)
+		},
+	},
+	"gooo.metric.domain-completeness.boundary-coverage.v1": {
+		Unit: "boundaries",
+		Evaluate: func(spec dimensionSpec, _ ProfileModel, inputs loadedInputs, _ string, _ bool, _ int64, _ int) Dimension {
+			return measureBoundaryCoverage(spec, inputs)
+		},
+	},
+	"gooo.metric.domain-completeness.provenance-integrity.v1": {
+		Unit: "bindings",
+		Evaluate: func(spec dimensionSpec, profile ProfileModel, inputs loadedInputs, subject string, profileSemanticsEqual bool, runID int64, attempt int) Dimension {
+			return measureProvenanceIntegrity(spec, profile, inputs, subject, profileSemanticsEqual, runID, attempt)
+		},
+	},
 }
 
 func measureDeclarationCoverage(spec dimensionSpec, contract languageutility.Contract, program []byte, inputs loadedInputs) Dimension {

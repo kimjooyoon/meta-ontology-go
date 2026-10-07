@@ -40,6 +40,7 @@ func TestCapabilityDiscoveryEvidenceBindsExactReplayAndSource(t *testing.T) {
 	if state, reason := validateCapabilityDiscoveryCells(observation, reportRaw, replayRaw); state != "PASS" {
 		t.Fatalf("valid capability discovery cells = %q / %q", state, reason)
 	}
+	dimensions := testProfileDimensions(t)
 	t.Run("unobserved capability stages do not gain credit", func(t *testing.T) {
 		utilityContract := languageutility.Contract{
 			UseCases: []languageutility.UseCaseSpec{{ID: "capability-discovery"}},
