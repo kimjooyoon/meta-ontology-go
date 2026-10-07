@@ -83,6 +83,10 @@ It passes the five-field input contract to the target manifest's entry; this
 example uses a single ordinary entry activity. `--construction-receipt`,
 `--cases` and `--inputs` are mutually exclusive.
 
+The [recorded interpretation](../../docs/research/domain-tools-20261007/observation-summary.json)
+binds the original model-run receipt, compiler revision, derived inputs and actual
+Gooo outputs. Its raw receipt retains the two fresh native runs.
+
 ## Check the tool separately
 
 ```sh

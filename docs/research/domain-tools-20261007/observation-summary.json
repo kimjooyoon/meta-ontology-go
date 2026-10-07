@@ -1,0 +1,81 @@
+{
+  "schema": "gooo/research-construction-observation/v1",
+  "observed_date": "2026-10-08",
+  "timezone": "Asia/Seoul",
+  "compiler": {
+    "revision": "8f26c0849a6155f243e5ceadde76f43dda6976c9",
+    "working_tree_clean_at_build": true,
+    "toolchain": "go version go1.27.1 darwin/arm64"
+  },
+  "input_receipt": "documentation-model.json",
+  "input_receipt_sha256": "sha256:3768a872af2a2a4757bf252691ed48a956884e1f2e555a063594bdb2da4fafba",
+  "construction_observations": [
+    {
+      "activity": "GoooPackage0ActivityAssess",
+      "activity_id": "gooo-workspace://activity/gooo-package0activity-assess",
+      "attempt_index": 0,
+      "candidate_mask": 7,
+      "selected": false,
+      "declared_budget": 8,
+      "candidate_count": 8,
+      "counts": {
+        "matched": 2,
+        "total": 3,
+        "best": 2,
+        "scored": 1,
+        "budget": 8
+      }
+    },
+    {
+      "activity": "GoooPackage0ActivityAssess",
+      "activity_id": "gooo-workspace://activity/gooo-package0activity-assess",
+      "attempt_index": 1,
+      "candidate_mask": 5,
+      "selected": true,
+      "declared_budget": 8,
+      "candidate_count": 8,
+      "counts": {
+        "matched": 3,
+        "total": 3,
+        "best": 3,
+        "scored": 2,
+        "budget": 8
+      }
+    }
+  ],
+  "gooo_tool_manifest": "examples/assembly-explainer/gooo.workspace.json",
+  "gooo_results": [
+    {
+      "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+      "next_operation": "CONTINUE_CANDIDATES",
+      "state": "PROGRESS"
+    },
+    {
+      "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+      "next_operation": "OBSERVE_NEW_INPUTS",
+      "state": "PASS"
+    }
+  ],
+  "new_observation_model_calls": 0,
+  "new_native_execution_model_calls": 0,
+  "native_replayed": true,
+  "native_runs": 2,
+  "runtime_expectations": {
+    "status": "UNKNOWN",
+    "passed": 0,
+    "total": 0,
+    "reason": "input-only interpretation has no supplied runtime oracle"
+  },
+  "receipt": {
+    "path": "observation.json",
+    "sha256": "df8ddadc0072094e1ad3a0d59f3a085f23025a671534d97ac2535f114f893853",
+    "bytes": 48239
+  },
+  "reproduction": "gooo package execute --json --construction-receipt docs/research/domain-tools-20261007/documentation-model.json examples/assembly-explainer/gooo.workspace.json",
+  "scope": [
+    "Original candidate scores and projection were recomputed through composition replay without loading the historical model.",
+    "Each row describes only candidates observed up to that attempt, using whole cases rather than individual fields.",
+    "The Gooo tool ran twice on automatically derived inputs. Its next operations are returned as data, not executed repairs.",
+    "Historical native runtime counters were not used as construction evidence. Source-fill and search observation adapters remain unsupported."
+  ]
+}
