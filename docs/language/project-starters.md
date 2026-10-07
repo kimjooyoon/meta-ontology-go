@@ -51,6 +51,22 @@ proposal matched only 3/5 construction cases. Three input-only rows then returne
 diagnostic messages with zero new model calls. This is one local paired task;
 the raw receipts retain its exact source, model identity and measurement scope.
 
+### Keep the installed compiler identity with the result
+
+`gooo version --build --json` includes the executable's observed main-module
+path, version and Go module checksum under `module`. Native execution and replay
+retain those coordinates under `producer_module`; a declared module replacement
+has a separate `replacement` entry. Missing build metadata omits the field, and
+an unavailable version or checksum stays empty or absent.
+
+This is embedded build metadata. `producer_source_sha` keeps its existing Git
+meaning: a module-installed executable can carry a precise module version and
+checksum while its Git revision remains `UNBOUND_LOCAL_SOURCE`. A short revision
+inside a Go pseudo-version is not expanded into a full commit. Saved replay
+records the current executable's module separately from the prior execution.
+These fields do not change the declared choices, finite scores or acceptance
+rules. The Go version running native child programs remains a separate value.
+
 ## Library construction and model choices
 
 To use the local compact model for the source-declared assignment, pass its
