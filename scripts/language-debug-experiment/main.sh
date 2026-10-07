@@ -120,11 +120,14 @@ jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-l
     closed("artifact-emission";"scripts/language-example-experiment";"artifact-emission.json") +
     closed("profiling";"scripts/language-profile-experiment";"profiling.json") +
     closed("debugging";"scripts/language-debug-experiment";"debugging.json") +
-    closed("package-execution";"scripts/language-package-execution";"package-execution.json") |
+    closed("package-execution";"scripts/language-package-execution";"package-execution.json") +
+    closed("capability-discovery";"scripts/language-utility-evidence";"capability-discovery.json") |
     map(if .use_case_id=="debugging" and (.stage_id=="DETERMINISTIC_REPLAY" or .stage_id=="RESOURCE_OBSERVED")
       then opened("debugging";.stage_id;"DEBUG_EVIDENCE_NOT_BOUND")
       elif .use_case_id=="package-execution" and .stage_id=="RESOURCE_OBSERVED"
-      then opened("package-execution";.stage_id;"PACKAGE_RESOURCES_NOT_OBSERVED") else . end))}
+      then opened("package-execution";.stage_id;"PACKAGE_RESOURCES_NOT_OBSERVED")
+      elif .use_case_id=="capability-discovery"
+      then opened("capability-discovery";.stage_id;"DISCOVERY_EVIDENCE_NOT_BOUND") else . end))}
 ' > "$seed_observation"
 go run ./cmd/language-utility-witness -contract examples/language-utility/contract.json \
   -observation "$seed_observation" -report "$work/seed-utility-report.json" \
