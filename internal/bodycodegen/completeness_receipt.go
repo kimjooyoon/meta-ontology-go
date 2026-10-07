@@ -509,6 +509,11 @@ func layaObservationDimension(report Report) CompletenessDimension {
 
 func nextCompletenessOperation(id string) string {
 	operations := map[string]string{
+		"body_fill_candidate_grammar_coverage": "EXPAND_THE_DECLARED_PER_HOLE_GRAMMAR_WITHIN_ITS_BOUND",
+		"body_fill_assignment_space_coverage":  "CONTINUE_OMITTED_ASSIGNMENTS_WITHIN_A_DECLARED_BUDGET",
+		"body_fill_candidate_probe_coverage":   "COMPLETE_THE_DECLARED_CANDIDATE_PROBES",
+		"provider_execution_accounting":        "RECORD_PROVIDER_EXECUTIONS_AND_UNKNOWN_OUTCOMES",
+
 		"typed_path_source_binding":          "BIND_ORIGINAL_SOURCE_DOCUMENT_SEARCH_CONFIG_AND_SELECTED_BODY",
 		"typed_path_finite_accuracy":         "CONTINUE_TYPED_CANDIDATES_AGAINST_DECLARED_FAILURES_AND_MEASURE_UNSEEN_INPUTS_SEPARATELY",
 		"typed_path_provider_accounting":     "RECORD_LOCAL_PREDICTIONS_MODEL_PINS_AND_EXTERNAL_CALL_COUNTS",

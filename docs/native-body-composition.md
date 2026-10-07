@@ -51,11 +51,12 @@ gooo body-compose \
   --out /tmp/gooo-composition
 ```
 
-Use a new output directory. Optional `--model /path/to/model.json` loads one
-local path model for all `assembling` activities in this request. Without it,
-assembly uses deterministic bounded search. Ordinary bodies are preserved and
-typechecked. The current assembly model profile remains Integer -> Integer;
-Boolean and Text bodies connect through ordinary checked source lowering.
+Use a new output directory. Optional `--model /path/to/model.json` retains a
+local structural model for choice-based integer or record assembly. Optional
+`--fill-model /path/to/model.json` retains a TinyGo operation model for
+`source_fill` assignments. These are separate model profiles; a mixed graph can
+use both. Empty model paths use deterministic bounded selection. All ordinary
+bodies and declared assignments are checked before an optional model is loaded.
 
 The directory contains `original.gooo`, `cases.json`, `composition.json`,
 `runtime.json`, `realized.gooo`, `generated.go`, `main.go` and `go.mod`.
@@ -94,7 +95,49 @@ This composition route uses deterministic ordering for source IR search.
 `--model` applies to choice-based scalar or record assembly in a mixed graph;
 a graph containing only source IR search rejects that option before loading a
 model. No provider is inferred from environment variables in `body-compose`.
-Multi-hole `source_fill` plans still use the separate `body-codegen` route.
+Multi-hole `source_fill` plans use the additional route below.
+
+## Source-owned multi-hole construction
+
+```sh
+gooo body-compose \
+  --source examples/body-codegen/source-fill-composition.gooo.fixture \
+  --cases examples/body-codegen/source-fill-composition-cases.json \
+  --out /tmp/gooo-source-fill-composition
+```
+
+This example assembles two activities with two holes each, connects their outputs
+and checks a Boolean result: add one, multiply by two, then test positivity.
+Five runtime inputs carry 15 named output expectations. An input above 2^53
+checks that the native integer path preserves exact values.
+
+Add `--fill-model /path/to/model.json` to use a compatible local TinyGo operation
+bundle. It loads once for the graph, then predicts once for each fill activity.
+The model reads the source intent and proposes an operation; Gooo maps that to
+a declared complete assignment and retains both proposed and selected scores.
+If a proposal scores below the best declared selection-suite candidate, Gooo
+uses that candidate and records the adjustment. Record-valued fills, including
+grammar-derived assignments, can also feed typed downstream activities.
+
+`fill_model` records the one-time load. Per-activity `body_fill` receipts contain
+model digests, inference timings, filled expressions, finite selection scores
+and post-selection holdouts. The two-stage example also runs with a synthetic
+constant-operation test model: an intentionally wrong second proposal is kept
+in the receipt beside the corrected selection. This checks integration; it does
+not measure a trained model's general accuracy.
+
+Saved `--composition` replay requires no model file or provider. It reconstructs
+the original decision request, recomputes every candidate score and the selected
+case/holdout observations, and compares the emitted bytes before native execution.
+The historical decision is reused without fresh inference. The completed
+`realized.gooo` has ordinary bodies and can be composed again. `body-realize`
+also accepts a saved source-fill generation. Receipts from older versions that
+lack `original_source_digest` must be regenerated for this route.
+
+The bounded deterministic scorer also serves as preflight, so generation and
+replay repeat candidate evaluation. This is currently a reproducible construction
+path, with no measured speed advantage. Finite scores describe only the declared
+cases; incomplete grammar exploration and unmatched cases remain visible.
 
 ## One activity without a synthetic bind
 
