@@ -8,6 +8,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"strings"
 )
 
 const (
@@ -48,12 +49,13 @@ func routeEquivalenceParameters(packageName, activityName string, parameters []I
 
 func routeEquivalenceWithCalls(packageName, activityName string, parameters []InputParameter,
 	outputType, body string, generated []byte, rule string, calls []pureCallFunction, records []RecordType) (RouteEquivalenceReceipt, error) {
-	sourceText := fmt.Sprintf("package %s\n%sfunc %s(%s) %s {\n%s\n}\n", packageName, RecordDeclarations(records, false), activityName, parameterDeclaration(parameters), outputType, body)
+	var sourceText strings.Builder
+	sourceText.WriteString(fmt.Sprintf("package %s\n%sfunc %s(%s) %s {\n%s\n}\n", packageName, RecordDeclarations(records, false), activityName, parameterDeclaration(parameters), outputType, body))
 	for _, call := range calls {
-		sourceText += call.declaration()
+		sourceText.WriteString(call.declaration())
 	}
 	withSignature := len(parameters) > 1 || len(records) > 0
-	sourceForm, err := canonicalizeRouteProjection(packageName, activityName, []byte(sourceText), true, withSignature, calls, records)
+	sourceForm, err := canonicalizeRouteProjection(packageName, activityName, []byte(sourceText.String()), true, withSignature, calls, records)
 	if err != nil {
 		return RouteEquivalenceReceipt{}, err
 	}

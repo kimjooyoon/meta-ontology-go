@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"go/types"
 	"sort"
+	"strings"
 )
 
 type recordSiteCollector struct {
@@ -23,18 +24,19 @@ func recordAssemblySites(body preparedBody) ([]recordValueSite, error) {
 		return nil, err
 	}
 	records := body.records
-	suffix := "\n}"
+	var suffix strings.Builder
+	suffix.WriteString("\n}")
 	if len(calls) > 0 {
 		records = body.allRecords
 	}
 	for _, call := range calls {
-		suffix += "\n" + call.declaration()
+		suffix.WriteString("\n" + call.declaration())
 	}
 	prefix := "package selection\n" + RecordDeclarations(records, false) +
 		"func " + body.activity.Name + "(" + parameterDeclaration(body.parameters) + ") " + body.outputType + "{\n"
 	c := recordSiteCollector{body: body, base: len(prefix), fset: token.NewFileSet(),
 		info: types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}}
-	file, err := parser.ParseFile(c.fset, "record-body", prefix+body.body+suffix, parser.AllErrors)
+	file, err := parser.ParseFile(c.fset, "record-body", prefix+body.body+suffix.String(), parser.AllErrors)
 	if err != nil {
 		return nil, err
 	}
