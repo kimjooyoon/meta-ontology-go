@@ -15,6 +15,13 @@ IR and projects structural Go. Handwritten Go slots hold implementation logic;
 the experimental typed-path route can assemble bounded activity bodies from
 conditions, assignments, references, branches, and expressions.
 
+The research thesis is to let a model rank only source-declared construction
+choices, while Gooo and the compiler define the available space and explicit
+checks determine what evidence a result earns. This bounds model influence; it
+does not prove behavior beyond the declared checks. The [research thesis and
+evaluation plan](docs/research/verified-construction-thesis.md) separates what is
+implemented from the hypotheses and measurements still needed.
+
 ```text
 Gooo source + intent + permitted choices + finite expectations
                          │

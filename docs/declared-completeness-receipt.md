@@ -171,10 +171,16 @@ bodies. The four-state classification rule is now a body-bearing
 `ClassifyDomainCompleteness` activity in the same Gooo profile. Gooo generates
 the Go projection consumed by the measurement adapters, and every receipt run
 re-generates that body deterministically and rejects a byte mismatch before
-measuring. The source declaration therefore owns the roster, order, and
-PASS/PROGRESS/UNKNOWN/FAIL_CLOSED decision semantics; evidence acquisition and
-the six bounded metric evaluators remain Go adapters. The classifier's ordered
-inputs are numerator, denominator, unknown-unit count, and contradiction flag.
+measuring. The source declaration therefore owns the roster, order, and per-axis
+PASS/PROGRESS/UNKNOWN/FAIL_CLOSED classification. Receipt-level outcome
+priority is also executed from Gooo: invalid receipt input, any fail-closed
+axis, any unknown axis, any progress axis, then pass. The generated projection
+chooses that outcome; Go still attaches the corresponding reason and first
+actionable frontier. Evidence acquisition and the six bounded metric
+evaluators remain Go adapters. The axis classifier's ordered inputs are
+numerator, denominator, unknown-unit count, and contradiction flag. The receipt
+selector's Boolean inputs are invalid input, fail-closed axis, unknown axis,
+and progress axis, in that order.
 
 Without a separate domain contract, declaration coverage is `UNKNOWN` with a
 zero denominator; the target source is not allowed to define its own scope. With

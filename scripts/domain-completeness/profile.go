@@ -195,6 +195,10 @@ func validateProfile(model ProfileModel) error {
 			Name: "ClassifyDomainCompleteness", Inputs: []string{"Integer", "Integer", "Integer", "Boolean"},
 			Output: "Text",
 		},
+		"SelectDomainCompletenessOutcome": {
+			Name: "SelectDomainCompletenessOutcome", Inputs: []string{"Boolean", "Boolean", "Boolean", "Boolean"},
+			Output: "Text",
+		},
 		"FindPriorDomainCompletenessReceipt": {
 			Name: "FindPriorDomainCompletenessReceipt", Inputs: []string{"DomainProfile"},
 			Output: "ComparisonBaseline", ValueProgram: "gooo.evidence.latest-compatible-domain-receipt.v1",
@@ -207,7 +211,7 @@ func validateProfile(model ProfileModel) error {
 	for name, expected := range expectedActivities {
 		actual, exists := model.Activities[name]
 		programMismatch := actual.ValueProgram != expected.ValueProgram
-		if name == "ClassifyDomainCompleteness" {
+		if name == "ClassifyDomainCompleteness" || name == "SelectDomainCompletenessOutcome" {
 			programMismatch = strings.TrimSpace(actual.ValueProgram) == ""
 		}
 		if !exists || actual.Output != expected.Output || programMismatch ||

@@ -10,25 +10,35 @@ import (
 )
 
 //go:generate sh -c "env GOOO_LAYA_URL= GOOO_LAYA_API_KEY= go run ../../cmd/gooo body-codegen --activity ClassifyDomainCompleteness ../../scripts/domain-completeness/profile.gooo > status_generated.go"
+//go:generate sh -c "env GOOO_LAYA_URL= GOOO_LAYA_API_KEY= go run ../../cmd/gooo body-codegen --activity SelectDomainCompletenessOutcome ../../scripts/domain-completeness/profile.gooo > decision_generated.go"
 
-// VerifyGeneratedProjection confirms that the checked-in Go body is the exact
-// deterministic lowering of the classifier activity in the Gooo profile.
+// VerifyGeneratedProjection confirms that the checked-in Go bodies are exact
+// deterministic lowerings of their activities in the Gooo profile.
 func VerifyGeneratedProjection(profilePath string, profile []byte) error {
-	generated, err := bodycodegen.Generate(profilePath, profile, "ClassifyDomainCompleteness")
-	if err != nil {
-		return fmt.Errorf("generate Gooo completeness classifier: %w", err)
-	}
 	root, err := moduleRoot(profilePath)
 	if err != nil {
 		return err
 	}
-	projectionPath := filepath.Join(root, "internal", "domaincompleteness", "status_generated.go")
-	projection, err := os.ReadFile(projectionPath)
-	if err != nil {
-		return fmt.Errorf("read generated Gooo completeness classifier: %w", err)
+	projections := []struct {
+		activity string
+		file     string
+	}{
+		{activity: "ClassifyDomainCompleteness", file: "status_generated.go"},
+		{activity: "SelectDomainCompletenessOutcome", file: "decision_generated.go"},
 	}
-	if !bytes.Equal(projection, []byte(generated.Source)) {
-		return fmt.Errorf("generated Gooo completeness classifier differs from the source activity")
+	for _, projection := range projections {
+		generated, err := bodycodegen.Generate(profilePath, profile, projection.activity)
+		if err != nil {
+			return fmt.Errorf("generate Gooo completeness activity %s: %w", projection.activity, err)
+		}
+		projectionPath := filepath.Join(root, "internal", "domaincompleteness", projection.file)
+		checkedIn, err := os.ReadFile(projectionPath)
+		if err != nil {
+			return fmt.Errorf("read generated Gooo completeness activity %s: %w", projection.activity, err)
+		}
+		if !bytes.Equal(checkedIn, []byte(generated.Source)) {
+			return fmt.Errorf("generated Gooo completeness activity %s differs from its source body", projection.activity)
+		}
 	}
 	return nil
 }
