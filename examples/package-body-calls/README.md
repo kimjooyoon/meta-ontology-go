@@ -81,3 +81,33 @@ unit preservation remain separate measurements.
 함수가 어느 파일에서 왔고 실행할 때 어떤 이름이 됐는지 함께 기록합니다.
 다른 도구에서도 같은 판단을 가져다 쓸 수 있고, 저장된 결과를 다시 실행할 때
 원본 함수가 바뀌었는지도 확인할 수 있습니다.
+
+## Recorded own-model use
+
+The [raw study](../../docs/research/package-body-calls-20261008/summary.json)
+uses clean compiler `a0af6fd8bb01da787e893a888dd54f82aaf58844` and the unchanged
+own compact model. The three packages contain two independently executed graph
+activities and two pure helper calls.
+
+| Operation | Construction cases | Fields | Attempts | Native expectations | New inference calls |
+| --- | --- | --- | --- | --- | --- |
+| Deterministic | 5/5 | 15/15 | 4 | 8/8 | 0 |
+| Own compact model | 5/5 | 15/15 | 2 | 8/8 | 1 |
+| Saved replay | 5/5 retained | 15/15 retained | 2 retained | 8/8 | 0 |
+| Input-only replay | 5/5 retained | 15/15 retained | 2 retained | 0/0, no expectations | 0 |
+
+The model's first candidate matched 3/5 construction cases; the second matched
+5/5. Deterministic and model-guided construction produced the same program.
+The eight native expectations cover two outputs for each of four unique input
+rows. Those rows are disjoint from the recorded construction inputs; model
+training exposure remains unknown. Input-only replay reports `OBSERVED` and
+preserves the historical construction measurements without inventing a current
+accuracy percentage.
+
+Prediction took 19,292 ns, setup 0.779 ms and resident tensors 2,096 bytes. The
+whole model command took 0.32 s wall, 0.16 s user and 0.10 s system time, with
+86,425,600 bytes maximum RSS. Native compilation and execution are included.
+Local tests had finished before these sequential observations; host activity and
+caches were uncontrolled. Host CPU utilization and the model's CPU increment were
+not sampled. This small task establishes the recorded behavior and reuse path;
+broader performance and external adoption remain open measurements.

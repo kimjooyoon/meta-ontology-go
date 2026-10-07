@@ -93,7 +93,7 @@ func isActivityInput(name string, count int) bool {
 	if count == 1 {
 		return name == "input"
 	}
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if name == fmt.Sprintf("input%d", i) {
 			return true
 		}
