@@ -99,3 +99,21 @@ from the caller's feedback document. The loop does not invent expected answers,
 adjust model weights, or rewrite arbitrary application bodies. If the declared
 grammar cannot express a needed body, the result remains incomplete after its
 bounded attempts. Grammar expansion is a separate language operation.
+
+## Own-model observation
+
+The [2026-10-07 run](../../docs/research/assembly-feedback-20261007/summary.json)
+used compiler `4218c33a` and unchanged public 2,072-parameter QAT weights. Both
+arms promoted one counterexample and reached 14/14 feedback outputs and 6/6
+final-evaluation outputs. Deterministic ordering took three rounds and 13 recorded
+selection attempts; model ordering took two rounds and six attempts. Repeated
+candidate evaluations across rounds are included; internal replay/preflight work
+is excluded from that attempt count.
+
+The two model predictions took 16.417 and 20.625 microseconds. Whole-command
+wall times were 2.81 and 1.74 seconds, user/system CPU times 1.01/0.74 and
+0.72/0.54 seconds, and maximum RSS 83.7 and 84.0 MiB. Model tensor storage was
+2,096 bytes. These are one deterministic-first pair with no cache reset, including
+native builds and policy runs. Host CPU utilization was not sampled. Saved replay
+matched 14/14 outputs with zero new model calls. The summary links complete raw
+observations and the pinned model identity; no training was performed for this run.

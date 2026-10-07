@@ -15,6 +15,7 @@ func init() {
 		"docs/language/workspace-manifest.md",
 		"docs/research/assembly-feedback-20261007/deterministic.json",
 		"docs/research/assembly-feedback-20261007/model.json",
+		"docs/research/assembly-feedback-20261007/replay.json",
 		"docs/research/assembly-feedback-20261007/summary.json",
 		"examples/assembly-explainer/README.md",
 		"examples/assembly-explainer/cases.json",
