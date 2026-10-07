@@ -30,6 +30,7 @@ type Composition struct {
 	Source               string                         `json:"source"`
 	Driver               string                         `json:"driver_source"`
 	Model                *bodycodegen.RetainedModelInfo `json:"model,omitempty"`
+	FillModel            *CompositionFillModelInfo      `json:"fill_model,omitempty"`
 	ElapsedNS            int64                          `json:"elapsed_ns"`
 	Scope                string                         `json:"scope"`
 }
@@ -39,6 +40,13 @@ type Composition struct {
 // become the next step's exact input. No native execution happens in this phase.
 func GenerateComposition(ctx context.Context, filename string, source []byte,
 	suite CompositionCases, modelPath string) (Composition, error) {
+	return GenerateCompositionWithOptions(ctx, filename, source, suite, CompositionOptions{ModelPath: modelPath})
+}
+
+// GenerateCompositionWithOptions retains separate optional models for structural
+// choices and source_fill assignments. Empty paths use deterministic selection.
+func GenerateCompositionWithOptions(ctx context.Context, filename string, source []byte,
+	suite CompositionCases, options CompositionOptions) (Composition, error) {
 	start := time.Now()
 	graph, err := prepareCompositionGraph(ctx, filename, source)
 	result := Composition{Schema: "gooo/body-composition/v1", Stage: "PLAN", OriginalSourceSHA256: digest(source),
@@ -54,7 +62,7 @@ func GenerateComposition(ctx context.Context, filename string, source []byte,
 	if err != nil {
 		return finish(err)
 	}
-	if modelPath != "" && !graph.hasAssembly() {
+	if (options.ModelPath != "" || options.FillModelPath != "") && !graph.hasAssembly() {
 		return finish(fmt.Errorf("a composition model requires an assembling activity"))
 	}
 	if _, err := graph.inputRows(suite); err != nil {
@@ -64,11 +72,11 @@ func GenerateComposition(ctx context.Context, filename string, source []byte,
 	if err := graph.preflight(ctx, filename, source); err != nil {
 		return finish(err)
 	}
-	if err := graph.validateModelRoute(ctx, filename, source, modelPath); err != nil {
+	if err := graph.validateModelRoute(ctx, filename, source, options); err != nil {
 		return finish(err)
 	}
 	result.Stage = "ACTIVITY_GENERATION"
-	current, err := generateCompositionSteps(ctx, filename, source, graph, modelPath, &result)
+	current, err := generateCompositionSteps(ctx, filename, source, graph, options, &result)
 	if err != nil {
 		return finish(err)
 	}
@@ -89,8 +97,8 @@ func GenerateComposition(ctx context.Context, filename string, source []byte,
 }
 
 func generateCompositionSteps(ctx context.Context, filename string, source []byte,
-	graph compositionGraph, modelPath string, result *Composition) ([]byte, error) {
-	generator := compositionAssemblyGenerator{modelPath: modelPath}
+	graph compositionGraph, options CompositionOptions, result *Composition) ([]byte, error) {
+	generator := compositionAssemblyGenerator{options: options}
 	current := append([]byte(nil), source...)
 	for _, node := range graph.nodes[:graph.count] {
 		result.ActiveActivity = node.Name
@@ -101,6 +109,7 @@ func generateCompositionSteps(ctx context.Context, filename string, source []byt
 		var err error
 		if node.Assembling {
 			generation, err = generator.generate(ctx, filename, current, node.Name)
+			result.FillModel = generator.fillInfo
 			if generator.retained != nil {
 				info := generator.retained.Info()
 				result.Model = &info

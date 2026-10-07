@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"Lift": -2}, "expected": {"Lift": -1, "Scale": -2, "Positive": false}},
+    {"inputs": {"Lift": 0}, "expected": {"Lift": 1, "Scale": 2, "Positive": true}},
+    {"inputs": {"Lift": 7}, "expected": {"Lift": 8, "Scale": 16, "Positive": true}},
+    {"inputs": {"Lift": 100}, "expected": {"Lift": 101, "Scale": 202, "Positive": true}},
+    {"inputs": {"Lift": 9007199254740993}, "expected": {"Lift": 9007199254740994, "Scale": 18014398509481988, "Positive": true}}
+  ]
+}
