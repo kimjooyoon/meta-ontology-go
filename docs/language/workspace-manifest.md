@@ -86,15 +86,16 @@ carry the same stable entity ID. Its receipt records producer and consumer
 packages, activities, ports, and entity ID under the consumer package's
 `bindings` list. Unknown aliases, activities, ports, and type mismatches fail
 closed. Imported producers can feed local consumers. `package resolve` only
-checks that wiring. `package execute` takes a finite case file, lowers the
-entry's explicit producer chain into a typed activity graph, generates each
+checks that wiring. `package execute` takes a finite case file or an input-only
+document, lowers the entry's explicit producer chain into a typed activity graph, generates each
 body in that chain, compiles the resulting Go, and runs it twice. Unrelated
 activities in the workspace are left out of the execution graph. Case keys use
 `<package-path>:<activity>`;
 root inputs use that key, multi-input roots append `.<input-port>`, and expected
 outputs use the activity key. The receipt preserves package-to-lowered-activity
-identity and reports observed finite-case accuracy. This path requires 2 to 16
-activities on the entry's explicitly connected producer chain and supported
+identity and reports observed finite-case accuracy when expectations are supplied.
+This path supports 1 to 16 activities: the entry runs independently, or its producers
+join through explicit binds. It accepts supported
 scalar or declared-record values. Ordinary bodies follow their declared Gooo
 bodies deterministically; `--assembly-model` is an optional local model for assembling source-declared
 body plans. A source-owned `source_fill` plan in an activity's Gooo
@@ -115,6 +116,15 @@ built and before the generated package is compiled. To connect Laya, set
 `GOOO_LAYA_URL` to its `/v1/systemone` endpoint for the same command. Fill
 receipts record provider decision time; native build and run observations
 record wall time, CPU time, and peak resident memory when the host exposes them.
+
+For an ordinary language tool, use `--inputs <inputs.json>` instead of `--cases`.
+The input document has schema `gooo/body-composition-inputs/v1` and an `inputs`
+array of named root-input maps. No expected output is supplied. Plain output is
+one JSON entry result per row; `--json` includes the complete receipt with
+`decision: OBSERVED` and `inputs_digest`. Two matching native executions establish
+replay, while finite expectation counts remain 0/0 and correctness remains
+unobserved. The existing `--cases` mode still requires nonempty expectations.
+See the [standalone Gooo assembly explainer](../../examples/assembly-explainer/README.md).
 
 Declared records are parsed with the explicit EntityFields V4 profile throughout
 package resolution, IR lowering, and workspace flattening. V4 preserves optional

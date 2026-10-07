@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/body-composition-inputs/v1",
+  "inputs": [
+    {"gooo/tools/assembly-explainer:Explain": {"matched": 1, "total": 3, "best": 3, "scored": 3, "budget": 3}},
+    {"gooo/tools/assembly-explainer:Explain": {"matched": 3, "total": 3, "best": 3, "scored": 3, "budget": 3}},
+    {"gooo/tools/assembly-explainer:Explain": {"matched": 0, "total": 4, "best": 0, "scored": 0, "budget": 3}}
+  ]
+}

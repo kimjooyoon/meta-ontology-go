@@ -80,8 +80,8 @@ func sourceSHA256(value []byte) string {
 }
 
 func translateCases(program Program, suite bodyexecution.CompositionCases) (bodyexecution.CompositionCases, error) {
-	if suite.Schema != "gooo/body-composition-cases/v1" {
-		return bodyexecution.CompositionCases{}, fmt.Errorf("workspace execution requires gooo/body-composition-cases/v1 cases")
+	if suite.Schema != "gooo/body-composition-cases/v1" && suite.Schema != bodyexecution.CompositionInputsSchema {
+		return bodyexecution.CompositionCases{}, fmt.Errorf("workspace execution requires gooo/body-composition-cases/v1 or gooo/body-composition-inputs/v1")
 	}
 	byKey := make(map[string]ActivityRef, len(program.Activities))
 	for _, activity := range program.Activities {

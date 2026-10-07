@@ -33,6 +33,12 @@ func ValidateSourceAssembly(ctx context.Context, filename string, source []byte,
 	if err != nil {
 		return err
 	}
+	if IsSourceIRBodyFill(spec) {
+		// Reuse the bounded deterministic scorer to check every assignment and
+		// case before a composition loads any optional model.
+		_, err = GenerateWithSourceIRBodyFill(ctx, filename, source, activity, spec, "", "", IRBodyFillOptions{})
+		return err
+	}
 	if IsSourceIRSearch(spec) {
 		return ValidateSourceIRSearch(ctx, filename, source, activity, spec)
 	}

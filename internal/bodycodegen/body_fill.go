@@ -164,6 +164,7 @@ type IRBodyFillCandidateProbeProfile struct {
 
 type IRBodyFillReceipt struct {
 	Schema                          string                                `json:"schema"`
+	OriginalSourceDigest            string                                `json:"original_source_digest"`
 	Intent                          string                                `json:"intent"`
 	HoleID                          string                                `json:"hole_id"`
 	HoleToken                       string                                `json:"hole_token"`
@@ -273,7 +274,7 @@ func generateWithIRBodyFillOptions(
 	if ctx == nil {
 		return Result{}, fmt.Errorf("body-fill context is required")
 	}
-	usingTinyGo := tinyProvider != nil
+	usingTinyGo := bodyFillUsesTinyGo(options, tinyProvider)
 	if usingTinyGo {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
@@ -462,12 +463,7 @@ func generateWithIRBodyFillOptions(
 	}
 	decisionStarted := time.Now()
 	decisionContext, cancel := context.WithTimeout(ctx, irBodyFillDecisionBudget)
-	var decision decisionroute.Receipt
-	if usingTinyGo {
-		decision, err = tinyProvider.Resolve(decisionContext, request)
-	} else {
-		decision, err = decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
-	}
+	decision, err := resolveBodyFillDecision(decisionContext, request, endpoint, apiKey, options, tinyProvider)
 	cancel()
 	decisionMS := float64(time.Since(decisionStarted)) / float64(time.Millisecond)
 	if err != nil {
@@ -553,7 +549,8 @@ func generateWithIRBodyFillOptions(
 		holeFills = bodyFillHoleResults(holes, bodyFillCandidateFills(plan, originalSelected))
 	}
 	result.Report.BodyFill = &IRBodyFillReceipt{
-		Schema: plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
+		OriginalSourceDigest: digest(source),
+		Schema:               plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
 		HoleToken: bodyFillHoleToken(holes[0].ID), IRPlanSHA256: digest(planBytes),
 		ProposedCandidateID: proposed.ID, ProposedAccuracyPct: proposedScore.AccuracyPercent,
 		SelectedCandidateID: selected.ID, SelectedExpression: selected.Expression,

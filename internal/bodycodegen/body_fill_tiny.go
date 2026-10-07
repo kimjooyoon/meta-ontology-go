@@ -19,8 +19,9 @@ type tinyGoBodyFillResolver interface {
 // IRBodyFillOptions selects an optional local model for one body-fill call.
 // A nil TinyGoProvider preserves external-model or deterministic selection.
 type IRBodyFillOptions struct {
-	TinyGoProvider  *decisionroute.TinyGoProvider
-	TinyModelLoadMS *float64
+	TinyGoProvider   *decisionroute.TinyGoProvider
+	TinyModelLoadMS  *float64
+	recordedDecision *decisionroute.Receipt
 }
 
 func tinyGoBodyFillOptions(candidates []IRBodyFillCandidate) ([]decisionroute.Option, error) {

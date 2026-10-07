@@ -17,7 +17,7 @@ import (
 
 const bodyComposeUsage = "usage: gooo body-compose --source <source.gooo> " +
 	"(--cases <cases.json> | --case-series <series.json>) [--repeat <1..16>] " +
-	"[--model <model.json> | --composition <composition.json>] [--go-bin <go1.27.1>] [--out <new-directory>]"
+	"[--model <model.json>] [--fill-model <model.json>] [--composition <composition.json>] [--go-bin <go1.27.1>] [--out <new-directory>]"
 
 type bodyCompositionOutput struct {
 	GeneratedNow   bool                                 `json:"generated_now"`
@@ -38,7 +38,7 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 		fmt.Fprintln(stderr, bodyComposeUsage)
 		return exitOK
 	}
-	flags := map[string]string{"--source": "", "--cases": "", "--case-series": "", "--repeat": "", "--model": "", "--composition": "", "--go-bin": "", "--out": ""}
+	flags := map[string]string{"--source": "", "--cases": "", "--case-series": "", "--repeat": "", "--model": "", "--fill-model": "", "--composition": "", "--go-bin": "", "--out": ""}
 	for i := 0; i < len(args); i += 2 {
 		value, ok := flags[args[i]]
 		if !ok || value != "" || i+1 >= len(args) || args[i+1] == "" || strings.HasPrefix(args[i+1], "--") {
@@ -48,7 +48,7 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 		flags[args[i]] = args[i+1]
 	}
 	if flags["--source"] == "" || (flags["--cases"] == "") == (flags["--case-series"] == "") ||
-		(flags["--model"] != "" && flags["--composition"] != "") {
+		((flags["--model"] != "" || flags["--fill-model"] != "") && flags["--composition"] != "") {
 		fmt.Fprintln(stderr, bodyComposeUsage)
 		return exitUsage
 	}
@@ -91,7 +91,8 @@ func executeBodyComposition(ctx context.Context, flags map[string]string, stdout
 	}
 	output := bodyCompositionOutput{GeneratedNow: flags["--composition"] == "", CaseSeries: series}
 	if output.GeneratedNow {
-		output.Composition, err = bodyexecution.GenerateComposition(ctx, flags["--source"], source, suites[0], flags["--model"])
+		options := bodyexecution.CompositionOptions{ModelPath: flags["--model"], FillModelPath: flags["--fill-model"]}
+		output.Composition, err = bodyexecution.GenerateCompositionWithOptions(ctx, flags["--source"], source, suites[0], options)
 	} else {
 		var raw []byte
 		raw, err = readBodyExecutionFile(flags["--composition"], 32<<20)
