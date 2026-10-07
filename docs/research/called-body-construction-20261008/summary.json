@@ -1,0 +1,777 @@
+{
+  "schema": "gooo/research-called-body-construction/v1",
+  "observed_at_utc": "2026-10-07T20:02:14.615932+00:00",
+  "compiler": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.5-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.1",
+    "module_version": "v0.6.4-dev.0.20261007195950-01f71d405d11",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.4-dev.0.20261007195950-01f71d405d11"
+    },
+    "compiler_source_sha": "01f71d405d11bf1f0157a04f1791eb4347314676",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "01f71d405d11bf1f0157a04f1791eb4347314676",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.24-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.1"
+  },
+  "compiler_binary": {
+    "sha256": "15e765ee891188860049893f2be4f83802f4f662cdb95b844ca2311a3fc15ad6",
+    "bytes": 22708802
+  },
+  "environment": {
+    "os": "Darwin",
+    "release": "25.5.0",
+    "architecture": "arm64"
+  },
+  "sources": {
+    "examples/called-body-construction/cases.json": {
+      "sha256": "de7ca1d0470d01cb59cb43ea2bf5949e7521fd295515f9236ecc62f250b211f9",
+      "bytes": 1366
+    },
+    "examples/called-body-construction/gooo.workspace.json": {
+      "sha256": "b7774605be0fd962176b0f7e034e781d7e3788b870ee1532422550def380cceb",
+      "bytes": 653
+    },
+    "examples/called-body-construction/inputs.json": {
+      "sha256": "a644b18178fd483e5f2de4ce46a0116fac9aeec6909d72f09fbe366d3642f148",
+      "bytes": 562
+    },
+    "examples/called-body-construction/app.gooo.fixture": {
+      "sha256": "f9bd02a42315ced4799c7aba5da8b29bb06b0acce8b9d0384fea235c284a0e6d",
+      "bytes": 286
+    },
+    "examples/called-body-construction/diagnostics.gooo.fixture": {
+      "sha256": "d642e8a8282cbc232b49f8ff5915697b673636d1f8d9b2f6cec036eef46a79c2",
+      "bytes": 2426
+    },
+    "examples/called-body-construction/rules.gooo.fixture": {
+      "sha256": "340cc73d6650b8013753a28f3c711aa6532cdd70924f76ef1e52a38fe805628d",
+      "bytes": 329
+    },
+    "examples/package-assembly-policy/checkpoint.workspace.json": {
+      "sha256": "7e0b1952d5e84f5923a2a9cbd67fef92620ad8e3134c6d80f1e6457bb32d4b54",
+      "bytes": 516
+    },
+    "examples/package-assembly-policy/gooo.workspace.json": {
+      "sha256": "d02500e037408cc0f4485152c71fbd6dc78780a8a8f12eed6f9783fd05f9d4a8",
+      "bytes": 509
+    },
+    "examples/package-assembly-policy/checkpoint.gooo.fixture": {
+      "sha256": "ae44cb0dc1fcce8339b22674f215129d52317d029cd5cdaa98335330e66f59cc",
+      "bytes": 266
+    },
+    "examples/package-assembly-policy/counts.gooo.fixture": {
+      "sha256": "2c3d9821093dd74cde909a42d290245974dd6e3659b611dd400bb7d188aacab0",
+      "bytes": 1042
+    },
+    "examples/package-assembly-policy/policy.gooo.fixture": {
+      "sha256": "b58ee5903d9432b2a0547ddd56c959920dc794f178b4b5bdea9b6925d2f6ef01",
+      "bytes": 1515
+    },
+    "examples/assembly-explainer/gooo.workspace.json": {
+      "sha256": "ff88654cf2d414ba1bc26ab50db1a9cc4c093a5879427d94bd4123db2fb55281",
+      "bytes": 273
+    },
+    "examples/assembly-explainer/main.gooo.fixture": {
+      "sha256": "32003343b2297192e96e2fe640cba83a92a41524b50e19553895df9e94dc148f",
+      "bytes": 2348
+    }
+  },
+  "model": {
+    "hub_revision": "https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary",
+    "observation": {
+      "schema": "gooo/retained-path-model/v1",
+      "loaded": true,
+      "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+      "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+      "resident_tensor_bytes": 2096,
+      "setup_ms": 0.733292,
+      "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+      "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+      "feature_version": "triple_record_field_context_v1_shared_v1",
+      "arithmetic_version": "float32_separate_v1"
+    },
+    "new_training": false
+  },
+  "method": {
+    "execution_order": [
+      "deterministic",
+      "model",
+      "replay",
+      "checkpoint",
+      "explained",
+      "input-only",
+      "checkpoint-replay"
+    ],
+    "paired_scope": "Identical target sources, three called-helper record choices, five construction cases, eight-attempt budget, caller cases and two-package Gooo continue policy. Deterministic and own-model ranking differ.",
+    "construction_scope": "One called helper constructed first; its selected body is fixed for caller projection. Original choices, cases, partial scores and policy decisions are retained in composition.preparations. Fixed helper predicates and the caller are not independently assembled.",
+    "native_scope": "Four finite expectations observe only the Main activity output. Called helper arguments are not traced; input separation remains UNKNOWN and no disjoint-input success is claimed.",
+    "checkpoint_scope": "Same target and own model, different stopping policy; first candidate remains partial. This changes policy and is not a ranking comparison.",
+    "replay_scope": "Preparations, policy and caller reconstructed; two fresh native runs; zero new inference. Historical model and construction counts remain historical.",
+    "explanation_scope": "Gooo reinterprets verified helper attempt counts and returns follow-up operations; this invocation does not schedule or execute those operations.",
+    "input_only_scope": "Three input rows without expectations; OBSERVED and 0/0 do not imply accuracy.",
+    "timing_scope": "Single sequential commands including native Go compilation/execution after local tests finished; host activity and caches uncontrolled. CPU average derives from rounded CPU/wall totals including child work; no general speed advantage established.",
+    "host_cpu_utilization": "NOT_SAMPLED",
+    "model_cpu_increment": "UNMEASURED",
+    "training_exposure": "UNKNOWN",
+    "interventions": "Maintainer authored source, choices, finite expectations and policies. Seven explicit CLI invocations completed without candidate edits or interactive approval. No independent adoption or automatic scheduling measured.",
+    "exit_codes": {
+      "deterministic": 0,
+      "model": 0,
+      "replay": 0,
+      "checkpoint": 0,
+      "explained": 0,
+      "input-only": 0,
+      "checkpoint-replay": 0
+    }
+  },
+  "runs": {
+    "deterministic": {
+      "decision": "PASS",
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "preparation_count": 1,
+      "runtime_activity_count": 1,
+      "native_expectations": {
+        "passed": 4,
+        "total": 4
+      },
+      "new_model_calls": 0,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CALLED_ASSEMBLY_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 4,
+        "scope": "unique root-input tuples observed; constructed helper call arguments are not traced, so separation from helper selection cases remains unknown; finite output checks remain separate"
+      },
+      "resource_observation": {
+        "wall_seconds": 0.63,
+        "user_seconds": 0.16,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 85983232,
+        "average_cpu_percent_of_one_core": 41.27
+      },
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 0,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 1,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 2,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "policy_decisions": [
+        {
+          "attempt_index": 0,
+          "mask": 0,
+          "input": {
+            "matched": 3,
+            "total": 5,
+            "best": 3,
+            "scored": 1,
+            "budget": 8
+          },
+          "state": "PROGRESS",
+          "next_operation": "CONTINUE_CANDIDATES",
+          "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+          "continue": true
+        },
+        {
+          "attempt_index": 1,
+          "mask": 1,
+          "input": {
+            "matched": 3,
+            "total": 5,
+            "best": 3,
+            "scored": 2,
+            "budget": 8
+          },
+          "state": "PROGRESS",
+          "next_operation": "CONTINUE_CANDIDATES",
+          "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+          "continue": true
+        },
+        {
+          "attempt_index": 2,
+          "mask": 2,
+          "input": {
+            "matched": 3,
+            "total": 5,
+            "best": 3,
+            "scored": 3,
+            "budget": 8
+          },
+          "state": "PROGRESS",
+          "next_operation": "CONTINUE_CANDIDATES",
+          "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+          "continue": true
+        },
+        {
+          "attempt_index": 3,
+          "mask": 3,
+          "input": {
+            "matched": 5,
+            "total": 5,
+            "best": 5,
+            "scored": 4,
+            "budget": 8
+          },
+          "state": "PASS",
+          "next_operation": "OBSERVE_NEW_INPUTS",
+          "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+          "continue": false
+        }
+      ],
+      "historical_model_calls": 0,
+      "historical_predict_ns": 0
+    },
+    "model": {
+      "decision": "PASS",
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "preparation_count": 1,
+      "runtime_activity_count": 1,
+      "native_expectations": {
+        "passed": 4,
+        "total": 4
+      },
+      "new_model_calls": 1,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CALLED_ASSEMBLY_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 4,
+        "scope": "unique root-input tuples observed; constructed helper call arguments are not traced, so separation from helper selection cases remains unknown; finite output checks remain separate"
+      },
+      "resource_observation": {
+        "wall_seconds": 0.35,
+        "user_seconds": 0.17,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86818816,
+        "average_cpu_percent_of_one_core": 80.0
+      },
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "policy_decisions": [
+        {
+          "attempt_index": 0,
+          "mask": 7,
+          "input": {
+            "matched": 3,
+            "total": 5,
+            "best": 3,
+            "scored": 1,
+            "budget": 8
+          },
+          "state": "PROGRESS",
+          "next_operation": "CONTINUE_CANDIDATES",
+          "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+          "continue": true
+        },
+        {
+          "attempt_index": 1,
+          "mask": 3,
+          "input": {
+            "matched": 5,
+            "total": 5,
+            "best": 5,
+            "scored": 2,
+            "budget": 8
+          },
+          "state": "PASS",
+          "next_operation": "OBSERVE_NEW_INPUTS",
+          "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+          "continue": false
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 16584
+    },
+    "replay": {
+      "decision": "PASS",
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "preparation_count": 1,
+      "runtime_activity_count": 1,
+      "native_expectations": {
+        "passed": 4,
+        "total": 4
+      },
+      "new_model_calls": 0,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CALLED_ASSEMBLY_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 4,
+        "scope": "unique root-input tuples observed; constructed helper call arguments are not traced, so separation from helper selection cases remains unknown; finite output checks remain separate"
+      },
+      "resource_observation": {
+        "wall_seconds": 0.33,
+        "user_seconds": 0.15,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 86114304,
+        "average_cpu_percent_of_one_core": 75.76
+      },
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "policy_decisions": [
+        {
+          "attempt_index": 0,
+          "mask": 7,
+          "input": {
+            "matched": 3,
+            "total": 5,
+            "best": 3,
+            "scored": 1,
+            "budget": 8
+          },
+          "state": "PROGRESS",
+          "next_operation": "CONTINUE_CANDIDATES",
+          "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+          "continue": true
+        },
+        {
+          "attempt_index": 1,
+          "mask": 3,
+          "input": {
+            "matched": 5,
+            "total": 5,
+            "best": 5,
+            "scored": 2,
+            "budget": 8
+          },
+          "state": "PASS",
+          "next_operation": "OBSERVE_NEW_INPUTS",
+          "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+          "continue": false
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 16584
+    },
+    "checkpoint": {
+      "decision": "PROGRESS",
+      "generated_sha256": "sha256:8456e21bd5b63087b48452f6ae7d8d7d044533599dc964761942cceeb20b4d37",
+      "preparation_count": 1,
+      "runtime_activity_count": 1,
+      "native_expectations": {
+        "passed": 2,
+        "total": 4
+      },
+      "new_model_calls": 1,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CALLED_ASSEMBLY_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 4,
+        "scope": "unique root-input tuples observed; constructed helper call arguments are not traced, so separation from helper selection cases remains unknown; finite output checks remain separate"
+      },
+      "resource_observation": {
+        "wall_seconds": 0.55,
+        "user_seconds": 0.17,
+        "system_seconds": 0.12,
+        "maximum_rss_bytes": 87162880,
+        "average_cpu_percent_of_one_core": 52.73
+      },
+      "construction": {
+        "status": "PARTIAL_FINITE",
+        "passed": 3,
+        "total": 5,
+        "fields_passed": 13,
+        "fields_total": 15,
+        "selected_mask": 7
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        }
+      ],
+      "policy_decisions": [
+        {
+          "attempt_index": 0,
+          "mask": 7,
+          "input": {
+            "matched": 3,
+            "total": 5,
+            "best": 3,
+            "scored": 1,
+            "budget": 8
+          },
+          "state": "PROGRESS",
+          "next_operation": "USE_OBSERVED_CANDIDATE",
+          "message": "첫 후보를 기록합니다.",
+          "continue": false
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 16500
+    },
+    "explained": {
+      "decision": "OBSERVED",
+      "generated_sha256": "sha256:357ea9435aab23cd847bde1a4fe6e5f9b4fa21802942204536ee2fd3ba13cdec",
+      "preparation_count": 0,
+      "runtime_activity_count": 1,
+      "native_expectations": {
+        "passed": 0,
+        "total": 0
+      },
+      "new_model_calls": 0,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "NO_RUNTIME_EXPECTATIONS",
+        "unique_inputs": 2,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 2,
+        "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "resource_observation": {
+        "wall_seconds": 0.33,
+        "user_seconds": 0.15,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 85803008,
+        "average_cpu_percent_of_one_core": 75.76
+      },
+      "construction_rows": [
+        {
+          "activity": "GoooPackage2ActivityDiagnose",
+          "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+          "profile": "record_choices",
+          "view": "attempt_prefix",
+          "attempt_index": 0,
+          "candidate_mask": 7,
+          "selected": false,
+          "proposed": true,
+          "scoring_completed": true,
+          "input_index": 0,
+          "declared_budget": 8,
+          "candidate_count": 8,
+          "counts": {
+            "matched": 3,
+            "total": 5,
+            "best": 3,
+            "scored": 1,
+            "budget": 8
+          }
+        },
+        {
+          "activity": "GoooPackage2ActivityDiagnose",
+          "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+          "profile": "record_choices",
+          "view": "attempt_prefix",
+          "attempt_index": 1,
+          "candidate_mask": 3,
+          "selected": true,
+          "proposed": false,
+          "scoring_completed": true,
+          "input_index": 1,
+          "declared_budget": 8,
+          "candidate_count": 8,
+          "counts": {
+            "matched": 5,
+            "total": 5,
+            "best": 5,
+            "scored": 2,
+            "budget": 8
+          }
+        }
+      ],
+      "returned_operations": [
+        "CONTINUE_CANDIDATES",
+        "OBSERVE_NEW_INPUTS"
+      ]
+    },
+    "input-only": {
+      "decision": "OBSERVED",
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "preparation_count": 1,
+      "runtime_activity_count": 1,
+      "native_expectations": {
+        "passed": 0,
+        "total": 0
+      },
+      "new_model_calls": 0,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CALLED_ASSEMBLY_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 3,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 3,
+        "scope": "unique root-input tuples observed; constructed helper call arguments are not traced, so separation from helper selection cases remains unknown; finite output checks remain separate"
+      },
+      "resource_observation": {
+        "wall_seconds": 0.33,
+        "user_seconds": 0.15,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 86753280,
+        "average_cpu_percent_of_one_core": 75.76
+      },
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "policy_decisions": [
+        {
+          "attempt_index": 0,
+          "mask": 7,
+          "input": {
+            "matched": 3,
+            "total": 5,
+            "best": 3,
+            "scored": 1,
+            "budget": 8
+          },
+          "state": "PROGRESS",
+          "next_operation": "CONTINUE_CANDIDATES",
+          "message": "남은 예산에서 다른 후보를 관측할 수 있습니다.",
+          "continue": true
+        },
+        {
+          "attempt_index": 1,
+          "mask": 3,
+          "input": {
+            "matched": 5,
+            "total": 5,
+            "best": 5,
+            "scored": 2,
+            "budget": 8
+          },
+          "state": "PASS",
+          "next_operation": "OBSERVE_NEW_INPUTS",
+          "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+          "continue": false
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 16584
+    },
+    "checkpoint-replay": {
+      "decision": "PROGRESS",
+      "generated_sha256": "sha256:8456e21bd5b63087b48452f6ae7d8d7d044533599dc964761942cceeb20b4d37",
+      "preparation_count": 1,
+      "runtime_activity_count": 1,
+      "native_expectations": {
+        "passed": 2,
+        "total": 4
+      },
+      "new_model_calls": 0,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CALLED_ASSEMBLY_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 4,
+        "scope": "unique root-input tuples observed; constructed helper call arguments are not traced, so separation from helper selection cases remains unknown; finite output checks remain separate"
+      },
+      "resource_observation": {
+        "wall_seconds": 0.84,
+        "user_seconds": 0.16,
+        "system_seconds": 0.15,
+        "maximum_rss_bytes": 85901312,
+        "average_cpu_percent_of_one_core": 36.9
+      },
+      "construction": {
+        "status": "PARTIAL_FINITE",
+        "passed": 3,
+        "total": 5,
+        "fields_passed": 13,
+        "fields_total": 15,
+        "selected_mask": 7
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        }
+      ],
+      "policy_decisions": [
+        {
+          "attempt_index": 0,
+          "mask": 7,
+          "input": {
+            "matched": 3,
+            "total": 5,
+            "best": 3,
+            "scored": 1,
+            "budget": 8
+          },
+          "state": "PROGRESS",
+          "next_operation": "USE_OBSERVED_CANDIDATE",
+          "message": "첫 후보를 기록합니다.",
+          "continue": false
+        }
+      ],
+      "historical_model_calls": 1,
+      "historical_predict_ns": 16500
+    }
+  },
+  "raw_artifacts": {
+    "build.json": {
+      "sha256": "658638935c4186f52524975c6370b2b090a372fd0def77fb51f7c9f4e22a8676",
+      "bytes": 659
+    },
+    "deterministic.json": {
+      "sha256": "3dbea21032f0e35d0a16773d1c15ee6c50c93e7ed90539cf40564a66064f1186",
+      "bytes": 91464
+    },
+    "deterministic.time": {
+      "sha256": "c3029c6a9118289b3bd887e4d3e344a2fa6822b3b0b405f549f1d4cbbaeab0fe",
+      "bytes": 777
+    },
+    "model.json": {
+      "sha256": "aba0cb2edeeb439213f93528c368b9c005ca576ce62f0887c9521a9acc1802e0",
+      "bytes": 93615
+    },
+    "model.time": {
+      "sha256": "0f5bf6a66fe1d3463af25fe0256e6c7a6e20267ee42f25095a260f96d767c6b0",
+      "bytes": 777
+    },
+    "replay.json": {
+      "sha256": "484afe307ab5a900979f92c6b7f711807cc5c2e871d76717d9673a6b7f1640e3",
+      "bytes": 94043
+    },
+    "replay.time": {
+      "sha256": "9f5a368ac760c3a76619b076d3a527ada286a6e10650b61c87876bf33bb75992",
+      "bytes": 777
+    },
+    "checkpoint.json": {
+      "sha256": "04fd8be28c6245bfb9d59921f802fa845bca6173879470f58c4b80e6373083e8",
+      "bytes": 88475
+    },
+    "checkpoint.time": {
+      "sha256": "6639bf26569eac290ea37b901202afb745b97d341e192a284cb063abf1afb9ce",
+      "bytes": 777
+    },
+    "explained.json": {
+      "sha256": "367b0e27610af92938e0ed3d90a1e32c1af0be24f19a84acce3fc1d34d8ac70f",
+      "bytes": 48600
+    },
+    "explained.time": {
+      "sha256": "55facf798a40738e2f34fac2d92e69d86d9b2b9ec2e28fe64bba810914d27961",
+      "bytes": 777
+    },
+    "input-only.json": {
+      "sha256": "6540f5b7f63fe02b1048cd728a3bba8fc175e5e74ee5299e99d8bf69ff4575f7",
+      "bytes": 93215
+    },
+    "input-only.time": {
+      "sha256": "4fbb44942acedfae42ce3e3bd3e43f8926c5200507ad1f7ee5e3509ce91f2320",
+      "bytes": 777
+    },
+    "checkpoint-replay.json": {
+      "sha256": "99f56a4829d2798b8d150456c3eb596bd055dc559441a2d1f029bb0fef550908",
+      "bytes": 88904
+    },
+    "checkpoint-replay.time": {
+      "sha256": "fcaef92435042d44209264df3fdfad19e1750c6420238cfb9bfa9e23b8d0dae1",
+      "bytes": 777
+    }
+  }
+}

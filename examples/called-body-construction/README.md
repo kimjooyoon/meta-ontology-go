@@ -89,6 +89,12 @@ argument tuple. Consequently, input separation reports
 New root inputs may map to previously observed helper inputs. Construction case
 coverage and native output checks retain their own denominators.
 
+Each helper is selected against its own declared cases. A later caller failure
+does not automatically reopen an earlier helper choice. The native regression
+suite includes an ambiguous helper that satisfies 1/1 local cases while its caller
+matches 0/1 expectations. Retaining those two results exposes where stronger
+obligations or a future search across dependent choices is needed.
+
 Saved continuation currently rejects compositions with called-body preparations:
 changing a helper may affect later caller constructions and requires a new
 construction. Ordinary saved replay is supported. The next extension should
@@ -104,3 +110,33 @@ define which dependent constructions can be retained when a helper changes.
 실행 결과와 부품의 조립 점수는 따로 읽습니다. 아직 보조 함수에 전달된 모든
 인자를 기록하지 않으므로, 새로운 입력에서도 잘 되는지에 대한 지표는 미확인으로
 남깁니다. 실제로 관측한 범위부터 조금씩 넓히는 메타프로그래밍 경로입니다.
+
+## Recorded own-model construction
+
+The [raw study](../../docs/research/called-body-construction-20261008/summary.json)
+pins clean compiler `01f71d405d11bf1f0157a04f1791eb4347314676` and the unchanged
+own QAT model. It constructs one called diagnostic body, then projects one
+independently executed caller.
+
+| Route | Helper attempts | Helper cases | Fields | Caller expectations | New model calls |
+| --- | ---: | --- | --- | --- | ---: |
+| Deterministic | 4 | 5/5 | 15/15 | 4/4 | 0 |
+| Own model | 2 | 5/5 | 15/15 | 4/4 | 1 |
+| Saved replay | 2 retained | 5/5 retained | 15/15 retained | 4/4 | 0 |
+| Own model + checkpoint policy | 1 | 3/5 | 13/15 | 2/4 | 1 |
+| Saved checkpoint replay | 1 retained | 3/5 retained | 13/15 retained | 2/4 | 0 |
+
+The Gooo explainer separately interpreted the model's two helper attempts as
+`CONTINUE_CANDIDATES` and `OBSERVE_NEW_INPUTS`, with zero new model calls.
+Input-only replay returned three observations with 0/0 expectations. All called
+construction runs retain unknown input separation because helper arguments are
+not traced. The complete deterministic, model and replay routes generated the
+same program.
+
+Prediction took 16,584 ns; setup took 0.733292 ms with 2,096 bytes of tensors.
+The whole model command took 0.35 s wall, 0.17 s user and 0.11 s system time,
+with 86,818,816 bytes maximum RSS. Rounded CPU/wall totals correspond to 80% of
+one core including child work; host utilization and the model's separate CPU
+increment were not sampled. These are single sequential local observations
+after tests, with uncontrolled caches. Training exposure and external adoption
+remain unmeasured.

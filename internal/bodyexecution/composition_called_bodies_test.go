@@ -173,3 +173,31 @@ func TestCalledBodyConstructionRejectsCyclesAndMissingPreparation(t *testing.T) 
 		t.Fatal("recursive assembly reached inference", err)
 	}
 }
+
+func TestCalledBodyConstructionKeepsHelperAndCallerObligationsSeparate(t *testing.T) {
+	source := []byte(`package ambiguous
+namespace ambiguous
+entity Integer id "ambiguous://integer"
+entity Box id "ambiguous://box" fields { field value id "ambiguous://value" type integer required one }
+activity Choose(Integer) -> Box computes "return Box{value: input}" assembling {
+    choice "value" field_value at "0" alternative "input * 2" intent "A possible doubled value."
+    value_case "[0]" -> "{\"value\":0}"
+    attempts "2"
+}
+activity Main(Integer) -> Integer computes "let result = Choose(input); return result.value"
+`)
+	suite := calledCompositionCases(t, `{"schema":"gooo/body-composition-cases/v1","cases":[{"inputs":{"Main":3},"expected":{"Main":6}}]}`)
+	ctx := context.Background()
+	prior, err := GenerateCompositionWithOptions(ctx, "ambiguous.gooo", source, suite, CompositionOptions{EntryActivity: "Main"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := prior.Preparations[0].Generation.Report.RecordAssembly
+	if record.Passed != 1 || record.Total != 1 || record.SelectedMask != 0 {
+		t.Fatal("ambiguous helper did not retain its finite observation", record)
+	}
+	native, err := ExecuteComposition(ctx, "ambiguous.gooo", source, prior, suite, nativeTool())
+	if err != nil || native.FinitePassed != 0 || native.FiniteTotal != 1 || !native.RuntimeReplayed {
+		t.Fatal("helper case success became caller correctness", err, native)
+	}
+}
