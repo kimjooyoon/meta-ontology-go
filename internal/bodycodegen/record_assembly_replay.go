@@ -67,9 +67,16 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 	if err = searchRecordAssemblyWithPolicy(ctx, plan, expected, policy); err != nil {
 		return Realization{}, err
 	}
+	if err = verifyRecordAssemblyObservations(expected, r); err != nil {
+		return Realization{}, err
+	}
+	return realizeRecordAssemblyProjection(ctx, filename, source, prior, plan, expected)
+}
+
+func verifyRecordAssemblyObservations(expected, r *RecordAssemblyReceipt) error {
 	observedCases, err := canonicalRecordCaseValues(r.Cases)
 	if err != nil {
-		return Realization{}, err
+		return err
 	}
 	checks := []struct {
 		name    string
@@ -86,9 +93,15 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 	}
 	for _, check := range checks {
 		if !check.matches {
-			return Realization{}, fmt.Errorf("record %s do not replay", check.name)
+			return fmt.Errorf("record %s do not replay", check.name)
 		}
 	}
+	return nil
+}
+
+func realizeRecordAssemblyProjection(ctx context.Context, filename string, source []byte, prior Result,
+	plan recordAssemblyPlan, expected *RecordAssemblyReceipt) (Realization, error) {
+	r := prior.Report.RecordAssembly
 	generated, err := emitRecordAssembly(ctx, filename, source, plan, expected)
 	if err != nil {
 		return Realization{}, err
