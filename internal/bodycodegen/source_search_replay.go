@@ -22,7 +22,7 @@ func replaySourceIRSearchPlan(ctx context.Context, filename string, source []byt
 		r.PlanSHA256 != completenessPlanSHA(r) {
 		return plan, fmt.Errorf("IR search projection profile is missing or changed")
 	}
-	generated, err := generateIRBodySearchCandidates(&plan)
+	generated, err := generateIRBodySearchCandidatesForSource(ctx, filename, source, prior.Report.Activity, &plan)
 	if err != nil {
 		return plan, err
 	}

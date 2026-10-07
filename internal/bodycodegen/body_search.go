@@ -137,7 +137,7 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	if err := validateIRBodySearchPlan(plan); err != nil {
 		return Result{}, err
 	}
-	candidateGeneration, err := generateIRBodySearchCandidates(&plan)
+	candidateGeneration, err := generateIRBodySearchCandidatesForSource(ctx, filename, source, activityName, &plan)
 	if err != nil {
 		return Result{}, err
 	}
