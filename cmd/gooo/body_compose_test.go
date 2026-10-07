@@ -58,6 +58,29 @@ func TestBodyCompositionCLIProducesRunnableAndReplayableFiles(t *testing.T) {
 	}
 }
 
+func TestBodyCompositionCLIExecutesSingleActivityWithoutArtificialBind(t *testing.T) {
+	source := "../../examples/body-codegen/native-single-activity.gooo.fixture"
+	cases := "../../examples/body-codegen/native-single-activity-cases.json"
+	tool := filepath.Join(runtime.GOROOT(), "bin", "go")
+	if runtime.GOOS == "windows" {
+		tool += ".exe"
+	}
+
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"body-compose", "--source", source, "--cases", cases, "--go-bin", tool}, &stdout, &stderr); code != exitOK {
+		t.Fatalf("single-activity composition(%d): %s", code, stderr.String())
+	}
+	var result bodyCompositionOutput
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if !result.GeneratedNow || len(result.Composition.Plan.Activities) != 1 || len(result.Composition.Plan.Edges) != 0 ||
+		result.Runtime.FinitePassed != 3 || result.Runtime.FiniteTotal != 3 || len(result.Runtime.Runs) != 2 ||
+		!result.Runtime.ProjectionReplayed || !result.Runtime.RuntimeReplayed || result.Runtime.ModelCalls != 0 {
+		t.Fatalf("single-activity native observation = composition:%+v runtime:%+v", result.Composition.Plan, result.Runtime)
+	}
+}
+
 func TestBodyCompositionUsageAndFailureRecords(t *testing.T) {
 	for _, args := range [][]string{nil, {"--source"}, {"--source", "x", "--cases", "y", "--model", "z", "--composition", "q"}, {"--unknown", "x"}} {
 		var stdout, stderr bytes.Buffer

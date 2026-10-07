@@ -1,7 +1,9 @@
 # Compose generated Gooo bodies through declared binds
 
 `body-compose` constructs the activities in one Gooo file, combines their checked
-Go functions, and immediately builds and executes the declared graph. A selected
+Go functions, and immediately builds and executes the declared graph. A single
+activity runs directly without a synthetic `bind`; graphs with multiple
+activities still require explicit typed binds for every data-flow edge. A selected
 integer assembly can feed another integer activity, an Integer -> Boolean body,
 a Boolean -> Boolean body, and fan out to several consumers. Independent Text
 roots and Text -> Boolean edges use the same typed graph.
@@ -61,6 +63,24 @@ The final three files form the actual runnable program; `main.go` contains the
 generated input delivery calls. Selected source checkpoints are retained in
 `realized.gooo` and can be the source of another composition request.
 
+## One activity without a synthetic bind
+
+A single activity is a complete executable plan by itself. Its case keys use
+the activity name, and the same command generates the projection, builds it,
+and executes it twice without inventing an edge:
+
+```sh
+go run ./cmd/gooo body-compose \
+  --source examples/body-codegen/native-single-activity.gooo.fixture \
+  --cases examples/body-codegen/native-single-activity-cases.json \
+  --go-bin "$(go env GOROOT)/bin/go"
+```
+
+The example has a local variable and a three-way conditional. The native
+runtime receipt reports the finite result as `3/3` and records both runs and
+their resource observations. Multiple activities still need explicit typed
+binds for every internal data-flow edge.
+
 Execute a saved composition with a new finite suite:
 
 ```sh
@@ -113,10 +133,12 @@ the same input may occur in both, so no holdout accuracy is inferred.
 ## Execution and layout
 
 The existing typed-plan compiler checks exact entity identities, ports and
-cycles. Activity order is its canonical topological order; edges retain stable
-producer/consumer/entity IDs. Each input port has at most one producer and a producer may
-have many consumers. Multiple roots require separate explicit inputs. There
-are no inferred edges or runtime dependency waits.
+cycles. A singleton plan has one declared activity and an empty edge list;
+multiple activities without an explicit edge are rejected. Activity order is
+its canonical topological order; edges retain stable producer/consumer/entity
+IDs. Each input port has at most one producer and a producer may have many
+consumers. Multiple roots require separate explicit inputs. There are no
+inferred edges or runtime dependency waits.
 
 Graph preparation uses a 16-entry activity array. The generated driver uses
 fixed-width arrays for root inputs and ordered outputs, with typed local values
@@ -135,8 +157,10 @@ do not measure whole-computer CPU utilization or prove a speed gain.
 
 ## Current boundaries
 
-The graph supports 2..16 activities with 1..16 inputs and one result each, explicit
-in-invocation binds, and the ordinary pure Integer/Boolean/Text body profile.
+The graph supports 1..16 activities with 1..16 inputs and one result each.
+An isolated activity needs no bind; every data-flow edge between multiple
+activities remains explicit. The ordinary pure Integer/Boolean/Text body profile
+is supported.
 Source is bounded to128 KiB, generated function source to256 KiB, suites to32 KiB
 and1..128 cases, and each decoded Text scalar to1024 UTF-8 bytes. Child stdout
 and stderr retain the existing64 KiB limit. A total request has a60-second native

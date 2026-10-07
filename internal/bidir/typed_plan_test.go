@@ -64,6 +64,39 @@ func TestCompileTypedPlanRejectsAmbiguousPorts(t *testing.T) {
 	}
 }
 
+func TestCompileTypedPlanAllowsOneActivityWithoutArtificialBind(t *testing.T) {
+	document := Document{
+		Namespace: "single",
+		Declarations: []Declaration{{
+			Kind: ActivityKind, ID: "gooo://activity/single/Clamp", Name: "Clamp",
+			Inputs:  []Reference{{ID: "gooo://entity/integer", Name: "Integer"}},
+			Outputs: []Reference{{ID: "gooo://entity/integer", Name: "Integer"}},
+		}},
+	}
+
+	plan, err := CompileTypedPlan(document)
+	if err != nil {
+		t.Fatalf("single activity without a data-flow edge was rejected: %v", err)
+	}
+	if len(plan.Activities) != 1 || plan.Activities[0] != "gooo://activity/single/Clamp" ||
+		len(plan.Edges) != 0 || plan.Edges == nil {
+		t.Fatalf("singleton plan = %#v, want one activity and an explicit empty edge list", plan)
+	}
+}
+
+func TestCompileTypedPlanStillRequiresEdgesForMultipleActivities(t *testing.T) {
+	document := Document{
+		Namespace: "disconnected",
+		Declarations: []Declaration{
+			{Kind: ActivityKind, ID: "gooo://activity/disconnected/First", Name: "First"},
+			{Kind: ActivityKind, ID: "gooo://activity/disconnected/Second", Name: "Second"},
+		},
+	}
+	if _, err := CompileTypedPlan(document); err == nil || !strings.Contains(err.Error(), "no explicit binding edges") {
+		t.Fatalf("multiple disconnected activities were accepted: %v", err)
+	}
+}
+
 func TestTypedPlanDigestIgnoresSourceSpans(t *testing.T) {
 	document := feedbackDocument(t, feedbackSource)
 	first, err := CompileTypedPlan(document)

@@ -29,8 +29,8 @@ func prepareCompositionGraph(ctx context.Context, filename string, source []byte
 	if err != nil {
 		return graph, err
 	}
-	if len(typed.Activities) < 2 || len(typed.Activities) > compositionLimit {
-		return graph, fmt.Errorf("composition requires 2..16 activities and explicit binds")
+	if len(typed.Activities) < 1 || len(typed.Activities) > compositionLimit {
+		return graph, fmt.Errorf("composition requires 1..16 declared activities")
 	}
 	graph.count = len(typed.Activities)
 	graph.plan = CompositionPlan{Schema: "gooo/body-composition-plan/v1",
