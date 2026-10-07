@@ -203,8 +203,36 @@ observations add no score points beyond the named expected outputs.
 `finite_passed / finite_total` counts these supplied runtime expectations. An
 unobserved stage output is retained without receiving an accuracy credit.
 Partial finite results remain visible even when both compiled executions agree.
-The generation-time selection examples and the runtime suite are separate;
-the same input may occur in both, so no holdout accuracy is inferred.
+The generation-time examples and runtime suite may contain the same inputs.
+The following measurement exposes that overlap.
+
+### Input separation
+
+After source replay and two matching native executions, `runtime.json` includes
+`input_separation`. It uses unique, typed root-input tuples as whole cases:
+
+- `unique_inputs` counts distinct root inputs; `duplicate_rows` counts repeats.
+- `overlapping_inputs` counts cases whose actual input at any assembling
+  activity occurs in source selection/holdout cases or recorded probes.
+- `disjoint_inputs` counts cases with new actual inputs at every assembling
+  activity; downstream inputs come from the native delivery trace.
+- `disjoint_cases_passed` counts disjoint cases satisfying every supplied
+  expectation, including expectations from duplicate rows.
+- `unknown_inputs` retains cases whose input separation cannot be established.
+
+The fraction is `disjoint_cases_passed / disjoint_inputs`. One case may name
+several outputs, so its unit differs from `finite_passed / finite_total`.
+Optional absence remains distinct from zero, record key order is normalized,
+and int64 values retain their exact identity.
+
+With complete input observations, a positive denominator is `PASS` when all
+disjoint cases match and `PROGRESS` otherwise, including measured `0/N`.
+No disjoint cases, no assembling activity, unexecuted runtime, or unavailable
+input identities produce `UNKNOWN` with a reason. Recorded holdouts are included
+conservatively even when they were excluded from candidate ranking. External
+feedback without input identities also leaves the measurement `UNKNOWN`.
+Model-training exposure remains unknown; this finite fraction describes only
+the recorded input boundary. The metric is descriptive and adds no CI gate.
 
 ## Execution and layout
 

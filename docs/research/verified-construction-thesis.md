@@ -113,6 +113,65 @@ The first study should answer narrow questions:
 Set decision thresholds before looking at aggregate results. Publish negative
 and inconclusive results alongside positive ones.
 
+## Grow through a replaceable construction system
+
+The project direction is to make Gooo useful for constructing small, inspectable
+programs and language tools. A first public demonstration should follow one
+real task from its Gooo contract through selection, native execution, and an
+explanation of the remaining work. Developer-facing language comes first:
+what can be expressed, what ran, and how another person can reproduce it.
+
+Treat substitution as two different experiments:
+
+| Change | Keep fixed | Observe |
+| --- | --- | --- |
+| Deterministic ordering, model A, model B | Source/ontology, permitted candidates, compiler, checks, task inputs and budget | Candidate order, selected body, rejected attempts, finite behavior, resource use and unknowns |
+| Domain vocabulary or obligations | The identified compiler/kernel revision | Changed semantic identities, resulting candidate space, required checks, unsupported constructs and migration needs |
+
+With model replacement, the definition of valid construction stays fixed.
+The selected program and its behavior may change under a bounded search budget;
+record that difference and check it. With domain replacement, explicitly record
+the changed meaning. Demonstrating this across two domains is a next experiment;
+the repository's current adapters and supported profiles define the available
+surface.
+
+Prioritize three small ecosystem tasks: explain a failed assembly, suggest a
+bounded repair from its counterexamples, and generate an executable example
+from declared types and obligations. Each should produce a Gooo artifact that
+can be inspected and replayed. A useful next language feature is one required by
+a recorded failure in those tasks. Model training then learns search preferences
+from the retained attempts, with dataset identities and held-out task families.
+
+### Keep the evaluation units visible
+
+`body-compose` now reports `input_separation` after replaying the source and
+running the native graph twice. It compares actual input tuples at every
+assembling activity with declared selection/holdout inputs and recorded probes.
+A root case is disjoint only when every assembling activity receives a disjoint
+tuple. Duplicate root inputs contribute one case; all expectations supplied for
+that input must agree with execution. See the [runtime measurement
+contract](../native-body-composition.md#input-separation).
+
+This measures new inputs relative to the recorded construction observations.
+Model-training exposure remains unknown. In the same way, native case success,
+grammar coverage and declared-obligation coverage each retain their own units.
+Add task-level completion only after freezing the task's acceptance boundary;
+add external agent baselines when they share that boundary and accounting.
+
+### Build artifacts that others can carry forward
+
+Keep source, compiler revision, model and dataset identities, applicable license
+references, generated artifacts and execution receipts linked. Missing records
+stay explicit. Provenance establishes a traceable chain; ownership and license
+claims require their own supporting records. This makes the research easier to
+reproduce, extend and evaluate independently.
+
+Start outreach material with the runnable example, then the paired comparison,
+then the language design. Record external reproduction and useful tasks as they
+occur. Product packaging and commercial options can develop from observed use;
+no acquisition price, adoption figure or hypothetical benchmark is treated as a
+project result.
+
 ## Research context
 
 Gooo builds on questions studied in related systems, and should be compared to
@@ -123,6 +182,8 @@ techniques:
   and synthesis/verification workflows in a host language.
 - [DreamCoder](https://arxiv.org/abs/2006.08381) combines a growing program
   language with learned guidance for program search.
+- [W3C PROV-O](https://www.w3.org/TR/prov-o/) supplies a vocabulary for
+  representing provenance across entities, activities and agents.
 - [Halide](https://people.csail.mit.edu/jrk/halide12/) separates algorithm
   specification from scheduling decisions. A later [schedule-search
   study](https://ai.meta.com/research/publications/learning-to-optimize-halide-with-tree-search-and-random-programs/)
