@@ -131,5 +131,156 @@
     "Native elapsed time includes toolchain selection, build, and two executions; inherited caches differ between runs.",
     "CPU values cover recorded native child processes; host CPU utilization was not sampled.",
     "Outer go-run startup and a dependency download occurred on the model run and are excluded from these native observations."
-  ]
+  ],
+  "bounded_record_follow_up": {
+    "schema": "gooo/bounded-record-ranking-observation/v1",
+    "compiler_source_sha": "91fbb04b9d75053ed994a3334b7d7d5eb152bf97",
+    "source_recipe": {
+      "path": "examples/body-codegen/record-candidate-continuation.gooo.fixture",
+      "replace": "attempts \"8\"",
+      "with": "attempts \"4\"",
+      "source_sha256": "01c15df17c30c542162bcef0db99bb3ac5f63c28cb718a03892d2836b7ee8792"
+    },
+    "runtime_cases_path": "examples/body-codegen/record-field-updates-cases.json",
+    "runtime_cases_sha256": "2fbb11d582720a5cca2098a13f890c0197ae3d3983adca4bb01bdfda990d8818",
+    "attempt_budget": 4,
+    "candidate_space": 8,
+    "selection_input_count": 5,
+    "runs": [
+      {
+        "policy": "model",
+        "original_result_sha256": "1d51b1c42590135889153ccbadd99e9fa505d78aebba3c34864f22886aa29dce",
+        "selected_mask": 6,
+        "selected_source_sha256": "sha256:10e3853970c49f2040f1a150ec1edc13c63fc8d1a123bbd4b789261dddcee972",
+        "attempts": [
+          {
+            "mask": 5,
+            "passed": 2,
+            "total": 5,
+            "fields_passed": 9,
+            "fields_total": 15
+          },
+          {
+            "mask": 4,
+            "passed": 2,
+            "total": 5,
+            "fields_passed": 9,
+            "fields_total": 15
+          },
+          {
+            "mask": 7,
+            "status": "TYPECHECK_FAILED",
+            "reason": "typecheck generated activity: body.goo:11:5: declared and not used: saved",
+            "passed": 0,
+            "total": 0,
+            "fields_passed": 0,
+            "fields_total": 0
+          },
+          {
+            "mask": 6,
+            "passed": 5,
+            "total": 5,
+            "fields_passed": 15,
+            "fields_total": 15
+          }
+        ],
+        "local_model_predictions": 1,
+        "predict_ns": 12167,
+        "generation_ns": 3244458,
+        "model": {
+          "schema": "gooo/retained-path-model/v1",
+          "loaded": true,
+          "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+          "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+          "resident_tensor_bytes": 2096,
+          "setup_ms": 0.483833,
+          "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+          "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+          "feature_version": "triple_record_field_context_v1_shared_v1",
+          "arithmetic_version": "float32_separate_v1"
+        },
+        "selection_passed": 5,
+        "selection_total": 5,
+        "selection_fields_passed": 15,
+        "selection_fields_total": 15,
+        "native_activity_outputs_passed": 14,
+        "native_activity_outputs_total": 14,
+        "disjoint_input_cases": 2,
+        "disjoint_activity_outputs_passed": 4,
+        "disjoint_activity_outputs_total": 4,
+        "native_elapsed_ns": 481834417,
+        "native_child_cpu_ns": 222587000,
+        "native_build_peak_rss_bytes": 88064000,
+        "native_stdout_sha256": [
+          "sha256:eb1cd023cdcd3455ccaa1b17b5895c1ca65981fa987ae8326a69de8657c78919",
+          "sha256:eb1cd023cdcd3455ccaa1b17b5895c1ca65981fa987ae8326a69de8657c78919"
+        ]
+      },
+      {
+        "policy": "deterministic",
+        "original_result_sha256": "1885908dddf525d730bbd4eaf5734f5945d3d8f3a646e8ca616f524f2613fdc4",
+        "selected_mask": 2,
+        "selected_source_sha256": "sha256:23d5abcc140db27321f2674c07e276f88ba9bfcda85754522484a33eaccc14b3",
+        "attempts": [
+          {
+            "mask": 0,
+            "passed": 2,
+            "total": 5,
+            "fields_passed": 9,
+            "fields_total": 15
+          },
+          {
+            "mask": 1,
+            "passed": 2,
+            "total": 5,
+            "fields_passed": 9,
+            "fields_total": 15
+          },
+          {
+            "mask": 2,
+            "passed": 2,
+            "total": 5,
+            "fields_passed": 12,
+            "fields_total": 15
+          },
+          {
+            "mask": 3,
+            "status": "TYPECHECK_FAILED",
+            "reason": "typecheck generated activity: body.goo:11:5: declared and not used: saved",
+            "passed": 0,
+            "total": 0,
+            "fields_passed": 0,
+            "fields_total": 0
+          }
+        ],
+        "local_model_predictions": 0,
+        "predict_ns": 0,
+        "generation_ns": 3190500,
+        "model": null,
+        "selection_passed": 2,
+        "selection_total": 5,
+        "selection_fields_passed": 12,
+        "selection_fields_total": 15,
+        "native_activity_outputs_passed": 6,
+        "native_activity_outputs_total": 14,
+        "disjoint_input_cases": 2,
+        "disjoint_activity_outputs_passed": 2,
+        "disjoint_activity_outputs_total": 4,
+        "native_elapsed_ns": 323468417,
+        "native_child_cpu_ns": 217845000,
+        "native_build_peak_rss_bytes": 86048768,
+        "native_stdout_sha256": [
+          "sha256:472165dac4b3393d5820eb526615f2196f8e8611b598e467e07bd33bbd9bca70",
+          "sha256:472165dac4b3393d5820eb526615f2196f8e8611b598e467e07bd33bbd9bca70"
+        ]
+      }
+    ],
+    "limits": [
+      "One workload and one final source-bound run per policy; exploratory go-run executions preceded these runs.",
+      "Five runtime inputs repeat the selection inputs; only two compound input tuples are disjoint from the selection suite.",
+      "Disjoint inputs do not establish independence from model training data.",
+      "This is a finite-example result; it does not prove general behavior or a latency advantage.",
+      "Native timing includes toolchain selection, compilation and two executions, with inherited caches."
+    ]
+  }
 }

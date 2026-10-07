@@ -36,6 +36,24 @@
 [원본 리비전·모델 해시와 측정 범위](research/comparison-dogfood-20261007.json)를
 함께 공개합니다. 이 진단은 기존 결과를 읽고 다음 작업을 고르는 도구입니다.
 
+같은 기록의 원래 레코드 조립도 다시 실행했습니다. 후보 8개 중 4회만
+시도하도록 고정하면, 자체 모델 경로는 14/14개 활동 출력이 기대값과
+일치했고 결정론 경로는 6/14개였습니다. 양쪽 모두 타입 탈락 후보 1개를
+거쳐 탐색을 계속했습니다. 7개 실행 입력 중 5개는 선택 사례와 겹치며,
+서로 다른 입력 2개에서의 활동 출력은 모델 4/4, 결정론 2/4입니다.
+이 입력 분리는 모델 학습 자료와의 독립성을 뜻하지 않습니다. 단일 작업의
+유한 관측이며, 위 JSON의 `bounded_record_follow_up`에 별도로 기록했습니다.
+
+재현할 때는 공개된 컴파일러 리비전 `91fbb04b`를 빌드한 뒤 다음 소스를
+사용합니다. 같은 명령에서 `--model`을 생략하면 결정론 경로입니다.
+
+```sh
+sed 's/attempts "8"/attempts "4"/' examples/body-codegen/record-candidate-continuation.gooo.fixture > /tmp/bounded-record.gooo
+gooo body-compose --source /tmp/bounded-record.gooo \
+  --cases examples/body-codegen/record-field-updates-cases.json \
+  --model /path/to/gooo-ecosystem-workbench/models/shared-qat/model.json
+```
+
 Gooo가 선언한 IR 후보 탐색은 생성 결과를 저장한 뒤 `body-execute`로 이어갈
 수 있습니다. 실행기는 원본 후보 집합, 선택된 식, 훈련·홀드아웃 결과를 다시
 계산하고 실제 Go 실행으로 연결합니다. 이 재생 단계의 모델 호출은 0회입니다.
