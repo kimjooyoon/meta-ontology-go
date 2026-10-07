@@ -6,6 +6,15 @@ This local observation uses clean compiler
 It was recorded before publication of the release. The [summary](summary.json)
 binds the raw receipts, resource observations, generated starter and source files.
 
+The six original starter files are preserved byte-for-byte in
+[starter.zip](starter.zip), with their original filenames and member hashes in
+the summary. Extract it into an empty directory to inspect or run the recorded
+project. The initial evidence commit left its two `.gooo` outputs as loose
+files; [CI run 37685519652](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/37685519652)
+counted them as unregistered repository language sources and failed the syntax
+corpus checks. Packaging the observation as an archive preserves the generated
+project, measured receipts and existing corpus rules.
+
 ## What ran
 
 | Route | Candidate attempts | Construction cases | Native expectations | New model calls | Whole command wall |

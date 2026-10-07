@@ -117,7 +117,7 @@
       "called-checkpoint": 0,
       "checkpoint-explanation": 0
     },
-    "starter": "Created by this executable with init --template diagnostic --module example.org/release066/diagnostic; all six emitted files retained in starter/.",
+    "starter": "Created by this executable with init --template diagnostic --module example.org/release066/diagnostic; all six emitted files retained byte-for-byte as root members of starter.zip.",
     "paired_scope": "Each deterministic/model pair uses identical source, choices, cases and budgets. Called pair uses the same Gooo continuation policy. Checkpoint uses a different stopping policy.",
     "historical_replay": "Prior compiler receipt reconstructed by the new binary; no new inference. Retained assembly calls and prediction times describe the original construction.",
     "checkpoint_explanation": "Gooo reads the actual partial candidate record and returns CONTINUE_CANDIDATES. This is a suggestion; the experiment does not dispatch a continuation. Saved continuation with called preparations is currently unsupported.",
@@ -747,30 +747,6 @@
       "sha256": "2a76b7633b9d5d5ce78bbe475157cf9869d3956fc9939ef6aa423e9c8fcdd2fd",
       "bytes": 777
     },
-    "starter/README.md": {
-      "sha256": "4c77b0190d37db5c57a28bafaef707cf177415d61552d568668c92efadbeb369",
-      "bytes": 2604
-    },
-    "starter/app.gooo": {
-      "sha256": "c9abe6c8372dc07f87961c0d40ec8fbe69c47980433fd74a723d95b50a7cb56a",
-      "bytes": 288
-    },
-    "starter/cases.json": {
-      "sha256": "6d2fc6cb0c612154de22cee5358c6eb0531188208592937085e6fc0d97234335",
-      "bytes": 2852
-    },
-    "starter/diagnostics.gooo": {
-      "sha256": "face53e3c39b6568ed8541780255aad5101420d924a317f1b81ea09883f68949",
-      "bytes": 2650
-    },
-    "starter/gooo.workspace.json": {
-      "sha256": "64586d0a2196bba3d7146df850128721ececb0c7c2c52228540b078ce88b64ca",
-      "bytes": 574
-    },
-    "starter/inputs.json": {
-      "sha256": "29e61b1ead10e26166388919a414791b2e547425fd14d41be814e04e0f73556f",
-      "bytes": 1018
-    },
     "starter-deterministic.json": {
       "sha256": "f71abe716c901a778a05795ce4e48775f0f0d6f3f2017276adcb1677f1491a52",
       "bytes": 77538
@@ -795,9 +771,49 @@
       "sha256": "51006e45df21c1e338dba56fd5f41b74ab27f6aba6c47b24b311e722e8746dab",
       "bytes": 777
     },
+    "starter.zip": {
+      "sha256": "2aaf6512e0e15370f8ebf12bd06a52e00e28400bfe6911e5d291a465dedcbefd",
+      "bytes": 3864
+    },
     "version.json": {
       "sha256": "9c1077688745067e7dfcd4f00e19ab0f162b1c96987b373743ea41ca3241c2db",
       "bytes": 227
     }
+  },
+  "generated_starter": {
+    "archive": "starter.zip",
+    "members": {
+      "README.md": {
+        "sha256": "4c77b0190d37db5c57a28bafaef707cf177415d61552d568668c92efadbeb369",
+        "bytes": 2604
+      },
+      "app.gooo": {
+        "sha256": "c9abe6c8372dc07f87961c0d40ec8fbe69c47980433fd74a723d95b50a7cb56a",
+        "bytes": 288
+      },
+      "cases.json": {
+        "sha256": "6d2fc6cb0c612154de22cee5358c6eb0531188208592937085e6fc0d97234335",
+        "bytes": 2852
+      },
+      "diagnostics.gooo": {
+        "sha256": "face53e3c39b6568ed8541780255aad5101420d924a317f1b81ea09883f68949",
+        "bytes": 2650
+      },
+      "gooo.workspace.json": {
+        "sha256": "64586d0a2196bba3d7146df850128721ececb0c7c2c52228540b078ce88b64ca",
+        "bytes": 574
+      },
+      "inputs.json": {
+        "sha256": "29e61b1ead10e26166388919a414791b2e547425fd14d41be814e04e0f73556f",
+        "bytes": 1018
+      }
+    },
+    "restoration": "Extract into an empty directory; member names and bytes match the original init output."
+  },
+  "evidence_packaging": {
+    "prior_head": "9c7167ba524da77a4c7175dbd03f04fc339a0db5",
+    "failed_ci": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/37685519652",
+    "cause": "The two raw .gooo observation files in starter/ were counted as unregistered repository language sources.",
+    "correction": "Archive the original generated project without changing member bytes, paths, measured receipts, compiler identity or corpus rules."
   }
 }

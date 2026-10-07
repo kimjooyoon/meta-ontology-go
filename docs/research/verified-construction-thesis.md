@@ -250,6 +250,14 @@ Maintainer runs, including runs of downloaded binaries and module installations,
 establish installation observations; external reproduction and adoption still
 need independent reports.
 
+The [0.6.6 candidate walkthrough](release-066-dogfood-20261008/README.md)
+connects the starter, constructed helper, own model, historical replay and Gooo
+explainer in eight actual local invocations. It includes a deliberately partial
+result: 3/5 helper cases and 2/4 application expectations, followed by a Gooo
+suggestion to continue. Use that complete-to-partial comparison as the first
+small demonstration. The recorded candidate predates release publication, and
+the command caller still initiates each operation.
+
 The next construction experiment should connect the existing explainer to a
 bounded repair proposal. Give it a retained failed attempt, the remaining
 source-declared alternatives, and a fixed attempt budget. Have Gooo describe the
