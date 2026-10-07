@@ -56,3 +56,13 @@ gooo package replay --json --receipt execution.json \
 Supply a new case or input file to use the program on different inputs. Replay
 and interpretation make zero model calls. Older external-fill receipts missing
 their plans need one construction run with the original `--body-plans` file.
+
+## Recorded local use
+
+The [published observation](../../docs/research/external-construction-20261008/summary.json)
+uses clean compiler `8a48369e`. Construction matched the two named activity
+outputs in 1.03 seconds; Gooo interpreted the four candidate rows in 0.40 seconds.
+Each command performed two native runs and zero model calls. The root input
+overlaps construction, so fresh-input correctness remains unmeasured here.
+This is one sequential local run with uncontrolled warm caches. Raw receipts,
+plan identities, outputs and reproduction commands accompany the summary.
