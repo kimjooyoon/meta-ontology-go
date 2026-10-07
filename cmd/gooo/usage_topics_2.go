@@ -5,15 +5,20 @@ var topicHelpGroup2 = map[string]string{
 
 Usage:
   gooo discover [--json] --query <question> [--domain-contract <contract.gooo>]
-    [--generation <body-codegen.json>] <file.gooo>
+    [--generation <body-codegen.json> [--execute-cases <cases.json>
+      [--go-bin <go1.27.1>]]] <file.gooo>
 
 This deterministic JEV integration binds the question to the exact Gooo source
 and normalized semantic IR. A separate Gooo domain contract supplies the
 denominator for declaration coverage; without it, coverage remains UNKNOWN.
 Add --generation to replay a saved source-owned IR search or typed path result.
 Expected domain activity signatures supply the generation coverage denominator.
-The command checks the projection and finite selection observations without a
-model or native build. Independent runtime and reverse observations remain open.
+Projection replay checks finite selection observations without a model.
+With --execute-cases, the command builds the source-replayed Integer -> Integer
+projection and executes the supplied cases twice. It records fresh runtime and
+reverse observations, counts repeated independent inputs once, and preserves
+partial behavior. Independent here means absent from the effective selection
+suite; model-training exposure remains unknown. --go-bin selects the Go tool.
 
 See docs/language/capability-discovery.md.
 `,

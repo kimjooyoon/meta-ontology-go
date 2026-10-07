@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -10,13 +9,15 @@ import (
 
 	jev "github.com/kimjooyoon/gooo-jev/gooo"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-const discoverUsage = "usage: gooo discover [--json] --query <question> [--domain-contract <contract.gooo>] [--generation <body-codegen.json>] <file.gooo>"
+const discoverUsage = "usage: gooo discover [--json] --query <question> [--domain-contract <contract.gooo>] " +
+	"[--generation <body-codegen.json> [--execute-cases <cases.json> [--go-bin <go1.27.1>]]] <file.gooo>"
 
 type capabilityDiscoveryReport struct {
 	Schema                 string                            `json:"schema"`
@@ -29,61 +30,28 @@ type capabilityDiscoveryReport struct {
 	DomainContractHash     string                            `json:"domain_contract_digest,omitempty"`
 	DomainContractSemantic string                            `json:"domain_contract_semantic_digest,omitempty"`
 	Generation             *discoveryGeneration              `json:"generation,omitempty"`
+	Runtime                *bodyexecution.Result             `json:"runtime,omitempty"`
 	Receipt                *completeness.CompletenessReceipt `json:"completeness_receipt"`
 }
 
 func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	args, jsonMode := parseJSONFlag(args)
-	query := ""
-	filename := ""
-	domainContractPath := ""
-	generationPath := ""
-	for index := 0; index < len(args); index++ {
-		switch args[index] {
-		case "--query":
-			if query != "" || index+1 >= len(args) {
-				return reportDiscoverUsage(jsonMode, stdout, stderr)
-			}
-			index++
-			query = strings.TrimSpace(args[index])
-			if query == "" {
-				return reportDiscoverUsage(jsonMode, stdout, stderr)
-			}
-		case "--domain-contract":
-			if domainContractPath != "" || index+1 >= len(args) {
-				return reportDiscoverUsage(jsonMode, stdout, stderr)
-			}
-			index++
-			domainContractPath = strings.TrimSpace(args[index])
-			if domainContractPath == "" {
-				return reportDiscoverUsage(jsonMode, stdout, stderr)
-			}
-		case "--generation":
-			if generationPath != "" || index+1 >= len(args) {
-				return reportDiscoverUsage(jsonMode, stdout, stderr)
-			}
-			index++
-			generationPath = strings.TrimSpace(args[index])
-			if generationPath == "" {
-				return reportDiscoverUsage(jsonMode, stdout, stderr)
-			}
-		case "--help", "-h":
-			_, _ = fmt.Fprintln(stdout, discoverUsage)
-			return exitOK
-		default:
-			if strings.HasPrefix(args[index], "-") || filename != "" {
-				return reportDiscoverUsage(jsonMode, stdout, stderr)
-			}
-			filename = args[index]
-		}
+	flags, filename, help, valid := parseDiscoveryOptions(args)
+	if help {
+		_, _ = fmt.Fprintln(stdout, discoverUsage)
+		return exitOK
 	}
-	if query == "" || filename == "" {
+	if !valid {
 		return reportDiscoverUsage(jsonMode, stdout, stderr)
 	}
 	source, err := reader.ReadFile(filename)
 	if err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_READ_FAILED", err.Error())
 	}
+	return discoverFromSource(reader, filename, source, flags, jsonMode, stdout, stderr)
+}
+
+func discoverFromSource(reader SourceReader, filename string, source []byte, flags map[string]string, jsonMode bool, stdout, stderr io.Writer) int {
 	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, string(source), syntax.EntityFieldsV4Support())
 	if diagnostics.HasErrors() || file == nil {
 		message := "source parser did not produce a declaration"
@@ -100,24 +68,21 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	if err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_PORT_SIGNATURE_FAILED", err.Error())
 	}
-	domainContract, contractFailure, err := loadDiscoveryDomainContract(reader, filename, source, domainContractPath)
+	domainContract, contractFailure, err := loadDiscoveryDomainContract(reader, filename, source, flags["--domain-contract"])
 	if err != nil {
-		return reportDiscoverFailure(jsonMode, stdout, stderr, domainContractPath, contractFailure, err.Error())
+		return reportDiscoverFailure(jsonMode, stdout, stderr, flags["--domain-contract"], contractFailure, err.Error())
 	}
-	trail := jev.DiscoverCapabilityQueryTrail(query, string(source))
+	trail := jev.DiscoverCapabilityQueryTrail(flags["--query"], string(source))
 	if err := trail.Validate(); err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "CAPABILITY_TRAIL_INVALID", err.Error())
 	}
-	generation, err := loadDiscoveryGeneration(reader, filename, source, generationPath)
+	generation, err := loadDiscoveryGeneration(reader, filename, source, flags["--generation"])
 	if err != nil {
-		return reportDiscoverFailure(jsonMode, stdout, stderr, generationPath, "GENERATION_REPLAY_FAILED", err.Error())
+		return reportDiscoverFailure(jsonMode, stdout, stderr, flags["--generation"], "GENERATION_REPLAY_FAILED", err.Error())
 	}
 	receipt := capabilityDiscoveryCompletenessReceipt(filename, source, ir, inputSequences, trail, domainContract, generation)
-	if err := completeness.Validate(receipt); err != nil {
-		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "COMPLETENESS_RECEIPT_INVALID", err.Error())
-	}
 	report := capabilityDiscoveryReport{
-		Schema: "gooo/capability-discovery-report/v1", Decision: "PROGRESS", Query: trail,
+		Schema: "gooo/capability-discovery-report/v1", Decision: receipt.Decision, Query: trail,
 		SourcePath: filename, SourceHash: "sha256:" + cache.HashBytes(source).String(),
 		Semantic: ir.StableHash(), Generation: generation, Receipt: receipt,
 	}
@@ -126,67 +91,13 @@ func runDiscover(args []string, reader SourceReader, stdout, stderr io.Writer) i
 		report.DomainContractHash = "sha256:" + cache.HashBytes(domainContract.Source).String()
 		report.DomainContractSemantic = domainContract.IR.StableHash()
 	}
-	if jsonMode {
-		encoder := json.NewEncoder(stdout)
-		encoder.SetIndent("", "  ")
-		if err := encoder.Encode(report); err != nil {
-			return exitFailure
-		}
-		return exitOK
-	}
-	if _, err := fmt.Fprintf(stdout, "capability discovery: %s (%s)\ncompleteness: PROGRESS, first unresolved: %s\nsource: %s\n",
-		trail.Response.Status, trail.Intent, receipt.FirstUnresolved.ID, filename); err != nil {
-		return exitFailure
-	}
-	if generation != nil {
-		for _, dimension := range receipt.Dimensions {
-			if dimension.ID == "generation_coverage" {
-				if _, err := fmt.Fprintf(stdout, "generation replay: %s\ngeneration coverage: %s %d/%d\n",
-					generation.ActivityID, dimension.Status, dimension.Numerator, dimension.Denominator); err != nil {
-					return exitFailure
-				}
-			}
-		}
-	}
-	for _, capability := range trail.Response.Capabilities {
-		if _, err := fmt.Fprintf(stdout, "- %s [%s]: %s\n", capability.ID, capability.State, capability.Description); err != nil {
-			return exitFailure
-		}
-	}
-	return exitOK
+	return finishDiscoveryReport(reader, source, report, flags, jsonMode, stdout, stderr)
 }
 
 func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir semantic.IR, inputSequences map[semantic.ID][]semantic.ID, trail jev.CapabilityQueryTrail, domainContract *discoveryDomainContract, generation *discoveryGeneration) *completeness.CompletenessReceipt {
 	sourceDigest := "sha256:" + cache.HashBytes(source).String()
 	semanticDigest := ir.StableHash()
-	matchStatus, matchNumerator := capabilityCatalogMatchState(trail.Response.Status)
-	declarationCoverage := discoveryDeclarationCoverage(ir, inputSequences, domainContract)
-	dimensions := []completeness.CompletenessDimension{
-		declarationCoverage,
-		{ID: "capability_discovery_observation", Status: "PASS", Numerator: 1, Denominator: 1,
-			Unit: "validated deterministic JEV discovery trails", Reason: "The JEV trail validates its query, declaration observation, route and evidence digests; a match is descriptive, not proof of implementation.",
-			Evidence: []string{"jev_query_digest:" + trail.Response.QueryDigest, "jev_evidence_digest:" + trail.EvidenceDigest,
-				"intent:" + trail.Intent, "discovery_path:" + strings.Join(trail.DiscoveryPath, ">")}},
-		{ID: "catalog_match", Status: matchStatus, Numerator: matchNumerator, Denominator: 1,
-			Unit: "requested capabilities found in the JEV catalog", Reason: capabilityMatchReason(trail.Response.Status),
-			Evidence: []string{"jev_status:" + string(trail.Response.Status), "query_digest:" + trail.Response.QueryDigest}},
-		discoveryGenerationCoverage(ir, inputSequences, domainContract, generation),
-		unknownCompletenessDimension("reverse_observation_coverage", "generated runtime observations mapped back to source", "Discovery does not execute or reverse-observe generated artifacts."),
-		unknownCompletenessDimension("real_use_case_coverage", "independently replayed input and output cases", "A catalog answer is not an independent use case or behavior result."),
-		{ID: "execution_boundary_coverage", Status: boundaryObservationStatus(trail), Numerator: boolInt(trail.Response.NonExecuting && trail.Response.NonAuthorizing), Denominator: 1,
-			Unit: "capability discovery requests that remain non-executing and non-authorizing", Reason: "JEV discovery is a read-only description and grants neither execution nor authorization.",
-			Evidence: []string{"non_executing:" + strconv.FormatBool(trail.Response.NonExecuting), "non_authorizing:" + strconv.FormatBool(trail.Response.NonAuthorizing)}},
-		unknownCompletenessDimension("permission_boundary_coverage", "observed host permission profiles", "The discovery receipt does not observe operating-system permissions."),
-		unknownCompletenessDimension("network_boundary_coverage", "observed external network boundaries", "The discovery receipt does not observe external network configuration."),
-		{ID: "provenance_integrity", Status: "PASS", Numerator: 1, Denominator: 1,
-			Unit: "source, semantic IR, optional domain contract and JEV trail identities bound in one receipt", Reason: "The receipt binds exact source bytes, normalized semantic IR, optional domain-contract bytes and semantic IR, JEV query identity and trail evidence.",
-			Evidence: discoveryProvenanceEvidence(sourceDigest, semanticDigest, trail, domainContract)},
-	}
-	if generation != nil {
-		last := &dimensions[len(dimensions)-1]
-		last.Evidence = append(last.Evidence, "generation_artifact_digest:"+generation.Digest,
-			"generated_digest:"+generation.GeneratedDigest, "generated_activity_id:"+generation.ActivityID)
-	}
+	dimensions := capabilityDiscoveryDimensions(sourceDigest, semanticDigest, ir, inputSequences, trail, domainContract, generation)
 	core := make([]string, 0, len(dimensions))
 	statusCounts := map[string]int{"PASS": 0, "PROGRESS": 0, "UNKNOWN": 0, "FAIL_CLOSED": 0}
 	unresolved := make([]completeness.UnresolvedCompletenessClaim, 0)
@@ -231,6 +142,39 @@ func capabilityDiscoveryCompletenessReceipt(filename string, source []byte, ir s
 		receipt.NotClaimed[2] = "Projection replay checks the saved construction and finite selection observations; native execution, independent cases and historical model calls need their own evidence."
 	}
 	return receipt
+}
+
+func capabilityDiscoveryDimensions(sourceDigest, semanticDigest string, ir semantic.IR, inputSequences map[semantic.ID][]semantic.ID,
+	trail jev.CapabilityQueryTrail, domainContract *discoveryDomainContract, generation *discoveryGeneration) []completeness.CompletenessDimension {
+	matchStatus, matchNumerator := capabilityCatalogMatchState(trail.Response.Status)
+	declarationCoverage := discoveryDeclarationCoverage(ir, inputSequences, domainContract)
+	dimensions := []completeness.CompletenessDimension{
+		declarationCoverage,
+		{ID: "capability_discovery_observation", Status: "PASS", Numerator: 1, Denominator: 1,
+			Unit: "validated deterministic JEV discovery trails", Reason: "The JEV trail validates its query, declaration observation, route and evidence digests; a match is descriptive, not proof of implementation.",
+			Evidence: []string{"jev_query_digest:" + trail.Response.QueryDigest, "jev_evidence_digest:" + trail.EvidenceDigest,
+				"intent:" + trail.Intent, "discovery_path:" + strings.Join(trail.DiscoveryPath, ">")}},
+		{ID: "catalog_match", Status: matchStatus, Numerator: matchNumerator, Denominator: 1,
+			Unit: "requested capabilities found in the JEV catalog", Reason: capabilityMatchReason(trail.Response.Status),
+			Evidence: []string{"jev_status:" + string(trail.Response.Status), "query_digest:" + trail.Response.QueryDigest}},
+		discoveryGenerationCoverage(ir, inputSequences, domainContract, generation),
+		unknownCompletenessDimension("reverse_observation_coverage", "generated runtime observations mapped back to source", "Discovery does not execute or reverse-observe generated artifacts."),
+		unknownCompletenessDimension("real_use_case_coverage", "independently replayed input and output cases", "A catalog answer is not an independent use case or behavior result."),
+		{ID: "execution_boundary_coverage", Status: boundaryObservationStatus(trail), Numerator: boolInt(trail.Response.NonExecuting && trail.Response.NonAuthorizing), Denominator: 1,
+			Unit: "capability discovery requests that remain non-executing and non-authorizing", Reason: "JEV discovery is a read-only description and grants neither execution nor authorization.",
+			Evidence: []string{"non_executing:" + strconv.FormatBool(trail.Response.NonExecuting), "non_authorizing:" + strconv.FormatBool(trail.Response.NonAuthorizing)}},
+		unknownCompletenessDimension("permission_boundary_coverage", "observed host permission profiles", "The discovery receipt does not observe operating-system permissions."),
+		unknownCompletenessDimension("network_boundary_coverage", "observed external network boundaries", "The discovery receipt does not observe external network configuration."),
+		{ID: "provenance_integrity", Status: "PASS", Numerator: 1, Denominator: 1,
+			Unit: "source, semantic IR, optional domain contract and JEV trail identities bound in one receipt", Reason: "The receipt binds exact source bytes, normalized semantic IR, optional domain-contract bytes and semantic IR, JEV query identity and trail evidence.",
+			Evidence: discoveryProvenanceEvidence(sourceDigest, semanticDigest, trail, domainContract)},
+	}
+	if generation != nil {
+		last := &dimensions[len(dimensions)-1]
+		last.Evidence = append(last.Evidence, "generation_artifact_digest:"+generation.Digest,
+			"generated_digest:"+generation.GeneratedDigest, "generated_activity_id:"+generation.ActivityID)
+	}
+	return dimensions
 }
 
 func capabilityCatalogMatchState(status jev.CapabilityQueryState) (string, int) {
