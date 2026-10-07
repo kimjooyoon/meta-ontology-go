@@ -33,6 +33,16 @@
   ],
   "ownership": [
     {
+      "branch": "agent/gooo-growth-next-20261008",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "docs/language-direction.ko.md",
+        "docs/research/verified-construction-thesis.md",
+        "internal/verify/scope_gooo_growth_next_20261008.go"
+      ]
+    },
+    {
       "branch": "agent/gooo-source-owned-comparison-20261007",
       "paths": [
         ".github/agent-scope-table.md",
