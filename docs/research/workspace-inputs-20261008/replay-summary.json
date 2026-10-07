@@ -1,0 +1,83 @@
+{
+  "schema": "gooo/workspace-replay-construction-study/v1",
+  "observed_on": "2026-10-08 Asia/Seoul",
+  "compiler_revision": "139b932a73bfdaf7422dacfa3ee1fcb1db938cb6",
+  "compiler_tree_dirty": false,
+  "go_version": "go version go1.27.1 darwin/arm64",
+  "replay_wall_ms": 1162.622875,
+  "interpretation_wall_ms": 382.76308300000017,
+  "prior_receipt": {
+    "path": "execution.json",
+    "sha256": "sha256:26dad94e827e56e28ab8a2ba5aec1ba9f8f52eee7ea74e05a290ed286d62c0bf",
+    "compiler_revision": "093a839199d2d91d6b1b73490c0a12057bafdc6f"
+  },
+  "replay": {
+    "path": "replay.json",
+    "receipt_sha256": "sha256:1d9f16e1126a4bbd37ed29f7d95881fc3cabba07b44bad29c9669c82b5f16aa5",
+    "receipt_bytes": 63551,
+    "decision": "PASS",
+    "runtime_activity_outputs": {
+      "passed": 8,
+      "total": 8
+    },
+    "native_runs": 2,
+    "current_model_calls": 0,
+    "replayed_fills": 1,
+    "native_elapsed_ms": 517.121125,
+    "input_separation": {
+      "status": "PASS",
+      "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+      "unique_inputs": 3,
+      "duplicate_rows": 1,
+      "overlapping_inputs": 2,
+      "disjoint_inputs": 1,
+      "disjoint_cases_passed": 1,
+      "unknown_inputs": 0,
+      "scope": "unique root-input tuples; actual inputs at all composing and earlier body-fill activities compared with their selection/holdout cases and probes; duplicate expectations must all match; model-training exposure is unknown",
+      "earlier_stages": [
+        {
+          "activity_id": "gooo-workspace://activity/gooo-package1activity-lift",
+          "source_sha256": "sha256:dfc43c8492a8f4a6b71c60616068a5fa0174cce7e6d43f9b19784e46af6ea461",
+          "plan_sha256": "sha256:d363756f693163c7d75b5d4be59a74060806890232c8a7382758b286621c6a6b",
+          "input_set_sha256": "sha256:efd16f8c3b2df5cde2f3982f650eb6fedf47fc12f5bb62c3ef7f19267e45cbfe",
+          "unique_inputs": 13
+        }
+      ]
+    },
+    "earlier_stage_identities_unchanged": true
+  },
+  "interpretation": {
+    "path": "replay-interpretation.json",
+    "receipt_sha256": "sha256:29ec6e56cd78b246228f585c9de760f4822ef5241adfd8f716f5b1e4013b1d68",
+    "receipt_bytes": 48476,
+    "decision": "OBSERVED",
+    "observed_rows": 2,
+    "runtime_expectations": 0,
+    "native_runs": 2,
+    "current_model_calls": 0,
+    "native_elapsed_ms": 365.346334,
+    "outputs": [
+      {
+        "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+        "next_operation": "OBSERVE_NEW_INPUTS",
+        "state": "PASS"
+      },
+      {
+        "message": "더 많은 사례를 만족한 후보가 기록되어 있습니다.",
+        "next_operation": "USE_OBSERVED_CANDIDATE",
+        "state": "PROGRESS"
+      }
+    ]
+  },
+  "reproduce": [
+    "gooo package replay --json --go /path/to/go1.27.1 --receipt docs/research/workspace-inputs-20261008/execution.json --cases examples/workspace-input-observations/cases.json examples/workspace-input-observations/gooo.workspace.json > replay.json",
+    "gooo package execute --json --go /path/to/go1.27.1 --construction-receipt replay.json examples/assembly-explainer/gooo.workspace.json"
+  ],
+  "measurement_scope": [
+    "One sequential local observation with uncontrolled warm build caches; wall time includes the whole CLI process, native elapsed time has its separate runtime scope.",
+    "Replay reuses saved construction choices and computes new runtime measurements; it does not reuse historical runtime success counters.",
+    "Eight matched activity outputs and one passing disjoint input case have different denominators. Disjointness is relative to recorded construction inputs, not model-training exposure.",
+    "The Gooo explanation is an input-only invocation with no expected-output success denominator. Its two observed suggestions are data and do not execute a repair.",
+    "This study measures no model prediction latency, CPU utilization, peak memory, external reproduction or comparative advantage."
+  ]
+}

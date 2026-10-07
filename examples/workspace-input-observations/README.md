@@ -56,3 +56,23 @@ expected-output evidence as unknown. Replay performs zero model calls.
 The [published run](../../docs/research/workspace-inputs-20261008/summary.json)
 records clean compiler revision `093a8391`, the raw receipt, eight matched
 activity outputs, one passing disjoint case, two native runs and zero model calls.
+
+The [replay and explanation observation](../../docs/research/workspace-inputs-20261008/replay-summary.json)
+uses clean compiler `139b932a` to read that earlier receipt. Fresh execution again
+matches 8/8 activity outputs and 1/1 disjoint case, retaining the earlier
+construction-input identities. The CLI takes 1.16 seconds in this single local
+run; build-cache conditions were not controlled for a performance comparison.
+
+Save replay's JSON as `replay.json` and let a Gooo tool read its construction:
+
+```sh
+gooo package execute --json --construction-receipt replay.json \
+  examples/assembly-explainer/gooo.workspace.json
+```
+
+Gooo's source-defined rules return `OBSERVE_NEW_INPUTS` for the candidate
+matching 3/3 construction cases and `USE_OBSERVED_CANDIDATE` for the candidate
+matching 0/3. The explanation command took 0.38 seconds and ran its native
+program twice. Both commands made zero model calls. The explanation is
+`OBSERVED`: it returns suggestions as data, with no expected-output accuracy
+denominator and no automatic repair action.
