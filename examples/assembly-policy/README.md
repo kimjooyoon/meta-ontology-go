@@ -83,3 +83,27 @@ explicit `body-compose` option. Other assembly profiles keep their existing
 construction behavior. Unit and native checks compare the interpreted Gooo
 policy outputs with its compiled Go projection and cover early stop, an
 unsolved space, type rejection, policy replacement, and saved replay.
+
+## Recorded own-model use
+
+The [October 8 observation](../../docs/research/assembly-policy-20261008/summary.json)
+retains raw outputs from clean compiler `1335874bc5d113f79572d64be23efe70f3a61d2c`.
+Deterministic ordering tried four candidates. The own model proposed mask 7,
+matching 3/5 cases and 13/15 fields. Gooo returned `CONTINUE_CANDIDATES`; the
+second candidate, mask 3, matched 5/5 and 15/15. Both paths generated the same
+program and matched four separate native expectations. Saved replay matched
+4/4 with zero new model calls. The model's two policy decisions also matched
+2/2 outputs when the policy was compiled and executed as a native Gooo program.
+
+The unsolved variant exhausted eight attempts, retained 3/5 cases and 13/15
+fields, and matched 2/4 native expectations. Gooo returned
+`EXPAND_DECLARED_CHOICES`. The command exited zero because the observation
+completed; matched/total and finite status describe the remaining work.
+
+Prediction took 20,208 ns; model setup took 0.705583 ms with 2,096 bytes of
+resident tensors. Whole-command times were 0.55 s deterministic and 0.34 s
+model-guided; maximum RSS was approximately 86.0 MB and 87.2 MB respectively.
+These are single sequential observations including Go compilation and native
+execution with uncontrolled caches. Model-only CPU utilization and a general
+speed advantage remain unmeasured. The model is unchanged and its training
+exposure to these task families remains unknown.

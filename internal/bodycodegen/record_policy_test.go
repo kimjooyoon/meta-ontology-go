@@ -3,6 +3,7 @@ package bodycodegen
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -154,6 +155,33 @@ func TestRecordPolicyRoundTripAndBoundTrace(t *testing.T) {
 			copied.Report.RecordAssembly.Control.Decisions[0].Input == result.Report.RecordAssembly.Control.Decisions[0].Input
 		if (replayErr == nil) != unchanged {
 			t.Fatal("policy replay binding", replayErr)
+		}
+	}
+}
+
+func TestRecordPolicyRequestsKeepIndependentState(t *testing.T) {
+	g, err := NewTypedPathGenerator(writeOriginRecordModel(t, "qat_ternary"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := recordUpdatesFixture(t)
+	policy := assemblyPolicyFixture(t)
+	errors := make(chan error, 4)
+	for range 4 {
+		go func() {
+			result, err := g.GenerateRecordAssemblyWithPolicy(context.Background(), "record.gooo", source, "Select", policy)
+			if err == nil {
+				r := result.Report.RecordAssembly
+				if r.ModelCalls != 1 || r.FieldsPassed != 15 || len(r.Control.Decisions) != len(r.Attempts) {
+					err = fmt.Errorf("request borrowed another construction state")
+				}
+			}
+			errors <- err
+		}()
+	}
+	for range 4 {
+		if err := <-errors; err != nil {
+			t.Fatal(err)
 		}
 	}
 }
