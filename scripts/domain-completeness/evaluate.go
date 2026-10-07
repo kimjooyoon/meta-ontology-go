@@ -61,11 +61,13 @@ type loadedInputs struct {
 	graph          graphSnapshot
 	finalGraphRaw  []byte
 	finalGraph     graphSnapshot
+	discovery      capabilityDiscoveryEvidence
 	evidenceRefs   []EvidenceRef
 	evidenceState  string
 	evidenceReason string
 	inputBytes     int64
 	inputFiles     int
+	inputPathSeen  map[string]bool
 	issues         []string
 }
 
@@ -256,14 +258,21 @@ func compareReports(current, baseline Report, supplied bool) Comparison {
 }
 
 func loadInputs(contractPath, evidenceDir string) loadedInputs {
-	result := loadedInputs{evidenceState: "UNKNOWN", evidenceReason: "EVIDENCE_ARTIFACTS_NOT_READ"}
+	result := loadedInputs{evidenceState: "UNKNOWN", evidenceReason: "EVIDENCE_ARTIFACTS_NOT_READ", inputPathSeen: make(map[string]bool)}
 	read := func(path string) []byte {
 		value, err := os.ReadFile(path)
 		if err != nil {
 			return nil
 		}
-		result.inputFiles++
-		result.inputBytes += int64(len(value))
+		identity, identityErr := filepath.Abs(path)
+		if identityErr != nil {
+			identity = filepath.Clean(path)
+		}
+		if !result.inputPathSeen[identity] {
+			result.inputPathSeen[identity] = true
+			result.inputFiles++
+			result.inputBytes += int64(len(value))
+		}
 		return value
 	}
 	result.contractRaw = read(contractPath)
@@ -315,12 +324,26 @@ func loadInputs(contractPath, evidenceDir string) loadedInputs {
 			result.issues = append(result.issues, "invalid generated graph")
 		}
 	}
+	discoveryReportRaw := read(filepath.Join(evidenceDir, capabilityDiscoveryReportPath))
+	discoveryReplayRaw := read(filepath.Join(evidenceDir, capabilityDiscoveryReplayPath))
+	discoverySourceRaw := read(filepath.Join(evidenceDir, capabilityDiscoverySourceCopy))
+	discoveryContractRaw := read(filepath.Join(evidenceDir, capabilityDiscoveryContractCopy))
+	result.discovery = validateCapabilityDiscoveryEvidence(
+		discoveryReportRaw, discoveryReplayRaw, discoverySourceRaw, discoveryContractRaw,
+	)
+	if result.discovery.State == "PASS" {
+		state, reason := validateCapabilityDiscoveryCells(result.observation, discoveryReportRaw, discoveryReplayRaw)
+		if state != "PASS" {
+			result.discovery.State, result.discovery.Reason = state, reason
+		}
+	}
+	result.discovery.Refs = discoveryEvidenceRefs(discoveryReportRaw, discoveryReplayRaw, discoverySourceRaw, discoveryContractRaw)
+	if result.discovery.State == "FAIL_CLOSED" {
+		result.issues = append(result.issues, result.discovery.Reason)
+	}
 	result.evidenceRefs, result.evidenceState, result.evidenceReason = validateEvidenceReferences(evidenceDir, result.report)
 	for _, ref := range result.evidenceRefs {
-		if value, err := os.ReadFile(filepath.Join(evidenceDir, ref.Path)); err == nil {
-			result.inputFiles++
-			result.inputBytes += int64(len(value))
-		}
+		read(filepath.Join(evidenceDir, ref.Path))
 	}
 	return result
 }
@@ -433,6 +456,7 @@ func measureDeclarationCoverage(spec dimensionSpec, contract languageutility.Con
 		}
 	}
 	dimension.Evidence = []EvidenceRef{{Role: "source-contract", Path: "examples/language-utility/contract.json", Digest: digestBytes(inputs.contractRaw)}}
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
 	dimension.Status = classify(dimension.Numerator, dimension.Denominator, 0, false)
 	if dimension.Status != "PASS" {
 		dimension.FirstUnresolved = &Frontier{Unit: "declared-cell", Stage: "SYNTAX_ACCEPTED", Reason: "GENERATED_ACTIVITY_MISSING", NextOperation: "REGENERATE_DECLARED_PROGRAM"}
@@ -446,6 +470,16 @@ func measureGenerationCoverage(spec dimensionSpec, contract languageutility.Cont
 		return unknown(dimension, "UTILITY_REPORT_MISSING", "GENERATE_UTILITY_REPORT")
 	}
 	for _, useCase := range contract.UseCases {
+		if useCase.ID == "capability-discovery" {
+			if inputs.discovery.State == "PASS" {
+				dimension.UnknownUnits++
+			} else if inputs.discovery.State == "FAIL_CLOSED" {
+				return failed(dimension, inputs.discovery.Reason, "REPAIR_CAPABILITY_DISCOVERY_RECEIPT")
+			} else {
+				dimension.UnknownUnits++
+			}
+			continue
+		}
 		var found *languageutility.CellResult
 		for index := range report.Cells {
 			cell := &report.Cells[index]
@@ -463,6 +497,14 @@ func measureGenerationCoverage(spec dimensionSpec, contract languageutility.Cont
 		}
 	}
 	dimension.Evidence = append(dimension.Evidence, inputs.evidenceRefs...)
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
+	if inputs.discovery.State != "PASS" || dimension.UnknownUnits > 0 {
+		dimension.Status = "UNKNOWN"
+		dimension.UnknownUnits = max(dimension.UnknownUnits, 1)
+		dimension.FirstUnresolved = &Frontier{Unit: "capability-discovery", Stage: "GENERATION_COVERAGE",
+			Reason: "DISCOVERY_RECEIPT_HAS_NO_GENERATED_CODE_ARTIFACT", NextOperation: "GENERATE_A_SOURCE_BOUND_CODE_ARTIFACT"}
+		return dimension
+	}
 	dimension.Status = classify(dimension.Numerator, dimension.Denominator, 0, false)
 	if dimension.Status != "PASS" {
 		dimension.FirstUnresolved = firstOpenCell(report, contract)
@@ -474,7 +516,7 @@ func measureGenerationCoverage(spec dimensionSpec, contract languageutility.Cont
 }
 
 func measureReverseObservationCoverage(spec dimensionSpec, inputs loadedInputs) Dimension {
-	dimension := newDimension(spec, 1)
+	dimension := newDimension(spec, 2)
 	if len(inputs.programRaw) == 0 || len(inputs.graphRaw) == 0 || len(inputs.finalGraphRaw) == 0 {
 		return unknown(dimension, "SOURCE_OR_REVERSE_GRAPH_MISSING", "GENERATE_AND_REOBSERVE_STRUCTURE")
 	}
@@ -486,6 +528,7 @@ func measureReverseObservationCoverage(spec dimensionSpec, inputs loadedInputs) 
 		{Role: "source-graph", Path: "gooo-graph.json", Digest: digestBytes(inputs.graphRaw)},
 		{Role: "reverse-observation", Path: "final-gooo-graph.json", Digest: digestBytes(inputs.finalGraphRaw)},
 	}
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
 	if !bytes.Equal(inputs.graphRaw, inputs.finalGraphRaw) {
 		if !equalGraph(inputs.graph, inputs.finalGraph) {
 			return failed(dimension, "REVERSE_GRAPH_MISMATCH", "REGENERATE_OR_REOBSERVE_STRUCTURE")
@@ -493,7 +536,21 @@ func measureReverseObservationCoverage(spec dimensionSpec, inputs loadedInputs) 
 	}
 	if equalGraph(inputs.graph, inputs.finalGraph) {
 		dimension.Numerator = 1
-		dimension.Status = "PASS"
+		if inputs.discovery.State != "PASS" {
+			dimension.UnknownUnits = 1
+			dimension.Status = "UNKNOWN"
+			dimension.FirstUnresolved = &Frontier{Unit: "capability-discovery", Stage: "REVERSE_OBSERVATION_COVERAGE",
+				Reason: inputs.discovery.Reason, NextOperation: "REVERSE_OBSERVE_A_DISCOVERY_BOUND_ARTIFACT"}
+			return dimension
+		}
+		reverse, ok := requireDiscoveryReceiptDimension(inputs.discovery.Report, "reverse_observation_coverage")
+		if !ok || reverse.Status != "UNKNOWN" {
+			return failed(dimension, "CAPABILITY_DISCOVERY_REVERSE_RECEIPT_CHANGED", "REPAIR_DISCOVERY_REVERSE_EVIDENCE")
+		}
+		dimension.UnknownUnits = 1
+		dimension.Status = "UNKNOWN"
+		dimension.FirstUnresolved = &Frontier{Unit: "capability-discovery", Stage: "REVERSE_OBSERVATION_COVERAGE",
+			Reason: reverse.Reason, NextOperation: "REVERSE_OBSERVE_A_DISCOVERY_BOUND_ARTIFACT"}
 		return dimension
 	}
 	return failed(dimension, "REVERSE_GRAPH_MISMATCH", "REGENERATE_OR_REOBSERVE_STRUCTURE")
@@ -508,21 +565,37 @@ func measureUseCaseCoverage(spec dimensionSpec, contract languageutility.Contrac
 	dimension.UnknownUnits = report.Summary.UnknownCells
 	dimension.RefutedUnits = report.Summary.RefutedCells
 	dimension.Evidence = []EvidenceRef{{Role: "use-case-outcomes", Path: "report.json", Digest: digestBytes(inputs.reportRaw)}}
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
 	if dimension.RefutedUnits > 0 {
 		return failed(dimension, "USE_CASE_EVIDENCE_REFUTED", "RETAIN_AND_REPAIR_COUNTEREXAMPLE")
 	}
 	if dimension.UnknownUnits > 0 {
 		return unknown(dimension, "USE_CASE_EVIDENCE_UNKNOWN", "RESOLVE_FIRST_UNKNOWN_USE_CASE")
 	}
-	dimension.Status = classify(dimension.Numerator, dimension.Denominator, 0, false)
+	unknownUnits := 0
+	if inputs.discovery.State == "PASS" {
+		realUseCase, ok := requireDiscoveryReceiptDimension(inputs.discovery.Report, "real_use_case_coverage")
+		if !ok || realUseCase.Status != "UNKNOWN" {
+			return failed(dimension, "CAPABILITY_DISCOVERY_USE_CASE_RECEIPT_CHANGED", "REPAIR_DISCOVERY_USE_CASE_EVIDENCE")
+		}
+		unknownUnits++
+		dimension.FirstUnresolved = &Frontier{Unit: "capability-discovery", Stage: "REAL_USE_CASE_COVERAGE",
+			Reason: realUseCase.Reason, NextOperation: "BIND_INDEPENDENT_INPUT_AND_EXPECTED_OUTPUT_CASES"}
+	} else {
+		unknownUnits++
+	}
+	dimension.UnknownUnits += unknownUnits
+	dimension.Status = classify(dimension.Numerator, dimension.Denominator, dimension.UnknownUnits, false)
 	if dimension.Status != "PASS" {
-		dimension.FirstUnresolved = firstOpenCell(report, contract)
+		if dimension.FirstUnresolved == nil {
+			dimension.FirstUnresolved = firstOpenCell(report, contract)
+		}
 	}
 	return dimension
 }
 
 func measureBoundaryCoverage(spec dimensionSpec, inputs loadedInputs) Dimension {
-	dimension := newDimension(spec, 5)
+	dimension := newDimension(spec, 6)
 	if len(inputs.inventoryRaw) == 0 || len(inputs.observationRaw) == 0 {
 		return unknown(dimension, "BOUNDARY_OBSERVATION_MISSING", "COLLECT_BOUNDARY_OBSERVATIONS")
 	}
@@ -537,6 +610,7 @@ func measureBoundaryCoverage(spec dimensionSpec, inputs loadedInputs) Dimension 
 		{Role: "repository-boundary", Path: "inventory.json", Digest: digestBytes(inputs.inventoryRaw)},
 		{Role: "observer-write-count", Path: "observation.json", Digest: digestBytes(inputs.observationRaw)},
 	}
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
 	for _, passed := range checks {
 		if passed {
 			dimension.Numerator++
@@ -544,10 +618,17 @@ func measureBoundaryCoverage(spec dimensionSpec, inputs loadedInputs) Dimension 
 			dimension.RefutedUnits++
 		}
 	}
+	if inputs.discovery.State == "PASS" {
+		dimension.Numerator++
+	} else if inputs.discovery.State == "FAIL_CLOSED" {
+		dimension.RefutedUnits++
+	} else {
+		dimension.UnknownUnits++
+	}
 	if dimension.RefutedUnits > 0 || inputs.observation.RepositoryWrites != 0 {
 		return failed(dimension, "READ_ONLY_BOUNDARY_REFUTED", "RESTORE_READ_ONLY_OBSERVER_BOUNDARY")
 	}
-	dimension.Status = classify(dimension.Numerator, dimension.Denominator, 0, false)
+	dimension.Status = classify(dimension.Numerator, dimension.Denominator, dimension.UnknownUnits, false)
 	if dimension.Status != "PASS" {
 		dimension.FirstUnresolved = &Frontier{Unit: "authority-boundary", Stage: "BOUNDARY_COVERAGE", Reason: "BOUNDARY_CHECK_INCOMPLETE", NextOperation: "COLLECT_BOUNDARY_OBSERVATIONS"}
 	}
@@ -555,7 +636,7 @@ func measureBoundaryCoverage(spec dimensionSpec, inputs loadedInputs) Dimension 
 }
 
 func measureProvenanceIntegrity(spec dimensionSpec, profile ProfileModel, inputs loadedInputs, subject string, profileSemanticsEqual bool, runID int64, attempt int) Dimension {
-	dimension := newDimension(spec, 8)
+	dimension := newDimension(spec, 9)
 	check := func(ok bool, missing bool) {
 		if missing {
 			dimension.UnknownUnits++
@@ -571,6 +652,7 @@ func measureProvenanceIntegrity(spec dimensionSpec, profile ProfileModel, inputs
 	programLoaded := len(inputs.programRaw) > 0
 	check(canonicalSubject(subject) && inputs.report.SubjectSHA == subject && inputs.observation.SubjectSHA == subject, !reportLoaded || !observationLoaded || subject == "")
 	check(inputs.progress.Contract.Digest == digestBytes(inputs.contractRaw), !contractLoaded || len(inputs.progressRaw) == 0)
+	check(inputs.discovery.State == "PASS", inputs.discovery.State == "UNKNOWN")
 	expectedProgram, programErr := languageutility.GenerateProgram(inputs.contract)
 	check(programErr == nil && bytes.Equal(inputs.programRaw, []byte(expectedProgram)) &&
 		inputs.report.ProgramDigest == digestBytes(inputs.programRaw), !contractLoaded || !programLoaded || !reportLoaded)
@@ -594,6 +676,7 @@ func measureProvenanceIntegrity(spec dimensionSpec, profile ProfileModel, inputs
 		{Role: "utility-report", Path: "report.json", Digest: digestBytes(inputs.reportRaw)},
 		{Role: "generated-program", Path: "program.gooo", Digest: digestBytes(inputs.programRaw)},
 	}
+	dimension.Evidence = append(dimension.Evidence, inputs.discovery.Refs...)
 	if dimension.RefutedUnits > 0 {
 		return failed(dimension, "PROVENANCE_BINDING_MISMATCH", "REGENERATE_EXACT_PROVENANCE_RECEIPT")
 	}

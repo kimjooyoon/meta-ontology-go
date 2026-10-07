@@ -106,7 +106,7 @@ fi
 # two new debugging cells remain OPEN. The final utility observation below
 # binds those same cells to this exact generated program and graph.
 seed_observation="$work/seed-observation.json"
-jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-language-utility-v1' \
+jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-language-utility-v2' \
   --arg head "$HEAD_SHA" --argjson stages '[
     "SOURCE_PRESENT","SYNTAX_ACCEPTED","SEMANTIC_ACCEPTED","OUTCOME_OBSERVED",
     "DETERMINISTIC_REPLAY","RESOURCE_OBSERVED","USER_ARTIFACT_VERIFIED"
@@ -120,11 +120,14 @@ jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-l
     closed("artifact-emission";"scripts/language-example-experiment";"artifact-emission.json") +
     closed("profiling";"scripts/language-profile-experiment";"profiling.json") +
     closed("debugging";"scripts/language-debug-experiment";"debugging.json") +
-    closed("package-execution";"scripts/language-package-execution";"package-execution.json") |
+    closed("package-execution";"scripts/language-package-execution";"package-execution.json") +
+    closed("capability-discovery";"scripts/language-utility-evidence";"capability-discovery.json") |
     map(if .use_case_id=="debugging" and (.stage_id=="DETERMINISTIC_REPLAY" or .stage_id=="RESOURCE_OBSERVED")
       then opened("debugging";.stage_id;"DEBUG_EVIDENCE_NOT_BOUND")
       elif .use_case_id=="package-execution" and .stage_id=="RESOURCE_OBSERVED"
-      then opened("package-execution";.stage_id;"PACKAGE_RESOURCES_NOT_OBSERVED") else . end))}
+      then opened("package-execution";.stage_id;"PACKAGE_RESOURCES_NOT_OBSERVED")
+      elif .use_case_id=="capability-discovery"
+      then opened("capability-discovery";.stage_id;"DISCOVERY_EVIDENCE_NOT_BOUND") else . end))}
 ' > "$seed_observation"
 go run ./cmd/language-utility-witness -contract examples/language-utility/contract.json \
   -observation "$seed_observation" -report "$work/seed-utility-report.json" \
@@ -156,7 +159,10 @@ jq -n --arg schema "gooo-graph/v1" --arg program_digest "$program_digest" --arg 
   ([$g.relations[] | select((.predicate=="used" and is_debug(.subject)) or (.predicate=="wasGeneratedBy" and is_debug(.object))) | {relation:.predicate,subject:.subject,object:.object}] | sort_by(.relation,.subject,.object)) as $debug_causal_edges |
   {schema:$schema,program_digest:$program_digest,graph_hash:$graph_hash,activity_count:$activity_count,edge_count:$edge_count,debug_activity_count:$debug_activity_count,debug_output_count:$debug_output_count,debug_used_edge_count:$debug_used_edge_count,debug_generated_edge_count:$debug_generated_edge_count,debug_activity_ids:$debug_activity_ids,debug_causal_edges:$debug_causal_edges}
 ' > "$work/graph-observation.json"
-jq -e '.activity_count==44 and .edge_count==88 and .debug_activity_count==2 and .debug_output_count==2 and .debug_used_edge_count==2 and .debug_generated_edge_count==2' "$work/graph-observation.json"
+utility_cell_count="$(jq '(.use_cases | length) * (.stages | length)' examples/language-utility/contract.json)"
+jq -e --argjson utility_cells "$utility_cell_count" \
+  '.activity_count==($utility_cells + .debug_activity_count) and .edge_count==(.activity_count * 2) and .debug_activity_count==2 and .debug_output_count==2 and .debug_used_edge_count==2 and .debug_generated_edge_count==2' \
+  "$work/graph-observation.json"
 
 edges_for() {
   local activity_id="$1"

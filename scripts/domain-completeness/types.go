@@ -2,7 +2,7 @@ package main
 
 const (
 	ReceiptSchema = "gooo://meta/domain-completeness/receipt/v1"
-	ProfileID     = "gooo://meta/domain-completeness/profile/gooo-language-utility-v1"
+	ProfileID     = "gooo://meta/domain-completeness/profile/gooo-language-utility-v2"
 )
 
 type Entity struct {

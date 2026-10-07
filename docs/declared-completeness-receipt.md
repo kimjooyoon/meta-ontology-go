@@ -168,6 +168,17 @@ scope coverage only. Activity-body correctness, independent use-case execution,
 generation, permission/network observations, and reverse observation remain
 separate; a catalog match is not a semantic success score.
 
+The CI language-utility contract v2 now includes one source-bound discovery
+case. It runs the same query twice and requires byte-identical report output,
+then validates the report against its separately copied source and domain
+contract before incorporating those files and digests into the domain
+completeness vector. The observed command path closes only its input, parse,
+semantic, outcome, deterministic replay, and report-artifact cells. It leaves
+resource observation open; its embedded receipt keeps code generation, reverse
+observation, and independent behavior unknown. The current sample's separate
+domain contract covers three of four declarations, which is preserved as
+`3/4` evidence rather than treated as a code-generation score.
+
 Broader runtime profiles still need to bind independent inputs, source revisions,
 tool identities, and observation artifacts. Comparison currently covers the
 closed typed-path generation/runtime profiles; broader domain comparisons and
