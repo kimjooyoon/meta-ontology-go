@@ -475,9 +475,35 @@ validates each proposed choice against the training cases. Without Laya, it
 follows the same stable candidate order. The JSON response keeps generation and
 execution receipts together: `training_passed/training_total` measures declared
 selection examples, `holdout_passed/holdout_total` measures the withheld source
-examples, and `execution.observation.cases` measures the independent runtime
+examples, and `execution.observation.cases` measures the separately executed runtime
 suite. The three denominators stay separate; passing finite examples does not
 establish intent understanding or all-input correctness.
+
+Generation and execution can also be separated, so a saved result can be
+replayed later without calling the chooser again:
+
+```sh
+gooo body-codegen --json --activity ClampNegativeToZero \
+  examples/body-codegen/ir-search-source.gooo.fixture > generation.json
+gooo body-execute \
+  --source examples/body-codegen/ir-search-source.gooo.fixture \
+  --generation generation.json \
+  --cases examples/body-codegen/ir-search-runtime-cases.json > runtime.json
+```
+
+Both execution routes rebuild the candidate set from the original Gooo search
+contract, check the selected candidate ID and expression, regenerate the exact
+Go projection, and re-evaluate the selected training and holdout cases before
+the native build. Recorded model calls remain historical observations; replay
+uses zero model calls. A faithfully recorded 0/N result can still be executed
+and measured. Native IR-search replay requires a source `assembling` search
+contract; external `--fill-search` generation plans alone cannot supply it.
+
+The bundled runtime suite repeats the five training inputs and two source
+holdout inputs. Its seven compiled results test execution consistency and
+report zero new inputs in `selection_disjoint_inputs`. Use different runtime
+inputs to measure additional cases; keep that denominator separate from the
+source suites.
 
 Related: [recipes](source-path-recipes.md), [language direction](language-direction.ko.md),
 [worker](native-body-worker.md).

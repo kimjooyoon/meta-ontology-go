@@ -308,11 +308,18 @@ gooo body-search-run \
 ```
 
 The command finishes one generation request before compiling the selected Go
-program, then executes it twice against the independent runtime cases. It emits
+program, then executes it twice against the supplied runtime cases. It emits
 one JSON object containing the generation and runtime receipts. Laya is optional;
 without it, Gooo uses its stable candidate order. Selection training cases,
-withheld holdout cases and independent runtime cases retain separate scores, so
+withheld holdout cases and separately executed runtime cases retain separate scores, so
 the result shows which part of the pipeline was actually exercised.
+
+For saved generation results, `body-execute` also reads the source-owned search
+contract directly. Both routes replay the declared candidate set, selected
+expression and finite training/holdout observations before building. The
+bundled runtime cases reuse those source inputs, so their 7/7 matches establish
+execution consistency and have zero new inputs. See [the split generation and
+execution example](../source-assembly.md#declare-a-typed-ir-search-in-the-gooo-source).
 
 ## Source-bound structural paths with a local Go model
 
