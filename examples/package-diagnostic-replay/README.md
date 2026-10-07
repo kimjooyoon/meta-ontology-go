@@ -49,3 +49,14 @@ calls remain historical fields in the construction receipt; current calls are
 Supply `--go /path/to/go1.27.1` when the Go binary on PATH differs. This tool suggests
 an operation as data; it does not modify another project's source. Its fixed cases
 establish the stated finite behavior, with broader task coverage still open.
+
+## Recorded own-model use
+
+The [raw study](../../docs/research/workspace-replay-20261007/summary.json) used the
+existing shared QAT model without new training. Its first choice matched 13/15
+construction fields; Gooo continued to a 15/15 candidate in two attempts. Stable
+deterministic ordering needed four attempts. Both programs matched 8/8 native
+output expectations, and the saved model-selected program replayed at 8/8 with
+zero new inference calls. Prediction took 19.3 microseconds, with model setup
+recorded separately at 0.79 milliseconds. This is one paired task observation;
+broader accuracy, calibration and speed remain unmeasured.
