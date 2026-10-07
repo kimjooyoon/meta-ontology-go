@@ -19,10 +19,16 @@ func TestClassifyKeepsUnknownDistinctFromProgress(t *testing.T) {
 	}{
 		{name: "closed", numerator: 4, denominator: 4, want: "PASS"},
 		{name: "measured gap", numerator: 2, denominator: 4, want: "PROGRESS"},
-		{name: "unobserved", denominator: 4, want: "UNKNOWN"},
+		{name: "measured zero", denominator: 4, want: "PROGRESS"},
+		{name: "unobserved", denominator: 4, unknown: 4, want: "UNKNOWN"},
+		{name: "missing population", want: "UNKNOWN"},
+		{name: "complete count with unknown evidence", numerator: 4, denominator: 4, unknown: 1, want: "UNKNOWN"},
 		{name: "unknown frontier", numerator: 2, denominator: 4, unknown: 1, want: "UNKNOWN"},
 		{name: "contradiction", numerator: 4, denominator: 4, refuted: true, want: "FAIL_CLOSED"},
 		{name: "invalid population", numerator: 5, denominator: 4, want: "FAIL_CLOSED"},
+		{name: "negative matches", numerator: -1, denominator: 4, want: "FAIL_CLOSED"},
+		{name: "negative population", denominator: -1, want: "FAIL_CLOSED"},
+		{name: "negative unknown", denominator: 4, unknown: -1, want: "FAIL_CLOSED"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -46,9 +52,9 @@ func TestDeclarationCoverageMatchesGeneratedUtilityProgram(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dimension := measureDeclarationCoverage(dimensions[0], contract, []byte(program), loadedInputs{contractRaw: contractRaw})
-	if dimension.Status != "PASS" || dimension.Numerator != 42 || dimension.Denominator != 42 || dimension.FirstUnresolved != nil {
-		t.Fatalf("declaration coverage = %#v, want PASS 42/42", dimension)
+	dimension := measureDeclarationCoverage(testProfileDimensions(t)[0], contract, []byte(program), loadedInputs{contractRaw: contractRaw})
+	if dimension.Status != "PASS" || dimension.Numerator != 49 || dimension.Denominator != 49 || dimension.FirstUnresolved != nil {
+		t.Fatalf("declaration coverage = %#v, want PASS 49/49", dimension)
 	}
 }
 
@@ -116,5 +122,35 @@ func TestReportDigestIsDeterministic(t *testing.T) {
 	}
 	if first != second {
 		t.Fatalf("report digests differ: %s and %s", first, second)
+	}
+}
+
+func TestCompareReportsRequiresSameProfileAndExactPopulation(t *testing.T) {
+	baseline := Report{
+		Schema: ReceiptSchema, ProfileID: ProfileID, SubjectSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		Contract:   ContractRef{SemanticHash: "profile"},
+		Generated:  GeneratedRef{SemanticHash: "profile", SemanticsEqual: true},
+		Snapshot:   Snapshot{Repository: "owner/repo", SubjectSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+		Dimensions: []Dimension{{ID: "use_case_coverage", MetricID: "metric", Unit: "use_cases", Status: "PROGRESS", Numerator: 2, Denominator: 4}},
+	}
+	baseline.Digest, _ = reportDigest(baseline)
+	current := baseline
+	current.SubjectSHA = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+	current.Snapshot.SubjectSHA = current.SubjectSHA
+	current.Dimensions = []Dimension{{ID: "use_case_coverage", MetricID: "metric", Unit: "use_cases", Status: "PROGRESS", Numerator: 3, Denominator: 4}}
+	comparison := compareReports(current, baseline, true)
+	if comparison.Status != "COMPARABLE" || len(comparison.Dimensions) != 1 || comparison.Dimensions[0].NumeratorDelta == nil || *comparison.Dimensions[0].NumeratorDelta != 1 {
+		t.Fatalf("compatible comparison = %#v", comparison)
+	}
+	current.Dimensions[0].Denominator = 5
+	comparison = compareReports(current, baseline, true)
+	if comparison.Status != "UNKNOWN_INCOMPATIBLE_BASELINE" {
+		t.Fatalf("different denominator comparison = %#v", comparison)
+	}
+	current.Dimensions[0].Denominator = 4
+	current.Dimensions[0].UnknownUnits = 1
+	comparison = compareReports(current, baseline, true)
+	if comparison.Status != "PARTIAL" || comparison.Dimensions[0].Status != "UNKNOWN_UNRESOLVED_EVIDENCE" {
+		t.Fatalf("unknown evidence comparison = %#v", comparison)
 	}
 }

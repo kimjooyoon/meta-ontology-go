@@ -1,8 +1,8 @@
 {
   "schema": "gooo/package-workspace-manifest/v1",
-  "entry": {"package_path": "boundedint/app", "activity": "Main"},
+  "entry": {"package_path": "{{module}}/app", "activity": "Main"},
   "packages": [
-    {"path": "boundedint/app", "name": "app", "imports": ["boundedint/core"], "sources": ["app.gooo"]},
-    {"path": "boundedint/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
+    {"path": "{{module}}/app", "name": "app", "imports": ["{{module}}/core"], "sources": ["app.gooo"]},
+    {"path": "{{module}}/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
   ]
 }

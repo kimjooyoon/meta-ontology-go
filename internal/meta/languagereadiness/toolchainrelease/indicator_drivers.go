@@ -7,7 +7,7 @@ func driverIndicators(s Summary) []Indicator {
 		s.ArchiveReplays, s.ChecksumEntries, s.ToolchainBindings, s.VCSBindings,
 		s.ConceptBindings, s.CodeBindings, s.MetricBindings, s.UseCaseBindings,
 	}
-	targets := []int{CaseCount, 3, 3, 1, 6, 6, 3, 3, 3, 3, 3, 3, 1, 6, IndicatorCount, 3}
+	targets := []int{CaseCount, TargetCount, 3, 2, 8, 8, TargetCount, TargetCount, TargetCount, TargetCount, TargetCount, TargetCount, 1, 6, IndicatorCount, 3}
 	proofs := []string{
 		"COHERENCE", "FOUNDATION", "FOUNDATION", "FOUNDATION",
 		"REGRESSION", "REGRESSION", "COHERENCE", "REGRESSION",

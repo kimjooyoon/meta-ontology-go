@@ -2,6 +2,11 @@ package languageutility
 
 import "strings"
 
+var canonicalDebugActivityIDs = []string{
+	"languageutility://activity/observe-debugging-deterministic-replay",
+	"languageutility://activity/observe-debugging-resource-observed",
+}
+
 func refutedResult(result CellResult, step, reason string) CellResult {
 	result.State, result.ClaimStatus, result.Resolution = StateRefuted, "REFUTED", "EXACT"
 	result.Step, result.Reason = step, reason
@@ -31,8 +36,16 @@ func validateDebugBinding(observed CellObservation, graph GraphObservation, stag
 }
 
 func validDebugGraph(graph GraphObservation) bool {
-	activities := map[string]bool{"languageutility://activity/observe-debugging-deterministic-replay": true, "languageutility://activity/observe-debugging-resource-observed": true}
-	if graph.Schema != "gooo-graph/v1" || graph.ActivityCount != 44 || graph.EdgeCount != 88 || graph.DebugActivityCount != 2 || graph.DebugOutputCount != 2 || graph.DebugUsedEdgeCount != 2 || graph.DebugGeneratedEdgeCount != 2 || len(graph.DebugActivityIDs) != 2 || len(graph.DebugCausalEdges) != 4 {
+	activities := make(map[string]bool, len(canonicalDebugActivityIDs))
+	for _, activity := range canonicalDebugActivityIDs {
+		activities[activity] = true
+	}
+	expectedActivities := ExpectedGraphActivityCount(len(activities))
+	if graph.Schema != "gooo-graph/v1" || graph.ActivityCount != expectedActivities ||
+		graph.EdgeCount != ExpectedGraphEdgeCount(expectedActivities) || graph.DebugActivityCount != len(activities) ||
+		graph.DebugOutputCount != len(activities) || graph.DebugUsedEdgeCount != len(activities) ||
+		graph.DebugGeneratedEdgeCount != len(activities) || len(graph.DebugActivityIDs) != len(activities) ||
+		len(graph.DebugCausalEdges) != len(activities)*2 {
 		return false
 	}
 	seenActivities := map[string]bool{}

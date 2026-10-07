@@ -62,6 +62,10 @@ func runtimeCompleteness(prior bodycodegen.Result, result Result) *completeness.
 	r.DecisionBasis = "Original compiler dimensions are preserved; this producer adds exact source replay, native build, ordered compiled executions, finite caller expectations and reverse source links. Unobserved permissions, model-training generalization and full-domain behavior remain explicit."
 	r.Scope["parent_receipt_sha256"] = o.ParentReceiptSHA256
 	r.Scope["producer_source_sha"] = o.ProducerSourceSHA
+	delete(r.Scope, "producer_module")
+	if o.ProducerModule != nil {
+		r.Scope["producer_module"] = o.ProducerModule
+	}
 	r.Scope["producer_toolchain"] = runtime.Version()
 	r.Scope["parent_observation_authority"] = "caller-supplied prior receipt; source/body/finite observations replayed; prior model execution and declared compiler revision not independently attested"
 	encoded, _ := json.Marshal(o)

@@ -1,0 +1,65 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Diagnose.input0": 17,
+        "Diagnose.input1": 21,
+        "Diagnose.input2": 1,
+        "Diagnose.input3": "네 필드가 남았습니다"
+      },
+      "expected": {
+        "Diagnose": {
+          "code": "partial",
+          "message": "네 필드가 남았습니다",
+          "action": "repair-and-replay"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Diagnose.input0": 3,
+        "Diagnose.input1": 5,
+        "Diagnose.input2": 0,
+        "Diagnose.input3": "two outputs differ"
+      },
+      "expected": {
+        "Diagnose": {
+          "code": "partial",
+          "message": "two outputs differ",
+          "action": "expand-examples"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Diagnose.input0": 8,
+        "Diagnose.input1": 8,
+        "Diagnose.input2": 0,
+        "Diagnose.input3": ""
+      },
+      "expected": {
+        "Diagnose": {
+          "code": "complete",
+          "message": "All observed fields matched.",
+          "action": "accept"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Diagnose.input0": 9007199254740994,
+        "Diagnose.input1": 9007199254740993,
+        "Diagnose.input2": 0,
+        "Diagnose.input3": "count exceeds total"
+      },
+      "expected": {
+        "Diagnose": {
+          "code": "invalid-counts",
+          "message": "count exceeds total",
+          "action": "fix-counts"
+        }
+      }
+    }
+  ]
+}

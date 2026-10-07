@@ -1,0 +1,39 @@
+package recordrelationtriples
+namespace recordrelationtriples
+
+entity First id "recordrelationtriples://entity/first" fields {
+    field key id "recordrelationtriples://entity/first/key" type string required one
+}
+
+entity Second id "recordrelationtriples://entity/second" fields {
+    field key id "recordrelationtriples://entity/second/key" type string required one
+}
+
+entity Third id "recordrelationtriples://entity/third" fields {
+    field key id "recordrelationtriples://entity/third/key" type string required one
+}
+
+entity Decision id "recordrelationtriples://entity/decision" fields {
+    field accepted id "recordrelationtriples://entity/decision/accepted" type boolean required one
+}
+
+activity MatchAll(First, Second, Third) -> Decision computes `if __GOOO_BODY_HOLE_condition__ {
+	return Decision{accepted: __GOOO_BODY_HOLE_accepted__}
+} else {
+	return Decision{accepted: false}
+}` assembling {
+    source_fill intent "Accept only when all three input keys agree." {
+        hole "condition"
+        hole "accepted"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "record-field-relation-composition/v2" max_expressions "8"
+            hole "accepted" grammar "record-boolean-literal/v1" max_expressions "2"
+        }
+    }
+    value_case "[{\"key\":\"alpha\"},{\"key\":\"alpha\"},{\"key\":\"alpha\"}]" -> "{\"accepted\":true}"
+    value_case "[{\"key\":\"alpha\"},{\"key\":\"beta\"},{\"key\":\"alpha\"}]" -> "{\"accepted\":false}"
+    value_case "[{\"key\":\"alpha\"},{\"key\":\"alpha\"},{\"key\":\"beta\"}]" -> "{\"accepted\":false}"
+    value_case "[{\"key\":\"alpha\"},{\"key\":\"beta\"},{\"key\":\"beta\"}]" -> "{\"accepted\":false}"
+    holdout_value_case "[{\"key\":\"theta\"},{\"key\":\"theta\"},{\"key\":\"theta\"}]" -> "{\"accepted\":true}"
+    holdout_value_case "[{\"key\":\"theta\"},{\"key\":\"theta\"},{\"key\":\"sigma\"}]" -> "{\"accepted\":false}"
+}

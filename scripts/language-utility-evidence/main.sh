@@ -52,8 +52,44 @@ cp "$out/package/report.json" "$out/evidence/package-execution.json"
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/gooo-graph.json" "$out/gooo-graph.json"
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/graph-observation.json" "$out/graph-observation.json"
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/program.gooo" "$out/program.gooo"
-
 digest() { printf 'sha256:%s' "$(sha256sum "$1" | cut -d' ' -f1)"; }
+
+phase="CAPABILITY_DISCOVERY"
+discovery_source="examples/capability-discovery/current.gooo.fixture"
+discovery_contract="examples/capability-discovery/domain-contract.gooo.fixture"
+discovery_query="How do I generate a canonical .gooo declaration?"
+go run ./cmd/gooo discover --json --query "$discovery_query" \
+  --domain-contract "$discovery_contract" "$discovery_source" \
+  > "$out/evidence/capability-discovery.json"
+go run ./cmd/gooo discover --json --query "$discovery_query" \
+  --domain-contract "$discovery_contract" "$discovery_source" \
+  > "$out/evidence/capability-discovery-replay.json"
+cmp "$out/evidence/capability-discovery.json" "$out/evidence/capability-discovery-replay.json"
+cp "$discovery_source" "$out/evidence/capability-discovery-source.gooo"
+cp "$discovery_contract" "$out/evidence/capability-discovery-domain-contract.gooo"
+jq -e --arg source_path "$discovery_source" --arg contract_path "$discovery_contract" \
+  --arg source_digest "$(digest "$discovery_source")" \
+  --arg contract_digest "$(digest "$discovery_contract")" --arg query "$discovery_query" '
+  .schema == "gooo/capability-discovery-report/v1" and .decision == "PROGRESS" and
+  .source_path == $source_path and .source_digest == $source_digest and
+  .domain_contract_path == $contract_path and .domain_contract_digest == $contract_digest and
+  .capability_trail.response.status == "AVAILABLE" and
+  .capability_trail.response.query == $query and
+  .capability_trail.response.declaration.bound == true and
+  .capability_trail.response.non_executing == true and
+  .capability_trail.response.non_authorizing == true and
+  .capability_trail.evidence_digest == .completeness_receipt.scope.jev_evidence_digest and
+  ([.completeness_receipt.dimensions[] | select(.id=="declaration_coverage") | .numerator,.denominator] == [3,4]) and
+  ([.completeness_receipt.dimensions[] | select(.id=="capability_discovery_observation") | .status] == ["PASS"]) and
+  ([.completeness_receipt.dimensions[] | select(.id=="generation_coverage") | .status] == ["UNKNOWN"]) and
+  ([.completeness_receipt.dimensions[] | select(.id=="reverse_observation_coverage") | .status] == ["UNKNOWN"]) and
+  ([.completeness_receipt.dimensions[] | select(.id=="real_use_case_coverage") | .status] == ["UNKNOWN"]) and
+  ([.completeness_receipt.dimensions[] | select(.id=="execution_boundary_coverage") | .status] == ["PASS"]) and
+  ([.completeness_receipt.dimensions[] | select(.id=="provenance_integrity") | .status] == ["PASS"])
+' "$out/evidence/capability-discovery.json"
+discovery_report_digest="$(digest "$out/evidence/capability-discovery.json")"
+discovery_replay_digest="$(digest "$out/evidence/capability-discovery-replay.json")"
+
 stages='["SOURCE_PRESENT","SYNTAX_ACCEPTED","SEMANTIC_ACCEPTED","OUTCOME_OBSERVED","DETERMINISTIC_REPLAY","RESOURCE_OBSERVED","USER_ARTIFACT_VERIFIED"]'
 phase="OBSERVATION"
 debug_report_digest="$(digest "$out/evidence/debugging.json")"
@@ -65,10 +101,10 @@ replay_edges="$(jq --arg activity "$replay_activity_id" --arg input "$cell_input
   '[.relations[] | select((.predicate=="used" and .subject==$activity and .object==$input) or (.predicate=="wasGeneratedBy" and .subject==$output and .object==$activity)) | {relation:.predicate,subject:.subject,object:.object}]' "$out/gooo-graph.json")"
 resource_edges="$(jq --arg activity "$resource_activity_id" --arg input "$cell_input_id" --arg output "$cell_output_id" \
   '[.relations[] | select((.predicate=="used" and .subject==$activity and .object==$input) or (.predicate=="wasGeneratedBy" and .subject==$output and .object==$activity)) | {relation:.predicate,subject:.subject,object:.object}]' "$out/gooo-graph.json")"
-jq -e '.activity_count==44 and .edge_count==88 and .debug_activity_count==2 and .debug_output_count==2 and .debug_used_edge_count==2 and .debug_generated_edge_count==2' "$out/graph-observation.json"
+jq -e '.activity_count==51 and .edge_count==102 and .debug_activity_count==2 and .debug_output_count==2 and .debug_used_edge_count==2 and .debug_generated_edge_count==2' "$out/graph-observation.json"
 jq -e 'length==2' <<<"$replay_edges"
 jq -e 'length==2' <<<"$resource_edges"
-jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-language-utility-v1' \
+jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-language-utility-v2' \
   --arg head "$HEAD_SHA" --argjson stages "$stages" \
   --arg ci "$(digest "$out/evidence/ci-plan.json")" \
   --arg source "$(digest "$out/evidence/source-execution.json")" \
@@ -76,6 +112,7 @@ jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-l
   --arg profile "$(digest "$out/evidence/profiling.json")" \
   --arg debug "$debug_report_digest" \
   --arg package "$(digest "$out/evidence/package-execution.json")" \
+  --arg discovery "$discovery_report_digest" --arg discovery_replay "$discovery_replay_digest" \
   --arg replay_activity "$replay_activity_id" --arg resource_activity "$resource_activity_id" \
   --argjson replay_edges "$replay_edges" --argjson resource_edges "$resource_edges" \
   --arg input_id "$cell_input_id" --arg output_id "$cell_output_id" \
@@ -96,13 +133,18 @@ jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-l
     closed("artifact-emission";"scripts/language-example-experiment";"artifact-emission.json";$emit) +
     closed("profiling";"scripts/language-profile-experiment";"profiling.json";$profile) +
     closed("debugging";"scripts/language-debug-experiment";"debugging.json";$debug) +
-    closed("package-execution";"scripts/language-package-execution";"package-execution.json";$package)) |
+    closed("package-execution";"scripts/language-package-execution";"package-execution.json";$package) +
+    closed("capability-discovery";"scripts/language-utility-evidence";"capability-discovery.json";$discovery)) |
     map(if .use_case_id=="debugging" and .stage_id=="DETERMINISTIC_REPLAY" then
       debug_closed(.stage_id;$replay_activity;$replay_edges)
     elif .use_case_id=="debugging" and .stage_id=="RESOURCE_OBSERVED" then
       debug_closed(.stage_id;$resource_activity;$resource_edges)
     elif .use_case_id=="package-execution" and .stage_id=="RESOURCE_OBSERVED" then
-      opened("package-execution";.stage_id;"PACKAGE_RESOURCES_NOT_OBSERVED") else . end))}
+      opened("package-execution";.stage_id;"PACKAGE_RESOURCES_NOT_OBSERVED")
+    elif .use_case_id=="capability-discovery" and .stage_id=="DETERMINISTIC_REPLAY" then
+      .evidence_path="evidence/capability-discovery-replay.json" | .evidence_digest=$discovery_replay
+    elif .use_case_id=="capability-discovery" and .stage_id=="RESOURCE_OBSERVED" then
+      opened("capability-discovery";.stage_id;"DISCOVERY_RESOURCES_NOT_MEASURED") else . end))}
 ' > "$out/observation.json"
 
 args=(-contract examples/language-utility/contract.json -observation "$out/observation.json" -report "$out/report.json" -program "$out/program.gooo")
@@ -213,8 +255,24 @@ domain_args=(
   -output "$domain_root/receipt.json"
   -program "$domain_root/program.gooo"
 )
-go run ./scripts/domain-completeness "${domain_args[@]}"
-go run ./scripts/domain-completeness "${domain_args[@]}" -check
+go run ./scripts/domain-completeness "${domain_args[@]}" -auto-baseline
+domain_replay_args=("${domain_args[@]}" -check)
+baseline_cache="$domain_root/receipt.json.baseline.json"
+if [ -s "$baseline_cache" ]; then
+  domain_replay_args+=(
+    -baseline "$baseline_cache"
+    -baseline-artifact-id "$(jq -r '.investment.comparison.baseline_artifact_id' "$domain_root/receipt.json")"
+    -baseline-artifact-digest "$(jq -r '.investment.comparison.baseline_artifact_digest' "$domain_root/receipt.json")"
+    -baseline-artifact-name "$(jq -r '.investment.comparison.baseline_artifact_name' "$domain_root/receipt.json")"
+    -baseline-artifact-bytes "$(jq -r '.investment.comparison.baseline_artifact_bytes' "$domain_root/receipt.json")"
+  )
+else
+  domain_replay_args+=(
+    -comparison-status "$(jq -r '.investment.comparison_status' "$domain_root/receipt.json")"
+    -comparison-reason "$(jq -r '.investment.comparison_reason' "$domain_root/receipt.json")"
+  )
+fi
+go run ./scripts/domain-completeness "${domain_replay_args[@]}"
 go run ./cmd/gooo check "$domain_root/program.gooo"
 
 phase="SUMMARY"
@@ -236,6 +294,7 @@ phase="SUMMARY"
   echo "- next operation: $domain_next"
   echo "- receipt: $domain_digest"
   echo "- system evidence files/budget, bytes/budget, repository writes, human actions: $domain_cost"
+  jq -r '"- historical comparison: \(.investment.comparison_status)" + (if .investment.comparison_reason == "" then "" else " (\(.investment.comparison_reason))" end) + (if .investment.comparison == null then "" else " against run \(.investment.comparison.baseline_workflow_run_id) attempt \(.investment.comparison.baseline_run_attempt) at \(.investment.comparison.baseline_subject_sha)" end)' "$domain_root/receipt.json"
   echo
   echo '### Debugging evidence'
   jq -r '"- replay: \(.replay.equal) / \(.replay.schema)\n- runtime observations: \(.summary.resource_observations)\n- source digests: \(.runtime_observations[0].source_raw_digest), \(.runtime_observations[1].source_raw_digest)\n- semantic digests: \(.runtime_observations[0].source_semantic_digest), \(.runtime_observations[1].source_semantic_digest)\n- binary digest: \(.runtime_observations[0].binary_digest)\n- arguments: \(.runtime_observations[0].arguments | join(" ")) ; \(.runtime_observations[1].arguments | join(" "))\n- subject SHA: \(.runtime_observations[0].subject_sha)\n- output digests: \(.runtime_observations[0].output_digest), \(.runtime_observations[1].output_digest)\n- wall_ns/wall_ms: \(.runtime_observations[0].wall_ns)/\(.runtime_observations[0].wall_ms), \(.runtime_observations[1].wall_ns)/\(.runtime_observations[1].wall_ms)\n- peak RSS KiB: \(.runtime_observations[0].peak_rss_kib), \(.runtime_observations[1].peak_rss_kib)\n- build wall_ms/RSS KiB: \(.build.wall_ms)/\(.build.peak_rss_kib)\n- evaluator build wall_ms/RSS KiB: \(.evaluator_build.wall_ms)/\(.evaluator_build.peak_rss_kib)\n- test wall_ms/RSS KiB: \(.test.wall_ms)/\(.test.peak_rss_kib)\n- cache states: \(.build.cache_state) ; \(.evaluator_build.cache_state) ; \(.test.cache_state)\n- Go runtime receipts: \(.summary.compiler.go127_runtimes)\n- Gooo graph activities/edges: \(.graph.activity_count)/\(.graph.edge_count)\n- Gooo debug activities, outputs, used/generated edges: \(.graph.debug_activity_count)/\(.graph.debug_output_count)/\(.graph.debug_used_edge_count)/\(.graph.debug_generated_edge_count)"' "$out/evidence/debugging.json"

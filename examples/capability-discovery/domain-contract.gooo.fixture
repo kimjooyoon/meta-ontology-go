@@ -1,0 +1,6 @@
+package billing_contract
+namespace billing
+entity Invoice id "billing://invoice"
+entity Receipt id "billing://receipt"
+entity Reviewer id "billing://reviewer"
+activity Issue(Invoice) -> Receipt

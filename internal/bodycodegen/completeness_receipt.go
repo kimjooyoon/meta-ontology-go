@@ -284,7 +284,7 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		DecisionBasis: "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
 		Scope: map[string]any{
 			"receipt_declaration": completeness.ContractBinding(),
-			"domain_scope":        "one pure typed Gooo activity body in the closed body-codegen profile, with one Integer, Boolean, or Text input and one supported scalar result",
+			"domain_scope":        "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
 			"allowed_investment":  allowedInvestment,
 			"excluded_scope":      []string{"unstated natural-language intent", "independently sourced production workflows", "generated runtime behavior", "unrestricted Gooo body syntax", "route clarity or utility"},
 			"plan_sha256":         planSHA, "compiler_source_sha": compilerSHA,
@@ -302,13 +302,39 @@ func buildCompletenessReceipt(report Report, failure string) *CompletenessReceip
 		NotClaimed:       []string{"user-intent completeness", "real-workflow coverage", "generated runtime behavior", "full-domain semantics", "route quality", "universal language completeness"},
 		FailClosedReason: failReason,
 	}
+	if len(report.RecordTypes) > 0 {
+		receipt.Scope["record_types"] = append([]RecordType(nil), report.RecordTypes...)
+		if hasOptionalRecordFields(report.RecordTypes) {
+			if report.RecordAssembly != nil {
+				receipt.Scope["record_body_scope"] = "optional single scalar fields use typed pointers for copy, transport, and source-declared bounded field synthesis; finite case results report presence separately from zero values"
+			} else {
+				receipt.Scope["record_body_scope"] = "optional single scalar fields use typed pointers for copy and transport; source-declared field synthesis requires record assembly"
+				receipt.NotClaimed = append(receipt.NotClaimed, "source-declared synthesis of optional record values")
+			}
+		}
+	}
 	if report.BodyPaths != nil {
 		bindPathCompletenessScope(receipt, report)
 	}
 	if report.RecordAssembly != nil {
 		bindRecordAssemblyScope(receipt, report)
 	}
+	if report.CallClosure != nil {
+		receipt.Scope["call_closure"] = report.CallClosure
+		receipt.Scope["domain_scope"] = "one pure typed Gooo activity with source-declared fixed callees; bounded acyclic call closure"
+	}
 	return receipt
+}
+
+func hasOptionalRecordFields(records []RecordType) bool {
+	for _, record := range records {
+		for _, field := range record.Fields {
+			if field.Presence == "optional" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func populateCompletenessReceipt(report *Report, failure string) {
@@ -487,6 +513,11 @@ func layaObservationDimension(report Report) CompletenessDimension {
 
 func nextCompletenessOperation(id string) string {
 	operations := map[string]string{
+		"body_fill_candidate_grammar_coverage": "EXPAND_THE_DECLARED_PER_HOLE_GRAMMAR_WITHIN_ITS_BOUND",
+		"body_fill_assignment_space_coverage":  "CONTINUE_OMITTED_ASSIGNMENTS_WITHIN_A_DECLARED_BUDGET",
+		"body_fill_candidate_probe_coverage":   "COMPLETE_THE_DECLARED_CANDIDATE_PROBES",
+		"provider_execution_accounting":        "RECORD_PROVIDER_EXECUTIONS_AND_UNKNOWN_OUTCOMES",
+
 		"typed_path_source_binding":          "BIND_ORIGINAL_SOURCE_DOCUMENT_SEARCH_CONFIG_AND_SELECTED_BODY",
 		"typed_path_finite_accuracy":         "CONTINUE_TYPED_CANDIDATES_AGAINST_DECLARED_FAILURES_AND_MEASURE_UNSEEN_INPUTS_SEPARATELY",
 		"typed_path_provider_accounting":     "RECORD_LOCAL_PREDICTIONS_MODEL_PINS_AND_EXTERNAL_CALL_COUNTS",

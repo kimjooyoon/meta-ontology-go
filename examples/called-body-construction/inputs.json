@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/body-composition-inputs/v1",
+  "inputs": [
+    {
+      "app/explain:Main.input0": 1,
+      "app/explain:Main.input1": 3,
+      "app/explain:Main.input2": 1,
+      "app/explain:Main.input3": "missing branch result"
+    },
+    {
+      "app/explain:Main.input0": 0,
+      "app/explain:Main.input1": 0,
+      "app/explain:Main.input2": 0,
+      "app/explain:Main.input3": ""
+    },
+    {
+      "app/explain:Main.input0": 11,
+      "app/explain:Main.input1": 11,
+      "app/explain:Main.input2": 0,
+      "app/explain:Main.input3": ""
+    }
+  ]
+}

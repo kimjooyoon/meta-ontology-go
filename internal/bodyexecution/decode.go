@@ -48,14 +48,20 @@ func DecodePlan(data []byte) (pathplan.Document, error) {
 // DecodeSourcePlan expands recipes from the execution's original source while
 // retaining the existing full-document decoder and its exact-field contract.
 func DecodeSourcePlan(ctx context.Context, filename string, source []byte, activity string, data []byte) (pathplan.Document, error) {
-	if len(data) == 0 {
-		return bodycodegen.DecodeSourcePathDocument(ctx, filename, source, activity, nil)
-	}
 	if ctx != nil && ctx.Err() == nil {
 		assembly, err := bodycodegen.SourceAssembly(ctx, filename, source, activity)
-		if err != nil || assembly != nil {
+		if err == nil && bodycodegen.IsSourceIRSearch(assembly) {
+			if len(data) != 0 {
+				return pathplan.Document{}, fmt.Errorf("source IR search owns its plan; omit the external path document")
+			}
+			return pathplan.Document{}, nil // Execute replays the source-owned IR search contract.
+		}
+		if err != nil || assembly != nil || len(data) == 0 {
 			return bodycodegen.DecodeSourcePathDocument(ctx, filename, source, activity, data)
 		}
+	}
+	if len(data) == 0 {
+		return bodycodegen.DecodeSourcePathDocument(ctx, filename, source, activity, nil)
 	}
 	if len(data) > 256<<10 || !utf8.Valid(data) {
 		return pathplan.Document{}, fmt.Errorf("invalid plan JSON size or UTF-8")

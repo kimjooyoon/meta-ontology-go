@@ -18,11 +18,19 @@ func IsSourceIRSearch(spec *assemblyspec.Spec) bool {
 func GenerateWithSourceIRSearch(ctx context.Context, filename string, source []byte, activity string,
 	spec *assemblyspec.Spec, endpoint, apiKey string,
 ) (Result, error) {
+	plan, err := sourceIRSearchPlan(spec)
+	if err != nil {
+		return Result{}, err
+	}
+	return GenerateWithIRBodySearch(ctx, filename, source, activity, plan, endpoint, apiKey)
+}
+
+func sourceIRSearchPlan(spec *assemblyspec.Spec) (IRBodySearchPlan, error) {
 	if !IsSourceIRSearch(spec) {
-		return Result{}, fmt.Errorf("activity has no source-declared IR search")
+		return IRBodySearchPlan{}, fmt.Errorf("activity has no source-declared IR search")
 	}
 	if err := spec.Validate(); err != nil {
-		return Result{}, fmt.Errorf("invalid source-declared IR search: %w", err)
+		return IRBodySearchPlan{}, fmt.Errorf("invalid source-declared IR search: %w", err)
 	}
 	plan := IRBodySearchPlan{
 		Schema: bodySearchPlanSchema, Intent: spec.Search.Intent, HoleID: spec.Search.HoleID,
@@ -40,5 +48,5 @@ func GenerateWithSourceIRSearch(ctx context.Context, filename string, source []b
 	for index, testCase := range spec.HoldoutCases {
 		plan.HoldoutTestCases[index] = IRBodyFillTestCase{Input: testCase.Input, Expected: testCase.Expected}
 	}
-	return GenerateWithIRBodySearch(ctx, filename, source, activity, plan, endpoint, apiKey)
+	return plan, nil
 }

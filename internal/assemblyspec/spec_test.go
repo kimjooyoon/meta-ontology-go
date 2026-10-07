@@ -59,6 +59,97 @@ func TestAssemblyFiniteAndTextBudgets(t *testing.T) {
 	}
 }
 
+func TestRecordSourceFillAllowsOnlyTypedRecordGrammars(t *testing.T) {
+	spec := Spec{
+		ValueCases: []ValueCase{
+			{Inputs: `[{"state":"ready"}]`, Expected: `{"decision":"accepted"}`},
+			{Inputs: `[{"state":"queued"}]`, Expected: `{"decision":"rejected"}`},
+		},
+		FillPlan: &FillPlan{
+			Intent: "route record states",
+			Holes:  []FillHole{{ID: "condition"}, {ID: "accepted"}, {ID: "rejected"}},
+			Generation: &FillGeneration{MaxCandidates: 16, HoleGrammars: []FillHoleGrammar{
+				{HoleID: "condition", Grammar: "record-field-predicate/v1", MaxExpressions: 4},
+				{HoleID: "accepted", Grammar: "record-string-literal/v1", MaxExpressions: 2},
+				{HoleID: "rejected", Grammar: "record-string-literal/v1", MaxExpressions: 2},
+			}},
+		},
+	}
+	if err := spec.Validate(); err != nil {
+		t.Fatalf("typed record candidate derivation rejected: %v", err)
+	}
+	composed := spec.Clone()
+	composed.FillPlan.Generation.HoleGrammars[0].Grammar = "record-field-predicate-composition/v1"
+	if err := composed.Validate(); err != nil {
+		t.Fatalf("composed record predicate derivation rejected: %v", err)
+	}
+	ordered := spec.Clone()
+	ordered.FillPlan.Generation.HoleGrammars[0].Grammar = "record-field-predicate/v2"
+	if err := ordered.Validate(); err != nil {
+		t.Fatalf("ordered record predicate derivation rejected: %v", err)
+	}
+	relation := spec.Clone()
+	relation.FillPlan.Generation.HoleGrammars[0].Grammar = "record-field-relation/v1"
+	if err := relation.Validate(); err != nil {
+		t.Fatalf("record field relation derivation rejected: %v", err)
+	}
+	relationComposed := spec.Clone()
+	relationComposed.FillPlan.Generation.HoleGrammars[0].Grammar = "record-field-relation-composition/v1"
+	if err := relationComposed.Validate(); err != nil {
+		t.Fatalf("composed record field relation derivation rejected: %v", err)
+	}
+	orderedComposed := spec.Clone()
+	orderedComposed.FillPlan.Generation.HoleGrammars[0].Grammar = "record-field-predicate-composition/v2"
+	if err := orderedComposed.Validate(); err != nil {
+		t.Fatalf("ordered composed record predicate derivation rejected: %v", err)
+	}
+	relationTriples := spec.Clone()
+	relationTriples.FillPlan.Generation.HoleGrammars[0].Grammar = "record-field-relation-composition/v2"
+	if err := relationTriples.Validate(); err != nil {
+		t.Fatalf("three-relation record derivation rejected: %v", err)
+	}
+	relationQuads := spec.Clone()
+	relationQuads.FillPlan.Generation.HoleGrammars[0].Grammar = "record-field-relation-composition/v3"
+	if err := relationQuads.Validate(); err != nil {
+		t.Fatalf("four-relation record derivation rejected: %v", err)
+	}
+
+	invalid := spec.Clone()
+	invalid.FillPlan.Generation.HoleGrammars[0].Grammar = "integer-predicate/v1"
+	if err := invalid.Validate(); err == nil {
+		t.Fatal("integer grammar mixed into record value cases")
+	}
+}
+
+func TestRecordSourceFillHoldoutsAreCanonicalDisjointAndCloned(t *testing.T) {
+	spec := Spec{
+		ValueCases:        []ValueCase{{Inputs: `[{"state":"ready"}]`, Expected: `{"decision":"yes"}`}},
+		ValueHoldoutCases: []ValueCase{{Inputs: `[{"state":"queued"}]`, Expected: `{"decision":"no"}`}},
+		FillPlan: &FillPlan{Intent: "route by state", Holes: []FillHole{{ID: "condition"}, {ID: "yes"}},
+			Candidates: []FillCandidate{{ID: "a", Fills: []HoleFilling{{HoleID: "condition", Expression: `input.state == "ready"`}, {HoleID: "yes", Expression: `"yes"`}}},
+				{ID: "b", Fills: []HoleFilling{{HoleID: "condition", Expression: `input.state != "ready"`}, {HoleID: "yes", Expression: `"no"`}}}}},
+	}
+	if err := spec.Validate(); err != nil {
+		t.Fatalf("disjoint record holdout rejected: %v", err)
+	}
+	clone := spec.Clone()
+	clone.ValueHoldoutCases[0].Expected = `{"decision":"changed"}`
+	if spec.ValueHoldoutCases[0].Expected != `{"decision":"no"}` {
+		t.Fatal("record holdout clone shares caller storage")
+	}
+	for _, mutate := range []func(*Spec){
+		func(s *Spec) { s.ValueHoldoutCases[0].Inputs = s.ValueCases[0].Inputs },
+		func(s *Spec) { s.ValueHoldoutCases[0].Expected = `{"decision": "no"}` },
+		func(s *Spec) { s.FillPlan = nil },
+	} {
+		invalid := spec.Clone()
+		mutate(invalid)
+		if err := invalid.Validate(); err == nil {
+			t.Fatal("invalid record holdout accepted", invalid)
+		}
+	}
+}
+
 func TestAssemblyCheckpointCanonicalSelectionAndClone(t *testing.T) {
 	s := validSpec()
 	s.Baseline = "return input - 2"

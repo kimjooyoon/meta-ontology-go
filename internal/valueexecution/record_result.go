@@ -2,10 +2,10 @@ package valueexecution
 
 import "maps"
 
-// RecordFields is data only. Field names and required presence are checked
+// RecordFields is data only. Field names and required or optional presence are checked
 // against the entity schema compiled from the Gooo source.
 // RecordFields carries scalar values admitted by the compiled Gooo schema.
-// Current record transport supports string and Boolean fields.
+// Current record transport supports string, Boolean and integer fields.
 type RecordFields map[string]any
 
 type RecordEvidence struct {

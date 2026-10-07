@@ -38,12 +38,20 @@ func generateDenominator(raw []byte, version, capability int) ([]byte, error) {
 	for _, item := range value.Boundaries {
 		links += item.LinkTarget
 	}
-	if links != 12 {
-		return nil, fmt.Errorf("baseline denominator changed link obligations")
+	if links <= 0 {
+		return nil, fmt.Errorf("baseline denominator has no link obligations")
 	}
+	baselineLinks := links
 	value.Version++
 	value.DenominatorID = denominatorID(value.Version)
 	value.Boundaries[0].Target++
+	links = 0
+	for _, item := range value.Boundaries {
+		links += item.LinkTarget
+	}
+	if links != baselineLinks {
+		return nil, fmt.Errorf("generated denominator changed link obligations")
+	}
 	out, err := json.MarshalIndent(value, "", "  ")
 	return append(out, '\n'), err
 }

@@ -1,0 +1,65 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "example/read:Parse": 0
+      },
+      "expected": {
+        "example/read:Parse": {
+          "value": 1,
+          "note": "Result belongs to read"
+        },
+        "example/read:Unwrap": 1,
+        "example/write:Render": {
+          "scaled": 2
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/read:Parse": 2
+      },
+      "expected": {
+        "example/read:Parse": {
+          "value": 3,
+          "note": "Result belongs to read"
+        },
+        "example/read:Unwrap": 3,
+        "example/write:Render": {
+          "scaled": 6
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/read:Parse": -4
+      },
+      "expected": {
+        "example/read:Parse": {
+          "value": -3,
+          "note": "Result belongs to read"
+        },
+        "example/read:Unwrap": -3,
+        "example/write:Render": {
+          "scaled": -6
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/read:Parse": 9007199254740993
+      },
+      "expected": {
+        "example/read:Parse": {
+          "value": 9007199254740994,
+          "note": "Result belongs to read"
+        },
+        "example/read:Unwrap": 9007199254740994,
+        "example/write:Render": {
+          "scaled": 18014398509481988
+        }
+      }
+    }
+  ]
+}

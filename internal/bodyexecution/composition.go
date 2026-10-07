@@ -26,12 +26,15 @@ type Composition struct {
 	DriverSHA256         string                         `json:"driver_sha256"`
 	Plan                 CompositionPlan                `json:"plan"`
 	Steps                []CompositionStep              `json:"steps"`
+	Preparations         []CompositionStep              `json:"preparations,omitempty"`
 	GoooSource           string                         `json:"gooo_source"`
 	Source               string                         `json:"source"`
 	Driver               string                         `json:"driver_source"`
 	Model                *bodycodegen.RetainedModelInfo `json:"model,omitempty"`
+	FillModel            *CompositionFillModelInfo      `json:"fill_model,omitempty"`
 	ElapsedNS            int64                          `json:"elapsed_ns"`
 	Scope                string                         `json:"scope"`
+	Continuation         *CompositionContinuation       `json:"continuation,omitempty"`
 }
 
 // GenerateComposition constructs each activity in typed plan order, retaining
@@ -39,8 +42,15 @@ type Composition struct {
 // become the next step's exact input. No native execution happens in this phase.
 func GenerateComposition(ctx context.Context, filename string, source []byte,
 	suite CompositionCases, modelPath string) (Composition, error) {
+	return GenerateCompositionWithOptions(ctx, filename, source, suite, CompositionOptions{ModelPath: modelPath})
+}
+
+// GenerateCompositionWithOptions retains separate optional models for structural
+// choices and source_fill assignments. Empty paths use deterministic selection.
+func GenerateCompositionWithOptions(ctx context.Context, filename string, source []byte,
+	suite CompositionCases, options CompositionOptions) (Composition, error) {
 	start := time.Now()
-	graph, err := prepareCompositionGraph(ctx, filename, source)
+	graph, err := prepareCompositionGraphForEntry(ctx, filename, source, options.EntryActivity)
 	result := Composition{Schema: "gooo/body-composition/v1", Stage: "PLAN", OriginalSourceSHA256: digest(source),
 		Plan: graph.plan, Steps: make([]CompositionStep, 0, graph.count),
 		Scope: "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"}
@@ -54,7 +64,7 @@ func GenerateComposition(ctx context.Context, filename string, source []byte,
 	if err != nil {
 		return finish(err)
 	}
-	if modelPath != "" && !graph.hasAssembly() {
+	if (options.ModelPath != "" || options.FillModelPath != "") && !graph.hasAssembly() {
 		return finish(fmt.Errorf("a composition model requires an assembling activity"))
 	}
 	if _, err := graph.inputRows(suite); err != nil {
@@ -64,8 +74,11 @@ func GenerateComposition(ctx context.Context, filename string, source []byte,
 	if err := graph.preflight(ctx, filename, source); err != nil {
 		return finish(err)
 	}
+	if err := graph.validateModelRoute(ctx, filename, source, options); err != nil {
+		return finish(err)
+	}
 	result.Stage = "ACTIVITY_GENERATION"
-	current, err := generateCompositionSteps(ctx, filename, source, graph, modelPath, &result)
+	current, err := generateCompositionSteps(ctx, filename, source, graph, options, &result)
 	if err != nil {
 		return finish(err)
 	}
@@ -86,9 +99,12 @@ func GenerateComposition(ctx context.Context, filename string, source []byte,
 }
 
 func generateCompositionSteps(ctx context.Context, filename string, source []byte,
-	graph compositionGraph, modelPath string, result *Composition) ([]byte, error) {
-	var generator *bodycodegen.TypedPathGenerator
-	current := append([]byte(nil), source...)
+	graph compositionGraph, options CompositionOptions, result *Composition) ([]byte, error) {
+	generator := compositionAssemblyGenerator{options: options}
+	current, err := generateCalledBodies(ctx, filename, source, graph, &generator, result)
+	if err != nil {
+		return nil, err
+	}
 	for _, node := range graph.nodes[:graph.count] {
 		result.ActiveActivity = node.Name
 		if err := ctx.Err(); err != nil {
@@ -96,16 +112,13 @@ func generateCompositionSteps(ctx context.Context, filename string, source []byt
 		}
 		var generation bodycodegen.Result
 		var err error
-		if node.Assembling {
-			if generator == nil {
-				generator, err = bodycodegen.NewTypedPathGenerator(modelPath)
-				if err != nil {
-					return nil, err
-				}
-				info := generator.Info()
+		if node.Assembling && !node.Prepared {
+			generation, err = generator.generate(ctx, filename, current, node.Name)
+			result.FillModel = generator.fillInfo
+			if generator.retained != nil {
+				info := generator.retained.Info()
 				result.Model = &info
 			}
-			generation, err = generateCompositionAssembly(ctx, filename, current, node.Name, generator)
 		} else {
 			generation, err = bodycodegen.GenerateWithPlanner(ctx, filename, current, node.Name, "", "")
 		}
@@ -113,25 +126,27 @@ func generateCompositionSteps(ctx context.Context, filename string, source []byt
 			return nil, fmt.Errorf("activity %q generation: %w", node.Name, err)
 		}
 		result.Steps = append(result.Steps, CompositionStep{InputSourceSHA256: digest(current), Generation: generation})
-		if node.Assembling {
-			current = []byte(generation.GoooSource)
+		if node.Assembling && !node.Prepared {
+			realized, err := bodycodegen.RealizeSourceAssembly(ctx, filename, current, generation)
+			if err != nil {
+				return nil, fmt.Errorf("activity %q checkpoint: %w", node.Name, err)
+			}
+			current = []byte(realized.Source)
 		}
 	}
 	return current, nil
 }
 
 func (graph compositionGraph) hasAssembly() bool {
+	if len(graph.plan.Preparations) > 0 {
+		return true
+	}
 	for _, node := range graph.nodes[:graph.count] {
 		if node.Assembling {
 			return true
 		}
 	}
 	return false
-}
-
-func generateCompositionAssembly(ctx context.Context, filename string, source []byte,
-	activity string, generator *bodycodegen.TypedPathGenerator) (bodycodegen.Result, error) {
-	return generator.GenerateSourceAssembly(ctx, filename, source, activity)
 }
 
 func DecodeComposition(raw []byte) (Composition, error) {
@@ -150,7 +165,7 @@ func VerifyComposition(ctx context.Context, filename string, source []byte, prio
 }
 
 func replayComposition(ctx context.Context, filename string, source []byte, prior Composition) (compositionGraph, error) {
-	graph, err := prepareCompositionGraph(ctx, filename, source)
+	graph, err := prepareCompositionGraphForEntry(ctx, filename, source, prior.Plan.EntryActivity)
 	if err != nil {
 		return graph, err
 	}
@@ -159,13 +174,16 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 		!sameCompositionPlan(prior.Plan, graph.plan) || len(prior.Steps) != graph.count {
 		return graph, fmt.Errorf("composition original source, typed plan or step order differs")
 	}
-	current := append([]byte(nil), source...)
+	current, err := replayCalledBodies(ctx, filename, source, graph, prior)
+	if err != nil {
+		return graph, err
+	}
 	for i, node := range graph.nodes[:graph.count] {
 		step := prior.Steps[i]
 		if step.InputSourceSHA256 != digest(current) || step.Generation.Report.Activity != node.Name {
 			return graph, fmt.Errorf("composition step %d input or activity order differs", i)
 		}
-		if node.Assembling {
+		if node.Assembling && !node.Prepared {
 			realized, err := bodycodegen.RealizeSourceAssembly(ctx, filename, current, step.Generation)
 			if err != nil {
 				return graph, fmt.Errorf("composition step %d replay: %w", i, err)
@@ -184,6 +202,9 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 	if err != nil || prior.Driver != driver || prior.DriverSHA256 != digest([]byte(driver)) {
 		return graph, fmt.Errorf("composition generated input delivery driver does not replay")
 	}
+	if err := verifyCompositionContinuation(prior); err != nil {
+		return graph, err
+	}
 	return graph, ctx.Err()
 }
 
@@ -199,7 +220,8 @@ func replayCompositionPlain(ctx context.Context, filename string, source []byte,
 		!r.DeterministicReplay || r.ActivityID != node.ID || r.SourceDigest != expected.SourceDigest ||
 		r.GeneratedDigest != expected.GeneratedDigest || r.ProgramDigest != expected.ProgramDigest ||
 		r.InputType != expected.InputType || r.OutputType != expected.OutputType ||
-		!reflect.DeepEqual(r.InputParameters, expected.InputParameters) || !reflect.DeepEqual(r.RecordTypes, expected.RecordTypes) {
+		!reflect.DeepEqual(r.InputParameters, expected.InputParameters) || !reflect.DeepEqual(r.RecordTypes, expected.RecordTypes) ||
+		!reflect.DeepEqual(r.CallClosure, expected.CallClosure) {
 		return fmt.Errorf("ordinary body projection differs from its source")
 	}
 	return nil

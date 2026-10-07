@@ -1,0 +1,49 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "app/explain:Main.input0": 17,
+        "app/explain:Main.input1": 21,
+        "app/explain:Main.input2": 1,
+        "app/explain:Main.input3": "네 필드가 남았습니다"
+      },
+      "expected": {
+        "app/explain:Main": "partial: 네 필드가 남았습니다 [repair-and-replay]"
+      }
+    },
+    {
+      "inputs": {
+        "app/explain:Main.input0": 3,
+        "app/explain:Main.input1": 5,
+        "app/explain:Main.input2": 0,
+        "app/explain:Main.input3": "two outputs differ"
+      },
+      "expected": {
+        "app/explain:Main": "partial: two outputs differ [expand-examples]"
+      }
+    },
+    {
+      "inputs": {
+        "app/explain:Main.input0": 8,
+        "app/explain:Main.input1": 8,
+        "app/explain:Main.input2": 0,
+        "app/explain:Main.input3": ""
+      },
+      "expected": {
+        "app/explain:Main": "complete: All observed fields matched. [accept]"
+      }
+    },
+    {
+      "inputs": {
+        "app/explain:Main.input0": 9007199254740994,
+        "app/explain:Main.input1": 9007199254740993,
+        "app/explain:Main.input2": 0,
+        "app/explain:Main.input3": "count exceeds total"
+      },
+      "expected": {
+        "app/explain:Main": "invalid-counts: count exceeds total [fix-counts]"
+      }
+    }
+  ]
+}

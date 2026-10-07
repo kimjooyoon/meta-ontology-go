@@ -28,7 +28,13 @@ func TestSemanticConsumerAcceptsActualSyntaxProducerReceipt(t *testing.T) {
 	}
 	if semantic.Decision != DecisionPass || semantic.Resolution != ResolutionExact ||
 		semantic.Summary.Total != FixedTotal || semantic.Summary.Unresolved != 0 {
-		t.Fatalf("semantic report from actual syntax producer: decision=%s resolution=%s total=%d unresolved=%d", semantic.Decision, semantic.Resolution, semantic.Summary.Total, semantic.Summary.Unresolved)
+		var unresolved []string
+		for _, result := range semantic.Cases {
+			if result.Status == StatusUnresolved {
+				unresolved = append(unresolved, result.Definition.ID+":"+result.Evidence.Error)
+			}
+		}
+		t.Fatalf("semantic report from actual syntax producer: decision=%s resolution=%s total=%d unresolved=%d cases=%v", semantic.Decision, semantic.Resolution, semantic.Summary.Total, semantic.Summary.Unresolved, unresolved)
 	}
 }
 

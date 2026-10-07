@@ -55,7 +55,13 @@ func RecordDeclarations(records []RecordType, native bool) string {
 			if native {
 				name = field.GoName
 			}
-			fmt.Fprintf(&out, "%s %s `json:%q`\n", name, recordGoType(field.TypeID), field.Name)
+			fieldType := recordGoType(field.TypeID)
+			jsonOptions := ""
+			if field.Presence == "optional" {
+				fieldType = "*" + fieldType
+				jsonOptions = ",omitempty"
+			}
+			fmt.Fprintf(&out, "%s %s `json:%q`\n", name, fieldType, field.Name+jsonOptions)
 		}
 		fmt.Fprintf(&out, "}\n//gooo:generated:end id=%q kind=\"entity\"\n", record.ID)
 	}

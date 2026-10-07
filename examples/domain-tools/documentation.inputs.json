@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/body-composition-inputs/v1",
+  "inputs": [
+    {
+      "gooo/tools/policy:Assess": {
+        "declared": 4,
+        "documented": 1,
+        "implemented": 4,
+        "stale": false
+      }
+    },
+    {
+      "gooo/tools/policy:Assess": {
+        "declared": 4,
+        "documented": 4,
+        "implemented": 4,
+        "stale": false
+      }
+    }
+  ]
+}

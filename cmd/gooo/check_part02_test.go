@@ -100,6 +100,20 @@ func TestRunInitRequiresOneDestination(t *testing.T) {
 	}
 }
 
+func TestRunInitRejectsInvalidLibraryModulePath(t *testing.T) {
+	for _, module := range []string{"../escape", "Uppercase/Name", "example.org//empty"} {
+		var stdout, stderr bytes.Buffer
+		destination := filepath.Join(t.TempDir(), "library")
+		code := run([]string{"init", "--template", "library", "--module", module, destination}, &stdout, &stderr)
+		if code != exitUsage || !strings.Contains(stderr.String(), "invalid library module path") {
+			t.Fatalf("invalid module path %q was accepted: code=%d stdout=%q stderr=%q", module, code, stdout.String(), stderr.String())
+		}
+		if _, err := os.Stat(destination); !os.IsNotExist(err) {
+			t.Fatalf("invalid module path %q created a destination: stat err=%v", module, err)
+		}
+	}
+}
+
 type fixtureReader struct {
 	source string
 	err    error

@@ -8,6 +8,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"strings"
 )
 
 const (
@@ -43,53 +44,24 @@ func routeEquivalence(packageName, activityName, inputType, outputType, body str
 }
 
 func routeEquivalenceParameters(packageName, activityName string, parameters []InputParameter, outputType, body string, generated []byte, rule string, records ...RecordType) (RouteEquivalenceReceipt, error) {
-	sourceFileSet := token.NewFileSet()
-	sourceText := fmt.Sprintf("package %s\n%sfunc %s(%s) %s {\n%s\n}\n", packageName, RecordDeclarations(records, false), activityName, parameterDeclaration(parameters), outputType, body)
-	sourceFile, err := parser.ParseFile(sourceFileSet, "source-body.goo", sourceText, parser.AllErrors)
-	if err != nil {
-		return RouteEquivalenceReceipt{}, fmt.Errorf("parse accepted source body for equivalence receipt: %w", err)
-	}
-	sourceFunction, ok := findFunction(sourceFile, activityName)
-	if !ok {
-		return RouteEquivalenceReceipt{}, fmt.Errorf("accepted source body has no function for equivalence receipt")
-	}
-	normalizeIntegerLocalInitializers(packageName, sourceFile, sourceFileSet)
+	return routeEquivalenceWithCalls(packageName, activityName, parameters, outputType, body, generated, rule, nil, records)
+}
 
-	generatedFileSet := token.NewFileSet()
-	generatedFile, err := parser.ParseFile(generatedFileSet, "generated-body.go", generated, parser.AllErrors)
+func routeEquivalenceWithCalls(packageName, activityName string, parameters []InputParameter,
+	outputType, body string, generated []byte, rule string, calls []pureCallFunction, records []RecordType) (RouteEquivalenceReceipt, error) {
+	var sourceText strings.Builder
+	sourceText.WriteString(fmt.Sprintf("package %s\n%sfunc %s(%s) %s {\n%s\n}\n", packageName, RecordDeclarations(records, false), activityName, parameterDeclaration(parameters), outputType, body))
+	for _, call := range calls {
+		sourceText.WriteString(call.declaration())
+	}
+	withSignature := len(parameters) > 1 || len(records) > 0
+	sourceForm, err := canonicalizeRouteProjection(packageName, activityName, []byte(sourceText.String()), true, withSignature, calls, records)
 	if err != nil {
-		return RouteEquivalenceReceipt{}, fmt.Errorf("parse generated body for equivalence receipt: %w", err)
+		return RouteEquivalenceReceipt{}, err
 	}
-	restoreRecordNames(generatedFile, records)
-	generatedFunction, ok := findFunction(generatedFile, activityName)
-	if !ok {
-		return RouteEquivalenceReceipt{}, fmt.Errorf("generated source has no function for equivalence receipt")
-	}
-
-	sourceForm, err := canonicalizeSemanticBody(sourceFileSet, sourceFunction.Body, records...)
+	generatedForm, err := canonicalizeRouteProjection(packageName, activityName, generated, false, withSignature, calls, records)
 	if err != nil {
-		return RouteEquivalenceReceipt{}, fmt.Errorf("canonicalize accepted source body: %w", err)
-	}
-	generatedForm, err := canonicalizeSemanticBody(generatedFileSet, generatedFunction.Body, records...)
-	if err != nil {
-		return RouteEquivalenceReceipt{}, fmt.Errorf("canonicalize generated body: %w", err)
-	}
-	if len(parameters) > 1 || len(records) > 0 {
-		sourceSignature, ok := formatNode(sourceFileSet, sourceFunction.Type)
-		if !ok {
-			return RouteEquivalenceReceipt{}, fmt.Errorf("format source signature")
-		}
-		generatedSignature, ok := formatNode(generatedFileSet, generatedFunction.Type)
-		if !ok {
-			return RouteEquivalenceReceipt{}, fmt.Errorf("format generated signature")
-		}
-		sourceForm = append([]byte(sourceSignature+"\x00"), sourceForm...)
-		generatedForm = append([]byte(generatedSignature+"\x00"), generatedForm...)
-	}
-	if len(records) > 0 {
-		recordIdentity, _ := json.Marshal(records)
-		sourceForm = append(append(recordIdentity, 0), sourceForm...)
-		generatedForm = append(append([]byte(nil), recordIdentity...), append([]byte{0}, generatedForm...)...)
+		return RouteEquivalenceReceipt{}, err
 	}
 	equivalent := bytes.Equal(sourceForm, generatedForm)
 	decision := "FAIL_CLOSED"
@@ -102,6 +74,43 @@ func routeEquivalenceParameters(packageName, activityName string, parameters []I
 		GeneratedSemanticDigest: digest(generatedForm), Equivalent: equivalent,
 		Scope: routeEquivalenceScope,
 	}, nil
+}
+
+func canonicalizeRouteProjection(packageName, activityName string, raw []byte, original, withSignature bool,
+	calls []pureCallFunction, records []RecordType) ([]byte, error) {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "equivalence.go", raw, parser.AllErrors)
+	if err != nil {
+		return nil, fmt.Errorf("parse route equivalence projection: %w", err)
+	}
+	if original {
+		normalizeIntegerLocalInitializers(packageName, file, fset)
+	} else {
+		restoreRecordNames(file, records)
+	}
+	function, ok := findFunction(file, activityName)
+	if !ok {
+		return nil, fmt.Errorf("route equivalence projection has no declared function")
+	}
+	form, err := canonicalizeSemanticBody(fset, function.Body, records...)
+	if err != nil {
+		return nil, err
+	}
+	if withSignature {
+		signature, ok := formatNode(fset, function.Type)
+		if !ok {
+			return nil, fmt.Errorf("format route equivalence signature")
+		}
+		form = append([]byte(signature+"\x00"), form...)
+	}
+	if len(records) > 0 {
+		identity, _ := json.Marshal(records)
+		form = append(append(identity, 0), form...)
+	}
+	if len(calls) > 0 {
+		return appendPureCallForms(form, fset, file, calls, records)
+	}
+	return form, nil
 }
 
 func canonicalizeSemanticBody(fileSet *token.FileSet, body *ast.BlockStmt, records ...RecordType) ([]byte, error) {

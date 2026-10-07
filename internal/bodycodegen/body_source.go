@@ -13,6 +13,9 @@ type preparedBody struct {
 	parameters                                []InputParameter
 	records                                   []RecordType
 	base                                      generatedRoute
+	file                                      *syntax.File
+	allRecords                                []RecordType
+	activityIDs                               map[string]string
 }
 
 func prepareActivityBody(filename string, source []byte, activityName string) (preparedBody, error) {
@@ -43,12 +46,13 @@ func prepareActivityBody(filename string, source []byte, activityName string) (p
 		return p, fmt.Errorf("activity %q output entity %q is outside the pure value profile", activityName, p.activity.Output)
 	}
 	p.records = activityRecords(records, p.parameters, p.outputType, p.activity.ValueProgram)
+	p.file, p.allRecords, p.activityIDs = file, records, map[string]string{}
 	for _, node := range model.Nodes {
-		if node.Kind == bidir.ActivityKind && node.Name == activityName {
-			p.activityID = string(node.ID)
-			break
+		if node.Kind == bidir.ActivityKind {
+			p.activityIDs[node.Name] = string(node.ID)
 		}
 	}
+	p.activityID = p.activityIDs[activityName]
 	if p.activityID == "" {
 		return p, fmt.Errorf("activity %q has no stable semantic identity", activityName)
 	}
@@ -95,6 +99,5 @@ func sourceBodyParameters(activity *syntax.ActivityDecl, records []RecordType) (
 }
 
 func (p preparedBody) generate(route string) (generatedRoute, error) {
-	return generateRouteParameters(p.packageName, p.activity.Name, p.activityID,
-		p.parameters, p.outputType, p.body, route, p.records...)
+	return p.generateBody(p.body, route)
 }

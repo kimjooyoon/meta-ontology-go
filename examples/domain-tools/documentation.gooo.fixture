@@ -1,0 +1,40 @@
+package policy
+namespace documentation
+
+import report "gooo/tools/report"
+
+entity DocumentationObservation id "gooo://domain-tools/documentation-observation" fields {
+    field declared id "gooo://domain-tools/documentation/declared" type integer required one
+    field documented id "gooo://domain-tools/documentation/documented" type integer required one
+    field implemented id "gooo://domain-tools/documentation/implemented" type integer required one
+    field stale id "gooo://domain-tools/documentation/stale" type boolean required one
+}
+
+activity Assess(DocumentationObservation) -> Report computes `if input.declared < 0 || input.documented < 0 || input.implemented < 0 || input.documented > input.declared || input.implemented > input.declared {
+    return Report{state: "FAIL_CLOSED", next_operation: "RECONCILE_COUNTS", message: "관측 수치를 확인하세요."}
+}
+if input.declared == 0 {
+    return Report{state: "UNKNOWN", next_operation: "DECLARE_FEATURES", message: "기능 목록을 선언하세요."}
+}
+if input.stale {
+    return Report{state: "PROGRESS", next_operation: "UPDATE_EXAMPLES", message: "구현과 예제를 다시 맞추세요."}
+}
+if input.implemented < input.declared {
+    return Report{state: "PROGRESS", next_operation: "IMPLEMENT_DECLARATIONS", message: "선언한 기능의 구현이 남았습니다."}
+}
+if input.documented == input.declared {
+    return Report{state: "PASS", next_operation: "CHECK_NEW_FEATURES", message: "선언한 기능과 예제가 일치합니다."}
+}
+let result = Report{state: "", next_operation: "", message: ""}
+result.state = "UNKNOWN"
+result.next_operation = "DOCUMENT_MISSING"
+result.message = "모든 예제를 작성했습니다."
+return result` assembling {
+    choice "partial-state" field_update at "0" alternative "\"PROGRESS\"" intent "미작성 예제를 부분 충족으로 기록한다. Use PROGRESS for missing examples."
+    choice "keep-action" field_update at "1" alternative "\"REWRITE_COMPILER\"" intent "기존 문서 작성 동작을 유지한다. Keep the original DOCUMENT_MISSING action."
+    choice "explanation" field_update at "2" alternative "\"예제가 없는 기능이 남았습니다.\"" intent "문서가 필요한 기능을 설명한다. Explain the missing feature examples."
+    value_case "[{\"declared\":2,\"documented\":1,\"implemented\":2,\"stale\":false}]" -> "{\"state\":\"PROGRESS\",\"next_operation\":\"DOCUMENT_MISSING\",\"message\":\"예제가 없는 기능이 남았습니다.\"}"
+    value_case "[{\"declared\":2,\"documented\":2,\"implemented\":2,\"stale\":false}]" -> "{\"state\":\"PASS\",\"next_operation\":\"CHECK_NEW_FEATURES\",\"message\":\"선언한 기능과 예제가 일치합니다.\"}"
+    value_case "[{\"declared\":0,\"documented\":0,\"implemented\":0,\"stale\":false}]" -> "{\"state\":\"UNKNOWN\",\"next_operation\":\"DECLARE_FEATURES\",\"message\":\"기능 목록을 선언하세요.\"}"
+    attempts "8"
+}

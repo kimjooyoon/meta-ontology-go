@@ -1,0 +1,539 @@
+{
+  "schema": "gooo/research-pure-activity-calls/v1",
+  "observed_at_utc": "2026-10-07T19:21:01.299774+00:00",
+  "compiler": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.5-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.1",
+    "module_version": "v0.6.4-dev.0.20261007191840-2a4408497d98",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.4-dev.0.20261007191840-2a4408497d98"
+    },
+    "compiler_source_sha": "2a4408497d98dbe5bb293c01be266de4a0240b28",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "2a4408497d98dbe5bb293c01be266de4a0240b28",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.24-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.1"
+  },
+  "compiler_binary": {
+    "sha256": "68afe8ae311695cfdc4961ecc11693572e94174aa04dc7fcb2888e455436573b",
+    "bytes": 22639090
+  },
+  "environment": {
+    "os": "Darwin",
+    "release": "25.5.0",
+    "architecture": "arm64"
+  },
+  "sources": {
+    "examples/pure-activity-calls/main.gooo.fixture": {
+      "sha256": "c2f923feadaca98e93112eb32b1f7d8b952073ce568f3c2c86d206087ef8792f",
+      "bytes": 2552
+    },
+    "examples/pure-activity-calls/policy.gooo.fixture": {
+      "sha256": "99e81297974734fe2762ed4ee2beb16ae0e1a5db2a3506184e19be3094cc4bd4",
+      "bytes": 2480
+    },
+    "examples/assembly-policy/checkpoint.gooo.fixture": {
+      "sha256": "45e0a407e5900d4c5d39564370b6c21028ff24d7545acc655316837145f1fb3a",
+      "bytes": 1150
+    },
+    "examples/assembly-policy/cases.json": {
+      "sha256": "fd2442504ba7eacb4e3e6776a3f4478f5b878265af660af6c040cb6b7769ed83",
+      "bytes": 1502
+    }
+  },
+  "model": {
+    "hub_revision": "https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary",
+    "observation": {
+      "schema": "gooo/retained-path-model/v1",
+      "loaded": true,
+      "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+      "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+      "resident_tensor_bytes": 2096,
+      "setup_ms": 0.575666,
+      "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+      "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+      "feature_version": "triple_record_field_context_v1_shared_v1",
+      "arithmetic_version": "float32_separate_v1"
+    },
+    "new_training": false
+  },
+  "method": {
+    "order": [
+      "deterministic",
+      "model",
+      "replay",
+      "checkpoint",
+      "continued"
+    ],
+    "paired_scope": "Same source, source-declared alternatives, eight-attempt budget, Explain policy, entry and native cases for deterministic/model. Each CLI operation uses a separate process.",
+    "policy_reuse": "Diagnose calls source-defined IsPartial; Explain calls source-defined CanContinue. Policy projection records its own closed helper dependency. The optional model ranks record-field alternatives and does not generate these helper bodies.",
+    "checkpoint": "Separate model-guided construction uses Checkpoint to save one attempted candidate. Continued construction supplies the Explain policy and no model file.",
+    "replay": "Loads the saved model-guided composition; model metadata and prediction counts are retained historical observations, not new inference.",
+    "exit_codes": {
+      "deterministic": 0,
+      "model": 0,
+      "replay": 0,
+      "checkpoint": 0,
+      "continued": 0
+    },
+    "exit_scope": "Completed observation, including partial checkpoint; exit zero alone does not mean every case passed.",
+    "training_exposure": "UNKNOWN",
+    "host_cpu_utilization": "NOT_SAMPLED",
+    "model_cpu_utilization_increment": "UNMEASURED",
+    "timing_scope": "One sequential observation per command; native Go compilation and execution included. Focused race tests were launched on the same host during this study, and caches were uncontrolled. Timing is descriptive; no speedup or model-only CPU claim.",
+    "interventions": "Maintainer authored source, helpers, alternatives and expectations. Five explicit CLI operations completed without candidate edits or interactive approval. Task scheduling and external adoption are not measured.",
+    "coverage_scope": "Projection semantic-unit preservation covers the accepted root and each distinct helper once. Finite case/field satisfaction uses separate denominators. The partial checkpoint preserves every projection unit while matching only 3/5 construction cases.",
+    "language_profile": "Same-source fixed pure activity calls. Package-qualified body calls and synthesizing a callee are not implemented by this change."
+  },
+  "runs": {
+    "deterministic": {
+      "generated_now": true,
+      "entry_activity": "Diagnose",
+      "original_source_sha256": "sha256:c2f923feadaca98e93112eb32b1f7d8b952073ce568f3c2c86d206087ef8792f",
+      "generated_sha256": "sha256:d2f4557ea366b61817fb07273bdd64f6b63086c9df92e93c06350dc2dd97f116",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 0,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 1,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 2,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "projection": {
+        "source_semantic_units": 104,
+        "lowered_semantic_units": 104,
+        "completeness_percent": 100,
+        "call_closure": {
+          "schema": "gooo/pure-activity-call-closure/v1",
+          "activities": [
+            {
+              "name": "IsPartial",
+              "activity_id": "diagnostics://activity/is-partial",
+              "program_sha256": "sha256:3b53d16759d4d7e0471b355b04adc1ab43fe00d418dbdcb75e2f6beef295d76a"
+            }
+          ],
+          "edges": [
+            {
+              "caller_id": "diagnostics://activity/diagnose",
+              "callee_id": "diagnostics://activity/is-partial",
+              "ordinal": 0
+            }
+          ],
+          "max_calls_per_invocation": 1
+        }
+      },
+      "historical_model_calls": 0,
+      "historical_predict_ns": 0,
+      "new_model_calls": 0,
+      "model_loaded_for_this_command": false,
+      "continuation": null,
+      "native_expectations": {
+        "passed": 4,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PASS",
+          "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 4,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.54,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86196224
+      }
+    },
+    "model": {
+      "generated_now": true,
+      "entry_activity": "Diagnose",
+      "original_source_sha256": "sha256:c2f923feadaca98e93112eb32b1f7d8b952073ce568f3c2c86d206087ef8792f",
+      "generated_sha256": "sha256:d2f4557ea366b61817fb07273bdd64f6b63086c9df92e93c06350dc2dd97f116",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "projection": {
+        "source_semantic_units": 104,
+        "lowered_semantic_units": 104,
+        "completeness_percent": 100,
+        "call_closure": {
+          "schema": "gooo/pure-activity-call-closure/v1",
+          "activities": [
+            {
+              "name": "IsPartial",
+              "activity_id": "diagnostics://activity/is-partial",
+              "program_sha256": "sha256:3b53d16759d4d7e0471b355b04adc1ab43fe00d418dbdcb75e2f6beef295d76a"
+            }
+          ],
+          "edges": [
+            {
+              "caller_id": "diagnostics://activity/diagnose",
+              "callee_id": "diagnostics://activity/is-partial",
+              "ordinal": 0
+            }
+          ],
+          "max_calls_per_invocation": 1
+        }
+      },
+      "historical_model_calls": 1,
+      "historical_predict_ns": 18917,
+      "new_model_calls": 1,
+      "model_loaded_for_this_command": true,
+      "continuation": null,
+      "native_expectations": {
+        "passed": 4,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PASS",
+          "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 4,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.32,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 85360640
+      }
+    },
+    "replay": {
+      "generated_now": false,
+      "entry_activity": "Diagnose",
+      "original_source_sha256": "sha256:c2f923feadaca98e93112eb32b1f7d8b952073ce568f3c2c86d206087ef8792f",
+      "generated_sha256": "sha256:d2f4557ea366b61817fb07273bdd64f6b63086c9df92e93c06350dc2dd97f116",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "projection": {
+        "source_semantic_units": 104,
+        "lowered_semantic_units": 104,
+        "completeness_percent": 100,
+        "call_closure": {
+          "schema": "gooo/pure-activity-call-closure/v1",
+          "activities": [
+            {
+              "name": "IsPartial",
+              "activity_id": "diagnostics://activity/is-partial",
+              "program_sha256": "sha256:3b53d16759d4d7e0471b355b04adc1ab43fe00d418dbdcb75e2f6beef295d76a"
+            }
+          ],
+          "edges": [
+            {
+              "caller_id": "diagnostics://activity/diagnose",
+              "callee_id": "diagnostics://activity/is-partial",
+              "ordinal": 0
+            }
+          ],
+          "max_calls_per_invocation": 1
+        }
+      },
+      "historical_model_calls": 1,
+      "historical_predict_ns": 18917,
+      "new_model_calls": 0,
+      "model_loaded_for_this_command": false,
+      "continuation": null,
+      "native_expectations": {
+        "passed": 4,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PASS",
+          "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 4,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.3,
+        "user_seconds": 0.15,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 86016000
+      }
+    },
+    "checkpoint": {
+      "generated_now": true,
+      "entry_activity": "Diagnose",
+      "original_source_sha256": "sha256:c2f923feadaca98e93112eb32b1f7d8b952073ce568f3c2c86d206087ef8792f",
+      "generated_sha256": "sha256:607ebe1225f4fa58c1aa41213e3f7055cfc7667704081d3580441ea2624a33ff",
+      "construction": {
+        "status": "PARTIAL_FINITE",
+        "passed": 3,
+        "total": 5,
+        "fields_passed": 13,
+        "fields_total": 15,
+        "selected_mask": 7
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        }
+      ],
+      "projection": {
+        "source_semantic_units": 105,
+        "lowered_semantic_units": 105,
+        "completeness_percent": 100,
+        "call_closure": {
+          "schema": "gooo/pure-activity-call-closure/v1",
+          "activities": [
+            {
+              "name": "IsPartial",
+              "activity_id": "diagnostics://activity/is-partial",
+              "program_sha256": "sha256:3b53d16759d4d7e0471b355b04adc1ab43fe00d418dbdcb75e2f6beef295d76a"
+            }
+          ],
+          "edges": [
+            {
+              "caller_id": "diagnostics://activity/diagnose",
+              "callee_id": "diagnostics://activity/is-partial",
+              "ordinal": 0
+            }
+          ],
+          "max_calls_per_invocation": 1
+        }
+      },
+      "historical_model_calls": 1,
+      "historical_predict_ns": 11583,
+      "new_model_calls": 1,
+      "model_loaded_for_this_command": true,
+      "continuation": null,
+      "native_expectations": {
+        "passed": 2,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PROGRESS",
+          "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 2,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.48,
+        "user_seconds": 0.15,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 85442560
+      }
+    },
+    "continued": {
+      "generated_now": true,
+      "entry_activity": "Diagnose",
+      "original_source_sha256": "sha256:c2f923feadaca98e93112eb32b1f7d8b952073ce568f3c2c86d206087ef8792f",
+      "generated_sha256": "sha256:d2f4557ea366b61817fb07273bdd64f6b63086c9df92e93c06350dc2dd97f116",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "projection": {
+        "source_semantic_units": 104,
+        "lowered_semantic_units": 104,
+        "completeness_percent": 100,
+        "call_closure": {
+          "schema": "gooo/pure-activity-call-closure/v1",
+          "activities": [
+            {
+              "name": "IsPartial",
+              "activity_id": "diagnostics://activity/is-partial",
+              "program_sha256": "sha256:3b53d16759d4d7e0471b355b04adc1ab43fe00d418dbdcb75e2f6beef295d76a"
+            }
+          ],
+          "edges": [
+            {
+              "caller_id": "diagnostics://activity/diagnose",
+              "callee_id": "diagnostics://activity/is-partial",
+              "ordinal": 0
+            }
+          ],
+          "max_calls_per_invocation": 1
+        }
+      },
+      "historical_model_calls": 1,
+      "historical_predict_ns": 11583,
+      "new_model_calls": 0,
+      "model_loaded_for_this_command": false,
+      "continuation": {
+        "retained_attempts": 1,
+        "added_attempts": 1,
+        "new_model_calls": 0
+      },
+      "native_expectations": {
+        "passed": 4,
+        "total": 4,
+        "new_model_calls": 0,
+        "input_separation": {
+          "status": "PASS",
+          "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+          "unique_inputs": 4,
+          "duplicate_rows": 0,
+          "overlapping_inputs": 0,
+          "disjoint_inputs": 4,
+          "disjoint_cases_passed": 4,
+          "unknown_inputs": 0,
+          "scope": "unique root-input tuples; actual inputs at every assembling activity compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+        }
+      },
+      "resource_observation": {
+        "wall_seconds": 0.34,
+        "user_seconds": 0.18,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86130688
+      }
+    }
+  },
+  "raw_artifacts": {
+    "build.json": {
+      "sha256": "3c7bf360193fda45e8a053bc5fc8903d921a8bfd5257d6f8d3ba3e9ab6e5e896",
+      "bytes": 659
+    },
+    "policy-projection.json": {
+      "sha256": "b36a4e0fd78f999eefbd573756a67741dd0f5c52528e7101cd7cc07b923787ed",
+      "bytes": 25269
+    },
+    "deterministic.json": {
+      "sha256": "fcc05eae0ed812563641ebe18cbe09000b87dac912bd5a9460d666c3602ee1ef",
+      "bytes": 51075
+    },
+    "deterministic.time": {
+      "sha256": "294ad3b13a77e1efbc99a5c76a992a6b6eb02f70efc4996543d766ed86971896",
+      "bytes": 777
+    },
+    "model.json": {
+      "sha256": "9a795db63a167d2ba570ac08089b8a7b6dd425004f9b784e74f4f824834211b2",
+      "bytes": 53227
+    },
+    "model.time": {
+      "sha256": "12930ecb949cf9145a395a1403b7e2c8687b153d5f70fc3909e4b9b398850092",
+      "bytes": 777
+    },
+    "replay.json": {
+      "sha256": "c6129fc48c270220e692fbcccca4951437414f21c724e05c611d82fc156637e1",
+      "bytes": 53229
+    },
+    "replay.time": {
+      "sha256": "e1cada24625c464e3ba7940ced992d00cc9799555607ca3a964590ef800e0308",
+      "bytes": 777
+    },
+    "checkpoint.json": {
+      "sha256": "8d1cc9f5567ee6c7e922e4797fc16d2f6ad2ee92576d1d3aa890593ff919f31d",
+      "bytes": 52003
+    },
+    "checkpoint.time": {
+      "sha256": "555b3bf2732edb44a058fb18f8ca757fb7794962a08cb8325b612a479e45c3c6",
+      "bytes": 777
+    },
+    "continued.json": {
+      "sha256": "c0131cc7bd3ddec9e439498ed2d0aeb8d39462af317085c87dfe6dbc3e4e3ee3",
+      "bytes": 54866
+    },
+    "continued.time": {
+      "sha256": "d32d94e682047b42483f1cf9debd2d4e4a942b6db506a334f8662dc435d73c60",
+      "bytes": 777
+    }
+  }
+}

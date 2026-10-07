@@ -23,7 +23,10 @@ func (node CompositionActivity) inputKey(port string) string {
 }
 
 func (graph *compositionGraph) bindActivity(file *syntax.File, i int) error {
-	node := &graph.nodes[i]
+	return graph.bindActivityInputs(file, &graph.nodes[i], true)
+}
+
+func (graph compositionGraph) bindActivityInputs(file *syntax.File, node *CompositionActivity, graphEntry bool) error {
 	for _, declaration := range file.Declarations {
 		activity, ok := declaration.(*syntax.ActivityDecl)
 		if !ok || activity.Name != node.Name {
@@ -46,7 +49,7 @@ func (graph *compositionGraph) bindActivity(file *syntax.File, i int) error {
 		if graph.valueGoType(node.InputType) == "" || graph.valueGoType(node.OutputType) == "" {
 			return fmt.Errorf("composition activity %q requires a scalar or declared record", node.Name)
 		}
-		if node.Assembling && !bodycodegen.IsRecordAssembly(&activity.Assembly.Spec) &&
+		if graphEntry && node.Assembling && !bodycodegen.IsRecordAssembly(&activity.Assembly.Spec) &&
 			(len(activity.Inputs) != 1 || node.InputType != "Integer" || node.OutputType != "Integer") {
 			return fmt.Errorf("composition assembly activity %q requires Integer -> Integer", node.Name)
 		}

@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/buildidentity"
 )
 
 const decisionRuntimeModule = "github.com/kimjooyoon/gooo-decision-runtime"
@@ -23,19 +25,20 @@ type versionSDKInfo struct {
 // Build metadata describes the running executable. It does not observe the Go
 // executable selected by a later native request.
 type versionBuildInfo struct {
-	Schema            string         `json:"schema"`
-	Language          string         `json:"language"`
-	Version           string         `json:"version"`
-	Status            string         `json:"status"`
-	BuildInfoObserved bool           `json:"build_info_observed"`
-	GoVersion         string         `json:"go_version"`
-	ModuleVersion     string         `json:"module_version"`
-	CompilerSourceSHA string         `json:"compiler_source_sha"`
-	SourceStatus      string         `json:"source_status"`
-	VCSRevision       string         `json:"vcs_revision"`
-	VCSModified       string         `json:"vcs_modified"`
-	SDK               versionSDKInfo `json:"decision_runtime"`
-	NativeGoRequired  string         `json:"native_go_required"`
+	Schema            string                `json:"schema"`
+	Language          string                `json:"language"`
+	Version           string                `json:"version"`
+	Status            string                `json:"status"`
+	BuildInfoObserved bool                  `json:"build_info_observed"`
+	GoVersion         string                `json:"go_version"`
+	ModuleVersion     string                `json:"module_version"`
+	Module            *buildidentity.Module `json:"module,omitempty"`
+	CompilerSourceSHA string                `json:"compiler_source_sha"`
+	SourceStatus      string                `json:"source_status"`
+	VCSRevision       string                `json:"vcs_revision"`
+	VCSModified       string                `json:"vcs_modified"`
+	SDK               versionSDKInfo        `json:"decision_runtime"`
+	NativeGoRequired  string                `json:"native_go_required"`
 }
 
 func versionBuildMetadata(info *debug.BuildInfo, runtimeVersion string) versionBuildInfo {
@@ -48,6 +51,7 @@ func versionBuildMetadata(info *debug.BuildInfo, runtimeVersion string) versionB
 		return result
 	}
 	result.BuildInfoObserved = true
+	result.Module = buildidentity.ModuleFromBuildInfo(info)
 	if info.GoVersion != "" {
 		result.GoVersion = info.GoVersion
 	}

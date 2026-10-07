@@ -1,0 +1,5 @@
+package billing
+namespace billing
+entity Bill id "billing://invoice"
+entity Receipt id "billing://receipt"
+activity Issue(Bill) -> Receipt computes "billing.issue"

@@ -1,0 +1,19 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"example/domain:Submit": {"candidate_id": 41, "state": "ready"}},
+      "expected": {
+        "example/domain:Submit": {"candidate_id": 41, "state": "ready"},
+        "example/app:Main": {"candidate_id": 41, "decision": "accepted"}
+      }
+    },
+    {
+      "inputs": {"example/domain:Submit": {"candidate_id": 42, "state": "queued"}},
+      "expected": {
+        "example/domain:Submit": {"candidate_id": 42, "state": "queued"},
+        "example/app:Main": {"candidate_id": 42, "decision": "rejected"}
+      }
+    }
+  ]
+}

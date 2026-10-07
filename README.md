@@ -15,6 +15,13 @@ IR and projects structural Go. Handwritten Go slots hold implementation logic;
 the experimental typed-path route can assemble bounded activity bodies from
 conditions, assignments, references, branches, and expressions.
 
+The research thesis is to let a model rank only source-declared construction
+choices, while Gooo and the compiler define the available space and explicit
+checks determine what evidence a result earns. This bounds model influence; it
+does not prove behavior beyond the declared checks. The [research thesis and
+evaluation plan](docs/research/verified-construction-thesis.md) separates what is
+implemented from the hypotheses and measurements still needed.
+
 ```text
 Gooo source + intent + permitted choices + finite expectations
                          │
@@ -38,12 +45,28 @@ Gooo source + intent + permitted choices + finite expectations
 · [workspace package graph](docs/language/workspace-manifest.md)
 
 Start a two-package library workspace with `gooo init --template library
-<directory>`. It declares an imported activity binding and typed body-fill
-plans. `gooo package execute` accepts a local compact model for sequential
-activity fills through `--tiny-model`; without a provider it follows the
-declared deterministic order. See [project starters](docs/language/project-starters.md).
+<directory>`. Its Gooo source declares an imported activity binding and a
+multi-hole body-fill plan. `gooo package execute` reads that plan directly from
+the source and accepts a local compact model through `--tiny-model`; without a
+provider it chooses deterministically from the same declared assignments. See
+[project starters](docs/language/project-starters.md).
 
 ## First run
+
+Build a small diagnostic tool whose choices and rules are written in Gooo:
+
+```sh
+go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
+gooo init --template diagnostic my-diagnostic
+cd my-diagnostic
+gooo package execute --json --cases cases.json gooo.workspace.json > execution.json
+gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
+```
+
+The generated README explains the six project files, finite checks and optional
+local model. Replay runs the saved program on new rows with zero new inference.
+Native execution uses Go 1.27.1; pass `--go /path/to/go1.27.1` when needed.
+See [project starters](docs/language/project-starters.md) for the complete flow.
 
 To start a new project with a working Gooo declaration, declared alternatives
 and finite examples, run:
@@ -67,6 +90,11 @@ exists and keeps code generation, runtime behavior, and reverse observation
 unresolved until those steps are measured separately. It does not call a model
 or execute the program. Use `--json` to consume the trail and completeness
 receipt from another tool.
+Add [`--generation`](docs/language/capability-discovery.md#connect-an-existing-generation)
+to replay a saved source-owned construction and measure its generated activity
+coverage against a separate Gooo contract. Add `--execute-cases <cases.json>`
+to build and run that projection twice, linking fresh runtime observations and
+unique inputs absent from selection to the same receipt.
 
 `gooo test` checks explicit activity-output markers, not input/output values. See the [language test example](examples/language-test/README.md) before adding one.
 
@@ -241,7 +269,7 @@ The latest model study and the deployed integration have separate evidence:
   and broader task coverage are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
-This compiler revision uses **Go SDK v0.2.21-experimental**, with V3/V4 feature
+This compiler revision uses **Go SDK v0.2.24-experimental**, with V3/V4 feature
 contracts, versioned arithmetic, bounded probe sessions and prepared candidate reuse. The
 [observation loop](docs/path-observation-loop.md) can choose a distinguishing
 input, obtain its result from a declared Gooo reference activity, and use that
@@ -262,8 +290,8 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| Compiler at this revision | SDK v0.2.21; source recipes, bounded observation/reuse, prepared candidates, file/stream construction and execution | Usability, finite completion and construction cost |
-| [SDK v0.2.21](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.21-experimental) | V3/V4 inference, explicit arithmetic, owned probes, reusable candidates and bounded Unix model-file loading | Broader source and behavior coverage |
+| Compiler at this revision | SDK v0.2.24; source recipes, bounded observation/reuse, prepared candidates, file/stream construction and execution | Usability, finite completion and construction cost |
+| [SDK v0.2.24 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.24-experimental) | V3/V4 inference, explicit arithmetic, owned probes, reusable candidates and bounded Unix model-file loading | Broader source and behavior coverage |
 | [Hugging Face model](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Wording, operation order and new-task evaluation |
 
 At SDK revision `59c8d34`, local arm64 and
@@ -318,7 +346,7 @@ These badges are generated from the lowered public-trust `.gooo` policy. Workflo
 #### Language / Release
 
 [![Go 1.27.1 toolchain](https://img.shields.io/badge/Go-1.27.1-00ADD8?logo=go&logoColor=white)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/go.mod)
-[![Published release v0.6.0-dev](https://img.shields.io/github/v/release/kimjooyoon/meta-ontology-go?include_prereleases&label=published%20release)](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.0-dev)
+[![Published experimental prerelease](https://img.shields.io/github/v/release/kimjooyoon/meta-ontology-go?include_prereleases&label=published%20release)](https://github.com/kimjooyoon/meta-ontology-go/releases)
 
 #### Build / Conformance
 

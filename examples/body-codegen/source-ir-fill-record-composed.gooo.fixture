@@ -1,0 +1,34 @@
+package recordfillcomposed
+namespace recordfillcomposed
+
+entity Candidate id "recordfillcomposed://candidate" fields {
+    field state id "recordfillcomposed://candidate/state" type string required one
+    field reviewed id "recordfillcomposed://candidate/reviewed" type boolean required one
+    field candidate_id id "recordfillcomposed://candidate/id" type integer required one
+}
+
+entity Review id "recordfillcomposed://review" fields {
+    field candidate_id id "recordfillcomposed://review/candidate-id" type integer required one
+    field decision id "recordfillcomposed://review/decision" type string required one
+}
+
+activity ReviewCandidate(Candidate) -> Review computes `if __GOOO_BODY_HOLE_condition__ {
+    return Review{candidate_id: input.candidate_id, decision: __GOOO_BODY_HOLE_accepted__}
+} else {
+    return Review{candidate_id: input.candidate_id, decision: __GOOO_BODY_HOLE_rejected__}
+}` assembling {
+    source_fill intent "Accept only ready candidates that passed review." {
+        hole "condition"
+        hole "accepted"
+        hole "rejected"
+        derive assignments max_candidates "16" {
+            hole "condition" grammar "record-field-predicate-composition/v1" max_expressions "8"
+            hole "accepted" grammar "record-string-literal/v1" max_expressions "2"
+            hole "rejected" grammar "record-string-literal/v1" max_expressions "2"
+        }
+    }
+    value_case "[{\"candidate_id\":41,\"reviewed\":true,\"state\":\"ready\"}]" -> "{\"candidate_id\":41,\"decision\":\"accepted\"}"
+    value_case "[{\"candidate_id\":42,\"reviewed\":false,\"state\":\"ready\"}]" -> "{\"candidate_id\":42,\"decision\":\"rejected\"}"
+    holdout_value_case "[{\"candidate_id\":43,\"reviewed\":true,\"state\":\"queued\"}]" -> "{\"candidate_id\":43,\"decision\":\"rejected\"}"
+    holdout_value_case "[{\"candidate_id\":44,\"reviewed\":true,\"state\":\"ready\"}]" -> "{\"candidate_id\":44,\"decision\":\"accepted\"}"
+}

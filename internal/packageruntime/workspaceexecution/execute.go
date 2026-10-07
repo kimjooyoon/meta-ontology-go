@@ -13,22 +13,26 @@ import (
 )
 
 type Result struct {
-	Schema       string                           `json:"schema"`
-	Program      Program                          `json:"program"`
-	BodyFills    []BodyFillStep                   `json:"body_fills,omitempty"`
-	SourceSHA256 string                           `json:"execution_source_sha256"`
-	Composition  bodyexecution.Composition        `json:"composition"`
-	Runtime      bodyexecution.CompositionRuntime `json:"runtime"`
-	Scope        string                           `json:"scope"`
+	Schema         string                           `json:"schema"`
+	Program        Program                          `json:"program"`
+	BodyFills      []BodyFillStep                   `json:"body_fills,omitempty"`
+	SourceSHA256   string                           `json:"execution_source_sha256"`
+	Composition    bodyexecution.Composition        `json:"composition"`
+	Runtime        bodyexecution.CompositionRuntime `json:"runtime"`
+	Scope          string                           `json:"scope"`
+	Replay         *ReplayEvidence                  `json:"replay,omitempty"`
+	AssemblyPolicy *WorkspaceAssemblyPolicy         `json:"assembly_policy,omitempty"`
 }
 
 type BodyFillStep struct {
-	Activity          ActivityRef        `json:"activity"`
-	InputSourceSHA256 string             `json:"input_source_sha256"`
-	Generation        bodycodegen.Result `json:"generation"`
+	Activity          ActivityRef                 `json:"activity"`
+	InputSourceSHA256 string                      `json:"input_source_sha256"`
+	Generation        bodycodegen.Result          `json:"generation"`
+	Plan              *bodycodegen.IRBodyFillPlan `json:"external_plan,omitempty"`
 }
 
 type ExecuteOptions struct {
+	AssemblyPolicy    *packageruntime.Manifest
 	AssemblyModelPath string
 	GoBinary          string
 	BodyFillPlans     map[string]bodycodegen.IRBodyFillPlan
@@ -55,43 +59,31 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 	if err != nil {
 		return Result{}, err
 	}
+	policySnapshot, policy, err := prepareWorkspacePolicy(ctx, options.AssemblyPolicy)
+	if err != nil {
+		return Result{}, err
+	}
 	current := []byte(program.Source)
-	fills := make([]BodyFillStep, 0, len(options.BodyFillPlans))
-	knownPlans := make(map[string]bool, len(options.BodyFillPlans))
-	bodyFillOptions := options.BodyFillOptions
-	for _, activity := range program.Activities {
-		key := packageActivityKey(activity.PackagePath, activity.Activity)
-		plan, exists := options.BodyFillPlans[key]
-		if !exists {
-			continue
-		}
-		knownPlans[key] = true
-		generation, fillErr := bodycodegen.GenerateWithIRBodyFillWithOptions(ctx, "workspace.gooo", current,
-			activity.LoweredName, plan, options.LayaEndpoint, options.LayaAPIKey, bodyFillOptions)
-		if fillErr != nil {
-			return Result{}, fmt.Errorf("activity %s body fill: %w", key, fillErr)
-		}
-		bodyFillOptions.TinyModelLoadMS = nil
-		if generation.GoooSource == "" || generation.Report.BodyFill == nil {
-			return Result{}, fmt.Errorf("activity %s body fill returned no replayable Gooo source", key)
-		}
-		fills = append(fills, BodyFillStep{Activity: activity, InputSourceSHA256: sourceSHA256(current), Generation: generation})
-		current = []byte(generation.GoooSource)
+	current, fills, err := applyBodyFills(ctx, program, current, options)
+	if err != nil {
+		return Result{}, err
 	}
-	if len(knownPlans) != len(options.BodyFillPlans) {
-		return Result{}, fmt.Errorf("body-fill plans contain an activity not declared in the workspace")
+	compositionOptions := bodyexecution.CompositionOptions{ModelPath: options.AssemblyModelPath, RecordPolicy: policy}
+	if program.PureCalls != nil {
+		compositionOptions.EntryActivity = program.Entry.LoweredName
 	}
-	composition, err := bodyexecution.GenerateComposition(ctx, "workspace.gooo", current, translated, options.AssemblyModelPath)
+	composition, err := bodyexecution.GenerateCompositionWithOptions(ctx, "workspace.gooo", current, translated, compositionOptions)
 	if err != nil {
 		return Result{}, fmt.Errorf("generate workspace activity bodies: %w", err)
 	}
 	runtime, err := bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, composition, translated, options.GoBinary)
 	result := Result{Schema: "gooo/workspace-body-execution/v1", Program: program, BodyFills: fills,
-		SourceSHA256: sourceSHA256(current), Composition: composition,
+		SourceSHA256: sourceSHA256(current), Composition: composition, AssemblyPolicy: policySnapshot,
 		Runtime: runtime, Scope: "typed imported activity bindings; generated Go compiled and run twice; finite named expectations only"}
 	if err != nil {
 		return result, fmt.Errorf("execute generated workspace bodies: %w", err)
 	}
+	result.Runtime.InputSeparation = measureWorkspaceInputs(ctx, current, result, translated)
 	return result, nil
 }
 
@@ -101,8 +93,8 @@ func sourceSHA256(value []byte) string {
 }
 
 func translateCases(program Program, suite bodyexecution.CompositionCases) (bodyexecution.CompositionCases, error) {
-	if suite.Schema != "gooo/body-composition-cases/v1" {
-		return bodyexecution.CompositionCases{}, fmt.Errorf("workspace execution requires gooo/body-composition-cases/v1 cases")
+	if suite.Schema != "gooo/body-composition-cases/v1" && suite.Schema != bodyexecution.CompositionInputsSchema {
+		return bodyexecution.CompositionCases{}, fmt.Errorf("workspace execution requires gooo/body-composition-cases/v1 or gooo/body-composition-inputs/v1")
 	}
 	byKey := make(map[string]ActivityRef, len(program.Activities))
 	for _, activity := range program.Activities {

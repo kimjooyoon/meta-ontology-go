@@ -3,13 +3,17 @@ namespace domain_completeness
 
 entity BoundaryCoverage id "gooo://meta/domain-completeness/dimension/boundary-coverage"
 entity BoundaryEvidence id "gooo://meta/domain-completeness/evidence/boundary"
+entity Boolean id "gooo://meta/domain-completeness/type/boolean"
+entity ComparisonBaseline id "gooo://meta/domain-completeness/comparison/baseline"
+entity ComparisonDelta id "gooo://meta/domain-completeness/comparison/delta"
 entity DeclarationCoverage id "gooo://meta/domain-completeness/dimension/declaration-coverage"
 entity DeclarationEvidence id "gooo://meta/domain-completeness/evidence/declaration"
 entity DomainCompletenessReceipt id "gooo://meta/domain-completeness/receipt/v1"
 entity DomainCompletenessVector id "gooo://meta/domain-completeness/vector"
-entity DomainProfile id "gooo://meta/domain-completeness/profile/gooo-language-utility-v1"
+entity DomainProfile id "gooo://meta/domain-completeness/profile/gooo-language-utility-v2"
 entity ExcludedExternalAdoption id "gooo://meta/domain-completeness/excluded/external-adoption"
 entity ExcludedGeneralPurposeCompleteness id "gooo://meta/domain-completeness/excluded/general-purpose-completeness"
+entity Integer id "gooo://meta/domain-completeness/type/integer"
 entity GenerationCoverage id "gooo://meta/domain-completeness/dimension/generation-coverage"
 entity GenerationEvidence id "gooo://meta/domain-completeness/evidence/generation"
 entity ProvenanceEvidence id "gooo://meta/domain-completeness/evidence/provenance"
@@ -17,10 +21,31 @@ entity ProvenanceIntegrity id "gooo://meta/domain-completeness/dimension/provena
 entity ReadOnlySystemBudget id "gooo://meta/domain-completeness/budget/read-only-zero-human-actions"
 entity ReverseObservationCoverage id "gooo://meta/domain-completeness/dimension/reverse-observation-coverage"
 entity ReverseObservationEvidence id "gooo://meta/domain-completeness/evidence/reverse-observation"
+entity Text id "gooo://meta/domain-completeness/type/text"
 entity UseCaseCoverage id "gooo://meta/domain-completeness/dimension/use-case-coverage"
 entity UseCaseEvidence id "gooo://meta/domain-completeness/evidence/use-case"
 
 activity AssembleDomainCompletenessVector(DeclarationCoverage, GenerationCoverage, ReverseObservationCoverage, UseCaseCoverage, BoundaryCoverage, ProvenanceIntegrity) -> DomainCompletenessVector computes "gooo.metric.domain-completeness.vector:v1"
+activity CanCompareDomainCompletenessAxes(Integer, Integer, Integer, Integer, Text, Text) -> Boolean computes `return input0 == 0 && input1 == 0 && input2 == 0 && input3 == 0 && (input4 == "PASS" || input4 == "PROGRESS") && (input5 == "PASS" || input5 == "PROGRESS")`
+activity ClassifyDomainCompleteness(Integer, Integer, Integer, Boolean) -> Text computes `if input3 || input0 < 0 || input1 < 0 || input2 < 0 || input0 > input1 {
+	return "FAIL_CLOSED"
+} else if input1 == 0 || input2 > 0 {
+	return "UNKNOWN"
+} else if input0 == input1 {
+	return "PASS"
+} else {
+	return "PROGRESS"
+}`
+activity SelectDomainCompletenessOutcome(Boolean, Boolean, Boolean, Boolean) -> Text computes `if input0 || input1 {
+	return "FAIL_CLOSED"
+} else if input2 {
+	return "UNKNOWN"
+} else if input3 {
+	return "PROGRESS"
+} else {
+	return "PASS"
+}`
+activity CompareDomainCompletenessVectors(DomainCompletenessReceipt, ComparisonBaseline) -> ComparisonDelta computes "gooo.metric.domain-completeness.vector-delta.v1"
 activity EmitDomainCompletenessReceipt(DomainCompletenessVector) -> DomainCompletenessReceipt computes "gooo.receipt.domain-completeness:v1"
 activity MeasureBoundaryCoverage(BoundaryEvidence) -> BoundaryCoverage computes "gooo.metric.domain-completeness.boundary-coverage.v1"
 activity MeasureDeclarationCoverage(DeclarationEvidence) -> DeclarationCoverage computes "gooo.metric.domain-completeness.declaration-coverage.v1"
@@ -29,3 +54,4 @@ activity MeasureProvenanceIntegrity(ProvenanceEvidence) -> ProvenanceIntegrity c
 activity MeasureReverseObservationCoverage(ReverseObservationEvidence) -> ReverseObservationCoverage computes "gooo.metric.domain-completeness.reverse-observation-coverage.v1"
 activity MeasureUseCaseCoverage(UseCaseEvidence) -> UseCaseCoverage computes "gooo.metric.domain-completeness.use-case-coverage.v1"
 activity ReplayDomainCompletenessReceipt(DomainCompletenessReceipt) -> DomainCompletenessReceipt computes "gooo.replay.domain-completeness:v1"
+activity FindPriorDomainCompletenessReceipt(DomainProfile) -> ComparisonBaseline computes "gooo.evidence.latest-compatible-domain-receipt.v1"

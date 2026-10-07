@@ -1,0 +1,31 @@
+package holeflow
+namespace holeflow
+entity Integer id "holeflow://integer"
+
+activity Increment(Integer) -> Integer computes "return input + __GOOO_BODY_HOLE_offset__" assembling {
+    search hole "offset" grammar "integer-hole-residual/v1" intent "입력에 1을 더한다. Add one to the input." max_candidates "16"
+    case "2" -> "3"
+    case "10" -> "11"
+    holdout_case "100" -> "101"
+    attempts "16"
+}
+
+activity Amplify(Integer) -> Integer computes "return (input + __GOOO_BODY_HOLE_offset__) * 2" assembling {
+    search hole "offset" grammar "integer-hole-residual/v1" intent "3을 더한 뒤 두 배로 만든다. Add three, then double." max_candidates "16"
+    case "3" -> "12"
+    case "11" -> "28"
+    holdout_case "101" -> "208"
+    attempts "16"
+}
+
+activity Project(Integer) -> Integer computes `let saved = input
+let correction = __GOOO_BODY_HOLE_term__
+return saved + correction` assembling {
+    search hole "term" grammar "integer-hole-residual/v1" intent "입력의 다섯 배에 3을 더한다. Multiply the input by five and add three." max_candidates "16"
+    case "12" -> "63"
+    case "28" -> "143"
+    holdout_case "208" -> "1043"
+    attempts "16"
+}
+bind Increment.result -> Amplify.input
+bind Amplify.result -> Project.input

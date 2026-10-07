@@ -91,7 +91,7 @@ func TestRecordPlanRejectsUnsupportedSource(t *testing.T) {
 	text := string(source)
 	cases := []string{
 		strings.Replace(text, "record.forward:v1", "record.approve:v1", 1),
-		strings.Replace(text, "type string required one", "type string optional one", 1),
+		strings.Replace(text, "type string required one", "type string optional many", 1),
 		strings.Replace(text, "type string required one", "type string required many", 1),
 		text + "\nbind Capture.result -> Review.input\n",
 		text + "\nbind Review.result -> Capture.input\n",
@@ -194,5 +194,78 @@ func TestRecordPlanValidatesBooleanFieldsAgainstSourceType(t *testing.T) {
 	}
 	if result.Results["Report"].Fields["Complete"] != true {
 		t.Fatalf("Boolean value not transported: %+v", result.Results["Report"].Fields)
+	}
+}
+
+func TestRecordPlanPreservesOptionalScalarPresence(t *testing.T) {
+	source, err := os.ReadFile("../../examples/language-record-binding/optional.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	input, err := os.ReadFile("../../examples/language-record-binding/optional-input.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fields, err := DecodeRecordInput(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := CompileRecordPlan("optional.gooo", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	execution, err := plan.Execute(map[string]RecordFields{"Capture": fields})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if execution.ApplyCalls != 2 || execution.Deliveries != 1 {
+		t.Fatalf("execution=%+v", execution)
+	}
+	for _, name := range []string{"Capture", "Relay"} {
+		result := execution.Results[name].Fields
+		if _, present := result["Note"]; present || result["Label"] != "" || result["Complete"] != false || result["Count"] != int64(0) {
+			t.Fatalf("optional presence changed in %s: %#v", name, result)
+		}
+	}
+
+	missingRequired := maps.Clone(fields)
+	delete(missingRequired, "Name")
+	extra := maps.Clone(fields)
+	extra["Invented"] = "value"
+	wrongOptionalType := maps.Clone(fields)
+	wrongOptionalType["Count"] = int32(0)
+	for name, invalid := range map[string]RecordFields{
+		"missing-required": missingRequired,
+		"extra-field":      extra,
+		"wrong-optional":   wrongOptionalType,
+	} {
+		rejected, err := plan.Execute(map[string]RecordFields{"Capture": invalid})
+		if err == nil || rejected.ApplyCalls != 0 || len(rejected.Results) != 0 {
+			t.Fatalf("%s execution=%+v err=%v", name, rejected, err)
+		}
+	}
+}
+
+func TestRecordPlanAllowsEmptyAllOptionalRecord(t *testing.T) {
+	const source = `package optionalrecords
+namespace optionalrecords
+entity Profile id "records://profile" fields {
+  field note id "records://profile/note" type string optional one
+  field active id "records://profile/active" type boolean optional one
+  field count id "records://profile/count" type integer optional one
+}
+activity Capture(Profile) -> Profile computes "record.forward:v1"
+`
+	plan, err := CompileRecordPlan("optional.gooo", []byte(source))
+	if err != nil {
+		t.Fatal(err)
+	}
+	empty, err := DecodeRecordInput([]byte(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	execution, err := plan.Execute(map[string]RecordFields{"Capture": empty})
+	if err != nil || execution.ApplyCalls != 1 || len(execution.Results["Capture"].Fields) != 0 {
+		t.Fatalf("execution=%+v err=%v", execution, err)
 	}
 }

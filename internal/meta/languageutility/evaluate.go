@@ -11,7 +11,7 @@ func Evaluate(contract Contract, observation Observation) (Report, error) {
 		return Report{}, fmt.Errorf("language utility observation identity is invalid")
 	}
 	index := indexObservation(contract, observation)
-	cells := make([]CellResult, 0, 42)
+	cells := make([]CellResult, 0, len(contract.UseCases)*len(contract.Stages))
 	for _, useCase := range contract.UseCases {
 		for _, stage := range contract.Stages {
 			key := cellKey(useCase.ID, stage.ID)

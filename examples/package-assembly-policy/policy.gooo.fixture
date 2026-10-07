@@ -1,0 +1,25 @@
+package policy
+namespace policy
+
+import counts "tools/assembly-counts"
+
+activity Explain(AssemblyObservation) -> Explanation computes `if input.matched < 0 || input.total < 0 || input.best < input.matched || input.best > input.total || input.scored < 0 || input.budget < input.scored {
+    return Explanation{state: "FAIL_CLOSED", next_operation: "RECONCILE_COUNTS", message: "관측 수치의 범위를 확인하세요."}
+}
+if input.total == 0 {
+    return Explanation{state: "UNKNOWN", next_operation: "DECLARE_CASES", message: "판단할 사례가 선언되지 않았습니다."}
+}
+if input.scored == 0 {
+    return Explanation{state: "UNKNOWN", next_operation: "EVALUATE_CANDIDATES", message: "후보를 아직 채점하지 않았습니다."}
+}
+if input.best > input.matched {
+    return Explanation{state: "PROGRESS", next_operation: "USE_OBSERVED_CANDIDATE", message: "더 많은 사례를 만족한 후보가 기록되어 있습니다."}
+}
+if input.matched == input.total {
+    return Explanation{state: "PASS", next_operation: "OBSERVE_NEW_INPUTS", message: "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요."}
+}
+if counts.CanContinue(input) {
+    return Explanation{state: "PROGRESS", next_operation: "CONTINUE_CANDIDATES", message: "남은 예산에서 다른 후보를 관측할 수 있습니다."}
+}
+return Explanation{state: "PROGRESS", next_operation: "EXPAND_DECLARED_CHOICES", message: "현재 후보와 예산에서 만족하지 못한 사례가 남았습니다."}`
+

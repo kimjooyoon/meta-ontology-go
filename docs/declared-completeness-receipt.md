@@ -30,10 +30,12 @@ replaces these axes, and no human action is needed to continue the bounded searc
 
 ## Native execution and reverse observation
 
-`body-execute` consumes an existing typed-path generation and independently
-reconstructs it from the original Gooo, complete path document and selected
-choices. It makes **zero model/provider calls**. Only byte-identical replayed Go
-reaches a local Go 1.27.1 build. Its stdlib wrapper runs that compiled program
+`body-execute` consumes an existing typed-path or source-owned IR-search
+generation. It reconstructs the selected body from the original Gooo and its
+complete path document or declared search grammar and cases. IR search also
+replays candidate membership and selected training/holdout results, including
+measured zero matches. It makes **zero model/provider calls**. Only byte-identical
+replayed Go reaches a local Go 1.27.1 build. Its stdlib wrapper runs that compiled program
 twice with the ordered caller inputs, under a 60-second total budget and a
 2-second budget per execution. The source files and generation input stay intact.
 
@@ -159,9 +161,81 @@ and a first natural-language capability-discovery integration now use the common
 receipt. `gooo discover --query <question> <file.gooo>` calls the pinned JEV
 capability catalog deterministically, binds its query/trail digests to the exact
 source and normalized semantic IR, and emits the same generated receipt schema.
-The receipt deliberately leaves independent use-case execution, generation,
-permission/network observations, and reverse observation unresolved; a catalog
-match is not a semantic success score.
+Adding `--generation` replays a saved source-owned projection and binds its
+artifact and activity identity. Generation coverage uses expected activity
+signatures from a separate domain contract. `--execute-cases` creates fresh
+native runtime and reverse observations, retaining their full envelope and
+parent receipt. Independent use-case coverage counts unique inputs absent from
+selection, with all supplied expectations matched in both executions. See the
+[connected discovery example](language/capability-discovery.md#connect-an-existing-generation).
+
+The domain profile now drives the measurement roster and its order from the
+`AssembleDomainCompletenessVector` input sequence. Each `Measure...` activity's
+`computes` identifier selects a registered, versioned evaluator adapter; its
+output stable ID and evidence input type must match the profile contract. An
+unknown metric or disconnected measurement fails closed. This removes the
+separate Go-maintained list of dimensions, while the bounded measurement
+implementations themselves remain Go adapters rather than interpreted Gooo
+bodies. The four-state classification rule is now a body-bearing
+`ClassifyDomainCompleteness` activity in the same Gooo profile. Gooo generates
+the Go projection consumed by the measurement adapters, and every receipt run
+re-generates that body deterministically and rejects a byte mismatch before
+measuring. The source declaration therefore owns the roster, order, and per-axis
+PASS/PROGRESS/UNKNOWN/FAIL_CLOSED classification. Receipt-level outcome
+priority is also executed from Gooo: invalid receipt input, any fail-closed
+axis, any unknown axis, any progress axis, then pass. The generated projection
+chooses that outcome; Go still attaches the corresponding reason and first
+actionable frontier. Evidence acquisition and the six bounded metric
+evaluators remain Go adapters. The axis classifier's ordered inputs are
+numerator, denominator, unknown-unit count, and contradiction flag. The receipt
+selector's Boolean inputs are invalid input, fail-closed axis, unknown axis,
+and progress axis, in that order.
+
+For a known positive denominator, zero fulfilled units and zero unknown units
+are `PROGRESS` at `0/N`: an observed gap that can be compared with a later run.
+`PROGRESS` describes measured incompleteness; it does not assert improvement
+over a baseline. Missing observations carry unknown units and remain `UNKNOWN`;
+an absent denominator is also `UNKNOWN`. Refuted evidence remains `FAIL_CLOSED`.
+Generation adapters distinguish a classified open cell from a missing cell or
+a claimed completion whose evidence has not been validated. Changes to this
+Gooo classifier change the profile semantic hash, so earlier receipts with the
+previous rule are incompatible comparison baselines.
+
+The Gooo activity `CanCompareDomainCompletenessAxes` also owns axis comparison
+eligibility. Its ordered inputs are the prior/current unknown counts,
+prior/current refuted counts, and prior/current status strings. Both statuses
+must be `PASS` or `PROGRESS`, and all four counts must be zero. The adapter
+first checks receipt identity, matching scope and denominators, and valid
+counts, then calls the generated Boolean rule. Every receipt run verifies this
+projection against the source alongside the status and outcome projections.
+
+An unresolved axis has `numerator_delta: null` in JSON. A comparable axis can
+report a positive, zero, or negative delta, including `0/N` as its baseline.
+Consumers should inspect the comparison status and accept a numeric delta only
+for `COMPARABLE`. The changed profile semantic hash prevents comparisons with
+receipts whose classification or comparison rule differs.
+
+Without a separate domain contract, declaration coverage is `UNKNOWN` with a
+zero denominator; the target source is not allowed to define its own scope. With
+`--domain-contract <contract.gooo>`, the compiler compares the contract's
+stable declaration IDs, kinds, namespaces, entity fields, and ordered typed
+activity ports against the target and records both contract digests. Reordering
+typed activity inputs is a shape mismatch and is identified in receipt
+evidence. That is declared scope coverage only. Activity-body correctness,
+independent use-case execution, generation, permission/network observations,
+and reverse observation remain separate; a catalog match is not a semantic
+success score.
+
+The CI language-utility contract v2 now includes one source-bound discovery
+case. It runs the same query twice and requires byte-identical report output,
+then validates the report against its separately copied source and domain
+contract before incorporating those files and digests into the domain
+completeness vector. The observed command path closes only its input, parse,
+semantic, outcome, deterministic replay, and report-artifact cells. It leaves
+resource observation open; its embedded receipt keeps code generation, reverse
+observation, and independent behavior unknown. The current sample's separate
+domain contract covers three of four declarations, which is preserved as
+`3/4` evidence rather than treated as a code-generation score.
 
 Broader runtime profiles still need to bind independent inputs, source revisions,
 tool identities, and observation artifacts. Comparison currently covers the

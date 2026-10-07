@@ -2,39 +2,11 @@ package bidir
 
 import (
 	"fmt"
-	"go/scanner"
-	"go/token"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
-// The indexed-input profile explicitly preserves source slots alongside PROV
-// relations. Existing documents without this profile retain their representation.
-func hasIndexedInputProfile(document Document) bool {
-	for _, binding := range document.RuntimeBindings {
-		if _, ok := semantic.InputPortIndex(binding.Consumer.Port.Name, int(^uint(0)>>1)); ok {
-			return true
-		}
-	}
-	for _, declaration := range document.Declarations {
-		if len(declaration.Inputs) < 2 || declaration.Attributes[ActivityValueProgramAttribute] == "" {
-			continue
-		}
-		body := []byte(declaration.Attributes[ActivityValueProgramAttribute])
-		var first scanner.Scanner
-		first.Init(token.NewFileSet().AddFile("body", -1, len(body)), body, nil, 0)
-		_, kind, literal := first.Scan()
-		if kind == token.RETURN || kind == token.IF || kind == token.VAR || kind == token.IDENT && literal == "let" {
-			return true
-		}
-	}
-	return false
-}
-
 func bindSourceInputSequences(model *Model, document Document, names map[string]ID, ids map[ID]struct{}) error {
-	if !hasIndexedInputProfile(document) {
-		return nil
-	}
 	for _, declaration := range document.Declarations {
 		if declaration.Kind != ActivityKind || len(declaration.Inputs) < 2 {
 			continue
@@ -73,16 +45,16 @@ func modelInputEntity(model Model, node Node, port string) (ID, bool) {
 	if !ok {
 		return "", false
 	}
+	declared := make(map[ID]bool, len(node.InputSequence))
 	for _, input := range node.InputSequence {
 		entity, found := model.node(input.ID)
 		if !found || entity.Kind != EntityKind {
 			return "", false
 		}
-		used := false
-		for _, actual := range modelRuntimePorts(model, node.ID, PredicateUsed, true) {
-			used = used || actual == input.ID
-		}
-		if !used {
+		declared[input.ID] = true
+	}
+	for _, actual := range modelRuntimePorts(model, node.ID, PredicateUsed, true) {
+		if !declared[actual] {
 			return "", false
 		}
 	}
@@ -113,9 +85,6 @@ func validateInputSequences(model Model) error {
 		declared := make(map[ID]bool, len(node.InputSequence))
 		for _, input := range node.InputSequence {
 			declared[input.ID] = true
-		}
-		if len(declared) != len(used) {
-			return fmt.Errorf("input sequence and used relations disagree for %q", node.ID)
 		}
 		for _, entity := range used {
 			if !declared[entity] {

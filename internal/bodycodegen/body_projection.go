@@ -7,6 +7,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"strings"
 )
 
 type bodyProjection struct {
@@ -14,11 +15,17 @@ type bodyProjection struct {
 	fset              *token.FileSet
 	function          *ast.FuncDecl
 	constructs, units int
+	calls             []pureCallFunction
 }
 
 func renderParameters(packageName, activityName, activityID string, parameters []InputParameter,
 	outputType, body, route string, records ...RecordType) ([]byte, int, int, int, int, error) {
-	p, err := prepareBodyProjection(packageName, activityName, parameters, outputType, body, records)
+	return renderParametersWithCalls(packageName, activityName, activityID, parameters, outputType, body, route, nil, records)
+}
+
+func renderParametersWithCalls(packageName, activityName, activityID string, parameters []InputParameter,
+	outputType, body, route string, calls []pureCallFunction, records []RecordType) ([]byte, int, int, int, int, error) {
+	p, err := prepareBodyProjectionWithCalls(packageName, activityName, parameters, outputType, body, calls, records)
 	if err != nil {
 		return nil, 0, 0, 0, 0, err
 	}
@@ -32,15 +39,24 @@ func renderParameters(packageName, activityName, activityID string, parameters [
 
 func prepareBodyProjection(packageName, activityName string, parameters []InputParameter,
 	outputType, body string, records []RecordType) (bodyProjection, error) {
-	p := bodyProjection{fset: token.NewFileSet()}
-	wrapped := fmt.Sprintf("package %s\n%sfunc %s(%s) %s {\n%s\n}\n", packageName,
-		RecordDeclarations(records, false), activityName, parameterDeclaration(parameters), outputType, body)
+	return prepareBodyProjectionWithCalls(packageName, activityName, parameters, outputType, body, nil, records)
+}
+
+func prepareBodyProjectionWithCalls(packageName, activityName string, parameters []InputParameter,
+	outputType, body string, calls []pureCallFunction, records []RecordType) (bodyProjection, error) {
+	p := bodyProjection{fset: token.NewFileSet(), calls: calls}
+	var wrapped strings.Builder
+	wrapped.WriteString(fmt.Sprintf("package %s\n%sfunc %s(%s) %s {\n%s\n}\n", packageName,
+		RecordDeclarations(records, false), activityName, parameterDeclaration(parameters), outputType, body))
+	for _, call := range calls {
+		wrapped.WriteString(call.declaration())
+	}
 	var err error
-	p.file, err = parser.ParseFile(p.fset, "body.goo", wrapped, parser.AllErrors)
+	p.file, err = parser.ParseFile(p.fset, "body.goo", wrapped.String(), parser.AllErrors)
 	if err != nil {
 		return p, fmt.Errorf("parse computes body: %w", err)
 	}
-	if len(p.file.Decls) != len(records)+1 || len(p.file.Imports) != 0 {
+	if len(p.file.Decls) != len(records)+1+len(calls) || len(p.file.Imports) != 0 {
 		return p, fmt.Errorf("computes must contain only the declared function body")
 	}
 	var ok bool
@@ -59,6 +75,9 @@ func prepareBodyProjection(packageName, activityName string, parameters []InputP
 		return p, fmt.Errorf("activity %q body must return on every control-flow path", activityName)
 	}
 	p.units = semanticUnitCount(p.function.Body)
+	if err := p.validatePureCalls(records); err != nil {
+		return p, err
+	}
 	return p, validateRecordLiterals(p.function.Body, records)
 }
 
@@ -84,6 +103,12 @@ func (p bodyProjection) lower(packageName, activityName, outputType, route strin
 	}
 	inferred := normalizeIntegerLocalInitializers(packageName, p.file, p.fset)
 	units := semanticUnitCount(p.function.Body) - inferred
+	for _, call := range p.calls {
+		function, _ := findFunction(p.file, call.identity.Name)
+		count, _ := validateBlockInputs(function.Body, parameterNames(call.parameters), parameterNames(call.parameters), true, records...)
+		constructs += count
+		units += semanticUnitCount(function.Body)
+	}
 	if err := typecheck(packageName, p.file, p.fset); err != nil {
 		return 0, 0, fmt.Errorf("typecheck generated activity: %w", err)
 	}
@@ -100,6 +125,14 @@ func (p bodyProjection) emit(packageName, activityID string, records []RecordTyp
 	}
 	out.WriteByte('\n')
 	fmt.Fprintf(&out, "//gooo:generated:end id=%q kind=\"activity\"\n", activityID)
+	for _, call := range p.calls {
+		function, _ := findFunction(p.file, call.identity.Name)
+		fmt.Fprintf(&out, "//gooo:generated:start id=%q kind=\"activity\"\n", call.identity.ActivityID)
+		if err := format.Node(&out, p.fset, function); err != nil {
+			return nil, err
+		}
+		fmt.Fprintf(&out, "\n//gooo:generated:end id=%q kind=\"activity\"\n", call.identity.ActivityID)
+	}
 	raw, err := format.Source(out.Bytes())
 	if err != nil {
 		return nil, fmt.Errorf("format generated source: %w", err)

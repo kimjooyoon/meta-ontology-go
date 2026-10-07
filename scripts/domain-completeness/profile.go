@@ -16,16 +16,6 @@ type dimensionSpec struct {
 	MetricID string
 	Evidence string
 	Unit     string
-	Activity string
-}
-
-var dimensions = []dimensionSpec{
-	{ID: "declaration_coverage", MetricID: "gooo.metric.domain-completeness.declaration-coverage.v1", Evidence: "DeclarationEvidence", Unit: "declarations", Activity: "MeasureDeclarationCoverage"},
-	{ID: "generation_coverage", MetricID: "gooo.metric.domain-completeness.generation-coverage.v1", Evidence: "GenerationEvidence", Unit: "use_cases", Activity: "MeasureGenerationCoverage"},
-	{ID: "reverse_observation_coverage", MetricID: "gooo.metric.domain-completeness.reverse-observation-coverage.v1", Evidence: "ReverseObservationEvidence", Unit: "observations", Activity: "MeasureReverseObservationCoverage"},
-	{ID: "use_case_coverage", MetricID: "gooo.metric.domain-completeness.use-case-coverage.v1", Evidence: "UseCaseEvidence", Unit: "use_cases", Activity: "MeasureUseCaseCoverage"},
-	{ID: "boundary_coverage", MetricID: "gooo.metric.domain-completeness.boundary-coverage.v1", Evidence: "BoundaryEvidence", Unit: "boundaries", Activity: "MeasureBoundaryCoverage"},
-	{ID: "provenance_integrity", MetricID: "gooo.metric.domain-completeness.provenance-integrity.v1", Evidence: "ProvenanceEvidence", Unit: "bindings", Activity: "MeasureProvenanceIntegrity"},
 }
 
 func compileProfile(path string, source []byte) (ProfileModel, error) {
@@ -73,17 +63,84 @@ func compileProfile(path string, source []byte) (ProfileModel, error) {
 			}
 		}
 	}
+	dimensions, err := profileDimensions(model)
+	if err != nil {
+		return ProfileModel{}, err
+	}
+	model.Dimensions = dimensions
 	if err := validateProfile(model); err != nil {
 		return ProfileModel{}, err
 	}
 	return model, nil
 }
 
+func profileDimensions(model ProfileModel) ([]dimensionSpec, error) {
+	vector, exists := model.Activities["AssembleDomainCompletenessVector"]
+	if !exists || vector.Output != "DomainCompletenessVector" ||
+		vector.ValueProgram != "gooo.metric.domain-completeness.vector:v1" {
+		return nil, fmt.Errorf("profile vector activity is missing or invalid")
+	}
+
+	const profilePrefix = "gooo://meta/domain-completeness"
+	result := make([]dimensionSpec, 0, len(vector.Inputs))
+	seenOutputs := make(map[string]bool, len(vector.Inputs))
+	seenActivities := make(map[string]bool, len(vector.Inputs))
+	for _, output := range vector.Inputs {
+		if seenOutputs[output] {
+			return nil, fmt.Errorf("profile vector repeats dimension %q", output)
+		}
+		seenOutputs[output] = true
+		entity, exists := model.Entities[output]
+		if !exists || !strings.HasPrefix(entity.ID, profilePrefix+"/dimension/") {
+			return nil, fmt.Errorf("profile vector input %q is not a declared dimension", output)
+		}
+		slug := strings.TrimPrefix(entity.ID, profilePrefix+"/dimension/")
+		if slug == "" || strings.Contains(slug, "/") {
+			return nil, fmt.Errorf("profile dimension %q has an invalid stable ID", output)
+		}
+		id := strings.ReplaceAll(slug, "-", "_")
+		activityName := "Measure" + output
+		activity, exists := model.Activities[activityName]
+		if !exists || activity.Output != output || len(activity.Inputs) != 1 || seenActivities[activityName] {
+			return nil, fmt.Errorf("profile dimension %q has no unique matching measurement activity", output)
+		}
+		metricID := activity.ValueProgram
+		runtime, supported := dimensionRuntimes[metricID]
+		if !supported {
+			return nil, fmt.Errorf("profile dimension %q declares unsupported metric %q", output, metricID)
+		}
+		if metricID != "gooo.metric.domain-completeness."+slug+".v1" {
+			return nil, fmt.Errorf("profile dimension %q metric does not match its stable ID", output)
+		}
+		seenActivities[activityName] = true
+		evidence, exists := model.Entities[activity.Inputs[0]]
+		stem := strings.TrimSuffix(strings.TrimSuffix(slug, "-coverage"), "-integrity")
+		if !exists || evidence.ID != profilePrefix+"/evidence/"+stem {
+			return nil, fmt.Errorf("profile measurement %q is not bound to its source evidence type", activityName)
+		}
+		result = append(result, dimensionSpec{
+			ID: id, MetricID: metricID, Evidence: activity.Inputs[0], Unit: runtime.Unit,
+		})
+	}
+	for name := range model.Activities {
+		if strings.HasPrefix(name, "Measure") && !seenActivities[name] {
+			return nil, fmt.Errorf("profile measurement %q is not connected to the vector", name)
+		}
+	}
+	if len(result) == 0 {
+		return nil, fmt.Errorf("profile vector has no dimensions")
+	}
+	return result, nil
+}
+
 func validateProfile(model ProfileModel) error {
 	prefix := "gooo://meta/domain-completeness"
 	expectedEntities := map[string]string{
 		"BoundaryEvidence":                   prefix + "/evidence/boundary",
+		"ComparisonBaseline":                 prefix + "/comparison/baseline",
+		"ComparisonDelta":                    prefix + "/comparison/delta",
 		"BoundaryCoverage":                   prefix + "/dimension/boundary-coverage",
+		"Boolean":                            prefix + "/type/boolean",
 		"DeclarationEvidence":                prefix + "/evidence/declaration",
 		"DeclarationCoverage":                prefix + "/dimension/declaration-coverage",
 		"DomainCompletenessReceipt":          ReceiptSchema,
@@ -91,6 +148,7 @@ func validateProfile(model ProfileModel) error {
 		"DomainProfile":                      ProfileID,
 		"ExcludedGeneralPurposeCompleteness": prefix + "/excluded/general-purpose-completeness",
 		"ExcludedExternalAdoption":           prefix + "/excluded/external-adoption",
+		"Integer":                            prefix + "/type/integer",
 		"GenerationEvidence":                 prefix + "/evidence/generation",
 		"GenerationCoverage":                 prefix + "/dimension/generation-coverage",
 		"ProvenanceEvidence":                 prefix + "/evidence/provenance",
@@ -98,6 +156,7 @@ func validateProfile(model ProfileModel) error {
 		"ReadOnlySystemBudget":               prefix + "/budget/read-only-zero-human-actions",
 		"ReverseObservationEvidence":         prefix + "/evidence/reverse-observation",
 		"ReverseObservationCoverage":         prefix + "/dimension/reverse-observation-coverage",
+		"Text":                               prefix + "/type/text",
 		"UseCaseEvidence":                    prefix + "/evidence/use-case",
 		"UseCaseCoverage":                    prefix + "/dimension/use-case-coverage",
 	}
@@ -110,32 +169,56 @@ func validateProfile(model ProfileModel) error {
 			return fmt.Errorf("profile entity %q must bind ID %q", name, id)
 		}
 	}
-	expectedActivities := make(map[string]Activity)
-	for _, dimension := range dimensions {
-		expectedActivities[dimension.Activity] = Activity{
-			Name: dimension.Activity, Inputs: []string{dimension.Evidence},
-			Output: title(dimension.ID), ValueProgram: dimension.MetricID,
+	expectedDimensions := 0
+	for _, id := range expectedEntities {
+		if strings.HasPrefix(id, prefix+"/dimension/") {
+			expectedDimensions++
 		}
 	}
-	expectedActivities["AssembleDomainCompletenessVector"] = Activity{
-		Name:   "AssembleDomainCompletenessVector",
-		Inputs: []string{"DeclarationCoverage", "GenerationCoverage", "ReverseObservationCoverage", "UseCaseCoverage", "BoundaryCoverage", "ProvenanceIntegrity"},
-		Output: "DomainCompletenessVector", ValueProgram: "gooo.metric.domain-completeness.vector:v1",
+	if len(model.Dimensions) != expectedDimensions {
+		return fmt.Errorf("profile vector dimension denominator is %d, want %d", len(model.Dimensions), expectedDimensions)
 	}
-	expectedActivities["EmitDomainCompletenessReceipt"] = Activity{
-		Name: "EmitDomainCompletenessReceipt", Inputs: []string{"DomainCompletenessVector"},
-		Output: "DomainCompletenessReceipt", ValueProgram: "gooo.receipt.domain-completeness:v1",
+	expectedActivities := map[string]Activity{
+		"CanCompareDomainCompletenessAxes": {
+			Name: "CanCompareDomainCompletenessAxes", Inputs: []string{"Integer", "Integer", "Integer", "Integer", "Text", "Text"},
+			Output: "Boolean",
+		},
+		"EmitDomainCompletenessReceipt": {
+			Name: "EmitDomainCompletenessReceipt", Inputs: []string{"DomainCompletenessVector"},
+			Output: "DomainCompletenessReceipt", ValueProgram: "gooo.receipt.domain-completeness:v1",
+		},
+		"ReplayDomainCompletenessReceipt": {
+			Name: "ReplayDomainCompletenessReceipt", Inputs: []string{"DomainCompletenessReceipt"},
+			Output: "DomainCompletenessReceipt", ValueProgram: "gooo.replay.domain-completeness:v1",
+		},
+		"CompareDomainCompletenessVectors": {
+			Name: "CompareDomainCompletenessVectors", Inputs: []string{"DomainCompletenessReceipt", "ComparisonBaseline"},
+			Output: "ComparisonDelta", ValueProgram: "gooo.metric.domain-completeness.vector-delta.v1",
+		},
+		"ClassifyDomainCompleteness": {
+			Name: "ClassifyDomainCompleteness", Inputs: []string{"Integer", "Integer", "Integer", "Boolean"},
+			Output: "Text",
+		},
+		"SelectDomainCompletenessOutcome": {
+			Name: "SelectDomainCompletenessOutcome", Inputs: []string{"Boolean", "Boolean", "Boolean", "Boolean"},
+			Output: "Text",
+		},
+		"FindPriorDomainCompletenessReceipt": {
+			Name: "FindPriorDomainCompletenessReceipt", Inputs: []string{"DomainProfile"},
+			Output: "ComparisonBaseline", ValueProgram: "gooo.evidence.latest-compatible-domain-receipt.v1",
+		},
+		"AssembleDomainCompletenessVector": model.Activities["AssembleDomainCompletenessVector"],
 	}
-	expectedActivities["ReplayDomainCompletenessReceipt"] = Activity{
-		Name: "ReplayDomainCompletenessReceipt", Inputs: []string{"DomainCompletenessReceipt"},
-		Output: "DomainCompletenessReceipt", ValueProgram: "gooo.replay.domain-completeness:v1",
-	}
-	if len(model.Activities) != len(expectedActivities) {
-		return fmt.Errorf("profile activity denominator is %d, want %d", len(model.Activities), len(expectedActivities))
+	if len(model.Activities) != len(expectedActivities)+len(model.Dimensions) {
+		return fmt.Errorf("profile activity denominator is %d, want %d", len(model.Activities), len(expectedActivities)+len(model.Dimensions))
 	}
 	for name, expected := range expectedActivities {
 		actual, exists := model.Activities[name]
-		if !exists || actual.Output != expected.Output || actual.ValueProgram != expected.ValueProgram ||
+		programMismatch := actual.ValueProgram != expected.ValueProgram
+		if name == "ClassifyDomainCompleteness" || name == "SelectDomainCompletenessOutcome" || name == "CanCompareDomainCompletenessAxes" {
+			programMismatch = strings.TrimSpace(actual.ValueProgram) == ""
+		}
+		if !exists || actual.Output != expected.Output || programMismatch ||
 			!equalStrings(actual.Inputs, expected.Inputs) {
 			return fmt.Errorf("profile activity %q does not match the receipt contract", name)
 		}
@@ -191,17 +274,6 @@ func semanticHash(path string, source []byte) (string, error) {
 func digestBytes(value []byte) string {
 	sum := sha256.Sum256(value)
 	return "sha256:" + hex.EncodeToString(sum[:])
-}
-
-func title(value string) string {
-	parts := strings.Split(value, "_")
-	for index, part := range parts {
-		if part == "" {
-			continue
-		}
-		parts[index] = strings.ToUpper(part[:1]) + part[1:]
-	}
-	return strings.Join(parts, "")
 }
 
 func equalStrings(left, right []string) bool {

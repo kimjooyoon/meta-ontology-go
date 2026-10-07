@@ -46,6 +46,15 @@ func generateSourceFillCandidates(plan *assemblyspec.FillPlan, cases []assemblys
 	if plan == nil || plan.Generation == nil {
 		return nil, nil, fmt.Errorf("source fill candidate derivation is not declared")
 	}
+	return generateSourceFillCandidatesWith(plan, func(declaration assemblyspec.FillHoleGrammar) ([]string, int, bool, error) {
+		return generateSourceFillExpressions(declaration, cases)
+	})
+}
+
+func generateSourceFillCandidatesWith(plan *assemblyspec.FillPlan, generate func(assemblyspec.FillHoleGrammar) ([]string, int, bool, error)) ([]IRBodyFillCandidate, *IRBodyFillCandidateGenerationReceipt, error) {
+	if plan == nil || plan.Generation == nil || generate == nil {
+		return nil, nil, fmt.Errorf("source fill candidate derivation is not declared")
+	}
 	grammarByHole := make(map[string]assemblyspec.FillHoleGrammar, len(plan.Holes))
 	if len(plan.Generation.HoleGrammars) != 0 {
 		for _, grammar := range plan.Generation.HoleGrammars {
@@ -69,7 +78,7 @@ func generateSourceFillCandidates(plan *assemblyspec.FillPlan, cases []assemblys
 		if !ok {
 			return nil, nil, fmt.Errorf("source fill has no grammar for hole %q", hole.ID)
 		}
-		candidates, enumerated, complete, err := generateSourceFillExpressions(declaration, cases)
+		candidates, enumerated, complete, err := generate(declaration)
 		if err != nil {
 			return nil, nil, fmt.Errorf("derive expressions for hole %q: %w", hole.ID, err)
 		}

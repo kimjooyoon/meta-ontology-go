@@ -1,0 +1,15 @@
+bin/gooo: go1.27.1
+	path	github.com/kimjooyoon/meta-ontology-go/cmd/gooo
+	mod	github.com/kimjooyoon/meta-ontology-go	v0.6.5-dev.0.20261007180852-1b39843fca58	h1:4ZXG9AtQ9rBJjz5pXmVHZ73q2foKjaliiiP7B9Lymg8=
+	dep	github.com/kimjooyoon/gooo-decision-runtime	v0.2.24-experimental	h1:rlYu+jFfO88id/598ZfVKI9Qapcwxo7xtYW2dI7n254=
+	dep	github.com/kimjooyoon/gooo-jev	v0.0.0-20260928032625-e146e6dbb34a	h1:1/uDBg0hud6IiZzOhTKXokIWdmlnU4HdYz7TGl729+s=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	CGO_ENABLED=1
+	build	CGO_CFLAGS=
+	build	CGO_CPPFLAGS=
+	build	CGO_CXXFLAGS=
+	build	CGO_LDFLAGS=
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0

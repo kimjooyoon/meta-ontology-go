@@ -25,42 +25,9 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 	if err := spec.Validate(); err != nil {
 		return Result{}, fmt.Errorf("invalid source-declared IR body-fill plan: %w", err)
 	}
-	candidates := make([]IRBodyFillCandidate, len(spec.FillPlan.Candidates))
-	var generationReceipt *IRBodyFillCandidateGenerationReceipt
-	if spec.FillPlan.Generation != nil {
-		var err error
-		candidates, generationReceipt, err = generateSourceFillCandidates(spec.FillPlan, spec.Cases)
-		if err != nil {
-			return Result{}, err
-		}
-	}
-	if spec.FillPlan.Generation == nil {
-		for index, candidate := range spec.FillPlan.Candidates {
-			fills := make(map[string]string, len(candidate.Fills))
-			for _, fill := range candidate.Fills {
-				fills[fill.HoleID] = fill.Expression
-			}
-			candidates[index] = IRBodyFillCandidate{ID: candidate.ID, Fills: fills}
-		}
-	}
-	plan := IRBodyFillPlan{
-		Schema: bodyFillMultiPlanSchema, Intent: spec.FillPlan.Intent,
-		Holes:            make([]IRBodyFillHole, len(spec.FillPlan.Holes)),
-		Candidates:       make([]IRBodyFillCandidate, len(candidates)),
-		TestCases:        make([]IRBodyFillTestCase, len(spec.Cases)),
-		HoldoutTestCases: make([]IRBodyFillTestCase, len(spec.HoldoutCases)),
-	}
-	for index, hole := range spec.FillPlan.Holes {
-		plan.Holes[index] = IRBodyFillHole{ID: hole.ID}
-	}
-	for index, candidate := range candidates {
-		plan.Candidates[index] = candidate
-	}
-	for index, testCase := range spec.Cases {
-		plan.TestCases[index] = IRBodyFillTestCase{Input: testCase.Input, Expected: testCase.Expected}
-	}
-	for index, testCase := range spec.HoldoutCases {
-		plan.HoldoutTestCases[index] = IRBodyFillTestCase{Input: testCase.Input, Expected: testCase.Expected}
+	plan, generationReceipt, err := sourceIRBodyFillPlan(filename, source, activity, spec)
+	if err != nil {
+		return Result{}, err
 	}
 	result, err := GenerateWithIRBodyFillWithOptions(ctx, filename, source, activity, plan, endpoint, apiKey, options)
 	if err != nil {
@@ -77,6 +44,51 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 		populateCompletenessReceipt(&result.Report, "")
 	}
 	return result, nil
+}
+
+func sourceIRBodyFillPlan(filename string, source []byte, activity string, spec *assemblyspec.Spec) (IRBodyFillPlan, *IRBodyFillCandidateGenerationReceipt, error) {
+	candidates := make([]IRBodyFillCandidate, len(spec.FillPlan.Candidates))
+	var receipt *IRBodyFillCandidateGenerationReceipt
+	if spec.FillPlan.Generation != nil {
+		var err error
+		if len(spec.ValueCases) > 0 {
+			candidates, receipt, err = generateSourceRecordFillCandidates(filename, source, activity, spec.FillPlan, spec.ValueCases)
+		} else {
+			candidates, receipt, err = generateSourceFillCandidates(spec.FillPlan, spec.Cases)
+		}
+		if err != nil {
+			return IRBodyFillPlan{}, nil, err
+		}
+	} else {
+		for index, candidate := range spec.FillPlan.Candidates {
+			fills := make(map[string]string, len(candidate.Fills))
+			for _, fill := range candidate.Fills {
+				fills[fill.HoleID] = fill.Expression
+			}
+			candidates[index] = IRBodyFillCandidate{ID: candidate.ID, Fills: fills}
+		}
+	}
+	plan := IRBodyFillPlan{
+		Schema: bodyFillMultiPlanSchema, Intent: spec.FillPlan.Intent,
+		Holes: make([]IRBodyFillHole, len(spec.FillPlan.Holes)), Candidates: candidates,
+		TestCases:        make([]IRBodyFillTestCase, len(spec.Cases)),
+		HoldoutTestCases: make([]IRBodyFillTestCase, len(spec.HoldoutCases)),
+	}
+	if len(spec.ValueCases) > 0 {
+		plan.Schema = bodyFillRecordPlanSchema
+		plan.ValueCases = append([]assemblyspec.ValueCase(nil), spec.ValueCases...)
+		plan.ValueHoldoutCases = append([]assemblyspec.ValueCase(nil), spec.ValueHoldoutCases...)
+	}
+	for index, hole := range spec.FillPlan.Holes {
+		plan.Holes[index] = IRBodyFillHole{ID: hole.ID}
+	}
+	for index, testCase := range spec.Cases {
+		plan.TestCases[index] = IRBodyFillTestCase{Input: testCase.Input, Expected: testCase.Expected}
+	}
+	for index, testCase := range spec.HoldoutCases {
+		plan.HoldoutTestCases[index] = IRBodyFillTestCase{Input: testCase.Input, Expected: testCase.Expected}
+	}
+	return plan, receipt, nil
 }
 
 func sourceWithoutIRBodyFill(filename string, source []byte, activity string) ([]byte, error) {

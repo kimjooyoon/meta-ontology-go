@@ -136,7 +136,26 @@ system next_operation are recorded without assigning a person.
 
 This profile measures the repository's declared language-utility portfolio.
 It does not claim universal language completeness, external adoption, or
-gooo-jev completeness. Its first receipt has no profile-bound historical vector,
-so cross-run comparison remains UNKNOWN until an exact compatible baseline
-receipt is available. The vector is descriptive and does not add a blocking CI
-check.
+gooo-jev completeness. Cross-run comparison is UNKNOWN until an exact
+profile-compatible receipt exists. The evaluator accepts an optional
+`-baseline` receipt for local replay and can discover a baseline during CI.
+Comparison requires the receipt digest, profile and generated semantic hashes,
+repository identity, metric IDs, units, and denominators to match. The Gooo
+profile declares both prior-receipt discovery and vector comparison as meta
+activities. A changed
+denominator or incompatible profile stays UNKNOWN; axes with unresolved
+evidence remain UNKNOWN while independently complete axes can still compare.
+The report records per-axis numerator deltas and baseline receipt identity.
+This is descriptive and does not add a blocking CI check. The evidence workflow
+searches the newest 20 completed successful pushes to `dev`, then reads only
+artifacts whose names bind each run's exact head SHA. It skips receipts whose
+profile, generated semantics, metric IDs, units, or denominators do not match
+the current vector and continues to an older candidate. The collector verifies
+the artifact digest and checks the receipt's repository, commit, run ID, and
+attempt before using it. It includes downloaded bytes in the system budget and
+pins the selected receipt and artifact identity for deterministic replay. The
+receipt distinguishes unavailable history from a retained history that is
+incompatible with the current profile or population, and records the reason
+code. Expired or missing artifacts leave the comparison UNKNOWN. CI grants this
+read-only collector `actions: read`; comparison does not write repository state
+or affect promotion.
