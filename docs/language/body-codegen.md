@@ -28,6 +28,13 @@ candidate. Its source and decisions are retained for replay with zero new model
 calls. Deterministic ordering and an optional compact model share the same
 declared alternatives, finite checks and attempt budget.
 
+`body-compose --resume-composition` continues a saved record-choice composition
+under a new explicit Gooo policy. It verifies the earlier observations, retains
+the original ranking and cumulative attempt budget, and starts with the remaining
+candidates. This path loads no model. See the [checkpoint and continuation
+example](../../examples/assembly-policy/README.md#continue-a-saved-partial-construction)
+for supported graphs, history bounds, and replay accounting.
+
 Gooo source can declare candidate expressions for a record-valued activity
 body. The compiler checks each complete assignment against the record shape
 and declared `value_case` examples, then emits only a listed assignment. The

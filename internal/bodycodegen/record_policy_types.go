@@ -14,6 +14,21 @@ type RecordAssemblyControl struct {
 	GeneratedSHA256 string                 `json:"generated_sha256"`
 	ActivityID      string                 `json:"activity_id"`
 	Decisions       []RecordPolicyDecision `json:"decisions"`
+	Entry           *RecordPolicyDecision  `json:"entry,omitempty"`
+}
+
+// A stage preserves a previous search boundary and its Gooo control program.
+// Stages are flat and bounded; replay reconstructs every boundary in order.
+type RecordAssemblyControlStage struct {
+	Attempts     int                    `json:"attempts"`
+	SelectedMask uint16                 `json:"selected_mask"`
+	Control      *RecordAssemblyControl `json:"control,omitempty"`
+}
+
+type RecordAssemblyContinuation struct {
+	RetainedAttempts int `json:"retained_attempts"`
+	AddedAttempts    int `json:"added_attempts"`
+	NewModelCalls    int `json:"new_model_calls"`
 }
 
 type RecordPolicyCounts struct {

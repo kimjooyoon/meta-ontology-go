@@ -33,6 +33,7 @@ type Composition struct {
 	FillModel            *CompositionFillModelInfo      `json:"fill_model,omitempty"`
 	ElapsedNS            int64                          `json:"elapsed_ns"`
 	Scope                string                         `json:"scope"`
+	Continuation         *CompositionContinuation       `json:"continuation,omitempty"`
 }
 
 // GenerateComposition constructs each activity in typed plan order, retaining
@@ -190,6 +191,9 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 	driver, err := compositionDriver(graph)
 	if err != nil || prior.Driver != driver || prior.DriverSHA256 != digest([]byte(driver)) {
 		return graph, fmt.Errorf("composition generated input delivery driver does not replay")
+	}
+	if err := verifyCompositionContinuation(prior); err != nil {
+		return graph, err
 	}
 	return graph, ctx.Err()
 }

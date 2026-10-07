@@ -133,7 +133,16 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 	best := -1
 	var policyBest RecordAssemblyAttempt
 	var policyCases []RecordAssemblyCase
-	for _, mask := range r.Ranking {
+	remaining := r.Ranking[len(r.Attempts):]
+	if len(r.Attempts) > 0 {
+		best = 0
+		var err error
+		policyBest, policyCases, remaining, err = resumeRecordSearch(ctx, p, r, policy)
+		if err != nil {
+			return err
+		}
+	}
+	for _, mask := range remaining {
 		if len(r.Attempts) >= p.spec.MaxAttempts {
 			break
 		}
