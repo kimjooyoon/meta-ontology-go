@@ -1,0 +1,63 @@
+{
+  "schema": "gooo/workspace-input-observation-study/v1",
+  "observed_on": "2026-10-08 Asia/Seoul",
+  "compiler_revision": "093a839199d2d91d6b1b73490c0a12057bafdc6f",
+  "compiler_tree_dirty": false,
+  "go_version": "go version go1.27.1 darwin/arm64",
+  "receipt_sha256": "sha256:26dad94e827e56e28ab8a2ba5aec1ba9f8f52eee7ea74e05a290ed286d62c0bf",
+  "receipt_bytes": 63125,
+  "mode": "deterministic source-owned body fill and fresh native execution",
+  "model_calls": 0,
+  "native_runs": 2,
+  "runtime_activity_outputs": {
+    "passed": 8,
+    "total": 8
+  },
+  "input_separation": {
+    "status": "PASS",
+    "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+    "unique_inputs": 3,
+    "duplicate_rows": 1,
+    "overlapping_inputs": 2,
+    "disjoint_inputs": 1,
+    "disjoint_cases_passed": 1,
+    "unknown_inputs": 0,
+    "scope": "unique root-input tuples; actual inputs at all composing and earlier body-fill activities compared with their selection/holdout cases and probes; duplicate expectations must all match; model-training exposure is unknown",
+    "earlier_stages": [
+      {
+        "activity_id": "gooo-workspace://activity/gooo-package1activity-lift",
+        "source_sha256": "sha256:dfc43c8492a8f4a6b71c60616068a5fa0174cce7e6d43f9b19784e46af6ea461",
+        "plan_sha256": "sha256:d363756f693163c7d75b5d4be59a74060806890232c8a7382758b286621c6a6b",
+        "input_set_sha256": "sha256:efd16f8c3b2df5cde2f3982f650eb6fedf47fc12f5bb62c3ef7f19267e45cbfe",
+        "unique_inputs": 13
+      }
+    ]
+  },
+  "cases": [
+    {
+      "root": -9,
+      "lift_input": 0,
+      "known_from": "fill training case"
+    },
+    {
+      "root": 11,
+      "lift_input": 11,
+      "known_from": null
+    },
+    {
+      "root": 100,
+      "lift_input": 100,
+      "known_from": "fill holdout case"
+    },
+    {
+      "root": 11,
+      "lift_input": 11,
+      "duplicate_of_row": 1
+    }
+  ],
+  "scope": [
+    "Finite unique runtime inputs and all their supplied expectations; model-training exposure remains unknown.",
+    "Body construction cases, holdouts and generated probes are included for earlier fills, including intermediate values.",
+    "No performance advantage or general correctness claim is derived from this example."
+  ]
+}

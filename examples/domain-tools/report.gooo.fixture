@@ -1,0 +1,9 @@
+package report
+namespace report
+
+entity Report id "gooo://tools/report/v1" fields {
+    field state id "gooo://tools/report/state" type string required one
+    field next_operation id "gooo://tools/report/next-operation" type string required one
+    field message id "gooo://tools/report/message" type string required one
+}
+entity Text id "gooo://tools/report/text"

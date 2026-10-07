@@ -47,5 +47,8 @@ Start from a library template:
 
 For workspace manifests and execution, see docs/language/workspace-manifest.md
 and docs/language/language-package-execution.md.
+
+Reuse a saved package execution without a model:
+  gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 `,
 }

@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/body-composition-inputs/v1",
+  "inputs": [
+    {
+      "gooo/tools/policy:Assess": {
+        "matched": 0,
+        "total": 4,
+        "scored": 1,
+        "budget": 5
+      }
+    },
+    {
+      "gooo/tools/policy:Assess": {
+        "matched": 4,
+        "total": 4,
+        "scored": 1,
+        "budget": 5
+      }
+    }
+  ]
+}

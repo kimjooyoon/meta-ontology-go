@@ -255,6 +255,14 @@ feedback without input identities also leaves the measurement `UNKNOWN`.
 Model-training exposure remains unknown; this finite fraction describes only
 the recorded input boundary. The metric is descriptive and adds no CI gate.
 
+Workspace execution also includes body fills completed before composition.
+The earlier fill's selected body is matched to the executed activity, and its
+training, holdout and probe tuples join the known-input sets. A new root can
+still overlap when an intermediate activity receives a previously observed
+value. `earlier_stages` records the activity, source, plan and canonical input-set
+digests for these stages. Source-owned fills and external fill plans use the
+same typed tuple accounting. See the [workspace input example](../examples/workspace-input-observations/README.md).
+
 ## Execution and layout
 
 The existing typed-plan compiler checks exact entity identities, ports and

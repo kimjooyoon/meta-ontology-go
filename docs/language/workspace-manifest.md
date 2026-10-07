@@ -1,5 +1,40 @@
 # Gooo workspace package graph
 
+## Reuse a selected package program
+
+Save `package execute --json` output, then use `package replay --receipt <saved.json>`
+with the workspace manifest and either `--cases` or `--inputs`. The
+[diagnostic tool example](../../examples/package-diagnostic-replay/README.md)
+shows a Gooo library whose three body choices can be selected by the own compact
+model and subsequently reused without the model files.
+
+Replay rereads the manifest and its current sources, reconstructs the dependency
+graph, source fills and external fill plans, and verifies the saved native
+projection. It compiles and runs that program twice on the requested inputs.
+The selected body stays fixed; changed input rows do not initiate another search.
+Copying the same manifest-relative source tree to another location is supported.
+Changed declarations, dependency identities or entry points need a new execution
+record. Older external-fill records that lack `external_plan` need one new
+`package execute` using their original plan; source-owned records contain their
+construction contract already.
+
+With `--json`, `replayed_from_sha256` identifies the exact supplied receipt and
+`result.replay.prior_result_sha256` binds its decoded result. Historical generation
+records retain their old model-call counts. This invocation's replay and runtime
+model-call counts are zero; provider environment settings are not consulted.
+Fresh case results report `PASS` or `PROGRESS`; input-only results report
+`OBSERVED` and keep correctness unknown. These decisions describe execution and
+finite expectations, not correctness across all inputs. Prior runtime observations
+are retained in the input receipt, rather than reused as current measurements.
+
+Replay also recomputes `runtime.input_separation` over the fresh native traces.
+Earlier source fills and external fill plans contribute their construction,
+holdout and probe inputs. The retained `earlier_stages` identities explain which
+sets were compared. A new root input that reaches an already observed value at
+a later activity remains overlapping. [Whole-workspace example](../../examples/workspace-input-observations/README.md).
+
+## Resolve and execute
+
 `gooo.workspace.json` connects source files to the package graph already used
 by Gooo's package runtime. Resolve a workspace with:
 

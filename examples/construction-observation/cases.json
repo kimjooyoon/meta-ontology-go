@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"example/construction:Normalize": -9}, "expected": {"example/construction:Normalize": 0, "example/construction:Lift": 1}},
+    {"inputs": {"example/construction:Normalize": 11}, "expected": {"example/construction:Normalize": 11, "example/construction:Lift": 12}}
+  ]
+}
