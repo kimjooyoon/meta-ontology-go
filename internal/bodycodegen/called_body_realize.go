@@ -13,22 +13,30 @@ func RealizeCalledAssembly(ctx context.Context, filename string, source []byte, 
 	if err != nil {
 		return Realization{}, err
 	}
-	file, diagnostics := ParseBodyFile(filename, []byte(realized.Source))
-	if diagnostics.HasErrors() || file == nil {
-		return Realization{}, fmt.Errorf("called body realization has syntax errors")
-	}
-	activity, err := sourceBodyActivity(file, prior.Report.Activity)
+	realized.Source, err = fixedCalledSource(filename, realized.Source, prior.Report.Activity)
 	if err != nil {
 		return Realization{}, err
 	}
+	realized.RealizedSourceSHA256 = digest([]byte(realized.Source))
+	return realized, nil
+}
+
+func fixedCalledSource(filename, source, name string) (string, error) {
+	file, diagnostics := ParseBodyFile(filename, []byte(source))
+	if diagnostics.HasErrors() || file == nil {
+		return "", fmt.Errorf("called body realization has syntax errors")
+	}
+	activity, err := sourceBodyActivity(file, name)
+	if err != nil {
+		return "", err
+	}
 	if activity.Assembly != nil {
 		span := activity.Assembly.Span
-		if span.Start.Offset < activity.ValueProgramSpan.End.Offset || span.End.Offset > len(realized.Source) ||
+		if span.Start.Offset < activity.ValueProgramSpan.End.Offset || span.End.Offset > len(source) ||
 			span.Start.Offset > span.End.Offset {
-			return Realization{}, fmt.Errorf("called assembly checkpoint spans differ")
+			return "", fmt.Errorf("called assembly checkpoint spans differ")
 		}
-		realized.Source = realized.Source[:span.Start.Offset] + realized.Source[span.End.Offset:]
-		realized.RealizedSourceSHA256 = digest([]byte(realized.Source))
+		source = source[:span.Start.Offset] + source[span.End.Offset:]
 	}
-	return realized, nil
+	return source, nil
 }

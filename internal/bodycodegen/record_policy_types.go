@@ -20,15 +20,19 @@ type RecordAssemblyControl struct {
 // A stage preserves a previous search boundary and its Gooo control program.
 // Stages are flat and bounded; replay reconstructs every boundary in order.
 type RecordAssemblyControlStage struct {
-	Attempts     int                    `json:"attempts"`
-	SelectedMask uint16                 `json:"selected_mask"`
-	Control      *RecordAssemblyControl `json:"control,omitempty"`
+	Attempts          int                    `json:"attempts"`
+	SelectedMask      uint16                 `json:"selected_mask"`
+	Control           *RecordAssemblyControl `json:"control,omitempty"`
+	Source            string                 `json:"source,omitempty"`
+	SourceSHA256      string                 `json:"source_sha256,omitempty"`
+	RecheckedAttempts int                    `json:"rechecked_attempts,omitempty"`
 }
 
 type RecordAssemblyContinuation struct {
-	RetainedAttempts int `json:"retained_attempts"`
-	AddedAttempts    int `json:"added_attempts"`
-	NewModelCalls    int `json:"new_model_calls"`
+	RetainedAttempts  int `json:"retained_attempts"`
+	AddedAttempts     int `json:"added_attempts"`
+	RecheckedAttempts int `json:"rechecked_attempts,omitempty"`
+	NewModelCalls     int `json:"new_model_calls"`
 }
 
 type RecordPolicyCounts struct {
