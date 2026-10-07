@@ -13,7 +13,6 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
-	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
@@ -39,6 +38,7 @@ type packageExecutionReceipt struct {
 	InputsDigest   string                     `json:"inputs_digest,omitempty"`
 	Result         *workspaceexecution.Result `json:"result,omitempty"`
 	Error          string                     `json:"error,omitempty"`
+	ReplayedFrom   string                     `json:"replayed_from_sha256,omitempty"`
 }
 
 func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -180,35 +180,9 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 		bodyFillOptions = bodycodegen.IRBodyFillOptions{TinyGoProvider: provider, TinyModelLoadMS: &modelLoadMS}
 		layaEndpoint, layaAPIKey = "", ""
 	}
-	runtimeManifest := packageruntime.Manifest{Schema: packageruntime.ManifestSchema, Entry: manifest.Entry}
-	root := filepath.Dir(manifestPath)
-	sourceCount, sourceBytes := 0, 0
-	for _, declared := range manifest.Packages {
-		pkg := packageruntime.PackageSpec{Path: declared.Path, Name: declared.Name, Imports: append([]string(nil), declared.Imports...)}
-		for _, sourcePath := range declared.Sources {
-			relative, pathErr := workspaceSourcePath(sourcePath)
-			if pathErr != nil {
-				return fail(pathErr, workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			sourceCount++
-			if sourceCount > workspaceMaxSourceCount {
-				return fail(fmt.Errorf("workspace declares more than %d source files", workspaceMaxSourceCount), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			filename := filepath.Join(root, relative)
-			content, readErr := readSource(reader, filename)
-			if readErr != nil {
-				return fail(fmt.Errorf("source %q: %w", sourcePath, readErr), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			sourceBytes += len(content)
-			if len(content) > workspaceMaxSourceBytes {
-				return fail(fmt.Errorf("source %q exceeds %d bytes", sourcePath, workspaceMaxSourceBytes), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			if sourceBytes > workspaceMaxSourceSetSize {
-				return fail(fmt.Errorf("workspace sources exceed %d bytes total", workspaceMaxSourceSetSize), workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
-			}
-			pkg.Sources = append(pkg.Sources, packageruntime.Source{Filename: filepath.ToSlash(relative), Content: string(content)})
-		}
-		runtimeManifest.Packages = append(runtimeManifest.Packages, pkg)
+	runtimeManifest, err := loadPackageSources(reader, manifestPath, manifest)
+	if err != nil {
+		return fail(err, workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
 	}
 	result, err := workspaceexecution.ExecuteWorkspaceWithOptions(context.Background(), runtimeManifest, suite, workspaceexecution.ExecuteOptions{
 		AssemblyModelPath: assemblyModelPath, GoBinary: goBinary, BodyFillPlans: plans, BodyFillOptions: bodyFillOptions,
@@ -220,6 +194,9 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 	receipt := packageExecutionReceipt{Schema: "gooo/workspace-body-execution-receipt/v1", Decision: "PASS",
 		Manifest: filepath.ToSlash(manifestPath), ManifestDigest: workspaceDigest(manifestBytes),
 		CasesDigest: workspaceDigest(caseBytes), Result: &result}
+	if result.Runtime.FinitePassed < result.Runtime.FiniteTotal {
+		receipt.Decision = "PROGRESS"
+	}
 	if inputOnly {
 		receipt.Decision = "OBSERVED"
 		receipt.InputsDigest, receipt.CasesDigest = receipt.CasesDigest, ""

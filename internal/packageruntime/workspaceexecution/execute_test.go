@@ -218,6 +218,16 @@ activity Normalize(Integer) -> Integer computes "return __GOOO_BODY_HOLE_value__
 			t.Fatalf("model body-fill provenance or accuracy missing: %#v", step)
 		}
 	}
+	server.Close()
+	prior := savedWorkspaceResult(t, result)
+	again, err := ReplayWorkspace(context.Background(), manifest, prior, suite, "")
+	if err != nil || again.Replay == nil || again.Replay.ModelCalls != 0 || requests.Load() != 2 || again.Runtime.FinitePassed != 2 {
+		t.Fatal("saved external fills did not replay after the provider stopped", err)
+	}
+	prior.BodyFills[0].Plan.Intent += " changed"
+	if _, err := ReplayWorkspace(context.Background(), manifest, prior, suite, "missing-go-binary"); err == nil {
+		t.Fatal("different external plan replayed")
+	}
 }
 
 func TestExecuteWorkspaceUsesSourceDeclaredFillPlanWithLayaAndDeterministicFallback(t *testing.T) {

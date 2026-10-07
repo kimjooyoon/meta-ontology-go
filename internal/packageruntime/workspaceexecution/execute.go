@@ -20,12 +20,14 @@ type Result struct {
 	Composition  bodyexecution.Composition        `json:"composition"`
 	Runtime      bodyexecution.CompositionRuntime `json:"runtime"`
 	Scope        string                           `json:"scope"`
+	Replay       *ReplayEvidence                  `json:"replay,omitempty"`
 }
 
 type BodyFillStep struct {
-	Activity          ActivityRef        `json:"activity"`
-	InputSourceSHA256 string             `json:"input_source_sha256"`
-	Generation        bodycodegen.Result `json:"generation"`
+	Activity          ActivityRef                 `json:"activity"`
+	InputSourceSHA256 string                      `json:"input_source_sha256"`
+	Generation        bodycodegen.Result          `json:"generation"`
+	Plan              *bodycodegen.IRBodyFillPlan `json:"external_plan,omitempty"`
 }
 
 type ExecuteOptions struct {

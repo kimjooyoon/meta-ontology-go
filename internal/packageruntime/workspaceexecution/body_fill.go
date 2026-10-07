@@ -36,7 +36,11 @@ func applyBodyFills(ctx context.Context, program Program, current []byte, option
 		if generation.GoooSource == "" || generation.Report.BodyFill == nil {
 			return nil, nil, fmt.Errorf("activity %s body fill returned no replayable Gooo source", key)
 		}
-		fills = append(fills, BodyFillStep{Activity: activity, InputSourceSHA256: sourceSHA256(current), Generation: generation})
+		step := BodyFillStep{Activity: activity, InputSourceSHA256: sourceSHA256(current), Generation: generation}
+		if sourceSpec == nil {
+			step.Plan = &plan
+		}
+		fills = append(fills, step)
 		current = []byte(generation.GoooSource)
 	}
 	if len(knownPlans) != len(options.BodyFillPlans) {

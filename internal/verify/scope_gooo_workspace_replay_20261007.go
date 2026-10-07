@@ -1,0 +1,36 @@
+package verify
+
+func init() {
+	branchScopeAllowlist["agent/gooo-workspace-replay-20261007"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/gooo/package_execute.go",
+		"cmd/gooo/package_replay.go",
+		"cmd/gooo/package_replay_test.go",
+		"cmd/gooo/package_resolve.go",
+		"cmd/gooo/package_sources.go",
+		"cmd/gooo/usage_topics_3.go",
+		"docs/language-direction.ko.md",
+		"docs/language/workspace-manifest.md",
+		"docs/research/workspace-replay-20261007/deterministic.json",
+		"docs/research/workspace-replay-20261007/inputs.json",
+		"docs/research/workspace-replay-20261007/model.json",
+		"docs/research/workspace-replay-20261007/replay.json",
+		"docs/research/workspace-replay-20261007/summary.json",
+		"examples/package-diagnostic-replay/README.md",
+		"examples/package-diagnostic-replay/app.gooo.fixture",
+		"examples/package-diagnostic-replay/cases.json",
+		"examples/package-diagnostic-replay/diagnostics.gooo.fixture",
+		"examples/package-diagnostic-replay/gooo.workspace.json",
+		"examples/package-diagnostic-replay/inputs.json",
+		"internal/bodycodegen/body_fill_replay.go",
+		"internal/bodycodegen/body_fill_replay_test.go",
+		"internal/bodyexecution/receipt_decode.go",
+		"internal/packageruntime/workspaceexecution/body_fill.go",
+		"internal/packageruntime/workspaceexecution/execute.go",
+		"internal/packageruntime/workspaceexecution/execute_test.go",
+		"internal/packageruntime/workspaceexecution/replay.go",
+		"internal/packageruntime/workspaceexecution/replay_test.go",
+		"internal/verify/scope_gooo_workspace_replay_20261007.go",
+	}
+}
