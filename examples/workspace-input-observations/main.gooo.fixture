@@ -1,0 +1,23 @@
+package construction
+namespace construction
+entity Integer id "construction://integer"
+
+activity Normalize(Integer) -> Integer computes `let output = input
+if input < 0 { output = 0 }
+return output`
+
+activity Lift(Integer) -> Integer computes `let base = __GOOO_BODY_HOLE_value__
+return base + __GOOO_BODY_HOLE_step__` assembling {
+    source_fill intent "Add one to the normalized value." {
+        hole "value"
+        hole "step"
+        candidate "add_one" { fill "value" "input" fill "step" "1" }
+        candidate "double" { fill "value" "input * 2" fill "step" "0" }
+    }
+    case "-2" -> "-1"
+    case "0" -> "1"
+    case "7" -> "8"
+    holdout_case "100" -> "101"
+}
+
+bind Normalize.result -> Lift.input

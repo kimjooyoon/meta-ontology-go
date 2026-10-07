@@ -8,15 +8,16 @@ import (
 // CompositionInputSeparation counts unique root-input tuples after source replay
 // and two matching native executions. Its unit is a whole case, not an activity.
 type CompositionInputSeparation struct {
-	Status              string `json:"status"`
-	Reason              string `json:"reason"`
-	UniqueInputs        int    `json:"unique_inputs"`
-	DuplicateRows       int    `json:"duplicate_rows"`
-	OverlappingInputs   int    `json:"overlapping_inputs"`
-	DisjointInputs      int    `json:"disjoint_inputs"`
-	DisjointCasesPassed int    `json:"disjoint_cases_passed"`
-	UnknownInputs       int    `json:"unknown_inputs"`
-	Scope               string `json:"scope"`
+	Status              string                   `json:"status"`
+	Reason              string                   `json:"reason"`
+	UniqueInputs        int                      `json:"unique_inputs"`
+	DuplicateRows       int                      `json:"duplicate_rows"`
+	OverlappingInputs   int                      `json:"overlapping_inputs"`
+	DisjointInputs      int                      `json:"disjoint_inputs"`
+	DisjointCasesPassed int                      `json:"disjoint_cases_passed"`
+	UnknownInputs       int                      `json:"unknown_inputs"`
+	Scope               string                   `json:"scope"`
+	EarlierStages       []ConstructionInputStage `json:"earlier_stages,omitempty"`
 }
 
 func unknownCompositionInputSeparation(reason string) CompositionInputSeparation {
@@ -32,13 +33,18 @@ type compositionInputObservation struct {
 func (graph compositionGraph) measureInputSeparation(ctx context.Context, filename string, source []byte,
 	prior Composition, suite CompositionCases, traces []CompositionTrace) CompositionInputSeparation {
 	result := unknownCompositionInputSeparation("NO_DISJOINT_INPUTS")
-	rows, err := graph.inputRows(suite)
-	if err != nil || len(rows) != len(traces) {
-		return unknownCompositionInputSeparation("INPUT_OBSERVATIONS_UNAVAILABLE")
-	}
 	seen, err := graph.selectionInputs(ctx, filename, source, prior)
 	if err != nil {
 		return unknownCompositionInputSeparation("SELECTION_INPUTS_UNAVAILABLE")
+	}
+	return graph.measureKnownInputSeparation(suite, traces, seen, result)
+}
+
+func (graph compositionGraph) measureKnownInputSeparation(suite CompositionCases, traces []CompositionTrace,
+	seen compositionSelectionInputs, result CompositionInputSeparation) CompositionInputSeparation {
+	rows, err := graph.inputRows(suite)
+	if err != nil || len(rows) != len(traces) {
+		return unknownCompositionInputSeparation("INPUT_OBSERVATIONS_UNAVAILABLE")
 	}
 	unique := make(map[string]compositionInputObservation, len(rows))
 	for i, row := range rows {

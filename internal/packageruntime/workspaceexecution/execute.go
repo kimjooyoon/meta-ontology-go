@@ -73,6 +73,7 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 	if err != nil {
 		return result, fmt.Errorf("execute generated workspace bodies: %w", err)
 	}
+	result.Runtime.InputSeparation = measureWorkspaceInputs(ctx, current, result, translated)
 	return result, nil
 }
 

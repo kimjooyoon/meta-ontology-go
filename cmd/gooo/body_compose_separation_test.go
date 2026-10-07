@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"testing"
 
@@ -36,7 +37,7 @@ func TestBodyCompositionCLIPublishesSeparatedInputCases(t *testing.T) {
 		t.Fatal(err)
 	}
 	var saved bodyexecution.CompositionRuntime
-	if err := json.Unmarshal(raw, &saved); err != nil || saved.InputSeparation != got {
+	if err := json.Unmarshal(raw, &saved); err != nil || !reflect.DeepEqual(saved.InputSeparation, got) {
 		t.Fatal("saved runtime lost input separation", err, saved.InputSeparation)
 	}
 }
