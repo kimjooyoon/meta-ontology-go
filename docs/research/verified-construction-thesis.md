@@ -154,11 +154,13 @@ tuple. Duplicate root inputs contribute one case; all expectations supplied for
 that input must agree with execution. See the [runtime measurement
 contract](../native-body-composition.md#input-separation).
 
-Workspace source fills currently run before this composition measurement. Its
-input separation therefore describes the remaining assembling activities.
-[The combined construction example](../../examples/construction-observation/README.md)
-records a value already seen by an earlier fill stage; extending automatic
-input-separation accounting across all stages is an outstanding language-tool task.
+Workspace execution and replay now include earlier source fills and external
+fill plans in this measurement. Their training, holdout and probe tuples join
+the known-input sets, with activity, source, plan and input-set identities.
+[The whole-workspace example](../../examples/workspace-input-observations/README.md)
+includes a new root that becomes an already observed downstream value. It is
+counted as overlapping. Earlier published receipts retain the scope recorded by
+their original compiler revision.
 
 This measures new inputs relative to the recorded construction observations.
 Model-training exposure remains unknown. In the same way, native case success,

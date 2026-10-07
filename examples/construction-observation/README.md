@@ -21,10 +21,10 @@ from the required toolchain. Neither command requires a model download.
 The first command builds and runs the generated graph twice. Its two runtime
 inputs specify four activity outputs: `-9 → 0 → 1` and `11 → 11 → 12`. The
 construction suites and runtime expectations retain separate denominators.
-The current workspace `input_separation` field covers the composition after
-fills have been applied. In this example, the zero passed from `Normalize` to
-`Lift` already occurs in Lift's construction suite. Include that earlier stage
-when judging novelty across the whole program.
+The workspace `input_separation` field includes earlier fills. In this example,
+the zero passed from `Normalize` to `Lift` already occurs in Lift's construction
+suite, so the first runtime input is overlapping. The original published run
+below predates this whole-workspace accounting and retains its earlier scope.
 
 The second command recomputes candidate scores from the saved source, then runs
 the Gooo explanation tool twice. For a fill candidate scoring 0/3 when another
