@@ -12,6 +12,11 @@
 공정하게 비교하는 방법은 [검증 가능한 코드 조립 연구 계획](research/verified-construction-thesis.md)에
 정리했습니다.
 
+Gooo가 선언한 IR 후보 탐색은 생성 결과를 저장한 뒤 `body-execute`로 이어갈
+수 있습니다. 실행기는 원본 후보 집합, 선택된 식, 훈련·홀드아웃 결과를 다시
+계산하고 실제 Go 실행으로 연결합니다. 이 재생 단계의 모델 호출은 0회입니다.
+[생성과 실행을 나누는 예제](source-assembly.md#declare-a-typed-ir-search-in-the-gooo-source).
+
 `assembling` 블록은 한정된 IR 후보 탐색을 Gooo 소스에 직접 선언합니다. 이제
 여러 코드 구멍(hole)에 각각 다른 타입의 문법을 지정할 수 있습니다. 예를 들어
 조건 구멍에는 입력과 훈련 입력값을 비교하는 불리언 문법을, 반환값 구멍에는

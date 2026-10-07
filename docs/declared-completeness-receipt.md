@@ -30,10 +30,12 @@ replaces these axes, and no human action is needed to continue the bounded searc
 
 ## Native execution and reverse observation
 
-`body-execute` consumes an existing typed-path generation and independently
-reconstructs it from the original Gooo, complete path document and selected
-choices. It makes **zero model/provider calls**. Only byte-identical replayed Go
-reaches a local Go 1.27.1 build. Its stdlib wrapper runs that compiled program
+`body-execute` consumes an existing typed-path or source-owned IR-search
+generation. It reconstructs the selected body from the original Gooo and its
+complete path document or declared search grammar and cases. IR search also
+replays candidate membership and selected training/holdout results, including
+measured zero matches. It makes **zero model/provider calls**. Only byte-identical
+replayed Go reaches a local Go 1.27.1 build. Its stdlib wrapper runs that compiled program
 twice with the ordered caller inputs, under a 60-second total budget and a
 2-second budget per execution. The source files and generation input stay intact.
 
