@@ -159,3 +159,26 @@ the compiler does not schedule follow-up invocations itself.
 다시 시작할 때 모델을 불러오지 않아도 기존 후보 순서로 작업을 계속할 수 있습니다.
 앞서 쓴 예산과 실패한 후보도 그대로 계산합니다. 선언한 범위에 답이 없는 경우에는
 그 부족한 부분을 결과에 남기며, 새 부품을 추가하는 일은 별도의 소스 변경입니다.
+
+### Recorded continuation
+
+The [continuation study](../../docs/research/assembly-resume-20261008/summary.json)
+uses clean compiler `f23bc3c29df5e7869549347f6d5952917385bee5` and the unchanged
+own QAT model. Its first proposal matched 3/5 construction cases and 13/15 fields.
+A separate process continued without a model path, retained the first attempt,
+added one candidate and reached 5/5 cases, 15/15 fields and 4/4 separate native
+expectations. Deterministic continuation retained one attempt and added three to
+reach the same generated program. Saved continued-program replay matched 4/4
+with zero new model calls.
+
+The unsolved variant retained 3/5 cases, 13/15 fields and 2/4 native expectations
+after eight cumulative attempts. Another continuation retained all eight and
+added zero. The same total budget applied across process boundaries.
+
+The initial prediction took 18,250 ns; setup took 0.594 ms and resident tensors
+occupied 2,096 bytes. Model-free continuation took 0.40 s wall, 0.16 s user and
+0.11 s system time, with 86,818,816 bytes maximum RSS for the measured command.
+This includes historical validation, Go compilation and native execution. Host
+CPU utilization and the model's CPU increment were not sampled. These single
+sequential runs establish a reproducible example; broader performance and model
+training exposure remain open measurements.
