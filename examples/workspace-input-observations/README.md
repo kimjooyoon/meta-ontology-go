@@ -35,3 +35,7 @@ The same measurement supports source-declared fills and externally supplied
 fill plans. Missing input evidence remains `UNKNOWN`. Input-only executions
 keep their overlap counts but have no expected-output success count. Exposure
 in a model's training data remains unknown.
+
+The [published run](../../docs/research/workspace-inputs-20261008/summary.json)
+records clean compiler revision `093a8391`, the raw receipt, eight matched
+activity outputs, one passing disjoint case, two native runs and zero model calls.
