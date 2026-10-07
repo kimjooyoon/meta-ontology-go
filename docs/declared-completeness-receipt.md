@@ -161,6 +161,11 @@ and a first natural-language capability-discovery integration now use the common
 receipt. `gooo discover --query <question> <file.gooo>` calls the pinned JEV
 capability catalog deterministically, binds its query/trail digests to the exact
 source and normalized semantic IR, and emits the same generated receipt schema.
+Adding `--generation` replays a saved source-owned projection and binds its
+artifact and activity identity. Generation coverage uses expected activity
+signatures from a separate domain contract; native runtime and reverse
+observations remain separate evidence. See the
+[connected discovery example](language/capability-discovery.md#connect-an-existing-generation).
 
 The domain profile now drives the measurement roster and its order from the
 `AssembleDomainCompletenessVector` input sequence. Each `Measure...` activity's

@@ -17,3 +17,12 @@ ID `billing://reviewer`. The example renames `Invoice` to `Bill` in the target
 while keeping the same stable ID and type, so presentation changes do not lower
 coverage. The measure does not assess activity-body correctness, generation,
 runtime behavior, or philosophical completeness.
+
+## From discovery to generated code
+
+`generation-domain.gooo.fixture` declares two expected integer activities.
+Attach the saved `ClampNegativeToZero` result from the source-owned search
+example to observe generation coverage **1/2**, with `Pending` still uncovered.
+The [discovery guide](../../docs/language/capability-discovery.md#connect-an-existing-generation)
+contains both commands. Replaying the projection uses no model or native build;
+the separate `body-execute` command records native execution evidence.

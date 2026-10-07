@@ -4,14 +4,16 @@ var topicHelpGroup2 = map[string]string{
 	"discover": `Discover a capability from natural language and Gooo source
 
 Usage:
-  gooo discover [--json] --query <question> [--domain-contract <contract.gooo>] <file.gooo>
+  gooo discover [--json] --query <question> [--domain-contract <contract.gooo>]
+    [--generation <body-codegen.json>] <file.gooo>
 
 This deterministic JEV integration binds the question to the exact Gooo source
 and normalized semantic IR. A separate Gooo domain contract supplies the
 denominator for declaration coverage; without it, coverage remains UNKNOWN.
-The command does not call a model, generate code, execute the source, or
-authorize work. The shared completeness receipt leaves generation, independent
-use cases, runtime execution, and reverse observation unresolved.
+Add --generation to replay a saved source-owned IR search or typed path result.
+Expected domain activity signatures supply the generation coverage denominator.
+The command checks the projection and finite selection observations without a
+model or native build. Independent runtime and reverse observations remain open.
 
 See docs/language/capability-discovery.md.
 `,
