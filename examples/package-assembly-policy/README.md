@@ -112,3 +112,11 @@ model's separate CPU increment were not sampled. These were sequential local
 observations with uncontrolled caches, after local tests completed. They establish
 the recorded outcomes and policy reuse; broader performance and external adoption
 require additional measurements.
+
+## Continue package construction
+
+`gooo package resume` consumes a saved package execution and an explicit new
+`--assembly-policy-workspace`. It preserves every historical policy package,
+earlier body fills, model ranking and cumulative candidate budget. See the
+[called-body checkpoint example](../called-body-construction/README.md#continue-a-saved-package-checkpoint)
+for initial construction, continuation and model-free replay.

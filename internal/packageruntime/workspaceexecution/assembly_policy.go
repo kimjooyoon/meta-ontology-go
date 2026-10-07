@@ -1,7 +1,6 @@
 package workspaceexecution
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -46,41 +45,42 @@ func prepareWorkspacePolicy(ctx context.Context, manifest *packageruntime.Manife
 }
 
 func verifyWorkspacePolicy(ctx context.Context, prior Result) error {
-	var policy *bodycodegen.RecordAssemblyPolicy
-	if prior.AssemblyPolicy != nil {
-		snapshot, prepared, err := prepareWorkspacePolicy(ctx, &prior.AssemblyPolicy.Manifest)
-		if err != nil {
-			return err
-		}
-		expected, _ := json.Marshal(snapshot)
-		observed, _ := json.Marshal(prior.AssemblyPolicy)
-		if !bytes.Equal(expected, observed) {
-			return fmt.Errorf("saved assembly policy packages or lowering differ")
-		}
-		policy = prepared
+	if err := verifyWorkspaceContinuation(prior); err != nil {
+		return err
 	}
-	return verifyWorkspacePolicySteps(prior.Composition, policy)
+	policy, err := verifiedWorkspacePolicySnapshot(ctx, prior.AssemblyPolicy)
+	if err != nil {
+		return err
+	}
+	history := make([]*bodycodegen.RecordAssemblyPolicy, len(prior.PolicyHistory))
+	for i, snapshot := range prior.PolicyHistory {
+		history[i], err = verifiedWorkspacePolicySnapshot(ctx, snapshot)
+		if err != nil {
+			return fmt.Errorf("workspace policy stage %d: %w", i, err)
+		}
+	}
+	return verifyWorkspacePolicySteps(prior.Composition, policy, history)
 }
 
-func verifyWorkspacePolicySteps(composition bodyexecution.Composition, policy *bodycodegen.RecordAssemblyPolicy) error {
+func verifyWorkspacePolicySteps(composition bodyexecution.Composition, policy *bodycodegen.RecordAssemblyPolicy,
+	history []*bodycodegen.RecordAssemblyPolicy) error {
 	controlled := 0
 	for _, step := range composition.ConstructionSteps() {
 		record := step.Generation.Report.RecordAssembly
 		if record == nil {
 			continue
 		}
-		if policy == nil {
-			if record.Control != nil || len(record.ControlHistory) != 0 {
-				return fmt.Errorf("saved workspace control requires its policy source packages")
-			}
-			continue
-		}
-		if record.Control == nil || record.Control.Policy != *policy || len(record.ControlHistory) != 0 {
+		if len(record.ControlHistory) != len(history) || !sameWorkspaceRecordPolicy(record.Control, policy) {
 			return fmt.Errorf("saved workspace record selection differs from its assembly policy")
+		}
+		for i, stage := range record.ControlHistory {
+			if !sameWorkspaceRecordPolicy(stage.Control, history[i]) {
+				return fmt.Errorf("saved workspace record differs from policy stage %d", i)
+			}
 		}
 		controlled++
 	}
-	if policy != nil && controlled == 0 {
+	if (policy != nil || len(history) > 0) && controlled == 0 {
 		return fmt.Errorf("saved assembly policy has no record-choice construction")
 	}
 	return nil

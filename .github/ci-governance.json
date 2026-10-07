@@ -7543,6 +7543,45 @@
         "internal/bodyexecution/composition_resume_history.go",
         "internal/verify/scope_gooo_dependent_continuation_20261008.go"
       ]
+    },
+    {
+      "branch": "agent/gooo-workspace-continuation-20261008",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/package_execute.go",
+        "cmd/gooo/package_replay.go",
+        "cmd/gooo/package_resolve.go",
+        "cmd/gooo/package_resume_test.go",
+        "cmd/gooo/usage_topics_3.go",
+        "docs/language-direction.ko.md",
+        "docs/research/workspace-continuation-20261008/README.md",
+        "docs/research/workspace-continuation-20261008/build.json",
+        "docs/research/workspace-continuation-20261008/deterministic-checkpoint.json",
+        "docs/research/workspace-continuation-20261008/deterministic-checkpoint.time",
+        "docs/research/workspace-continuation-20261008/deterministic-continued.json",
+        "docs/research/workspace-continuation-20261008/deterministic-continued.time",
+        "docs/research/workspace-continuation-20261008/deterministic-replay.json",
+        "docs/research/workspace-continuation-20261008/deterministic-replay.time",
+        "docs/research/workspace-continuation-20261008/model-checkpoint.json",
+        "docs/research/workspace-continuation-20261008/model-checkpoint.time",
+        "docs/research/workspace-continuation-20261008/model-continued.json",
+        "docs/research/workspace-continuation-20261008/model-continued.time",
+        "docs/research/workspace-continuation-20261008/model-replay.json",
+        "docs/research/workspace-continuation-20261008/model-replay.time",
+        "docs/research/workspace-continuation-20261008/summary.json",
+        "examples/called-body-construction/README.md",
+        "examples/package-assembly-policy/README.md",
+        "internal/bodycodegen/body_fill.go",
+        "internal/packageruntime/workspaceexecution/assembly_policy.go",
+        "internal/packageruntime/workspaceexecution/execute.go",
+        "internal/packageruntime/workspaceexecution/policy_history.go",
+        "internal/packageruntime/workspaceexecution/policy_history_test.go",
+        "internal/packageruntime/workspaceexecution/replay.go",
+        "internal/packageruntime/workspaceexecution/resume.go",
+        "internal/packageruntime/workspaceexecution/resume_test.go",
+        "internal/verify/scope_gooo_workspace_continuation_20261008.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

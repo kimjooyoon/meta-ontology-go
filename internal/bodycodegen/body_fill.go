@@ -293,7 +293,7 @@ func generateWithIRBodyFillOptions(
 	if usingTinyGo && (endpoint != "" || apiKey != "" || plan.ProviderModel != "") {
 		return Result{}, fmt.Errorf("tiny_go body fill cannot be combined with Laya endpoint, API key, or provider model")
 	}
-	file, diagnostics := syntax.ParseFile(filename, string(source))
+	file, diagnostics := ParseBodyFile(filename, source)
 	if diagnostics.HasErrors() {
 		return Result{}, fmt.Errorf("parse .gooo source: %w", diagnostics.Error())
 	}
@@ -326,11 +326,7 @@ func generateWithIRBodyFillOptions(
 			return Result{}, fmt.Errorf("IR body-fill case input arity %d does not match activity input arity %d", len(testCase.inputValues()), len(activity.Inputs))
 		}
 	}
-	modelDocument, err := bidir.DocumentFromSyntax(file)
-	if err != nil {
-		return Result{}, fmt.Errorf("lower activity identity: %w", err)
-	}
-	model, err := bidir.Get(modelDocument)
+	model, _, err := resolveBodyModel(file)
 	if err != nil {
 		return Result{}, fmt.Errorf("resolve activity identity: %w", err)
 	}
