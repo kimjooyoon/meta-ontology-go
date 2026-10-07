@@ -3,12 +3,13 @@ package workspaceexecution
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 )
 
-// ObserveConstruction reconstructs source-owned fills followed by composition
+// ObserveConstruction reconstructs source or externally planned fills, then composition
 // before returning finite construction observations. Native history is not replayed.
 func ObserveConstruction(ctx context.Context, prior Result) ([]bodyexecution.ConstructionObservation, error) {
 	if ctx == nil || prior.Schema != "gooo/workspace-body-execution/v1" {
@@ -16,20 +17,21 @@ func ObserveConstruction(ctx context.Context, prior Result) ([]bodyexecution.Con
 	}
 	current := []byte(prior.Program.Source)
 	var rows []bodyexecution.ConstructionObservation
-	seen := make(map[string]bool)
+	lastIndex := -1
 	for _, step := range prior.BodyFills {
 		activity := step.Activity.LoweredName
-		if seen[activity] || step.InputSourceSHA256 != sourceSHA256(current) ||
+		index := slices.Index(prior.Program.Activities, step.Activity)
+		if index <= lastIndex || step.InputSourceSHA256 != sourceSHA256(current) ||
 			step.Generation.Report.Activity != activity || step.Generation.Report.BodyFill == nil {
 			return nil, fmt.Errorf("construction body fill has a changed source, activity or profile")
 		}
-		seen[activity] = true
-		replayed, err := bodycodegen.RealizeSourceAssembly(ctx, "workspace.gooo", current, step.Generation)
+		lastIndex = index
+		replayed, observed, err := observeWorkspaceFill(ctx, current, step)
 		if err != nil {
-			return nil, fmt.Errorf("construction observation requires replayable source-owned fills: %w", err)
+			return nil, err
 		}
-		current = []byte(replayed.Source)
-		rows = append(rows, bodyexecution.ObserveVerifiedFill(step.Generation.Report)...)
+		current = []byte(replayed)
+		rows = append(rows, observed...)
 	}
 	if sourceSHA256(current) != prior.SourceSHA256 {
 		return nil, fmt.Errorf("construction input source differs from the saved execution source")
@@ -43,4 +45,29 @@ func ObserveConstruction(ctx context.Context, prior Result) ([]bodyexecution.Con
 		return nil, fmt.Errorf("saved workspace has no construction observations")
 	}
 	return rows, nil
+}
+
+func observeWorkspaceFill(ctx context.Context, source []byte, step BodyFillStep) (string, []bodyexecution.ConstructionObservation, error) {
+	spec, err := bodycodegen.SourceAssembly(ctx, "workspace.gooo", source, step.Activity.LoweredName)
+	if err != nil {
+		return "", nil, err
+	}
+	if step.Plan != nil {
+		if spec != nil {
+			return "", nil, fmt.Errorf("construction body fill has both a source contract and an external plan")
+		}
+		completed, err := bodycodegen.ReplayIRBodyFill(ctx, "workspace.gooo", source, *step.Plan, step.Generation)
+		if err != nil {
+			return "", nil, err
+		}
+		return completed, bodyexecution.ObserveVerifiedExternalFill(step.Generation.Report), nil
+	}
+	if !bodycodegen.IsSourceIRBodyFill(spec) {
+		return "", nil, fmt.Errorf("external construction observation requires its saved plan; regenerate older receipts with the original plan")
+	}
+	completed, err := bodycodegen.RealizeSourceAssembly(ctx, "workspace.gooo", source, step.Generation)
+	if err != nil {
+		return "", nil, err
+	}
+	return completed.Source, bodyexecution.ObserveVerifiedFill(step.Generation.Report), nil
 }

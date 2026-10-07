@@ -1,0 +1,179 @@
+{
+  "schema": "gooo/external-construction-observation-study/v1",
+  "observed_on": "2026-10-08 Asia/Seoul",
+  "compiler_revision": "8a48369e1222f7597622d11bc9c858fe6137cd75",
+  "compiler_tree_dirty": false,
+  "go_version": "go version go1.27.1 darwin/arm64",
+  "construction_wall_ms": 1026.204958,
+  "interpretation_wall_ms": 395.84825,
+  "construction": {
+    "path": "construction.json",
+    "sha256": "sha256:3d7759a5fc5536388760e12ab1c6a44089cc09e4c8fda8c95c99b830c3cdfcfc",
+    "bytes": 82457,
+    "decision": "PASS",
+    "external_plans": 2,
+    "runtime_activity_outputs": {
+      "passed": 2,
+      "total": 2
+    },
+    "native_runs": 2,
+    "model_calls": 0,
+    "native_elapsed_ms": 374.749834,
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "NO_DISJOINT_INPUTS",
+      "unique_inputs": 1,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 1,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 0,
+      "scope": "unique root-input tuples; actual inputs at all composing and earlier body-fill activities compared with their selection/holdout cases and probes; duplicate expectations must all match; model-training exposure is unknown",
+      "earlier_stages": [
+        {
+          "activity_id": "gooo-workspace://activity/gooo-package0activity-normalize",
+          "source_sha256": "sha256:4815aafa453e8bc6443d2c279b4c6a1fd7b71928386f1ef5669d573fea48e46a",
+          "plan_sha256": "sha256:f81a56f00ea82c748eb54fc195578f99efefded1debf5660575e97e1f84878cb",
+          "input_set_sha256": "sha256:cd6d49bf1897953ebcc0ef948db3e715cf872e00ef6f3a0db6f51751c206c761",
+          "unique_inputs": 14
+        },
+        {
+          "activity_id": "gooo-workspace://activity/gooo-package1activity-main",
+          "source_sha256": "sha256:8158f560be03bf68a7f904950970d6c44fe6e4a9da5010a1bd8be02aed2af7d6",
+          "plan_sha256": "sha256:cacae709dc66326a879f1931053e32d92e7f195ef69dfce8087b01b3b70574ca",
+          "input_set_sha256": "sha256:cd6d49bf1897953ebcc0ef948db3e715cf872e00ef6f3a0db6f51751c206c761",
+          "unique_inputs": 14
+        }
+      ]
+    }
+  },
+  "interpretation": {
+    "path": "interpretation.json",
+    "sha256": "sha256:944efeb2862e85bdd3bfd76a014f169e2e8b24d413a23386c34e725d0ca75b37",
+    "bytes": 51420,
+    "decision": "OBSERVED",
+    "rows": [
+      {
+        "activity": "GoooPackage0ActivityNormalize",
+        "activity_id": "gooo-workspace://activity/gooo-package0activity-normalize",
+        "profile": "external_fill",
+        "view": "scored_set",
+        "candidate_index": 0,
+        "candidate_id": "increment",
+        "selected": true,
+        "proposed": true,
+        "scoring_completed": true,
+        "input_index": 0,
+        "declared_budget": 2,
+        "candidate_count": 2,
+        "counts": {
+          "matched": 3,
+          "total": 3,
+          "best": 3,
+          "scored": 2,
+          "budget": 2
+        }
+      },
+      {
+        "activity": "GoooPackage0ActivityNormalize",
+        "activity_id": "gooo-workspace://activity/gooo-package0activity-normalize",
+        "profile": "external_fill",
+        "view": "scored_set",
+        "candidate_index": 1,
+        "candidate_id": "identity",
+        "selected": false,
+        "proposed": false,
+        "scoring_completed": true,
+        "input_index": 1,
+        "declared_budget": 2,
+        "candidate_count": 2,
+        "counts": {
+          "matched": 0,
+          "total": 3,
+          "best": 3,
+          "scored": 2,
+          "budget": 2
+        }
+      },
+      {
+        "activity": "GoooPackage1ActivityMain",
+        "activity_id": "gooo-workspace://activity/gooo-package1activity-main",
+        "profile": "external_fill",
+        "view": "scored_set",
+        "candidate_index": 0,
+        "candidate_id": "identity",
+        "selected": true,
+        "proposed": true,
+        "scoring_completed": true,
+        "input_index": 2,
+        "declared_budget": 2,
+        "candidate_count": 2,
+        "counts": {
+          "matched": 3,
+          "total": 3,
+          "best": 3,
+          "scored": 2,
+          "budget": 2
+        }
+      },
+      {
+        "activity": "GoooPackage1ActivityMain",
+        "activity_id": "gooo-workspace://activity/gooo-package1activity-main",
+        "profile": "external_fill",
+        "view": "scored_set",
+        "candidate_index": 1,
+        "candidate_id": "zero",
+        "selected": false,
+        "proposed": false,
+        "scoring_completed": true,
+        "input_index": 3,
+        "declared_budget": 2,
+        "candidate_count": 2,
+        "counts": {
+          "matched": 1,
+          "total": 3,
+          "best": 3,
+          "scored": 2,
+          "budget": 2
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+        "next_operation": "OBSERVE_NEW_INPUTS",
+        "state": "PASS"
+      },
+      {
+        "message": "더 많은 사례를 만족한 후보가 기록되어 있습니다.",
+        "next_operation": "USE_OBSERVED_CANDIDATE",
+        "state": "PROGRESS"
+      },
+      {
+        "message": "선언한 사례를 만족했습니다. 새 입력은 별도로 관측하세요.",
+        "next_operation": "OBSERVE_NEW_INPUTS",
+        "state": "PASS"
+      },
+      {
+        "message": "더 많은 사례를 만족한 후보가 기록되어 있습니다.",
+        "next_operation": "USE_OBSERVED_CANDIDATE",
+        "state": "PROGRESS"
+      }
+    ],
+    "runtime_expectations": 0,
+    "native_runs": 2,
+    "model_calls": 0,
+    "native_elapsed_ms": 373.784916
+  },
+  "reproduce": [
+    "gooo package execute --json --go /path/to/go1.27.1 --body-plans examples/package-imports/body-plans.json --cases examples/package-imports/cases.json examples/package-imports/gooo.workspace.json > execution.json",
+    "gooo package execute --json --go /path/to/go1.27.1 --construction-receipt execution.json examples/assembly-explainer/gooo.workspace.json"
+  ],
+  "scope": [
+    "Two externally planned integer activities in imported packages; each plan has two permitted candidates and three construction cases.",
+    "The single native root input was already used in construction. Two matched activity outputs provide no disjoint-input completion rate.",
+    "Gooo interpretations are observed outputs without supplied expected answers; suggestions are data and do not apply a repair.",
+    "One sequential local observation with uncontrolled warm caches. Whole CLI wall time and native elapsed time have separate scopes. CPU utilization, memory, model prediction latency and comparative advantage were not measured.",
+    "Record plans, mixed source/external fills, altered/missing plans and cancellation are covered by tests; this actual command study uses the imported integer example."
+  ]
+}

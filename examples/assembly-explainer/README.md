@@ -59,7 +59,7 @@ gooo package execute --json \
 ```
 
 The adapter reconstructs saved source-owned record choices, IR searches and body
-fills, including their candidate scores. Each scored candidate becomes one input
+fills, plus body fills with retained external plans, including candidate scores. Each scored candidate becomes one input
 row for the Gooo entry. Counts use whole construction cases; they do
 not use the historical runtime counters or the number of matching record fields.
 The observation carries the original receipt hash, activity, candidate mask,
@@ -75,9 +75,12 @@ their reason and `scoring_completed: false`; they receive no policy input and
 their zeroed count fields carry no case measurement. A measured 0/N retains its
 positive denominator. `input_index` maps scored observations to policy outputs.
 
-For source fills, every candidate is evaluated before selection. These rows use
+For body fills, every candidate is evaluated before selection. These rows use
 `view: scored_set`; all have the final scored-set size and observed best score.
-The declared capacity is the source-owned candidate set size. `selected` and
+The declared capacity is the retained plan's candidate set size. `source_fill`
+identifies a source-owned contract; `external_fill` identifies the plan retained
+in the saved body-fill step. Replay reconstructs and scores that exact plan.
+`selected` and
 `proposed` identify the final and proposed candidates. Holdout scores stay out of
 both policy input forms. [Run both profiles](../construction-observation/README.md).
 
@@ -88,8 +91,11 @@ the recorded construction sequence; they do not execute a repair or establish
 correctness on new program inputs.
 
 The current adapter handles source-owned record choices, integer IR search and
-source-owned body fills, with at most 128 scored rows per request. External fill
-plans and other assembly profiles return an unsupported-profile error.
+source-owned or externally planned body fills, with at most 128 scored rows per request.
+External fills require the saved `external_plan`; regenerate older receipts with
+the original plan if that field is absent. Other assembly profiles return an
+unsupported-profile error. [Run the imported-package example](../package-imports/README.md)
+to pass two external plans through native execution and Gooo explanation.
 It passes the five-field input contract to the target manifest's entry; this
 example uses a single ordinary entry activity. `--construction-receipt`,
 `--cases` and `--inputs` are mutually exclusive.

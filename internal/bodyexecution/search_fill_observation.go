@@ -27,6 +27,16 @@ func observeSearchAttempts(report bodycodegen.Report, budget int) []Construction
 // ObserveVerifiedFill must follow source-fill replay. All fill candidates were
 // scored before selection, so this is a scored set, not a chronological search.
 func ObserveVerifiedFill(report bodycodegen.Report) []ConstructionObservation {
+	return observeVerifiedFill(report, "source_fill")
+}
+
+// ObserveVerifiedExternalFill must follow replay with the retained external plan.
+// Its candidate scores use the same whole-case units as source-owned fills.
+func ObserveVerifiedExternalFill(report bodycodegen.Report) []ConstructionObservation {
+	return observeVerifiedFill(report, "external_fill")
+}
+
+func observeVerifiedFill(report bodycodegen.Report, profile string) []ConstructionObservation {
 	f := report.BodyFill
 	var rows []ConstructionObservation
 	best := 0
@@ -35,7 +45,7 @@ func ObserveVerifiedFill(report bodycodegen.Report) []ConstructionObservation {
 	}
 	for i, c := range f.CandidateScores {
 		rows = append(rows, ConstructionObservation{Activity: report.Activity, ActivityID: report.ActivityID,
-			Profile: "source_fill", View: "scored_set", CandidateIndex: &i, CandidateID: c.ID,
+			Profile: profile, View: "scored_set", CandidateIndex: &i, CandidateID: c.ID,
 			Selected: c.ID == f.SelectedCandidateID, Proposed: c.ID == f.ProposedCandidateID, ScoringCompleted: true,
 			DeclaredBudget: len(f.CandidateScores), CandidateCount: len(f.CandidateScores),
 			Counts: AssemblyCounts{Matched: c.TestCasesPassed, Total: c.TestCasesTotal, Best: best,
