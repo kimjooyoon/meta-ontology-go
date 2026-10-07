@@ -28,7 +28,6 @@ func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document,
 		ids[id] = semanticID
 		names[referenceKey(namespace.String(), declaration.Name)] = semanticID
 	}
-	indexedInputs := hasIndexedInputProfile(document)
 	for _, declaration := range declarations {
 		if err := checkLowerContext(ctx); err != nil {
 			return nil, nil, err
@@ -52,7 +51,7 @@ func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document,
 		if err := bindSemanticValueProgram(declaration, &node); err != nil {
 			return nil, nil, err
 		}
-		if indexedInputs && kind == semantic.Activity && len(declaration.Inputs) >= 2 {
+		if kind == semantic.Activity && len(declaration.Inputs) >= 2 {
 			for _, input := range declaration.Inputs {
 				entity, err := resolveSemanticReference(input, namespace, ids, names)
 				if err != nil {
