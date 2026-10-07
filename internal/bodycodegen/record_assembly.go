@@ -62,6 +62,21 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 		}
 		r.Control = controller.receipt
 	}
+	if err = g.rankRecordAssembly(plan, r); err != nil {
+		return Result{}, err
+	}
+	if err = searchRecordAssemblyWithPolicy(ctx, plan, r, controller); err != nil {
+		return Result{}, err
+	}
+	result, err := emitRecordAssembly(ctx, filename, source, plan, r)
+	r.GenerationNS = time.Since(started).Nanoseconds()
+	if err == nil {
+		populateCompletenessReceipt(&result.Report, "")
+	}
+	return result, err
+}
+
+func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *RecordAssemblyReceipt) error {
 	r.ModelRequested = g.info.Loaded
 	if g.info.Loaded {
 		info := g.Info()
@@ -73,6 +88,7 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 		if r.Context.Status == "ENCODED" {
 			var workspace jointdecision.ThreeWorkspace
 			var prediction jointdecision.ThreePrediction
+			var err error
 			predictStarted := time.Now()
 			switch info.FeatureVersion {
 			case jointdecision.RecordFieldFeatureVersion:
@@ -86,7 +102,7 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 			}
 			r.ModelCalls, r.PredictNS = 1, time.Since(predictStarted).Nanoseconds()
 			if err != nil {
-				return Result{}, fmt.Errorf("record field prediction: %w", err)
+				return fmt.Errorf("record field prediction: %w", err)
 			}
 			r.Prediction = &prediction
 			slices.SortFunc(r.Ranking, func(a, b uint16) int {
@@ -100,15 +116,7 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 			})
 		}
 	}
-	if err = searchRecordAssemblyWithPolicy(ctx, plan, r, controller); err != nil {
-		return Result{}, err
-	}
-	result, err := emitRecordAssembly(ctx, filename, source, plan, r)
-	r.GenerationNS = time.Since(started).Nanoseconds()
-	if err == nil {
-		populateCompletenessReceipt(&result.Report, "")
-	}
-	return result, err
+	return nil
 }
 
 func newRecordAssemblyReceipt(source []byte, p recordAssemblyPlan) *RecordAssemblyReceipt {
@@ -187,6 +195,11 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 	if best < 0 {
 		return fmt.Errorf("record assembly has no valid typed candidate within the attempt budget")
 	}
+	finishRecordAssemblySearch(r)
+	return nil
+}
+
+func finishRecordAssemblySearch(r *RecordAssemblyReceipt) {
 	r.Status = "PARTIAL_FINITE"
 	if r.Passed == r.Total {
 		r.Status = "COMPLETE_FINITE"
@@ -197,7 +210,6 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 			r.Choices[i].Picked = "value_second"
 		}
 	}
-	return nil
 }
 
 func scoreRecordCases(mask uint16, cases []RecordAssemblyCase) RecordAssemblyAttempt {
