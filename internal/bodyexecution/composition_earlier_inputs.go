@@ -34,6 +34,9 @@ func MeasureEarlierFillInputs(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return unknown
 	}
+	if len(graph.plan.Preparations) > 0 {
+		return graph.unobservedCallInputs(suite)
+	}
 	seen, err := graph.selectionInputs(ctx, filename, source, prior)
 	if err != nil {
 		return unknown

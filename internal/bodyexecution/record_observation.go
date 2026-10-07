@@ -61,8 +61,11 @@ func ObserveConstruction(ctx context.Context, source []byte, prior Composition) 
 		return nil, err
 	}
 	var rows []ConstructionObservation
-	for _, step := range prior.Steps {
+	for _, step := range prior.ConstructionSteps() {
 		report := step.Generation.Report
+		if report.RecordAssembly == nil && report.BodySearch == nil && report.BodyFill == nil {
+			continue
+		}
 		spec, err := bodycodegen.SourceAssembly(ctx, "workspace.gooo", source, report.Activity)
 		if err != nil {
 			return nil, err

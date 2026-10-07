@@ -290,8 +290,11 @@ imports a shared continuation predicate, reads actual candidate observations and
 controls construction of a different workspace. Policy source packages accompany
 the saved result for reconstruction. A paired own-model run and a deliberate early
 stop retain both complete and partial finite outcomes. This extends reusable
-metaprogramming within the current record-choice profile; automatic scheduling
-and constructing helper bodies still need supported language routes.
+metaprogramming within the current record-choice profile. [Called-body
+construction](../../examples/called-body-construction/README.md) now constructs
+source-declared helper bodies in dependency order before projecting their callers.
+The attempts remain independently inspectable. Automatic scheduling and retaining
+dependent caller constructions after a helper changes remain further work.
 
 Publish a short Korean and English walkthrough of the connected tool, its
 failed case and its replay. An independent developer should be able to follow it

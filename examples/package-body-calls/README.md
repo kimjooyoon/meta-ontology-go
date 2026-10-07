@@ -71,10 +71,11 @@ declared alternatives; a selected body's `call_closure` records the helpers it
 actually includes.
 
 The compiler checks the same pure-call bounds as standalone generation. Cycles,
-indirect calls, unknown imports, shadowed call names and still-assembling callees
-are rejected. Imported helpers have fixed Gooo bodies. Source-IR fill/search keep
-their existing narrower expression profiles. Finite case results and projection
-unit preservation remain separate measurements.
+indirect calls, unknown imports and shadowed call names are rejected. This example
+uses fixed helpers. [Called-body construction](../called-body-construction/README.md)
+also constructs source-declared helper choices before projecting the caller.
+Source-IR fill/search keep their existing expression profiles. Finite case results
+and projection unit preservation remain separate measurements.
 
 ## 한국어: 작은 판단을 도구 상자에 나누어 담기
 

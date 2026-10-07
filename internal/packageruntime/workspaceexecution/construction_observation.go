@@ -15,6 +15,9 @@ func ObserveConstruction(ctx context.Context, prior Result) ([]bodyexecution.Con
 	if ctx == nil || prior.Schema != "gooo/workspace-body-execution/v1" {
 		return nil, fmt.Errorf("construction observation requires a context and workspace execution")
 	}
+	if err := verifyWorkspacePolicy(ctx, prior); err != nil {
+		return nil, err
+	}
 	current := []byte(prior.Program.Source)
 	var rows []bodyexecution.ConstructionObservation
 	lastIndex := -1

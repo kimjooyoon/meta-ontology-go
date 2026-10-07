@@ -64,7 +64,7 @@ func verifyWorkspacePolicy(ctx context.Context, prior Result) error {
 
 func verifyWorkspacePolicySteps(composition bodyexecution.Composition, policy *bodycodegen.RecordAssemblyPolicy) error {
 	controlled := 0
-	for _, step := range composition.Steps {
+	for _, step := range composition.ConstructionSteps() {
 		record := step.Generation.Report.RecordAssembly
 		if record == nil {
 			continue

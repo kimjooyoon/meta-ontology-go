@@ -73,8 +73,10 @@ or indirect callees, external calls, and callees that still have an `assembling`
 contract. Current bodies use 1..16 scalar or supported record inputs and one
 result. Standalone generation resolves fixed activities from one source.
 [Workspace execution](../package-body-calls/README.md) also resolves local-package
-and imported helpers before lowering. Model construction inside a callee remains
-unsupported.
+and imported helpers before lowering. [Composition](../called-body-construction/README.md)
+can construct called assembling bodies first and retain their choices and finite
+observations as preparation steps. Direct single-body generation still requires
+fixed callees.
 Existing source-IR fill/search profiles retain their own expression constraints.
 
 ## Recorded use of the own compact model

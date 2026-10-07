@@ -1,0 +1,6 @@
+package app
+namespace app
+import diagnostics "tools/diagnostics"
+
+activity Main(Integer, Integer, Integer, Text) -> Text computes `let diagnostic = diagnostics.Diagnose(input0, input1, input2, input3)
+return diagnostic.code + ": " + diagnostic.message + " [" + diagnostic.action + "]"`

@@ -1,0 +1,6 @@
+package rules
+namespace rules
+entity Integer id "gooo://diagnostics/integer"
+entity Boolean id "gooo://diagnostics/boolean"
+activity BelowTotal(Integer, Integer) -> Boolean computes `return input0 >= 0 && input0 < input1`
+activity IsPartial(Integer, Integer) -> Boolean computes `return input1 > 0 && BelowTotal(input0, input1)`

@@ -83,8 +83,8 @@ func (c workspaceCalls) resolveCall(d workspaceCallDeclaration, call *ast.CallEx
 	}
 	key := packageActivityKey(pkg, name)
 	callee, ok := c[key]
-	if !ok || pkg == "" || !callee.activity.ValueProgramPresent || callee.activity.Assembly != nil {
-		return "", fmt.Errorf("call %q requires a fixed computes activity in the local package or a source import", name)
+	if !ok || pkg == "" || (!callee.activity.ValueProgramPresent && callee.activity.Assembly == nil) {
+		return "", fmt.Errorf("call %q requires a computes or assembling activity in the local package or a source import", name)
 	}
 	return key, nil
 }

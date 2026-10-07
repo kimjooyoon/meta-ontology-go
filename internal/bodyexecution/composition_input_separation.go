@@ -32,12 +32,32 @@ type compositionInputObservation struct {
 
 func (graph compositionGraph) measureInputSeparation(ctx context.Context, filename string, source []byte,
 	prior Composition, suite CompositionCases, traces []CompositionTrace) CompositionInputSeparation {
+	if len(graph.plan.Preparations) > 0 {
+		return graph.unobservedCallInputs(suite)
+	}
 	result := unknownCompositionInputSeparation("NO_DISJOINT_INPUTS")
 	seen, err := graph.selectionInputs(ctx, filename, source, prior)
 	if err != nil {
 		return unknownCompositionInputSeparation("SELECTION_INPUTS_UNAVAILABLE")
 	}
 	return graph.measureKnownInputSeparation(suite, traces, seen, result)
+}
+
+func (graph compositionGraph) unobservedCallInputs(suite CompositionCases) CompositionInputSeparation {
+	result := unknownCompositionInputSeparation("CALLED_ASSEMBLY_INPUTS_NOT_OBSERVED")
+	result.Scope = "unique root-input tuples observed; constructed helper call arguments are not traced, so separation from helper selection cases remains unknown; finite output checks remain separate"
+	rows, err := graph.inputRows(suite)
+	if err != nil {
+		return result
+	}
+	unique := make(map[string]bool, len(rows))
+	for _, row := range rows {
+		raw, _ := json.Marshal(row)
+		unique[string(raw)] = true
+	}
+	result.UniqueInputs, result.UnknownInputs = len(unique), len(unique)
+	result.DuplicateRows = len(rows) - len(unique)
+	return result
 }
 
 func (graph compositionGraph) measureKnownInputSeparation(suite CompositionCases, traces []CompositionTrace,

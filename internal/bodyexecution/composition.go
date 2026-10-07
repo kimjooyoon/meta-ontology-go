@@ -26,6 +26,7 @@ type Composition struct {
 	DriverSHA256         string                         `json:"driver_sha256"`
 	Plan                 CompositionPlan                `json:"plan"`
 	Steps                []CompositionStep              `json:"steps"`
+	Preparations         []CompositionStep              `json:"preparations,omitempty"`
 	GoooSource           string                         `json:"gooo_source"`
 	Source               string                         `json:"source"`
 	Driver               string                         `json:"driver_source"`
@@ -100,7 +101,10 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 func generateCompositionSteps(ctx context.Context, filename string, source []byte,
 	graph compositionGraph, options CompositionOptions, result *Composition) ([]byte, error) {
 	generator := compositionAssemblyGenerator{options: options}
-	current := append([]byte(nil), source...)
+	current, err := generateCalledBodies(ctx, filename, source, graph, &generator, result)
+	if err != nil {
+		return nil, err
+	}
 	for _, node := range graph.nodes[:graph.count] {
 		result.ActiveActivity = node.Name
 		if err := ctx.Err(); err != nil {
@@ -108,7 +112,7 @@ func generateCompositionSteps(ctx context.Context, filename string, source []byt
 		}
 		var generation bodycodegen.Result
 		var err error
-		if node.Assembling {
+		if node.Assembling && !node.Prepared {
 			generation, err = generator.generate(ctx, filename, current, node.Name)
 			result.FillModel = generator.fillInfo
 			if generator.retained != nil {
@@ -122,7 +126,7 @@ func generateCompositionSteps(ctx context.Context, filename string, source []byt
 			return nil, fmt.Errorf("activity %q generation: %w", node.Name, err)
 		}
 		result.Steps = append(result.Steps, CompositionStep{InputSourceSHA256: digest(current), Generation: generation})
-		if node.Assembling {
+		if node.Assembling && !node.Prepared {
 			realized, err := bodycodegen.RealizeSourceAssembly(ctx, filename, current, generation)
 			if err != nil {
 				return nil, fmt.Errorf("activity %q checkpoint: %w", node.Name, err)
@@ -134,6 +138,9 @@ func generateCompositionSteps(ctx context.Context, filename string, source []byt
 }
 
 func (graph compositionGraph) hasAssembly() bool {
+	if len(graph.plan.Preparations) > 0 {
+		return true
+	}
 	for _, node := range graph.nodes[:graph.count] {
 		if node.Assembling {
 			return true
@@ -167,13 +174,16 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 		!sameCompositionPlan(prior.Plan, graph.plan) || len(prior.Steps) != graph.count {
 		return graph, fmt.Errorf("composition original source, typed plan or step order differs")
 	}
-	current := append([]byte(nil), source...)
+	current, err := replayCalledBodies(ctx, filename, source, graph, prior)
+	if err != nil {
+		return graph, err
+	}
 	for i, node := range graph.nodes[:graph.count] {
 		step := prior.Steps[i]
 		if step.InputSourceSHA256 != digest(current) || step.Generation.Report.Activity != node.Name {
 			return graph, fmt.Errorf("composition step %d input or activity order differs", i)
 		}
-		if node.Assembling {
+		if node.Assembling && !node.Prepared {
 			realized, err := bodycodegen.RealizeSourceAssembly(ctx, filename, current, step.Generation)
 			if err != nil {
 				return graph, fmt.Errorf("composition step %d replay: %w", i, err)

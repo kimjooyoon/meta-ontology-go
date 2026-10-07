@@ -21,6 +21,9 @@ func (g *compositionAssemblyGenerator) generate(ctx context.Context, filename st
 	if err != nil {
 		return bodycodegen.Result{}, err
 	}
+	if err := bodycodegen.ValidateSourceAssembly(ctx, filename, source, activity); err != nil {
+		return bodycodegen.Result{}, err
+	}
 	if bodycodegen.IsSourceIRBodyFill(spec) {
 		return g.generateFill(ctx, filename, source, activity, spec)
 	}
@@ -49,7 +52,11 @@ func (graph compositionGraph) validateModelRoute(ctx context.Context, filename s
 		}
 	}
 	var hasChoice, hasFill, hasRecord bool
-	for _, node := range graph.nodes[:graph.count] {
+	nodes := append([]CompositionActivity(nil), graph.nodes[:graph.count]...)
+	for _, helper := range graph.plan.Preparations {
+		nodes = append(nodes, CompositionActivity{Name: helper.Name, Assembling: true})
+	}
+	for _, node := range nodes {
 		if !node.Assembling {
 			continue
 		}

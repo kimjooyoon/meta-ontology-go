@@ -51,6 +51,9 @@ func prepareCompositionGraphForEntry(ctx context.Context, filename string, sourc
 	if err := graph.bindEdges(typed); err != nil {
 		return graph, err
 	}
+	if err := graph.bindCallConstruction(ctx, filename, source, model); err != nil {
+		return graph, err
+	}
 	graph.plan.Activities = append([]CompositionActivity(nil), graph.nodes[:graph.count]...)
 	return graph, nil
 }
@@ -109,9 +112,13 @@ func (node *CompositionActivity) bindEntityIDs(model bidir.Model) {
 	}
 }
 
-// Check all bodies and embedded plans before loading an optional model.
+// Check independent bodies before loading an optional model. Dependent bodies
+// are checked again when their called assembly prerequisites have been realized.
 func (graph compositionGraph) preflight(ctx context.Context, filename string, source []byte) error {
 	for _, node := range graph.nodes[:graph.count] {
+		if graph.deferred[node.Name] {
+			continue
+		}
 		if node.Assembling {
 			if err := bodycodegen.ValidateSourceAssembly(ctx, filename, source, node.Name); err != nil {
 				return fmt.Errorf("activity %q plan: %w", node.Name, err)
@@ -120,6 +127,13 @@ func (graph compositionGraph) preflight(ctx context.Context, filename string, so
 		}
 		if _, err := bodycodegen.GenerateWithPlanner(ctx, filename, source, node.Name, "", ""); err != nil {
 			return fmt.Errorf("activity %q: %w", node.Name, err)
+		}
+	}
+	for _, helper := range graph.plan.Preparations {
+		if !graph.deferred[helper.Name] {
+			if err := bodycodegen.ValidateSourceAssembly(ctx, filename, source, helper.Name); err != nil {
+				return fmt.Errorf("called activity %q plan: %w", helper.Name, err)
+			}
 		}
 	}
 	return nil
