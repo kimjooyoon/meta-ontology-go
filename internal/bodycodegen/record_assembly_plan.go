@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"go/parser"
 	"sort"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 )
 
 type recordAssemblyPlan struct {
-	body     preparedBody
-	original preparedBody
-	spec     *assemblyspec.Spec
-	choices  []RecordValueChoice
-	sites    []recordValueSite
+	body             preparedBody
+	original         preparedBody
+	spec             *assemblyspec.Spec
+	choices          []RecordValueChoice
+	sites            []recordValueSite
+	dependencySHA256 string
 }
 
 type recordValueSite struct {
@@ -172,16 +174,22 @@ func (p recordAssemblyPlan) candidate(mask uint16) (generatedRoute, error) {
 	return p.body.generateBody(body, preserveRoute)
 }
 
-func (p recordAssemblyPlan) validateAlternatives(ctx context.Context) error {
+func (p *recordAssemblyPlan) validateAlternatives(ctx context.Context) error {
+	// Disjoint sites and static pure calls make the baseline plus individual
+	// alternatives cover every callable dependency, including alternative-only calls.
+	var fingerprint strings.Builder
+	fingerprint.WriteString(digest(p.body.base.source))
 	for i := range p.sites {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		_, err := p.candidate(1 << i)
+		candidate, err := p.candidate(1 << i)
 		if err != nil {
 			return fmt.Errorf("field choice %q: %w", p.choices[i].ID, err)
 		}
+		fingerprint.WriteString(digest(candidate.source))
 	}
+	p.dependencySHA256 = digest([]byte(fingerprint.String()))
 	return nil
 }
 

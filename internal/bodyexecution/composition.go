@@ -205,6 +205,9 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 	if err := verifyCompositionContinuation(prior); err != nil {
 		return graph, err
 	}
+	if err := verifyCalledContinuationHistory(ctx, filename, source, prior); err != nil {
+		return graph, err
+	}
 	return graph, ctx.Err()
 }
 

@@ -30,6 +30,7 @@ type RecordAssemblyReceipt struct {
 	Context              *RecordOrdinalContext          `json:"model_context,omitempty"`
 	Prediction           *jointdecision.ThreePrediction `json:"prediction,omitempty"`
 	Ranking              []uint16                       `json:"ranking"`
+	RankingSourceSHA256  string                         `json:"ranking_source_sha256,omitempty"`
 	GenerationNS         int64                          `json:"generation_ns"`
 	Scope                string                         `json:"scope"`
 	Control              *RecordAssemblyControl         `json:"control,omitempty"`

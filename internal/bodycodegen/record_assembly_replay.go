@@ -52,11 +52,19 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 		return Realization{}, err
 	}
 	expected := newRecordAssemblyReceipt(source, plan)
-	if err = verifyRecordAssemblyRanking(r, expected, plan); err != nil {
+	plans, origin, err := recordHistoryPlans(ctx, filename, source, plan, r.ControlHistory)
+	if err != nil {
+		return Realization{}, err
+	}
+	if r.RankingSourceSHA256 != origin {
+		return Realization{}, fmt.Errorf("record ranking source differs")
+	}
+	expected.RankingSourceSHA256 = origin
+	if err = verifyRecordAssemblyRanking(r, expected, plans[0]); err != nil {
 		return Realization{}, err
 	}
 	expected.Ranking = append([]uint16(nil), r.Ranking...)
-	if err = replayRecordSearchStages(ctx, plan, expected, r.ControlHistory, r.Control); err != nil {
+	if err = replayRecordSearchStages(ctx, plans, expected, r.ControlHistory, r.Control); err != nil {
 		return Realization{}, err
 	}
 	if err = verifyRecordAssemblyObservations(expected, r); err != nil {
