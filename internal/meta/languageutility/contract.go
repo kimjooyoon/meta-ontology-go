@@ -47,8 +47,8 @@ func ValidateContract(value Contract) error {
 	if value.Schema != ContractSchema || value.ID == "" {
 		return fmt.Errorf("language utility contract identity is invalid")
 	}
-	if len(value.Stages) != len(CanonicalStages) || len(value.UseCases) != 6 {
-		return fmt.Errorf("language utility denominator must be 6 x 7")
+	if len(value.Stages) != len(CanonicalStages) || len(value.UseCases) != 7 {
+		return fmt.Errorf("language utility denominator must be 7 x 7")
 	}
 	for index, stage := range value.Stages {
 		if stage != CanonicalStages[index] {
@@ -62,8 +62,8 @@ func ValidateContract(value Contract) error {
 		}
 		seen[useCase.ID] = true
 	}
-	if value.Floors.ClosedCells < 0 || value.Floors.ClosedCells > 42 ||
-		value.Floors.CompleteUseCases < 0 || value.Floors.CompleteUseCases > 6 {
+	if value.Floors.ClosedCells < 0 || value.Floors.ClosedCells > len(value.UseCases)*len(value.Stages) ||
+		value.Floors.CompleteUseCases < 0 || value.Floors.CompleteUseCases > len(value.UseCases) {
 		return fmt.Errorf("language utility floors are invalid")
 	}
 	return nil

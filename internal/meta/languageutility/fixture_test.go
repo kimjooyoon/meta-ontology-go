@@ -3,7 +3,7 @@ package languageutility
 import "strings"
 
 func fixtureContract() Contract {
-	return Contract{Schema: ContractSchema, ID: "gooo-language-utility-v1",
+	return Contract{Schema: ContractSchema, ID: "gooo-language-utility-v2",
 		Stages: append([]StageSpec(nil), CanonicalStages...),
 		UseCases: []UseCaseSpec{
 			{ID: "ci-plan-selection", Label: "CI plan"},
@@ -12,6 +12,7 @@ func fixtureContract() Contract {
 			{ID: "profiling", Label: "Profiling"},
 			{ID: "debugging", Label: "Debugging"},
 			{ID: "package-execution", Label: "Package execution"},
+			{ID: "capability-discovery", Label: "Capability discovery"},
 		}, Floors: Floors{ClosedCells: 39, CompleteUseCases: 4}}
 }
 
@@ -32,6 +33,7 @@ func fixtureObservation(contract Contract) Observation {
 	openCell(&value, "debugging", "DETERMINISTIC_REPLAY", "DEBUG_REPLAY_NOT_EXECUTED")
 	openCell(&value, "debugging", "RESOURCE_OBSERVED", "DEBUG_RESOURCES_NOT_OBSERVED")
 	openCell(&value, "package-execution", "RESOURCE_OBSERVED", "PACKAGE_RESOURCES_NOT_OBSERVED")
+	openCell(&value, "capability-discovery", "RESOURCE_OBSERVED", "DISCOVERY_RESOURCES_NOT_MEASURED")
 	return value
 }
 

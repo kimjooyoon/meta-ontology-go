@@ -106,7 +106,7 @@ fi
 # two new debugging cells remain OPEN. The final utility observation below
 # binds those same cells to this exact generated program and graph.
 seed_observation="$work/seed-observation.json"
-jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-language-utility-v1' \
+jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-language-utility-v2' \
   --arg head "$HEAD_SHA" --argjson stages '[
     "SOURCE_PRESENT","SYNTAX_ACCEPTED","SEMANTIC_ACCEPTED","OUTCOME_OBSERVED",
     "DETERMINISTIC_REPLAY","RESOURCE_OBSERVED","USER_ARTIFACT_VERIFIED"
@@ -156,7 +156,7 @@ jq -n --arg schema "gooo-graph/v1" --arg program_digest "$program_digest" --arg 
   ([$g.relations[] | select((.predicate=="used" and is_debug(.subject)) or (.predicate=="wasGeneratedBy" and is_debug(.object))) | {relation:.predicate,subject:.subject,object:.object}] | sort_by(.relation,.subject,.object)) as $debug_causal_edges |
   {schema:$schema,program_digest:$program_digest,graph_hash:$graph_hash,activity_count:$activity_count,edge_count:$edge_count,debug_activity_count:$debug_activity_count,debug_output_count:$debug_output_count,debug_used_edge_count:$debug_used_edge_count,debug_generated_edge_count:$debug_generated_edge_count,debug_activity_ids:$debug_activity_ids,debug_causal_edges:$debug_causal_edges}
 ' > "$work/graph-observation.json"
-jq -e '.activity_count==44 and .edge_count==88 and .debug_activity_count==2 and .debug_output_count==2 and .debug_used_edge_count==2 and .debug_generated_edge_count==2' "$work/graph-observation.json"
+jq -e '.activity_count==51 and .edge_count==102 and .debug_activity_count==2 and .debug_output_count==2 and .debug_used_edge_count==2 and .debug_generated_edge_count==2' "$work/graph-observation.json"
 
 edges_for() {
   local activity_id="$1"

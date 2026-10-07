@@ -34,7 +34,8 @@ func summarize(contract Contract, observation Observation, cells []CellResult, i
 	}
 	summary.ClosedDeltaFromFloor = summary.ClosedCells - summary.ClosedFloor
 	summary.CompleteUseCaseFloorDelta = summary.CompleteUseCases - summary.CompleteUseCaseFloor
-	summary.ObservationComplete = summary.UnknownCells == 0 && issues == 0 && len(cells) == 42
+	summary.ObservationComplete = summary.UnknownCells == 0 && issues == 0 &&
+		len(cells) == len(contract.UseCases)*len(contract.Stages)
 	summary.UtilityComplete = summary.ClosedCells == summary.CellsTotal
 	summary.PromotionComplete = summary.UtilityComplete && summary.RefutedCells == 0 &&
 		summary.ObservationComplete && summary.RepositoryWrites == 0

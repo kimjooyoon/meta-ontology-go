@@ -9,7 +9,7 @@ entity DeclarationCoverage id "gooo://meta/domain-completeness/dimension/declara
 entity DeclarationEvidence id "gooo://meta/domain-completeness/evidence/declaration"
 entity DomainCompletenessReceipt id "gooo://meta/domain-completeness/receipt/v1"
 entity DomainCompletenessVector id "gooo://meta/domain-completeness/vector"
-entity DomainProfile id "gooo://meta/domain-completeness/profile/gooo-language-utility-v1"
+entity DomainProfile id "gooo://meta/domain-completeness/profile/gooo-language-utility-v2"
 entity ExcludedExternalAdoption id "gooo://meta/domain-completeness/excluded/external-adoption"
 entity ExcludedGeneralPurposeCompleteness id "gooo://meta/domain-completeness/excluded/general-purpose-completeness"
 entity GenerationCoverage id "gooo://meta/domain-completeness/dimension/generation-coverage"
