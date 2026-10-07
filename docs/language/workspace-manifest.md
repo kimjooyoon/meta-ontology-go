@@ -27,6 +27,12 @@ Fresh case results report `PASS` or `PROGRESS`; input-only results report
 finite expectations, not correctness across all inputs. Prior runtime observations
 are retained in the input receipt, rather than reused as current measurements.
 
+Replay also recomputes `runtime.input_separation` over the fresh native traces.
+Earlier source fills and external fill plans contribute their construction,
+holdout and probe inputs. The retained `earlier_stages` identities explain which
+sets were compared. A new root input that reaches an already observed value at
+a later activity remains overlapping. [Whole-workspace example](../../examples/workspace-input-observations/README.md).
+
 ## Resolve and execute
 
 `gooo.workspace.json` connects source files to the package graph already used

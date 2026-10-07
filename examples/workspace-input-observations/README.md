@@ -36,6 +36,23 @@ fill plans. Missing input evidence remains `UNKNOWN`. Input-only executions
 keep their overlap counts but have no expected-output success count. Exposure
 in a model's training data remains unknown.
 
+## Reuse the constructed program
+
+Save the first command's JSON as `execution.json`, then replay it with:
+
+```sh
+gooo package replay --json --receipt execution.json \
+  --cases examples/workspace-input-observations/cases.json \
+  examples/workspace-input-observations/gooo.workspace.json
+```
+
+Replay reconstructs the retained fill, executes the saved program twice on the
+requested rows, and recomputes input separation from these fresh traces. The
+earlier input-set identities stay the same. New runtime rows and expectations
+determine this invocation's counts; historical accuracy counters are not reused.
+Passing `--inputs` instead of `--cases` retains overlap observations and marks
+expected-output evidence as unknown. Replay performs zero model calls.
+
 The [published run](../../docs/research/workspace-inputs-20261008/summary.json)
 records clean compiler revision `093a8391`, the raw receipt, eight matched
 activity outputs, one passing disjoint case, two native runs and zero model calls.
