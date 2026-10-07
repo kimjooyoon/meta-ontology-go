@@ -14,8 +14,9 @@ package. A separate two-package Gooo policy stops after its first candidate.
 | Deterministic | 2/4 | 4/4 | Retain 1, add 3 | 4/4, zero new predictions |
 | Own compact model | 2/4 | 4/4 | Retain 1, add 1 | 4/4, zero new predictions |
 
-The helper's construction cases progress from 3/5 to 5/5, and fields from
-13/15 to 15/15. Four distinct native root inputs are disjoint from the helper's
+The helper's construction cases progress from 3/5 to 5/5 on both routes. Field
+matches progress from 11/15 to 15/15 in the deterministic route, and from 13/15
+to 15/15 in the model route. Four distinct native root inputs are disjoint from the helper's
 declared construction cases. Both routes produce the same final generated
 program. Historical policy packages and model ranking survive continuation and
 replay; continuation itself makes zero new predictions. Input disjointness from
