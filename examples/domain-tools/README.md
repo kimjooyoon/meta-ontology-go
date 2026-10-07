@@ -76,3 +76,25 @@ supported record/body profile. Their different input identities and rules remain
 visible. Supplying assembly observations to the documentation profile fails its
 input contract. The experiment is a bounded basis for expanding reusable domain
 tools and their language support.
+
+## Recorded construction
+
+The [paired observation](../../docs/research/domain-tools-20261007/summary.json)
+contains the compiler and model identities, all four raw receipts and timing scope.
+
+| Domain | Deterministic attempts | Model attempts | Model prediction | Final native outputs |
+| --- | ---: | ---: | --- | --- |
+| Code assembly | 8 | 1 | Mask 7 satisfied 3/3 construction cases | 14/14 in both routes |
+| Documentation | 6 | 2 | Mask 7 satisfied 2/3; mask 5 then satisfied 3/3 | 14/14 in both routes |
+
+The documentation model assigned probability 0.99983287 to its first proposal,
+which changed the required `DOCUMENT_MISSING` action. The finite checks caught
+that mismatch. Model scores describe the ranking output; they are not calibrated
+probabilities that the tool fulfills its task.
+
+Model prediction took 20,834 and 21,500 ns; setup took 0.741083 and 0.196458 ms.
+The loaded tensor storage was 2,096 bytes. The entire commands, including native
+build/execution, reported about 86 MB maximum RSS. The summary retains exact
+process measurements; host CPU utilization was not sampled. The runs were single
+sequential pairs with uncontrolled caches, so this observation establishes the
+candidate counts and finite outcomes rather than a general speed advantage.
