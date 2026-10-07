@@ -125,6 +125,11 @@ func realizeRecordAssemblyProjection(ctx context.Context, filename string, sourc
 }
 
 func verifyRecordAssemblyRanking(r, expected *RecordAssemblyReceipt, plan recordAssemblyPlan) error {
+	// Older receipts omit this observation; replay still derives the real limit
+	// from source. A present value must describe that same declared budget.
+	if r.AttemptBudget != nil && *r.AttemptBudget != plan.spec.MaxAttempts {
+		return fmt.Errorf("record attempt budget differs from source")
+	}
 	if r.ContractSHA256 != expected.ContractSHA256 || r.TestSuiteSHA256 != expected.TestSuiteSHA256 ||
 		len(r.Ranking) != len(expected.Ranking) {
 		return fmt.Errorf("record contract or ranking differs")
