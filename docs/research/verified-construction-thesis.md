@@ -136,6 +136,32 @@ by matched experiments and external use.
 
 ## Development sequence
 
+### Public growth milestones
+
+Keep each milestone tied to something another developer can inspect or run:
+
+| Milestone | Published artifact | Evidence to retain |
+| --- | --- | --- |
+| Follow one construction | A short source-to-execution example with its expected cases | Source, selected path, generated body, outputs, and unresolved dimensions |
+| Compare decision policies | The same frozen tasks with deterministic and model-ranked ordering | Paired budgets, all attempts, model identity, measured zero results, and unknown observations |
+| Try another domain | A versioned ontology and explicit verification obligations | Which declarations change, which compiler rules remain shared, and unsupported constructions |
+| Reproduce outside this workspace | Setup instructions and an independent run report | Environment, deviations, failed steps, and any human intervention |
+| Learn from external use | A documented task supplied by another developer | The task's scope, observed outcome, and reproducible failure cases |
+
+The first demo can be small enough to follow in a few minutes. Show the same
+source with a model and with deterministic ordering, then inspect a failed or
+incomplete result as well as a passing one. Treat the model like a suggested
+route through a workshop: the available parts and assembly rules remain visible
+when the suggestion changes.
+
+Public technical notes should link to the corresponding revision, runnable
+example, and result artifacts. Repository counts, parameter counts, and stars
+provide context; external reproduction and useful completed tasks establish
+whether the construction process helps people. The proposed agent comparisons
+and commercial directions are hypotheses to revisit as that evidence grows.
+
+### Implementation order
+
 1. Keep language semantics, candidate permissions, decision ranking, and
    verification obligations separately inspectable in Gooo and its receipts.
 2. Expand the reproducible task corpus only when each task has a stable source,

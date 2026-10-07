@@ -8,10 +8,8 @@ func ClassifyDomainCompleteness(input0 int64, input1 int64, input2 int64, input3
 		return "UNKNOWN"
 	} else if input0 == input1 {
 		return "PASS"
-	} else if input0 > 0 {
-		return "PROGRESS"
 	} else {
-		return "UNKNOWN"
+		return "PROGRESS"
 	}
 }
 

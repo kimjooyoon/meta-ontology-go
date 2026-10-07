@@ -19,10 +19,16 @@ func TestClassifyKeepsUnknownDistinctFromProgress(t *testing.T) {
 	}{
 		{name: "closed", numerator: 4, denominator: 4, want: "PASS"},
 		{name: "measured gap", numerator: 2, denominator: 4, want: "PROGRESS"},
-		{name: "unobserved", denominator: 4, want: "UNKNOWN"},
+		{name: "measured zero", denominator: 4, want: "PROGRESS"},
+		{name: "unobserved", denominator: 4, unknown: 4, want: "UNKNOWN"},
+		{name: "missing population", want: "UNKNOWN"},
+		{name: "complete count with unknown evidence", numerator: 4, denominator: 4, unknown: 1, want: "UNKNOWN"},
 		{name: "unknown frontier", numerator: 2, denominator: 4, unknown: 1, want: "UNKNOWN"},
 		{name: "contradiction", numerator: 4, denominator: 4, refuted: true, want: "FAIL_CLOSED"},
 		{name: "invalid population", numerator: 5, denominator: 4, want: "FAIL_CLOSED"},
+		{name: "negative matches", numerator: -1, denominator: 4, want: "FAIL_CLOSED"},
+		{name: "negative population", denominator: -1, want: "FAIL_CLOSED"},
+		{name: "negative unknown", denominator: 4, unknown: -1, want: "FAIL_CLOSED"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

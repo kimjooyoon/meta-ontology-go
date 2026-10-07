@@ -189,6 +189,16 @@ numerator, denominator, unknown-unit count, and contradiction flag. The receipt
 selector's Boolean inputs are invalid input, fail-closed axis, unknown axis,
 and progress axis, in that order.
 
+For a known positive denominator, zero fulfilled units and zero unknown units
+are `PROGRESS` at `0/N`: an observed gap that can be compared with a later run.
+`PROGRESS` describes measured incompleteness; it does not assert improvement
+over a baseline. Missing observations carry unknown units and remain `UNKNOWN`;
+an absent denominator is also `UNKNOWN`. Refuted evidence remains `FAIL_CLOSED`.
+Generation adapters distinguish a classified open cell from a missing cell or
+a claimed completion whose evidence has not been validated. Changes to this
+Gooo classifier change the profile semantic hash, so earlier receipts with the
+previous rule are incompatible comparison baselines.
+
 Without a separate domain contract, declaration coverage is `UNKNOWN` with a
 zero denominator; the target source is not allowed to define its own scope. With
 `--domain-contract <contract.gooo>`, the compiler compares the contract's
