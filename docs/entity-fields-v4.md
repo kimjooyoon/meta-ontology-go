@@ -23,4 +23,8 @@ optional values remain unsupported. Pure record-body codegen and
 `body-compose` accept optional single scalar fields as typed pointers for
 copy-and-transport bodies. Missing keys remain absent across explicit binds;
 `""`, `false` and `0` remain present. Learned field assembly does not yet
-synthesize new optional values.
+synthesize new optional values. `gooo package resolve` and `gooo package execute`
+also accept V4 fields throughout workspace parsing, IR lowering and flattening.
+The [optional package-flow example](../examples/package-optional-record-flow/README.md)
+checks that absent fields and explicit zero values survive an imported activity
+bind and native replay.

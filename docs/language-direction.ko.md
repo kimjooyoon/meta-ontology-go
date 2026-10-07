@@ -560,8 +560,11 @@ Boolean, Integer 필드를 Go의 `*string`, `*bool`, `*int64`로 투영합니다
 원본 필드 span·안정 ID·프로필 지문을 보존하고 생성 manifest는 그 source map
 지문과 Go 산출물을 연결합니다. 현재는 `gooo check`, `gooo generate`,
 `run --record-input`과 record 본문 복사·조합에서 사용할 수 있으며 capability
-discovery와 활동 bind 계획도 이 프로필을 읽습니다. 부재는 생략된 JSON 키로
-표현하고 `null` 입력은 거부합니다. 본문 조립에서 새 선택값을 학습해 만드는 기능은
+discovery, 활동 bind 계획, 다중 패키지 `package execute`도 이 프로필을 읽습니다.
+패키지 실행은 선택 필드를 가져온 활동에서 다음 활동까지 보존합니다. 생략된 키는
+부재로, 명시한 빈 문자열·`false`·`0`은 값으로 남습니다. 실제 패키지 실행과 재생은
+[선택 필드 예제](../examples/package-optional-record-flow/README.md)에서 확인할 수
+있습니다. `null` 입력은 거부합니다. 본문 조립에서 새 선택값을 학습해 만드는 기능은
 아직 없습니다.
 [V4 예제](../examples/entity-fields-v4/main.gooo.fixture)와
 [V4 지원 범위](entity-fields-v4.md),

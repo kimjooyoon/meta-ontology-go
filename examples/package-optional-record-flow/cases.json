@@ -1,0 +1,26 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"example/domain:Submit": {}},
+      "expected": {
+        "example/domain:Submit": {},
+        "example/app:Main": {}
+      }
+    },
+    {
+      "inputs": {"example/domain:Submit": {"note": "", "complete": false, "count": 0}},
+      "expected": {
+        "example/domain:Submit": {"note": "", "complete": false, "count": 0},
+        "example/app:Main": {"note": "", "complete": false, "count": 0}
+      }
+    },
+    {
+      "inputs": {"example/domain:Submit": {"note": "queued", "count": 9007199254740995}},
+      "expected": {
+        "example/domain:Submit": {"note": "queued", "count": 9007199254740995},
+        "example/app:Main": {"note": "queued", "count": 9007199254740995}
+      }
+    }
+  ]
+}

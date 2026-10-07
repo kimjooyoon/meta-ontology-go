@@ -52,8 +52,9 @@ source field names. The report's `record_types` retains source names, stable
 IDs, scalar type IDs and generated names. Each route is typechecked
 and compared after restoring source names; the receipt binds the record
 contract and function signature. Body generation and composition use the
-separately versioned EntityFields V3 profile. Existing V1 and V2 entry points
-retain their string-only and string/Boolean contracts.
+separately versioned EntityFields V3 profile for required scalar fields and V4
+when optional fields are declared. Existing V1 and V2 entry points retain their
+string-only and string/Boolean contracts.
 
 ## Construct and execute the complete example
 
@@ -136,7 +137,12 @@ The EntityFields V3 profile added required single `integer` fields to the Go
 projection and source-driven body-generation and `body-compose` paths. V4
 extends ordinary pure record-body generation and `body-compose` to optional
 single scalar fields for typed copy and transport, preserving absence separately
-from explicit zero values.
+from explicit zero values. The same V4 contract now spans `gooo package resolve`
+and `gooo package execute`, so a record can cross an imported activity bind
+without collapsing an omitted field into `""`, `false` or `0`. The
+[package-flow example](../examples/package-optional-record-flow/README.md)
+exercises absence, explicit zero values and exact large integers through native
+execution and replay.
 
 The [optional body source](../examples/body-codegen/optional-record-transport.gooo.fixture)
 and [cases](../examples/body-codegen/optional-record-transport-cases.json)

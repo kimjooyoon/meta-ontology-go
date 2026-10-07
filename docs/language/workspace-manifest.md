@@ -116,8 +116,13 @@ built and before the generated package is compiled. To connect Laya, set
 receipts record provider decision time; native build and run observations
 record wall time, CPU time, and peak resident memory when the host exposes them.
 
-Declared records are parsed with the explicit EntityFields V3 profile throughout
-package resolution, IR lowering, and workspace flattening. For example,
+Declared records are parsed with the explicit EntityFields V4 profile throughout
+package resolution, IR lowering, and workspace flattening. V4 preserves optional
+single string, Boolean and Integer fields across workspace binds: omission stays
+absent, while explicit `""`, `false` and `0` stay present. `null` remains invalid.
+The runnable [optional-record workspace](../../examples/package-optional-record-flow/README.md)
+checks absent fields, explicit zero values and a large exact integer through the
+full package execution path. For example,
 `examples/package-record-flow` sends a `Candidate` record from an imported
 `Submit` activity into an app-owned body that constructs a typed `Review` record.
 Run it with:
@@ -131,5 +136,6 @@ go run ./cmd/gooo package execute --json \
 Finite cases check the actual record values at both activities, then runtime
 replay checks that the generated Go projection produces the same result again.
 EntityFields V3 currently covers required single string, boolean, and integer
-fields; optional, repeated, nested, and arbitrary user-defined field types are
-outside this support boundary.
+fields in the original record-flow example. The workspace runtime's V4 profile
+also supports optional single fields of those types. Repeated, nested, and
+arbitrary user-defined field types remain outside this support boundary.
