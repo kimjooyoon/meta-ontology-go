@@ -88,12 +88,8 @@ func validateCapabilityDiscoveryEvidence(reportRaw, replayRaw, sourceRaw, contra
 		return fail("CAPABILITY_DISCOVERY_TRAIL_SOURCE_MISMATCH")
 	}
 	declaration := report.Trail.Response.Declaration
-	if declaration == nil {
-		result.State, result.Reason = "UNKNOWN", "CAPABILITY_DISCOVERY_DECLARATION_NOT_BOUND"
-		return result
-	}
-	if !declaration.Bound {
-		result.State, result.Reason = "UNKNOWN", "CAPABILITY_DISCOVERY_DECLARATION_NOT_BOUND"
+	if declaration == nil || !declaration.Bound {
+		result.Reason = "CAPABILITY_DISCOVERY_DECLARATION_NOT_BOUND"
 		return result
 	}
 	if report.Receipt == nil || completeness.Validate(report.Receipt) != nil ||
