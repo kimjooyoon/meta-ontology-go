@@ -53,6 +53,21 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
+Build a small diagnostic tool whose choices and rules are written in Gooo:
+
+```sh
+go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
+gooo init --template diagnostic my-diagnostic
+cd my-diagnostic
+gooo package execute --json --cases cases.json gooo.workspace.json > execution.json
+gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
+```
+
+The generated README explains the six project files, finite checks and optional
+local model. Replay runs the saved program on new rows with zero new inference.
+Native execution uses Go 1.27.1; pass `--go /path/to/go1.27.1` when needed.
+See [project starters](docs/language/project-starters.md) for the complete flow.
+
 To start a new project with a working Gooo declaration, declared alternatives
 and finite examples, run:
 

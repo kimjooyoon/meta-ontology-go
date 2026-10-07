@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "{{module}}/app",
+    "activity": "Main"
+  },
+  "packages": [
+    {
+      "path": "{{module}}/app",
+      "name": "app",
+      "imports": [
+        "{{module}}/diagnostics"
+      ],
+      "sources": [
+        "app.gooo"
+      ]
+    },
+    {
+      "path": "{{module}}/diagnostics",
+      "name": "diagnostics",
+      "imports": [],
+      "sources": [
+        "diagnostics.gooo"
+      ]
+    }
+  ]
+}

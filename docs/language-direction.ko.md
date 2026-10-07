@@ -38,6 +38,12 @@
 
 ### Gooo로 만든 작은 도구를 바로 사용하기
 
+`gooo init --template diagnostic my-diagnostic`으로 진단 도구 프로젝트를
+바로 만들 수 있습니다. 조건식·변수 할당·레코드 선택지는 생성된 Gooo 소스에
+있고, 기본 경로는 모델 없이 실행합니다. 한 번 조립한 기록을 저장하면 새 입력에
+모델 호출 없이 재사용할 수 있습니다. [시작 템플릿 안내](language/project-starters.md#start-a-reusable-diagnostic-tool)는
+선택적으로 자체 모델을 연결하는 방법과 각 검사의 범위를 함께 설명합니다.
+
 조립 결과를 설명하는 [독립 Gooo 패키지](../examples/assembly-explainer/README.md)를
 추가했습니다. 입력은 맞춘 사례 수, 전체 사례 수, 관측된 최선의 후보와 남은
 평가 예산입니다. Gooo 소스에 선언한 조건이 “더 나은 후보 사용”, “다른 후보

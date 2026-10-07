@@ -22,7 +22,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	return runWithInput(args, os.Stdin, stdout, stderr)
 }
 
-const initUsage = "usage: gooo init [--template app|library] [--module <path>] <new-directory>"
+const initUsage = "usage: gooo init [--template app|library|diagnostic] [--module <path>] <new-directory>"
 
 var libraryModulePathPattern = regexp.MustCompile(`^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*(?:/[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*)*$`)
 
@@ -71,47 +71,15 @@ https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/language/body-codeg
 }
 
 func runInit(args []string, stdout, stderr io.Writer) int {
-	template := "app"
-	modulePath := "boundedint"
-	moduleProvided := false
-	destinationArg := ""
-	for index := 0; index < len(args); index++ {
-		switch args[index] {
-		case "--template":
-			if index+1 >= len(args) {
-				fmt.Fprintln(stderr, initUsage)
-				return exitUsage
-			}
-			template = args[index+1]
-			index++
-		case "--module":
-			if index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" {
-				fmt.Fprintln(stderr, initUsage)
-				return exitUsage
-			}
-			modulePath = args[index+1]
-			moduleProvided = true
-			index++
-		default:
-			if strings.HasPrefix(args[index], "-") || destinationArg != "" {
-				fmt.Fprintln(stderr, initUsage)
-				return exitUsage
-			}
-			destinationArg = args[index]
-		}
-	}
-	files := starterFiles
-	if template == "library" {
-		if !libraryModulePathPattern.MatchString(modulePath) {
-			fmt.Fprintf(stderr, "gooo init: invalid library module path %q\n", modulePath)
-			return exitUsage
-		}
-		files = libraryStarterFiles
-	} else if template != "app" {
-		fmt.Fprintf(stderr, "gooo init: unknown template %q (choose app or library)\n", template)
+	options, err := parseStarterOptions(args)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
 		return exitUsage
-	} else if moduleProvided {
-		fmt.Fprintln(stderr, "gooo init: --module is available only with --template library")
+	}
+	template, destinationArg := options.template, options.destination
+	files, modulePath, err := selectStarterFiles(template, options.module, options.moduleProvided)
+	if err != nil {
+		fmt.Fprintln(stderr, "gooo init:", err)
 		return exitUsage
 	}
 	if destinationArg == "" {
@@ -129,7 +97,7 @@ func runInit(args []string, stdout, stderr io.Writer) int {
 	}
 	created := make([]string, 0, len(files))
 	for name, content := range files {
-		if template == "library" {
+		if template != "app" {
 			namespace := strings.NewReplacer("/", "_", ".", "_", "-", "_").Replace(modulePath)
 			content = strings.NewReplacer("{{module}}", modulePath, "{{namespace}}", namespace).Replace(content)
 		}
@@ -144,8 +112,8 @@ func runInit(args []string, stdout, stderr io.Writer) int {
 		}
 		created = append(created, path)
 	}
-	if template == "library" {
-		fmt.Fprintf(stdout, "Created Gooo library starter in %s\n", destination)
+	if template != "app" {
+		fmt.Fprintf(stdout, "Created Gooo %s starter in %s\n", template, destination)
 		fmt.Fprintf(stdout, "Next: cd %s && gooo package execute --json --cases cases.json gooo.workspace.json\n", destination)
 	} else {
 		fmt.Fprintf(stdout, "Created Gooo starter in %s\n", destination)
