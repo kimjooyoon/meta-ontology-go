@@ -99,24 +99,7 @@ func executeBodyComposition(ctx context.Context, flags map[string]string, stdout
 		}
 	}
 	output := bodyCompositionOutput{GeneratedNow: flags["--composition"] == "", CaseSeries: series}
-	if output.GeneratedNow {
-		options := bodyexecution.CompositionOptions{ModelPath: flags["--model"], FillModelPath: flags["--fill-model"]}
-		options.RecordPolicy, err = readRecordAssemblyPolicy(flags)
-		if err != nil {
-			return fail(err)
-		}
-		if flags["--resume-composition"] != "" {
-			output.Composition, err = resumeBodyComposition(ctx, flags, source, suites[0], *options.RecordPolicy)
-		} else {
-			output.Composition, err = bodyexecution.GenerateCompositionWithOptions(ctx, flags["--source"], source, suites[0], options)
-		}
-	} else {
-		var raw []byte
-		raw, err = readBodyExecutionFile(flags["--composition"], 32<<20)
-		if err == nil {
-			output.Composition, err = bodyexecution.DecodeComposition(raw)
-		}
-	}
+	output.Composition, err = buildOrReadBodyComposition(ctx, flags, source, suites[0])
 	if err == nil {
 		if series != nil || repeat > 1 {
 			output.RuntimeHistory, err = executeCompositionHistory(ctx, flags, source, output.Composition, suites, repeat)

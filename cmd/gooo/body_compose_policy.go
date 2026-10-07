@@ -30,3 +30,24 @@ func resumeBodyComposition(ctx context.Context, flags map[string]string, source 
 	}
 	return bodyexecution.ResumeComposition(ctx, flags["--source"], source, prior, suite, policy)
 }
+
+func buildOrReadBodyComposition(ctx context.Context, flags map[string]string, source []byte,
+	suite bodyexecution.CompositionCases) (bodyexecution.Composition, error) {
+	if flags["--composition"] != "" {
+		raw, err := readBodyExecutionFile(flags["--composition"], 32<<20)
+		if err != nil {
+			return bodyexecution.Composition{}, err
+		}
+		return bodyexecution.DecodeComposition(raw)
+	}
+	options := bodyexecution.CompositionOptions{ModelPath: flags["--model"], FillModelPath: flags["--fill-model"]}
+	var err error
+	options.RecordPolicy, err = readRecordAssemblyPolicy(flags)
+	if err != nil {
+		return bodyexecution.Composition{}, err
+	}
+	if flags["--resume-composition"] != "" {
+		return resumeBodyComposition(ctx, flags, source, suite, *options.RecordPolicy)
+	}
+	return bodyexecution.GenerateCompositionWithOptions(ctx, flags["--source"], source, suite, options)
+}
