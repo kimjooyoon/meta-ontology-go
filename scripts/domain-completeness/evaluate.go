@@ -233,20 +233,10 @@ func compareReports(current, baseline Report, supplied bool) Comparison {
 	for _, dimension := range current.Dimensions {
 		prior, exists := byID[dimension.ID]
 		if !exists || prior.MetricID != dimension.MetricID || prior.Unit != dimension.Unit ||
-			prior.Denominator != dimension.Denominator || prior.Denominator <= 0 ||
-			prior.Numerator < 0 || prior.Numerator > prior.Denominator || prior.UnknownUnits < 0 || prior.RefutedUnits < 0 ||
-			dimension.Numerator < 0 || dimension.Numerator > dimension.Denominator {
+			prior.Denominator != dimension.Denominator || !validComparisonCounts(prior) || !validComparisonCounts(dimension) {
 			return Comparison{Status: "UNKNOWN_INCOMPATIBLE_BASELINE", Dimensions: []DimensionDelta{}}
 		}
-		axisStatus := "COMPARABLE"
-		if prior.UnknownUnits > 0 || dimension.UnknownUnits > 0 || prior.Status == "UNKNOWN" || dimension.Status == "UNKNOWN" ||
-			prior.Status == "FAIL_CLOSED" || dimension.Status == "FAIL_CLOSED" {
-			axisStatus = "UNKNOWN_UNRESOLVED_EVIDENCE"
-		}
-		result.Dimensions = append(result.Dimensions, DimensionDelta{
-			ID: dimension.ID, Status: axisStatus, NumeratorDelta: dimension.Numerator - prior.Numerator,
-			Denominator: dimension.Denominator, BaselineStatus: prior.Status, CurrentStatus: dimension.Status,
-		})
+		result.Dimensions = append(result.Dimensions, compareDimension(dimension, prior))
 	}
 	result.Status = "COMPARABLE"
 	for _, delta := range result.Dimensions {

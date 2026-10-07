@@ -63,7 +63,7 @@ func TestObservedZeroCanBeComparedWithoutCountingUnknownAsProgress(t *testing.T)
 	current.Dimensions = []Dimension{{ID: "generation_coverage", MetricID: "metric", Unit: "use_cases",
 		Status: classify(2, 4, 0, false), Numerator: 2, Denominator: 4}}
 	comparison := compareReports(current, baseline, true)
-	if comparison.Status != "COMPARABLE" || comparison.Dimensions[0].BaselineStatus != "PROGRESS" || comparison.Dimensions[0].NumeratorDelta != 2 {
+	if comparison.Status != "COMPARABLE" || comparison.Dimensions[0].BaselineStatus != "PROGRESS" || comparison.Dimensions[0].NumeratorDelta == nil || *comparison.Dimensions[0].NumeratorDelta != 2 {
 		t.Fatalf("measured zero comparison = %#v", comparison)
 	}
 	baseline.Dimensions[0].Status = classify(0, 4, 4, false)

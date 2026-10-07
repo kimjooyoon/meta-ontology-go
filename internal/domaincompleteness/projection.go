@@ -11,6 +11,7 @@ import (
 
 //go:generate sh -c "env GOOO_LAYA_URL= GOOO_LAYA_API_KEY= go run ../../cmd/gooo body-codegen --activity ClassifyDomainCompleteness ../../scripts/domain-completeness/profile.gooo > status_generated.go"
 //go:generate sh -c "env GOOO_LAYA_URL= GOOO_LAYA_API_KEY= go run ../../cmd/gooo body-codegen --activity SelectDomainCompletenessOutcome ../../scripts/domain-completeness/profile.gooo > decision_generated.go"
+//go:generate sh -c "env GOOO_LAYA_URL= GOOO_LAYA_API_KEY= go run ../../cmd/gooo body-codegen --activity CanCompareDomainCompletenessAxes ../../scripts/domain-completeness/profile.gooo > comparison_generated.go"
 
 // VerifyGeneratedProjection confirms that the checked-in Go bodies are exact
 // deterministic lowerings of their activities in the Gooo profile.
@@ -25,6 +26,7 @@ func VerifyGeneratedProjection(profilePath string, profile []byte) error {
 	}{
 		{activity: "ClassifyDomainCompleteness", file: "status_generated.go"},
 		{activity: "SelectDomainCompletenessOutcome", file: "decision_generated.go"},
+		{activity: "CanCompareDomainCompletenessAxes", file: "comparison_generated.go"},
 	}
 	for _, projection := range projections {
 		generated, err := bodycodegen.Generate(profilePath, profile, projection.activity)
