@@ -26,7 +26,9 @@ type Program struct {
 	Activities      []ActivityRef        `json:"activities"`
 	Source          string               `json:"lowered_gooo_source"`
 	Scope           string               `json:"scope"`
+	EntityAliases   []EntityAlias        `json:"entity_aliases,omitempty"`
 	sourceFillSpecs map[string]*assemblyspec.Spec
+	recordNames     workspaceRecordNames
 }
 
 // Prepare validates the package manifest and flattens its reachable package
@@ -74,9 +76,6 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 			}
 		}
 	}
-	entities := map[string]string{}
-	entityDeclarations := map[string]*syntax.EntityDecl{}
-	entityDecls := map[string]bool{}
 	activityDeclarations := map[string]*syntax.ActivityDecl{}
 	activityOrder := make([]string, 0, len(allActivityRefs))
 	type pendingBinding struct {
@@ -92,19 +91,6 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 			imports := importAliases(spec.Path, file.Imports)
 			for _, declaration := range file.Declarations {
 				switch value := declaration.(type) {
-				case *syntax.EntityDecl:
-					if previous, exists := entities[value.Name]; exists && previous != value.ID {
-						return Program{}, fmt.Errorf("entity name %q has different stable IDs across workspace packages", value.Name)
-					}
-					entities[value.Name] = value.ID
-					if previous, exists := entityDeclarations[value.Name]; exists && !sameEntityShape(previous, value) {
-						return Program{}, fmt.Errorf("entity name %q has conflicting declarations across workspace packages", value.Name)
-					}
-					if !entityDecls[value.Name] {
-						declarations = append(declarations, declaration)
-						entityDecls[value.Name] = true
-						entityDeclarations[value.Name] = value
-					}
 				case *syntax.ActivityDecl:
 					key := packageActivityKey(spec.Path, value.Name)
 					value.Name = activityNames[spec.Path][value.Name]
@@ -172,6 +158,14 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 			refsByName[ref.LoweredName] = ref
 		}
 	}
+	recordNames, err := scopeWorkspaceRecords(ordered, files, image, refsByName)
+	if err != nil {
+		return Program{}, err
+	}
+	declarations, err = collectWorkspaceEntities(ordered, files)
+	if err != nil {
+		return Program{}, err
+	}
 	for _, key := range activityOrder {
 		if needed[key] {
 			declarations = append(declarations, activityDeclarations[key])
@@ -213,6 +207,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 	}
 	return Program{Schema: "gooo/workspace-body-program/v1", Workspace: image, Entry: entry,
 		Activities: activities, Source: source, sourceFillSpecs: sourceFillSpecs,
+		EntityAliases: recordNames.aliases, recordNames: recordNames,
 		Scope: "explicitly bound workspace activity bodies lowered to one typed Gooo graph; execution requires finite cases and native Go compilation"}, nil
 }
 
