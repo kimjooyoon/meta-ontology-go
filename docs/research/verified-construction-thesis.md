@@ -296,6 +296,16 @@ source-declared helper bodies in dependency order before projecting their caller
 The attempts remain independently inspectable. Automatic scheduling and retaining
 dependent caller constructions after a helper changes remain further work.
 
+Fresh called-body executions now retain the actual arguments delivered to each
+constructed helper. The [paired follow-up](called-input-observation-20261008/summary.json)
+distinguishes input overlap from finite output success, and replays an older
+saved construction with fresh argument observations and zero new inference.
+The model reached the selected helper in two attempts, compared with four for
+deterministic ordering; the measured whole commands took 0.36 s and 0.34 s
+respectively. Candidate count and elapsed time remain separate outcomes. Calls
+made while scoring another assembling body still need their own input-history
+observations before nested construction can claim disjoint runtime inputs.
+
 Publish a short Korean and English walkthrough of the connected tool, its
 failed case and its replay. An independent developer should be able to follow it
 without reconstructing the research repository history. Their reproducible

@@ -1,0 +1,870 @@
+{
+  "schema": "gooo/called-input-observation-study/v1",
+  "compiler": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.5-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.1",
+    "module_version": "v0.6.4-dev.0.20261007201500-d51304603566",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.4-dev.0.20261007201500-d51304603566"
+    },
+    "compiler_source_sha": "d5130460356646f964d01a619f0db62f166f0ea5",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "d5130460356646f964d01a619f0db62f166f0ea5",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.24-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.1"
+  },
+  "sources": {
+    "examples/called-body-construction/cases.json": {
+      "sha256": "de7ca1d0470d01cb59cb43ea2bf5949e7521fd295515f9236ecc62f250b211f9",
+      "bytes": 1366
+    },
+    "examples/called-body-construction/gooo.workspace.json": {
+      "sha256": "b7774605be0fd962176b0f7e034e781d7e3788b870ee1532422550def380cceb",
+      "bytes": 653
+    },
+    "examples/called-body-construction/inputs.json": {
+      "sha256": "a644b18178fd483e5f2de4ce46a0116fac9aeec6909d72f09fbe366d3642f148",
+      "bytes": 562
+    },
+    "examples/called-body-construction/app.gooo.fixture": {
+      "sha256": "f9bd02a42315ced4799c7aba5da8b29bb06b0acce8b9d0384fea235c284a0e6d",
+      "bytes": 286
+    },
+    "examples/called-body-construction/diagnostics.gooo.fixture": {
+      "sha256": "d642e8a8282cbc232b49f8ff5915697b673636d1f8d9b2f6cec036eef46a79c2",
+      "bytes": 2426
+    },
+    "examples/called-body-construction/rules.gooo.fixture": {
+      "sha256": "340cc73d6650b8013753a28f3c711aa6532cdd70924f76ef1e52a38fe805628d",
+      "bytes": 329
+    },
+    "examples/package-assembly-policy/checkpoint.workspace.json": {
+      "sha256": "7e0b1952d5e84f5923a2a9cbd67fef92620ad8e3134c6d80f1e6457bb32d4b54",
+      "bytes": 516
+    },
+    "examples/package-assembly-policy/gooo.workspace.json": {
+      "sha256": "d02500e037408cc0f4485152c71fbd6dc78780a8a8f12eed6f9783fd05f9d4a8",
+      "bytes": 509
+    },
+    "examples/package-assembly-policy/checkpoint.gooo.fixture": {
+      "sha256": "ae44cb0dc1fcce8339b22674f215129d52317d029cd5cdaa98335330e66f59cc",
+      "bytes": 266
+    },
+    "examples/package-assembly-policy/counts.gooo.fixture": {
+      "sha256": "2c3d9821093dd74cde909a42d290245974dd6e3659b611dd400bb7d188aacab0",
+      "bytes": 1042
+    },
+    "examples/package-assembly-policy/policy.gooo.fixture": {
+      "sha256": "b58ee5903d9432b2a0547ddd56c959920dc794f178b4b5bdea9b6925d2f6ef01",
+      "bytes": 1515
+    }
+  },
+  "model": {
+    "observation": {
+      "schema": "gooo/retained-path-model/v1",
+      "loaded": true,
+      "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+      "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+      "resident_tensor_bytes": 2096,
+      "setup_ms": 0.734625,
+      "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+      "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+      "feature_version": "triple_record_field_context_v1_shared_v1",
+      "arithmetic_version": "float32_separate_v1"
+    },
+    "hub_revision": "https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary",
+    "new_training": false
+  },
+  "method": {
+    "execution_order": [
+      "deterministic",
+      "model",
+      "replay",
+      "historical-replay",
+      "checkpoint",
+      "input-only"
+    ],
+    "exit_codes": {
+      "deterministic": 0,
+      "model": 0,
+      "replay": 0,
+      "historical-replay": 0,
+      "checkpoint": 0,
+      "input-only": 0
+    },
+    "paired_scope": "Same Gooo target, choices, five helper selection cases, four caller expectations, eight-attempt budget and Gooo continue policy; optional own model changes candidate order.",
+    "runtime_scope": "Typed argument tuples captured at each constructed helper function entry; two matching native runs include identical argument observations. Counts retain finite cases and field checks separately.",
+    "known_input_scope": "Source selection/holdout inputs and recorded probes; input disjointness does not establish model-training independence.",
+    "indirect_scope": "Calls made while scoring dependent constructing bodies remain unobserved and report UNKNOWN; skipped constructed activities earn no disjoint-input credit.",
+    "checkpoint_scope": "Different Gooo stopping policy retains first candidate and partial output; not a paired ranking comparison.",
+    "replay_scope": "Saved construction replay with zero new inference; historical model calls remain historical. Historical replay consumes the prior study receipt and produces fresh observations.",
+    "input_only_scope": "Three input rows without expectations; overlap/disjoint counts are observed but accuracy stays UNKNOWN and 0/0.",
+    "timing_scope": "Single sequential local commands, including native compilation and two executions, after local tests completed; host work and caches uncontrolled. CPU average derived from rounded user+system/wall totals includes child processes.",
+    "host_cpu_utilization": "NOT_SAMPLED",
+    "model_cpu_increment": "UNMEASURED",
+    "training_exposure": "UNKNOWN",
+    "interventions": "Maintainer-authored source, alternatives, cases and policies; six explicit CLI invocations; zero interactive approvals or candidate edits during these invocations; no independent adoption or automatic scheduling measured."
+  },
+  "historical_receipt": {
+    "path": "docs/research/called-body-construction-20261008/model.json",
+    "sha256": "aba0cb2edeeb439213f93528c368b9c005ca576ce62f0887c9521a9acc1802e0",
+    "bytes": 93615
+  },
+  "runs": {
+    "deterministic": {
+      "decision": "PASS",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 0,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 1,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 2,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "native_expectations": {
+        "passed": 4,
+        "total": 4
+      },
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "calls": [
+        {
+          "case_index": 0,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                17,
+                21,
+                1,
+                "네 필드가 남았습니다"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                3,
+                5,
+                0,
+                "two outputs differ"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 2,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                8,
+                8,
+                0,
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 3,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                9007199254740994,
+                9007199254740993,
+                0,
+                "count exceeds total"
+              ]
+            }
+          ]
+        }
+      ],
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "observed_projection_sha256": "sha256:2a9eb0b2dc7fabdb7ac4aaf1a3dc0e11f8ac746781e5b10238b78b9e1fbce5cc",
+      "observed_driver_sha256": "sha256:bb100de94fec6ab38fce894353791c4b1d59ba8d6d1dafbe0ca2ccbd94adeb90",
+      "new_model_calls": 0,
+      "historical_model_calls": 0,
+      "historical_predict_ns": 0,
+      "resource_observation": {
+        "wall_seconds": 0.34,
+        "user_seconds": 0.17,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 87048192,
+        "average_cpu_percent_of_one_core": 79.41
+      }
+    },
+    "model": {
+      "decision": "PASS",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "native_expectations": {
+        "passed": 4,
+        "total": 4
+      },
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "calls": [
+        {
+          "case_index": 0,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                17,
+                21,
+                1,
+                "네 필드가 남았습니다"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                3,
+                5,
+                0,
+                "two outputs differ"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 2,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                8,
+                8,
+                0,
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 3,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                9007199254740994,
+                9007199254740993,
+                0,
+                "count exceeds total"
+              ]
+            }
+          ]
+        }
+      ],
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "observed_projection_sha256": "sha256:2a9eb0b2dc7fabdb7ac4aaf1a3dc0e11f8ac746781e5b10238b78b9e1fbce5cc",
+      "observed_driver_sha256": "sha256:bb100de94fec6ab38fce894353791c4b1d59ba8d6d1dafbe0ca2ccbd94adeb90",
+      "new_model_calls": 1,
+      "historical_model_calls": 1,
+      "historical_predict_ns": 12042,
+      "resource_observation": {
+        "wall_seconds": 0.36,
+        "user_seconds": 0.16,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86720512,
+        "average_cpu_percent_of_one_core": 75.0
+      }
+    },
+    "replay": {
+      "decision": "PASS",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "native_expectations": {
+        "passed": 4,
+        "total": 4
+      },
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "calls": [
+        {
+          "case_index": 0,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                17,
+                21,
+                1,
+                "네 필드가 남았습니다"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                3,
+                5,
+                0,
+                "two outputs differ"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 2,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                8,
+                8,
+                0,
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 3,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                9007199254740994,
+                9007199254740993,
+                0,
+                "count exceeds total"
+              ]
+            }
+          ]
+        }
+      ],
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "observed_projection_sha256": "sha256:2a9eb0b2dc7fabdb7ac4aaf1a3dc0e11f8ac746781e5b10238b78b9e1fbce5cc",
+      "observed_driver_sha256": "sha256:bb100de94fec6ab38fce894353791c4b1d59ba8d6d1dafbe0ca2ccbd94adeb90",
+      "new_model_calls": 0,
+      "historical_model_calls": 1,
+      "historical_predict_ns": 12042,
+      "resource_observation": {
+        "wall_seconds": 0.32,
+        "user_seconds": 0.15,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 87015424,
+        "average_cpu_percent_of_one_core": 81.25
+      }
+    },
+    "historical-replay": {
+      "decision": "PASS",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "native_expectations": {
+        "passed": 4,
+        "total": 4
+      },
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 4,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "calls": [
+        {
+          "case_index": 0,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                17,
+                21,
+                1,
+                "네 필드가 남았습니다"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                3,
+                5,
+                0,
+                "two outputs differ"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 2,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                8,
+                8,
+                0,
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 3,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                9007199254740994,
+                9007199254740993,
+                0,
+                "count exceeds total"
+              ]
+            }
+          ]
+        }
+      ],
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "observed_projection_sha256": "sha256:2a9eb0b2dc7fabdb7ac4aaf1a3dc0e11f8ac746781e5b10238b78b9e1fbce5cc",
+      "observed_driver_sha256": "sha256:bb100de94fec6ab38fce894353791c4b1d59ba8d6d1dafbe0ca2ccbd94adeb90",
+      "new_model_calls": 0,
+      "historical_model_calls": 1,
+      "historical_predict_ns": 16584,
+      "resource_observation": {
+        "wall_seconds": 0.33,
+        "user_seconds": 0.15,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 87425024,
+        "average_cpu_percent_of_one_core": 75.76
+      }
+    },
+    "checkpoint": {
+      "decision": "PROGRESS",
+      "construction": {
+        "status": "PARTIAL_FINITE",
+        "passed": 3,
+        "total": 5,
+        "fields_passed": 13,
+        "fields_total": 15,
+        "selected_mask": 7
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        }
+      ],
+      "native_expectations": {
+        "passed": 2,
+        "total": 4
+      },
+      "input_separation": {
+        "status": "PROGRESS",
+        "reason": "DISJOINT_EXPECTATIONS_DIFFER",
+        "unique_inputs": 4,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 4,
+        "disjoint_cases_passed": 2,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "calls": [
+        {
+          "case_index": 0,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                17,
+                21,
+                1,
+                "네 필드가 남았습니다"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                3,
+                5,
+                0,
+                "two outputs differ"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 2,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                8,
+                8,
+                0,
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 3,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                9007199254740994,
+                9007199254740993,
+                0,
+                "count exceeds total"
+              ]
+            }
+          ]
+        }
+      ],
+      "generated_sha256": "sha256:8456e21bd5b63087b48452f6ae7d8d7d044533599dc964761942cceeb20b4d37",
+      "observed_projection_sha256": "sha256:d2e9147fad10a36361160561a08ed82b82b7671b0895f94d3754621ec6fad4b4",
+      "observed_driver_sha256": "sha256:bb100de94fec6ab38fce894353791c4b1d59ba8d6d1dafbe0ca2ccbd94adeb90",
+      "new_model_calls": 1,
+      "historical_model_calls": 1,
+      "historical_predict_ns": 16375,
+      "resource_observation": {
+        "wall_seconds": 0.54,
+        "user_seconds": 0.18,
+        "system_seconds": 0.11,
+        "maximum_rss_bytes": 86982656,
+        "average_cpu_percent_of_one_core": 53.7
+      }
+    },
+    "input-only": {
+      "decision": "OBSERVED",
+      "construction": {
+        "status": "COMPLETE_FINITE",
+        "passed": 5,
+        "total": 5,
+        "fields_passed": 15,
+        "fields_total": 15,
+        "selected_mask": 3
+      },
+      "attempts": [
+        {
+          "mask": 7,
+          "passed": 3,
+          "total": 5
+        },
+        {
+          "mask": 3,
+          "passed": 5,
+          "total": 5
+        }
+      ],
+      "native_expectations": {
+        "passed": 0,
+        "total": 0
+      },
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "NO_RUNTIME_EXPECTATIONS",
+        "unique_inputs": 3,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 1,
+        "disjoint_inputs": 2,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "calls": [
+        {
+          "case_index": 0,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                1,
+                3,
+                1,
+                "missing branch result"
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                0,
+                0,
+                0,
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 2,
+          "observed": true,
+          "calls": [
+            {
+              "root_activity_id": "gooo-workspace://activity/gooo-package3activity-main",
+              "activity_id": "gooo-workspace://activity/gooo-package2activity-diagnose",
+              "inputs": [
+                11,
+                11,
+                0,
+                ""
+              ]
+            }
+          ]
+        }
+      ],
+      "generated_sha256": "sha256:8510cbcbf4c93289b30634ea9c2b553579312592e68ef165cc8e9f662dca5ae3",
+      "observed_projection_sha256": "sha256:2a9eb0b2dc7fabdb7ac4aaf1a3dc0e11f8ac746781e5b10238b78b9e1fbce5cc",
+      "observed_driver_sha256": "sha256:bb100de94fec6ab38fce894353791c4b1d59ba8d6d1dafbe0ca2ccbd94adeb90",
+      "new_model_calls": 0,
+      "historical_model_calls": 1,
+      "historical_predict_ns": 12042,
+      "resource_observation": {
+        "wall_seconds": 0.33,
+        "user_seconds": 0.15,
+        "system_seconds": 0.1,
+        "maximum_rss_bytes": 85671936,
+        "average_cpu_percent_of_one_core": 75.76
+      }
+    }
+  },
+  "raw_artifacts": {
+    "build.json": {
+      "sha256": "30b36bb5f59f28c54b067322f7986ff90ad3410d94b71ad6ca5b8d7bbb7bd74e",
+      "bytes": 659
+    },
+    "deterministic.json": {
+      "sha256": "1d29547237990d7042d040e7c99974f1682435d86531b8cfbc5fefa9ee027602",
+      "bytes": 92658
+    },
+    "deterministic.time": {
+      "sha256": "f2b1e034d56bd358f7759e76a45bab97f24dcfd48dc50a49308c06b77da77e40",
+      "bytes": 777
+    },
+    "model.json": {
+      "sha256": "cbe9841702e04238fcd860ce478e830ff30149120bd047223c7531e885c80e46",
+      "bytes": 94812
+    },
+    "model.time": {
+      "sha256": "7520e94040e81732e97b6f2ee5acfe1670fe1c8b751819cb34f85daf225956d7",
+      "bytes": 777
+    },
+    "replay.json": {
+      "sha256": "7307a9038eeee241c62f16e6914e7854ab215e2b838b763d41bfae1f3815546b",
+      "bytes": 95239
+    },
+    "replay.time": {
+      "sha256": "13f02a024ca45c967d1e6dfa2c9115e365930c18a51dcad4adf7823dfc469f06",
+      "bytes": 777
+    },
+    "historical-replay.json": {
+      "sha256": "d4ee1a20141e969b6f9ae8fc8262f062e270bde8a128e8319e0db08c42948425",
+      "bytes": 95239
+    },
+    "historical-replay.time": {
+      "sha256": "7df855dc4f0cd817b1bda23fc4c49229c0a60424571ff29cf43fae7b6de7b7a0",
+      "bytes": 777
+    },
+    "checkpoint.json": {
+      "sha256": "25ff3d5dfdbd7c1dbb1eb38f423351de0f470d4723b9b9ed2096e84ddc62eb44",
+      "bytes": 89673
+    },
+    "checkpoint.time": {
+      "sha256": "3c3c3321ab0651763bb9f0b771bd30c4eb7852ac2da343aec47ad9f21e50f63d",
+      "bytes": 777
+    },
+    "input-only.json": {
+      "sha256": "3c8117a1e06349f421a7327b6e15201d6ba0898542b64961525229964cab9002",
+      "bytes": 94124
+    },
+    "input-only.time": {
+      "sha256": "b4c8323ed1d5e08ed95945425a6d09313dc0bed64d15eee3f45677dad20ca6eb",
+      "bytes": 777
+    }
+  }
+}
