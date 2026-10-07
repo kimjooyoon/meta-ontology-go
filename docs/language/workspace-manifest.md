@@ -71,6 +71,19 @@ and output entity type to that ID. An activity can use an entity in
 its own package or an entity declared in one of its direct imports. Unknown or
 ambiguous imported types fail closed. When an entity exists locally, the local
 declaration takes precedence over imported entities with the same name.
+
+Record names are scoped to the owning package during executable lowering.
+Different packages may each declare `Result` with distinct stable IDs and field
+layouts; the compiler assigns distinct execution names and records the mapping
+in `program.entity_aliases`. Constructors, signatures and supported assembly
+expressions use the resolved type. Names inside strings, comments, field labels
+and ordinary local-variable references retain their original spelling. Aliases
+of the same stable record ID share one declaration when their ordered fields
+agree. The [two-Result workspace](../../examples/package-record-namespaces/README.md)
+exercises this behavior through real package execution and exact integer values.
+Ambiguous imported constructor names need an unambiguous declaration/import
+environment, as do signature types. Scalar entities keep the current
+Integer/Boolean/Text body profiles.
 When source files declare imports, their union must match the manifest's
 `imports` list. A mismatch fails with `PACKAGE_SOURCE_IMPORT_MISMATCH` so source
 intent and the workspace graph cannot quietly drift apart. Existing workspaces

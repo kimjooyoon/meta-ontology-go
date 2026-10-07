@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "example/write",
+    "activity": "Render"
+  },
+  "packages": [
+    {
+      "path": "example/write",
+      "name": "write",
+      "imports": [
+        "example/read"
+      ],
+      "sources": [
+        "write.gooo.fixture"
+      ]
+    },
+    {
+      "path": "example/read",
+      "name": "read",
+      "imports": [],
+      "sources": [
+        "read.gooo.fixture"
+      ]
+    }
+  ]
+}
