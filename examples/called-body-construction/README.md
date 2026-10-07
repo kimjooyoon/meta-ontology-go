@@ -101,10 +101,51 @@ suite includes an ambiguous helper that satisfies 1/1 local cases while its call
 matches 0/1 expectations. Retaining those two results exposes where stronger
 obligations or a future search across dependent choices is needed.
 
-Saved continuation currently rejects compositions with called-body preparations:
-changing a helper may affect later caller constructions and requires a new
-construction. Ordinary saved replay is supported. The next extension should
-define which dependent constructions can be retained when a helper changes.
+Saved record-choice construction can continue in dependency order. When a helper
+changes, dependent candidates are checked with the changed helper, while their
+historical scores remain bound to their original source. Earlier workspace body
+fills are replayed unchanged. Continuing a source fill or source IR search inside
+the composition remains a separate extension.
+
+## Continue a saved package checkpoint
+
+Build from this revision, then stop after the first diagnostic candidate:
+
+```sh
+/tmp/gooo-called-body package execute --json \
+  --cases examples/called-body-construction/cases.json \
+  --assembly-policy-workspace examples/package-assembly-policy/checkpoint.workspace.json \
+  examples/called-body-construction/gooo.workspace.json > checkpoint.json
+
+/tmp/gooo-called-body package resume --json --receipt checkpoint.json \
+  --cases examples/called-body-construction/cases.json \
+  --assembly-policy-workspace examples/package-assembly-policy/gooo.workspace.json \
+  examples/called-body-construction/gooo.workspace.json > continued.json
+
+/tmp/gooo-called-body package replay --json --receipt continued.json \
+  --cases examples/called-body-construction/cases.json \
+  examples/called-body-construction/gooo.workspace.json
+```
+
+The four finite caller expectations progress from 2/4 to 4/4. The diagnostic's
+separate construction cases progress from 3/5 to 5/5. An optional
+`--assembly-model /path/to/shared-qat/model.json` belongs on the initial command.
+Resume keeps that ranking, the original candidate budget, and every prior policy
+workspace. It accepts no inference option and makes zero new predictions. The
+new policy must be explicit; no policy or source is silently substituted.
+
+The receipt's `continued_from_sha256` identifies the consumed envelope.
+`result.assembly_policy_history` retains source packages for each earlier stage,
+including a null stage for the initial built-in rule. At most 16 saved stages are
+accepted. `result.continuation` counts replayed fills and new model calls;
+`result.composition.continuation.activities` separates retained, rechecked and
+added attempts. Each resume/replay performs two fresh native executions. Use
+`--inputs` instead of `--cases` for observations without an accuracy score.
+
+The current workspace must still match the saved source. Historical policy files
+need not remain on disk because their exact packages are in the receipt. Parent
+digests name earlier artifacts; keep those artifacts if a complete chain is
+needed. They are not signatures or a remote archive.
 
 ## 한국어: 필요한 부품부터 만들어 연결하기
 

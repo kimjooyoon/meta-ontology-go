@@ -50,5 +50,8 @@ and docs/language/language-package-execution.md.
 
 Reuse a saved package execution without a model:
   gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
+
+Continue saved record choices under an explicit Gooo policy:
+  gooo package resume --receipt execution.json --assembly-policy-workspace policy.workspace.json --cases cases.json gooo.workspace.json
 `,
 }

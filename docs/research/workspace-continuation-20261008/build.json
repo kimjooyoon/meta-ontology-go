@@ -1,0 +1,18 @@
+{
+  "schema": "gooo/local-study-build/v1",
+  "compiler_source_sha": "e411aafeaf674e61d6998197f6d80b94d155d0f1",
+  "clean_at_build": true,
+  "go_version": "go version go1.27.1 darwin/arm64",
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "binary_sha256": "6c46daba015f24ff38959ba673d6081192bbd8e1b03b170e11a78392c323e036",
+  "version": {
+    "schema_version": "gooo-version/v1",
+    "language": "gooo",
+    "version": "0.6.6-dev",
+    "status": "development",
+    "semantic_ir": "semantic-ir/v1",
+    "semantic_check": "gooo-semantic-check/v1",
+    "graph": "gooo-graph/v1",
+    "fix_plan": "gooo-fix-plan/v1"
+  }
+}

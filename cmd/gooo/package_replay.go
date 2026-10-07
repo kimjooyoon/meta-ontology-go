@@ -12,21 +12,31 @@ import (
 	"syscall"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
 const packageReplayUsage = "usage: gooo package replay [--json] --receipt <execution.json> (--cases <cases.json> | --inputs <inputs.json>) [--go <go-binary>] <gooo.workspace.json>"
+const packageResumeUsage = "usage: gooo package resume [--json] --receipt <execution.json> --assembly-policy-workspace <policy.workspace.json> (--cases <cases.json> | --inputs <inputs.json>) [--go <go-binary>] <gooo.workspace.json>"
 
 func runPackageReplay(args []string, reader SourceReader, stdout, stderr io.Writer) int {
+	return runPackageSaved(args, reader, stdout, stderr, false)
+}
+
+func runPackageSaved(args []string, reader SourceReader, stdout, stderr io.Writer, resume bool) int {
 	args, jsonMode := parseJSONFlag(args)
-	flags, manifestPath, err := parsePackageReplayArgs(args)
+	flags, manifestPath, err := parsePackageSavedArgs(args, resume)
 	if err != nil {
-		fmt.Fprintln(stderr, packageReplayUsage)
+		usage := packageReplayUsage
+		if resume {
+			usage = packageResumeUsage
+		}
+		fmt.Fprintln(stderr, usage)
 		return exitUsage
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	receipt, err := executePackageReplay(ctx, reader, manifestPath, flags)
+	receipt, err := executePackageSaved(ctx, reader, manifestPath, flags, resume)
 	if err != nil {
 		receipt.Decision, receipt.Error = "FAIL_CLOSED", err.Error()
 	}
@@ -38,13 +48,22 @@ func runPackageReplay(args []string, reader SourceReader, stdout, stderr io.Writ
 			return exitFailure
 		}
 	} else if err != nil {
-		fmt.Fprintf(stderr, "gooo package replay: %v\n", err)
+		operation := "replay"
+		if resume {
+			operation = "resume"
+		}
+		fmt.Fprintf(stderr, "gooo package %s: %v\n", operation, err)
 	} else if flags["--inputs"] != "" {
 		return writePackageActualValues(stdout, stderr, *receipt.Result)
 	} else {
 		r := receipt.Result
-		fmt.Fprintf(stdout, "replayed workspace entry: %s.%s finite=%d/%d model_calls=%d\n",
-			r.Program.Entry.PackagePath, r.Program.Entry.Activity, r.Runtime.FinitePassed, r.Runtime.FiniteTotal, r.Replay.ModelCalls)
+		if resume {
+			fmt.Fprintf(stdout, "continued workspace entry: %s.%s finite=%d/%d new_model_calls=%d\n",
+				r.Program.Entry.PackagePath, r.Program.Entry.Activity, r.Runtime.FinitePassed, r.Runtime.FiniteTotal, r.Continuation.NewModelCalls)
+		} else {
+			fmt.Fprintf(stdout, "replayed workspace entry: %s.%s finite=%d/%d model_calls=%d\n",
+				r.Program.Entry.PackagePath, r.Program.Entry.Activity, r.Runtime.FinitePassed, r.Runtime.FiniteTotal, r.Replay.ModelCalls)
+		}
 	}
 	if err != nil {
 		return exitFailure
@@ -53,7 +72,14 @@ func runPackageReplay(args []string, reader SourceReader, stdout, stderr io.Writ
 }
 
 func parsePackageReplayArgs(args []string) (map[string]string, string, error) {
+	return parsePackageSavedArgs(args, false)
+}
+
+func parsePackageSavedArgs(args []string, resume bool) (map[string]string, string, error) {
 	flags := map[string]string{"--receipt": "", "--cases": "", "--inputs": "", "--go": ""}
+	if resume {
+		flags["--assembly-policy-workspace"] = ""
+	}
 	manifest := ""
 	for i := 0; i < len(args); i++ {
 		if previous, ok := flags[args[i]]; ok {
@@ -71,10 +97,17 @@ func parsePackageReplayArgs(args []string) (map[string]string, string, error) {
 	if manifest == "" || flags["--receipt"] == "" || (flags["--cases"] == "") == (flags["--inputs"] == "") {
 		return nil, "", fmt.Errorf("replay needs a receipt, workspace and one input mode")
 	}
+	if resume && flags["--assembly-policy-workspace"] == "" {
+		return nil, "", fmt.Errorf("continuation requires an explicit policy workspace")
+	}
 	return flags, manifest, nil
 }
 
 func executePackageReplay(ctx context.Context, reader SourceReader, manifestPath string, flags map[string]string) (packageExecutionReceipt, error) {
+	return executePackageSaved(ctx, reader, manifestPath, flags, false)
+}
+
+func executePackageSaved(ctx context.Context, reader SourceReader, manifestPath string, flags map[string]string, resume bool) (packageExecutionReceipt, error) {
 	receipt := packageExecutionReceipt{Schema: "gooo/workspace-body-execution-receipt/v1", Manifest: filepath.ToSlash(manifestPath)}
 	manifestBytes, err := readSource(reader, manifestPath)
 	if err != nil {
@@ -90,6 +123,9 @@ func executePackageReplay(ctx context.Context, reader SourceReader, manifestPath
 		return receipt, err
 	}
 	receipt.ReplayedFrom = workspaceDigest(raw)
+	if resume {
+		receipt.ContinuedFrom, receipt.ReplayedFrom = receipt.ReplayedFrom, ""
+	}
 	var saved packageExecutionReceipt
 	if err := bodyexecution.DecodeExecutionReceipt(raw, &saved); err != nil {
 		return receipt, fmt.Errorf("decode saved package execution: %w", err)
@@ -110,7 +146,7 @@ func executePackageReplay(ctx context.Context, reader SourceReader, manifestPath
 	if err != nil {
 		return receipt, err
 	}
-	result, err := workspaceexecution.ReplayWorkspace(ctx, runtimeManifest, *saved.Result, suite, flags["--go"])
+	result, err := runSavedWorkspace(ctx, reader, runtimeManifest, *saved.Result, suite, flags, resume)
 	receipt.Result = &result
 	receipt.Decision = "PASS"
 	if result.Runtime.FinitePassed < result.Runtime.FiniteTotal {
@@ -120,6 +156,18 @@ func executePackageReplay(ctx context.Context, reader SourceReader, manifestPath
 		receipt.Decision = "OBSERVED"
 	}
 	return receipt, err
+}
+
+func runSavedWorkspace(ctx context.Context, reader SourceReader, manifest packageruntime.Manifest,
+	prior workspaceexecution.Result, suite bodyexecution.CompositionCases, flags map[string]string, resume bool) (workspaceexecution.Result, error) {
+	if !resume {
+		return workspaceexecution.ReplayWorkspace(ctx, manifest, prior, suite, flags["--go"])
+	}
+	policy, err := readPackageAssemblyPolicy(reader, flags["--assembly-policy-workspace"])
+	if err != nil {
+		return workspaceexecution.Result{}, err
+	}
+	return workspaceexecution.ResumeWorkspace(ctx, manifest, prior, suite, policy, flags["--go"])
 }
 
 func readPackageReplayInputs(reader SourceReader, flags map[string]string) (bodyexecution.CompositionCases, string, bool, error) {

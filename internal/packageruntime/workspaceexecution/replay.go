@@ -24,36 +24,12 @@ type ReplayEvidence struct {
 // remain historical evidence; this invocation performs two fresh native runs.
 func ReplayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prior Result,
 	suite bodyexecution.CompositionCases, goBinary string) (Result, error) {
-	if ctx == nil {
-		return Result{}, fmt.Errorf("workspace replay requires a context")
-	}
-	if err := ctx.Err(); err != nil {
-		return Result{}, err
-	}
-	if prior.Schema != "gooo/workspace-body-execution/v1" {
-		return Result{}, fmt.Errorf("workspace replay requires a saved execution result")
-	}
-	program, err := Prepare(manifest)
+	program, current, err := reconstructWorkspace(ctx, manifest, prior)
 	if err != nil {
 		return Result{}, err
-	}
-	currentProgram, _ := json.Marshal(program)
-	savedProgram, _ := json.Marshal(prior.Program)
-	if !bytes.Equal(currentProgram, savedProgram) {
-		return Result{}, fmt.Errorf("saved workspace differs from current sources, dependencies, entry or lowered graph")
 	}
 	translated, err := translateCases(program, suite)
 	if err != nil {
-		return Result{}, err
-	}
-	current, err := replayWorkspaceFills(ctx, program, prior.BodyFills)
-	if err != nil {
-		return Result{}, err
-	}
-	if sourceSHA256(current) != prior.SourceSHA256 {
-		return Result{}, fmt.Errorf("saved workspace execution source differs")
-	}
-	if err := verifyWorkspacePolicy(ctx, prior); err != nil {
 		return Result{}, err
 	}
 	encoded, err := json.Marshal(prior)
@@ -62,6 +38,7 @@ func ReplayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prio
 	}
 	result := Result{Schema: prior.Schema, Program: program, BodyFills: prior.BodyFills,
 		SourceSHA256: prior.SourceSHA256, Composition: prior.Composition, AssemblyPolicy: prior.AssemblyPolicy,
+		PolicyHistory: prior.PolicyHistory, Continuation: prior.Continuation,
 		Replay: &ReplayEvidence{Schema: "gooo/workspace-body-replay/v1", PriorResultSHA256: sourceSHA256(encoded),
 			BodyFillsReplayed: len(prior.BodyFills), Scope: "saved decisions and source-bound candidates reconstructed without inference; old runtime observations are not reused"},
 		Scope: "saved workspace construction with two fresh native executions; current finite expectations or input-only observations"}
@@ -70,6 +47,40 @@ func ReplayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prio
 		result.Runtime.InputSeparation = measureWorkspaceInputs(ctx, current, result, translated)
 	}
 	return result, err
+}
+
+// Reconstruction checks the saved source and policy packages without executing
+// old runtime cases. Replay and continuation each perform their own execution.
+func reconstructWorkspace(ctx context.Context, manifest packageruntime.Manifest, prior Result) (Program, []byte, error) {
+	if ctx == nil {
+		return Program{}, nil, fmt.Errorf("workspace replay requires a context")
+	}
+	if err := ctx.Err(); err != nil {
+		return Program{}, nil, err
+	}
+	if prior.Schema != "gooo/workspace-body-execution/v1" {
+		return Program{}, nil, fmt.Errorf("workspace replay requires a saved execution result")
+	}
+	program, err := Prepare(manifest)
+	if err != nil {
+		return Program{}, nil, err
+	}
+	currentProgram, _ := json.Marshal(program)
+	savedProgram, _ := json.Marshal(prior.Program)
+	if !bytes.Equal(currentProgram, savedProgram) {
+		return Program{}, nil, fmt.Errorf("saved workspace differs from current sources, dependencies, entry or lowered graph")
+	}
+	current, err := replayWorkspaceFills(ctx, program, prior.BodyFills)
+	if err != nil {
+		return Program{}, nil, err
+	}
+	if sourceSHA256(current) != prior.SourceSHA256 {
+		return Program{}, nil, fmt.Errorf("saved workspace execution source differs")
+	}
+	if err := verifyWorkspacePolicy(ctx, prior); err != nil {
+		return Program{}, nil, err
+	}
+	return program, current, nil
 }
 
 func replayWorkspaceFills(ctx context.Context, program Program, fills []BodyFillStep) ([]byte, error) {
