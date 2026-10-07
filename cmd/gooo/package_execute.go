@@ -17,7 +17,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageExecuteUsage = "usage: gooo package execute [--json] --cases <cases.json> [--body-plans <plans.json>] [--assembly-model <model.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
+const packageExecuteUsage = "usage: gooo package execute [--json] (--cases <cases.json> | --inputs <inputs.json>) [--body-plans <plans.json>] [--assembly-model <model.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
 
 type packageBodyFillPlanSet struct {
 	Schema     string                     `json:"schema"`
@@ -36,6 +36,7 @@ type packageExecutionReceipt struct {
 	Manifest       string                     `json:"manifest"`
 	ManifestDigest string                     `json:"manifest_digest,omitempty"`
 	CasesDigest    string                     `json:"cases_digest,omitempty"`
+	InputsDigest   string                     `json:"inputs_digest,omitempty"`
 	Result         *workspaceexecution.Result `json:"result,omitempty"`
 	Error          string                     `json:"error,omitempty"`
 }
@@ -43,14 +44,16 @@ type packageExecutionReceipt struct {
 func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	args, jsonMode := parseJSONFlag(args)
 	casesPath, plansPath, assemblyModelPath, tinyModelPath, goBinary, manifestPath := "", "", "", "", "", ""
+	inputOnly := false
 	for index := 0; index < len(args); index++ {
 		switch args[index] {
-		case "--cases":
+		case "--cases", "--inputs":
 			if casesPath != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
 				fmt.Fprintln(stderr, packageExecuteUsage)
 				return exitUsage
 			}
 			casesPath = args[index+1]
+			inputOnly = args[index] == "--inputs"
 			index++
 		case "--assembly-model":
 			if assemblyModelPath != "" || index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" || strings.HasPrefix(args[index+1], "-") {
@@ -95,6 +98,9 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 	fail := func(cause error, manifestDigest, casesDigest string) int {
 		receipt := packageExecutionReceipt{Schema: "gooo/workspace-body-execution-receipt/v1", Decision: "FAIL_CLOSED",
 			Manifest: filepath.ToSlash(manifestPath), ManifestDigest: manifestDigest, CasesDigest: casesDigest, Error: cause.Error()}
+		if inputOnly {
+			receipt.InputsDigest, receipt.CasesDigest = receipt.CasesDigest, ""
+		}
 		if jsonMode {
 			_ = json.NewEncoder(stdout).Encode(receipt)
 		} else {
@@ -117,7 +123,11 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 	if err != nil {
 		return fail(err, workspaceDigest(manifestBytes), "")
 	}
-	suite, err := bodyexecution.DecodeCompositionCases(caseBytes)
+	decodeInputs := bodyexecution.DecodeCompositionCases
+	if inputOnly {
+		decodeInputs = bodyexecution.DecodeCompositionInputs
+	}
+	suite, err := decodeInputs(caseBytes)
 	if err != nil {
 		return fail(err, workspaceDigest(manifestBytes), workspaceDigest(caseBytes))
 	}
@@ -210,6 +220,10 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 	receipt := packageExecutionReceipt{Schema: "gooo/workspace-body-execution-receipt/v1", Decision: "PASS",
 		Manifest: filepath.ToSlash(manifestPath), ManifestDigest: workspaceDigest(manifestBytes),
 		CasesDigest: workspaceDigest(caseBytes), Result: &result}
+	if inputOnly {
+		receipt.Decision = "OBSERVED"
+		receipt.InputsDigest, receipt.CasesDigest = receipt.CasesDigest, ""
+	}
 	if jsonMode {
 		encoder := json.NewEncoder(stdout)
 		encoder.SetEscapeHTML(false)
@@ -218,6 +232,9 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 			return exitFailure
 		}
 		return exitOK
+	}
+	if inputOnly {
+		return writePackageActualValues(stdout, stderr, result)
 	}
 	fmt.Fprintf(stdout, "executed workspace entry: %s.%s activities=%d finite=%d/%d replayed=%t digest=%s\n",
 		result.Program.Entry.PackagePath, result.Program.Entry.Activity, len(result.Program.Activities),

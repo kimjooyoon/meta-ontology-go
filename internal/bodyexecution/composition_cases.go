@@ -40,7 +40,10 @@ func ValidateCompositionCases(ctx context.Context, filename string, source []byt
 }
 
 func (graph compositionGraph) inputRows(suite CompositionCases) ([][]json.RawMessage, error) {
-	if suite.Schema != "gooo/body-composition-cases/v1" || len(suite.Cases) < 1 || len(suite.Cases) > 128 {
+	if err := validateCompositionInputMode(suite); err != nil {
+		return nil, err
+	}
+	if len(suite.Cases) < 1 || len(suite.Cases) > 128 {
 		return nil, fmt.Errorf("composition cases require schema and 1..128 cases")
 	}
 	raw, err := json.Marshal(suite)
@@ -49,7 +52,7 @@ func (graph compositionGraph) inputRows(suite CompositionCases) ([][]json.RawMes
 	}
 	rows := make([][]json.RawMessage, len(suite.Cases))
 	for c, test := range suite.Cases {
-		row, err := graph.inputRow(test)
+		row, err := graph.inputRow(test, suite.Schema != CompositionInputsSchema)
 		if err != nil {
 			return nil, fmt.Errorf("case %d: %w", c, err)
 		}
@@ -58,7 +61,7 @@ func (graph compositionGraph) inputRows(suite CompositionCases) ([][]json.RawMes
 	return rows, nil
 }
 
-func (graph compositionGraph) inputRow(test CompositionCase) ([]json.RawMessage, error) {
+func (graph compositionGraph) inputRow(test CompositionCase, requireExpectation bool) ([]json.RawMessage, error) {
 	var storage [compositionLimit * compositionLimit]json.RawMessage
 	roots, expected := 0, 0
 	for _, node := range graph.nodes[:graph.count] {
@@ -85,7 +88,7 @@ func (graph compositionGraph) inputRow(test CompositionCase) ([]json.RawMessage,
 			expected++
 		}
 	}
-	if roots != len(test.Inputs) || expected != len(test.Expected) || expected == 0 {
+	if roots != len(test.Inputs) || expected != len(test.Expected) || requireExpectation && expected == 0 {
 		return nil, fmt.Errorf("inputs and nonempty expectations must name declared activities")
 	}
 	return append([]json.RawMessage(nil), storage[:roots]...), nil

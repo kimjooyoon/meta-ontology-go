@@ -70,6 +70,11 @@ func (graph compositionGraph) measureInputSeparation(ctx context.Context, filena
 			result.UnknownInputs++
 		}
 	}
+	if suite.Schema == CompositionInputsSchema {
+		result.Status, result.Reason = "UNKNOWN", "NO_RUNTIME_EXPECTATIONS"
+		result.DisjointCasesPassed = 0
+		return result
+	}
 	return finishInputSeparation(result)
 }
 
