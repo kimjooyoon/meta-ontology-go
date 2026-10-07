@@ -38,7 +38,7 @@ this invocation or the underlying program's whole input domain.
 | `total` | Declared cases in that same suite |
 | `best` | Largest matched count among the observed candidates |
 | `scored` | Candidates actually scored against that suite |
-| `budget` | Declared number of candidate evaluations allowed |
+| `budget` | Effective scoring capacity after the candidate cap and observed unscored attempts |
 
 Invalid count ranges return `FAIL_CLOSED`. An absent suite and an unscored set
 remain `UNKNOWN`. An observed 0/N result with candidates still available returns
@@ -58,18 +58,28 @@ gooo package execute --json \
   examples/assembly-explainer/gooo.workspace.json
 ```
 
-The adapter reconstructs the saved source-owned record choices and their finite
-scores using the existing composition replay. Each attempted candidate becomes
-one input row for the Gooo entry. Counts use whole construction cases; they do
+The adapter reconstructs saved source-owned record choices, IR searches and body
+fills, including their candidate scores. Each scored candidate becomes one input
+row for the Gooo entry. Counts use whole construction cases; they do
 not use the historical runtime counters or the number of matching record fields.
 The observation carries the original receipt hash, activity, candidate mask,
 attempt index and source-declared budget in `construction_input`.
 
 The example records a model's first candidate matching 2/3 cases, then a candidate
 matching 3/3. Gooo returns `CONTINUE_CANDIDATES` followed by `OBSERVE_NEW_INPUTS`.
-`best` includes only candidates already observed at that point. `scored` counts
-candidate attempts, including any type rejection, and `budget` is capped by the
-declared candidate space so an exhausted space cannot appear to have work left.
+For record choices and IR search, `view: attempt_prefix` means `best` includes
+only candidates already observed at that point. `scored` counts completed
+evaluations. The declared attempt budget is capped by the candidate space and
+reduced by unscored attempts seen so far. Type or evaluation failures retain
+their reason and `scoring_completed: false`; they receive no policy input and
+their zeroed count fields carry no case measurement. A measured 0/N retains its
+positive denominator. `input_index` maps scored observations to policy outputs.
+
+For source fills, every candidate is evaluated before selection. These rows use
+`view: scored_set`; all have the final scored-set size and observed best score.
+The declared capacity is the source-owned candidate set size. `selected` and
+`proposed` identify the final and proposed candidates. Holdout scores stay out of
+both policy input forms. [Run both profiles](../construction-observation/README.md).
 
 This interpretation makes zero model calls. The target Gooo tool is compiled and
 executed twice with no supplied expected answers, so its outer result remains
@@ -77,15 +87,18 @@ executed twice with no supplied expected answers, so its outer result remains
 the recorded construction sequence; they do not execute a repair or establish
 correctness on new program inputs.
 
-The current adapter handles source-owned record-choice compositions with no
-preceding body-fill stage, and at most 128 attempted-candidate rows per request.
+The current adapter handles source-owned record choices, integer IR search and
+source-owned body fills, with at most 128 scored rows per request. External fill
+plans and other assembly profiles return an unsupported-profile error.
 It passes the five-field input contract to the target manifest's entry; this
 example uses a single ordinary entry activity. `--construction-receipt`,
 `--cases` and `--inputs` are mutually exclusive.
 
 The [recorded interpretation](../../docs/research/domain-tools-20261007/observation-summary.json)
 binds the original model-run receipt, compiler revision, derived inputs and actual
-Gooo outputs. Its raw receipt retains the two fresh native runs.
+Gooo outputs. Its raw receipt retains the two fresh native runs. That historical
+record uses the first adapter schema; current observations use
+`gooo/construction-input/v2` with explicit profile and input mapping.
 
 ## Check the tool separately
 
