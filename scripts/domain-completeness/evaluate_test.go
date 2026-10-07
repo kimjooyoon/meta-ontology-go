@@ -46,7 +46,7 @@ func TestDeclarationCoverageMatchesGeneratedUtilityProgram(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dimension := measureDeclarationCoverage(dimensions[0], contract, []byte(program), loadedInputs{contractRaw: contractRaw})
+	dimension := measureDeclarationCoverage(testProfileDimensions(t)[0], contract, []byte(program), loadedInputs{contractRaw: contractRaw})
 	if dimension.Status != "PASS" || dimension.Numerator != 49 || dimension.Denominator != 49 || dimension.FirstUnresolved != nil {
 		t.Fatalf("declaration coverage = %#v, want PASS 49/49", dimension)
 	}
