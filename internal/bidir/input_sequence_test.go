@@ -75,10 +75,11 @@ func TestIndexedRepeatedInputsSurviveGetPutAndSemanticLowering(t *testing.T) {
 	for i := range tampered.Nodes {
 		if tampered.Nodes[i].ID == add.ID {
 			tampered.Nodes[i].InputSequence[0].ID = "joins://text"
+			tampered.Nodes[i].InputSequence[1].ID = "joins://text"
 		}
 	}
 	if err := tampered.Validate(); err == nil {
-		t.Fatal("input sequence disagreed with used facts")
+		t.Fatal("input sequence omitted an entity required by its used facts")
 	}
 	if SemanticFingerprint(tampered) == SemanticFingerprint(model) {
 		t.Fatal("sequence mutation did not change model fingerprint")
@@ -154,6 +155,74 @@ activity Pick(Boolean, Text) -> Text computes "if input0 { return input1 } else 
 	for _, d := range written.Declarations {
 		if d.Kind == ActivityKind && (d.Inputs[1].Name != "Words" || d.Inputs[1].ID == "") {
 			t.Fatal("ordered reference lost renamed display/identity")
+		}
+	}
+}
+
+func TestOrderedActivityInputsAreSemanticWithoutBodyOrRuntimeBindings(t *testing.T) {
+	left := inputSequenceDocument(t, `package ordered
+namespace ordered
+entity Boolean id "ordered://boolean"
+entity Text id "ordered://text"
+activity Choose(Boolean, Text) -> Text
+`)
+	right := inputSequenceDocument(t, `package ordered
+namespace ordered
+entity Boolean id "ordered://boolean"
+entity Text id "ordered://text"
+activity Choose(Text, Boolean) -> Text
+`)
+
+	leftModel, err := Get(left)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rightModel, err := Get(right)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if SemanticEquivalent(leftModel, rightModel) || SemanticFingerprint(leftModel) == SemanticFingerprint(rightModel) {
+		t.Fatal("input declaration order was lost without a body or runtime binding")
+	}
+	var choose Node
+	for _, node := range leftModel.Nodes {
+		if node.Name == "Choose" {
+			choose = node
+		}
+	}
+	withoutUsage := leftModel.Clone()
+	filtered := withoutUsage.Relations[:0]
+	for _, relation := range withoutUsage.Relations {
+		if relation.Kind != PredicateUsed || relation.Source != choose.ID {
+			filtered = append(filtered, relation)
+		}
+	}
+	withoutUsage.Relations = filtered
+	if err := withoutUsage.Validate(); err != nil {
+		t.Fatalf("formal input signature depended on usage relations: %v", err)
+	}
+	if input, ok := modelInputEntity(withoutUsage, choose, "input1"); !ok || input != "ordered://text" {
+		t.Fatalf("unused formal input was not addressable: input=%q ok=%t", input, ok)
+	}
+	for _, test := range []struct {
+		document Document
+		want     []semantic.ID
+	}{
+		{document: left, want: []semantic.ID{"ordered://boolean", "ordered://text"}},
+		{document: right, want: []semantic.ID{"ordered://text", "ordered://boolean"}},
+	} {
+		ir, err := LowerDocument(test.document)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var observed []semantic.ID
+		for _, node := range ir.Graph.Nodes() {
+			if node.Kind == semantic.Activity {
+				observed = node.InputSequence
+			}
+		}
+		if !reflect.DeepEqual(observed, test.want) {
+			t.Fatalf("IR input order = %v, want %v", observed, test.want)
 		}
 	}
 }
