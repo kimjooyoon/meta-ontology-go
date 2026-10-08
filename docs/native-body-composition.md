@@ -371,7 +371,7 @@ toolchain failure and compiled-program execution failure still stop the request.
 
 ## Reconsider complete multi-hole assignments
 
-Development source after 0.6.13-dev also connects `source_fill` to caller-guided
+Gooo 0.6.14 development source also connects `source_fill` to caller-guided
 construction. Its declared or grammar-derived assignments fill condition,
 variable and return expressions together. The initial local winner is attempted
 first, followed by source assignment order. Each completed combination is checked
