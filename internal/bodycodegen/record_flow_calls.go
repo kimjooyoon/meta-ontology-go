@@ -21,11 +21,12 @@ type recordFlowReturns struct {
 // Resolve the same fixed source closure used by native projection. Alternative
 // calls belong to the analysis even when they are absent from the baseline.
 func (c *recordFlowBuilder) sourcePrelude() (string, string, error) {
-	closureSource := c.body.body
+	var closureSource strings.Builder
+	closureSource.WriteString(c.body.body)
 	for _, site := range c.sites {
-		closureSource += "\n_ = (" + site.choice.Second + ")"
+		closureSource.WriteString("\n_ = (" + site.choice.Second + ")")
 	}
-	functions, _, _, err := c.body.resolvePureCalls(closureSource)
+	functions, _, _, err := c.body.resolvePureCalls(closureSource.String())
 	if err != nil {
 		return "", "", err
 	}
