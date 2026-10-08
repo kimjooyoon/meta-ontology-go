@@ -410,8 +410,13 @@ func TestGenerateWithIRBodyFillRejectsOpenOrMismatchedCandidates(t *testing.T) {
 				context.Background(), "ir-fill-clamp.gooo", source,
 				"ClampNegativeToZero", *editedPlan, "", "",
 			)
-			if err == nil || result.Source != "" {
-				t.Fatalf("invalid body-fill input emitted source: %#v err=%v", result, err)
+			if test.name == "missing hole" {
+				if err == nil || result.Source != "" {
+					t.Fatal("missing hole emitted source", err)
+				}
+			} else if err != nil || result.Report.BodyFill == nil || len(result.Report.BodyFill.RejectedCandidates) != 1 ||
+				result.Report.BodyFill.RejectedCandidates[0].CandidateID != planCopy.Candidates[0].ID || len(result.Report.BodyFill.CandidateScores) != len(planCopy.Candidates)-1 {
+				t.Fatalf("candidate rejection did not preserve the remaining assignments: err=%v", err)
 			}
 		})
 	}

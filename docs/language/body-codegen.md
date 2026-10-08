@@ -509,7 +509,13 @@ go run ./cmd/gooo body-codegen --json --fill-plan \
 ```
 
 Set `GOOO_LAYA_URL` to let Laya rank the declared assignments. Without a model,
-Gooo selects deterministically and still scores every assignment. The compact
+Gooo selects deterministically and checks every assignment. Type errors and
+training-evaluation errors are retained in `rejected_candidates`; only completed
+scores appear in `candidate_scores`. A single remaining assignment is selected
+with `ONLY_VALID_CANDIDATE` and zero model predictions. If all assignments fail,
+the diagnostic retains every rejection and the original plan digest. Malformed
+contracts, cancellation and separate holdout-evaluation failures remain terminal.
+The compact
 `--tiny-model` path also accepts v2 plans when at least one hole gives every
 complete assignment a distinct supported root operation. Gooo picks the first
 such hole in declaration order and records it as `tiny_model_focus_hole`. The

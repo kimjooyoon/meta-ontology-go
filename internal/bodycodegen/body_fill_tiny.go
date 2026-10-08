@@ -179,7 +179,7 @@ func bodyFillProviderAccounting(receipt decisionroute.Receipt) (localPredictions
 	case "laya":
 		return 0, 1, true
 	case "deterministic":
-		if receipt.FallbackReason == "NOT_CONFIGURED" {
+		if receipt.FallbackReason == "NOT_CONFIGURED" || receipt.FallbackReason == "ONLY_VALID_CANDIDATE" {
 			return 0, 0, true
 		}
 		return 0, 0, false

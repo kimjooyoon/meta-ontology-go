@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -19,6 +20,7 @@ type SourceFillCandidateSet struct {
 // FillCandidate preserves both local suites. Only TestCasesPassed/Total may
 // contribute to caller-guided selection; holdout observations stay separate.
 type FillCandidate struct {
+	Rejection            *IRBodyFillCandidateRejection         `json:"rejection,omitempty"`
 	Schema               string                                `json:"schema"`
 	Activity             string                                `json:"activity"`
 	ActivityID           string                                `json:"activity_id"`
@@ -77,8 +79,8 @@ func PlanSourceFillCandidates(ctx context.Context, filename string, source []byt
 
 // RealizeSourceFillCandidate checks a complete source-owned assignment, including
 // a locally imperfect one. It loads no model and never replaces a local winner's
-// receipt or expectations. Invalid source, type/evaluation errors and cancellation
-// remain errors; the ordinary initial source-fill preflight is unchanged.
+// receipt or expectations. Deterministic type/training failures return a bound
+// rejection; malformed source, cancellation and holdout failures remain terminal.
 func RealizeSourceFillCandidate(ctx context.Context, filename string, source []byte, activity, candidateID string) (FillCandidate, []byte, error) {
 	plan, set, err := sourceFillCandidatePlan(ctx, filename, source, activity)
 	if err != nil {
@@ -92,18 +94,48 @@ func RealizeSourceFillCandidate(ctx context.Context, filename string, source []b
 	if err != nil {
 		return FillCandidate{}, nil, err
 	}
-	generated, err := GenerateWithPlanner(ctx, filename, selected, activity, "", "")
+	id, err := fillActivityID(filename, source, activity)
 	if err != nil {
 		return FillCandidate{}, nil, err
 	}
-	observation := FillCandidate{Schema: "gooo/fill-candidate/v1", Activity: activity, ActivityID: generated.Report.ActivityID,
+	observation := FillCandidate{Schema: "gooo/fill-candidate/v1", Activity: activity, ActivityID: id,
 		InputSourceSHA256: digest(source), SelectedSourceSHA256: digest(selected), PlanSHA256: set.PlanSHA256,
 		CandidateCount: len(set.Candidates), Generation: set.Generation, CandidateID: candidate.ID,
 		SelectionMethod: "caller_selected_assignment", HoleFills: bodyFillHoleResults(bodyFillPlanHoles(plan), candidate.Fills)}
+	generated, err := GenerateWithPlanner(ctx, filename, selected, activity, "", "")
+	if err != nil {
+		err = rejectSourceFillCandidate(ctx, &observation, "TYPECHECK", err)
+		return observation, nil, err
+	}
 	if err = scoreSourceFillCandidate(ctx, filename, selected, generated.Source, activity, plan, &observation); err != nil {
 		return observation, nil, err
 	}
 	return observation, selected, ctx.Err()
+}
+
+func fillActivityID(filename string, source []byte, activity string) (string, error) {
+	file, diagnostics := ParseBodyFile(filename, source)
+	if file == nil || diagnostics.HasErrors() {
+		return "", fmt.Errorf("parse source fill identity: %v", diagnostics)
+	}
+	model, _, err := resolveBodyModel(file)
+	if err != nil {
+		return "", err
+	}
+	for _, node := range model.Nodes {
+		if node.Kind == bidir.ActivityKind && node.Name == activity {
+			return string(node.ID), nil
+		}
+	}
+	return "", fmt.Errorf("activity %q has no stable semantic identity", activity)
+}
+
+func rejectSourceFillCandidate(ctx context.Context, r *FillCandidate, stage string, err error) error {
+	if canceled := ctx.Err(); canceled != nil {
+		return canceled
+	}
+	r.Rejection = &IRBodyFillCandidateRejection{CandidateID: r.CandidateID, Stage: stage, Reason: err.Error(), HoleFills: r.HoleFills}
+	return &SourceFillCandidateRejection{Observation: *r.Rejection}
 }
 
 func selectedFillSource(filename string, source []byte, activity string, plan IRBodyFillPlan, candidate IRBodyFillCandidate) ([]byte, error) {

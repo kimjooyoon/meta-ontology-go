@@ -11,7 +11,8 @@ func scoreSourceFillCandidate(ctx context.Context, filename string, source []byt
 		var err error
 		r.CaseResults, r.TestCasesPassed, err = evaluateIntegerCasesContext(ctx, []byte(generated), activity, plan.TestCases)
 		if err != nil {
-			return err
+			r.CaseResults, r.TestCasesPassed = nil, 0
+			return rejectSourceFillCandidate(ctx, r, "TRAINING_EVALUATION", err)
 		}
 		r.HoldoutCaseResults, r.HoldoutCasesPassed, err = evaluateIntegerCasesContext(ctx, []byte(generated), activity, plan.HoldoutTestCases)
 		r.TestCasesTotal, r.HoldoutCasesTotal = len(plan.TestCases), len(plan.HoldoutTestCases)
@@ -27,7 +28,8 @@ func scoreSourceFillCandidate(ctx context.Context, filename string, source []byt
 	}
 	r.ValueCaseResults, err = evaluateRecordAssembly(ctx, []byte(generated), activity, records, plan.ValueCases)
 	if err != nil {
-		return err
+		r.ValueCaseResults = nil
+		return rejectSourceFillCandidate(ctx, r, "TRAINING_EVALUATION", err)
 	}
 	r.ValueHoldoutResults, err = evaluateRecordAssembly(ctx, []byte(generated), activity, records, plan.ValueHoldoutCases)
 	if err != nil {

@@ -54,7 +54,7 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 }
 
 func verifyJointHeader(ctx context.Context, filename string, source []byte, r JointConstruction) error {
-	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
+	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
 		r.OriginalSourceSHA256 != digest(source) || r.ConstructionSHA256 != compositionDigest(r.ConstructionCases) ||
 		r.ProgramBudget < 1 || r.ProgramBudget > 64 || r.SelectedAttempt < 0 || r.SelectedAttempt >= len(r.Attempts) {
 		return fmt.Errorf("joint construction identity, stage or budget differs")

@@ -290,6 +290,24 @@ same typed tuple accounting. See the [workspace input example](../examples/works
 
 ## Execution and layout
 
+### Rejected body-fill assignments
+
+`body-construct` can continue past type errors and local training-evaluation
+errors in `source_fill` assignments. The initial fill receipt separates scored
+candidates from `rejected_candidates`. The original assignment list remains the
+search space, and rejected combinations consume the same program-attempt budget.
+Their native runtime is empty; local totals cover only an already scored prefix.
+`gooo/joint-construction/v5` binds these observations and their saved replay.
+An initial plan with no valid assignment stops before model loading and exposes
+`initial.fill_failure`, including every rejection and the plan digest.
+
+The [five-assignment example](../examples/caller-fill-rejection/README.md)
+demonstrates these cases. Malformed contracts, cancellation, holdout-evaluation
+errors and native build/run errors still stop the request. Holdout observations
+remain separate from selection scores.
+
+### Native execution
+
 The existing typed-plan compiler checks exact entity identities, ports and
 cycles. A singleton plan has one declared activity and an empty edge list;
 multiple activities without an explicit edge are rejected. Activity order is
