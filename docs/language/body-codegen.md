@@ -269,6 +269,14 @@ An inferred local initialized from an integer constant uses `int64`, keeping
 Integer locals aligned with the DSL type. This rule applies at local bindings;
 it adds no conversions at activity input or output boundaries. Boolean and
 Text locals retain Go's `bool` and `string` inference.
+Locals may remain unread in the baseline or a selected candidate. Their
+initializers and subsequent assignments still execute in the declared scope and
+order; type errors and evaluated division errors remain observable. Native Go
+gets an adjacent `_ = local` for each unread binding. That target-only marker
+does not change the Gooo source, candidate selectors or source semantic counts.
+The [candidate-local example](../../examples/candidate-locals/README.md) assembles
+a retry result from precomputed values, with separate construction and native
+execution cases. This behavior is a source-development change after 0.6.7-dev.
 Fixed pure activities declared in the same source can be called by name with
 typed positional arguments. Their acyclic call closure is included in generation
 and replay; see [pure activity reuse](../../examples/pure-activity-calls/README.md).

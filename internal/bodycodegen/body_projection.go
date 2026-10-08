@@ -116,6 +116,9 @@ func (p bodyProjection) lower(packageName, activityName, outputType, route strin
 }
 
 func (p bodyProjection) emit(packageName, activityID string, records []RecordType) ([]byte, error) {
+	if err := emitUnusedLocalReads(packageName, p.file, p.fset); err != nil {
+		return nil, fmt.Errorf("typecheck native local projection: %w", err)
+	}
 	var out bytes.Buffer
 	fmt.Fprintf(&out, "package %s\n\n", packageName)
 	out.WriteString(RecordDeclarations(records, true))
