@@ -1,6 +1,17 @@
 package main
 
 var topicHelpGroup4 = map[string]string{
+	"body-construct": `Construct a program using caller feedback
+
+` + bodyConstructUsage + `
+
+Record-choice helpers keep their own Gooo cases. Each completed combination is
+compiled and run on --construction-cases; --cases runs after selection. The
+optional model ranks local choices once during initial construction. Without it,
+the order is deterministic. Saved construction rechecks every attempted program
+without inference. Consumed caller inputs are reported separately from new ones.
+See examples/caller-guided-construction/README.md.
+`,
 	"body-refine": `Run a Gooo policy between bounded construction rounds
 
 ` + bodyRefineUsage + `
@@ -35,7 +46,7 @@ Use --build to include compiler build information.
 
   init, check, test, run, body-codegen, generate, emit
   format, fix, inspect, query, graph, receipt-schema
-  package, body-compose, body-execute, body-search-run, body-realize, body-refine
+  package, body-compose, body-construct, body-execute, body-search-run, body-realize, body-refine
   profile, debug, decide, invoke, lsp, version
 
 Use ` + "`gooo help <command>`" + ` for a guide to a core command. Advanced
