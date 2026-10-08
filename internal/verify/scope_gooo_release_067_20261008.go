@@ -11,6 +11,8 @@ func init() {
 		"docs/external/gooo-release-publication-v3.md",
 		"docs/language-direction.ko.md",
 		"docs/releases/0.6.7-dev.md",
+		"examples/dependent-continuation/README.md",
+		"examples/package-assembly-policy/README.md",
 		"internal/meta/languagereadiness/toolchaincli/assert_json.go",
 		"internal/meta/languagereadiness/toolchaincli/assert_positive.go",
 		"internal/meta/languagereadiness/toolchaincli/fixture_output_test.go",
