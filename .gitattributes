@@ -1,0 +1,4 @@
+# Embedded declarations and generated projections bind their exact source bytes.
+# Keep text checkouts identical across native compiler build platforms.
+* text=auto eol=lf
+*.bin -text
