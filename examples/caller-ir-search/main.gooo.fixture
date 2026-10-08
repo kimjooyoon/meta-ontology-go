@@ -1,0 +1,9 @@
+package callerhole
+namespace callerhole
+entity Integer id "callerhole://integer"
+activity Choose(Integer) -> Integer computes "let value = __GOOO_BODY_HOLE_value__; return value" assembling {
+    search hole "value" grammar "integer-offset-constant/v1" intent "호출자가 필요한 계산식을 고른다. Choose the expression needed by the caller." max_candidates "8"
+    case "0" -> "0"
+    attempts "5"
+}
+activity Main(Integer) -> Integer computes "return Choose(input) + input"

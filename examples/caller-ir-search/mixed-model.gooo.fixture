@@ -1,0 +1,21 @@
+package mixedhole
+namespace mixedhole
+entity Integer id "mixedhole://integer"
+entity Parts id "mixedhole://parts" fields {
+    field first id "mixedhole://first" type integer required one
+    field second id "mixedhole://second" type integer required one
+    field ready id "mixedhole://ready" type boolean required one
+}
+activity Choose(Integer) -> Integer computes "let value = __GOOO_BODY_HOLE_value__; return value" assembling {
+    search hole "value" grammar "integer-offset-constant/v1" intent "호출자의 조건에 맞는 값을 고른다. Choose the value needed by the caller." max_candidates "8"
+    case "0" -> "0"
+    attempts "5"
+}
+activity Pick(Integer) -> Parts computes "return Parts{first:input,second:input,ready:input < 0}" assembling {
+    choice "first" field_value at "0" alternative "input * 2" intent "첫 계산은 입력의 두 배이다. Double the input."
+    choice "second" field_value at "1" alternative "input * 3" intent "두 번째 계산은 입력의 세 배이다. Triple the input."
+    choice "ready" field_value at "2" alternative "input > 0" intent "양수일 때 준비된다. Ready when the input is positive."
+    value_case "[0]" -> "{\"first\":0,\"second\":0,\"ready\":false}"
+    attempts "8"
+}
+activity Main(Integer) -> Integer computes "let n = Choose(input); let p = Pick(input); if n != 0 { return -1 }; if p.ready { return p.first + p.second }; return 0"

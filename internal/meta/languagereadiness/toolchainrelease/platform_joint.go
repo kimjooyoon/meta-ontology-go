@@ -53,11 +53,12 @@ type jointSmokeOutput struct {
 	Generated    *bool `json:"generated_now"`
 	Construction struct {
 		Schema, Stage, Failure, Decision string
-		StopReason                       string `json:"stop_reason"`
-		Budget                           *int   `json:"program_budget"`
-		Space                            string `json:"candidate_space"`
-		SelectedAttempt                  *int   `json:"selected_attempt"`
-		Source                           string `json:"selected_source"`
+		StopReason                       string   `json:"stop_reason"`
+		Budget                           *int     `json:"program_budget"`
+		Space                            string   `json:"candidate_space"`
+		Kinds                            []string `json:"candidate_kinds"`
+		SelectedAttempt                  *int     `json:"selected_attempt"`
+		Source                           string   `json:"selected_source"`
 		Selected                         struct {
 			SHA string `json:"generated_sha256"`
 		}
@@ -78,10 +79,12 @@ type jointSmokeOutput struct {
 }
 
 type jointSmokeAttempt struct {
-	Masks      []int
-	Passed     *int `json:"local_passed"`
-	Total      *int `json:"local_total"`
-	Candidates []struct {
+	Rejection        *jointSmokeRejection        `json:"rejection"`
+	SearchCandidates []jointSmokeSearchCandidate `json:"search_candidates"`
+	Masks            []int
+	Passed           *int `json:"local_passed"`
+	Total            *int `json:"local_total"`
+	Candidates       []struct {
 		Activity string
 		Attempt  struct{ Mask, Passed, Total *int }
 		Cases    []struct {

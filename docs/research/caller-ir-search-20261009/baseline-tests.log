@@ -1,0 +1,11 @@
+--- FAIL: TestReportPublishFailureRollsBackTransaction (0.00s)
+    transaction_test.go:45: namespace replacement unsupported on GOOS darwin: helper.go
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor	0.258s
+--- FAIL: TestPreviewOutputRejectsSymlinkBoundary (0.00s)
+    main_test.go:46: symlink output was not rejected: preview output must not be a symlink
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/cmd/callback-preview	0.418s
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	3.028s
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.194s
+FAIL

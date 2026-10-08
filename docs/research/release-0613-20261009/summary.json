@@ -1,0 +1,139 @@
+{
+  "compiler": {
+    "build_info_observed": true,
+    "compiler_source_sha": "141b38d64c41f2a799db2c708652de2adc4864ac",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "replaced": false,
+      "version": "v0.2.26-experimental"
+    },
+    "go_version": "go1.27.1",
+    "language": "gooo",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.12-dev.0.20261008155239-141b38d64c41"
+    },
+    "module_version": "v0.6.12-dev.0.20261008155239-141b38d64c41",
+    "native_go_required": "go1.27.1",
+    "schema": "gooo/build-identity/v1",
+    "source_status": "CLEAN_VCS",
+    "status": "development",
+    "vcs_modified": "false",
+    "vcs_revision": "141b38d64c41f2a799db2c708652de2adc4864ac",
+    "version": "0.6.13-dev"
+  },
+  "fixed_model_selected_source_equal": true,
+  "host_cpu_utilization": "NOT_SAMPLED",
+  "native_platform": {
+    "archive": {
+      "builds": 2,
+      "bytes": 12795707,
+      "digest": "sha256:e05ef73932697d6d53316c77f845a5f92766054eea37f0565cba74cba5fb3689",
+      "name": "gooo-darwin-arm64.tar.gz",
+      "replay_equal": true
+    },
+    "archive_format": "tar.gz",
+    "binary": {
+      "builds": 2,
+      "bytes": 22971378,
+      "digest": "sha256:1cf0f249ac865ede9647458bfb4a973da824e3727c103cbc328e2b52136bbcd7",
+      "name": "gooo",
+      "replay_equal": true
+    },
+    "build": {
+      "build_vcs": true,
+      "cgo_enabled": false,
+      "trimpath": true,
+      "vcs_modified": false,
+      "vcs_revision": "141b38d64c41f2a799db2c708652de2adc4864ac"
+    },
+    "decision": "PASS",
+    "head_sha": "141b38d64c41f2a799db2c708652de2adc4864ac",
+    "mutation_authorities": 0,
+    "platform": {
+      "archive_format": "tar.gz",
+      "goarch": "arm64",
+      "goos": "darwin",
+      "id": "darwin-arm64",
+      "runner": "macos-15"
+    },
+    "reason": "TOOLCHAIN_RELEASE_PLATFORM_READY",
+    "receipt_digest": "sha256:3ed9a851f5e1d6646c1e33d8919af148996849a233fce4ac0b427cdb0dd78fb5",
+    "repository_writes": 0,
+    "resolution": "EXACT",
+    "schema": "gooo/toolchain-release-platform-receipt/v1",
+    "smoke": {
+      "language": "gooo",
+      "schema_version": "gooo-version/v1",
+      "status": "development",
+      "version": "0.6.13-dev"
+    },
+    "toolchain": "go1.27.1"
+  },
+  "prior_values_and_selections_equal": true,
+  "rows": [
+    {
+      "attempts": 3,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 4,
+      "evaluation_total": 4,
+      "name": "scalar",
+      "native_program_attempts": 2,
+      "rejected": 1,
+      "replayed": false
+    },
+    {
+      "attempts": 2,
+      "decision": "PARTIAL_FINITE",
+      "evaluation_passed": 1,
+      "evaluation_total": 4,
+      "name": "partial",
+      "native_program_attempts": 1,
+      "rejected": 1,
+      "replayed": false
+    },
+    {
+      "attempts": 3,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 4,
+      "evaluation_total": 4,
+      "name": "scalar-replay",
+      "native_program_attempts": 2,
+      "rejected": 1,
+      "replayed": true
+    },
+    {
+      "attempts": 24,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 4,
+      "evaluation_total": 4,
+      "name": "mixed-fixed",
+      "native_program_attempts": 16,
+      "rejected": 8,
+      "replayed": false
+    },
+    {
+      "attempts": 17,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 4,
+      "evaluation_total": 4,
+      "name": "mixed-model",
+      "native_program_attempts": 9,
+      "rejected": 8,
+      "replayed": false
+    },
+    {
+      "attempts": 17,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 4,
+      "evaluation_total": 4,
+      "name": "mixed-model-replay",
+      "native_program_attempts": 9,
+      "rejected": 8,
+      "replayed": true
+    }
+  ],
+  "saved_values_equal": true,
+  "schema": "gooo/release-0613-rejection-regression/v1",
+  "scope": "Local release regression of the same two fixed programs, four construction runs and two saved replays; unchanged weights and expectations; no new training or generalization measurement. The platform runner field names the configured target profile; this run occurred on the local macOS host."
+}

@@ -1,0 +1,1 @@
+PASS: exact original caller/evaluation values recounted; rejections remain unscored; selected source and saved values agree.
