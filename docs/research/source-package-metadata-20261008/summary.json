@@ -1,0 +1,1558 @@
+{
+  "compiler": {
+    "build_info_observed": true,
+    "compiler_source_sha": "b8b8ac3bd1899b3c3f709f838166e9d2157d37f2",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "replaced": false,
+      "version": "v0.2.26-experimental"
+    },
+    "go_version": "go1.27.1",
+    "language": "gooo",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.8-dev.0.20261008112301-b8b8ac3bd189"
+    },
+    "module_version": "v0.6.8-dev.0.20261008112301-b8b8ac3bd189",
+    "native_go_required": "go1.27.1",
+    "schema": "gooo/build-identity/v1",
+    "source_status": "CLEAN_VCS",
+    "status": "development",
+    "vcs_modified": "false",
+    "vcs_revision": "b8b8ac3bd1899b3c3f709f838166e9d2157d37f2",
+    "version": "0.6.10-dev"
+  },
+  "consumer_programs": 1,
+  "distinct_evaluation_inputs": 10,
+  "input_only_actuals": [
+    {
+      "available": true,
+      "bytes": 13,
+      "title": "한글 예제"
+    },
+    {
+      "available": false,
+      "bytes": 1,
+      "title": "untitled"
+    },
+    {
+      "available": false,
+      "bytes": 0,
+      "title": "doc"
+    }
+  ],
+  "input_only_correctness": "UNKNOWN",
+  "manifest_digests_distinct": true,
+  "new_replay_model_calls": 0,
+  "resolution_equal": true,
+  "runs": [
+    {
+      "assembly": {
+        "attempt_budget": 8,
+        "attempts": [
+          {
+            "fields_passed": 9,
+            "fields_total": 15,
+            "mask": 0,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 11,
+            "fields_total": 15,
+            "mask": 1,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 10,
+            "fields_total": 15,
+            "mask": 2,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 12,
+            "fields_total": 15,
+            "mask": 3,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 12,
+            "fields_total": 15,
+            "mask": 4,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 14,
+            "fields_total": 15,
+            "mask": 5,
+            "passed": 4,
+            "total": 5
+          },
+          {
+            "fields_passed": 13,
+            "fields_total": 15,
+            "mask": 6,
+            "passed": 3,
+            "total": 5
+          },
+          {
+            "fields_passed": 15,
+            "fields_total": 15,
+            "mask": 7,
+            "passed": 5,
+            "total": 5
+          }
+        ],
+        "cases": [
+          {
+            "actual": {
+              "available": true,
+              "bytes": 3,
+              "title": "guide"
+            },
+            "expected": {
+              "available": true,
+              "bytes": 3,
+              "title": "guide"
+            },
+            "fields": [
+              {
+                "actual": "true",
+                "expected": "true",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "guide",
+                "expected": "guide",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "3",
+                "expected": "3",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "guide",
+              3
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 8,
+              "title": "untitled"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 8,
+              "title": "untitled"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "untitled",
+                "expected": "untitled",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "8",
+                "expected": "8",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "",
+              20
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "hello",
+                "expected": "hello",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "0",
+                "expected": "0",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "hello",
+              -1
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": true,
+              "bytes": 7,
+              "title": "한🙂"
+            },
+            "expected": {
+              "available": true,
+              "bytes": 7,
+              "title": "한🙂"
+            },
+            "fields": [
+              {
+                "actual": "true",
+                "expected": "true",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "한🙂",
+                "expected": "한🙂",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "7",
+                "expected": "7",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "한🙂",
+              80
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "hello",
+                "expected": "hello",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "0",
+                "expected": "0",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "hello",
+              0
+            ],
+            "passed": true
+          }
+        ],
+        "choices": [
+          {
+            "field": "available",
+            "field_id": "gooo://examples/preview/available",
+            "first": "false",
+            "id": "available",
+            "intent": "원문과 사용 가능한 예산이 있을 때 표시한다. Keep the computed availability.",
+            "occurrence": 0,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "available"
+          },
+          {
+            "field": "title",
+            "field_id": "gooo://examples/preview/title",
+            "first": "input0",
+            "id": "title",
+            "intent": "빈 제목의 대체값을 보존한다. Keep the title with its empty-input fallback.",
+            "occurrence": 1,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "title"
+          },
+          {
+            "field": "bytes",
+            "field_id": "gooo://examples/preview/bytes",
+            "first": "0",
+            "id": "bytes",
+            "intent": "예산과 80바이트 상한을 적용한 길이를 보존한다. Keep the computed byte budget.",
+            "occurrence": 2,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "bytes"
+          }
+        ],
+        "contract_sha256": "sha256:63ab0c2f7445f3affc09a620cab9c24508e343fe25f7d57763438a8944a262b9",
+        "fields_passed": 15,
+        "fields_total": 15,
+        "generation_ns": 9494833,
+        "model_calls": 0,
+        "model_requested": false,
+        "original_source_sha256": "sha256:30b1688e60e5543642f2e8590fd118ddadc4db32df2052295eb447d0e706081a",
+        "passed": 5,
+        "predict_ns": 0,
+        "ranking": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "schema": "gooo/record-field-assembly/v1",
+        "scope": "source-declared record field alternatives; finite case and field coverage; candidate interpretation followed by ordinary typed Go emission; no model updates",
+        "selected_mask": 7,
+        "selected_source_sha256": "sha256:25d90ffd68003160807a35c2db7361b0d32856ccbec8f3c6e06c89797fd22bae",
+        "status": "COMPLETE_FINITE",
+        "test_suite_sha256": "sha256:674bfacbb8432b146a328a0b8eb8dd6038ec26a4b80d1d592bacc0b3fcace8b7",
+        "total": 5
+      },
+      "generated_sha256": "sha256:be59aef7fba25ebd9f1fee71e03571bd19e25ed969618d93520d82a80bc95f62",
+      "model": {
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "schema": "gooo/retained-path-model/v1",
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "setup_ms": 0.000167
+      },
+      "operation": "explicit-fixed",
+      "passed": 10,
+      "replay": null,
+      "total": 10
+    },
+    {
+      "assembly": {
+        "attempt_budget": 8,
+        "attempts": [
+          {
+            "fields_passed": 9,
+            "fields_total": 15,
+            "mask": 0,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 11,
+            "fields_total": 15,
+            "mask": 1,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 10,
+            "fields_total": 15,
+            "mask": 2,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 12,
+            "fields_total": 15,
+            "mask": 3,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 12,
+            "fields_total": 15,
+            "mask": 4,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 14,
+            "fields_total": 15,
+            "mask": 5,
+            "passed": 4,
+            "total": 5
+          },
+          {
+            "fields_passed": 13,
+            "fields_total": 15,
+            "mask": 6,
+            "passed": 3,
+            "total": 5
+          },
+          {
+            "fields_passed": 15,
+            "fields_total": 15,
+            "mask": 7,
+            "passed": 5,
+            "total": 5
+          }
+        ],
+        "cases": [
+          {
+            "actual": {
+              "available": true,
+              "bytes": 3,
+              "title": "guide"
+            },
+            "expected": {
+              "available": true,
+              "bytes": 3,
+              "title": "guide"
+            },
+            "fields": [
+              {
+                "actual": "true",
+                "expected": "true",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "guide",
+                "expected": "guide",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "3",
+                "expected": "3",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "guide",
+              3
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 8,
+              "title": "untitled"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 8,
+              "title": "untitled"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "untitled",
+                "expected": "untitled",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "8",
+                "expected": "8",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "",
+              20
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "hello",
+                "expected": "hello",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "0",
+                "expected": "0",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "hello",
+              -1
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": true,
+              "bytes": 7,
+              "title": "한🙂"
+            },
+            "expected": {
+              "available": true,
+              "bytes": 7,
+              "title": "한🙂"
+            },
+            "fields": [
+              {
+                "actual": "true",
+                "expected": "true",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "한🙂",
+                "expected": "한🙂",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "7",
+                "expected": "7",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "한🙂",
+              80
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "hello",
+                "expected": "hello",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "0",
+                "expected": "0",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "hello",
+              0
+            ],
+            "passed": true
+          }
+        ],
+        "choices": [
+          {
+            "field": "available",
+            "field_id": "gooo://examples/preview/available",
+            "first": "false",
+            "id": "available",
+            "intent": "원문과 사용 가능한 예산이 있을 때 표시한다. Keep the computed availability.",
+            "occurrence": 0,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "available"
+          },
+          {
+            "field": "title",
+            "field_id": "gooo://examples/preview/title",
+            "first": "input0",
+            "id": "title",
+            "intent": "빈 제목의 대체값을 보존한다. Keep the title with its empty-input fallback.",
+            "occurrence": 1,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "title"
+          },
+          {
+            "field": "bytes",
+            "field_id": "gooo://examples/preview/bytes",
+            "first": "0",
+            "id": "bytes",
+            "intent": "예산과 80바이트 상한을 적용한 길이를 보존한다. Keep the computed byte budget.",
+            "occurrence": 2,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "bytes"
+          }
+        ],
+        "contract_sha256": "sha256:63ab0c2f7445f3affc09a620cab9c24508e343fe25f7d57763438a8944a262b9",
+        "fields_passed": 15,
+        "fields_total": 15,
+        "generation_ns": 12741833,
+        "model_calls": 0,
+        "model_requested": false,
+        "original_source_sha256": "sha256:30b1688e60e5543642f2e8590fd118ddadc4db32df2052295eb447d0e706081a",
+        "passed": 5,
+        "predict_ns": 0,
+        "ranking": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "schema": "gooo/record-field-assembly/v1",
+        "scope": "source-declared record field alternatives; finite case and field coverage; candidate interpretation followed by ordinary typed Go emission; no model updates",
+        "selected_mask": 7,
+        "selected_source_sha256": "sha256:25d90ffd68003160807a35c2db7361b0d32856ccbec8f3c6e06c89797fd22bae",
+        "status": "COMPLETE_FINITE",
+        "test_suite_sha256": "sha256:674bfacbb8432b146a328a0b8eb8dd6038ec26a4b80d1d592bacc0b3fcace8b7",
+        "total": 5
+      },
+      "generated_sha256": "sha256:be59aef7fba25ebd9f1fee71e03571bd19e25ed969618d93520d82a80bc95f62",
+      "model": {
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "schema": "gooo/retained-path-model/v1",
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "setup_ms": 0.00025
+      },
+      "operation": "source-fixed",
+      "passed": 10,
+      "replay": null,
+      "total": 10
+    },
+    {
+      "assembly": {
+        "attempt_budget": 8,
+        "attempts": [
+          {
+            "fields_passed": 9,
+            "fields_total": 15,
+            "mask": 0,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 10,
+            "fields_total": 15,
+            "mask": 2,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 12,
+            "fields_total": 15,
+            "mask": 4,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 13,
+            "fields_total": 15,
+            "mask": 6,
+            "passed": 3,
+            "total": 5
+          },
+          {
+            "fields_passed": 11,
+            "fields_total": 15,
+            "mask": 1,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 12,
+            "fields_total": 15,
+            "mask": 3,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 14,
+            "fields_total": 15,
+            "mask": 5,
+            "passed": 4,
+            "total": 5
+          },
+          {
+            "fields_passed": 15,
+            "fields_total": 15,
+            "mask": 7,
+            "passed": 5,
+            "total": 5
+          }
+        ],
+        "cases": [
+          {
+            "actual": {
+              "available": true,
+              "bytes": 3,
+              "title": "guide"
+            },
+            "expected": {
+              "available": true,
+              "bytes": 3,
+              "title": "guide"
+            },
+            "fields": [
+              {
+                "actual": "true",
+                "expected": "true",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "guide",
+                "expected": "guide",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "3",
+                "expected": "3",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "guide",
+              3
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 8,
+              "title": "untitled"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 8,
+              "title": "untitled"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "untitled",
+                "expected": "untitled",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "8",
+                "expected": "8",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "",
+              20
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "hello",
+                "expected": "hello",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "0",
+                "expected": "0",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "hello",
+              -1
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": true,
+              "bytes": 7,
+              "title": "한🙂"
+            },
+            "expected": {
+              "available": true,
+              "bytes": 7,
+              "title": "한🙂"
+            },
+            "fields": [
+              {
+                "actual": "true",
+                "expected": "true",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "한🙂",
+                "expected": "한🙂",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "7",
+                "expected": "7",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "한🙂",
+              80
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "hello",
+                "expected": "hello",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "0",
+                "expected": "0",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "hello",
+              0
+            ],
+            "passed": true
+          }
+        ],
+        "choices": [
+          {
+            "field": "available",
+            "field_id": "gooo://examples/preview/available",
+            "first": "false",
+            "id": "available",
+            "intent": "원문과 사용 가능한 예산이 있을 때 표시한다. Keep the computed availability.",
+            "occurrence": 0,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "available"
+          },
+          {
+            "field": "title",
+            "field_id": "gooo://examples/preview/title",
+            "first": "input0",
+            "id": "title",
+            "intent": "빈 제목의 대체값을 보존한다. Keep the title with its empty-input fallback.",
+            "occurrence": 1,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "title"
+          },
+          {
+            "field": "bytes",
+            "field_id": "gooo://examples/preview/bytes",
+            "first": "0",
+            "id": "bytes",
+            "intent": "예산과 80바이트 상한을 적용한 길이를 보존한다. Keep the computed byte budget.",
+            "occurrence": 2,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "bytes"
+          }
+        ],
+        "contract_sha256": "sha256:63ab0c2f7445f3affc09a620cab9c24508e343fe25f7d57763438a8944a262b9",
+        "fields_passed": 15,
+        "fields_total": 15,
+        "generation_ns": 12438750,
+        "model": {
+          "arithmetic_version": "float32_separate_v1",
+          "feature_version": "triple_record_value_graph_v3_shared_v1",
+          "loaded": true,
+          "metadata_sha256": "3c68205a660695103712e2115ce90accd298b406dced8ad5ad5c9b84bab0a202",
+          "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+          "resident_tensor_bytes": 2096,
+          "schema": "gooo/retained-path-model/v1",
+          "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+          "setup_ms": 0.796625,
+          "weights_sha256": "76f68845a03ed8c8bc261a57c919e96dcdd352d3c35bcdaeb3d9b51a88975c6f"
+        },
+        "model_calls": 1,
+        "model_context": {
+          "feature_version": "triple_record_value_graph_v3_shared_v1",
+          "parts": [
+            "{\"field\":\"available\",\"first\":\"false\",\"second\":\"available\",\"intent\":\"원문과 사용 가능한 예산이 있을 때 표시한다. Keep the computed availability.\",\"field_id\":\"gooo://examples/preview/available\",\"roots\":[131,132]}",
+            "{\"field\":\"title\",\"first\":\"input0\",\"second\":\"title\",\"intent\":\"빈 제목의 대체값을 보존한다. Keep the title with its empty-input fallback.\",\"field_id\":\"gooo://examples/preview/title\",\"roots\":[134,135]}",
+            "{\"field\":\"bytes\",\"first\":\"0\",\"second\":\"bytes\",\"intent\":\"예산과 80바이트 상한을 적용한 길이를 보존한다. Keep the computed byte budget.\",\"field_id\":\"gooo://examples/preview/bytes\",\"roots\":[137,138]}"
+          ],
+          "schema": "gooo/record-value-graph-context/v3",
+          "scope": "ordered source value graph, canonical literals, input types and complete intent; source provenance retained; inputs, expected outputs and predictions excluded",
+          "sha256": "sha256:44b94a7ca289920d528eaae015d6353b1d18dc5f91e2eb8f38e5ae9d77b2e01e",
+          "status": "ENCODED",
+          "text": "gooo;record-graph3-v3|{\"choices\":[{\"field\":\"available\",\"first\":\"false\",\"second\":\"available\",\"intent\":\"원문과 사용 가능한 예산이 있을 때 표시한다. Keep the computed availability.\",\"field_id\":\"gooo://examples/preview/available\",\"roots\":[131,132]},{\"field\":\"title\",\"first\":\"input0\",\"second\":\"title\",\"intent\":\"빈 제목의 대체값을 보존한다. Keep the title with its empty-input fallback.\",\"field_id\":\"gooo://examples/preview/title\",\"roots\":[134,135]},{\"field\":\"bytes\",\"first\":\"0\",\"second\":\"bytes\",\"intent\":\"예산과 80바이트 상한을 적용한 길이를 보존한다. Keep the computed byte budget.\",\"field_id\":\"gooo://examples/preview/bytes\",\"roots\":[137,138]}],\"nodes\":[{\"kind\":\"input\",\"input\":1,\"input_type\":\"string\",\"parents\":[0,0]},{\"kind\":\"input\",\"input\":2,\"input_type\":\"int64\",\"parents\":[0,0]},{\"kind\":\"read\",\"parents\":[2,0]},{\"kind\":\"literal\",\"operator\":\"INT\",\"literal\":\"0\",\"parents\":[0,0]},{\"kind\":\"literal\",\"operator\":\"INT\",\"literal\":\"80\",\"parents\":[0,0]},{\"kind\":\"call_parameter\",\"parents\":[3,0]},{\"kind\":\"call_parameter\",\"parents\":[4,0]},{\"kind\":\"call_parameter\",\"parents\":[5,0]},{\"kind\":\"read\",\"parents\":[7,0]},{\"kind\":\"read\",\"parents\":[8,0]},{\"kind\":\"call_parameter\",\"parents\":[9,0]},{\"kind\":\"call_parameter\",\"parents\":[10,0]},{\"kind\":\"read\",\"parents\":[11,0]},{\"kind\":\"read\",\"parents\":[12,0]},{\"kind\":\"expression\",\"operator\":\"\\u003c\",\"parents\":[13,14]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[15,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[15,0]},{\"kind\":\"read\",\"parents\":[11,0],\"guard\":16},{\"kind\":\"return\",\"parents\":[18,0],\"guard\":16},{\"kind\":\"read\",\"parents\":[12,0],\"guard\":17},{\"kind\":\"return\",\"parents\":[20,0],\"guard\":17},{\"kind\":\"join\",\"parents\":[21,19],\"condition\":17},{\"kind\":\"call\",\"parents\":[22,0]},{\"kind\":\"copy\",\"parents\":[23,0]},{\"kind\":\"read\",\"parents\":[7,0]},{\"kind\":\"read\",\"parents\":[8,0]},{\"kind\":\"call_parameter\",\"parents\":[25,0]},{\"kind\":\"call_parameter\",\"parents\":[26,0]},{\"kind\":\"read\",\"parents\":[27,0]},{\"kind\":\"read\",\"parents\":[28,0]},{\"kind\":\"expression\",\"operator\":\"\\u003e\",\"parents\":[29,30]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[31,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[31,0]},{\"kind\":\"read\",\"parents\":[27,0],\"guard\":32},{\"kind\":\"return\",\"parents\":[34,0],\"guard\":32},{\"kind\":\"read\",\"parents\":[28,0],\"guard\":33},{\"kind\":\"return\",\"parents\":[36,0],\"guard\":33},{\"kind\":\"join\",\"parents\":[37,35],\"condition\":33},{\"kind\":\"call\",\"parents\":[38,0]},{\"kind\":\"copy\",\"parents\":[39,0]},{\"kind\":\"read\",\"parents\":[24,0]},{\"kind\":\"read\",\"parents\":[6,0]},{\"kind\":\"read\",\"parents\":[40,0]},{\"kind\":\"call_parameter\",\"parents\":[42,0]},{\"kind\":\"call_parameter\",\"parents\":[43,0]},{\"kind\":\"read\",\"parents\":[44,0]},{\"kind\":\"read\",\"parents\":[45,0]},{\"kind\":\"expression\",\"operator\":\"\\u003c\",\"parents\":[46,47]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[48,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[48,0]},{\"kind\":\"read\",\"parents\":[44,0],\"guard\":49},{\"kind\":\"return\",\"parents\":[51,0],\"guard\":49},{\"kind\":\"read\",\"parents\":[45,0],\"guard\":50},{\"kind\":\"return\",\"parents\":[53,0],\"guard\":50},{\"kind\":\"join\",\"parents\":[54,52],\"condition\":50},{\"kind\":\"call\",\"parents\":[55,0]},{\"kind\":\"call_parameter\",\"parents\":[41,0]},{\"kind\":\"call_parameter\",\"parents\":[56,0]},{\"kind\":\"read\",\"parents\":[57,0]},{\"kind\":\"read\",\"parents\":[58,0]},{\"kind\":\"expression\",\"operator\":\"\\u003e\",\"parents\":[59,60]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[61,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[61,0]},{\"kind\":\"read\",\"parents\":[57,0],\"guard\":62},{\"kind\":\"return\",\"parents\":[64,0],\"guard\":62},{\"kind\":\"read\",\"parents\":[58,0],\"guard\":63},{\"kind\":\"return\",\"parents\":[66,0],\"guard\":63},{\"kind\":\"join\",\"parents\":[67,65],\"condition\":63},{\"kind\":\"call\",\"parents\":[68,0]},{\"kind\":\"return\",\"parents\":[69,0]},{\"kind\":\"call\",\"parents\":[70,0]},{\"kind\":\"copy\",\"parents\":[71,0]},{\"kind\":\"read\",\"parents\":[1,0]},{\"kind\":\"literal\",\"operator\":\"STRING\",\"literal\":\"\\\"untitled\\\"\",\"parents\":[0,0]},{\"kind\":\"call_parameter\",\"parents\":[73,0]},{\"kind\":\"call_parameter\",\"parents\":[74,0]},{\"kind\":\"read\",\"parents\":[75,0]},{\"kind\":\"literal\",\"operator\":\"STRING\",\"literal\":\"\\\"\\\"\",\"parents\":[0,0]},{\"kind\":\"expression\",\"operator\":\"!=\",\"parents\":[77,78]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[79,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[79,0]},{\"kind\":\"read\",\"parents\":[75,0],\"guard\":80},{\"kind\":\"return\",\"parents\":[82,0],\"guard\":80},{\"kind\":\"read\",\"parents\":[76,0],\"guard\":81},{\"kind\":\"return\",\"parents\":[84,0],\"guard\":81},{\"kind\":\"join\",\"parents\":[85,83],\"condition\":81},{\"kind\":\"call\",\"parents\":[86,0]},{\"kind\":\"copy\",\"parents\":[87,0]},{\"kind\":\"read\",\"parents\":[88,0]},{\"kind\":\"call_parameter\",\"parents\":[89,0]},{\"kind\":\"read\",\"parents\":[90,0]},{\"kind\":\"expression\",\"operator\":\"len\",\"parents\":[91,0]},{\"kind\":\"expression\",\"operator\":\"int64\",\"parents\":[92,0]},{\"kind\":\"return\",\"parents\":[93,0]},{\"kind\":\"call\",\"parents\":[94,0]},{\"kind\":\"read\",\"parents\":[72,0]},{\"kind\":\"call_parameter\",\"parents\":[95,0]},{\"kind\":\"call_parameter\",\"parents\":[96,0]},{\"kind\":\"read\",\"parents\":[97,0]},{\"kind\":\"read\",\"parents\":[98,0]},{\"kind\":\"expression\",\"operator\":\"\\u003c\",\"parents\":[99,100]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[101,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[101,0]},{\"kind\":\"read\",\"parents\":[97,0],\"guard\":102},{\"kind\":\"return\",\"parents\":[104,0],\"guard\":102},{\"kind\":\"read\",\"parents\":[98,0],\"guard\":103},{\"kind\":\"return\",\"parents\":[106,0],\"guard\":103},{\"kind\":\"join\",\"parents\":[107,105],\"condition\":103},{\"kind\":\"call\",\"parents\":[108,0]},{\"kind\":\"copy\",\"parents\":[109,0]},{\"kind\":\"read\",\"parents\":[72,0]},{\"kind\":\"literal\",\"operator\":\"INT\",\"literal\":\"0\",\"parents\":[0,0]},{\"kind\":\"expression\",\"operator\":\"\\u003e\",\"parents\":[111,112]},{\"kind\":\"read\",\"parents\":[1,0]},{\"kind\":\"call_parameter\",\"parents\":[114,0]},{\"kind\":\"read\",\"parents\":[115,0]},{\"kind\":\"expression\",\"operator\":\"len\",\"parents\":[116,0]},{\"kind\":\"expression\",\"operator\":\"int64\",\"parents\":[117,0]},{\"kind\":\"return\",\"parents\":[118,0]},{\"kind\":\"call\",\"parents\":[119,0]},{\"kind\":\"literal\",\"operator\":\"INT\",\"literal\":\"0\",\"parents\":[0,0]},{\"kind\":\"expression\",\"operator\":\"\\u003e\",\"parents\":[120,121]},{\"kind\":\"call_parameter\",\"parents\":[113,0]},{\"kind\":\"call_parameter\",\"parents\":[122,0]},{\"kind\":\"read\",\"parents\":[123,0]},{\"kind\":\"read\",\"parents\":[124,0]},{\"kind\":\"expression\",\"operator\":\"\\u0026\\u0026\",\"parents\":[125,126]},{\"kind\":\"return\",\"parents\":[127,0]},{\"kind\":\"call\",\"parents\":[128,0]},{\"kind\":\"copy\",\"parents\":[129,0]},{\"kind\":\"literal\",\"operator\":\"BOOL\",\"literal\":\"false\",\"parents\":[0,0]},{\"kind\":\"read\",\"parents\":[130,0]},{\"kind\":\"choice\",\"field_id\":\"gooo://examples/preview/available\",\"parents\":[131,132]},{\"kind\":\"read\",\"parents\":[1,0]},{\"kind\":\"read\",\"parents\":[88,0]},{\"kind\":\"choice\",\"field_id\":\"gooo://examples/preview/title\",\"parents\":[134,135]},{\"kind\":\"literal\",\"operator\":\"INT\",\"literal\":\"0\",\"parents\":[0,0]},{\"kind\":\"read\",\"parents\":[110,0]},{\"kind\":\"choice\",\"field_id\":\"gooo://examples/preview/bytes\",\"parents\":[137,138]},{\"kind\":\"return\",\"field_id\":\"gooo://examples/preview/available\",\"parents\":[133,0]},{\"kind\":\"return\",\"field_id\":\"gooo://examples/preview/title\",\"parents\":[136,0]},{\"kind\":\"return\",\"field_id\":\"gooo://examples/preview/bytes\",\"parents\":[139,0]}]}",
+          "value_flow_sha256": "sha256:5ed2e7a3bd6b7a39c7be0298c18e3a49b5f00ed6f7200b42fb0ae8d3a7dadd99"
+        },
+        "model_requested": true,
+        "original_source_sha256": "sha256:30b1688e60e5543642f2e8590fd118ddadc4db32df2052295eb447d0e706081a",
+        "passed": 5,
+        "predict_ns": 109709,
+        "prediction": {
+          "logits": [
+            2.3915582,
+            -0.624593,
+            1.5198201,
+            -1.4963311,
+            1.4963311,
+            -1.5198201,
+            0.624593,
+            -2.3915582
+          ],
+          "probabilities": [
+            0.7276559,
+            0.0017463465,
+            0.12727526,
+            0.0003054558,
+            0.12143439,
+            0.00029143793,
+            0.02124025,
+            0.000050975792
+          ],
+          "proposed_mask": 0
+        },
+        "ranking": [
+          0,
+          2,
+          4,
+          6,
+          1,
+          3,
+          5,
+          7
+        ],
+        "schema": "gooo/record-field-assembly/v1",
+        "scope": "source-declared record field alternatives; finite case and field coverage; candidate interpretation followed by ordinary typed Go emission; no model updates",
+        "selected_mask": 7,
+        "selected_source_sha256": "sha256:25d90ffd68003160807a35c2db7361b0d32856ccbec8f3c6e06c89797fd22bae",
+        "status": "COMPLETE_FINITE",
+        "test_suite_sha256": "sha256:674bfacbb8432b146a328a0b8eb8dd6038ec26a4b80d1d592bacc0b3fcace8b7",
+        "total": 5
+      },
+      "generated_sha256": "sha256:be59aef7fba25ebd9f1fee71e03571bd19e25ed969618d93520d82a80bc95f62",
+      "model": {
+        "arithmetic_version": "float32_separate_v1",
+        "feature_version": "triple_record_value_graph_v3_shared_v1",
+        "loaded": true,
+        "metadata_sha256": "3c68205a660695103712e2115ce90accd298b406dced8ad5ad5c9b84bab0a202",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "resident_tensor_bytes": 2096,
+        "schema": "gooo/retained-path-model/v1",
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "setup_ms": 0.796625,
+        "weights_sha256": "76f68845a03ed8c8bc261a57c919e96dcdd352d3c35bcdaeb3d9b51a88975c6f"
+      },
+      "operation": "source-model",
+      "passed": 10,
+      "replay": null,
+      "total": 10
+    },
+    {
+      "assembly": {
+        "attempt_budget": 8,
+        "attempts": [
+          {
+            "fields_passed": 9,
+            "fields_total": 15,
+            "mask": 0,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 10,
+            "fields_total": 15,
+            "mask": 2,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 12,
+            "fields_total": 15,
+            "mask": 4,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 13,
+            "fields_total": 15,
+            "mask": 6,
+            "passed": 3,
+            "total": 5
+          },
+          {
+            "fields_passed": 11,
+            "fields_total": 15,
+            "mask": 1,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 12,
+            "fields_total": 15,
+            "mask": 3,
+            "passed": 2,
+            "total": 5
+          },
+          {
+            "fields_passed": 14,
+            "fields_total": 15,
+            "mask": 5,
+            "passed": 4,
+            "total": 5
+          },
+          {
+            "fields_passed": 15,
+            "fields_total": 15,
+            "mask": 7,
+            "passed": 5,
+            "total": 5
+          }
+        ],
+        "cases": [
+          {
+            "actual": {
+              "available": true,
+              "bytes": 3,
+              "title": "guide"
+            },
+            "expected": {
+              "available": true,
+              "bytes": 3,
+              "title": "guide"
+            },
+            "fields": [
+              {
+                "actual": "true",
+                "expected": "true",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "guide",
+                "expected": "guide",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "3",
+                "expected": "3",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "guide",
+              3
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 8,
+              "title": "untitled"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 8,
+              "title": "untitled"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "untitled",
+                "expected": "untitled",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "8",
+                "expected": "8",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "",
+              20
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "hello",
+                "expected": "hello",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "0",
+                "expected": "0",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "hello",
+              -1
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": true,
+              "bytes": 7,
+              "title": "한🙂"
+            },
+            "expected": {
+              "available": true,
+              "bytes": 7,
+              "title": "한🙂"
+            },
+            "fields": [
+              {
+                "actual": "true",
+                "expected": "true",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "한🙂",
+                "expected": "한🙂",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "7",
+                "expected": "7",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "한🙂",
+              80
+            ],
+            "passed": true
+          },
+          {
+            "actual": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "expected": {
+              "available": false,
+              "bytes": 0,
+              "title": "hello"
+            },
+            "fields": [
+              {
+                "actual": "false",
+                "expected": "false",
+                "id": "gooo://examples/preview/available",
+                "name": "available",
+                "passed": true,
+                "type_id": "urn:gooo:type:boolean"
+              },
+              {
+                "actual": "hello",
+                "expected": "hello",
+                "id": "gooo://examples/preview/title",
+                "name": "title",
+                "passed": true
+              },
+              {
+                "actual": "0",
+                "expected": "0",
+                "id": "gooo://examples/preview/bytes",
+                "name": "bytes",
+                "passed": true,
+                "type_id": "urn:gooo:type:integer"
+              }
+            ],
+            "inputs": [
+              "hello",
+              0
+            ],
+            "passed": true
+          }
+        ],
+        "choices": [
+          {
+            "field": "available",
+            "field_id": "gooo://examples/preview/available",
+            "first": "false",
+            "id": "available",
+            "intent": "원문과 사용 가능한 예산이 있을 때 표시한다. Keep the computed availability.",
+            "occurrence": 0,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "available"
+          },
+          {
+            "field": "title",
+            "field_id": "gooo://examples/preview/title",
+            "first": "input0",
+            "id": "title",
+            "intent": "빈 제목의 대체값을 보존한다. Keep the title with its empty-input fallback.",
+            "occurrence": 1,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "title"
+          },
+          {
+            "field": "bytes",
+            "field_id": "gooo://examples/preview/bytes",
+            "first": "0",
+            "id": "bytes",
+            "intent": "예산과 80바이트 상한을 적용한 길이를 보존한다. Keep the computed byte budget.",
+            "occurrence": 2,
+            "picked": "value_second",
+            "record_id": "gooo://examples/preview",
+            "second": "bytes"
+          }
+        ],
+        "contract_sha256": "sha256:63ab0c2f7445f3affc09a620cab9c24508e343fe25f7d57763438a8944a262b9",
+        "fields_passed": 15,
+        "fields_total": 15,
+        "generation_ns": 12438750,
+        "model": {
+          "arithmetic_version": "float32_separate_v1",
+          "feature_version": "triple_record_value_graph_v3_shared_v1",
+          "loaded": true,
+          "metadata_sha256": "3c68205a660695103712e2115ce90accd298b406dced8ad5ad5c9b84bab0a202",
+          "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+          "resident_tensor_bytes": 2096,
+          "schema": "gooo/retained-path-model/v1",
+          "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+          "setup_ms": 0.796625,
+          "weights_sha256": "76f68845a03ed8c8bc261a57c919e96dcdd352d3c35bcdaeb3d9b51a88975c6f"
+        },
+        "model_calls": 1,
+        "model_context": {
+          "feature_version": "triple_record_value_graph_v3_shared_v1",
+          "parts": [
+            "{\"field\":\"available\",\"first\":\"false\",\"second\":\"available\",\"intent\":\"원문과 사용 가능한 예산이 있을 때 표시한다. Keep the computed availability.\",\"field_id\":\"gooo://examples/preview/available\",\"roots\":[131,132]}",
+            "{\"field\":\"title\",\"first\":\"input0\",\"second\":\"title\",\"intent\":\"빈 제목의 대체값을 보존한다. Keep the title with its empty-input fallback.\",\"field_id\":\"gooo://examples/preview/title\",\"roots\":[134,135]}",
+            "{\"field\":\"bytes\",\"first\":\"0\",\"second\":\"bytes\",\"intent\":\"예산과 80바이트 상한을 적용한 길이를 보존한다. Keep the computed byte budget.\",\"field_id\":\"gooo://examples/preview/bytes\",\"roots\":[137,138]}"
+          ],
+          "schema": "gooo/record-value-graph-context/v3",
+          "scope": "ordered source value graph, canonical literals, input types and complete intent; source provenance retained; inputs, expected outputs and predictions excluded",
+          "sha256": "sha256:44b94a7ca289920d528eaae015d6353b1d18dc5f91e2eb8f38e5ae9d77b2e01e",
+          "status": "ENCODED",
+          "text": "gooo;record-graph3-v3|{\"choices\":[{\"field\":\"available\",\"first\":\"false\",\"second\":\"available\",\"intent\":\"원문과 사용 가능한 예산이 있을 때 표시한다. Keep the computed availability.\",\"field_id\":\"gooo://examples/preview/available\",\"roots\":[131,132]},{\"field\":\"title\",\"first\":\"input0\",\"second\":\"title\",\"intent\":\"빈 제목의 대체값을 보존한다. Keep the title with its empty-input fallback.\",\"field_id\":\"gooo://examples/preview/title\",\"roots\":[134,135]},{\"field\":\"bytes\",\"first\":\"0\",\"second\":\"bytes\",\"intent\":\"예산과 80바이트 상한을 적용한 길이를 보존한다. Keep the computed byte budget.\",\"field_id\":\"gooo://examples/preview/bytes\",\"roots\":[137,138]}],\"nodes\":[{\"kind\":\"input\",\"input\":1,\"input_type\":\"string\",\"parents\":[0,0]},{\"kind\":\"input\",\"input\":2,\"input_type\":\"int64\",\"parents\":[0,0]},{\"kind\":\"read\",\"parents\":[2,0]},{\"kind\":\"literal\",\"operator\":\"INT\",\"literal\":\"0\",\"parents\":[0,0]},{\"kind\":\"literal\",\"operator\":\"INT\",\"literal\":\"80\",\"parents\":[0,0]},{\"kind\":\"call_parameter\",\"parents\":[3,0]},{\"kind\":\"call_parameter\",\"parents\":[4,0]},{\"kind\":\"call_parameter\",\"parents\":[5,0]},{\"kind\":\"read\",\"parents\":[7,0]},{\"kind\":\"read\",\"parents\":[8,0]},{\"kind\":\"call_parameter\",\"parents\":[9,0]},{\"kind\":\"call_parameter\",\"parents\":[10,0]},{\"kind\":\"read\",\"parents\":[11,0]},{\"kind\":\"read\",\"parents\":[12,0]},{\"kind\":\"expression\",\"operator\":\"\\u003c\",\"parents\":[13,14]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[15,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[15,0]},{\"kind\":\"read\",\"parents\":[11,0],\"guard\":16},{\"kind\":\"return\",\"parents\":[18,0],\"guard\":16},{\"kind\":\"read\",\"parents\":[12,0],\"guard\":17},{\"kind\":\"return\",\"parents\":[20,0],\"guard\":17},{\"kind\":\"join\",\"parents\":[21,19],\"condition\":17},{\"kind\":\"call\",\"parents\":[22,0]},{\"kind\":\"copy\",\"parents\":[23,0]},{\"kind\":\"read\",\"parents\":[7,0]},{\"kind\":\"read\",\"parents\":[8,0]},{\"kind\":\"call_parameter\",\"parents\":[25,0]},{\"kind\":\"call_parameter\",\"parents\":[26,0]},{\"kind\":\"read\",\"parents\":[27,0]},{\"kind\":\"read\",\"parents\":[28,0]},{\"kind\":\"expression\",\"operator\":\"\\u003e\",\"parents\":[29,30]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[31,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[31,0]},{\"kind\":\"read\",\"parents\":[27,0],\"guard\":32},{\"kind\":\"return\",\"parents\":[34,0],\"guard\":32},{\"kind\":\"read\",\"parents\":[28,0],\"guard\":33},{\"kind\":\"return\",\"parents\":[36,0],\"guard\":33},{\"kind\":\"join\",\"parents\":[37,35],\"condition\":33},{\"kind\":\"call\",\"parents\":[38,0]},{\"kind\":\"copy\",\"parents\":[39,0]},{\"kind\":\"read\",\"parents\":[24,0]},{\"kind\":\"read\",\"parents\":[6,0]},{\"kind\":\"read\",\"parents\":[40,0]},{\"kind\":\"call_parameter\",\"parents\":[42,0]},{\"kind\":\"call_parameter\",\"parents\":[43,0]},{\"kind\":\"read\",\"parents\":[44,0]},{\"kind\":\"read\",\"parents\":[45,0]},{\"kind\":\"expression\",\"operator\":\"\\u003c\",\"parents\":[46,47]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[48,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[48,0]},{\"kind\":\"read\",\"parents\":[44,0],\"guard\":49},{\"kind\":\"return\",\"parents\":[51,0],\"guard\":49},{\"kind\":\"read\",\"parents\":[45,0],\"guard\":50},{\"kind\":\"return\",\"parents\":[53,0],\"guard\":50},{\"kind\":\"join\",\"parents\":[54,52],\"condition\":50},{\"kind\":\"call\",\"parents\":[55,0]},{\"kind\":\"call_parameter\",\"parents\":[41,0]},{\"kind\":\"call_parameter\",\"parents\":[56,0]},{\"kind\":\"read\",\"parents\":[57,0]},{\"kind\":\"read\",\"parents\":[58,0]},{\"kind\":\"expression\",\"operator\":\"\\u003e\",\"parents\":[59,60]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[61,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[61,0]},{\"kind\":\"read\",\"parents\":[57,0],\"guard\":62},{\"kind\":\"return\",\"parents\":[64,0],\"guard\":62},{\"kind\":\"read\",\"parents\":[58,0],\"guard\":63},{\"kind\":\"return\",\"parents\":[66,0],\"guard\":63},{\"kind\":\"join\",\"parents\":[67,65],\"condition\":63},{\"kind\":\"call\",\"parents\":[68,0]},{\"kind\":\"return\",\"parents\":[69,0]},{\"kind\":\"call\",\"parents\":[70,0]},{\"kind\":\"copy\",\"parents\":[71,0]},{\"kind\":\"read\",\"parents\":[1,0]},{\"kind\":\"literal\",\"operator\":\"STRING\",\"literal\":\"\\\"untitled\\\"\",\"parents\":[0,0]},{\"kind\":\"call_parameter\",\"parents\":[73,0]},{\"kind\":\"call_parameter\",\"parents\":[74,0]},{\"kind\":\"read\",\"parents\":[75,0]},{\"kind\":\"literal\",\"operator\":\"STRING\",\"literal\":\"\\\"\\\"\",\"parents\":[0,0]},{\"kind\":\"expression\",\"operator\":\"!=\",\"parents\":[77,78]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[79,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[79,0]},{\"kind\":\"read\",\"parents\":[75,0],\"guard\":80},{\"kind\":\"return\",\"parents\":[82,0],\"guard\":80},{\"kind\":\"read\",\"parents\":[76,0],\"guard\":81},{\"kind\":\"return\",\"parents\":[84,0],\"guard\":81},{\"kind\":\"join\",\"parents\":[85,83],\"condition\":81},{\"kind\":\"call\",\"parents\":[86,0]},{\"kind\":\"copy\",\"parents\":[87,0]},{\"kind\":\"read\",\"parents\":[88,0]},{\"kind\":\"call_parameter\",\"parents\":[89,0]},{\"kind\":\"read\",\"parents\":[90,0]},{\"kind\":\"expression\",\"operator\":\"len\",\"parents\":[91,0]},{\"kind\":\"expression\",\"operator\":\"int64\",\"parents\":[92,0]},{\"kind\":\"return\",\"parents\":[93,0]},{\"kind\":\"call\",\"parents\":[94,0]},{\"kind\":\"read\",\"parents\":[72,0]},{\"kind\":\"call_parameter\",\"parents\":[95,0]},{\"kind\":\"call_parameter\",\"parents\":[96,0]},{\"kind\":\"read\",\"parents\":[97,0]},{\"kind\":\"read\",\"parents\":[98,0]},{\"kind\":\"expression\",\"operator\":\"\\u003c\",\"parents\":[99,100]},{\"kind\":\"guard\",\"operator\":\"true\",\"parents\":[101,0]},{\"kind\":\"guard\",\"operator\":\"false\",\"parents\":[101,0]},{\"kind\":\"read\",\"parents\":[97,0],\"guard\":102},{\"kind\":\"return\",\"parents\":[104,0],\"guard\":102},{\"kind\":\"read\",\"parents\":[98,0],\"guard\":103},{\"kind\":\"return\",\"parents\":[106,0],\"guard\":103},{\"kind\":\"join\",\"parents\":[107,105],\"condition\":103},{\"kind\":\"call\",\"parents\":[108,0]},{\"kind\":\"copy\",\"parents\":[109,0]},{\"kind\":\"read\",\"parents\":[72,0]},{\"kind\":\"literal\",\"operator\":\"INT\",\"literal\":\"0\",\"parents\":[0,0]},{\"kind\":\"expression\",\"operator\":\"\\u003e\",\"parents\":[111,112]},{\"kind\":\"read\",\"parents\":[1,0]},{\"kind\":\"call_parameter\",\"parents\":[114,0]},{\"kind\":\"read\",\"parents\":[115,0]},{\"kind\":\"expression\",\"operator\":\"len\",\"parents\":[116,0]},{\"kind\":\"expression\",\"operator\":\"int64\",\"parents\":[117,0]},{\"kind\":\"return\",\"parents\":[118,0]},{\"kind\":\"call\",\"parents\":[119,0]},{\"kind\":\"literal\",\"operator\":\"INT\",\"literal\":\"0\",\"parents\":[0,0]},{\"kind\":\"expression\",\"operator\":\"\\u003e\",\"parents\":[120,121]},{\"kind\":\"call_parameter\",\"parents\":[113,0]},{\"kind\":\"call_parameter\",\"parents\":[122,0]},{\"kind\":\"read\",\"parents\":[123,0]},{\"kind\":\"read\",\"parents\":[124,0]},{\"kind\":\"expression\",\"operator\":\"\\u0026\\u0026\",\"parents\":[125,126]},{\"kind\":\"return\",\"parents\":[127,0]},{\"kind\":\"call\",\"parents\":[128,0]},{\"kind\":\"copy\",\"parents\":[129,0]},{\"kind\":\"literal\",\"operator\":\"BOOL\",\"literal\":\"false\",\"parents\":[0,0]},{\"kind\":\"read\",\"parents\":[130,0]},{\"kind\":\"choice\",\"field_id\":\"gooo://examples/preview/available\",\"parents\":[131,132]},{\"kind\":\"read\",\"parents\":[1,0]},{\"kind\":\"read\",\"parents\":[88,0]},{\"kind\":\"choice\",\"field_id\":\"gooo://examples/preview/title\",\"parents\":[134,135]},{\"kind\":\"literal\",\"operator\":\"INT\",\"literal\":\"0\",\"parents\":[0,0]},{\"kind\":\"read\",\"parents\":[110,0]},{\"kind\":\"choice\",\"field_id\":\"gooo://examples/preview/bytes\",\"parents\":[137,138]},{\"kind\":\"return\",\"field_id\":\"gooo://examples/preview/available\",\"parents\":[133,0]},{\"kind\":\"return\",\"field_id\":\"gooo://examples/preview/title\",\"parents\":[136,0]},{\"kind\":\"return\",\"field_id\":\"gooo://examples/preview/bytes\",\"parents\":[139,0]}]}",
+          "value_flow_sha256": "sha256:5ed2e7a3bd6b7a39c7be0298c18e3a49b5f00ed6f7200b42fb0ae8d3a7dadd99"
+        },
+        "model_requested": true,
+        "original_source_sha256": "sha256:30b1688e60e5543642f2e8590fd118ddadc4db32df2052295eb447d0e706081a",
+        "passed": 5,
+        "predict_ns": 109709,
+        "prediction": {
+          "logits": [
+            2.3915582,
+            -0.624593,
+            1.5198201,
+            -1.4963311,
+            1.4963311,
+            -1.5198201,
+            0.624593,
+            -2.3915582
+          ],
+          "probabilities": [
+            0.7276559,
+            0.0017463465,
+            0.12727526,
+            0.0003054558,
+            0.12143439,
+            0.00029143793,
+            0.02124025,
+            0.000050975792
+          ],
+          "proposed_mask": 0
+        },
+        "ranking": [
+          0,
+          2,
+          4,
+          6,
+          1,
+          3,
+          5,
+          7
+        ],
+        "schema": "gooo/record-field-assembly/v1",
+        "scope": "source-declared record field alternatives; finite case and field coverage; candidate interpretation followed by ordinary typed Go emission; no model updates",
+        "selected_mask": 7,
+        "selected_source_sha256": "sha256:25d90ffd68003160807a35c2db7361b0d32856ccbec8f3c6e06c89797fd22bae",
+        "status": "COMPLETE_FINITE",
+        "test_suite_sha256": "sha256:674bfacbb8432b146a328a0b8eb8dd6038ec26a4b80d1d592bacc0b3fcace8b7",
+        "total": 5
+      },
+      "generated_sha256": "sha256:be59aef7fba25ebd9f1fee71e03571bd19e25ed969618d93520d82a80bc95f62",
+      "model": {
+        "arithmetic_version": "float32_separate_v1",
+        "feature_version": "triple_record_value_graph_v3_shared_v1",
+        "loaded": true,
+        "metadata_sha256": "3c68205a660695103712e2115ce90accd298b406dced8ad5ad5c9b84bab0a202",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "resident_tensor_bytes": 2096,
+        "schema": "gooo/retained-path-model/v1",
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "setup_ms": 0.796625,
+        "weights_sha256": "76f68845a03ed8c8bc261a57c919e96dcdd352d3c35bcdaeb3d9b51a88975c6f"
+      },
+      "operation": "source-replay",
+      "passed": 10,
+      "replay": {
+        "body_fills_replayed": 0,
+        "model_calls": 0,
+        "prior_result_sha256": "sha256:e5e08dc9edf9202d84d5aab6be8ec7a5a3e06b2a51a11d3379a5c7006573ed94",
+        "schema": "gooo/workspace-body-replay/v1",
+        "scope": "saved decisions and source-bound candidates reconstructed without inference; old runtime observations are not reused"
+      },
+      "total": 10
+    }
+  ],
+  "schema": "gooo/source-package-metadata-observation/v1",
+  "scope": "Previously frozen standard-library consumer; compiler regression using unchanged sources and model; no new training or generalization study."
+}

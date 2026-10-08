@@ -44,6 +44,13 @@ Gooo source + intent + permitted choices + finite expectations
 
 · [workspace package graph](docs/language/workspace-manifest.md)
 
+The development workspace reader can derive package names and dependencies from
+Gooo source, leaving only paths, source files and the entry in the manifest.
+[Source-owned package metadata](docs/language/workspace-manifest.md#resolve-and-execute)
+works across construction, saved replay and Gooo assembly policies. The separate
+[Gooo standard library](https://github.com/kimjooyoon/gooo-standard-library)
+provides reusable number, logic and text functions with native usage examples.
+
 Start a two-package library workspace with `gooo init --template library
 <directory>`. Its Gooo source declares an imported activity binding and a
 multi-hole body-fill plan. `gooo package execute` reads that plan directly from
@@ -53,6 +60,8 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
+The [0.6.11 development guide](docs/releases/0.6.11-dev.md) covers source-derived
+workspace names and imports, shorter project starters and saved package reuse.
 The [0.6.10 development guide](docs/releases/0.6.10-dev.md) covers text primitives
 in package execution and the public Gooo source-editing tool. The
 [0.6.9 guide](docs/releases/0.6.9-dev.md) introduces string operations, following
