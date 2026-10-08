@@ -126,10 +126,12 @@ func expandSourceRecipeProjection(ctx context.Context, filename string, source [
 }
 
 func sourceRecipeDocument(ctx context.Context, base Result, activity string, recipe sourcePathRecipe) (pathplan.Document, error) {
-	file, err := parser.ParseFile(token.NewFileSet(), "recipe.go", base.Source, parser.AllErrors)
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "recipe.go", base.Source, parser.AllErrors)
 	if err != nil {
 		return pathplan.Document{}, err
 	}
+	removeLocalReadMarkers(file, fset)
 	function, ok := findFunction(file, activity)
 	if !ok {
 		return pathplan.Document{}, fmt.Errorf("recipe activity projection missing")

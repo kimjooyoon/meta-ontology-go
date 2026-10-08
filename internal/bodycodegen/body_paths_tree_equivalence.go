@@ -47,10 +47,12 @@ func typedBodyTree(ctx context.Context, name string, source []byte) ([]byte, err
 }
 
 func normalizedTypedBodyTree(ctx context.Context, name string, source []byte) ([]byte, bool, error) {
-	file, err := parser.ParseFile(token.NewFileSet(), "typed-tree.go", source, parser.AllErrors)
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "typed-tree.go", source, parser.AllErrors)
 	if err != nil {
 		return nil, false, err
 	}
+	removeLocalReadMarkers(file, fset)
 	function, ok := findFunction(file, name)
 	if !ok {
 		return nil, false, fmt.Errorf("typed tree function missing")

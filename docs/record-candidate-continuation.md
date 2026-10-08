@@ -1,12 +1,13 @@
 # Continue after a record combination fails type checking
 
-Two field alternatives can each be valid while their combination removes every
-use of a saved local. Gooo keeps this failed combination in the attempt history
-and continues to the next candidate within the declared budget.
+Gooo records a combination's type-check failure and continues to the next
+candidate within the declared budget. A candidate that leaves a local unread
+now remains valid: the compiler preserves the local's initialization and writes.
 
 The [runnable example](../examples/body-codegen/record-candidate-continuation.gooo.fixture)
 uses `saved.title` and `saved.state` as two baseline expressions. Replacing both
-leaves `saved` unused. A later combination retains the title expression and
+leaves `saved` unread. That combination is evaluated normally. A later
+combination retains the title expression and
 produces all fifteen expected selection fields.
 
 ```sh
@@ -19,11 +20,16 @@ gooo body-compose \
 ```
 
 The deterministic example attempts seven combinations and selects mask6.
-Mask3 records `status: "TYPECHECK_FAILED"` and its compiler diagnostic. Its case
-and field counts are zero because no supplied case ran for that candidate.
+Mask3 now matches two of five cases and twelve of fifteen fields.
 The selected candidate separately records fifteen of fifteen selection fields.
-With `attempts "4"`, the failed combination consumes the fourth attempt and the
+With `attempts "4"`, that combination consumes the fourth attempt and the
 best valid result remains partial at twelve of fifteen fields.
+
+The published 0.6.7-dev compiler treated mask3 as `TYPECHECK_FAILED` because Go
+rejected its unread binding. Those historical receipts retain that observation.
+The newer source semantics can reject replay of an old attempt history whose
+outcome differs; use the original compiler for historical replay or create a new
+receipt. See [candidate locals](../examples/candidate-locals/README.md).
 
 Every new record assembly receipt includes `attempt_budget`, copied from the
 source `attempts` declaration. It is independent of the number of ranked

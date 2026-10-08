@@ -88,6 +88,7 @@ func canonicalizeRouteProjection(packageName, activityName string, raw []byte, o
 	} else {
 		restoreRecordNames(file, records)
 	}
+	removeLocalReadMarkers(file, fset)
 	function, ok := findFunction(file, activityName)
 	if !ok {
 		return nil, fmt.Errorf("route equivalence projection has no declared function")
