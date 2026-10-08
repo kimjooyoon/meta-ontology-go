@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "files", "activity": "Classify"},
+  "packages": [{
+    "path": "files",
+    "name": "filenames",
+    "imports": [],
+    "sources": ["source.gooo.fixture"]
+  }]
+}

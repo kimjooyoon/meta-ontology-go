@@ -6,6 +6,8 @@ import (
 	"go/parser"
 	"go/token"
 	"sort"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, source, surface string, body bool) (string, []WorkspaceCallSite, error) {
@@ -30,6 +32,13 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 		call, ok := node.(*ast.CallExpr)
 		if !ok || err != nil {
 			return err == nil
+		}
+		if name, plain := call.Fun.(*ast.Ident); plain && name.Obj == nil && bodycodegen.IsBodyPrimitiveName(name.Name) {
+			if _, declared := c[packageActivityKey(d.ref.PackagePath, name.Name)]; !declared {
+				// Keep the primitive text and descend into its arguments so that
+				// nested source activity calls still enter the dependency graph.
+				return true
+			}
 		}
 		var target string
 		target, err = c.resolveCall(d, call)
