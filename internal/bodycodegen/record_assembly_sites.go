@@ -41,7 +41,7 @@ func recordAssemblySites(body preparedBody) ([]recordValueSite, error) {
 		return nil, err
 	}
 	normalizeIntegerLocalInitializers("selection", file, c.fset)
-	if _, err = new(types.Config).Check("selection", c.fset, []*ast.File{file}, &c.info); err != nil {
+	if _, err = checkBodyTypes("selection", file, c.fset, &c.info); err != nil {
 		return nil, fmt.Errorf("field site types: %w", err)
 	}
 	function, _ := findFunction(file, body.activity.Name)

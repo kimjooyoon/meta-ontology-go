@@ -9,7 +9,8 @@ import (
 )
 
 // Each individual alternative retains one use of saved. Mask 3 removes both
-// uses, while mask 6 is a valid complete implementation of the finite contract.
+// reads, while mask 6 completes the finite contract. An unused saved local still
+// evaluates its initializer and is now a valid Gooo binding.
 func recordUnusedCombinationFixture(t *testing.T) []byte {
 	t.Helper()
 	source := string(recordUpdatesFixture(t))
@@ -29,6 +30,9 @@ func TestRecordAssemblyTypedRejectionBeforeAnyValidCandidate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Inject a real field-type mismatch after preflight to exercise rejection
+	// independently of the source language's permitted unused local bindings.
+	plan.sites[0].choice.Second = "true"
 	r := newRecordAssemblyReceipt(source, plan)
 	r.Ranking = []uint16{3, 6}
 	if err = searchRecordAssembly(ctx, plan, r); err != nil || len(r.Attempts) != 2 || r.SelectedMask != 6 ||
@@ -55,7 +59,7 @@ func TestRecordAssemblyTypedRejectionBeforeAnyValidCandidate(t *testing.T) {
 	}
 }
 
-func TestRecordAssemblyModelPredictsOnceAcrossTypedRejection(t *testing.T) {
+func TestRecordAssemblyModelPredictsOnceAcrossUnusedLocalCandidate(t *testing.T) {
 	g, err := NewTypedPathGenerator(writeOriginRecordModel(t, "qat_ternary"))
 	if err != nil {
 		t.Fatal(err)
@@ -66,18 +70,18 @@ func TestRecordAssemblyModelPredictsOnceAcrossTypedRejection(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := result.Report.RecordAssembly
-	rejected := 0
+	scored := 0
 	for _, attempt := range r.Attempts {
-		if attempt.Mask == 3 && attempt.Status == "TYPECHECK_FAILED" {
-			rejected++
+		if attempt.Mask == 3 && attempt.Status == "" && attempt.Total == 5 {
+			scored++
 		}
 	}
-	if r.ModelCalls != 1 || r.FieldsPassed != 15 || r.Context.Status != "ENCODED" || rejected != 1 {
-		t.Fatalf("single prediction across candidate error: calls=%d fields=%d rejected=%d", r.ModelCalls, r.FieldsPassed, rejected)
+	if r.ModelCalls != 1 || r.FieldsPassed != 15 || r.Context.Status != "ENCODED" || scored != 1 {
+		t.Fatalf("single prediction across unused local: calls=%d fields=%d scored=%d", r.ModelCalls, r.FieldsPassed, scored)
 	}
 	replay, err := RealizeSourceAssembly(context.Background(), "model.gooo", source, result)
 	if err != nil || replay.ModelCalls != 0 {
-		t.Fatal("typed failure required a new prediction on replay", err)
+		t.Fatal("unused local required a new prediction on replay", err)
 	}
 }
 
@@ -98,7 +102,8 @@ func TestRecordConstructorCombinationAlsoContinues(t *testing.T) {
 		t.Fatal("constructor combination stopped finite selection", err)
 	}
 	r := result.Report.RecordAssembly
-	if r.SelectedMask != 6 || r.FieldsPassed != 15 || len(r.Attempts) != 7 || r.Attempts[3].Status != "TYPECHECK_FAILED" {
+	if r.SelectedMask != 6 || r.FieldsPassed != 15 || len(r.Attempts) != 7 || r.Attempts[3].Status != "" ||
+		r.Attempts[3].Total != 5 {
 		t.Fatalf("constructor continuation: mask=%d fields=%d attempts=%d", r.SelectedMask, r.FieldsPassed, len(r.Attempts))
 	}
 	if _, err = RealizeSourceAssembly(context.Background(), "constructor.gooo", []byte(source), result); err != nil {
@@ -113,7 +118,7 @@ func TestRecordSuccessfulAttemptKeepsPreviousJSONShape(t *testing.T) {
 	}
 }
 
-func TestRecordAssemblyContinuesAfterInvalidTypedCombination(t *testing.T) {
+func TestRecordAssemblyScoresUnusedLocalCombination(t *testing.T) {
 	source := recordUnusedCombinationFixture(t)
 	ctx := context.Background()
 	if err := ValidateSourceAssembly(ctx, "combination.gooo", source, "Select"); err != nil {
@@ -125,21 +130,21 @@ func TestRecordAssemblyContinuesAfterInvalidTypedCombination(t *testing.T) {
 	}
 	result, err := g.GenerateSourceAssembly(ctx, "combination.gooo", source, "Select")
 	if err != nil {
-		t.Fatal("invalid combination stopped a later valid candidate", err)
+		t.Fatal("unused local stopped a later complete candidate", err)
 	}
 	r := result.Report.RecordAssembly
 	if r.SelectedMask != 6 || r.Status != "COMPLETE_FINITE" || r.FieldsPassed != 15 || r.FieldsTotal != 15 ||
 		len(r.Attempts) != 7 || r.ModelCalls != 0 || !result.Report.TypecheckPassed {
 		t.Fatalf("finite continuation differs: %+v", r)
 	}
-	invalid := r.Attempts[3]
-	if invalid.Mask != 3 || invalid.Status != "TYPECHECK_FAILED" || !strings.Contains(invalid.Reason, "declared and not used: saved") ||
-		invalid.Passed != 0 || invalid.Total != 0 || invalid.FieldsPassed != 0 || invalid.FieldsTotal != 0 {
-		t.Fatalf("unexecuted invalid combination acquired case scores: %+v", invalid)
+	partial := r.Attempts[3]
+	if partial.Mask != 3 || partial.Status != "" || partial.Reason != "" ||
+		partial.Passed != 2 || partial.Total != 5 || partial.FieldsPassed != 12 || partial.FieldsTotal != 15 {
+		t.Fatalf("unused-local combination was not scored: %+v", partial)
 	}
 	realized, err := RealizeSourceAssembly(ctx, "combination.gooo", source, result)
 	if err != nil || realized.ModelCalls != 0 || realized.Source != result.GoooSource {
-		t.Fatal("failed attempt did not replay", err)
+		t.Fatal("partial attempt did not replay", err)
 	}
 	next, err := g.GenerateSourceAssembly(ctx, "combination.gooo", []byte(result.GoooSource), "Select")
 	if err != nil || next.Source != result.Source || next.GoooSource != result.GoooSource {
@@ -147,8 +152,8 @@ func TestRecordAssemblyContinuesAfterInvalidTypedCombination(t *testing.T) {
 	}
 	for _, mutate := range []func(*Result){
 		func(v *Result) { v.Report.RecordAssembly.Attempts[3].Reason = "other error" },
-		func(v *Result) { v.Report.RecordAssembly.Attempts[3].Status = "" },
-		func(v *Result) { v.Report.RecordAssembly.Attempts[3].Total = 5 },
+		func(v *Result) { v.Report.RecordAssembly.Attempts[3].Status = "TYPECHECK_FAILED" },
+		func(v *Result) { v.Report.RecordAssembly.Attempts[3].Total = 0 },
 	} {
 		raw, err := json.Marshal(result)
 		if err != nil {
@@ -160,12 +165,12 @@ func TestRecordAssemblyContinuesAfterInvalidTypedCombination(t *testing.T) {
 		}
 		mutate(&changed)
 		if _, err = RealizeSourceAssembly(ctx, "combination.gooo", source, changed); err == nil {
-			t.Fatal("changed failed-attempt observation was accepted")
+			t.Fatal("changed scored-attempt observation was accepted")
 		}
 	}
 }
 
-func TestRecordAssemblyInvalidCombinationConsumesBudgetAndKeepsPartial(t *testing.T) {
+func TestRecordAssemblyUnusedCombinationConsumesBudgetAndKeepsPartial(t *testing.T) {
 	source := []byte(strings.Replace(string(recordUnusedCombinationFixture(t)), "attempts \"8\"", "attempts \"4\"", 1))
 	g, err := NewTypedPathGenerator("")
 	if err != nil {
@@ -176,11 +181,11 @@ func TestRecordAssemblyInvalidCombinationConsumesBudgetAndKeepsPartial(t *testin
 		t.Fatal("partial valid candidate was lost", err)
 	}
 	r := result.Report.RecordAssembly
-	if len(r.Attempts) != 4 || r.Attempts[3].Status != "TYPECHECK_FAILED" || r.SelectedMask != 2 ||
+	if len(r.Attempts) != 4 || r.Attempts[3].Status != "" || r.Attempts[3].Total != 5 || r.SelectedMask != 2 ||
 		r.Status != "PARTIAL_FINITE" || r.FieldsPassed != 12 || r.FieldsTotal != 15 {
 		t.Fatalf("bounded partial continuation differs: %+v", r)
 	}
 	if _, err = RealizeSourceAssembly(context.Background(), "partial.gooo", source, result); err != nil {
-		t.Fatal("partial failed attempt did not replay", err)
+		t.Fatal("partial unused-local attempt did not replay", err)
 	}
 }

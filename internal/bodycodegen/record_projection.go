@@ -138,7 +138,7 @@ func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.Fi
 		return nil
 	}
 	information := &types.Info{Defs: make(map[*ast.Ident]types.Object), Uses: make(map[*ast.Ident]types.Object)}
-	if _, err := new(types.Config).Check(packageName, fset, []*ast.File{file}, information); err != nil {
+	if _, err := checkBodyTypes(packageName, file, fset, information); err != nil {
 		return fmt.Errorf("typecheck record bodies: %w", err)
 	}
 	if err := lowerRecordNames(file, information, records); err != nil {
