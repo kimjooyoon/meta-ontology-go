@@ -313,6 +313,14 @@ func evaluateIntegerBinary(operator token.Token, left, right any) (any, error) {
 			return a - b, nil
 		case token.MUL:
 			return a * b, nil
+		case token.QUO, token.REM:
+			if b == 0 {
+				return nil, fmt.Errorf("zero divisor for integer operator %s", operator)
+			}
+			if operator == token.QUO {
+				return a / b, nil
+			}
+			return a % b, nil
 		case token.EQL:
 			return a == b, nil
 		case token.NEQ:

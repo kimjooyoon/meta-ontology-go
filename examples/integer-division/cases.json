@@ -1,0 +1,13 @@
+{
+  "schema":"gooo/body-composition-cases/v1",
+  "cases":[
+    {"inputs":{"Divide.input0":13,"Divide.input1":5},"expected":{"Divide":{"valid":true,"quotient":2,"remainder":3}}},
+    {"inputs":{"Divide.input0":-13,"Divide.input1":5},"expected":{"Divide":{"valid":true,"quotient":-2,"remainder":-3}}},
+    {"inputs":{"Divide.input0":13,"Divide.input1":-5},"expected":{"Divide":{"valid":true,"quotient":-2,"remainder":3}}},
+    {"inputs":{"Divide.input0":-13,"Divide.input1":-5},"expected":{"Divide":{"valid":true,"quotient":2,"remainder":-3}}},
+    {"inputs":{"Divide.input0":-9223372036854775808,"Divide.input1":-1},"expected":{"Divide":{"valid":true,"quotient":-9223372036854775808,"remainder":0}}},
+    {"inputs":{"Divide.input0":9223372036854775807,"Divide.input1":2},"expected":{"Divide":{"valid":true,"quotient":4611686018427387903,"remainder":1}}},
+    {"inputs":{"Divide.input0":13,"Divide.input1":0},"expected":{"Divide":{"valid":false,"quotient":0,"remainder":0}}},
+    {"inputs":{"Divide.input0":0,"Divide.input1":-5},"expected":{"Divide":{"valid":true,"quotient":0,"remainder":0}}}
+  ]
+}
