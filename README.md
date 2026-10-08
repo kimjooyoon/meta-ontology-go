@@ -44,14 +44,15 @@ Gooo source + intent + permitted choices + finite expectations
 
 · [workspace package graph](docs/language/workspace-manifest.md)
 
-The development `body-construct` route can reconsider record choices and integer IR expressions
+The development `body-construct` route can reconsider record choices, integer IR expressions
+and [complete multi-hole assignments](examples/caller-source-fill/README.md)
 using their caller's actual results. Local obligations and caller expectations
 are retained separately, with bounded whole-program attempts and model-free
 saved replay. [Caller-guided construction](examples/caller-guided-construction/README.md)
 includes a runnable example and the current source/model/budget limits.
 It also records [rejected local expressions](examples/caller-search-rejection/README.md)
-and continues within the original attempt budget. These IR-search extensions
-require development source newer than the published 0.6.12 archive.
+and continues within the original attempt budget. IR search is in 0.6.13;
+caller-guided `source_fill` requires development source newer than that archive.
 
 The development workspace reader can derive package names and dependencies from
 Gooo source, leaving only paths, source files and the entry in the manifest.

@@ -358,7 +358,7 @@ source-search indices, and `search_candidates` retains exact local observations
 and grammar coverage. Record-only receipts keep v1. Replay checks both formats
 against the source and re-executes caller cases with no new inference. The
 optional graph model orders record choices; integer expression ordering remains
-deterministic. This extension is newer than the published 0.6.12 binary.
+deterministic. Integer search and its local-rejection path are in 0.6.13-dev.
 
 If a source-search expression fails its local typecheck or pure evaluation, the
 history uses `gooo/joint-construction/v3` and retains a `rejection`. That
@@ -368,6 +368,29 @@ within the original budgets, and saved replay rederives the rejected expression
 and reason. [Runnable rejection example](../examples/caller-search-rejection/README.md).
 Request cancellation, invalid source/selection, reconstruction failure, native
 toolchain failure and compiled-program execution failure still stop the request.
+
+## Reconsider complete multi-hole assignments
+
+Development source after 0.6.13-dev also connects `source_fill` to caller-guided
+construction. Its declared or grammar-derived assignments fill condition,
+variable and return expressions together. The initial local winner is attempted
+first, followed by source assignment order. Each completed combination is checked
+and executed immediately within the existing whole-program budget.
+
+The [budget helper example](../examples/caller-source-fill/README.md) includes
+conditional assignment and a record result. Its v4 observation adds
+`source_fill_index` selectors and `fill_candidates`. Every candidate records all
+hole expressions, input/selected-source and plan digests, local training cases
+and separate local holdout cases. Training and native caller cases guide selection;
+holdouts never enter ranking or `COMPLETE_FINITE`. Those finite cases can all pass
+while a holdout fails. Final evaluation remains a separate native execution.
+
+`--fill-model` accepts the existing operation-classifier profile for initial local
+fills; `--model` accepts the record-choice profile. Both are optional. Initial
+model observations are retained; subsequent search and saved replay load no model.
+Source-fill preflight still checks every assignment and stops on invalid ones.
+The mixed v4 path preserves integer-search rejection rows and their scored-prefix
+counts. Existing v1/v2/v3 observations keep their original meaning.
 
 ## Current boundaries
 

@@ -39,7 +39,7 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 	var err error
 	r.Stage = "INITIAL_LOCAL_CONSTRUCTION"
 	r.Initial, err = GenerateCompositionWithOptions(ctx, filename, source, cases,
-		CompositionOptions{EntryActivity: options.EntryActivity, ModelPath: options.ModelPath})
+		CompositionOptions{EntryActivity: options.EntryActivity, ModelPath: options.ModelPath, FillModelPath: options.FillModelPath})
 	if err != nil {
 		return finish(err)
 	}
@@ -49,9 +49,12 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 	}
 	r.CandidateSpace, r.Stage = space, "CALLER_GUIDED_SEARCH"
 	r.CandidateKinds = jointCandidateKinds(slots)
+	r.Schema = jointObservationSchema(slots, nil)
 	if len(r.CandidateKinds) != 0 {
-		r.Schema = jointMixedSchema
 		r.Scope = "source-bounded record masks and integer IR search expressions; local obligations and native caller expectations retained separately; optional model order only for record choices; search uses its deterministic source-budget prefix; no general correctness claim"
+	}
+	if r.Schema == jointFillSchema {
+		r.Scope = "source-bounded fill assignments, record masks and integer search expressions; selection uses local training and native caller cases only; local fill holdout observations do not influence selection or completion; optional models select initial bodies; subsequent fills use source order; rejected search rows have no caller score and local totals cover their scored prefix; finite observations only"
 	}
 	executor := NewExecutor()
 	defer executor.Close()
@@ -66,10 +69,12 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 		if attempt.Rejection == nil {
 			attempt.Runtime, err = executor.ExecuteComposition(ctx, filename, selected, program, cases, options.GoBinary)
 		} else {
-			if r.Schema != jointRejectionSchema {
+			if r.Schema != jointRejectionSchema && r.Schema != jointFillSchema {
 				r.Scope += "; rejected local expressions consume attempts without a caller score; rejected local totals cover only the scored prefix"
 			}
-			r.Schema = jointRejectionSchema
+			if r.Schema != jointFillSchema {
+				r.Schema = jointRejectionSchema
+			}
 		}
 		r.Attempts = append(r.Attempts, attempt)
 		if err != nil {
@@ -111,12 +116,12 @@ func validateJointSource(ctx context.Context, filename string, source []byte, ca
 		}
 	}
 	if len(names) == 0 || len(names) > compositionLimit {
-		return fmt.Errorf("joint construction requires 1..16 record-choice or source IR search bodies")
+		return fmt.Errorf("joint construction requires 1..16 record-choice, source IR search or source-fill bodies")
 	}
 	for _, name := range names {
 		spec, err := bodycodegen.SourceAssembly(ctx, filename, source, name)
-		if err != nil || !bodycodegen.IsRecordAssembly(spec) && !bodycodegen.IsSourceIRSearch(spec) {
-			return fmt.Errorf("joint construction requires a record-choice or source IR search contract at %s", name)
+		if err != nil || !bodycodegen.IsRecordAssembly(spec) && !bodycodegen.IsSourceIRSearch(spec) && !bodycodegen.IsSourceIRBodyFill(spec) {
+			return fmt.Errorf("joint construction requires a record-choice, source IR search or source-fill contract at %s", name)
 		}
 	}
 	return nil
@@ -130,6 +135,20 @@ func materializeJoint(ctx context.Context, filename string, source []byte, cases
 	}
 	current := source
 	for i, slot := range slots {
+		if len(slot.fillIDs) != 0 {
+			if int(masks[i]) >= len(slot.fillIDs) {
+				return attempt, nil, Composition{}, fmt.Errorf("fill candidate index exceeds the source bound")
+			}
+			candidate, selected, err := bodycodegen.RealizeSourceFillCandidate(ctx, filename, current, slot.activity, slot.fillIDs[masks[i]])
+			if err != nil {
+				return attempt, nil, Composition{}, fmt.Errorf("joint fill activity %s: %w", slot.activity, err)
+			}
+			attempt.FillCandidates = append(attempt.FillCandidates, candidate)
+			attempt.LocalPassed += candidate.TestCasesPassed
+			attempt.LocalTotal += candidate.TestCasesTotal
+			current = selected
+			continue
+		}
 		if len(slot.searchIDs) != 0 {
 			if int(masks[i]) >= len(slot.searchIDs) {
 				return attempt, nil, Composition{}, fmt.Errorf("search candidate index exceeds the source bound")
