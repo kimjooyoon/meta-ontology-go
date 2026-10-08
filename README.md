@@ -113,6 +113,13 @@ local model. Replay runs the saved program on new rows with zero new inference.
 Native execution uses Go 1.27.1; pass `--go /path/to/go1.27.1` when needed.
 See [project starters](docs/language/project-starters.md) for the complete flow.
 
+The development source also supports `gooo package construct`: caller examples
+can reconsider assembly choices in imported libraries. The
+[package construction example](examples/package-caller-construction/README.md)
+builds a bounded retry calculation across packages, retains failed attempts and
+evaluates the selected program on separate inputs. Saved construction replays
+without a model; the published 0.6.16 binary supplies the earlier execution path.
+
 To start a new project with a working Gooo declaration, declared alternatives
 and finite examples, run:
 

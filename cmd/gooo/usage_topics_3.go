@@ -53,5 +53,14 @@ Reuse a saved package execution without a model:
 
 Continue saved record choices under an explicit Gooo policy:
   gooo package resume --receipt execution.json --assembly-policy-workspace policy.workspace.json --cases cases.json gooo.workspace.json
+
+Reconsider imported helpers using caller examples:
+  gooo package construct --json --construction-cases feedback.json --cases evaluation.json --attempts 8 gooo.workspace.json
+  gooo package construct --json --receipt construction.json --cases evaluation.json gooo.workspace.json
+
+Save the first command's JSON output as construction.json. Models are optional;
+--model orders record choices and --fill-model selects initial source fills.
+Saved construction rechecks all attempts with zero new inference. See
+examples/package-caller-construction/README.md for a runnable package example.
 `,
 }
