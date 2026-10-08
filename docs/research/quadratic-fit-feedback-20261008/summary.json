@@ -1,0 +1,67 @@
+{
+  "schema": "gooo/quadratic-fit-feedback-study/v1",
+  "compiler": {
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "vcs.revision": "14717427b49ddd7562503e25ada41245e0577262",
+    "vcs.modified": "false"
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "decision": {
+        "action": "ADVANCE_SEARCH",
+        "next_attempts": 8,
+        "retain": true,
+        "reason": "소스에 선언한 다음 탐색 설정으로 이어갑니다.",
+        "next_search_id": "fit"
+      },
+      "grammar": "integer-hole-quadratic/v1",
+      "enumerated": 108,
+      "retained": 16,
+      "coverage_percent": 14.814814814814815,
+      "grammar_complete": false,
+      "attempted": 8,
+      "selected_expression": "-3",
+      "feedback_passed": 1,
+      "feedback_total": 10,
+      "probe_evaluations": 30
+    },
+    {
+      "round": 2,
+      "decision": {
+        "action": "STOP",
+        "next_attempts": 8,
+        "retain": true,
+        "reason": "관측 결과와 라운드 한도에 따라 멈춥니다."
+      },
+      "grammar": "integer-hole-quadratic/v2",
+      "enumerated": 108,
+      "retained": 16,
+      "coverage_percent": 14.814814814814815,
+      "grammar_complete": false,
+      "attempted": 1,
+      "selected_expression": "input * -2 + -1",
+      "feedback_passed": 10,
+      "feedback_total": 10,
+      "probe_evaluations": 30
+    }
+  ],
+  "evaluation": {
+    "passed": 3,
+    "total": 3,
+    "input_separation": {
+      "status": "PASS",
+      "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 3,
+      "disjoint_cases_passed": 3,
+      "unknown_inputs": 0,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    }
+  },
+  "replay_model_calls": 0,
+  "scope": "One native source-policy transition between versioned quadratic candidate orders. Same bounded 108-expression universe, cap16 and attempt allowance8; ten adaptive feedback inputs and three post-selection evaluation inputs. Probe-root compatibility prioritizes proposals; full typed-body execution scores them. No model training."
+}

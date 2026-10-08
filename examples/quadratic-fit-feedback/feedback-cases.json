@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"Build": 1}, "expected": {"Build": 10}},
+    {"inputs": {"Build": 2}, "expected": {"Build": 27}},
+    {"inputs": {"Build": 3}, "expected": {"Build": 52}},
+    {"inputs": {"Build": 4}, "expected": {"Build": 85}},
+    {"inputs": {"Build": 5}, "expected": {"Build": 126}},
+    {"inputs": {"Build": 6}, "expected": {"Build": 175}},
+    {"inputs": {"Build": 7}, "expected": {"Build": 232}},
+    {"inputs": {"Build": 8}, "expected": {"Build": 297}},
+    {"inputs": {"Build": 9}, "expected": {"Build": 370}},
+    {"inputs": {"Build": 10}, "expected": {"Build": 451}}
+  ]
+}

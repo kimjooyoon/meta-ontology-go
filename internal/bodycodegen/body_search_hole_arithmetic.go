@@ -58,21 +58,29 @@ func holeContextExpressions(probes []IRBodyHoleProbe, fallback []string) []strin
 }
 
 func holeAffineExpression(first, next IRBodyHoleProbe) string {
-	if first.Input == next.Input || first.Derived == nil || next.Derived == nil {
+	coefficient, offset, ok := holeAffineCoefficients(first, next)
+	if !ok {
 		return ""
+	}
+	return holeLinearExpression(coefficient, offset)
+}
+
+func holeAffineCoefficients(first, next IRBodyHoleProbe) (int64, int64, bool) {
+	if first.Input == next.Input || first.Derived == nil || next.Derived == nil {
+		return 0, 0, false
 	}
 	dx := new(big.Int).Sub(big.NewInt(next.Input), big.NewInt(first.Input))
 	dy := new(big.Int).Sub(big.NewInt(*next.Derived), big.NewInt(*first.Derived))
 	coefficient, remainder := new(big.Int), new(big.Int)
 	coefficient.QuoRem(dy, dx, remainder)
 	if remainder.Sign() != 0 || !coefficient.IsInt64() {
-		return ""
+		return 0, 0, false
 	}
 	offset := new(big.Int).Sub(big.NewInt(*first.Derived), new(big.Int).Mul(coefficient, big.NewInt(first.Input)))
 	if !offset.IsInt64() {
-		return ""
+		return 0, 0, false
 	}
-	return holeLinearExpression(coefficient.Int64(), offset.Int64())
+	return coefficient.Int64(), offset.Int64(), true
 }
 
 func holeLinearExpression(coefficient, offset int64) string {
