@@ -1,0 +1,15 @@
+package quadratic
+namespace quadratic
+entity Integer id "quadratic://integer"
+activity Adjust(Integer) -> Integer computes `if input < 0 {
+    return input
+}
+let factor = __GOOO_BODY_HOLE_factor__
+let adjustment = factor * factor
+return input + adjustment` assembling {
+    search hole "factor" grammar "integer-hole-residual/v1" intent "음수는 유지하고 나머지 입력에 9를 더한다. Preserve negative inputs; add nine otherwise." max_candidates "16"
+    search_alternative "quadratic" grammar "integer-hole-quadratic/v1" max_candidates "16"
+    case "2" -> "11"
+    case "10" -> "19"
+    attempts "8"
+}

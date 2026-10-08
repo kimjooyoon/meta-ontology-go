@@ -13,11 +13,16 @@ func (s Spec) validateSearchAlternatives() error {
 	for _, alternative := range s.SearchAlternatives {
 		key := fmt.Sprintf("%s/%d", alternative.Grammar, alternative.MaxCandidates)
 		if !identifier(alternative.ID) || ids[alternative.ID] || settings[key] ||
-			(alternative.Grammar != "integer-offset-constant/v1" && alternative.Grammar != "integer-hole-residual/v1") ||
+			!supportedSearchGrammar(alternative.Grammar) ||
 			alternative.MaxCandidates < 2 || alternative.MaxCandidates > 16 {
 			return fmt.Errorf("search alternative requires a unique ID and grammar/bound pair, supported grammar and 2..16 candidates")
 		}
 		ids[alternative.ID], settings[key] = true, true
 	}
 	return nil
+}
+
+func supportedSearchGrammar(grammar string) bool {
+	return grammar == "integer-offset-constant/v1" || grammar == "integer-hole-residual/v1" ||
+		grammar == "integer-hole-quadratic/v1"
 }

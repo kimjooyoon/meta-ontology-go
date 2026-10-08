@@ -12,6 +12,7 @@ const bodySearchCandidateGenerationSchema = "gooo/body-codegen-ir-candidate-gene
 const bodySearchCandidateGenerationReceiptSchema = "gooo/body-codegen-ir-candidate-generation-receipt/v1"
 const bodySearchIntegerAffineGrammar = "integer-offset-constant/v1"
 const bodySearchHoleResidualGrammar = "integer-hole-residual/v1"
+const bodySearchHoleQuadraticGrammar = "integer-hole-quadratic/v1"
 
 // IRBodySearchCandidateGeneration asks Gooo to derive a bounded expression set
 // from the declared training examples instead of requiring a hand-written list.
@@ -41,7 +42,7 @@ func validateIRBodySearchCandidateGeneration(plan IRBodySearchCandidateGeneratio
 	if plan.Schema != bodySearchCandidateGenerationSchema {
 		return fmt.Errorf("IR body-search candidate-generation schema must be %q", bodySearchCandidateGenerationSchema)
 	}
-	if plan.Grammar != bodySearchIntegerAffineGrammar && plan.Grammar != bodySearchHoleResidualGrammar {
+	if plan.Grammar != bodySearchIntegerAffineGrammar && plan.Grammar != bodySearchHoleResidualGrammar && plan.Grammar != bodySearchHoleQuadraticGrammar {
 		return fmt.Errorf("unsupported IR body-search candidate grammar %q", plan.Grammar)
 	}
 	if plan.MaxCandidates < 2 || plan.MaxCandidates > 16 {
@@ -113,6 +114,9 @@ func retainIRBodySearchCandidates(plan *IRBodySearchPlan, expressions []string, 
 	scope := "retained unique expressions / all unique expressions in integer-offset-constant/v1 derived from training examples; excludes other expression grammars and all-domain semantics"
 	if holeContext != nil {
 		scope = "retained unique expressions / contextual constants, input offsets, first-anchor affine fits and legacy grammar seeds derived from training-only zero/one hole probes; excludes other grammars and all-domain semantics"
+	}
+	if plan.CandidateGeneration.Grammar == bodySearchHoleQuadraticGrammar {
+		scope = "retained unique expressions / integer roots and first-anchor affine fits from training-only minus-one/zero/one hole probes, followed by residual grammar seeds; polynomial fits are proposals scored against the whole body; excludes other grammars and all-domain semantics"
 	}
 	return &IRBodySearchCandidateGenerationReceipt{
 		Schema: bodySearchCandidateGenerationReceiptSchema, Grammar: plan.CandidateGeneration.Grammar,
