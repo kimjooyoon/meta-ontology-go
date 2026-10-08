@@ -1,0 +1,9 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "app/explain", "activity": "Main"},
+  "packages": [
+    {"path": "app/explain", "sources": ["app.gooo.fixture"]},
+    {"path": "tools/diagnostics", "sources": ["diagnostics.gooo.fixture"]},
+    {"path": "tools/rules", "sources": ["rules.gooo.fixture"]}
+  ]
+}

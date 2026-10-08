@@ -72,42 +72,9 @@ func runPackageCommand(args []string, reader SourceReader, stdout, stderr io.Wri
 	if err != nil {
 		return packageResolutionFailure(jsonMode, manifestPath, err, stderr, stdout)
 	}
-	root := filepath.Dir(manifestPath)
-	runtimeManifest := packageruntime.Manifest{
-		Schema: packageruntime.ManifestSchema,
-		Entry:  manifest.Entry,
-	}
-	sourceCount, sourceBytes := 0, 0
-	for _, declared := range manifest.Packages {
-		pkg := packageruntime.PackageSpec{
-			Path: declared.Path, Name: declared.Name, Imports: append([]string(nil), declared.Imports...),
-		}
-		for _, sourcePath := range declared.Sources {
-			relative, pathErr := workspaceSourcePath(sourcePath)
-			if pathErr != nil {
-				return packageResolutionFailure(jsonMode, manifestPath, pathErr, stderr, stdout)
-			}
-			filename := filepath.Join(root, relative)
-			content, readErr := readSource(reader, filename)
-			if readErr != nil {
-				return packageResolutionFailure(jsonMode, manifestPath, fmt.Errorf("source %q: %w", sourcePath, readErr), stderr, stdout)
-			}
-			sourceCount++
-			sourceBytes += len(content)
-			if sourceCount > workspaceMaxSourceCount {
-				return packageResolutionFailure(jsonMode, manifestPath, fmt.Errorf("workspace declares more than %d source files", workspaceMaxSourceCount), stderr, stdout)
-			}
-			if len(content) > workspaceMaxSourceBytes {
-				return packageResolutionFailure(jsonMode, manifestPath, fmt.Errorf("source %q exceeds %d bytes", sourcePath, workspaceMaxSourceBytes), stderr, stdout)
-			}
-			if sourceBytes > workspaceMaxSourceSetSize {
-				return packageResolutionFailure(jsonMode, manifestPath, fmt.Errorf("workspace sources exceed %d bytes total", workspaceMaxSourceSetSize), stderr, stdout)
-			}
-			pkg.Sources = append(pkg.Sources, packageruntime.Source{
-				Filename: filepath.ToSlash(relative), Content: string(content),
-			})
-		}
-		runtimeManifest.Packages = append(runtimeManifest.Packages, pkg)
+	runtimeManifest, err := loadPackageSources(reader, manifestPath, manifest)
+	if err != nil {
+		return packageResolutionFailure(jsonMode, manifestPath, err, stderr, stdout)
 	}
 	result, err := packageruntime.Run(runtimeManifest)
 	if err != nil {
