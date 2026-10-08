@@ -26,7 +26,10 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 			return fmt.Errorf("TOOLCHAIN_RELEASE_LANGUAGE_SMOKE %s: %w", example.name, err)
 		}
 	}
-	return smokeSourceGraph(binary, input)
+	if err := smokeSourceGraph(binary, input); err != nil {
+		return err
+	}
+	return smokePackageText(binary, input)
 }
 
 func smokeLanguageExample(binary, work string, input BuildInput, example languageSmokeCase) error {

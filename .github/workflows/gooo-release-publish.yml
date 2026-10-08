@@ -23,7 +23,7 @@ on:
       tag:
         description: Experimental release tag
         required: true
-        default: v0.6.9-dev
+        default: v0.6.10-dev
         type: string
 
 permissions: {}
@@ -44,7 +44,7 @@ jobs:
       contents: read
     env:
       EXACT_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.validated_sha || github.event.pull_request.head.sha }}
-      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || 'v0.6.9-dev' }}
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || 'v0.6.10-dev' }}
       GOTOOLCHAIN: go1.27.1
     steps:
       - name: Bind dispatched source to current dev before executing it
@@ -75,12 +75,12 @@ jobs:
           output="$RUNNER_TEMP/gooo-release-publication-contract"
           mkdir -p "$output"
           test "$(git rev-parse HEAD)" = "$EXACT_SHA"
-          test "$RELEASE_TAG" = "v0.6.9-dev"
+          test "$RELEASE_TAG" = "v0.6.10-dev"
           go run ./cmd/gooo check "$source" > "$output/check.stdout"
           version_json="$(go run ./cmd/gooo version --json)"
           jq -e '
             .schema_version == "gooo-version/v1" and
-            .language == "gooo" and .version == "0.6.9-dev" and
+            .language == "gooo" and .version == "0.6.10-dev" and
             .status == "development"
           ' <<< "$version_json"
           activity_total="$(awk '$1 == "activity" { count++ } END { print count + 0 }' "$source")"
@@ -99,7 +99,7 @@ jobs:
               head_sha:$head,
               meta_operation:"publish-exact-experimental-release",
               meta_source:{path:$source,digest:$source_digest,check_digest:$check_digest,activities:$activities},
-              identity:{tag:$tag,version:"0.6.9-dev",status:"development",version_schema:"gooo-version/v1",prerelease:true,latest:false},
+              identity:{tag:$tag,version:"0.6.10-dev",status:"development",version_schema:"gooo-version/v1",prerelease:true,latest:false},
               cells:[
                 {id:"VALIDATED_MERGE_EVIDENCE",proof_choice:"FOUNDATION"},
                 {id:"EXPERIMENTAL_RELEASE_IDENTITY",proof_choice:"FOUNDATION"},
@@ -191,7 +191,7 @@ jobs:
           grep -Fx 'activity AssembleReleasePayload(ValidatedMergeEvidence, ReleaseIdentity) -> ReleasePayload' "$source"
           jq -e '
             .schema_version == "gooo-version/v1" and .language == "gooo" and
-            .version == "0.6.9-dev" and .status == "development" and
+            .version == "0.6.10-dev" and .status == "development" and
             .semantic_ir == "semantic-ir/v1" and .semantic_check == "gooo-semantic-check/v1" and
             .graph == "gooo-graph/v1" and .fix_plan == "gooo-fix-plan/v1"
           ' "$output/probe-version.json"
@@ -272,7 +272,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$RELEASE_TAG" = "v0.6.9-dev"
+          test "$RELEASE_TAG" = "v0.6.10-dev"
           [[ "$VALIDATED_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$READINESS_RUN_ID" =~ ^[1-9][0-9]*$ ]]
           test "$(git rev-parse HEAD)" = "$VALIDATED_SHA"
@@ -359,7 +359,7 @@ jobs:
           dist="$RUNNER_TEMP/gooo-release-dist"
           jq -e '
             .schema_version == "gooo-version/v1" and .language == "gooo" and
-            .version == "0.6.9-dev" and .status == "development" and
+            .version == "0.6.10-dev" and .status == "development" and
             .semantic_ir == "semantic-ir/v1" and
             .semantic_check == "gooo-semantic-check/v1" and
             .graph == "gooo-graph/v1" and .fix_plan == "gooo-fix-plan/v1"
@@ -401,7 +401,7 @@ jobs:
             --slurpfile assets "$RUNNER_TEMP/release-assets.json" \
             '{
               schema:"gooo/release-manifest/v1",
-              tag:$tag,head_sha:$head,version:"0.6.9-dev",status:"development",
+              tag:$tag,head_sha:$head,version:"0.6.10-dev",status:"development",
               prerelease:true,latest:false,readiness_run_id:$run_id,
               release_report_digest:$report_digest,
               source_report_digest:$source_report_digest,
@@ -469,13 +469,13 @@ jobs:
         run: |
           set -euo pipefail
           dist="$RUNNER_TEMP/gooo-release-dist"
-          test "$RELEASE_TAG" = "v0.6.9-dev"
+          test "$RELEASE_TAG" = "v0.6.10-dev"
           dev_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/dev" --jq .object.sha)"
           test "$dev_sha" = "$VALIDATED_SHA"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$READINESS_RUN_ID" \
             --jq '.conclusion' | grep -Fx success
           jq -e --arg sha "$VALIDATED_SHA" --arg tag "$RELEASE_TAG" '
-            .head_sha == $sha and .tag == $tag and .version == "0.6.9-dev" and
+            .head_sha == $sha and .tag == $tag and .version == "0.6.10-dev" and
             .status == "development" and .prerelease == true and .latest == false and
             .payload_total == 7 and (.assets | length) == 7 and
             .repository_writes == 0
@@ -501,7 +501,7 @@ jobs:
           dist="$RUNNER_TEMP/gooo-release-dist"
           notes="$RUNNER_TEMP/release-notes.md"
           cat > "$notes" <<EOF
-          # Gooo v0.6.9-dev
+          # Gooo v0.6.10-dev
 
           Experimental Gooo CLI prerelease for exact commit \`$VALIDATED_SHA\`.
 
@@ -513,7 +513,7 @@ jobs:
           - Use public decision runtime v0.2.26-experimental. Existing model contracts keep their original inputs; v3 requires separately trained weights, which this release does not include.
           - Retain deterministic candidate selection and saved execution with zero new model calls. Native release witnesses construct and replay division, retry and filename programs, then consume the graph export through the SDK.
 
-          Start with the [0.6.9 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.9-dev.md), [text operations](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/text-operations/README.md), or [source graph input](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/record-graph-model-input.md).
+          Start with the [0.6.10 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.10-dev.md), [text operations](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/text-operations/README.md), or [source graph input](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/record-graph-model-input.md).
           Native execution requires Go 1.27.1 on the host. Pass --go when its executable is outside PATH.
           Source-declared cases and finite budgets bound these experiments. An exhausted or truncated search retains partial results. Separate evaluation measures the supplied inputs after selection.
           The [source graph observation](https://github.com/kimjooyoon/meta-ontology-go/wiki/Source-Graph-Model-Input) compares eight arrangements of one filename classifier. Distinct full arrays increased from two in v1 to four in v2 and eight in v3. This measures preserved input distinctions; trained v3 quality remains unmeasured. The [existing v1 model study](https://github.com/kimjooyoon/meta-ontology-go/wiki/Text-Operations-and-Choice-Order) keeps its 1/8 first-choice result and finite continuation evidence.
@@ -535,7 +535,7 @@ jobs:
 
           tag_object="$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/tags" \
             -f tag="$RELEASE_TAG" \
-            -f message="Gooo v0.6.9-dev experimental prerelease" \
+            -f message="Gooo v0.6.10-dev experimental prerelease" \
             -f object="$VALIDATED_SHA" \
             -f type="commit" \
             --jq .sha)"
@@ -549,7 +549,7 @@ jobs:
             --draft \
             --prerelease \
             --latest=false \
-            --title "Gooo v0.6.9-dev" \
+            --title "Gooo v0.6.10-dev" \
             --notes-file "$notes"
       - name: Verify draft and publish prerelease
         shell: bash
@@ -591,7 +591,7 @@ jobs:
               manifest_digest:$manifest_digest,
               publication_meta_source_digest:$meta_source_digest,
               release:{url:.url,prerelease:.isPrerelease,draft:.isDraft,asset_names:[.assets[].name]|sort},
-              claim:{id:"release://gooo/v0.6.9-dev",entity:"GoooExperimentalPrerelease",status:"DISCHARGED",state:"CLOSED"},
+              claim:{id:"release://gooo/v0.6.10-dev",entity:"GoooExperimentalPrerelease",status:"DISCHARGED",state:"CLOSED"},
               summary:{total_work:9,closed:9,unknown:0,refuted:0,assets_published:(.assets|length),assets_total:9,checksum_entries:8,repository_writes:0}
             }' "$release_json" > "$RUNNER_TEMP/publication.json"
       - name: Upload publication result
@@ -634,7 +634,7 @@ jobs:
               mutation_allowed:false,
               upstream:{prepare:$prepare,publish:$publish},
               claim:{
-                id:"release://gooo/v0.6.9-dev",entity:"GoooExperimentalPrerelease",
+                id:"release://gooo/v0.6.10-dev",entity:"GoooExperimentalPrerelease",
                 status:"ACTIVE",state:"UNKNOWN",resolution:"OPERATION_CLASS",
                 stage:"RELEASE",step:"PUBLISH_PRERELEASE",
                 reason:"RELEASE_PUBLICATION_UPSTREAM_NOT_SUCCESS",

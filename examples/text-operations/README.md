@@ -50,7 +50,7 @@ go run ./cmd/gooo package replay --json \
   examples/text-operations/gooo.workspace.json
 ```
 
-Use a checkout containing the workspace text-primitive fix; the original
+Use the 0.6.10 source or a checkout containing the workspace text-primitive fix; the original
 0.6.9-dev release supports this source through `body-compose` but rejects `len`
 in package call resolution. Package execution now recognizes `len` and `int64`
 in bodies and declared alternatives, including arguments containing source
