@@ -182,6 +182,7 @@ type IRBodyFillReceipt struct {
 	SelectionAdjustment             string                                `json:"selection_adjustment"`
 	Decision                        decisionroute.Receipt                 `json:"decision"`
 	CandidateScores                 []IRBodyFillCandidateScore            `json:"candidate_scores"`
+	RejectedCandidates              []IRBodyFillCandidateRejection        `json:"rejected_candidates,omitempty"`
 	BehavioralProbes                *IRBodyFillBehavioralProbeReceipt     `json:"behavioral_probes,omitempty"`
 	TestSuiteSHA256                 string                                `json:"test_suite_sha256"`
 	TestCasesPassed                 int                                   `json:"test_cases_passed"`
@@ -209,21 +210,22 @@ type IRBodyFillHoleFill struct {
 }
 
 type irBodyFillState struct {
-	Schema           string                            `json:"schema"`
-	Stage            string                            `json:"stage"`
-	Activity         string                            `json:"activity"`
-	ActivityID       string                            `json:"activity_id"`
-	InputType        string                            `json:"input_type"`
-	InputTypes       []string                          `json:"input_types,omitempty"`
-	OutputType       string                            `json:"output_type"`
-	Intent           string                            `json:"intent"`
-	HoleID           string                            `json:"hole_id"`
-	HoleIDs          []string                          `json:"hole_ids,omitempty"`
-	BodyIR           string                            `json:"body_ir"`
-	TestCaseCount    int                               `json:"test_case_count"`
-	TestSuiteSHA256  string                            `json:"test_suite_sha256"`
-	Candidates       []IRBodyFillCandidateScore        `json:"candidate_scores"`
-	BehavioralProbes *IRBodyFillBehavioralProbeReceipt `json:"behavioral_probes,omitempty"`
+	Schema             string                            `json:"schema"`
+	Stage              string                            `json:"stage"`
+	Activity           string                            `json:"activity"`
+	ActivityID         string                            `json:"activity_id"`
+	InputType          string                            `json:"input_type"`
+	InputTypes         []string                          `json:"input_types,omitempty"`
+	OutputType         string                            `json:"output_type"`
+	Intent             string                            `json:"intent"`
+	HoleID             string                            `json:"hole_id"`
+	HoleIDs            []string                          `json:"hole_ids,omitempty"`
+	BodyIR             string                            `json:"body_ir"`
+	TestCaseCount      int                               `json:"test_case_count"`
+	TestSuiteSHA256    string                            `json:"test_suite_sha256"`
+	Candidates         []IRBodyFillCandidateScore        `json:"candidate_scores"`
+	RejectedCandidates []IRBodyFillCandidateRejection    `json:"rejected_candidates,omitempty"`
+	BehavioralProbes   *IRBodyFillBehavioralProbeReceipt `json:"behavioral_probes,omitempty"`
 }
 
 // GenerateWithIRBodyFill builds the typed hole plan synchronously from a Gooo
@@ -354,9 +356,14 @@ func generateWithIRBodyFillOptions(
 	}
 	planStarted := time.Now()
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
+	var rejected []IRBodyFillCandidateRejection
+	eligible := make([]IRBodyFillCandidate, 0, len(plan.Candidates))
 	candidateBodies := make(map[string]string, len(plan.Candidates))
 	candidateSources := make(map[string][]byte, len(plan.Candidates))
 	for _, candidate := range plan.Candidates {
+		if err := ctx.Err(); err != nil {
+			return Result{}, err
+		}
 		fills := bodyFillCandidateFills(plan, candidate)
 		candidateBody := body
 		for _, hole := range holes {
@@ -370,12 +377,18 @@ func generateWithIRBodyFillOptions(
 			file.Package.Name, activityName, activityID, bodyFillInputParameters(activity.Inputs), "int64", candidateBody, preserveRoute,
 		)
 		if err != nil {
-			return Result{}, fmt.Errorf("candidate %q is not a valid typed body: %w", candidate.ID, err)
+			rejected = append(rejected, rejectedBodyFillCandidate(plan, candidate, "TYPECHECK", err))
+			continue
 		}
-		_, passed, err := evaluateIntegerCases(generated.source, activityName, plan.TestCases)
+		_, passed, err := evaluateIntegerCasesContext(ctx, []byte(generated.source), activityName, plan.TestCases)
 		if err != nil {
-			return Result{}, fmt.Errorf("evaluate candidate %q: %w", candidate.ID, err)
+			if ctx.Err() != nil {
+				return Result{}, ctx.Err()
+			}
+			rejected = append(rejected, rejectedBodyFillCandidate(plan, candidate, "TRAINING_EVALUATION", err))
+			continue
 		}
+		eligible = append(eligible, candidate)
 		candidateBodies[candidate.ID] = candidateBody
 		candidateSources[candidate.ID] = []byte(generated.source)
 		accuracy := float64(passed) * 100 / float64(len(plan.TestCases))
@@ -388,6 +401,10 @@ func generateWithIRBodyFillOptions(
 			TestCasesPassed: passed, TestCasesTotal: len(plan.TestCases), AccuracyPercent: accuracy,
 		})
 	}
+	if len(eligible) == 0 {
+		return Result{}, noValidBodyFill(ctx, activityName, plan, rejected)
+	}
+	usingTinyGo = usingTinyGo && len(eligible) > 1
 	behavioralProbeStarted := time.Now()
 	behavioralProbes, err := measureIRBodyFillBehavioralProbes(activityName, candidateSources, plan.TestCases, plan.HoldoutTestCases)
 	if err != nil {
@@ -402,22 +419,22 @@ func generateWithIRBodyFillOptions(
 		Activity: activityName, ActivityID: activityID, InputType: "Integer", InputTypes: bodyFillInputTypes(activity.Inputs), OutputType: "Integer",
 		Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes), HoleIDs: bodyFillHoleIDs(plan, holes), BodyIR: body,
 		TestCaseCount: len(plan.TestCases), TestSuiteSHA256: testSuiteSHA256, Candidates: scores,
-		BehavioralProbes: behavioralProbes,
+		BehavioralProbes: behavioralProbes, RejectedCandidates: rejected,
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("encode Gooo IR body-fill state: %w", err)
 	}
 	requestOptions := make([]decisionroute.Option, 0, len(plan.Candidates))
-	modelCandidates := bodyFillModelCandidates(holes, plan.Candidates)
+	modelCandidates := bodyFillModelCandidates(holes, eligible)
 	tinyModelFocusHole := ""
 	if usingTinyGo {
 		if plan.Schema == bodyFillMultiPlanSchema {
-			tinyModelFocusHole, err = tinyGoBodyFillFocusHole(holes, plan.Candidates)
+			tinyModelFocusHole, err = tinyGoBodyFillFocusHole(holes, eligible)
 			if err != nil {
 				return Result{}, err
 			}
 		}
-		requestOptions, err = tinyGoBodyFillOptionsForHole(plan.Candidates, tinyModelFocusHole)
+		requestOptions, err = tinyGoBodyFillOptionsForHole(eligible, tinyModelFocusHole)
 		if err != nil {
 			return Result{}, err
 		}
@@ -447,7 +464,7 @@ func generateWithIRBodyFillOptions(
 			Instructions: instructions,
 			Options:      requestOptions,
 		},
-		Fallback: plan.Candidates[0].ID,
+		Fallback: eligible[0].ID,
 	}
 	if usingTinyGo {
 		request.Intent = plan.Intent
@@ -555,7 +572,7 @@ func generateWithIRBodyFillOptions(
 		BestCandidateID:    best.ID, BestAccuracyPercent: best.AccuracyPercent,
 		SelectionRegretPP:   best.AccuracyPercent - proposedScore.AccuracyPercent,
 		SelectionAdjustment: selectionAdjustment,
-		Decision:            decision, CandidateScores: scores,
+		Decision:            decision, CandidateScores: scores, RejectedCandidates: rejected,
 		BehavioralProbes: behavioralProbes,
 		TestSuiteSHA256:  testSuiteSHA256, TestCasesPassed: passed,
 		TestCasesTotal: len(plan.TestCases), FunctionalAccuracyPct: accuracy,

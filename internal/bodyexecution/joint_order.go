@@ -10,11 +10,12 @@ import (
 )
 
 type jointSlot struct {
-	activity  string
-	initial   uint16
-	ranking   []uint16
-	searchIDs []string
-	fillIDs   []string
+	activity     string
+	initial      uint16
+	ranking      []uint16
+	searchIDs    []string
+	fillIDs      []string
+	fillRejected bool
 }
 
 func jointSlots(ctx context.Context, filename string, source []byte, prior Composition) ([]jointSlot, string, error) {
