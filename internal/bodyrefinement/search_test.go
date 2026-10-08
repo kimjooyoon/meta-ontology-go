@@ -67,7 +67,7 @@ func TestSearchPolicyKeepsUnavailableAlternativesAndRoundCapsPartial(t *testing.
 				options.MaxRounds = 2
 			} else {
 				var lines []string
-				for _, line := range strings.Split(string(source), "\n") {
+				for line := range strings.SplitSeq(string(source), "\n") {
 					if strings.Contains(line, "search_alternative") {
 						continue
 					}
