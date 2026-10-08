@@ -69,6 +69,9 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
+The [0.6.13 candidate guide](docs/releases/0.6.13-dev.md) adds caller-guided integer
+expression search, rejected-candidate continuation and replayable partial results.
+The release page identifies whether the candidate has been publicly published.
 The [0.6.12 development guide](docs/releases/0.6.12-dev.md) introduces whole-program
 construction using caller results, bounded source choices and model-free saved replay.
 The [0.6.11 development guide](docs/releases/0.6.11-dev.md) covers source-derived
