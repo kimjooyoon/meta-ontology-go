@@ -426,7 +426,7 @@ func validateExpression(expression ast.Expr) error {
 		return validateExpression(value.X)
 	case *ast.BinaryExpr:
 		switch value.Op {
-		case token.ADD, token.SUB, token.MUL, token.EQL, token.NEQ, token.LSS, token.LEQ, token.GTR, token.GEQ, token.LAND, token.LOR:
+		case token.ADD, token.SUB, token.MUL, token.QUO, token.REM, token.EQL, token.NEQ, token.LSS, token.LEQ, token.GTR, token.GEQ, token.LAND, token.LOR:
 		default:
 			return fmt.Errorf("unsupported binary operator %s", value.Op)
 		}
