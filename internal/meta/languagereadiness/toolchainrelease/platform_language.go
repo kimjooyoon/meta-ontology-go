@@ -32,7 +32,10 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 	if err := smokePackageText(binary, input); err != nil {
 		return err
 	}
-	return smokePackageSource(binary, input)
+	if err := smokePackageSource(binary, input); err != nil {
+		return err
+	}
+	return smokeJointConstruction(binary, work, input)
 }
 
 func smokeLanguageExample(binary, work string, input BuildInput, example languageSmokeCase) error {
