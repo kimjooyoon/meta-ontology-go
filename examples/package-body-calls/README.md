@@ -48,7 +48,7 @@ native executions.
 
 ## Read names and imports from source
 
-The current development compiler also reads package names and imports directly
+The 0.6.11 development compiler also reads package names and imports directly
 from the Gooo files. `source.workspace.json` lists only package paths, source
 files and the entry:
 

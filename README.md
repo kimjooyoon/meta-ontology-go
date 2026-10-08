@@ -60,6 +60,8 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
+The [0.6.11 development guide](docs/releases/0.6.11-dev.md) covers source-derived
+workspace names and imports, shorter project starters and saved package reuse.
 The [0.6.10 development guide](docs/releases/0.6.10-dev.md) covers text primitives
 in package execution and the public Gooo source-editing tool. The
 [0.6.9 guide](docs/releases/0.6.9-dev.md) introduces string operations, following
