@@ -1,0 +1,59 @@
+package bodyexecution
+
+import "github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+
+const jointSchema = "gooo/joint-construction/v1"
+
+// JointConstruction keeps local preparation, caller feedback and subsequent
+// evaluation distinct. Initial is also the source-bound historical model order.
+type JointConstruction struct {
+	Schema               string           `json:"schema"`
+	Stage                string           `json:"stage"`
+	Failure              string           `json:"failure,omitempty"`
+	OriginalSourceSHA256 string           `json:"original_source_sha256"`
+	ConstructionCases    CompositionCases `json:"construction_cases"`
+	ConstructionSHA256   string           `json:"construction_sha256"`
+	Initial              Composition      `json:"initial"`
+	ProgramBudget        int              `json:"program_budget"`
+	CandidateSpace       string           `json:"candidate_space"`
+	Attempts             []JointAttempt   `json:"attempts"`
+	SelectedAttempt      int              `json:"selected_attempt"`
+	SelectedSource       string           `json:"selected_source"`
+	Selected             Composition      `json:"selected"`
+	Decision             string           `json:"decision"`
+	StopReason           string           `json:"stop_reason"`
+	ElapsedNS            int64            `json:"elapsed_ns"`
+	Scope                string           `json:"scope"`
+}
+
+type JointAttempt struct {
+	Masks       []uint16                      `json:"masks"`
+	Candidates  []bodycodegen.RecordCandidate `json:"candidates"`
+	LocalPassed int                           `json:"local_passed"`
+	LocalTotal  int                           `json:"local_total"`
+	Runtime     CompositionRuntime            `json:"runtime"`
+}
+
+type JointOptions struct {
+	EntryActivity string
+	ModelPath     string
+	ProgramBudget int
+	GoBinary      string
+}
+
+type JointEvaluation struct {
+	Runtime              CompositionRuntime   `json:"runtime"`
+	ConstructionReplayed bool                 `json:"construction_replayed"`
+	NewModelCalls        int                  `json:"new_model_calls"`
+	InputSeparation      JointInputSeparation `json:"input_separation"`
+}
+
+// This metric describes caller root tuples, including duplicates. It makes no
+// claim about model-training exposure or all indirect local-example inputs.
+type JointInputSeparation struct {
+	UniqueInputs       int    `json:"unique_inputs"`
+	DuplicateRows      int    `json:"duplicate_rows"`
+	ConstructionInputs int    `json:"construction_inputs"`
+	OtherInputs        int    `json:"other_inputs"`
+	Scope              string `json:"scope"`
+}

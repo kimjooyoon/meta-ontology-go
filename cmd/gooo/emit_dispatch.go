@@ -29,6 +29,8 @@ func runExtensionCommand(args []string, stdout, stderr io.Writer) int {
 		return runBodyRealize(args[1:], stdout, stderr)
 	case "body-compose":
 		return runBodyCompose(args[1:], stdout, stderr)
+	case "body-construct":
+		return runBodyConstruct(args[1:], stdout, stderr)
 	case "body-refine":
 		return runBodyRefine(args[1:], stdout, stderr)
 	case "completeness-delta":

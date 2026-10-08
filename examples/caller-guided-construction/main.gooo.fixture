@@ -1,0 +1,12 @@
+package caller
+namespace caller
+entity Integer id "caller://integer"
+entity Box id "caller://box" fields {
+    field value id "caller://value" type integer required one
+}
+activity Choose(Integer) -> Box computes "return Box{value: input}" assembling {
+    choice "value" field_value at "0" alternative "input * 2" intent "호출자가 요구하는 두 배 값을 선택한다. Choose a doubled value."
+    value_case "[0]" -> "{\"value\":0}"
+    attempts "2"
+}
+activity Main(Integer) -> Integer computes "let result = Choose(input); return result.value"
