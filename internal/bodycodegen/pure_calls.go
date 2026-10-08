@@ -11,6 +11,8 @@ import (
 
 const pureCallLimit = 4096
 
+func bodyPrimitiveName(name string) bool { return name == "len" || name == "int64" }
+
 type PureCallActivity struct {
 	Name          string `json:"name"`
 	ActivityID    string `json:"activity_id"`
@@ -105,6 +107,11 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 	}
 	budget, height := 0, 0
 	for ordinal, callee := range names {
+		// Source-declared activities retain their identity even when their name
+		// shadows a Go primitive. Primitives themselves add no activity edge.
+		if bodyPrimitiveName(callee) && r.ids[callee] == "" {
+			continue
+		}
 		cost, err := r.include(callee, depth+1)
 		if err != nil {
 			return 0, err
@@ -167,7 +174,7 @@ func (p preparedBody) generateBody(body, route string) (generatedRoute, error) {
 	}
 	result, err := generateRouteWithCalls(p.packageName, p.activity.Name, p.activityID,
 		p.parameters, p.outputType, body, route, functions, p.allRecords)
-	if err == nil {
+	if err == nil && len(functions) > 0 {
 		result.report.CallClosure = &PureCallClosure{Schema: "gooo/pure-activity-call-closure/v1", MaxCallsPerInvocation: budget, Edges: edges}
 		for _, f := range functions {
 			result.report.CallClosure.Activities = append(result.report.CallClosure.Activities, f.identity)

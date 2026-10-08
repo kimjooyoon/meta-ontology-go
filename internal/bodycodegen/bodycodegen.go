@@ -411,6 +411,18 @@ func validateExpression(expression ast.Expr) error {
 	switch value := expression.(type) {
 	case *ast.CallExpr:
 		return validatePureCallExpression(value)
+	case *ast.SliceExpr:
+		if value.Slice3 {
+			return fmt.Errorf("Text slices accept only low and high byte offsets")
+		}
+		for _, part := range []ast.Expr{value.X, value.Low, value.High} {
+			if part != nil {
+				if err := validateExpression(part); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
 	case *ast.Ident, *ast.BasicLit:
 		return nil
 	case *ast.ParenExpr:
@@ -484,7 +496,7 @@ func normalizeIntegerLocalInitializers(packageName string, file *ast.File, fset 
 			return true
 		}
 		value, ok := information.Types[spec.Values[0]]
-		if !ok || value.Type == nil {
+		if !ok || value.Type == nil || value.Value == nil {
 			return true
 		}
 		basic, ok := value.Type.Underlying().(*types.Basic)

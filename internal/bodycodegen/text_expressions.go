@@ -1,0 +1,74 @@
+package bodycodegen
+
+import (
+	"fmt"
+	"go/ast"
+	"go/types"
+)
+
+func (e *integerBodyEvaluator) evaluateBodyPrimitive(call *ast.CallExpr) (any, bool, error) {
+	name, ok := call.Fun.(*ast.Ident)
+	if !ok || len(call.Args) != 1 {
+		return nil, false, nil
+	}
+	object := e.information.Uses[name]
+	_, builtin := object.(*types.Builtin)
+	_, conversion := object.(*types.TypeName)
+	if !(builtin && name.Name == "len") && !(conversion && name.Name == "int64") {
+		return nil, false, nil
+	}
+	value, err := e.evaluateExpression(call.Args[0])
+	if err != nil {
+		return nil, true, err
+	}
+	if builtin {
+		text, ok := value.(string)
+		if !ok {
+			return nil, true, fmt.Errorf("len requires Text, got %T", value)
+		}
+		value = int64(len(text))
+	}
+	value, err = coerceBodyValue(value, e.information.Types[call].Type)
+	return value, true, err
+}
+
+func (e *integerBodyEvaluator) textOffset(expression ast.Expr, fallback int64) (int64, error) {
+	if expression == nil {
+		return fallback, nil
+	}
+	value, err := e.evaluateExpression(expression)
+	if err != nil {
+		return 0, err
+	}
+	offset, ok := value.(int64)
+	if !ok {
+		return 0, fmt.Errorf("Text byte offset requires an integer, got %T", value)
+	}
+	return offset, nil
+}
+
+func (e *integerBodyEvaluator) evaluateTextSlice(slice *ast.SliceExpr) (any, error) {
+	if slice.Slice3 {
+		return nil, fmt.Errorf("Text slices accept only low and high byte offsets")
+	}
+	value, err := e.evaluateExpression(slice.X)
+	if err != nil {
+		return nil, err
+	}
+	text, ok := value.(string)
+	if !ok {
+		return nil, fmt.Errorf("slice requires Text, got %T", value)
+	}
+	low, err := e.textOffset(slice.Low, 0)
+	if err != nil {
+		return nil, err
+	}
+	high, err := e.textOffset(slice.High, int64(len(text)))
+	if err != nil {
+		return nil, err
+	}
+	if low < 0 || high < low || high > int64(len(text)) {
+		return nil, fmt.Errorf("Text slice byte offsets [%d:%d] exceed length %d", low, high, len(text))
+	}
+	return text[low:high], nil
+}

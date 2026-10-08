@@ -39,7 +39,7 @@ func TestPureActivityCallsGenerateInterpretAndBindDependencies(t *testing.T) {
 
 func TestPureActivityCallsRejectUnknownEffectsAndCycles(t *testing.T) {
 	for _, replacement := range []struct{ old, next string }{
-		{"Twice(-input)", "Missing(input)"}, {"Twice(-input)", "int64(input)"},
+		{"Twice(-input)", "Missing(input)"}, {"Twice(-input)", "float64(input)"},
 		{"Twice(-input)", "Twice(\"text\")"}, {"Twice(-input)", "Twice(input, input)"},
 		{"Twice(-input)", "Twice()"}, {"Twice(-input)", "external.Twice(input)"},
 		{"input * 2", "Score(input)"}, {"let result = input * 2; return result", "input = 1; return input"},

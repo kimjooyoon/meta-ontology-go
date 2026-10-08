@@ -28,8 +28,8 @@ func (p *bodyProjection) validatePureCalls(records []RecordType) error {
 	ast.Inspect(p.file, func(node ast.Node) bool {
 		if call, ok := node.(*ast.CallExpr); ok {
 			name, ok := call.Fun.(*ast.Ident)
-			if !ok || !allowed[name.Name] {
-				err = fmt.Errorf("unsupported call: callee must be a source-declared pure activity")
+			if !ok || (!allowed[name.Name] && !bodyPrimitiveName(name.Name)) {
+				err = fmt.Errorf("unsupported call: callee must be a source-declared pure activity or a supported value primitive")
 			}
 		}
 		return err == nil
