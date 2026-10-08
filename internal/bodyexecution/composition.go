@@ -60,8 +60,7 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 		result.ElapsedNS = time.Since(start).Nanoseconds()
 		if err != nil {
 			result.Failure = err.Error()
-			var rejected *bodycodegen.NoValidBodyFillCandidates
-			if errors.As(err, &rejected) {
+			if rejected, ok := errors.AsType[*bodycodegen.NoValidBodyFillCandidates](err); ok {
 				result.FillFailure = &rejected.Observation
 			}
 		}
