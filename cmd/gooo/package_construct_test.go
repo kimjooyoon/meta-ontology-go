@@ -131,3 +131,21 @@ func TestPackageConstructUsageAndFailureReceipts(t *testing.T) {
 		t.Fatal(err, stdout.String())
 	}
 }
+
+func TestPackageConstructionReadsItsDeclaredReceiptSize(t *testing.T) {
+	r := packageConstructionReceipt{Schema: "gooo/workspace-caller-construction-receipt/v1",
+		Decision: "PARTIAL_FINITE", ManifestDigest: "same-manifest",
+		Result: &workspaceexecution.ConstructionResult{Scope: strings.Repeat("x", 17<<20)}}
+	raw, err := json.Marshal(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "large.json")
+	if err := os.WriteFile(path, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	saved, digest, err := readSavedPackageConstruction(OSFileReader{}, path, "same-manifest")
+	if err != nil || saved.Result == nil || len(saved.Result.Scope) != 17<<20 || digest != workspaceDigest(raw) {
+		t.Fatal("a valid receipt within the 32 MiB boundary cannot be reopened", err)
+	}
+}

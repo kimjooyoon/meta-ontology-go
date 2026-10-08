@@ -136,7 +136,7 @@ func readPackageConstructionCases(reader SourceReader, path string) (bodyexecuti
 
 func readSavedPackageConstruction(reader SourceReader, path, manifestDigest string) (packageConstructionReceipt, string, error) {
 	var saved packageConstructionReceipt
-	raw, err := readSource(reader, path)
+	raw, err := readPackageConstructionReceipt(reader, path)
 	if err != nil {
 		return saved, "", err
 	}
@@ -149,6 +149,18 @@ func readSavedPackageConstruction(reader SourceReader, path, manifestDigest stri
 		return saved, digest, fmt.Errorf("saved package construction envelope or manifest differs")
 	}
 	return saved, digest, nil
+}
+
+func readPackageConstructionReceipt(reader SourceReader, path string) ([]byte, error) {
+	switch reader.(type) {
+	case OSFileReader, *OSFileReader:
+		return readBodyExecutionFile(path, 32<<20)
+	}
+	raw, err := reader.ReadFile(path)
+	if err == nil && len(raw) > 32<<20 {
+		return nil, inputLimitError(32 << 20)
+	}
+	return raw, err
 }
 
 func packageConstructionDecision(r workspaceexecution.ConstructionResult) string {
