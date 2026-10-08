@@ -8,7 +8,7 @@ func inspectPositive(operation string, observed cliruntime.Observation) outputEv
 	result := outputEvidence{stderrOK: observed.Stderr == ""}
 	switch operation {
 	case "VERSION_TEXT":
-		result.stdoutOK = observed.Stdout == "gooo 0.6.12-dev (development)\n"
+		result.stdoutOK = observed.Stdout == "gooo 0.6.13-dev (development)\n"
 	case "VERSION_JSON":
 		result.stdoutOK, result.structuredOutputs = validVersionJSON(observed.Stdout), 1
 	case "CHECK_TEXT":

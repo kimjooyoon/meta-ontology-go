@@ -3,6 +3,7 @@ package bodyexecution
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -42,24 +43,39 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 	if err != nil {
 		return finish(err)
 	}
-	slots, space, err := jointSlots(r.Initial)
+	slots, space, err := jointSlots(ctx, filename, source, r.Initial)
 	if err != nil {
 		return finish(err)
 	}
 	r.CandidateSpace, r.Stage = space, "CALLER_GUIDED_SEARCH"
+	r.CandidateKinds = jointCandidateKinds(slots)
+	if len(r.CandidateKinds) != 0 {
+		r.Schema = jointMixedSchema
+		r.Scope = "source-bounded record masks and integer IR search expressions; local obligations and native caller expectations retained separately; optional model order only for record choices; search uses its deterministic source-budget prefix; no general correctness claim"
+	}
 	executor := NewExecutor()
 	defer executor.Close()
 	for _, masks := range jointMaskOrder(slots, options.ProgramBudget) {
+		if err := ctx.Err(); err != nil {
+			return finish(err)
+		}
 		attempt, selected, program, err := materializeJoint(ctx, filename, source, cases, options.EntryActivity, slots, masks)
 		if err != nil {
 			return finish(err)
 		}
-		attempt.Runtime, err = executor.ExecuteComposition(ctx, filename, selected, program, cases, options.GoBinary)
+		if attempt.Rejection == nil {
+			attempt.Runtime, err = executor.ExecuteComposition(ctx, filename, selected, program, cases, options.GoBinary)
+		} else {
+			if r.Schema != jointRejectionSchema {
+				r.Scope += "; rejected local expressions consume attempts without a caller score; rejected local totals cover only the scored prefix"
+			}
+			r.Schema = jointRejectionSchema
+		}
 		r.Attempts = append(r.Attempts, attempt)
 		if err != nil {
 			return finish(err)
 		}
-		if r.SelectedAttempt < 0 || betterJoint(attempt, r.Attempts[r.SelectedAttempt]) {
+		if attempt.Rejection == nil && (r.SelectedAttempt < 0 || betterJoint(attempt, r.Attempts[r.SelectedAttempt])) {
 			r.SelectedAttempt, r.SelectedSource, r.Selected = len(r.Attempts)-1, string(selected), program
 		}
 		if raw, err := json.MarshalIndent(r, "", "  "); err != nil || len(raw) > 30<<20 {
@@ -95,12 +111,12 @@ func validateJointSource(ctx context.Context, filename string, source []byte, ca
 		}
 	}
 	if len(names) == 0 || len(names) > compositionLimit {
-		return fmt.Errorf("joint construction requires 1..16 record-choice bodies")
+		return fmt.Errorf("joint construction requires 1..16 record-choice or source IR search bodies")
 	}
 	for _, name := range names {
 		spec, err := bodycodegen.SourceAssembly(ctx, filename, source, name)
-		if err != nil || !bodycodegen.IsRecordAssembly(spec) {
-			return fmt.Errorf("joint construction requires a record-choice contract at %s", name)
+		if err != nil || !bodycodegen.IsRecordAssembly(spec) && !bodycodegen.IsSourceIRSearch(spec) {
+			return fmt.Errorf("joint construction requires a record-choice or source IR search contract at %s", name)
 		}
 	}
 	return nil
@@ -114,6 +130,27 @@ func materializeJoint(ctx context.Context, filename string, source []byte, cases
 	}
 	current := source
 	for i, slot := range slots {
+		if len(slot.searchIDs) != 0 {
+			if int(masks[i]) >= len(slot.searchIDs) {
+				return attempt, nil, Composition{}, fmt.Errorf("search candidate index exceeds the source bound")
+			}
+			candidate, selected, err := bodycodegen.RealizeSourceSearchCandidate(ctx, filename, current, slot.activity, slot.searchIDs[masks[i]])
+			if err != nil {
+				var rejected *bodycodegen.SourceSearchCandidateRejection
+				if errors.As(err, &rejected) && ctx.Err() == nil {
+					attempt.SearchCandidates = append(attempt.SearchCandidates, candidate)
+					attempt.Rejection = &JointCandidateRejection{Stage: "LOCAL_SOURCE_SEARCH", Slot: i,
+						Activity: slot.activity, CandidateID: candidate.Attempt.CandidateID, Reason: rejected.Error()}
+					return attempt, nil, Composition{}, nil
+				}
+				return attempt, nil, Composition{}, fmt.Errorf("joint search activity %s: %w", slot.activity, err)
+			}
+			attempt.SearchCandidates = append(attempt.SearchCandidates, candidate)
+			attempt.LocalPassed += candidate.Attempt.TestCasesPassed
+			attempt.LocalTotal += candidate.Attempt.TestCasesTotal
+			current = selected
+			continue
+		}
 		candidate, selected, err := bodycodegen.RealizeRecordCandidate(ctx, filename, current, slot.activity, masks[i])
 		if err != nil {
 			return attempt, nil, Composition{}, fmt.Errorf("joint activity %s: %w", slot.activity, err)

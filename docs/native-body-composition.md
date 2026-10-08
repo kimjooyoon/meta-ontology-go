@@ -343,6 +343,32 @@ the candidate space. One sequential pair on a shared host establishes this
 example's construction behavior; it does not establish a general speed or
 model-quality advantage. Raw receipts retain the unsuccessful baseline.
 
+## Reconsider integer IR expressions with caller feedback
+
+The development `body-construct` path also accepts source-declared integer
+`search hole` bodies alongside record choices. Its source grammar derives
+expressions; the caller's native execution can select a different expression
+even when the initial local examples already pass. Each activity's `attempts`
+still bounds its eligible prefix, separately from the whole-program budget.
+
+The [caller IR search example](../examples/caller-ir-search/README.md) covers
+scalar-only and mixed construction. Mixed receipts use
+`gooo/joint-construction/v2`: `candidate_kinds` distinguishes record masks from
+source-search indices, and `search_candidates` retains exact local observations
+and grammar coverage. Record-only receipts keep v1. Replay checks both formats
+against the source and re-executes caller cases with no new inference. The
+optional graph model orders record choices; integer expression ordering remains
+deterministic. This extension is newer than the published 0.6.12 binary.
+
+If a source-search expression fails its local typecheck or pure evaluation, the
+history uses `gooo/joint-construction/v3` and retains a `rejection`. That
+combination consumes one program attempt and receives no native caller score.
+Local totals on that row cover only the already scored prefix. Search continues
+within the original budgets, and saved replay rederives the rejected expression
+and reason. [Runnable rejection example](../examples/caller-search-rejection/README.md).
+Request cancellation, invalid source/selection, reconstruction failure, native
+toolchain failure and compiled-program execution failure still stop the request.
+
 ## Current boundaries
 
 The graph supports 1..16 activities with 1..16 inputs and one result each.
