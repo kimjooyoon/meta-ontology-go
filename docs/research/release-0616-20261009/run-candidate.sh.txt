@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+out=/tmp/gooo-release-0616-20261009.zJ18V6
+compiler="$out/candidate-binary/gooo"
+fixture=examples/caller-native-failure
+model=/Users/alice/meta-go/research/ecosystem/gooo-ecosystem-workbench/models/graph-chooser-20261008/all-data-demonstration/qat_ternary/model.json
+test "$(shasum -a 256 "$model" | cut -d ' ' -f 1)" = 3c68205a660695103712e2115ce90accd298b406dced8ad5ad5c9b84bab0a202
+test "$(shasum -a 256 "$(dirname "$model")/weights.bin" | cut -d ' ' -f 1)" = 76f68845a03ed8c8bc261a57c919e96dcdd352d3c35bcdaeb3d9b51a88975c6f
+for budget in 5 6; do
+ /usr/bin/time -lp "$compiler" body-construct --source "$fixture/source.gooo.fixture" --entry Main --construction-cases "$fixture/construction-cases.json" --cases "$fixture/evaluation-cases.json" --attempts "$budget" --out "$out/budget-$budget" > "$out/budget-$budget.json" 2> "$out/budget-$budget.time"
+done
+/usr/bin/time -lp "$compiler" body-construct --source "$out/budget-6/original.gooo" --construction "$out/budget-6/construction.json" --cases "$fixture/evaluation-cases.json" > "$out/budget-replay.json" 2> "$out/budget-replay.time"
+/usr/bin/time -lp "$compiler" body-construct --source "$fixture/mixed-model.gooo.fixture" --entry Main --construction-cases "$fixture/mixed-construction-cases.json" --cases "$fixture/mixed-evaluation-cases.json" --attempts 48 --out "$out/mixed-fixed" > "$out/mixed-fixed.json" 2> "$out/mixed-fixed.time"
+/usr/bin/time -lp "$compiler" body-construct --source "$fixture/mixed-model.gooo.fixture" --entry Main --construction-cases "$fixture/mixed-construction-cases.json" --cases "$fixture/mixed-evaluation-cases.json" --attempts 48 --model "$model" --out "$out/mixed-model" > "$out/mixed-model.json" 2> "$out/mixed-model.time"
+/usr/bin/time -lp "$compiler" body-construct --source "$out/mixed-model/original.gooo" --construction "$out/mixed-model/construction.json" --cases "$fixture/mixed-evaluation-cases.json" > "$out/mixed-replay.json" 2> "$out/mixed-replay.time"
+cmp "$out/mixed-fixed/selected.gooo" "$out/mixed-model/selected.gooo"
+go run /tmp/gooo-native-arithmetic-20261009.BqkFyh/recount.go "$out" "$fixture" > "$out/summary.json"
+printf 'PASS: six original native observations, unchanged model, exact source/cases and saved replay\n'
