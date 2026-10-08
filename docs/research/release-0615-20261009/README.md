@@ -40,3 +40,15 @@ Raw process timing files are retained as observations, not controlled benchmarks
 or host-wide CPU utilization measurements. Native combinations can contain two
 fresh executions and are distinct from child-process counts. The original
 feature and earlier release records remain available unchanged.
+
+## CI projection repair
+
+At candidate `a202e6e5`, all four native platform witnesses and publication
+conformance passed. Canonical semantic conformance found
+`NO_SAFE_DECLARATION_CAPACITY` while extracting the new 72-line validation
+function: the generated helper could not fit the captured anonymous result type.
+The validator was divided into identity, initial partition, attempts and final
+evaluation functions with the existing named input type. Expectations, fixtures,
+budgets and the compiler's construction behavior are unchanged. The same release
+tests, 31 mutation cases, race checks and vet pass after the refactor. Final
+canonical CI remains the authority for the projected repository.
