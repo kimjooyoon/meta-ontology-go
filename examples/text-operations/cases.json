@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs":{"Classify":"hello.gooo"},"expected":{"Classify":{"source":true,"stem":"hello","bytes":10}}},
+    {"inputs":{"Classify":".hidden.gooo"},"expected":{"Classify":{"source":false,"stem":".hidden","bytes":12}}},
+    {"inputs":{"Classify":"README.md"},"expected":{"Classify":{"source":false,"stem":"README.md","bytes":9}}},
+    {"inputs":{"Classify":".gooo"},"expected":{"Classify":{"source":false,"stem":"","bytes":5}}},
+    {"inputs":{"Classify":"a.gooo.gooo"},"expected":{"Classify":{"source":true,"stem":"a.gooo","bytes":11}}},
+    {"inputs":{"Classify":"a.GOOO"},"expected":{"Classify":{"source":false,"stem":"a.GOOO","bytes":6}}},
+    {"inputs":{"Classify":"gooo"},"expected":{"Classify":{"source":false,"stem":"gooo","bytes":4}}},
+    {"inputs":{"Classify":"."},"expected":{"Classify":{"source":false,"stem":".","bytes":1}}},
+    {"inputs":{"Classify":"예제.gooo"},"expected":{"Classify":{"source":true,"stem":"예제","bytes":11}}},
+    {"inputs":{"Classify":"🙂.gooo"},"expected":{"Classify":{"source":true,"stem":"🙂","bytes":9}}},
+    {"inputs":{"Classify":"é.gooo"},"expected":{"Classify":{"source":true,"stem":"é","bytes":8}}},
+    {"inputs":{"Classify":"x.gooo "},"expected":{"Classify":{"source":false,"stem":"x.gooo ","bytes":7}}}
+  ]
+}
