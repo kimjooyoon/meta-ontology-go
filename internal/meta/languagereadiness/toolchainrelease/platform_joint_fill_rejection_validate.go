@@ -52,16 +52,20 @@ func validateJointFillRejectionFinal(r jointSmokeOutput, cases []jointSmokeCase,
 }
 
 func validateJointFillRejectionInitial(r jointSmokeOutput) error {
+	return validateJointFillInitialIDs(r, []string{"late_unbounded", "early_wrong_cap", "bounded"})
+}
+
+func validateJointFillInitialIDs(r jointSmokeOutput, ids []string) error {
 	if len(r.Construction.Initial.Preparations) != 1 {
 		return fmt.Errorf("rejected-fill initial count differs")
 	}
 	i := r.Construction.Initial.Preparations[0].Generation.Report.Fill
 	if i == nil || i.Selected != "late_unbounded" || i.PlanSHA == "" || !jointSmokeInt(i.Calls, 0) ||
-		len(i.Scores) != 3 || len(i.Rejected) != 2 {
+		len(i.Scores) != len(ids) || len(i.Rejected) != 2 {
 		return fmt.Errorf("rejected-fill initial score/rejection partition differs")
 	}
 	for index, score := range i.Scores {
-		if score.ID != []string{"late_unbounded", "early_wrong_cap", "bounded"}[index] ||
+		if score.ID != ids[index] ||
 			!jointSmokeBool(score.Typed, true) || !jointSmokeInt(score.Passed, 1) || !jointSmokeInt(score.Total, 1) {
 			return fmt.Errorf("rejected-fill initial score differs")
 		}
