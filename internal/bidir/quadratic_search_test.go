@@ -6,7 +6,14 @@ import (
 )
 
 func TestQuadraticSearchAlternativeSurvivesSemanticRoundTrip(t *testing.T) {
-	source, err := os.ReadFile("../../examples/quadratic-feedback/source.gooo.fixture")
+	for _, fixture := range []string{"quadratic-feedback", "quadratic-fit-feedback"} {
+		t.Run(fixture, func(t *testing.T) { quadraticAlternativeRoundTrip(t, fixture) })
+	}
+}
+
+func quadraticAlternativeRoundTrip(t *testing.T, fixture string) {
+	t.Helper()
+	source, err := os.ReadFile("../../examples/" + fixture + "/source.gooo.fixture")
 	if err != nil {
 		t.Fatal(err)
 	}
