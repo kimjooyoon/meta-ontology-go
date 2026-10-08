@@ -55,7 +55,7 @@ and continues within the original attempt budget. IR search is in 0.6.13;
 caller-guided `source_fill` is in 0.6.14. The 0.6.15 development source also
 retains [rejected fill assignments](examples/caller-fill-rejection/README.md)
 and continues with the remaining candidates.
-Newer development source also records [native arithmetic failures](examples/caller-native-failure/README.md)
+The 0.6.16 development candidate also records [native arithmetic failures](examples/caller-native-failure/README.md)
 and continues to the next combination. It keeps independent results and records
 consumers without a producer value as blocked. This behavior is separate from the
 published 0.6.15 execution path.
@@ -76,6 +76,8 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
+The [0.6.16 development guide](docs/releases/0.6.16-dev.md) covers native arithmetic
+faults, independent outputs, blocked dependencies and saved failure histories.
 The [0.6.15 development guide](docs/releases/0.6.15-dev.md) covers rejected fill
 assignments, partial budgets, original failure reasons and saved replay.
 The [0.6.14 development guide](docs/releases/0.6.14-dev.md) adds caller-guided
