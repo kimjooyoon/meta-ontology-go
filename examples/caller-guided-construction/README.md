@@ -75,3 +75,8 @@ before dogfooding. Compare the initial prediction, complete program attempts,
 local and caller scores separately. The seven evaluation rows include one
 consumed construction input and six other root tuples; zero is also a local
 helper example. The evaluation score cannot be labeled wholly unseen.
+
+The [frozen observation and raw records](../../docs/research/caller-guided-construction-20261008)
+compare fixed and model ordering, include both partial and complete outcomes,
+and preserve a model-free saved replay. These are local development observations;
+the recorded compiler revision identifies the implementation used.
