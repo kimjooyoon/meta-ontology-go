@@ -19,6 +19,27 @@ read-only while local `let` values may be assigned. See the
 [multiple-input example and case keys](../native-body-composition.md) and
 [record construction and actual value delivery](../native-record-values.md).
 
+### Integer quotient and remainder
+
+Ordinary Integer bodies, declared IR-fill expressions and record-choice bodies
+accept `/` and `%`. Candidate interpretation and generated Go follow the
+[Go integer operator rules](https://go.dev/ref/spec#Integer_operators): quotient
+truncates toward zero and the remainder has the dividend's sign. For runtime
+int64 operands, the minimum value divided by `-1` stays the minimum value and
+its remainder is zero. Constant arithmetic is checked before conversion.
+
+A constant zero divisor fails type checking. An evaluated zero divisor returns
+an error during candidate scoring; an unguarded zero divisor in the emitted Go
+program produces a runtime failure. Write a source condition when zero has a
+domain-specific meaning. Short-circuit `&&` and `||` preserve their guarded
+evaluation order. The [division example](../../examples/integer-division/README.md)
+returns a validity field and explicitly chosen zero values in that case.
+
+The scalar typed-path arena and TinyGo operation classifier keep their closed
+operator vocabulary. Their model labels and existing search-grammar candidate
+sets are unchanged. Record-choice ranking can select field expressions whose
+ordinary body contains these operations.
+
 ### Model-guided record body fill
 
 For source-declared record choices, [`body-compose --assembly-policy`](../../examples/assembly-policy/README.md)
