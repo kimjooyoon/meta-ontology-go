@@ -5,10 +5,18 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
 func TestGitCheckoutPreservesDeclaredReceiptAndBinaryBytes(t *testing.T) {
+	// CI materializes its workspace through Git environment overrides.
+	outerGit := filepath.Join(t.TempDir(), "outer.git")
+	outerTree := t.TempDir()
+	outerIndex := filepath.Join(t.TempDir(), "outer.index")
+	t.Setenv("GIT_DIR", outerGit)
+	t.Setenv("GIT_WORK_TREE", outerTree)
+	t.Setenv("GIT_INDEX_FILE", outerIndex)
 	attributes, err := os.ReadFile("../../.gitattributes")
 	if err != nil && !os.IsNotExist(err) {
 		t.Fatal(err)
@@ -56,7 +64,7 @@ func TestGitCheckoutPreservesDeclaredReceiptAndBinaryBytes(t *testing.T) {
 				args = append([]string{"-c", "core.autocrlf=true", "-c", "core.safecrlf=false"}, args...)
 				command := exec.Command("git", args...)
 				command.Dir = repository
-				command.Env = append(os.Environ(), "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL="+os.DevNull)
+				command.Env = checkoutGitEnvironment()
 				if output, err := command.CombinedOutput(); err != nil {
 					t.Fatalf("git %v: %v: %s", args, err, output)
 				}
@@ -76,4 +84,23 @@ func TestGitCheckoutPreservesDeclaredReceiptAndBinaryBytes(t *testing.T) {
 			}
 		})
 	}
+	for _, path := range []string{outerGit, outerIndex} {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Fatalf("fixture wrote to inherited Git path %s: %v", path, err)
+		}
+	}
+	entries, err := os.ReadDir(outerTree)
+	if err != nil || len(entries) != 0 {
+		t.Fatalf("fixture changed inherited work tree: entries=%d error=%v", len(entries), err)
+	}
+}
+
+func checkoutGitEnvironment() []string {
+	environment := make([]string, 0, len(os.Environ())+2)
+	for _, variable := range os.Environ() {
+		if !strings.HasPrefix(strings.ToUpper(variable), "GIT_") {
+			environment = append(environment, variable)
+		}
+	}
+	return append(environment, "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL="+os.DevNull)
 }
