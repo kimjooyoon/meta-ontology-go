@@ -25,6 +25,20 @@ The selected candidate separately records fifteen of fifteen selection fields.
 With `attempts "4"`, the failed combination consumes the fourth attempt and the
 best valid result remains partial at twelve of fifteen fields.
 
+Every new record assembly receipt includes `attempt_budget`, copied from the
+source `attempts` declaration. It is independent of the number of ranked
+combinations and the number actually attempted: eight available combinations
+can have a budget of one, three, eight or sixteen. This observation is present
+even when no assembly policy or model is connected. Tools can therefore use the
+recorded source limit when deciding whether construction can continue.
+
+Replay checks a present budget against the source declaration. Earlier receipts
+that omit the field still replay using the source's limit; resuming one writes
+the explicit limit in the new receipt and preserves the predecessor unchanged.
+As with the other construction observations, the recorded limit is bound to the
+receipt digest. A budget alone does not prove that a candidate remains: tools
+must also inspect the attempt history, ranking and observed results.
+
 An optional model still predicts once to order the candidates. Failed candidates
 do not trigger another prediction. Saved selection replay reconstructs the same
 attempts with zero new predictions. Historical prediction counts stay attached

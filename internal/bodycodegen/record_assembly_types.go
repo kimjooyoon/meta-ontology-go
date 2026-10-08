@@ -15,6 +15,7 @@ type RecordAssemblyReceipt struct {
 	ContractSHA256       string                         `json:"contract_sha256"`
 	TestSuiteSHA256      string                         `json:"test_suite_sha256"`
 	SelectedMask         uint16                         `json:"selected_mask"`
+	AttemptBudget        *int                           `json:"attempt_budget,omitempty"`
 	Choices              []RecordValueChoice            `json:"choices"`
 	Attempts             []RecordAssemblyAttempt        `json:"attempts"`
 	Cases                []RecordAssemblyCase           `json:"cases"`
