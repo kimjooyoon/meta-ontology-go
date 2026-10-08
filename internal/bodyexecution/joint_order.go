@@ -14,12 +14,22 @@ type jointSlot struct {
 	initial   uint16
 	ranking   []uint16
 	searchIDs []string
+	fillIDs   []string
 }
 
 func jointSlots(ctx context.Context, filename string, source []byte, prior Composition) ([]jointSlot, string, error) {
 	var slots []jointSlot
 	space := big.NewInt(1)
 	for _, step := range prior.ConstructionSteps() {
+		if fill := step.Generation.Report.BodyFill; fill != nil {
+			slot, err := jointFillSlot(ctx, filename, source, step.Generation.Report.Activity, fill)
+			if err != nil {
+				return nil, "", err
+			}
+			slots = append(slots, slot)
+			space.Mul(space, big.NewInt(int64(len(slot.ranking))))
+			continue
+		}
 		if search := step.Generation.Report.BodySearch; search != nil {
 			set, err := bodycodegen.PlanSourceSearchCandidates(ctx, filename, source, step.Generation.Report.Activity)
 			if err != nil {
@@ -46,8 +56,8 @@ func jointSlots(ctx context.Context, filename string, source []byte, prior Compo
 		}
 		r := step.Generation.Report.RecordAssembly
 		if r == nil {
-			if step.Generation.Report.BodyFill != nil || step.Generation.Report.BodyPaths != nil {
-				return nil, "", fmt.Errorf("joint construction requires record-choice or source IR search bodies")
+			if step.Generation.Report.BodyPaths != nil {
+				return nil, "", fmt.Errorf("joint construction requires record-choice, source IR search or source-fill bodies")
 			}
 			continue
 		}
@@ -62,7 +72,7 @@ func jointSlots(ctx context.Context, filename string, source []byte, prior Compo
 		space.Mul(space, big.NewInt(int64(len(ranking))))
 	}
 	if len(slots) < 1 || len(slots) > compositionLimit {
-		return nil, "", fmt.Errorf("joint construction requires 1..16 record-choice or source IR search bodies")
+		return nil, "", fmt.Errorf("joint construction requires 1..16 record-choice, source IR search or source-fill bodies")
 	}
 	return slots, space.String(), nil
 }
@@ -74,6 +84,8 @@ func jointCandidateKinds(slots []jointSlot) []string {
 		kind := "record_mask"
 		if len(slot.searchIDs) != 0 {
 			kind, hasSearch = "source_search_index", true
+		} else if len(slot.fillIDs) != 0 {
+			kind, hasSearch = "source_fill_index", true
 		}
 		kinds = append(kinds, kind)
 	}

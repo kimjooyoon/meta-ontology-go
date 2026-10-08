@@ -32,15 +32,7 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 		return result, fmt.Errorf("joint candidate space differs: %v", err)
 	}
 	kinds := jointCandidateKinds(slots)
-	schema := jointSchema
-	if len(kinds) != 0 {
-		schema = jointMixedSchema
-		for _, attempt := range prior.Attempts {
-			if attempt.Rejection != nil {
-				schema = jointRejectionSchema
-			}
-		}
-	}
+	schema := jointObservationSchema(slots, prior.Attempts)
 	if prior.Schema != schema || !slices.Equal(prior.CandidateKinds, kinds) {
 		return result, fmt.Errorf("joint candidate kinds or schema differ")
 	}
@@ -62,7 +54,7 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 }
 
 func verifyJointHeader(ctx context.Context, filename string, source []byte, r JointConstruction) error {
-	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
+	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
 		r.OriginalSourceSHA256 != digest(source) || r.ConstructionSHA256 != compositionDigest(r.ConstructionCases) ||
 		r.ProgramBudget < 1 || r.ProgramBudget > 64 || r.SelectedAttempt < 0 || r.SelectedAttempt >= len(r.Attempts) {
 		return fmt.Errorf("joint construction identity, stage or budget differs")
@@ -89,6 +81,7 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 		}
 		if compositionDigest(attempt.Candidates) != compositionDigest(recorded.Candidates) ||
 			compositionDigest(attempt.SearchCandidates) != compositionDigest(recorded.SearchCandidates) ||
+			compositionDigest(attempt.FillCandidates) != compositionDigest(recorded.FillCandidates) ||
 			compositionDigest(attempt.Rejection) != compositionDigest(recorded.Rejection) ||
 			attempt.LocalPassed != recorded.LocalPassed || attempt.LocalTotal != recorded.LocalTotal {
 			return fmt.Errorf("joint attempt %d local obligations differ", i)

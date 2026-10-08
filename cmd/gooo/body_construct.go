@@ -15,7 +15,7 @@ import (
 )
 
 const bodyConstructUsage = "usage: gooo body-construct --source <source.gooo> --cases <evaluation.json> " +
-	"(--construction-cases <feedback.json> --attempts <1..64> [--entry <activity>] [--model <model.json>] | " +
+	"(--construction-cases <feedback.json> --attempts <1..64> [--entry <activity>] [--model <model.json>] [--fill-model <model.json>] | " +
 	"--construction <construction.json>) [--go-bin <go1.27.1>] [--out <new-directory>]"
 
 type bodyConstructOutput struct {
@@ -37,7 +37,7 @@ func runBodyConstruct(args []string, stdout, stderr io.Writer) int {
 
 func parseBodyConstruct(args []string) (map[string]string, error) {
 	flags := map[string]string{"--source": "", "--cases": "", "--construction-cases": "", "--attempts": "",
-		"--entry": "", "--model": "", "--construction": "", "--go-bin": "", "--out": ""}
+		"--entry": "", "--model": "", "--fill-model": "", "--construction": "", "--go-bin": "", "--out": ""}
 	for i := 0; i < len(args); i += 2 {
 		value, ok := flags[args[i]]
 		if !ok || value != "" || i+1 >= len(args) || args[i+1] == "" || strings.HasPrefix(args[i+1], "--") {
@@ -49,7 +49,7 @@ func parseBodyConstruct(args []string) (map[string]string, error) {
 		return nil, fmt.Errorf("%s", bodyConstructUsage)
 	}
 	if flags["--construction"] != "" {
-		for _, key := range []string{"--construction-cases", "--attempts", "--entry", "--model"} {
+		for _, key := range []string{"--construction-cases", "--attempts", "--entry", "--model", "--fill-model"} {
 			if flags[key] != "" {
 				return nil, fmt.Errorf("saved construction excludes %s", key)
 			}
@@ -87,7 +87,7 @@ func executeBodyConstruct(ctx context.Context, flags map[string]string, stdout, 
 		budget, _ := strconv.Atoi(flags["--attempts"])
 		output.Construction, output.Evaluation, err = bodyexecution.ConstructAndEvaluateJoint(ctx, flags["--source"], source,
 			feedback, evaluation, bodyexecution.JointOptions{EntryActivity: flags["--entry"], ProgramBudget: budget,
-				ModelPath: flags["--model"], GoBinary: flags["--go-bin"]})
+				ModelPath: flags["--model"], FillModelPath: flags["--fill-model"], GoBinary: flags["--go-bin"]})
 	} else {
 		raw, readErr := readBodyExecutionFile(flags["--construction"], 32<<20)
 		if readErr != nil {
