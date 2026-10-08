@@ -1,0 +1,3 @@
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	3.851s
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	44.233s
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	4.811s

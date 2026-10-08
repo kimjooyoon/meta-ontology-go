@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.11-dev
-version  = 0.6.11-dev
+tag      = v0.6.12-dev
+version  = 0.6.12-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -78,7 +78,7 @@ UNKNOWN cannot be converted to PUBLISHED by a human explanation.
 
 ## Readiness boundary
 
-For 0.6.11, each native platform witness also uses its candidate binary to
+For 0.6.12, each native platform witness also uses its candidate binary to
 construct and replay the division, candidate-local retry and filename examples.
 Their eight, twelve and twelve execution cases must all match, with zero new
 model calls and the same selected program on replay. It also exports the v3
@@ -93,7 +93,16 @@ each constructed and replayed. Its four input rows produce eight named expected
 outputs in each run. The witness compares every actual and reported expected
 value with the independent case file, keeps the generated program identical and
 requires zero new runtime/replay predictions. Four additional raw package receipts
-are retained per platform. These finite
+are retained per platform.
+
+The caller-guided construction regression runs `body-construct` from the candidate
+binary and then replays its saved history. Two whole-program attempts must keep
+the helper's local 1/1 while changing the caller's 0/1 to 1/1. Four evaluation
+rows, including an exact integer above 2^53, are checked against their independent
+case file. The selected generated program must match the last successful attempt
+and saved replay, with zero new runtime/replay predictions. The observation must
+identify one consumed caller input and three other input tuples. Two raw command
+outputs are retained per platform. These finite
 behavior checks are separate from the 26 structural release cases and the nine
 published asset identities. No trained v3 quality is claimed by readiness.
 

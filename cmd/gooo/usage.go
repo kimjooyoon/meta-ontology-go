@@ -28,6 +28,7 @@ Commands:
   test             Check declared activity-output test markers
   run              Resolve an activity or execute a supported value plan
   body-codegen     Fill declared IR holes and generate Go
+  body-construct   Reconsider body choices using whole-program examples
   generate         Generate a project from Gooo declarations
   discover         Map a natural-language question to a source-bound capability
   format, fix      Format or repair Gooo source
@@ -36,7 +37,7 @@ Commands:
   version          Show the compiler version and build information
 
 Use ` + "`gooo help <topic>`" + ` for guides and examples.
-Topics: start, language, models, body-codegen, discover, init, check, test, run,
+Topics: start, language, models, body-codegen, body-construct, discover, init, check, test, run,
         generate, format, package, inspect, query, version, commands
 `
 
