@@ -1,5 +1,23 @@
 # Gooo workspace package graph
 
+## Construct imported functions using caller feedback
+
+The development command `gooo package construct --construction-cases feedback.json
+--cases evaluation.json --attempts 8 gooo.workspace.json` keeps source assembly
+choices available after package lowering. It can reconsider imported helpers
+whose local examples pass but whose combined caller result differs. The
+[runnable example](../../examples/package-caller-construction/README.md) includes
+native faults, partial budgets, exact integers and an optional compact model.
+
+Use `--json` to save the full `gooo/workspace-caller-construction-receipt/v1`
+record. `package construct --receipt saved.json --cases evaluation.json
+gooo.workspace.json` binds the current package image and original construction
+cases, then re-executes every saved attempt without inference. Evaluation is
+performed after selection. Its caller input overlap counts stay separate from
+source-local examples and model-training exposure. `COMPLETE_FINITE` requires
+complete local and caller construction observations and matching evaluation
+expectations without observed activity faults or blocked dependencies.
+
 ## Reuse a selected package program
 
 Save `package execute --json` output, then use `package replay --receipt <saved.json>`
@@ -127,7 +145,7 @@ nonempty name or import list is also checked. Import-list differences fail with
 `PACKAGE_HEADER_MISMATCH`. Existing manifest-only dependency declarations remain
 supported when the source has no imports.
 
-`resolve`, `execute`, `replay`, `resume` and Gooo assembly-policy workspaces use
+`resolve`, `execute`, `replay`, `resume`, `construct` and Gooo assembly-policy workspaces use
 the same reader. Omitted and equivalent explicit metadata produce the same
 normalized graph, source/semantic identities and generated program. Each original
 manifest retains its own byte digest. Dependency cycles, unresolved packages and
