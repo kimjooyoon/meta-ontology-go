@@ -55,6 +55,13 @@ func TestIntegerDivisionZeroAndShortCircuit(t *testing.T) {
 		if _, err := Generate("zero.gooo", divisionSource("ConstantZero", "return input0 "+operator.String()+" 0"), "ConstantZero"); err == nil || !strings.Contains(err.Error(), "zero") {
 			t.Fatal("constant zero divisor passed type checking", operator, err)
 		}
+		unguarded, err := Generate("zero.gooo", divisionSource("RuntimeZero", "return input0 "+operator.String()+" input1"), "RuntimeZero")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, _, err := evaluateIntegerCases([]byte(unguarded.Source), "RuntimeZero", []IRBodyFillTestCase{{Inputs: []int64{4, 0}}}); err == nil || !strings.Contains(err.Error(), "zero divisor") {
+			t.Fatal("scoring an unguarded zero divisor did not return its error", err)
+		}
 		for _, body := range []string{
 			"if input1 == 0 || input0 " + operator.String() + " input1 == 0 { return 1 }; return 0",
 			"if input1 != 0 && input0 " + operator.String() + " input1 != 0 { return 0 }; return 1",
