@@ -65,24 +65,33 @@ type jointSmokeFillCase struct {
 }
 
 type jointSmokeFillCandidate struct {
+	Rejection        *jointSmokeFillRejection
 	Schema, Activity string
-	ActivityID       string `json:"activity_id"`
-	InputSHA         string `json:"input_source_sha256"`
-	SelectedSHA      string `json:"selected_source_sha256"`
-	PlanSHA          string `json:"plan_sha256"`
-	ID               string `json:"candidate_id"`
-	Method           string `json:"selection_method"`
-	Count            *int   `json:"candidate_count"`
-	Holes            []struct {
-		ID         string `json:"hole_id"`
-		Expression string
-	} `json:"hole_fills"`
-	Passed        *int                 `json:"test_cases_passed"`
-	Total         *int                 `json:"test_cases_total"`
-	Cases         []json.RawMessage    `json:"case_results"`
-	Values        []jointSmokeFillCase `json:"value_case_results"`
-	HoldoutPassed *int                 `json:"holdout_cases_passed"`
-	HoldoutTotal  *int                 `json:"holdout_cases_total"`
-	Holdout       []json.RawMessage    `json:"holdout_case_results"`
-	ValueHoldout  []jointSmokeFillCase `json:"value_holdout_results"`
+	ActivityID       string               `json:"activity_id"`
+	InputSHA         string               `json:"input_source_sha256"`
+	SelectedSHA      string               `json:"selected_source_sha256"`
+	PlanSHA          string               `json:"plan_sha256"`
+	ID               string               `json:"candidate_id"`
+	Method           string               `json:"selection_method"`
+	Count            *int                 `json:"candidate_count"`
+	Holes            []jointSmokeFillHole `json:"hole_fills"`
+	Passed           *int                 `json:"test_cases_passed"`
+	Total            *int                 `json:"test_cases_total"`
+	Cases            []json.RawMessage    `json:"case_results"`
+	Values           []jointSmokeFillCase `json:"value_case_results"`
+	HoldoutPassed    *int                 `json:"holdout_cases_passed"`
+	HoldoutTotal     *int                 `json:"holdout_cases_total"`
+	Holdout          []json.RawMessage    `json:"holdout_case_results"`
+	ValueHoldout     []jointSmokeFillCase `json:"value_holdout_results"`
+}
+
+type jointSmokeFillHole struct {
+	ID         string `json:"hole_id"`
+	Expression string
+}
+
+type jointSmokeFillRejection struct {
+	ID            string `json:"candidate_id"`
+	Stage, Reason string
+	Holes         []jointSmokeFillHole `json:"hole_fills"`
 }

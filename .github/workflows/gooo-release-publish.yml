@@ -23,7 +23,7 @@ on:
       tag:
         description: Experimental release tag
         required: true
-        default: v0.6.14-dev
+        default: v0.6.15-dev
         type: string
 
 permissions: {}
@@ -44,7 +44,7 @@ jobs:
       contents: read
     env:
       EXACT_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.validated_sha || github.event.pull_request.head.sha }}
-      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || 'v0.6.14-dev' }}
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || 'v0.6.15-dev' }}
       GOTOOLCHAIN: go1.27.1
     steps:
       - name: Bind dispatched source to current dev before executing it
@@ -75,12 +75,12 @@ jobs:
           output="$RUNNER_TEMP/gooo-release-publication-contract"
           mkdir -p "$output"
           test "$(git rev-parse HEAD)" = "$EXACT_SHA"
-          test "$RELEASE_TAG" = "v0.6.14-dev"
+          test "$RELEASE_TAG" = "v0.6.15-dev"
           go run ./cmd/gooo check "$source" > "$output/check.stdout"
           version_json="$(go run ./cmd/gooo version --json)"
           jq -e '
             .schema_version == "gooo-version/v1" and
-            .language == "gooo" and .version == "0.6.14-dev" and
+            .language == "gooo" and .version == "0.6.15-dev" and
             .status == "development"
           ' <<< "$version_json"
           activity_total="$(awk '$1 == "activity" { count++ } END { print count + 0 }' "$source")"
@@ -99,7 +99,7 @@ jobs:
               head_sha:$head,
               meta_operation:"publish-exact-experimental-release",
               meta_source:{path:$source,digest:$source_digest,check_digest:$check_digest,activities:$activities},
-              identity:{tag:$tag,version:"0.6.14-dev",status:"development",version_schema:"gooo-version/v1",prerelease:true,latest:false},
+              identity:{tag:$tag,version:"0.6.15-dev",status:"development",version_schema:"gooo-version/v1",prerelease:true,latest:false},
               cells:[
                 {id:"VALIDATED_MERGE_EVIDENCE",proof_choice:"FOUNDATION"},
                 {id:"EXPERIMENTAL_RELEASE_IDENTITY",proof_choice:"FOUNDATION"},
@@ -191,7 +191,7 @@ jobs:
           grep -Fx 'activity AssembleReleasePayload(ValidatedMergeEvidence, ReleaseIdentity) -> ReleasePayload' "$source"
           jq -e '
             .schema_version == "gooo-version/v1" and .language == "gooo" and
-            .version == "0.6.14-dev" and .status == "development" and
+            .version == "0.6.15-dev" and .status == "development" and
             .semantic_ir == "semantic-ir/v1" and .semantic_check == "gooo-semantic-check/v1" and
             .graph == "gooo-graph/v1" and .fix_plan == "gooo-fix-plan/v1"
           ' "$output/probe-version.json"
@@ -272,7 +272,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$RELEASE_TAG" = "v0.6.14-dev"
+          test "$RELEASE_TAG" = "v0.6.15-dev"
           [[ "$VALIDATED_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$READINESS_RUN_ID" =~ ^[1-9][0-9]*$ ]]
           test "$(git rev-parse HEAD)" = "$VALIDATED_SHA"
@@ -359,7 +359,7 @@ jobs:
           dist="$RUNNER_TEMP/gooo-release-dist"
           jq -e '
             .schema_version == "gooo-version/v1" and .language == "gooo" and
-            .version == "0.6.14-dev" and .status == "development" and
+            .version == "0.6.15-dev" and .status == "development" and
             .semantic_ir == "semantic-ir/v1" and
             .semantic_check == "gooo-semantic-check/v1" and
             .graph == "gooo-graph/v1" and .fix_plan == "gooo-fix-plan/v1"
@@ -401,7 +401,7 @@ jobs:
             --slurpfile assets "$RUNNER_TEMP/release-assets.json" \
             '{
               schema:"gooo/release-manifest/v1",
-              tag:$tag,head_sha:$head,version:"0.6.14-dev",status:"development",
+              tag:$tag,head_sha:$head,version:"0.6.15-dev",status:"development",
               prerelease:true,latest:false,readiness_run_id:$run_id,
               release_report_digest:$report_digest,
               source_report_digest:$source_report_digest,
@@ -469,13 +469,13 @@ jobs:
         run: |
           set -euo pipefail
           dist="$RUNNER_TEMP/gooo-release-dist"
-          test "$RELEASE_TAG" = "v0.6.14-dev"
+          test "$RELEASE_TAG" = "v0.6.15-dev"
           dev_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/dev" --jq .object.sha)"
           test "$dev_sha" = "$VALIDATED_SHA"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$READINESS_RUN_ID" \
             --jq '.conclusion' | grep -Fx success
           jq -e --arg sha "$VALIDATED_SHA" --arg tag "$RELEASE_TAG" '
-            .head_sha == $sha and .tag == $tag and .version == "0.6.14-dev" and
+            .head_sha == $sha and .tag == $tag and .version == "0.6.15-dev" and
             .status == "development" and .prerelease == true and .latest == false and
             .payload_total == 7 and (.assets | length) == 7 and
             .repository_writes == 0
@@ -501,22 +501,22 @@ jobs:
           dist="$RUNNER_TEMP/gooo-release-dist"
           notes="$RUNNER_TEMP/release-notes.md"
           cat > "$notes" <<EOF
-          # Gooo v0.6.14-dev
+          # Gooo v0.6.15-dev
 
           Experimental Gooo CLI prerelease for exact commit \`$VALIDATED_SHA\`.
 
-          ## Fill complete assignments using the caller's results
+          ## Continue construction after a rejected fill assignment
 
-          - Use \`body-construct\` to combine complete \`source_fill\` assignments, record choices and integer search when a locally complete helper still fails its caller's expectations.
-          - Fill conditions, variable values and return expressions together. Keep every hole expression and the original training cases, with source-local holdouts measured separately from selection.
-          - Compile and execute complete combinations immediately, retaining original local and caller expectations. Keep construction feedback separate from later evaluation and preserve partial outcomes.
+          - Record typecheck and training-evaluation failures for individual \`source_fill\` assignments, then continue within the original attempt budget.
+          - Keep rejected candidates separate from scored candidates. A rejected combination has no native execution or invented score. Conditions, variable values and return expressions remain source-owned.
+          - Retain original local and caller expectations, separate holdouts, every hole expression and source/plan identities. The v5 history preserves rejected attempts and partial outcomes.
           - Replay saved construction history and evaluate the selected ordinary program with zero new inference. Optional \`--model\` orders record choices; \`--fill-model\` accepts a compatible operation classifier for initial fill preparation. Deterministic ordering remains the default.
           - Keep Go 1.27.1 and public decision runtime v0.2.26-experimental. The independent graph QAT weights are distributed separately by the ecosystem workbench.
 
-          Start with the [0.6.14 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.14-dev.md), [multi-hole budget example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/caller-source-fill/README.md), or [public Gooo functions](https://github.com/kimjooyoon/gooo-standard-library).
+          Start with the [0.6.15 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.15-dev.md), [rejected-fill example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/caller-fill-rejection/README.md), or [public Gooo functions](https://github.com/kimjooyoon/gooo-standard-library).
           Native execution requires Go 1.27.1 on the host. Check the command help when selecting a non-default Go executable.
           Source-declared cases and finite budgets bound these experiments. An exhausted or truncated search retains partial results. Separate evaluation measures the supplied inputs after selection.
-          In the [frozen source-fill observation](https://github.com/kimjooyoon/gooo-ecosystem-workbench/tree/e27064428bd9006417f6ff3e98dcbe175acd9249/publication/caller-source-fill-20261009), mixed fixed ordering took 24 combinations and own-model ordering took three. Both selected the same Gooo source and matched four final evaluation rows. The unchanged graph QAT model ordered record choices; fill assignments followed source order. The smaller two-attempt budget retained a partial result. The Gooo feedback loop kept one original counterexample across four rounds/seven combinations. These are finite observations of two related programs.
+          In the [frozen rejected-fill observation](https://github.com/kimjooyoon/gooo-ecosystem-workbench/tree/a4ee93693916e00591fc7222e1881762a393400c/publication/caller-fill-rejection-20261009), mixed fixed ordering tried 40 combinations (16 rejected), and own-model ordering tried five (two rejected). Both selected the same Gooo source and matched four final evaluation rows. The unchanged graph QAT model ordered record choices; fill assignments followed source order. A three-attempt budget retained a partial 1/4 result. The Gooo feedback loop kept one original counterexample across five rounds and 13 attempts: five rejected plus eight native combinations. These are finite observations of related programs.
           Source graph and receipt formats evolve between development versions. Retain the original compiler for historical replay and create fresh receipts when semantics or context identities change.
 
           ## Release evidence
@@ -538,7 +538,7 @@ jobs:
 
           tag_object="$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/tags" \
             -f tag="$RELEASE_TAG" \
-            -f message="Gooo v0.6.14-dev experimental prerelease" \
+            -f message="Gooo v0.6.15-dev experimental prerelease" \
             -f object="$VALIDATED_SHA" \
             -f type="commit" \
             --jq .sha)"
@@ -552,7 +552,7 @@ jobs:
             --draft \
             --prerelease \
             --latest=false \
-            --title "Gooo v0.6.14-dev" \
+            --title "Gooo v0.6.15-dev" \
             --notes-file "$notes"
       - name: Verify draft and publish prerelease
         shell: bash
@@ -594,7 +594,7 @@ jobs:
               manifest_digest:$manifest_digest,
               publication_meta_source_digest:$meta_source_digest,
               release:{url:.url,prerelease:.isPrerelease,draft:.isDraft,asset_names:[.assets[].name]|sort},
-              claim:{id:"release://gooo/v0.6.14-dev",entity:"GoooExperimentalPrerelease",status:"DISCHARGED",state:"CLOSED"},
+              claim:{id:"release://gooo/v0.6.15-dev",entity:"GoooExperimentalPrerelease",status:"DISCHARGED",state:"CLOSED"},
               summary:{total_work:9,closed:9,unknown:0,refuted:0,assets_published:(.assets|length),assets_total:9,checksum_entries:8,repository_writes:0}
             }' "$release_json" > "$RUNNER_TEMP/publication.json"
       - name: Upload publication result
@@ -637,7 +637,7 @@ jobs:
               mutation_allowed:false,
               upstream:{prepare:$prepare,publish:$publish},
               claim:{
-                id:"release://gooo/v0.6.14-dev",entity:"GoooExperimentalPrerelease",
+                id:"release://gooo/v0.6.15-dev",entity:"GoooExperimentalPrerelease",
                 status:"ACTIVE",state:"UNKNOWN",resolution:"OPERATION_CLASS",
                 stage:"RELEASE",step:"PUBLISH_PRERELEASE",
                 reason:"RELEASE_PUBLICATION_UPSTREAM_NOT_SUCCESS",
