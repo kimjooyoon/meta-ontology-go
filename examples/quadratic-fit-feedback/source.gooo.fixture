@@ -1,0 +1,20 @@
+package fit
+namespace fit
+entity Integer id "fit://integer"
+activity Build(Integer) -> Integer computes `let factor = __GOOO_BODY_HOLE_factor__
+let square = factor * factor
+return input + square` assembling {
+    search hole "factor" grammar "integer-hole-quadratic/v1" intent "입력에 (입력의 두 배 더하기 1)의 제곱을 더한다. Add the square of twice the input plus one." max_candidates "16"
+    search_alternative "fit" grammar "integer-hole-quadratic/v2" max_candidates "16"
+    case "1" -> "10"
+    case "2" -> "27"
+    case "3" -> "52"
+    case "4" -> "85"
+    case "5" -> "126"
+    case "6" -> "175"
+    case "7" -> "232"
+    case "8" -> "297"
+    case "9" -> "370"
+    case "10" -> "451"
+    attempts "8"
+}

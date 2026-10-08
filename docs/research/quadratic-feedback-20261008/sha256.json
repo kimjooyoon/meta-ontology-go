@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/publication-file-hashes/v1",
+  "scope": "All retained files except this manifest",
+  "files": {
+    "README.md": "b1387355a66b8e5a63fb9af43c04a638f5c0e3aefd8e9c4460e585bb888312d3",
+    "refinement.json": "aed5c8e66b4841f0b4ad91da9d022c8557721b7ab4b869e04180af7226d7ed98",
+    "replay.json": "5c9a091e087bb81ac0baed5d82ad47c641c215290e419271a2fdf93779e9cbd3",
+    "summary.json": "d1da9cfd6f20d788431aedcfa5146a7b7b9c0cc61d2a28db897ef419a2ab1218"
+  }
+}
