@@ -94,8 +94,12 @@ selected source and plan identities. Two selected sources also ran as ordinary
 Gooo programs with the same final values. The text copies of the recount and
 comparison Go programs accompany the raw compressed outputs.
 
-The workbench currently pins public 0.6.15. Its reader needs a separate v6/runtime-v3
-integration before its automatic feedback loop can consume these new records.
+At the time of these compiler observations, the workbench pinned public 0.6.15.
+The subsequent [workbench PR 40](https://github.com/kimjooyoon/gooo-ecosystem-workbench/pull/40)
+added v6/runtime-v3 reading and Gooo feedback policies. It passed exact-source CI
+and merged as `83ca2df6560f81961512daf2d426b025a2c4d74d`. Its original five-round
+feedback and separate evaluation-only fault examples retain the original inputs
+and expectations; see its `publication/native-outcomes-20261009` directory.
 
 This changes the runtime observation and bounded construction protocol. Ordinary
 generated programs retain their original arithmetic behavior. Support for other

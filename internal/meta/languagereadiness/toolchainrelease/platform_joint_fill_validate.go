@@ -79,7 +79,7 @@ func validateJointFillLocal(a jointSmokeAttempt, index int, sourceSHA string) er
 }
 
 func validateJointFillLocalAt(a jointSmokeAttempt, index, selector, count int, sourceSHA string) error {
-	if a.Rejection != nil || len(a.Candidates) != 0 || len(a.SearchCandidates) != 0 || len(a.FillCandidates) != 1 ||
+	if index < 0 || index > 3 || a.Rejection != nil || len(a.Candidates) != 0 || len(a.SearchCandidates) != 0 || len(a.FillCandidates) != 1 ||
 		len(a.Masks) != 1 || a.Masks[0] != selector || !jointSmokeInt(a.Passed, 1) || !jointSmokeInt(a.Total, 1) {
 		return fmt.Errorf("caller source-fill candidate order or training denominator differs")
 	}
@@ -91,9 +91,12 @@ func validateJointFillLocalAt(a jointSmokeAttempt, index, selector, count int, s
 	if index == 2 {
 		cap = "input.limit"
 	}
+	if index == 3 {
+		cap = "input.limit / (input.used - input.limit)"
+	}
 	if c.Schema != "gooo/fill-candidate/v1" || c.Activity != "PlanBudget" || c.ActivityID != "budgetplan://activity/plan-budget" ||
 		c.Rejection != nil || c.InputSHA != sourceSHA || c.SelectedSHA == "" || c.PlanSHA == "" || !jointSmokeInt(c.Count, count) ||
-		c.ID != []string{"late_unbounded", "early_wrong_cap", "bounded"}[index] || c.Method != "caller_selected_assignment" ||
+		c.ID != []string{"late_unbounded", "early_wrong_cap", "bounded", "caller_zero_divisor"}[index] || c.Method != "caller_selected_assignment" ||
 		len(c.Holes) != 2 || c.Holes[0].ID != "boundary" || c.Holes[0].Expression != condition || c.Holes[1].ID != "cap" || c.Holes[1].Expression != cap ||
 		!jointSmokeInt(c.Passed, 1) || !jointSmokeInt(c.Total, 1) || !jointSmokeInt(c.HoldoutPassed, index/2) || !jointSmokeInt(c.HoldoutTotal, 1) ||
 		len(c.Cases) != 0 || len(c.Holdout) != 0 || len(c.Values) != 1 || len(c.ValueHoldout) != 1 {
@@ -101,7 +104,7 @@ func validateJointFillLocalAt(a jointSmokeAttempt, index, selector, count int, s
 	}
 	if !jointFillCaseMatches(c.Values[0], `{"used":0,"limit":8}`, `{"next":1,"exhausted":false}`, `{"next":1,"exhausted":false}`, true) ||
 		!jointFillCaseMatches(c.ValueHoldout[0], `{"used":9,"limit":8}`, `{"next":8,"exhausted":true}`,
-			[]string{`{"next":9,"exhausted":true}`, `{"next":7,"exhausted":true}`, `{"next":8,"exhausted":true}`}[index], index == 2) {
+			[]string{`{"next":9,"exhausted":true}`, `{"next":7,"exhausted":true}`, `{"next":8,"exhausted":true}`, `{"next":8,"exhausted":true}`}[index], index >= 2) {
 		return fmt.Errorf("caller source-fill original local values differ")
 	}
 	return nil

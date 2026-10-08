@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.13-dev
-version  = 0.6.13-dev
+tag      = v0.6.16-dev
+version  = 0.6.16-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -78,7 +78,7 @@ UNKNOWN cannot be converted to PUBLISHED by a human explanation.
 
 ## Readiness boundary
 
-For 0.6.13, each native platform witness also uses its candidate binary to
+For 0.6.16, each native platform witness also uses its candidate binary to
 construct and replay the division, candidate-local retry and filename examples.
 Their eight, twelve and twelve execution cases must all match, with zero new
 model calls and the same selected program on replay. It also exports the v3
@@ -114,6 +114,20 @@ above 2^53, must match exactly. All original local expectations, the rejection
 reason and selected generated program are retained. Two more raw search outputs
 are stored per platform; runtime and replay make zero new predictions. These
 counts remain separate from the structural case denominator above.
+
+The source-fill profiles also keep their partial, complete and saved-replay
+observations. The rejected-fill profile requires five attempts including two
+preflight rejections. Its three-attempt partial result preserves 1/4 supplied
+expectations; complete and saved runs preserve 4/4 with zero new inference.
+
+The native-arithmetic profile adds five raw outputs per platform. A five-attempt
+construction preserves a partial 1/4; six attempts reach 4/4 and saved replay
+rechecks that history. All three retain two preflight rejections and one reached
+zero-divisor fault with source-bound location and exact operands. A separate
+dependency graph and saved replay retain six matched outputs, one fault and one
+blocked activity across two rows. Original root/joined inputs, large integers,
+independent values, process completion and zero new inference are checked.
+Expected-output categories and all failed activities retain distinct scopes.
 
 The selected readiness run must have all of these properties:
 
