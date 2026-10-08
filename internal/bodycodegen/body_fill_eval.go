@@ -165,7 +165,12 @@ func (e *integerBodyEvaluator) evaluateExpression(expression ast.Expr) (any, err
 	}
 	switch value := expression.(type) {
 	case *ast.CallExpr:
+		if result, handled, err := e.evaluateBodyPrimitive(value); handled {
+			return result, err
+		}
 		return e.evaluatePureCall(value)
+	case *ast.SliceExpr:
+		return e.evaluateTextSlice(value)
 	case *ast.CompositeLit:
 		return e.evaluateRecordLiteral(value)
 	case *ast.SelectorExpr:
