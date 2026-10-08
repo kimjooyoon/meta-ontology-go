@@ -44,6 +44,12 @@ Gooo source + intent + permitted choices + finite expectations
 
 · [workspace package graph](docs/language/workspace-manifest.md)
 
+The development `body-construct` route can reconsider record-choice helpers
+using their caller's actual results. Local obligations and caller expectations
+are retained separately, with bounded whole-program attempts and model-free
+saved replay. [Caller-guided construction](examples/caller-guided-construction/README.md)
+includes a runnable example and the current source/model/budget limits.
+
 The development workspace reader can derive package names and dependencies from
 Gooo source, leaving only paths, source files and the entry in the manifest.
 [Source-owned package metadata](docs/language/workspace-manifest.md#resolve-and-execute)
