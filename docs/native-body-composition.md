@@ -303,8 +303,31 @@ An initial plan with no valid assignment stops before model loading and exposes
 
 The [five-assignment example](../examples/caller-fill-rejection/README.md)
 demonstrates these cases. Malformed contracts, cancellation, holdout-evaluation
-errors and native build/run errors still stop the request. Holdout observations
+errors and native build/run errors still stop the 0.6.15 request. Holdout observations
 remain separate from selection scores.
+
+### Native arithmetic outcomes in development source
+
+Newer development source derives a separately hashed execution observation from
+the replayed pure projection. Reached int64 division or remainder by zero records
+the original activity, expression span/hash and exact evaluated operands.
+An affected graph activity has no actual result; dependent activities carry
+`blocked_by` producer IDs. Earlier and independent deliveries and later rows
+continue. Both fresh executions must emit identical outcomes.
+
+`outcomes` counts supplied expectations as `matched`, `mismatched`, `faulted`,
+`blocked` or `unobserved`. A complete observation has zero unobserved expectations;
+an incomplete process observation does not supply this aggregate. A native
+language fault uses `body-composition-runtime/v3`; successful historical shapes
+remain readable. Fault-containing construction histories use
+`joint-construction/v6`, consume their original program budget and retain local
+scores separately. Saved replay reconstructs each attempted combination without
+model calls. The [six-assignment example](../examples/caller-native-failure/README.md)
+retains the original 0.6.15 failure and all original expected values.
+
+Toolchain errors, unknown process faults, timeouts and cancellation remain
+terminal. The generated standalone program and saved pure projection retain
+their original arithmetic behavior; the execution observation has its own hashes.
 
 ### Native execution
 

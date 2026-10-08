@@ -55,6 +55,10 @@ and continues within the original attempt budget. IR search is in 0.6.13;
 caller-guided `source_fill` is in 0.6.14. The 0.6.15 development source also
 retains [rejected fill assignments](examples/caller-fill-rejection/README.md)
 and continues with the remaining candidates.
+Newer development source also records [native arithmetic failures](examples/caller-native-failure/README.md)
+and continues to the next combination. It keeps independent results and records
+consumers without a producer value as blocked. This behavior is separate from the
+published 0.6.15 execution path.
 
 The development workspace reader can derive package names and dependencies from
 Gooo source, leaving only paths, source files and the entry in the manifest.

@@ -13,7 +13,11 @@ import (
 
 // Native observation is derived after source replay. The saved pure projection
 // remains unchanged; the runtime binds the separately instrumented source hashes.
-func observedCompositionSources(prior Composition) (string, string, error) {
+func observedCalledCompositionSources(prior Composition) (string, string, error) {
+	return observedCalledCompositionWithName(prior, "GoooObserveCalledInputs")
+}
+
+func observedCalledCompositionWithName(prior Composition, observerName string) (string, string, error) {
 	if len(prior.Preparations) == 0 {
 		return prior.Source, prior.Driver, nil
 	}
@@ -54,7 +58,7 @@ func observedCompositionSources(prior Composition) (string, string, error) {
 				arguments = append(arguments, ast.NewIdent(name.Name))
 			}
 		}
-		statement := &ast.ExprStmt{X: &ast.CallExpr{Fun: ast.NewIdent("GoooObserveCalledInputs"), Args: arguments}}
+		statement := &ast.ExprStmt{X: &ast.CallExpr{Fun: ast.NewIdent(observerName), Args: arguments}}
 		function.Body.List = append([]ast.Stmt{statement}, function.Body.List...)
 		count++
 	}

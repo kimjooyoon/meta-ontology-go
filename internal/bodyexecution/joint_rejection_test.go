@@ -100,21 +100,23 @@ func TestJointSearchRejectionReplayAndExactEvaluation(t *testing.T) {
 	}
 }
 
-func TestJointSearchToolAndNativeErrorsStillStop(t *testing.T) {
+func TestJointSearchToolErrorsStopAndArithmeticFaultsContinue(t *testing.T) {
 	source := jointRejectionSource(t)
 	feedback := jointCases(t, `[{"inputs":{"Main":3},"expected":{"Main":-1}}]`)
 	if _, err := ConstructJointComposition(context.Background(), "rejection.gooo", source, feedback,
 		JointOptions{EntryActivity: "Main", ProgramBudget: 5, GoBinary: "missing-go-tool"}); err == nil {
 		t.Fatal("missing tool hidden as a candidate rejection")
 	}
-	// A variable zero is valid Go and fails during native caller execution. That
-	// broader behavior is intentionally outside local-expression continuation.
+	// Keep the original variable-zero counterexample. It now has a source-bound
+	// native fault outcome, separate from a rejected local expression.
 	changed := strings.Replace(string(source), "if input == 0 { return 0 }; return input / __GOOO_BODY_HOLE_value__",
 		"let denominator = __GOOO_BODY_HOLE_value__; if input == 0 { return 0 }; return input / denominator", 1)
 	r, err := ConstructJointComposition(context.Background(), "native.gooo", []byte(changed), feedback,
 		JointOptions{EntryActivity: "Main", ProgramBudget: 5, GoBinary: nativeTool()})
-	if err == nil || r.Failure == "" || len(r.Attempts) != 2 || r.Attempts[1].Rejection != nil {
-		t.Fatal("native failure hidden as a local candidate rejection", r, err)
+	if err != nil || r.Failure != "" || len(r.Attempts) != 3 || r.Attempts[1].Rejection != nil ||
+		!hasCompositionFault(r.Attempts[1].Runtime) || r.Schema != jointFaultSchema || r.SelectedAttempt != 2 ||
+		r.Decision != "COMPLETE_FINITE" || !r.Attempts[1].Runtime.RuntimeReplayed {
+		t.Fatal("native fault lost or hidden as a local candidate rejection", r, err)
 	}
 }
 
