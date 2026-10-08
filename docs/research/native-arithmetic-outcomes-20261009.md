@@ -52,6 +52,51 @@ panics and cancellation; malformed/missing/contradictory protocol; modified faul
 metadata and expectations; and the original variable-zero search counterexample.
 The latter now retains a native fault and reaches its original third candidate.
 
+## Actual clean-source observations
+
+The native CLI was built from clean source
+`717d876e481c233ae3587488077be87843175fe6` with Go 1.27.1. Its development version
+string is still 0.6.15-dev; its source revision distinguishes it from the public
+0.6.15 executable. The full bodyexecution race suite passed in 147.685 seconds,
+vet passed, and focused CLI regressions passed. Raw results are in the
+[observation directory](native-arithmetic-outcomes-20261009/).
+
+| Run | Program attempts | Preflight rejected | Native combinations | Combinations with a native fault | Final cases |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Budget 5 | 5 | 2 | 3 | 1 | 1/4 |
+| Budget 6 | 6 | 2 | 4 | 1 | 4/4 |
+| Saved budget replay | 6 | 2 | 4 | 1 | 4/4 |
+| Mixed source order | 48 | 16 | 32 | 8 | 4/4 |
+| Mixed own-model order | 6 | 2 | 4 | 1 | 4/4 |
+| Saved mixed replay | 6 | 2 | 4 | 1 | 4/4 |
+
+Faulted combinations are a subset of native combinations. Each completed native
+observation runs twice; saved attempt counts are historical, while replay executes
+that history again. The unchanged graph chooser made one prediction in 33,833 ns.
+Record choices use that prediction; subsequent fill assignments use source order.
+Both modes selected identical Gooo source. The model is the existing all-data
+demonstration QAT ternary model, with 2,096 bytes of resident tensors. Metadata SHA-256
+is `3c68205a660695103712e2115ce90accd298b406dced8ad5ad5c9b84bab0a202` and weights SHA-256
+is `76f68845a03ed8c8bc261a57c919e96dcdd352d3c35bcdaeb3d9b51a88975c6f`.
+There was no new training or download.
+
+The whole model-mode command took 1.50 seconds wall time, 0.74 seconds user CPU
+and 0.50 seconds system CPU; maximum RSS was 87,113,728 bytes (about 83.1 MiB).
+These command-level observations include native building/execution. CPU time
+divided by wall time is about 82.7% of one core; this is not whole-machine CPU
+utilization or a controlled speed comparison. The model prediction interval is
+recorded separately.
+
+The recount uses exact JSON numbers and retains all original final expectations,
+including integers above 2^53. Historical v3, v4 and v5 records were executed
+again with zero inference and equal saved constructions, traces, expectations,
+selected source and plan identities. Two selected sources also ran as ordinary
+Gooo programs with the same final values. The text copies of the recount and
+comparison Go programs accompany the raw compressed outputs.
+
+The workbench currently pins public 0.6.15. Its reader needs a separate v6/runtime-v3
+integration before its automatic feedback loop can consume these new records.
+
 This changes the runtime observation and bounded construction protocol. Ordinary
 generated programs retain their original arithmetic behavior. Support for other
 language faults, general correctness, unseen-program model accuracy and a public
