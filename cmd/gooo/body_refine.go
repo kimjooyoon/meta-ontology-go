@@ -15,7 +15,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyrefinement"
 )
 
-const bodyRefineUsage = "usage: gooo body-refine --source <source.gooo> --activity <name> --feedback-cases <cases.json> --policy <policy.gooo> --max-attempts <1..64> [--max-rounds <1..8>] [--evaluation-cases <cases.json>] [--model <model.json>] [--go-bin <go>] --out <new-directory>"
+const bodyRefineUsage = "usage: gooo body-refine --source <source.gooo> --activity <name> --feedback-cases <cases.json> --policy <policy.gooo> [--search-policy] --max-attempts <1..64> [--max-rounds <1..8>] [--evaluation-cases <cases.json>] [--model <model.json>] [--go-bin <go>] --out <new-directory>"
 
 type bodyRefineFlags struct {
 	source, feedback, evaluation, policy, out string
@@ -30,6 +30,7 @@ func parseBodyRefine(args []string, stderr io.Writer) (bodyRefineFlags, error) {
 	f.StringVar(&values.feedback, "feedback-cases", "", "adaptive feedback cases")
 	f.StringVar(&values.evaluation, "evaluation-cases", "", "separate final evaluation; never given to policy")
 	f.StringVar(&values.policy, "policy", "", "Gooo source with one Decide activity")
+	f.BoolVar(&values.options.SearchPolicy, "search-policy", false, "extend policy inputs with search observations and source-declared alternatives")
 	f.StringVar(&values.out, "out", "", "new output directory")
 	f.StringVar(&values.options.Activity, "activity", "", "assembly activity whose budget may increase")
 	f.IntVar(&values.options.MaxAttempts, "max-attempts", 0, "maximum attempt budget per round")

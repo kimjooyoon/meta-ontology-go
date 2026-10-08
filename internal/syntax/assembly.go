@@ -72,6 +72,13 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 			}
 			seenFillPlan = true
 			d.Spec.FillPlan = p.parseAssemblyFillPlan()
+		case "search_alternative":
+			if len(d.Spec.SearchAlternatives) == 4 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds four search alternatives")
+				p.skipAssemblyRemainder()
+				continue
+			}
+			d.Spec.SearchAlternatives = append(d.Spec.SearchAlternatives, p.parseSearchAlternative())
 		case "value_case":
 			input := p.assemblyValue()
 			p.expect(TokenArrow, "->", DiagExpectedArrow)
@@ -132,6 +139,20 @@ func (p *Parser) parseAssemblySearch() *assemblyspec.Search {
 	}
 	search.MaxCandidates = int(value)
 	return search
+}
+
+func (p *Parser) parseSearchAlternative() assemblyspec.SearchAlternative {
+	alternative := assemblyspec.SearchAlternative{ID: p.expectString().Name}
+	p.assemblyKeyword("grammar")
+	alternative.Grammar = p.expectString().Name
+	p.assemblyKeyword("max_candidates")
+	value := p.assemblyInteger("alternative maximum candidate count")
+	if value < 2 || value > 16 {
+		p.error(DiagUnexpectedDeclaration, p.peek().Span, "search alternative max_candidates must be 2..16")
+	} else {
+		alternative.MaxCandidates = int(value)
+	}
+	return alternative
 }
 
 func (p *Parser) parseAssemblyFillPlan() *assemblyspec.FillPlan {
@@ -334,6 +355,10 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 		fmt.Fprintf(output, "    search hole %s grammar %s intent %s max_candidates %s\n",
 			quoteString(search.HoleID), quoteString(search.Grammar), quoteString(search.Intent),
 			quoteString(strconv.Itoa(search.MaxCandidates)))
+	}
+	for _, alternative := range d.Spec.SearchAlternatives {
+		fmt.Fprintf(output, "    search_alternative %s grammar %s max_candidates %s\n",
+			quoteString(alternative.ID), quoteString(alternative.Grammar), quoteString(strconv.Itoa(alternative.MaxCandidates)))
 	}
 	if d.Spec.FillPlan != nil {
 		plan := d.Spec.FillPlan

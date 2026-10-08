@@ -11,17 +11,18 @@ import (
 )
 
 type Spec struct {
-	Choices           []Choice    `json:"choices"`
-	Cases             []Case      `json:"cases"`
-	HoldoutCases      []Case      `json:"holdout_cases,omitempty"`
-	ValueCases        []ValueCase `json:"value_cases,omitempty"`
-	ValueHoldoutCases []ValueCase `json:"value_holdout_cases,omitempty"`
-	MaxAttempts       int         `json:"max_attempts"`
-	Seed              string      `json:"seed,omitempty"`
-	Baseline          string      `json:"baseline,omitempty"`
-	Picked            []Pick      `json:"picked,omitempty"`
-	Search            *Search     `json:"search,omitempty"`
-	FillPlan          *FillPlan   `json:"fill_plan,omitempty"`
+	Choices            []Choice            `json:"choices"`
+	Cases              []Case              `json:"cases"`
+	HoldoutCases       []Case              `json:"holdout_cases,omitempty"`
+	ValueCases         []ValueCase         `json:"value_cases,omitempty"`
+	ValueHoldoutCases  []ValueCase         `json:"value_holdout_cases,omitempty"`
+	MaxAttempts        int                 `json:"max_attempts"`
+	Seed               string              `json:"seed,omitempty"`
+	Baseline           string              `json:"baseline,omitempty"`
+	Picked             []Pick              `json:"picked,omitempty"`
+	Search             *Search             `json:"search,omitempty"`
+	SearchAlternatives []SearchAlternative `json:"search_alternatives,omitempty"`
+	FillPlan           *FillPlan           `json:"fill_plan,omitempty"`
 }
 
 // Search declares a bounded IR expression grammar whose candidates Gooo derives
@@ -30,6 +31,14 @@ type Search struct {
 	HoleID        string `json:"hole_id"`
 	Grammar       string `json:"grammar"`
 	Intent        string `json:"intent"`
+	MaxCandidates int    `json:"max_candidates"`
+}
+
+// SearchAlternative is a source-declared next grammar/candidate bound. The hole,
+// intent and expected behavior stay in the same assembly contract.
+type SearchAlternative struct {
+	ID            string `json:"id"`
+	Grammar       string `json:"grammar"`
 	MaxCandidates int    `json:"max_candidates"`
 }
 
@@ -97,6 +106,9 @@ type ValueCase struct {
 }
 
 func (s Spec) Validate() error {
+	if err := s.validateSearchAlternatives(); err != nil {
+		return err
+	}
 	if len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases) < 1 ||
 		len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases) > 128 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
 		return fmt.Errorf("assembly requires 1..16 choices, 1..128 cases and 1..64 attempts")
@@ -370,6 +382,7 @@ func (s Spec) Clone() *Spec {
 	clone.ValueCases = append([]ValueCase(nil), s.ValueCases...)
 	clone.ValueHoldoutCases = append([]ValueCase(nil), s.ValueHoldoutCases...)
 	clone.Picked = append([]Pick(nil), s.Picked...)
+	clone.SearchAlternatives = append([]SearchAlternative(nil), s.SearchAlternatives...)
 	if s.Search != nil {
 		search := *s.Search
 		clone.Search = &search
