@@ -8,14 +8,15 @@ import (
 )
 
 type languageSmokeCase struct {
-	name, source, cases string
-	total               int
+	name, source, cases, entry string
+	total                      int
 }
 
 func smokeLanguageExamples(binary, work string, input BuildInput) error {
 	examples := []languageSmokeCase{
-		{"integer-division", "examples/integer-division/source.gooo.fixture", "examples/integer-division/cases.json", 8},
-		{"candidate-locals", "examples/candidate-locals/retry.gooo.fixture", "examples/candidate-locals/cases.json", 12},
+		{"integer-division", "examples/integer-division/source.gooo.fixture", "examples/integer-division/cases.json", "", 8},
+		{"candidate-locals", "examples/candidate-locals/retry.gooo.fixture", "examples/candidate-locals/cases.json", "", 12},
+		{"text-operations", "examples/text-operations/source.gooo.fixture", "examples/text-operations/cases.json", "Classify", 12},
 	}
 	if err := os.MkdirAll(input.OutputDir, 0o755); err != nil {
 		return err
@@ -25,21 +26,18 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 			return fmt.Errorf("TOOLCHAIN_RELEASE_LANGUAGE_SMOKE %s: %w", example.name, err)
 		}
 	}
-	return nil
+	return smokeSourceGraph(binary, input)
 }
 
 func smokeLanguageExample(binary, work string, input BuildInput, example languageSmokeCase) error {
 	directory := filepath.Join(work, "language-"+example.name)
 	selected := ""
 	for _, replay := range []bool{false, true} {
-		args := []string{"body-compose", "--source", example.source, "--cases", example.cases}
 		mode := "construct"
 		if replay {
 			mode = "replay"
-			args = append(args, "--composition", filepath.Join(directory, "composition.json"))
-		} else {
-			args = append(args, "--out", directory)
 		}
+		args := languageSmokeArgs(example, directory, replay)
 		raw, err := commandOutput(input.Root, nil, binary, args...)
 		if err != nil {
 			return err
@@ -55,6 +53,21 @@ func smokeLanguageExample(binary, work string, input BuildInput, example languag
 		selected = observed
 	}
 	return nil
+}
+
+func languageSmokeArgs(example languageSmokeCase, directory string, replay bool) []string {
+	source := example.source
+	if replay {
+		source = filepath.Join(directory, "original.gooo")
+	}
+	args := []string{"body-compose", "--source", source, "--cases", example.cases}
+	if replay {
+		return append(args, "--composition", filepath.Join(directory, "composition.json"))
+	}
+	if example.entry != "" {
+		args = append(args, "--entry", example.entry)
+	}
+	return append(args, "--out", directory)
 }
 
 func validateLanguageSmoke(raw []byte, expected int, replay bool, selected string) (string, error) {
