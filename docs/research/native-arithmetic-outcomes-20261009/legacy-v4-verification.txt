@@ -1,0 +1,1 @@
+PASS gooo/joint-construction/v4 saved construction and original native values/expectations/source identities unchanged; zero new inference

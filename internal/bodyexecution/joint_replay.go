@@ -54,7 +54,7 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 }
 
 func verifyJointHeader(ctx context.Context, filename string, source []byte, r JointConstruction) error {
-	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
+	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema && r.Schema != jointFaultSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
 		r.OriginalSourceSHA256 != digest(source) || r.ConstructionSHA256 != compositionDigest(r.ConstructionCases) ||
 		r.ProgramBudget < 1 || r.ProgramBudget > 64 || r.SelectedAttempt < 0 || r.SelectedAttempt >= len(r.Attempts) {
 		return fmt.Errorf("joint construction identity, stage or budget differs")
@@ -119,6 +119,18 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 }
 
 func sameJointRuntime(a, b CompositionRuntime) bool {
+	if (hasCompositionFault(a) || hasCompositionFault(b)) &&
+		(a.Schema != compositionFaultRuntimeSchema || b.Schema != compositionFaultRuntimeSchema) {
+		return false
+	}
+	if b.Outcomes != nil || len(b.FaultSites) != 0 || hasCompositionFault(a) || hasCompositionFault(b) {
+		if !completeArithmeticRuns(a) || !completeArithmeticRuns(b) || a.Runs[0].StdoutSHA256 != b.Runs[0].StdoutSHA256 ||
+			compositionDigest(a.Outcomes) != compositionDigest(b.Outcomes) ||
+			compositionDigest(a.FaultSites) != compositionDigest(b.FaultSites) ||
+			a.ObservedProjectionSHA256 != b.ObservedProjectionSHA256 || a.ObservedDriverSHA256 != b.ObservedDriverSHA256 {
+			return false
+		}
+	}
 	semantic := func(r CompositionRuntime) any {
 		return []any{r.Stage, r.Failure, r.OriginalSourceSHA256, r.SelectedSourceSHA256,
 			r.TypedPlanSHA256, r.GeneratedSHA256, r.DriverSHA256, r.RuntimeSuiteSHA256,

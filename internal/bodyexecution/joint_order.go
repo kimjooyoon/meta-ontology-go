@@ -135,7 +135,7 @@ func jointLocalComplete(attempt JointAttempt) bool {
 }
 
 func jointComplete(attempt JointAttempt) bool {
-	return jointLocalComplete(attempt) && attempt.Runtime.FiniteTotal > 0 &&
+	return jointLocalComplete(attempt) && !hasCompositionFault(attempt.Runtime) && attempt.Runtime.FiniteTotal > 0 &&
 		attempt.Runtime.FinitePassed == attempt.Runtime.FiniteTotal
 }
 
@@ -145,6 +145,9 @@ func betterJoint(a, b JointAttempt) bool {
 	}
 	if a.Runtime.FinitePassed != b.Runtime.FinitePassed {
 		return a.Runtime.FinitePassed > b.Runtime.FinitePassed
+	}
+	if hasCompositionFault(a.Runtime) != hasCompositionFault(b.Runtime) {
+		return !hasCompositionFault(a.Runtime)
 	}
 	return a.LocalPassed > b.LocalPassed
 }
