@@ -117,3 +117,28 @@ func TestJointSearchToolAndNativeErrorsStillStop(t *testing.T) {
 		t.Fatal("native failure hidden as a local candidate rejection", r, err)
 	}
 }
+
+func TestJointRejectionRetainsScoredPrefix(t *testing.T) {
+	source, err := os.ReadFile("../../examples/caller-search-rejection/mixed-model.gooo.fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	cases := jointCases(t, `[{"inputs":{"Main":3},"expected":{"Main":15}}]`)
+	initial, err := GenerateCompositionWithOptions(ctx, "prefix.gooo", source, cases, CompositionOptions{EntryActivity: "Main"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	slots, _, err := jointSlots(ctx, "prefix.gooo", source, initial)
+	if err != nil || len(slots) != 2 || slots[0].activity != "Choose" || slots[1].activity != "Pick" {
+		t.Fatal(slots, err)
+	}
+	// Independent helpers can be realized in this order. The record was already
+	// scored when the following search expression was rejected.
+	a, sourceOut, _, err := materializeJoint(ctx, "prefix.gooo", source, cases, "Main",
+		[]jointSlot{slots[1], slots[0]}, []uint16{0, 1})
+	if err != nil || a.Rejection == nil || a.Rejection.Slot != 1 || a.LocalPassed != 1 || a.LocalTotal != 1 ||
+		len(a.Candidates) != 1 || len(a.SearchCandidates) != 1 || sourceOut != nil || jointLocalComplete(a) {
+		t.Fatal(a, err)
+	}
+}
