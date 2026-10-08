@@ -59,10 +59,24 @@ type jointSmokeOutput struct {
 		Kinds                            []string `json:"candidate_kinds"`
 		SelectedAttempt                  *int     `json:"selected_attempt"`
 		Source                           string   `json:"selected_source"`
+		OriginalSHA                      string   `json:"original_source_sha256"`
 		Selected                         struct {
 			SHA string `json:"generated_sha256"`
 		}
-		Initial  struct{ Model struct{ Loaded *bool } }
+		Initial struct {
+			Model        struct{ Loaded *bool }
+			FillModel    struct{ Loaded *bool } `json:"fill_model"`
+			Preparations []struct {
+				Generation struct {
+					Report struct {
+						Fill *struct {
+							Selected string `json:"selected_candidate_id"`
+							Calls    *int   `json:"local_model_predictions"`
+						} `json:"body_fill"`
+					}
+				}
+			}
+		}
 		Attempts []jointSmokeAttempt
 	}
 	Evaluation struct {
@@ -81,6 +95,7 @@ type jointSmokeOutput struct {
 type jointSmokeAttempt struct {
 	Rejection        *jointSmokeRejection        `json:"rejection"`
 	SearchCandidates []jointSmokeSearchCandidate `json:"search_candidates"`
+	FillCandidates   []jointSmokeFillCandidate   `json:"fill_candidates"`
 	Masks            []int
 	Passed           *int `json:"local_passed"`
 	Total            *int `json:"local_total"`
