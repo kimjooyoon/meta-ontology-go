@@ -10,14 +10,25 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 )
 
-func policyInputs(observation Observation) bodyexecution.CompositionCases {
-	raw, _ := json.Marshal(observation)
+func policyInputs(observation Observation, search *SearchObservation) bodyexecution.CompositionCases {
+	var input any = observation
+	if search != nil {
+		input = struct {
+			Observation
+			SearchObservation
+		}{observation, *search}
+	}
+	raw, _ := json.Marshal(input)
 	return bodyexecution.CompositionCases{Schema: bodyexecution.CompositionInputsSchema,
 		Cases: []bodyexecution.CompositionCase{{Inputs: map[string]json.RawMessage{"Decide": raw}}}}
 }
 
 func preparePolicy(ctx context.Context, options Options) (bodyexecution.Composition, error) {
-	composition, err := bodyexecution.GenerateComposition(ctx, "policy.gooo", options.PolicySource, policyInputs(Observation{}), "")
+	var search *SearchObservation
+	if options.SearchPolicy {
+		search = &SearchObservation{}
+	}
+	composition, err := bodyexecution.GenerateComposition(ctx, "policy.gooo", options.PolicySource, policyInputs(Observation{}, search), "")
 	if err != nil {
 		return composition, err
 	}
@@ -29,7 +40,7 @@ func preparePolicy(ctx context.Context, options Options) (bodyexecution.Composit
 
 func decide(ctx context.Context, options Options, policy bodyexecution.Composition, round *Round) error {
 	runtime, err := bodyexecution.ExecuteComposition(ctx, "policy.gooo", options.PolicySource, policy,
-		policyInputs(round.Observation), options.GoBinary)
+		policyInputs(round.Observation, round.Search), options.GoBinary)
 	round.PolicyRuntime = runtime
 	if err != nil {
 		return fmt.Errorf("execute Gooo feedback policy: %w", err)
@@ -46,13 +57,22 @@ func decide(ctx context.Context, options Options, policy bodyexecution.Compositi
 		return fmt.Errorf("feedback decision contains trailing output")
 	}
 	d := round.Decision
+	if d.Action == "ADVANCE_SEARCH" {
+		if validSearchDecision(options, round) {
+			return nil
+		}
+		return fmt.Errorf("search decision must select the next unvisited source alternative within its attempt limit")
+	}
+	if d.NextSearchID != "" {
+		return fmt.Errorf("only ADVANCE_SEARCH may select a search alternative")
+	}
 	if d.Action == "STOP" && d.NextAttempts == round.Observation.Attempts {
 		return nil
 	}
-	if d.Action == "INCORPORATE" && d.NextAttempts >= round.Observation.Attempts && d.NextAttempts <= options.MaxAttempts && round.Observation.Counterexamples > 0 {
+	if d.Action == "INCORPORATE" && d.NextAttempts >= round.Observation.Attempts && d.NextAttempts <= round.Observation.Limit && round.Observation.Counterexamples > 0 {
 		return nil
 	}
-	if d.Action != "CONTINUE" || d.NextAttempts <= round.Observation.Attempts || d.NextAttempts > options.MaxAttempts {
+	if d.Action != "CONTINUE" || d.NextAttempts <= round.Observation.Attempts || d.NextAttempts > round.Observation.Limit {
 		return fmt.Errorf("feedback decision must stop at the current budget or increase within the caller's limit")
 	}
 	return nil

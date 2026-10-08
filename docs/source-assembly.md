@@ -486,6 +486,14 @@ A source file may combine an integer search activity with record activities.
 search uses deterministic ordering. Record fields are handled by the same pure
 body profile during search preparation and replay.
 
+An assembly may also declare up to four `search_alternative` entries with a
+name, supported integer grammar and candidate cap. The opt-in `body-refine
+--search-policy` input lets a Gooo policy observe candidate-space limits and
+select the next unused declared setting with `ADVANCE_SEARCH`. The source
+revision keeps the hole, body, intent, expectations and alternative list.
+See the [source grammar revision example](../examples/search-feedback/README.md)
+for the full policy, observations and bounded CLI run.
+
 ### Construct a value inside an existing body
 
 For `return input + __GOOO_BODY_HOLE_value__`, examples `2 -> 3` and

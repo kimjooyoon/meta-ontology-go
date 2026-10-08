@@ -10,9 +10,12 @@ import (
 
 func Run(ctx context.Context, filename string, source []byte, feedback bodyexecution.CompositionCases, options Options) (Result, error) {
 	result := Result{Schema: "gooo/body-refinement/v1", Status: "UNKNOWN", FeedbackStatus: "UNKNOWN", EvaluationStatus: "UNKNOWN", Activity: options.Activity,
-		OriginalSource: string(source), PolicySource: string(options.PolicySource), FeedbackCases: feedback,
+		OriginalSource: string(source), PolicySource: string(options.PolicySource), SearchPolicy: options.SearchPolicy, FeedbackCases: feedback,
 		EvaluationCases: options.Evaluation, SelectedRound: -1, Rounds: []Round{},
 		Scope: "Gooo policy controls retained round, bounded source-budget revisions and promotion of explicit root-input counterexamples into source cases; feedback is adaptive, not held-out evidence; final evaluation is never sent to the policy; model-training exposure is unknown"}
+	if options.SearchPolicy {
+		result.Scope += "; search policy can advance through source-declared grammar/candidate-bound alternatives without revisiting a grammar/bound pair"
+	}
 	fail := func(err error) (Result, error) {
 		result.Status, result.Failure = "FAIL_CLOSED", err.Error()
 		return result, err
@@ -41,6 +44,9 @@ func runRounds(ctx context.Context, filename string, source []byte, feedback bod
 		round := Round{Source: string(current), Observation: Observation{Best: best, Attempts: attempts,
 			Limit: options.MaxAttempts, Round: index + 1, RoundLimit: options.MaxRounds}}
 		err := observeRound(ctx, filename, feedback, options, &round)
+		if err == nil && options.SearchPolicy {
+			err = observeSearch(ctx, filename, current, options, result.Rounds, &round)
+		}
 		if err == nil {
 			err = decide(ctx, options, result.PolicyComposition, &round)
 		}
@@ -105,7 +111,10 @@ func validate(ctx context.Context, filename string, source []byte, feedback body
 	if spec == nil || spec.FillPlan != nil || spec.MaxAttempts > options.MaxAttempts {
 		return 0, fmt.Errorf("refinement activity requires a choice/search assembly within the requested attempt limit")
 	}
-	if spec.Search != nil && options.MaxAttempts > spec.Search.MaxCandidates {
+	if options.SearchPolicy && spec.Search == nil {
+		return 0, fmt.Errorf("search policy requires a source-owned integer search")
+	}
+	if spec.Search != nil && !options.SearchPolicy && options.MaxAttempts > spec.Search.MaxCandidates {
 		options.MaxAttempts = spec.Search.MaxCandidates
 	}
 	if err := bodyexecution.ValidateCompositionCases(ctx, filename, source, feedback); err != nil {
