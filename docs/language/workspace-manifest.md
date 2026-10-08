@@ -60,9 +60,9 @@ entities and activities, then lists checked imported-activity bindings. This
 view helps inspect a workspace before consuming its JSON receipt. Both forms
 resolve the package graph only; they do not run activity bodies.
 
-Version 1 records an entry activity and packages. Each package has a stable
-path, a Gooo package name, imports by package path, and source paths relative to
-the workspace manifest:
+Version 1 records an entry activity and packages. Each package has a stable path
+and source paths relative to the workspace manifest. The development compiler
+reads omitted `name` and `imports` from the Gooo files. For example:
 
 ```json
 {
@@ -71,8 +71,6 @@ the workspace manifest:
   "packages": [
     {
       "path": "boundedint",
-      "name": "boundedint",
-      "imports": [],
       "sources": ["main.gooo"]
     }
   ]
@@ -119,16 +117,31 @@ exercises this behavior through real package execution and exact integer values.
 Ambiguous imported constructor names need an unambiguous declaration/import
 environment, as do signature types. Scalar entities keep the current
 Integer/Boolean/Text body profiles.
-When source files declare imports, their union must match the manifest's
-`imports` list. A mismatch fails with `PACKAGE_SOURCE_IMPORT_MISMATCH` so source
-intent and the workspace graph cannot quietly drift apart. Existing workspaces
-that keep imports only in the manifest remain supported until their source is
-updated.
+Omit `name` to use the `package` declaration; every source in that package must
+agree. Omit `imports` to use the sorted, deduplicated union of all its source
+imports. JSON `null` has the same meaning as omission for these optional fields;
+an empty name also requests source metadata. An explicit `imports: []` asserts
+no imports and is checked against any source import declarations. An explicit
+nonempty name or import list is also checked. Import-list differences fail with
+`PACKAGE_SOURCE_IMPORT_MISMATCH`; differing source package names fail with
+`PACKAGE_HEADER_MISMATCH`. Existing manifest-only dependency declarations remain
+supported when the source has no imports.
+
+`resolve`, `execute`, `replay`, `resume` and Gooo assembly-policy workspaces use
+the same reader. Omitted and equivalent explicit metadata produce the same
+normalized graph, source/semantic identities and generated program. Each original
+manifest retains its own byte digest. Dependency cycles, unresolved packages and
+invalid source still produce errors. Package paths, source locations and the entry
+remain explicit; this operation does not discover or download other repositories.
+The [source-derived three-package example](../../examples/package-body-calls/README.md)
+uses real calls, body assembly and saved execution. New library and diagnostic
+starters use this form. A compiler built from this development revision is needed;
+the published 0.6.10 compiler uses the earlier, fully specified form.
 
 Gooo source imports identify package dependencies, while the workspace manifest
 still supplies package paths, source files, and the executable entry. Activity
-call expressions across packages are not yet part of the language. `package
-resolve` can resolve an explicit imported-activity binding against the imported
+calls such as `rules.IsPartial(input0, input1)` are available in the supported
+pure-body profiles. `package resolve` can also resolve an explicit imported-activity binding against the imported
 package's exported activity and the local consumer. The output and input must
 carry the same stable entity ID. Its receipt records producer and consumer
 packages, activities, ports, and entity ID under the consumer package's

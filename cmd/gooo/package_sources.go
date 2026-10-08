@@ -32,6 +32,9 @@ func loadPackageSources(reader SourceReader, manifestPath string, manifest works
 			}
 			pkg.Sources = append(pkg.Sources, packageruntime.Source{Filename: filepath.ToSlash(relative), Content: string(content)})
 		}
+		if err := completeWorkspacePackage(&pkg, declared); err != nil {
+			return result, err
+		}
 		result.Packages = append(result.Packages, pkg)
 	}
 	return result, nil
