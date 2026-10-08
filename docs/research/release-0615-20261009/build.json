@@ -1,0 +1,66 @@
+{
+	"GoVersion": "go1.27.1",
+	"Path": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+	"Main": {
+		"Path": "github.com/kimjooyoon/meta-ontology-go",
+		"Version": "v0.6.14-dev.0.20261008194951-848f85de6a90"
+	},
+	"Deps": [
+		{
+			"Path": "github.com/kimjooyoon/gooo-decision-runtime",
+			"Version": "v0.2.26-experimental",
+			"Sum": "h1:L7knWc3XmvJnMV/a4uGophsNzY3sI8nxsmuubAguCBA="
+		},
+		{
+			"Path": "github.com/kimjooyoon/gooo-jev",
+			"Version": "v0.0.0-20260928032625-e146e6dbb34a",
+			"Sum": "h1:1/uDBg0hud6IiZzOhTKXokIWdmlnU4HdYz7TGl729+s="
+		}
+	],
+	"Settings": [
+		{
+			"Key": "-buildmode",
+			"Value": "exe"
+		},
+		{
+			"Key": "-compiler",
+			"Value": "gc"
+		},
+		{
+			"Key": "-trimpath",
+			"Value": "true"
+		},
+		{
+			"Key": "CGO_ENABLED",
+			"Value": "0"
+		},
+		{
+			"Key": "GOARCH",
+			"Value": "arm64"
+		},
+		{
+			"Key": "GOOS",
+			"Value": "darwin"
+		},
+		{
+			"Key": "GOARM64",
+			"Value": "v8.0"
+		},
+		{
+			"Key": "vcs",
+			"Value": "git"
+		},
+		{
+			"Key": "vcs.revision",
+			"Value": "848f85de6a9088b7396a3b4aeb3dce32ff670dd5"
+		},
+		{
+			"Key": "vcs.time",
+			"Value": "2026-10-08T19:49:51Z"
+		},
+		{
+			"Key": "vcs.modified",
+			"Value": "false"
+		}
+	]
+}

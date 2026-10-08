@@ -70,8 +70,16 @@ type jointSmokeOutput struct {
 				Generation struct {
 					Report struct {
 						Fill *struct {
-							Selected string `json:"selected_candidate_id"`
-							Calls    *int   `json:"local_model_predictions"`
+							Selected string                    `json:"selected_candidate_id"`
+							Calls    *int                      `json:"local_model_predictions"`
+							PlanSHA  string                    `json:"ir_plan_sha256"`
+							Rejected []jointSmokeFillRejection `json:"rejected_candidates"`
+							Scores   []struct {
+								ID     string
+								Typed  *bool `json:"typecheck_passed"`
+								Passed *int  `json:"test_cases_passed"`
+								Total  *int  `json:"test_cases_total"`
+							} `json:"candidate_scores"`
 						} `json:"body_fill"`
 					}
 				}
@@ -119,6 +127,8 @@ type jointSmokeRuntime struct {
 	Calls          *int   `json:"model_calls"`
 	Projection     *bool  `json:"projection_replayed"`
 	Replay         *bool  `json:"runtime_replayed"`
+	Build          struct{ Started *bool }
+	Runs           []json.RawMessage
 	Traces         []struct {
 		Index      int `json:"case_index"`
 		Deliveries []struct {
