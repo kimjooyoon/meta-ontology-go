@@ -8,7 +8,7 @@ import (
 )
 
 func (c *recordFlowBuilder) expression(node ast.Expr, state *flowState, selected bool) flowValue {
-	if selected && c.altSet == nil {
+	if selected && c.altSet == nil && c.callDepth == 0 {
 		for i, site := range c.sites {
 			span := c.span(node)
 			if span.Start == site.start && span.End == site.end {
@@ -38,6 +38,9 @@ func (c *recordFlowBuilder) expression(node ast.Expr, state *flowState, selected
 	case *ast.CompositeLit:
 		return c.constructor(e, state)
 	case *ast.CallExpr:
+		if name, ok := e.Fun.(*ast.Ident); ok && c.helpers[name.Name].body != nil {
+			return c.call(e, state, selected)
+		}
 		if name, ok := e.Fun.(*ast.Ident); ok && bodyPrimitiveName(name.Name) &&
 			c.body.activityIDs[name.Name] == "" && len(e.Args) == 1 {
 			value := c.expression(e.Args[0], state, selected)
