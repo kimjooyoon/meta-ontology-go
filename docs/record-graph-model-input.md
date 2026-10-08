@@ -13,8 +13,8 @@ go run ./cmd/gooo body-context --value-flow --activity Classify \
   examples/text-operations/source.gooo.fixture
 ```
 
-This source checkout requires SDK v0.2.26-experimental. The previously published
-Gooo 0.6.8 binary does not contain this option. The context alone performs zero
+The [0.6.9 development source](releases/0.6.9-dev.md) requires SDK v0.2.26-experimental.
+The earlier Gooo 0.6.8 binary does not contain this option. The context alone performs zero
 model predictions and zero candidate tests. The original full value-flow graph
 is shown only with `--value-flow`; its digest is retained in the model receipt.
 

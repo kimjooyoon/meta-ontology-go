@@ -16,6 +16,7 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 	examples := []languageSmokeCase{
 		{"integer-division", "examples/integer-division/source.gooo.fixture", "examples/integer-division/cases.json", 8},
 		{"candidate-locals", "examples/candidate-locals/retry.gooo.fixture", "examples/candidate-locals/cases.json", 12},
+		{"text-operations", "examples/text-operations/source.gooo.fixture", "examples/text-operations/cases.json", 12},
 	}
 	if err := os.MkdirAll(input.OutputDir, 0o755); err != nil {
 		return err
@@ -25,7 +26,7 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 			return fmt.Errorf("TOOLCHAIN_RELEASE_LANGUAGE_SMOKE %s: %w", example.name, err)
 		}
 	}
-	return nil
+	return smokeSourceGraph(binary, input)
 }
 
 func smokeLanguageExample(binary, work string, input BuildInput, example languageSmokeCase) error {

@@ -53,10 +53,13 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
-The [0.6.8 development guide](docs/releases/0.6.8-dev.md) covers signed integer
-division and candidate-local values that can be prepared before output choices
-are selected. It includes a runnable retry policy and saved replay. Earlier
-continuation and numeric refinement remain in the [0.6.7 guide](docs/releases/0.6.7-dev.md).
+The [0.6.9 development guide](docs/releases/0.6.9-dev.md) covers string operations,
+following values through source helpers and exporting ordered graphs for a small
+model. It includes a runnable filename classifier and saved replay. Check the
+[release page](https://github.com/kimjooyoon/meta-ontology-go/releases) for published
+assets and their exact source. Integer division and prepared candidate values
+are covered in the [0.6.8 guide](docs/releases/0.6.8-dev.md); earlier continuation
+and numeric refinement remain in the [0.6.7 guide](docs/releases/0.6.7-dev.md).
 
 Build a small diagnostic tool whose choices and rules are written in Gooo:
 
