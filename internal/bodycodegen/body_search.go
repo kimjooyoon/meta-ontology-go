@@ -81,6 +81,7 @@ type IRBodySearchReceipt struct {
 	HoldoutError                string                                  `json:"holdout_error,omitempty"`
 	Attempts                    []IRBodySearchAttempt                   `json:"attempts"`
 	CandidateCount              int                                     `json:"candidate_count"`
+	AttemptBudget               *int                                    `json:"attempt_budget,omitempty"`
 	CandidateGeneration         *IRBodySearchCandidateGenerationReceipt `json:"candidate_generation,omitempty"`
 	AttemptedCandidates         int                                     `json:"attempted_candidates"`
 	EvaluatedCandidates         int                                     `json:"evaluated_candidates"`
@@ -162,7 +163,7 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 		Schema: bodySearchPlanSchema, IRPlanSHA256: digest(planBytes), OriginalSourceDigest: digest(source),
 		TrainingSuiteSHA256: digest(trainingBytes), TrainingTotal: len(plan.TestCases),
 		HoldoutTotal: len(plan.HoldoutTestCases), CandidateCount: len(plan.Candidates),
-		UntestedCandidates: len(plan.Candidates), Attempts: []IRBodySearchAttempt{},
+		UntestedCandidates: len(plan.Candidates), Attempts: []IRBodySearchAttempt{}, AttemptBudget: &plan.MaxAttempts,
 		Evaluator: bodyFillEvaluator, ProviderBudgetMS: float64(providerBudget) / float64(time.Millisecond),
 		PromptProfile: plan.PromptProfile, CandidateGeneration: candidateGeneration,
 	}
@@ -501,7 +502,7 @@ func validateIRBodySearchPlan(plan IRBodySearchPlan) error {
 }
 
 func prepareBodySearch(filename string, source []byte, activityName, holeID string) (*syntax.File, *syntax.ActivityDecl, string, string, error) {
-	file, diagnostics := syntax.ParseFile(filename, string(source))
+	file, diagnostics := ParseBodyFile(filename, source)
 	if diagnostics.HasErrors() {
 		return nil, nil, "", "", diagnostics.Error()
 	}
@@ -520,11 +521,7 @@ func prepareBodySearch(filename string, source []byte, activityName, holeID stri
 	if len(activity.Inputs) != 1 || activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" {
 		return nil, nil, "", "", fmt.Errorf("IR body search requires one Integer input and one Integer output")
 	}
-	document, err := bidir.DocumentFromSyntax(file)
-	if err != nil {
-		return nil, nil, "", "", err
-	}
-	model, err := bidir.Get(document)
+	model, _, err := resolveBodyModel(file)
 	if err != nil {
 		return nil, nil, "", "", err
 	}

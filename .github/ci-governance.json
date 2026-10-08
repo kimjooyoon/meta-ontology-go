@@ -7595,6 +7595,21 @@
         "internal/bodycodegen/record_budget_test.go",
         "internal/verify/scope_gooo_source_attempt_budget_20261008.go"
       ]
+    },
+    {
+      "branch": "agent/gooo-source-search-context-20261008",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/body_context.go",
+        "cmd/gooo/body_search_context_test.go",
+        "docs/source-assembly.md",
+        "internal/bodycodegen/body_search.go",
+        "internal/bodycodegen/search_budget_test.go",
+        "internal/bodycodegen/source_search_context.go",
+        "internal/bodycodegen/source_search_replay.go",
+        "internal/verify/scope_gooo_source_search_context_20261008.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

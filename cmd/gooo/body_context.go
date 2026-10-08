@@ -72,6 +72,20 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 	if options.valueFlow {
 		return bodyContextFailure(stdout, fmt.Errorf("value flow requires record source assembly"))
 	}
+	if bodycodegen.IsSourceIRSearch(assembly) {
+		if options.plan != "" || options.featureExplicit {
+			return bodyContextFailure(stdout, fmt.Errorf("source search owns its plan and has no model feature encoding"))
+		}
+		result, err := bodycodegen.ExportSourceIRSearchContext(ctx, options.filename, source, options.activity, options.includePlan)
+		if err != nil {
+			return bodyContextFailure(stdout, err)
+		}
+		if err = json.NewEncoder(stdout).Encode(result); err != nil {
+			fmt.Fprintln(stderr, "context export output failed")
+			return exitFailure
+		}
+		return exitOK
+	}
 	document, err := bodycodegen.DecodeSourcePathDocument(ctx, options.filename, source, options.activity, raw)
 	if err != nil {
 		return bodyContextFailure(stdout, err)
@@ -94,7 +108,7 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 
 type bodyContextArgs struct {
 	plan, activity, filename, featureVersion string
-	includePlan, valueFlow                   bool
+	includePlan, valueFlow, featureExplicit  bool
 }
 
 func (o *bodyContextArgs) set(flag, value string) bool {
@@ -111,6 +125,9 @@ func (o *bodyContextArgs) set(flag, value string) bool {
 		return false
 	}
 	*target = value
+	if flag == "--feature-version" {
+		o.featureExplicit = true
+	}
 	return true
 }
 
