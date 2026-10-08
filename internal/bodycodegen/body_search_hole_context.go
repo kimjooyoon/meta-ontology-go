@@ -29,7 +29,7 @@ type IRBodyHoleContext struct {
 
 func generateIRBodySearchCandidatesForSource(ctx context.Context, filename string, source []byte, activity string,
 	plan *IRBodySearchPlan) (*IRBodySearchCandidateGenerationReceipt, error) {
-	if plan.CandidateGeneration == nil || (plan.CandidateGeneration.Grammar != bodySearchHoleResidualGrammar && plan.CandidateGeneration.Grammar != bodySearchHoleQuadraticGrammar) {
+	if plan.CandidateGeneration == nil || (plan.CandidateGeneration.Grammar != bodySearchHoleResidualGrammar && !isQuadraticHoleGrammar(plan.CandidateGeneration.Grammar)) {
 		return generateIRBodySearchCandidates(plan)
 	}
 	if ctx == nil {
@@ -59,7 +59,7 @@ func generateIRBodySearchCandidatesForSource(ctx context.Context, filename strin
 		TrainingSuiteSHA256: digest(training), Probes: make([]IRBodyHoleProbe, 0, len(plan.TestCases)),
 		Scope: "pure typed-body outputs with the hole set to zero and one on training inputs; exact integer residual proposals; nonlinear and wrapped behavior still requires full candidate scoring"}
 	var negative []byte
-	quadratic := plan.CandidateGeneration.Grammar == bodySearchHoleQuadraticGrammar
+	quadratic := isQuadraticHoleGrammar(plan.CandidateGeneration.Grammar)
 	if quadratic {
 		negative = holeProbeProgram(file.Package.Name, activity, id, body, plan.HoleID, -1)
 		observation.Schema = "gooo/integer-hole-context/v2"
@@ -81,6 +81,9 @@ func generateIRBodySearchCandidatesForSource(ctx context.Context, filename strin
 	expressions := holeContextExpressions(observation.Probes, bodySearchAffineExpressions(plan.TestCases))
 	if quadratic {
 		expressions = quadraticHoleExpressions(observation.Probes, expressions)
+	}
+	if plan.CandidateGeneration.Grammar == bodySearchHoleQuadraticFitGrammar {
+		expressions = orderQuadraticHoleExpressions(observation.Probes, expressions)
 	}
 	return retainIRBodySearchCandidates(plan, expressions, observation)
 }

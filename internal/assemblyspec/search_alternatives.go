@@ -24,5 +24,5 @@ func (s Spec) validateSearchAlternatives() error {
 
 func supportedSearchGrammar(grammar string) bool {
 	return grammar == "integer-offset-constant/v1" || grammar == "integer-hole-residual/v1" ||
-		grammar == "integer-hole-quadratic/v1"
+		grammar == "integer-hole-quadratic/v1" || grammar == "integer-hole-quadratic/v2"
 }

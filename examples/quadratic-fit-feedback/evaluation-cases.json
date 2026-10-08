@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"Build": 0}, "expected": {"Build": 1}},
+    {"inputs": {"Build": 11}, "expected": {"Build": 540}},
+    {"inputs": {"Build": -2}, "expected": {"Build": 7}}
+  ]
+}
