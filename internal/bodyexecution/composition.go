@@ -3,6 +3,7 @@ package bodyexecution
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -19,6 +20,7 @@ type Composition struct {
 	Schema               string                         `json:"schema"`
 	Stage                string                         `json:"stage"`
 	Failure              string                         `json:"failure,omitempty"`
+	FillFailure          *bodycodegen.IRBodyFillFailure `json:"fill_failure,omitempty"`
 	ActiveActivity       string                         `json:"active_activity,omitempty"`
 	OriginalSourceSHA256 string                         `json:"original_source_sha256"`
 	SelectedSourceSHA256 string                         `json:"selected_source_sha256"`
@@ -58,6 +60,9 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 		result.ElapsedNS = time.Since(start).Nanoseconds()
 		if err != nil {
 			result.Failure = err.Error()
+			if rejected, ok := errors.AsType[*bodycodegen.NoValidBodyFillCandidates](err); ok {
+				result.FillFailure = &rejected.Observation
+			}
 		}
 		return result, err
 	}

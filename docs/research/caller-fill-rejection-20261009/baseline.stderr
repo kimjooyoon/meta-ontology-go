@@ -1,0 +1,1 @@
+gooo body-construct: called activity "PlanBudget" plan: candidate "bad_cap_type" is not a valid typed record body: typecheck generated activity: body.goo:17:23: cannot use true (untyped bool constant) as int64 value in assignment

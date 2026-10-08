@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 func TestRunBodyCodegenWritesProjectionOrClosedFailure(t *testing.T) {
@@ -173,12 +175,18 @@ entity Integer id "sample://entity/integer"
 activity Clamp(Integer) -> Integer computes "if input < 0 { return __GOOO_BODY_HOLE_floor__ } else { return input }"
 `
 	cases := []struct {
-		name string
-		plan string
+		name      string
+		plan      string
+		singleton bool
 	}{
 		{
-			name: "ill-typed candidate",
-			plan: `{"schema":"gooo/body-codegen-ir-fill-plan/v1","intent":"Clamp negative inputs.","hole_id":"floor","candidates":[{"id":"bad","expression":"true"},{"id":"zero","expression":"0"}],"test_cases":[{"input":-1,"expected":0}]}`,
+			name:      "ill-typed candidate",
+			singleton: true,
+			plan:      `{"schema":"gooo/body-codegen-ir-fill-plan/v1","intent":"Clamp negative inputs.","hole_id":"floor","candidates":[{"id":"bad","expression":"true"},{"id":"zero","expression":"0"}],"test_cases":[{"input":-1,"expected":0}]}`,
+		},
+		{
+			name: "all ill-typed candidates",
+			plan: `{"schema":"gooo/body-codegen-ir-fill-plan/v1","intent":"Clamp negative inputs.","hole_id":"floor","candidates":[{"id":"bad","expression":"true"},{"id":"also_bad","expression":"false"}],"test_cases":[{"input":-1,"expected":0}]}`,
 		},
 		{
 			name: "missing expected value",
@@ -193,6 +201,18 @@ activity Clamp(Integer) -> Integer computes "if input < 0 { return __GOOO_BODY_H
 			}
 			var stdout, stderr bytes.Buffer
 			code := runBodyCodegen([]string{"--json", "--fill-plan", "fill-plan.json", "--activity", "Clamp", "fixture.gooo"}, reader, &stdout, &stderr)
+			if test.singleton {
+				var result bodycodegen.Result
+				if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+					t.Fatal(err)
+				}
+				f := result.Report.BodyFill
+				if code != exitOK || f == nil || len(f.RejectedCandidates) != 1 || len(f.CandidateScores) != 1 || f.SelectedCandidateID != "zero" ||
+					f.Decision.FallbackReason != "ONLY_VALID_CANDIDATE" || f.ExternalProviderCalls != 0 || !f.ExternalProviderCallsKnown {
+					t.Fatal(code, f, stderr.String())
+				}
+				return
+			}
 			var report struct {
 				Decision string `json:"decision"`
 				Source   string `json:"source"`

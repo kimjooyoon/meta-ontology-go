@@ -154,7 +154,6 @@ func TestTinyGoBodyFillRejectsUnsupportedDuplicateAndIllTypedCandidatesBeforePro
 		{name: "unsupported root", candidates: []IRBodyFillCandidate{{ID: "a", Expression: "input != 0"}, {ID: "b", Expression: "input < 0"}}},
 		{name: "duplicate operation", candidates: []IRBodyFillCandidate{{ID: "a", Expression: "input < 1"}, {ID: "b", Expression: "(input < 2)"}}},
 		{name: "not a binary operation", candidates: []IRBodyFillCandidate{{ID: "a", Expression: "true"}, {ID: "b", Expression: "input < 0"}}},
-		{name: "ill typed before inference", candidates: []IRBodyFillCandidate{{ID: "a", Expression: "input + true"}, {ID: "b", Expression: "input < 0"}}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

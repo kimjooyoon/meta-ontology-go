@@ -6,6 +6,7 @@ const jointSchema = "gooo/joint-construction/v1"
 const jointMixedSchema = "gooo/joint-construction/v2"
 const jointRejectionSchema = "gooo/joint-construction/v3"
 const jointFillSchema = "gooo/joint-construction/v4"
+const jointFillRejectionSchema = "gooo/joint-construction/v5"
 
 // JointConstruction keeps local preparation, caller feedback and subsequent
 // evaluation distinct. Initial is also the source-bound historical model order.
