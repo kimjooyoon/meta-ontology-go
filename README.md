@@ -52,7 +52,7 @@ saved replay. [Caller-guided construction](examples/caller-guided-construction/R
 includes a runnable example and the current source/model/budget limits.
 It also records [rejected local expressions](examples/caller-search-rejection/README.md)
 and continues within the original attempt budget. IR search is in 0.6.13;
-caller-guided `source_fill` requires development source newer than that archive.
+caller-guided `source_fill` is part of 0.6.14 development source.
 
 The development workspace reader can derive package names and dependencies from
 Gooo source, leaving only paths, source files and the entry in the manifest.
@@ -70,7 +70,9 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
-The [0.6.13 candidate guide](docs/releases/0.6.13-dev.md) adds caller-guided integer
+The [0.6.14 development guide](docs/releases/0.6.14-dev.md) adds caller-guided
+multi-hole assignments, separate training/holdout observations and ordinary source reuse.
+The [0.6.13 guide](docs/releases/0.6.13-dev.md) adds caller-guided integer
 expression search, rejected-candidate continuation and replayable partial results.
 The release page identifies whether the candidate has been publicly published.
 The [0.6.12 development guide](docs/releases/0.6.12-dev.md) introduces whole-program

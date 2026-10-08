@@ -1,7 +1,8 @@
 # Caller-guided multi-hole bodies
 
-Development source adds whole-program selection for `source_fill`. The published
-0.6.13-dev archive predates this addition. Build this revision with Go 1.27.1:
+Gooo 0.6.14 development source adds whole-program selection for `source_fill`.
+The [release guide](../../docs/releases/0.6.14-dev.md) explains the records and
+reuse commands. Build this revision with Go 1.27.1:
 
 ```sh
 go build -o /tmp/gooo-source-fill ./cmd/gooo
