@@ -162,7 +162,8 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 	}
 	valid := o.featureVersion == decision.SplitContextIntentFeatureVersion || o.featureVersion == decision.SemanticContextIntentFeatureVersion ||
 		o.featureVersion == jointdecision.RecordFieldFeatureVersion || o.featureVersion == jointdecision.RecordSharedFeatureVersion ||
-		o.featureVersion == jointdecision.RecordOriginSharedFeatureVersion
+		o.featureVersion == jointdecision.RecordOriginSharedFeatureVersion ||
+		o.featureVersion == jointdecision.RecordGraphSharedFeatureVersion
 	return o, o.activity != "" && o.filename != "" && valid
 }
 

@@ -43,7 +43,8 @@ func exportRecordAssemblyContext(ctx context.Context, filename string, source []
 	includePlan bool, version string, includeFlow bool) (RecordAssemblyContextExport, error) {
 	if version != "" && version != decision.SplitContextIntentFeatureVersion &&
 		version != decision.SemanticContextIntentFeatureVersion && version != jointdecision.RecordFieldFeatureVersion &&
-		version != jointdecision.RecordSharedFeatureVersion && version != jointdecision.RecordOriginSharedFeatureVersion {
+		version != jointdecision.RecordSharedFeatureVersion && version != jointdecision.RecordOriginSharedFeatureVersion &&
+		version != jointdecision.RecordGraphSharedFeatureVersion {
 		return RecordAssemblyContextExport{}, fmt.Errorf("unsupported record context feature version")
 	}
 	plan, err := prepareRecordAssembly(ctx, filename, source, activity)
@@ -52,12 +53,14 @@ func exportRecordAssemblyContext(ctx context.Context, filename string, source []
 	}
 	contract, _ := plan.spec.Canonical()
 	var flow *RecordValueFlow
-	if includeFlow || version == jointdecision.RecordOriginSharedFeatureVersion {
+	if includeFlow || version == jointdecision.RecordOriginSharedFeatureVersion || version == jointdecision.RecordGraphSharedFeatureVersion {
 		flow = recordValueFlow(plan)
 	}
 	var modelContext *RecordOrdinalContext
 	if version == jointdecision.RecordOriginSharedFeatureVersion {
 		modelContext = recordOriginContext(plan.choices, flow)
+	} else if version == jointdecision.RecordGraphSharedFeatureVersion {
+		modelContext = recordGraphContext(plan, flow)
 	} else {
 		modelContext = recordModelContext(plan.choices, version)
 	}

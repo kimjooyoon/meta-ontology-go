@@ -97,6 +97,8 @@ func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *Reco
 				err = g.three.PredictRecordSharedInto(r.Context.Text, &workspace, &prediction)
 			case jointdecision.RecordOriginSharedFeatureVersion:
 				err = g.three.PredictRecordOriginSharedInto(r.Context.Text, &workspace, &prediction)
+			case jointdecision.RecordGraphSharedFeatureVersion:
+				err = g.three.PredictRecordGraphSharedInto(r.Context.Text, &workspace, &prediction)
 			default:
 				err = g.three.PredictInto(r.Context.Text, &workspace, &prediction)
 			}
