@@ -44,7 +44,8 @@ manifest, source files, imported helpers, identity mapping and lowering travel
 in `result.assembly_policy`. Replay rebuilds that saved policy, compares its
 lowering and checks every recorded policy decision through the existing
 composition replay. Policy files and model files are not opened for replay.
-Changing a policy for a new construction requires a new execute command.
+Use a new execute command for a fresh construction, or `gooo package resume`
+with an explicit new policy to continue the saved construction's remaining candidates.
 
 The package snapshot preserves which source produced the policy. It does not
 authenticate the author or the origin of a copied receipt. The original source
@@ -64,8 +65,9 @@ new model calls and fresh native outputs.
   their existing behavior; at least one record-choice activity is required.
 - The source owns candidates and total attempt budget. Policy messages remain
   domain judgments; matched/total reports come from actual finite checks.
-- This route executes one bounded construction. Saved continuation is currently
-  available through `body-compose`, and has a separate receipt contract.
+- This execute route performs one bounded construction. `gooo package resume`
+  continues supported saved record-choice constructions with an explicit Gooo
+  policy, preserving the cumulative budget and historical policy source.
 
 Tests exercise continued and partial construction, imported helpers, replay
 after policy-file removal, changed-source rejection and agreement between policy
