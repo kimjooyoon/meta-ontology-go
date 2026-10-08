@@ -360,6 +360,15 @@ against the source and re-executes caller cases with no new inference. The
 optional graph model orders record choices; integer expression ordering remains
 deterministic. This extension is newer than the published 0.6.12 binary.
 
+If a source-search expression fails its local typecheck or pure evaluation, the
+history uses `gooo/joint-construction/v3` and retains a `rejection`. That
+combination consumes one program attempt and receives no native caller score.
+Local totals on that row cover only the already scored prefix. Search continues
+within the original budgets, and saved replay rederives the rejected expression
+and reason. [Runnable rejection example](../examples/caller-search-rejection/README.md).
+Request cancellation, invalid source/selection, reconstruction failure, native
+toolchain failure and compiled-program execution failure still stop the request.
+
 ## Current boundaries
 
 The graph supports 1..16 activities with 1..16 inputs and one result each.

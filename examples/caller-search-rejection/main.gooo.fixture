@@ -1,0 +1,9 @@
+package candidateerror
+namespace candidateerror
+entity Integer id "candidateerror://integer"
+activity Choose(Integer) -> Integer computes "if input == 0 { return 0 }; return input / __GOOO_BODY_HOLE_value__" assembling {
+    search hole "value" grammar "integer-offset-constant/v1" intent "Choose a denominator that matches the caller." max_candidates "8"
+    case "0" -> "0"
+    attempts "5"
+}
+activity Main(Integer) -> Integer computes "return Choose(input)"
