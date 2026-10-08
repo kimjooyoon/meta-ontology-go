@@ -13,9 +13,10 @@ func jointFillSlot(ctx context.Context, filename string, source []byte, activity
 	if err != nil {
 		return slot, err
 	}
-	if prior.IRPlanSHA256 != set.PlanSHA256 || len(prior.CandidateScores) != len(set.Candidates) {
+	if prior.IRPlanSHA256 != set.PlanSHA256 || len(prior.CandidateScores)+len(prior.RejectedCandidates) != len(set.Candidates) {
 		return slot, fmt.Errorf("joint source fill contract differs from initial construction")
 	}
+	slot.fillRejected = len(prior.RejectedCandidates) != 0
 	found := false
 	for i, candidate := range set.Candidates {
 		slot.fillIDs = append(slot.fillIDs, candidate.ID)
@@ -33,11 +34,19 @@ func jointFillSlot(ctx context.Context, filename string, source []byte, activity
 func jointObservationSchema(slots []jointSlot, attempts []JointAttempt) string {
 	schema := jointSchema
 	for _, slot := range slots {
-		if len(slot.fillIDs) != 0 {
-			return jointFillSchema
+		if slot.fillRejected {
+			return jointFillRejectionSchema
 		}
-		if len(slot.searchIDs) != 0 {
+		if len(slot.fillIDs) != 0 {
+			schema = jointFillSchema
+		}
+		if len(slot.searchIDs) != 0 && schema != jointFillSchema {
 			schema = jointMixedSchema
+		}
+	}
+	for _, attempt := range attempts {
+		if attempt.Rejection != nil && attempt.Rejection.Stage == "LOCAL_SOURCE_FILL" {
+			return jointFillRejectionSchema
 		}
 	}
 	if schema == jointMixedSchema {

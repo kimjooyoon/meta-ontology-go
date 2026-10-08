@@ -148,10 +148,11 @@ func TestSourceRecordIRBodyFillRejectsIllTypedCandidateBeforeLaya(t *testing.T) 
 	}))
 	defer server.Close()
 
-	_, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill.gooo", source,
+	result, err := GenerateWithSourceIRBodyFill(context.Background(), "record-fill.gooo", source,
 		"ReviewCandidate", spec, server.URL+"/v1/systemone", "", IRBodyFillOptions{})
-	if err == nil || !strings.Contains(err.Error(), "candidate \"ready_is_accepted\"") || calls != 0 {
-		t.Fatalf("ill-typed candidate was not rejected before model selection: calls=%d err=%v", calls, err)
+	if err != nil || calls != 0 || result.Report.BodyFill == nil || len(result.Report.BodyFill.RejectedCandidates) != 1 ||
+		result.Report.BodyFill.RejectedCandidates[0].CandidateID != "ready_is_accepted" || result.Report.BodyFill.Decision.FallbackReason != "ONLY_VALID_CANDIDATE" {
+		t.Fatalf("remaining record assignment was not selected without inference: calls=%d err=%v", calls, err)
 	}
 }
 

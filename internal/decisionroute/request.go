@@ -73,6 +73,15 @@ func ValidateProviderModel(model string) error {
 }
 
 func Validate(request Request) (string, error) {
+	return validate(request, false)
+}
+
+// ValidateSingleton binds one remaining choice without making a model request.
+func ValidateSingleton(request Request) (string, error) {
+	return validate(request, true)
+}
+
+func validate(request Request, singleton bool) (string, error) {
 	if err := ValidateProviderModel(request.ProviderModel); err != nil {
 		return "", err
 	}
@@ -80,7 +89,10 @@ func Validate(request Request) (string, error) {
 		strings.TrimSpace(request.Question.ID) == "" || strings.TrimSpace(request.Question.Instructions) == "" {
 		return "", errors.New("schema, state, question id, and question instructions are required")
 	}
-	if len(request.Question.Options) < 2 {
+	if singleton && len(request.Question.Options) != 1 {
+		return "", errors.New("exactly one deterministic option is required")
+	}
+	if !singleton && len(request.Question.Options) < 2 {
 		return "", errors.New("at least two decision options are required")
 	}
 	seen := make(map[string]bool, len(request.Question.Options))

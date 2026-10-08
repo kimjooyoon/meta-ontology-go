@@ -164,8 +164,13 @@ func generateWithRecordIRBodyFillOptions(
 
 	started := time.Now()
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
+	var rejected []IRBodyFillCandidateRejection
+	eligible := make([]IRBodyFillCandidate, 0, len(plan.Candidates))
 	candidateBodies := make(map[string]string, len(plan.Candidates))
 	for _, candidate := range plan.Candidates {
+		if err := ctx.Err(); err != nil {
+			return Result{}, err
+		}
 		candidateBody := body
 		for _, hole := range holes {
 			candidateBody, err = replaceIdentifier(candidateBody, bodyFillHoleToken(hole.ID), candidate.Fills[hole.ID])
@@ -176,12 +181,18 @@ func generateWithRecordIRBodyFillOptions(
 		generated, err := generateRouteParameters(file.Package.Name, activityName, activityID, parameters,
 			activity.Output, candidateBody, preserveRoute, records...)
 		if err != nil {
-			return Result{}, fmt.Errorf("candidate %q is not a valid typed record body: %w", candidate.ID, err)
+			rejected = append(rejected, rejectedBodyFillCandidate(plan, candidate, "TYPECHECK", err))
+			continue
 		}
 		observed, err := evaluateRecordAssembly(ctx, []byte(generated.source), activityName, records, plan.ValueCases)
 		if err != nil {
-			return Result{}, fmt.Errorf("evaluate record candidate %q: %w", candidate.ID, err)
+			if ctx.Err() != nil {
+				return Result{}, ctx.Err()
+			}
+			rejected = append(rejected, rejectedBodyFillCandidate(plan, candidate, "TRAINING_EVALUATION", err))
+			continue
 		}
+		eligible = append(eligible, candidate)
 		passed := 0
 		for _, result := range observed {
 			if result.Passed {
@@ -195,6 +206,10 @@ func generateWithRecordIRBodyFillOptions(
 			AccuracyPercent: float64(passed) * 100 / float64(len(plan.ValueCases)),
 		})
 	}
+	if len(eligible) == 0 {
+		return Result{}, noValidBodyFill(ctx, activityName, plan, rejected)
+	}
+	usingTinyGo = usingTinyGo && len(eligible) > 1
 	planBuildMS := float64(time.Since(started)) / float64(time.Millisecond)
 	testBytes, _ := json.Marshal(plan.ValueCases)
 	stateBytes, err := json.Marshal(irBodyFillState{
@@ -202,20 +217,20 @@ func generateWithRecordIRBodyFillOptions(
 		ActivityID: activityID, InputType: activity.Inputs[0].Name, InputTypes: bodyFillInputTypes(activity.Inputs),
 		OutputType: activity.Output, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
 		HoleIDs: bodyFillHoleIDs(plan, holes), BodyIR: body, TestCaseCount: len(plan.ValueCases),
-		TestSuiteSHA256: digest(testBytes), Candidates: scores,
+		TestSuiteSHA256: digest(testBytes), Candidates: scores, RejectedCandidates: rejected,
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("encode record Gooo IR body-fill state: %w", err)
 	}
-	modelCandidates := bodyFillModelCandidates(holes, plan.Candidates)
+	modelCandidates := bodyFillModelCandidates(holes, eligible)
 	tinyModelFocusHole := ""
 	requestOptions := make([]decisionroute.Option, 0, len(modelCandidates))
 	if usingTinyGo {
-		tinyModelFocusHole, err = tinyGoBodyFillFocusHole(holes, plan.Candidates)
+		tinyModelFocusHole, err = tinyGoBodyFillFocusHole(holes, eligible)
 		if err != nil {
 			return Result{}, err
 		}
-		requestOptions, err = tinyGoRecordBodyFillOptionsForHole(plan.Candidates, tinyModelFocusHole)
+		requestOptions, err = tinyGoRecordBodyFillOptionsForHole(eligible, tinyModelFocusHole)
 		if err != nil {
 			return Result{}, err
 		}
@@ -236,7 +251,7 @@ func generateWithRecordIRBodyFillOptions(
 		Schema: decisionroute.RequestSchema, State: string(stateBytes), ProviderModel: plan.ProviderModel,
 		Question: decisionroute.Question{
 			ID: "body_ir_fill", Instructions: instructions, Options: requestOptions,
-		}, Fallback: plan.Candidates[0].ID,
+		}, Fallback: eligible[0].ID,
 	}
 	if usingTinyGo {
 		request.Intent = plan.Intent
@@ -267,7 +282,7 @@ func generateWithRecordIRBodyFillOptions(
 	}
 	proposedID := decision.Selected
 	if usingTinyGo {
-		proposedID, err = tinyGoRecordCandidateForOperation(tinyModelFocusHole, decision.Selected, plan.Candidates, scores)
+		proposedID, err = tinyGoRecordCandidateForOperation(tinyModelFocusHole, decision.Selected, eligible, scores)
 		if err != nil {
 			return Result{}, err
 		}
@@ -356,7 +371,7 @@ func generateWithRecordIRBodyFillOptions(
 		TinyModelFocusHole: tinyModelFocusHole,
 		BestCandidateID:    best.ID, BestAccuracyPercent: best.AccuracyPercent,
 		SelectionRegretPP:   best.AccuracyPercent - proposedScore.AccuracyPercent,
-		SelectionAdjustment: selectionAdjustment, Decision: decision, CandidateScores: scores,
+		SelectionAdjustment: selectionAdjustment, Decision: decision, CandidateScores: scores, RejectedCandidates: rejected,
 		TestSuiteSHA256: digest(testBytes), TestCasesPassed: passed, TestCasesTotal: len(plan.ValueCases),
 		HoldoutSuiteSHA256: holdoutSuiteSHA256, HoldoutCasesPassed: holdoutPassed,
 		HoldoutCasesTotal: len(plan.ValueHoldoutCases), HoldoutAccuracyPercent: holdoutAccuracy,

@@ -53,8 +53,11 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 	if len(r.CandidateKinds) != 0 {
 		r.Scope = "source-bounded record masks and integer IR search expressions; local obligations and native caller expectations retained separately; optional model order only for record choices; search uses its deterministic source-budget prefix; no general correctness claim"
 	}
-	if r.Schema == jointFillSchema {
+	if r.Schema == jointFillSchema || r.Schema == jointFillRejectionSchema {
 		r.Scope = "source-bounded fill assignments, record masks and integer search expressions; selection uses local training and native caller cases only; local fill holdout observations do not influence selection or completion; optional models select initial bodies; subsequent fills use source order; rejected search rows have no caller score and local totals cover their scored prefix; finite observations only"
+	}
+	if r.Schema == jointFillRejectionSchema {
+		r.Scope += "; rejected fill assignments consume attempts without native execution or a local score; all source assignments remain in the candidate space"
 	}
 	executor := NewExecutor()
 	defer executor.Close()
@@ -69,14 +72,12 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 		if attempt.Rejection == nil {
 			attempt.Runtime, err = executor.ExecuteComposition(ctx, filename, selected, program, cases, options.GoBinary)
 		} else {
-			if r.Schema != jointRejectionSchema && r.Schema != jointFillSchema {
+			if r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema {
 				r.Scope += "; rejected local expressions consume attempts without a caller score; rejected local totals cover only the scored prefix"
-			}
-			if r.Schema != jointFillSchema {
-				r.Schema = jointRejectionSchema
 			}
 		}
 		r.Attempts = append(r.Attempts, attempt)
+		r.Schema = jointObservationSchema(slots, r.Attempts)
 		if err != nil {
 			return finish(err)
 		}
@@ -141,6 +142,13 @@ func materializeJoint(ctx context.Context, filename string, source []byte, cases
 			}
 			candidate, selected, err := bodycodegen.RealizeSourceFillCandidate(ctx, filename, current, slot.activity, slot.fillIDs[masks[i]])
 			if err != nil {
+				var rejected *bodycodegen.SourceFillCandidateRejection
+				if errors.As(err, &rejected) && ctx.Err() == nil {
+					attempt.FillCandidates = append(attempt.FillCandidates, candidate)
+					attempt.Rejection = &JointCandidateRejection{Stage: "LOCAL_SOURCE_FILL", Slot: i,
+						Activity: slot.activity, CandidateID: candidate.CandidateID, Reason: rejected.Error()}
+					return attempt, nil, Composition{}, nil
+				}
 				return attempt, nil, Composition{}, fmt.Errorf("joint fill activity %s: %w", slot.activity, err)
 			}
 			attempt.FillCandidates = append(attempt.FillCandidates, candidate)
