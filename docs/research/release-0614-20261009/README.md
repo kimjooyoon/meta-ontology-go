@@ -39,7 +39,8 @@ go run ./docs/research/release-0614-20261009/observe.go \
 ```
 
 Copy `build.json` alongside the extracted outputs. The prior raw outputs are
-also public in the workbench's `examples/caller-source-fill/observations.tar.gz`.
+also public as six individual `.json.gz` files in the workbench's
+`examples/caller-source-fill/` directory; decompress them into the prior directory.
 The test/race logs cover the release validators and CLI checks. The new platform
 validator uses original feature outputs as fixtures and rejects altered hole
 assignments, candidate/source identities, local and holdout counts, exact values,
