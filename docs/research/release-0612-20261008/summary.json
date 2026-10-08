@@ -1,0 +1,180 @@
+{
+  "compiler": {
+    "build_info_observed": true,
+    "compiler_source_sha": "2246ec35710486c4baede7653a24519053917d7b",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "replaced": false,
+      "version": "v0.2.26-experimental"
+    },
+    "go_version": "go1.27.1",
+    "language": "gooo",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.8-dev.0.20261008132231-2246ec357104"
+    },
+    "module_version": "v0.6.8-dev.0.20261008132231-2246ec357104",
+    "native_go_required": "go1.27.1",
+    "schema": "gooo/build-identity/v1",
+    "source_status": "CLEAN_VCS",
+    "status": "development",
+    "vcs_modified": "false",
+    "vcs_revision": "2246ec35710486c4baede7653a24519053917d7b",
+    "version": "0.6.12-dev"
+  },
+  "consumed_caller_inputs": 1,
+  "evaluation_root_inputs": 7,
+  "host_cpu_utilization": "NOT_SAMPLED",
+  "model_demonstration_programs": 1,
+  "native_platform": {
+    "archive": {
+      "builds": 2,
+      "bytes": 12782700,
+      "digest": "sha256:e384046f08072612c33849bfd6c5c3f13a846d46e7abf188d1a030a8123f21a1",
+      "name": "gooo-darwin-arm64.tar.gz",
+      "replay_equal": true
+    },
+    "archive_format": "tar.gz",
+    "binary": {
+      "builds": 2,
+      "bytes": 22953986,
+      "digest": "sha256:d52ca44f7c71ffd8b389b075363d6afff516957ce66358b4866d8808bda04231",
+      "name": "gooo",
+      "replay_equal": true
+    },
+    "build": {
+      "build_vcs": true,
+      "cgo_enabled": false,
+      "trimpath": true,
+      "vcs_modified": false,
+      "vcs_revision": "2246ec35710486c4baede7653a24519053917d7b"
+    },
+    "decision": "PASS",
+    "head_sha": "2246ec35710486c4baede7653a24519053917d7b",
+    "mutation_authorities": 0,
+    "platform": {
+      "archive_format": "tar.gz",
+      "goarch": "arm64",
+      "goos": "darwin",
+      "id": "darwin-arm64",
+      "runner": "macos-15"
+    },
+    "reason": "TOOLCHAIN_RELEASE_PLATFORM_READY",
+    "receipt_digest": "sha256:dbeccbedabac631bb20e77dbe781e5b8f39cde3a638030c301b2193c92d9944a",
+    "repository_writes": 0,
+    "resolution": "EXACT",
+    "schema": "gooo/toolchain-release-platform-receipt/v1",
+    "smoke": {
+      "language": "gooo",
+      "schema_version": "gooo-version/v1",
+      "status": "development",
+      "version": "0.6.12-dev"
+    },
+    "toolchain": "go1.27.1"
+  },
+  "other_root_inputs": 6,
+  "paired_mode_budget_runs": 4,
+  "root_zero_also_local_example": true,
+  "rows": [
+    {
+      "construction_ns": 562481916,
+      "decision": "PARTIAL_FINITE",
+      "evaluation_passed": 1,
+      "evaluation_total": 7,
+      "initial_local_attempts": 1,
+      "mode": "fixed",
+      "model": {
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "schema": "gooo/retained-path-model/v1",
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "setup_ms": 0.000167
+      },
+      "model_calls": 0,
+      "prediction_ns": 0,
+      "program_attempts": 1,
+      "program_budget": 1,
+      "selected_attempt": 0,
+      "selected_source_sha256": "sha256:340a23bde41c7a804af57886a78d4cf935e6b0df240b2d132111c8ca12ef840b"
+    },
+    {
+      "construction_ns": 490122000,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 7,
+      "evaluation_total": 7,
+      "initial_local_attempts": 1,
+      "mode": "model",
+      "model": {
+        "arithmetic_version": "float32_separate_v1",
+        "feature_version": "triple_record_value_graph_v3_shared_v1",
+        "loaded": true,
+        "metadata_sha256": "3c68205a660695103712e2115ce90accd298b406dced8ad5ad5c9b84bab0a202",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "resident_tensor_bytes": 2096,
+        "schema": "gooo/retained-path-model/v1",
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "setup_ms": 0.240791,
+        "weights_sha256": "76f68845a03ed8c8bc261a57c919e96dcdd352d3c35bcdaeb3d9b51a88975c6f"
+      },
+      "model_calls": 1,
+      "prediction_ns": 41750,
+      "program_attempts": 1,
+      "program_budget": 1,
+      "selected_attempt": 0,
+      "selected_source_sha256": "sha256:246fc29396908681debfb6097aef56ca2f79684c8278b0d9e5e15e755adf9818"
+    },
+    {
+      "construction_ns": 3787762375,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 7,
+      "evaluation_total": 7,
+      "initial_local_attempts": 1,
+      "mode": "fixed",
+      "model": {
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "schema": "gooo/retained-path-model/v1",
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "setup_ms": 0.000125
+      },
+      "model_calls": 0,
+      "prediction_ns": 0,
+      "program_attempts": 8,
+      "program_budget": 8,
+      "selected_attempt": 7,
+      "selected_source_sha256": "sha256:246fc29396908681debfb6097aef56ca2f79684c8278b0d9e5e15e755adf9818"
+    },
+    {
+      "construction_ns": 320894875,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 7,
+      "evaluation_total": 7,
+      "initial_local_attempts": 1,
+      "mode": "model",
+      "model": {
+        "arithmetic_version": "float32_separate_v1",
+        "feature_version": "triple_record_value_graph_v3_shared_v1",
+        "loaded": true,
+        "metadata_sha256": "3c68205a660695103712e2115ce90accd298b406dced8ad5ad5c9b84bab0a202",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "resident_tensor_bytes": 2096,
+        "schema": "gooo/retained-path-model/v1",
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "setup_ms": 0.172792,
+        "weights_sha256": "76f68845a03ed8c8bc261a57c919e96dcdd352d3c35bcdaeb3d9b51a88975c6f"
+      },
+      "model_calls": 1,
+      "prediction_ns": 42291,
+      "program_attempts": 1,
+      "program_budget": 8,
+      "selected_attempt": 0,
+      "selected_source_sha256": "sha256:246fc29396908681debfb6097aef56ca2f79684c8278b0d9e5e15e755adf9818"
+    }
+  ],
+  "saved_replay_new_model_calls": 0,
+  "schema": "gooo/release-0612-caller-regression/v1",
+  "scope": "Release regression of previously observed programs and unchanged weights; exact finite values and saved native replay; no training, generalization or general performance conclusion.",
+  "selected_source_equal": true,
+  "simple_program_attempts": 2,
+  "simple_regression_programs": 1
+}

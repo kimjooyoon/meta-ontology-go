@@ -1,0 +1,3 @@
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease	1.662s
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli	2.235s
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	86.053s
