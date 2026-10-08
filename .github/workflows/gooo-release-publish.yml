@@ -505,18 +505,18 @@ jobs:
 
           Experimental Gooo CLI prerelease for exact commit \`$VALIDATED_SHA\`.
 
-          ## Follow computed values into code assembly
+          ## Use assembled text tools as Gooo packages
 
-          - Write string byte-length and substring operations in Gooo, with source helpers for prefix/suffix checks and filename classification.
-          - Follow arguments, conditional returns and nested same-source helpers into the source value-flow graph, including helpers used only by an alternative.
-          - Export the explicit v3 graph-model context: ordered operators, canonical literals, input types and guarded values. Source-only export makes zero predictions and executes zero candidates.
-          - Use public decision runtime v0.2.26-experimental. Existing model contracts keep their original inputs; v3 requires separately trained weights, which this release does not include.
-          - Retain deterministic candidate selection and saved execution with zero new model calls. Native release witnesses construct and replay division, retry and filename programs, then consume the graph export through the SDK.
+          - Execute text primitives consistently through packages: len and int64 work in bodies, nested source helpers and declared field alternatives.
+          - Supply actual package inputs without an expected answer. Keep observed output separate from the finite examples used to select the program.
+          - Reuse a saved package on new inputs with zero new model calls. Source activities and local values retain their ordinary name precedence.
+          - Connect the public Gooo source-splice tool: check original context, conditionally replace a fragment, then count the updated bytes. Its returned Gooo source can be compiled and executed.
+          - Keep Go 1.27.1 and public decision runtime v0.2.26-experimental. The independent graph QAT weights are distributed separately by the ecosystem workbench.
 
           Start with the [0.6.10 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.10-dev.md), [text operations](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/text-operations/README.md), or [source graph input](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/record-graph-model-input.md).
-          Native execution requires Go 1.27.1 on the host. Pass --go when its executable is outside PATH.
+          Native execution requires Go 1.27.1 on the host. Check the command help when selecting a non-default Go executable.
           Source-declared cases and finite budgets bound these experiments. An exhausted or truncated search retains partial results. Separate evaluation measures the supplied inputs after selection.
-          The [source graph observation](https://github.com/kimjooyoon/meta-ontology-go/wiki/Source-Graph-Model-Input) compares eight arrangements of one filename classifier. Distinct full arrays increased from two in v1 to four in v2 and eight in v3. This measures preserved input distinctions; trained v3 quality remains unmeasured. The [existing v1 model study](https://github.com/kimjooyoon/meta-ontology-go/wiki/Text-Operations-and-Choice-Order) keeps its 1/8 first-choice result and finite continuation evidence.
+          In the [source editing study](https://github.com/kimjooyoon/meta-ontology-go/wiki/Editing-Gooo-with-Gooo), an unchanged graph model completed one new program in four attempts versus eight in fixed order. Both complete variants matched 542 independent native input tuples and saved replay. The first model choice failed, and two attempts produced fewer matching fields than fixed order. This is one program with fixed wording and candidate placement; broader transfer remains under study.
           Source graph and receipt formats evolve between development versions. Retain the original compiler for historical replay and create fresh receipts when semantics or context identities change.
 
           ## Release evidence
@@ -524,6 +524,7 @@ jobs:
           - readiness run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$READINESS_RUN_ID
           - release cases: 26/26
           - native language examples per target: division 8/8, retry 12/12 and filenames 12/12, each constructed and replayed
+          - package text per target: three actual input outputs checked field by field, saved replay, no supplied-expectation score and zero new predictions
           - graph context per target: exact source binding, v3 SDK decoding and feature extraction, zero predictions and zero candidate execution; raw observations accompany the readiness platform artifacts
           - meta-bound indicators: 39/39
           - release-readiness cells: 7/7
