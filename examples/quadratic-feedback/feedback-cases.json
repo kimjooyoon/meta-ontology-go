@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"Adjust": -4}, "expected": {"Adjust": -4}},
+    {"inputs": {"Adjust": 2}, "expected": {"Adjust": 11}},
+    {"inputs": {"Adjust": 10}, "expected": {"Adjust": 19}}
+  ]
+}

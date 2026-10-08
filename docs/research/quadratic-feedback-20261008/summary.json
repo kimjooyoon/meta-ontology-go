@@ -1,0 +1,117 @@
+{
+  "schema": "gooo/quadratic-feedback-study/v1",
+  "compiler": {
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "vcs.revision": "942d3e642499d07ffad947eef9380e28c1f3c291",
+    "vcs.modified": "false"
+  },
+  "feedback": {
+    "initial_passed": 1,
+    "final_passed": 3,
+    "total": 3
+  },
+  "evaluation": {
+    "passed": 3,
+    "total": 3,
+    "input_separation": {
+      "status": "PASS",
+      "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 3,
+      "disjoint_cases_passed": 3,
+      "unknown_inputs": 0,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    }
+  },
+  "rounds": [
+    {
+      "decision": {
+        "action": "ADVANCE_SEARCH",
+        "next_attempts": 8,
+        "retain": true,
+        "reason": "소스에 선언한 다음 탐색 설정으로 이어갑니다.",
+        "next_search_id": "quadratic"
+      },
+      "search": {
+        "search_attempted": 8,
+        "search_retained": 9,
+        "search_omitted": 0,
+        "grammar": "integer-hole-residual/v1",
+        "candidate_limit": 16,
+        "next_search_id": "quadratic",
+        "next_grammar": "integer-hole-quadratic/v1",
+        "next_attempt_limit": 8
+      }
+    },
+    {
+      "decision": {
+        "action": "STOP",
+        "next_attempts": 8,
+        "retain": true,
+        "reason": "관측 결과와 라운드 한도에 따라 멈춥니다."
+      },
+      "search": {
+        "search_attempted": 1,
+        "search_retained": 15,
+        "search_omitted": 0,
+        "grammar": "integer-hole-quadratic/v1",
+        "candidate_limit": 16,
+        "next_search_id": "",
+        "next_grammar": "",
+        "next_attempt_limit": 0
+      }
+    }
+  ],
+  "selected_expression": "-3",
+  "candidate_generation": {
+    "schema": "gooo/body-codegen-ir-candidate-generation-receipt/v1",
+    "grammar": "integer-hole-quadratic/v1",
+    "candidates_enumerated": 15,
+    "candidates_retained": 15,
+    "candidates_omitted": 0,
+    "candidate_set_sha256": "sha256:6f2852a11111384dc7cb3e6b86bb4332eb1e38d9abe771cee127196fc2018786",
+    "grammar_coverage_percent": 100,
+    "grammar_complete": true,
+    "completeness_scope": "retained unique expressions / integer roots and first-anchor affine fits from training-only minus-one/zero/one hole probes, followed by residual grammar seeds; polynomial fits are proposals scored against the whole body; excludes other grammars and all-domain semantics",
+    "hole_context": {
+      "schema": "gooo/integer-hole-context/v2",
+      "body_sha256": "sha256:b8fee733e2360235221009802f75cb0da8aa97dddf42a0c8159e0de88a34f52e",
+      "training_suite_sha256": "sha256:b676c4c45e8efe62c12d26cc9c0b3c15ad9e0c4baa906c1903d203aeb405eb08",
+      "evaluation_calls": 6,
+      "probes": [
+        {
+          "input": 2,
+          "expected": 11,
+          "zero_output": 2,
+          "one_output": 3,
+          "derived_hole_value": 9,
+          "status": "QUADRATIC_PROPOSAL",
+          "minus_one_output": 3,
+          "quadratic_roots": [
+            -3,
+            3
+          ]
+        },
+        {
+          "input": 10,
+          "expected": 19,
+          "zero_output": 10,
+          "one_output": 11,
+          "derived_hole_value": 9,
+          "status": "QUADRATIC_PROPOSAL",
+          "minus_one_output": 11,
+          "quadratic_roots": [
+            -3,
+            3
+          ]
+        }
+      ],
+      "scope": "training-only minus-one/zero/one outputs; exact integer roots of a three-point quadratic fit are proposals; branches, higher-degree expressions and wrapped arithmetic require whole-body scoring"
+    }
+  },
+  "replay_model_calls": 0,
+  "scope": "One native source-declared transition; deterministic candidate enumeration and Gooo policy; three adaptive feedback outputs and three post-selection evaluation outputs. Probe fits propose values; whole-body execution measures the finite result. No model training."
+}
