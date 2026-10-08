@@ -42,6 +42,9 @@ func BuildPlatform(input BuildInput) (PlatformReceipt, error) {
 	if err != nil {
 		return PlatformReceipt{}, err
 	}
+	if err := smokeLanguageExamples(firstBinary, work, input); err != nil {
+		return PlatformReceipt{}, err
+	}
 	archive, err := buildArchives(work, input, firstBinary, secondBinary)
 	if err != nil {
 		return PlatformReceipt{}, err
