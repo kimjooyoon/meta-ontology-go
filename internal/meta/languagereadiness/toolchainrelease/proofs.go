@@ -1,10 +1,12 @@
 package toolchainrelease
 
-func buildProofs(corpusDigest, conceptDigest string, evidence []PlatformEvidence) []Proof {
+import "fmt"
+
+func buildProofs(corpus Corpus, corpusDigest, conceptDigest string, evidence []PlatformEvidence) []Proof {
 	return []Proof{
 		{
 			ProofChoice:    "FOUNDATION",
-			Claim:          "the v1 denominator fixes three stable x64 runner targets and twenty cases",
+			Claim:          fmt.Sprintf("the v%d corpus declares %d native runner targets and %d release cases", corpus.Version, len(corpus.Targets), len(corpus.Cases)),
 			EvidenceDigest: corpusDigest,
 		},
 		{
