@@ -482,7 +482,8 @@ func typecheck(packageName string, file *ast.File, fset *token.FileSet) error {
 // which is not interchangeable with the compiler's int64 Integer type.
 // Boolean and text locals retain Go's normal inference.
 func normalizeIntegerLocalInitializers(packageName string, file *ast.File, fset *token.FileSet) int {
-	information := &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}
+	information := &types.Info{Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs: make(map[*ast.Ident]types.Object), Uses: make(map[*ast.Ident]types.Object)}
 	configuration := types.Config{Importer: importer.Default(), Error: func(error) {}}
 	// The initial check can report the int/int64 mismatch this normalization
 	// addresses. go/types still records initializer types for declarations it
@@ -490,17 +491,22 @@ func normalizeIntegerLocalInitializers(packageName string, file *ast.File, fset 
 	_, _ = configuration.Check(packageName, fset, []*ast.File{file}, information)
 
 	inferred := 0
+	runtimeLengths := make(map[types.Object]bool)
 	ast.Inspect(file, func(node ast.Node) bool {
 		spec, ok := node.(*ast.ValueSpec)
 		if !ok || spec.Type != nil || len(spec.Names) != 1 || len(spec.Values) != 1 {
 			return true
 		}
 		value, ok := information.Types[spec.Values[0]]
-		if !ok || value.Type == nil || value.Value == nil {
+		if !ok || value.Type == nil {
 			return true
 		}
 		basic, ok := value.Type.Underlying().(*types.Basic)
 		if !ok || (basic.Kind() != types.Int && basic.Kind() != types.UntypedInt) {
+			return true
+		}
+		if value.Value == nil && dependsOnRuntimeLength(spec.Values[0], information, runtimeLengths) {
+			runtimeLengths[information.Defs[spec.Names[0]]] = true
 			return true
 		}
 		spec.Type = ast.NewIdent("int64")

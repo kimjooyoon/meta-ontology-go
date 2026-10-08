@@ -48,10 +48,14 @@ func TestTextOperationsRetainSymbolicInputOrigins(t *testing.T) {
 
 func TestTextOperationsGenerateInterpretAndReplay(t *testing.T) {
 	source := []byte(textExpressionPrelude + "activity Prefix(Text, Text) -> Boolean computes `return len(input0) >= len(input1) && input0[:len(input1)] == input1`\n" +
-		"activity Run(Text, Text) -> Result computes `let n = len(input0); let size = int64(n); return Result{text: input0[:], size: size, matches: Prefix(input0, input1)}`\n")
+		"activity Run(Text, Text) -> Result computes `let n = len(input0); let m = n + 1; let a = 2; let b = a * a; let size = int64(m) - 1 + b - 4; return Result{text: input0[:], size: size, matches: Prefix(input0, input1)}`\n")
 	generated, err := Generate("text.gooo", source, "Run")
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !strings.Contains(generated.Source, "var b int64 = a * a") ||
+		strings.Contains(generated.Source, "var n int64") || strings.Contains(generated.Source, "var m int64") {
+		t.Fatal("runtime Text lengths altered prior integer local annotations", generated.Source)
 	}
 	closure := generated.Report.CallClosure
 	if !generated.Report.RouteEquivalence.Equivalent || !generated.Report.DeterministicReplay ||
