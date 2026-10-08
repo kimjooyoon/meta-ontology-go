@@ -276,7 +276,7 @@ gets an adjacent `_ = local` for each unread binding. That target-only marker
 does not change the Gooo source, candidate selectors or source semantic counts.
 The [candidate-local example](../../examples/candidate-locals/README.md) assembles
 a retry result from precomputed values, with separate construction and native
-execution cases. This behavior is a source-development change after 0.6.7-dev.
+execution cases. This behavior is introduced in 0.6.8-dev.
 Fixed pure activities declared in the same source can be called by name with
 typed positional arguments. Their acyclic call closure is included in generation
 and replay; see [pure activity reuse](../../examples/pure-activity-calls/README.md).
