@@ -53,9 +53,10 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
-The [0.6.9 development guide](docs/releases/0.6.9-dev.md) covers string operations,
-following values through source helpers and exporting ordered graphs for a small
-model. It includes a runnable filename classifier and saved replay. Check the
+The [0.6.10 development guide](docs/releases/0.6.10-dev.md) covers text primitives
+in package execution and the public Gooo source-editing tool. The
+[0.6.9 guide](docs/releases/0.6.9-dev.md) introduces string operations, following
+values through source helpers and ordered model graphs. Check the
 [release page](https://github.com/kimjooyoon/meta-ontology-go/releases) for published
 assets and their exact source. Integer division and prepared candidate values
 are covered in the [0.6.8 guide](docs/releases/0.6.8-dev.md); earlier continuation

@@ -13,8 +13,11 @@ packages twice with fixed metadata, and emits one source-bound receipt.
 The aggregate witness accepts only four unique `PASS / EXACT` receipts. Missing,
 duplicate, stale, dirty, unresolved, or unknown evidence fails closed.
 
-The 0.6.9 platform witness additionally constructs and replays division (eight
+The 0.6.10 platform witness additionally constructs and replays division (eight
 cases), retry (twelve) and filename classification (twelve) with the candidate
 binary. It consumes the filename source-only v3 graph export through the SDK.
+It also executes three input-only filename workspace requests and saved replay,
+checking their actual fields and zero new predictions without assigning the
+requests a supplied-expectation score.
 These observations remain separate from the twenty-six structural corpus cases;
 they do not change the corpus denominator or measure trained model quality.

@@ -33,6 +33,33 @@ go run ./cmd/gooo body-compose \
 
 ## Text semantics
 
+### Execute a package on actual inputs
+
+The same source can run as a workspace package. Input-only requests do not need
+an expected answer; their outputs are observed without assigning a correctness
+score. The eight-attempt construction still checks the five examples declared
+in the source. From the repository root:
+
+```sh
+go run ./cmd/gooo package execute --json \
+  --inputs examples/text-operations/inputs.json \
+  examples/text-operations/gooo.workspace.json > /tmp/gooo-text-package.json
+go run ./cmd/gooo package replay --json \
+  --receipt /tmp/gooo-text-package.json \
+  --inputs examples/text-operations/inputs.json \
+  examples/text-operations/gooo.workspace.json
+```
+
+Use the 0.6.10 source or a checkout containing the workspace text-primitive fix; the original
+0.6.9-dev release supports this source through `body-compose` but rejects `len`
+in package call resolution. Package execution now recognizes `len` and `int64`
+in bodies and declared alternatives, including arguments containing source
+activity calls. A source activity or local value with the same name keeps its
+ordinary scope meaning. Other call names still require a declared activity.
+Saved replay makes zero new model calls.
+
+### Byte-based operations
+
 `len(text)` and `text[low:high]` follow the
 [Go length](https://go.dev/ref/spec#Length_and_capacity) and
 [slice](https://go.dev/ref/spec#Slice_expressions) rules. Positions and lengths
