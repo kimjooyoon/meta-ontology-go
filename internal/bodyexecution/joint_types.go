@@ -4,6 +4,7 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 
 const jointSchema = "gooo/joint-construction/v1"
 const jointMixedSchema = "gooo/joint-construction/v2"
+const jointRejectionSchema = "gooo/joint-construction/v3"
 
 // JointConstruction keeps local preparation, caller feedback and subsequent
 // evaluation distinct. Initial is also the source-bound historical model order.
@@ -30,11 +31,22 @@ type JointConstruction struct {
 
 type JointAttempt struct {
 	Masks            []uint16                      `json:"masks"`
+	Rejection        *JointCandidateRejection      `json:"rejection,omitempty"`
 	Candidates       []bodycodegen.RecordCandidate `json:"candidates"`
 	SearchCandidates []bodycodegen.SearchCandidate `json:"search_candidates,omitempty"`
 	LocalPassed      int                           `json:"local_passed"`
 	LocalTotal       int                           `json:"local_total"`
 	Runtime          CompositionRuntime            `json:"runtime"`
+}
+
+// A rejected expression consumed a program attempt but did not reach native
+// caller execution. Local counts cover only the scored prefix before this slot.
+type JointCandidateRejection struct {
+	Stage       string `json:"stage"`
+	Slot        int    `json:"slot"`
+	Activity    string `json:"activity"`
+	CandidateID string `json:"candidate_id"`
+	Reason      string `json:"reason"`
 }
 
 type JointOptions struct {

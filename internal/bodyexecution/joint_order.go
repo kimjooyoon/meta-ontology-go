@@ -118,7 +118,7 @@ func jointMaskOrder(slots []jointSlot, budget int) [][]uint16 {
 }
 
 func jointLocalComplete(attempt JointAttempt) bool {
-	return attempt.LocalTotal > 0 && attempt.LocalPassed == attempt.LocalTotal
+	return attempt.Rejection == nil && attempt.LocalTotal > 0 && attempt.LocalPassed == attempt.LocalTotal
 }
 
 func jointComplete(attempt JointAttempt) bool {

@@ -28,6 +28,14 @@ type SearchCandidate struct {
 	Attempt              IRBodySearchAttempt                     `json:"attempt"`
 }
 
+// SourceSearchCandidateRejection identifies a deterministic failure while
+// checking one source-derived expression. It excludes cancellation, invalid
+// selection requests and failures to reconstruct the selected source.
+type SourceSearchCandidateRejection struct{ cause error }
+
+func (e *SourceSearchCandidateRejection) Error() string { return e.cause.Error() }
+func (e *SourceSearchCandidateRejection) Unwrap() error { return e.cause }
+
 func sourceSearchCandidatePlan(ctx context.Context, filename string, source []byte, activity string) (IRBodySearchPlan, SourceSearchCandidateSet, error) {
 	var set SourceSearchCandidateSet
 	if ctx == nil {
@@ -78,8 +86,17 @@ func RealizeSourceSearchCandidate(ctx context.Context, filename string, source [
 		return SearchCandidate{}, nil, err
 	}
 	filled, cases, passed, typed, err := evaluateSearchCandidate(ctx, file.Package.Name, activity, id, body, bodyFillHoleToken(plan.HoleID), candidate.Expression, plan.TestCases)
+	observation := SearchCandidate{Schema: "gooo/search-candidate/v1", Activity: activity, ActivityID: id,
+		InputSourceSHA256: digest(source), PlanSHA256: set.PlanSHA256,
+		AttemptBudget: set.AttemptBudget, CandidateCount: len(set.Candidates), Generation: set.Generation,
+		Attempt: IRBodySearchAttempt{CandidateID: candidate.ID, Expression: candidate.Expression,
+			SelectionMethod: "caller_selected_candidate", TypecheckPassed: typed, TestCasesTotal: len(plan.TestCases)}}
+	if canceled := ctx.Err(); canceled != nil {
+		return observation, nil, canceled
+	}
 	if err != nil {
-		return SearchCandidate{}, nil, err
+		observation.Attempt.Error = err.Error()
+		return observation, nil, &SourceSearchCandidateRejection{cause: err}
 	}
 	selected, err := replaceActivityProgram(source, declaration.ValueProgramSpan, filled)
 	if err != nil {
@@ -93,10 +110,8 @@ func RealizeSourceSearchCandidate(ctx context.Context, filename string, source [
 		return SearchCandidate{}, nil, err
 	}
 	accuracy := float64(passed) * 100 / float64(len(plan.TestCases))
-	observation := SearchCandidate{Schema: "gooo/search-candidate/v1", Activity: activity, ActivityID: id,
-		InputSourceSHA256: digest(source), SelectedSourceSHA256: digest([]byte(fixed)), PlanSHA256: set.PlanSHA256,
-		AttemptBudget: set.AttemptBudget, CandidateCount: len(set.Candidates), Generation: set.Generation,
-		Attempt: IRBodySearchAttempt{CandidateID: candidate.ID, Expression: candidate.Expression, SelectionMethod: "caller_selected_candidate", TypecheckPassed: typed,
-			ScoringCompleted: true, TestCasesPassed: passed, TestCasesTotal: len(plan.TestCases), AccuracyPercent: &accuracy, CaseResults: cases}}
+	observation.SelectedSourceSHA256 = digest([]byte(fixed))
+	observation.Attempt.ScoringCompleted, observation.Attempt.TestCasesPassed = true, passed
+	observation.Attempt.AccuracyPercent, observation.Attempt.CaseResults = &accuracy, cases
 	return observation, []byte(fixed), nil
 }
