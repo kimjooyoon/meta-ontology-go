@@ -39,6 +39,11 @@ func TestTextOperationsRetainSymbolicInputOrigins(t *testing.T) {
 		!flowContains(flow, flow.Choices[1].First, "input", "") || result.CandidateTests != 0 || result.ModelPredictions != 0 {
 		t.Fatal("text origins lost offsets, conversion, or source-only observation", result)
 	}
+	shadowed := append(append([]byte(nil), source...), []byte("activity len(Text) -> Integer computes `return 42`\n")...)
+	shadow, err := ExportRecordAssemblyContextWithFlow(context.Background(), "shadow-origins.gooo", shadowed, "Select", false, jointdecision.RecordSharedFeatureVersion)
+	if err != nil || shadow.ValueFlow == nil || shadow.ValueFlow.Status != "UNRESOLVED" {
+		t.Fatal("source-declared len was misrepresented as a primitive origin", shadow.ValueFlow, err)
+	}
 }
 
 func TestTextOperationsGenerateInterpretAndReplay(t *testing.T) {

@@ -38,7 +38,8 @@ func (c *recordFlowBuilder) expression(node ast.Expr, state *flowState, selected
 	case *ast.CompositeLit:
 		return c.constructor(e, state)
 	case *ast.CallExpr:
-		if name, ok := e.Fun.(*ast.Ident); ok && bodyPrimitiveName(name.Name) && len(e.Args) == 1 {
+		if name, ok := e.Fun.(*ast.Ident); ok && bodyPrimitiveName(name.Name) &&
+			c.body.activityIDs[name.Name] == "" && len(e.Args) == 1 {
 			value := c.expression(e.Args[0], state, selected)
 			return flowScalar(c.add("expression", [2]uint16{value.scalar}, c.span(e), "", 0, name.Name))
 		}
