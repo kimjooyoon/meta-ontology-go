@@ -61,7 +61,7 @@ func TestJointSourceAttemptLimitRestrictsEligibleChoices(t *testing.T) {
 }
 
 func TestJointIndependentCallsAndCancellation(t *testing.T) {
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		t.Run(string(rune('a'+i)), func(t *testing.T) {
 			t.Parallel()
 			source := []byte(jointAmbiguousSource)
