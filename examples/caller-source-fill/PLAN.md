@@ -3,6 +3,10 @@
 Frozen before implementation and own-model observation. Baseline compiler source:
 `772acf4abaa93c01e666909e1c8b9029406f003a` (public Gooo 0.6.13-dev).
 
+The first fixture draft used unsupported record/case shorthand. Correct those
+declarations to Gooo `fields`, `value_case` and `holdout_value_case` before using
+it as the baseline; preserve the original values and retain the parser failure.
+
 ## Language gap
 
 `source_fill` can fill condition, assignment and return expressions together, for

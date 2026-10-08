@@ -1,15 +1,14 @@
 package budgetplan
 namespace budgetplan
 entity Integer id "budgetplan://integer"
-entity Work id "budgetplan://work" {
-    used: Integer
-    limit: Integer
+entity Work id "budgetplan://work" fields {
+    field used id "budgetplan://work/used" type integer required one
+    field limit id "budgetplan://work/limit" type integer required one
 }
-entity Budget id "budgetplan://budget" {
-    next: Integer
-    exhausted: Boolean
+entity Budget id "budgetplan://budget" fields {
+    field next id "budgetplan://budget/next" type integer required one
+    field exhausted id "budgetplan://budget/exhausted" type boolean required one
 }
-entity Boolean id "budgetplan://boolean"
 
 activity PlanBudget(Work) -> Budget computes `let next = input.used + 1
 let exhausted = __GOOO_BODY_HOLE_boundary__
@@ -22,8 +21,8 @@ return Budget{next: next, exhausted: exhausted}` assembling {
         candidate "early_wrong_cap" { fill "boundary" "input.used >= input.limit" fill "cap" "input.limit - 1" }
         candidate "bounded" { fill "boundary" "input.used >= input.limit" fill "cap" "input.limit" }
     }
-    case_json `{"used":0,"limit":8}` -> `{"next":1,"exhausted":false}`
-    holdout_case_json `{"used":9,"limit":8}` -> `{"next":8,"exhausted":true}`
+    value_case "[{\"used\":0,\"limit\":8}]" -> "{\"next\":1,\"exhausted\":false}"
+    holdout_value_case "[{\"used\":9,\"limit\":8}]" -> "{\"next\":8,\"exhausted\":true}"
 }
 
 activity Main(Work) -> Integer computes `let plan = PlanBudget(input)
