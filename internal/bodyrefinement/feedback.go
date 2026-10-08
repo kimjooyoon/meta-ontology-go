@@ -10,6 +10,13 @@ import (
 
 func reviseRound(ctx context.Context, filename string, current []byte, options Options, round *Round) ([]byte, error) {
 	var err error
+	if round.Decision.Action == "ADVANCE_SEARCH" {
+		current, err = bodycodegen.ReviseAssemblySearch(ctx, filename, current, options.Activity, round.Decision.NextSearchID, round.Decision.NextAttempts)
+		if err == nil {
+			round.RevisedSource = string(current)
+		}
+		return current, err
+	}
 	if round.Decision.Action == "INCORPORATE" {
 		current, round.FeedbackAdded, err = bodycodegen.ExtendAssemblyCases(ctx, filename, current, options.Activity, counterexamples(*round, options.Activity))
 		if err != nil {
