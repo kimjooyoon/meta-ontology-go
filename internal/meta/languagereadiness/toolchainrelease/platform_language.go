@@ -41,7 +41,10 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 	if err := smokeJointSearchRejection(binary, work, input); err != nil {
 		return err
 	}
-	return smokeJointSourceFill(binary, work, input)
+	if err := smokeJointSourceFill(binary, work, input); err != nil {
+		return err
+	}
+	return smokeJointFillRejection(binary, work, input)
 }
 
 func smokeLanguageExample(binary, work string, input BuildInput, example languageSmokeCase) error {
