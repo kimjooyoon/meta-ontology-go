@@ -11,6 +11,7 @@ type Options struct {
 	ModelPath    string
 	GoBinary     string
 	PolicySource []byte
+	SearchPolicy bool
 	Evaluation   *bodyexecution.CompositionCases
 }
 
@@ -30,6 +31,7 @@ type Decision struct {
 	NextAttempts int    `json:"next_attempts"`
 	Retain       bool   `json:"retain"`
 	Reason       string `json:"reason"`
+	NextSearchID string `json:"next_search_id,omitempty"`
 }
 
 type Round struct {
@@ -37,6 +39,7 @@ type Round struct {
 	Composition   bodyexecution.Composition        `json:"composition"`
 	Runtime       bodyexecution.CompositionRuntime `json:"runtime"`
 	Observation   Observation                      `json:"observation"`
+	Search        *SearchObservation               `json:"search,omitempty"`
 	PolicyRuntime bodyexecution.CompositionRuntime `json:"policy_runtime"`
 	Decision      Decision                         `json:"decision"`
 	FeedbackAdded int                              `json:"feedback_added"`
@@ -53,6 +56,7 @@ type Result struct {
 	Activity          string                            `json:"activity"`
 	OriginalSource    string                            `json:"original_source"`
 	PolicySource      string                            `json:"policy_source"`
+	SearchPolicy      bool                              `json:"search_policy,omitempty"`
 	PolicyComposition bodyexecution.Composition         `json:"policy_composition"`
 	FeedbackCases     bodyexecution.CompositionCases    `json:"feedback_cases"`
 	EvaluationCases   *bodyexecution.CompositionCases   `json:"evaluation_cases,omitempty"`
