@@ -53,6 +53,10 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
+The [0.6.7 development guide](docs/releases/0.6.7-dev.md) covers saved helper
+continuation, Gooo-controlled search transitions and quadratic hole construction.
+It links runnable sources and finite observations, including partial results.
+
 Build a small diagnostic tool whose choices and rules are written in Gooo:
 
 ```sh
