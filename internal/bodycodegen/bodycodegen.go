@@ -461,8 +461,7 @@ func blockTerminates(block *ast.BlockStmt) bool {
 }
 
 func typecheck(packageName string, file *ast.File, fset *token.FileSet) error {
-	configuration := types.Config{Importer: importer.Default()}
-	_, err := configuration.Check(packageName, fset, []*ast.File{file}, nil)
+	_, err := checkBodyTypes(packageName, file, fset, nil)
 	return err
 }
 

@@ -46,7 +46,7 @@ func (c *recordFlowBuilder) parse() (*ast.FuncDecl, error) {
 		return nil, err
 	}
 	normalizeIntegerLocalInitializers("selection", file, c.fset)
-	if _, err = new(types.Config).Check("selection", c.fset, []*ast.File{file}, c.info); err != nil {
+	if _, err = checkBodyTypes("selection", file, c.fset, c.info); err != nil {
 		return nil, err
 	}
 	return file.Decls[len(file.Decls)-1].(*ast.FuncDecl), nil

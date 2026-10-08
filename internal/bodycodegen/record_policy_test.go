@@ -89,7 +89,7 @@ func TestRecordPolicyKeepsAnUnsolvedSpacePartial(t *testing.T) {
 	}
 }
 
-func TestRecordPolicyTypedRejectionAndSingleModelCall(t *testing.T) {
+func TestRecordPolicyUnusedLocalAndSingleModelCall(t *testing.T) {
 	g, err := NewTypedPathGenerator(writeOriginRecordModel(t, "qat_ternary"))
 	if err != nil {
 		t.Fatal(err)
@@ -101,8 +101,8 @@ func TestRecordPolicyTypedRejectionAndSingleModelCall(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := result.Report.RecordAssembly
-	if r.ModelCalls != 1 || r.FieldsPassed != 15 || len(r.Control.Decisions) != len(r.Attempts)-1 {
-		t.Fatal("type rejection acquired a score or repeated model inference", r)
+	if r.ModelCalls != 1 || r.FieldsPassed != 15 || len(r.Control.Decisions) != len(r.Attempts) {
+		t.Fatal("unused-local candidate lost its policy observation or repeated inference", r)
 	}
 	for _, d := range r.Control.Decisions {
 		if d.Input.Scored > d.Input.Budget || r.Attempts[d.AttemptIndex].Total == 0 {
