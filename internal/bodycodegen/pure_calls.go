@@ -13,6 +13,10 @@ const pureCallLimit = 4096
 
 func bodyPrimitiveName(name string) bool { return name == "len" || name == "int64" }
 
+// IsBodyPrimitiveName identifies the pure body's primitive spellings. A source
+// activity or local value with the same name still takes precedence in scope.
+func IsBodyPrimitiveName(name string) bool { return bodyPrimitiveName(name) }
+
 type PureCallActivity struct {
 	Name          string `json:"name"`
 	ActivityID    string `json:"activity_id"`
