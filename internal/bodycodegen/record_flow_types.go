@@ -21,13 +21,15 @@ type RecordValueFlow struct {
 	BodyView   string             `json:"body_view"`
 	Nodes      []RecordFlowNode   `json:"nodes,omitempty"`
 	Choices    []RecordFlowChoice `json:"choices,omitempty"`
+	Helpers    []PureCallActivity `json:"helpers,omitempty"`
 	Scope      string             `json:"scope"`
 }
 
 type RecordFlowSpan struct {
-	View  string `json:"view"`
-	Start int    `json:"start"`
-	End   int    `json:"end"`
+	ActivityID string `json:"activity_id,omitempty"`
+	View       string `json:"view"`
+	Start      int    `json:"start"`
+	End        int    `json:"end"`
 }
 
 type RecordFlowNode struct {
@@ -36,6 +38,7 @@ type RecordFlowNode struct {
 	FieldID    string         `json:"field_id,omitempty"`
 	Local      uint16         `json:"local,omitempty"`
 	Operator   string         `json:"operator,omitempty"`
+	CalleeID   string         `json:"callee_id,omitempty"`
 	Parents    [2]uint16      `json:"parents"`
 	Guard      uint16         `json:"guard,omitempty"`
 	Condition  uint16         `json:"condition,omitempty"`
@@ -72,22 +75,29 @@ type flowState struct {
 }
 
 type recordFlowBuilder struct {
-	body       preparedBody
-	sites      []recordValueSite
-	fset       *token.FileSet
-	info       *types.Info
-	base       int
-	nodes      [recordFlowNodeLimit]RecordFlowNode
-	count      int
-	locals     uint16
-	choices    [6]RecordFlowChoice
-	choiceSeen [6]bool
-	depth      int
-	guardRoot  uint16
-	err        error
-	view       string
-	bodyView   string
-	altSet     *token.FileSet
+	body             preparedBody
+	sites            []recordValueSite
+	fset             *token.FileSet
+	info             *types.Info
+	base             int
+	nodes            [recordFlowNodeLimit]RecordFlowNode
+	count            int
+	locals           uint16
+	choices          [6]RecordFlowChoice
+	choiceSeen       [6]bool
+	depth            int
+	guardRoot        uint16
+	err              error
+	view             string
+	bodyView         string
+	altSet           *token.FileSet
+	helpers          map[string]recordFlowHelper
+	helperOrder      []string
+	activityID       string
+	callDepth        int
+	outerBindings    int
+	returns          *recordFlowReturns
+	returnSuppressed bool
 }
 
 func flowScalar(root uint16) flowValue { return flowValue{record: -1, scalar: root} }
@@ -106,6 +116,6 @@ func (c *recordFlowBuilder) span(node ast.Node) RecordFlowSpan {
 	if c.altSet != nil {
 		fset, base = c.altSet, 0
 	}
-	return RecordFlowSpan{View: c.view, Start: fset.Position(node.Pos()).Offset - base,
+	return RecordFlowSpan{ActivityID: c.activityID, View: c.view, Start: fset.Position(node.Pos()).Offset - base,
 		End: fset.Position(node.End()).Offset - base}
 }

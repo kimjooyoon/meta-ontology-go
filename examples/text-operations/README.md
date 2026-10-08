@@ -55,8 +55,14 @@ byte indexing and loops remain outside this body profile.
 Source-declared pure functions keep their identities and call limits. Value
 primitives add no synthetic activity edges. Direct record expressions retain
 their length, conversion and slice-bound dependencies in the symbolic value
-graph. Interprocedural symbolic expansion remains outside that graph's current
-profile; source-call identity and finite evaluation still include the helpers.
+graph. The optional source-flow export also follows the pure helper calls,
+including their argument bindings and conditional return values. Its 512-node
+and 64-live-binding bounds apply across helper frames. Source spans retain the
+called activity identity. See [helper value flow](../../docs/record-value-flow.md#follow-a-pure-gooo-helper).
+
+The existing origin model feature vocabulary still compresses different
+operators together. Following a helper in the graph does not by itself make
+those distinctions available to the current trained model.
 
 The tests compare the interpreter, generated native program and saved replay.
 Their counts describe these finite examples and this filename policy.

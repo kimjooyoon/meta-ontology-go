@@ -30,7 +30,8 @@ func (c *recordFlowBuilder) statement(node ast.Stmt, state *flowState) bool {
 	case *ast.IfStmt:
 		return c.branch(s, state)
 	case *ast.ReturnStmt:
-		c.wrap(c.expression(s.Results[0], state, true), c.span(s), "return", 0)
+		value := c.wrap(c.expression(s.Results[0], state, true), c.span(s), "return", 0)
+		c.retainReturn(value, c.span(s))
 		return false
 	default:
 		c.err = fmt.Errorf("FLOW_STATEMENT_UNSUPPORTED")
@@ -93,7 +94,13 @@ func (c *recordFlowBuilder) branchArms(s *ast.IfStmt, parent flowState, thenGuar
 	then.guard, otherwise.guard = thenGuard, elseGuard
 	c.depth++
 	defer func() { c.depth-- }()
+	suppressed := c.returnSuppressed
+	defer func() { c.returnSuppressed = suppressed }()
+	value := c.info.Types[s.Cond].Value
+	known := value != nil && value.Kind() == constant.Bool
+	c.returnSuppressed = suppressed || known && !constant.BoolVal(value)
 	thenLive, elseLive := c.block(s.Body, &then), true
+	c.returnSuppressed = suppressed || known && constant.BoolVal(value)
 	if s.Else != nil {
 		c.guardRoot = otherwise.guard
 		if block, ok := s.Else.(*ast.BlockStmt); ok {
