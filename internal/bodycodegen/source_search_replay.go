@@ -28,6 +28,9 @@ func replaySourceIRSearchPlan(ctx context.Context, filename string, source []byt
 	}
 	encoded, err := json.Marshal(plan)
 	search := r.BodySearch
+	if search.AttemptBudget != nil && *search.AttemptBudget != plan.MaxAttempts {
+		return plan, fmt.Errorf("IR search attempt budget differs from the Gooo source")
+	}
 	if err != nil || search.Schema != bodySearchPlanSchema || search.IRPlanSHA256 != digest(encoded) ||
 		search.CandidateCount != len(plan.Candidates) || !reflect.DeepEqual(search.CandidateGeneration, generated) {
 		return plan, fmt.Errorf("IR search plan or candidate space differs from the Gooo source")
