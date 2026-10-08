@@ -2,7 +2,7 @@
   "schema": "gooo/package-workspace-manifest/v1",
   "entry": {"package_path": "{{module}}/app", "activity": "Main"},
   "packages": [
-    {"path": "{{module}}/app", "name": "app", "imports": ["{{module}}/core"], "sources": ["app.gooo"]},
-    {"path": "{{module}}/core", "name": "core", "imports": [], "sources": ["core.gooo"]}
+    {"path": "{{module}}/app", "sources": ["app.gooo"]},
+    {"path": "{{module}}/core", "sources": ["core.gooo"]}
   ]
 }

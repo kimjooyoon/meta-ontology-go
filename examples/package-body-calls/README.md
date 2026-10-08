@@ -46,7 +46,29 @@ relative to the workspace manifest. A changed helper source requires a new
 construction record. Replay reconstructs the call closure and performs fresh
 native executions.
 
-## What a call means
+## Read names and imports from source
+
+The 0.6.11 development compiler also reads package names and imports directly
+from the Gooo files. `source.workspace.json` lists only package paths, source
+files and the entry:
+
+```sh
+/tmp/gooo-package-calls package resolve examples/package-body-calls/source.workspace.json
+/tmp/gooo-package-calls package execute --json \
+  --cases examples/package-body-calls/cases.json \
+  examples/package-body-calls/source.workspace.json > source-package-calls.json
+/tmp/gooo-package-calls package replay --receipt source-package-calls.json \
+  --inputs examples/package-body-calls/inputs.json \
+  examples/package-body-calls/source.workspace.json
+```
+
+The fully specified manifest remains supported. Both descriptions resolve to the
+same semantic package graph; the manifest byte digests remain distinct. Use the
+same chosen manifest for construction and saved reuse. This source-derived
+metadata requires a compiler built from this development revision; the published
+0.6.10 compiler requires the fully specified manifest.
+
+## Calls and package identities
 
 `rules.IsPartial(...)` resolves through the import alias in the calling source
 file. An unqualified name refers to the local package, including its other source
