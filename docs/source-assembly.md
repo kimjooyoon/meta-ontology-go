@@ -460,6 +460,32 @@ budget or the end of the generated candidate set.
 This source-owned mode cannot be combined with path-choice fields, a second
 external plan, or record-field assembly in the same activity.
 
+Inspect the source-owned search before choosing or evaluating any candidate:
+
+```sh
+gooo body-context --include-plan --activity ClampNegativeToZero \
+  examples/body-codegen/ir-search-source.gooo.fixture
+```
+
+The `gooo/source-search-input-export/v1` result binds the source and assembly
+contract digests to the stable activity ID. `expanded_plan` contains the original
+grammar, cases and `max_attempts`. Export validates the source, integer profile
+and hole; candidate enumeration, residual probes and candidate type checking happen
+later. This lets a caller check the declared budget before construction.
+`model_predictions` and `candidate_tests` are zero. Search export has no model
+feature encoding and rejects `--feature-version`, `--value-flow` and `--plan`.
+
+New search receipts report `attempt_budget` separately from `candidate_count`
+and `attempted_candidates`. Replay checks a present budget against the source;
+older saved receipts without this optional field still replay. The retained
+candidate count covers the current search list. Inspect `candidates_omitted` in
+`candidate_generation` before treating that list as the whole named grammar.
+
+A source file may combine an integer search activity with record activities.
+`body-compose --model` can rank the record choices in that graph; its integer
+search uses deterministic ordering. Record fields are handled by the same pure
+body profile during search preparation and replay.
+
 ### Construct a value inside an existing body
 
 For `return input + __GOOO_BODY_HOLE_value__`, examples `2 -> 3` and
