@@ -122,9 +122,11 @@ func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *Reco
 func newRecordAssemblyReceipt(source []byte, p recordAssemblyPlan) *RecordAssemblyReceipt {
 	contract, _ := p.spec.Canonical()
 	cases, _ := json.Marshal(p.spec.ValueCases)
+	budget := p.spec.MaxAttempts
 	r := &RecordAssemblyReceipt{Schema: recordAssemblySchema, OriginalSourceSHA256: digest(source),
-		ContractSHA256: digest([]byte(contract)), TestSuiteSHA256: digest(cases), Choices: append([]RecordValueChoice(nil), p.choices...),
-		Scope: "source-declared record field alternatives; finite case and field coverage; candidate interpretation followed by ordinary typed Go emission; no model updates"}
+		ContractSHA256: digest([]byte(contract)), TestSuiteSHA256: digest(cases), AttemptBudget: &budget,
+		Choices: append([]RecordValueChoice(nil), p.choices...),
+		Scope:   "source-declared record field alternatives; finite case and field coverage; candidate interpretation followed by ordinary typed Go emission; no model updates"}
 	for mask := 0; mask < 1<<len(p.choices); mask++ {
 		r.Ranking = append(r.Ranking, uint16(mask))
 	}
