@@ -72,9 +72,11 @@ Nested helpers and a helper used as both a bound producer and a function are
 supported. Histories are bounded to 16 saved stages, with 128 KiB per source.
 Each round is checked against the helper bodies that round actually constructed.
 
-Source-fill/search continuation and package-workspace continuation remain open
-integration work. This command is explicitly invoked; it does not schedule its
-own next run. Nested calls made during candidate scoring do not yet contribute
+Source-fill/search continuation remains open integration work. Saved package
+record-choice constructions can continue with
+[`gooo package resume`](../called-body-construction/README.md#continue-a-saved-package-checkpoint)
+and an explicit Gooo policy. These commands are invoked to start each run.
+Nested calls made during candidate scoring do not yet contribute
 input-history observations, so the runtime report retains that input-separation
 limitation. Finite matches describe the named cases.
 
