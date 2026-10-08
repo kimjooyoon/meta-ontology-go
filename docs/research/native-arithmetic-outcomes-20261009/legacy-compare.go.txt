@@ -1,0 +1,50 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"os"
+	"reflect"
+)
+
+func load(path string) map[string]any {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	d := json.NewDecoder(bytes.NewReader(raw))
+	d.UseNumber()
+	var r map[string]any
+	if err = d.Decode(&r); err != nil {
+		panic(err)
+	}
+	return r
+}
+func main() {
+	old, new := load(os.Args[1]), load(os.Args[2])
+	if len(os.Args) > 3 && os.Args[3] == "reuse" {
+		compareRuntime(old["evaluation"].(map[string]any)["runtime"].(map[string]any), new["runtime"].(map[string]any))
+		fmt.Println("PASS selected ordinary source reuses original final values and expectations with no model calls")
+		return
+	}
+	a, b := old["construction"].(map[string]any), new["construction"].(map[string]any)
+	if !reflect.DeepEqual(a, b) {
+		panic("saved construction bytes decoded to different values")
+	}
+	ae, be := old["evaluation"].(map[string]any), new["evaluation"].(map[string]any)
+	ar, br := ae["runtime"].(map[string]any), be["runtime"].(map[string]any)
+	compareRuntime(ar, br)
+	if be["construction_replayed"] != true || be["new_model_calls"] != json.Number("0") {
+		panic("legacy replay inferred again")
+	}
+	fmt.Println("PASS", a["schema"], "saved construction and original native values/expectations/source identities unchanged; zero new inference")
+}
+
+func compareRuntime(ar, br map[string]any) {
+	for _, key := range []string{"original_source_sha256", "selected_source_sha256", "typed_plan_sha256", "generated_sha256", "driver_sha256", "runtime_suite_sha256", "traces", "finite_passed", "finite_total", "model_calls", "projection_replayed", "runtime_replayed"} {
+		if !reflect.DeepEqual(ar[key], br[key]) {
+			panic("runtime semantic difference: " + key)
+		}
+	}
+}
