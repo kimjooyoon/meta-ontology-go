@@ -256,7 +256,7 @@ func typeCheckCallbackPreviewCandidate(t *testing.T, root, logical, source strin
 func runCallbackPreviewFixtureSuite(t *testing.T, root, logical, candidateSource string) {
 	t.Helper()
 	tempRoot := t.TempDir()
-	for _, relative := range []string{"go.mod", "cmd/language-readiness-witness/predecessor-selection", "internal", "examples/causal-ci-selection/pagination-fixtures.json"} {
+	for _, relative := range []string{"go.mod", "go.sum", "cmd/language-readiness-witness/predecessor-selection", "internal", "examples/causal-ci-selection/pagination-fixtures.json"} {
 		if err := copyCallbackPreviewPath(root, tempRoot, relative); err != nil {
 			t.Fatalf("copy callback preview fixture tree: %v", err)
 		}
@@ -269,7 +269,7 @@ func runCallbackPreviewFixtureSuite(t *testing.T, root, logical, candidateSource
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	command := exec.CommandContext(ctx, "go", "test", "./cmd/language-readiness-witness/predecessor-selection", "-run", "^TestPaginationFixturesExecuteParserAndHTTPClient$")
+	command := exec.CommandContext(ctx, "go", "test", "-mod=readonly", "./cmd/language-readiness-witness/predecessor-selection", "-run", "^TestPaginationFixturesExecuteParserAndHTTPClient$")
 	command.Dir = tempRoot
 	output, err := command.CombinedOutput()
 	if err != nil {

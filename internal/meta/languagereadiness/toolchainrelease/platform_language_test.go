@@ -1,9 +1,31 @@
 package toolchainrelease
 
 import (
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
+
+func TestLanguageSmokeEntryIsSelectedOnlyDuringConstruction(t *testing.T) {
+	example := languageSmokeCase{source: "source.gooo", cases: "cases.json", entry: "Classify"}
+	directory := filepath.Join("saved", "filename")
+	want := []string{"body-compose", "--source", example.source, "--cases", example.cases,
+		"--entry", "Classify", "--out", directory}
+	if got := languageSmokeArgs(example, directory, false); !slices.Equal(got, want) {
+		t.Fatalf("construction arguments: %v; want %v", got, want)
+	}
+	want = []string{"body-compose", "--source", filepath.Join(directory, "original.gooo"),
+		"--cases", example.cases, "--composition", filepath.Join(directory, "composition.json")}
+	if got := languageSmokeArgs(example, directory, true); !slices.Equal(got, want) {
+		t.Fatalf("saved entry must come from composition: %v; want %v", got, want)
+	}
+	example.entry = ""
+	want = []string{"body-compose", "--source", example.source, "--cases", example.cases, "--out", directory}
+	if got := languageSmokeArgs(example, directory, false); !slices.Equal(got, want) {
+		t.Fatalf("default entry arguments: %v; want %v", got, want)
+	}
+}
 
 func TestLanguageSmokeRequiresNativeCasesAndSameSavedProgram(t *testing.T) {
 	valid := `{"generated_now":true,"runtime":{"finite_passed":12,"finite_total":12,"model_calls":0,"projection_replayed":true,"runtime_replayed":true},"composition":{"generated_sha256":"sha256:program"}}`

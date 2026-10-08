@@ -7,6 +7,9 @@ import (
 )
 
 func recordPlanModelContext(p recordAssemblyPlan, version string) *RecordOrdinalContext {
+	if version == jointdecision.RecordGraphSharedFeatureVersion {
+		return recordGraphContext(p, recordValueFlow(p))
+	}
 	if version == jointdecision.RecordOriginSharedFeatureVersion {
 		return recordOriginContext(p.choices, recordValueFlow(p))
 	}

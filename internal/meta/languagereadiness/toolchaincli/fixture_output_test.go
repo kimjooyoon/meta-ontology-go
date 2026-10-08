@@ -3,9 +3,9 @@ package toolchaincli
 func fakeOutput(key string) (int, string, string) {
 	switch key {
 	case "version":
-		return 0, "gooo 0.6.8-dev (development)\n", ""
+		return 0, "gooo 0.6.9-dev (development)\n", ""
 	case "version\x00--json":
-		return 0, "{\"schema_version\":\"gooo-version/v1\",\"language\":\"gooo\",\"version\":\"0.6.8-dev\",\"status\":\"development\",\"semantic_ir\":\"v1\",\"semantic_check\":\"v1\",\"graph\":\"v1\",\"fix_plan\":\"v1\"}\n", ""
+		return 0, "{\"schema_version\":\"gooo-version/v1\",\"language\":\"gooo\",\"version\":\"0.6.9-dev\",\"status\":\"development\",\"semantic_ir\":\"v1\",\"semantic_check\":\"v1\",\"graph\":\"v1\",\"fix_plan\":\"v1\"}\n", ""
 	case "check\x00" + sourceFixture:
 		return 0, "ok: " + sourceFixture + "\n", ""
 	case "check\x00--json\x00" + sourceFixture:

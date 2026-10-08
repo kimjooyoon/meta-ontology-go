@@ -32,6 +32,9 @@ func bindRecordAssemblyScope(common *CompletenessReceipt, result Report) {
 		if r.Context != nil && r.Context.FeatureVersion == jointdecision.RecordOriginSharedFeatureVersion {
 			common.Scope["decision_mode"] = "local_source_origin_prediction_then_finite_tdd"
 		}
+		if r.Context != nil && r.Context.FeatureVersion == jointdecision.RecordGraphSharedFeatureVersion {
+			common.Scope["decision_mode"] = "local_source_graph_prediction_then_finite_tdd"
+		}
 	}
 }
 

@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.8-dev
-version  = 0.6.8-dev
+tag      = v0.6.9-dev
+version  = 0.6.9-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -78,12 +78,15 @@ UNKNOWN cannot be converted to PUBLISHED by a human explanation.
 
 ## Readiness boundary
 
-For 0.6.8, each native platform witness also uses its candidate binary to
-construct and replay the division and candidate-local retry examples. Their
-eight and twelve execution cases must all match, with zero new model calls and
-the same selected program on replay. The platform artifacts retain four raw
-language observations each. These finite behavior checks are separate from the
-26 structural release cases and the nine published asset identities.
+For 0.6.9, each native platform witness also uses its candidate binary to
+construct and replay the division, candidate-local retry and filename examples.
+Their eight, twelve and twelve execution cases must all match, with zero new
+model calls and the same selected program on replay. It also exports the v3
+source graph, binds the source/context digests, requires zero predictions and
+candidate execution, and consumes the graph through the public SDK. Platform
+artifacts retain six raw language runs and one graph export each. These finite
+behavior checks are separate from the 26 structural release cases and the nine
+published asset identities. No trained v3 quality is claimed by readiness.
 
 The selected readiness run must have all of these properties:
 
