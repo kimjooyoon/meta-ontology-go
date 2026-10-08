@@ -37,9 +37,34 @@ func (c *recordFlowBuilder) expression(node ast.Expr, state *flowState, selected
 		return flowScalar(c.add("expression", [2]uint16{a.scalar}, c.span(e), "", 0, e.Op.String()))
 	case *ast.CompositeLit:
 		return c.constructor(e, state)
+	case *ast.CallExpr:
+		if name, ok := e.Fun.(*ast.Ident); ok && bodyPrimitiveName(name.Name) &&
+			c.body.activityIDs[name.Name] == "" && len(e.Args) == 1 {
+			value := c.expression(e.Args[0], state, selected)
+			return flowScalar(c.add("expression", [2]uint16{value.scalar}, c.span(e), "", 0, name.Name))
+		}
+	case *ast.SliceExpr:
+		return c.textSlice(e, state, selected)
 	}
 	c.err = fmt.Errorf("FLOW_EXPRESSION_UNSUPPORTED")
 	return flowScalar(0)
+}
+
+func (c *recordFlowBuilder) textSlice(e *ast.SliceExpr, state *flowState, selected bool) flowValue {
+	text := c.expression(e.X, state, selected).scalar
+	var low, high uint16
+	if e.Low != nil {
+		low = c.expression(e.Low, state, selected).scalar
+	} else {
+		low = c.add("literal", [2]uint16{}, c.span(e), "", 0, "0")
+	}
+	if e.High != nil {
+		high = c.expression(e.High, state, selected).scalar
+	} else {
+		high = c.add("expression", [2]uint16{text}, c.span(e), "", 0, "len")
+	}
+	bounds := c.add("expression", [2]uint16{low, high}, c.span(e), "", 0, "slice_bounds")
+	return flowScalar(c.add("expression", [2]uint16{text, bounds}, c.span(e), "", 0, "slice"))
 }
 
 func (c *recordFlowBuilder) selector(e *ast.SelectorExpr, state *flowState) flowValue {

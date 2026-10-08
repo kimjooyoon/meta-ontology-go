@@ -19,6 +19,23 @@ read-only while local `let` values may be assigned. See the
 [multiple-input example and case keys](../native-body-composition.md) and
 [record construction and actual value delivery](../native-record-values.md).
 
+### Text length and slicing
+
+Ordinary bodies and declared record candidates support `len(text)`,
+`text[low:high]`, `text[:high]`, `text[low:]` and `text[:]`. These use Go's byte
+length and offset semantics. Use `int64(len(text))` when a length is returned as
+Gooo Integer or placed in an integer record field. Runtime length locals retain
+`int`; literal integer locals retain Gooo's `int64` normalization.
+
+The [filename example](../../examples/text-operations/README.md) builds prefix,
+suffix, suffix removal and byte-length functions in Gooo, then assembles a record
+classifier with five construction cases and twelve separate runtime cases.
+Short-circuit length guards keep empty and shorter strings valid. Invalid slice
+bounds fail candidate scoring; unguarded native evaluation produces a runtime
+failure. Byte offsets can split UTF-8 characters, so text helpers use boundaries
+from complete prefixes and suffixes. These operators do not perform Unicode
+normalization. The closed scalar search grammar and model labels are unchanged.
+
 ### Integer quotient and remainder
 
 Ordinary Integer bodies, declared IR-fill expressions and record-choice bodies
