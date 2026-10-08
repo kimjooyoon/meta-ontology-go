@@ -138,4 +138,5 @@ separately versioned improvement. This change adds no trained weights.
 
 [Sequential updates](record-field-updates.md)
 · [Field assembly and finite completeness](record-field-assembly.md)
+· [Ordered operators and source values in model input](record-graph-model-input.md)
 · [Preregistered representation study plan](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/local-value-origin-plan.ko.md)
