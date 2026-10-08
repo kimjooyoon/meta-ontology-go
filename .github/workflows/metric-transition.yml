@@ -21,7 +21,7 @@ jobs:
       (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       CI_RUN_ID: ${{ github.event.workflow_run.id }}
     steps:
@@ -31,7 +31,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
       - name: Download exact meta artifacts
         uses: actions/download-artifact@v8
         with:

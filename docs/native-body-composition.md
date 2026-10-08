@@ -368,7 +368,7 @@ go run ./cmd/gooo body-compose \
   --cases examples/body-codegen/hole-context-composition-cases.json
 ```
 
-Run with a Go 1.27.1 toolchain; pass `--go-bin` when the Go binary on PATH differs.
+Run with a Go 1.27.2 toolchain; pass `--go-bin` when the Go binary on PATH differs.
 The native suite contains four input cases and twelve output expectations. Three
 inputs overlap construction observations; one input beyond 2^53 is disjoint at
 all three activities. Report these denominators separately. A generated search

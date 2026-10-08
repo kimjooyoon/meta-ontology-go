@@ -48,7 +48,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -57,7 +57,7 @@ jobs:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Bind the declared Go 1.27 toolchain
         run: |
-          test "$(go env GOVERSION)" = "go1.27.1"
+          test "$(go env GOVERSION)" = "go1.27.2"
           go version
       - name: Require Go modernizers and module graph at a fixed point
         run: |
@@ -159,7 +159,7 @@ jobs:
           jq -n \
             --arg schema gooo/go-format-remediation/v1 \
             --arg head_sha "$EXACT_HEAD_SHA" \
-            --arg toolchain go1.27.1 \
+            --arg toolchain go1.27.2 \
             --arg go_version "$(go version)" \
             --arg go_env_goversion "$(go env GOVERSION)" \
             --argjson paths "$paths_json" \
@@ -189,7 +189,7 @@ jobs:
           jq -e \
             --arg schema gooo/go-format-remediation/v1 \
             --arg head_sha "$EXACT_HEAD_SHA" \
-            --arg toolchain go1.27.1 \
+            --arg toolchain go1.27.2 \
             --argjson paths "$paths_json" \
             --arg path_count "$path_count" \
             --arg patch_sha256 "$patch_sha256" \
@@ -227,7 +227,7 @@ jobs:
           test "$path_count" -ge 0
           jq -e \
             --arg head_sha "$EXACT_HEAD_SHA" \
-            '.head_sha == $head_sha and .toolchain == "go1.27.1" and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and (.path_count|type) == "number" and .path_count >= 0' \
+            '.head_sha == $head_sha and .toolchain == "go1.27.2" and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and (.path_count|type) == "number" and .path_count >= 0' \
             "$receipt" > /dev/null
           cmp -s "$patch_a" "$patch_b"
           cmp -s "$patch_a" "$patch_a_fixed"
@@ -247,7 +247,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -267,7 +267,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -288,7 +288,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -308,7 +308,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -336,7 +336,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -669,7 +669,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -793,7 +793,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -1096,7 +1096,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -1406,7 +1406,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -1517,7 +1517,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: true
       - name: Conform package execution through Go 1.27
         env:
@@ -1543,7 +1543,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.1
+          go-version: 1.27.2
           cache: false
       - name: Re-consume exact predecessor artifact in caller-owned temp space
         env:

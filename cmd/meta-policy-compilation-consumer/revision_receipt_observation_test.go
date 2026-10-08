@@ -162,7 +162,7 @@ func TestRevisionReceiptObserverCLIEmitsReadOnlyBoundReport(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	build := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", binary, ".")
-	build.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+	build.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build actual receipt observer: %v\n%s", err, output)
 	}

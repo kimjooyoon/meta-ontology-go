@@ -25,7 +25,7 @@ func TestProjectedConformancePreservesNativeFailurePhase(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
-			if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n\ngo 1.27.1\n"), 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n\ngo 1.27.2\n"), 0o644); err != nil {
 				t.Fatal(err)
 			}
 			if err := os.WriteFile(filepath.Join(root, "x.go"), []byte("package p\n"), 0o644); err != nil {

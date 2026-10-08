@@ -13,7 +13,7 @@ without rebuilding its body.
 
 ## Run and inspect
 
-From this revision with Go 1.27.1:
+From this revision with Go 1.27.2:
 
 ```sh
 go build -o /tmp/gooo-called-body ./cmd/gooo
@@ -27,7 +27,7 @@ Add `--assembly-model /path/to/shared-qat/model.json` to rank the helper's choic
 with the [own compact model](https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary).
 Omitting the model selects candidates deterministically. The policy flag is also
 optional; when supplied, the separate Gooo policy controls the helper's search
-using its actual finite observations. Use `--go /path/to/go1.27.1` when required.
+using its actual finite observations. Use `--go /path/to/go1.27.2` when required.
 
 Inspect these parts of the result:
 

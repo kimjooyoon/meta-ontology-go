@@ -56,7 +56,7 @@ func releaseLinks(artifact artifactEnvelope) int {
 	links := 0
 	for _, item := range artifact.Cases {
 		if strings.HasSuffix(item.ID, "-go127-toolchain") &&
-			item.Observed == "go1.27.1" && item.Expected == "go1.27.1" {
+			item.Observed == "go1.27.2" && item.Expected == "go1.27.2" {
 			links++
 		}
 	}

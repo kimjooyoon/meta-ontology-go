@@ -181,7 +181,7 @@ func TestRuntimeRecordsBuildFailureWithoutScoringUnobservedCases(t *testing.T) {
 	}
 	source, doc, prior, parent := fixture(t)
 	tool := filepath.Join(t.TempDir(), "go-stub")
-	stub := "#!/bin/sh\nif [ \"$1\" = version ]; then echo 'go version go1.27.1 " + runtime.GOOS + "/" + runtime.GOARCH + "'; exit 0; fi\nexit 7\n"
+	stub := "#!/bin/sh\nif [ \"$1\" = version ]; then echo 'go version go1.27.2 " + runtime.GOOS + "/" + runtime.GOARCH + "'; exit 0; fi\nexit 7\n"
 	if err := os.WriteFile(tool, []byte(stub), 0700); err != nil {
 		t.Fatal(err)
 	}

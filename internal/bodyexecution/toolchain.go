@@ -50,7 +50,7 @@ func nativeGoBuildInfo(goBinary string) bool {
 		return false
 	}
 	info, err := buildinfo.Read(file)
-	if err != nil || info.Path != "cmd/go" || info.GoVersion != "go1.27.1" {
+	if err != nil || info.Path != "cmd/go" || info.GoVersion != "go1.27.2" {
 		return false
 	}
 	settings := map[string]string{}
@@ -91,13 +91,13 @@ func observeToolchain(ctx context.Context, goBinary string, r *Observation, owne
 		return err
 	}
 	r.GoVersion = strings.TrimSpace(string(version))
-	expected := "go version go1.27.1 " + runtime.GOOS + "/" + runtime.GOARCH
+	expected := "go version go1.27.2 " + runtime.GOOS + "/" + runtime.GOARCH
 	if r.GoVersion != expected {
 		observed := r.GoVersion
 		if len(observed) > 128 {
 			observed = observed[:128] + "..."
 		}
-		return fmt.Errorf("native execution requires %q; selected %q. Match Go 1.27.1 to this Gooo binary's operating system and architecture, then pass that executable with --go-bin (or --go for package execute)", expected, observed)
+		return fmt.Errorf("native execution requires %q; selected %q. Match Go 1.27.2 to this Gooo binary's operating system and architecture, then pass that executable with --go-bin (or --go for package execute)", expected, observed)
 	}
 	if eligible {
 		reference := ToolchainObservation{Schema: "gooo/owned-go-toolchain/v1", KeySHA256: key,

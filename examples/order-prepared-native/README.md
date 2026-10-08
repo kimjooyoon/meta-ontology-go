@@ -47,7 +47,7 @@ protocol note is committed before the follow-up starts.
 
 ## Run
 
-Build both binaries from the same clean compiler checkout with Go 1.27.1 and
+Build both binaries from the same clean compiler checkout with Go 1.27.2 and
 the public SDK v0.2.20-experimental, without replacements. Extract the initial
 native observations and keep the original model metadata and weights together.
 Choose a fresh output directory. Set paths appropriate to your machine:
@@ -56,7 +56,7 @@ Choose a fresh output directory. Set paths appropriate to your machine:
 go build -trimpath -o /tmp/gooo ./cmd/gooo
 go build -trimpath -o /tmp/order-prepared-native ./examples/order-prepared-native
 /tmp/order-prepared-native \
-  --compiler /tmp/gooo --go-bin /path/to/go1.27.1/bin/go \
+  --compiler /tmp/gooo --go-bin /path/to/go1.27.2/bin/go \
   --baseline /path/to/order-judge-native-initial \
   --model /path/to/model.json --out /path/to/fresh-observations
 ```

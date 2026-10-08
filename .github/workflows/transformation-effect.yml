@@ -42,7 +42,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@v7
@@ -52,7 +52,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: true
       - name: Build, execute, and replay native release candidate
         shell: bash
@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact head
@@ -101,7 +101,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: true
 
       - name: Build isolated SplitGo subject
@@ -115,7 +115,7 @@ jobs:
           cat > "$fixture/go.mod" <<'EOF'
           module fixture
 
-          go 1.27.1
+          go 1.27.2
           EOF
           {
             echo 'package fixture'
@@ -189,7 +189,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: true
 
       - name: Select expected boundary decision
@@ -260,7 +260,7 @@ jobs:
       (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-24.04
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@v7
@@ -270,7 +270,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
       - uses: actions/download-artifact@v8
         with:
           name: guarded-promotion-${{ env.HEAD_SHA }}
@@ -313,7 +313,7 @@ jobs:
       (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-24.04
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       CI_RUN_ID: ${{ github.event.workflow_run.id }}
     steps:
@@ -323,7 +323,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
       - name: Download exact meta artifacts
         uses: actions/download-artifact@v8
         with:
@@ -378,7 +378,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
@@ -391,7 +391,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -663,7 +663,7 @@ jobs:
     permissions:
       contents: read
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact head
@@ -675,7 +675,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
       - name: Build and observe language syntax scope partition
         id: observe
         continue-on-error: true
@@ -890,7 +890,7 @@ jobs:
       )
     runs-on: ubuntu-24.04
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
       REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
     steps:
@@ -901,7 +901,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
       - name: Assert causal workflows use setup-go v7
         shell: bash
         run: |
@@ -2391,7 +2391,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@v7
@@ -2401,7 +2401,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: true
       - name: Download exact functional CLI receipt
         uses: actions/download-artifact@v8
@@ -2483,7 +2483,7 @@ jobs:
       github.event.workflow_run.head_branch == 'dev'
     runs-on: ubuntu-24.04
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact transformation subject
@@ -2495,7 +2495,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
       - name: Download exact guarded promotion receipt
         uses: actions/download-artifact@v8
         with:
@@ -2538,7 +2538,7 @@ jobs:
       actions: read
       contents: read
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
@@ -2548,7 +2548,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: false
       - name: Generate fixed eligibility receipts
         shell: bash
@@ -2603,7 +2603,7 @@ jobs:
     permissions:
       contents: read
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
@@ -2613,7 +2613,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: false
       - name: Fetch immutable external reference documents
         shell: bash
@@ -2693,7 +2693,7 @@ jobs:
       - name: Set up exact Go
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: false
       - name: Allocate isolated caches
         run: |
@@ -2951,7 +2951,7 @@ jobs:
       contents: read
       actions: read
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -2962,7 +2962,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: true
       - name: Reduce fixed language delivery contract
         shell: bash
@@ -2996,7 +2996,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -3005,7 +3005,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: true
       - name: Execute Gooo source and reduce fixed receipts
         shell: bash
@@ -3025,7 +3025,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -3034,7 +3034,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: true
       - name: Download exact source execution artifact
         uses: actions/download-artifact@v8
@@ -3059,7 +3059,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
       SOURCE_EXECUTION_INPUT: source-execution-input
       ARTIFACT_ORACLE_INPUT: artifact-oracle-input

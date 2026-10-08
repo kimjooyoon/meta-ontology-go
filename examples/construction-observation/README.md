@@ -15,7 +15,7 @@ gooo package execute --json --construction-receipt /tmp/construction.json \
   examples/assembly-explainer/gooo.workspace.json
 ```
 
-Pass `--go /path/to/go1.27.1` to each command if the Go executable on PATH differs
+Pass `--go /path/to/go1.27.2` to each command if the Go executable on PATH differs
 from the required toolchain. Neither command requires a model download.
 
 The first command builds and runs the generated graph twice. Its two runtime

@@ -16,7 +16,7 @@ typed body. The [assembly policy](policy.gooo.fixture) also reuses a Gooo
 
 ## Run one entry and its helpers
 
-From this revision with Go 1.27.1:
+From this revision with Go 1.27.2:
 
 ```sh
 go build -o /tmp/gooo-calls ./cmd/gooo
@@ -28,7 +28,7 @@ go build -o /tmp/gooo-calls ./cmd/gooo
   --policy-activity Explain --out /tmp/gooo-calls-program
 ```
 
-The output directory must be new. Use `--go-bin /path/to/go1.27.1` if needed.
+The output directory must be new. Use `--go-bin /path/to/go1.27.2` if needed.
 Add `--model /path/to/shared-qat/model.json` for the existing
 [own compact model](https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary).
 Without that option, selection follows deterministic ordering.

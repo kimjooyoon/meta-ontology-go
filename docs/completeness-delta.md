@@ -42,7 +42,7 @@ and dimension changes to understand the outcome.
 
 ## Run generation, execution, and comparison
 
-With Go 1.27.1 available as `go`, from the compiler checkout:
+With Go 1.27.2 available as `go`, from the compiler checkout:
 
 ```sh
 go run ./cmd/gooo body-codegen --json --activity Combined \

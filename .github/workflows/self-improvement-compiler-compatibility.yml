@@ -67,10 +67,10 @@ jobs:
           git worktree add --detach "$predecessor" "$PREDECESSOR_SHA"
           test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
 
-      - name: Install exact Go 1.27.1
+      - name: Install exact Go 1.27.2
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: false
 
       - name: Require exact heads, toolchain, and clean source trees
@@ -78,7 +78,7 @@ jobs:
         run: |
           set -euo pipefail
           predecessor="$RUNNER_TEMP/compiler-compatibility/predecessor"
-          test "$(go env GOVERSION)" = "go1.27.1"
+          test "$(go env GOVERSION)" = "go1.27.2"
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
           test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
           test "$(git status --porcelain)" = ""

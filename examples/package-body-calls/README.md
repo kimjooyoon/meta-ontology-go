@@ -18,7 +18,7 @@ Its own decision helper is imported from a reusable package.
 
 ## Construct, execute and keep the result
 
-From this compiler revision with Go 1.27.1:
+From this compiler revision with Go 1.27.2:
 
 ```sh
 go build -o /tmp/gooo-package-calls ./cmd/gooo
@@ -29,7 +29,7 @@ go build -o /tmp/gooo-package-calls ./cmd/gooo
 
 Add `--assembly-model /path/to/shared-qat/model.json` for the optional
 [own compact model](https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary).
-Without it, candidate ordering is deterministic. Use `--go /path/to/go1.27.1`
+Without it, candidate ordering is deterministic. Use `--go /path/to/go1.27.2`
 when the Go binary on PATH differs.
 
 Replay the saved construction on fresh inputs without supplying a model:

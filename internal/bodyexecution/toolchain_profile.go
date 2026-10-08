@@ -22,7 +22,7 @@ func ownedScopeToolchain(receipt *completeness.CompletenessReceipt) (ToolchainOb
 		return reference, fmt.Errorf("owned toolchain identity or source output differs")
 	}
 	fields := strings.Fields(reference.GoVersion)
-	if len(fields) != 4 || fields[0] != "go" || fields[1] != "version" || fields[2] != "go1.27.1" ||
+	if len(fields) != 4 || fields[0] != "go" || fields[1] != "version" || fields[2] != "go1.27.2" ||
 		!strings.Contains(fields[3], "/") {
 		return reference, fmt.Errorf("unsupported owned Go version")
 	}

@@ -13,7 +13,7 @@ func writeJointOutput(directory string, source []byte, output bodyConstructOutpu
 	files := map[string][]byte{
 		"original.gooo": source, "selected.gooo": []byte(output.Construction.SelectedSource),
 		"generated.go": []byte(output.Construction.Selected.Source), "main.go": []byte(output.Construction.Selected.Driver),
-		"go.mod": []byte("module gooo.observed.composition\n\ngo 1.27.1\n"),
+		"go.mod": []byte("module gooo.observed.composition\n\ngo 1.27.2\n"),
 	}
 	for name, value := range map[string]any{"construction.json": output.Construction, "evaluation.json": output.Evaluation,
 		"composition.json": output.Construction.Selected, "construction-cases.json": output.Construction.ConstructionCases} {

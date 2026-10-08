@@ -36,7 +36,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GOTOOLCHAIN: go1.27.1
+  GOTOOLCHAIN: go1.27.2
   SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
@@ -54,10 +54,10 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: true
       - name: Assert toolchain authority
-        run: test "$(go env GOVERSION)" = "go1.27.1"
+        run: test "$(go env GOVERSION)" = "go1.27.2"
       - name: Build, test, and run conformance twice
         shell: bash
         run: |
@@ -361,7 +361,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: true
       - name: Download producer boundary
         uses: actions/download-artifact@v8

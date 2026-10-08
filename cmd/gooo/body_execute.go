@@ -15,7 +15,7 @@ import (
 )
 
 const bodyExecuteUsage = "usage: gooo body-execute --source <original.gooo> [--path-plan <plan.json>] " +
-	"--generation <body-codegen.json> --cases <cases.json> [--go-bin <go1.27.1>]"
+	"--generation <body-codegen.json> --cases <cases.json> [--go-bin <go1.27.2>]"
 
 func runBodyExecute(args []string, stdout, stderr io.Writer) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

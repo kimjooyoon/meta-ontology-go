@@ -19,7 +19,7 @@ The receipts are facts; only the aggregate operation can grant readiness credit.
 
 Each receipt binds:
 
-- exact Git commit and Go 1.27.1
+- exact Git commit and Go 1.27.2
 - native GOOS and GOARCH
 - a clean VCS build with `-trimpath` and `CGO_ENABLED=0`
 - two byte-equal binaries

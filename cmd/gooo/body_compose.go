@@ -17,7 +17,7 @@ import (
 
 const bodyComposeUsage = "usage: gooo body-compose --source <source.gooo> " +
 	"(--cases <cases.json> | --case-series <series.json>) [--repeat <1..16>] " +
-	"[--model <model.json>] [--fill-model <model.json>] [--composition <composition.json>] [--go-bin <go1.27.1>] [--out <new-directory>] " +
+	"[--model <model.json>] [--fill-model <model.json>] [--composition <composition.json>] [--go-bin <go1.27.2>] [--out <new-directory>] " +
 	"[--assembly-policy <policy.gooo> --policy-activity <name>] [--resume-composition <composition.json>] [--entry <activity>]"
 
 type bodyCompositionOutput struct {
@@ -152,7 +152,7 @@ func writeCompositionOutput(directory string, source, cases []byte, output bodyC
 		{"runtime.json", append(runtime, '\n')}, {"realized.gooo", []byte(output.Composition.GoooSource)},
 		{"generated.go", []byte(output.Composition.Source)},
 		{"main.go", []byte(output.Composition.Driver)},
-		{"go.mod", []byte("module gooo.observed.composition\n\ngo 1.27.1\n")},
+		{"go.mod", []byte("module gooo.observed.composition\n\ngo 1.27.2\n")},
 	}
 	if len(output.RuntimeHistory) > 0 {
 		data, err := json.MarshalIndent(output.RuntimeHistory, "", "  ")

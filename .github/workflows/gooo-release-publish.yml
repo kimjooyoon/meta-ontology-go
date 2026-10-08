@@ -45,7 +45,7 @@ jobs:
     env:
       EXACT_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.validated_sha || github.event.pull_request.head.sha }}
       RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || 'v0.6.17-dev' }}
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
     steps:
       - name: Bind dispatched source to current dev before executing it
         if: github.event_name == 'workflow_dispatch'
@@ -65,7 +65,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: false
       - name: Bind and check the Gooo publication authority
         shell: bash
@@ -239,7 +239,7 @@ jobs:
       READINESS_RUN_ID: ${{ inputs.readiness_run_id }}
       VALIDATED_SHA: ${{ inputs.validated_sha }}
       RELEASE_TAG: ${{ inputs.tag }}
-      GOTOOLCHAIN: go1.27.1
+      GOTOOLCHAIN: go1.27.2
     steps:
       - name: Check out exact validated merge
         uses: actions/checkout@v7
@@ -250,7 +250,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           # Downloaded release candidates must not populate reusable caches.
           cache: false
       - name: Build trusted witness before downloading release inputs
@@ -511,10 +511,10 @@ jobs:
           - Retain every bounded attempt, including local rejections, reached native faults and partial outcomes. Original caller inputs, expected values, hole assignments and source identities stay visible.
           - Replay all saved construction attempts and run the selected ordinary program on separate evaluation inputs with zero new inference. The original receipt and complete attempt history remain bound to the current package sources.
           - Connect package observations to the workbench's Gooo budget and counterexample rules. Optional \`--model\` orders record choices; \`--fill-model\` accepts a compatible operation classifier for initial fill preparation. Deterministic ordering remains the default.
-          - Keep Go 1.27.1 and public decision runtime v0.2.26-experimental. The independent graph QAT weights are distributed separately by the ecosystem workbench.
+          - Keep Go 1.27.2 and public decision runtime v0.2.26-experimental. The independent graph QAT weights are distributed separately by the ecosystem workbench.
 
           Start with the [0.6.17 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.17-dev.md), [package construction example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/package-caller-construction/README.md), or [public Gooo functions](https://github.com/kimjooyoon/gooo-standard-library).
-          Native execution requires Go 1.27.1 on the host. Check the command help when selecting a non-default Go executable.
+          Native execution requires Go 1.27.2 on the host. Check the command help when selecting a non-default Go executable.
           Source-declared cases and finite budgets bound these experiments. An exhausted or truncated search retains partial results. Separate evaluation measures the supplied inputs after selection.
           The [retained package feedback observations](https://github.com/kimjooyoon/gooo-ecosystem-workbench/tree/99a293f7b6ecfe591bf3e1a05060489109b62470/publication/package-construction-20261009) include five rounds/14 attempts for an imported budget helper and eight rounds/105 attempts for two imported libraries with the unchanged own graph model. Both finish with 4/4 separate holdout observations and zero new inference during final replay. Repeated attempts count again. A single related three-package construction used 48 fixed-order or 41 own-model attempts and selected identical code. These are finite observations of related programs.
           Source graph and receipt formats evolve between development versions. Retain the original compiler for historical replay and create fresh receipts when semantics or context identities change.

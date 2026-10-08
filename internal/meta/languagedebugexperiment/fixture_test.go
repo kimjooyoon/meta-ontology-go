@@ -27,7 +27,7 @@ func testInput(t *testing.T) Input {
 }
 
 func runtimeFixture(run int, receipt languagedebug.Receipt) RuntimeObservation {
-	return RuntimeObservation{Run: run, RuntimeReceiptSchema: RuntimeReceiptSchema, Runner: "fixture", Toolchain: "go version go1.27.1 fixture",
+	return RuntimeObservation{Run: run, RuntimeReceiptSchema: RuntimeReceiptSchema, Runner: "fixture", Toolchain: "go version go1.27.2 fixture",
 		SourceRawDigest: receipt.SourceDigest, SourceSemanticDigest: receipt.SemanticDigest,
 		BinaryDigest: digest('d'), Arguments: []string{"debug"}, SubjectSHA: string(makeHex('a', 40)),
 		OutputDigest: digest('c'), WallNS: 1000000, WallMS: 1, PeakRSSKiB: 1}

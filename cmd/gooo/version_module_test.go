@@ -12,7 +12,7 @@ func TestVersionBuildRetainsInstalledModuleIdentity(t *testing.T) {
 		Version: "v0.6.5-dev.0.20261007174112-25df294860e1",
 		Sum:     "h1:Q3T4B9HJ+cbJl9JL9oqeobZmff19pocAet10bCAXVZw=",
 	}}
-	identity := versionBuildMetadata(info, "go1.27.1")
+	identity := versionBuildMetadata(info, "go1.27.2")
 	raw, err := json.Marshal(identity)
 	if err != nil {
 		t.Fatal(err)

@@ -76,7 +76,7 @@ jq -s --arg head "$HEAD_SHA" --arg binary_digest "$binary_digest" \
 	--slurpfile artifact "$work/artifact.json" \
 	'{schema:"gooo/symbolic-invocation-schema-receipt/v1",decision:"PASS",resolution:"EXACT",
 	reason:"EXTERNAL_SCHEMA_VALIDATION_OBSERVED",subject_sha:$head,
-	compiler:{go_version:"1.27.1",binary_digest:$binary_digest,binary_bytes:$binary_bytes,
+	compiler:{go_version:"1.27.2",binary_digest:$binary_digest,binary_bytes:$binary_bytes,
 	registered_emitters:$artifact[0].extensions.registered_emitters},
 	source:{gooo_files:$gooo_files,go_files:$go_files,gooo_lines:$gooo_lines,files:$files,directories:$directories},
 	artifact:{kind:$artifact[0].kind,artifact_schema:$artifact[0].schema,digest:$artifact[0].digest,

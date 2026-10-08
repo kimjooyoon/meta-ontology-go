@@ -69,7 +69,7 @@ func TestCallbackPackageCommandFailurePreservesOutputCI(t *testing.T) {
 	}
 	directory := t.TempDir()
 	for name, source := range map[string]string{
-		"go.mod":          "module example.invalid/callback-failure\n\ngo 1.27.1\n",
+		"go.mod":          "module example.invalid/callback-failure\n\ngo 1.27.2\n",
 		"failure_test.go": "package fixture\nimport \"testing\"\nfunc TestRequired(t *testing.T) { missingObserverSymbol() }\n",
 	} {
 		if err := os.WriteFile(filepath.Join(directory, name), []byte(source), 0o600); err != nil {

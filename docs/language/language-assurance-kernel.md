@@ -70,7 +70,7 @@ The committed fixtures are transaction templates. CI binds their three evidence 
 
 ## Go 1.27 and metaprogramming boundary
 
-CI uses Go `1.27.1` and `go fix -diff`. The official Go command contract makes `-diff` non-mutating and non-zero when a modernization patch exists, so CI can enforce fixes without writing to the candidate tree. Go 1.27 adds the `atomictypes`, `embedlit`, `slicesbackward`, and `unsafefuncs` modernizers. See the [Go 1.27 release notes](https://go.dev/doc/go1.27) and [`go fix` command documentation](https://go.dev/cmd/go/).
+CI uses Go `1.27.2` and `go fix -diff`. The official Go command contract makes `-diff` non-mutating and non-zero when a modernization patch exists, so CI can enforce fixes without writing to the candidate tree. Go 1.27 adds the `atomictypes`, `embedlit`, `slicesbackward`, and `unsafefuncs` modernizers. See the [Go 1.27 release notes](https://go.dev/doc/go1.27) and [`go fix` command documentation](https://go.dev/cmd/go/).
 
 [gomacro](https://github.com/cosmos72/gomacro) is a useful comparison point for runtime Go interpretation and AST-to-AST Lisp-like macros. This PR does not claim those capabilities. Its meta-level contribution is narrower: one executable observes an authority graph, while a separately implemented executable reconstructs the same normalized conclusion from raw evidence; disagreement remains visible and blocks promotion.
 

@@ -24,7 +24,7 @@ const (
 	TransitionCount       = 8
 	ContinuityEdgeCount   = 7
 	EvidenceArtifactCount = 24
-	TestContract          = "go1.27.1|go test ./...|go test -race ./..."
+	TestContract          = "go1.27.2|go test ./...|go test -race ./..."
 	DefaultMode           = "strict-default"
 	OptInMode             = "caller-owned-immutable-successor-certificate"
 

@@ -2,7 +2,7 @@
   "schema": "gooo/symbolic-invocation-usecase-contract/v1",
   "version": 1,
   "metric_id": "gooo.metric.user.symbolic-invocation-validation.v1",
-  "expected_go_version": "1.27.1",
+  "expected_go_version": "1.27.2",
   "expected_registered_emitters": 3,
   "expected_gooo_files": 3,
   "expected_go_files": 0,
