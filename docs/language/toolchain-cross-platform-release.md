@@ -2,9 +2,9 @@
 
 ## Boundary
 
-The v1 claim is intentionally narrow: one exact source SHA produces native release
-candidates on Linux amd64, Darwin amd64, and Windows amd64. It does not claim every
-Go port and it does not publish a GitHub Release.
+One exact source SHA produces native release candidates on Linux amd64,
+Darwin amd64, Darwin arm64 and Windows amd64. The checked-in corpus enumerates
+these four targets. Publication follows the separate release contract.
 
 GitHub documents the fixed runner labels used by this corpus:
 https://docs.github.com/en/actions/reference/runners/github-hosted-runners
@@ -14,7 +14,7 @@ https://pkg.go.dev/cmd/go
 
 ## Meta operation
 
-`assemble-exact-cross-platform-release` consumes three external platform receipts.
+`assemble-exact-cross-platform-release` consumes four external platform receipts.
 The receipts are facts; only the aggregate operation can grant readiness credit.
 
 Each receipt binds:
@@ -24,8 +24,14 @@ Each receipt binds:
 - a clean VCS build with `-trimpath` and `CGO_ENABLED=0`
 - two byte-equal binaries
 - two byte-equal deterministic archives
-- one native `gooo version --json` execution
+- native version, language-example, package, construction and saved-replay executions
 - zero repository writes and zero mutation authorities
 
-The aggregate emits one sorted `SHA256SUMS` file and three archives. Unknown top
+The aggregate emits one sorted `SHA256SUMS` file and four archives. Unknown top
 decisions lower resolution and fail closed rather than becoming a fixed point.
+
+The package construction profile checks a two-package imported helper at attempt
+budgets five and six, then replays the saved six-attempt history. It preserves
+partial 1/4 and complete 4/4 results, original package identities and caller rows,
+local rejections, native faults and exact large integers. Native case counts are
+reported separately from the structural release corpus.

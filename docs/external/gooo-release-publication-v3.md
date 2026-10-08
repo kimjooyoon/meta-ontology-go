@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.16-dev
-version  = 0.6.16-dev
+tag      = v0.6.17-dev
+version  = 0.6.17-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -78,7 +78,7 @@ UNKNOWN cannot be converted to PUBLISHED by a human explanation.
 
 ## Readiness boundary
 
-For 0.6.16, each native platform witness also uses its candidate binary to
+For 0.6.17, each native platform witness also uses its candidate binary to
 construct and replay the division, candidate-local retry and filename examples.
 Their eight, twelve and twelve execution cases must all match, with zero new
 model calls and the same selected program on replay. It also exports the v3
@@ -128,6 +128,18 @@ dependency graph and saved replay retain six matched outputs, one fault and one
 blocked activity across two rows. Original root/joined inputs, large integers,
 independent values, process completion and zero new inference are checked.
 Expected-output categories and all failed activities retain distinct scopes.
+
+The package-caller profile adds three original receipts per platform. It runs
+`package construct` against a two-package workspace at budgets five and six,
+then replays the six-attempt receipt without a model. Expected outcomes are
+partial 1/4, complete 4/4 and saved replay 4/4. The witness reconstructs the
+package image from the original manifest and source files, checks both original
+and lowered caller cases, and binds native observations to package activity IDs.
+Two local rejections, the reached zero-divisor fault, exact large integers and
+all saved attempts remain visible. The replay must retain the entire original
+construction and its receipt digests, with zero new inference. These finite
+execution cases have their own denominators, separate from the 26 structural
+release cases. Each platform artifact retains the raw JSON for all three runs.
 
 The selected readiness run must have all of these properties:
 

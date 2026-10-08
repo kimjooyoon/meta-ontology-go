@@ -6,6 +6,10 @@ import (
 )
 
 func validateJointFillRuntime(r jointSmokeRuntime, cases []jointSmokeCase, actual []json.RawMessage) error {
+	return validateJointFillRuntimeFor(r, cases, actual, "Main", "budgetplan://activity/main")
+}
+
+func validateJointFillRuntimeFor(r jointSmokeRuntime, cases []jointSmokeCase, actual []json.RawMessage, key, id string) error {
 	if r.Stage != "COMPLETE" || r.Failure != "" || r.SHA == "" || !jointSmokeInt(r.Total, len(cases)) ||
 		!jointSmokeInt(r.Calls, 0) || !jointSmokeBool(r.Projection, true) || !jointSmokeBool(r.Replay, true) ||
 		len(r.Traces) != len(cases) || actual != nil && len(actual) != len(cases) {
@@ -19,13 +23,13 @@ func validateJointFillRuntime(r jointSmokeRuntime, cases []jointSmokeCase, actua
 			return fmt.Errorf("caller source-fill row identity differs")
 		}
 		seen[i] = true
-		d, expected := trace.Deliveries[0], cases[i].Expected["Main"]
+		d, expected := trace.Deliveries[0], cases[i].Expected[key]
 		want := expected
 		if actual != nil {
 			want = actual[i]
 		}
 		match := samePackageSourceValue(want, expected)
-		if d.ID != "budgetplan://activity/main" || !samePackageSourceValue(d.Input, cases[i].Inputs["Main"]) ||
+		if d.ID != id || !samePackageSourceValue(d.Input, cases[i].Inputs[key]) ||
 			!samePackageSourceValue(d.Expected, expected) || !samePackageSourceValue(d.Actual, want) || !jointSmokeBool(d.Passed, match) {
 			return fmt.Errorf("caller source-fill exact actual/expected value differs at row %d", i)
 		}

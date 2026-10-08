@@ -76,6 +76,8 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
+The [0.6.17 development guide](docs/releases/0.6.17-dev.md) covers imported-package
+construction, unchanged caller feedback and saved whole-history replay.
 The [0.6.16 development guide](docs/releases/0.6.16-dev.md) covers native arithmetic
 faults, independent outputs, blocked dependencies and saved failure histories.
 The [0.6.15 development guide](docs/releases/0.6.15-dev.md) covers rejected fill
