@@ -61,8 +61,8 @@ view helps inspect a workspace before consuming its JSON receipt. Both forms
 resolve the package graph only; they do not run activity bodies.
 
 Version 1 records an entry activity and packages. Each package has a stable path
-and source paths relative to the workspace manifest. The development compiler
-reads omitted `name` and `imports` from the Gooo files. For example:
+and source paths relative to the workspace manifest. The 0.6.11 development
+source reads omitted `name` and `imports` from the Gooo files. For example:
 
 ```json
 {
