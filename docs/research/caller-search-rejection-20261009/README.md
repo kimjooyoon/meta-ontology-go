@@ -39,7 +39,8 @@ and comparative latency were not measured.
 
 ## Recount and validation
 
-Extract the archive to a fresh directory and run:
+Extract the archive to a fresh directory, copy the adjacent `build.json` into
+that directory, and run:
 
 ```sh
 go run ./docs/research/caller-search-rejection-20261009/observe.go \
