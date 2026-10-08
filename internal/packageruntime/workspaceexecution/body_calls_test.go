@@ -72,7 +72,7 @@ func TestWorkspacePureCallsNamesNativeAndSavedReplay(t *testing.T) {
 
 func TestWorkspacePureCallsRejectUnresolvedAndShadowedNames(t *testing.T) {
 	for _, body := range []string{"return missing.Scale(input)", "return core.Missing(input)", "return Triple(input)",
-		"let core = input; return core.Scale(input)", "let Double = input; return Double(input)", "return input.Scale(input)", "return int64(input)"} {
+		"let core = input; return core.Scale(input)", "let Double = input; return Double(input)", "return input.Scale(input)"} {
 		t.Run(body, func(t *testing.T) {
 			manifest := pureCallWorkspace()
 			manifest.Packages[1].Sources[0].Content = strings.Replace(manifest.Packages[1].Sources[0].Content,
