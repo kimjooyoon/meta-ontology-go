@@ -5,12 +5,15 @@ var topicHelpGroup4 = map[string]string{
 
 ` + bodyConstructUsage + `
 
-Record-choice helpers keep their own Gooo cases. Each completed combination is
+Record choices, integer search and source_fill helpers keep their own Gooo cases.
+Each completed combination is
 compiled and run on --construction-cases; --cases runs after selection. The
-optional model ranks local choices once during initial construction. Without it,
+optional --model ranks record choices; --fill-model uses a compatible operation
+classifier for initial fill selection. Local fill holdouts stay separate from
+training/caller scores and never decide completion. Without models,
 the order is deterministic. Saved construction rechecks every attempted program
 without inference. Consumed caller inputs are reported separately from new ones.
-See examples/caller-guided-construction/README.md.
+See examples/caller-guided-construction/README.md and examples/caller-source-fill/README.md.
 `,
 	"body-refine": `Run a Gooo policy between bounded construction rounds
 

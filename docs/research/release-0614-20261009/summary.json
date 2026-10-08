@@ -1,0 +1,168 @@
+{
+  "compiler": {
+    "build_info_observed": true,
+    "compiler_source_sha": "ab55beb3063cbc879a9acaa9405b3e6efc001e51",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "replaced": false,
+      "version": "v0.2.26-experimental"
+    },
+    "go_version": "go1.27.1",
+    "language": "gooo",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.13-dev.0.20261008175112-ab55beb3063c"
+    },
+    "module_version": "v0.6.13-dev.0.20261008175112-ab55beb3063c",
+    "native_go_required": "go1.27.1",
+    "schema": "gooo/build-identity/v1",
+    "source_status": "CLEAN_VCS",
+    "status": "development",
+    "vcs_modified": "false",
+    "vcs_revision": "ab55beb3063cbc879a9acaa9405b3e6efc001e51",
+    "version": "0.6.14-dev"
+  },
+  "fixed_model_selected_source_equal": true,
+  "host_cpu_utilization": "NOT_SAMPLED",
+  "native_platform": {
+    "archive": {
+      "builds": 2,
+      "bytes": 12803890,
+      "digest": "sha256:bce97cd0f17e2646fee8fa398c4b74d10964dd952084a2a807c008c4b29e27b7",
+      "name": "gooo-darwin-arm64.tar.gz",
+      "replay_equal": true
+    },
+    "archive_format": "tar.gz",
+    "binary": {
+      "builds": 2,
+      "bytes": 23005154,
+      "digest": "sha256:f4262448d52ad47bb798ad2c41e310dc1fcfd0d8a4060d342a32a05adc7eb85e",
+      "name": "gooo",
+      "replay_equal": true
+    },
+    "build": {
+      "build_vcs": true,
+      "cgo_enabled": false,
+      "trimpath": true,
+      "vcs_modified": false,
+      "vcs_revision": "ab55beb3063cbc879a9acaa9405b3e6efc001e51"
+    },
+    "decision": "PASS",
+    "head_sha": "ab55beb3063cbc879a9acaa9405b3e6efc001e51",
+    "mutation_authorities": 0,
+    "platform": {
+      "archive_format": "tar.gz",
+      "goarch": "arm64",
+      "goos": "darwin",
+      "id": "darwin-arm64",
+      "runner": "macos-15"
+    },
+    "reason": "TOOLCHAIN_RELEASE_PLATFORM_READY",
+    "receipt_digest": "sha256:d3a008722c9fdd15d911d280cbdd7f685b34a9a6be5c414751c5b6515a467f66",
+    "repository_writes": 0,
+    "resolution": "EXACT",
+    "schema": "gooo/toolchain-release-platform-receipt/v1",
+    "smoke": {
+      "language": "gooo",
+      "schema_version": "gooo-version/v1",
+      "status": "development",
+      "version": "0.6.14-dev"
+    },
+    "toolchain": "go1.27.1"
+  },
+  "prior_values_and_assignments_equal": true,
+  "rows": [
+    {
+      "attempts": 2,
+      "decision": "PARTIAL_FINITE",
+      "evaluation_passed": 1,
+      "evaluation_total": 4,
+      "fill_holdout_passed": 0,
+      "fill_holdout_total": 1,
+      "fresh_model_predictions": 0,
+      "historical_model_predictions": 0,
+      "local_passed": 1,
+      "local_total": 1,
+      "name": "budget-2",
+      "native_program_attempts": 2,
+      "replayed": false
+    },
+    {
+      "attempts": 3,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 4,
+      "evaluation_total": 4,
+      "fill_holdout_passed": 1,
+      "fill_holdout_total": 1,
+      "fresh_model_predictions": 0,
+      "historical_model_predictions": 0,
+      "local_passed": 1,
+      "local_total": 1,
+      "name": "budget-3",
+      "native_program_attempts": 3,
+      "replayed": false
+    },
+    {
+      "attempts": 3,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 4,
+      "evaluation_total": 4,
+      "fill_holdout_passed": 1,
+      "fill_holdout_total": 1,
+      "fresh_model_predictions": 0,
+      "historical_model_predictions": 0,
+      "local_passed": 1,
+      "local_total": 1,
+      "name": "budget-replay",
+      "native_program_attempts": 3,
+      "replayed": true
+    },
+    {
+      "attempts": 24,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 4,
+      "evaluation_total": 4,
+      "fill_holdout_passed": 1,
+      "fill_holdout_total": 1,
+      "fresh_model_predictions": 0,
+      "historical_model_predictions": 0,
+      "local_passed": 2,
+      "local_total": 2,
+      "name": "mixed-fixed",
+      "native_program_attempts": 24,
+      "replayed": false
+    },
+    {
+      "attempts": 3,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 4,
+      "evaluation_total": 4,
+      "fill_holdout_passed": 1,
+      "fill_holdout_total": 1,
+      "fresh_model_predictions": 1,
+      "historical_model_predictions": 1,
+      "local_passed": 2,
+      "local_total": 2,
+      "name": "mixed-model",
+      "native_program_attempts": 3,
+      "replayed": false
+    },
+    {
+      "attempts": 3,
+      "decision": "COMPLETE_FINITE",
+      "evaluation_passed": 4,
+      "evaluation_total": 4,
+      "fill_holdout_passed": 1,
+      "fill_holdout_total": 1,
+      "fresh_model_predictions": 0,
+      "historical_model_predictions": 1,
+      "local_passed": 2,
+      "local_total": 2,
+      "name": "mixed-replay",
+      "native_program_attempts": 3,
+      "replayed": true
+    }
+  ],
+  "schema": "gooo/release-0614-source-fill-regression/v1",
+  "scope": "Local candidate regression of two related frozen programs: four fresh constructions and two saved replays. Same weights and expectations as the feature observation; no new training, generalization or controlled performance claim. The runner label names a configured target; this witness ran on the local macOS host."
+}
