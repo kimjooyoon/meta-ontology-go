@@ -41,7 +41,10 @@ func TestTextOperationsRetainSymbolicInputOrigins(t *testing.T) {
 	}
 	shadowed := append(append([]byte(nil), source...), []byte("activity len(Text) -> Integer computes `return 42`\n")...)
 	shadow, err := ExportRecordAssemblyContextWithFlow(context.Background(), "shadow-origins.gooo", shadowed, "Select", false, jointdecision.RecordSharedFeatureVersion)
-	if err != nil || shadow.ValueFlow == nil || shadow.ValueFlow.Status != "UNRESOLVED" {
+	if err != nil || shadow.ValueFlow == nil || shadow.ValueFlow.Status != "RESOLVED" ||
+		len(shadow.ValueFlow.Helpers) != 1 || shadow.ValueFlow.Helpers[0].Name != "len" ||
+		!flowContains(shadow.ValueFlow, shadow.ValueFlow.Choices[1].First, "call", "") ||
+		flowContains(shadow.ValueFlow, shadow.ValueFlow.Choices[1].First, "expression", "len") {
 		t.Fatal("source-declared len was misrepresented as a primitive origin", shadow.ValueFlow, err)
 	}
 }

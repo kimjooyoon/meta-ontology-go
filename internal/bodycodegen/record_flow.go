@@ -34,12 +34,21 @@ func recordValueFlow(p recordAssemblyPlan) *RecordValueFlow {
 	}
 	r.Nodes = append([]RecordFlowNode(nil), c.nodes[:c.count]...)
 	r.Choices = append([]RecordFlowChoice(nil), c.choices[:len(p.sites)]...)
+	for _, name := range c.helperOrder {
+		r.Helpers = append(r.Helpers, c.helpers[name].function.identity)
+	}
+	if len(r.Helpers) > 0 {
+		r.Scope += "; fixed same-source helpers retain argument bindings, guarded returns, callee identities and helper-relative spans"
+	}
 	return r
 }
 
 func (c *recordFlowBuilder) parse() (*ast.FuncDecl, error) {
-	prefix := "package selection\n" + RecordDeclarations(c.body.records, false) +
-		"func selected(" + parameterDeclaration(c.body.parameters) + ") " + c.body.outputType + "{\n"
+	prefix, root, err := c.sourcePrelude()
+	if err != nil {
+		return nil, err
+	}
+	prefix += "func " + root + "(" + parameterDeclaration(c.body.parameters) + ") " + c.body.outputType + "{\n"
 	c.base = len(prefix)
 	file, err := parser.ParseFile(c.fset, "record-flow", prefix+c.body.body+"\n}", parser.AllErrors)
 	if err != nil {
@@ -48,6 +57,13 @@ func (c *recordFlowBuilder) parse() (*ast.FuncDecl, error) {
 	normalizeIntegerLocalInitializers("selection", file, c.fset)
 	if _, err = checkBodyTypes("selection", file, c.fset, c.info); err != nil {
 		return nil, err
+	}
+	for _, declaration := range file.Decls {
+		if fn, ok := declaration.(*ast.FuncDecl); ok && fn.Name.Name != root {
+			helper := c.helpers[fn.Name.Name]
+			helper.body = fn.Body
+			c.helpers[fn.Name.Name] = helper
+		}
 	}
 	return file.Decls[len(file.Decls)-1].(*ast.FuncDecl), nil
 }
@@ -67,7 +83,7 @@ func (c *recordFlowBuilder) add(kind string, parents [2]uint16, span RecordFlowS
 }
 
 func (c *recordFlowBuilder) bind(state *flowState, name string, value flowValue, span RecordFlowSpan, kind string) {
-	if state.count == len(state.bindings) {
+	if state.count+c.outerBindings >= len(state.bindings) {
 		c.err = fmt.Errorf("FLOW_LOCAL_BOUND")
 		return
 	}

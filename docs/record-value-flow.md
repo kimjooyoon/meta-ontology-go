@@ -53,6 +53,44 @@ unsupported relation, or stopping before a declared choice returns
 `UNRESOLVED` with a reason and no partial graph. The usual context export keeps
 its existing JSON shape unless this option or the new model contract is selected.
 
+## Follow a pure Gooo helper
+
+The graph follows the fixed, same-source helper activities already supported by
+body generation. Each call connects its actual arguments to fresh
+`call_parameter` definitions, analyzes the helper's body, and links its returned
+value back through a `call` node. Record arguments and returned fields retain
+copy-by-value relationships. Calls that occur only in an alternative expression
+are included in the source closure too.
+
+The optional `helpers` list binds each helper's stable activity ID, name and
+original program digest. Helper body spans carry `activity_id` and offsets in
+that helper's same-width-normalized `computes` body. Call nodes retain
+`callee_id`; their spans describe the caller's expression, including an
+`alternative:<choice ID>` when applicable. A local rename preserves the value
+relationships, while source digests and affected byte spans still describe the
+actual source.
+
+Several return statements are joined using their execution guards. A return
+inside a source-constant unreachable branch does not contribute to the helper's
+result. Conditionals and nested calls retain their own scopes. No input values,
+expected outputs or model predictions are needed to build this graph.
+
+The 512-node bound applies to the expanded graph, and the 64-binding bound
+includes live caller and callee frames together. The pure source closure keeps
+its 32-activity and 16-call-level limits; nested conditional analysis retains its
+16-level limit across calls. An exceeded bound returns the complete unresolved
+status without nodes, choices or helper metadata from a partial expansion.
+
+For example, `Classify` in the [filename example](../examples/text-operations/README.md)
+uses `HasSuffix`, `HasPrefix`, `StripSuffix` and `ByteLength`. Its graph can follow
+both return paths of `StripSuffix`, including its nested `HasSuffix` call:
+
+```sh
+go run ./cmd/gooo body-context --value-flow --activity Classify \
+  --feature-version triple_record_field_flow_v2_shared_v1 \
+  examples/text-operations/source.gooo.fixture
+```
+
 ## Feed the relation to the small model
 
 ```sh
@@ -89,6 +127,14 @@ receiver pairs that shared the old expression array now produce different
 origin arrays in the regression fixture. This measures representation, while
 finite cases continue to measure functionality. Different graphs can share
 ancestor counts, and the shared judge still scores the three fields independently.
+
+Helper expansion extends the source relations available to the existing origin
+projection. Its feature vocabulary is unchanged: call wrappers use the existing
+read/other category, and helper IDs remain in the source graph. In particular,
+the structural projection still merges several operators such as `&&` and `||`.
+A resolved graph is evidence that the source relation was represented; its
+compressed model input and prediction quality need their own measurements and a
+separately versioned improvement. This change adds no trained weights.
 
 [Sequential updates](record-field-updates.md)
 · [Field assembly and finite completeness](record-field-assembly.md)
