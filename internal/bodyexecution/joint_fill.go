@@ -32,6 +32,11 @@ func jointFillSlot(ctx context.Context, filename string, source []byte, activity
 }
 
 func jointObservationSchema(slots []jointSlot, attempts []JointAttempt) string {
+	for _, attempt := range attempts {
+		if hasCompositionFault(attempt.Runtime) {
+			return jointFaultSchema
+		}
+	}
 	schema := jointSchema
 	for _, slot := range slots {
 		if slot.fillRejected {

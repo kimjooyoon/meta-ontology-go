@@ -23,6 +23,8 @@ type CompositionDelivery struct {
 	ActualFields []CompositionRecordField  `json:"actual_fields,omitempty"`
 	Expected     json.RawMessage           `json:"expected,omitempty"`
 	Passed       *bool                     `json:"passed,omitempty"`
+	Fault        *CompositionFault         `json:"fault,omitempty"`
+	BlockedBy    []string                  `json:"blocked_by,omitempty"`
 }
 
 type CompositionPortDelivery struct {
@@ -67,6 +69,8 @@ type CompositionRuntime struct {
 	RuntimeReplayed          bool                       `json:"runtime_replayed"`
 	FinitePassed             int                        `json:"finite_passed"`
 	FiniteTotal              int                        `json:"finite_total"`
+	FaultSites               []CompositionFaultSite     `json:"fault_sites,omitempty"`
+	Outcomes                 *CompositionOutcomes       `json:"outcomes,omitempty"`
 	InputSeparation          CompositionInputSeparation `json:"input_separation"`
 	ModelCalls               int                        `json:"model_calls"`
 	ElapsedNS                int64                      `json:"elapsed_ns"`
@@ -190,6 +194,7 @@ func observeCompositionRuns(ctx context.Context, root, executable string, rows [
 	graph compositionGraph, suite CompositionCases, r *CompositionRuntime) error {
 	input, _ := json.Marshal(rows)
 	var first []byte
+	var outcomes *CompositionOutcomes
 	for run := range 2 {
 		r.Stage = fmt.Sprintf("EXECUTE_%d", run+1)
 		output, observation, runErr := runCompositionProcess(ctx, root, executable, input)
@@ -199,17 +204,35 @@ func observeCompositionRuns(ctx context.Context, root, executable string, rows [
 		}
 		if run == 0 {
 			first = output
-			traces, passed, err := graph.nativeTraces(output, suite)
+			traces, passed, observed, err := graph.nativeOutcomeTraces(output, suite, r.FaultSites)
 			if err != nil {
 				return err
 			}
 			r.Traces, r.FinitePassed = traces, passed
+			outcomes = observed
 		} else if !bytes.Equal(first, output) {
 			return fmt.Errorf("compiled composition replay outputs differ")
 		}
 	}
 	r.RuntimeReplayed, r.Stage = true, "COMPLETE"
+	r.Outcomes = outcomes
+	if hasCompositionFault(*r) {
+		r.Schema = compositionFaultRuntimeSchema
+	}
 	return nil
+}
+
+func (graph compositionGraph) nativeOutcomeTraces(output []byte, suite CompositionCases,
+	sites []CompositionFaultSite) ([]CompositionTrace, int, *CompositionOutcomes, error) {
+	if len(sites) == 0 {
+		traces, passed, err := graph.nativeTraces(output, suite)
+		return traces, passed, nil, err
+	}
+	traces, outcomes, err := graph.nativeArithmeticTraces(output, suite, sites)
+	if err != nil {
+		return nil, 0, nil, err
+	}
+	return traces, outcomes.Matched, outcomes, nil
 }
 
 func runCompositionProcess(ctx context.Context, root, executable string, input []byte) ([]byte, ProcessObservation, error) {

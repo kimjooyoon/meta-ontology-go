@@ -77,6 +77,9 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 			}
 		}
 		r.Attempts = append(r.Attempts, attempt)
+		if r.Schema != jointFaultSchema && hasCompositionFault(attempt.Runtime) {
+			r.Scope += "; native integer zero-divisor outcomes preserve reached operation identities and operands; dependent activities are blocked; twice-reproduced language faults consume program attempts and permit continuation"
+		}
 		r.Schema = jointObservationSchema(slots, r.Attempts)
 		if err != nil {
 			return finish(err)
