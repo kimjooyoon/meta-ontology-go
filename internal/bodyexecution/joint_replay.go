@@ -27,9 +27,17 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 	if err := verifyJointHeader(ctx, filename, source, prior); err != nil {
 		return result, err
 	}
-	slots, space, err := jointSlots(prior.Initial)
+	slots, space, err := jointSlots(ctx, filename, source, prior.Initial)
 	if err != nil || space != prior.CandidateSpace {
 		return result, fmt.Errorf("joint candidate space differs: %v", err)
+	}
+	kinds := jointCandidateKinds(slots)
+	schema := jointSchema
+	if len(kinds) != 0 {
+		schema = jointMixedSchema
+	}
+	if prior.Schema != schema || !slices.Equal(prior.CandidateKinds, kinds) {
+		return result, fmt.Errorf("joint candidate kinds or schema differ")
 	}
 	order := jointMaskOrder(slots, prior.ProgramBudget)
 	if len(prior.Attempts) == 0 || len(prior.Attempts) > len(order) {
@@ -49,7 +57,7 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 }
 
 func verifyJointHeader(ctx context.Context, filename string, source []byte, r JointConstruction) error {
-	if r.Schema != jointSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
+	if r.Schema != jointSchema && r.Schema != jointMixedSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
 		r.OriginalSourceSHA256 != digest(source) || r.ConstructionSHA256 != compositionDigest(r.ConstructionCases) ||
 		r.ProgramBudget < 1 || r.ProgramBudget > 64 || r.SelectedAttempt < 0 || r.SelectedAttempt >= len(r.Attempts) {
 		return fmt.Errorf("joint construction identity, stage or budget differs")
@@ -75,6 +83,7 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 			return err
 		}
 		if compositionDigest(attempt.Candidates) != compositionDigest(recorded.Candidates) ||
+			compositionDigest(attempt.SearchCandidates) != compositionDigest(recorded.SearchCandidates) ||
 			attempt.LocalPassed != recorded.LocalPassed || attempt.LocalTotal != recorded.LocalTotal {
 			return fmt.Errorf("joint attempt %d local obligations differ", i)
 		}

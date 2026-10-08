@@ -3,6 +3,7 @@ package bodyexecution
 import "github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 
 const jointSchema = "gooo/joint-construction/v1"
+const jointMixedSchema = "gooo/joint-construction/v2"
 
 // JointConstruction keeps local preparation, caller feedback and subsequent
 // evaluation distinct. Initial is also the source-bound historical model order.
@@ -16,6 +17,7 @@ type JointConstruction struct {
 	Initial              Composition      `json:"initial"`
 	ProgramBudget        int              `json:"program_budget"`
 	CandidateSpace       string           `json:"candidate_space"`
+	CandidateKinds       []string         `json:"candidate_kinds,omitempty"`
 	Attempts             []JointAttempt   `json:"attempts"`
 	SelectedAttempt      int              `json:"selected_attempt"`
 	SelectedSource       string           `json:"selected_source"`
@@ -27,11 +29,12 @@ type JointConstruction struct {
 }
 
 type JointAttempt struct {
-	Masks       []uint16                      `json:"masks"`
-	Candidates  []bodycodegen.RecordCandidate `json:"candidates"`
-	LocalPassed int                           `json:"local_passed"`
-	LocalTotal  int                           `json:"local_total"`
-	Runtime     CompositionRuntime            `json:"runtime"`
+	Masks            []uint16                      `json:"masks"`
+	Candidates       []bodycodegen.RecordCandidate `json:"candidates"`
+	SearchCandidates []bodycodegen.SearchCandidate `json:"search_candidates,omitempty"`
+	LocalPassed      int                           `json:"local_passed"`
+	LocalTotal       int                           `json:"local_total"`
+	Runtime          CompositionRuntime            `json:"runtime"`
 }
 
 type JointOptions struct {
