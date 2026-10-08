@@ -33,7 +33,7 @@ func Evaluate(corpus Corpus, corpusDigest string, evidence []PlatformEvidence,
 	if summary.CasesTotal > 0 {
 		summary.ReadinessBPS = satisfied * 10000 / summary.CasesTotal
 	}
-	proofs := buildProofs(corpusDigest, conceptDigest, evidence)
+	proofs := buildProofs(corpus, corpusDigest, conceptDigest, evidence)
 	if len(proofs) != 3 {
 		summary.ProofFailures = 1
 	}
