@@ -75,8 +75,12 @@ func validateJointFillSmoke(raw, source, feedback, evaluation []byte, budget int
 }
 
 func validateJointFillLocal(a jointSmokeAttempt, index int, sourceSHA string) error {
+	return validateJointFillLocalAt(a, index, index, 3, sourceSHA)
+}
+
+func validateJointFillLocalAt(a jointSmokeAttempt, index, selector, count int, sourceSHA string) error {
 	if a.Rejection != nil || len(a.Candidates) != 0 || len(a.SearchCandidates) != 0 || len(a.FillCandidates) != 1 ||
-		len(a.Masks) != 1 || a.Masks[0] != index || !jointSmokeInt(a.Passed, 1) || !jointSmokeInt(a.Total, 1) {
+		len(a.Masks) != 1 || a.Masks[0] != selector || !jointSmokeInt(a.Passed, 1) || !jointSmokeInt(a.Total, 1) {
 		return fmt.Errorf("caller source-fill candidate order or training denominator differs")
 	}
 	c := a.FillCandidates[0]
@@ -88,7 +92,7 @@ func validateJointFillLocal(a jointSmokeAttempt, index int, sourceSHA string) er
 		cap = "input.limit"
 	}
 	if c.Schema != "gooo/fill-candidate/v1" || c.Activity != "PlanBudget" || c.ActivityID != "budgetplan://activity/plan-budget" ||
-		c.InputSHA != sourceSHA || c.SelectedSHA == "" || c.PlanSHA == "" || !jointSmokeInt(c.Count, 3) ||
+		c.Rejection != nil || c.InputSHA != sourceSHA || c.SelectedSHA == "" || c.PlanSHA == "" || !jointSmokeInt(c.Count, count) ||
 		c.ID != []string{"late_unbounded", "early_wrong_cap", "bounded"}[index] || c.Method != "caller_selected_assignment" ||
 		len(c.Holes) != 2 || c.Holes[0].ID != "boundary" || c.Holes[0].Expression != condition || c.Holes[1].ID != "cap" || c.Holes[1].Expression != cap ||
 		!jointSmokeInt(c.Passed, 1) || !jointSmokeInt(c.Total, 1) || !jointSmokeInt(c.HoldoutPassed, index/2) || !jointSmokeInt(c.HoldoutTotal, 1) ||
