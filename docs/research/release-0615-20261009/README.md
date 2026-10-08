@@ -9,7 +9,7 @@ The macOS arm64 platform witness built twice, compared the resulting bytes,
 executed the existing native profiles plus the new rejected-fill profile, and
 compared archive bytes. Its exact receipt and three new raw outputs are retained
 in `observations.tar.gz`. The executable used below came from that candidate
-archive. `build.txt` binds it to clean source, Go 1.27.1 and the unchanged public
+archive. `build.json` binds it to clean source, Go 1.27.1 and the unchanged public
 decision runtime. This local candidate record does not imply a published release.
 
 | Observation | Budgeted attempts | Rejected | Native combinations | Later evaluation |
