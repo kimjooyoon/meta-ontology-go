@@ -96,7 +96,7 @@ go run ./cmd/gooo discover --json --query "Generate Gooo code" \
 ```
 
 This command replays the source-owned selection, builds the closed
-`Integer -> Integer` projection with Go 1.27.1, and runs the input sequence in
+`Integer -> Integer` projection with Go 1.27.2, and runs the input sequence in
 two separate processes. Add `--go-bin <path>` to select a local tool explicitly.
 The runtime stage uses the existing 60-second operation budget and two-second
 per-execution limits; its temporary workspace is removed afterward.

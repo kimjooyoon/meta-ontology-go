@@ -122,7 +122,7 @@ func mapConstructionConsumerSource(t *testing.T) (string, string) {
 	}
 	source.WriteString("\t}\n\tfmt.Print(len(witness))\n\treturn witness\n}\n")
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module consumer-witness.test\n\ngo 1.27.1\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module consumer-witness.test\n\ngo 1.27.2\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte(source.String()), 0o644); err != nil {

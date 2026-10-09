@@ -8,7 +8,7 @@ tool and formats its result. Package and semantic identities belong to
 
 ## Build once, then reuse
 
-From this directory, using Gooo and Go 1.27.1 for your host:
+From this directory, using Gooo and Go 1.27.2 for your host:
 
 ```sh
 gooo package execute --json --cases cases.json gooo.workspace.json > execution.json
@@ -28,7 +28,7 @@ use `--cases cases.json` in place of `--inputs inputs.json`. This supplied suite
 has four input rows and eight activity-output expectations, separate from the
 five source-declared construction cases.
 
-If the default Go executable differs, add `--go /path/to/go1.27.1` to either
+If the default Go executable differs, add `--go /path/to/go1.27.2` to either
 command. The complete directory can be moved together; replay checks the saved
 choices against these source files and performs two fresh native runs. Changes
 to source declarations require a new construction receipt.

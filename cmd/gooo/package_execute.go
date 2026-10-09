@@ -118,10 +118,13 @@ func executePackage(ctx context.Context, reader SourceReader, manifestPath strin
 		return receipt, err
 	}
 	result, err := workspaceexecution.ExecuteWorkspaceWithOptions(ctx, runtimeManifest, suite, options)
+	if result.Schema != "" {
+		receipt.Result = &result
+	}
 	if err != nil {
 		return receipt, err
 	}
-	receipt.Result, receipt.Decision = &result, "PASS"
+	receipt.Decision = "PASS"
 	if result.Runtime.FinitePassed < result.Runtime.FiniteTotal {
 		receipt.Decision = "PROGRESS"
 	}

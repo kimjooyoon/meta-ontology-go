@@ -17,7 +17,7 @@ gooo package execute --json --construction-receipt execution.json \
   examples/assembly-explainer/gooo.workspace.json
 ```
 
-Use `--go /path/to/go1.27.1` if the default Go executable differs from the
+Use `--go /path/to/go1.27.2` if the default Go executable differs from the
 required toolchain. Both commands work with deterministic construction.
 
 The first command retains each external plan together with its candidates,

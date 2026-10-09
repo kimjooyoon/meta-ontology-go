@@ -80,9 +80,9 @@ Request example, with observed values filled by the caller:
   "base_version": 30,
   "snapshot_digest": "sha256:<observed-snapshot>",
   "source_digest": "sha256:<observed-source>",
-  "toolchain": "go1.27.0",
+  "toolchain": "go1.27.2",
   "execution_identity": {
-    "go_version": "go1.27.0",
+    "go_version": "go1.27.2",
     "goos": "linux",
     "goarch": "amd64",
     "executable_sha256": "sha256:<observed-generator>",

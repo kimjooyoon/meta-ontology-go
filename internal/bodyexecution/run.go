@@ -266,7 +266,7 @@ func prepareWorkspace(root string, prior bodycodegen.Result) error {
 	}
 	adapter := fmt.Sprintf("package %s\nfunc %s(input int64) int64 {return %s(input)}\n", file.Name.Name, bridge, prior.Report.Activity)
 	main := fmt.Sprintf("package main\nimport(\"encoding/json\";\"os\";p \"gooo.observed.body/projection\")\nfunc main(){var in []int64;if json.NewDecoder(os.Stdin).Decode(&in)!=nil||len(in)>128{os.Exit(2)};out:=make([]int64,len(in));for i,v:=range in{out[i]=p.%s(v)};if json.NewEncoder(os.Stdout).Encode(out)!=nil{os.Exit(3)}}\n", bridge)
-	files := map[string]string{"go.mod": "module gooo.observed.body\n\ngo 1.27.1\n", "main.go": main, "projection/generated.go": prior.Source, "projection/adapter.go": adapter}
+	files := map[string]string{"go.mod": "module gooo.observed.body\n\ngo 1.27.2\n", "main.go": main, "projection/generated.go": prior.Source, "projection/adapter.go": adapter}
 	if file.Name.Name == "main" {
 		delete(files, "projection/generated.go")
 		delete(files, "projection/adapter.go")

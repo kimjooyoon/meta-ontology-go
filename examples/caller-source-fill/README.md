@@ -2,7 +2,7 @@
 
 Gooo 0.6.14 development source adds whole-program selection for `source_fill`.
 The [release guide](../../docs/releases/0.6.14-dev.md) explains the records and
-reuse commands. Build this revision with Go 1.27.1:
+reuse commands. Build this revision with Go 1.27.2:
 
 ```sh
 go build -o /tmp/gooo-source-fill ./cmd/gooo

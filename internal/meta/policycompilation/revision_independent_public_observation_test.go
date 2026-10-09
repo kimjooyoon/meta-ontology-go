@@ -50,7 +50,7 @@ func TestIndependentRevisionCompositionPublicObservation(t *testing.T) {
 		"-revision-operation", filepath.Join(directory, "operation.gooo"),
 		"-revision-consumer", consumer, "-revision-consumer-digest", consumerDigest,
 		"-profile-package", "metapolicycompilation", "-profile-namespace", "metapolicycompilation")
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 	var stdout, stderr bytes.Buffer
 	command.Stdout, command.Stderr = &stdout, &stderr
 	start := time.Now()
@@ -127,7 +127,7 @@ func buildIndependentPublicCommand(t *testing.T, ctx context.Context, root, dire
 	}
 	command := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", binary, "./cmd/"+name)
 	command.Dir = root
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("build public %s command: %v\n%s", name, err, output)
 	}

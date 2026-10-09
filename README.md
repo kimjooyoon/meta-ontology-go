@@ -76,6 +76,8 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
+The [0.6.17 development guide](docs/releases/0.6.17-dev.md) covers imported-package
+construction, unchanged caller feedback and saved whole-history replay.
 The [0.6.16 development guide](docs/releases/0.6.16-dev.md) covers native arithmetic
 faults, independent outputs, blocked dependencies and saved failure histories.
 The [0.6.15 development guide](docs/releases/0.6.15-dev.md) covers rejected fill
@@ -110,7 +112,7 @@ gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace
 
 The generated README explains the six project files, finite checks and optional
 local model. Replay runs the saved program on new rows with zero new inference.
-Native execution uses Go 1.27.1; pass `--go /path/to/go1.27.1` when needed.
+Native execution uses Go 1.27.2; pass `--go /path/to/go1.27.2` when needed.
 See [project starters](docs/language/project-starters.md) for the complete flow.
 
 The development source also supports `gooo package construct`: caller examples
@@ -243,7 +245,7 @@ Inspect the running executable with `gooo version --build`; add `--json` for
 dependency/replacement and source-binding state. Dirty or unbound builds retain
 their original metadata and `UNBOUND_LOCAL_SOURCE`. Native requests check the
 actual selected Go executable independently. The default looks for native
-Go1.27.1 on PATH, then in the compiler's local GOROOT and exact toolchain cache. `--go-bin` takes priority
+Go 1.27.2 on PATH, then in the compiler's local GOROOT and exact toolchain cache. `--go-bin` takes priority
 for an explicit tool. [Setup and output fields](docs/native-body-worker.md#check-the-executable-and-run-with-a-local-native-tool).
 
 Use `gooo body-path-run` for source, recipe and finite-case files; use
@@ -255,7 +257,7 @@ file limits, compatible model profiles and result fields.
 | What happened | Where to start |
 | --- | --- |
 | Input/model setup error before an output directory | Check regular-file kind, readable path, size, source UTF-8 and model metadata/weights |
-| Go-tool setup error after generation | Check the Go 1.27.1 executable; the generated program and original error remain available |
+| Go-tool setup error after generation | Check the Go 1.27.2 executable; the generated program and original error remain available |
 | Finite cases are unobserved | Read the setup/execution cause before interpreting a completion fraction |
 | Executed cases have a mismatch | Compare retained input, expected/actual output and replay result |
 
@@ -397,7 +399,7 @@ These badges are generated from the lowered public-trust `.gooo` policy. Workflo
 
 #### Language / Release
 
-[![Go 1.27.1 toolchain](https://img.shields.io/badge/Go-1.27.1-00ADD8?logo=go&logoColor=white)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/go.mod)
+[![Go 1.27.2 toolchain](https://img.shields.io/badge/Go-1.27.2-00ADD8?logo=go&logoColor=white)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/go.mod)
 [![Published experimental prerelease](https://img.shields.io/github/v/release/kimjooyoon/meta-ontology-go?include_prereleases&label=published%20release)](https://github.com/kimjooyoon/meta-ontology-go/releases)
 
 #### Build / Conformance

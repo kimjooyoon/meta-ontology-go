@@ -25,13 +25,17 @@ func validateJointRejectedFill(a jointSmokeAttempt, index int, sourceSHA string)
 }
 
 func validateJointRejectedFillCount(a jointSmokeAttempt, index, count int, sourceSHA string) error {
+	return validateJointRejectedFillFor(a, index, count, sourceSHA, "PlanBudget", "budgetplan://activity/plan-budget")
+}
+
+func validateJointRejectedFillFor(a jointSmokeAttempt, index, count int, sourceSHA, activity, id string) error {
 	if a.Rejection == nil || a.Rejection.Stage != "LOCAL_SOURCE_FILL" || !jointSmokeInt(a.Rejection.Slot, 0) ||
-		a.Rejection.Activity != "PlanBudget" || len(a.Candidates) != 0 || len(a.SearchCandidates) != 0 || len(a.FillCandidates) != 1 ||
+		a.Rejection.Activity != activity || len(a.Candidates) != 0 || len(a.SearchCandidates) != 0 || len(a.FillCandidates) != 1 ||
 		len(a.Masks) != 1 || a.Masks[0] != index || !jointSmokeInt(a.Passed, 0) || !jointSmokeInt(a.Total, 0) {
 		return fmt.Errorf("rejected-fill local rejection or budget selector differs")
 	}
 	c := a.FillCandidates[0]
-	if c.Schema != "gooo/fill-candidate/v1" || c.Activity != "PlanBudget" || c.ActivityID != "budgetplan://activity/plan-budget" ||
+	if c.Schema != "gooo/fill-candidate/v1" || c.Activity != activity || c.ActivityID != id ||
 		c.InputSHA != sourceSHA || c.SelectedSHA == "" || c.PlanSHA == "" || !jointSmokeInt(c.Count, count) ||
 		c.Method != "caller_selected_assignment" || c.Rejection == nil || c.ID != c.Rejection.ID ||
 		a.Rejection.CandidateID != c.ID || a.Rejection.Reason != c.Rejection.Reason || !slices.Equal(c.Holes, c.Rejection.Holes) ||

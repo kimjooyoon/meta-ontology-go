@@ -44,7 +44,7 @@ func RunFilesCommand(ctx context.Context, name string, args []string, stdout, st
 	cases := f.String("cases", "", "independent runtime expectations JSON")
 	options := f.String("options", "", "optional stream options JSON, including CI context")
 	model := f.String("model", "", "explicit local model.json; omit for deterministic construction")
-	goBin := f.String("go-bin", "", "explicit local Go 1.27.1 tool; default checks PATH, compiler GOROOT, toolchain cache")
+	goBin := f.String("go-bin", "", "explicit local Go 1.27.2 tool; default checks PATH, compiler GOROOT, toolchain cache")
 	out := f.String("out", "", "fresh output directory, or saved directory for --verify-timing")
 	repeat := f.Int("repeat", 1, "bounded sequential requests (1..16)")
 	timing := f.Bool("timing", false, "save bounded wall phases and original-file SHA256 bindings")

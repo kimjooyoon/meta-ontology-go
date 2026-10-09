@@ -61,7 +61,7 @@ func testObservation() Observation {
 			testRun(2, fixture, plan, DigestBytes([]byte("plan-raw-2")), DigestBytes([]byte("events")), DigestBytes([]byte("raw-2")))},
 		Reuse:     ReuseAccounting{RequestMode: "BASELINE", Requests: 1, Discovered: 1, Executed: 1, Reused: 0, Skipped: 0, PriorCandidates: 0, Invalidated: 0, Decision: "EXECUTE", Reason: "NO_PRIOR_RECEIPT", SourceDigest: digest, FixtureDigest: digest, ArgumentDigest: digest, EnvironmentDigest: digest, ReleaseDigest: digest, ToolchainDigest: digest, DependencyGraphDigest: digest, ExpectedResultDigest: digest, BaselinePhysicalCommandExecutions: 9, BaselinePhysicalTestExecutions: 2, ReusePhysicalCommandExecutions: 0, ReusePhysicalTestExecutions: 0, PriorReceiptsValid: 0, DecisionWallMS: 1, DecisionPeakRSSKiB: 1, RequiresExecution: true},
 		Runtime:   RuntimeSummary{ConsumerBuildMS: 1, ConsumerBuildPeakRSS: 1, TofuInitMS: 1, TofuInitPeakRSS: 1, TofuPlanMS: 1, TofuPlanPeakRSS: 1, TofuShowMS: 1, TofuShowPeakRSS: 1, TofuTestMS: 1, TofuTestPeakRSS: 1, TofuTestExecutions: 2, TotalWallMS: 1, MaxPeakRSSKiB: 1},
-		Inventory: Inventory{InputRegularFiles: 1, InputPhysicalLines: 1, OutputArtifactFiles: 1}, ObserverGoVersion: "go version go1.27.1 linux/amd64", ObserverGOVERSION: ExpectedGo, ObserverToolchainDigest: digest,
+		Inventory: Inventory{InputRegularFiles: 1, InputPhysicalLines: 1, OutputArtifactFiles: 1}, ObserverGoVersion: "go version go1.27.2 linux/amd64", ObserverGOVERSION: ExpectedGo, ObserverToolchainDigest: digest,
 		CellEvidenceProjections: cellProjections, CellEvidenceDigests: cellEvidence, Graph: testGraph(digest), RepositoryWrites: 0, LocalTestExecutions: 0, ReleaseBinaryBuilds: 0, ReleaseBinaryBuildReason: "NOT_EXECUTED_RELEASE_BINARY_BOUNDARY", HumanReportReady: true}
 }
 

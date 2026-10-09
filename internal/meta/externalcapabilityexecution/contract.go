@@ -8,7 +8,7 @@ const (
 	ExpectedRepository = "https://github.com/cosmos72/gomacro"
 	ExpectedCommit     = "cf0d4bf32da393dbda97e3572f216731013ffa55"
 	ExpectedTree       = "8cc240a53dd29432ad83620b20fd8a0a05674c6d"
-	ExpectedGoVersion  = "go1.27.1"
+	ExpectedGoVersion  = "go1.27.2"
 
 	MetricDenominator = 10
 	SuiteDenominator  = 15

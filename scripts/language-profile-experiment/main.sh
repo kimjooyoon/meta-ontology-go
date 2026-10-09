@@ -54,7 +54,7 @@ comparison_contract="$root/examples/language-profile/comparison-contract.json"
 jq -e '
   .schema=="gooo/language-comparison-contract/v1" and
   .contract_id=="billing-declaration-signature-go-ast-v1" and
-  .samples_per_language==5 and .runner_image=="ubuntu-24.04" and .go_toolchain=="go1.27.1" and
+  .samples_per_language==5 and .runner_image=="ubuntu-24.04" and .go_toolchain=="go1.27.2" and
   .not_claimed==["general language performance ranking", "native compilation cost",
     "production workload performance", "business correctness", "cross-runner improvement"]
 ' "$comparison_contract"

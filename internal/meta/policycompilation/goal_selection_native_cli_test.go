@@ -40,7 +40,7 @@ func (h goalSelectionHarness) jsonFile(name string, value any) string {
 func (h goalSelectionHarness) invoke(binary string, wantExit int, arguments ...string) []byte {
 	h.t.Helper()
 	command := exec.CommandContext(h.ctx, binary, arguments...)
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 	var stdout, stderr bytes.Buffer
 	command.Stdout, command.Stderr = &stdout, &stderr
 	err := command.Run()
@@ -76,7 +76,7 @@ func TestFrozenGoooGoalSelectionAndFollowingInvocation(t *testing.T) {
 		next += ".exe"
 	}
 	build := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", next, "./cmd/meta-policy-compilation-witness/next-execution")
-	build.Dir, build.Env = root, append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+	build.Dir, build.Env = root, append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build frozen-goal command: %v\n%s", err, output)
 	}

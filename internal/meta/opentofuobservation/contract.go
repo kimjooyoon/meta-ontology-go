@@ -12,7 +12,7 @@ const (
 	ExpectedAssetSHA   = "sha256:50a6106fa4de523d09c87af85f3db1dd47535fc005727fdca6852146476b88ec"
 	ExpectedAssetSize  = 34646566
 	ExpectedSumsSHA    = "sha256:6988e0cb8f4e9ebfa3b0999e44841549741b22d9b38873cb5b89074f1cddcb1c"
-	ExpectedGo         = "go1.27.1"
+	ExpectedGo         = "go1.27.2"
 	DecisionPass       = "PASS"
 	DecisionUnknown    = "UNKNOWN"
 	DecisionRefuted    = "REFUTED"
