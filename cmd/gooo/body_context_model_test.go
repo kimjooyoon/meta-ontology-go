@@ -63,7 +63,7 @@ func TestBodyContextModelSelectsItsInputContractWithoutPredicting(t *testing.T) 
 func TestBodyContextModelReportsRepresentationDecline(t *testing.T) {
 	source, model := recordModelContextFixture(t)
 	var lines []string
-	for _, line := range strings.Split(string(source), "\n") {
+	for line := range strings.SplitSeq(string(source), "\n") {
 		if !strings.Contains(line, `choice "active"`) && !strings.Contains(line, `choice "count"`) {
 			lines = append(lines, line)
 		}
