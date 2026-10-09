@@ -151,6 +151,14 @@ func (e *Executor) dropArtifact() error {
 
 func copyProcess(p ProcessObservation) ProcessObservation {
 	p.Diagnostics = append([]byte(nil), p.Diagnostics...)
+	if p.Timing != nil {
+		timing := *p.Timing
+		if timing.DeadlineRemainingNS != nil {
+			remaining := *timing.DeadlineRemainingNS
+			timing.DeadlineRemainingNS = &remaining
+		}
+		p.Timing = &timing
+	}
 	if p.ExitCode != nil {
 		v := *p.ExitCode
 		p.ExitCode = &v
