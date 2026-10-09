@@ -38,11 +38,15 @@ v1..v6 behavior remains unchanged. A finite score retains its measured inputs.
 - Exercise optional model use with existing own small weights, without downloading
   a larger model. Record which body receives inference and representation declines.
 
-The branch fixture uses `0 - input`: unary variable negation is supported by
-ordinary Gooo but recipe expansion currently accepts only negative literals.
-Extending that spelling requires preserving source binding and existing arena
-indices; it is a separate follow-up. Typed-path helpers currently remain pure
-Integer -> Integer bodies within the existing 16-decision/128-node bounds.
+The original branch fixture and observations use `0 - input`. The subsequent
+language usability patch adds `unary.gooo.fixture`, variable/local negation,
+parenthesized arithmetic and nested negation to recipe expansion. Negative
+literals keep their original arena indices; nonliteral negation lowers to the
+existing zero subtraction. Source binding names arithmetic normalization and
+combined condition normalization separately. Checkpoint palettes and saved
+native replay retain int64 wraparound and exact values above 2^53.
+Typed-path helpers remain pure Integer -> Integer bodies within the existing
+16-decision/128-node bounds.
 
 [Original observations](typed-path-caller-20261010/README.md) record the clean
 development producer, fixed and mixed own-model executions, separate input
