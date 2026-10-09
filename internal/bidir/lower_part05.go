@@ -12,6 +12,12 @@ func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (De
 		return Declaration{}, err
 	}
 	declaration := Declaration{Kind: ActivityKind, Name: activity.Name, Span: toSourceSpan(activity.Span)}
+	if activity.IDPresent || activity.ID != "" {
+		if _, err := semantic.ParseIdentity(activity.ID); err != nil {
+			return Declaration{}, fmt.Errorf("activity %q identity: %w", activity.Name, err)
+		}
+		declaration.ID = ID(activity.ID)
+	}
 	if activity.ValueProgramPresent || activity.ValueProgram != "" {
 		declaration.Attributes = map[string]string{ActivityValueProgramAttribute: activity.ValueProgram}
 	}

@@ -24,7 +24,7 @@ func sourceDeclarations(packagePath, filename string, declarations []syntax.Decl
 			if outputType == "" {
 				outputType = value.Result.Name
 			}
-			exports = append(exports, Export{Name: value.Name, Kind: "activity", InputTypes: inputTypes, OutputType: outputType})
+			exports = append(exports, Export{Name: value.Name, Kind: "activity", ID: value.ID, InputTypes: inputTypes, OutputType: outputType})
 		}
 	}
 	return names, exports, activities

@@ -70,6 +70,9 @@ The development source also provides `gooo package interface --json
 gooo.workspace.json` for [package documentation and API tools](docs/language/package-interface.md).
 It exports stable declaration IDs, ordered function inputs, and record field
 types and presence from the validated workspace, including imported packages.
+Activities may declare an [explicit stable ID](docs/language/activity-identity.md)
+after the result type, so a display rename retains that identity in interfaces,
+generated markers and native delivery traces.
 
 Start a two-package library workspace with `gooo init --template library
 <directory>`. Its Gooo source declares an imported activity binding and a

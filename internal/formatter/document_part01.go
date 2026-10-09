@@ -8,15 +8,16 @@ const (
 	ActivityDeclaration DeclarationKind = "activity"
 )
 
-// Declaration is a syntax-neutral semantic declaration. Entity IDs are
-// authoritative. Activity IDs are optional because the initial surface
-// grammar derives them from namespace and display name.
+// Declaration is a syntax-neutral semantic declaration. Activity IDs may be
+// explicit or derived from namespace and display name. ExplicitIdentity retains
+// an authored ID even when it currently equals the derived value.
 type Declaration struct {
-	Kind   DeclarationKind
-	Name   string
-	ID     string
-	Inputs []string
-	Output string
+	Kind             DeclarationKind
+	Name             string
+	ID               string
+	ExplicitIdentity bool
+	Inputs           []string
+	Output           string
 }
 
 // Document is the minimal semantic view consumed by the formatter.
