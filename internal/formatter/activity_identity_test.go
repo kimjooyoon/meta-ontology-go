@@ -58,3 +58,19 @@ func TestFormatterRejectsInvalidActivityIdentity(t *testing.T) {
 		t.Fatal("explicit empty identity became derived identity", result)
 	}
 }
+
+func TestFormatterComparesCanonicalActivityIdentities(t *testing.T) {
+	document := billingDocument()
+	document.Declarations[0].ID = "BILLING://ENTITY/order"
+	document.Declarations[2].ID = "billing://entity/order"
+	if result := Format(&document); !result.HasErrors() || result.Source != "" {
+		t.Fatal("URI casing hid activity/entity collision", result)
+	}
+	document.Declarations[2].ID = "URN:gooo:activity:sum"
+	first := document.SemanticFingerprint()
+	document.Declarations[0].ID = "billing://entity/order"
+	document.Declarations[2].ID = "urn:gooo:activity:sum"
+	if first == "" || first != document.SemanticFingerprint() {
+		t.Fatal("canonical URI casing changed semantic fingerprint")
+	}
+}

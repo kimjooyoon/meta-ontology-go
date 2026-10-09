@@ -55,7 +55,8 @@ activity `+name+`(Integer) -> Integer id "urn:gooo:activity:sum" computes "retur
 }
 
 func TestLowerRejectsEmptyInvalidAndDuplicateExplicitActivityIdentity(t *testing.T) {
-	for _, tail := range []string{`id ""`, `id "relative"`, `id "urn:gooo:type:integer"`, `id "urn:gooo:activity:sum"
+	for _, tail := range []string{`id ""`, `id "relative"`, `id "urn:gooo:type:integer"`, `id "URN:gooo:activity:sum"
+activity Other(Integer) -> Integer id "urn:gooo:activity:sum"`, `id "urn:gooo:activity:sum"
 activity Other(Integer) -> Integer id "urn:gooo:activity:sum"`} {
 		file, diagnostics := syntax.ParseFile("bad.gooo", "package p\nnamespace p\nentity Integer id \"urn:gooo:type:integer\"\nactivity Sum(Integer) -> Integer "+tail)
 		if diagnostics.HasErrors() {

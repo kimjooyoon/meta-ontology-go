@@ -19,6 +19,8 @@ Write `id` before `computes` or `assembling`. An absolute URI-like ID such as a
 a package cannot share an ID, including across source files. An explicit activity
 ID also cannot collide with an entity's ID. Workspace execution lowers reachable
 packages into one graph; identities in that graph must be distinct.
+URI scheme and host casing normalize when checking identities. For example,
+`URN:gooo:activity:sum` and `urn:gooo:activity:sum` identify the same activity.
 
 Declarations without `id` continue to derive their activity ID from namespace and
 name. Formatting preserves an authored ID even when it equals the derived value.

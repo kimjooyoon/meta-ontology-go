@@ -1,6 +1,9 @@
 package packageruntime
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+)
 
 func sourceDeclarations(packagePath, filename string, declarations []syntax.Declaration) (
 	[]string, []Export, []EntryPlan,
@@ -24,7 +27,11 @@ func sourceDeclarations(packagePath, filename string, declarations []syntax.Decl
 			if outputType == "" {
 				outputType = value.Result.Name
 			}
-			exports = append(exports, Export{Name: value.Name, Kind: "activity", ID: value.ID, InputTypes: inputTypes, OutputType: outputType})
+			identity := value.ID
+			if id, err := semantic.ParseIdentity(identity); err == nil {
+				identity = id.String()
+			}
+			exports = append(exports, Export{Name: value.Name, Kind: "activity", ID: identity, InputTypes: inputTypes, OutputType: outputType})
 		}
 	}
 	return names, exports, activities

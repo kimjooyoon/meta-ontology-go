@@ -6,11 +6,15 @@ import (
 )
 
 func TestExplicitActivityIdentityIsExportedAcrossRename(t *testing.T) {
-	for _, name := range []string{"Choose", "Pick"} {
+	for _, name := range []string{"Choose", "Pick", "Canonical"} {
 		m := interfaceFixture()
 		m.Entry.Activity = name
 		m.Packages[0].Sources[0].Content = strings.ReplaceAll(m.Packages[0].Sources[0].Content, "Choose", name)
-		m.Packages[0].Sources[0].Content = strings.ReplaceAll(m.Packages[0].Sources[0].Content, " computes", ` id "urn:gooo:activity:choose" computes`)
+		id := "urn:gooo:activity:choose"
+		if name == "Canonical" {
+			id = "URN:gooo:activity:choose"
+		}
+		m.Packages[0].Sources[0].Content = strings.ReplaceAll(m.Packages[0].Sources[0].Content, " computes", ` id "`+id+`" computes`)
 		view, err := Describe(m)
 		if err != nil {
 			t.Fatal(err)
