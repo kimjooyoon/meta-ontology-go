@@ -56,11 +56,11 @@ func TestAdapterDiagnosticsPreventUnsafeOutput(t *testing.T) {
 		t.Fatalf("adapter error was not propagated safely: %#v", result)
 	}
 }
-func TestFormatDocumentRejectsUnrepresentableActivityIdentity(t *testing.T) {
+func TestFormatDocumentRepresentsCustomActivityIdentity(t *testing.T) {
 	document := billingDocument()
 	document.Declarations[2].ID = "billing://activity/custom"
 	result := Format(&document)
-	if result.Source != "" || len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != CodeUnsupportedIdentity {
+	if result.HasErrors() || !strings.Contains(result.Source, `activity PayOrder(Order) -> Payment id "billing://activity/custom"`) {
 		t.Fatalf("unexpected activity identity result: %#v", result)
 	}
 }

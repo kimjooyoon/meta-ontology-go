@@ -31,6 +31,9 @@ func formatActivity(output *strings.Builder, activity *ActivityDecl) error {
 	}
 	output.WriteString(") -> ")
 	output.WriteString(result)
+	if err := formatActivityIdentity(output, activity); err != nil {
+		return err
+	}
 	return formatActivityValueProgram(output, activity)
 }
 func activityParameters(activity *ActivityDecl) ([]NameRef, error) {

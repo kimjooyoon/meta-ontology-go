@@ -88,6 +88,7 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeI
 		}
 		compiled.image.Bindings = append(compiled.image.Bindings, bindings...)
 	}
+	identities := make(map[string]string)
 	for _, source := range sources {
 		fileForLowering := source.file.Clone()
 		fileForLowering.Bindings = localBindings(fileForLowering.Bindings)
@@ -96,8 +97,16 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeI
 		if err != nil {
 			return compiledPackage{}, reject("PACKAGE_SOURCE_INVALID", "lower source %q: %v", source.source.Filename, err)
 		}
+		projected := projectSourceInterface(source, ir)
+		for _, declaration := range projected {
+			if previous, exists := identities[declaration.ID]; exists {
+				return compiledPackage{}, reject("PACKAGE_DECLARATION_ID_DUPLICATE",
+					"%s:%s and %s share identity %q", spec.Path, declaration.Name, previous, declaration.ID)
+			}
+			identities[declaration.ID] = declaration.Name
+		}
 		if includeInterface {
-			compiled.declarations = append(compiled.declarations, projectSourceInterface(source, ir)...)
+			compiled.declarations = append(compiled.declarations, projected...)
 		}
 		compiled.image.Sources = append(compiled.image.Sources, SourceImage{
 			Filename: source.source.Filename, SourceDigest: digestValue(source.source.Content),

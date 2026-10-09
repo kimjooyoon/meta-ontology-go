@@ -28,8 +28,8 @@ func (d Document) SemanticFingerprint() string {
 	records := make([]string, 0, len(d.Declarations))
 	for _, declaration := range d.Declarations {
 		if declaration.Kind == EntityDeclaration {
-			entities[declaration.Name] = declaration.ID
-			records = append(records, "entity|"+declaration.ID)
+			entities[declaration.Name] = canonicalIdentity(declaration.ID)
+			records = append(records, "entity|"+canonicalIdentity(declaration.ID))
 		}
 	}
 	for _, declaration := range d.Declarations {
@@ -40,6 +40,7 @@ func (d Document) SemanticFingerprint() string {
 		if activityID == "" {
 			activityID = defaultActivityID(d.Namespace, declaration.Name)
 		}
+		activityID = canonicalIdentity(activityID)
 		inputs := make([]string, len(declaration.Inputs))
 		for index, input := range declaration.Inputs {
 			inputs[index] = entities[input]
