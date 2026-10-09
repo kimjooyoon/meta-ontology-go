@@ -42,7 +42,35 @@ deterministically. The finite suite has seven input scenarios and 49 named
 output expectations, covering operand order, zero/false/empty values, Unicode
 and int64 wraparound.
 
+## Observe inputs before writing caller tests
+
+Use `--inputs` with the `gooo/body-composition-inputs/v1` schema to run actual
+values without supplying an expected result. The saved directory contains
+`inputs.json`; the CLI envelope records `input_schema`. Source-owned selection
+cases still guide assembly. Native observations report zero expectations, zero
+passes and `UNKNOWN` correctness with `NO_RUNTIME_EXPECTATIONS`.
+
+```sh
+gooo-dev body-compose --source examples/body-codegen/native-input-joins.gooo.fixture \
+  --inputs examples/composition-inputs/joins.json --repeat 2 --out out/observed-joins
+```
+
+Later use `--composition out/observed-joins/composition.json` with either new
+`--inputs` or scored `--cases`. Both replay the source-bound graph with zero new
+model calls. `--resume-composition` also accepts input-only observations with an
+explicit policy. Choose exactly one of `--inputs`, `--cases`, `--case-series`.
+The [runnable guide](../examples/composition-inputs/README.md) shows the complete
+observe/replay/check sequence. The 0.6.23 development source includes this route.
+Use a matching compiler; the public v0.6.22-dev binary requires `--cases`.
+
 ## Run and continue
+
+Before creating a composition, use development `body-plan --source SOURCE
+--entry ACTIVITY` to read caller input keys, bindings and called assembly order.
+`--inputs-template` writes editable input placeholders with no expected outputs;
+`--json` exports the source-bound structural plan. See
+[plan inspection](composition-plan-inspection.md) for a complete sequence.
+Inspection does not generate candidates, check bodies or load a model.
 
 ```sh
 gooo body-compose \

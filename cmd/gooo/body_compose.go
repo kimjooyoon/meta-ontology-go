@@ -16,11 +16,12 @@ import (
 )
 
 const bodyComposeUsage = "usage: gooo body-compose --source <source.gooo> " +
-	"(--cases <cases.json> | --case-series <series.json>) [--repeat <1..16>] " +
+	"(--cases <cases.json> | --inputs <inputs.json> | --case-series <series.json>) [--repeat <1..16>] " +
 	"[--model <model.json>] [--fill-model <model.json>] [--composition <composition.json>] [--go-bin <go1.27.2>] [--out <new-directory>] " +
 	"[--assembly-policy <policy.gooo> --policy-activity <name>] [--resume-composition <composition.json>] [--entry <activity>]"
 
 type bodyCompositionOutput struct {
+	InputSchema    string                               `json:"input_schema"`
 	GeneratedNow   bool                                 `json:"generated_now"`
 	Composition    bodyexecution.Composition            `json:"composition"`
 	Runtime        bodyexecution.CompositionRuntime     `json:"runtime"`
@@ -40,6 +41,7 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 		return exitOK
 	}
 	flags := map[string]string{"--source": "", "--cases": "", "--case-series": "", "--repeat": "", "--model": "", "--fill-model": "", "--composition": "", "--go-bin": "", "--out": ""}
+	flags["--inputs"] = ""
 	flags["--assembly-policy"], flags["--policy-activity"] = "", ""
 	flags["--resume-composition"] = ""
 	flags["--entry"] = ""
@@ -51,7 +53,7 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 		}
 		flags[args[i]] = args[i+1]
 	}
-	if flags["--source"] == "" || (flags["--cases"] == "") == (flags["--case-series"] == "") ||
+	if flags["--source"] == "" || compositionInputModes(flags) != 1 ||
 		((flags["--model"] != "" || flags["--fill-model"] != "" || flags["--assembly-policy"] != "") && flags["--composition"] != "") ||
 		((flags["--assembly-policy"] == "") != (flags["--policy-activity"] == "")) {
 		fmt.Fprintln(stderr, bodyComposeUsage)
@@ -103,7 +105,7 @@ func executeBodyComposition(ctx context.Context, flags map[string]string, stdout
 			return fail(err)
 		}
 	}
-	output := bodyCompositionOutput{GeneratedNow: flags["--composition"] == "", CaseSeries: series}
+	output := bodyCompositionOutput{InputSchema: suites[0].Schema, GeneratedNow: flags["--composition"] == "", CaseSeries: series}
 	output.Composition, err = buildOrReadBodyComposition(ctx, flags, source, suites[0])
 	if err == nil && series != nil && (flags["--composition"] != "" || flags["--resume-composition"] != "") {
 		err = bodyexecution.ValidateCompositionSuitesForEntry(ctx, flags["--source"], source, suites, output.Composition.Plan.EntryActivity)
@@ -144,11 +146,15 @@ func writeCompositionOutput(directory string, source, cases []byte, output bodyC
 	if err != nil {
 		return err
 	}
+	inputName := "cases.json"
+	if output.InputSchema == bodyexecution.CompositionInputsSchema {
+		inputName = "inputs.json"
+	}
 	files := []struct {
 		name string
 		data []byte
 	}{
-		{"original.gooo", source}, {"cases.json", cases}, {"composition.json", append(composition, '\n')},
+		{"original.gooo", source}, {inputName, cases}, {"composition.json", append(composition, '\n')},
 		{"runtime.json", append(runtime, '\n')}, {"realized.gooo", []byte(output.Composition.GoooSource)},
 		{"generated.go", []byte(output.Composition.Source)},
 		{"main.go", []byte(output.Composition.Driver)},
