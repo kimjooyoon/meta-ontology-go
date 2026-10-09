@@ -15,8 +15,8 @@ go run ./cmd/gooo body-context --activity Describe \
 The fixture contains existing metadata and 446 bytes of packed weights. The
 command validates both files using the same loader as assembly. It prepares and
 typechecks source alternatives, then exports their input. Model predictions and
-candidate tests remain zero. This is a source-development feature after the
-0.6.21 release candidate; check your executable's source or release notes.
+candidate tests remain zero. This is included in the 0.6.22 development candidate; check your executable's
+source and the release page for publication status.
 
 ## Read the result
 
@@ -55,7 +55,7 @@ that principle to a source/model pair, retaining finite verification at assembly
 
 ## Native release checks
 
-The development release profile saves Korean and English preflight outputs before
+The 0.6.22 development release profile saves Korean and English preflight outputs before
 model assembly. It requires explicit zero prediction and test counters, the actual
 source digest, stable field IDs and the verified model's input contract. Assembly
 and saved replay must retain the same model input digest. A missing counter stays
