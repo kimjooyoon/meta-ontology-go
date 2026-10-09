@@ -32,6 +32,13 @@ func jointFillSlot(ctx context.Context, filename string, source []byte, activity
 }
 
 func jointObservationSchema(slots []jointSlot, attempts []JointAttempt) string {
+	// v7 includes typed candidates, local rejections and native arithmetic faults.
+	// Older producer schemas keep their original derivation unchanged.
+	for _, slot := range slots {
+		if len(slot.pathMasks) != 0 {
+			return jointPathSchema
+		}
+	}
 	for _, attempt := range attempts {
 		if hasCompositionFault(attempt.Runtime) {
 			return jointFaultSchema

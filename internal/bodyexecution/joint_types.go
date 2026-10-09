@@ -8,6 +8,7 @@ const jointRejectionSchema = "gooo/joint-construction/v3"
 const jointFillSchema = "gooo/joint-construction/v4"
 const jointFillRejectionSchema = "gooo/joint-construction/v5"
 const jointFaultSchema = "gooo/joint-construction/v6"
+const jointPathSchema = "gooo/joint-construction/v7"
 
 // JointConstruction keeps local preparation, caller feedback and subsequent
 // evaluation distinct. Initial is also the source-bound historical model order.
@@ -38,6 +39,7 @@ type JointAttempt struct {
 	Candidates       []bodycodegen.RecordCandidate `json:"candidates"`
 	SearchCandidates []bodycodegen.SearchCandidate `json:"search_candidates,omitempty"`
 	FillCandidates   []bodycodegen.FillCandidate   `json:"fill_candidates,omitempty"`
+	PathCandidates   []bodycodegen.PathCandidate   `json:"path_candidates,omitempty"`
 	LocalPassed      int                           `json:"local_passed"`
 	LocalTotal       int                           `json:"local_total"`
 	Runtime          CompositionRuntime            `json:"runtime"`
