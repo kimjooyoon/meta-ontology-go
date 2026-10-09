@@ -14,4 +14,5 @@ return Label{text: "pending"}` assembling {
     value_case "[-2,true,\"한글\"]" -> "{\"text\":\"한글\"}"
     value_case "[0,true,\"zero\"]" -> "{\"text\":\"zero\"}"
     value_case "[2,false,\"off\"]" -> "{\"text\":\"off\"}"
+    attempts "2"
 }
