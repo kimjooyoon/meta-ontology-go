@@ -15,6 +15,9 @@ func TestRuntimeProcessHelper(t *testing.T) {
 		return
 	}
 	switch os.Args[len(os.Args)-1] {
+	case "body-helper-ok":
+		fmt.Print("ready")
+		os.Exit(0)
 	case "body-helper-exit":
 		fmt.Fprint(os.Stderr, "native helper failed")
 		os.Exit(7)
@@ -65,10 +68,13 @@ func TestRuntimeChildKeepsFailureCauseAndDiagnostics(t *testing.T) {
 }
 
 func TestRuntimeProcessCopyKeepsIndependentDiagnostics(t *testing.T) {
-	original := ProcessObservation{Diagnostics: []byte("original")}
+	budget := int64(123)
+	original := ProcessObservation{Diagnostics: []byte("original"), Timing: &ProcessTiming{StartNS: 45, DeadlineRemainingNS: &budget}}
 	copied := copyProcess(original)
 	copied.Diagnostics[0] = 'x'
-	if string(original.Diagnostics) != "original" {
+	copied.Timing.StartNS = 9
+	*copied.Timing.DeadlineRemainingNS = 7
+	if string(original.Diagnostics) != "original" || original.Timing.StartNS != 45 || *original.Timing.DeadlineRemainingNS != 123 {
 		t.Fatal("copy changed the original diagnostic bytes")
 	}
 }
@@ -92,6 +98,9 @@ func TestRuntimeChildBoundsAndCancellation(t *testing.T) {
 			}
 			if mode == "sleep" && !observation.TimedOut {
 				t.Fatal("timeout is unobserved")
+			}
+			if observation.Timing == nil || observation.Timing.StartNS+observation.Timing.WaitNS != observation.WallNS {
+				t.Fatal("start/wait accounting differs from total", observation)
 			}
 			if mode == "overflow" && !observation.OutputTruncated {
 				t.Fatal("output limit is unobserved")
