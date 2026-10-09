@@ -315,11 +315,11 @@ func generateWithIRBodyFillOptions(
 	if !activity.ValueProgramPresent || activity.ValueProgram == "" {
 		return Result{}, fmt.Errorf("activity %q has no computes body", activityName)
 	}
-	if len(activity.Inputs) < 1 || len(activity.Inputs) > 16 || activity.Output != "Integer" {
+	if len(activity.Inputs) < 1 || len(activity.Inputs) > 16 || sourceScalarKind(file, activity.Output) != "Integer" {
 		return Result{}, fmt.Errorf("IR body fill requires 1..16 Integer inputs and one Integer output")
 	}
 	for _, input := range activity.Inputs {
-		if input.Name != "Integer" {
+		if sourceScalarKind(file, input.Name) != "Integer" {
 			return Result{}, fmt.Errorf("IR body fill currently requires Integer inputs and one Integer output")
 		}
 	}

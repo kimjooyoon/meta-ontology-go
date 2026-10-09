@@ -28,7 +28,7 @@ func (graph compositionGraph) recordType(name string) (bodycodegen.RecordType, b
 }
 
 func (graph compositionGraph) valueGoType(name string) string {
-	if scalar := scalarGoType(name); scalar != "" {
+	if scalar := scalarGoType(graph.scalarKind(name)); scalar != "" {
 		return scalar
 	}
 	if record, ok := graph.recordType(name); ok {
@@ -41,7 +41,7 @@ func (graph compositionGraph) canonicalValue(raw []byte, name string) (json.RawM
 	if record, ok := graph.recordType(name); ok {
 		return canonicalRecord(raw, record)
 	}
-	return canonicalScalar(raw, name)
+	return canonicalScalar(raw, graph.scalarKind(name))
 }
 
 func canonicalRecord(raw []byte, record bodycodegen.RecordType) (json.RawMessage, error) {

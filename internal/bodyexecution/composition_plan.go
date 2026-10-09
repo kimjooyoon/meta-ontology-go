@@ -54,11 +54,19 @@ type CompositionHelper struct {
 }
 
 type compositionGraph struct {
-	plan     CompositionPlan
-	nodes    [compositionLimit]CompositionActivity
-	count    int
-	deferred map[string]bool
-	called   map[string]CompositionActivity
+	scalarKinds map[string]string
+	plan        CompositionPlan
+	nodes       [compositionLimit]CompositionActivity
+	count       int
+	deferred    map[string]bool
+	called      map[string]CompositionActivity
+}
+
+func (graph compositionGraph) scalarKind(name string) string {
+	if kind, ok := graph.scalarKinds[name]; ok {
+		return kind
+	}
+	return name
 }
 
 func (graph *compositionGraph) index(id string) int {

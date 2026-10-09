@@ -280,7 +280,9 @@ GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone \
 The pure body profile accepts 1..16 `Integer`, `Boolean`, `Text` or declared
 required-string record inputs and one scalar/record result, local `let` declarations,
 assignment to an existing local, `if/else`, and one-value `return`. `Integer`,
-`Boolean`, and `Text` lower to Go `int64`, `bool`, and `string`. Conditions and
+`Boolean`, and `Text` lower to Go `int64`, `bool`, and `string`. Recognized
+canonical scalar IDs supply those representations under other source
+names too; see [scalar identities](scalar-identity.md). Conditions and
 expressions are checked by Go's type checker after a closed syntax filter.
 An inferred local initialized from an integer constant uses `int64`, keeping
 Integer locals aligned with the DSL type. This rule applies at local bindings;

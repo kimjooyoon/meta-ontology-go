@@ -29,6 +29,9 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 	if err := smokeStableActivity(binary, work, input); err != nil {
 		return err
 	}
+	if err := smokeScalarIdentity(binary, work, input); err != nil {
+		return err
+	}
 	if err := smokeSourceGraph(binary, input); err != nil {
 		return err
 	}
