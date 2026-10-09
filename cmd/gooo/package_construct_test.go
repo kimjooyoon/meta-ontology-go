@@ -20,7 +20,7 @@ func runPackageConstructionFixture(t *testing.T, args ...string) (packageConstru
 		t.Fatal(code, stderr.String(), stdout.String())
 	}
 	var r packageConstructionReceipt
-	if err := json.Unmarshal(stdout.Bytes(), &r); err != nil || r.Result == nil {
+	if err := bodyexecution.DecodeExecutionReceipt(stdout.Bytes(), &r); err != nil || r.Result == nil {
 		t.Fatal(err, stdout.String())
 	}
 	return r, append([]byte(nil), stdout.Bytes()...)
