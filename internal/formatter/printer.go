@@ -15,7 +15,7 @@ func render(document Document, options Options) string {
 		if previousKind != "" && previousKind != declaration.Kind {
 			lines = append(lines, "")
 		}
-		lines = append(lines, renderDeclaration(declaration))
+		lines = append(lines, renderDeclaration(declaration, document.Namespace))
 		previousKind = declaration.Kind
 	}
 	result := strings.Join(lines, "\n")
@@ -25,11 +25,15 @@ func render(document Document, options Options) string {
 	return result
 }
 
-func renderDeclaration(declaration Declaration) string {
+func renderDeclaration(declaration Declaration, namespace string) string {
 	if declaration.Kind == EntityDeclaration {
 		return "entity " + declaration.Name + " id " + quoteString(declaration.ID)
 	}
-	return "activity " + declaration.Name + "(" + strings.Join(declaration.Inputs, ", ") + ") -> " + declaration.Output
+	result := "activity " + declaration.Name + "(" + strings.Join(declaration.Inputs, ", ") + ") -> " + declaration.Output
+	if declaration.ID != "" && (declaration.ExplicitIdentity || declaration.ID != defaultActivityID(namespace, declaration.Name)) {
+		result += " id " + quoteString(declaration.ID)
+	}
+	return result
 }
 
 func quoteString(value string) string {

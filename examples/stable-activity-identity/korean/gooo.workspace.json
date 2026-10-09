@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path":"example/stable","activity":"합계"},
+  "packages": [{"path":"example/stable","sources":["source.gooo.fixture"]}]
+}

@@ -61,7 +61,8 @@ func (SyntaxAdapter) Adapt(ast any) (*Document, Diagnostics) {
 			if diagnostic != nil {
 				return nil, Diagnostics{*diagnostic}
 			}
-			declaration := Declaration{Kind: ActivityDeclaration, Name: value.Name, Inputs: make([]string, len(inputs)), Output: output}
+			declaration := Declaration{Kind: ActivityDeclaration, Name: value.Name, ID: value.ID,
+				ExplicitIdentity: value.IDPresent || value.ID != "", Inputs: make([]string, len(inputs)), Output: output}
 			for index, input := range inputs {
 				declaration.Inputs[index] = input.Name
 			}

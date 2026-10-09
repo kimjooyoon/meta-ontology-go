@@ -58,6 +58,7 @@ func (p *Parser) parseActivity() *ActivityDecl {
 	if !result.Span.IsEmpty() {
 		activity.Span.End = result.Span.End
 	}
+	p.parseActivityIdentity(activity)
 	if p.at(TokenIdentifier) && p.peek().Value == "computes" {
 		p.advance()
 		activity.ValueProgramPresent = true

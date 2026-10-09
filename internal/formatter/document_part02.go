@@ -4,16 +4,19 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 func validateEntity(diagnostics Diagnostics, declaration Declaration, ids map[string]struct{}) Diagnostics {
 	if !isIdentifier(declaration.Name) || declaration.ID == "" || !utf8.ValidString(declaration.ID) {
 		return appendInvalid(diagnostics, "entity requires an identifier and a stable semantic ID")
 	}
-	if _, exists := ids[declaration.ID]; exists {
+	id := canonicalIdentity(declaration.ID)
+	if _, exists := ids[id]; exists {
 		return appendInvalid(diagnostics, "semantic IDs must be unique")
 	}
-	ids[declaration.ID] = struct{}{}
+	ids[id] = struct{}{}
 	return diagnostics
 }
 func validateActivity(diagnostics Diagnostics, declaration Declaration, namespace string, entityNames, entityIDs, activityIDs map[string]struct{}) Diagnostics {
@@ -22,9 +25,14 @@ func validateActivity(diagnostics Diagnostics, declaration Declaration, namespac
 	}
 	activityID := declaration.ID
 	if activityID == "" {
+		if declaration.ExplicitIdentity {
+			return appendInvalid(diagnostics, "explicit activity identity must not be empty")
+		}
 		activityID = defaultActivityID(namespace, declaration.Name)
-	} else if declaration.ID != defaultActivityID(namespace, declaration.Name) {
-		diagnostics = append(diagnostics, Diagnostic{Severity: SeverityError, Code: CodeUnsupportedIdentity, Message: "activity identity cannot be represented by the initial surface grammar"})
+	} else if id, err := semantic.ParseIdentity(activityID); err != nil {
+		return appendInvalid(diagnostics, "activity requires a valid stable semantic ID")
+	} else {
+		activityID = id.String()
 	}
 	if _, exists := entityIDs[activityID]; exists {
 		diagnostics = appendInvalid(diagnostics, "semantic IDs must be unique")
@@ -45,6 +53,13 @@ func validateActivity(diagnostics Diagnostics, declaration Declaration, namespac
 }
 func appendInvalid(diagnostics Diagnostics, message string) Diagnostics {
 	return append(diagnostics, Diagnostic{Severity: SeverityError, Code: CodeInvalidDocument, Message: message})
+}
+
+func canonicalIdentity(value string) string {
+	if id, err := semantic.ParseIdentity(value); err == nil {
+		return id.String()
+	}
+	return value
 }
 func isIdentifier(value string) bool {
 	if value == "" || !utf8.ValidString(value) {
