@@ -15,8 +15,9 @@ go run ./cmd/gooo body-context --activity Describe \
 The fixture contains existing metadata and 446 bytes of packed weights. The
 command validates both files using the same loader as assembly. It prepares and
 typechecks source alternatives, then exports their input. Model predictions and
-candidate tests remain zero. This is included in the 0.6.22 development candidate; check your executable's
-source and the release page for publication status.
+candidate tests remain zero. Record preflight is included in public 0.6.23.
+The [typed-path extension](typed-model-preflight.md) is a separate development change;
+check your executable's source and the release page for publication status.
 
 ## Read the result
 
@@ -46,8 +47,10 @@ source plan, including finite cases; `--value-flow` adds the source provenance g
 
 This option currently covers source-owned record field assembly and its four
 field-expression, shared, origin and graph model contracts. An explicit
-`--feature-version` must match the loaded model. Other `body-context` exports use
-their existing explicit features and currently reject `--model`.
+`--feature-version` must match the loaded model. The typed-path development
+extension also inspects branch, variable and operand models using construction's
+input preparation. Source IR search and whole-candidate judges have separate
+contracts. Record exports and their original schema remain unchanged.
 
 The usability idea came from [tinyjs's capabilities and requirements APIs](https://github.com/tarwin/tinyjsapp):
 show available behavior and missing conditions before work starts. Gooo applies

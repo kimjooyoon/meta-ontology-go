@@ -96,7 +96,7 @@ func TestSourceRecipeStrictRejection(t *testing.T) {
 			t.Fatal("invalid recipe accepted", raw)
 		}
 	}
-	for _, body := range []string{"return -input", "return input / 2", "var local int8 = 1; return input + (0 * 1)",
+	for _, body := range []string{"return +input", "return input / 2", "var local int8 = 1; return input + (0 * 1)",
 		"let value = input - 2; return value"} {
 		raw := recipeBytes(recipeOperand)
 		if strings.HasPrefix(body, "let") {

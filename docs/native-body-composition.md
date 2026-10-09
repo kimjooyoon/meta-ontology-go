@@ -51,7 +51,7 @@ cases still guide assembly. Native observations report zero expectations, zero
 passes and `UNKNOWN` correctness with `NO_RUNTIME_EXPECTATIONS`.
 
 ```sh
-gooo-dev body-compose --source examples/body-codegen/native-input-joins.gooo.fixture \
+gooo body-compose --source examples/body-codegen/native-input-joins.gooo.fixture \
   --inputs examples/composition-inputs/joins.json --repeat 2 --out out/observed-joins
 ```
 
@@ -60,12 +60,11 @@ Later use `--composition out/observed-joins/composition.json` with either new
 model calls. `--resume-composition` also accepts input-only observations with an
 explicit policy. Choose exactly one of `--inputs`, `--cases`, `--case-series`.
 The [runnable guide](../examples/composition-inputs/README.md) shows the complete
-observe/replay/check sequence. The 0.6.23 development source includes this route.
-Use a matching compiler; the public v0.6.22-dev binary requires `--cases`.
+observe/replay/check sequence. Public v0.6.23-dev includes this route.
 
 ## Run and continue
 
-Before creating a composition, use development `body-plan --source SOURCE
+Before creating a composition, use `body-plan --source SOURCE
 --entry ACTIVITY` to read caller input keys, bindings and called assembly order.
 `--inputs-template` writes editable input placeholders with no expected outputs;
 `--json` exports the source-bound structural plan. See
@@ -437,6 +436,24 @@ within the original budgets, and saved replay rederives the rejected expression
 and reason. [Runnable rejection example](../examples/caller-search-rejection/README.md).
 Request cancellation, invalid source/selection, reconstruction failure, native
 toolchain failure and compiled-program execution failure still stop the request.
+
+## Reconsider typed conditions, locals and branches
+
+Development source after public 0.6.23 also accepts source-owned typed-path
+assembly in caller-guided construction. A locally complete helper can be reopened
+when its actual caller fails. The [small branch example](../examples/caller-typed-paths/README.md)
+starts with an ambiguous local `0 -> 0` case and a caller `3 -> 6` expectation.
+Record choices, integer searches and complete fill assignments can share the
+same bounded program search with typed-path helpers.
+
+The initial selected mask is the first attempt. Remaining typed masks follow
+deterministic fallback distance and numeric order, with no new model calls.
+The initial body consumes one of the helper's source attempts. This continuation
+order is explicitly separate from the model's historical initial judgment.
+v7 receipts retain the full source palette bound, actual local results, rejected
+interacting edits and native caller outcomes. Replay rederives each candidate,
+rechecks every local case and re-executes consumed caller feedback before the
+supplied final evaluation. Earlier v1..v6 receipts retain their original format.
 
 ## Reconsider complete multi-hole assignments
 

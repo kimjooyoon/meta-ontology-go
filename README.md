@@ -51,6 +51,9 @@ using their caller's actual results. Local obligations and caller expectations
 are retained separately, with bounded whole-program attempts and model-free
 saved replay. [Caller-guided construction](examples/caller-guided-construction/README.md)
 includes a runnable example and the current source/model/budget limits.
+The 0.6.24 development source also reopens
+[typed conditions and branches](examples/caller-typed-paths/README.md), including
+mixed record construction, rejected interacting edits and saved v7 replay.
 It also records [rejected local expressions](examples/caller-search-rejection/README.md)
 and continues within the original attempt budget. IR search is in 0.6.13;
 caller-guided `source_fill` is in 0.6.14. The 0.6.15 development source also
@@ -87,7 +90,9 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
-The [0.6.23 development guide](docs/releases/0.6.23-dev.md) starts with input planning,
+The [0.6.24 development guide](docs/releases/0.6.24-dev.md) starts with inspecting
+a model/source pair, reconstructing a branch from caller feedback and replaying
+the saved program. The [0.6.23 guide](docs/releases/0.6.23-dev.md) covers input planning,
 input-only execution and later checking of the same saved program. The
 [0.6.22 guide](docs/releases/0.6.22-dev.md) covers source/model
 preflight, the included own-model fixture and native replay. The
@@ -208,6 +213,9 @@ execution, see [native body composition](docs/native-body-composition.md).
 For a source-owned record body, [inspect model compatibility](docs/record-model-preflight.md)
 with `body-context --model` before assembly. The model's input feature is selected
 automatically; representation declines retain their reason and perform zero predictions.
+The development [typed-path preflight](docs/typed-model-preflight.md) extends that
+inspection to branches, variables and operand choices, using construction's exact
+model input preparation. Public 0.6.23 retains its record preflight scope.
 
 ## What we are developing
 

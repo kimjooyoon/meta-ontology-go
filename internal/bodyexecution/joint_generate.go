@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -58,6 +59,9 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 	}
 	if r.Schema == jointFillRejectionSchema {
 		r.Scope += "; rejected fill assignments consume attempts without native execution or a local score; all source assignments remain in the candidate space"
+	}
+	if r.Schema == jointPathSchema {
+		r.Scope = "source-bounded typed paths, record masks, search expressions and fill assignments; initial local model observations retained unchanged; typed paths use the initial selected mask first, then deterministic fallback distance and numeric order within the source attempt cap; record ranking and source search/fill orders retain their own contracts; local cases and native caller cases remain separate; no model calls in subsequent candidates or saved replay; rejected combined paths consume attempts without caller scores; finite observations only"
 	}
 	executor := NewExecutor()
 	defer executor.Close()
@@ -120,12 +124,12 @@ func validateJointSource(ctx context.Context, filename string, source []byte, ca
 		}
 	}
 	if len(names) == 0 || len(names) > compositionLimit {
-		return fmt.Errorf("joint construction requires 1..16 record-choice, source IR search or source-fill bodies")
+		return fmt.Errorf("joint construction requires 1..16 source assembly bodies")
 	}
 	for _, name := range names {
 		spec, err := bodycodegen.SourceAssembly(ctx, filename, source, name)
-		if err != nil || !bodycodegen.IsRecordAssembly(spec) && !bodycodegen.IsSourceIRSearch(spec) && !bodycodegen.IsSourceIRBodyFill(spec) {
-			return fmt.Errorf("joint construction requires a record-choice, source IR search or source-fill contract at %s", name)
+		if err != nil || !bodycodegen.IsRecordAssembly(spec) && !bodycodegen.IsSourceIRSearch(spec) && !bodycodegen.IsSourceIRBodyFill(spec) && !bodycodegen.IsSourceTypedPathAssembly(spec) {
+			return fmt.Errorf("joint construction requires a source assembly contract at %s", name)
 		}
 	}
 	return nil
@@ -139,6 +143,25 @@ func materializeJoint(ctx context.Context, filename string, source []byte, cases
 	}
 	current := source
 	for i, slot := range slots {
+		if len(slot.pathMasks) != 0 {
+			if !slices.Contains(slot.pathMasks, masks[i]) {
+				return attempt, nil, Composition{}, fmt.Errorf("typed path mask exceeds the source attempt cap")
+			}
+			candidate, selected, err := bodycodegen.RealizeSourcePathCandidate(ctx, filename, current, slot.activity, slot.pathReceipt, masks[i])
+			attempt.PathCandidates = append(attempt.PathCandidates, candidate)
+			if err != nil {
+				if rejected, ok := errors.AsType[*bodycodegen.SourcePathCandidateRejection](err); ok && ctx.Err() == nil {
+					attempt.Rejection = &JointCandidateRejection{Stage: "LOCAL_TYPED_PATH", Slot: i,
+						Activity: slot.activity, CandidateID: fmt.Sprintf("path_%04x", masks[i]), Reason: rejected.Error()}
+					return attempt, nil, Composition{}, nil
+				}
+				return attempt, nil, Composition{}, fmt.Errorf("joint typed path activity %s: %w", slot.activity, err)
+			}
+			attempt.LocalPassed += candidate.Passed
+			attempt.LocalTotal += candidate.Total
+			current = selected
+			continue
+		}
 		if len(slot.fillIDs) != 0 {
 			if int(masks[i]) >= len(slot.fillIDs) {
 				return attempt, nil, Composition{}, fmt.Errorf("fill candidate index exceeds the source bound")

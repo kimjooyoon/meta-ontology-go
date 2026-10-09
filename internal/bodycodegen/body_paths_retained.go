@@ -91,6 +91,7 @@ func NewTypedPathGenerator(modelPath string) (*TypedPathGenerator, error) {
 			g.info.MetadataSHA256 = g.model.MetadataSHA256()
 			g.info.WeightsSHA256 = g.model.WeightsSHA256()
 			g.info.ResidentTensorBytes = g.model.ResidentTensorBytes()
+			g.info.ModelSchema, g.info.FeatureVersion = g.model.Schema(), g.model.FeatureVersion()
 		}
 	}
 	g.info.SetupMS = elapsedMS(started)
