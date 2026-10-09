@@ -237,9 +237,7 @@ func (graph compositionGraph) nativeOutcomeTraces(output []byte, suite Compositi
 }
 
 func runCompositionProcess(ctx context.Context, root, executable string, input []byte) ([]byte, ProcessObservation, error) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	return process(ctx, root, executable, input)
+	return processWithWaitLimit(ctx, 2*time.Second, root, executable, input)
 }
 
 func (graph compositionGraph) nativeTraces(output []byte, suite CompositionCases) ([]CompositionTrace, int, error) {

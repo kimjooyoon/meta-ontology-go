@@ -435,6 +435,9 @@ counts. Existing v1/v2/v3 observations keep their original meaning.
 
 ## Current boundaries
 
+[Process observations](native-process-observations.md) record host Start/Wait
+phases and preserve exact failed release-command output for diagnosis.
+
 The graph supports 1..16 activities with 1..16 inputs and one result each.
 An isolated activity needs no bind; every data-flow edge between multiple
 activities remains explicit. The ordinary pure Integer/Boolean/Text body profile
