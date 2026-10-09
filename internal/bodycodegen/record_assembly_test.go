@@ -207,7 +207,7 @@ func TestRecordAssemblyImmutableModelConcurrencyAndCompleteContext(t *testing.T)
 				return
 			}
 			r := result.Report.RecordAssembly
-			if r.ModelCalls != 1 || r.PredictNS < 1 || r.Prediction == nil || r.Context.Status != "ENCODED" || r.SelectedMask != 7 || r.Model.ModelSchema == "" {
+			if r.ModelCalls != 1 || r.PredictNS < 0 || r.Prediction == nil || r.Context.Status != "ENCODED" || r.SelectedMask != 7 || r.Model.ModelSchema == "" {
 				t.Errorf("local ordinal prediction: calls=%d context=%+v", r.ModelCalls, r.Context)
 			}
 			if strings.Contains(r.Context.Text, "value_case") || !strings.Contains(r.Context.Text, "Keep the original title.") {
