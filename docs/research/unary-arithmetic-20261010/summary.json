@@ -1,0 +1,65 @@
+{
+  "producer": "34dc675b1b24102014c15e1b22635c481b6858d6",
+  "scope": "finite unary caller construction, separate evaluation, own record-model inference; training exposure unknown",
+  "experiments": [
+    {
+      "attempts": 2,
+      "space": "2",
+      "local_passed": 1,
+      "local_total": 1,
+      "caller_passed": 1,
+      "caller_total": 1,
+      "final_passed": 3,
+      "final_total": 3,
+      "new_replay_model_calls": 0,
+      "initial_model_calls": 0,
+      "path_context": [
+        {
+          "activity": "Choose",
+          "method": "normalized_arithmetic_typed_body_tree/v1",
+          "status": null,
+          "reason": null
+        }
+      ],
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "setup_ms": 0.000125,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+      }
+    },
+    {
+      "attempts": 15,
+      "space": "16",
+      "local_passed": 2,
+      "local_total": 2,
+      "caller_passed": 1,
+      "caller_total": 1,
+      "final_passed": 3,
+      "final_total": 3,
+      "new_replay_model_calls": 0,
+      "initial_model_calls": 1,
+      "path_context": [
+        {
+          "activity": "Choose",
+          "method": "normalized_arithmetic_typed_body_tree/v1",
+          "status": "DECLINED_TO_DETERMINISTIC",
+          "reason": "THREE_DECISION_COUNT_UNSUPPORTED"
+        }
+      ],
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.652417,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      }
+    }
+  ]
+}

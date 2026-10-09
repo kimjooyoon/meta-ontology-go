@@ -15,6 +15,8 @@ func (b *recipeArena) expression(node ast.Expr, depth int) (int, error) {
 	}
 	node, normalized := normalizeConditionExpression(node)
 	b.normalizedCondition = b.normalizedCondition || normalized
+	node, normalized = normalizeArithmeticExpression(node)
+	b.normalizedArithmetic = b.normalizedArithmetic || normalized
 	value := bodyplan.Expr{}
 	switch e := node.(type) {
 	case *ast.ParenExpr:
@@ -62,16 +64,7 @@ func (b *recipeArena) expression(node ast.Expr, depth int) (int, error) {
 	default:
 		return 0, fmt.Errorf("recipe expression %T is outside the typed arena", node)
 	}
-	if b.expressionCount == len(b.expressions) {
-		return 0, fmt.Errorf("recipe exceeds 128 expressions")
-	}
-	index := b.expressionCount
-	b.expressions[index], b.expressionPositions[index] = value, node.Pos()
-	b.expressionCount++
-	if value.Kind == bodyplan.ExprInput {
-		b.inputIndex, b.inputSeen = index, true
-	}
-	return index, nil
+	return b.appendRecipeExpression(node, value)
 }
 
 // The typed arena has a deliberately small closed operator set. These exact
@@ -169,36 +162,12 @@ func (b *recipeArena) statement(node ast.Stmt, depth int) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		if s.Else != nil {
-			var nodes []ast.Stmt
-			switch otherwise := s.Else.(type) {
-			case *ast.BlockStmt:
-				nodes = otherwise.List
-			case *ast.IfStmt:
-				// An else-if is one conditional inside the else branch. Keep
-				// its original positions for source-order choice selectors.
-				nodes = []ast.Stmt{otherwise}
-			default:
-				return 0, fmt.Errorf("recipe else requires a block or if")
-			}
-			value.Else, err = b.sequence(nodes, depth+1)
-			if err != nil {
-				return 0, err
-			}
+		value.Else, err = b.recipeElseSequence(s.Else, depth)
+		if err != nil {
+			return 0, err
 		}
 	default:
 		return 0, fmt.Errorf("recipe statement %T is outside the typed arena", node)
 	}
-	index, err := b.expression(expression, depth+1)
-	if err != nil {
-		return 0, err
-	}
-	value.Expr = index
-	if b.statementCount == len(b.statements) {
-		return 0, fmt.Errorf("recipe exceeds 128 statements")
-	}
-	index = b.statementCount
-	b.statements[index], b.statementPositions[index] = value, node.Pos()
-	b.statementCount++
-	return index, nil
+	return b.appendRecipeStatement(node, value, expression, depth)
 }

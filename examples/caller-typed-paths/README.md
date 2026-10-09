@@ -3,6 +3,11 @@
 Development source after the public 0.6.23 release adds typed-path bodies to
 `body-construct`. Build that source with Go 1.27.2; the existing 0.6.23 release
 continues to support its recorded record/search/fill construction contracts.
+Build a separately named development binary from the checkout:
+
+```sh
+GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o /tmp/gooo-typed-dev ./cmd/gooo
+```
 
 `Choose` has two permitted branch layouts. Both return zero for its local
 `0 -> 0` example, so that example cannot distinguish them. `Main` supplies the
@@ -11,12 +16,12 @@ executes the caller, and then tries the other branch within the source budget.
 The separate evaluation file contains positive, negative and exact int64 inputs.
 
 ```sh
-gooo-dev body-construct --source examples/caller-typed-paths/main.gooo.fixture \
+/tmp/gooo-typed-dev body-construct --source examples/caller-typed-paths/main.gooo.fixture \
   --entry Main --construction-cases examples/caller-typed-paths/construction-cases.json \
   --cases examples/caller-typed-paths/evaluation-cases.json --attempts 2 \
   --out /tmp/gooo-caller-paths
 
-gooo-dev body-construct --source /tmp/gooo-caller-paths/original.gooo \
+/tmp/gooo-typed-dev body-construct --source /tmp/gooo-caller-paths/original.gooo \
   --construction /tmp/gooo-caller-paths/construction.json \
   --cases examples/caller-typed-paths/evaluation-cases.json
 ```
@@ -50,5 +55,24 @@ the representation decline and proceeds deterministically. Use its
 The receipt makes that split explicit, rather than reporting model ranking for
 every body. No new model or larger training set is required for this example.
 
-The current typed recipe spells arithmetic negation as `0 - input`. Ordinary
-Gooo supports `-input`; that spelling has not yet been added to recipe expansion.
+## Write integer negation directly
+
+`unary.gooo.fixture` uses `-input`. Typed recipes also accept negated locals,
+parenthesized expressions and nested negation. The compiler normalizes these
+to `0 - expression` in its existing bounded integer arena. A normalized unary
+subtraction is an `operand_order` site; source order still puts an outer
+negation before its nested binary expression. Negative integer literals keep
+their previous expression indices.
+
+```sh
+/tmp/gooo-typed-dev body-construct --source examples/caller-typed-paths/unary.gooo.fixture \
+  --entry Main --construction-cases examples/caller-typed-paths/construction-cases.json \
+  --cases examples/caller-typed-paths/evaluation-cases.json --attempts 2 \
+  --out /tmp/gooo-caller-unary
+```
+
+The binding receipt names arithmetic normalization explicitly, and records
+combined arithmetic/condition normalization separately. Local typing rejects
+boolean negation through this arithmetic route. Existing node and nesting
+bounds still apply. The earlier `main.gooo.fixture` and recorded observations
+keep their original spelling and producer.

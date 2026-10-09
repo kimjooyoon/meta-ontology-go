@@ -14,7 +14,8 @@ import (
 
 // Called only after both native projections have typechecked. The typed arena
 // retains every operator, child edge, local binding and ordered statement while
-// omitting redundant parentheses and normalizing int64 literal spelling.
+// omitting redundant parentheses and normalizing int64 literal spelling,
+// supported condition sugar and nonliteral integer negation explicitly.
 func typedBodyTreeEquivalence(ctx context.Context, name, original string, generated []byte) (RouteEquivalenceReceipt, error) {
 	left, leftNormalized, err := normalizedTypedBodyTree(ctx, name,
 		[]byte("package source\nfunc "+name+"(input int64) int64 {\n"+original+"\n}"))
@@ -31,9 +32,17 @@ func typedBodyTreeEquivalence(ctx context.Context, name, original string, genera
 	}
 	method := "canonical_typed_body_tree/v1"
 	scope := "typechecked Integer -> Integer typed-body arena; exact operator, child-edge, local and statement structure"
-	if leftNormalized || rightNormalized {
+	if leftNormalized.condition || rightNormalized.condition {
 		method = "normalized_condition_typed_body_tree/v1"
 		scope = "typechecked Integer -> Integer arena; exact local and statement structure with >, >=, != and boolean ! reduced to <, <= and equality with false"
+	}
+	if leftNormalized.arithmetic || rightNormalized.arithmetic {
+		method = "normalized_arithmetic_typed_body_tree/v1"
+		scope = "typechecked Integer -> Integer arena; exact local and statement structure with nonliteral unary - reduced to int64 zero subtraction"
+		if leftNormalized.condition || rightNormalized.condition {
+			method = "normalized_arithmetic_condition_typed_body_tree/v1"
+			scope += "; >, >=, != and boolean ! reduced to <, <= and equality with false"
+		}
 	}
 	return RouteEquivalenceReceipt{Schema: routeEquivalenceSchema, Decision: status,
 		Method: method, Rule: "typed_path_fallback_matches_authoritative_source",
@@ -46,31 +55,35 @@ func typedBodyTree(ctx context.Context, name string, source []byte) ([]byte, err
 	return tree, err
 }
 
-func normalizedTypedBodyTree(ctx context.Context, name string, source []byte) ([]byte, bool, error) {
+type typedBodyNormalization struct {
+	condition, arithmetic bool
+}
+
+func normalizedTypedBodyTree(ctx context.Context, name string, source []byte) ([]byte, typedBodyNormalization, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "typed-tree.go", source, parser.AllErrors)
 	if err != nil {
-		return nil, false, err
+		return nil, typedBodyNormalization{}, err
 	}
 	removeLocalReadMarkers(file, fset)
 	function, ok := findFunction(file, name)
 	if !ok {
-		return nil, false, fmt.Errorf("typed tree function missing")
+		return nil, typedBodyNormalization{}, fmt.Errorf("typed tree function missing")
 	}
 	b := recipeArena{ctx: ctx}
 	root, err := b.sequence(function.Body.List, 0)
 	if err != nil {
-		return nil, false, err
+		return nil, typedBodyNormalization{}, err
 	}
 	if err := b.includeDeclaredInput(); err != nil {
-		return nil, false, err
+		return nil, typedBodyNormalization{}, err
 	}
 	plan := bodyplan.Plan{Schema: bodyplan.Schema, ID: "typed-source-tree", Name: name,
 		ResultType: decision.TypeInt, Expressions: b.expressions[:b.expressionCount],
 		Statements: b.statements[:b.statementCount], Root: root}
 	if _, err := bodyplan.Compile(plan, nil); err != nil {
-		return nil, false, err
+		return nil, typedBodyNormalization{}, err
 	}
 	tree, err := json.Marshal(plan)
-	return tree, b.normalizedCondition, err
+	return tree, typedBodyNormalization{condition: b.normalizedCondition, arithmetic: b.normalizedArithmetic}, err
 }
