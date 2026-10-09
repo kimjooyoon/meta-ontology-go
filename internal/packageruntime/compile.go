@@ -8,8 +8,9 @@ import (
 )
 
 type compiledPackage struct {
-	image      PackageImage
-	activities []EntryPlan
+	image        PackageImage
+	activities   []EntryPlan
+	declarations []InterfaceDeclaration
 }
 
 type parsedPackageSource struct {
@@ -18,7 +19,7 @@ type parsedPackageSource struct {
 	names  []string
 }
 
-func compilePackage(spec PackageSpec, dependencies map[string][]Export) (compiledPackage, error) {
+func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeInterface bool) (compiledPackage, error) {
 	compiled := compiledPackage{image: PackageImage{
 		Path: spec.Path, Name: spec.Name, Imports: append([]string(nil), spec.Imports...),
 	}}
@@ -94,6 +95,9 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export) (compile
 		ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), fileWithTypes, bidir.EntityFieldsV4Support())
 		if err != nil {
 			return compiledPackage{}, reject("PACKAGE_SOURCE_INVALID", "lower source %q: %v", source.source.Filename, err)
+		}
+		if includeInterface {
+			compiled.declarations = append(compiled.declarations, projectSourceInterface(source, ir)...)
 		}
 		compiled.image.Sources = append(compiled.image.Sources, SourceImage{
 			Filename: source.source.Filename, SourceDigest: digestValue(source.source.Content),

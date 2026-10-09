@@ -1,25 +1,38 @@
 package packageruntime
 
 func Build(manifest Manifest) (Image, error) {
+	image, _, err := build(manifest, false)
+	return image, err
+}
+
+func build(manifest Manifest, includeInterface bool) (Image, []InterfacePackage, error) {
 	normalized, err := normalizeManifest(manifest)
 	if err != nil {
-		return Image{}, err
+		return Image{}, nil, err
 	}
 	order, err := initializationOrder(normalized.Packages)
 	if err != nil {
-		return Image{}, err
+		return Image{}, nil, err
 	}
 	byPath := make(map[string]PackageSpec, len(normalized.Packages))
 	for _, spec := range normalized.Packages {
 		byPath[spec.Path] = spec
 	}
 	image := Image{Schema: ImageSchema, InitOrder: order}
+	var interfaces []InterfacePackage
 	activities := make([]EntryPlan, 0)
 	exportsByPath := make(map[string][]Export, len(order))
 	for _, packagePath := range order {
-		compiled, compileErr := compilePackage(byPath[packagePath], exportsByPath)
+		compiled, compileErr := compilePackage(byPath[packagePath], exportsByPath, includeInterface)
 		if compileErr != nil {
-			return Image{}, compileErr
+			return Image{}, nil, compileErr
+		}
+		if includeInterface {
+			view, err := compiled.publicInterface()
+			if err != nil {
+				return Image{}, nil, err
+			}
+			interfaces = append(interfaces, view)
 		}
 		image.Packages = append(image.Packages, compiled.image)
 		exportsByPath[packagePath] = compiled.image.Exports
@@ -27,11 +40,11 @@ func Build(manifest Manifest) (Image, error) {
 	}
 	entry, err := resolveEntry(normalized.Entry, byPath, activities)
 	if err != nil {
-		return Image{}, err
+		return Image{}, nil, err
 	}
 	image.Entry = entry
 	image.Digest = imageDigest(image)
-	return image, nil
+	return image, interfaces, nil
 }
 
 func resolveEntry(entry EntrySpec, packages map[string]PackageSpec, activities []EntryPlan) (EntryPlan, error) {

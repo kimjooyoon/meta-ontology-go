@@ -67,6 +67,11 @@ works across construction, saved replay and Gooo assembly policies. The separate
 [Gooo standard library](https://github.com/kimjooyoon/gooo-standard-library)
 provides reusable number, logic and text functions with native usage examples.
 
+The development source also provides `gooo package interface --json
+gooo.workspace.json` for [package documentation and API tools](docs/language/package-interface.md).
+It exports stable declaration IDs, ordered function inputs, and record field
+types and presence from the validated workspace, including imported packages.
+
 Start a two-package library workspace with `gooo init --template library
 <directory>`. Its Gooo source declares an imported activity binding and a
 multi-hole body-fill plan. `gooo package execute` reads that plan directly from
