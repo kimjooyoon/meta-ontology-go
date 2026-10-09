@@ -29,6 +29,7 @@ Commands:
   run              Resolve an activity or execute a supported value plan
   body-codegen     Fill declared IR holes and generate Go
   body-context     Inspect source input and local model compatibility
+  body-plan        List caller inputs and assembly dependencies without execution
   body-compose     Assemble, compile and execute a typed program
   body-construct   Reconsider body choices using whole-program examples
   generate         Generate a project from Gooo declarations
@@ -39,7 +40,7 @@ Commands:
   version          Show the compiler version and build information
 
 Use ` + "`gooo help <topic>`" + ` for guides and examples.
-Topics: start, language, models, body-codegen, body-context, body-compose, body-construct,
+Topics: start, language, models, body-codegen, body-context, body-plan, body-compose, body-construct,
         discover, init, check, test, run,
         generate, format, package, inspect, query, version, commands
 `

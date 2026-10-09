@@ -1,0 +1,243 @@
+{
+  "schema": "gooo/composition-plan-dogfood/v1",
+  "source": {
+    "base_sha": "485ef8ed572882206d79680aa5ab87744e52738a",
+    "status": "UNBOUND_LOCAL_SOURCE/MODIFIED_VCS; candidate Go source was unchanged after this build",
+    "candidate_binary_sha256": "1ceb927c5bb2ce44428b3af57f896185f6d299e06d33335003b9bbf85bd7202b",
+    "go_version": "go1.27.2"
+  },
+  "model": {
+    "path": "examples/scalar-identity/model/model.json",
+    "metadata_bytes": 1124,
+    "weights_bytes": 446,
+    "metadata_sha256": "3c68205a660695103712e2115ce90accd298b406dced8ad5ad5c9b84bab0a202",
+    "weights_sha256": "76f68845a03ed8c8bc261a57c919e96dcdd352d3c35bcdaeb3d9b51a88975c6f",
+    "resident_tensor_bytes": 2096,
+    "scope": "packed weights and decoded tensors only; total process RAM was not isolated"
+  },
+  "observations": [
+    {
+      "label": "called-fill",
+      "source_sha256": "sha256:3a208b0ab3938ee5ef3cdeeaadb5890c4db3c6d5a581c524211b0554f7843648",
+      "input_keys": [
+        "Main"
+      ],
+      "assemblies": [
+        {
+          "name": "PlanBudget",
+          "id": "budgetplan://activity/plan-budget",
+          "phase": "called_body",
+          "kind": "source_fill",
+          "contract_sha256": "sha256:bea62489ba73ed255c10cb3754886e89cd768d43cddf915b927e775ceda7749b",
+          "source_cases": 1,
+          "source_holdout_cases": 1,
+          "depends_on_assembly": false
+        }
+      ],
+      "inspection": {
+        "model_calls": 0,
+        "candidate_tests": 0,
+        "native_executions": 0
+      },
+      "exported_plan_matches_generation": true,
+      "initial_model_calls": 0,
+      "input_only": {
+        "finite_passed": 0,
+        "finite_total": 0,
+        "new_model_calls": 0,
+        "correctness_reason": "NO_RUNTIME_EXPECTATIONS"
+      },
+      "scored_replay": {
+        "finite_passed": 1,
+        "finite_total": 4,
+        "new_model_calls": 0,
+        "generated_now": false
+      },
+      "scope": "one local fixture; templates contain placeholders, not oracles; later authored cases score the retained program; no accuracy-generalization or isolated latency claim"
+    },
+    {
+      "label": "joins",
+      "source_sha256": "sha256:1d40b5b796ffb0de08a2f2bbaa8feaf33a05fc6c6c0276b7c057777142b3c2f4",
+      "input_keys": [
+        "Compare.input0",
+        "Compare.input1",
+        "Left",
+        "Right",
+        "Label.input1",
+        "Label.input2"
+      ],
+      "assemblies": [
+        {
+          "name": "Left",
+          "id": "joins://activity/left",
+          "phase": "activity",
+          "kind": "typed_paths",
+          "contract_sha256": "sha256:b8e8e89ca1c73b2eaba5004c4b262c0754bb070f959dc2273ec981aa65024d55",
+          "source_cases": 6,
+          "source_holdout_cases": 0,
+          "depends_on_assembly": false
+        }
+      ],
+      "inspection": {
+        "model_calls": 0,
+        "candidate_tests": 0,
+        "native_executions": 0
+      },
+      "exported_plan_matches_generation": true,
+      "initial_model_calls": 0,
+      "input_only": {
+        "finite_passed": 0,
+        "finite_total": 0,
+        "new_model_calls": 0,
+        "correctness_reason": "NO_RUNTIME_EXPECTATIONS"
+      },
+      "scored_replay": {
+        "finite_passed": 49,
+        "finite_total": 49,
+        "new_model_calls": 0,
+        "generated_now": false
+      },
+      "scope": "one local fixture; templates contain placeholders, not oracles; later authored cases score the retained program; no accuracy-generalization or isolated latency claim"
+    },
+    {
+      "label": "own-model",
+      "source_sha256": "sha256:ac67b0d19cf49dec85c781bb28977c8238f43f008215f2fa2a7f250c925bffe3",
+      "input_keys": [
+        "Describe.input0",
+        "Describe.input1",
+        "Describe.input2"
+      ],
+      "assemblies": [
+        {
+          "name": "Describe",
+          "id": "urn:gooo:scalar-identity:describe",
+          "phase": "activity",
+          "kind": "record_choices",
+          "contract_sha256": "sha256:f890bffec74ef9d8ee17335338f3f04dd61fdce0ec2d410ac992b3e34d9cfbfc",
+          "source_cases": 4,
+          "source_holdout_cases": 0,
+          "depends_on_assembly": false
+        }
+      ],
+      "inspection": {
+        "model_calls": 0,
+        "candidate_tests": 0,
+        "native_executions": 0
+      },
+      "exported_plan_matches_generation": true,
+      "initial_model_calls": 1,
+      "input_only": {
+        "finite_passed": 0,
+        "finite_total": 0,
+        "new_model_calls": 0,
+        "correctness_reason": "NO_RUNTIME_EXPECTATIONS"
+      },
+      "scored_replay": {
+        "finite_passed": 4,
+        "finite_total": 4,
+        "new_model_calls": 0,
+        "generated_now": false
+      },
+      "scope": "one local fixture; templates contain placeholders, not oracles; later authored cases score the retained program; no accuracy-generalization or isolated latency claim"
+    },
+    {
+      "label": "source-fill",
+      "source_sha256": "sha256:d07320adbdaf8858b457721cded4fdebc5945a854e9f151c447ad9edd9dac6ce",
+      "input_keys": [
+        "Lift"
+      ],
+      "assemblies": [
+        {
+          "name": "Lift",
+          "id": "fillflow://activity/lift",
+          "phase": "activity",
+          "kind": "source_fill",
+          "contract_sha256": "sha256:51756b0a7d36755fca28ed113aae4a835d7c093b8d5f51329cf50eeb8be80b13",
+          "source_cases": 3,
+          "source_holdout_cases": 1,
+          "depends_on_assembly": false
+        },
+        {
+          "name": "Scale",
+          "id": "fillflow://activity/scale",
+          "phase": "activity",
+          "kind": "source_fill",
+          "contract_sha256": "sha256:c475634d1a24a1cf4e817e19ceb4d7745537a3b21d3841b0ccba0c85bec57f2f",
+          "source_cases": 3,
+          "source_holdout_cases": 1,
+          "depends_on_assembly": false
+        }
+      ],
+      "inspection": {
+        "model_calls": 0,
+        "candidate_tests": 0,
+        "native_executions": 0
+      },
+      "exported_plan_matches_generation": true,
+      "initial_model_calls": 0,
+      "input_only": {
+        "finite_passed": 0,
+        "finite_total": 0,
+        "new_model_calls": 0,
+        "correctness_reason": "NO_RUNTIME_EXPECTATIONS"
+      },
+      "scored_replay": {
+        "finite_passed": 15,
+        "finite_total": 15,
+        "new_model_calls": 0,
+        "generated_now": false
+      },
+      "scope": "one local fixture; templates contain placeholders, not oracles; later authored cases score the retained program; no accuracy-generalization or isolated latency claim"
+    },
+    {
+      "label": "source-search",
+      "source_sha256": "sha256:054aede1522dc8c9b079dd00a169cd73a98ff3ca9df9f39ea2dc71a1c1e723b0",
+      "input_keys": [
+        "Normalize"
+      ],
+      "assemblies": [
+        {
+          "name": "Normalize",
+          "id": "searchflow://activity/normalize",
+          "phase": "activity",
+          "kind": "source_search",
+          "contract_sha256": "sha256:727e2c9a57a17d39008247c6983747cbea46873710b2c59a302b1720c91314ee",
+          "source_cases": 3,
+          "source_holdout_cases": 2,
+          "depends_on_assembly": false
+        },
+        {
+          "name": "AddOffset",
+          "id": "searchflow://activity/add-offset",
+          "phase": "activity",
+          "kind": "source_search",
+          "contract_sha256": "sha256:80e2e1415d01f9dee2dc1fe598e6c678bc7c17c0f89fc37c5bb76ffcca1836a9",
+          "source_cases": 3,
+          "source_holdout_cases": 2,
+          "depends_on_assembly": false
+        }
+      ],
+      "inspection": {
+        "model_calls": 0,
+        "candidate_tests": 0,
+        "native_executions": 0
+      },
+      "exported_plan_matches_generation": true,
+      "initial_model_calls": 0,
+      "input_only": {
+        "finite_passed": 0,
+        "finite_total": 0,
+        "new_model_calls": 0,
+        "correctness_reason": "NO_RUNTIME_EXPECTATIONS"
+      },
+      "scored_replay": {
+        "finite_passed": 15,
+        "finite_total": 15,
+        "new_model_calls": 0,
+        "generated_now": false
+      },
+      "scope": "one local fixture; templates contain placeholders, not oracles; later authored cases score the retained program; no accuracy-generalization or isolated latency claim"
+    }
+  ],
+  "validation_scope": "five actual local command sequences; exact exported/generated plan equality; original raw outputs retained locally; no held-out accuracy or isolated latency measurement"
+}

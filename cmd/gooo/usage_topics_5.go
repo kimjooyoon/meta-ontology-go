@@ -1,6 +1,26 @@
 package main
 
 var topicHelpGroup5 = map[string]string{
+	"body-plan": `Read caller inputs before assembling a program
+
+` + bodyPlanUsage + `
+
+From the compiler source checkout:
+  gooo body-plan --source examples/body-codegen/native-input-joins.gooo.fixture --entry Label
+  gooo body-plan --source examples/body-codegen/native-input-joins.gooo.fixture \
+    --entry Label --inputs-template > inputs.json
+  gooo body-compose --source examples/body-codegen/native-input-joins.gooo.fixture \
+    --entry Label --inputs inputs.json --out out/observed
+
+Edit the template's zeros, false values and empty strings to supply your inputs.
+Bound ports receive their producer's result and are omitted from the template.
+Optional record fields are omitted; add them explicitly when present.
+--json exports source and contract digests, stable IDs, the structural plan,
+root input keys and called-body assembly order. Inspection performs zero model
+calls, candidate tests or native executions. Body checks, model compatibility
+and correctness are separate. No expected outputs are created.
+See docs/composition-plan-inspection.md and gooo help body-compose.
+`,
 	"body-context": `Inspect source input and model compatibility
 
 ` + bodyContextUsage + `
