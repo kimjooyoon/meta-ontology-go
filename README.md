@@ -83,10 +83,11 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
-The [0.6.19 development guide](docs/releases/0.6.19-dev.md) covers reading a
-package's declared structure, describing API changes with Gooo rules, and
-observing native startup separately from execution. Its release page records
-when the candidate is published.
+The [0.6.20 development guide](docs/releases/0.6.20-dev.md) covers stable activity
+IDs, English/Korean names, variable assignment, conditions, native execution and
+saved replay. Its release page records when the candidate is published.
+The [0.6.19 development guide](docs/releases/0.6.19-dev.md) covers package
+interfaces, API changes described by Gooo rules and native startup observations.
 The [0.6.18 development guide](docs/releases/0.6.18-dev.md) covers running a
 constructed package on actual inputs, reusing its receipt and evaluating it later.
 The [0.6.17 development guide](docs/releases/0.6.17-dev.md) covers imported-package

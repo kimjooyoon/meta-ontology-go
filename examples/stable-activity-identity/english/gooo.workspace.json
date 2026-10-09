@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path":"example/stable","activity":"Total"},
+  "packages": [{"path":"example/stable","sources":["source.gooo.fixture"]}]
+}

@@ -31,9 +31,13 @@ source filename. Entity `shape` is `record` for an explicit fields block and
 - `cardinality`: the validated semantic cardinality.
 
 Activities include ordered input type IDs and an output type ID. Repeated
-input types remain repeated. Activity IDs currently come from the compiler's
-namespace/name convention; renaming an activity therefore changes its ID.
-Entity and field names can change while their explicit IDs stay the same.
+input types remain repeated. An activity can declare a URI ID after its output
+type: `activity Total(Integer) -> Integer id "urn:example:total" computes "return input"`.
+The canonical ID remains the same when the source name changes. Without `id`,
+the compiler derives an ID from namespace and name, so a rename changes that
+derived ID. Entity and field names can also change while their explicit IDs stay
+the same. See [activity identity](activity-identity.md) for reference names,
+duplicate IDs, and fresh receipts after source edits.
 
 For example, the optional-record fixture exposes `Profile.note` as an optional
 string and `Profile.count` as an optional integer. A later change from optional

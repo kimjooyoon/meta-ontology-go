@@ -1,0 +1,6 @@
+package stable
+namespace stable
+entity Integer id "urn:gooo:type:integer"
+activity Total(Integer, Integer) -> Integer id "URN:gooo:example:total" computes `let result = input0 + input1
+if result < 0 { result = 0 }
+return result`
