@@ -52,53 +52,7 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
-	if bodycodegen.IsRecordAssembly(assembly) {
-		if len(raw) != 0 {
-			return bodyContextFailure(stdout, fmt.Errorf("record source assembly owns its plan"))
-		}
-		result, err := exportRecordBodyContext(ctx, source, options)
-		if err != nil {
-			return bodyContextFailure(stdout, err)
-		}
-		if err = json.NewEncoder(stdout).Encode(result); err != nil {
-			return bodyContextFailure(stdout, err)
-		}
-		return exitOK
-	}
-	if options.valueFlow {
-		return bodyContextFailure(stdout, fmt.Errorf("value flow requires record source assembly"))
-	}
-	if bodycodegen.IsSourceIRSearch(assembly) {
-		if options.plan != "" || options.featureExplicit || options.model != "" {
-			return bodyContextFailure(stdout, fmt.Errorf("source search owns its plan and has no model feature encoding"))
-		}
-		result, err := bodycodegen.ExportSourceIRSearchContext(ctx, options.filename, source, options.activity, options.includePlan)
-		if err != nil {
-			return bodyContextFailure(stdout, err)
-		}
-		if err = json.NewEncoder(stdout).Encode(result); err != nil {
-			fmt.Fprintln(stderr, "context export output failed")
-			return exitFailure
-		}
-		return exitOK
-	}
-	document, err := bodycodegen.DecodeSourcePathDocument(ctx, options.filename, source, options.activity, raw)
-	if err != nil {
-		return bodyContextFailure(stdout, err)
-	}
-	result, err := exportTypedBodyContext(ctx, source, document, options)
-	if err != nil {
-		return bodyContextFailure(stdout, err)
-	}
-	output := bodyContextOutput{TypedPathContextExport: result}
-	if options.includePlan {
-		output.ExpandedPlan = &document.Plan
-	}
-	if err = json.NewEncoder(stdout).Encode(output); err != nil {
-		fmt.Fprintln(stderr, "context export output failed")
-		return exitFailure
-	}
-	return exitOK
+	return runSourceBodyContext(ctx, source, raw, assembly, options, stdout, stderr)
 }
 
 type bodyContextArgs struct {

@@ -56,10 +56,15 @@ func exportBoundPathModelContext(ctx context.Context, document pathplan.Document
 	if err := ctx.Err(); err != nil {
 		return fail(err)
 	}
+	loadStarted := time.Now()
+	receipt.Timing.ExecutionModel = "source_bind_then_explicit_model_load_then_context_export"
+	receipt.Timing.DecisionStage = "model_load_attempt_without_predictions_or_candidate_tests_or_selected_emission"
 	g, err := NewTypedPathGenerator(modelPath)
+	receipt.Timing.ModelLoadMS = elapsedMS(loadStarted)
 	if err != nil {
 		return fail(err)
 	}
+	receipt.Timing.DecisionStage = "model_loaded_without_predictions_or_candidate_tests_or_selected_emission"
 	if g.order != nil {
 		return fail(fmt.Errorf("body-context model preflight does not yet cover whole-candidate judges"))
 	}
@@ -142,11 +147,13 @@ func finishPathModelContext(ctx context.Context, ranked *pathplan.PreparedPlan, 
 		status, reason = "READY_FOR_RANKING", "SOURCE_INPUT_ENCODED"
 	}
 	receipt.Timing.TotalMS = elapsedMS(started)
+	info := g.Info()
+	info.Scope = "one preflight model load; setup included in model_load_ms and total_ms; no inference"
 	return TypedPathContextExport{Schema: "gooo/compiler-path-model-input-export/v1",
 		OriginalSourceSHA256: receipt.OriginalSourceSHA256, DocumentSHA256: receipt.DocumentSHA256,
 		TestSuiteSHA256: receipt.TestSuiteSHA256, SourceBinding: receipt.SourceBinding,
 		Context: modelContext, Inputs: inputs, CompleteModelInput: complete, Timing: receipt.Timing,
 		ModelCompatibility: &PathModelCompatibility{Schema: "gooo/path-model-compatibility/v1", Status: status,
-			Reason: reason, Model: g.Info(), Scope: "verified artifact and source input representation; ranking and correctness remain unmeasured"},
+			Reason: reason, Model: info, Scope: "verified artifact and source input representation; ranking and correctness remain unmeasured"},
 		Scope: "source-bound model input inspection; zero predictions, candidate tests, selected emissions and repository writes; seed and outcomes unused"}, nil
 }

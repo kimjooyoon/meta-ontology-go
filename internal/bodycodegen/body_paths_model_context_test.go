@@ -74,6 +74,12 @@ func assertTypedPreflightZeroWork(t *testing.T, out TypedPathContextExport) {
 		out.ModelPredictions != 0 || out.CandidateTests != 0 || out.SelectedEmission || out.RepositoryWrites != 0 {
 		t.Fatal("inspection identity or zero-work boundary differs", out)
 	}
+	if out.Timing.ExecutionModel != "source_bind_then_explicit_model_load_then_context_export" ||
+		out.Timing.DecisionStage != "model_loaded_without_predictions_or_candidate_tests_or_selected_emission" ||
+		out.Timing.ModelLoadMS <= 0 || out.Timing.ModelLoadMS < out.ModelCompatibility.Model.SetupMS ||
+		out.Timing.TotalMS < out.Timing.ModelLoadMS || !strings.Contains(out.ModelCompatibility.Model.Scope, "included") {
+		t.Fatal("inspection must separate actual loading from zero inference", out.Timing, out.ModelCompatibility.Model)
+	}
 }
 
 func TestTypedModelPreflightExportsCompleteJointRuntimeInput(t *testing.T) {

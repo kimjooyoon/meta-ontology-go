@@ -43,6 +43,8 @@ go run ./cmd/gooo body-context --activity Choose --include-plan \
 `model_predictions`, `candidate_tests`, `repository_writes`는 0이고 `selected_emission`은 false입니다.
 입력을 만드는 동안 소스와 타입을 검사하는 비용은 있습니다. 모델의 초기화 시간과 텐서 크기는
 그 과정 전체의 시간·메모리와 따로 기록합니다.
+typed 모델 사전 확인의 `timing.model_load_ms`는 실제 로드 구간이며 `total_ms`에 포함됩니다.
+모델을 읽은 것과 예측한 것을 단계 이름으로 구분합니다.
 
 거절된 입력은 `inputs: []`이고 전체 모델 입력도 내보내지 않습니다. 긴 문장 일부를 잘라서
 입력 가능한 것으로 표시하지 않습니다. 원래 선언의 지문과 거절 이유는 남습니다.
