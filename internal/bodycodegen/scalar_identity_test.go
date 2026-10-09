@@ -3,8 +3,12 @@ package bodycodegen
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 func TestScalarIdentitiesPreserveAuthoredTypeNames(t *testing.T) {
@@ -82,5 +86,34 @@ func TestScalarIdentityIntegerSearchAndTypedPaths(t *testing.T) {
 	result, err = GenerateWithTypedPaths(context.Background(), "alias.gooo", source, "Assemble", doc, "")
 	if err != nil || result.Report.BodyPaths.FunctionalCompleteness != 100 || result.Report.BodyPaths.Search.Selection.ModelCalls != 0 {
 		t.Fatal("typed path binding lost scalar identity", err)
+	}
+}
+
+func TestScalarIdentityRecordFillGrammarPreservesNativePredicates(t *testing.T) {
+	for _, names := range [][3]string{{"Integer", "Boolean", "Text"}, {"정수", "논리", "문자열"}} {
+		source := fmt.Sprintf(`package p
+namespace p
+entity %s id "urn:gooo:type:integer"
+entity %s id "urn:gooo:type:boolean"
+entity %s id "urn:gooo:type:string"
+activity Inspect(%s, %s, %s) -> %s computes "return input0"
+`, names[0], names[1], names[2], names[0], names[1], names[2], names[0])
+		file, diagnostics := ParseBodyFile("predicates.gooo", []byte(source))
+		if diagnostics.HasErrors() {
+			t.Fatal(diagnostics)
+		}
+		activity := file.Declarations[len(file.Declarations)-1].(*syntax.ActivityDecl)
+		grammar := recordFillGrammarContext{file: file, activity: activity, cases: []assemblyspec.ValueCase{
+			{Inputs: `[9007199254740993,true,"한글"]`},
+		}}
+		atoms, err := grammar.predicateAtoms(true)
+		if err != nil || len(atoms) != 10 || !slices.Contains(atoms, "input0 >= 9007199254740993") ||
+			!slices.Contains(atoms, "input1 == true") || !slices.Contains(atoms, `input2 == "한글"`) {
+			t.Fatalf("native predicates changed for %v: %v %#v", names, err, atoms)
+		}
+		selectors, err := grammar.fieldRelationSelectors()
+		if err != nil || len(selectors) != 0 {
+			t.Fatal("scalar inputs were treated as records", err, selectors)
+		}
 	}
 }

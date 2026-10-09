@@ -32,10 +32,11 @@ supply a scalar representation. A canonical scalar cannot also declare fields.
 ## Compose a small program with the own model
 
 The public `examples/scalar-identity` program declares three Korean type names.
-Its body calculates a local string using an integer condition and a Boolean.
-An assembling choice can place that calculated string in a record's text field.
-Four authored assembly cases guide selection; four different runtime inputs
-observe the selected program, including exact large integers and an emoji.
+Its body calculates a local string and a condition using an integer and a Boolean.
+Three assembling choices fill text, active and count fields from those source
+values. Four authored cases check 12 field observations while selecting among
+eight possible combinations. Four different runtime inputs observe the selected
+program, including exact large integers and an emoji.
 
 ```sh
 go build -trimpath -o .gooo ./cmd/gooo
@@ -44,9 +45,11 @@ go build -trimpath -o .gooo ./cmd/gooo
 ```
 
 Add `--model /absolute/path/to/graph-model.json` to use a compatible own graph
-chooser. The model orders the source-declared choices; cases check the selected
-body. Omitting that option uses deterministic order. Save separate outputs for
-the two modes and compare their observations.
+chooser that supports three field choices. The model orders the source-declared
+combinations; cases check the selected body. Omitting that option uses
+deterministic order. Check `record_assembly.model_calls` and `model_context` in the
+report to distinguish inference from a representation decline. Save separate
+outputs for the two modes and compare their observations.
 
 Replay uses `out/scalar-fixed/original.gooo` with the same external cases and
 `--composition out/scalar-fixed/composition.json`. It reconstructs the selected
