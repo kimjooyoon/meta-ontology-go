@@ -19,8 +19,8 @@ Generate Go from an activity:
 Explore a source-bound capability without executing it:
   gooo discover --query "What can Gooo generate here?" --json main.gooo
 
-The compiler works without a language model. A local Laya service can optionally
-rank choices already declared in Gooo; it cannot add code outside those choices.
+Gooo declares the permitted choices and checks their results. An optional local model
+can propose their order. Omitting the model selects deterministic candidate order.
 
 Commands:
   init             Create an app or library starter
@@ -28,6 +28,8 @@ Commands:
   test             Check declared activity-output test markers
   run              Resolve an activity or execute a supported value plan
   body-codegen     Fill declared IR holes and generate Go
+  body-context     Inspect source input and local model compatibility
+  body-compose     Assemble, compile and execute a typed program
   body-construct   Reconsider body choices using whole-program examples
   generate         Generate a project from Gooo declarations
   discover         Map a natural-language question to a source-bound capability
@@ -37,7 +39,8 @@ Commands:
   version          Show the compiler version and build information
 
 Use ` + "`gooo help <topic>`" + ` for guides and examples.
-Topics: start, language, models, body-codegen, body-construct, discover, init, check, test, run,
+Topics: start, language, models, body-codegen, body-context, body-compose, body-construct,
+        discover, init, check, test, run,
         generate, format, package, inspect, query, version, commands
 `
 

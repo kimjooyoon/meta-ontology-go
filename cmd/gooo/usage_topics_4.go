@@ -49,7 +49,7 @@ Use --build to include compiler build information.
 
   init, check, test, run, body-codegen, generate, emit
   format, fix, inspect, query, graph, receipt-schema
-  package, body-compose, body-construct, body-execute, body-search-run, body-realize, body-refine
+  package, body-context, body-compose, body-construct, body-execute, body-search-run, body-realize, body-refine
   profile, debug, decide, invoke, lsp, version
 
 Use ` + "`gooo help <command>`" + ` for a guide to a core command. Advanced

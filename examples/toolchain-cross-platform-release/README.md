@@ -36,3 +36,10 @@ select identical native code; each saved replay performs zero new inference.
 The profile retains eight raw construct/replay reports per platform. The own model
 must actually infer once during construction and retain its metadata/weight hashes.
 These supplied-program checks remain separate from the structural corpus denominator.
+
+The 0.6.22 candidate adds two actual source/model preflight exports before model
+assembly. Each target retains ten scalar reports: two exports and the same eight
+construct/replay reports. Preflight requires explicit zero prediction/test counters,
+source/model identities and the exact input digest later retained by assembly and
+saved replay. Missing counters remain missing. The structural corpus stays at 26
+cases; these additional observations do not increase its denominator.
