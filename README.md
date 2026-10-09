@@ -51,7 +51,7 @@ using their caller's actual results. Local obligations and caller expectations
 are retained separately, with bounded whole-program attempts and model-free
 saved replay. [Caller-guided construction](examples/caller-guided-construction/README.md)
 includes a runnable example and the current source/model/budget limits.
-Development source after public 0.6.23 also reopens
+The 0.6.24 development source also reopens
 [typed conditions and branches](examples/caller-typed-paths/README.md), including
 mixed record construction, rejected interacting edits and saved v7 replay.
 It also records [rejected local expressions](examples/caller-search-rejection/README.md)
@@ -90,7 +90,9 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
-The [0.6.23 development guide](docs/releases/0.6.23-dev.md) starts with input planning,
+The [0.6.24 development guide](docs/releases/0.6.24-dev.md) starts with inspecting
+a model/source pair, reconstructing a branch from caller feedback and replaying
+the saved program. The [0.6.23 guide](docs/releases/0.6.23-dev.md) covers input planning,
 input-only execution and later checking of the same saved program. The
 [0.6.22 guide](docs/releases/0.6.22-dev.md) covers source/model
 preflight, the included own-model fixture and native replay. The
