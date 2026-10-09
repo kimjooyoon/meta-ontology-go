@@ -55,10 +55,9 @@ and continues within the original attempt budget. IR search is in 0.6.13;
 caller-guided `source_fill` is in 0.6.14. The 0.6.15 development source also
 retains [rejected fill assignments](examples/caller-fill-rejection/README.md)
 and continues with the remaining candidates.
-The 0.6.16 development candidate also records [native arithmetic failures](examples/caller-native-failure/README.md)
+Since 0.6.16, construction also records [native arithmetic failures](examples/caller-native-failure/README.md)
 and continues to the next combination. It keeps independent results and records
-consumers without a producer value as blocked. This behavior is separate from the
-published 0.6.15 execution path.
+consumers without a producer value as blocked.
 
 The development workspace reader can derive package names and dependencies from
 Gooo source, leaving only paths, source files and the entry in the manifest.
@@ -81,6 +80,10 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
+The [0.6.19 development guide](docs/releases/0.6.19-dev.md) covers reading a
+package's declared structure, describing API changes with Gooo rules, and
+observing native startup separately from execution. Its release page records
+when the candidate is published.
 The [0.6.18 development guide](docs/releases/0.6.18-dev.md) covers running a
 constructed package on actual inputs, reusing its receipt and evaluating it later.
 The [0.6.17 development guide](docs/releases/0.6.17-dev.md) covers imported-package
