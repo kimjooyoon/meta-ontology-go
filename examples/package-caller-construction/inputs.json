@@ -1,0 +1,9 @@
+{
+  "schema": "gooo/body-composition-inputs/v1",
+  "inputs": [
+    {"app/retry:Main": {"used": 2, "limit": 8}},
+    {"app/retry:Main": {"used": 20, "limit": 10}},
+    {"app/retry:Main": {"used": 9007199254740994, "limit": 9007199254740994}},
+    {"app/retry:Main": {"used": 0, "limit": 1}}
+  ]
+}

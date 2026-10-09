@@ -57,10 +57,13 @@ Continue saved record choices under an explicit Gooo policy:
 Reconsider imported helpers using caller examples:
   gooo package construct --json --construction-cases feedback.json --cases evaluation.json --attempts 8 gooo.workspace.json
   gooo package construct --json --receipt construction.json --cases evaluation.json gooo.workspace.json
+  gooo package construct --receipt construction.json --inputs inputs.json gooo.workspace.json
 
 Save the first command's JSON output as construction.json. Models are optional;
 --model orders record choices and --fill-model selects initial source fills.
 Saved construction rechecks all attempts with zero new inference. See
 examples/package-caller-construction/README.md for a runnable package example.
+Use exactly one of --cases (finite checks) or --inputs (actual values).
+Input-only JSON is OBSERVED; the original construction decision stays separate.
 `,
 }

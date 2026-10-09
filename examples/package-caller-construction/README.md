@@ -7,8 +7,9 @@ candidates pass its local example at `used=0`. At the caller's boundary
 
 `gooo package construct` uses that caller result to reconsider the imported
 function. It retains package identities, original examples, rejected candidates,
-native faults and the selected program. Build this development revision to use
-the command; the published 0.6.16 binary supplies the baseline `package execute`.
+native faults and the selected program. The published 0.6.17 binary supports
+construction with evaluation cases. Build this development revision to use the
+new input-only path shown below.
 
 ## Run the example
 
@@ -82,7 +83,7 @@ remain in that receipt; this invocation reports fresh measurements.
 A relocated copy of the same workspace is supported. Changed package sources,
 imports, stable identities, entry or caller cases require new construction.
 `--receipt` excludes new construction examples, budgets and model options.
-Both `COMPLETE_FINITE` and `PARTIAL_FINITE` receipts can be replayed. Process or
+`COMPLETE_FINITE`, `PARTIAL_FINITE` and `OBSERVED` receipts can be replayed. Process or
 compiler failures return an error and retain available construction history.
 
 The command supports the existing typed package closure with source record
@@ -90,3 +91,32 @@ choices, integer IR search and source fills, within 1–64 program attempts.
 External fill plans and custom assembly-policy workspaces remain on the
 `package execute` / `package resume` routes. A saved package construction is
 consumed by `package construct --receipt`; it has its own receipt schema.
+
+## Run actual inputs
+
+Once a program has been selected, an application usually has inputs without
+known answers. `inputs.json` supplies four such rows, including an integer above
+JavaScript's exact-number boundary. Run the saved construction on them:
+
+```sh
+/tmp/gooo-package package construct --receipt construction.json \
+  --inputs examples/package-caller-construction/inputs.json \
+  examples/package-caller-construction/gooo.workspace.json
+```
+
+The six-attempt program prints `3`, `-10`, `-9007199254740994`, and `1`, one JSON
+value per line. To save the full observation, add `--json > observation.json`.
+That receipt can be reused with either `--inputs` or `--cases`. Fresh construction
+also accepts `--inputs`, together with the original labelled construction cases
+and an attempt budget. These actual inputs do not influence candidate selection.
+
+Input-only receipts report `OBSERVED` and bind the file with `inputs_digest`.
+The current input observations contain no expected values or pass flags, and
+their finite evaluation counts are zero.
+`result.construction.decision` still says whether the consumed construction
+examples reached `COMPLETE_FINITE` or remained `PARTIAL_FINITE`. Both kinds can
+produce actual values; observation alone does not establish their correctness.
+
+JSON retains native faults and blocked dependencies as observations. Plain mode
+stops with a nonzero exit when the entry has no value and points to `--json` for
+details. Values already printed belong to preceding successful input rows.
