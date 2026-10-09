@@ -2,7 +2,6 @@ package bodyexecution
 
 import (
 	"context"
-	"os/exec"
 	"time"
 )
 
@@ -11,31 +10,55 @@ import (
 type ProcessTiming struct {
 	StartNS              int64  `json:"start_ns"`
 	WaitNS               int64  `json:"wait_ns"`
+	WaitLimitNS          int64  `json:"wait_limit_ns,omitempty"`
 	DeadlineRemainingNS  *int64 `json:"deadline_remaining_ns,omitempty"`
 	ContextAtStartReturn string `json:"context_at_start_return"`
 }
 
-func timedProcess(ctx context.Context, cmd *exec.Cmd) (ProcessTiming, int64, string, error) {
+func timedProcessCalls(ctx context.Context, startProcess, waitProcess func() error,
+	waitLimit time.Duration, cancel context.CancelCauseFunc) (ProcessTiming, int64, string, error) {
 	var timing ProcessTiming
 	start := time.Now()
 	if deadline, ok := ctx.Deadline(); ok {
 		remaining := deadline.Sub(start).Nanoseconds()
 		timing.DeadlineRemainingNS = &remaining
 	}
-	err := cmd.Start()
+	err := startProcess()
 	started := time.Now()
 	timing.StartNS = started.Sub(start).Nanoseconds()
 	timing.ContextAtStartReturn = processContextState(ctx)
 	if err != nil {
 		return timing, timing.StartNS, "START", err
 	}
-	err = cmd.Wait()
+	timing.WaitLimitNS = int64(waitLimit)
+	err = boundedProcessWait(ctx, waitProcess, waitLimit, cancel)
 	timing.WaitNS = time.Since(started).Nanoseconds()
 	phase := ""
 	if err != nil {
 		phase = "WAIT"
 	}
 	return timing, timing.StartNS + timing.WaitNS, phase, err
+}
+
+// The parent's deadline is never replaced. Native calls add a shorter budget
+// only after Start returns; toolchain and build calls keep their parent budget.
+func boundedProcessWait(ctx context.Context, wait func() error, limit time.Duration, cancel context.CancelCauseFunc) error {
+	if limit <= 0 {
+		return wait()
+	}
+	done := make(chan struct{})
+	timer := time.AfterFunc(limit, func() {
+		cancel(context.DeadlineExceeded)
+		close(done)
+	})
+	err := wait()
+	if !timer.Stop() {
+		<-done
+	}
+	if err == nil {
+		err = context.Cause(ctx)
+	}
+	return err
 }
 
 func processContextState(ctx context.Context) string {

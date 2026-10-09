@@ -5,6 +5,7 @@ package bodyexecution
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -50,6 +51,13 @@ func (b *limitedBuffer) Write(p []byte) (int, error) {
 }
 
 func process(ctx context.Context, dir, binary string, input []byte, args ...string) ([]byte, ProcessObservation, error) {
+	return processWithWaitLimit(ctx, 0, dir, binary, input, args...)
+}
+
+func processWithWaitLimit(ctx context.Context, waitLimit time.Duration, dir, binary string,
+	input []byte, args ...string) ([]byte, ProcessObservation, error) {
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
 	cmd := exec.CommandContext(ctx, binary, args...)
 	bindProcessGroup(cmd)
 	cmd.Dir, cmd.WaitDelay = dir, time.Second
@@ -57,9 +65,10 @@ func process(ctx context.Context, dir, binary string, input []byte, args ...stri
 	cmd.Env = childEnvironment()
 	stdout, stderr := &limitedBuffer{limit: 64 << 10}, &limitedBuffer{limit: 64 << 10}
 	cmd.Stdout, cmd.Stderr = stdout, stderr
-	timing, wall, failurePhase, err := timedProcess(ctx, cmd)
+	timing, wall, failurePhase, err := timedProcessCalls(ctx, cmd.Start, cmd.Wait, waitLimit, cancel)
+	timedOut := errors.Is(context.Cause(ctx), context.DeadlineExceeded)
 	r := ProcessObservation{Started: cmd.Process != nil, Completed: err == nil, WallNS: wall, Timing: &timing, FailurePhase: failurePhase,
-		Canceled: ctx.Err() == context.Canceled, TimedOut: ctx.Err() == context.DeadlineExceeded, DiagnosticsBytes: stderr.Len(),
+		Canceled: ctx.Err() == context.Canceled && !timedOut, TimedOut: timedOut, DiagnosticsBytes: stderr.Len(),
 		OutputTruncated: stdout.exceeded || stderr.exceeded,
 		StdoutSHA256:    digest(stdout.Bytes()), StderrSHA256: digest(stderr.Bytes())}
 	if cmd.ProcessState != nil {
