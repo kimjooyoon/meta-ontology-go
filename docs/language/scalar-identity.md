@@ -51,6 +51,11 @@ deterministic order. Check `record_assembly.model_calls` and `model_context` in 
 report to distinguish inference from a representation decline. Save separate
 outputs for the two modes and compare their observations.
 
+This checkout includes a small unchanged own-model fixture at
+`examples/scalar-identity/model/model.json`. Use it with a fresh output directory
+to reproduce actual inference. `english.gooo.fixture` changes only the entity
+names and source references; both languages use the same cases and intents.
+
 Replay uses `out/scalar-fixed/original.gooo` with the same external cases and
 `--composition out/scalar-fixed/composition.json`. It reconstructs the selected
 program and runs with zero new inference. The counts describe the supplied
