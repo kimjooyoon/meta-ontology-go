@@ -17,7 +17,8 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyContextUsage = "usage: gooo body-context [--plan <plan.json>] --activity <name> [--feature-version <version>] [--include-plan] [--value-flow] <file.gooo>"
+const bodyContextUsage = "usage: gooo body-context [--plan <plan.json>] --activity <name> " +
+	"[--model <model.json>] [--feature-version <version>] [--include-plan] [--value-flow] <file.gooo>"
 
 type bodyContextOutput struct {
 	bodycodegen.TypedPathContextExport
@@ -55,12 +56,7 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 		if len(raw) != 0 {
 			return bodyContextFailure(stdout, fmt.Errorf("record source assembly owns its plan"))
 		}
-		export := bodycodegen.ExportRecordAssemblyContextWithFeature
-		if options.valueFlow {
-			export = bodycodegen.ExportRecordAssemblyContextWithFlow
-		}
-		result, err := export(ctx, options.filename, source,
-			options.activity, options.includePlan, options.featureVersion)
+		result, err := exportRecordBodyContext(ctx, source, options)
 		if err != nil {
 			return bodyContextFailure(stdout, err)
 		}
@@ -68,6 +64,9 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 			return bodyContextFailure(stdout, err)
 		}
 		return exitOK
+	}
+	if options.model != "" {
+		return bodyContextFailure(stdout, fmt.Errorf("body-context --model requires record source assembly"))
 	}
 	if options.valueFlow {
 		return bodyContextFailure(stdout, fmt.Errorf("value flow requires record source assembly"))
@@ -107,8 +106,8 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 }
 
 type bodyContextArgs struct {
-	plan, activity, filename, featureVersion string
-	includePlan, valueFlow, featureExplicit  bool
+	plan, activity, filename, featureVersion, model string
+	includePlan, valueFlow, featureExplicit         bool
 }
 
 func (o *bodyContextArgs) set(flag, value string) bool {
@@ -118,6 +117,8 @@ func (o *bodyContextArgs) set(flag, value string) bool {
 		target = &o.plan
 	case "--activity":
 		target = &o.activity
+	case "--model":
+		target = &o.model
 	case "--feature-version":
 		target = &o.featureVersion
 	}
@@ -145,7 +146,7 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 				return o, false
 			}
 			o.valueFlow = true
-		case "--plan", "--activity", "--feature-version":
+		case "--plan", "--activity", "--feature-version", "--model":
 			if i+1 >= len(args) || !o.set(args[i], args[i+1]) {
 				return o, false
 			}

@@ -81,4 +81,10 @@ func TestNativeScalarIdentityReleaseProfile(t *testing.T) {
 	if err := smokeScalarIdentity(binary, t.TempDir(), input); err != nil {
 		t.Fatal(err)
 	}
+	for _, language := range []string{"korean", "english"} {
+		name := "local-native-scalar-identity-" + language + "-model-preflight.json"
+		if _, err := os.ReadFile(filepath.Join(input.OutputDir, name)); err != nil {
+			t.Fatal("native release profile did not retain source/model preflight", err)
+		}
+	}
 }

@@ -10,17 +10,18 @@ import (
 )
 
 type RecordAssemblyContextExport struct {
-	Schema               string                `json:"schema"`
-	OriginalSourceSHA256 string                `json:"original_source_sha256"`
-	ContractSHA256       string                `json:"contract_sha256"`
-	ActivityID           string                `json:"activity_id"`
-	Choices              []RecordValueChoice   `json:"choices"`
-	Context              *RecordOrdinalContext `json:"context"`
-	ValueFlow            *RecordValueFlow      `json:"value_flow,omitempty"`
-	ExpandedPlan         *assemblyspec.Spec    `json:"expanded_plan,omitempty"`
-	ModelPredictions     int                   `json:"model_predictions"`
-	CandidateTests       int                   `json:"candidate_tests"`
-	Scope                string                `json:"scope"`
+	Schema               string                    `json:"schema"`
+	OriginalSourceSHA256 string                    `json:"original_source_sha256"`
+	ContractSHA256       string                    `json:"contract_sha256"`
+	ActivityID           string                    `json:"activity_id"`
+	Choices              []RecordValueChoice       `json:"choices"`
+	Context              *RecordOrdinalContext     `json:"context"`
+	ValueFlow            *RecordValueFlow          `json:"value_flow,omitempty"`
+	ExpandedPlan         *assemblyspec.Spec        `json:"expanded_plan,omitempty"`
+	ModelCompatibility   *RecordModelCompatibility `json:"model_compatibility,omitempty"`
+	ModelPredictions     int                       `json:"model_predictions"`
+	CandidateTests       int                       `json:"candidate_tests"`
+	Scope                string                    `json:"scope"`
 }
 
 func ExportRecordAssemblyContext(ctx context.Context, filename string, source []byte, activity string, includePlan bool) (RecordAssemblyContextExport, error) {

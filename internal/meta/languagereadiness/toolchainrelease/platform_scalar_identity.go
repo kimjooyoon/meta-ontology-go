@@ -43,6 +43,14 @@ func smokeScalarIdentityMode(binary, work string, input BuildInput, example lang
 		example.name += "-fixed"
 	}
 	directory, selected := filepath.Join(work, example.name), ""
+	contextSHA := ""
+	if model {
+		var err error
+		contextSHA, err = smokeScalarModelPreflight(binary, input, example)
+		if err != nil {
+			return "", err
+		}
+	}
 	for _, replay := range []bool{false, true} {
 		run := func(root string, env []string, command string, args ...string) ([]byte, error) {
 			if model && !replay {
@@ -57,6 +65,11 @@ func smokeScalarIdentityMode(binary, work string, input BuildInput, example lang
 		selected, err = validateScalarIdentitySmoke(raw, names, model, replay, selected)
 		if err != nil {
 			return "", err
+		}
+		if model {
+			if err := validateScalarPreflightBinding(raw, contextSHA); err != nil {
+				return "", err
+			}
 		}
 	}
 	return selected, nil

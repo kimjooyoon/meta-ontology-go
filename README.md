@@ -86,8 +86,10 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
-The [0.6.21 development guide](docs/releases/0.6.21-dev.md) covers scalar type
-identities, English/Korean names, the included own-model fixture and native replay.
+The [0.6.22 development guide](docs/releases/0.6.22-dev.md) starts with source/model
+preflight, the included own-model fixture and native replay. The
+[0.6.21 guide](docs/releases/0.6.21-dev.md) records scalar type identities and
+English/Korean names.
 The [0.6.20 development guide](docs/releases/0.6.20-dev.md) covers stable activity
 IDs, English/Korean names, variable assignment, conditions, native execution and
 saved replay. Its release page records when the candidate is published.
@@ -200,6 +202,9 @@ the same declared search uses deterministic ordering. The
 [worked example](docs/source-assembly.md) explains the Gooo syntax, limits and
 model profile. For a complete multi-activity run, including compilation and
 execution, see [native body composition](docs/native-body-composition.md).
+For a source-owned record body, [inspect model compatibility](docs/record-model-preflight.md)
+with `body-context --model` before assembly. The model's input feature is selected
+automatically; representation declines retain their reason and perform zero predictions.
 
 ## What we are developing
 
