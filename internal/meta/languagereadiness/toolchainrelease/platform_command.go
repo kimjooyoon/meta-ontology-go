@@ -19,7 +19,7 @@ func commandOutput(root string, overrides []string, name string, args ...string)
 	call.Env = mergedEnvironment(os.Environ(), overrides)
 	output, err := call.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("%s %s: %w: %s", name, strings.Join(args, " "), err, strings.TrimSpace(string(output)))
+		return output, fmt.Errorf("%s %s: %w: %s", name, strings.Join(args, " "), err, strings.TrimSpace(string(output)))
 	}
 	return output, nil
 }

@@ -67,10 +67,10 @@ jobs:
           git worktree add --detach "$predecessor" "$PREDECESSOR_SHA"
           test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
 
-      - name: Install exact Go 1.27.1
+      - name: Install exact Go 1.27.2
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: false
 
       - name: Require exact heads, toolchain, and clean source trees
@@ -78,13 +78,36 @@ jobs:
         run: |
           set -euo pipefail
           predecessor="$RUNNER_TEMP/compiler-compatibility/predecessor"
-          test "$(go env GOVERSION)" = "go1.27.1"
+          test "$(go env GOVERSION)" = "go1.27.2"
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
           test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
           test "$(git status --porcelain)" = ""
           test "$(git -C "$predecessor" status --porcelain)" = ""
 
-      - name: Execute predecessor and successor independently
+      - name: Observe a toolchain contract transition
+        id: toolchain_contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/compiler-compatibility"
+          before="$(awk '$1 == "go" {print $2}' "$work/predecessor/go.mod")"
+          after="$(awk '$1 == "go" {print $2}' go.mod)"
+          test -n "$before"
+          test "$after" = 1.27.2
+          same=true
+          if [ "$before" != "$after" ]; then same=false; fi
+          echo "same=$same" >> "$GITHUB_OUTPUT"
+          jq -n --arg predecessor "$PREDECESSOR_SHA" --arg successor "$HEAD_SHA" \
+            --arg before "$before" --arg after "$after" --argjson same "$same" \
+            '{schema:"gooo/compiler-toolchain-transition/v1",predecessor_sha:$predecessor,
+              successor_sha:$successor,predecessor_go:$before,successor_go:$after,
+              toolchain_equal:$same,compatibility_authorized:false,
+              decision:(if $same then "REPLAY_REQUIRED" else "REFUTED" end),
+              reason:(if $same then "INDEPENDENT_REPLAY_REQUIRED" else "GO_TOOLCHAIN_IDENTITY_CHANGED" end),
+              scope:"Implementation-only certificates require an unchanged Go toolchain; successor tests still run."}' \
+            > "$work/toolchain-transition.json"
+
+      - name: Execute the successor and any eligible predecessor independently
         shell: bash
         run: |
           set -euo pipefail
@@ -94,17 +117,20 @@ jobs:
           input="examples/self-improvement-observation/input.fixture"
           contract="examples/self-improvement-observation/observation.gooo"
 
-          (
-            cd "$predecessor"
-            go run ./cmd/gooo generate "$input" --out "$work/predecessor/generate" --json > "$work/predecessor/generate/generate.json"
-            go test ./...
-            go test -race ./...
-          )
+          if [ "${{ steps.toolchain_contract.outputs.same }}" = true ]; then
+            (
+              cd "$predecessor"
+              go run ./cmd/gooo generate "$input" --out "$work/predecessor/generate" --json > "$work/predecessor/generate/generate.json"
+              go test ./...
+              go test -race ./...
+            )
+          fi
           go run ./cmd/gooo generate "$input" --out "$work/successor/generate" --json > "$work/successor/generate/generate.json"
           go test ./...
           go test -race ./...
 
       - name: Build caller-owned identity, authorization, and certificate
+        if: steps.toolchain_contract.outputs.same == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -167,6 +193,7 @@ jobs:
             -output "$work/compatibility-certificate.json"
 
       - name: Consume through ordinary generate with explicit compatibility opt-in
+        if: steps.toolchain_contract.outputs.same == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -203,6 +230,7 @@ jobs:
           test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
 
       - name: Run six-case compatibility conformance and publish evidence
+        if: steps.toolchain_contract.outputs.same == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -234,9 +262,19 @@ jobs:
           test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
 
       - name: Upload immutable compatibility evidence
+        if: steps.toolchain_contract.outputs.same == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: compiler-compatibility-evidence-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/compiler-compatibility/publication
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Preserve the toolchain transition observation
+        if: always() && steps.toolchain_contract.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: compiler-toolchain-transition-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/compiler-compatibility/toolchain-transition.json
           if-no-files-found: error
           retention-days: 30

@@ -2,7 +2,7 @@
 
 The `billing-declaration-signature-go-ast-v1` experiment gives the project its
 first exact-head, system-generated comparison with another language. On the
-`ubuntu-24.04` / Go 1.27.1 CI runner, it compares the `PayOrder` declaration in
+`ubuntu-24.04` / Go 1.27.2 CI runner, it compares the `PayOrder` declaration in
 `examples/billing/main.gooo` with the Go AST baseline in
 `examples/language-profile/go-baseline.go`.
 

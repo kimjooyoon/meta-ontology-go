@@ -8,7 +8,7 @@ alternatives, attempt budget, type checks and finite measurements.
 
 ## Construct and execute
 
-Build this revision with Go 1.27.1, then run from the repository root:
+Build this revision with Go 1.27.2, then run from the repository root:
 
 ```sh
 go build -o /tmp/gooo-assembly-policy ./cmd/gooo
@@ -19,7 +19,7 @@ go build -o /tmp/gooo-assembly-policy ./cmd/gooo
   --policy-activity Explain --out /tmp/gooo-policy-construction
 ```
 
-The output directory must be new. Add `--go-bin /path/to/go1.27.1` when the Go
+The output directory must be new. Add `--go-bin /path/to/go1.27.2` when the Go
 executable on PATH differs. The default uses deterministic candidate order.
 Pass `--model /path/to/shared-qat/model.json` to use the
 [own compact model](https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary)

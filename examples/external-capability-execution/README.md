@@ -5,7 +5,7 @@ This use case separates two statements that must never be merged:
 - the pinned gomacro repository is not fully compatible with Go 1.27: `6/8`, `FAIL_CLOSED`
 - selected metaprogramming capabilities can still execute exactly without changing that parent result
 
-The witness builds the pinned commit with Go 1.27.0 in CI. It executes embedded
+The witness builds the pinned commit with Go 1.27.2 in CI. It executes embedded
 evaluation and AST macro generation twice, compares normalized receipts, and
 requires both the Gooo checkout and the gomacro checkout to remain unchanged.
 Temporary build and generated files live outside both repositories.
@@ -17,7 +17,7 @@ Temporary build and generated files live outside both repositories.
 | 1 | driver | FOUNDATION | bind pinned repository | `1/1` |
 | 2 | driver | FOUNDATION | verify pinned commit | `1/1` |
 | 3 | driver | FOUNDATION | verify pinned tree | `1/1` |
-| 4 | driver | FOUNDATION | select Go toolchain | `go1.27.0` |
+| 4 | driver | FOUNDATION | select Go toolchain | `go1.27.2` |
 | 5 | outcome | COHERENCE | execute embedded evaluation | `42` in `2/2` runs |
 | 6 | outcome | COHERENCE | execute interpreted function | `55` in `2/2` runs |
 | 7 | outcome | COHERENCE | execute AST macro generation | pinned output in `2/2` runs |

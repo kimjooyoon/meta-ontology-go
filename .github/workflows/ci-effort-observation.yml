@@ -51,14 +51,14 @@ jobs:
       - name: Set up Go 1.27 observer
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: false
 
       - name: Build and verify canonical workflow-lineage conformance
         shell: bash
         run: |
           set -euo pipefail
-          test "$(go env GOVERSION)" = "go1.27.1"
+          test "$(go env GOVERSION)" = "go1.27.2"
           lineage_root="$RUNNER_TEMP/ci-effort-observation-lineage"
           mkdir -p "$lineage_root/conformance"
           go build -o "$lineage_root/lineage" ./scripts/ci-effort-observation-lineage
@@ -441,7 +441,7 @@ jobs:
           root="$RUNNER_TEMP/ci-effort-observation"
           source_event="$(jq -r .event "$root/source/run.json")"
           source_ref="$(jq -r 'if .ref == null then "" else .ref end' "$root/source/run.json")"
-          environment="repository=$GITHUB_REPOSITORY;event=$source_event;ref=$source_ref;head=$HEAD_SHA;toolchain=go1.27.1;permissions=contents:read,actions:read;workspace=<workspace>"
+          environment="repository=$GITHUB_REPOSITORY;event=$source_event;ref=$source_ref;head=$HEAD_SHA;toolchain=go1.27.2;permissions=contents:read,actions:read;workspace=<workspace>"
           args=(
             --run "$root/source/run.json"
             --jobs "$root/source/jobs.json"

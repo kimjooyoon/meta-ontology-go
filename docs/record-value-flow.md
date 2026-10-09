@@ -20,7 +20,7 @@ field names match.
 
 ## Inspect the source graph
 
-From a checkout with Go 1.27.1:
+From a checkout with Go 1.27.2:
 
 ```sh
 go run ./cmd/gooo body-context --value-flow --activity Select \

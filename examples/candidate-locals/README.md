@@ -1,6 +1,6 @@
 # Assemble a result from prepared local values
 
-Build Gooo 0.6.8-dev with Go 1.27.1. This example needs the unread-local semantics
+Build Gooo 0.6.8-dev with Go 1.27.2. This example needs the unread-local semantics
 introduced in that version; check the release page for published binaries.
 
 `PlanRetry` computes a retry decision, a capped delay and a reason. Its baseline

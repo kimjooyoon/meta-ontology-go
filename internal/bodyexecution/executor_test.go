@@ -218,7 +218,7 @@ func TestExecutorCanceledRunDropsArtifact(t *testing.T) {
 	source, doc, prior, parent := fixture(t)
 	tool := filepath.Join(t.TempDir(), "go-stub")
 	marker := filepath.Join(t.TempDir(), "running")
-	stub := "#!/bin/sh\nif [ \"$1\" = version ]; then echo 'go version go1.27.1 " + runtime.GOOS + "/" + runtime.GOARCH + "'; exit 0; fi\n" +
+	stub := "#!/bin/sh\nif [ \"$1\" = version ]; then echo 'go version go1.27.2 " + runtime.GOOS + "/" + runtime.GOARCH + "'; exit 0; fi\n" +
 		"while [ \"$1\" != -o ]; do shift; done\nshift\nprintf '#!/bin/sh\\ntouch \"" + marker + "\"\\nsleep 30 &\\nwait\\n' > \"$1\"\nchmod 700 \"$1\"\n"
 	if err := os.WriteFile(tool, []byte(stub), 0700); err != nil {
 		t.Fatal(err)
@@ -288,7 +288,7 @@ func TestExecutorGoToolBytesInvalidateAndCloseCancelsBuild(t *testing.T) {
 		t.Fatal("tool change did not invalidate", err)
 	}
 	marker := filepath.Join(t.TempDir(), "building")
-	stub = "#!/bin/sh\nif [ \"$1\" = version ]; then echo 'go version go1.27.1 " + runtime.GOOS + "/" + runtime.GOARCH + "'; exit 0; fi\ntouch '" + marker + "'\nsleep 30 &\nwait\n"
+	stub = "#!/bin/sh\nif [ \"$1\" = version ]; then echo 'go version go1.27.2 " + runtime.GOOS + "/" + runtime.GOARCH + "'; exit 0; fi\ntouch '" + marker + "'\nsleep 30 &\nwait\n"
 	if err := os.WriteFile(tool, []byte(stub), 0700); err != nil {
 		t.Fatal(err)
 	}

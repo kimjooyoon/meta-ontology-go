@@ -95,7 +95,7 @@ and four intervention variants use exact expected/observed ID inventories.
 Changed-file counts are reported as a PR-SHA subject-universe digest/count and
 coverage, not as a fixed improvement denominator.
 
-The plan-adjudication artifact preserves exact `go1.27.0`, `go version`,
+The plan-adjudication artifact preserves exact `go1.27.2`, `go version`,
 `go env GOVERSION`, the registered `go tool fix help` inventory, and
 `go fix -diff` stdout/stderr/exit/digests, exact command argv/cwd, subject
 HEAD/tree and module digests, package-universe count/digest, and a live old

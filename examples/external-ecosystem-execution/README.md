@@ -6,7 +6,7 @@ promoting that evidence into an official language decision.
 ## Fixed measurement
 
 The versioned denominator contains exactly 8 indicators: reference binding,
-pinned commit, pinned tree, Go 1.27.0, two uncached external executions,
+pinned commit, pinned tree, Go 1.27.2, two uncached external executions,
 normalized replay equality, and repository write boundaries. Success remains
 exactly `8/8 = 10000` basis points. The regression denominator is exactly
 `10/10`, including 3 missing-evidence cases and 6 known invariant failures.

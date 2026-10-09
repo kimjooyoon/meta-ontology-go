@@ -12,7 +12,7 @@ the command; the published 0.6.16 binary supplies the baseline `package execute`
 
 ## Run the example
 
-From the repository root, with Go 1.27.1:
+From the repository root, with Go 1.27.2:
 
 ```sh
 go build -o /tmp/gooo-package ./cmd/gooo

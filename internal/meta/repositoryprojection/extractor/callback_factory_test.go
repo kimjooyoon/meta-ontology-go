@@ -116,7 +116,7 @@ func TestCallbackFactoryRejectsUnknownLowering(t *testing.T) {
 func writeCallbackFactoryFixture(t *testing.T, source string) string {
 	t.Helper()
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module factory.test\n\ngo 1.27.1\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module factory.test\n\ngo 1.27.2\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "fixture_test.go"), []byte(source), 0o644); err != nil {

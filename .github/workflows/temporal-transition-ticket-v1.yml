@@ -18,7 +18,7 @@ jobs:
 
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           cache: false
 
       - name: Verify immutable generated vendor inputs
@@ -283,7 +283,7 @@ jobs:
             --argjson conformer_reports "$conformer_reports" --argjson metadata_files "$metadata_files" \
             --argjson artifact_files "$artifact_files" '
             {schema:"gooo/evidence-generator/temporal-transition-ticket/runtime/v1",subject_sha:$subject_sha,
-             toolchain:{go:$go_version,go_required:"go1.27.1",released_gooo_reuse:1},
+             toolchain:{go:$go_version,go_required:"go1.27.2",released_gooo_reuse:1},
              executions:{gooo_version:1,gooo_syntax_check:1,gooo_semantic_check:1,gooo_graph:1,
                activity_resolution:12,transition_evaluator:19,conformer:19,normal_replay_runs:2,
                go_build:0,go_test:0,product_build:0,product_test:0,local_test:0},
@@ -306,7 +306,7 @@ jobs:
                spec_checkout_count:0,spec_copy_count:0,product_evaluator_ownership:0,core_evaluator_ownership:0}}
           ' > "$RUNNER_TEMP/temporal-evidence/runtime.json"
 
-          jq -e '.toolchain.go=="go1.27.1" and .repository.writes==0 and .authority.cross_project_required_gates==0 and
+          jq -e '.toolchain.go=="go1.27.2" and .repository.writes==0 and .authority.cross_project_required_gates==0 and
             .authority.local_test_executions==0 and .executions.go_build==0 and .executions.go_test==0 and
             .executions.local_test==0 and .cases=={total:18,closed:1,unknown:4,refuted:13,normal_replay_runs:2,cells_per_case:12,activities:12} and
             .activities=={total:12,proof:{FOUNDATION:4,COHERENCE:4,REGRESSION:4},indicator:{DRIVER:4,OUTCOME:4,GUARDRAIL:4}} and

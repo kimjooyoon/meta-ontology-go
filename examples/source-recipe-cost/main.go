@@ -48,7 +48,7 @@ func hash(raw []byte) string  { return fmt.Sprintf("%x", sha256.Sum256(raw)) }
 
 func identity() string {
 	info, ok := debug.ReadBuildInfo()
-	require(ok && info.GoVersion == "go1.27.1", "Go1.27.1 build required")
+	require(ok && info.GoVersion == "go1.27.2", "Go1.27.2 build required")
 	var revision string
 	clean, sdk := false, false
 	for _, setting := range info.Settings {

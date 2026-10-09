@@ -56,7 +56,7 @@ func TestIndependentRevisionCompositionPublicCommand(t *testing.T) {
 			name += ".exe"
 		}
 		command := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", name, pkg)
-		command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+		command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 		if output, err := command.CombinedOutput(); err != nil {
 			t.Fatalf("build %s: %v\n%s", pkg, err, output)
 		}

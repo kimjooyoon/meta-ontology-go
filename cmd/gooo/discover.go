@@ -17,7 +17,7 @@ import (
 )
 
 const discoverUsage = "usage: gooo discover [--json] --query <question> [--domain-contract <contract.gooo>] " +
-	"[--generation <body-codegen.json> [--execute-cases <cases.json> [--go-bin <go1.27.1>]]] <file.gooo>"
+	"[--generation <body-codegen.json> [--execute-cases <cases.json> [--go-bin <go1.27.2>]]] <file.gooo>"
 
 type capabilityDiscoveryReport struct {
 	Schema                 string                            `json:"schema"`

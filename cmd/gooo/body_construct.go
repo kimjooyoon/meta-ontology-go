@@ -16,7 +16,7 @@ import (
 
 const bodyConstructUsage = "usage: gooo body-construct --source <source.gooo> --cases <evaluation.json> " +
 	"(--construction-cases <feedback.json> --attempts <1..64> [--entry <activity>] [--model <model.json>] [--fill-model <model.json>] | " +
-	"--construction <construction.json>) [--go-bin <go1.27.1>] [--out <new-directory>]"
+	"--construction <construction.json>) [--go-bin <go1.27.2>] [--out <new-directory>]"
 
 type bodyConstructOutput struct {
 	GeneratedNow bool                            `json:"generated_now"`

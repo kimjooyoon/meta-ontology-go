@@ -10,7 +10,7 @@ func CanonicalContract() Contract {
 		Schema:                       "gooo/symbolic-invocation-usecase-contract/v1",
 		Version:                      1,
 		MetricID:                     "gooo.metric.user.symbolic-invocation-validation.v1",
-		ExpectedGoVersion:            "1.27.1",
+		ExpectedGoVersion:            "1.27.2",
 		ExpectedRegisteredEmitters:   3,
 		ExpectedGoooFiles:            3,
 		ExpectedGoFiles:              0,

@@ -159,7 +159,7 @@ func runPublicGoooCLI(repoRoot, policyPath, outputRoot, profilePackage, profileN
 	defer cancel()
 	check := exec.CommandContext(ctx, "go", "run", "./cmd/gooo", "check", "--semantic", policyPath)
 	check.Dir = repoRoot
-	check.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+	check.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 	if output, err := check.CombinedOutput(); err != nil {
 		return policycompilation.PublicCLIEvidence{}, "", fmt.Errorf("public gooo check --semantic failed: %w: %s", err, strings.TrimSpace(string(output)))
 	}
@@ -169,7 +169,7 @@ func runPublicGoooCLI(repoRoot, policyPath, outputRoot, profilePackage, profileN
 	}
 	generate := exec.CommandContext(ctx, "go", "run", "./cmd/gooo", "generate", policyPath, "--profile", policycompilation.PublicProfileID, "--profile-package", profilePackage, "--profile-namespace", profileNamespace, "--profile-project-root", profileProjectRoot, "--out", cliOutput)
 	generate.Dir = repoRoot
-	generate.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+	generate.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 	if output, err := generate.CombinedOutput(); err != nil {
 		return policycompilation.PublicCLIEvidence{}, "", fmt.Errorf("public gooo generate failed: %w: %s", err, strings.TrimSpace(string(output)))
 	}

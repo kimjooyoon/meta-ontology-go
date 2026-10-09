@@ -97,7 +97,7 @@ func TestGeneratedJudgeDeclaredInputPreservesBindingsAndAuthority(t *testing.T) 
 	// Compile once for this corpus; each input runs the same generated binary.
 	build := exec.CommandContext(t.Context(), "go", "build", "-o", binary, judgePath)
 	build.Dir = work
-	build.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.1")
+	build.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.2")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build generated judge: %v: %s", err, output)
 	}
@@ -474,7 +474,7 @@ func TestPolicyDecisionProposalChangesGeneratedBehavior(t *testing.T) {
 	// Build one candidate binary; the proposal API itself does not execute it.
 	build := exec.CommandContext(t.Context(), "go", "build", "-o", binary, judgePath)
 	build.Dir = work
-	build.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.1")
+	build.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.2")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build proposed generated judge: %v: %s", err, output)
 	}
@@ -539,7 +539,7 @@ func TestPublicPolicyDecisionRevisionProfileFromCLI(t *testing.T) {
 	binary := filepath.Join(work, "gooo")
 	build := exec.CommandContext(t.Context(), "go", "build", "-o", binary, "./cmd/gooo")
 	build.Dir = repository
-	build.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+	build.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build public Gooo CLI: %v: %s", err, output)
 	}
@@ -636,7 +636,7 @@ func TestPublicPolicyDecisionRevisionProfileFromCLI(t *testing.T) {
 		judge := filepath.Join(work, "candidate-judge")
 		buildJudge := exec.CommandContext(t.Context(), "go", "build", "-o", judge, filepath.Join(generatedRoot, "judge.go"))
 		buildJudge.Dir = generatedRoot
-		buildJudge.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.1")
+		buildJudge.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.2")
 		if output, err := buildJudge.CombinedOutput(); err != nil {
 			t.Fatalf("build public-profile judge: %v: %s", err, output)
 		}
@@ -1247,7 +1247,7 @@ func TestGeneratedJudgeRejectsTrailingDocuments(t *testing.T) {
 	}
 	binaryPath := filepath.Join(filepath.Dir(judgePath), "judge")
 	build := exec.Command("go", "build", "-o", binaryPath, judgePath)
-	build.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.1")
+	build.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.2")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build generated judge: %v: %s", err, output)
 	}
@@ -1287,7 +1287,7 @@ func TestGeneratedJudgeRejectsDuplicateObjectKeys(t *testing.T) {
 	}
 	binaryPath := filepath.Join(tempDir, "judge")
 	build := exec.Command("go", "build", "-o", binaryPath, judgePath)
-	build.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.1")
+	build.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.2")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build generated judge: %v: %s", err, output)
 	}

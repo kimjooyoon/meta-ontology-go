@@ -24,14 +24,14 @@ func TestModuleImporterResolvesLocalReplacementWithSharedStandardTypes(t *testin
 	root := t.TempDir()
 	writeImporterFixture(t, root, "go.mod", `module example.test/main
 
-go 1.27.1
+go 1.27.2
 
 require example.test/dependency v0.0.0
 replace example.test/dependency => ./dependency
 `)
 	writeImporterFixture(t, root, "dependency/go.mod", `module example.test/dependency
 
-go 1.27.1
+go 1.27.2
 `)
 	writeImporterFixture(t, root, "dependency/dependency.go", `package dependency
 
@@ -135,13 +135,13 @@ func TestModuleImporterUsesHostBuildContextDespiteAmbientTargetAndTags(t *testin
 	t.Setenv("GOEXPERIMENT", "not-a-real-experiment")
 	t.Setenv("GOPROXY", "off")
 	root := t.TempDir()
-	writeImporterFixture(t, root, "go.mod", "module example.test/main\n\ngo 1.27.1\n\nrequire example.test/platform v0.0.0\nreplace example.test/platform => ./dep\n")
+	writeImporterFixture(t, root, "go.mod", "module example.test/main\n\ngo 1.27.2\n\nrequire example.test/platform v0.0.0\nreplace example.test/platform => ./dep\n")
 	hostOS := build.Default.GOOS
 	otherOS := "windows"
 	if hostOS == otherOS {
 		otherOS = "linux"
 	}
-	writeImporterFixture(t, root, filepath.Join("dep", "go.mod"), "module example.test/platform\n\ngo 1.27.1\n")
+	writeImporterFixture(t, root, filepath.Join("dep", "go.mod"), "module example.test/platform\n\ngo 1.27.2\n")
 	writeImporterFixture(t, root, filepath.Join("dep", "selected_"+hostOS+".go"), "//go:build "+hostOS+"\n\npackage dep\n\nfunc Selected() string { return \"host\" }\n")
 	writeImporterFixture(t, root, filepath.Join("dep", "selected_"+otherOS+".go"), "//go:build "+otherOS+"\n\npackage dep\n\nfunc Selected() string { return \"other\" }\n")
 	imports := newModuleImporter(root)
@@ -171,14 +171,14 @@ func TestModuleImporterRejectsUnresolvedAndCGODependencies(t *testing.T) {
 	root := t.TempDir()
 	writeImporterFixture(t, root, "go.mod", `module example.test/main
 
-go 1.27.1
+go 1.27.2
 
 require example.test/cgo v0.0.0
 replace example.test/cgo => ./cgo
 `)
 	writeImporterFixture(t, root, "cgo/go.mod", `module example.test/cgo
 
-go 1.27.1
+go 1.27.2
 `)
 	writeImporterFixture(t, root, "cgo/cgo.go", `package cgo
 
@@ -289,7 +289,7 @@ func requireModuleFailure(t *testing.T, err error, code moduleDependencyCauseCod
 
 func TestModuleImporterRejectsLocalTraversalAndSymlinkEscapes(t *testing.T) {
 	root := t.TempDir()
-	writeImporterFixture(t, root, "go.mod", "module example.test/main\n\ngo 1.27.1\n")
+	writeImporterFixture(t, root, "go.mod", "module example.test/main\n\ngo 1.27.2\n")
 	outside := t.TempDir()
 	writeImporterFixture(t, outside, "escape.go", "package escape\n\nconst Secret = \"outside\"\n")
 	imports := newModuleImporter(root)
@@ -305,7 +305,7 @@ func TestModuleImporterRejectsLocalTraversalAndSymlinkEscapes(t *testing.T) {
 	}
 
 	fileRoot := t.TempDir()
-	writeImporterFixture(t, fileRoot, "go.mod", "module example.test/filelink\n\ngo 1.27.1\n")
+	writeImporterFixture(t, fileRoot, "go.mod", "module example.test/filelink\n\ngo 1.27.2\n")
 	if err := os.Symlink(filepath.Join(outside, "escape.go"), filepath.Join(fileRoot, "escape.go")); err != nil {
 		t.Skipf("file symlinks unavailable: %v", err)
 	}
@@ -325,7 +325,7 @@ func TestModuleImporterAcceptsRelativeRepositoryRoot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	writeImporterFixture(t, absoluteRoot, "go.mod", "module example.test/relative\n\ngo 1.27.1\n")
+	writeImporterFixture(t, absoluteRoot, "go.mod", "module example.test/relative\n\ngo 1.27.2\n")
 	writeImporterFixture(t, absoluteRoot, "package.go", "package relative\n\nconst Value = 1\n")
 	imports := newModuleImporter(relativeRoot)
 	package_, err := imports.Import("example.test/relative")

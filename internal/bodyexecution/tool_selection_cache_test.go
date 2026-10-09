@@ -31,7 +31,7 @@ func TestTrimmedCompilerResolvesOnlyTheExactCachedTool(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
-	cached := filepath.Join(cache, "golang.org", "toolchain@v0.0.1-go1.27.1."+runtime.GOOS+"-"+runtime.GOARCH, "bin", name)
+	cached := filepath.Join(cache, "golang.org", "toolchain@v0.0.1-go1.27.2."+runtime.GOOS+"-"+runtime.GOARCH, "bin", name)
 	for _, pathAvailable := range []bool{false, true} {
 		for _, cacheSupported := range []bool{false, true} {
 			pathTool := filepath.Join(cache, "old-path-go")

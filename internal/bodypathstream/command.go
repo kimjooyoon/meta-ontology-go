@@ -21,7 +21,7 @@ func RunCommand(ctx context.Context, name string, args []string, input io.Reader
 	model := flags.String("model", "", "explicit local model.json; omit for deterministic construction")
 	workers := flags.Int("workers", 1, "bounded construction workers (1..8)")
 	execute := flags.Bool("execute", false, "observe each construction with current execution_cases; retain one native artifact")
-	goBinary := flags.String("go-bin", "", "explicit local Go 1.27.1 tool for --execute; default checks PATH, GOROOT, toolchain cache")
+	goBinary := flags.String("go-bin", "", "explicit local Go 1.27.2 tool for --execute; default checks PATH, GOROOT, toolchain cache")
 	flags.Usage = func() {
 		fmt.Fprintf(stderr, "usage: %s [--model model.json] [--workers 1..8] [--execute [--go-bin path]] < requests.jsonl\n", name)
 		flags.PrintDefaults()

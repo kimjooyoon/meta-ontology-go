@@ -2,14 +2,14 @@
 
 The versioned denominator is fixed before execution.
 
-- targets: 3
-- cases: 20
+- targets: 4 (Linux amd64, Darwin amd64, Darwin arm64, Windows amd64)
+- structural release cases: 26
 - indicators: 39
 - outcome / driver / guardrail: 3 / 16 / 20
 - proofs: FOUNDATION / COHERENCE / REGRESSION
 - use cases: 3
 
-Acceptance requires `20/20` cases, `39/39` indicators, and every guardrail at zero.
+Acceptance requires `26/26` structural cases, `39/39` indicators, and every guardrail at zero.
 The report must be `PASS / EXACT` and bind the exact head SHA.
 
 The readiness transition uses the unchanged 24-obligation registry:
@@ -19,5 +19,12 @@ The readiness transition uses the unchanged 24-obligation registry:
 - delta: `+1 / +417`
 - regressions / unresolved / repository writes: `0 / 0 / 0`
 
-The denominator does not infer support for ARM, mobile, WebAssembly, package
-signing, or public release publication. Those require a future versioned corpus.
+The native profile additionally executes language and package examples and
+replays their saved construction. Package caller construction adds three raw
+observations per platform: partial 1/4, complete 4/4 and saved replay 4/4, with
+zero new inference during replay. Original source, cases and failure histories
+are checked independently of the structural denominator.
+
+Darwin arm64 is one of the four explicit targets. Other ARM ports, mobile,
+WebAssembly and signing need their own evidence. Public release publication is
+governed by the separate publication contract.

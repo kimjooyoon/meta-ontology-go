@@ -70,7 +70,7 @@ func TestSuffixClosureOwnerCounterexampleUsesSameModuleCI(t *testing.T) {
 	callers := make([]string, 0, len(sources))
 	for _, source := range sources {
 		root := t.TempDir()
-		if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.invalid/suffix-identity\n\ngo 1.27.1\n"), 0o600); err != nil {
+		if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.invalid/suffix-identity\n\ngo 1.27.2\n"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 		if err := os.WriteFile(filepath.Join(root, "fixture_test.go"), []byte(source), 0o600); err != nil {

@@ -5,7 +5,7 @@ package retentionpolicygenerated
 const (
 	EvaluatorSchema    = "gooo/semantic-retention-policy-evaluator/v1"
 	PolicySourcePath   = "examples/self-improvement-observation/observation.gooo"
-	PolicySourceDigest = "103d3a0b24052bd6eba7b0f62fed47097f3e9337a3d776aae6804398728ee58d"
+	PolicySourceDigest = "260a622c303277857ee9565432a1b9e4fcd2f12c2d63f011ffb02237c501c5ba"
 	EvaluatorDigest    = "4881a4c764188981e0a06409444c0742cbe61ef38c09603123df7126643ed7b6"
 )
 

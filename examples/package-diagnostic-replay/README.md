@@ -46,7 +46,7 @@ runs; it performs no model inference or new candidate selection. Earlier model
 calls remain historical fields in the construction receipt; current calls are
 `result.replay.model_calls` and `result.runtime.model_calls`, both zero.
 
-Supply `--go /path/to/go1.27.1` when the Go binary on PATH differs. This tool suggests
+Supply `--go /path/to/go1.27.2` when the Go binary on PATH differs. This tool suggests
 an operation as data; it does not modify another project's source. Its fixed cases
 establish the stated finite behavior, with broader task coverage still open.
 
