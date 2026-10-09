@@ -60,8 +60,8 @@ Later use `--composition out/observed-joins/composition.json` with either new
 model calls. `--resume-composition` also accepts input-only observations with an
 explicit policy. Choose exactly one of `--inputs`, `--cases`, `--case-series`.
 The [runnable guide](../examples/composition-inputs/README.md) shows the complete
-observe/replay/check sequence. This route is a development addition after
-v0.6.22-dev; existing public release commands continue to use `--cases`.
+observe/replay/check sequence. The 0.6.23 development source includes this route.
+Use a matching compiler; the public v0.6.22-dev binary requires `--cases`.
 
 ## Run and continue
 

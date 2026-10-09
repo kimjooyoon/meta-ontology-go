@@ -68,9 +68,10 @@ model compatibility. A structural plan can therefore exist for a body that
 later fails a type check. Tools must retain the source digest and recompute the
 plan after source changes before using it as the basis for generation.
 
-This is a development addition after v0.6.22-dev. Public 0.6.22 binaries do not
-contain this command. Build compiler source
-`a15b413412ad7b465a0567fb1db4de5706a8c2a8` or a compatible later revision.
+The 0.6.23 development source includes this command. The public 0.6.22 binary
+predates it. The [0.6.23 guide](releases/0.6.23-dev.md) records the native release
+profile; source `a15b413412ad7b465a0567fb1db4de5706a8c2a8` remains the original
+development revision used by the accepted workbench example.
 
 ## Continue a saved graph in the workbench
 
