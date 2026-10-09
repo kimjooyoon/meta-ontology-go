@@ -17,7 +17,8 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyContextUsage = "usage: gooo body-context [--plan <plan.json>] --activity <name> [--model <model.json>] [--feature-version <version>] [--include-plan] [--value-flow] <file.gooo>"
+const bodyContextUsage = "usage: gooo body-context [--plan <plan.json>] --activity <name> " +
+	"[--model <model.json>] [--feature-version <version>] [--include-plan] [--value-flow] <file.gooo>"
 
 type bodyContextOutput struct {
 	bodycodegen.TypedPathContextExport

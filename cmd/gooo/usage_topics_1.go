@@ -19,18 +19,23 @@ Try it:
 See docs/language-direction.ko.md and docs/language/language-semantic-model.md
 for the current language model and supported syntax.
 `,
-	"models": `Optional language models
+	"models": `Local models for source-declared choices
 
-Gooo remains usable without a model. When a model is not configured, decisions
-use the compiler's deterministic candidate order.
+The Gooo source declares alternatives, types and finite cases. A compatible local
+model proposes candidate order. Omitting --model selects deterministic order.
 
-To use a local Laya server, start it on loopback and set:
-  export GOOO_LAYA_URL=http://127.0.0.1:8787/v1/systemone
-  gooo body-codegen --json --activity Clamp main.gooo
+From the compiler source checkout, inspect the included own model:
+  gooo body-context --activity Describe \
+    --model examples/scalar-identity/model/model.json examples/scalar-identity/source.gooo.fixture
 
-Laya ranks only candidates already declared by Gooo. The compiler still checks
-the selected body and reports declared-case results. See docs/language/laya-decision-provider.md
-for configuration details and provider behavior.
+The model metadata selects its input feature. Inspection reports compatibility
+and reasons for representation decline with zero predictions and candidate tests.
+Use gooo help body-compose for assembly and saved replay. Field and case counts
+describe their recorded finite examples. Model-call counts identify actual inference.
+
+See docs/record-model-preflight.md and examples/scalar-identity/model/README.md.
+Explicit operation-provider configuration remains documented in
+docs/language/laya-decision-provider.md.
 `,
 	"body-codegen": `Generate a Gooo activity body
 

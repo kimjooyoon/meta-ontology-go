@@ -7,6 +7,7 @@ var topicHelp = mergeHelpTopics(
 	topicHelpGroup2,
 	topicHelpGroup3,
 	topicHelpGroup4,
+	topicHelpGroup5,
 )
 
 func mergeHelpTopics(groups ...map[string]string) map[string]string {
