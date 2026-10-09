@@ -200,6 +200,9 @@ the same declared search uses deterministic ordering. The
 [worked example](docs/source-assembly.md) explains the Gooo syntax, limits and
 model profile. For a complete multi-activity run, including compilation and
 execution, see [native body composition](docs/native-body-composition.md).
+For a source-owned record body, [inspect model compatibility](docs/record-model-preflight.md)
+with `body-context --model` before assembly. The model's input feature is selected
+automatically; representation declines retain their reason and perform zero predictions.
 
 ## What we are developing
 

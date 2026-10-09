@@ -67,8 +67,15 @@ All eight arrangements of the filename fixture produce distinct complete arrays
 in the source export regression. The compact relation and intent channels still
 use hashes and can collide on other programs. The intent channel is smaller
 than v2's, so Korean/English wording and separate program families need new
-measurements. The judge still scores fields independently. No trained graph
-weights are included or substituted for the published v1 model.
+measurements. The judge still scores fields independently. Those integration
+tests used synthetic weights. The current [scalar example](language/scalar-identity.md)
+includes the existing own QAT graph chooser as a separate reproducible fixture.
+Its provenance and finite limitations are documented alongside the model.
+The published v1 model keeps its own contract.
+
+For a local record-field model, [check source compatibility](record-model-preflight.md)
+with `body-context --model` before assembly. The compiler picks the verified
+model's feature and reports representation declines with zero predictions.
 
 [Value-flow provenance and helper scope](record-value-flow.md)
 · [Field assembly and finite completeness](record-field-assembly.md)
