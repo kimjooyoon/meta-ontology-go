@@ -61,17 +61,8 @@ func smokeLanguageExample(binary, work string, input BuildInput, example languag
 	directory := filepath.Join(work, "language-"+example.name)
 	selected := ""
 	for _, replay := range []bool{false, true} {
-		mode := "construct"
-		if replay {
-			mode = "replay"
-		}
-		args := languageSmokeArgs(example, directory, replay)
-		raw, err := commandOutput(input.Root, nil, binary, args...)
+		raw, err := runLanguageSmokeCommand(binary, directory, input, example, replay, commandOutput)
 		if err != nil {
-			return err
-		}
-		name := input.Target.ID + "-" + example.name + "-" + mode + ".json"
-		if err := os.WriteFile(filepath.Join(input.OutputDir, name), raw, 0o644); err != nil {
 			return err
 		}
 		observed, err := validateLanguageSmoke(raw, example.total, replay, selected)

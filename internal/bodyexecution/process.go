@@ -13,21 +13,23 @@ import (
 )
 
 type ProcessObservation struct {
-	Started          bool   `json:"started"`
-	Completed        bool   `json:"completed"`
-	Canceled         bool   `json:"canceled"`
-	TimedOut         bool   `json:"timed_out"`
-	DiagnosticsBytes int    `json:"diagnostics_bytes"`
-	OutputTruncated  bool   `json:"output_truncated"`
-	ExitCode         *int   `json:"exit_code"`
-	WallNS           int64  `json:"wall_ns"`
-	UserNS           int64  `json:"user_ns"`
-	SystemNS         int64  `json:"system_ns"`
-	PeakRSSBytes     *int64 `json:"peak_rss_bytes"`
-	StdoutSHA256     string `json:"stdout_sha256"`
-	StderrSHA256     string `json:"stderr_sha256"`
-	Failure          string `json:"failure,omitempty"`
-	Diagnostics      []byte `json:"diagnostics,omitempty"`
+	Started          bool           `json:"started"`
+	Completed        bool           `json:"completed"`
+	Canceled         bool           `json:"canceled"`
+	TimedOut         bool           `json:"timed_out"`
+	DiagnosticsBytes int            `json:"diagnostics_bytes"`
+	OutputTruncated  bool           `json:"output_truncated"`
+	ExitCode         *int           `json:"exit_code"`
+	WallNS           int64          `json:"wall_ns"`
+	UserNS           int64          `json:"user_ns"`
+	SystemNS         int64          `json:"system_ns"`
+	PeakRSSBytes     *int64         `json:"peak_rss_bytes"`
+	StdoutSHA256     string         `json:"stdout_sha256"`
+	StderrSHA256     string         `json:"stderr_sha256"`
+	Failure          string         `json:"failure,omitempty"`
+	Diagnostics      []byte         `json:"diagnostics,omitempty"`
+	Timing           *ProcessTiming `json:"timing,omitempty"`
+	FailurePhase     string         `json:"failure_phase,omitempty"`
 }
 
 type limitedBuffer struct {
@@ -55,9 +57,8 @@ func process(ctx context.Context, dir, binary string, input []byte, args ...stri
 	cmd.Env = childEnvironment()
 	stdout, stderr := &limitedBuffer{limit: 64 << 10}, &limitedBuffer{limit: 64 << 10}
 	cmd.Stdout, cmd.Stderr = stdout, stderr
-	start := time.Now()
-	err := cmd.Run()
-	r := ProcessObservation{Started: cmd.Process != nil, Completed: err == nil, WallNS: time.Since(start).Nanoseconds(),
+	timing, wall, failurePhase, err := timedProcess(ctx, cmd)
+	r := ProcessObservation{Started: cmd.Process != nil, Completed: err == nil, WallNS: wall, Timing: &timing, FailurePhase: failurePhase,
 		Canceled: ctx.Err() == context.Canceled, TimedOut: ctx.Err() == context.DeadlineExceeded, DiagnosticsBytes: stderr.Len(),
 		OutputTruncated: stdout.exceeded || stderr.exceeded,
 		StdoutSHA256:    digest(stdout.Bytes()), StderrSHA256: digest(stderr.Bytes())}
@@ -71,12 +72,14 @@ func process(ctx context.Context, dir, binary string, input []byte, args ...stri
 		r.Completed = false
 		if err == nil {
 			err = fmt.Errorf("child output exceeds observation bound")
+			r.FailurePhase = "OUTPUT"
 		}
 		r.Failure, r.Diagnostics = err.Error(), append([]byte(nil), stderr.Bytes()...)
 		return nil, r, fmt.Errorf("bounded child failed: %w", err)
 	}
 	if stderr.Len() != 0 {
 		r.Completed = false
+		r.FailurePhase = "OUTPUT"
 		r.Failure, r.Diagnostics = "bounded child emitted unexpected diagnostics", append([]byte(nil), stderr.Bytes()...)
 		return nil, r, fmt.Errorf("%s", r.Failure)
 	}
