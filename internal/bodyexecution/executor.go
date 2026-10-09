@@ -150,6 +150,7 @@ func (e *Executor) dropArtifact() error {
 }
 
 func copyProcess(p ProcessObservation) ProcessObservation {
+	p.Diagnostics = append([]byte(nil), p.Diagnostics...)
 	if p.ExitCode != nil {
 		v := *p.ExitCode
 		p.ExitCode = &v

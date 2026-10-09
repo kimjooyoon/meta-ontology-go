@@ -40,8 +40,18 @@ func TestJointReplayRecomputesSelectionsAndCallerEvidence(t *testing.T) {
 				t.Fatal(err)
 			}
 			change(&r)
-			if _, err = ReplayJointComposition(ctx, "joint.gooo", source, r, cases, nativeTool()); err == nil {
+			before := compositionDigest(r)
+			got, err := ReplayJointComposition(ctx, "joint.gooo", source, r, cases, nativeTool())
+			if err == nil {
 				t.Fatal("changed observation replayed")
+			}
+			if name == "caller score" || name == "caller value" {
+				f := got.ReplayFailure
+				if f == nil || f.AttemptIndex != 0 || f.Stage != "CALLER_COMPARISON" ||
+					!sameJointRuntime(f.Runtime, prior.Attempts[0].Runtime) || got.ConstructionReplayed ||
+					got.Runtime.Stage != "" || compositionDigest(r) != before {
+					t.Fatal("current comparison evidence or original history changed", got)
+				}
 			}
 		})
 	}
