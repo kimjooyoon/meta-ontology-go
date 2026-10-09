@@ -69,6 +69,28 @@ later fails a type check. Tools must retain the source digest and recompute the
 plan after source changes before using it as the basis for generation.
 
 This is a development addition after v0.6.22-dev. Public 0.6.22 binaries do not
-contain this command. The saved assembly feedback workbench currently supports
-one record assembly with fixed consumers; this export supplies the metadata
-needed to extend that path to several assemblies and additional root inputs.
+contain this command. Build compiler source
+`a15b413412ad7b465a0567fb1db4de5706a8c2a8` or a compatible later revision.
+
+## Continue a saved graph in the workbench
+
+[Workbench PR54](https://github.com/kimjooyoon/gooo-ecosystem-workbench/pull/54)
+consumes this export through `assemble --graph`. It retains the native plan,
+source, original caller rows, body checkpoints and saved replay. Pass that output
+folder to `construct --assembly` to continue with the original failing caller
+rows selected by a Gooo rule. Multiple record bodies, called source-fill helpers,
+source-search and additional caller roots are supported. Source-local cases
+remain in their original contracts.
+
+The [accepted example and two commands](https://github.com/kimjooyoon/gooo-ecosystem-workbench/blob/0d7d30a9e89576b4963e18b0967a71836849c234/examples/full-graph-assembly/README.md)
+use this compiler revision. The original workbench CI passed all38 steps before
+normal merge and clean installation. An explicit model selects the initial
+record candidate order; omission in the next construction starts deterministically.
+Saved replay uses zero fresh inference. Graph source-fill uses source order.
+
+Typed paths execute and replay, while their whole-program caller-guided
+reconstruction remains a separate native implementation task. The workbench
+reports `expand-joint-profile` for that gap. Input-only caller observations stay
+0/0 and request expectations before starting feedback construction.
+The [finite experiment](https://github.com/kimjooyoon/gooo-ecosystem-workbench/tree/0d7d30a9e89576b4963e18b0967a71836849c234/publication/full-graph-assembly-20261010)
+retains successful examples, budget16 failure, model calls and unscored input.
