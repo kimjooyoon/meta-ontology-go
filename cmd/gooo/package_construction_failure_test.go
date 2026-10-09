@@ -44,7 +44,7 @@ func TestPackageConstructionReplayRetainsCurrentFailure(t *testing.T) {
 	failure := observation.Result.Evaluation.ReplayFailure
 	if code != exitFailure || got.Decision != "FAIL_CLOSED" || got.Error == "" ||
 		failure == nil || failure.AttemptIndex != 0 || failure.Stage != "CALLER_EXECUTION" ||
-		failure.Runtime.Stage == "" || !strings.Contains(failure.Runtime.Failure, "missing-go") {
+		failure.Runtime.Stage != "TOOLCHAIN" || !strings.Contains(failure.Runtime.Failure, "missing-go") {
 		t.Fatalf("current failed attempt was discarded: code=%d failure=%+v error=%s", code, failure, got.Error)
 	}
 	if got.Result.Evaluation.ConstructionReplayed || got.Result.Evaluation.Runtime.Stage != "" ||
