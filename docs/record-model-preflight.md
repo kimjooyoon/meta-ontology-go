@@ -53,5 +53,19 @@ The usability idea came from [tinyjs's capabilities and requirements APIs](https
 show available behavior and missing conditions before work starts. Gooo applies
 that principle to a source/model pair, retaining finite verification at assembly.
 
+## Native release checks
+
+The development release profile saves Korean and English preflight outputs before
+model assembly. It requires explicit zero prediction and test counters, the actual
+source digest, stable field IDs and the verified model's input contract. Assembly
+and saved replay must retain the same model input digest. A missing counter stays
+missing rather than being interpreted as zero.
+
+There are ten scalar observations per platform: two preflight outputs and the
+existing eight fixed/model construction and replay reports. This adds evidence
+to the existing scalar case; the release corpus still declares 26 cases. Failed
+commands retain their original bytes as `.failed-output`. These development checks
+follow the 0.6.21 release candidate, which retains eight scalar reports per platform.
+
 [Graph input](record-graph-model-input.md) · [Field assembly](record-field-assembly.md)
 · [Scalar identity example](language/scalar-identity.md)
