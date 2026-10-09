@@ -43,5 +43,20 @@ PROV relations. Package interfaces retain the ordered input/output types after
 a rename. Native workspace tests use English and Korean names, verify generated
 markers and delivery trace IDs, and replay saved receipts with zero model calls.
 
+The own compact QAT model was also used with the
+[ecosystem workbench](https://github.com/kimjooyoon/gooo-ecosystem-workbench/tree/59bc4118a5c4b50843412ed793d61373b065183f).
+Changing `Calculate` to `합계` with the same ID produced two observations: a changed
+entry name and a changed declaration name. Both deterministic and model selection
+classified them as package wiring and source name changes. The authored policy
+selection covered 51/51 fields in 17 cases; this rename input had no independent
+correctness labels (0/0). The model was called once, and saved replay made zero new
+model calls. No training or weight update was performed for this observation.
+
+Whole-command measurements on one local run were 1.35 seconds for deterministic
+selection and 0.76 seconds with the model; maximum resident size was 87,539,712 and
+87,457,792 bytes respectively. Command order and warmed build caches affect these
+times. They measure the workbench command and its native toolchain activity,
+including model selection, rather than isolated model latency or host CPU load.
+
 See [package interfaces](package-interface.md) for the data consumed by ecosystem
 tools and [body generation](body-codegen.md) for bounded model selection.

@@ -39,6 +39,18 @@ activity `+name+`(Integer) -> Integer id "urn:gooo:activity:sum" computes "retur
 		if err := CheckPutGet(document, model); err != nil {
 			t.Fatal("Put-Get", err)
 		}
+		for i := range model.Nodes {
+			if model.Nodes[i].ID == "urn:gooo:activity:sum" {
+				model.Nodes[i].Name = "Updated"
+			}
+		}
+		if err := CheckPutGet(document, model); err != nil {
+			t.Fatal("renamed Put-Get", err)
+		}
+		written, err := Put(document, model)
+		if err != nil || written.Declarations[1].Name != "Updated" || written.Declarations[1].ID != "urn:gooo:activity:sum" {
+			t.Fatal("write-back rename changed activity identity", written, err)
+		}
 	}
 }
 
