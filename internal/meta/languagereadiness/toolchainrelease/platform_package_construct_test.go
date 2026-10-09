@@ -132,9 +132,13 @@ func TestNativePackageCallerReleaseProfile(t *testing.T) {
 	if err := smokePackageConstruction(binary, input); err != nil {
 		t.Fatal(err)
 	}
-	for _, mode := range []string{"partial", "construct", "replay"} {
+	for _, mode := range []string{"partial", "construct", "replay", "partial-inputs", "inputs", "inputs-replay", "inputs-again", "inputs-evaluate"} {
 		if info, err := os.Stat(filepath.Join(input.OutputDir, "local-native-package-caller-"+mode+".json")); err != nil || info.Size() == 0 {
 			t.Fatal("missing native observation", mode, err)
 		}
+	}
+	values, err := os.ReadFile(filepath.Join(input.OutputDir, "local-native-package-caller-values.jsonl"))
+	if err != nil || string(values) != "3\n-10\n-9007199254740994\n1\n" {
+		t.Fatal("missing exact native values", err)
 	}
 }

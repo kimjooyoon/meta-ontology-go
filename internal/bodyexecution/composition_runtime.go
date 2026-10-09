@@ -151,6 +151,7 @@ func executeCompositionNative(ctx context.Context, graph compositionGraph, prior
 }
 
 func prepareCompositionTool(ctx context.Context, requested string, r *CompositionRuntime, owner *Executor) (string, error) {
+	r.Stage = "TOOLCHAIN"
 	native := &Observation{ProducerSourceSHA: r.ProducerSourceSHA}
 	goBinary, selection, err := selectGoTool(requested)
 	r.GoToolSelection = selection
@@ -161,7 +162,7 @@ func prepareCompositionTool(ctx context.Context, requested string, r *Compositio
 	if err != nil {
 		return "", err
 	}
-	r.GoToolSHA256, r.Stage = native.GoToolSHA256, "TOOLCHAIN"
+	r.GoToolSHA256 = native.GoToolSHA256
 	err = observeToolchain(ctx, goBinary, native, owner)
 	r.Toolchain, r.GoVersion = native.Toolchain, native.GoVersion
 	r.ToolchainReference = native.ToolchainReference

@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.17-dev
-version  = 0.6.17-dev
+tag      = v0.6.18-dev
+version  = 0.6.18-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -78,7 +78,7 @@ UNKNOWN cannot be converted to PUBLISHED by a human explanation.
 
 ## Readiness boundary
 
-For 0.6.17, each native platform witness also uses its candidate binary to
+For 0.6.18, each native platform witness also uses its candidate binary to
 construct and replay the division, candidate-local retry and filename examples.
 Their eight, twelve and twelve execution cases must all match, with zero new
 model calls and the same selected program on replay. It also exports the v3
@@ -129,7 +129,7 @@ blocked activity across two rows. Original root/joined inputs, large integers,
 independent values, process completion and zero new inference are checked.
 Expected-output categories and all failed activities retain distinct scopes.
 
-The package-caller profile adds three original receipts per platform. It runs
+The package-caller profile adds eight original receipts per platform. It runs
 `package construct` against a two-package workspace at budgets five and six,
 then replays the six-attempt receipt without a model. Expected outcomes are
 partial 1/4, complete 4/4 and saved replay 4/4. The witness reconstructs the
@@ -139,7 +139,18 @@ Two local rejections, the reached zero-divisor fault, exact large integers and
 all saved attempts remain visible. The replay must retain the entire original
 construction and its receipt digests, with zero new inference. These finite
 execution cases have their own denominators, separate from the 26 structural
-release cases. Each platform artifact retains the raw JSON for all three runs.
+release cases.
+
+Five additional JSON runs cover partial and complete construction with actual
+inputs, input execution from a scored receipt, repeated execution from an
+input-only receipt, and later labelled evaluation from that saved observation.
+Input-only envelopes must report `OBSERVED`, bind the exact input-file digest,
+retain zero evaluation counts and omit expected/pass labels on each delivery.
+The witness independently checks four actual values, including an integer above
+2^53, against the original input rows. Saved executions preserve the complete
+construction history and make zero new predictions. A ninth command checks the
+four plain output lines exactly. Each platform artifact retains all eight raw
+JSON receipts and the plain-value output.
 
 The selected readiness run must have all of these properties:
 

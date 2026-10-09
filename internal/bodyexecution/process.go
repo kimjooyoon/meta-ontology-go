@@ -26,6 +26,8 @@ type ProcessObservation struct {
 	PeakRSSBytes     *int64 `json:"peak_rss_bytes"`
 	StdoutSHA256     string `json:"stdout_sha256"`
 	StderrSHA256     string `json:"stderr_sha256"`
+	Failure          string `json:"failure,omitempty"`
+	Diagnostics      []byte `json:"diagnostics,omitempty"`
 }
 
 type limitedBuffer struct {
@@ -67,11 +69,16 @@ func process(ctx context.Context, dir, binary string, input []byte, args ...stri
 	}
 	if err != nil || r.OutputTruncated {
 		r.Completed = false
-		return nil, r, fmt.Errorf("bounded child failed (exit/timeout recorded)")
+		if err == nil {
+			err = fmt.Errorf("child output exceeds observation bound")
+		}
+		r.Failure, r.Diagnostics = err.Error(), append([]byte(nil), stderr.Bytes()...)
+		return nil, r, fmt.Errorf("bounded child failed: %w", err)
 	}
 	if stderr.Len() != 0 {
 		r.Completed = false
-		return nil, r, fmt.Errorf("bounded child emitted unexpected diagnostics")
+		r.Failure, r.Diagnostics = "bounded child emitted unexpected diagnostics", append([]byte(nil), stderr.Bytes()...)
+		return nil, r, fmt.Errorf("%s", r.Failure)
 	}
 	return stdout.Bytes(), r, nil
 }

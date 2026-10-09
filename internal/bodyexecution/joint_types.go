@@ -63,9 +63,18 @@ type JointOptions struct {
 
 type JointEvaluation struct {
 	Runtime              CompositionRuntime   `json:"runtime"`
+	ReplayFailure        *JointReplayFailure  `json:"replay_failure,omitempty"`
 	ConstructionReplayed bool                 `json:"construction_replayed"`
 	NewModelCalls        int                  `json:"new_model_calls"`
 	InputSeparation      JointInputSeparation `json:"input_separation"`
+}
+
+// JointReplayFailure is a current observation of a saved attempt. It never
+// replaces the saved history or claims that the new evaluation suite ran.
+type JointReplayFailure struct {
+	AttemptIndex int                `json:"attempt_index"`
+	Stage        string             `json:"stage"`
+	Runtime      CompositionRuntime `json:"runtime"`
 }
 
 // This metric describes caller root tuples, including duplicates. It makes no
