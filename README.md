@@ -51,6 +51,9 @@ using their caller's actual results. Local obligations and caller expectations
 are retained separately, with bounded whole-program attempts and model-free
 saved replay. [Caller-guided construction](examples/caller-guided-construction/README.md)
 includes a runnable example and the current source/model/budget limits.
+Development source after public 0.6.23 also reopens
+[typed conditions and branches](examples/caller-typed-paths/README.md), including
+mixed record construction, rejected interacting edits and saved v7 replay.
 It also records [rejected local expressions](examples/caller-search-rejection/README.md)
 and continues within the original attempt budget. IR search is in 0.6.13;
 caller-guided `source_fill` is in 0.6.14. The 0.6.15 development source also

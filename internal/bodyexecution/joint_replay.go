@@ -55,7 +55,7 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 }
 
 func verifyJointHeader(ctx context.Context, filename string, source []byte, r JointConstruction) error {
-	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema && r.Schema != jointFaultSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
+	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema && r.Schema != jointFaultSchema && r.Schema != jointPathSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
 		r.OriginalSourceSHA256 != digest(source) || r.ConstructionSHA256 != compositionDigest(r.ConstructionCases) ||
 		r.ProgramBudget < 1 || r.ProgramBudget > 64 || r.SelectedAttempt < 0 || r.SelectedAttempt >= len(r.Attempts) {
 		return fmt.Errorf("joint construction identity, stage or budget differs")
@@ -83,6 +83,7 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 		if compositionDigest(attempt.Candidates) != compositionDigest(recorded.Candidates) ||
 			compositionDigest(attempt.SearchCandidates) != compositionDigest(recorded.SearchCandidates) ||
 			compositionDigest(attempt.FillCandidates) != compositionDigest(recorded.FillCandidates) ||
+			compositionDigest(attempt.PathCandidates) != compositionDigest(recorded.PathCandidates) ||
 			compositionDigest(attempt.Rejection) != compositionDigest(recorded.Rejection) ||
 			attempt.LocalPassed != recorded.LocalPassed || attempt.LocalTotal != recorded.LocalTotal {
 			return nil, fmt.Errorf("joint attempt %d local obligations differ", i)
