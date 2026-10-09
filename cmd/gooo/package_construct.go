@@ -16,7 +16,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageConstructUsage = "usage: gooo package construct [--json] --cases <evaluation.json> " +
+const packageConstructUsage = "usage: gooo package construct [--json] (--cases <evaluation.json> | --inputs <inputs.json>) " +
 	"(--construction-cases <feedback.json> --attempts <1..64> [--model <model.json>] [--fill-model <model.json>] | " +
 	"--receipt <construction.json>) [--go <go-binary>] <gooo.workspace.json>"
 
@@ -26,6 +26,7 @@ type packageConstructionReceipt struct {
 	Manifest       string                                 `json:"manifest"`
 	ManifestDigest string                                 `json:"manifest_digest,omitempty"`
 	CasesDigest    string                                 `json:"cases_digest,omitempty"`
+	InputsDigest   string                                 `json:"inputs_digest,omitempty"`
 	ReplayedFrom   string                                 `json:"replayed_from_sha256,omitempty"`
 	Result         *workspaceexecution.ConstructionResult `json:"result,omitempty"`
 	Error          string                                 `json:"error,omitempty"`
@@ -48,7 +49,7 @@ func runPackageConstruct(args []string, reader SourceReader, stdout, stderr io.W
 }
 
 func parsePackageConstructArgs(args []string) (map[string]string, string, error) {
-	flags := map[string]string{"--cases": "", "--construction-cases": "", "--attempts": "", "--model": "", "--fill-model": "", "--receipt": "", "--go": ""}
+	flags := map[string]string{"--cases": "", "--inputs": "", "--construction-cases": "", "--attempts": "", "--model": "", "--fill-model": "", "--receipt": "", "--go": ""}
 	manifest := ""
 	for i := 0; i < len(args); i++ {
 		if previous, ok := flags[args[i]]; ok {
@@ -63,7 +64,7 @@ func parsePackageConstructArgs(args []string) (map[string]string, string, error)
 			return nil, "", fmt.Errorf("%s", packageConstructUsage)
 		}
 	}
-	if manifest == "" || flags["--cases"] == "" {
+	if manifest == "" || (flags["--cases"] == "") == (flags["--inputs"] == "") {
 		return nil, "", fmt.Errorf("%s", packageConstructUsage)
 	}
 	if flags["--receipt"] != "" {
@@ -99,8 +100,11 @@ func executePackageConstruct(ctx context.Context, reader SourceReader, path stri
 	if err != nil {
 		return r, err
 	}
-	evaluation, digest, err := readPackageConstructionCases(reader, flags["--cases"])
+	evaluation, digest, inputOnly, err := readPackageReplayInputs(reader, flags)
 	r.CasesDigest = digest
+	if inputOnly {
+		r.InputsDigest, r.CasesDigest = digest, ""
+	}
 	if err != nil {
 		return r, err
 	}
@@ -122,6 +126,9 @@ func executePackageConstruct(ctx context.Context, reader SourceReader, path stri
 			ProgramBudget: budget, ModelPath: flags["--model"], FillModelPath: flags["--fill-model"], GoBinary: flags["--go"]})
 	}
 	r.Result, r.Decision = &result, packageConstructionDecision(result)
+	if inputOnly {
+		r.Decision = "OBSERVED"
+	}
 	return r, err
 }
 
@@ -145,7 +152,8 @@ func readSavedPackageConstruction(reader SourceReader, path, manifestDigest stri
 		return saved, digest, err
 	}
 	if saved.Schema != "gooo/workspace-caller-construction-receipt/v1" || saved.ManifestDigest != manifestDigest ||
-		saved.Error != "" || saved.Result == nil || (saved.Decision != "COMPLETE_FINITE" && saved.Decision != "PARTIAL_FINITE") {
+		saved.Error != "" || saved.Result == nil ||
+		(saved.Decision != "COMPLETE_FINITE" && saved.Decision != "PARTIAL_FINITE" && saved.Decision != "OBSERVED") {
 		return saved, digest, fmt.Errorf("saved package construction envelope or manifest differs")
 	}
 	return saved, digest, nil
@@ -193,6 +201,9 @@ func writePackageConstruction(r packageConstructionReceipt, cause error, jsonMod
 		}
 	} else if cause == nil {
 		c, e := r.Result.Construction, r.Result.Evaluation
+		if r.Decision == "OBSERVED" {
+			return writePackageEntryValues(stdout, stderr, r.Result.Program.Entry.LoweredName, c.Selected.Plan, e.Runtime)
+		}
 		fmt.Fprintf(stdout, "%s: attempts=%d/%d evaluation=%d/%d consumed_inputs=%d other_inputs=%d replayed=%t\n",
 			r.Decision, len(c.Attempts), c.ProgramBudget, e.Runtime.FinitePassed, e.Runtime.FiniteTotal,
 			e.InputSeparation.ConstructionInputs, e.InputSeparation.OtherInputs, e.ConstructionReplayed)

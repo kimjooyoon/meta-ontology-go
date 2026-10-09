@@ -18,6 +18,17 @@ source-local examples and model-training exposure. `COMPLETE_FINITE` requires
 complete local and caller construction observations and matching evaluation
 expectations without observed activity faults or blocked dependencies.
 
+The development source accepts `--inputs inputs.json` in place of `--cases`,
+for both fresh construction and saved receipt replay. The input file uses
+`gooo/body-composition-inputs/v1` and supplies no expected values. Fresh construction
+still requires labelled `--construction-cases`; actual inputs do not choose the
+program. Plain output is one JSON entry value per row. With `--json`, the receipt
+has `decision=OBSERVED`, `inputs_digest`, and zero finite evaluation counts; the
+original construction decision and all attempts remain in `result.construction`.
+An observed receipt can later receive new inputs or labelled evaluation cases.
+Native faults remain in JSON observations. Plain output returns a nonzero exit
+when an entry value is unavailable, retaining any preceding successful rows.
+
 ## Reuse a selected package program
 
 Save `package execute --json` output, then use `package replay --receipt <saved.json>`
