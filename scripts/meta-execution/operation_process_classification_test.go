@@ -174,7 +174,7 @@ func TestVerifierCacheInvocationNativeSourceChangeCannotReuseSuccess(t *testing.
 			t.Fatal(err)
 		}
 	}
-	write("go.mod", "module example.com/gooo-verifier-cache-invocation-witness\n\ngo 1.27.1\n")
+	write("go.mod", "module example.com/gooo-verifier-cache-invocation-witness\n\ngo 1.27.2\n")
 	write("value.go", "package cachewitness\n\nfunc Value() int { return 42 }\n")
 	write("value_test.go", fmt.Sprintf("package cachewitness\n\nimport \"testing\"\n\nfunc TestValue(t *testing.T) {\n"+
 		"t.Log(%q)\nif Value() != 42 { t.Fatal(\"value changed\") }\n}\n", root))

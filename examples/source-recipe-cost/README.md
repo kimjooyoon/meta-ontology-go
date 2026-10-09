@@ -2,7 +2,7 @@
 
 Fixed before collection, 2026-10-03. Build this identical collector in a clean
 baseline revision containing the prior decoder and a clean candidate revision
-containing projection reuse. Both use Go1.27.1 and public SDK v0.2.20. Report their
+containing projection reuse. Both use Go1.27.2 and public SDK v0.2.20. Report their
 actual commit identities; adding this example changes the build's source SHA.
 
 Use the 128 original model-arm request/budget records (64 requests, budgets 1/8),

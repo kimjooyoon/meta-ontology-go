@@ -22,7 +22,7 @@ func revisionReceiptNativeWitness(t *testing.T, work string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	build := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", binary, "../meta-policy-compilation-witness")
-	build.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+	build.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build separate native revision witness: %v\n%s", err, output)
 	}
@@ -38,7 +38,7 @@ func revisionReceiptRunFixture(t *testing.T, binary, work, phase string, request
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	command := exec.CommandContext(ctx, binary, "-policy", filepath.Join(work, "policy.gooo"), "-observe-revision", requestPath)
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.1")
+	command.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.2")
 	if missingToolchain {
 		environment := make([]string, 0, len(command.Env)+1)
 		for _, entry := range command.Env {

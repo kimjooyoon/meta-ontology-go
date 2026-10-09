@@ -163,7 +163,7 @@ entity Source id "gooo://error-guard/source"
 entity RawCandidate id "gooo://error-guard/raw-candidate"
 entity Candidate id "gooo://error-guard/candidate"
 activity GuardWrite(Source) -> RawCandidate computes "go-error-guard:v2;function=runMetaPolicyGenerationProfile;writer=stdout;writer-type=interfaceWriter;source=sha256:SOURCE_HEX;handler=sha256:HANDLER_HEX"
-activity Canonicalize(RawCandidate) -> Candidate computes "go-source-format:v1;toolchain=go1.27.0"
+activity Canonicalize(RawCandidate) -> Candidate computes "go-source-format:v1;toolchain=go1.27.2"
 ~~~
 
 SOURCE_HEX and HANDLER_HEX are placeholders, not executable pins. The guard may
@@ -220,7 +220,7 @@ entity Source id "gooo://error-guard/source"
 entity RawCandidate id "gooo://error-guard/raw-candidate"
 entity Candidate id "gooo://error-guard/candidate"
 activity GuardHumanOutput(Source) -> RawCandidate computes "go-error-guard:v3;function=reportGenerateSuccess;writer=stdout;mode=jsonMode;handler-call=writeJSONReport;writes=3;source=sha256:SOURCE_HEX;handler=sha256:HANDLER_HEX"
-activity Canonicalize(RawCandidate) -> Candidate computes "go-source-format:v1;toolchain=go1.27.0"
+activity Canonicalize(RawCandidate) -> Candidate computes "go-source-format:v1;toolchain=go1.27.2"
 ~~~
 
 Use the existing explicit -pipeline adapter. SOURCE_HEX and HANDLER_HEX remain

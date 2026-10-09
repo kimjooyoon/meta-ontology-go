@@ -27,7 +27,7 @@ gooo body-refine \
   --max-attempts 8 --max-rounds 4 --out /tmp/gooo-feedback-run
 ```
 
-Pass `--go-bin /path/to/go1.27.1` when the default Go is a different version.
+Pass `--go-bin /path/to/go1.27.2` when the default Go is a different version.
 Add `--model /path/to/model.json` to rank construction choices with a compatible
 local model. Omission uses deterministic ordering. Each construction round loads
 its model separately and records its own calls; policy execution is deterministic.

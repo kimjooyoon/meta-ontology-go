@@ -170,7 +170,7 @@ func prepareCompositionTool(ctx context.Context, requested string, r *Compositio
 
 func buildCompositionExecutable(ctx context.Context, root, projection, driver string,
 	goBinary string, r *CompositionRuntime) (string, error) {
-	for name, text := range map[string]string{"go.mod": "module gooo.observed.composition\n\ngo 1.27.1\n",
+	for name, text := range map[string]string{"go.mod": "module gooo.observed.composition\n\ngo 1.27.2\n",
 		"generated.go": projection, "main.go": driver} {
 		if err := os.WriteFile(filepath.Join(root, name), []byte(text), 0600); err != nil {
 			return "", err

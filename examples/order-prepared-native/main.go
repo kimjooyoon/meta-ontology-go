@@ -70,7 +70,7 @@ func save(path string, value any) string {
 
 func identity() string {
 	b, ok := debug.ReadBuildInfo()
-	require(ok && b.GoVersion == "go1.27.1", "pinned Go build required")
+	require(ok && b.GoVersion == "go1.27.2", "pinned Go build required")
 	var revision string
 	clean, sdk := false, false
 	for _, s := range b.Settings {
@@ -148,7 +148,7 @@ func observe(g *bodycodegen.TypedPathGenerator, setup float64, compiler, goBin, 
 
 func main() {
 	compiler := flag.String("compiler", "", "clean same-revision Gooo binary")
-	goBin := flag.String("go-bin", "go", "Go 1.27.1 binary")
+	goBin := flag.String("go-bin", "go", "Go 1.27.2 binary")
 	baseline := flag.String("baseline", "", "extracted original order-judge native observations")
 	model := flag.String("model", "", "original order judge model.json")
 	out := flag.String("out", "", "fresh output directory")

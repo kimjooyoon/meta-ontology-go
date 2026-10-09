@@ -57,7 +57,7 @@ func save(path string, v any) string {
 }
 func identity() string {
 	b, ok := debug.ReadBuildInfo()
-	require(ok && b.GoVersion == "go1.27.1", "Go 1.27.1 required")
+	require(ok && b.GoVersion == "go1.27.2", "Go 1.27.2 required")
 	revision, clean, sdk := "", false, false
 	for _, s := range b.Settings {
 		if s.Key == "vcs.revision" {
@@ -143,7 +143,7 @@ func observe(g *bodycodegen.TypedPathGenerator, owner *bodyexecution.Executor, o
 func main() {
 	baseline := flag.String("baseline", "", "extracted frozen initial native observations")
 	model := flag.String("model", "", "original public model.json")
-	goBin := flag.String("go-bin", "go", "Go 1.27.1 tool")
+	goBin := flag.String("go-bin", "go", "Go 1.27.2 tool")
 	out := flag.String("out", "", "fresh output directory")
 	flag.Parse()
 	require(*baseline != "" && *model != "" && *out != "" && flag.NArg() == 0, "inputs required")

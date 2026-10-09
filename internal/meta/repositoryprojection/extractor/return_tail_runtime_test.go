@@ -323,7 +323,7 @@ func runtimeWitnessWriteSupport(root string, support map[string]string) error {
 }
 
 func runtimeWitnessWriteGoMod(root string) error {
-	return runtimeWitnessWrite(filepath.Join(root, "go.mod"), []byte("module runtime-witness.test\n\ngo 1.27.1\n"))
+	return runtimeWitnessWrite(filepath.Join(root, "go.mod"), []byte("module runtime-witness.test\n\ngo 1.27.2\n"))
 }
 
 func runtimeWitnessRunGo(root string) ([]byte, []byte, error) {

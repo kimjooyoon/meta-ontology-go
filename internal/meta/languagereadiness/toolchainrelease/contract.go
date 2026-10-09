@@ -5,7 +5,7 @@ const (
 	CorpusSchema          = "gooo/toolchain-cross-platform-release-corpus/v1"
 	ReportSchema          = "gooo/toolchain-cross-platform-release-report/v1"
 	MetaOperation         = "assemble-exact-cross-platform-release"
-	ExpectedToolchain     = "go1.27.1"
+	ExpectedToolchain     = "go1.27.2"
 	DecisionPass          = "PASS"
 	DecisionFailClosed    = "FAIL_CLOSED"
 	ResolutionExact       = "EXACT"

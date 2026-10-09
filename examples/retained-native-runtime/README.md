@@ -24,12 +24,12 @@ and first-launch variation present. It establishes no new training/generalizatio
 result. Test changed expectations, tampering, cancellation and concurrency in the
 executor and stream suites separately.
 
-Build from a clean committed compiler checkout with Go 1.27.1:
+Build from a clean committed compiler checkout with Go 1.27.2:
 
 ```sh
 go build -trimpath -o /tmp/retained-native-runtime ./examples/retained-native-runtime
 /tmp/retained-native-runtime --baseline /path/to/order-judge-native-initial \
-  --model /path/to/public/model.json --go-bin /path/to/go1.27.1/bin/go \
+  --model /path/to/public/model.json --go-bin /path/to/go1.27.2/bin/go \
   --out /path/to/fresh-observations
 ```
 

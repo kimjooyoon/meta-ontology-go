@@ -16,15 +16,15 @@ This view makes no model calls, downloads or native executions.
 
 Without `--go-bin`, native execution inspects the `go` on PATH, then the
 `bin/go` (Windows: `bin/go.exe`) in the running compiler's `runtime.GOROOT()`,
-then the exact Go1.27.1/host-platform toolchain module in the local module cache.
-It selects the first native `cmd/go` with embedded Go1.27.1 and matching host
+then the exact Go1.27.2/host-platform toolchain module in the local module cache.
+It selects the first native `cmd/go` with embedded Go1.27.2 and matching host
 platform. If neither is recognized, it preserves the PATH tool for the existing
 actual-version observation. A missing PATH tool and unavailable compiler root
 produce an installation hint. An installed compiler copied from another machine
 may have an unavailable build root; a `-trimpath` build can omit it. Cache lookup
 uses an absolute `GOMODCACHE` environment value, otherwise the first absolute
 `GOPATH` entry plus `pkg/mod`, otherwise the home directory's `go/pkg/mod`.
-It checks only `golang.org/toolchain@v0.0.1-go1.27.1.<os>-<arch>/bin/go`.
+It checks only `golang.org/toolchain@v0.0.1-go1.27.2.<os>-<arch>/bin/go`.
 Custom cache settings written only through `go env -w` require an environment
 value or `--go-bin`. This lookup searches at most three executable locations.
 
@@ -41,7 +41,7 @@ version. Its failure retains the actual version response. To locate a previously
 installed Go toolchain manually, or install it through Go's toolchain mechanism:
 
 ```sh
-gooo_go_bin="$(GOTOOLCHAIN=go1.27.1 go env GOROOT)/bin/go"
+gooo_go_bin="$(GOTOOLCHAIN=go1.27.2 go env GOROOT)/bin/go"
 "$gooo_go_bin" version
 ```
 
@@ -65,12 +65,12 @@ gooo body-path-run \
 Choose a fresh `--out` path; an existing path is rejected. `--activity` is an
 explicit source activity name. Both full typed plans and short source recipes
 work. Add `--model /explicit/path/model.json` to use a local compatible judge;
-omitting it uses deterministic construction. Add `--go-bin /path/to/go1.27.1/bin/go`
+omitting it uses deterministic construction. Add `--go-bin /path/to/go1.27.2/bin/go`
 to select the native tool explicitly. Repetition is sequential, bounded to 1..16, default 1.
 One generator and one native executor serve all repetitions, using the same
 request evaluation as `body-path-stream --execute`.
 
-The executor keeps the first successful Go version check for a native Go1.27.1
+The executor keeps the first successful Go version check for a native Go1.27.2
 `cmd/go` executable. Every request hashes the current Go file and checks its
 embedded version/platform. The retained check is reused only when tool path,
 bytes, child environment and producer context match. Shell wrappers receive a
@@ -230,7 +230,7 @@ includes all these files and a small model. A recipe describes permitted choices
 the model ranks those choices and the compiler checks the resulting body.
 
 The standalone `gooo-body-worker` remains available with the same protocol and
-options (`go build -o gooo-body-worker ./cmd/gooo-body-worker`, Go 1.27.1).
+options (`go build -o gooo-body-worker ./cmd/gooo-body-worker`, Go 1.27.2).
 Both entry points use one command implementation.
 
 The optional local model loads once. Standard error emits one
@@ -302,7 +302,7 @@ jq -cn --rawfile source examples/body-codegen/typed-path-compound.gooo.fixture \
   --slurpfile cases examples/body-codegen/typed-path-runtime-cases.json \
   'range(2) as $i | {schema:"gooo/native-body-stream-request/v1",correlation_id:("run-"+($i|tostring)),
     source:$source,activity:"Combined",document:$document[0],execution_cases:$cases[0]}' \
-  | gooo body-path-stream --execute --go-bin /path/to/go1.27.1/bin/go > results.jsonl
+  | gooo body-path-stream --execute --go-bin /path/to/go1.27.2/bin/go > results.jsonl
 
 jq '{id:.correlation_id,status,error,reused:.execution.observation.artifact.reused,
   cases:.execution.observation.cases}' results.jsonl
@@ -336,7 +336,7 @@ and excludes prior build cost. Owned execution uses runtime receipt profile v2;
 the standalone `body-execute` v1 behavior remains available.
 
 The runtime compiles the closed, pure `Integer -> Integer` projection and a stdlib
-array driver. Its Go tool is pinned to 1.27.1. Source checks constrain the emitted
+array driver. Its Go tool is pinned to 1.27.2. Source checks constrain the emitted
 body; the caller still chooses the local Go executable and inherits host permissions.
 
 ## Optional finite ambiguity diagnosis

@@ -1,6 +1,6 @@
 # Continue constructing a program with called helpers
 
-Build from this source revision with Go 1.27.1. This example requires the
+Build from this source revision with Go 1.27.2. This example requires the
 dependency-aware continuation added after `v0.6.6-dev`.
 
 `Seed` adds one; `Wrap` doubles that result; `Main` calls `Wrap` twice. Each

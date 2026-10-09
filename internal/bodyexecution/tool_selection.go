@@ -41,7 +41,7 @@ func resolveGoTool(requested, goRoot, moduleCache string, lookup func(string) (s
 	supported func(string) bool) (string, string, error) {
 	absolute := func(path, origin string, err error) (string, string, error) {
 		if err != nil {
-			return "", "", fmt.Errorf("Go tool is unavailable: %w; select an installed Go 1.27.1 executable with --go-bin", err)
+			return "", "", fmt.Errorf("Go tool is unavailable: %w; select an installed Go 1.27.2 executable with --go-bin", err)
 		}
 		path, err = filepath.Abs(path)
 		return path, origin, err
@@ -67,7 +67,7 @@ func resolveGoTool(requested, goRoot, moduleCache string, lookup func(string) (s
 	if moduleCache != "" {
 		// Go's toolchain module has one version/platform-specific location.
 		// This remains usable when -trimpath omitted the compiler's GOROOT.
-		version := "golang.org/toolchain@v0.0.1-go1.27.1." + runtime.GOOS + "-" + runtime.GOARCH
+		version := "golang.org/toolchain@v0.0.1-go1.27.2." + runtime.GOOS + "-" + runtime.GOARCH
 		cachedTool, err := lookup(filepath.Join(moduleCache, version, "bin", name))
 		if err == nil && cachedTool != path && supported(cachedTool) {
 			return absolute(cachedTool, "toolchain_cache", nil)

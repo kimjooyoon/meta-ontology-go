@@ -15,7 +15,7 @@ IDs and the explicit `Assess -> Render` binding.
 
 ## Run a tool
 
-From this repository, use Go 1.27.1 to build the CLI:
+From this repository, use Go 1.27.2 to build the CLI:
 
 ```sh
 go build -o /tmp/gooo-domain-tools ./cmd/gooo
@@ -28,7 +28,7 @@ go build -o /tmp/gooo-domain-tools ./cmd/gooo
 ```
 
 If the native build would find another Go version on PATH, add
-`--go /path/to/go1.27.1`. Outputs and inputs appear in
+`--go /path/to/go1.27.2`. Outputs and inputs appear in
 `result.runtime.traces`. Input-only runs are `OBSERVED`, with no scored runtime
 expectations. The state inside each returned report is the Gooo tool's domain
 judgment. For example, a returned `UNKNOWN` explains a missing feature roster;

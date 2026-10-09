@@ -8,7 +8,7 @@ and checks that helper through the same package mechanism used by the target.
 
 ## Run the connected tool
 
-From this repository revision with Go 1.27.1:
+From this repository revision with Go 1.27.2:
 
 ```sh
 go build -o /tmp/gooo-package-policy ./cmd/gooo
@@ -22,7 +22,7 @@ Add `--assembly-model /path/to/shared-qat/model.json` for the optional
 [own compact model](https://huggingface.co/asketeddy/gooo-record-shared-field-tiny-v1/tree/5800946afb35506d66357ee3ea6f956f506795b9/models/qat_ternary).
 The model ranks the target's declared choices. The fixed Gooo policy consumes
 actual observations before the next candidate is constructed. Without the model
-flag, candidate order is deterministic. Use `--go /path/to/go1.27.1` if needed.
+flag, candidate order is deterministic. Use `--go /path/to/go1.27.2` if needed.
 
 Replace the policy manifest with `checkpoint.workspace.json` to stop after the
 first scored candidate. The result retains the partial cases, fields and runtime

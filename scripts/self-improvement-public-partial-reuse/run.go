@@ -48,8 +48,8 @@ func run(input runInput) error {
 	if err != nil {
 		return err
 	}
-	if runtime.Version() != "go1.27.1" {
-		return fmt.Errorf("partial reuse requires Go 1.27.1, got %s", runtime.Version())
+	if runtime.Version() != "go1.27.2" {
+		return fmt.Errorf("partial reuse requires Go 1.27.2, got %s", runtime.Version())
 	}
 	compiler, err := publicpartialreuse.CompilerDigest(input.RepoRoot)
 	if err != nil {
@@ -430,7 +430,7 @@ func preparePackage(directory string, program, testContract []byte) error {
 	if err := writeNew(filepath.Join(directory, "generated_project_test.go"), testContract, 0o644); err != nil {
 		return err
 	}
-	return writeNew(filepath.Join(directory, "go.mod"), []byte("module partial-reuse-example\n\ngo 1.27.1\n"), 0o644)
+	return writeNew(filepath.Join(directory, "go.mod"), []byte("module partial-reuse-example\n\ngo 1.27.2\n"), 0o644)
 }
 
 func executeTests(directory string, partition publicpartialreuse.Partition, timePrefix string) (publicpartialreuse.Metrics, executionResult, error) {

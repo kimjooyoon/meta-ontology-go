@@ -13,7 +13,7 @@ gooo package execute --json \
   examples/package-record-namespaces/gooo.workspace.json
 ```
 
-Use Go 1.27.1, or pass `--go /path/to/go1.27.1` for the native build. Four input
+Use Go 1.27.2, or pass `--go /path/to/go1.27.2` for the native build. Four input
 rows check twelve activity outputs, including an integer above 2^53. The command
 builds the selected graph and runs it twice.
 

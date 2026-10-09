@@ -51,7 +51,10 @@ func smokeCallerExamples(binary, work string, input BuildInput) error {
 	if err := smokeJointFillRejection(binary, work, input); err != nil {
 		return err
 	}
-	return smokeNativeArithmetic(binary, work, input)
+	if err := smokeNativeArithmetic(binary, work, input); err != nil {
+		return err
+	}
+	return smokePackageConstruction(binary, input)
 }
 
 func smokeLanguageExample(binary, work string, input BuildInput, example languageSmokeCase) error {

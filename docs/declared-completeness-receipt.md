@@ -35,7 +35,7 @@ generation. It reconstructs the selected body from the original Gooo and its
 complete path document or declared search grammar and cases. IR search also
 replays candidate membership and selected training/holdout results, including
 measured zero matches. It makes **zero model/provider calls**. Only byte-identical
-replayed Go reaches a local Go 1.27.1 build. Its stdlib wrapper runs that compiled program
+replayed Go reaches a local Go 1.27.2 build. Its stdlib wrapper runs that compiled program
 twice with the ordered caller inputs, under a 60-second total budget and a
 2-second budget per execution. The source files and generation input stay intact.
 
@@ -48,7 +48,7 @@ gooo body-execute \
   --path-plan examples/body-codegen/typed-path-compound-plan.json \
   --generation /tmp/body-generation.json \
   --cases examples/body-codegen/typed-path-runtime-cases.json \
-  --go-bin /path/to/go1.27.1 > /tmp/body-runtime.json
+  --go-bin /path/to/go1.27.2 > /tmp/body-runtime.json
 ```
 
 The runtime cases envelope is `gooo/body-runtime-cases/v1`, with `cases` holding

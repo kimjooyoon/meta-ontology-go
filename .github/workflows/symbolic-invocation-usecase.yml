@@ -54,7 +54,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           check-latest: true
       - name: Produce schema evidence through merged compiler path
         run: bash scripts/symbolic-invocation-schema/main.sh
@@ -89,7 +89,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.1'
+          go-version: '1.27.2'
           check-latest: true
       - name: Download exact producer evidence
         uses: actions/download-artifact@v8

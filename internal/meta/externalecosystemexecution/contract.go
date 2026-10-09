@@ -20,7 +20,7 @@ const (
 	ExpectedCommit            = "cf0d4bf32da393dbda97e3572f216731013ffa55"
 	ExpectedTree              = "8cc240a53dd29432ad83620b20fd8a0a05674c6d"
 	ExpectedModuleGo          = "1.23.0"
-	ExpectedGoVersion         = "go1.27.1"
+	ExpectedGoVersion         = "go1.27.2"
 	DecisionConfirmed         = "EXECUTION_CONFIRMED"
 	DecisionFailClosed        = "FAIL_CLOSED"
 )

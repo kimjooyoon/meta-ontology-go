@@ -6,7 +6,7 @@ var topicHelpGroup2 = map[string]string{
 Usage:
   gooo discover [--json] --query <question> [--domain-contract <contract.gooo>]
     [--generation <body-codegen.json> [--execute-cases <cases.json>
-      [--go-bin <go1.27.1>]]] <file.gooo>
+      [--go-bin <go1.27.2>]]] <file.gooo>
 
 This deterministic JEV integration binds the question to the exact Gooo source
 and normalized semantic IR. A separate Gooo domain contract supplies the
