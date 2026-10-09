@@ -14,8 +14,8 @@ import (
 const packageConstructionRoot = "examples/package-caller-construction"
 
 type packageConstructionReference struct {
-	Manifest, Feedback, Evaluation, Program []byte
-	Source                                  string
+	Manifest, Feedback, Evaluation, Inputs, Program []byte
+	Source                                          string
 }
 
 // The reference is rebuilt from the original fixture, not from the executable's
@@ -33,6 +33,9 @@ func readPackageConstructionReference(root string) (packageConstructionReference
 		return r, err
 	}
 	if r.Evaluation, err = read("evaluation-cases.json"); err != nil {
+		return r, err
+	}
+	if r.Inputs, err = read("inputs.json"); err != nil {
 		return r, err
 	}
 	var m struct {
@@ -70,38 +73,74 @@ func readPackageConstructionReference(root string) (packageConstructionReference
 	return r, err
 }
 
+type packageConstructionSmokeRun struct {
+	mode      string
+	budget    int
+	inputOnly bool
+	from      string
+}
+
 func smokePackageConstruction(binary string, input BuildInput) error {
 	reference, err := readPackageConstructionReference(input.Root)
 	if err != nil {
 		return err
 	}
-	var saved []byte
-	for _, mode := range []string{"partial", "construct", "replay"} {
-		budget := 6
-		if mode == "partial" {
-			budget = 5
+	saved := map[string][]byte{}
+	for _, step := range []packageConstructionSmokeRun{
+		{"partial", 5, false, ""}, {"construct", 6, false, ""}, {"replay", 6, false, "construct"},
+		{"partial-inputs", 5, true, ""}, {"inputs", 6, true, ""},
+		{"inputs-replay", 6, true, "construct"}, {"inputs-again", 6, true, "inputs"},
+		{"inputs-evaluate", 6, false, "inputs-again"},
+	} {
+		raw, err := runPackageConstructionSmoke(binary, input, step)
+		if err == nil {
+			err = validatePackageConstructionRun(raw, reference, step.budget, saved[step.from], step.inputOnly)
 		}
-		args := []string{"package", "construct", "--json", "--cases", filepath.Join(packageConstructionRoot, "evaluation-cases.json")}
-		if mode == "replay" {
-			args = append(args, "--receipt", filepath.Join(input.OutputDir, input.Target.ID+"-package-caller-construct.json"))
-		} else {
-			args = append(args, "--construction-cases", filepath.Join(packageConstructionRoot, "construction-cases.json"), "--attempts", strconv.Itoa(budget))
+		if err != nil {
+			return fmt.Errorf("TOOLCHAIN_RELEASE_PACKAGE_CONSTRUCTION %s: %w", step.mode, err)
 		}
-		raw, runErr := commandOutput(input.Root, nil, binary, append(args, filepath.Join(packageConstructionRoot, "gooo.workspace.json"))...)
-		if len(raw) > 0 {
-			if err := os.WriteFile(filepath.Join(input.OutputDir, input.Target.ID+"-package-caller-"+mode+".json"), raw, 0644); err != nil {
-				return err
-			}
+		saved[step.mode] = raw
+	}
+	return smokePackageInputValues(binary, input)
+}
+
+func packageConstructionSmokePath(input BuildInput, mode string) string {
+	return filepath.Join(input.OutputDir, input.Target.ID+"-package-caller-"+mode+".json")
+}
+
+func runPackageConstructionSmoke(binary string, input BuildInput, step packageConstructionSmokeRun) ([]byte, error) {
+	flag, name := "--cases", "evaluation-cases.json"
+	if step.inputOnly {
+		flag, name = "--inputs", "inputs.json"
+	}
+	args := []string{"package", "construct", "--json", flag, filepath.Join(packageConstructionRoot, name)}
+	if step.from != "" {
+		args = append(args, "--receipt", packageConstructionSmokePath(input, step.from))
+	} else {
+		args = append(args, "--construction-cases", filepath.Join(packageConstructionRoot, "construction-cases.json"), "--attempts", strconv.Itoa(step.budget))
+	}
+	raw, err := commandOutput(input.Root, nil, binary, append(args, filepath.Join(packageConstructionRoot, "gooo.workspace.json"))...)
+	if len(raw) > 0 {
+		if writeErr := os.WriteFile(packageConstructionSmokePath(input, step.mode), raw, 0o644); writeErr != nil {
+			return raw, writeErr
 		}
-		if runErr != nil {
-			return fmt.Errorf("TOOLCHAIN_RELEASE_PACKAGE_CONSTRUCTION %s: %w", mode, runErr)
+	}
+	return raw, err
+}
+
+func smokePackageInputValues(binary string, input BuildInput) error {
+	raw, err := commandOutput(input.Root, nil, binary, "package", "construct", "--receipt", packageConstructionSmokePath(input, "inputs-again"),
+		"--inputs", filepath.Join(packageConstructionRoot, "inputs.json"), filepath.Join(packageConstructionRoot, "gooo.workspace.json"))
+	if len(raw) > 0 {
+		if writeErr := os.WriteFile(filepath.Join(input.OutputDir, input.Target.ID+"-package-caller-values.jsonl"), raw, 0o644); writeErr != nil {
+			return writeErr
 		}
-		if err := validatePackageConstructionSmoke(raw, reference, budget, saved); err != nil {
-			return fmt.Errorf("TOOLCHAIN_RELEASE_PACKAGE_CONSTRUCTION %s: %w", mode, err)
-		}
-		if mode == "construct" {
-			saved = raw
-		}
+	}
+	if err != nil {
+		return fmt.Errorf("TOOLCHAIN_RELEASE_PACKAGE_VALUES: %w", err)
+	}
+	if string(raw) != "3\n-10\n-9007199254740994\n1\n" {
+		return fmt.Errorf("TOOLCHAIN_RELEASE_PACKAGE_VALUES: actual entry values differ")
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package toolchainrelease
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -17,6 +18,7 @@ type packageConstructionEnvelope struct {
 	Schema, Decision, Error string
 	Manifest                string `json:"manifest_digest"`
 	Cases                   string `json:"cases_digest"`
+	Inputs                  string `json:"inputs_digest"`
 	From                    string `json:"replayed_from_sha256"`
 	Result                  json.RawMessage
 }
@@ -29,6 +31,10 @@ type packageConstructionResult struct {
 }
 
 func validatePackageConstructionSmoke(raw []byte, reference packageConstructionReference, budget int, saved []byte) error {
+	return validatePackageConstructionRun(raw, reference, budget, saved, false)
+}
+
+func validatePackageConstructionRun(raw []byte, reference packageConstructionReference, budget int, saved []byte, inputOnly bool) error {
 	var envelope packageConstructionEnvelope
 	if err := json.Unmarshal(raw, &envelope); err != nil {
 		return err
@@ -41,8 +47,13 @@ func validatePackageConstructionSmoke(raw []byte, reference packageConstructionR
 	if budget == 5 {
 		decision = "PARTIAL_FINITE"
 	}
+	bound := envelope.Cases == packageSmokeSHA(reference.Evaluation) && envelope.Inputs == ""
+	if inputOnly {
+		decision = "OBSERVED"
+		bound = envelope.Inputs == packageSmokeSHA(reference.Inputs) && envelope.Cases == ""
+	}
 	if envelope.Schema != "gooo/workspace-caller-construction-receipt/v1" || envelope.Decision != decision || envelope.Error != "" ||
-		envelope.Manifest != packageSmokeSHA(reference.Manifest) || envelope.Cases != packageSmokeSHA(reference.Evaluation) ||
+		envelope.Manifest != packageSmokeSHA(reference.Manifest) || !bound ||
 		result.Schema != "gooo/workspace-caller-construction/v1" || !samePackageSourceValue(result.Program, reference.Program) ||
 		!samePackageSourceValue(result.Cases, reference.Feedback) {
 		return fmt.Errorf("package construction envelope or original package binding differs")
@@ -97,7 +108,12 @@ func validatePackageConstructionSmoke(raw []byte, reference packageConstructionR
 		c.Attempts[index].FillCandidates[0].SelectedSHA != packageSmokeSHA([]byte(c.Source)) {
 		return fmt.Errorf("package selected source differs from execution")
 	}
-	if err = validateJointFillRuntimeFor(e.Runtime, evaluation, actual, packageCallerKey, packageCallerID); err != nil {
+	if inputOnly {
+		err = validatePackageInputRuntime(result.Evaluation, reference.Inputs, budget, len(saved) > 0)
+	} else {
+		err = validateJointFillRuntimeFor(e.Runtime, evaluation, actual, packageCallerKey, packageCallerID)
+	}
+	if err != nil {
 		return err
 	}
 	return validateNativeSmokeRuns(e.Runtime.Runs)
@@ -121,7 +137,9 @@ func validatePackageConstructionReplay(envelope packageConstructionEnvelope, res
 	// The inner digest follows the compiler's typed saved-result encoding; the
 	// outer digest binds the original receipt bytes, including historical timing.
 	var typed workspaceexecution.ConstructionResult
-	if err := json.Unmarshal(old.Result, &typed); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(old.Result))
+	decoder.UseNumber()
+	if err := decoder.Decode(&typed); err != nil {
 		return "", err
 	}
 	canonical, err := json.Marshal(typed)
