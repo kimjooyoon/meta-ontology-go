@@ -328,8 +328,11 @@ the child process group; other platforms use the direct-child mechanism.
 
 Construction can use 1..8 workers; native observations share one cancellable gate.
 They execute serially, with queue wait recorded in `artifact.wait_ns`. The 60-second
-runtime deadline includes waiting; each compiled-program run has a two-second
-limit. Mixed projections can replace the slot frequently. A source-bound original
+runtime deadline includes waiting and host process creation. Each compiled-program
+run adds a two-second limit after the host's Start call returns; the original
+deadline can expire earlier and is never extended. Start/Wait times and the
+applied wait budget appear in the [process observation](native-process-observations.md).
+Mixed projections can replace the slot frequently. A source-bound original
 build appears in `artifact.source_build`; `observation.build` records only work
 done by the current call. Reuse has three current children (version plus two runs)
 and excludes prior build cost. Owned execution uses runtime receipt profile v2;
