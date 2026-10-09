@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/body-composition-inputs/v1",
+  "inputs": [
+    {"Left":9007199254740993,"Right":2,"Label.input1":true,"Label.input2":"한글🙂","Compare.input0":"같음","Compare.input1":"같음"},
+    {"Left":0,"Right":0,"Label.input1":false,"Label.input2":"","Compare.input0":"","Compare.input1":""}
+  ]
+}

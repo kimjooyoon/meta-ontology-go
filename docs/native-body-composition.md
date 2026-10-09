@@ -42,6 +42,27 @@ deterministically. The finite suite has seven input scenarios and 49 named
 output expectations, covering operand order, zero/false/empty values, Unicode
 and int64 wraparound.
 
+## Observe inputs before writing caller tests
+
+Use `--inputs` with the `gooo/body-composition-inputs/v1` schema to run actual
+values without supplying an expected result. The saved directory contains
+`inputs.json`; the CLI envelope records `input_schema`. Source-owned selection
+cases still guide assembly. Native observations report zero expectations, zero
+passes and `UNKNOWN` correctness with `NO_RUNTIME_EXPECTATIONS`.
+
+```sh
+gooo-dev body-compose --source examples/body-codegen/native-input-joins.gooo.fixture \
+  --inputs examples/composition-inputs/joins.json --repeat 2 --out out/observed-joins
+```
+
+Later use `--composition out/observed-joins/composition.json` with either new
+`--inputs` or scored `--cases`. Both replay the source-bound graph with zero new
+model calls. `--resume-composition` also accepts input-only observations with an
+explicit policy. Choose exactly one of `--inputs`, `--cases`, `--case-series`.
+The [runnable guide](../examples/composition-inputs/README.md) shows the complete
+observe/replay/check sequence. This route is a development addition after
+v0.6.22-dev; existing public release commands continue to use `--cases`.
+
 ## Run and continue
 
 ```sh
