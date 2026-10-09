@@ -65,6 +65,13 @@ v0.6.22-dev; existing public release commands continue to use `--cases`.
 
 ## Run and continue
 
+Before creating a composition, use development `body-plan --source SOURCE
+--entry ACTIVITY` to read caller input keys, bindings and called assembly order.
+`--inputs-template` writes editable input placeholders with no expected outputs;
+`--json` exports the source-bound structural plan. See
+[plan inspection](composition-plan-inspection.md) for a complete sequence.
+Inspection does not generate candidates, check bodies or load a model.
+
 ```sh
 gooo body-compose \
   --source examples/body-codegen/native-composition.gooo.fixture \

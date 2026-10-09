@@ -38,6 +38,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [body generation](docs/language/body-codegen.md)
 · [Gooo source assembly](docs/source-assembly.md)
 · [compose activity bodies](docs/native-body-composition.md)
+· [inspect inputs before assembly](docs/composition-plan-inspection.md)
 · [small model integration](docs/three-choice-path-model.md)
 · [capability discovery](docs/language/capability-discovery.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
