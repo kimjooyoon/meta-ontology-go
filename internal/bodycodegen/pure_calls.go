@@ -143,11 +143,11 @@ func (r *pureCallResolver) include(name string, depth int) (int, error) {
 	if err != nil || activity.Assembly != nil || r.ids[name] == "" {
 		return 0, fmt.Errorf("pure call %q requires a fixed computes activity in the same source", name)
 	}
-	parameters, err := sourceBodyParameters(activity, r.records)
+	parameters, err := sourceBodyParameters(activity, r.records, r.file)
 	if err != nil {
 		return 0, err
 	}
-	output, ok := bodyEntityType(activity.Output, r.records)
+	output, ok := bodyEntityType(activity.Output, r.records, r.file)
 	if !ok {
 		return 0, fmt.Errorf("pure call %q output is outside the value profile", name)
 	}

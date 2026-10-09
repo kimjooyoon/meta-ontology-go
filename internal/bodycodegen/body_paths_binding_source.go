@@ -23,7 +23,7 @@ func typedPathActivity(filename string, source []byte, name string, prepared *pa
 		}
 	}
 	if activity == nil || !activity.ValueProgramPresent || len(activity.Inputs) != 1 ||
-		activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" || prepared.ActivityName() != name {
+		sourceScalarKind(file, activity.Inputs[0].Name) != "Integer" || sourceScalarKind(file, activity.Output) != "Integer" || prepared.ActivityName() != name {
 		return nil, nil, fmt.Errorf("typed path plan must match one source Integer -> Integer activity")
 	}
 	return file, activity, nil
