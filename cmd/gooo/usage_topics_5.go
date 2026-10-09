@@ -34,8 +34,17 @@ Saved replay:
   gooo body-compose --source out/scalar-model/original.gooo \
     --cases examples/scalar-identity/cases.json --composition out/scalar-model/composition.json
 
+Observe values before writing runtime expectations:
+  gooo body-compose --source examples/scalar-identity/source.gooo.fixture \
+    --inputs examples/composition-inputs/record.json --entry Describe --out out/scalar-observed
+
+--inputs uses gooo/body-composition-inputs/v1 and saves inputs.json. It reports
+actual root and intermediate values with finite_total=0, finite_passed=0 and
+NO_RUNTIME_EXPECTATIONS (UNKNOWN correctness). Supply --cases on saved replay
+to score caller expectations later. --inputs, --cases and --case-series are exclusive.
+
 The source owns alternatives and finite assembly cases. --cases supplies the
-native execution inputs. Assembly field/case counts and native results are
+native execution inputs and expected outputs. Assembly field/case counts and native results are
 reported separately. Omitting --model uses deterministic order. The runtime
 model_calls count is zero during saved replay; the saved assembly report retains
 its original call count. Native compilation requires the project's Go toolchain.

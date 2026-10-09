@@ -233,6 +233,11 @@ beside the working body so the next generation can use the same alternatives.
 edges. One optional model is retained across integer assemblies; Integer,
 Boolean and Text activities then execute in a compiled graph with ordered
 intermediate input/output observations and finite expectation counts.
+The development CLI also accepts `body-compose --inputs` to observe values
+before writing caller expectations, then `--composition ... --cases ...` to
+check the same saved graph. Input-only execution reports UNKNOWN correctness
+with zero expectations. [Observe, replay and check](examples/composition-inputs/README.md)
+shows the new route; the v0.6.22-dev release continues to use `--cases`.
 Ordinary bodies support up to 16 ordered scalar inputs, including repeated types
 and partially bound joins. [Input-port example and runnable guide](docs/native-body-composition.md).
 String, Boolean and Integer records can be constructed, read and passed through

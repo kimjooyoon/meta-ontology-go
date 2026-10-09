@@ -8,14 +8,27 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 )
 
+func compositionInputModes(flags map[string]string) (count int) {
+	for _, flag := range []string{"--cases", "--inputs", "--case-series"} {
+		if flags[flag] != "" {
+			count++
+		}
+	}
+	return count
+}
+
 func readCompositionSuites(flags map[string]string) ([]bodyexecution.CompositionCases, []byte,
 	*bodyexecution.CompositionCaseSeries, error) {
 	if flags["--case-series"] == "" {
-		raw, err := readBodyExecutionFile(flags["--cases"], 32<<10)
+		path, decode := flags["--cases"], bodyexecution.DecodeCompositionCases
+		if flags["--inputs"] != "" {
+			path, decode = flags["--inputs"], bodyexecution.DecodeCompositionInputs
+		}
+		raw, err := readBodyExecutionFile(path, 32<<10)
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		suite, err := bodyexecution.DecodeCompositionCases(raw)
+		suite, err := decode(raw)
 		return []bodyexecution.CompositionCases{suite}, raw, nil, err
 	}
 	raw, err := readBodyExecutionFile(flags["--case-series"], 512<<10)
