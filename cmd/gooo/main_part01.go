@@ -189,6 +189,8 @@ func runWithInputCommandsOne(args []string, stdout, stderr io.Writer) (int, bool
 		return runGenerate(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
 	case "body-context":
 		return runBodyContext(args[1:], OSFileReader{}, stdout, stderr), true
+	case "body-plan":
+		return runBodyPlan(args[1:], OSFileReader{}, stdout, stderr), true
 	case "body-codegen":
 		return runBodyCodegen(args[1:], OSFileReader{}, stdout, stderr), true
 	default:
