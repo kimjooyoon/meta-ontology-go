@@ -29,6 +29,8 @@ type TypedPathContextExport struct {
 	CandidateTests       int                      `json:"candidate_tests"`
 	SelectedEmission     bool                     `json:"selected_emission"`
 	RepositoryWrites     int                      `json:"repository_writes"`
+	ModelCompatibility   *PathModelCompatibility  `json:"model_compatibility,omitempty"`
+	CompleteModelInput   *CompletePathModelInput  `json:"complete_model_input,omitempty"`
 	Scope                string                   `json:"scope"`
 }
 
@@ -46,6 +48,11 @@ func ExportTypedPathContext(ctx context.Context, filename string, source []byte,
 // The default API/CLI continue to use v2; v3 weights must opt in via metadata.
 func ExportTypedPathContextWithFeature(ctx context.Context, filename string, source []byte, activityName string,
 	document pathplan.Document, featureVersion string) (TypedPathContextExport, error) {
+	return exportTypedPathContext(ctx, filename, source, activityName, document, featureVersion, "")
+}
+
+func exportTypedPathContext(ctx context.Context, filename string, source []byte, activityName string,
+	document pathplan.Document, featureVersion, modelPath string) (TypedPathContextExport, error) {
 	started := time.Now()
 	receipt := &BodyPathReceipt{Schema: "gooo/body-context-export-validation/v1",
 		OriginalSourceSHA256: digest(source), Timing: BodyPathTiming{
@@ -57,7 +64,7 @@ func ExportTypedPathContextWithFeature(ctx context.Context, filename string, sou
 	if ctx == nil || len(source) == 0 || len(source) > 128<<10 {
 		return fail(fmt.Errorf("typed path context requires a context and source of at most 128 KiB"))
 	}
-	if featureVersion != decision.SplitContextIntentFeatureVersion && featureVersion != decision.SemanticContextIntentFeatureVersion {
+	if modelPath == "" && featureVersion != decision.SplitContextIntentFeatureVersion && featureVersion != decision.SemanticContextIntentFeatureVersion {
 		return fail(fmt.Errorf("unsupported compiler context feature version"))
 	}
 	ctx, cancel := context.WithTimeout(ctx, bodyPathBudget)
@@ -77,6 +84,10 @@ func ExportTypedPathContextWithFeature(ctx context.Context, filename string, sou
 	bound, err := bindTypedPathSource(ctx, filename, source, activityName, prepared, receipt)
 	if err != nil {
 		return fail(err)
+	}
+	if modelPath != "" {
+		return exportBoundPathModelContext(ctx, document, prepared, bound.base.Report.ActivityID,
+			featureVersion, modelPath, receipt, started)
 	}
 	return exportBoundPathContext(ctx, document, prepared, bound.base.Report.ActivityID, featureVersion, receipt, started)
 }

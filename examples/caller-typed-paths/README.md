@@ -34,6 +34,18 @@ rejected combinations. Earlier v1..v6 receipts keep their existing semantics.
 
 ## Model use and deterministic continuation
 
+Before construction, inspect the development source/model pair without prediction:
+
+```sh
+/tmp/gooo-typed-dev body-context --activity Choose --include-plan \
+  --model examples/scalar-identity/model/model.json examples/caller-typed-paths/unary.gooo.fixture
+```
+
+The existing record model declines this one typed choice with
+`THREE_DECISION_COUNT_UNSUPPORTED`; construction can proceed deterministically.
+The optional expanded plan shows source choices and separate finite cases.
+See [typed model preflight](../../docs/typed-model-preflight.md) for the input contracts.
+
 `model.gooo.fixture` adds three choices: branch layout, comparison operands and
 subtraction operands. It accepts a compatible own three-choice model via
 `--model /path/to/model.json`. Initial generation records its model calls and
