@@ -86,8 +86,10 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
-The [0.6.21 development guide](docs/releases/0.6.21-dev.md) covers scalar type
-identities, English/Korean names, the included own-model fixture and native replay.
+The [0.6.22 development guide](docs/releases/0.6.22-dev.md) starts with source/model
+preflight, the included own-model fixture and native replay. The
+[0.6.21 guide](docs/releases/0.6.21-dev.md) records scalar type identities and
+English/Korean names.
 The [0.6.20 development guide](docs/releases/0.6.20-dev.md) covers stable activity
 IDs, English/Korean names, variable assignment, conditions, native execution and
 saved replay. Its release page records when the candidate is published.
