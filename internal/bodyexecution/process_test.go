@@ -64,6 +64,15 @@ func TestRuntimeChildKeepsFailureCauseAndDiagnostics(t *testing.T) {
 	}
 }
 
+func TestRuntimeProcessCopyKeepsIndependentDiagnostics(t *testing.T) {
+	original := ProcessObservation{Diagnostics: []byte("original")}
+	copied := copyProcess(original)
+	copied.Diagnostics[0] = 'x'
+	if string(original.Diagnostics) != "original" {
+		t.Fatal("copy changed the original diagnostic bytes")
+	}
+}
+
 func TestRuntimeChildBoundsAndCancellation(t *testing.T) {
 	binary, err := os.Executable()
 	if err != nil {
