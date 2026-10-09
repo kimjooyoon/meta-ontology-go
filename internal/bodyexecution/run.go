@@ -195,9 +195,7 @@ func execute(ctx context.Context, filename string, source []byte, document pathp
 			phase.End(true)
 		}
 		phase = bodytiming.Start(ctx, phaseNames[run][1])
-		runCtx, stop := context.WithTimeout(ctx, 2*time.Second)
-		output, observation, runErr := process(runCtx, root, executable, input)
-		stop()
+		output, observation, runErr := processWithWaitLimit(ctx, 2*time.Second, root, executable, input)
 		r.Runs = append(r.Runs, observation)
 		if runErr != nil {
 			return finish(runErr)
