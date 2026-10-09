@@ -7,6 +7,8 @@ import (
 	"math/bits"
 	"slices"
 
+	"github.com/kimjooyoon/gooo-decision-runtime/bodyplan"
+	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 )
 
@@ -157,25 +159,35 @@ func RealizeSourcePathCandidate(ctx context.Context, filename string, source []b
 	if err != nil || projection.Report.ActivityID != result.ActivityID {
 		return result, nil, fmt.Errorf("typed path candidate projection or stable identity differs: %v", err)
 	}
-	local := make([]IRBodyFillTestCase, len(document.TestCases))
-	for i, test := range document.TestCases {
+	result, err = scoreSourcePathCandidate(ctx, []byte(projection.Source), activity, selected, document.TestCases, result)
+	if err != nil {
+		return result, nil, err
+	}
+	result.SelectedSourceSHA256 = digest([]byte(fixed))
+	return result, []byte(fixed), nil
+}
+
+func scoreSourcePathCandidate(ctx context.Context, projection []byte, activity string,
+	selected *bodyplan.Program, tests []pathplan.TestCase, result PathCandidate) (PathCandidate, error) {
+	local := make([]IRBodyFillTestCase, len(tests))
+	for i, test := range tests {
 		local[i] = IRBodyFillTestCase{Input: test.Input, Expected: test.Expected}
 	}
 	result.Stage = "LOCAL_CASES"
-	cases, passed, err := evaluateIntegerCasesContext(ctx, []byte(projection.Source), activity, local)
+	cases, passed, err := evaluateIntegerCasesContext(ctx, projection, activity, local)
 	if err != nil {
-		return rejectPathCandidate(ctx, result, err)
+		result, _, err = rejectPathCandidate(ctx, result, err)
+		return result, err
 	}
-	for i, test := range document.TestCases {
+	for i, test := range tests {
 		value, err := selected.Evaluate(test.Input)
 		if err != nil || value.Int != cases[i].Actual {
-			return result, nil, fmt.Errorf("typed path candidate and emitted evaluator disagree: %v", err)
+			return result, fmt.Errorf("typed path candidate and emitted evaluator disagree: %v", err)
 		}
 	}
 	result.Stage, result.Cases = "COMPLETE", cases
 	result.Passed, result.Total = passed, len(cases)
-	result.SelectedSourceSHA256 = digest([]byte(fixed))
-	return result, []byte(fixed), nil
+	return result, nil
 }
 
 func rejectPathCandidate(ctx context.Context, result PathCandidate, err error) (PathCandidate, []byte, error) {
