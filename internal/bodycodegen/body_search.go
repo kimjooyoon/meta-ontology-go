@@ -518,7 +518,7 @@ func prepareBodySearch(filename string, source []byte, activityName, holeID stri
 	if activity == nil || !activity.ValueProgramPresent || activity.ValueProgram == "" {
 		return nil, nil, "", "", fmt.Errorf("activity %q has no computes body", activityName)
 	}
-	if len(activity.Inputs) != 1 || activity.Inputs[0].Name != "Integer" || activity.Output != "Integer" {
+	if len(activity.Inputs) != 1 || sourceScalarKind(file, activity.Inputs[0].Name) != "Integer" || sourceScalarKind(file, activity.Output) != "Integer" {
 		return nil, nil, "", "", fmt.Errorf("IR body search requires one Integer input and one Integer output")
 	}
 	model, _, err := resolveBodyModel(file)

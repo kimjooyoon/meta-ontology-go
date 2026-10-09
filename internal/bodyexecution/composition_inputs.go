@@ -50,7 +50,7 @@ func (graph compositionGraph) bindActivityInputs(file *syntax.File, node *Compos
 			return fmt.Errorf("composition activity %q requires a scalar or declared record", node.Name)
 		}
 		if graphEntry && node.Assembling && !bodycodegen.IsRecordAssembly(&activity.Assembly.Spec) &&
-			(len(activity.Inputs) != 1 || node.InputType != "Integer" || node.OutputType != "Integer") {
+			(len(activity.Inputs) != 1 || graph.scalarKind(node.InputType) != "Integer" || graph.scalarKind(node.OutputType) != "Integer") {
 			return fmt.Errorf("composition assembly activity %q requires Integer -> Integer", node.Name)
 		}
 		return nil

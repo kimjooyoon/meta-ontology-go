@@ -45,6 +45,7 @@ func prepareCompositionGraphForEntry(ctx context.Context, filename string, sourc
 	if err != nil {
 		return graph, err
 	}
+	graph.scalarKinds = bodycodegen.ScalarKindsFromSource(file)
 	if err := graph.bindNodes(file, model, typed); err != nil {
 		return graph, err
 	}

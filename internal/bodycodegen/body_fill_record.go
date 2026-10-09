@@ -155,7 +155,7 @@ func generateWithRecordIRBodyFillOptions(
 		if len(activity.Inputs) > 1 {
 			name = fmt.Sprintf("input%d", index)
 		}
-		typeName, ok := bodyEntityType(input.Name, records)
+		typeName, ok := bodyEntityType(input.Name, records, file)
 		if !ok {
 			return Result{}, fmt.Errorf("activity input %q is outside the scalar or declared-record profile", input.Name)
 		}
