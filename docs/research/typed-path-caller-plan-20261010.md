@@ -44,6 +44,11 @@ Extending that spelling requires preserving source binding and existing arena
 indices; it is a separate follow-up. Typed-path helpers currently remain pure
 Integer -> Integer bodies within the existing 16-decision/128-node bounds.
 
+[Original observations](typed-path-caller-20261010/README.md) record the clean
+development producer, fixed and mixed own-model executions, separate input
+scores, model representation decline and saved replay. The local fixtures passed
+their finite checks; the current public0.6.23 tag keeps its earlier producer.
+
 ## External ideas and decisions
 
 Recent Hacker News and GeekNews reading led to these source checks. These are
