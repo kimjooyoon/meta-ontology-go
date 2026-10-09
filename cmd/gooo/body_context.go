@@ -65,14 +65,11 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 		}
 		return exitOK
 	}
-	if options.model != "" {
-		return bodyContextFailure(stdout, fmt.Errorf("body-context --model requires record source assembly"))
-	}
 	if options.valueFlow {
 		return bodyContextFailure(stdout, fmt.Errorf("value flow requires record source assembly"))
 	}
 	if bodycodegen.IsSourceIRSearch(assembly) {
-		if options.plan != "" || options.featureExplicit {
+		if options.plan != "" || options.featureExplicit || options.model != "" {
 			return bodyContextFailure(stdout, fmt.Errorf("source search owns its plan and has no model feature encoding"))
 		}
 		result, err := bodycodegen.ExportSourceIRSearchContext(ctx, options.filename, source, options.activity, options.includePlan)
@@ -89,8 +86,7 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
-	result, err := bodycodegen.ExportTypedPathContextWithFeature(ctx, options.filename, source,
-		options.activity, document, options.featureVersion)
+	result, err := exportTypedBodyContext(ctx, source, document, options)
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
@@ -162,6 +158,8 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 		o.featureVersion = decision.SplitContextIntentFeatureVersion
 	}
 	valid := o.featureVersion == decision.SplitContextIntentFeatureVersion || o.featureVersion == decision.SemanticContextIntentFeatureVersion ||
+		o.featureVersion == decision.PositionedIntentFeatureVersion || o.featureVersion == jointdecision.FeatureVersion ||
+		o.featureVersion == jointdecision.ThreeFeatureVersion || o.featureVersion == jointdecision.ThreeBagFeatureVersion ||
 		o.featureVersion == jointdecision.RecordFieldFeatureVersion || o.featureVersion == jointdecision.RecordSharedFeatureVersion ||
 		o.featureVersion == jointdecision.RecordOriginSharedFeatureVersion ||
 		o.featureVersion == jointdecision.RecordGraphSharedFeatureVersion

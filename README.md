@@ -211,6 +211,9 @@ execution, see [native body composition](docs/native-body-composition.md).
 For a source-owned record body, [inspect model compatibility](docs/record-model-preflight.md)
 with `body-context --model` before assembly. The model's input feature is selected
 automatically; representation declines retain their reason and perform zero predictions.
+The development [typed-path preflight](docs/typed-model-preflight.md) extends that
+inspection to branches, variables and operand choices, using construction's exact
+model input preparation. Public 0.6.23 retains its record preflight scope.
 
 ## What we are developing
 
