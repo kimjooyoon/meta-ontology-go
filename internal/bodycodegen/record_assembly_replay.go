@@ -165,7 +165,9 @@ func verifyRecordAssemblyRanking(r, expected *RecordAssemblyReceipt, plan record
 			return fmt.Errorf("declined context must use deterministic selection")
 		}
 	} else {
-		if r.ModelCalls != 1 || r.PredictNS < 1 || r.Prediction == nil {
+		// A completed short prediction can span zero clock ticks on a platform.
+		// Invocation and captured ranking establish inference; timing stays measured.
+		if r.ModelCalls != 1 || r.PredictNS < 0 || r.Prediction == nil {
 			return fmt.Errorf("record model call observation differs")
 		}
 		if err := verifyRecordPredictionRanking(r); err != nil {

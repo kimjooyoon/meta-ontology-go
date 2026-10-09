@@ -36,12 +36,12 @@ func prepareActivityBody(filename string, source []byte, activityName string) (p
 	if err != nil {
 		return p, err
 	}
-	p.parameters, err = sourceBodyParameters(p.activity, records)
+	p.parameters, err = sourceBodyParameters(p.activity, records, file)
 	if err != nil {
 		return p, err
 	}
 	var ok bool
-	p.outputType, ok = bodyEntityType(p.activity.Output, records)
+	p.outputType, ok = bodyEntityType(p.activity.Output, records, file)
 	if !ok {
 		return p, fmt.Errorf("activity %q output entity %q is outside the pure value profile", activityName, p.activity.Output)
 	}
@@ -79,13 +79,13 @@ func sourceBodyActivity(file *syntax.File, name string) (*syntax.ActivityDecl, e
 	return nil, fmt.Errorf("activity %q was not found", name)
 }
 
-func sourceBodyParameters(activity *syntax.ActivityDecl, records []RecordType) ([]InputParameter, error) {
+func sourceBodyParameters(activity *syntax.ActivityDecl, records []RecordType, files ...*syntax.File) ([]InputParameter, error) {
 	if len(activity.Inputs) < 1 || len(activity.Inputs) > 16 {
 		return nil, fmt.Errorf("activity %q requires 1..16 inputs, got %d", activity.Name, len(activity.Inputs))
 	}
 	parameters := make([]InputParameter, len(activity.Inputs))
 	for i, input := range activity.Inputs {
-		inputType, ok := bodyEntityType(input.Name, records)
+		inputType, ok := bodyEntityType(input.Name, records, files...)
 		if !ok {
 			return nil, fmt.Errorf("activity %q input entity %q is outside the pure value profile", activity.Name, input.Name)
 		}

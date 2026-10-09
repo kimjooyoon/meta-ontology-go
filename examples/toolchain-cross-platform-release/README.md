@@ -27,3 +27,12 @@ new runtime/replay predictions. Four raw package receipts are retained per
 platform; repeated executions do not increase the distinct-input count.
 These observations remain separate from the twenty-six structural corpus cases;
 they do not change the corpus denominator or measure trained model quality.
+
+The 0.6.21 native profile also constructs the scalar identity example with Korean
+and English type names, fixed selection and the included unchanged own graph model.
+It checks 12/12 authored fields over four selection cases and four different native
+input tuples, with exact large integers, Boolean and text fields. All four modes
+select identical native code; each saved replay performs zero new inference.
+The profile retains eight raw construct/replay reports per platform. The own model
+must actually infer once during construction and retain its metadata/weight hashes.
+These supplied-program checks remain separate from the structural corpus denominator.

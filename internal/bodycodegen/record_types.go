@@ -34,7 +34,7 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 		if node.Kind != bidir.EntityKind || len(node.Fields) == 0 {
 			continue
 		}
-		if _, scalar := goTypeForEntity(node.Name); scalar {
+		if ScalarEntityKind(node.Name, string(node.ID)) != "" {
 			return nil, fmt.Errorf("scalar entity %q cannot also declare record fields", node.Name)
 		}
 		if !recordIdentifier(node.Name) || len(node.Fields) > 16 || len(result) >= 16 {
@@ -89,8 +89,12 @@ func ParseBodyFile(filename string, source []byte) (*syntax.File, syntax.Diagnos
 	return file, diagnostics
 }
 
-func bodyEntityType(name string, records []RecordType) (string, bool) {
-	if scalar, ok := goTypeForEntity(name); ok {
+func bodyEntityType(name string, records []RecordType, files ...*syntax.File) (string, bool) {
+	var file *syntax.File
+	if len(files) != 0 {
+		file = files[0]
+	}
+	if scalar, ok := goTypeForEntity(sourceScalarKind(file, name)); ok {
 		return scalar, true
 	}
 	for _, record := range records {

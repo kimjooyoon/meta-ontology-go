@@ -62,7 +62,7 @@ func TestSharedRecordFieldContractFiniteContinuationAndRetainedConcurrency(t *te
 				t.Fatal(err)
 			}
 			r := result.Report.RecordAssembly
-			if r.ModelCalls != 1 || r.PredictNS < 1 || r.Prediction == nil || r.Context.Text != exported.Context.Text ||
+			if r.ModelCalls != 1 || r.PredictNS < 0 || r.Prediction == nil || r.Context.Text != exported.Context.Text ||
 				r.SelectedMask != 7 || r.FieldsPassed != 15 || len(r.Attempts) != 8 || r.Attempts[0].Mask != 0 ||
 				result.Report.CompletenessReceipt.Scope["decision_mode"] != "local_shared_field_prediction_then_finite_tdd" {
 				t.Fatal("shared single prediction/finite continuation differs", r)

@@ -73,6 +73,9 @@ types and presence from the validated workspace, including imported packages.
 Activities may declare an [explicit stable ID](docs/language/activity-identity.md)
 after the result type, so a display rename retains that identity in interfaces,
 generated markers and native delivery traces.
+Native scalar declarations can also keep [recognized type identities](docs/language/scalar-identity.md)
+while using English or Korean names. The source example includes a small own graph
+model for three field choices and separate native execution cases.
 
 Start a two-package library workspace with `gooo init --template library
 <directory>`. Its Gooo source declares an imported activity binding and a
@@ -83,6 +86,8 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
+The [0.6.21 development guide](docs/releases/0.6.21-dev.md) covers scalar type
+identities, English/Korean names, the included own-model fixture and native replay.
 The [0.6.20 development guide](docs/releases/0.6.20-dev.md) covers stable activity
 IDs, English/Korean names, variable assignment, conditions, native execution and
 saved replay. Its release page records when the candidate is published.

@@ -53,13 +53,14 @@ func generateSourceRecordFillCandidates(filename string, source []byte, activity
 	if output == nil {
 		return nil, nil, fmt.Errorf("record source-fill derivation requires a declared record output")
 	}
-	context := recordFillGrammarContext{activity: activity, records: records, output: output, cases: valueCases}
+	context := recordFillGrammarContext{file: file, activity: activity, records: records, output: output, cases: valueCases}
 	return generateSourceFillCandidatesWith(plan, func(grammar assemblyspec.FillHoleGrammar) ([]string, int, bool, error) {
 		return context.expressions(grammar)
 	})
 }
 
 type recordFillGrammarContext struct {
+	file     *syntax.File
 	activity *syntax.ActivityDecl
 	records  []RecordType
 	output   *RecordType
@@ -132,7 +133,7 @@ type recordFieldRelationAtom struct {
 func (c recordFillGrammarContext) fieldRelationSelectors() ([]recordFieldRelationSelector, error) {
 	selectors := make([]recordFieldRelationSelector, 0)
 	for inputIndex, input := range c.activity.Inputs {
-		if scalarTypeID(input.Name) != "" {
+		if c.scalarTypeID(input.Name) != "" {
 			continue
 		}
 		record := recordTypeByName(c.records, input.Name)
@@ -564,10 +565,10 @@ func (c recordFillGrammarContext) predicateAtoms(integerOrder bool) ([]string, e
 				root = fmt.Sprintf("input%d", inputIndex)
 			}
 			typeName := declaration.Name
-			if scalarTypeID(typeName) != "" {
-				literal, ok := recordFillLiteral(inputs[inputIndex], scalarTypeID(typeName))
+			if c.scalarTypeID(typeName) != "" {
+				literal, ok := recordFillLiteral(inputs[inputIndex], c.scalarTypeID(typeName))
 				if ok {
-					ordered := integerOrder && scalarTypeID(typeName) == string(semantic.BuiltinIntegerTypeID)
+					ordered := integerOrder && c.scalarTypeID(typeName) == string(semantic.BuiltinIntegerTypeID)
 					appendRecordPredicates(&expressions, seen, root, literal, ordered)
 				}
 				continue
@@ -657,6 +658,10 @@ func scalarTypeID(name string) string {
 	default:
 		return ""
 	}
+}
+
+func (c recordFillGrammarContext) scalarTypeID(name string) string {
+	return scalarTypeID(sourceScalarKind(c.file, name))
 }
 
 func recordFillLiteral(raw json.RawMessage, typeID string) (string, bool) {
