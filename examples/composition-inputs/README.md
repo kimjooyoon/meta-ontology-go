@@ -46,5 +46,6 @@ bound producer outputs. Use exactly one of `--inputs`, `--cases`, `--case-series
 input-only documents cannot include expectations. Limits remain 1..128 rows,
 32 KiB per input document and at most 16 executions including repeats.
 
-The development command needs the compiler revision containing this route;
-v0.6.22-dev's public `gooo` binary does not expose `body-compose --inputs`.
+The 0.6.23 development source includes this route. Public v0.6.22-dev predates it.
+See the [0.6.23 guide](../../docs/releases/0.6.23-dev.md) for the native release
+profile, then use `gooo` in the commands above with the matching installed version.

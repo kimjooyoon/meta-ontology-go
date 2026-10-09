@@ -87,7 +87,9 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
-The [0.6.22 development guide](docs/releases/0.6.22-dev.md) starts with source/model
+The [0.6.23 development guide](docs/releases/0.6.23-dev.md) starts with input planning,
+input-only execution and later checking of the same saved program. The
+[0.6.22 guide](docs/releases/0.6.22-dev.md) covers source/model
 preflight, the included own-model fixture and native replay. The
 [0.6.21 guide](docs/releases/0.6.21-dev.md) records scalar type identities and
 English/Korean names.
@@ -238,7 +240,8 @@ The development CLI also accepts `body-compose --inputs` to observe values
 before writing caller expectations, then `--composition ... --cases ...` to
 check the same saved graph. Input-only execution reports UNKNOWN correctness
 with zero expectations. [Observe, replay and check](examples/composition-inputs/README.md)
-shows the new route; the v0.6.22-dev release continues to use `--cases`.
+shows the route included in the 0.6.23 development source. Public v0.6.22-dev
+requires `--cases`; use the matching 0.6.23 binary for input-only execution.
 Ordinary bodies support up to 16 ordered scalar inputs, including repeated types
 and partially bound joins. [Input-port example and runnable guide](docs/native-body-composition.md).
 String, Boolean and Integer records can be constructed, read and passed through
