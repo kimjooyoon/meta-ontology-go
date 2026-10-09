@@ -70,6 +70,9 @@ The development source also provides `gooo package interface --json
 gooo.workspace.json` for [package documentation and API tools](docs/language/package-interface.md).
 It exports stable declaration IDs, ordered function inputs, and record field
 types and presence from the validated workspace, including imported packages.
+Activities may declare an [explicit stable ID](docs/language/activity-identity.md)
+after the result type, so a display rename retains that identity in interfaces,
+generated markers and native delivery traces.
 
 Start a two-package library workspace with `gooo init --template library
 <directory>`. Its Gooo source declares an imported activity binding and a
@@ -80,10 +83,11 @@ provider it chooses deterministically from the same declared assignments. See
 
 ## First run
 
-The [0.6.19 development guide](docs/releases/0.6.19-dev.md) covers reading a
-package's declared structure, describing API changes with Gooo rules, and
-observing native startup separately from execution. Its release page records
-when the candidate is published.
+The [0.6.20 development guide](docs/releases/0.6.20-dev.md) covers stable activity
+IDs, English/Korean names, variable assignment, conditions, native execution and
+saved replay. Its release page records when the candidate is published.
+The [0.6.19 development guide](docs/releases/0.6.19-dev.md) covers package
+interfaces, API changes described by Gooo rules and native startup observations.
 The [0.6.18 development guide](docs/releases/0.6.18-dev.md) covers running a
 constructed package on actual inputs, reusing its receipt and evaluating it later.
 The [0.6.17 development guide](docs/releases/0.6.17-dev.md) covers imported-package
