@@ -68,6 +68,7 @@ jobs:
             --expected-goos "${{ matrix.goos }}" \
             --expected-goarch "${{ matrix.goarch }}"
       - name: Upload exact platform release receipt
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: toolchain-release-platform-${{ matrix.platform }}-${{ env.HEAD_SHA }}

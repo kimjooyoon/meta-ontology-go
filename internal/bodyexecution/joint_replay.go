@@ -42,7 +42,8 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 	}
 	executor := NewExecutor()
 	defer executor.Close()
-	if err := verifyJointAttempts(ctx, filename, source, prior, slots, order, executor, goBinary); err != nil {
+	result.ReplayFailure, err = verifyJointAttempts(ctx, filename, source, prior, slots, order, executor, goBinary)
+	if err != nil {
 		return result, err
 	}
 	result.ConstructionReplayed = true
@@ -66,56 +67,56 @@ func verifyJointHeader(ctx context.Context, filename string, source []byte, r Jo
 }
 
 func verifyJointAttempts(ctx context.Context, filename string, source []byte, prior JointConstruction,
-	slots []jointSlot, order [][]uint16, executor *Executor, goBinary string) error {
+	slots []jointSlot, order [][]uint16, executor *Executor, goBinary string) (*JointReplayFailure, error) {
 	best := -1
 	var bestSource []byte
 	var bestProgram Composition
 	for i, recorded := range prior.Attempts {
 		if !slices.Equal(recorded.Masks, order[i]) {
-			return fmt.Errorf("joint attempt %d differs from bounded source order", i)
+			return nil, fmt.Errorf("joint attempt %d differs from bounded source order", i)
 		}
 		attempt, selected, program, err := materializeJoint(ctx, filename, source, prior.ConstructionCases,
 			prior.Initial.Plan.EntryActivity, slots, recorded.Masks)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if compositionDigest(attempt.Candidates) != compositionDigest(recorded.Candidates) ||
 			compositionDigest(attempt.SearchCandidates) != compositionDigest(recorded.SearchCandidates) ||
 			compositionDigest(attempt.FillCandidates) != compositionDigest(recorded.FillCandidates) ||
 			compositionDigest(attempt.Rejection) != compositionDigest(recorded.Rejection) ||
 			attempt.LocalPassed != recorded.LocalPassed || attempt.LocalTotal != recorded.LocalTotal {
-			return fmt.Errorf("joint attempt %d local obligations differ", i)
+			return nil, fmt.Errorf("joint attempt %d local obligations differ", i)
 		}
 		if attempt.Rejection != nil {
 			if compositionDigest(recorded.Runtime) != compositionDigest(CompositionRuntime{}) {
-				return fmt.Errorf("joint rejected attempt %d cannot claim native caller observations", i)
+				return nil, fmt.Errorf("joint rejected attempt %d cannot claim native caller observations", i)
 			}
 			continue
 		}
 		attempt.Runtime, err = executor.ExecuteComposition(ctx, filename, selected, program, prior.ConstructionCases, goBinary)
 		if err != nil {
-			return err
+			return &JointReplayFailure{i, "CALLER_EXECUTION", attempt.Runtime}, fmt.Errorf("joint replay attempt %d: %w", i, err)
 		}
 		if !sameJointRuntime(attempt.Runtime, recorded.Runtime) {
-			return fmt.Errorf("joint attempt %d native caller observations differ", i)
+			return &JointReplayFailure{i, "CALLER_COMPARISON", attempt.Runtime}, fmt.Errorf("joint attempt %d native caller observations differ", i)
 		}
 		if best < 0 || betterJoint(attempt, prior.Attempts[best]) {
 			best, bestSource, bestProgram = i, selected, program
 		}
 		if jointComplete(attempt) && i != len(prior.Attempts)-1 {
-			return fmt.Errorf("joint construction continued after satisfying all obligations")
+			return nil, fmt.Errorf("joint construction continued after satisfying all obligations")
 		}
 	}
 	if best != prior.SelectedAttempt || string(bestSource) != prior.SelectedSource ||
 		bestProgram.Source != prior.Selected.Source || bestProgram.Driver != prior.Selected.Driver {
-		return fmt.Errorf("joint selected program differs from observed candidates")
+		return nil, fmt.Errorf("joint selected program differs from observed candidates")
 	}
 	decision, stop := jointOutcome(prior)
 	if decision != prior.Decision || stop != prior.StopReason ||
 		(decision != "COMPLETE_FINITE" && len(prior.Attempts) != len(order)) {
-		return fmt.Errorf("joint stopping observation differs")
+		return nil, fmt.Errorf("joint stopping observation differs")
 	}
-	return VerifyComposition(ctx, filename, bestSource, prior.Selected)
+	return nil, VerifyComposition(ctx, filename, bestSource, prior.Selected)
 }
 
 func sameJointRuntime(a, b CompositionRuntime) bool {
