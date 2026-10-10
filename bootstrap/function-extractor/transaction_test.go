@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -30,7 +32,7 @@ func TestCommitStagedPreservesPreexistingTemp(t *testing.T) {
 	}
 }
 
-func TestReportPublishFailureRollsBackTransaction(t *testing.T) {
+func TestTransactionFailurePreservesOriginalFiles(t *testing.T) {
 	root := t.TempDir()
 	destination := filepath.Join(root, "source.go")
 	if err := os.WriteFile(destination, []byte("package old\n"), 0o644); err != nil {
@@ -41,23 +43,36 @@ func TestReportPublishFailureRollsBackTransaction(t *testing.T) {
 		"source.go": {name: destination, data: []byte("package new\n"), mode: 0o644},
 		"helper.go": {name: created, data: []byte("package helper\n"), mode: 0o644, created: true},
 	})
-	if err != nil {
-		t.Fatal(err)
+	if runtime.GOOS == "linux" {
+		if err != nil {
+			t.Fatal(err)
+		}
+		reportPath := filepath.Join(root, "report-directory")
+		if err := os.Mkdir(reportPath, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := writeExtractionReport(reportPath, extractionReport{}); err == nil {
+			t.Fatal("report publication unexpectedly succeeded")
+		}
+		if err := rollbackTransactions(transaction.files, len(transaction.files)); err != nil {
+			t.Fatal(err)
+		}
+	} else if err == nil || !strings.Contains(err.Error(), "namespace replacement unsupported on GOOS "+runtime.GOOS) {
+		t.Fatalf("unsupported host did not reject the transaction: %v", err)
 	}
-	reportPath := filepath.Join(root, "report-directory")
-	if err := os.Mkdir(reportPath, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := writeExtractionReport(reportPath, extractionReport{}); err == nil {
-		t.Fatal("report publication unexpectedly succeeded")
-	}
-	rollbackTransactions(transaction.files, len(transaction.files))
 	got, err := os.ReadFile(destination)
 	if err != nil || !bytes.Equal(got, []byte("package old\n")) {
 		t.Fatalf("destination was not restored: %v", err)
 	}
 	if _, err := os.Lstat(created); !os.IsNotExist(err) {
 		t.Fatalf("created helper survived rollback: %v", err)
+	}
+	for _, name := range []string{destination, created} {
+		for _, suffix := range []string{".extract.tmp", ".extract.bak"} {
+			if _, err := os.Lstat(name + suffix); !os.IsNotExist(err) {
+				t.Fatalf("transaction residue %s: %v", name+suffix, err)
+			}
+		}
 	}
 }
 
