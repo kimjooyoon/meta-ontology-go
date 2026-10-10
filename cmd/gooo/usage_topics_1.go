@@ -19,24 +19,7 @@ Try it:
 See docs/language-direction.ko.md and docs/language/language-semantic-model.md
 for the current language model and supported syntax.
 `,
-	"models": `Local models for source-declared choices
-
-The Gooo source declares alternatives, types and finite cases. A compatible local
-model proposes candidate order. Omitting --model selects deterministic order.
-
-From the compiler source checkout, inspect the included own model:
-  gooo body-context --activity Describe \
-    --model examples/scalar-identity/model/model.json examples/scalar-identity/source.gooo.fixture
-
-The model metadata selects its input feature. Inspection reports compatibility
-and reasons for representation decline with zero predictions and candidate tests.
-Use gooo help body-compose for assembly and saved replay. Field and case counts
-describe their recorded finite examples. Model-call counts identify actual inference.
-
-See docs/record-model-preflight.md and examples/scalar-identity/model/README.md.
-Explicit operation-provider configuration remains documented in
-docs/language/laya-decision-provider.md.
-`,
+	"models": modelsHelp,
 	"body-codegen": `Generate a Gooo activity body
 
 Usage:
