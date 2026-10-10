@@ -1,0 +1,15 @@
+{
+  "deterministic_attempts": 3,
+  "feedback_additional_calls": 0,
+  "feedback_mode_initial_predict_ns": 10708,
+  "initial_predict_ns": 12125,
+  "model_attempts": 1,
+  "native_cases": 8,
+  "new_audit_model_calls": 0,
+  "new_audit_native_runs": 0,
+  "producer": "9c7d5bc76735eb33db032646082240eb16a1cefc",
+  "scope": "Read-only audit of six original commands; no new inference, evaluator or native process.",
+  "source_conditions": 3,
+  "source_outputs": 6,
+  "status": "PASS"
+}

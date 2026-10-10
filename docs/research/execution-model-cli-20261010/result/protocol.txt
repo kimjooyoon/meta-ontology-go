@@ -1,0 +1,41 @@
+NEW protocol; no executions recorded yet.
+
+Purpose: use the unchanged public Gooo-trained v3 model through the compiler CLI.
+This is transport and composition dogfood, not a rerun of the 128-source study
+or independent-task accuracy. No fitting, sweeps, sampling or model changes.
+
+Producer: a clean commit on agent/execution-model-compiler-20261010 (record full
+revision before starting), Go1.27.2 and public SDK0.2.32. Build once with trimpath,
+preserve build metadata and binary SHA; clean_vcs is mandatory.
+
+Model: immutable public PR24 model-v3_output_on.json, file SHA256
+7827d36a64ce72ee9d880f7e6bdb9b29f3cfba34d02d435781df4bf034dd789c.
+Do not fit or rewrite it. Its training includes related max/min source forms.
+
+Source: examples/body-codegen/source-output-feedback.gooo.fixture. Max(input,10)
+with two source-declared choices, six output cases, three condition cases and
+four attempts. Exact large integers remain in typed Go structures. Main calls
+Choose directly. Construction caller case:11. Separate native evaluation:8
+cases including -11,9,10,11 and the exact large values in the checked-in suite.
+Some evaluation inputs overlap declared cases; do not call all eight held out.
+
+Fresh actual CLI commands, once each, in this order:
+1. body-context --model, expected 320 FP32 export and no predictions/tests.
+2. body-codegen deterministic, no model.
+3. body-codegen with model, step1, no feedback.
+4. body-codegen with model, step1, feedback rounds3.
+5. body-construct Main with this model, construction/evaluation suites, budget4.
+   This uses its ordinary initial model ranking; do not claim it enables the
+   body-codegen interleaved-feedback flags.
+6. Remove only the owned local model copy, then saved body-construct replay of
+   the stored construction and same evaluation suite. Expect zero new calls.
+
+Record stdout/stderr, /usr/bin/time -l for each command, source/model SHA,
+start/completion markers. Report actual attempts, model calls, conditions,
+output cases, native cases, feedback output records, feature-version/digest
+parity and timings. Preserve unfavorable results. No host CPU-delta claim:
+user+system time divided by elapsed is average core demand, not system load.
+
+Once commands finish, validate their immutable records without new inference,
+evaluation or native processes, gzip-n and byte-compare raw originals. Do not
+restart completed commands or use the prior study as this CLI measurement.
