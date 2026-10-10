@@ -1,9 +1,9 @@
 # Compare the outcomes of a workflow change
 
-The 0.6.27 development candidate adds `gooo body-outcomes-delta`. It reads saved results from
+The published [0.6.27 development release](releases/0.6.27-dev.md) adds `gooo body-outcomes-delta`. It reads saved results from
 `body-construct` or `body-compose` and shows what changed for each caller input.
-The public0.6.26 binary predates this command; build the current development
-source with Go1.27.2 to use it.
+The public binary supports text and JSON output. The current development source
+also supports Markdown; build it with Go1.27.2 for all commands below.
 
 ```sh
 GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o /tmp/gooo-outcomes ./cmd/gooo
@@ -48,8 +48,8 @@ comparison itself never needs a model file.
 
 ### Share a change report
 
-The development source also exports a Markdown report for a pull request or
-team discussion:
+The development source after 0.6.27 also exports a Markdown report for a pull
+request or team discussion. This flag is absent from the 0.6.27 public binary:
 
 ```sh
 /tmp/gooo-outcomes body-outcomes-delta --before before.json --after after.json --markdown > change.md

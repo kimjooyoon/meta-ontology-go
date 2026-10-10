@@ -15,7 +15,7 @@ This example needs **Go 1.27.2** and no model or API key. In a new working
 directory on macOS or Linux:
 
 ```sh
-GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.26-dev
+GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.27-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -23,9 +23,9 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 ```
 
-This walkthrough pins the published 0.6.26 compiler. The
-[0.6.27 candidate guide](docs/releases/0.6.27-dev.md) describes the new saved-outcome
-comparison command and its publication status.
+This walkthrough pins the published 0.6.27 compiler. The
+[0.6.27 release guide](docs/releases/0.6.27-dev.md) covers comparing saved outcomes
+when a rule changes. The later Markdown report is available in development source.
 
 The last command prints:
 
