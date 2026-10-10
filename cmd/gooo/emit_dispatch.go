@@ -35,6 +35,8 @@ func runExtensionCommand(args []string, stdout, stderr io.Writer) int {
 		return runBodyRefine(args[1:], stdout, stderr)
 	case "completeness-delta":
 		return runCompletenessDelta(args[1:], stdout, stderr)
+	case "body-outcomes-delta":
+		return runBodyOutcomesDelta(args[1:], stdout, stderr)
 	case "certify":
 		return runRetentionCertify(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
 	case "consume":

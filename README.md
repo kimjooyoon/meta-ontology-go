@@ -77,6 +77,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [Gooo source assembly](docs/source-assembly.md)
 · [compose activity bodies](docs/native-body-composition.md)
 · [inspect inputs before assembly](docs/composition-plan-inspection.md)
+· [compare workflow outcomes after a rule change](docs/workflow-outcome-delta.md)
 · [small model integration](docs/three-choice-path-model.md)
 · [source-bound condition/output models and CLI](docs/condition-decision-model.md)
 · [capability discovery](docs/language/capability-discovery.md)

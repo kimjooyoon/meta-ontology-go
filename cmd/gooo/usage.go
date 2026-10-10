@@ -32,6 +32,7 @@ Commands:
   body-plan        List caller inputs and assembly dependencies without execution
   body-compose     Assemble, compile and execute a typed program
   body-construct   Reconsider body choices using whole-program examples
+  body-outcomes-delta Compare saved outputs and changed requirements by input
   generate         Generate a project from Gooo declarations
   discover         Map a natural-language question to a source-bound capability
   format, fix      Format or repair Gooo source
@@ -41,7 +42,7 @@ Commands:
 
 Use ` + "`gooo help <topic>`" + ` for guides and examples.
 Topics: start, language, models, body-codegen, body-context, body-plan, body-compose, body-construct,
-        discover, init, check, test, run,
+        body-outcomes-delta, discover, init, check, test, run,
         generate, format, package, inspect, query, version, commands
 `
 
