@@ -38,6 +38,26 @@ example or model training. The report makes no held-out accuracy claim from this
 overlap count. Candidate uniqueness and arbitrary-input correctness remain outside
 this summary, even when every supplied check passes.
 
+## First local choice and the selected program
+
+For typed-path bodies, the report also reads the initial local search history.
+It shows how many local candidates were recorded, the local model call count,
+the first candidate's output checks and its recorded intermediate-condition checks.
+Those local candidates differ from the caller program attempts at the top of the
+report. A first candidate can match every output while failing a declared condition.
+
+The first unmet condition includes its choice ID, exact integer input, expected
+Boolean and observed Boolean, or `not reached`. The first condition percentage
+counts the recorded condition rows; absent observations are marked `not recorded`.
+Each body also shows the path candidate from the selected caller attempt, which
+can differ from the initial locally selected body. Missing or ambiguous selections
+remain unmeasured. At most eight initial typed-path bodies are displayed, including
+constructed callable helpers; JSON retains the remaining bodies and observations.
+
+On replay, the initial model call count remains historical. The separate new-call
+row describes the replay/evaluation operation. Rendering these rows makes no model
+calls and does not repeat either search or native execution.
+
 ## Saved construction
 
 ```sh
