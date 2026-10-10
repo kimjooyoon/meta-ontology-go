@@ -4,6 +4,10 @@
 assembling programs, and keeping the evidence of how they behave. This repository
 contains its Go compiler. Source files use the `.gooo` extension.
 
+[Try 13 HTTP, Unicode, and byte functions in your browser](https://kimjooyoon.github.io/gooo-go-ports/)
+without installing anything or using a model. The demo runs fixed, precompiled
+Gooo → Go → WebAssembly programs; it does not compile arbitrary source.
+
 ## Try a working Gooo program
 
 Build a small diagnostic tool, then reuse its selected program on new inputs.
@@ -34,8 +38,8 @@ supplied cases. Replay uses the saved choices with zero new model calls. Edit
 [Installation, platform downloads, and next steps](docs/getting-started.md)
 explain what the finite checks establish and how to change the source.
 For a separate library example, [Gooo Go Ports](https://github.com/kimjooyoon/gooo-go-ports)
-implements eight HTTP and Unicode functions and compares them with Go originals;
-its [recorded checks](https://github.com/kimjooyoon/gooo-go-ports/blob/db55487870f91d7f5e42658c5323a82f12ce9830/evidence/initial.json)
+implements thirteen HTTP, Unicode, and byte functions and compares them with Go originals;
+its [recorded native checks](https://github.com/kimjooyoon/gooo-go-ports/blob/a58b55b798c95da04cc51cf779df76399ea59a55/evidence/math-bits-20261010.json)
 cover named inputs, not whole-package compatibility.
 
 Think of Gooo as a workshop: declarations provide the plan, a small local model
