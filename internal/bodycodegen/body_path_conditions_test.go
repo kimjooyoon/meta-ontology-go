@@ -187,7 +187,7 @@ func TestSourceConditionsUniqueObservationAndNoConditionCompatibility(t *testing
 		t.Fatal(err)
 	}
 	var plain []string
-	for _, line := range strings.Split(string(source), "\n") {
+	for line := range strings.SplitSeq(string(source), "\n") {
 		if !strings.Contains(line, "condition_case") {
 			plain = append(plain, line)
 		}
@@ -207,6 +207,79 @@ func TestSourceConditionsUniqueObservationAndNoConditionCompatibility(t *testing
 		}
 	}
 	if err := VerifyTypedPathProjection(ctx, "plain.gooo", source, doc, result); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSourceConditionsUseReassignedLocalValuesThroughReplay(t *testing.T) {
+	source := checkpointFixture(t, "let value = input; value = 0 - value; if value < 0 { return value } else { return 0 - value }",
+		[]assemblyspec.Choice{{ID: "sign", Kind: "branch_layout", Occurrence: 0, Intent: "Return a nonnegative value."}})
+	source = []byte(strings.Replace(string(source), `case "0" -> "2"`, `case "-9007199254740995" -> "9007199254740995"
+ case "0" -> "0"
+ case "9007199254740995" -> "9007199254740995"`, 1))
+	source = []byte(strings.Replace(string(source), `attempts "64"`, `condition_case "sign" input "-9007199254740995" -> "false"
+ condition_case "sign" input "9007199254740995" -> "true"
+ attempts "2"`, 1))
+	ctx := context.Background()
+	doc, err := DecodeSourcePathDocument(ctx, "assigned.gooo", source, "Assemble", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, model := range []string{"", writeTypedPathContractModel(t, false)} {
+		result, err := GenerateWithTypedPaths(ctx, "assigned.gooo", source, "Assemble", doc, model)
+		if err != nil {
+			t.Fatal(err)
+		}
+		p := result.Report.BodyPaths
+		if p.Conditions == nil || p.Conditions.Passed != 2 || p.FunctionalCompleteness != 100 ||
+			p.Search.Selection.Choices["sign"] != "layout_reverse" {
+			t.Fatal("assignment state was not observed", p)
+		}
+		if p.Conditions.Results[0].Observation.Value || !p.Conditions.Results[1].Observation.Value {
+			t.Fatal("observed original input instead of reassigned local")
+		}
+		if err := VerifyTypedPathProjection(ctx, "assigned.gooo", source, doc, result); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestSourceConditionFailureReachesModelReconsideration(t *testing.T) {
+	ctx := context.Background()
+	source := strings.ReplaceAll(string(conditionSource(t)),
+		`condition_case "comparison" input "-9007199254740995" -> "true"`,
+		`condition_case "comparison" input "-9007199254740995" -> "false"`)
+	source = strings.ReplaceAll(source,
+		`condition_case "comparison" input "9007199254740995" -> "false"`,
+		`condition_case "comparison" input "9007199254740995" -> "true"`)
+	source = strings.ReplaceAll(source, "음수 입력인지 비교한다. Compare whether input is negative.",
+		"양수 입력인지 비교한다. Compare whether input is positive.")
+	doc, err := DecodeSourcePathDocument(ctx, "feedback-conditions.gooo", []byte(source), "Choose", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ci := &pathplan.CIHint{SourceSHA: strings.Repeat("a", 40), Status: "FAIL"}
+	result, err := GenerateWithTypedPathFeedback(ctx, "feedback-conditions.gooo", []byte(source), "Choose", doc,
+		writeTypedPathContractModel(t, false), 1, 2, ci)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := result.Report.BodyPaths
+	if p.Conditions == nil || p.Conditions.Passed != 3 || p.FunctionalCompleteness != 100 || len(p.Feedback) == 0 {
+		t.Fatal("condition feedback lost final source validation", p)
+	}
+	first := p.Feedback[0]
+	if first.ConditionRejected != 1 || first.FirstConditionFailure == nil || first.ModelCalls != 3 || len(first.Judgments) != 3 {
+		t.Fatal("compiler did not expose the SDK condition feedback", first)
+	}
+	for _, j := range first.Judgments {
+		if !strings.Contains(j.Input, "condition_input=-9007199254740995") ||
+			!strings.Contains(j.Input, "condition_expected=false condition_actual=true condition_status=MISMATCH") ||
+			!strings.Contains(j.Input, "ci=FAIL") {
+			t.Fatal("source-bound model input lost observed condition failure", j.Input)
+		}
+	}
+	if err := VerifyTypedPathProjection(ctx, "feedback-conditions.gooo", []byte(source), doc, result); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -150,7 +150,7 @@ func main() {
 	require(len(os.Args) == 2, "observation directory required")
 	root := os.Args[1]
 	var original []string
-	for _, line := range strings.Split(string(read(filepath.Join(root, "constrained.gooo"))), "\n") {
+	for line := range strings.SplitSeq(string(read(filepath.Join(root, "constrained.gooo"))), "\n") {
 		if !strings.HasPrefix(line, "    condition_case ") {
 			original = append(original, line)
 		}

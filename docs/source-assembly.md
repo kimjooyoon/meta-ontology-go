@@ -244,7 +244,15 @@ These percentages describe the listed inputs and conditions. Natural-language
 hints still express broader intent; unlisted inputs and intermediate properties
 remain unmeasured. Some evaluation inputs overlap the fixture's local cases, so
 the eleven caller cases are reported as finite evaluation, not an unseen-input
-accuracy estimate. This API uses decision-runtime `v0.2.27-experimental`.
+accuracy estimate. This API uses decision-runtime `v0.2.28-experimental`.
+
+Explicit typed-path feedback also carries the first committed condition failure
+into the frozen model's next input. The feedback receipt records its candidate
+mask, exact input, expected Boolean and observed result. A condition that was not
+reached uses `UNOBSERVED` in the model context. Final-output failures and caller
+CI hints remain separate inputs. The complete intent is retained; an oversized
+context declines inference and leaves the existing frontier intact. This supplies
+an observed counterexample for the next ranking call without changing weights.
 The [paired own-model observation](research/source-conditions-20261010/README.md)
 keeps weights and output cases fixed and records how the three source conditions
 change candidate selection and saved native replay.
