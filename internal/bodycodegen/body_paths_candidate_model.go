@@ -90,11 +90,7 @@ func (m *conditionPathModel) exportInput(prepared *pathplan.PreparedPlan, input 
 	}
 	out.SourceFeatureSHA = digest(source[:])
 	if m.flow != nil {
-		var features [decision.ExecutionFlowFeatureDim]float32
-		if err := input.ExecutionFlowFeaturesInto(choice.ID, &features); err != nil {
-			return out, err
-		}
-		out.FlowFeatures, out.Bytes, out.InputSHA = &features, len(features)*4, candidateFeatureDigest(features[:])
+		return m.exportFlowInput(prepared, input, choice.ID, out)
 	} else if m.execution != nil {
 		var features [decision.ExecutionFeatureDim]float32
 		if err := input.ExecutionFeaturesInto(choice.ID, &features); err != nil {
@@ -108,5 +104,28 @@ func (m *conditionPathModel) exportInput(prepared *pathplan.PreparedPlan, input 
 		}
 		out.Features, out.Bytes, out.InputSHA = &features, len(features)*4, conditionFeatureDigest(features)
 	}
+	return out, nil
+}
+
+func (m *conditionPathModel) exportFlowInput(prepared *pathplan.PreparedPlan, input *pathplan.ConditionInput,
+	id string, out ExportedPathInput) (ExportedPathInput, error) {
+	var features [decision.ExecutionFlowFeatureDim]float32
+	var err error
+	if m.featureVersion() == decision.SemanticFlowFeatureVersion {
+		var semantic pathplan.SemanticBranchContext
+		semantic, err = prepared.SemanticBranchContext(id)
+		if err != nil {
+			return out, err
+		}
+		out.SemanticFlow = &semantic
+		out.SourceFeatureSHA = digest(semantic.Source[:])
+		err = input.ExecutionSemanticFlowFeaturesInto(id, &features)
+	} else {
+		err = input.ExecutionFlowFeaturesInto(id, &features)
+	}
+	if err != nil {
+		return out, err
+	}
+	out.FlowFeatures, out.Bytes, out.InputSHA = &features, len(features)*4, candidateFeatureDigest(features[:])
 	return out, nil
 }

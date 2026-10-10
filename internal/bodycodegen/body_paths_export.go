@@ -17,6 +17,7 @@ type ExportedPathInput struct {
 	Features          *[decision.FeatureDim]float32              `json:"features,omitempty"`
 	ExecutionFeatures *[decision.ExecutionFeatureDim]float32     `json:"execution_features,omitempty"`
 	FlowFeatures      *[decision.ExecutionFlowFeatureDim]float32 `json:"flow_features,omitempty"`
+	SemanticFlow      *pathplan.SemanticBranchContext            `json:"semantic_flow_context,omitempty"`
 }
 
 type TypedPathContextExport struct {
