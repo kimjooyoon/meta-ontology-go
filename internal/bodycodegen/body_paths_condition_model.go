@@ -8,6 +8,7 @@ import (
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/conditiondecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/executiondecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/flowdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
 
@@ -19,6 +20,7 @@ const conditionModelTensorBytes = conditiondecision.ParameterCount * 4
 type conditionPathModel struct {
 	model       *conditiondecision.Model
 	execution   *executiondecision.Model
+	flow        *flowdecision.Model
 	artifactSHA string
 }
 
@@ -27,7 +29,7 @@ func conditionFeatureDigest(features [decision.FeatureDim]float32) string {
 }
 
 func candidateFeatureDigest(features []float32) string {
-	var raw [decision.ExecutionFeatureDim * 4]byte
+	var raw [decision.ExecutionFlowFeatureDim * 4]byte
 	for i, value := range features {
 		binary.LittleEndian.PutUint32(raw[i*4:], math.Float32bits(value))
 	}
@@ -42,6 +44,9 @@ func prepareConditionModelContext(ctx context.Context, document pathplan.Documen
 		Inputs: []PathContextInput{}, Scope: "immutable source and authored intent; initially empty observation channels; input_sha256 hashes the versioned little-endian FP32 array; no predictions or candidate evaluation"}
 	if model.execution != nil {
 		r.Schema = "gooo/compiler-execution-model-context/v1"
+	}
+	if model.flow != nil {
+		r.Schema = "gooo/compiler-flow-model-context/v1"
 	}
 	input, err := model.initialInput(document, prepared)
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/conditiondecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/executiondecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/flowdecision"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
@@ -18,7 +19,13 @@ func cliVersionedCandidateModel(t *testing.T, version string) string {
 	t.Helper()
 	var raw []byte
 	var err error
-	if version == decision.ExecutionFeatureVersion {
+	if version == decision.ExecutionFlowFeatureVersion {
+		m, failure := flowdecision.New([flowdecision.ParameterCount]float32{})
+		if failure != nil {
+			t.Fatal(failure)
+		}
+		raw, err = m.Marshal()
+	} else if version == decision.ExecutionFeatureVersion {
 		m, failure := executiondecision.New([executiondecision.ParameterCount]float32{})
 		if failure != nil {
 			t.Fatal(failure)
@@ -42,7 +49,7 @@ func cliVersionedCandidateModel(t *testing.T, version string) string {
 }
 
 func TestCandidateModelCLIExplicitVersionAndArrays(t *testing.T) {
-	for _, version := range []string{decision.ConditionChannelFeatureVersion, decision.ConditionBranchFeatureVersion, decision.ExecutionFeatureVersion} {
+	for _, version := range []string{decision.ConditionChannelFeatureVersion, decision.ConditionBranchFeatureVersion, decision.ExecutionFeatureVersion, decision.ExecutionFlowFeatureVersion} {
 		t.Run(version, func(t *testing.T) {
 			model := cliVersionedCandidateModel(t, version)
 			source := "../../examples/body-codegen/source-output-feedback.gooo.fixture"
@@ -71,7 +78,10 @@ func TestCandidateModelCLIExplicitVersionAndArrays(t *testing.T) {
 				t.Fatal("versioned model bypassed codegen validation")
 			}
 			for i, input := range before.Inputs {
-				if input.InputSHA != "sha256:"+p.ConditionProgress[0].Ranking.FeatureSHA[i] || (input.ExecutionFeatures != nil) != (version == decision.ExecutionFeatureVersion) || (input.Features != nil) == (version == decision.ExecutionFeatureVersion) {
+				legacy := version == decision.ConditionChannelFeatureVersion || version == decision.ConditionBranchFeatureVersion
+				if input.InputSHA != "sha256:"+p.ConditionProgress[0].Ranking.FeatureSHA[i] ||
+					(input.ExecutionFeatures != nil) != (version == decision.ExecutionFeatureVersion) ||
+					(input.FlowFeatures != nil) != (version == decision.ExecutionFlowFeatureVersion) || (input.Features != nil) != legacy {
 					t.Fatal("preflight array or digest differs", i)
 				}
 			}
@@ -80,7 +90,14 @@ func TestCandidateModelCLIExplicitVersionAndArrays(t *testing.T) {
 }
 
 func TestExecutionModelCLIConstructAndReplayWithoutArtifact(t *testing.T) {
-	model := cliVersionedCandidateModel(t, decision.ExecutionFeatureVersion)
+	for _, version := range []string{decision.ExecutionFeatureVersion, decision.ExecutionFlowFeatureVersion} {
+		t.Run(version, func(t *testing.T) { candidateModelCLIConstructAndReplay(t, version) })
+	}
+}
+
+func candidateModelCLIConstructAndReplay(t *testing.T, version string) {
+	t.Helper()
+	model := cliVersionedCandidateModel(t, version)
 	root := filepath.Join(t.TempDir(), "construction")
 	base := "../../examples/body-codegen/source-output-"
 	goBin := filepath.Join(runtime.GOROOT(), "bin", "go")
@@ -98,7 +115,7 @@ func TestExecutionModelCLIConstructAndReplayWithoutArtifact(t *testing.T) {
 		t.Fatal(err)
 	}
 	p := result.Construction.Initial.Preparations[0].Generation.Report.BodyPaths
-	if result.Evaluation.Runtime.FinitePassed != 8 || p.Conditions.Passed != 3 || p.Search.Selection.ModelCalls != 1 || p.ModelRetention.FeatureVersion != decision.ExecutionFeatureVersion {
+	if result.Evaluation.Runtime.FinitePassed != 8 || p.Conditions.Passed != 3 || p.Search.Selection.ModelCalls != 1 || p.ModelRetention.FeatureVersion != version {
 		t.Fatal("construction did not retain execution model identity", result)
 	}
 	if err := os.Remove(model); err != nil {

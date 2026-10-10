@@ -118,7 +118,7 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 		o.featureVersion == jointdecision.RecordOriginSharedFeatureVersion ||
 		o.featureVersion == jointdecision.RecordGraphSharedFeatureVersion ||
 		o.featureVersion == decision.ConditionChannelFeatureVersion || o.featureVersion == decision.ConditionBranchFeatureVersion ||
-		o.featureVersion == decision.ExecutionFeatureVersion
+		o.featureVersion == decision.ExecutionFeatureVersion || o.featureVersion == decision.ExecutionFlowFeatureVersion
 	return o, o.activity != "" && o.filename != "" && valid
 }
 
