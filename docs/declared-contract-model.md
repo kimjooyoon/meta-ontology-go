@@ -85,6 +85,11 @@ go run ./cmd/gooo body-codegen --json --activity Choose \
 사례를 다르게 읽는 방식은 이번 묶음에서 첫 선택을 개선했지만, 판단 계산은 더 길었습니다.
 이 수치는 SDK 관측이며 실제 컴파일러 명령 전체의 시간과 구분합니다.
 
+공개 가중치를 연결한 [CLI 15개 명령의 관측](research/choice-contract-cli-20261010/README.md)에서는
+세 예제의 후보 시도가 5→4회였고, 첫 선택 성공은 양쪽 모두 2/3이었습니다. 네이티브 구성과
+모델 없는 저장 재실행은 각각 24/24개 사례를 통과했습니다. 모델을 사용하는 구성 전체는
+4.26~5.20ms였으며 파일 읽기 비용을 포함해 고정 순서보다 길었습니다.
+
 ### 앞선 공유 평균 모델
 
 [SDK의 고정 실험](https://github.com/kimjooyoon/gooo-decision-runtime/tree/88ef3de7895c832b91ece179e3623a57fd5997db/studies/contract-goals-20261010)은
