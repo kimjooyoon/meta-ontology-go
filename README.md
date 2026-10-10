@@ -25,7 +25,9 @@ gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace
 
 This walkthrough pins the published 0.6.27 compiler. The
 [0.6.27 release guide](docs/releases/0.6.27-dev.md) covers comparing saved outcomes
-when a rule changes. The later Markdown report is available in development source.
+when a rule changes. The [0.6.28 candidate guide](docs/releases/0.6.28-dev.md)
+covers readable construction reports, reading saved results without execution,
+Markdown outcome comparisons and the latest supported local decision models.
 
 The last command prints:
 

@@ -51,6 +51,9 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 }
 
 func smokeCallerExamples(binary, work string, input BuildInput) error {
+	if err := smokeConstructionReports(binary, work, input); err != nil {
+		return err
+	}
 	if err := smokeOutcomeDelta(binary, work, input); err != nil {
 		return err
 	}
