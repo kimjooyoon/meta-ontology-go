@@ -23,6 +23,8 @@ type RetainedModelInfo struct {
 	ModelSchema         string  `json:"model_schema,omitempty"`
 	FeatureVersion      string  `json:"feature_version,omitempty"`
 	ArithmeticVersion   string  `json:"arithmetic_version,omitempty"`
+	ArtifactSHA256      string  `json:"artifact_sha256,omitempty"`
+	ModelFingerprint    string  `json:"model_fingerprint,omitempty"`
 }
 
 type typedPathModel struct {
@@ -31,6 +33,7 @@ type typedPathModel struct {
 	joint       *jointdecision.Model
 	three       *jointdecision.ThreeModel
 	order       *retainedOrderModel
+	condition   *conditionPathModel
 	retention   *RetainedModelInfo
 	diagnosis   *PathDiagnosisOptions
 	observation *PathObservationOptions
@@ -41,11 +44,12 @@ type typedPathModel struct {
 // judge retains at most one fully checked plan, identified by its complete digest.
 // Callers must not mutate their source/document/options during a call.
 type TypedPathGenerator struct {
-	model *decision.Model
-	joint *jointdecision.Model
-	three *jointdecision.ThreeModel
-	order *retainedOrderModel
-	info  RetainedModelInfo
+	model     *decision.Model
+	joint     *jointdecision.Model
+	three     *jointdecision.ThreeModel
+	order     *retainedOrderModel
+	condition *conditionPathModel
+	info      RetainedModelInfo
 }
 
 type TypedPathOptions struct {
@@ -70,8 +74,13 @@ func NewTypedPathGenerator(modelPath string) (*TypedPathGenerator, error) {
 		}
 		g.model, g.joint, g.three = models.model, models.joint, models.three
 		g.order = models.order
+		g.condition = models.condition
 		g.info.Loaded = true
-		if g.order != nil {
+		if g.condition != nil {
+			g.info.ArtifactSHA256, g.info.ModelFingerprint = g.condition.artifactSHA, "sha256:"+g.condition.model.Fingerprint()
+			g.info.ResidentTensorBytes = conditionModelTensorBytes
+			g.info.ModelSchema, g.info.FeatureVersion = conditionModelSchema, decision.ConditionChannelFeatureVersion
+		} else if g.order != nil {
 			identity := g.order.runtime.Identity()
 			g.info.MetadataSHA256, g.info.WeightsSHA256 = identity.MetadataSHA256, identity.WeightsSHA256
 			g.info.ResidentTensorBytes = identity.TensorBytes
@@ -105,7 +114,7 @@ func (g *TypedPathGenerator) Generate(ctx context.Context, filename string, sour
 	if g == nil || g.info.Schema != "gooo/retained-path-model/v1" {
 		return Result{}, fmt.Errorf("generator required")
 	}
-	feedback, diagnosis, err := resolveTypedPathOptions(options, g.model != nil || g.joint != nil || g.three != nil || g.order != nil)
+	feedback, diagnosis, err := resolveTypedPathOptions(options, g.model != nil || g.joint != nil || g.three != nil || g.order != nil || g.condition != nil)
 	if err != nil {
 		return Result{}, err
 	}
@@ -114,6 +123,6 @@ func (g *TypedPathGenerator) Generate(ctx context.Context, filename string, sour
 		return Result{}, err
 	}
 	return generateTypedPathRequest(ctx, filename, source, activityName, document,
-		typedPathModel{model: g.model, joint: g.joint, three: g.three, order: g.order, retention: &g.info,
+		typedPathModel{model: g.model, joint: g.joint, three: g.three, order: g.order, condition: g.condition, retention: &g.info,
 			diagnosis: diagnosis, observation: observation}, options.StepAttempts, feedback)
 }
