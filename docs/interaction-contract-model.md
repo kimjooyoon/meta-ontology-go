@@ -1,7 +1,23 @@
 # 출력과 중간 조건을 함께 읽는 모델
 
-이 문서는 SDK 0.2.39 연결을 추가한 개발 소스 기준입니다. 공개 0.6.26의
-선택별 사례 모델 사용법은 [해당 버전 안내](releases/0.6.26-dev.md)에 있습니다.
+이 문서는 SDK 0.2.39 연결을 추가한 개발 소스 기준입니다. 공개 0.6.27은 SDK 0.2.37의
+선택별 사례 모델을 지원하며, 사용법은 [기존 모델 안내](releases/0.6.26-dev.md)에 있습니다.
+
+## 먼저 실행 파일의 모델 지원 범위 확인하기
+
+```sh
+gooo version --build --json
+```
+
+언어 버전과 함께 `decision_runtime.version`을 확인합니다. 이 개발 소스와 공개 파일의
+언어 버전 번호가 같을 수 있으므로, 실제 포함된 SDK와 `compiler_source_sha`를 함께 읽습니다.
+
+| 실행 파일 | 포함된 SDK | 이 안내의 상호작용 모델 |
+| --- | --- | --- |
+| 공개 0.6.27 파일 | `v0.2.37-experimental` | 지원하지 않음 |
+| 이 개발 소스에서 만든 파일 | `v0.2.39-experimental` | 지원 |
+
+새 모델을 사용하려면 아래처럼 이 소스를 빌드해 `out/gooo`로 실행합니다.
 
 Gooo 소스에 선택 가능한 분기와 기대 출력을 적고, `condition_case`로 중간 비교의
 참·거짓도 적습니다. 자체 모델은 이 세 정보를 함께 읽어 처음 확인할 경로를 고릅니다.
@@ -22,6 +38,7 @@ curl -fL https://github.com/kimjooyoon/gooo-decision-runtime/releases/download/v
 printf '%s\n' '4b61fe8d84df77c8dfac6a880eedcddfd8f5f903fa538d1e80532dd77f74b1ac  out/interaction-model/model-interaction-v1.json' \
   | shasum -a 256 -c -
 GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o out/gooo ./cmd/gooo
+out/gooo version --build --json
 
 out/gooo body-context --activity Choose \
   --model out/interaction-model/model-interaction-v1.json \
