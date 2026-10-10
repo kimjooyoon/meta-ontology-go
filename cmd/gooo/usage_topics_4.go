@@ -14,6 +14,8 @@ conflicting duplicates and missing observations remain explicit.
 This command does not execute programs, call models, or write files. Exit0
 means the comparison was produced; it does not mean every requirement passed.
 Use --json for exact integer values, original observations and grouped counts.
+Use --markdown for a shareable report with explicitly named denominators.
+Choose one output format. A group with no eligible population is n/a, not 0%.
 See docs/workflow-outcome-delta.md.
 `,
 	"body-construct": `Construct a program using caller feedback
