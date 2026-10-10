@@ -52,57 +52,7 @@ func runBodyContextWithContext(ctx context.Context, args []string, reader Source
 	if err != nil {
 		return bodyContextFailure(stdout, err)
 	}
-	if bodycodegen.IsRecordAssembly(assembly) {
-		if len(raw) != 0 {
-			return bodyContextFailure(stdout, fmt.Errorf("record source assembly owns its plan"))
-		}
-		result, err := exportRecordBodyContext(ctx, source, options)
-		if err != nil {
-			return bodyContextFailure(stdout, err)
-		}
-		if err = json.NewEncoder(stdout).Encode(result); err != nil {
-			return bodyContextFailure(stdout, err)
-		}
-		return exitOK
-	}
-	if options.model != "" {
-		return bodyContextFailure(stdout, fmt.Errorf("body-context --model requires record source assembly"))
-	}
-	if options.valueFlow {
-		return bodyContextFailure(stdout, fmt.Errorf("value flow requires record source assembly"))
-	}
-	if bodycodegen.IsSourceIRSearch(assembly) {
-		if options.plan != "" || options.featureExplicit {
-			return bodyContextFailure(stdout, fmt.Errorf("source search owns its plan and has no model feature encoding"))
-		}
-		result, err := bodycodegen.ExportSourceIRSearchContext(ctx, options.filename, source, options.activity, options.includePlan)
-		if err != nil {
-			return bodyContextFailure(stdout, err)
-		}
-		if err = json.NewEncoder(stdout).Encode(result); err != nil {
-			fmt.Fprintln(stderr, "context export output failed")
-			return exitFailure
-		}
-		return exitOK
-	}
-	document, err := bodycodegen.DecodeSourcePathDocument(ctx, options.filename, source, options.activity, raw)
-	if err != nil {
-		return bodyContextFailure(stdout, err)
-	}
-	result, err := bodycodegen.ExportTypedPathContextWithFeature(ctx, options.filename, source,
-		options.activity, document, options.featureVersion)
-	if err != nil {
-		return bodyContextFailure(stdout, err)
-	}
-	output := bodyContextOutput{TypedPathContextExport: result}
-	if options.includePlan {
-		output.ExpandedPlan = &document.Plan
-	}
-	if err = json.NewEncoder(stdout).Encode(output); err != nil {
-		fmt.Fprintln(stderr, "context export output failed")
-		return exitFailure
-	}
-	return exitOK
+	return runSourceBodyContext(ctx, source, raw, assembly, options, stdout, stderr)
 }
 
 type bodyContextArgs struct {
@@ -162,6 +112,8 @@ func parseBodyContextArgs(args []string) (bodyContextArgs, bool) {
 		o.featureVersion = decision.SplitContextIntentFeatureVersion
 	}
 	valid := o.featureVersion == decision.SplitContextIntentFeatureVersion || o.featureVersion == decision.SemanticContextIntentFeatureVersion ||
+		o.featureVersion == decision.PositionedIntentFeatureVersion || o.featureVersion == jointdecision.FeatureVersion ||
+		o.featureVersion == jointdecision.ThreeFeatureVersion || o.featureVersion == jointdecision.ThreeBagFeatureVersion ||
 		o.featureVersion == jointdecision.RecordFieldFeatureVersion || o.featureVersion == jointdecision.RecordSharedFeatureVersion ||
 		o.featureVersion == jointdecision.RecordOriginSharedFeatureVersion ||
 		o.featureVersion == jointdecision.RecordGraphSharedFeatureVersion

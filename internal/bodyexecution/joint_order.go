@@ -16,12 +16,24 @@ type jointSlot struct {
 	searchIDs    []string
 	fillIDs      []string
 	fillRejected bool
+	pathMasks    []uint16
+	pathReceipt  *bodycodegen.BodyPathReceipt
 }
 
 func jointSlots(ctx context.Context, filename string, source []byte, prior Composition) ([]jointSlot, string, error) {
 	var slots []jointSlot
 	space := big.NewInt(1)
 	for _, step := range prior.ConstructionSteps() {
+		if paths := step.Generation.Report.BodyPaths; paths != nil {
+			set, err := bodycodegen.PlanSourcePathCandidates(ctx, filename, source, step.Generation.Report.Activity, paths)
+			if err != nil {
+				return nil, "", err
+			}
+			slots = append(slots, jointSlot{activity: step.Generation.Report.Activity,
+				initial: set.Masks[0], ranking: slices.Clone(set.Masks), pathMasks: slices.Clone(set.Masks), pathReceipt: paths})
+			space.Mul(space, big.NewInt(int64(len(set.Masks))))
+			continue
+		}
 		if fill := step.Generation.Report.BodyFill; fill != nil {
 			slot, err := jointFillSlot(ctx, filename, source, step.Generation.Report.Activity, fill)
 			if err != nil {
@@ -57,9 +69,6 @@ func jointSlots(ctx context.Context, filename string, source []byte, prior Compo
 		}
 		r := step.Generation.Report.RecordAssembly
 		if r == nil {
-			if step.Generation.Report.BodyPaths != nil {
-				return nil, "", fmt.Errorf("joint construction requires record-choice, source IR search or source-fill bodies")
-			}
 			continue
 		}
 		if r.AttemptBudget == nil || *r.AttemptBudget < 1 || len(r.Ranking) == 0 {
@@ -73,7 +82,7 @@ func jointSlots(ctx context.Context, filename string, source []byte, prior Compo
 		space.Mul(space, big.NewInt(int64(len(ranking))))
 	}
 	if len(slots) < 1 || len(slots) > compositionLimit {
-		return nil, "", fmt.Errorf("joint construction requires 1..16 record-choice, source IR search or source-fill bodies")
+		return nil, "", fmt.Errorf("joint construction requires 1..16 source assembly bodies")
 	}
 	return slots, space.String(), nil
 }
@@ -87,6 +96,8 @@ func jointCandidateKinds(slots []jointSlot) []string {
 			kind, hasSearch = "source_search_index", true
 		} else if len(slot.fillIDs) != 0 {
 			kind, hasSearch = "source_fill_index", true
+		} else if len(slot.pathMasks) != 0 {
+			kind, hasSearch = "typed_path_mask", true
 		}
 		kinds = append(kinds, kind)
 	}

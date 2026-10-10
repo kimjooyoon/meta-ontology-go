@@ -125,7 +125,7 @@ func TestBodyContextModelPreservesExplicitFlowAndCancellation(t *testing.T) {
 	}
 }
 
-func TestBodyContextModelRejectsOtherAssemblyKinds(t *testing.T) {
+func TestBodyContextModelStillRequiresASourceOrExternalPlan(t *testing.T) {
 	_, model := recordModelContextFixture(t)
 	source, err := os.ReadFile("../../examples/body-codegen/path-recipe.gooo.fixture")
 	if err != nil {
@@ -134,7 +134,7 @@ func TestBodyContextModelRejectsOtherAssemblyKinds(t *testing.T) {
 	var out, stderr bytes.Buffer
 	if runBodyContext([]string{"--model", model, "--activity", "Compose", "r.gooo"},
 		mapSourceReader{"r.gooo": source}, &out, &stderr) != exitFailure ||
-		!strings.Contains(out.String(), "body-context --model requires record source assembly") ||
+		!strings.Contains(out.String(), "plan") ||
 		strings.Contains(out.String(), `"model_compatibility"`) {
 		t.Fatal("unsupported body advertised as compatible", out.String(), stderr.String())
 	}

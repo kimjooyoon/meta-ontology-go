@@ -1,0 +1,73 @@
+{
+  "producer": "ce430158302b9b472057582d1a83ab66760446fc",
+  "scope": "source-bound finite caller construction and separate evaluation; model-training exposure unknown",
+  "experiments": [
+    {
+      "schema": "gooo/joint-construction/v7",
+      "space": "2",
+      "attempts": 2,
+      "selected_attempt": 1,
+      "initial_caller_passed": 0,
+      "local_passed": 1,
+      "local_total": 1,
+      "construction_passed": 1,
+      "construction_total": 1,
+      "final_passed": 3,
+      "final_total": 3,
+      "separate_inputs": 3,
+      "final_model_calls": 0,
+      "initial_model_calls": 0,
+      "path_contexts": [
+        {
+          "activity": "Choose",
+          "model_predictions": 0,
+          "status": null,
+          "reason": null
+        }
+      ],
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "setup_ms": 0.000084,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+      }
+    },
+    {
+      "schema": "gooo/joint-construction/v7",
+      "space": "16",
+      "attempts": 15,
+      "selected_attempt": 14,
+      "initial_caller_passed": 0,
+      "local_passed": 2,
+      "local_total": 2,
+      "construction_passed": 1,
+      "construction_total": 1,
+      "final_passed": 3,
+      "final_total": 3,
+      "separate_inputs": 3,
+      "final_model_calls": 0,
+      "initial_model_calls": 1,
+      "path_contexts": [
+        {
+          "activity": "Choose",
+          "model_predictions": 0,
+          "status": "DECLINED_TO_DETERMINISTIC",
+          "reason": "THREE_DECISION_COUNT_UNSUPPORTED"
+        }
+      ],
+      "model": {
+        "schema": "gooo/retained-path-model/v1",
+        "loaded": true,
+        "metadata_sha256": "f95925a277c45957722bc116213c61bee997cc07a94adae738a05d218d660059",
+        "weights_sha256": "049081cc6dc62f3c4230f72e601c1fd421c514fce9cfdf7bc1eb412ca4c5514b",
+        "resident_tensor_bytes": 2096,
+        "setup_ms": 0.653666,
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "model_schema": "gooo/tiny-shared-three-choice-path-model/v1",
+        "feature_version": "triple_record_field_context_v1_shared_v1",
+        "arithmetic_version": "float32_separate_v1"
+      }
+    }
+  ]
+}
