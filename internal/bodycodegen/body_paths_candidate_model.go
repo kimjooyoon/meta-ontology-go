@@ -50,10 +50,12 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 	if m.contract != nil {
 		info.ModelSchema, info.ResidentTensorBytes = m.contract.ArtifactSchema(), contractdecision.ParameterCount*4
 	}
-	if _, ok := m.contract.(*contractdecision.ChoiceModel); ok {
+	switch m.contract.(type) {
+	case *contractdecision.ChoiceModel:
 		info.ResidentTensorBytes = contractdecision.ChoiceParameterCount * 4
-	}
-	if m.orderedContract() {
+	case *contractdecision.OrderedRequirementModel:
+		info.ResidentTensorBytes = contractdecision.OrderedRequirementParameterCount * 4
+	case *contractdecision.InteractionRequirementModel:
 		info.ResidentTensorBytes = contractdecision.InteractionRequirementParameterCount * 4
 	}
 	if m.execution != nil {
@@ -69,6 +71,8 @@ func decodeCandidateModel(raw []byte, schema string) (typedPathModel, error) {
 	var err error
 	if schema == contractdecision.InteractionRequirementSchema {
 		m.contract, err = contractdecision.DecodeInteractionRequirementConditioned(raw)
+	} else if schema == contractdecision.OrderedRequirementSchema {
+		m.contract, err = contractdecision.DecodeOrderedRequirementConditioned(raw)
 	} else if schema == contractdecision.ChoiceSchema {
 		m.contract, err = contractdecision.DecodeChoiceConditioned(raw)
 	} else if schema == contractdecision.Schema || schema == contractdecision.PoolingSchema {

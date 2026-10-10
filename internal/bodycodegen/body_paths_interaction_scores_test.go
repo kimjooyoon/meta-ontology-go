@@ -25,7 +25,7 @@ func (c exportedInteractionCases) ConditionFeatures(i int) ([decision.DeclaredCo
 	return c.conditions[i], nil
 }
 
-func checkInteractionContractScores(t *testing.T, g *TypedPathGenerator,
+func checkOrderedContractScores(t *testing.T, g *TypedPathGenerator,
 	before TypedPathContextExport, rank *pathplan.ContractRanking) {
 	t.Helper()
 	inputs := make([][contractdecision.OrderedFeatureDim]float32, len(before.Inputs))
@@ -33,14 +33,24 @@ func checkInteractionContractScores(t *testing.T, g *TypedPathGenerator,
 		inputs[i] = *row.OrderedFeatures
 	}
 	cases := exportedInteractionCases{before.ContractCases.Features, before.ContractConditions.Features}
-	var workspace contractdecision.InteractionRequirementWorkspace
 	var expected contractdecision.ChoicePrediction
-	model := g.condition.contract.(*contractdecision.InteractionRequirementModel)
-	if err := model.PredictChoicesInto(inputs, cases, cases, &workspace, &expected); err != nil {
+	var err error
+	switch model := g.condition.contract.(type) {
+	case *contractdecision.InteractionRequirementModel:
+		var workspace contractdecision.InteractionRequirementWorkspace
+		err = model.PredictChoicesInto(inputs, cases, cases, &workspace, &expected)
+	case *contractdecision.OrderedRequirementModel:
+		var workspace contractdecision.OrderedRequirementWorkspace
+		err = model.PredictChoicesInto(inputs, cases, cases, &workspace, &expected)
+	default:
+		t.Error("unexpected ordered contract model type")
+		return
+	}
+	if err != nil {
 		t.Error(err)
 		return
 	}
-	if expected.Logits != rank.Logits || rank.ModelFingerprint != model.Fingerprint() {
+	if expected.Logits != rank.Logits || rank.ModelFingerprint != g.condition.contract.Fingerprint() {
 		t.Error("actual compiler ranking differs from explicitly exported inputs")
 	}
 }

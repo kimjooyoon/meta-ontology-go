@@ -62,6 +62,11 @@ func checkInteractionContractExport(t *testing.T, before TypedPathContextExport,
 		info.FeatureVersion != contractdecision.OrderedSourceFeatureVersion || before.ContractConditions == nil {
 		t.Fatal("interaction preflight identity or work differs")
 	}
+	checkOrderedContractArrays(t, before, doc)
+}
+
+func checkOrderedContractArrays(t *testing.T, before TypedPathContextExport, doc pathplan.Document) {
+	t.Helper()
 	p, err := doc.Prepare()
 	if err != nil {
 		t.Fatal(err)
@@ -91,6 +96,12 @@ func checkInteractionContractExport(t *testing.T, before TypedPathContextExport,
 func checkInteractionContractGeneration(t *testing.T, g *TypedPathGenerator, source []byte,
 	doc pathplan.Document, before TypedPathContextExport) {
 	t.Helper()
+	checkOrderedContractGeneration(t, g, source, doc, before, "interaction_requirement_contract_fp32")
+}
+
+func checkOrderedContractGeneration(t *testing.T, g *TypedPathGenerator, source []byte,
+	doc pathplan.Document, before TypedPathContextExport, variant string) {
+	t.Helper()
 	r, err := g.Generate(context.Background(), "interaction.gooo", source, "Choose", doc, TypedPathOptions{StepAttempts: 1})
 	if err != nil {
 		t.Error(err)
@@ -99,7 +110,7 @@ func checkInteractionContractGeneration(t *testing.T, g *TypedPathGenerator, sou
 	p := r.Report.BodyPaths
 	if p.FunctionalCompleteness != 100 || p.Conditions.Passed != 3 || p.ContractRanking == nil ||
 		p.ContractRanking.Calls != 1 || p.Search.Selection.ModelCalls != 1 ||
-		p.Search.Selection.ModelVariant != "interaction_requirement_contract_fp32" || !reflect.DeepEqual(p.ModelContext, before.Context) {
+		p.Search.Selection.ModelVariant != variant || !reflect.DeepEqual(p.ModelContext, before.Context) {
 		t.Error("interaction model did not reach one-ranking checked construction")
 		return
 	}
@@ -121,5 +132,5 @@ func checkInteractionContractGeneration(t *testing.T, g *TypedPathGenerator, sou
 	if err := VerifyTypedPathProjection(context.Background(), "interaction.gooo", source, doc, r); err != nil {
 		t.Error(err)
 	}
-	checkInteractionContractScores(t, g, before, rank)
+	checkOrderedContractScores(t, g, before, rank)
 }

@@ -47,7 +47,11 @@ func TestInteractionAssignmentCLIContextAndNativeReplay(t *testing.T) {
 }
 
 func TestInteractionContractUnsupportedCLIChoiceUsesDeterministicSearch(t *testing.T) {
-	model := cliInteractionContractModel(t)
+	checkOrderedContractUnsupportedCLIChoice(t, cliInteractionContractModel(t))
+}
+
+func checkOrderedContractUnsupportedCLIChoice(t *testing.T, model string) {
+	t.Helper()
 	source := "../../examples/body-codegen/source-condition-cases.gooo.fixture"
 	var out, diagnostics bytes.Buffer
 	if code := run([]string{"body-context", "--model", model, "--activity", "Choose", source}, &out, &diagnostics); code != exitOK {

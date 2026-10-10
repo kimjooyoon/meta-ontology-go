@@ -128,6 +128,9 @@ func prepareContractModelContext(ctx context.Context, document pathplan.Document
 	r.ContractCases = &cases
 	if model.orderedContract() {
 		r.Schema = "gooo/compiler-interaction-contract-model-context/v1"
+		if model.contract.ArtifactSchema() == contractdecision.OrderedRequirementSchema {
+			r.Schema = "gooo/compiler-ordered-contract-model-context/v1"
+		}
 		r.Scope = "ordered source arrays, all declared outputs and Boolean conditions; zero predictions or candidate executions; FP32 digests use little-endian bytes"
 		r.ContractConditions, err = contractConditionContext(ctx, input)
 		if err != nil {

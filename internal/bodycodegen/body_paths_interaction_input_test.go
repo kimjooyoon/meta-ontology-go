@@ -13,10 +13,16 @@ import (
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/contractdecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
 
 func TestInteractionContractExportsEveryConditionAndEmptyStream(t *testing.T) {
 	name := writeInteractionContractModel(t, contractdecision.MeanPooling)
+	checkContractConditionStreams(t, name, checkInteractionContractExport)
+}
+
+func checkContractConditionStreams(t *testing.T, name string, check func(*testing.T, TypedPathContextExport, pathplan.Document)) {
+	t.Helper()
 	for _, count := range []int{0, 1, 128} {
 		source := interactionConditionsSource(count)
 		doc := declaredContractDocument(t, source)
@@ -24,7 +30,7 @@ func TestInteractionContractExportsEveryConditionAndEmptyStream(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		checkInteractionContractExport(t, before, doc)
+		check(t, before, doc)
 		rows := before.ContractConditions
 		if rows.Count != count || len(rows.Features) != count || !reflect.DeepEqual(before.Context.ContractConditions, &rows.ContractConditionContext) {
 			t.Fatal("condition rows or empty-channel identity lost", count)
@@ -109,7 +115,12 @@ func TestInteractionContractBoundedDigestPreservesLegacyWidths(t *testing.T) {
 }
 
 func TestInteractionContractCancellationAndContradictoryCases(t *testing.T) {
-	g, err := NewTypedPathGenerator(writeInteractionContractModel(t, contractdecision.ExtremePooling))
+	checkContractCancellationAndContradictoryCases(t, writeInteractionContractModel(t, contractdecision.ExtremePooling))
+}
+
+func checkContractCancellationAndContradictoryCases(t *testing.T, name string) {
+	t.Helper()
+	g, err := NewTypedPathGenerator(name)
 	if err != nil {
 		t.Fatal(err)
 	}

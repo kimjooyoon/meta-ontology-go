@@ -8,8 +8,8 @@ Omit --path-model (body-codegen) or --model (body-construct/body-compose)
 for deterministic order. A supplied unreadable or incompatible file is an error.
 
 Check the compiler's included SDK with gooo version --build --json.
-The public0.6.27 binary includes SDK0.2.37. This development source includes
-SDK0.2.39 and supports the interaction model described below.
+The public 0.6.27 binary includes SDK 0.2.37. This development source includes
+SDK 0.2.39 and supports the two ordered-source models described below.
 
 Typed integer branches, comparisons and variables:
   1. From the matching source checkout, get model-choice-v1.json and its checksum
@@ -49,6 +49,9 @@ Ordered source, output and intermediate-condition interaction model:
 
   Scores order candidates; authored output and condition checks record what
   each candidate satisfied. The guide also covers assignments and saved replay.
+  The same SDK release includes model-ordered-v1.json as a comparison model.
+  Select it with the same --model or --path-model option, keeping the same source and cases.
+  Model metadata and input inspection identify which model was used.
 
 Included record-field example:
   gooo body-context --activity Describe \

@@ -29,6 +29,15 @@ Gooo 소스에 선택 가능한 분기와 기대 출력을 적고, `condition_ca
 `model-interaction-v1.json`을 사용합니다. 가중치 배열은 FP32 19,034개, 76,136바이트입니다.
 파일과 실행 중 전체 메모리의 크기는 이 배열보다 큽니다.
 
+같은 배포의 `model-ordered-v1.json`도 연결할 수 있습니다. 두 모델은 같은 소스 배열,
+기대 출력, 중간 조건을 읽지만 점수를 계산하는 모델 구조가 다릅니다. 소스와 사례를 유지한 채
+모델 파일만 교체해 비교합니다. 모델을 생략한 고정 순서도 함께 기준으로 둡니다.
+
+| 파일 | 모델 형식 | FP32 가중치 배열 |
+| --- | --- | --- |
+| `model-interaction-v1.json` | `gooo/interaction-requirement-contract/v1` | 19,034개 · 76,136바이트 |
+| `model-ordered-v1.json` | `gooo/ordered-requirement-contract/v1` | 17,890개 · 71,560바이트 |
+
 개발 저장소 루트에서:
 
 ```sh
@@ -54,6 +63,16 @@ out/gooo body-codegen --json --activity Choose \
 같은 요구를 검사합니다. 손상됐거나 지원하지 않는 모델 파일을 지정하면 읽기 오류를 반환합니다.
 
 ## 실제 실행과 저장 재사용
+
+비교 모델을 사용할 때는 다음처럼 받아 체크섬을 확인하고 위 조립 명령의
+`--path-model` 또는 아래 명령의 `--model`에 이 파일을 지정합니다.
+
+```sh
+curl -fL https://github.com/kimjooyoon/gooo-decision-runtime/releases/download/v0.2.39-experimental/model-ordered-v1.json \
+  -o out/interaction-model/model-ordered-v1.json
+printf '%s\n' '9f2901905b0cd663ea61d678a0993e6f6c2abee3aef7689b1d00faa91e3f857d  out/interaction-model/model-ordered-v1.json' \
+  | shasum -a 256 -c -
+```
 
 ```sh
 out/gooo body-construct --entry Main \
