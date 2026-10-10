@@ -13,8 +13,9 @@ import (
 // Context text is disclosed only by this explicit export API, not normal receipts.
 type ExportedPathInput struct {
 	PathContextInput
-	Text     string                        `json:"text"`
-	Features *[decision.FeatureDim]float32 `json:"features,omitempty"`
+	Text              string                                 `json:"text"`
+	Features          *[decision.FeatureDim]float32          `json:"features,omitempty"`
+	ExecutionFeatures *[decision.ExecutionFeatureDim]float32 `json:"execution_features,omitempty"`
 }
 
 type TypedPathContextExport struct {

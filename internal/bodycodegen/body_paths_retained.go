@@ -77,9 +77,7 @@ func NewTypedPathGenerator(modelPath string) (*TypedPathGenerator, error) {
 		g.condition = models.condition
 		g.info.Loaded = true
 		if g.condition != nil {
-			g.info.ArtifactSHA256, g.info.ModelFingerprint = g.condition.artifactSHA, "sha256:"+g.condition.model.Fingerprint()
-			g.info.ResidentTensorBytes = conditionModelTensorBytes
-			g.info.ModelSchema, g.info.FeatureVersion = conditionModelSchema, decision.ConditionChannelFeatureVersion
+			g.condition.describe(&g.info)
 		} else if g.order != nil {
 			identity := g.order.runtime.Identity()
 			g.info.MetadataSHA256, g.info.WeightsSHA256 = identity.MetadataSHA256, identity.WeightsSHA256
