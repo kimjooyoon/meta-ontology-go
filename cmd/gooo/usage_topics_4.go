@@ -30,6 +30,10 @@ classifier for initial fill selection. Local fill holdouts stay separate from
 training/caller scores and never decide completion. Without models,
 the order is deterministic. Saved construction rechecks every attempted program
 without inference. Consumed caller inputs are reported separately from new ones.
+Use --format text for a short result or --format markdown for a shareable table.
+The default --format json and saved --out files retain every original record.
+Reports separate local checks, caller construction expectations and later evaluation;
+missing observations stay unmeasured and failures keep the original exit status.
 See examples/caller-guided-construction/README.md and examples/caller-source-fill/README.md.
 `,
 	"body-refine": `Run a Gooo policy between bounded construction rounds
