@@ -33,7 +33,7 @@ out/gooo body-codegen --json --activity Choose \
 ```
 
 입력 확인은 모델 판단과 후보 검사를 하지 않습니다. 조립은 처음 한 번 판단하고,
-진행 기록의 `predictions_this_advance`는 0으로 유지합니다. 모델을 생략하면 고정 순서로
+진행 기록의 `search.new_local_model_predictions`는 0으로 유지합니다. 모델을 생략하면 고정 순서로
 같은 요구를 검사합니다. 손상됐거나 지원하지 않는 모델 파일을 지정하면 읽기 오류를 반환합니다.
 
 ## 실제 실행과 저장 재사용
@@ -79,3 +79,9 @@ out/gooo body-construct \
 확인합니다. 학습 품질은 [SDK의 원래 실험](https://github.com/kimjooyoon/gooo-decision-runtime/tree/01dc72229552260f0e2da10a0a312865a8b9ed32/studies/interaction-requirement-learning-20261011)에
 성공과 실패를 함께 기록했습니다. 연결부 테스트 통과율을 새 정확도 수치로 세지 않습니다.
 규칙을 바꾼 뒤 저장 결과는 [결과 비교 명령](workflow-outcome-delta.md)으로 읽을 수 있습니다.
+
+[공개 가중치의 실제 연결 기록](research/interaction-contract-cli-20261011/README.md)에서는
+첫 추천이 틀렸고, 고정 순서와 모델 모두 후보 2개를 검사했습니다. 모델 판단은 약 138µs,
+파일 읽기를 포함한 조립은 기본 1.34ms·모델 6.86ms였습니다. 후속 네이티브 실행과 저장
+재실행은 각각 11/11개를 만족했고 결과 비교도 모두 같았습니다. 한 예제의 통합 관측이며
+새 정확도 수치나 일반적인 속도 개선으로 확대하지 않습니다.

@@ -1,0 +1,51 @@
+Gooo SDK 0.2.39 native integration observation, 2026-10-11 KST
+
+Purpose: inspect and construct a source-authored body with the published local
+interaction model, then execute its saved body without loading the model again.
+This is a compiler integration observation, not a new held-out accuracy study.
+No original fit, original SDK study, original release download or old pilot is rerun.
+
+Freeze before executing: exact clean compiler source SHA, source fixture SHA,
+construction/evaluation-case SHA and this protocol SHA. Use Go1.27.2 with
+GOWORK=off, and retain the actual compiler build info. Record immutable source
+and model identifiers in the local observation folder.
+
+Model: original publicly verified downloaded/model-interaction-v1.json from
+SDK v0.2.39-experimental; SHA256
+4b61fe8d84df77c8dfac6a880eedcddfd8f5f903fa538d1e80532dd77f74b1ac.
+No copy of the model is needed in this new observation folder.
+
+Source: examples/body-codegen/source-interaction-condition-cases.gooo.fixture.
+Two choices: branch layout and comparison operand order. Source has seven output
+goals, three Boolean condition goals, and a deterministic Main caller.
+Construction input: examples/body-codegen/source-condition-construction-cases.json.
+Evaluation input: examples/body-codegen/source-condition-evaluation-cases.json,
+11 caller inputs, including int64 values above 2^53. Some values overlap the
+source-authored goals; these are not held-out accuracy cases.
+
+Fixed sequence, each command exactly once:
+1. body-context with model: zero predictions/candidate tests; inspect the complete
+   ordered-source, output-case and condition arrays and their digests.
+2. body-codegen without model: deterministic baseline, step size1.
+3. body-codegen with published model: step size1, one initial ranking, retained
+   source/case/condition hashes match the context inspected in step1.
+4. body-construct with published model: Main entry, construction/evaluation inputs,
+   attempt budget8, actual Go1.27.2 compiler path and one caller-owned output folder.
+5. body-construct replay from step4's original.gooo and construction.json, same
+   evaluation inputs and no --model argument; the receipt must report zero new
+   model calls.
+6. body-outcomes-delta compares the saved native and replay outputs, with zero
+   new model predictions and generated-program executions. Retain the complete
+   comparison, including unchanged groups.
+
+Record complete stdout/stderr and exit status, /usr/bin/time -lp wall/user/system
+seconds and maximum resident bytes for every command. Keep first-proposal outcome,
+candidate attempts, declared output/condition counts, finite native counts, model
+calls and prediction nanoseconds distinct. Derive aggregate process CPU percentage
+as 100*(user+system)/wall, noting timer granularity and all subprocesses. No p50/p99,
+causal speedup or generalization claim follows from one fixed-order execution.
+
+On any failure retain all preceding output, mark the step failed and stop; do not
+silently retry the same observation. Later code corrections require a new stated
+integration protocol while preserving this attempt. Tests with synthetic weights
+are separate regression checks and are not added to accuracy totals.
