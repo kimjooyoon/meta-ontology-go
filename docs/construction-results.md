@@ -1,6 +1,6 @@
 # Reading a construction result
 
-Development source adds `--format text` and `--format markdown` to `body-construct`.
+The 0.6.28 candidate adds `--format text`, `--format markdown` and saved `--report` reading to `body-construct`.
 The public 0.6.27 binary predates these options. JSON remains the default and keeps
 the original shape. Every format uses the same construction and evaluation result;
 formatting adds no model call, candidate evaluation, compilation or program run.
@@ -38,7 +38,48 @@ example or model training. The report makes no held-out accuracy claim from this
 overlap count. Candidate uniqueness and arbitrary-input correctness remain outside
 this summary, even when every supplied check passes.
 
+## First local choice and the selected program
+
+For typed-path bodies, the report also reads the initial local search history.
+It shows how many local candidates were recorded, the local model call count,
+the first candidate's output checks and its recorded intermediate-condition checks.
+Those local candidates differ from the caller program attempts at the top of the
+report. A first candidate can match every output while failing a declared condition.
+
+The first unmet condition includes its choice ID, exact integer input, expected
+Boolean and observed Boolean, or `not reached`. The first condition percentage
+counts the recorded condition rows; absent observations are marked `not recorded`.
+Each body also shows the path candidate from the selected caller attempt, which
+can differ from the initial locally selected body. Missing or ambiguous selections
+remain unmeasured. At most eight initial typed-path bodies are displayed, including
+constructed callable helpers; JSON retains the remaining bodies and observations.
+
+On replay, the initial model call count remains historical. The separate new-call
+row describes the replay/evaluation operation. Rendering these rows makes no model
+calls and does not repeat either search or native execution.
+
 ## Saved construction
+
+### Read a saved result
+
+Save the full JSON stdout during the original invocation, for example by using
+`--format json > result.json` with the construction command above. Later, read
+that same observation without source files, model weights or a Go toolchain:
+
+```sh
+gooo body-construct --report result.json
+gooo body-construct --report result.json --format markdown
+```
+
+This mode reads one full JSON result, up to 32MiB. The default is text; JSON output
+returns the original bytes. It shows the file's SHA-256 and labels all reported
+calls, attempts and outcomes as historical. No model or generated program runs.
+Exit 0 means the file was read and formatted; a recorded failure remains visible.
+The recorded claims are not reverified. Execution flags and `--out` are excluded.
+The separate `construction.json` and `evaluation.json` files lack the full CLI
+envelope and cannot be substituted for `result.json`.
+
+### Replay with a current evaluation suite
 
 ```sh
 gooo body-construct --source first-construction/original.gooo \

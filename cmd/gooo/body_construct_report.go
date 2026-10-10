@@ -35,6 +35,8 @@ func writeBodyConstructResult(out io.Writer, result bodyConstructOutput, format 
 	fmt.Fprint(&text, "\nShares count the named supplied checks or expected activity outputs, not all possible inputs.\n")
 	fmt.Fprint(&text, "Input overlap counts caller root tuples only; local-example and model-training exposure are unknown.\n")
 	fmt.Fprint(&text, "Candidate uniqueness and behavior on other inputs are not assessed by this report.\n")
+	fmt.Fprint(&text, "Typed-path rows retain initial local search history; these candidates differ from caller program attempts.\n")
+	fmt.Fprint(&text, "Recorded local model calls belong to that history, including when a saved construction is replayed.\n")
 	fmt.Fprint(&text, "Use --format json for all attempts, values and evidence. Saved --out files remain full JSON and source.\n")
 	_, err := io.WriteString(out, text.String())
 	return err
@@ -52,6 +54,7 @@ func constructionReportRows(result bodyConstructOutput) [][2]string {
 		{"Attempted programs / budget", fmt.Sprintf("%d / %d", len(c.Attempts), c.ProgramBudget)},
 		{"Source-bounded candidate combinations", reportedValue(c.CandidateSpace)}}
 	rows = append(rows, constructionSelectionRows(c)...)
+	rows = append(rows, constructionPathRows(c)...)
 	rows = append(rows, [2]string{"Evaluation stage", reportedValue(e.Runtime.Stage)},
 		[2]string{"Evaluation expected outputs", constructionRuntimeShare(e.Runtime)})
 	if e.InputSeparation.Scope == "" {

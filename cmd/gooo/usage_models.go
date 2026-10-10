@@ -8,8 +8,8 @@ Omit --path-model (body-codegen) or --model (body-construct/body-compose)
 for deterministic order. A supplied unreadable or incompatible file is an error.
 
 Check the compiler's included SDK with gooo version --build --json.
-The public 0.6.27 binary includes SDK 0.2.37. This development source includes
-SDK 0.2.40 and supports the ordered-source and canonical models described below.
+This 0.6.28 candidate includes SDK 0.2.40 and supports the ordered-source and
+canonical models described below. The earlier public 0.6.27 includes SDK 0.2.37.
 
 Typed integer branches, comparisons and variables:
   1. From the matching source checkout, get model-choice-v1.json and its checksum

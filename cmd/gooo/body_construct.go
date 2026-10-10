@@ -15,7 +15,8 @@ import (
 
 const bodyConstructUsage = "usage: gooo body-construct --source <source.gooo> --cases <evaluation.json> " +
 	"(--construction-cases <feedback.json> --attempts <1..64> [--entry <activity>] [--model <model.json>] [--fill-model <model.json>] | " +
-	"--construction <construction.json>) [--go-bin <go1.27.2>] [--out <new-directory>] [--format json|text|markdown]"
+	"--construction <construction.json>) [--go-bin <go1.27.2>] [--out <new-directory>] [--format json|text|markdown]\n" +
+	"       gooo body-construct --report <saved-result.json> [--format text|markdown|json]"
 
 type bodyConstructOutput struct {
 	GeneratedNow bool                            `json:"generated_now"`
@@ -24,19 +25,22 @@ type bodyConstructOutput struct {
 }
 
 func runBodyConstruct(args []string, stdout, stderr io.Writer) int {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 	flags, err := parseBodyConstruct(args)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return exitUsage
 	}
+	if flags["--report"] != "" {
+		return runSavedConstructionReport(flags["--report"], flags["--format"], stdout, stderr)
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 	return executeBodyConstruct(ctx, flags, stdout, stderr)
 }
 
 func parseBodyConstruct(args []string) (map[string]string, error) {
 	flags := map[string]string{"--source": "", "--cases": "", "--construction-cases": "", "--attempts": "",
-		"--entry": "", "--model": "", "--fill-model": "", "--construction": "", "--go-bin": "", "--out": "", "--format": ""}
+		"--entry": "", "--model": "", "--fill-model": "", "--construction": "", "--go-bin": "", "--out": "", "--format": "", "--report": ""}
 	for i := 0; i < len(args); i += 2 {
 		value, ok := flags[args[i]]
 		if !ok || value != "" || i+1 >= len(args) || args[i+1] == "" || strings.HasPrefix(args[i+1], "--") {
@@ -44,11 +48,14 @@ func parseBodyConstruct(args []string) (map[string]string, error) {
 		}
 		flags[args[i]] = args[i+1]
 	}
-	if flags["--source"] == "" || flags["--cases"] == "" {
-		return nil, fmt.Errorf("%s", bodyConstructUsage)
-	}
 	if format := flags["--format"]; format != "" && format != "json" && format != "text" && format != "markdown" {
 		return nil, fmt.Errorf("body-construct format must be json, text or markdown")
+	}
+	if flags["--report"] != "" {
+		return parseSavedConstructionFlags(flags)
+	}
+	if flags["--source"] == "" || flags["--cases"] == "" {
+		return nil, fmt.Errorf("%s", bodyConstructUsage)
 	}
 	if flags["--construction"] != "" {
 		for _, key := range []string{"--construction-cases", "--attempts", "--entry", "--model", "--fill-model"} {
