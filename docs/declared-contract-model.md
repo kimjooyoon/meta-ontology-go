@@ -8,7 +8,10 @@ Gooo에는 만들 수 있는 코드 경로와 기대하는 결과를 함께 적�
 SDK [0.2.36 실험 배포](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.36-experimental)의
 `model-contract-v1.json`을 개발 컴파일러에 연결했습니다. 모델은 9,746개 FP32 가중치,
 38,984바이트의 가중치 배열을 사용합니다. 학습과 판단을 Go로 로컬 CPU에서 수행합니다.
-현재 설치된 공개 컴파일러 0.6.25에는 이 연결이 아직 포함되지 않습니다.
+공개 컴파일러 0.6.26부터 이 연결을 사용할 수 있습니다.
+
+개발 소스에는 출력과 중간 조건을 함께 읽는 [SDK 0.2.39 상호작용 모델](interaction-contract-model.md)도
+연결했습니다. 아래 표와 기존 관측은 앞선 모델들의 입력 형식과 결과를 기록합니다.
 
 이번 개발 변경에서는 [SDK0.2.37](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.37-experimental)의
 선택별 사례 모델과 전역 집계 모델도 같은 명령으로 읽습니다. 두 파일은 새 문서 388개 중

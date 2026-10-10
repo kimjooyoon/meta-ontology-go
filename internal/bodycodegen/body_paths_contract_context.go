@@ -8,6 +8,7 @@ import (
 	"math"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
+	"github.com/kimjooyoon/gooo-decision-runtime/contractdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
 
@@ -64,10 +65,18 @@ func exportContractCases(document pathplan.Document, prepared *pathplan.Prepared
 	return r, nil
 }
 
-func exportedContractInput(input *pathplan.ContractInput, choice pathplan.Choice) (ExportedPathInput, error) {
+func exportedContractInput(input *pathplan.ContractInput, choice pathplan.Choice, ordered bool) (ExportedPathInput, error) {
 	intent := digest([]byte(choice.Intent))
 	r := ExportedPathInput{DecisionID: choice.ID,
 		OriginalIntentSHA: intent, NaturalIntentSHA: intent, Text: choice.Intent}
+	if ordered {
+		var features [contractdecision.OrderedFeatureDim]float32
+		if err := input.OrderedSourceFeaturesInto(choice.ID, &features); err != nil {
+			return r, err
+		}
+		r.OrderedFeatures, r.Bytes, r.InputSHA = &features, len(features)*4, candidateFeatureDigest(features[:])
+		return r, nil
+	}
 	var features [decision.ExecutionFlowFeatureDim]float32
 	if err := input.RelationalSourceFeaturesInto(choice.ID, &features); err != nil {
 		return r, err
@@ -76,16 +85,26 @@ func exportedContractInput(input *pathplan.ContractInput, choice pathplan.Choice
 	return r, nil
 }
 
-func exportedContractInputs(document pathplan.Document, prepared *pathplan.PreparedPlan) ([]ExportedPathInput, error) {
+func exportedContractInputs(document pathplan.Document, prepared *pathplan.PreparedPlan, ordered bool) ([]ExportedPathInput, error) {
 	input, err := prepared.InitialContractInput(document.TestCases)
 	if err != nil {
 		return nil, err
 	}
 	r := make([]ExportedPathInput, 0, len(document.Plan.Decisions))
 	for _, choice := range document.Plan.Decisions {
-		exported, err := exportedContractInput(input, choice)
+		exported, err := exportedContractInput(input, choice, ordered)
 		if err != nil {
 			return nil, err
+		}
+		if ordered {
+			view, err := prepared.OrderedBranchContext(choice.ID)
+			if err != nil {
+				return nil, err
+			}
+			if !view.Available {
+				return nil, fmt.Errorf("ordered explanation unavailable: %s", view.Reason)
+			}
+			exported.OrderedBranch = &view
 		}
 		r = append(r, exported)
 	}
@@ -107,6 +126,17 @@ func prepareContractModelContext(ctx context.Context, document pathplan.Document
 		return prepared, r, false, err
 	}
 	r.ContractCases = &cases
+	if model.orderedContract() {
+		r.Schema = "gooo/compiler-interaction-contract-model-context/v1"
+		if model.contract.ArtifactSchema() == contractdecision.OrderedRequirementSchema {
+			r.Schema = "gooo/compiler-ordered-contract-model-context/v1"
+		}
+		r.Scope = "ordered source arrays, all declared outputs and Boolean conditions; zero predictions or candidate executions; FP32 digests use little-endian bytes"
+		r.ContractConditions, err = contractConditionContext(ctx, input)
+		if err != nil {
+			return prepared, r, false, err
+		}
+	}
 	return appendContractSourceContext(ctx, document, prepared, input, r)
 }
 
@@ -116,7 +146,7 @@ func appendContractSourceContext(ctx context.Context, document pathplan.Document
 		if err := ctx.Err(); err != nil {
 			return prepared, r, false, err
 		}
-		exported, err := exportedContractInput(input, choice)
+		exported, err := exportedContractInput(input, choice, r.FeatureVersion == contractdecision.OrderedSourceFeatureVersion)
 		if err != nil {
 			r.Status, r.Reason, r.DeclinedDecision = "DECLINED_TO_DETERMINISTIC", err.Error(), choice.ID
 			return prepared, r, true, nil

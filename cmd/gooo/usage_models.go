@@ -7,6 +7,10 @@ A compatible local model proposes candidate order; Gooo checks each candidate.
 Omit --path-model (body-codegen) or --model (body-construct/body-compose)
 for deterministic order. A supplied unreadable or incompatible file is an error.
 
+Check the compiler's included SDK with gooo version --build --json.
+The public 0.6.27 binary includes SDK 0.2.37. This development source includes
+SDK 0.2.39 and supports the two ordered-source models described below.
+
 Typed integer branches, comparisons and variables:
   1. From the matching source checkout, get model-choice-v1.json and its checksum
      from https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.37-experimental
@@ -31,6 +35,23 @@ Typed integer branches, comparisons and variables:
   The declared-case model makes one initial prediction; later candidates reuse
   that ordering. Its fixed ranking mode does not combine with sampling,
   repeated model feedback or an external execution oracle.
+
+Ordered source, output and intermediate-condition interaction model:
+  Get model-interaction-v1.json and its checksum from
+  https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.39-experimental
+  See docs/interaction-contract-model.md for verified download commands.
+
+  gooo body-context --activity Choose --model out/interaction-model/model-interaction-v1.json \
+    examples/body-codegen/source-interaction-condition-cases.gooo.fixture
+  gooo body-codegen --json --activity Choose \
+    --path-model out/interaction-model/model-interaction-v1.json \
+    examples/body-codegen/source-interaction-condition-cases.gooo.fixture
+
+  Scores order candidates; authored output and condition checks record what
+  each candidate satisfied. The guide also covers assignments and saved replay.
+  The same SDK release includes model-ordered-v1.json as a comparison model.
+  Select it with the same --model or --path-model option, keeping the same source and cases.
+  Model metadata and input inspection identify which model was used.
 
 Included record-field example:
   gooo body-context --activity Describe \

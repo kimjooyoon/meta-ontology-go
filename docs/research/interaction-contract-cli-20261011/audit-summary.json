@@ -1,0 +1,40 @@
+{
+  "schema": "gooo/interaction-native-observation/v1",
+  "source_sha": "73024efdd8f5bb877071460011bfb2137420e54a",
+  "model_artifact_sha256": "sha256:4b61fe8d84df77c8dfac6a880eedcddfd8f5f903fa538d1e80532dd77f74b1ac",
+  "scope": "one native integration example; finite authored goals; no new held-out accuracy or causal speedup claim",
+  "context": {
+    "choices": 2,
+    "source_cells_per_choice": 528,
+    "output_cases": 7,
+    "condition_cases": 3,
+    "predictions": 0,
+    "candidate_tests": 0
+  },
+  "deterministic": {
+    "attempts": 2,
+    "model_calls": 0,
+    "codegen_ms": 1.335625
+  },
+  "model": {
+    "attempts": 2,
+    "model_calls": 1,
+    "predict_ns": 137667,
+    "codegen_ms": 6.86225,
+    "model_load_ms": 5.003375
+  },
+  "native": {
+    "model_calls": 1,
+    "predict_ns": 113083,
+    "passed": 11,
+    "total": 11
+  },
+  "replay": {
+    "model_calls": 0,
+    "passed": 11,
+    "total": 11,
+    "unchanged_comparison_groups": 11
+  },
+  "customer_savings": null,
+  "external_adoption": null
+}

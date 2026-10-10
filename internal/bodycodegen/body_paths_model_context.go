@@ -93,6 +93,10 @@ func exportBoundPathModelContext(ctx context.Context, document pathplan.Document
 	if err == nil && !declined && g.condition != nil && g.condition.contract != nil {
 		result.ContractCases, err = exportContractCases(document, prepared)
 		result.Scope = "source-bound source and declared-case arrays; zero predictions, candidate tests, selected emissions and writes; expected outputs are goals, observed execution is absent"
+		if err == nil && g.condition.orderedContract() {
+			result.ContractConditions, err = exportContractConditions(ctx, document, prepared)
+			result.Scope = "source-bound ordered source, output goals and Boolean condition goals; zero predictions, candidate tests, selected emissions and writes"
+		}
 	}
 	return result, err
 }
