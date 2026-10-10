@@ -7,7 +7,6 @@ import (
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/conditiondecision"
-	"github.com/kimjooyoon/gooo-decision-runtime/contractdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/executiondecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/flowdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
@@ -22,7 +21,7 @@ type conditionPathModel struct {
 	model       *conditiondecision.Model
 	execution   *executiondecision.Model
 	flow        *flowdecision.Model
-	contract    *contractdecision.Model
+	contract    declaredContractModel
 	artifactSHA string
 }
 

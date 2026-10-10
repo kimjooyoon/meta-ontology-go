@@ -1,0 +1,16 @@
+/tmp/gooo-release-0623-20261010.hCOVqV/choice-cli-compiler: go1.27.2
+	path	github.com/kimjooyoon/meta-ontology-go/cmd/gooo
+	mod	github.com/kimjooyoon/meta-ontology-go	v0.6.14-dev.0.20261010115759-5aef77867df5	
+	dep	github.com/kimjooyoon/gooo-decision-runtime	v0.2.37-experimental	h1:FqR/C3vOHK56yKNbcASxdYDu8Hrx4y/Jc356GVF/a+A=
+	dep	github.com/kimjooyoon/gooo-jev	v0.0.0-20260928032625-e146e6dbb34a	h1:1/uDBg0hud6IiZzOhTKXokIWdmlnU4HdYz7TGl729+s=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	-trimpath=true
+	build	CGO_ENABLED=1
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0
+	build	vcs=git
+	build	vcs.revision=5aef77867df5d9568621b83fcd548d5771744059
+	build	vcs.time=2026-10-10T11:57:59Z
+	build	vcs.modified=false

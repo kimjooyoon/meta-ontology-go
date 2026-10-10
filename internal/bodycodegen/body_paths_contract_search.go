@@ -13,7 +13,7 @@ import (
 func searchContractPaths(ctx context.Context, prepared *pathplan.PreparedPlan, model *conditionPathModel,
 	cases []pathplan.TestCase, total, step int) (pathplan.SearchResult, *bodyplan.Program,
 	*pathplan.ContractRanking, []pathplan.ContractProgress, error) {
-	session, err := prepared.NewContractSession(ctx, model.contract, cases)
+	session, err := model.newContractSession(ctx, prepared, cases)
 	if err != nil {
 		return pathplan.SearchResult{}, nil, nil, nil, err
 	}

@@ -1,0 +1,33 @@
+Fixed before the trained choice model is run through this compiler integration.
+This is a new CLI wiring observation using three already-published SDK examples,
+not a repeat of the 388-document study and not a new quality experiment.
+
+Model: SDK v0.2.37-experimental model-choice-v1.json, SHA256
+aa81790884cd21ac9dd435fe5cf14b604cdd658f514f6460a526fc858ae07ab1.
+SDK source: 3f032abfc41cf0b2082949fede4abb8f9919a1b6 (tree equal to study1854690).
+Names: fresh-bound-k9-r1-w0-alias-g0, fresh-bound-k9-r1-w0-alias-g1,
+fresh-scale-k9-r1-w0-direct-g1. The first pair selected both goals correctly;
+the multiplication case regressed against the global model in the original study.
+Preserve exact source text and document JSON; verify their original SHA256s.
+Append only Main(Integer)->Integer returning Choose(input) for native execution.
+All eight outputs, three conditions and four masks remain; use exact int64 while
+copying cases, including values above 2^53. Native construction uses the second
+declared case; native evaluation uses all eight cases.
+
+Build the clean committed development compiler once with Go1.27.2, trimpath,
+the public SDK0.2.37 module, and source/version/build/binary-hash records.
+In a fresh exclusive output directory, run once per example:
+1 body-context --model: input arrays and artifact identity, zero predictions;
+2 body-codegen: model absent, deterministic;
+3 body-codegen --path-model with batch1: exactly one initial prediction;
+4 body-construct Main with the model and budget4: native executable and saved construction;
+5 remove that example's owned model copy; replay the saved construction without a model.
+
+Fifteen commands, no training/feedback/retuning. Six model predictions, one per
+model codegen and native construction. No prediction during preflight or saved
+replay. Every attempted body must check all required outputs and conditions.
+Keep every failure and all original stdout/stderr, command args, exit status,
+wall/user/system times and RSS. Do not overwrite/restart a completed producer.
+Retain exact producer/SDK/model/source identities; archive compact records with
+gzip-n and decompressed byte comparisons. A read-only typed-int64 audit checks
+original records without predicting, compiling, running or fitting again.
