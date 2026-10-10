@@ -35,7 +35,11 @@ func TestDeclaredContractModelCLIContextAndCodegen(t *testing.T) {
 
 func checkContractModelCLIContextAndCodegen(t *testing.T, model, schema string) {
 	t.Helper()
-	source := "../../examples/body-codegen/source-condition-cases.gooo.fixture"
+	checkContractModelCLIContextAndCodegenSource(t, model, schema, "../../examples/body-codegen/source-condition-cases.gooo.fixture")
+}
+
+func checkContractModelCLIContextAndCodegenSource(t *testing.T, model, schema, source string) {
+	t.Helper()
 	var out, diagnostics bytes.Buffer
 	if code := run([]string{"body-context", "--model", model, "--activity", "Choose", source}, &out, &diagnostics); code != exitOK {
 		t.Fatal(code, out.String(), diagnostics.String())
@@ -68,13 +72,18 @@ func TestDeclaredContractModelCLINativeConstructionAndModelFreeReplay(t *testing
 
 func checkContractModelCLINativeConstructionAndReplay(t *testing.T, model, schema string) {
 	t.Helper()
+	checkContractModelCLINativeConstructionAndReplaySource(t, model, schema, "../../examples/body-codegen/source-condition-cases.gooo.fixture")
+}
+
+func checkContractModelCLINativeConstructionAndReplaySource(t *testing.T, model, schema, source string) {
+	t.Helper()
 	root := filepath.Join(t.TempDir(), "construction")
 	base := "../../examples/body-codegen/source-condition-"
 	goBin := filepath.Join(runtime.GOROOT(), "bin", "go")
 	if runtime.GOOS == "windows" {
 		goBin += ".exe"
 	}
-	args := []string{"body-construct", "--source", base + "cases.gooo.fixture", "--entry", "Main", "--model", model,
+	args := []string{"body-construct", "--source", source, "--entry", "Main", "--model", model,
 		"--construction-cases", base + "construction-cases.json", "--cases", base + "evaluation-cases.json", "--attempts", "8", "--go-bin", goBin, "--out", root}
 	var out, diagnostics bytes.Buffer
 	if code := run(args, &out, &diagnostics); code != exitOK {

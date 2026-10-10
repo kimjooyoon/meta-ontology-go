@@ -43,4 +43,5 @@ caller case results measure the constructed program. Saved replay makes zero
 new predictions. Native execution requires Go1.27.2 on the host.
 
 See docs/declared-contract-model.md and docs/record-model-preflight.md.
+SDK0.2.39 interaction model: see docs/interaction-contract-model.md for ordered source and condition goals.
 `

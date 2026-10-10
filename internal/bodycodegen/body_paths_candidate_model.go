@@ -15,6 +15,9 @@ import (
 // Shape and version come from the decoded artifact. A v1 artifact never gains
 // branch or output channels just because a newer runtime is available.
 func (m *conditionPathModel) featureVersion() string {
+	if m.orderedContract() {
+		return contractdecision.OrderedSourceFeatureVersion
+	}
 	if m.contract != nil {
 		return decision.RelationalFlowFeatureVersion
 	}
@@ -50,6 +53,9 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 	if _, ok := m.contract.(*contractdecision.ChoiceModel); ok {
 		info.ResidentTensorBytes = contractdecision.ChoiceParameterCount * 4
 	}
+	if m.orderedContract() {
+		info.ResidentTensorBytes = contractdecision.InteractionRequirementParameterCount * 4
+	}
 	if m.execution != nil {
 		info.ModelSchema, info.ResidentTensorBytes = executiondecision.Schema, executiondecision.ParameterCount*4
 	}
@@ -61,7 +67,9 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 func decodeCandidateModel(raw []byte, schema string) (typedPathModel, error) {
 	m := &conditionPathModel{artifactSHA: digest(raw)}
 	var err error
-	if schema == contractdecision.ChoiceSchema {
+	if schema == contractdecision.InteractionRequirementSchema {
+		m.contract, err = contractdecision.DecodeInteractionRequirementConditioned(raw)
+	} else if schema == contractdecision.ChoiceSchema {
 		m.contract, err = contractdecision.DecodeChoiceConditioned(raw)
 	} else if schema == contractdecision.Schema || schema == contractdecision.PoolingSchema {
 		m.contract, err = contractdecision.Decode(raw)

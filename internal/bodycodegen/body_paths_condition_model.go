@@ -7,6 +7,7 @@ import (
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/conditiondecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/contractdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/executiondecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/flowdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
@@ -30,7 +31,7 @@ func conditionFeatureDigest(features [decision.FeatureDim]float32) string {
 }
 
 func candidateFeatureDigest(features []float32) string {
-	var raw [decision.ExecutionFlowFeatureDim * 4]byte
+	var raw [contractdecision.OrderedFeatureDim * 4]byte
 	for i, value := range features {
 		binary.LittleEndian.PutUint32(raw[i*4:], math.Float32bits(value))
 	}
@@ -72,7 +73,7 @@ func prepareConditionModelContext(ctx context.Context, document pathplan.Documen
 
 func exportedConditionInputs(document pathplan.Document, prepared *pathplan.PreparedPlan, model *conditionPathModel) ([]ExportedPathInput, error) {
 	if model.contract != nil {
-		return exportedContractInputs(document, prepared)
+		return exportedContractInputs(document, prepared, model.orderedContract())
 	}
 	input, err := model.initialInput(document, prepared)
 	if err != nil {

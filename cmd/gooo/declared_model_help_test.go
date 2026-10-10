@@ -18,7 +18,7 @@ func TestDeclaredModelHelpShowsPracticalWorkflow(t *testing.T) {
 			}
 		}
 		if topic == "models" {
-			for _, want := range []string{"--path-model", "--model", "body-construct", "construction.json", "v0.2.37-experimental", "checksum", "deterministic"} {
+			for _, want := range []string{"--path-model", "--model", "body-construct", "construction.json", "v0.2.37-experimental", "checksum", "deterministic", "docs/interaction-contract-model.md"} {
 				if !strings.Contains(out.String(), want) {
 					t.Fatalf("model workflow misses %q", want)
 				}
