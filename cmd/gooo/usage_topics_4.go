@@ -1,6 +1,21 @@
 package main
 
 var topicHelpGroup4 = map[string]string{
+	"body-outcomes-delta": `Compare saved workflow outcomes
+
+` + bodyOutcomesDeltaUsage + `
+
+Read body-construct output, its saved evaluation.json, body-compose output,
+or a composition runtime v1/v2/v3. Match complete caller input tuples and stable
+activity IDs, even when case order changes. Requirements and actual outcomes
+are compared separately. Regressions require the same observed expectation;
+conflicting duplicates and missing observations remain explicit.
+
+This command does not execute programs, call models, or write files. Exit0
+means the comparison was produced; it does not mean every requirement passed.
+Use --json for exact integer values, original observations and grouped counts.
+See docs/workflow-outcome-delta.md.
+`,
 	"body-construct": `Construct a program using caller feedback
 
 ` + bodyConstructUsage + `
@@ -50,7 +65,7 @@ Use --build to include compiler build information.
   init, check, test, run, body-codegen, generate, emit
   format, fix, inspect, query, graph, receipt-schema
   package, body-context, body-compose, body-construct, body-execute, body-search-run, body-realize, body-refine
-  profile, debug, decide, invoke, lsp, version
+  body-outcomes-delta, profile, debug, decide, invoke, lsp, version
 
 Use ` + "`gooo help <command>`" + ` for a guide to a core command. Advanced
 revision, provenance, repair, and self-improvement commands are listed in the
