@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -16,7 +15,7 @@ import (
 
 const bodyConstructUsage = "usage: gooo body-construct --source <source.gooo> --cases <evaluation.json> " +
 	"(--construction-cases <feedback.json> --attempts <1..64> [--entry <activity>] [--model <model.json>] [--fill-model <model.json>] | " +
-	"--construction <construction.json>) [--go-bin <go1.27.2>] [--out <new-directory>]"
+	"--construction <construction.json>) [--go-bin <go1.27.2>] [--out <new-directory>] [--format json|text|markdown]"
 
 type bodyConstructOutput struct {
 	GeneratedNow bool                            `json:"generated_now"`
@@ -37,7 +36,7 @@ func runBodyConstruct(args []string, stdout, stderr io.Writer) int {
 
 func parseBodyConstruct(args []string) (map[string]string, error) {
 	flags := map[string]string{"--source": "", "--cases": "", "--construction-cases": "", "--attempts": "",
-		"--entry": "", "--model": "", "--fill-model": "", "--construction": "", "--go-bin": "", "--out": ""}
+		"--entry": "", "--model": "", "--fill-model": "", "--construction": "", "--go-bin": "", "--out": "", "--format": ""}
 	for i := 0; i < len(args); i += 2 {
 		value, ok := flags[args[i]]
 		if !ok || value != "" || i+1 >= len(args) || args[i+1] == "" || strings.HasPrefix(args[i+1], "--") {
@@ -47,6 +46,9 @@ func parseBodyConstruct(args []string) (map[string]string, error) {
 	}
 	if flags["--source"] == "" || flags["--cases"] == "" {
 		return nil, fmt.Errorf("%s", bodyConstructUsage)
+	}
+	if format := flags["--format"]; format != "" && format != "json" && format != "text" && format != "markdown" {
+		return nil, fmt.Errorf("body-construct format must be json, text or markdown")
 	}
 	if flags["--construction"] != "" {
 		for _, key := range []string{"--construction-cases", "--attempts", "--entry", "--model", "--fill-model"} {
@@ -103,7 +105,7 @@ func executeBodyConstruct(ctx context.Context, flags map[string]string, stdout, 
 			return fail(writeErr)
 		}
 	}
-	if encodeErr := json.NewEncoder(stdout).Encode(output); encodeErr != nil {
+	if encodeErr := writeBodyConstructResult(stdout, output, flags["--format"]); encodeErr != nil {
 		return fail(encodeErr)
 	}
 	if err != nil {

@@ -96,6 +96,10 @@ using their caller's actual results. Local obligations and caller expectations
 are retained separately, with bounded whole-program attempts and model-free
 saved replay. [Caller-guided construction](examples/caller-guided-construction/README.md)
 includes a runnable example and the current source/model/budget limits.
+Development source also supports `body-construct --format text` or `--format markdown`
+to show local checks, caller expectations, separate evaluation and input overlap.
+JSON remains the default; [reading construction results](docs/construction-results.md)
+explains the denominators, unobserved outcomes and saved replay.
 The 0.6.24 development source also reopens
 [typed conditions and branches](examples/caller-typed-paths/README.md), including
 mixed record construction, rejected interacting edits and saved v7 replay.
