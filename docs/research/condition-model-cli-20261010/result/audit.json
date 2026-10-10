@@ -1,0 +1,17 @@
+{
+  "condition_attempts": 2,
+  "deterministic_attempts": 4,
+  "feedback_predict_ns": 10625,
+  "initial_predict_ns": 10708,
+  "native_cases_passed": 10,
+  "new_model_calls": 0,
+  "new_native_runs": 0,
+  "observed_model_calls": 2,
+  "observed_native_runs": 2,
+  "producer_source_sha": "35851648ee237837841905bb4c35c35db3298f00",
+  "scope": "Read-only recount of saved observations; native excerpt omits the local tool path and parent/completeness payloads. No new inference or execution.",
+  "selection_disjoint_inputs": 4,
+  "source_conditions_passed": 3,
+  "source_outputs_passed": 9,
+  "status": "PASS"
+}

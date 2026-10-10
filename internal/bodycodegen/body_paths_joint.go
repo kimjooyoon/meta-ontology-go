@@ -4,33 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
+	"github.com/kimjooyoon/gooo-decision-runtime/conditiondecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/orderjudge"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
-	"github.com/kimjooyoon/meta-ontology-go/internal/fileopen"
 )
 
 // Dispatch reads bounded metadata; each loader enforces its closed artifact
 // contract. Fresh source binding remains part of each construction request.
 func loadTypedStructuralModel(name string) (typedPathModel, error) {
-	f, err := fileopen.ReadOnly(name)
+	raw, err := readStructuralModelBytes(name)
 	if err != nil {
 		return typedPathModel{}, err
-	}
-	defer f.Close()
-	info, err := f.Stat()
-	if err != nil || !info.Mode().IsRegular() || info.Size() <= 0 || info.Size() > 64<<10 {
-		return typedPathModel{}, fmt.Errorf("bounded regular structural metadata required")
-	}
-	raw, err := io.ReadAll(io.LimitReader(f, (64<<10)+1))
-	if err != nil {
-		return typedPathModel{}, err
-	}
-	if len(raw) > 64<<10 {
-		return typedPathModel{}, fmt.Errorf("structural metadata grew beyond bound")
 	}
 	if err = decision.RejectDuplicateJSONKeys(raw); err != nil {
 		return typedPathModel{}, err
@@ -41,6 +28,16 @@ func loadTypedStructuralModel(name string) (typedPathModel, error) {
 	}
 	if err = json.Unmarshal(raw, &selector); err != nil {
 		return typedPathModel{}, err
+	}
+	if selector.Schema == conditiondecision.Schema {
+		model, err := conditiondecision.Decode(raw)
+		if err != nil {
+			return typedPathModel{}, err
+		}
+		return typedPathModel{condition: &conditionPathModel{model: model, artifactSHA: digest(raw)}}, nil
+	}
+	if len(raw) > 64<<10 {
+		return typedPathModel{}, fmt.Errorf("bounded regular structural metadata required")
 	}
 	if selector.Schema == orderjudge.Schema {
 		model, err := loadOrderJudge(name, raw)

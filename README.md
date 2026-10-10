@@ -15,7 +15,7 @@ This example needs **Go 1.27.2** and no model or API key. In a new working
 directory on macOS or Linux:
 
 ```sh
-GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.24-dev
+GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.25-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -78,6 +78,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [compose activity bodies](docs/native-body-composition.md)
 · [inspect inputs before assembly](docs/composition-plan-inspection.md)
 · [small model integration](docs/three-choice-path-model.md)
+· [source-bound condition model and CLI](docs/condition-decision-model.md)
 · [capability discovery](docs/language/capability-discovery.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
 

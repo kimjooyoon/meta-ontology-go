@@ -28,6 +28,9 @@ type CompletePathModelInput struct {
 func (m typedPathModel) prepareContext(ctx context.Context, document pathplan.Document,
 	original *pathplan.PreparedPlan, activityID, semanticSHA string) (
 	*pathplan.PreparedPlan, *PathModelContextReceipt, bool, error) {
+	if m.condition != nil {
+		return prepareConditionModelContext(ctx, document, original, m.condition, activityID, semanticSHA)
+	}
 	if m.three != nil {
 		return prepareThreeModelContext(ctx, document, original, m.three, activityID, semanticSHA)
 	}
@@ -73,7 +76,7 @@ func exportBoundPathModelContext(ctx context.Context, document pathplan.Document
 		return fail(fmt.Errorf("explicit feature version differs from loaded model feature %q", info.FeatureVersion))
 	}
 	contextStarted := time.Now()
-	models := typedPathModel{model: g.model, joint: g.joint, three: g.three}
+	models := typedPathModel{model: g.model, joint: g.joint, three: g.three, condition: g.condition}
 	ranked, modelContext, declined, err := models.prepareContext(ctx, document, prepared,
 		activityID, receipt.SourceBinding.SourceSemanticDigest)
 	if err != nil {
@@ -93,6 +96,9 @@ func modelContextInputs(document pathplan.Document, prepared *pathplan.PreparedP
 	modelContext **PathModelContextReceipt, declined bool, activityID, semanticSHA string) ([]ExportedPathInput, error) {
 	if declined {
 		return []ExportedPathInput{}, nil
+	}
+	if g.condition != nil {
+		return exportedConditionInputs(document, prepared)
 	}
 	if *modelContext != nil {
 		feature := decision.SemanticContextIntentFeatureVersion

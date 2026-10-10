@@ -32,6 +32,8 @@ type PathModelContextReceipt struct {
 	OriginalPlanSHA   string              `json:"original_plan_sha256"`
 	RankedPlanSHA     string              `json:"ranked_plan_sha256,omitempty"`
 	MetadataSHA       string              `json:"model_metadata_sha256,omitempty"`
+	ArtifactSHA       string              `json:"model_artifact_sha256,omitempty"`
+	ModelFingerprint  string              `json:"model_fingerprint,omitempty"`
 	FeatureVersion    string              `json:"feature_version"`
 	ArithmeticVersion string              `json:"arithmetic_version,omitempty"`
 	Inputs            []PathContextInput  `json:"inputs"`

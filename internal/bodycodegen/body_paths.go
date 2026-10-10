@@ -16,38 +16,40 @@ const bodyPathBudget = 8 * time.Second
 // BodyPathReceipt separates finite functional observations from the existing
 // compiler receipt for complete lowering of a selected, typed source body.
 type BodyPathReceipt struct {
-	Schema                 string                     `json:"schema"`
-	OriginalSourceSHA256   string                     `json:"original_source_sha256"`
-	SelectedSourceSHA256   string                     `json:"selected_source_sha256,omitempty"`
-	SourceFormat           string                     `json:"source_format,omitempty"`
-	DocumentSHA256         string                     `json:"document_sha256"`
-	TestSuiteSHA256        string                     `json:"test_suite_sha256"`
-	SearchConfigSHA256     string                     `json:"search_config_sha256"`
-	SearchConfig           json.RawMessage            `json:"search_config"`
-	DeclaredTestCases      int                        `json:"declared_test_cases"`
-	LocalModelRequested    bool                       `json:"local_model_requested"`
-	SearchStarted          bool                       `json:"search_started"`
-	SourceBaseMatched      bool                       `json:"source_base_matched"`
-	SourceBinding          RouteEquivalenceReceipt    `json:"source_binding"`
-	Search                 pathplan.SearchResult      `json:"search"`
-	OrderJudgment          *orderjudge.SearchReceipt  `json:"whole_candidate_judgment,omitempty"`
-	OrderPreparation       *OrderPreparationReceipt   `json:"whole_candidate_preparation,omitempty"`
-	Progress               []pathplan.SessionProgress `json:"session_progress,omitempty"`
-	Feedback               []pathplan.FeedbackReceipt `json:"feedback_judgments,omitempty"`
-	FeedbackUnfixed        bool                       `json:"feedback_unfixed,omitempty"`
-	ModelRetention         *RetainedModelInfo         `json:"model_retention,omitempty"`
-	ModelContext           *PathModelContextReceipt   `json:"model_context,omitempty"`
-	Diagnosis              *pathplan.Diagnosis        `json:"diagnosis,omitempty"`
-	DiagnosisOptionsSHA256 string                     `json:"diagnosis_options_sha256,omitempty"`
-	DiagnosisBudget        int                        `json:"diagnosis_budget,omitempty"`
-	DiagnosisScope         string                     `json:"diagnosis_scope,omitempty"`
-	Observation            *PathObservationReceipt    `json:"observation,omitempty"`
-	Resolution             *PathResolutionReceipt     `json:"resolution,omitempty"`
-	NativeCases            []IRBodyFillCaseResult     `json:"native_case_results,omitempty"`
-	Conditions             *PathConditionReceipt      `json:"conditions,omitempty"`
-	FunctionalCompleteness float64                    `json:"finite_functional_completeness_percent"`
-	Scope                  string                     `json:"scope"`
-	Timing                 BodyPathTiming             `json:"timing"`
+	Schema                 string                       `json:"schema"`
+	OriginalSourceSHA256   string                       `json:"original_source_sha256"`
+	SelectedSourceSHA256   string                       `json:"selected_source_sha256,omitempty"`
+	SourceFormat           string                       `json:"source_format,omitempty"`
+	DocumentSHA256         string                       `json:"document_sha256"`
+	TestSuiteSHA256        string                       `json:"test_suite_sha256"`
+	SearchConfigSHA256     string                       `json:"search_config_sha256"`
+	SearchConfig           json.RawMessage              `json:"search_config"`
+	DeclaredTestCases      int                          `json:"declared_test_cases"`
+	LocalModelRequested    bool                         `json:"local_model_requested"`
+	SearchStarted          bool                         `json:"search_started"`
+	SourceBaseMatched      bool                         `json:"source_base_matched"`
+	SourceBinding          RouteEquivalenceReceipt      `json:"source_binding"`
+	Search                 pathplan.SearchResult        `json:"search"`
+	OrderJudgment          *orderjudge.SearchReceipt    `json:"whole_candidate_judgment,omitempty"`
+	OrderPreparation       *OrderPreparationReceipt     `json:"whole_candidate_preparation,omitempty"`
+	Progress               []pathplan.SessionProgress   `json:"session_progress,omitempty"`
+	Feedback               []pathplan.FeedbackReceipt   `json:"feedback_judgments,omitempty"`
+	ConditionProgress      []pathplan.ConditionProgress `json:"condition_session_progress,omitempty"`
+	ConditionFeedback      []pathplan.ConditionRanking  `json:"condition_feedback_judgments,omitempty"`
+	FeedbackUnfixed        bool                         `json:"feedback_unfixed,omitempty"`
+	ModelRetention         *RetainedModelInfo           `json:"model_retention,omitempty"`
+	ModelContext           *PathModelContextReceipt     `json:"model_context,omitempty"`
+	Diagnosis              *pathplan.Diagnosis          `json:"diagnosis,omitempty"`
+	DiagnosisOptionsSHA256 string                       `json:"diagnosis_options_sha256,omitempty"`
+	DiagnosisBudget        int                          `json:"diagnosis_budget,omitempty"`
+	DiagnosisScope         string                       `json:"diagnosis_scope,omitempty"`
+	Observation            *PathObservationReceipt      `json:"observation,omitempty"`
+	Resolution             *PathResolutionReceipt       `json:"resolution,omitempty"`
+	NativeCases            []IRBodyFillCaseResult       `json:"native_case_results,omitempty"`
+	Conditions             *PathConditionReceipt        `json:"conditions,omitempty"`
+	FunctionalCompleteness float64                      `json:"finite_functional_completeness_percent"`
+	Scope                  string                       `json:"scope"`
+	Timing                 BodyPathTiming               `json:"timing"`
 }
 
 type BodyPathTiming struct {
@@ -136,7 +138,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	searchConfig := typedPathSearchConfig(stepAttempts, feedback)
 	receipt := &BodyPathReceipt{
 		Schema: "gooo/body-codegen-typed-path-receipt/v1", OriginalSourceSHA256: digest(source),
-		LocalModelRequested: models.path != "" || models.model != nil || models.joint != nil || models.three != nil || models.order != nil,
+		LocalModelRequested: models.path != "" || models.model != nil || models.joint != nil || models.three != nil || models.order != nil || models.condition != nil,
 		SearchConfigSHA256:  digest(searchConfig), SearchConfig: searchConfig,
 		Scope: "declared finite cases and bounded typed alternatives; not proof of natural-language intent or all int64 inputs",
 		Timing: BodyPathTiming{ExecutionModel: "single_process_source_bind_then_rank_then_finite_tdd_then_native_emit",
@@ -172,7 +174,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return fail(err)
 	}
-	if document.Seed != "" && models.path == "" && models.model == nil && models.joint == nil && models.three == nil && models.order == nil {
+	if document.Seed != "" && models.path == "" && models.model == nil && models.joint == nil && models.three == nil && models.order == nil && models.condition == nil {
 		return fail(fmt.Errorf("typed path sampling requires an explicit local model"))
 	}
 	bound, err := bindTypedPathSource(ctx, filename, source, activityName, prepared, receipt)
@@ -203,12 +205,14 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	joint := models.joint
 	three := models.three
 	order := models.order
+	condition := models.condition
 	if models.path != "" {
 		loadStarted := time.Now()
 		var loaded typedPathModel
 		loaded, err = loadTypedStructuralModel(models.path)
 		model, joint, three = loaded.model, loaded.joint, loaded.three
 		order = loaded.order
+		condition = loaded.condition
 		receipt.Timing.ModelLoadMS = elapsedMS(loadStarted)
 		if err != nil {
 			return fail(fmt.Errorf("load explicit structural model: %w", err))
@@ -223,7 +227,12 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	}
 	contextStarted := time.Now()
 	var contextDeclined bool
-	if three != nil {
+	if condition != nil {
+		if feedback != nil && (feedback.ci != nil || feedback.unfixed) {
+			return fail(fmt.Errorf("condition model supports condition feedback; CI hints and unfixed feedback are outside its feature contract"))
+		}
+		prepared, receipt.ModelContext, contextDeclined, err = prepareConditionModelContext(ctx, document, prepared, condition, base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest)
+	} else if three != nil {
 		prepared, receipt.ModelContext, contextDeclined, err = prepareThreeModelContext(ctx, document, prepared,
 			three, base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest)
 	} else if joint != nil {
@@ -244,6 +253,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 		model, feedback, searchSeed = nil, nil, ""
 		joint = nil
 		three = nil
+		condition = nil
 		receipt.FeedbackUnfixed = false
 		receipt.Timing.ExecutionModel = "source_bind_then_context_decline_then_deterministic_finite_tdd_then_native_emit"
 		receipt.Timing.DecisionStage = "no_predictions_representation_declined"
@@ -259,7 +269,14 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	receipt.SearchStarted = true
 	var search pathplan.SearchResult
 	var selected *bodyplan.Program
-	if three != nil {
+	if condition != nil {
+		rounds := 0
+		if feedback != nil {
+			rounds = feedback.rounds
+		}
+		search, selected, receipt.ConditionProgress, receipt.ConditionFeedback, err = prepared.SearchConditionBatches(ctx, condition.model,
+			effectiveCases, document.MaxAttempts, min(document.MaxAttempts, max(1, stepAttempts)), searchSeed, rounds)
+	} else if three != nil {
 		rounds := 0
 		var ci *pathplan.CIHint
 		if feedback != nil {
