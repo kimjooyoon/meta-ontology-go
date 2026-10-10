@@ -1,6 +1,6 @@
 # Compare the outcomes of a workflow change
 
-Development source adds `gooo body-outcomes-delta`. It reads saved results from
+The 0.6.27 development candidate adds `gooo body-outcomes-delta`. It reads saved results from
 `body-construct` or `body-compose` and shows what changed for each caller input.
 The public0.6.26 binary predates this command; build the current development
 source with Go1.27.2 to use it.
