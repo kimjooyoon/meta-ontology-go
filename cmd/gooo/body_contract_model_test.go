@@ -30,7 +30,11 @@ func cliDeclaredContractModel(t *testing.T) string {
 }
 
 func TestDeclaredContractModelCLIContextAndCodegen(t *testing.T) {
-	model := cliDeclaredContractModel(t)
+	checkContractModelCLIContextAndCodegen(t, cliDeclaredContractModel(t), contractdecision.Schema)
+}
+
+func checkContractModelCLIContextAndCodegen(t *testing.T, model, schema string) {
+	t.Helper()
 	source := "../../examples/body-codegen/source-condition-cases.gooo.fixture"
 	var out, diagnostics bytes.Buffer
 	if code := run([]string{"body-context", "--model", model, "--activity", "Choose", source}, &out, &diagnostics); code != exitOK {
@@ -40,7 +44,7 @@ func TestDeclaredContractModelCLIContextAndCodegen(t *testing.T) {
 	if err := json.Unmarshal(out.Bytes(), &before); err != nil {
 		t.Fatal(err)
 	}
-	if before.ModelPredictions != 0 || before.CandidateTests != 0 || before.ContractCases == nil || before.ContractCases.Count != 7 {
+	if before.ModelPredictions != 0 || before.CandidateTests != 0 || before.ContractCases == nil || before.ContractCases.Count != 7 || before.ModelCompatibility.Model.ModelSchema != schema {
 		t.Fatal("CLI did not export the authored examples")
 	}
 	out.Reset()
@@ -59,7 +63,11 @@ func TestDeclaredContractModelCLIContextAndCodegen(t *testing.T) {
 }
 
 func TestDeclaredContractModelCLINativeConstructionAndModelFreeReplay(t *testing.T) {
-	model := cliDeclaredContractModel(t)
+	checkContractModelCLINativeConstructionAndReplay(t, cliDeclaredContractModel(t), contractdecision.Schema)
+}
+
+func checkContractModelCLINativeConstructionAndReplay(t *testing.T, model, schema string) {
+	t.Helper()
 	root := filepath.Join(t.TempDir(), "construction")
 	base := "../../examples/body-codegen/source-condition-"
 	goBin := filepath.Join(runtime.GOROOT(), "bin", "go")
@@ -77,7 +85,7 @@ func TestDeclaredContractModelCLINativeConstructionAndModelFreeReplay(t *testing
 		t.Fatal(err)
 	}
 	p := result.Construction.Initial.Preparations[0].Generation.Report.BodyPaths
-	if result.Evaluation.Runtime.FinitePassed != 11 || p.ContractRanking == nil || p.ContractRanking.Calls != 1 || p.ModelRetention.ModelSchema != contractdecision.Schema {
+	if result.Evaluation.Runtime.FinitePassed != 11 || p.ContractRanking == nil || p.ContractRanking.Calls != 1 || p.ModelRetention.ModelSchema != schema {
 		t.Fatal("native construction lost the declared-case decision")
 	}
 	if err := os.Remove(model); err != nil {

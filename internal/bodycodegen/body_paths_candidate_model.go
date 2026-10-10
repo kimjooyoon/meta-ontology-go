@@ -45,7 +45,10 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 	info.FeatureVersion = m.featureVersion()
 	info.ModelSchema, info.ResidentTensorBytes = conditionModelSchema, conditionModelTensorBytes
 	if m.contract != nil {
-		info.ModelSchema, info.ResidentTensorBytes = contractdecision.Schema, contractdecision.ParameterCount*4
+		info.ModelSchema, info.ResidentTensorBytes = m.contract.ArtifactSchema(), contractdecision.ParameterCount*4
+	}
+	if _, ok := m.contract.(*contractdecision.ChoiceModel); ok {
+		info.ResidentTensorBytes = contractdecision.ChoiceParameterCount * 4
 	}
 	if m.execution != nil {
 		info.ModelSchema, info.ResidentTensorBytes = executiondecision.Schema, executiondecision.ParameterCount*4
@@ -58,7 +61,9 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 func decodeCandidateModel(raw []byte, schema string) (typedPathModel, error) {
 	m := &conditionPathModel{artifactSHA: digest(raw)}
 	var err error
-	if schema == contractdecision.Schema {
+	if schema == contractdecision.ChoiceSchema {
+		m.contract, err = contractdecision.DecodeChoiceConditioned(raw)
+	} else if schema == contractdecision.Schema || schema == contractdecision.PoolingSchema {
 		m.contract, err = contractdecision.Decode(raw)
 	} else if schema == flowdecision.Schema || schema == flowdecision.ActivationSchema {
 		m.flow, err = flowdecision.Decode(raw)
