@@ -9,7 +9,7 @@ for deterministic order. A supplied unreadable or incompatible file is an error.
 
 Check the compiler's included SDK with gooo version --build --json.
 The public 0.6.27 binary includes SDK 0.2.37. This development source includes
-SDK 0.2.39 and supports the two ordered-source models described below.
+SDK 0.2.40 and supports the ordered-source and canonical models described below.
 
 Typed integer branches, comparisons and variables:
   1. From the matching source checkout, get model-choice-v1.json and its checksum
@@ -52,6 +52,19 @@ Ordered source, output and intermediate-condition interaction model:
   The same SDK release includes model-ordered-v1.json as a comparison model.
   Select it with the same --model or --path-model option, keeping the same source and cases.
   Model metadata and input inspection identify which model was used.
+
+Canonical direct-return and assignment source, research model:
+  Get model-canonical-research-v1.json and MODEL-SHA256SUMS from
+  https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.40-experimental
+  See docs/canonical-contract-model.md for source inspection, construction and replay.
+
+  gooo body-context --activity Choose --model model-canonical-research-v1.json \
+    examples/body-codegen/source-interaction-assignment-cases.gooo.fixture
+
+  Supported equivalent calculations receive the same resolved input. Original
+  source identities and execution are preserved. Unsupported source shapes
+  retain a decline reason and continue deterministic search with zero predictions.
+  The paired study reports weak first-choice results; existing defaults remain unchanged.
 
 Included record-field example:
   gooo body-context --activity Describe \

@@ -15,6 +15,9 @@ import (
 // Shape and version come from the decoded artifact. A v1 artifact never gains
 // branch or output channels just because a newer runtime is available.
 func (m *conditionPathModel) featureVersion() string {
+	if m.canonicalContract() {
+		return contractdecision.CanonicalOrderedSourceFeatureVersion
+	}
 	if m.orderedContract() {
 		return contractdecision.OrderedSourceFeatureVersion
 	}
@@ -55,7 +58,7 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 		info.ResidentTensorBytes = contractdecision.ChoiceParameterCount * 4
 	case *contractdecision.OrderedRequirementModel:
 		info.ResidentTensorBytes = contractdecision.OrderedRequirementParameterCount * 4
-	case *contractdecision.InteractionRequirementModel:
+	case *contractdecision.InteractionRequirementModel, *contractdecision.CanonicalInteractionRequirementModel:
 		info.ResidentTensorBytes = contractdecision.InteractionRequirementParameterCount * 4
 	}
 	if m.execution != nil {
@@ -69,7 +72,9 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 func decodeCandidateModel(raw []byte, schema string) (typedPathModel, error) {
 	m := &conditionPathModel{artifactSHA: digest(raw)}
 	var err error
-	if schema == contractdecision.InteractionRequirementSchema {
+	if schema == contractdecision.CanonicalInteractionRequirementSchema {
+		m.contract, err = contractdecision.DecodeCanonicalInteractionRequirementConditioned(raw)
+	} else if schema == contractdecision.InteractionRequirementSchema {
 		m.contract, err = contractdecision.DecodeInteractionRequirementConditioned(raw)
 	} else if schema == contractdecision.OrderedRequirementSchema {
 		m.contract, err = contractdecision.DecodeOrderedRequirementConditioned(raw)

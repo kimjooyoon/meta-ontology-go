@@ -270,6 +270,11 @@ reads every authored input/expected-output example before one initial ranking.
 Its SDK 0.2.36 artifact has 9,746 parameters; ordinary finite checks and saved
 model-free execution remain part of the compiler path.
 
+Development source also accepts the [SDK0.2.40 canonical branch model](docs/canonical-contract-model.md).
+It reads supported direct-return and assignment forms as the same calculation,
+while retaining original source identities and execution. Its research weights
+and low first-choice results are public; the released compiler0.6.27 predates this adapter.
+
 ## What we are developing
 
 The goal is to make program construction an inspectable language operation.

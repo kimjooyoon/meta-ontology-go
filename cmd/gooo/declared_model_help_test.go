@@ -24,6 +24,7 @@ func TestDeclaredModelHelpShowsPracticalWorkflow(t *testing.T) {
 				"version --build --json", "model-interaction-v1.json", "v0.2.39-experimental",
 				"source-interaction-condition-cases.gooo.fixture",
 				"model-ordered-v1.json", "same source and cases",
+				"v0.2.40-experimental", "model-canonical-research-v1.json", "canonical-contract-model.md",
 			} {
 				if !strings.Contains(out.String(), want) {
 					t.Fatalf("model workflow misses %q", want)

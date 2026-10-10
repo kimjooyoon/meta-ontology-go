@@ -12,12 +12,12 @@ import (
 func isContractCandidateSchema(schema string) bool {
 	return schema == contractdecision.Schema || schema == contractdecision.PoolingSchema ||
 		schema == contractdecision.ChoiceSchema || schema == contractdecision.InteractionRequirementSchema ||
-		schema == contractdecision.OrderedRequirementSchema
+		schema == contractdecision.OrderedRequirementSchema || schema == contractdecision.CanonicalInteractionRequirementSchema
 }
 
 func (m *conditionPathModel) orderedContract() bool {
 	return m.contract != nil && (m.contract.ArtifactSchema() == contractdecision.InteractionRequirementSchema ||
-		m.contract.ArtifactSchema() == contractdecision.OrderedRequirementSchema)
+		m.contract.ArtifactSchema() == contractdecision.OrderedRequirementSchema || m.canonicalContract())
 }
 
 type declaredContractModel interface {
@@ -28,6 +28,8 @@ type declaredContractModel interface {
 func (m *conditionPathModel) newContractSession(ctx context.Context, prepared *pathplan.PreparedPlan,
 	cases []pathplan.TestCase) (*pathplan.ContractSession, error) {
 	switch model := m.contract.(type) {
+	case *contractdecision.CanonicalInteractionRequirementModel:
+		return prepared.NewCanonicalInteractionRequirementContractSession(ctx, model, cases)
 	case *contractdecision.InteractionRequirementModel:
 		return prepared.NewInteractionRequirementContractSession(ctx, model, cases)
 	case *contractdecision.OrderedRequirementModel:
