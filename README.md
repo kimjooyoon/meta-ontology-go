@@ -4,6 +4,40 @@
 assembling programs, and keeping the evidence of how they behave. This repository
 contains its Go compiler. Source files use the `.gooo` extension.
 
+## Try a working Gooo program
+
+Build a small diagnostic tool, then reuse its selected program on new inputs.
+This example needs **Go 1.27.2** and no model or API key. In a new working
+directory on macOS or Linux:
+
+```sh
+GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.24-dev
+export PATH="$PWD/.gooo-bin:$PATH"
+gooo init --template diagnostic my-diagnostic
+cd my-diagnostic
+gooo package execute --json --cases cases.json gooo.workspace.json > execution.json
+gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
+```
+
+The last command prints:
+
+```text
+"partial: missing branch result [repair-and-replay]"
+"unobserved: Add expected observations. [add-examples]"
+"complete: All observed fields matched. [accept]"
+```
+
+Gooo assembles choices declared in `diagnostics.gooo`, generates Go, and runs the
+supplied cases. Replay uses the saved choices with zero new model calls. Edit
+`inputs.json` to try your own counts and diagnostic text.
+
+[Installation, platform downloads, and next steps](docs/getting-started.md)
+explain what the finite checks establish and how to change the source.
+For a separate library example, [Gooo Go Ports](https://github.com/kimjooyoon/gooo-go-ports)
+implements eight HTTP and Unicode functions and compares them with Go originals;
+its [recorded checks](https://github.com/kimjooyoon/gooo-go-ports/blob/db55487870f91d7f5e42658c5323a82f12ce9830/evidence/initial.json)
+cover named inputs, not whole-package compatibility.
+
 Think of Gooo as a workshop: declarations provide the plan, a small local model
 can suggest which permitted parts to assemble, and the compiler checks the fit
 and generates Go. A Go experiment runner builds and executes the resulting
