@@ -36,6 +36,8 @@ type BodyPathReceipt struct {
 	Feedback               []pathplan.FeedbackReceipt   `json:"feedback_judgments,omitempty"`
 	ConditionProgress      []pathplan.ConditionProgress `json:"condition_session_progress,omitempty"`
 	ConditionFeedback      []pathplan.ConditionRanking  `json:"condition_feedback_judgments,omitempty"`
+	ContractRanking        *pathplan.ContractRanking    `json:"declared_contract_ranking,omitempty"`
+	ContractProgress       []pathplan.ContractProgress  `json:"declared_contract_progress,omitempty"`
 	FeedbackUnfixed        bool                         `json:"feedback_unfixed,omitempty"`
 	ModelRetention         *RetainedModelInfo           `json:"model_retention,omitempty"`
 	ModelContext           *PathModelContextReceipt     `json:"model_context,omitempty"`
@@ -228,6 +230,9 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	contextStarted := time.Now()
 	var contextDeclined bool
 	if condition != nil {
+		if condition.contract != nil && (document.Seed != "" || feedback != nil || models.observation != nil) {
+			return fail(fmt.Errorf("declared-contract model uses one initial ranking; omit seed, feedback and oracle observation options"))
+		}
 		if feedback != nil && (feedback.ci != nil || feedback.unfixed) {
 			return fail(fmt.Errorf("candidate model requires its declared observation channels; CI hints and unfixed feedback are outside its feature contract"))
 		}
@@ -269,7 +274,11 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	receipt.SearchStarted = true
 	var search pathplan.SearchResult
 	var selected *bodyplan.Program
-	if condition != nil {
+	if condition != nil && condition.contract != nil {
+		receipt.Timing.DecisionStage = "declared_cases_ranked_once_before_candidate_tests_and_final_native_emission"
+		search, selected, receipt.ContractRanking, receipt.ContractProgress, err = searchContractPaths(ctx, prepared,
+			condition, effectiveCases, document.MaxAttempts, min(document.MaxAttempts, max(1, stepAttempts)))
+	} else if condition != nil {
 		rounds := 0
 		if feedback != nil {
 			rounds = feedback.rounds

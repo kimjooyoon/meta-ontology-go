@@ -1,0 +1,15 @@
+{
+  "args": [
+    "body-construct",
+    "--source",
+    "construction/original.gooo",
+    "--construction",
+    "construction/construction.json",
+    "--cases",
+    "evaluation-cases.json",
+    "--go-bin",
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go"
+  ],
+  "wall_ns": 350822208,
+  "exit_code": 0
+}

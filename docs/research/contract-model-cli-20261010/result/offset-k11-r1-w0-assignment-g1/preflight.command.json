@@ -1,0 +1,12 @@
+{
+  "args": [
+    "body-context",
+    "--activity",
+    "Choose",
+    "--model",
+    "model.json",
+    "source.gooo"
+  ],
+  "wall_ns": 12771416,
+  "exit_code": 0
+}

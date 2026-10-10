@@ -35,6 +35,7 @@ type TypedPathContextExport struct {
 	RepositoryWrites     int                      `json:"repository_writes"`
 	ModelCompatibility   *PathModelCompatibility  `json:"model_compatibility,omitempty"`
 	CompleteModelInput   *CompletePathModelInput  `json:"complete_model_input,omitempty"`
+	ContractCases        *ExportedContractCases   `json:"declared_contract_cases,omitempty"`
 	Scope                string                   `json:"scope"`
 }
 

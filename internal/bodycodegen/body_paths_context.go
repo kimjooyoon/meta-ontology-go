@@ -25,24 +25,25 @@ type PathContextInput struct {
 }
 
 type PathModelContextReceipt struct {
-	Schema            string              `json:"schema"`
-	Status            string              `json:"status"`
-	ActivityID        string              `json:"activity_id"`
-	SourceSemanticSHA string              `json:"source_semantic_sha256"`
-	OriginalPlanSHA   string              `json:"original_plan_sha256"`
-	RankedPlanSHA     string              `json:"ranked_plan_sha256,omitempty"`
-	MetadataSHA       string              `json:"model_metadata_sha256,omitempty"`
-	ArtifactSHA       string              `json:"model_artifact_sha256,omitempty"`
-	ModelFingerprint  string              `json:"model_fingerprint,omitempty"`
-	FeatureVersion    string              `json:"feature_version"`
-	ArithmeticVersion string              `json:"arithmetic_version,omitempty"`
-	Inputs            []PathContextInput  `json:"inputs"`
-	DeclinedDecision  string              `json:"declined_decision,omitempty"`
-	Reason            string              `json:"reason,omitempty"`
-	SeedSkipped       bool                `json:"seed_skipped,omitempty"`
-	FeedbackSkipped   bool                `json:"feedback_skipped,omitempty"`
-	Scope             string              `json:"scope"`
-	DeclaredInputs    *PathDeclaredInputs `json:"complete_declared_inputs,omitempty"`
+	Schema            string               `json:"schema"`
+	Status            string               `json:"status"`
+	ActivityID        string               `json:"activity_id"`
+	SourceSemanticSHA string               `json:"source_semantic_sha256"`
+	OriginalPlanSHA   string               `json:"original_plan_sha256"`
+	RankedPlanSHA     string               `json:"ranked_plan_sha256,omitempty"`
+	MetadataSHA       string               `json:"model_metadata_sha256,omitempty"`
+	ArtifactSHA       string               `json:"model_artifact_sha256,omitempty"`
+	ModelFingerprint  string               `json:"model_fingerprint,omitempty"`
+	FeatureVersion    string               `json:"feature_version"`
+	ArithmeticVersion string               `json:"arithmetic_version,omitempty"`
+	Inputs            []PathContextInput   `json:"inputs"`
+	DeclinedDecision  string               `json:"declined_decision,omitempty"`
+	Reason            string               `json:"reason,omitempty"`
+	SeedSkipped       bool                 `json:"seed_skipped,omitempty"`
+	FeedbackSkipped   bool                 `json:"feedback_skipped,omitempty"`
+	Scope             string               `json:"scope"`
+	DeclaredInputs    *PathDeclaredInputs  `json:"complete_declared_inputs,omitempty"`
+	ContractCases     *ContractCaseContext `json:"declared_contract_cases,omitempty"`
 }
 
 // DeclaredInputs preserves the original caller text, separate from the source-

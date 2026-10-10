@@ -1,0 +1,69 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Main": -9007199254740995
+      },
+      "expected": {
+        "Main": 7
+      }
+    },
+    {
+      "inputs": {
+        "Main": 0
+      },
+      "expected": {
+        "Main": 7
+      }
+    },
+    {
+      "inputs": {
+        "Main": 6
+      },
+      "expected": {
+        "Main": 7
+      }
+    },
+    {
+      "inputs": {
+        "Main": 7
+      },
+      "expected": {
+        "Main": 7
+      }
+    },
+    {
+      "inputs": {
+        "Main": 8
+      },
+      "expected": {
+        "Main": 8
+      }
+    },
+    {
+      "inputs": {
+        "Main": 9007199254740993
+      },
+      "expected": {
+        "Main": 9007199254740993
+      }
+    },
+    {
+      "inputs": {
+        "Main": 9007199254740995
+      },
+      "expected": {
+        "Main": 9007199254740995
+      }
+    },
+    {
+      "inputs": {
+        "Main": 18014398509481990
+      },
+      "expected": {
+        "Main": 18014398509481990
+      }
+    }
+  ]
+}

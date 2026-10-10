@@ -7,6 +7,7 @@ import (
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/conditiondecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/contractdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/executiondecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/flowdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
@@ -32,7 +33,7 @@ func loadTypedStructuralModel(name string) (typedPathModel, error) {
 		return typedPathModel{}, err
 	}
 	if selector.Schema == conditiondecision.Schema || selector.Schema == executiondecision.Schema ||
-		selector.Schema == flowdecision.Schema || selector.Schema == flowdecision.ActivationSchema {
+		selector.Schema == flowdecision.Schema || selector.Schema == flowdecision.ActivationSchema || selector.Schema == contractdecision.Schema {
 		return decodeCandidateModel(raw, selector.Schema)
 	}
 	if len(raw) > 64<<10 {
