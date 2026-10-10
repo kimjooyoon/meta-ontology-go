@@ -21,6 +21,12 @@ func (b *recipeArena) expression(node ast.Expr, depth int) (int, error) {
 	switch e := node.(type) {
 	case *ast.ParenExpr:
 		return b.expression(e.X, depth)
+	case *ast.CallExpr:
+		literal, err := typedIntegerLiteral(e)
+		if err != nil {
+			return 0, err
+		}
+		return b.expression(literal, depth+1)
 	case *ast.Ident:
 		value.Kind, value.Name = bodyplan.ExprLocal, e.Name
 		if e.Name == "input" {
