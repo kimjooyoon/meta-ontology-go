@@ -11,6 +11,7 @@ import (
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/flowdecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
 
 // Controlled weights prove wiring; measured learned accuracy belongs to the
@@ -68,38 +69,44 @@ func TestFlowModelCompilerAssignmentAndActualInput(t *testing.T) {
 	var wg sync.WaitGroup
 	for range 3 {
 		wg.Go(func() {
-			result, err := g.Generate(ctx, "flow.gooo", source, "Choose", doc, TypedPathOptions{StepAttempts: 1})
-			if err != nil {
-				t.Error(err)
-				return
-			}
-			p := result.Report.BodyPaths
-			if p.Search.Status != "TRAINING_COMPLETE" || len(p.Search.Attempts) != 1 || p.Search.Attempts[0].Mask != 2 || p.Search.Selection.ModelCalls != 1 || p.Search.Selection.ModelVariant != "flow_fp32" || p.FunctionalCompleteness != 100 || p.Conditions.Passed != 3 {
-				t.Error("static assignment facts did not select and check the body", p)
-			}
-			if !reflect.DeepEqual(before.Context, p.ModelContext) {
-				t.Error("preflight and actual input contexts differ")
-			}
-			for i, input := range before.Inputs {
-				if input.FlowFeatures == nil || input.Features != nil || input.ExecutionFeatures != nil || input.Bytes != 1536 || input.InputSHA != "sha256:"+p.ConditionProgress[0].Ranking.FeatureSHA[i] || input.InputSHA != candidateFeatureDigest(input.FlowFeatures[:]) {
-					t.Error("flow array differs from actual prediction", i)
-					continue
-				}
-				if !slices.Equal(input.FlowFeatures[:320], legacy.Inputs[i].ExecutionFeatures[:]) {
-					t.Error("flow extension changed the old prefix")
-				}
-				for _, value := range input.FlowFeatures[256:320] {
-					if value != 0 {
-						t.Error("future output entered initial prediction")
-					}
-				}
-			}
-			if err := VerifyTypedPathProjection(ctx, "flow.gooo", source, doc, result); err != nil {
-				t.Error("saved program requires model file", err)
-			}
+			checkRetainedFlowGeneration(t, ctx, g, source, doc, before, legacy)
 		})
 	}
 	wg.Wait()
+}
+
+func checkRetainedFlowGeneration(t *testing.T, ctx context.Context, g *TypedPathGenerator, source []byte,
+	doc pathplan.Document, before, legacy TypedPathContextExport) {
+	t.Helper()
+	result, err := g.Generate(ctx, "flow.gooo", source, "Choose", doc, TypedPathOptions{StepAttempts: 1})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	p := result.Report.BodyPaths
+	if p.Search.Status != "TRAINING_COMPLETE" || len(p.Search.Attempts) != 1 || p.Search.Attempts[0].Mask != 2 || p.Search.Selection.ModelCalls != 1 || p.Search.Selection.ModelVariant != "flow_fp32" || p.FunctionalCompleteness != 100 || p.Conditions.Passed != 3 {
+		t.Error("static assignment facts did not select and check the body", p)
+	}
+	if !reflect.DeepEqual(before.Context, p.ModelContext) {
+		t.Error("preflight and actual input contexts differ")
+	}
+	for i, input := range before.Inputs {
+		if input.FlowFeatures == nil || input.Features != nil || input.ExecutionFeatures != nil || input.Bytes != 1536 || input.InputSHA != "sha256:"+p.ConditionProgress[0].Ranking.FeatureSHA[i] || input.InputSHA != candidateFeatureDigest(input.FlowFeatures[:]) {
+			t.Error("flow array differs from actual prediction", i)
+			continue
+		}
+		if !slices.Equal(input.FlowFeatures[:320], legacy.Inputs[i].ExecutionFeatures[:]) {
+			t.Error("flow extension changed the old prefix")
+		}
+		for _, value := range input.FlowFeatures[256:320] {
+			if value != 0 {
+				t.Error("future output entered initial prediction")
+			}
+		}
+	}
+	if err := VerifyTypedPathProjection(ctx, "flow.gooo", source, doc, result); err != nil {
+		t.Error("saved program requires model file", err)
+	}
 }
 
 func TestFlowModelCompilerOutputFeedback(t *testing.T) {

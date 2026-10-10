@@ -121,6 +121,17 @@ func audit(root string) map[string]any {
 	must(f.Calls == 1 && f.OutputFailure != nil && !f.HasFailure && f.Proposed == 0 && f.PredictNS > 0 && f.Applied && !f.AddedMask, "observed repeated top proposal after output feedback")
 	must(f.OutputFailure.Result.Actual == -9007199254740995, "exact failed output")
 	must(len(initial.ConditionProgress) == 3 && len(feedback.ConditionProgress) == 4, "interleaved progress")
+	checkFlowInputs(pre, initial, feedback)
+	checkSavedConstruction(root)
+	return map[string]any{"status": "PASS", "scope": "Read-only audit of six original commands; no new inference, evaluator or native process.", "producer": producer,
+		"deterministic_attempts": len(d.Search.Attempts), "model_attempts": len(initial.Search.Attempts), "feedback_attempts": len(feedback.Search.Attempts), "feedback_additional_calls": 1,
+		"initial_predict_ns": initial.ConditionProgress[0].Ranking.PredictNS, "feedback_mode_initial_predict_ns": feedback.ConditionProgress[0].Ranking.PredictNS,
+		"feedback_predict_ns":    f.PredictNS,
+		"feedback_proposed_mask": f.Proposed, "repeated_top_candidate_reexecuted": false,
+		"source_outputs": 6, "source_conditions": 3, "native_cases": 8, "new_audit_model_calls": 0, "new_audit_native_runs": 0}
+}
+
+func checkFlowInputs(pre bodycodegen.TypedPathContextExport, initial, feedback *bodycodegen.BodyPathReceipt) {
 	for _, p := range []*bodycodegen.BodyPathReceipt{initial, feedback} {
 		must(p.ModelContext.ArtifactSHA == "sha256:"+model && p.ModelContext.ModelFingerprint == "sha256:"+fingerprint, "model identities")
 		must(p.Search.Attempts[0].Mask == 0 && p.Search.Attempts[1].Mask == 2, "observed candidate order")
@@ -147,6 +158,9 @@ func audit(root string) map[string]any {
 			must(digest([]byte(input.Text)) == input.OriginalIntentSHA, "authored intent")
 		}
 	}
+}
+
+func checkSavedConstruction(root string) {
 	suite := decode[bodyexecution.CompositionCases](read(root, "evaluation-cases.json"))
 	built := decode[constructionOutput](read(root, "construction.json.gz"))
 	replayed := decode[constructionOutput](read(root, "replay.json.gz"))
@@ -160,12 +174,6 @@ func audit(root string) map[string]any {
 	must(savedErr == nil && builtErr == nil && bytes.Equal(savedJSON, builtJSON), "saved file matches stdout after JSON whitespace normalization")
 	checkNative(built.Evaluation.Runtime, suite)
 	checkNative(replayed.Evaluation.Runtime, suite)
-	return map[string]any{"status": "PASS", "scope": "Read-only audit of six original commands; no new inference, evaluator or native process.", "producer": producer,
-		"deterministic_attempts": len(d.Search.Attempts), "model_attempts": len(initial.Search.Attempts), "feedback_attempts": len(feedback.Search.Attempts), "feedback_additional_calls": 1,
-		"initial_predict_ns": initial.ConditionProgress[0].Ranking.PredictNS, "feedback_mode_initial_predict_ns": feedback.ConditionProgress[0].Ranking.PredictNS,
-		"feedback_predict_ns":    f.PredictNS,
-		"feedback_proposed_mask": f.Proposed, "repeated_top_candidate_reexecuted": false,
-		"source_outputs": 6, "source_conditions": 3, "native_cases": 8, "new_audit_model_calls": 0, "new_audit_native_runs": 0}
 }
 
 func main() {
