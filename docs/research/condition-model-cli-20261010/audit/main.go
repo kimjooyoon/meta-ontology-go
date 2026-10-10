@@ -86,7 +86,7 @@ func main() {
 	sdk := build["decision_runtime"].(map[string]any)
 	must(sdk["version"] == "v0.2.30-experimental" && sdk["replaced"] == false, "public SDK")
 	must(strings.TrimSpace(string(read(root, "model.sha256"))) == model, "model file identity")
-	sourceSHA := digest(read(root, "source.gooo"))
+	sourceSHA := digest(read(root, "source.gooo.gz"))
 	pre := decode[bodycodegen.TypedPathContextExport](read(root, "preflight.json.gz"))
 	must(pre.OriginalSourceSHA256 == sourceSHA && pre.ModelPredictions == 0 && pre.CandidateTests == 0, "preflight")
 	must(pre.Context != nil && len(pre.Inputs) == 2 && len(pre.Context.Inputs) == 2, "preflight features")

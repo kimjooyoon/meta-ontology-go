@@ -6,7 +6,9 @@
 
 ## 무엇을 해봤나
 
-[Gooo 소스](result/source.gooo)에 비교 방향과 분기 배치를 선택할 두 자리를 선언했다.
+[Gooo 예제](../../../examples/body-codegen/source-condition-model.gooo.fixture)에
+비교 방향과 분기 배치를 선택할 두 자리를 선언했다. 실험에서 소비한 원본 바이트는
+`result/source.gooo.gz`에 보관했다.
 조합은 네 개다. 최종 출력은 절댓값이고, 중간 비교는 **입력이 양수인지** 확인해야 한다.
 두 비교 방향 모두 분기를 맞춰 바꾸면 절댓값을 만들 수 있으므로, 출력만으로는 이 의도를
 구분할 수 없다. 소스에 출력 사례 9개와 중간 조건 사례 3개를 따로 적었다.
@@ -61,6 +63,9 @@
 - `preflight.json.gz`, `deterministic.json.gz`, `condition.json.gz`는 `gzip -n`으로 압축했고,
   풀어낸 바이트를 최초 관측과 비교했다. 초기 입력의 256개 FP32 특징은 실제 모델이 받은
   특징 해시와 같다. 초기 조건 관측 구간은 비어 있다.
+- `source.gooo.gz`도 같은 방식으로 원본 바이트와 비교했다. 보관용 스냅샷을 압축해
+  현재 언어 코퍼스에 별도 실행 단위로 중복 등록되지 않게 한다. 직접 실행할 예제와
+  집중 CLI 검사는 `examples/body-codegen/source-condition-model.gooo.fixture`를 사용한다.
 - `native-observation.json`은 원본에서 뽑은 관측이다. 로컬 Go 경로와 부모·완전성 페이로드를
   제외했다. 생략한 필드와 원본 전체 파일의 해시를 명시했다. 전체 원본 영수증을 대신하는
   재검증 자료로 취급하지 않는다. 공개된 조립 원본과 이 관측으로 수치와 출처를 재집계한다.
