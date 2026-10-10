@@ -46,7 +46,7 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		report.Summary.GovernanceExecuted != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceUnresolved != 0 ||
 		report.Summary.ProjectionTotal != languagesyntax.FixedProjectionTotal || report.Summary.ProjectionSatisfied != languagesyntax.FixedProjectionTotal || report.Summary.ProjectionUnresolved != 0 ||
-		len(report.Source.GoooFiles) != 98 || len(report.Source.PackageUnits) != 4 ||
+		len(report.Source.GoooFiles) != 99 || len(report.Source.PackageUnits) != 4 ||
 		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 3 ||
 		len(report.Source.PackageUnits[2].Members) != 1 || len(report.Source.PackageUnits[3].Members) != 1 {
 		invalidIDs := make([]string, 0, report.Summary.InvalidCases)
@@ -197,6 +197,11 @@ func TestProjectionCorpusBindsActualSourceAndBothArtifacts(t *testing.T) {
 		{"changed-delta-go", "internal/completenessdelta/delta.generated.go", "Numerator   int", "Numerator   string", false},
 		{"changed-delta-schema", "internal/completenessdelta/delta.schema.json", "\"minimum\": 0", "\"minimum\": -1", false},
 		{"missing-delta-go", "internal/completenessdelta/delta.generated.go", "", "", true},
+		{"changed-outcome-source", "internal/outcomedelta/delta.gooo", "type Text required one", "type Record required one", false},
+		{"changed-outcome-go", "internal/outcomedelta/delta.generated.go", "ActivityID        string", "ActivityID        int", false},
+		{"changed-outcome-schema", "internal/outcomedelta/delta.schema.json", "\"type\": \"string\"", "\"type\": \"integer\"", false},
+		{"missing-outcome-go", "internal/outcomedelta/delta.generated.go", "", "", true},
+		{"missing-outcome-schema", "internal/outcomedelta/delta.schema.json", "", "", true},
 	} {
 		t.Run(sample.name, func(t *testing.T) {
 			var altered []byte
@@ -234,6 +239,7 @@ func TestProjectionRegistryCannotDropOrRedirectObligations(t *testing.T) {
 	repository, raw := fixture(t)
 	for _, mutate := range []func(*languagesyntax.Registry){
 		func(r *languagesyntax.Registry) { r.ProjectionUnits = nil },
+		func(r *languagesyntax.Registry) { r.ProjectionUnits = r.ProjectionUnits[:2] },
 		func(r *languagesyntax.Registry) { r.ProjectionUnits[0].Profile = "invented/profile" },
 		func(r *languagesyntax.Registry) { r.ProjectionUnits[0].GoPath = "unrelated.go" },
 	} {

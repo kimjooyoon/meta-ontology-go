@@ -48,3 +48,14 @@ This reads existing evidence only. Structural declarations come from
 against that source. Regression fixtures cover exact integers, reordered cases,
 whole caller tuples, bound intermediate inputs, multiple ports, records,
 conflicting duplicates, absent expectations, partial observations and faults.
+
+## Repository integration
+
+The first CI on source `f612c0ce` found the new declaration and two examples
+outside the syntax inventory. Focused comparator tests had passed; the full
+repository checks exposed this registration omission. The report declaration is
+now a third source-bound receipt projection. Its Go and JSON outputs are checked
+against the declaration, including missing or changed artifact fixtures. The
+construction examples follow the existing `.gooo.fixture` convention and remain
+byte-identical to the frozen source. Existing syntax cases and their obligations
+remain in the registry. Original comparison records above are unchanged.

@@ -28,13 +28,13 @@ evidence from repeated changes in an actual workflow.
 
 ```sh
 /tmp/gooo-outcomes body-construct \
-  --source examples/workflow-outcome-delta/batch16.gooo --entry Main \
+  --source examples/workflow-outcome-delta/batch16.gooo.fixture --entry Main \
   --construction-cases examples/workflow-outcome-delta/construction.json \
   --cases examples/workflow-outcome-delta/evaluation16.json \
   --attempts 4 --out batch16-run > before.json
 
 /tmp/gooo-outcomes body-construct \
-  --source examples/workflow-outcome-delta/batch32.gooo --entry Main \
+  --source examples/workflow-outcome-delta/batch32.gooo.fixture --entry Main \
   --construction-cases examples/workflow-outcome-delta/construction.json \
   --cases examples/workflow-outcome-delta/evaluation32.json \
   --attempts 4 --out batch32-run > after.json

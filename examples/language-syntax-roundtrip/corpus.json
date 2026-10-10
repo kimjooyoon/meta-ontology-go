@@ -806,6 +806,14 @@
       "root": "CompletenessDelta",
       "go_path": "internal/completenessdelta/delta.generated.go",
       "json_schema_path": "internal/completenessdelta/delta.schema.json"
+    },
+    {
+      "id": "declared-workflow-outcome-delta",
+      "path": "internal/outcomedelta/delta.gooo",
+      "profile": "gooo/receipt-structure-projection/v1",
+      "root": "OutcomeDelta",
+      "go_path": "internal/outcomedelta/delta.generated.go",
+      "json_schema_path": "internal/outcomedelta/delta.schema.json"
     }
   ],
   "meta_sources": [
