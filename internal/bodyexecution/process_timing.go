@@ -2,6 +2,8 @@ package bodyexecution
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 )
 
@@ -28,16 +30,30 @@ func timedProcessCalls(ctx context.Context, startProcess, waitProcess func() err
 	timing.StartNS = started.Sub(start).Nanoseconds()
 	timing.ContextAtStartReturn = processContextState(ctx)
 	if err != nil {
-		return timing, timing.StartNS, "START", err
+		return timing, timing.StartNS, "START", processContextFailure(ctx, err)
 	}
 	timing.WaitLimitNS = int64(waitLimit)
-	err = boundedProcessWait(ctx, waitProcess, waitLimit, cancel)
+	err = processContextFailure(ctx, boundedProcessWait(ctx, waitProcess, waitLimit, cancel))
 	timing.WaitNS = time.Since(started).Nanoseconds()
 	phase := ""
 	if err != nil {
 		phase = "WAIT"
 	}
 	return timing, timing.StartNS + timing.WaitNS, phase, err
+}
+
+// Keep interruption and operating-system failure available to errors.Is/As.
+// exec.Cmd.Wait commonly returns an ExitError after cancellation kills a child.
+// The cause is attached after waiting so the child is still always joined.
+func processContextFailure(ctx context.Context, failure error) error {
+	cause := context.Cause(ctx)
+	if cause == nil || errors.Is(failure, cause) {
+		return failure
+	}
+	if failure == nil {
+		return cause
+	}
+	return fmt.Errorf("%w: %w", cause, failure)
 }
 
 // The parent's deadline is never replaced. Native calls add a shorter budget

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"os/exec"
 	"strings"
 	"testing"
 	"testing/synctest"
@@ -110,10 +111,60 @@ func TestNativeWaitLimitTerminatesRealChild(t *testing.T) {
 	defer cancel()
 	_, r, err := processWithWaitLimit(ctx, 100*time.Millisecond, t.TempDir(), binary, nil,
 		"-test.run=^TestRuntimeProcessHelper$", "--", "body-helper-sleep")
+	var exit *exec.ExitError
+	if !errors.Is(err, context.DeadlineExceeded) || !errors.As(err, &exit) {
+		t.Fatal("deadline and native exit cause must both remain inspectable", err)
+	}
 	if err == nil || !r.Started || r.Completed || !r.TimedOut || r.Canceled || r.ExitCode == nil ||
 		r.FailurePhase != "WAIT" || r.Timing == nil || r.Timing.WaitLimitNS != int64(100*time.Millisecond) ||
 		r.Timing.StartNS+r.Timing.WaitNS != r.WallNS {
 		t.Fatalf("native wait did not stop and join the child: %+v %v", r, err)
+	}
+}
+
+func TestProcessFailureRetainsContextAndWaitCause(t *testing.T) {
+	for _, limit := range []time.Duration{0, 2 * time.Second} {
+		for _, cause := range []error{context.Canceled, context.DeadlineExceeded, errors.New("caller stopped assembly")} {
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithCancelCause(context.Background())
+				defer cancel(nil)
+				time.AfterFunc(time.Second, func() { cancel(cause) })
+				childFailure := errors.New("child wait reported termination")
+				timing, _, phase, err := timedProcessCalls(ctx, func() error { return nil },
+					func() error { <-ctx.Done(); return childFailure }, limit, cancel)
+				if !errors.Is(err, cause) || !errors.Is(err, childFailure) || phase != "WAIT" ||
+					timing.WaitNS != int64(time.Second) {
+					t.Fatal("caller cannot distinguish interruption from ordinary exit failure", timing, err)
+				}
+			})
+		}
+	}
+}
+
+func TestProcessFailureKeepsExpiredStartCauseWithoutWaiting(t *testing.T) {
+	ctx, cancel := context.WithCancelCause(context.Background())
+	cause, failure := errors.New("caller stopped before start"), errors.New("start failed")
+	cancel(cause)
+	_, _, phase, err := timedProcessCalls(ctx, func() error { return failure },
+		func() error { t.Fatal("failed child must not be waited"); return nil }, time.Second, cancel)
+	if !errors.Is(err, cause) || !errors.Is(err, failure) || phase != "START" {
+		t.Fatal("start lost its context or original error", phase, err)
+	}
+}
+
+func TestProcessFailureReportsCancellationEvenWhenWaitReturnsNil(t *testing.T) {
+	for _, limit := range []time.Duration{0, 2 * time.Second} {
+		synctest.Test(t, func(t *testing.T) {
+			ctx, cancel := context.WithCancelCause(context.Background())
+			defer cancel(nil)
+			time.AfterFunc(time.Second, func() { cancel(context.Canceled) })
+			joined := false
+			_, _, phase, err := timedProcessCalls(ctx, func() error { return nil },
+				func() error { <-ctx.Done(); joined = true; return nil }, limit, cancel)
+			if !joined || !errors.Is(err, context.Canceled) || phase != "WAIT" {
+				t.Fatal("canceled process was accepted or not joined", joined, phase, err)
+			}
+		})
 	}
 }
 
