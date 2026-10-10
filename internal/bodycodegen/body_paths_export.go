@@ -19,6 +19,7 @@ type ExportedPathInput struct {
 	ExecutionFeatures *[decision.ExecutionFeatureDim]float32       `json:"execution_features,omitempty"`
 	FlowFeatures      *[decision.ExecutionFlowFeatureDim]float32   `json:"flow_features,omitempty"`
 	OrderedFeatures   *[contractdecision.OrderedFeatureDim]float32 `json:"ordered_source_features,omitempty"`
+	OrderedBranch     *pathplan.OrderedBranchContext               `json:"ordered_branch_context,omitempty"`
 	SemanticFlow      *pathplan.SemanticBranchContext              `json:"semantic_flow_context,omitempty"`
 }
 

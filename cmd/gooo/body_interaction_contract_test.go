@@ -39,6 +39,13 @@ func TestInteractionContractModelCLINativeConstructionAndModelFreeReplay(t *test
 	checkContractModelCLINativeConstructionAndReplaySource(t, cliInteractionContractModel(t), contractdecision.InteractionRequirementSchema, interactionContractSource)
 }
 
+func TestInteractionAssignmentCLIContextAndNativeReplay(t *testing.T) {
+	const source = "../../examples/body-codegen/source-interaction-assignment-cases.gooo.fixture"
+	model := cliInteractionContractModel(t)
+	checkContractModelCLIContextAndCodegenSource(t, model, contractdecision.InteractionRequirementSchema, source)
+	checkContractModelCLINativeConstructionAndReplaySource(t, model, contractdecision.InteractionRequirementSchema, source)
+}
+
 func TestInteractionContractUnsupportedCLIChoiceUsesDeterministicSearch(t *testing.T) {
 	model := cliInteractionContractModel(t)
 	source := "../../examples/body-codegen/source-condition-cases.gooo.fixture"

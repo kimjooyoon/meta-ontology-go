@@ -86,7 +86,7 @@ func TestConditionModelPreflightMatchesSourceArrayAndNativeSearch(t *testing.T) 
 	}
 	first := p.ConditionProgress[0].Ranking
 	for i, input := range preflight.Inputs {
-		if input.Features == nil || input.Text != doc.Plan.Decisions[i].Intent || input.InputSHA != "sha256:"+first.FeatureSHA[i] || conditionFeatureDigest(*input.Features) != input.InputSHA || input.Bytes != 1024 {
+		if input.Features == nil || input.OrderedBranch != nil || input.Text != doc.Plan.Decisions[i].Intent || input.InputSHA != "sha256:"+first.FeatureSHA[i] || conditionFeatureDigest(*input.Features) != input.InputSHA || input.Bytes != 1024 {
 			t.Fatal("feature bytes differ from actual neural input", i)
 		}
 		for _, v := range input.Features[192:] {

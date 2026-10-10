@@ -96,6 +96,16 @@ func exportedContractInputs(document pathplan.Document, prepared *pathplan.Prepa
 		if err != nil {
 			return nil, err
 		}
+		if ordered {
+			view, err := prepared.OrderedBranchContext(choice.ID)
+			if err != nil {
+				return nil, err
+			}
+			if !view.Available {
+				return nil, fmt.Errorf("ordered explanation unavailable: %s", view.Reason)
+			}
+			exported.OrderedBranch = &view
+		}
 		r = append(r, exported)
 	}
 	return r, nil
