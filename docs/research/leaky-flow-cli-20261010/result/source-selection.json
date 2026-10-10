@@ -1,0 +1,32 @@
+[
+  {
+    "name": "max-direct",
+    "source_id": "max-k11-r1-w1-direct",
+    "original_source_sha256": "5c2dc82ef71ae815bb5ffba3bd7a6a7df590b2292e2d85eb996a8661c7d2ad12",
+    "fixture_sha256": "62a5a4767f7d61b3aa910ae4442bc9a2e9f024114eed3dfe88b81d4b3992d007"
+  },
+  {
+    "name": "max-copy",
+    "source_id": "max-k11-r1-w1-copy_after_branch",
+    "original_source_sha256": "65aa68acfc233cb04e0f15b9e2279a4184c1ed3f5919a2a8ed6c0facb0f4c02f",
+    "fixture_sha256": "d470cdbd3e492fa53e4716198c8fc9f91d78a0fb4a641042a6e5498b19be7af5"
+  },
+  {
+    "name": "min-direct",
+    "source_id": "min-k11-r0-w0-direct",
+    "original_source_sha256": "7a288f47b4614e2d62d9ec367faa019157115f17d56e20d82dea14b01c7b7e17",
+    "fixture_sha256": "b21b4af2890ed3b162f4395e2b2a2de844c764dc247549de6c36edc82308cb52"
+  },
+  {
+    "name": "min-copy",
+    "source_id": "min-k11-r0-w0-copy_after_branch",
+    "original_source_sha256": "3ed7e4baf48284f5a2299f4ddfc2efb7113c023ac482dfba3eea081914b69461",
+    "fixture_sha256": "f52d0ba8fc2ad4386a3bf3a6fa09015bd36647dd40b27ca885453fbc50b7a2a5"
+  },
+  {
+    "name": "nested",
+    "source_id": "control-nested",
+    "original_source_sha256": "2688064ce47a7fa3bc0e31ccec1d65f3507d6e48c2ae91d608bfe38f37f9cfb9",
+    "fixture_sha256": "09d20e5fccd60b5a68940f35672816d7c8b62073c1250eee55d85ce1a31267ea"
+  }
+]
