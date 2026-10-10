@@ -1,0 +1,40 @@
+{
+  "copy": {
+    "construction_native_cases": 8,
+    "deterministic_attempts": 1,
+    "deterministic_total_ms": 1.003958,
+    "feedback_attempts": 2,
+    "feedback_initial_predict_ns": 14083,
+    "feedback_predict_ns": 14042,
+    "feedback_total_ms": 3.600291,
+    "initial_attempts": 2,
+    "initial_predict_ns": 14208,
+    "initial_total_ms": 3.646083,
+    "model_free_replay_cases": 8,
+    "repeated_candidate_executions": 0,
+    "source_conditions": 3,
+    "source_outputs": 8
+  },
+  "direct": {
+    "construction_native_cases": 8,
+    "deterministic_attempts": 1,
+    "deterministic_total_ms": 0.665209,
+    "feedback_attempts": 2,
+    "feedback_initial_predict_ns": 14167,
+    "feedback_predict_ns": 13916,
+    "feedback_total_ms": 3.224125,
+    "initial_attempts": 2,
+    "initial_predict_ns": 15083,
+    "initial_total_ms": 3.174416,
+    "model_free_replay_cases": 8,
+    "repeated_candidate_executions": 0,
+    "source_conditions": 3,
+    "source_outputs": 8
+  },
+  "native_processes": 8,
+  "new_audit_model_calls": 0,
+  "new_audit_native_runs": 0,
+  "paired_choices": 2,
+  "producer": "449b45c103e23903e5839f38f2ba42e945d8f993",
+  "status": "PASS"
+}

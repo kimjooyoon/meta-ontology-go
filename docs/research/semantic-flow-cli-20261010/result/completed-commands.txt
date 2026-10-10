@@ -1,0 +1,12 @@
+direct	preflight
+direct	deterministic
+direct	initial
+direct	feedback
+direct	construction
+direct	replay
+copy	preflight
+copy	deterministic
+copy	initial
+copy	feedback
+copy	construction
+copy	replay
