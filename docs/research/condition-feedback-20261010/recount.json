@@ -1,0 +1,130 @@
+{
+  "results": [
+    {
+      "arm": "baseline",
+      "candidate_evaluations": 5,
+      "condition_rejections": 3,
+      "conditions_declared": 3,
+      "conditions_passed": 3,
+      "external_calls": 0,
+      "feedback_input_max_bytes": 0,
+      "feedback_input_min_bytes": 0,
+      "feedback_predictions": 0,
+      "model_predictions": 3,
+      "native_cases": [
+        {
+          "input": -9,
+          "expected": 9,
+          "actual": 9,
+          "passed": true
+        },
+        {
+          "input": -2,
+          "expected": 2,
+          "actual": 2,
+          "passed": true
+        },
+        {
+          "input": 0,
+          "expected": 0,
+          "actual": 0,
+          "passed": true
+        },
+        {
+          "input": 2,
+          "expected": 2,
+          "actual": 2,
+          "passed": true
+        },
+        {
+          "input": 9,
+          "expected": 9,
+          "actual": 9,
+          "passed": true
+        },
+        {
+          "input": -9007199254740995,
+          "expected": 9007199254740995,
+          "actual": 9007199254740995,
+          "passed": true
+        },
+        {
+          "input": 9007199254740995,
+          "expected": 9007199254740995,
+          "actual": 9007199254740995,
+          "passed": true
+        }
+      ],
+      "prediction_total_ns": 36542,
+      "selected_choices": {
+        "comparison": "layout_forward",
+        "negative": "layout_forward",
+        "sign": "layout_reverse"
+      }
+    },
+    {
+      "arm": "feedback",
+      "candidate_evaluations": 3,
+      "condition_rejections": 1,
+      "conditions_declared": 3,
+      "conditions_passed": 3,
+      "external_calls": 0,
+      "feedback_input_max_bytes": 493,
+      "feedback_input_min_bytes": 456,
+      "feedback_predictions": 6,
+      "model_predictions": 9,
+      "native_cases": [
+        {
+          "input": -9,
+          "expected": 9,
+          "actual": 9,
+          "passed": true
+        },
+        {
+          "input": -2,
+          "expected": 2,
+          "actual": 2,
+          "passed": true
+        },
+        {
+          "input": 0,
+          "expected": 0,
+          "actual": 0,
+          "passed": true
+        },
+        {
+          "input": 2,
+          "expected": 2,
+          "actual": 2,
+          "passed": true
+        },
+        {
+          "input": 9,
+          "expected": 9,
+          "actual": 9,
+          "passed": true
+        },
+        {
+          "input": -9007199254740995,
+          "expected": 9007199254740995,
+          "actual": 9007199254740995,
+          "passed": true
+        },
+        {
+          "input": 9007199254740995,
+          "expected": 9007199254740995,
+          "actual": 9007199254740995,
+          "passed": true
+        }
+      ],
+      "prediction_total_ns": 173168,
+      "selected_choices": {
+        "comparison": "layout_forward",
+        "negative": "layout_forward",
+        "sign": "layout_reverse"
+      }
+    }
+  ],
+  "schema": "gooo/condition-feedback-observation/v1",
+  "scope": "one source, frozen model and finite cases; rank once versus two feedback rounds; no training, unseen-input or isolated-condition-causality claim"
+}
