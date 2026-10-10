@@ -13,6 +13,9 @@ SDK [0.2.36 실험 배포](https://github.com/kimjooyoon/gooo-decision-runtime/r
 개발 소스에는 출력과 중간 조건을 함께 읽는 [SDK 0.2.39 상호작용 모델](interaction-contract-model.md)도
 연결했습니다. 아래 표와 기존 관측은 앞선 모델들의 입력 형식과 결과를 기록합니다.
 
+SDK0.2.40의 [같은 계산을 같은 입력으로 읽는 연구 모델](canonical-contract-model.md)도 개발 소스에서
+사용할 수 있습니다. 기존 모델의 입력과 기본 선택은 유지합니다.
+
 이번 개발 변경에서는 [SDK0.2.37](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.37-experimental)의
 선택별 사례 모델과 전역 집계 모델도 같은 명령으로 읽습니다. 두 파일은 새 문서 388개 중
 미리 정한 32개로 학습한 공개 가중치입니다. 기존 v1 형식도 계속 사용할 수 있습니다.

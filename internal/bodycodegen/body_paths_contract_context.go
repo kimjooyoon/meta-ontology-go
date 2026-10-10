@@ -131,7 +131,13 @@ func prepareContractModelContext(ctx context.Context, document pathplan.Document
 		if model.contract.ArtifactSchema() == contractdecision.OrderedRequirementSchema {
 			r.Schema = "gooo/compiler-ordered-contract-model-context/v1"
 		}
+		if model.canonicalContract() {
+			r.Schema = "gooo/compiler-canonical-interaction-contract-model-context/v1"
+		}
 		r.Scope = "ordered source arrays, all declared outputs and Boolean conditions; zero predictions or candidate executions; FP32 digests use little-endian bytes"
+		if model.canonicalContract() {
+			r.Scope = "source-resolved canonical branch arrays, all declared outputs and Boolean conditions; zero predictions or candidate executions; original source owns execution"
+		}
 		r.ContractConditions, err = contractConditionContext(ctx, input)
 		if err != nil {
 			return prepared, r, false, err
@@ -146,7 +152,13 @@ func appendContractSourceContext(ctx context.Context, document pathplan.Document
 		if err := ctx.Err(); err != nil {
 			return prepared, r, false, err
 		}
-		exported, err := exportedContractInput(input, choice, r.FeatureVersion == contractdecision.OrderedSourceFeatureVersion)
+		var exported ExportedPathInput
+		var err error
+		if r.FeatureVersion == contractdecision.CanonicalOrderedSourceFeatureVersion {
+			exported, err = exportedCanonicalContractInput(input, choice)
+		} else {
+			exported, err = exportedContractInput(input, choice, r.FeatureVersion == contractdecision.OrderedSourceFeatureVersion)
+		}
 		if err != nil {
 			r.Status, r.Reason, r.DeclinedDecision = "DECLINED_TO_DETERMINISTIC", err.Error(), choice.ID
 			return prepared, r, true, nil
