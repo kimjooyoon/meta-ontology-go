@@ -1,0 +1,19 @@
+{
+  "deterministic_attempts": 3,
+  "feedback_additional_calls": 1,
+  "feedback_attempts": 2,
+  "feedback_mode_initial_predict_ns": 16875,
+  "feedback_predict_ns": 13875,
+  "feedback_proposed_mask": 0,
+  "initial_predict_ns": 24375,
+  "model_attempts": 2,
+  "native_cases": 8,
+  "new_audit_model_calls": 0,
+  "new_audit_native_runs": 0,
+  "producer": "5f4c73b9801c80ed6c1ebbbbf6200eca933538fb",
+  "repeated_top_candidate_reexecuted": false,
+  "scope": "Read-only audit of six original commands; no new inference, evaluator or native process.",
+  "source_conditions": 3,
+  "source_outputs": 6,
+  "status": "PASS"
+}

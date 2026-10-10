@@ -49,6 +49,12 @@ go run ./cmd/gooo body-codegen --json --activity Choose \
 피드백도 켠 모델의 시도151회를 줄이지 못해, 예제의 기본 명령은 첫 판단만 사용합니다.
 추가 관측을 쓰려면 `--path-feedback-rounds 3`을 명시합니다.
 
+[실제 CLI 대입문 조립 기록](research/flow-model-cli-20261010/README.md)에서는 기본3회에서
+모델2회로 후보 검사가 줄었습니다. 모델의 첫 선택은 틀렸고 피드백을 줘도 같은 후보를
+최상위로 골랐습니다. 탐색기가 검사한 후보를 건너뛰고 다음 후보를 완성했습니다.
+모델 읽기를 포함한 조립은 기본1.068ms·모델3.437ms였으며, 저장 재실행까지 별도 네이티브
+사례8/8개를 확인했습니다.
+
 ## 출력 실패를 읽는 v3 모델
 
 [128개 Gooo 소스 변형 실험](https://github.com/kimjooyoon/gooo-decision-runtime/tree/5a2b2d55fa5e05e1cf4f06e855f4e27ec25a3da4/studies/execution-feedback-learning-20261010)의
