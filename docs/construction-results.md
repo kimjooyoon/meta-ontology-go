@@ -60,6 +60,27 @@ calls and does not repeat either search or native execution.
 
 ## Saved construction
 
+### Read a saved result
+
+Save the full JSON stdout during the original invocation, for example by using
+`--format json > result.json` with the construction command above. Later, read
+that same observation without source files, model weights or a Go toolchain:
+
+```sh
+gooo body-construct --report result.json
+gooo body-construct --report result.json --format markdown
+```
+
+This mode reads one full JSON result, up to 32MiB. The default is text; JSON output
+returns the original bytes. It shows the file's SHA-256 and labels all reported
+calls, attempts and outcomes as historical. No model or generated program runs.
+Exit 0 means the file was read and formatted; a recorded failure remains visible.
+The recorded claims are not reverified. Execution flags and `--out` are excluded.
+The separate `construction.json` and `evaluation.json` files lack the full CLI
+envelope and cannot be substituted for `result.json`.
+
+### Replay with a current evaluation suite
+
 ```sh
 gooo body-construct --source first-construction/original.gooo \
   --construction first-construction/construction.json \
