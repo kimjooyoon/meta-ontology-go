@@ -31,7 +31,8 @@ func loadTypedStructuralModel(name string) (typedPathModel, error) {
 	if err = json.Unmarshal(raw, &selector); err != nil {
 		return typedPathModel{}, err
 	}
-	if selector.Schema == conditiondecision.Schema || selector.Schema == executiondecision.Schema || selector.Schema == flowdecision.Schema {
+	if selector.Schema == conditiondecision.Schema || selector.Schema == executiondecision.Schema ||
+		selector.Schema == flowdecision.Schema || selector.Schema == flowdecision.ActivationSchema {
 		return decodeCandidateModel(raw, selector.Schema)
 	}
 	if len(raw) > 64<<10 {

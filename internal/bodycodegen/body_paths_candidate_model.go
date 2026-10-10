@@ -41,14 +41,14 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 		info.ModelSchema, info.ResidentTensorBytes = executiondecision.Schema, executiondecision.ParameterCount*4
 	}
 	if m.flow != nil {
-		info.ModelSchema, info.ResidentTensorBytes = flowdecision.Schema, flowdecision.ParameterCount*4
+		info.ModelSchema, info.ResidentTensorBytes = m.flow.ArtifactSchema(), flowdecision.ParameterCount*4
 	}
 }
 
 func decodeCandidateModel(raw []byte, schema string) (typedPathModel, error) {
 	m := &conditionPathModel{artifactSHA: digest(raw)}
 	var err error
-	if schema == flowdecision.Schema {
+	if schema == flowdecision.Schema || schema == flowdecision.ActivationSchema {
 		m.flow, err = flowdecision.Decode(raw)
 	} else if schema == executiondecision.Schema {
 		m.execution, err = executiondecision.Decode(raw)
@@ -111,7 +111,7 @@ func (m *conditionPathModel) exportFlowInput(prepared *pathplan.PreparedPlan, in
 	id string, out ExportedPathInput) (ExportedPathInput, error) {
 	var features [decision.ExecutionFlowFeatureDim]float32
 	var err error
-	if m.featureVersion() == decision.SemanticFlowFeatureVersion {
+	if m.featureVersion() == decision.SemanticFlowFeatureVersion || m.featureVersion() == decision.RelationalFlowFeatureVersion {
 		var semantic pathplan.SemanticBranchContext
 		semantic, err = prepared.SemanticBranchContext(id)
 		if err != nil {
@@ -119,7 +119,11 @@ func (m *conditionPathModel) exportFlowInput(prepared *pathplan.PreparedPlan, in
 		}
 		out.SemanticFlow = &semantic
 		out.SourceFeatureSHA = digest(semantic.Source[:])
-		err = input.ExecutionSemanticFlowFeaturesInto(id, &features)
+		if m.featureVersion() == decision.RelationalFlowFeatureVersion {
+			err = input.ExecutionRelationalFlowFeaturesInto(id, &features)
+		} else {
+			err = input.ExecutionSemanticFlowFeaturesInto(id, &features)
+		}
 	} else {
 		err = input.ExecutionFlowFeaturesInto(id, &features)
 	}

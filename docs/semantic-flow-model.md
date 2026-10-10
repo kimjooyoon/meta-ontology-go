@@ -1,8 +1,11 @@
 # 같은 기능의 표현을 같은 결정 입력으로 읽기
 
-개발 소스는 SDK0.2.34의 `source_intent_condition_output_semantic_flow_v5` 모델을
+개발 소스는 SDK0.2.35를 사용하며 `source_intent_condition_output_semantic_flow_v5` 모델을
 직접 읽습니다. 모델 파일의 입력 버전에 맞춰 실제 조립과 `body-context` 사전 조회가
 같은 배열을 만듭니다. 현재 설치된 공개 컴파일러0.6.25에는 아직 포함되지 않습니다.
+
+후속 [관계 입력과 음수 신호 모델](relational-flow-model.md)도 명시적인 모델 형식으로
+연결했습니다. 아래 v5 학습·CLI 측정은 당시 가중치와 생산자 기록을 그대로 유지합니다.
 
 하나의 분기에서 비교 피연산자와 반환값을 추적할 수 있으면 직접 반환·별칭·대입·복사
 표현을 정리합니다. `semantic_flow_context`에는 적용 여부와 이유, 정확한 값 흐름이

@@ -19,7 +19,7 @@ func cliVersionedCandidateModel(t *testing.T, version string) string {
 	t.Helper()
 	var raw []byte
 	var err error
-	if version == decision.ExecutionFlowFeatureVersion || version == decision.SemanticFlowFeatureVersion {
+	if version == decision.ExecutionFlowFeatureVersion || version == decision.SemanticFlowFeatureVersion || version == decision.RelationalFlowFeatureVersion {
 		m, failure := flowdecision.NewForFeatures([flowdecision.ParameterCount]float32{}, version)
 		if failure != nil {
 			t.Fatal(failure)
@@ -49,7 +49,7 @@ func cliVersionedCandidateModel(t *testing.T, version string) string {
 }
 
 func TestCandidateModelCLIExplicitVersionAndArrays(t *testing.T) {
-	for _, version := range []string{decision.ConditionChannelFeatureVersion, decision.ConditionBranchFeatureVersion, decision.ExecutionFeatureVersion, decision.ExecutionFlowFeatureVersion, decision.SemanticFlowFeatureVersion} {
+	for _, version := range []string{decision.ConditionChannelFeatureVersion, decision.ConditionBranchFeatureVersion, decision.ExecutionFeatureVersion, decision.ExecutionFlowFeatureVersion, decision.SemanticFlowFeatureVersion, decision.RelationalFlowFeatureVersion} {
 		t.Run(version, func(t *testing.T) {
 			model := cliVersionedCandidateModel(t, version)
 			source := "../../examples/body-codegen/source-output-feedback.gooo.fixture"
@@ -81,7 +81,7 @@ func TestCandidateModelCLIExplicitVersionAndArrays(t *testing.T) {
 				legacy := version == decision.ConditionChannelFeatureVersion || version == decision.ConditionBranchFeatureVersion
 				if input.InputSHA != "sha256:"+p.ConditionProgress[0].Ranking.FeatureSHA[i] ||
 					(input.ExecutionFeatures != nil) != (version == decision.ExecutionFeatureVersion) ||
-					(input.FlowFeatures != nil) != (version == decision.ExecutionFlowFeatureVersion || version == decision.SemanticFlowFeatureVersion) || (input.Features != nil) != legacy {
+					(input.FlowFeatures != nil) != (version == decision.ExecutionFlowFeatureVersion || version == decision.SemanticFlowFeatureVersion || version == decision.RelationalFlowFeatureVersion) || (input.Features != nil) != legacy {
 					t.Fatal("preflight array or digest differs", i)
 				}
 			}
@@ -90,7 +90,7 @@ func TestCandidateModelCLIExplicitVersionAndArrays(t *testing.T) {
 }
 
 func TestExecutionModelCLIConstructAndReplayWithoutArtifact(t *testing.T) {
-	for _, version := range []string{decision.ExecutionFeatureVersion, decision.ExecutionFlowFeatureVersion, decision.SemanticFlowFeatureVersion} {
+	for _, version := range []string{decision.ExecutionFeatureVersion, decision.ExecutionFlowFeatureVersion, decision.SemanticFlowFeatureVersion, decision.RelationalFlowFeatureVersion} {
 		t.Run(version, func(t *testing.T) { candidateModelCLIConstructAndReplay(t, version) })
 	}
 }
@@ -98,6 +98,11 @@ func TestExecutionModelCLIConstructAndReplayWithoutArtifact(t *testing.T) {
 func candidateModelCLIConstructAndReplay(t *testing.T, version string) {
 	t.Helper()
 	model := cliVersionedCandidateModel(t, version)
+	candidateModelCLIConstructAndReplayWithModel(t, version, model)
+}
+
+func candidateModelCLIConstructAndReplayWithModel(t *testing.T, version, model string) {
+	t.Helper()
 	root := filepath.Join(t.TempDir(), "construction")
 	base := "../../examples/body-codegen/source-output-"
 	goBin := filepath.Join(runtime.GOROOT(), "bin", "go")
