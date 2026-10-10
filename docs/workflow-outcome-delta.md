@@ -1,9 +1,9 @@
 # Compare the outcomes of a workflow change
 
-The 0.6.27 development candidate adds `gooo body-outcomes-delta`. It reads saved results from
+The published [0.6.27 development release](releases/0.6.27-dev.md) adds `gooo body-outcomes-delta`. It reads saved results from
 `body-construct` or `body-compose` and shows what changed for each caller input.
-The public0.6.26 binary predates this command; build the current development
-source with Go1.27.2 to use it.
+The public binary supports text and JSON output. The current development source
+also supports Markdown; build it with Go1.27.2 for all commands below.
 
 ```sh
 GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o /tmp/gooo-outcomes ./cmd/gooo
@@ -45,6 +45,28 @@ evidence from repeated changes in an actual workflow.
 Use fresh output directories. Both constructions are deterministic here. Adding
 a compatible released model to construction only changes candidate order; the
 comparison itself never needs a model file.
+
+### Share a change report
+
+The development source after 0.6.27 also exports a Markdown report for a pull
+request or team discussion. This flag is absent from the 0.6.27 public binary:
+
+```sh
+/tmp/gooo-outcomes body-outcomes-delta --before before.json --after after.json --markdown > change.md
+```
+
+Choose either `--markdown` or `--json`. The report includes every aligned group,
+before/after input digests and recorded runtime stages. Long values are shortened
+at 120 characters; JSON retains full values, original indices and fault details.
+The report is written to stdout; the shell redirection above creates the file.
+
+Each share names its denominator. Regressions are divided by previously matching
+groups with unchanged expectations; improvements use previously failing groups.
+Changed requirements, unobserved assessments and conflicting duplicates use all
+observed groups. A missing denominator is `n/a`, and percentages are descriptive
+shares of these saved groups. They do not estimate unseen behavior, model
+accuracy or savings. The [adoption plan](adoption-plan.ko.md) explains which
+real workflow observations would make this useful to another team.
 
 On the original saved0.6.26 observations, ten input groups align. Five outputs
 and their expectations change together (17,31,32,33 and9007199254740993); five
