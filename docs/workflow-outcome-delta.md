@@ -46,6 +46,28 @@ Use fresh output directories. Both constructions are deterministic here. Adding
 a compatible released model to construction only changes candidate order; the
 comparison itself never needs a model file.
 
+### Share a change report
+
+The development source also exports a Markdown report for a pull request or
+team discussion:
+
+```sh
+/tmp/gooo-outcomes body-outcomes-delta --before before.json --after after.json --markdown > change.md
+```
+
+Choose either `--markdown` or `--json`. The report includes every aligned group,
+before/after input digests and recorded runtime stages. Long values are shortened
+at 120 characters; JSON retains full values, original indices and fault details.
+The report is written to stdout; the shell redirection above creates the file.
+
+Each share names its denominator. Regressions are divided by previously matching
+groups with unchanged expectations; improvements use previously failing groups.
+Changed requirements, unobserved assessments and conflicting duplicates use all
+observed groups. A missing denominator is `n/a`, and percentages are descriptive
+shares of these saved groups. They do not estimate unseen behavior, model
+accuracy or savings. The [adoption plan](adoption-plan.ko.md) explains which
+real workflow observations would make this useful to another team.
+
 On the original saved0.6.26 observations, ten input groups align. Five outputs
 and their expectations change together (17,31,32,33 and9007199254740993); five
 remain matching. The report contains five `REQUIREMENT_CHANGED`, five

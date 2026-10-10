@@ -9,14 +9,14 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/outcomedelta"
 )
 
-const bodyOutcomesDeltaUsage = "usage: gooo body-outcomes-delta --before <saved.json> --after <saved.json> [--json]"
+const bodyOutcomesDeltaUsage = "usage: gooo body-outcomes-delta --before <saved.json> --after <saved.json> [--json | --markdown]"
 
 func runBodyOutcomesDelta(args []string, stdout, stderr io.Writer) int {
 	flags := map[string]string{"--before": "", "--after": ""}
-	asJSON := false
+	format := "text"
 	for i := 0; i < len(args); i++ {
-		if args[i] == "--json" && !asJSON {
-			asJSON = true
+		if (args[i] == "--json" || args[i] == "--markdown") && format == "text" {
+			format = args[i]
 			continue
 		}
 		value, ok := flags[args[i]]
@@ -44,9 +44,12 @@ func runBodyOutcomesDelta(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return fail(err)
 	}
-	if asJSON {
+	switch format {
+	case "--json":
 		err = json.NewEncoder(stdout).Encode(report)
-	} else {
+	case "--markdown":
+		err = writeOutcomeMarkdown(stdout, report)
+	default:
 		err = writeOutcomeDelta(stdout, report)
 	}
 	if err != nil {
@@ -93,6 +96,10 @@ func outcomeValue(records []map[string]any, key string) string {
 	if !present {
 		return "(unobserved or unavailable)"
 	}
+	return outcomeJSONSummary(value)
+}
+
+func outcomeJSONSummary(value any) string {
 	b, _ := json.Marshal(value)
 	runes := []rune(string(b))
 	if len(runes) > 120 {

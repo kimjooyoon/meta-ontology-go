@@ -77,6 +77,7 @@ Gooo source + intent + permitted choices + finite expectations
 ```
 
 **Start here:** [direction and current progress, 한국어](docs/language-direction.ko.md)
+· [practical adoption plan, 한국어](docs/adoption-plan.ko.md)
 · [body generation](docs/language/body-codegen.md)
 · [Gooo source assembly](docs/source-assembly.md)
 · [compose activity bodies](docs/native-body-composition.md)
