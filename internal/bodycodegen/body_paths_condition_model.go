@@ -7,6 +7,7 @@ import (
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/conditiondecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/contractdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/executiondecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/flowdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
@@ -21,6 +22,7 @@ type conditionPathModel struct {
 	model       *conditiondecision.Model
 	execution   *executiondecision.Model
 	flow        *flowdecision.Model
+	contract    *contractdecision.Model
 	artifactSHA string
 }
 
@@ -38,6 +40,9 @@ func candidateFeatureDigest(features []float32) string {
 
 func prepareConditionModelContext(ctx context.Context, document pathplan.Document, prepared *pathplan.PreparedPlan,
 	model *conditionPathModel, activityID, semanticSHA string) (*pathplan.PreparedPlan, *PathModelContextReceipt, bool, error) {
+	if model.contract != nil {
+		return prepareContractModelContext(ctx, document, prepared, model, activityID, semanticSHA)
+	}
 	r := &PathModelContextReceipt{Schema: "gooo/compiler-condition-model-context/v1", Status: "ENCODED", ActivityID: activityID,
 		SourceSemanticSHA: semanticSHA, OriginalPlanSHA: prepared.PlanSHA256(), RankedPlanSHA: prepared.PlanSHA256(),
 		ArtifactSHA: model.artifactSHA, ModelFingerprint: "sha256:" + model.fingerprint(), FeatureVersion: model.featureVersion(),
@@ -67,6 +72,9 @@ func prepareConditionModelContext(ctx context.Context, document pathplan.Documen
 }
 
 func exportedConditionInputs(document pathplan.Document, prepared *pathplan.PreparedPlan, model *conditionPathModel) ([]ExportedPathInput, error) {
+	if model.contract != nil {
+		return exportedContractInputs(document, prepared)
+	}
 	input, err := model.initialInput(document, prepared)
 	if err != nil {
 		return nil, err

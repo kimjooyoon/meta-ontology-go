@@ -255,6 +255,10 @@ automatically; representation declines retain their reason and perform zero pred
 The development [typed-path preflight](docs/typed-model-preflight.md) extends that
 inspection to branches, variables and operand choices, using construction's exact
 model input preparation. Public 0.6.23 retains its record preflight scope.
+The development [declared-contract model](docs/declared-contract-model.md) also
+reads every authored input/expected-output example before one initial ranking.
+Its SDK 0.2.36 artifact has 9,746 parameters; ordinary finite checks and saved
+model-free execution remain part of the compiler path.
 
 ## What we are developing
 

@@ -89,7 +89,12 @@ func exportBoundPathModelContext(ctx context.Context, document pathplan.Document
 	if err != nil {
 		return fail(err)
 	}
-	return finishPathModelContext(ctx, ranked, g, modelContext, inputs, declined, receipt, started)
+	result, err := finishPathModelContext(ctx, ranked, g, modelContext, inputs, declined, receipt, started)
+	if err == nil && !declined && g.condition != nil && g.condition.contract != nil {
+		result.ContractCases, err = exportContractCases(document, prepared)
+		result.Scope = "source-bound source and declared-case arrays; zero predictions, candidate tests, selected emissions and writes; expected outputs are goals, observed execution is absent"
+	}
+	return result, err
 }
 
 func modelContextInputs(document pathplan.Document, prepared *pathplan.PreparedPlan, g *TypedPathGenerator,

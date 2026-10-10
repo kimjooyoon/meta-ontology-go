@@ -6,6 +6,7 @@ import (
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/bodyplan"
 	"github.com/kimjooyoon/gooo-decision-runtime/conditiondecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/contractdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/executiondecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/flowdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
@@ -14,6 +15,9 @@ import (
 // Shape and version come from the decoded artifact. A v1 artifact never gains
 // branch or output channels just because a newer runtime is available.
 func (m *conditionPathModel) featureVersion() string {
+	if m.contract != nil {
+		return decision.RelationalFlowFeatureVersion
+	}
 	if m.flow != nil {
 		return m.flow.FeatureVersion()
 	}
@@ -24,6 +28,9 @@ func (m *conditionPathModel) featureVersion() string {
 }
 
 func (m *conditionPathModel) fingerprint() string {
+	if m.contract != nil {
+		return m.contract.Fingerprint()
+	}
 	if m.flow != nil {
 		return m.flow.Fingerprint()
 	}
@@ -37,6 +44,9 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 	info.ArtifactSHA256, info.ModelFingerprint = m.artifactSHA, "sha256:"+m.fingerprint()
 	info.FeatureVersion = m.featureVersion()
 	info.ModelSchema, info.ResidentTensorBytes = conditionModelSchema, conditionModelTensorBytes
+	if m.contract != nil {
+		info.ModelSchema, info.ResidentTensorBytes = contractdecision.Schema, contractdecision.ParameterCount*4
+	}
 	if m.execution != nil {
 		info.ModelSchema, info.ResidentTensorBytes = executiondecision.Schema, executiondecision.ParameterCount*4
 	}
@@ -48,7 +58,9 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 func decodeCandidateModel(raw []byte, schema string) (typedPathModel, error) {
 	m := &conditionPathModel{artifactSHA: digest(raw)}
 	var err error
-	if schema == flowdecision.Schema || schema == flowdecision.ActivationSchema {
+	if schema == contractdecision.Schema {
+		m.contract, err = contractdecision.Decode(raw)
+	} else if schema == flowdecision.Schema || schema == flowdecision.ActivationSchema {
 		m.flow, err = flowdecision.Decode(raw)
 	} else if schema == executiondecision.Schema {
 		m.execution, err = executiondecision.Decode(raw)

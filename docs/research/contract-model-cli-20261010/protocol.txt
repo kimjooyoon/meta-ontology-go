@@ -1,0 +1,29 @@
+Fixed before executing the learned contract model through the new compiler CLI.
+This is an integration observation on four already-published examples, not an
+unseen accuracy experiment. Do not repeat the SDK study or fit any weights.
+
+Use SDK0.2.36 model-contract-v1.json with SHA256
+c53ef0386dfc8ee2422b2b9605b609b0c23315905599ecc2f4555c26de514b5f.
+Use exact SDK examples from accepted88ef3de7895c832b91ece179e3623a57fd5997db:
+bound-k7-r0-w0-direct-g0, bound-k7-r0-w0-direct-g1,
+offset-k11-r1-w0-assignment-g0, offset-k11-r1-w0-assignment-g1.
+Append only Main(Integer)->Integer returning Choose(input) for native construction.
+Each source retains all original eight output cases, three conditions and four
+masks. Native evaluation uses those same eight cases; construction uses the
+second authored case. Use typed int64 while copying cases, never whole float64.
+
+Build the clean committed development compiler once with Go1.27.2 and trimpath.
+Capture source revision, version/build metadata and binary hash before execution.
+For each source, execute once in this order:
+1 body-context with the published model, no explicit feature version;
+2 body-codegen without a model;
+3 body-codegen with the published model and batch1;
+4 body-construct Main with model, four-attempt budget and saved native output;
+5 remove only that source's owned model copy, replay the saved construction.
+
+Twenty commands total, no feedback/fit/retuning. Save stdout, stderr, exit status,
+wall/user/system time and peak process RSS for each command, including failures.
+Create an exclusive output directory; do not overwrite or restart original calls.
+Record exact preflight arrays, model count, ranking/progress identity, all finite
+attempts, conditions, native outputs and model-free replay. These known related
+sources establish wiring and observed cost only. Preserve every worse result.
