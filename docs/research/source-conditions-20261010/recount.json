@@ -1,0 +1,297 @@
+{
+  "results": [
+    {
+      "arm": "baseline",
+      "construction_attempts": 1,
+      "exact_native_rows": [
+        {
+          "actual": 0,
+          "expected": 0,
+          "input": -11
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "input": -9
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "input": -8
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "input": -2
+        },
+        {
+          "actual": 4,
+          "expected": 4,
+          "input": 2
+        },
+        {
+          "actual": 8,
+          "expected": 8,
+          "input": 4
+        },
+        {
+          "actual": 16,
+          "expected": 16,
+          "input": 8
+        },
+        {
+          "actual": 18,
+          "expected": 18,
+          "input": 9
+        },
+        {
+          "actual": 22,
+          "expected": 22,
+          "input": 11
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "input": -9007199254740995
+        },
+        {
+          "actual": 18014398509481990,
+          "expected": 18014398509481990,
+          "input": 9007199254740995
+        }
+      ],
+      "final_condition_receipt": null,
+      "final_predicate_audit": {
+        "expression": "0 \u003c input",
+        "generated_sha256": "sha256:bd2d1627027d9da129bb5bcdd45850a4e4692c58f70fe1fafdc56812ed4efbe8",
+        "passed": 1,
+        "probes": [
+          {
+            "actual": false,
+            "expected": true,
+            "input": -1
+          },
+          {
+            "actual": false,
+            "expected": false,
+            "input": 0
+          },
+          {
+            "actual": true,
+            "expected": false,
+            "input": 1
+          }
+        ],
+        "total": 3
+      },
+      "initial_choices": {
+        "comparison": "layout_reverse",
+        "negative": "layout_forward",
+        "sign": "layout_forward"
+      },
+      "initial_condition_rejected_candidates": 0,
+      "initial_evaluated_candidates": 1,
+      "initial_proposals": {
+        "comparison": "layout_reverse",
+        "negative": "layout_forward",
+        "sign": "layout_forward"
+      },
+      "model_predictions": 3,
+      "model_weights_sha256": "dcd8e44591626d421d4961bfef82ec197e947cb1d5d2cd92868d908bc7de4aed",
+      "native_passed": 11,
+      "native_total": 11,
+      "prediction_total_ns": 46501,
+      "process": {
+        "aggregate_cpu_seconds_over_wall_percent": 61.904761904761905,
+        "maximum_resident_bytes": 87687168,
+        "scope": "one CLI invocation including native Go build/run subprocesses; not host utilization or isolated inference",
+        "system_seconds": 0.22,
+        "user_seconds": 0.3,
+        "wall_seconds": 0.84
+      },
+      "saved_replay_equal": true,
+      "saved_replay_new_model_calls": 0
+    },
+    {
+      "arm": "constrained",
+      "construction_attempts": 2,
+      "exact_native_rows": [
+        {
+          "actual": 0,
+          "expected": 0,
+          "input": -11
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "input": -9
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "input": -8
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "input": -2
+        },
+        {
+          "actual": 4,
+          "expected": 4,
+          "input": 2
+        },
+        {
+          "actual": 8,
+          "expected": 8,
+          "input": 4
+        },
+        {
+          "actual": 16,
+          "expected": 16,
+          "input": 8
+        },
+        {
+          "actual": 18,
+          "expected": 18,
+          "input": 9
+        },
+        {
+          "actual": 22,
+          "expected": 22,
+          "input": 11
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "input": -9007199254740995
+        },
+        {
+          "actual": 18014398509481990,
+          "expected": 18014398509481990,
+          "input": 9007199254740995
+        }
+      ],
+      "final_condition_receipt": {
+        "declared": 3,
+        "emitted_tree_sha256": "sha256:b0d178eaecc90f4d36366058b187549021dc9c8a5164053525f1ac35242c41b7",
+        "not_reached": 0,
+        "passed": 3,
+        "results": [
+          {
+            "case": {
+              "choice_id": "comparison",
+              "expected": true,
+              "input": -1
+            },
+            "observation": {
+              "expression": 4,
+              "reached": true,
+              "statement": 2,
+              "value": true
+            },
+            "output": {
+              "int": 1,
+              "type": "Int"
+            },
+            "passed": true,
+            "status": "MATCH"
+          },
+          {
+            "case": {
+              "choice_id": "comparison",
+              "expected": false,
+              "input": 0
+            },
+            "observation": {
+              "expression": 4,
+              "reached": true,
+              "statement": 2,
+              "value": false
+            },
+            "output": {
+              "type": "Int"
+            },
+            "passed": true,
+            "status": "MATCH"
+          },
+          {
+            "case": {
+              "choice_id": "comparison",
+              "expected": false,
+              "input": 1
+            },
+            "observation": {
+              "expression": 4,
+              "reached": true,
+              "statement": 2,
+              "value": false
+            },
+            "output": {
+              "int": 1,
+              "type": "Int"
+            },
+            "passed": true,
+            "status": "MATCH"
+          }
+        ],
+        "schema": "gooo/typed-path-conditions/v1",
+        "selected_tree_sha256": "sha256:b0d178eaecc90f4d36366058b187549021dc9c8a5164053525f1ac35242c41b7",
+        "status": "MATCHED",
+        "suite_sha256": "sha256:2bc09a2f78f3e9613c696cb91e7c9f8bdbd6ca66955240ab81de18a689b33ae4"
+      },
+      "final_predicate_audit": {
+        "expression": "input \u003c 0",
+        "generated_sha256": "sha256:e82d39e217393c53901cf6dab0c15d55539c3bce4a08dabef3d94fc00d103848",
+        "passed": 3,
+        "probes": [
+          {
+            "actual": true,
+            "expected": true,
+            "input": -1
+          },
+          {
+            "actual": false,
+            "expected": false,
+            "input": 0
+          },
+          {
+            "actual": false,
+            "expected": false,
+            "input": 1
+          }
+        ],
+        "total": 3
+      },
+      "initial_choices": {
+        "comparison": "layout_forward",
+        "negative": "layout_forward",
+        "sign": "layout_forward"
+      },
+      "initial_condition_rejected_candidates": 2,
+      "initial_evaluated_candidates": 3,
+      "initial_proposals": {
+        "comparison": "layout_reverse",
+        "negative": "layout_forward",
+        "sign": "layout_forward"
+      },
+      "model_predictions": 3,
+      "model_weights_sha256": "dcd8e44591626d421d4961bfef82ec197e947cb1d5d2cd92868d908bc7de4aed",
+      "native_passed": 11,
+      "native_total": 11,
+      "prediction_total_ns": 39876,
+      "process": {
+        "aggregate_cpu_seconds_over_wall_percent": 76.23762376237623,
+        "maximum_resident_bytes": 86966272,
+        "scope": "one CLI invocation including native Go build/run subprocesses; not host utilization or isolated inference",
+        "system_seconds": 0.33,
+        "user_seconds": 0.44,
+        "wall_seconds": 1.01
+      },
+      "saved_replay_equal": true,
+      "saved_replay_new_model_calls": 0
+    }
+  ],
+  "schema": "gooo/source-condition-paired-study/v1",
+  "scope": "same compiler, frozen model and cases; only three source condition_case declarations added; one timing observation per arm; no training or model-quality improvement claim"
+}

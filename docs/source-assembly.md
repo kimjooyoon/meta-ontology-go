@@ -245,6 +245,9 @@ hints still express broader intent; unlisted inputs and intermediate properties
 remain unmeasured. Some evaluation inputs overlap the fixture's local cases, so
 the eleven caller cases are reported as finite evaluation, not an unseen-input
 accuracy estimate. This API uses decision-runtime `v0.2.27-experimental`.
+The [paired own-model observation](research/source-conditions-20261010/README.md)
+keeps weights and output cases fixed and records how the three source conditions
+change candidate selection and saved native replay.
 
 ### When holes need different expression types
 
