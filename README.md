@@ -78,7 +78,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [compose activity bodies](docs/native-body-composition.md)
 · [inspect inputs before assembly](docs/composition-plan-inspection.md)
 · [small model integration](docs/three-choice-path-model.md)
-· [source-bound condition model and CLI](docs/condition-decision-model.md)
+· [source-bound condition/output models and CLI](docs/condition-decision-model.md)
 · [capability discovery](docs/language/capability-discovery.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
 

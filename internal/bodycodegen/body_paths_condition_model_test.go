@@ -192,6 +192,13 @@ func TestConditionModelArtifactIdentityBoundsAndClosedFormat(t *testing.T) {
 }
 
 func TestConditionModelUnsupportedSourceRetainsDeterministicBody(t *testing.T) {
+	for _, kind := range []string{"condition", "flow"} {
+		t.Run(kind, func(t *testing.T) { candidateModelUnsupportedSourceRetainsDeterministicBody(t, kind) })
+	}
+}
+
+func candidateModelUnsupportedSourceRetainsDeterministicBody(t *testing.T, kind string) {
+	t.Helper()
 	source := []byte(`package scoped
 namespace scoped
 entity Integer id "scoped://integer"
@@ -212,6 +219,9 @@ activity Choose(Integer) -> Integer computes "let result = input; if input < 0 {
 		t.Fatal(err)
 	}
 	name := writeConditionContractModel(t)
+	if kind == "flow" {
+		name = writeFlowContractModel(t, false)
+	}
 	r, err := GenerateWithTypedPathFeedback(ctx, "s.gooo", source, "Choose", doc, name, 1, 1, nil)
 	if err != nil {
 		t.Fatal(err)

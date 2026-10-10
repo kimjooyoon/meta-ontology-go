@@ -229,7 +229,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	var contextDeclined bool
 	if condition != nil {
 		if feedback != nil && (feedback.ci != nil || feedback.unfixed) {
-			return fail(fmt.Errorf("condition model supports condition feedback; CI hints and unfixed feedback are outside its feature contract"))
+			return fail(fmt.Errorf("candidate model requires its declared observation channels; CI hints and unfixed feedback are outside its feature contract"))
 		}
 		prepared, receipt.ModelContext, contextDeclined, err = prepareConditionModelContext(ctx, document, prepared, condition, base.Report.ActivityID, receipt.SourceBinding.SourceSemanticDigest)
 	} else if three != nil {
@@ -274,7 +274,7 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 		if feedback != nil {
 			rounds = feedback.rounds
 		}
-		search, selected, receipt.ConditionProgress, receipt.ConditionFeedback, err = prepared.SearchConditionBatches(ctx, condition.model,
+		search, selected, receipt.ConditionProgress, receipt.ConditionFeedback, err = condition.search(ctx, prepared,
 			effectiveCases, document.MaxAttempts, min(document.MaxAttempts, max(1, stepAttempts)), searchSeed, rounds)
 	} else if three != nil {
 		rounds := 0

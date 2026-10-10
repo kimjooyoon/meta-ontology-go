@@ -98,7 +98,7 @@ func modelContextInputs(document pathplan.Document, prepared *pathplan.PreparedP
 		return []ExportedPathInput{}, nil
 	}
 	if g.condition != nil {
-		return exportedConditionInputs(document, prepared)
+		return exportedConditionInputs(document, prepared, g.condition)
 	}
 	if *modelContext != nil {
 		feature := decision.SemanticContextIntentFeatureVersion
