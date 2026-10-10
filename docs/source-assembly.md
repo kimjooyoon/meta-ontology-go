@@ -171,6 +171,7 @@ activity ... computes <quoted-or-raw-body> assembling {
             max_candidates <quoted-count>
     }]
     case <quoted-int64-input> -> <quoted-int64-expected>
+    [condition_case <quoted-choice-id> input <quoted-int64-input> -> <quoted-true-or-false> ...]
     [holdout_case <quoted-int64-input> -> <quoted-int64-expected> ...]
     [value_case <quoted-canonical-inputs> -> <quoted-canonical-record> ...]
     [holdout_value_case <quoted-canonical-inputs> -> <quoted-canonical-record> ...]
@@ -187,6 +188,63 @@ per hole in declaration order, or one bounded `derive` clause with 2–16 expres
 per hole and 2–16 complete assignments. Manual candidates and `derive` are mutually
 exclusive. It is mutually exclusive with path
 choices, search, checkpoints, sampling seeds, and attempt budgets.
+
+### Intermediate conditions
+
+A final output can be correct while an intermediate decision is reversed.
+For example, reversing both a comparison and its two branches can still produce
+the same absolute value. A source-owned `condition_case` makes a finite
+expectation about the actual `if` condition explicit:
+
+```gooo
+condition_case "comparison" input "-9007199254740995" -> "true"
+condition_case "comparison" input "0" -> "false"
+condition_case "comparison" input "9007199254740995" -> "false"
+```
+
+The ID names an existing `branch_layout` choice, or an `operand_order` choice
+whose expression is the full condition of exactly one `if`. Inputs use exact
+signed 64-bit integers. The Boolean must be explicitly quoted as `"true"` or
+`"false"`. Up to 128 conditions are allowed; duplicate inputs for the same `if`
+are rejected even when different choice IDs refer to that statement. These
+conditions currently apply to Integer → Integer typed paths.
+
+Candidate search evaluates the condition in the candidate's actual execution
+with its current local variables. A skipped `if` yields `NOT_REACHED` and cannot
+satisfy a declared condition. A mismatch excludes that candidate from selection,
+while its final-output test results remain visible. The model still ranks the
+same finite alternatives, and deterministic search uses the same condition
+contract. If every attempted candidate fails it, generation returns the recorded
+failure instead of emitting a fallback body.
+
+The receipt adds `typed_path_intermediate_conditions` separately from final
+output accuracy. It records the finite observations and binds the selected and
+emitted typed structures. Saved replay reconstructs those observations without
+calling the model. Caller-guided construction also checks the conditions when
+trying another local path. Conditions omitted from source add no metric and do
+not change the previous path contract.
+
+The [runnable fixture](../examples/body-codegen/source-condition-cases.gooo.fixture)
+includes seven local output cases, three condition cases, and a caller. Try it
+with a build containing this feature:
+
+```sh
+go run ./cmd/gooo body-construct \
+  --source examples/body-codegen/source-condition-cases.gooo.fixture --entry Main \
+  --construction-cases examples/body-codegen/source-condition-construction-cases.json \
+  --cases examples/body-codegen/source-condition-evaluation-cases.json \
+  --attempts 8 --out /tmp/gooo-source-conditions
+go run ./cmd/gooo body-construct \
+  --source /tmp/gooo-source-conditions/original.gooo \
+  --construction /tmp/gooo-source-conditions/construction.json \
+  --cases examples/body-codegen/source-condition-evaluation-cases.json
+```
+
+These percentages describe the listed inputs and conditions. Natural-language
+hints still express broader intent; unlisted inputs and intermediate properties
+remain unmeasured. Some evaluation inputs overlap the fixture's local cases, so
+the eleven caller cases are reported as finite evaluation, not an unseen-input
+accuracy estimate. This API uses decision-runtime `v0.2.27-experimental`.
 
 ### When holes need different expression types
 

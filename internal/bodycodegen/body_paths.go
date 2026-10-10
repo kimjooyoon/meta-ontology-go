@@ -44,6 +44,7 @@ type BodyPathReceipt struct {
 	Observation            *PathObservationReceipt    `json:"observation,omitempty"`
 	Resolution             *PathResolutionReceipt     `json:"resolution,omitempty"`
 	NativeCases            []IRBodyFillCaseResult     `json:"native_case_results,omitempty"`
+	Conditions             *PathConditionReceipt      `json:"conditions,omitempty"`
 	FunctionalCompleteness float64                    `json:"finite_functional_completeness_percent"`
 	Scope                  string                     `json:"scope"`
 	Timing                 BodyPathTiming             `json:"timing"`
@@ -318,6 +319,20 @@ func emitSelectedTypedPath(ctx context.Context, filename string, source []byte, 
 	}
 	if result.Report.ActivityID != bound.base.Report.ActivityID {
 		return fail(fmt.Errorf("typed path emission changed stable semantic identity"))
+	}
+	conditions, err := selectedPathConditions(ctx, bound.prepared, bodyPathSelection(receipt).Choices,
+		selected, activityName, []byte(result.Source))
+	if conditions != nil {
+		receipt.Conditions = conditions
+	}
+	if err != nil {
+		return fail(err)
+	}
+	if conditions != nil {
+		if !sameConditionResults(conditions.Results, bodyPathSelection(receipt).Conditions) {
+			return fail(fmt.Errorf("selected condition observations differ from source-bound search"))
+		}
+		receipt.Conditions = conditions
 	}
 	cases := make([]IRBodyFillTestCase, len(effectiveCases))
 	for i, test := range effectiveCases {

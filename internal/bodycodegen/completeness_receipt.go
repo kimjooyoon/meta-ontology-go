@@ -523,6 +523,7 @@ func nextCompletenessOperation(id string) string {
 		"typed_path_provider_accounting":     "RECORD_LOCAL_PREDICTIONS_MODEL_PINS_AND_EXTERNAL_CALL_COUNTS",
 		"typed_path_candidate_observation":   "CONTINUE_UNATTEMPTED_TYPED_PATHS_WITHIN_THE_DECLARED_BUDGET",
 		"typed_path_candidate_scoring":       "REPAIR_TYPE_REJECTIONS_AND_SCORE_REMAINING_DECLARED_CANDIDATES",
+		"typed_path_intermediate_conditions": "SATISFY_DECLARED_CONDITIONS_AND_PRESERVE_SELECTED_STRUCTURE",
 		"search_training_accuracy":           "EXPAND_OR_REPAIR_CANDIDATES_AGAINST_TRAINING_FAILURES_WITHIN_THE_SEARCH_BUDGET",
 		"search_holdout_accuracy":            "VALIDATE_THE_SELECTED_BODY_AGAINST_A_SEPARATE_UNSEEN_TEST_SUITE",
 		"search_candidate_observation":       "MEASURE_UNTESTED_CANDIDATES_IN_A_SEPARATE_EXHAUSTIVE_BASELINE",

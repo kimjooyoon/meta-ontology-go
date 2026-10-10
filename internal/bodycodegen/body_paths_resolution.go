@@ -130,6 +130,13 @@ func resolveObservedPath(ctx context.Context, document pathplan.Document, prepar
 	if err != nil {
 		return nil, err
 	}
+	r.Selection.Conditions, err = prepared.CheckDeclaredConditions(ctx, r.Selection.Choices)
+	if err != nil {
+		return nil, err
+	}
+	if !pathplan.ConditionsPassed(r.Selection.Conditions) {
+		return nil, fmt.Errorf("resolved candidate violates declared conditions")
+	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -186,10 +193,19 @@ func pathResolutionDimension(p *BodyPathReceipt) CompletenessDimension {
 		[]string{"body_paths.resolution", "resolution_status:" + status}, p.Resolution != nil && !bound)
 }
 
-func replayPathResolution(document pathplan.Document, p *BodyPathReceipt) error {
+func replayPathResolution(ctx context.Context, document pathplan.Document, prepared *pathplan.PreparedPlan, p *BodyPathReceipt) error {
 	expected, err := makePathResolution(document, p)
 	if err != nil {
 		return err
+	}
+	if expected != nil && expected.Selection != nil {
+		expected.Selection.Conditions, err = prepared.CheckDeclaredConditions(ctx, expected.Selection.Choices)
+		if err != nil {
+			return err
+		}
+		if !pathplan.ConditionsPassed(expected.Selection.Conditions) {
+			return fmt.Errorf("replayed resolved candidate violates declared conditions")
+		}
 	}
 	if !pathResolutionBound(p) || !reflect.DeepEqual(expected, p.Resolution) {
 		return fmt.Errorf("typed-path resolution or skipped-work accounting does not replay")

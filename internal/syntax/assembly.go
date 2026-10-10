@@ -50,6 +50,22 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 				continue
 			}
 			d.Spec.Cases = append(d.Spec.Cases, assemblyspec.Case{Input: input, Expected: expected})
+		case "condition_case":
+			id := p.expectString().Name
+			p.assemblyKeyword("input")
+			input := p.assemblyInteger("condition case input")
+			p.expect(TokenArrow, "->", DiagExpectedArrow)
+			answer := p.expectString()
+			if answer.Name != "true" && answer.Name != "false" {
+				p.error(DiagUnexpectedDeclaration, answer.Span, "condition_case expects quoted true or false")
+			}
+			if len(d.Spec.ConditionCases) == 128 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds 128 condition cases")
+				p.skipAssemblyRemainder()
+				continue
+			}
+			d.Spec.ConditionCases = append(d.Spec.ConditionCases, assemblyspec.ConditionCase{
+				ChoiceID: id, Input: input, Expected: answer.Name == "true"})
 		case "holdout_case":
 			input := p.assemblyInteger("holdout case input")
 			p.expect(TokenArrow, "->", DiagExpectedArrow)
@@ -392,6 +408,10 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 	for _, c := range d.Spec.Cases {
 		fmt.Fprintf(output, "    case %s -> %s\n", quoteString(strconv.FormatInt(c.Input, 10)),
 			quoteString(strconv.FormatInt(c.Expected, 10)))
+	}
+	for _, c := range d.Spec.ConditionCases {
+		fmt.Fprintf(output, "    condition_case %s input %s -> %s\n", quoteString(c.ChoiceID),
+			quoteString(strconv.FormatInt(c.Input, 10)), quoteString(strconv.FormatBool(c.Expected)))
 	}
 	for _, c := range d.Spec.HoldoutCases {
 		fmt.Fprintf(output, "    holdout_case %s -> %s\n", quoteString(strconv.FormatInt(c.Input, 10)),
