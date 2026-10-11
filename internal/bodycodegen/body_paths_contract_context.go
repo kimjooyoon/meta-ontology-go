@@ -138,6 +138,10 @@ func prepareContractModelContext(ctx context.Context, document pathplan.Document
 		if model.canonicalContract() {
 			r.Scope = "source-resolved canonical branch arrays, all declared outputs and Boolean conditions; zero predictions or candidate executions; original source owns execution"
 		}
+		if model.sourceRelativeContract() {
+			r.Schema = "gooo/compiler-source-relative-contract-model-context/v1"
+			r.Scope = "canonical source arrays with predicate/condition relations, all declared outputs and Boolean conditions; zero predictions or candidate executions; original source owns execution"
+		}
 		r.ContractConditions, err = contractConditionContext(ctx, input)
 		if err != nil {
 			return prepared, r, false, err
@@ -154,7 +158,9 @@ func appendContractSourceContext(ctx context.Context, document pathplan.Document
 		}
 		var exported ExportedPathInput
 		var err error
-		if r.FeatureVersion == contractdecision.CanonicalOrderedSourceFeatureVersion {
+		if r.FeatureVersion == contractdecision.SourceRelativeOrderedSourceFeatureVersion {
+			exported, err = exportedSourceRelativeContractInput(input, choice)
+		} else if r.FeatureVersion == contractdecision.CanonicalOrderedSourceFeatureVersion {
 			exported, err = exportedCanonicalContractInput(input, choice)
 		} else {
 			exported, err = exportedContractInput(input, choice, r.FeatureVersion == contractdecision.OrderedSourceFeatureVersion)

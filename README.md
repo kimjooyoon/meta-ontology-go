@@ -273,6 +273,8 @@ Its SDK 0.2.36 artifact has 9,746 parameters; ordinary finite checks and saved
 model-free execution remain part of the compiler path.
 
 Development source also accepts the [SDK0.2.40 canonical branch model](docs/canonical-contract-model.md).
+The [SDK0.2.41 source-relative model](docs/source-relative-contract-model.md) adds explicit
+comparison/condition relations and a batch-amount example for construction and saved replay.
 It reads supported direct-return and assignment forms as the same calculation,
 while retaining original source identities and execution. Its research weights
 and low first-choice results are public; the released compiler0.6.27 predates this adapter.
