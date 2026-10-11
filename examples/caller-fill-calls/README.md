@@ -32,10 +32,11 @@ candidate evaluation without calling a model.
 
 Helpers must have fixed pure bodies when an assignment is evaluated. Composition
 can assemble required helpers first. Existing type checks, recursion rejection
-and call bounds apply. Full recording of helper arguments throughout fill
-preflight and selection remains work in progress, so constructed-helper input
-independence can remain `UNKNOWN`. Finite passing examples cover only their
-declared rows.
+and call bounds apply. Newer development source records helper arguments during
+fill preflight and selection; the original observation below predates that
+capture. Other construction boundaries still have incomplete coverage, so
+constructed-helper input independence can remain `UNKNOWN`. Finite passing
+examples cover only their declared rows.
 
 The [saved synthetic observation](observed-helper-fill-deb93c0a.json) binds clean
 development source `deb93c0a` to one original construction and saved replay. It

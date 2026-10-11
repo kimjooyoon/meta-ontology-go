@@ -32,6 +32,11 @@ decision models, saved construction reports and actual function-input history.
 Failed candidates remain visible. The original model observation used the same
 candidate count with model ranking and deterministic ordering.
 
+The next [0.6.30 development release](docs/releases/0.6.30-dev.md) is being
+prepared with failed-candidate recovery, body fill using helpers, retained search
+pools and local input histories. Its guide distinguishes development observations
+from the still-pending release build.
+
 The last command prints:
 
 ```text

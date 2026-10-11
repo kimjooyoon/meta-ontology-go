@@ -66,7 +66,13 @@ func smokeCallerExamples(binary, work string, input BuildInput) error {
 	if err := smokeJointSearchRejection(binary, work, input); err != nil {
 		return err
 	}
+	if err := smokeSearchCheckpoint(binary, work, input); err != nil {
+		return err
+	}
 	if err := smokeJointSourceFill(binary, work, input); err != nil {
+		return err
+	}
+	if err := smokeHelperFillHistory(binary, work, input); err != nil {
 		return err
 	}
 	if err := smokeJointFillRejection(binary, work, input); err != nil {

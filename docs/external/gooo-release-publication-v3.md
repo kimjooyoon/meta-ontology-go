@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.29-dev
-version  = 0.6.29-dev
+tag      = v0.6.30-dev
+version  = 0.6.30-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -151,6 +151,25 @@ The witness independently checks four actual values, including an integer above
 construction history and make zero new predictions. A ninth command checks the
 four plain output lines exactly. Each platform artifact retains all eight raw
 JSON receipts and the plain-value output.
+
+For 0.6.30, the helper-checkpoint profile adds two raw outputs per platform. The
+candidate binary assembles `Seed` before deriving `Build`'s seven-expression
+pool, then executes the one selected combination and three evaluation cases.
+Saved replay must preserve the complete original construction, including the
+planning source, current helper source, local call input and fixed initial pool.
+The witness compares native values with the independent case files and requires
+zero model calls. All three evaluation inputs retain unknown construction
+exposure. These finite counts remain separate from the structural release corpus.
+
+The helper-fill history profile adds another two raw outputs per platform.
+The candidate binary constructs and replays `examples/caller-fill-history`.
+Its first rejected assignment must retain both entered helper arguments and an
+incomplete local evaluation. The profile checks the prepared-source preflight,
+helper identity, selected hole assignment, 2/2 local training and 1/1 holdout
+results, and 3/3 native outputs against the independent evaluation file. Two
+evaluation inputs overlap construction and one remains unknown. Missing inference
+counts fail the profile. Saved replay preserves the complete original history;
+a failed command retains its raw output and stops the profile.
 
 The selected readiness run must have all of these properties:
 

@@ -1,0 +1,150 @@
+{
+  "schema": "gooo/release-preparation-observation/v1",
+  "scope": "One macOS arm64 execution of the helper-checkpoint release profile using a clean development producer. Four-platform readiness and publication remain pending. This is a regression observation, not a model study or performance comparison.",
+  "compiler_build": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.30-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.2",
+    "module_version": "v0.6.14-dev.0.20261011080140-87caaa692603",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.14-dev.0.20261011080140-87caaa692603"
+    },
+    "compiler_source_sha": "87caaa692603c0fc1ff5db44010ab157347cce70",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "87caaa692603c0fc1ff5db44010ab157347cce70",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.41-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.2"
+  },
+  "validated_by": "TestSearchCheckpointReleaseOnPackagedCompiler",
+  "runs": [
+    {
+      "generated_now": true,
+      "construction_replayed": false,
+      "decision": "COMPLETE_FINITE",
+      "original_source_sha256": "sha256:8dc2818dca624ecdca35215dfb4364b40f5d7c5bf8ce43e583a8ae02a5eaac7c",
+      "candidate_space": "14",
+      "program_budget": 8,
+      "attempts_consumed": 1,
+      "model_loaded": false,
+      "new_model_calls": 0,
+      "producer_source_sha": "87caaa692603c0fc1ff5db44010ab157347cce70",
+      "finite_passed": 3,
+      "finite_total": 3,
+      "values": [
+        {
+          "case_index": 0,
+          "deliveries": [
+            {
+              "input": -1,
+              "actual": 0,
+              "expected": 0,
+              "passed": true
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "deliveries": [
+            {
+              "input": 5,
+              "actual": 12,
+              "expected": 12,
+              "passed": true
+            }
+          ]
+        },
+        {
+          "case_index": 2,
+          "deliveries": [
+            {
+              "input": 8,
+              "actual": 18,
+              "expected": 18,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 3,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 3,
+        "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+      }
+    },
+    {
+      "generated_now": false,
+      "construction_replayed": true,
+      "decision": "COMPLETE_FINITE",
+      "original_source_sha256": "sha256:8dc2818dca624ecdca35215dfb4364b40f5d7c5bf8ce43e583a8ae02a5eaac7c",
+      "candidate_space": "14",
+      "program_budget": 8,
+      "attempts_consumed": 1,
+      "model_loaded": false,
+      "new_model_calls": 0,
+      "producer_source_sha": "87caaa692603c0fc1ff5db44010ab157347cce70",
+      "finite_passed": 3,
+      "finite_total": 3,
+      "values": [
+        {
+          "case_index": 0,
+          "deliveries": [
+            {
+              "input": -1,
+              "actual": 0,
+              "expected": 0,
+              "passed": true
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "deliveries": [
+            {
+              "input": 5,
+              "actual": 12,
+              "expected": 12,
+              "passed": true
+            }
+          ]
+        },
+        {
+          "case_index": 2,
+          "deliveries": [
+            {
+              "input": 8,
+              "actual": 18,
+              "expected": 18,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 3,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 3,
+        "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+      }
+    }
+  ]
+}
