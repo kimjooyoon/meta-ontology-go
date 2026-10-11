@@ -23,15 +23,15 @@ model=out/source-relative-model/research/source-relative-learning-20261011/resul
 shasum -a 256 "$model"
 ```
 
-파일의 SHA256은 다음 값입니다. FP32 가중치 배열은76,136바이트이고,
-메타데이터와 숫자의 문자열 표현을 포함한 JSON 파일은222,730바이트입니다.
+파일의 SHA256은 다음 값입니다. FP32 가중치 배열은 76,136바이트이고,
+메타데이터와 숫자의 문자열 표현을 포함한 JSON 파일은 222,730바이트입니다.
 
 ```text
 cae32bdad17ab818498c6099066918cd9c9c591eb118afe1bc6a7ef82dc83cc4
 ```
 
 [배치 처리량 예제](../examples/body-codegen/source-relative-batch.gooo.fixture)는
-대기 수가8보다 작으면3을 더하고,8이상이면두배를 반환하는 작은 시연용 규칙입니다.
+대기 수가 8보다 작으면 3을 더하고, 8 이상이면 두 배를 반환하는 작은 시연용 규칙입니다.
 소스의 초기 분기 배치와 기대 출력이 다르게 적혀 있어 조립 과정에서 선택이 필요합니다.
 변수 대입·비교식·두 반환 계산·검사 사례가 모두 Gooo 소스에 있습니다.
 
@@ -43,11 +43,11 @@ GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-context \
   examples/body-codegen/source-relative-batch.gooo.fixture
 ```
 
-`source_relative_features`는 모델이 실제로 읽는528개 값입니다. 그중 `[192:208]`의
+`source_relative_features`는 모델이 실제로 읽는 528개 값입니다. 그중 `[192:208]`의
 16개 값이 조건 관계이며, `source_relative_conditions`에 그 값의 개수·구간·가용
 이유가 표시됩니다. `canonical_branch_context`는 해석한 비교식과 반환식을 보여줍니다.
 원래 소스·계획의 식별값과 출력·Boolean 조건 배열도 따로 남습니다.
-이 명령의 모델 예측과 후보 검사는0회입니다.
+이 명령의 모델 예측과 후보 검사는 0회입니다.
 
 ## 조립하고 다시 사용하기
 
@@ -89,13 +89,13 @@ GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-construct \
 
 입력은 한 루트 분기, 정수 비교 `less_than`·`less_equal`·`equal`, 최대 두 선택과
 128개 조건을 지원합니다. 직접 반환과 지원하는 변수 대입은 같은 계산 입력을 사용합니다.
-지원 밖 소스는 이유와 함께 고정 순서로 이어가며 모델 호출은0회입니다. 모델 파일 형식이
+지원 밖 소스는 이유와 함께 고정 순서로 이어가며 모델 호출은 0회입니다. 모델 파일 형식이
 틀리면 오류를 반환합니다. 모델 점수는 후보를 정렬하는 값입니다.
 
-[원래288개 연구](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.41-experimental/studies/source-relative-learning-20261011)에서
-관련 첫 선택은64/128이었고 간단한 규칙도64/128이었습니다. 새 연결은 일반 SDK 후보 큐를
+[원래 288개 연구](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.41-experimental/studies/source-relative-learning-20261011)에서
+관련 첫 선택은 64/128이었고 간단한 규칙도 64/128이었습니다. 새 연결은 일반 SDK 후보 큐를
 사용하므로 원래 네 조합 정렬 실험의 시간과 후보 수를 그대로 적용할 수는 없습니다.
 이번 네이티브 연결의 별도 관찰은 [고정 계획](research/source-relative-native-20261011/protocol.md)을 따릅니다.
 [원래 실행 결과](research/source-relative-native-20261011/results.md)에서 모델과 고정 순서는
-모두 후보2개를 확인했습니다. 첫 출력 검사는1/4, 최종4/4였으며 저장 재실행은 새 모델 호출0회로
-같은 네이티브 사례4개를 통과했습니다. 판단 시간·가중치 준비·전체 실행 비용은 따로 기록했습니다.
+모두 후보 2개를 확인했습니다. 첫 출력 검사는 1/4, 최종 4/4였으며 저장 재실행은 새 모델 호출 0회로
+같은 네이티브 사례 4개를 통과했습니다. 판단 시간·가중치 준비·전체 실행 비용은 따로 기록했습니다.

@@ -1,8 +1,9 @@
 # Reading a construction result
 
-The 0.6.28 candidate adds `--format text`, `--format markdown` and saved `--report` reading to `body-construct`.
-The public 0.6.27 binary predates these options. JSON remains the default and keeps
-the original shape. Every format uses the same construction and evaluation result;
+The [public 0.6.29 compiler](releases/0.6.29-dev.md) supports `--format text`,
+`--format markdown` and saved `--report` reading for `body-construct`.
+JSON remains the default and keeps the original shape. Every format uses the same
+construction and evaluation result;
 formatting adds no model call, candidate evaluation, compilation or program run.
 
 ```sh
