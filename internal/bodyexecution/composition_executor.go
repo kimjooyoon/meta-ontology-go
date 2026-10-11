@@ -15,6 +15,11 @@ import (
 // scalar and graph methods share the bounded workspace and cancellation gate.
 func (e *Executor) ExecuteComposition(ctx context.Context, filename string, source []byte,
 	prior Composition, suite CompositionCases, goBinary string) (CompositionRuntime, error) {
+	return e.executeWithJointCalls(ctx, filename, source, prior, suite, goBinary, nil)
+}
+
+func (e *Executor) executeWithJointCalls(ctx context.Context, filename string, source []byte,
+	prior Composition, suite CompositionCases, goBinary string, calls *jointCallContext) (CompositionRuntime, error) {
 	started := time.Now()
 	reject := func(err error) (CompositionRuntime, error) {
 		r := initialCompositionRuntime(source, prior, suite)
@@ -44,7 +49,7 @@ func (e *Executor) ExecuteComposition(ctx context.Context, filename string, sour
 	wait := time.Since(started).Nanoseconds()
 	stop := context.AfterFunc(e.lifetime, cancel)
 	defer stop()
-	r, err := executeComposition(ctx, filename, source, prior, suite, goBinary, e)
+	r, err := executeComposition(ctx, filename, source, prior, suite, goBinary, e, calls)
 	if ctx.Err() != nil {
 		err = errors.Join(err, ctx.Err(), e.drop())
 	}

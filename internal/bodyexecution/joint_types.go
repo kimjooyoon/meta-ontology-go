@@ -14,6 +14,7 @@ const jointPathSchema = "gooo/joint-construction/v7"
 // evaluation distinct. Initial is also the source-bound historical model order.
 type JointConstruction struct {
 	Schema               string           `json:"schema"`
+	InputObservation     string           `json:"input_observation,omitempty"`
 	Stage                string           `json:"stage"`
 	Failure              string           `json:"failure,omitempty"`
 	OriginalSourceSHA256 string           `json:"original_source_sha256"`

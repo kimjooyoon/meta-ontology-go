@@ -33,7 +33,11 @@ func writeBodyConstructResult(out io.Writer, result bodyConstructOutput, format 
 		}
 	}
 	fmt.Fprint(&text, "\nShares count the named supplied checks or expected activity outputs, not all possible inputs.\n")
-	fmt.Fprint(&text, "Input overlap counts caller root tuples only; local-example and model-training exposure are unknown.\n")
+	if result.Evaluation.Runtime.ConstructionInputHistorySHA256 == "" {
+		fmt.Fprint(&text, "Input overlap counts caller root tuples only; local-example and model-training exposure are unknown.\n")
+	} else {
+		fmt.Fprint(&text, "Caller overlap counts root tuples. Constructed-input coverage follows actual arguments and recorded local/caller history; model-training exposure remains unknown.\n")
+	}
 	fmt.Fprint(&text, "Candidate uniqueness and behavior on other inputs are not assessed by this report.\n")
 	fmt.Fprint(&text, "Typed-path rows retain initial local search history; these candidates differ from caller program attempts.\n")
 	fmt.Fprint(&text, "Recorded local model calls belong to that history, including when a saved construction is replayed.\n")
@@ -67,6 +71,7 @@ func constructionReportRows(result bodyConstructOutput) [][2]string {
 		rows = append(rows, [2]string{"Saved history replayed", strconv.FormatBool(e.ConstructionReplayed)},
 			[2]string{"New model calls during replay/evaluation", strconv.Itoa(e.NewModelCalls)})
 	}
+	rows = append(rows, constructionInputHistoryRows(e.Runtime)...)
 	rows = append(rows, constructionFailureRows(result)...)
 	return rows
 }

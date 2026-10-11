@@ -2,10 +2,8 @@ package bodyexecution
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"slices"
 	"strconv"
 	"time"
 
@@ -18,7 +16,7 @@ import (
 func ConstructJointComposition(ctx context.Context, filename string, source []byte,
 	cases CompositionCases, options JointOptions) (JointConstruction, error) {
 	started := time.Now()
-	r := JointConstruction{Schema: jointSchema, Stage: "PREFLIGHT", OriginalSourceSHA256: digest(source),
+	r := JointConstruction{Schema: jointSchema, InputObservation: jointInputObservation, Stage: "PREFLIGHT", OriginalSourceSHA256: digest(source),
 		ConstructionCases: cases, ConstructionSHA256: compositionDigest(cases),
 		ProgramBudget: options.ProgramBudget, SelectedAttempt: -1,
 		Scope: "source-bounded record combinations; local obligations and native caller expectations retained separately; initial optional model order; caller cases are consumed construction feedback; no general correctness claim"}
@@ -63,40 +61,12 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 	if r.Schema == jointPathSchema {
 		r.Scope = "source-bounded typed paths, record masks, search expressions and fill assignments; initial local model observations retained unchanged; typed paths use the initial selected mask first, then deterministic fallback distance and numeric order within the source attempt cap; record ranking and source search/fill orders retain their own contracts; local cases and native caller cases remain separate; no model calls in subsequent candidates or saved replay; rejected combined paths consume attempts without caller scores; finite observations only"
 	}
-	executor := NewExecutor()
-	defer executor.Close()
-	for _, masks := range jointMaskOrder(slots, options.ProgramBudget) {
-		if err := ctx.Err(); err != nil {
-			return finish(err)
-		}
-		attempt, selected, program, err := materializeJoint(ctx, filename, source, cases, options.EntryActivity, slots, masks)
-		if err != nil {
-			return finish(err)
-		}
-		if attempt.Rejection == nil {
-			attempt.Runtime, err = executor.ExecuteComposition(ctx, filename, selected, program, cases, options.GoBinary)
-		} else {
-			if r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema {
-				r.Scope += "; rejected local expressions consume attempts without a caller score; rejected local totals cover only the scored prefix"
-			}
-		}
-		r.Attempts = append(r.Attempts, attempt)
-		if r.Schema != jointFaultSchema && hasCompositionFault(attempt.Runtime) {
-			r.Scope += "; native integer zero-divisor outcomes preserve reached operation identities and operands; dependent activities are blocked; twice-reproduced language faults consume program attempts and permit continuation"
-		}
-		r.Schema = jointObservationSchema(slots, r.Attempts)
-		if err != nil {
-			return finish(err)
-		}
-		if attempt.Rejection == nil && (r.SelectedAttempt < 0 || betterJoint(attempt, r.Attempts[r.SelectedAttempt])) {
-			r.SelectedAttempt, r.SelectedSource, r.Selected = len(r.Attempts)-1, string(selected), program
-		}
-		if raw, err := json.MarshalIndent(r, "", "  "); err != nil || len(raw) > 30<<20 {
-			return finish(fmt.Errorf("joint construction exceeds the 32 MiB observation limit"))
-		}
-		if jointComplete(attempt) {
-			break
-		}
+	calls, err := prepareJointCallContext(ctx, filename, source, r)
+	if err != nil {
+		return finish(err)
+	}
+	if err := r.runCandidates(ctx, filename, source, cases, options, slots, calls); err != nil {
+		return finish(err)
 	}
 	r.Decision, r.StopReason = jointOutcome(r)
 	r.Stage = "COMPLETE"
@@ -144,21 +114,10 @@ func materializeJoint(ctx context.Context, filename string, source []byte, cases
 	current := source
 	for i, slot := range slots {
 		if len(slot.pathMasks) != 0 {
-			if !slices.Contains(slot.pathMasks, masks[i]) {
-				return attempt, nil, Composition{}, fmt.Errorf("typed path mask exceeds the source attempt cap")
+			selected, err := materializeJointPath(ctx, filename, current, slot, masks[i], i, &attempt)
+			if err != nil || attempt.Rejection != nil {
+				return attempt, nil, Composition{}, err
 			}
-			candidate, selected, err := bodycodegen.RealizeSourcePathCandidate(ctx, filename, current, slot.activity, slot.pathReceipt, masks[i])
-			attempt.PathCandidates = append(attempt.PathCandidates, candidate)
-			if err != nil {
-				if rejected, ok := errors.AsType[*bodycodegen.SourcePathCandidateRejection](err); ok && ctx.Err() == nil {
-					attempt.Rejection = &JointCandidateRejection{Stage: "LOCAL_TYPED_PATH", Slot: i,
-						Activity: slot.activity, CandidateID: fmt.Sprintf("path_%04x", masks[i]), Reason: rejected.Error()}
-					return attempt, nil, Composition{}, nil
-				}
-				return attempt, nil, Composition{}, fmt.Errorf("joint typed path activity %s: %w", slot.activity, err)
-			}
-			attempt.LocalPassed += candidate.Passed
-			attempt.LocalTotal += candidate.Total
 			current = selected
 			continue
 		}

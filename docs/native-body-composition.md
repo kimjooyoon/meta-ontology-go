@@ -310,6 +310,29 @@ input history used during construction. The call recorder bounds observations
 to 65,536 per root case, matching 16 graph activities with at most 4,096 calls
 each; the existing execution time and output-size limits also apply.
 
+Fresh `body-construct` histories additionally retain these actual arguments for
+every native caller attempt, including failed candidates. The contract is
+`input_observation: gooo/joint-input-history/v1`. Each attempt's
+`call_context_sha256` binds the original source and preparation plan while the
+selected pure source and generated Go keep their own identities. Candidate
+execution still follows materialization immediately; observation adds no model
+calls or separate native execution.
+
+Subsequent evaluation compares actual constructed inputs with source cases,
+conditions, holdouts, recorded probes and the union of all consumed caller
+attempts. Its `construction_input_history_sha256` binds that complete history.
+For example, a changed caller may deliver an input to a helper that was seen only
+in a failed candidate. That remains overlapping. Repeated and nested calls are
+retained; duplicate root rows cannot inflate the disjoint denominator, and all
+their supplied expectations must match. The result is still a finite input
+boundary, with model-training exposure unknown.
+
+Saved replay derives the same call observation from the original source,
+rechecks each candidate and its actual arguments, then evaluates the requested
+suite without inference. Historical receipts without the input-observation
+contract keep their previous `UNKNOWN`; replay does not invent past call data.
+The unobserved local-candidate calls described above remain an explicit limit.
+
 Workspace execution also includes body fills completed before composition.
 The earlier fill's selected body is matched to the executed activity, and its
 training, holdout and probe tuples join the known-input sets. A new root can

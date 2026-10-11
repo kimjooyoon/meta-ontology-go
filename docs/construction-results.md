@@ -38,6 +38,18 @@ example or model training. The report makes no held-out accuracy claim from this
 overlap count. Candidate uniqueness and arbitrary-input correctness remain outside
 this summary, even when every supplied check passes.
 
+Fresh histories also show **Actual constructed inputs**. This compares actual
+activity/helper arguments with local source cases, conditions, holdouts, probes
+and all native caller attempts, including failures. A new root input can reach
+an old helper input. The table separates overlapping, disjoint and unknown cases;
+**Disjoint cases matching every expectation** uses only distinct root tuples and
+requires every supplied expectation across duplicate rows to match.
+
+This second measurement carries a digest of its construction history in JSON.
+The text reports `not recorded` for older results without that history contract.
+Missing observations remain unknown, including unrecorded calls made while
+scoring local candidates. Model-training exposure remains unknown.
+
 ## First local choice and the selected program
 
 For typed-path bodies, the report also reads the initial local search history.

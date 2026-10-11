@@ -25,7 +25,7 @@ func ConstructAndEvaluateJoint(ctx context.Context, filename string, source []by
 	if err != nil {
 		return prior, result, err
 	}
-	result.Runtime, err = ExecuteComposition(ctx, filename, []byte(prior.SelectedSource), prior.Selected, evaluation, options.GoBinary)
+	result.Runtime, err = evaluateJointInputs(ctx, filename, source, prior, evaluation, options.GoBinary, nil)
 	if err == nil {
 		result.InputSeparation, err = measureJointInputs(ctx, filename, []byte(prior.SelectedSource), prior, evaluation)
 	}

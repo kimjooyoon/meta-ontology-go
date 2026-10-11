@@ -513,7 +513,9 @@ jobs:
 
           The unchanged model has19,034 FP32 parameters and76,136 weight-array bytes. Its one observed prediction took106.833 microseconds, with7.822ms constructor setup. Whole commands took0.81s fixed and0.64s model on Apple M4 with normal Go caching and fixed order. These observations support no causal speedup claim. The [original records and limits](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/research/source-relative-native-20261011/results.md) preserve the first failure and runtime UNKNOWN classification.
 
-          Ordinary composition now counts inputs used only by Boolean conditions as already used during construction. Actual helper arguments retain their typed identity. In the regression example, all four outputs match but only one input is disjoint; previously all four were counted as new. Joint construction's materialized ordinary body may still report UNKNOWN when earlier local construction context is unavailable.
+          Ordinary composition now counts inputs used only by Boolean conditions as already used during construction. Actual helper arguments retain their typed identity. In the regression example, all four outputs match but only one input is disjoint; previously all four were counted as new.
+
+          Fresh joint construction retains actual helper inputs across every native candidate, including failures. Evaluation compares its inputs with the source cases and complete caller history; reports show overlap, disjoint cases and unknown cases. Replay verifies that history without inference. Older receipts keep their original UNKNOWN, and unobserved calls made while scoring local candidates remain a limit.
 
           ## Read and share a construction result
 
