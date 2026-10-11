@@ -89,7 +89,7 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 		if err != nil {
 			return nil, err
 		}
-		if compositionDigest(attempt.Candidates) != compositionDigest(recorded.Candidates) ||
+		if !bodycodegen.EqualRecordCandidateHistory(recorded.Candidates, attempt.Candidates) ||
 			!bodycodegen.EqualSearchCandidateHistory(recorded.SearchCandidates, attempt.SearchCandidates) ||
 			compositionDigest(attempt.FillCandidates) != compositionDigest(recorded.FillCandidates) ||
 			compositionDigest(attempt.PathCandidates) != compositionDigest(recorded.PathCandidates) ||

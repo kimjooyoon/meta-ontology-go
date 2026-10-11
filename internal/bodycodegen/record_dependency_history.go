@@ -114,8 +114,20 @@ func evaluateRecordMask(ctx context.Context, p recordAssemblyPlan, mask uint16) 
 		}
 		return RecordAssemblyAttempt{}, nil, err
 	}
-	cases, err := evaluateRecordAssembly(ctx, candidate.source, p.body.activity.Name, p.body.records, p.spec.ValueCases)
-	return scoreRecordCases(mask, cases), cases, err
+	cases, calls, err := evaluateRecordCasesObserved(ctx, candidate, mask, p.spec.ValueCases)
+	attempt := scoreRecordCases(mask, cases)
+	attempt.LocalCalls = calls
+	if err != nil {
+		attempt.Status, attempt.Reason = "EVALUATION_FAILED", err.Error()
+		if canceled := ctx.Err(); canceled != nil {
+			attempt.Status = "EVALUATION_CANCELLED"
+			return attempt, nil, canceled
+		}
+		// A deterministic candidate failure consumes its attempt, not the whole
+		// source budget. Its incomplete suite does not gain a partial score.
+		return attempt, nil, nil
+	}
+	return attempt, cases, nil
 }
 
 func transitionRecordDependencies(ctx context.Context, plans []recordAssemblyPlan, index int, r *RecordAssemblyReceipt) (int, error) {

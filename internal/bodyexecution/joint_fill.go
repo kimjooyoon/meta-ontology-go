@@ -61,7 +61,7 @@ func jointObservationSchema(slots []jointSlot, attempts []JointAttempt) string {
 			return jointFillRejectionSchema
 		}
 	}
-	if schema == jointMixedSchema {
+	if schema == jointMixedSchema || schema == jointSchema {
 		for _, attempt := range attempts {
 			if attempt.Rejection != nil {
 				return jointRejectionSchema

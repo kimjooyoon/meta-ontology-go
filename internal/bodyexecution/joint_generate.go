@@ -165,6 +165,13 @@ func materializeJoint(ctx context.Context, filename string, source []byte, cases
 		}
 		candidate, selected, err := bodycodegen.RealizeRecordCandidate(ctx, filename, current, slot.activity, masks[i])
 		if err != nil {
+			var rejected *bodycodegen.SourceRecordCandidateRejection
+			if errors.As(err, &rejected) && ctx.Err() == nil {
+				attempt.Candidates = append(attempt.Candidates, candidate)
+				attempt.Rejection = &JointCandidateRejection{Stage: "LOCAL_RECORD_ASSEMBLY", Slot: i,
+					Activity: slot.activity, CandidateID: strconv.Itoa(int(candidate.Attempt.Mask)), Reason: rejected.Error()}
+				return attempt, nil, Composition{}, nil
+			}
 			return attempt, nil, Composition{}, fmt.Errorf("joint activity %s: %w", slot.activity, err)
 		}
 		appendJointLocal(&attempt, candidate)

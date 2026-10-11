@@ -66,7 +66,7 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 		return Result{}, err
 	}
 	if err = searchRecordAssemblyWithPolicy(ctx, plan, r, controller); err != nil {
-		return Result{}, err
+		return Result{}, &RecordAssemblyError{Receipt: r, Cause: err}
 	}
 	result, err := emitRecordAssembly(ctx, filename, source, plan, r)
 	r.GenerationNS = time.Since(started).Nanoseconds()
@@ -163,6 +163,9 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 		}
 		attempt, cases, err := evaluateRecordMask(ctx, p, mask)
 		if err != nil {
+			if attempt.LocalCalls != nil {
+				r.Attempts = append(r.Attempts, attempt)
+			}
 			return err
 		}
 		r.Attempts = append(r.Attempts, attempt)
@@ -197,7 +200,7 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 		}
 	}
 	if best < 0 {
-		return fmt.Errorf("record assembly has no valid typed candidate within the attempt budget")
+		return fmt.Errorf("record assembly has no valid typed candidate that completed evaluation within the attempt budget")
 	}
 	finishRecordAssemblySearch(r)
 	return nil

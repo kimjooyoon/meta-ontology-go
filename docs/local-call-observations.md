@@ -1,4 +1,4 @@
-# Inputs observed during local IR search
+# Inputs observed during local candidate evaluation
 
 Development source records the helper inputs used while evaluating IR search
 candidates. Public compiler 0.6.29 predates this observation. The record is useful
@@ -36,8 +36,18 @@ or an additional scoring pass. Saved JSON indentation does not change typed
 values. Historical receipts without this field remain readable with their
 original absence; replay does not add a claim about past execution.
 
+Record assembly also captures each original candidate evaluation in
+`record_assembly.attempts[].local_calls`, including caller-selected record
+candidates. Its phase is `record-candidate`; the candidate ID is the decimal
+choice mask. Each record candidate retains at most 8,192 calls and 1 MiB of
+encoded tuples. The source-owned attempt budget bounds the number of candidates.
+An evaluation failure consumes one attempt and retains the calls already entered;
+it receives no completed case score. Cancellation stops construction. Exhausting
+the budget before any candidate completes produces an error with its original
+record receipt. `body-construct` exposes this as `initial.record_failure`.
+
 Input separation still needs the rest of the construction history: separate
-preflight, record/path/fill assembly evaluations, and every consumed caller
+preflight, path/fill assembly evaluations, and every consumed caller
 candidate. The current input-separation metric continues to report `UNKNOWN`
 when those inputs are unavailable. The new local trace provides evidence for
 that next integration; it supplies no general correctness or independence score.

@@ -85,7 +85,7 @@ func verifyRecordAssemblyObservations(expected, r *RecordAssemblyReceipt) error 
 		name    string
 		matches bool
 	}{
-		{"attempted combinations", reflect.DeepEqual(expected.Attempts, r.Attempts)},
+		{"attempted combinations", equalRecordAttempts(r.Attempts, expected.Attempts)},
 		{"case values", reflect.DeepEqual(expected.Cases, observedCases)},
 		{"field choices", reflect.DeepEqual(expected.Choices, r.Choices)},
 		{"selected combination", expected.SelectedMask == r.SelectedMask},
