@@ -40,3 +40,21 @@ existing evaluator passes. Changing an entered helper argument invalidates repla
 The regression test checks all three final outputs, saved JSON replay with zero
 model calls, two overlapping inputs and one unknown input. A finite `3/3` output
 result counts the supplied rows; those rows are not three independent observations.
+
+## Saved CLI observation
+
+The [source-bound observation](observed-local-calls-47cb0221.json) uses clean
+development producer `47cb0221f52472504b5278edfe43706c8b303bdc`, Go 1.27.2 and
+decision runtime 0.2.41. One constructor/evaluation command and one saved replay
+each matched all three native rows with zero model calls. Both reports retained
+two overlapping inputs and one unknown input. The failed first assignment keeps
+its two entered helper calls; the successful assignment retains training, probe
+and selected-case passes. Caller-selected assignments have separate histories.
+
+Whole-command accounting, including compilation and subprocesses, measured
+0.64 seconds wall, 0.29 seconds user CPU, 0.23 seconds system CPU and
+87,080,960 bytes maximum RSS. Saved replay measured 0.35 seconds wall,
+0.17 seconds user CPU, 0.11 seconds system CPU and 86,376,448 bytes maximum RSS.
+These are single observations. Instantaneous CPU utilization and a controlled
+performance comparison were not measured. The public compiler remains 0.6.29;
+this observation belongs to the development source above.
