@@ -30,6 +30,7 @@ type Composition struct {
 	Plan                 CompositionPlan                    `json:"plan"`
 	Steps                []CompositionStep                  `json:"steps"`
 	Preparations         []CompositionStep                  `json:"preparations,omitempty"`
+	SearchValidations    []CompositionSearchValidation      `json:"search_validations,omitempty"`
 	GoooSource           string                             `json:"gooo_source"`
 	Source               string                             `json:"source"`
 	Driver               string                             `json:"driver_source"`
@@ -80,7 +81,7 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 		return finish(err)
 	}
 	result.Stage = "BODY_PREFLIGHT"
-	if err := graph.preflight(ctx, filename, source); err != nil {
+	if err := graph.preflight(ctx, filename, source, &result.SearchValidations); err != nil {
 		return finish(err)
 	}
 	if err := graph.validateModelRoute(ctx, filename, source, options); err != nil {
@@ -109,7 +110,7 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 
 func generateCompositionSteps(ctx context.Context, filename string, source []byte,
 	graph compositionGraph, options CompositionOptions, result *Composition) ([]byte, error) {
-	generator := compositionAssemblyGenerator{options: options}
+	generator := compositionAssemblyGenerator{options: options, validations: &result.SearchValidations}
 	current, err := generateCalledBodies(ctx, filename, source, graph, &generator, result)
 	if err != nil {
 		return nil, err
@@ -184,7 +185,11 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 		!sameCompositionPlan(prior.Plan, graph.plan) || len(prior.Steps) != graph.count {
 		return graph, fmt.Errorf("composition original source, typed plan or step order differs")
 	}
-	current, err := replayCalledBodies(ctx, filename, source, graph, prior)
+	validations := compositionValidationReplay{checks: prior.SearchValidations}
+	if err := graph.replaySearchPreflights(ctx, filename, source, &validations); err != nil {
+		return graph, err
+	}
+	current, err := replayCalledBodies(ctx, filename, source, graph, prior, &validations)
 	if err != nil {
 		return graph, err
 	}
@@ -194,6 +199,9 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 			return graph, fmt.Errorf("composition step %d input or activity order differs", i)
 		}
 		if node.Assembling && !node.Prepared {
+			if err := validations.check(ctx, filename, current, node.Name, "ACTIVITY_GENERATION"); err != nil {
+				return graph, err
+			}
 			realized, err := bodycodegen.RealizeSourceAssembly(ctx, filename, current, step.Generation)
 			if err != nil {
 				return graph, fmt.Errorf("composition step %d replay: %w", i, err)
@@ -202,6 +210,9 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 		} else if err := replayCompositionPlain(ctx, filename, current, node, step.Generation); err != nil {
 			return graph, fmt.Errorf("composition step %d replay: %w", i, err)
 		}
+	}
+	if validations.next != len(validations.checks) {
+		return graph, fmt.Errorf("source search validation has unconsumed observations")
 	}
 	generated, err := emitCompositionProjection(prior.Steps, graph)
 	if err != nil || generated != prior.Source || prior.GeneratedSHA256 != digest([]byte(generated)) ||

@@ -54,9 +54,25 @@ completed score. The metric compares source activity identities and typed values
 it preserves exact integers and optional record fields. Fixed pure helpers have
 no source-owned candidate selection and do not create another learned target.
 
+Compositions also retain `search_validations` for source IR-search preflight.
+Each entry binds the stage, exact Gooo source checkpoint, activity identity and
+original local-call history. `BODY_PREFLIGHT` checks independent bodies before
+optional model loading. `ACTIVITY_GENERATION` checks the current source after
+required helpers have been assembled. Residual and quadratic grammar probes can
+call helpers during either stage. A failed probe keeps its entered calls; a later
+validation error keeps all earlier validation entries in the failed composition.
+`completed` describes validation completion, independently of each probe outcome.
+
+Saved replay verifies these explicit preflight boundaries against their original
+source checkpoints. This repeats their pure validation probes; it does not load
+a model or repeat candidate selection. Older compositions with no validation
+history stay readable and do not acquire invented observations. Original
+record/search selection histories retain their existing replay behavior.
+
 A retained prefix is positive evidence of use. It does not prove that an input
-absent from the prefix was never used. Separate preflight and path/fill assembly
-evaluations still need complete capture. Missing or partial coverage therefore
+absent from the prefix was never used. Path/fill preflight and assembly evaluations,
+candidate-set planning and the remaining construction boundaries still need
+complete capture. Missing or partial coverage therefore
 keeps other affected inputs `UNKNOWN`. The metric reads source-replayed records;
 it runs no extra candidate or model evaluation and does not rewrite old receipts.
 
