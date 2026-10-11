@@ -354,7 +354,8 @@ func TestGenerateWithIRBodyFillProviderFailureKeepsDeterministicFallback(t *test
 		t.Fatalf("unavailable provider did not produce a deterministic fallback receipt: %#v", result.Report.BodyFill)
 	}
 	timing := result.Report.BodyFill.Timing
-	if timing.LayaDecisionMS != 0 || timing.TinyDecisionMS != 0 || timing.ProviderDecisionMS < 0 {
+	if timing.LayaDecisionMS != 0 || timing.TinyDecisionMS != 0 ||
+		timing.ProviderDecisionMS < 0 || timing.ProviderDecisionMS > timing.TotalMS {
 		t.Fatalf("failed Laya request timing was attributed incorrectly: %#v", timing)
 	}
 	if result.Report.BodyFill.SelectedCandidateID != "zero" || result.Report.BodyFill.FunctionalAccuracyPct != 100 {
