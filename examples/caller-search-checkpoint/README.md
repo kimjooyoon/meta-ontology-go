@@ -41,3 +41,31 @@ GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o ./gooo ./cmd/gooo
 
 The native rows are finite examples. Input exposure and model-training exposure
 remain separate, with `UNKNOWN` where construction coverage is incomplete.
+
+## Recorded development run
+
+[The observation](observed-checkpoint-722161a1.json) was extracted from one original
+command and one saved replay using clean compiler source
+`722161a1ac3f7d82d3fedc4aeb3266ee1b0c81ee`, Go 1.27.2, on macOS arm64.
+
+The prepared `Seed` produced seven search expressions for `Build`. Its retained
+pool starts with offset `1`. The constructor selected the first combination out
+of fourteen possible combinations, with an eight-attempt budget. The local case
+and caller construction case each passed 1/1. Native evaluation and saved replay
+each passed 3/3: `Main(-1)=0`, `Main(5)=12`, and `Main(8)=18`.
+
+The pool's origin matches the prepared `Build` source, after `Seed` was assembled.
+The caller candidate records one local evaluation and no new generation probes.
+The regression suite separately changes the helper, retains the same pool, and
+checks that the local result is recomputed.
+
+| Whole command | Wall time | User CPU | System CPU | Maximum RSS |
+| --- | ---: | ---: | ---: | ---: |
+| Construct and evaluate | 1.00 s | 0.29 s | 0.23 s | 87,605,248 bytes |
+| Saved replay | 0.36 s | 0.17 s | 0.11 s | 85,082,112 bytes |
+
+These single-run figures include compilation and subprocesses. No controlled
+speedup or instantaneous system CPU utilization was measured. No model was
+loaded and no provider call occurred. All three evaluation inputs remain
+`UNKNOWN` for construction exposure because local observation coverage is still
+incomplete. Passing 3/3 therefore does not establish independent generalization.
