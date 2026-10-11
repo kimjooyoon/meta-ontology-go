@@ -1,0 +1,49 @@
+Fixed before any new learned-model compiler command.
+
+Use unchanged public SDK35 model-leaky_v6.json, SHA256
+d5f9c4ffb204852f4e1b3b1b1c491c7d1fb0753d0df2c1e0f0ffead80d9ac47e.
+No fit, tuning, quantization, reinterpretation of old weights or old-study rerun.
+Build a clean committed compiler with public SDK0.2.35 and Go1.27.2, trimpath.
+Record the binary/build/version identities before executing these commands.
+
+Five frozen sources are selected before measurement:
+max-k11-r1-w1-direct, max-k11-r1-w1-copy_after_branch,
+min-k11-r0-w0-direct, min-k11-r0-w0-copy_after_branch, control-nested.
+Take their exact Choose source from the immutable normalization records,
+gzip SHA05fa80975f0e6ea56e0e653fc1207d5894805957cd7a4a54091b67d0e1a7ed40,
+then append the same Main(Integer)->Integer caller returning Choose(input).
+Selection deliberately includes a prior success, a min regression and the nested
+regression. These are known related cases, not an unseen accuracy evaluation.
+Each source keeps2 choices,8 output cases,3 condition cases and4 possible masks.
+
+Native evaluation uses8 authored cases: -11, k-1, k, k+1,
+-9007199254740995,9007199254740993,9007199254740995,18014398509481990.
+k=11 for max/min and10 for the nested max control. Expected outputs follow
+the source's max/min intent. The single construction case is Main(12).
+Keep exact int64 throughout; no conversion of whole integers to float64.
+
+For each source (max-direct,max-copy,min-direct,min-copy,nested), run once:
+1 body-context with --model and no explicit feature version; require metadata
+  to select the v6 input, without predictions or candidate tests;
+2 body-codegen without a model;
+3 body-codegen with the fixed model, batch1 and no extra feedback;
+4 body-codegen with the fixed model, batch1 and3 feedback rounds;
+5 body-construct Main with the fixed construction/evaluation cases, budget4,
+  explicit Go binary and a fresh saved output directory;
+6 delete only the owned model copy, then replay the saved construction on the
+  same8 evaluation cases, preserving cached native build observations.
+
+30 new commands total. Save start/completion, stdout, stderr and per-command
+process time/RSS, including any failure. Never restart a completed command or
+discard a worse outcome. Compare the paired source forms' complete actual input
+arrays, and preflight hashes with initial ranking hashes. Preserve unnormalized
+nested-source context. Check that initial observation channels are empty.
+Record first validity, every candidate attempt, committed feedback, final source
+conditions/outputs, model identity, native outputs and model-free replay calls.
+Compare the actual initial model input/prediction with the saved SDK35 record
+only after selection; do not recompute the old SDK model judgment or oracle.
+
+Publish compressed observations with gzip-n, decompressed byte comparisons,
+SHA256 manifests and a read-only audit. Separate SDK latency from compiler
+loading/analysis/native time and mean core demand from host CPU utilization.
+The installed public compiler0.6.25 remains unchanged by this local experiment.

@@ -13,6 +13,7 @@ import (
 type Spec struct {
 	Choices            []Choice            `json:"choices"`
 	Cases              []Case              `json:"cases"`
+	ConditionCases     []ConditionCase     `json:"condition_cases,omitempty"`
 	HoldoutCases       []Case              `json:"holdout_cases,omitempty"`
 	ValueCases         []ValueCase         `json:"value_cases,omitempty"`
 	ValueHoldoutCases  []ValueCase         `json:"value_holdout_cases,omitempty"`
@@ -99,6 +100,12 @@ type Case struct {
 	Expected int64 `json:"expected"`
 }
 
+type ConditionCase struct {
+	ChoiceID string `json:"choice_id"`
+	Input    int64  `json:"input"`
+	Expected bool   `json:"expected"`
+}
+
 // ValueCase carries canonical JSON: positional inputs and a named record result.
 type ValueCase struct {
 	Inputs   string `json:"inputs"`
@@ -106,6 +113,9 @@ type ValueCase struct {
 }
 
 func (s Spec) Validate() error {
+	if err := s.validateConditionCases(); err != nil {
+		return err
+	}
 	if err := s.validateSearchAlternatives(); err != nil {
 		return err
 	}
@@ -379,6 +389,7 @@ func (s Spec) Clone() *Spec {
 	clone := s
 	clone.Choices = append([]Choice(nil), s.Choices...)
 	clone.Cases = append([]Case(nil), s.Cases...)
+	clone.ConditionCases = append([]ConditionCase(nil), s.ConditionCases...)
 	clone.ValueCases = append([]ValueCase(nil), s.ValueCases...)
 	clone.ValueHoldoutCases = append([]ValueCase(nil), s.ValueHoldoutCases...)
 	clone.Picked = append([]Pick(nil), s.Picked...)

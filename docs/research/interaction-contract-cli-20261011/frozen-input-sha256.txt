@@ -1,0 +1,5 @@
+63a2219dc36396e088fdbdf5827c5c57a22e61fb838b4b7f99ea10d6a86dbec2  examples/body-codegen/source-interaction-condition-cases.gooo.fixture
+bf15afcdf3409204206278752d9531b5f25ac5c5a4618ef077751c28be5dad37  examples/body-codegen/source-condition-construction-cases.json
+5c6658816a0a587b85dfd7559c0dcc3e75fdcd19056a4142337894d19d4e9b6c  examples/body-codegen/source-condition-evaluation-cases.json
+4b61fe8d84df77c8dfac6a880eedcddfd8f5f903fa538d1e80532dd77f74b1ac  /tmp/gooo-sdk-0239-20261011/downloaded/model-interaction-v1.json
+084c5b680e42f914fa7708ef4e18eb9c33cf2cffcd7c524cd27a640a1998b064  /tmp/gooo-queue-batch-pilot-20261011/interaction-native-observation-01/protocol.txt

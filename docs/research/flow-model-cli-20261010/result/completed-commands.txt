@@ -1,0 +1,6 @@
+preflight
+deterministic
+initial
+feedback
+construction
+replay

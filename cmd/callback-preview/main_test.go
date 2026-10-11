@@ -32,7 +32,12 @@ func TestPreviewOutputRejectsRepositoryInputs(t *testing.T) {
 }
 
 func TestPreviewOutputRejectsSymlinkBoundary(t *testing.T) {
-	root := t.TempDir()
+	// Match the canonical root used by safePreviewOutputPath before checking
+	// the inside-root boundary, including macOS temporary-directory aliases.
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 	target := filepath.Join(t.TempDir(), "outside.json")
 	original := []byte("original\n")
 	if err := os.WriteFile(target, original, 0o644); err != nil {

@@ -4,6 +4,50 @@
 assembling programs, and keeping the evidence of how they behave. This repository
 contains its Go compiler. Source files use the `.gooo` extension.
 
+[Try 13 HTTP, Unicode, and byte functions in your browser](https://kimjooyoon.github.io/gooo-go-ports/)
+without installing anything or using a model. The demo runs fixed, precompiled
+Gooo → Go → WebAssembly programs; it does not compile arbitrary source.
+
+## Try a working Gooo program
+
+Build a small diagnostic tool, then reuse its selected program on new inputs.
+This example needs **Go 1.27.2** and no model or API key. In a new working
+directory on macOS or Linux:
+
+```sh
+GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.27-dev
+export PATH="$PWD/.gooo-bin:$PATH"
+gooo init --template diagnostic my-diagnostic
+cd my-diagnostic
+gooo package execute --json --cases cases.json gooo.workspace.json > execution.json
+gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
+```
+
+This walkthrough pins the published 0.6.27 compiler. The
+[0.6.27 release guide](docs/releases/0.6.27-dev.md) covers comparing saved outcomes
+when a rule changes. The [0.6.28 candidate guide](docs/releases/0.6.28-dev.md)
+covers readable construction reports, reading saved results without execution,
+Markdown outcome comparisons and the latest supported local decision models.
+
+The last command prints:
+
+```text
+"partial: missing branch result [repair-and-replay]"
+"unobserved: Add expected observations. [add-examples]"
+"complete: All observed fields matched. [accept]"
+```
+
+Gooo assembles choices declared in `diagnostics.gooo`, generates Go, and runs the
+supplied cases. Replay uses the saved choices with zero new model calls. Edit
+`inputs.json` to try your own counts and diagnostic text.
+
+[Installation, platform downloads, and next steps](docs/getting-started.md)
+explain what the finite checks establish and how to change the source.
+For a separate library example, [Gooo Go Ports](https://github.com/kimjooyoon/gooo-go-ports)
+implements thirteen HTTP, Unicode, and byte functions and compares them with Go originals;
+its [recorded native checks](https://github.com/kimjooyoon/gooo-go-ports/blob/a58b55b798c95da04cc51cf779df76399ea59a55/evidence/math-bits-20261010.json)
+cover named inputs, not whole-package compatibility.
+
 Think of Gooo as a workshop: declarations provide the plan, a small local model
 can suggest which permitted parts to assemble, and the compiler checks the fit
 and generates Go. A Go experiment runner builds and executes the resulting
@@ -35,11 +79,14 @@ Gooo source + intent + permitted choices + finite expectations
 ```
 
 **Start here:** [direction and current progress, 한국어](docs/language-direction.ko.md)
+· [practical adoption plan, 한국어](docs/adoption-plan.ko.md)
 · [body generation](docs/language/body-codegen.md)
 · [Gooo source assembly](docs/source-assembly.md)
 · [compose activity bodies](docs/native-body-composition.md)
 · [inspect inputs before assembly](docs/composition-plan-inspection.md)
+· [compare workflow outcomes after a rule change](docs/workflow-outcome-delta.md)
 · [small model integration](docs/three-choice-path-model.md)
+· [source-bound condition/output models and CLI](docs/condition-decision-model.md)
 · [capability discovery](docs/language/capability-discovery.md)
 · [completeness observations](docs/declared-completeness-receipt.md).
 
@@ -51,6 +98,10 @@ using their caller's actual results. Local obligations and caller expectations
 are retained separately, with bounded whole-program attempts and model-free
 saved replay. [Caller-guided construction](examples/caller-guided-construction/README.md)
 includes a runnable example and the current source/model/budget limits.
+Development source also supports `body-construct --format text` or `--format markdown`
+to show local checks, caller expectations, separate evaluation and input overlap.
+JSON remains the default; [reading construction results](docs/construction-results.md)
+explains the denominators, unobserved outcomes and saved replay.
 The 0.6.24 development source also reopens
 [typed conditions and branches](examples/caller-typed-paths/README.md), including
 mixed record construction, rejected interacting edits and saved v7 replay.
@@ -216,6 +267,15 @@ automatically; representation declines retain their reason and perform zero pred
 The development [typed-path preflight](docs/typed-model-preflight.md) extends that
 inspection to branches, variables and operand choices, using construction's exact
 model input preparation. Public 0.6.23 retains its record preflight scope.
+The development [declared-contract model](docs/declared-contract-model.md) also
+reads every authored input/expected-output example before one initial ranking.
+Its SDK 0.2.36 artifact has 9,746 parameters; ordinary finite checks and saved
+model-free execution remain part of the compiler path.
+
+Development source also accepts the [SDK0.2.40 canonical branch model](docs/canonical-contract-model.md).
+It reads supported direct-return and assignment forms as the same calculation,
+while retaining original source identities and execution. Its research weights
+and low first-choice results are public; the released compiler0.6.27 predates this adapter.
 
 ## What we are developing
 

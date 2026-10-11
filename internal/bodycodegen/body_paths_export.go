@@ -7,31 +7,42 @@ import (
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/bodyplan"
+	"github.com/kimjooyoon/gooo-decision-runtime/contractdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 )
 
 // Context text is disclosed only by this explicit export API, not normal receipts.
 type ExportedPathInput struct {
 	PathContextInput
-	Text string `json:"text"`
+	Text              string                                       `json:"text"`
+	Features          *[decision.FeatureDim]float32                `json:"features,omitempty"`
+	ExecutionFeatures *[decision.ExecutionFeatureDim]float32       `json:"execution_features,omitempty"`
+	FlowFeatures      *[decision.ExecutionFlowFeatureDim]float32   `json:"flow_features,omitempty"`
+	OrderedFeatures   *[contractdecision.OrderedFeatureDim]float32 `json:"ordered_source_features,omitempty"`
+	OrderedBranch     *pathplan.OrderedBranchContext               `json:"ordered_branch_context,omitempty"`
+	CanonicalFeatures *[contractdecision.OrderedFeatureDim]float32 `json:"canonical_source_features,omitempty"`
+	CanonicalBranch   *pathplan.CanonicalOrderedBranchContext      `json:"canonical_branch_context,omitempty"`
+	SemanticFlow      *pathplan.SemanticBranchContext              `json:"semantic_flow_context,omitempty"`
 }
 
 type TypedPathContextExport struct {
-	Schema               string                   `json:"schema"`
-	OriginalSourceSHA256 string                   `json:"original_source_sha256"`
-	DocumentSHA256       string                   `json:"document_sha256"`
-	TestSuiteSHA256      string                   `json:"test_suite_sha256"`
-	SourceBinding        RouteEquivalenceReceipt  `json:"source_binding"`
-	Context              *PathModelContextReceipt `json:"context"`
-	Inputs               []ExportedPathInput      `json:"inputs"`
-	Timing               BodyPathTiming           `json:"timing"`
-	ModelPredictions     int                      `json:"model_predictions"`
-	CandidateTests       int                      `json:"candidate_tests"`
-	SelectedEmission     bool                     `json:"selected_emission"`
-	RepositoryWrites     int                      `json:"repository_writes"`
-	ModelCompatibility   *PathModelCompatibility  `json:"model_compatibility,omitempty"`
-	CompleteModelInput   *CompletePathModelInput  `json:"complete_model_input,omitempty"`
-	Scope                string                   `json:"scope"`
+	Schema               string                      `json:"schema"`
+	OriginalSourceSHA256 string                      `json:"original_source_sha256"`
+	DocumentSHA256       string                      `json:"document_sha256"`
+	TestSuiteSHA256      string                      `json:"test_suite_sha256"`
+	SourceBinding        RouteEquivalenceReceipt     `json:"source_binding"`
+	Context              *PathModelContextReceipt    `json:"context"`
+	Inputs               []ExportedPathInput         `json:"inputs"`
+	Timing               BodyPathTiming              `json:"timing"`
+	ModelPredictions     int                         `json:"model_predictions"`
+	CandidateTests       int                         `json:"candidate_tests"`
+	SelectedEmission     bool                        `json:"selected_emission"`
+	RepositoryWrites     int                         `json:"repository_writes"`
+	ModelCompatibility   *PathModelCompatibility     `json:"model_compatibility,omitempty"`
+	CompleteModelInput   *CompletePathModelInput     `json:"complete_model_input,omitempty"`
+	ContractCases        *ExportedContractCases      `json:"declared_contract_cases,omitempty"`
+	ContractConditions   *ExportedContractConditions `json:"declared_condition_cases,omitempty"`
+	Scope                string                      `json:"scope"`
 }
 
 // ExportTypedPathContext uses the same source binding and encoder as ranking.

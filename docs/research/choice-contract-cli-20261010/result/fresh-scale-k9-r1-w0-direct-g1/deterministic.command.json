@@ -1,0 +1,11 @@
+{
+  "args": [
+    "body-codegen",
+    "--json",
+    "--activity",
+    "Choose",
+    "source.gooo"
+  ],
+  "wall_ns": 9135875,
+  "exit_code": 0
+}

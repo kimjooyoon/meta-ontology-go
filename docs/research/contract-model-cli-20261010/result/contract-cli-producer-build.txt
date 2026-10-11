@@ -1,0 +1,15 @@
+/tmp/gooo-release-0623-20261010.hCOVqV/contract-cli-producer: go1.27.2
+	path	github.com/kimjooyoon/meta-ontology-go/docs/research/contract-model-cli-20261010/producer
+	mod	github.com/kimjooyoon/meta-ontology-go	v0.6.14-dev.0.20261010092437-4d4accf51ff8	
+	dep	github.com/kimjooyoon/gooo-decision-runtime	v0.2.36-experimental	h1:waShK+/lx3YNgdsJLp+0hFtuIVlOz/cFJXg/Jt2GeCs=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	-trimpath=true
+	build	CGO_ENABLED=1
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0
+	build	vcs=git
+	build	vcs.revision=4d4accf51ff8227293365ca92e4f3ddf2a5e8c57
+	build	vcs.time=2026-10-10T09:24:37Z
+	build	vcs.modified=false

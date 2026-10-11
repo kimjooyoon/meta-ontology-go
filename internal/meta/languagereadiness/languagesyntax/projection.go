@@ -9,7 +9,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/receiptprojection"
 )
 
-const FixedProjectionTotal = 2
+const FixedProjectionTotal = 3
 
 type ProjectionDefinition struct {
 	ID             string `json:"id"`
@@ -36,6 +36,10 @@ func expectedProjectionUnits() []ProjectionDefinition {
 		ID: "declared-completeness-delta", Path: "internal/completenessdelta/delta.gooo",
 		Profile: receiptprojection.Profile, Root: "CompletenessDelta",
 		GoPath: "internal/completenessdelta/delta.generated.go", JSONSchemaPath: "internal/completenessdelta/delta.schema.json",
+	}, {
+		ID: "declared-workflow-outcome-delta", Path: "internal/outcomedelta/delta.gooo",
+		Profile: receiptprojection.Profile, Root: "OutcomeDelta",
+		GoPath: "internal/outcomedelta/delta.generated.go", JSONSchemaPath: "internal/outcomedelta/delta.schema.json",
 	}}
 }
 

@@ -1,0 +1,186 @@
+{
+  "schema": "gooo/research-native-observation-excerpt/v1",
+  "original_native_sha256": "sha256:ec1f53ab4052e2cb1a11aec982acf56cddbce00981185980fc23d9d2b4114926",
+  "omitted_fields": [
+    "observation.go_tool_path",
+    "parent_receipt_bytes",
+    "completeness_receipt"
+  ],
+  "observation": {
+    "activity_id": "conditionmodel://activity/choose",
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 498313166,
+      "user_ns": 127915000,
+      "system_ns": 118034000,
+      "peak_rss_bytes": 86589440,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 866833,
+        "wait_ns": 497446333,
+        "deadline_remaining_ns": 59977928833,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "cases": [
+      {
+        "input": -11,
+        "expected": 11,
+        "actual": 11,
+        "passed": true
+      },
+      {
+        "input": -8,
+        "expected": 8,
+        "actual": 8,
+        "passed": true
+      },
+      {
+        "input": -2,
+        "expected": 2,
+        "actual": 2,
+        "passed": true
+      },
+      {
+        "input": 0,
+        "expected": 0,
+        "actual": 0,
+        "passed": true
+      },
+      {
+        "input": 4,
+        "expected": 4,
+        "actual": 4,
+        "passed": true
+      },
+      {
+        "input": 11,
+        "expected": 11,
+        "actual": 11,
+        "passed": true
+      },
+      {
+        "input": 9007199254740993,
+        "expected": 9007199254740993,
+        "actual": 9007199254740993,
+        "passed": true
+      },
+      {
+        "input": -9007199254740995,
+        "expected": 9007199254740995,
+        "actual": 9007199254740995,
+        "passed": true
+      },
+      {
+        "input": 9007199254740995,
+        "expected": 9007199254740995,
+        "actual": 9007199254740995,
+        "passed": true
+      },
+      {
+        "input": 18014398509481990,
+        "expected": 18014398509481990,
+        "actual": 18014398509481990,
+        "passed": true
+      }
+    ],
+    "declared_cases": 10,
+    "declared_compiler_source_sha": "35851648ee237837841905bb4c35c35db3298f00",
+    "elapsed_ns": 897004916,
+    "executable_sha256": "sha256:25b921645fb46069d05e639e491e6f0736952210dc2fba8d652277a8b28e5efa",
+    "generated_sha256": "sha256:1bbfb406b87f8cab609577e46b0f2450bb26539aefdfecbe3b17169d31323b62",
+    "go_tool_selection": "explicit",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "original_source_sha256": "sha256:58086b3063ab13edcd09b05855d62b8ad250525443fe536bb90b39b006e9c945",
+    "parent_receipt_sha256": "sha256:a18d03a247383aec4d024f0b22f21efda7725ea2eb030b6f1cb0db16c615cfbf",
+    "plan_sha256": "sha256:d5e0f3b5d0275ac540a6a3e843a6cd7dbc43e2dd5a30f2a81fae73a5f6d551a0",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.14-dev.0.20261010034343-35851648ee23"
+    },
+    "producer_source_sha": "35851648ee237837841905bb4c35c35db3298f00",
+    "projection_replayed": true,
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 366104417,
+        "user_ns": 3285000,
+        "system_ns": 5542000,
+        "peak_rss_bytes": 4423680,
+        "stdout_sha256": "sha256:896f956adf9a3379eedba27b29968859339d02d7277010539b84a74452ec3810",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 885583,
+          "wait_ns": 365218834,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59478100000,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 8440375,
+        "user_ns": 2518000,
+        "system_ns": 3565000,
+        "peak_rss_bytes": 4440064,
+        "stdout_sha256": "sha256:896f956adf9a3379eedba27b29968859339d02d7277010539b84a74452ec3810",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 3030500,
+          "wait_ns": 5409875,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59111737000,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "runtime_replayed": true,
+    "runtime_suite_sha256": "sha256:76dfe35ad3342cca0bbd81b8fe16a79637c76ac38c46a380c4d8745bb656a183",
+    "schema": "gooo/typed-path-runtime-observation/v1",
+    "scope": "Independent compiled execution of one source-replayed Integer -\u003e Integer projection; caller-supplied finite expectations; parent model observations are not re-attested; no inference or provider requests.",
+    "selected_source_sha256": "sha256:26b7a9b021dccf7358573940ae744d0f32e61aca0eefc9662fce4d595ed9204e",
+    "selection_disjoint_inputs": 4,
+    "stage": "COMPLETE",
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 9777917,
+      "user_ns": 2574000,
+      "system_ns": 5136000,
+      "peak_rss_bytes": 14254080,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1193459,
+        "wait_ns": 8584458,
+        "deadline_remaining_ns": 59988091917,
+        "context_at_start_return": "ACTIVE"
+      }
+    }
+  }
+}

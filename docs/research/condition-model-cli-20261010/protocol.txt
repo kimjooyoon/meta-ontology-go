@@ -1,0 +1,18 @@
+Fixed before execution, 2026-10-10: native Gooo condition model CLI integration.
+Use one clean committed compiler built with Go1.27.2 and public SDK0.2.30.
+Use examples/body-codegen/source-condition-model.gooo.fixture as authored.
+Use unchanged published model JSON SHA256
+a16696ed44c668f38cc2e7ee1dc6ff3f4716649d57e59df7c9490d1c670edc48.
+No training, weight edits or post-result intent/source edits in this study.
+One source-bound preflight with zero predictions; one deterministic body-codegen;
+one body-codegen with step1, feedback3, same source four-candidate budget.
+Then delete the experiment's copied model and execute the saved selected body
+through body-execute using explicit Go1.27.2. Record all actual process runs.
+The declared source contains nine output and three intermediate condition cases.
+Separate runtime file has ten cases, including four inputs absent from the source
+output examples and exact9007199254740993/±9007199254740995/18014398509481990.
+All sources remain variants of the already studied absolute-value problem.
+Record source/model/build hashes, full outputs, raw wall/user/system/RSS logs.
+Model timings come from actual initial/feedback receipts; no host CPU delta or
+general speed/accuracy claim. Keep failures and partial output; never rerun this
+destination. New experiments require a fresh directory.

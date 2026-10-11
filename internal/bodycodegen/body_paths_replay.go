@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
@@ -72,7 +73,7 @@ func replayTypedPathProjection(ctx context.Context, filename string, source []by
 	if err != nil {
 		return err
 	}
-	if err := replayPathResolution(document, p); err != nil {
+	if err := replayPathResolution(ctx, document, prepared, p); err != nil {
 		return err
 	}
 	selected, err := prepared.Compile(bodyPathSelection(p).Choices)
@@ -100,6 +101,14 @@ func replayTypedPathProjection(ctx context.Context, filename string, source []by
 		r.GeneratedDigest != r.ReplayDigest || replayed.Report.ActivityID != r.ActivityID ||
 		r.ActivityID != bound.base.Report.ActivityID || replayed.Report.ProgramDigest != r.ProgramDigest {
 		return fmt.Errorf("selected Gooo and generated projection do not replay exactly")
+	}
+	conditions, err := selectedPathConditions(ctx, prepared, bodyPathSelection(p).Choices,
+		selected, r.Activity, []byte(replayed.Source))
+	if err != nil || !reflect.DeepEqual(conditions, p.Conditions) {
+		return fmt.Errorf("source condition observations do not replay: %v", err)
+	}
+	if conditions != nil && !sameConditionResults(conditions.Results, bodyPathSelection(p).Conditions) {
+		return fmt.Errorf("selection condition observations differ from declared source")
 	}
 	cases := make([]IRBodyFillTestCase, len(effectiveCases))
 	for i, c := range effectiveCases {

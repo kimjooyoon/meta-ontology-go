@@ -1,0 +1,21 @@
+package semanticflow
+namespace semanticflow
+entity Integer id "semanticflow://integer"
+activity Choose(Integer) -> Integer computes "if input < 10 { if input < 0 { return 0 } else { return input } } else { return 10 }" assembling {
+ choice "comparison" operand_order at "0" intent "입력이 기준값보다 작은지 판단한다. Compare input with the threshold."
+ choice "branches" branch_layout at "0" intent "큰 값을 반환한다. Return the larger value."
+ case "-9007199254740995" -> "10"
+ case "0" -> "10"
+ case "9" -> "10"
+ case "10" -> "10"
+ case "11" -> "11"
+ case "9007199254740993" -> "9007199254740993"
+ case "9007199254740995" -> "9007199254740995"
+ case "18014398509481990" -> "18014398509481990"
+ condition_case "comparison" input "-9007199254740995" -> "true"
+ condition_case "comparison" input "10" -> "false"
+ condition_case "comparison" input "18014398509481990" -> "false"
+ attempts "4"
+}
+
+activity Main(Integer) -> Integer computes "return Choose(input)"

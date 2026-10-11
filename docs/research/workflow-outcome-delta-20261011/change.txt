@@ -1,0 +1,17 @@
+Compared 10 activity/input groups from saved observations.
+Outcomes changed: 5; unchanged: 5; ambiguous: 0; unobserved: 0
+Requirements changed: 5; regressions under the same requirement: 0; improvements: 0
+Only before: 0; only after: 0
+Not assessed against a shared observed requirement: 0; conflicting duplicate groups: 0
+  queuebatch://activity/main [{"activity_id":"queuebatch://activity/main","port":"input","value":17}]: BOTH; outcome=CHANGED; requirement=CHANGED; REQUIREMENT_CHANGED
+    actual: 16 -> 17; expected: 16 -> 17
+  queuebatch://activity/main [{"activity_id":"queuebatch://activity/main","port":"input","value":31}]: BOTH; outcome=CHANGED; requirement=CHANGED; REQUIREMENT_CHANGED
+    actual: 16 -> 31; expected: 16 -> 31
+  queuebatch://activity/main [{"activity_id":"queuebatch://activity/main","port":"input","value":32}]: BOTH; outcome=CHANGED; requirement=CHANGED; REQUIREMENT_CHANGED
+    actual: 16 -> 32; expected: 16 -> 32
+  queuebatch://activity/main [{"activity_id":"queuebatch://activity/main","port":"input","value":33}]: BOTH; outcome=CHANGED; requirement=CHANGED; REQUIREMENT_CHANGED
+    actual: 16 -> 32; expected: 16 -> 32
+  queuebatch://activity/main [{"activity_id":"queuebatch://activity/main","port":"input","value":9007199254740993}]: BOTH; outcome=CHANGED; requirement=CHANGED; REQUIREMENT_CHANGED
+    actual: 16 -> 32; expected: 16 -> 32
+Comparison made no model calls or program executions. Missing observations remain unobserved.
+Use --json for original values, case indices, source identities and every unchanged group.

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Read-only navigation to the meta-ontology-go repository, documentation, CI evidence, and experimental releases.">
-  <title>meta-ontology-go - public evidence index</title>
+  <meta name="description" content="Gooo is an experimental language for typed program construction, generated Go, and replayable execution. Install it, run a diagnostic tool, and inspect the result.">
+  <title>Gooo — build, run, and replay small programs</title>
   <style>
     :root {
       color-scheme: light;
@@ -102,6 +102,15 @@
     .boundary p:last-child { margin-bottom: 0; }
     code { padding: .12rem .3rem; border-radius: .3rem; background: rgb(29 42 53 / 8%); font-size: .9em; }
 
+    .actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.5rem; }
+    .button { padding: .6rem 1rem; border: 1px solid var(--accent); border-radius: .45rem; text-decoration: none; }
+    .button.primary { background: var(--accent); color: white; }
+    .button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+    pre { overflow-x: auto; padding: 1.2rem; border: 1px solid var(--line); border-radius: .6rem; background: var(--card); font-size: .88rem; line-height: 1.6; }
+    pre code { padding: 0; background: transparent; }
+    .output { border-left: 4px solid var(--accent); }
+    .small { color: var(--muted); font-size: .92rem; }
+
     footer {
       padding: 1.5rem 0 3rem;
       color: var(--muted);
@@ -119,20 +128,69 @@
 <body>
   <header>
     <div class="wrap">
-      <p class="eyebrow">Read-only presentation layer</p>
-      <h1>meta-ontology-go<br>public evidence index</h1>
-      <p class="lede">A small, static directory to the repository's existing documentation, source contracts, semantic evidence, CI observations, and experimental releases.</p>
+      <p class="eyebrow">An experimental language · Go Of Ontology</p>
+      <h1>Gooo</h1>
+      <p class="lede">Describe a small program. Run the generated Go. Keep a record you can inspect and replay.</p>
+      <p class="lede">Typed declarations, explicit construction choices, and finite examples live in <code>.gooo</code> source. An optional local model can rank those choices; the compiler checks and executes the selected program.</p>
+      <nav class="actions" aria-label="Start using Gooo">
+        <a class="button primary" href="https://kimjooyoon.github.io/gooo-go-ports/">Try in your browser</a>
+        <a class="button" href="#try">Run your first program</a>
+        <a class="button" href="https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.24-dev">Download 0.6.24-dev</a>
+        <a class="button" href="https://github.com/kimjooyoon/meta-ontology-go">Source on GitHub</a>
+      </nav>
+      <p class="small">Try 13 HTTP, Unicode, and byte functions without installation or a model.
+      The browser demo runs fixed, precompiled Gooo → Go → WebAssembly programs;
+      it does not compile arbitrary source.</p>
     </div>
   </header>
 
   <main class="wrap">
-    <div class="notice">
-      <p><strong>Evidence boundary.</strong> This page only links to existing public material. It does not run the compiler, recalculate metrics, create a score, publish a release, or authorize promotion. The moving <code>dev</code> links, workflow indexes, and release indexes below are for navigation - not exact snapshot evidence.</p>
-    </div>
+    <section id="try" aria-labelledby="try-heading">
+      <h2 id="try-heading">Run a diagnostic tool</h2>
+      <p>Install the published version, create two Gooo packages, and run them against supplied examples.
+      Then reuse the saved program on three new inputs. This example needs no model or account.</p>
+      <p class="small">Requires Go 1.27.2 for native execution. These macOS/Linux commands install Gooo locally for this shell.
+      See the <a href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/getting-started.md">installation guide</a>
+      for PATH setup, platform downloads, and what each command does.</p>
+      <pre aria-label="Install and run Gooo"><code>GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.24-dev
+export PATH="$PWD/.gooo-bin:$PATH"
+gooo init --template diagnostic my-diagnostic
+cd my-diagnostic
+gooo package execute --json --cases cases.json gooo.workspace.json &gt; execution.json
+gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json</code></pre>
+      <p>The final command prints:</p>
+      <pre class="output" aria-label="Observed diagnostic output"><code>"partial: missing branch result [repair-and-replay]"
+"unobserved: Add expected observations. [add-examples]"
+"complete: All observed fields matched. [accept]"</code></pre>
+      <p>Edit <code>inputs.json</code> and replay to try your own counts and diagnostic text.
+      Conditions and choices belong to <code>diagnostics.gooo</code>;
+      <code>app.gooo</code> imports the package and formats its result.</p>
+    </section>
+
+    <section aria-labelledby="use-heading">
+      <h2 id="use-heading">See what people can build</h2>
+      <div class="grid">
+        <a class="card" href="https://github.com/kimjooyoon/gooo-go-ports/tree/a58b55b798c95da04cc51cf779df76399ea59a55">
+          <h3>Go standard-library ports</h3>
+          <p>Thirteen HTTP, Unicode, and byte functions written in Gooo. A separate native suite compares 3,147 function and importing-example inputs with pinned Go originals and saved replay.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/gooo-standard-library">
+          <h3>Reusable Gooo functions</h3>
+          <p>Number, logic, and text packages with an importing application you can run.</p>
+        </a>
+        <a class="card" href="https://github.com/kimjooyoon/gooo-policy-studio">
+          <h3>Approval policy simulator</h3>
+          <p>A browser interface over Gooo rules and generated Go execution, with replayable observations.</p>
+        </a>
+      </div>
+      <p class="small">Gooo is experimental. Current pure bodies cover bounded scalar and record programs.
+      General loops, collections, and unrestricted Go-library compatibility are outside this profile.
+      Finite examples measure the supplied cases; they do not prove behavior for all inputs.</p>
+    </section>
 
     <section aria-labelledby="start-heading">
-      <h2 id="start-heading">Start with the repository</h2>
-      <p class="section-intro">The checked-in README and governance documents describe the supported surface and its limits.</p>
+      <h2 id="start-heading">Explore the language</h2>
+      <p class="section-intro">Read the source, learn the current syntax, or inspect how construction is checked.</p>
       <div class="grid">
         <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/README.md">
           <h3>README</h3>
@@ -218,9 +276,9 @@
           <h3>Release index</h3>
           <p>Published and prerelease tags with their attached assets.</p>
         </a>
-        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.4.0-dev">
-          <h3>v0.4.0-dev experimental release</h3>
-          <p>The existing v0.4.0-dev prerelease and its published assets.</p>
+        <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.24-dev">
+          <h3>v0.6.24-dev experimental release</h3>
+          <p>Published binaries for macOS, Linux, and Windows, with checksums and build information.</p>
         </a>
         <a class="card" href="https://github.com/kimjooyoon/meta-ontology-go/blob/dev/docs/language/toolchain-cross-platform-release.md">
           <h3>Cross-platform release notes</h3>
@@ -232,7 +290,7 @@
 
   <footer>
     <div class="wrap">
-      Presentation only: no runtime dependency, external font, analytics, compiler execution, metric recomputation, promotion, or release mutation is included here.
+      This static page has no account requirement or analytics. Commands run on your computer. Linked development pages may change; use the source revisions and original receipts when comparing observations.
     </div>
   </footer>
 </body>

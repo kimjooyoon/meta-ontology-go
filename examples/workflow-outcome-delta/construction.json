@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"Main": -1}, "expected": {"Main": 0}},
+    {"inputs": {"Main": 1}, "expected": {"Main": 1}}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/body-runtime-cases/v1",
+  "cases": [
+    {"input": -11, "expected": 11},
+    {"input": -8, "expected": 8},
+    {"input": -2, "expected": 2},
+    {"input": 0, "expected": 0},
+    {"input": 4, "expected": 4},
+    {"input": 11, "expected": 11},
+    {"input": 9007199254740993, "expected": 9007199254740993},
+    {"input": -9007199254740995, "expected": 9007199254740995},
+    {"input": 9007199254740995, "expected": 9007199254740995},
+    {"input": 18014398509481990, "expected": 18014398509481990}
+  ]
+}
