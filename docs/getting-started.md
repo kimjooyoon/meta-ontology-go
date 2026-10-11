@@ -1,7 +1,11 @@
 # Your first Gooo program
 
-[Try the browser demo](https://kimjooyoon.github.io/gooo-go-ports/) without installation or a model:
-it runs fixed, precompiled Gooo → Go → WebAssembly programs, not an arbitrary-source compiler.
+[Try the score-and-label tutorial](https://kimjooyoon.github.io/gooo-go-ports/tutorial.html)
+without installation or a model. Change two inputs and inspect four returned
+fields, then download the source and inputs for local editing and execution.
+It runs a fixed, precompiled Gooo → Go → WebAssembly program; it does not compile
+arbitrary source. The [library explorer](https://kimjooyoon.github.io/gooo-go-ports/)
+provides separate examples of selected Go function ports.
 
 Gooo declares a program's intent, permitted construction choices and finite
 examples, then generates Go and records what ran. This walkthrough builds a
@@ -98,8 +102,9 @@ your application decides what to do with it. Package distribution uses source
 files and a workspace manifest; there is no Gooo package registry in this flow.
 
 Try a separate source-porting use case in [Gooo Go Ports](https://github.com/kimjooyoon/gooo-go-ports).
-It compares thirteen HTTP, Unicode, and byte functions against pinned Go originals and retains
-[results and limits](https://github.com/kimjooyoon/gooo-go-ports/tree/a58b55b798c95da04cc51cf779df76399ea59a55#검증-범위).
+It compares selected Go standard-library functions against pinned Go originals.
+Its [results and limits](https://github.com/kimjooyoon/gooo-go-ports/blob/75d0655101d1468f9a94eb10571d34378b98293b/README.md)
+distinguish finite native cases, Unicode enumeration and browser checks.
 
 If this walkthrough fails, [open a compiler issue](https://github.com/kimjooyoon/meta-ontology-go/issues/new)
 with your operating system/architecture, `go version`, `gooo version --build --json`,
