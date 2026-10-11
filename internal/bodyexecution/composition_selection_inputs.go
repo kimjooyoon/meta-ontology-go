@@ -49,7 +49,8 @@ func (graph compositionGraph) selectionInputs(ctx context.Context, filename stri
 		sets.nodes[i] = set
 		sets.unobservedConstructionCalls = sets.unobservedConstructionCalls || graph.deferred[node.Name]
 	}
-	return sets, nil
+	err := graph.includeCompositionLocalInputs(&sets, prior)
+	return sets, err
 }
 
 func (graph compositionGraph) selectionInputSet(ctx context.Context, filename string, source []byte,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -59,8 +60,8 @@ func TestJointSearchCallsConstructedRecordHelper(t *testing.T) {
 	}
 	m := got.Runtime.InputSeparation
 	if m.Status != "UNKNOWN" || m.Reason != "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED" ||
-		m.UnknownInputs != 2 || m.OverlappingInputs != 1 {
-		t.Fatal("unrecorded local helper inputs gained an invented separation score", m)
+		m.UnknownInputs != 1 || m.OverlappingInputs != 2 || m.DisjointInputs != 0 {
+		t.Fatal("failed local input exposure or remaining unknown coverage differs", m)
 	}
 	raw, err := json.MarshalIndent(prior, "", "  ")
 	if err != nil {
@@ -73,5 +74,8 @@ func TestJointSearchCallsConstructedRecordHelper(t *testing.T) {
 	replayed, err := ReplayJointComposition(ctx, "calls.gooo", source, saved, evaluation, nativeTool())
 	if err != nil || !replayed.ConstructionReplayed || replayed.NewModelCalls != 0 || replayed.Runtime.FinitePassed != 3 {
 		t.Fatal("helper search did not replay without inference", replayed, err)
+	}
+	if !reflect.DeepEqual(replayed.Runtime.InputSeparation, m) {
+		t.Fatal("saved local exposure changed during replay", replayed.Runtime.InputSeparation, m)
 	}
 }
