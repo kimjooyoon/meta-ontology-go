@@ -13,7 +13,8 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/rollbackfixedpoint"
 )
 
-func TestCLIRecordsAppliedTerminalWithoutPromotion(t *testing.T) {
+func readAppliedRecoveryFixture(t *testing.T) (rollbackfixedpoint.Report, []byte) {
+	t.Helper()
 	path := "../../internal/meta/languagereadiness/rollbackfixedpoint/testdata/applied-original-8f45c78e.json.gz"
 	if root := os.Getenv("GOOO_ROLLBACK_TEST_DRAFT"); root != "" {
 		path = filepath.Join(root, "internal/meta/languagereadiness/rollbackfixedpoint/testdata/applied-original-8f45c78e.json.gz")
@@ -36,14 +37,21 @@ func TestCLIRecordsAppliedTerminalWithoutPromotion(t *testing.T) {
 	if err := json.Unmarshal(raw, &original); err != nil {
 		t.Fatal(err)
 	}
+	return original, raw
+}
+
+func appliedContinuityCLIInputs(t *testing.T) ([]string, string) {
+	t.Helper()
+	original, raw := readAppliedRecoveryFixture(t)
 	root := t.TempDir()
-	recoveryPath, guardPath, outputPath := filepath.Join(root, "recovery.json"), filepath.Join(root, "guard.json"), filepath.Join(root, "continuity.json")
+	recoveryPath := filepath.Join(root, "recovery.json")
+	guardPath := filepath.Join(root, "guard.json")
+	outputPath := filepath.Join(root, "continuity.json")
 	if err := os.WriteFile(recoveryPath, raw, 0600); err != nil {
 		t.Fatal(err)
 	}
 	g := original.Source.Guard
-	// This is a synthetic projection for the existing guard decoder. The recovery
-	// input above is the unchanged original public report, decoded and validated.
+	// The guard projection is synthetic. Recovery keeps the original public bytes.
 	guard := map[string]any{"schema": "gooo/autonomy-guarded-promotion/v1", "decision": g.Decision,
 		"reason": g.Reason, "resolution": g.Resolution, "report_digest": g.ReportDigest,
 		"source": map[string]any{"current_head_sha": g.HeadSHA},
@@ -56,8 +64,13 @@ func TestCLIRecordsAppliedTerminalWithoutPromotion(t *testing.T) {
 	if err := os.WriteFile(guardPath, guardBytes, 0600); err != nil {
 		t.Fatal(err)
 	}
-	var output bytes.Buffer
 	args := []string{"--head", g.HeadSHA, "--guard", guardPath, "--recovery", recoveryPath, "--out", outputPath}
+	return args, outputPath
+}
+
+func TestCLIRecordsAppliedTerminalWithoutPromotion(t *testing.T) {
+	args, outputPath := appliedContinuityCLIInputs(t)
+	var output bytes.Buffer
 	if err := run(args, &output); err != nil {
 		t.Fatal(err)
 	}
