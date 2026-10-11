@@ -1,0 +1,18 @@
+package localhistory
+namespace localhistory
+entity Integer id "localhistory://integer"
+entity Box id "localhistory://box" fields {
+    field value id "localhistory://value" type integer required one
+}
+activity Seed(Integer) -> Box computes "return Box{value: input}" assembling {
+    choice "value" field_value at "0" alternative "input * 2" intent "Keep the required seed value."
+    value_case "[7]" -> "{\"value\":7}"
+    attempts "2"
+}
+activity Divide(Integer) -> Integer computes "let denominator = __GOOO_BODY_HOLE_value__; let result = Seed(input + denominator); return result.value / denominator" assembling {
+    search hole "value" grammar "integer-offset-constant/v1" intent "Choose a denominator satisfying both local cases." max_candidates "8"
+    case "1" -> "2"
+    case "0" -> "1"
+    attempts "5"
+}
+activity Main(Integer) -> Integer computes "return Divide(input)"
