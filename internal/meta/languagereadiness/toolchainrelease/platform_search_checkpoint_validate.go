@@ -34,24 +34,26 @@ type checkpointDetails struct {
 	}
 }
 
+type jointConstructionEnvelope struct {
+	Construction json.RawMessage
+	Evaluation   struct {
+		Runtime struct {
+			Separation struct {
+				Status   string
+				Unknown  *int `json:"unknown_inputs"`
+				Overlap  *int `json:"overlapping_inputs"`
+				Disjoint *int `json:"disjoint_inputs"`
+			} `json:"input_separation"`
+		}
+	}
+}
+
 func validateSearchCheckpoint(raw, source, feedback, evaluation []byte, replay bool, retained string) (string, error) {
 	var r jointSmokeOutput
 	if err := json.Unmarshal(raw, &r); err != nil {
 		return "", err
 	}
-	var envelope struct {
-		Construction json.RawMessage
-		Evaluation   struct {
-			Runtime struct {
-				Separation struct {
-					Status   string
-					Unknown  *int `json:"unknown_inputs"`
-					Overlap  *int `json:"overlapping_inputs"`
-					Disjoint *int `json:"disjoint_inputs"`
-				} `json:"input_separation"`
-			}
-		}
-	}
+	var envelope jointConstructionEnvelope
 	if err := json.Unmarshal(raw, &envelope); err != nil {
 		return "", err
 	}

@@ -44,19 +44,7 @@ func validateHelperFillHistory(raw, source, feedback, evaluation []byte, replay 
 	if err := json.Unmarshal(raw, &r); err != nil {
 		return "", err
 	}
-	var envelope struct {
-		Construction json.RawMessage
-		Evaluation   struct {
-			Runtime struct {
-				Separation struct {
-					Status   string
-					Unknown  *int `json:"unknown_inputs"`
-					Overlap  *int `json:"overlapping_inputs"`
-					Disjoint *int `json:"disjoint_inputs"`
-				} `json:"input_separation"`
-			}
-		}
-	}
+	var envelope jointConstructionEnvelope
 	if err := json.Unmarshal(raw, &envelope); err != nil {
 		return "", err
 	}
