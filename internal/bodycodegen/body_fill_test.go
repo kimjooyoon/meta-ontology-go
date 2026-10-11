@@ -3,6 +3,7 @@ package bodycodegen
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -314,7 +315,7 @@ func TestGenerateWithIRBodyFillWaitsForLayaBeforeFinalEmission(t *testing.T) {
 	}
 }
 
-func TestGenerateWithIRBodyFillTimesOutWithoutDeadlockAndUsesFallback(t *testing.T) {
+func TestGenerateWithIRBodyFillStopsOnCallerDeadlineWithoutDeadlock(t *testing.T) {
 	fixture, plan := readIRBodyFillInputs(t)
 	release := make(chan struct{})
 	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
@@ -329,18 +330,31 @@ func TestGenerateWithIRBodyFillTimesOutWithoutDeadlockAndUsesFallback(t *testing
 		ctx, "ir-fill-clamp.gooo", fixture, "ClampNegativeToZero",
 		plan, server.URL+"/v1/systemone", "",
 	)
-	if err != nil {
-		t.Fatal(err)
+	if !errors.Is(err, context.DeadlineExceeded) || result.Source != "" || result.Report.BodyFill != nil {
+		t.Fatalf("caller deadline became a completed fallback: err=%v result=%+v", err, result)
 	}
 	if time.Since(started) > 750*time.Millisecond {
 		t.Fatalf("bounded Laya timeout returned too slowly: %s", time.Since(started))
 	}
+}
+
+func TestGenerateWithIRBodyFillProviderFailureKeepsDeterministicFallback(t *testing.T) {
+	fixture, plan := readIRBodyFillInputs(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer server.Close()
+	result, err := GenerateWithIRBodyFill(context.Background(), "ir-fill-clamp.gooo", fixture,
+		"ClampNegativeToZero", plan, server.URL+"/v1/systemone", "")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if result.Report.BodyFill == nil || result.Report.BodyFill.Decision.Mode != "deterministic_fallback" ||
-		result.Report.BodyFill.Decision.FallbackReason != "PROVIDER_UNAVAILABLE" {
-		t.Fatalf("timeout did not produce a deterministic fallback receipt: %#v", result.Report.BodyFill)
+		result.Report.BodyFill.Decision.FallbackReason != "PROVIDER_HTTP_ERROR" {
+		t.Fatalf("unavailable provider did not produce a deterministic fallback receipt: %#v", result.Report.BodyFill)
 	}
 	timing := result.Report.BodyFill.Timing
-	if timing.LayaDecisionMS != 0 || timing.TinyDecisionMS != 0 || timing.ProviderDecisionMS < 50 {
+	if timing.LayaDecisionMS != 0 || timing.TinyDecisionMS != 0 || timing.ProviderDecisionMS < 0 {
 		t.Fatalf("failed Laya request timing was attributed incorrectly: %#v", timing)
 	}
 	if result.Report.BodyFill.SelectedCandidateID != "zero" || result.Report.BodyFill.FunctionalAccuracyPct != 100 {

@@ -277,10 +277,8 @@ func generateWithIRBodyFillOptions(
 		return Result{}, fmt.Errorf("body-fill context is required")
 	}
 	usingTinyGo := bodyFillUsesTinyGo(options, tinyProvider)
-	if usingTinyGo {
-		if err := ctx.Err(); err != nil {
-			return Result{}, err
-		}
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
 	}
 	if err := validateIRBodyFillPlan(plan); err != nil {
 		return Result{}, err
@@ -406,7 +404,7 @@ func generateWithIRBodyFillOptions(
 	}
 	usingTinyGo = usingTinyGo && len(eligible) > 1
 	behavioralProbeStarted := time.Now()
-	behavioralProbes, err := measureIRBodyFillBehavioralProbes(activityName, candidateSources, plan.TestCases, plan.HoldoutTestCases)
+	behavioralProbes, err := measureIRBodyFillBehavioralProbes(ctx, activityName, candidateSources, plan.TestCases, plan.HoldoutTestCases)
 	if err != nil {
 		return Result{}, fmt.Errorf("measure candidate behavior on synthetic probes: %w", err)
 	}
@@ -469,16 +467,17 @@ func generateWithIRBodyFillOptions(
 	if usingTinyGo {
 		request.Intent = plan.Intent
 	}
-	if usingTinyGo {
-		if err := ctx.Err(); err != nil {
-			return Result{}, err
-		}
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
 	}
 	decisionStarted := time.Now()
 	decisionContext, cancel := context.WithTimeout(ctx, irBodyFillDecisionBudget)
 	decision, err := resolveBodyFillDecision(decisionContext, request, endpoint, apiKey, options, tinyProvider)
 	cancel()
 	decisionMS := float64(time.Since(decisionStarted)) / float64(time.Millisecond)
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
+	}
 	if err != nil {
 		return Result{}, fmt.Errorf("select Gooo IR body-fill candidate: %w", err)
 	}
@@ -492,11 +491,6 @@ func generateWithIRBodyFillOptions(
 		}
 		if !validTinyGoDecisionReceipt(decision, expectedRequestSHA256, request) {
 			return Result{}, fmt.Errorf("tiny_go chooser returned incomplete or mismatched model provenance")
-		}
-	}
-	if usingTinyGo {
-		if err := ctx.Err(); err != nil {
-			return Result{}, err
 		}
 	}
 	proposed, ok := candidateByID(modelCandidates, decision.Selected)
@@ -527,7 +521,7 @@ func generateWithIRBodyFillOptions(
 		return Result{}, fmt.Errorf("emit selected Gooo IR body: %w", err)
 	}
 	result.GoooSource = string(completedSource)
-	caseResults, passed, err := evaluateIntegerCases([]byte(result.Source), activityName, plan.TestCases)
+	caseResults, passed, err := evaluateIntegerCasesContext(ctx, []byte(result.Source), activityName, plan.TestCases)
 	if err != nil {
 		return Result{}, fmt.Errorf("evaluate selected generated body: %w", err)
 	}
@@ -537,7 +531,7 @@ func generateWithIRBodyFillOptions(
 	var holdoutSuiteSHA256 string
 	holdoutPassed := 0
 	if len(plan.HoldoutTestCases) > 0 {
-		holdoutResults, holdoutPassed, err = evaluateIntegerCases([]byte(result.Source), activityName, plan.HoldoutTestCases)
+		holdoutResults, holdoutPassed, err = evaluateIntegerCasesContext(ctx, []byte(result.Source), activityName, plan.HoldoutTestCases)
 		if err != nil {
 			return Result{}, fmt.Errorf("evaluate selected generated body on held-out cases: %w", err)
 		}

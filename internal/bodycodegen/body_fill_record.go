@@ -262,6 +262,9 @@ func generateWithRecordIRBodyFillOptions(
 	decision, err := resolveBodyFillDecision(decisionContext, request, endpoint, apiKey, options, tinyProvider)
 	cancel()
 	decisionMS := float64(time.Since(decisionStarted)) / float64(time.Millisecond)
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
+	}
 	if err != nil {
 		return Result{}, fmt.Errorf("select Gooo record body-fill candidate: %w", err)
 	}
@@ -275,9 +278,6 @@ func generateWithRecordIRBodyFillOptions(
 		}
 		if !validTinyGoDecisionReceipt(decision, expectedRequestSHA256, request) {
 			return Result{}, fmt.Errorf("tiny_go chooser returned incomplete or mismatched model provenance")
-		}
-		if err := ctx.Err(); err != nil {
-			return Result{}, err
 		}
 	}
 	proposedID := decision.Selected
