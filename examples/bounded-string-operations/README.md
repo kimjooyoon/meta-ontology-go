@@ -9,7 +9,7 @@ needle returns the rune count plus one, including 1 for empty Text. `MatchAt`
 compares bytes in a separate bounded helper; both callers have their own counted
 loops. `RuneCount` counts UTF-8 leading bytes within the valid Text contract.
 
-From this directory, with Gooo 0.6.31 or source containing counted-loop and
+From this directory, with public Gooo 0.6.32 or source containing counted-loop and
 Text-index support, and Go 1.27.2 available:
 
 ```sh
