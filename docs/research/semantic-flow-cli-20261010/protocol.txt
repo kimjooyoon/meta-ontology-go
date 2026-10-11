@@ -1,0 +1,38 @@
+New fixed compiler integration protocol before any learned-model CLI run.
+
+Use the unchanged SDK34 public model-v5.json, SHA256
+8127de6776d13b9c06710d1da762bb254401c1d8ff7e26ee6bb3c2d50d5cb8db.
+No fitting, prior experiment repeat, retuning or model metadata change.
+Producer is a clean committed compiler with public SDK0.2.34, Go1.27.2 and
+trimpath build. Retain version/build/binary identity before all commands.
+
+Two source fixtures retain direct and copy_after_branch forms of the already
+measured max-k11-r1-w1 group and append the same Main->Choose call. This family
+was selected to inspect a failure of the new model, not unseen accuracy.
+Each declares2 choices,8 exact outputs,3 conditions and4 possible paths.
+Keep constants beyond2^53 as int64. The two authored sources differ but their
+v5 initial decision arrays should match. Compiler source digests stay distinct.
+
+For each form, execute six new commands once, in this order:
+1 body-context with explicit v5 model/version, zero predictions/candidate tests;
+2 body-codegen without model;
+3 body-codegen with public model, batch1, no extra feedback;
+4 body-codegen with public model, batch1,3 feedback rounds;
+5 body-construct Main with source-semantic-flow-construction-cases (input12),
+  source-semantic-flow-evaluation-cases (8 cases), budget4, exactGo and savedout;
+6 remove only the owned model copy and replay that saved construction with the
+  same8 evaluation cases. Record native cached-build state and new calls.
+
+12 commands total. Preserve every result including errors, worse first choices,
+extra attempts and slower timings. No performance pass threshold or rerun.
+Record actual384-cell inputs/source-normalization reason, empty initial outcome
+channels, model identity, all output/condition/native cases, attempts/calls,
+load/predict/total time and per-command time-l. Validate preflight against actual
+first-ranking feature digests and pairwise input equality. Source/model calls
+and native processes are separate counts. CPU time/wall is mean core demand,
+not host CPU utilization; RSS includes compiler/native tooling.
+
+Save start/completion markers and partial records. Audit saved files without
+new inference, compilation, body evaluation or native execution. Publish gzip-n
+with decompressed byte comparisons and SHA256 manifests. No claim that current
+installed compiler0.6.25 already contains this local follow-up.

@@ -1,0 +1,30 @@
+package outcomedelta
+namespace outcomedelta
+
+entity Text id "gooo://receipt-structure/type/text"
+entity Record id "gooo://receipt-structure/type/record"
+entity Counts id "gooo://receipt-structure/type/counts"
+
+entity OutcomeChange id "gooo://outcome-delta/entity/change" fields {
+    field activity_id id "gooo://outcome-delta/change/activity" type Text required one
+    field root_inputs id "gooo://outcome-delta/change/inputs" type Record required many
+    field presence id "gooo://outcome-delta/change/presence" type Text required one
+    field outcome_change id "gooo://outcome-delta/change/outcome" type Text required one
+    field requirement_change id "gooo://outcome-delta/change/requirement" type Text required one
+    field assessment id "gooo://outcome-delta/change/assessment" type Text required one
+    field before id "gooo://outcome-delta/change/before" type Record required many
+    field after id "gooo://outcome-delta/change/after" type Record required many
+}
+
+entity OutcomeDelta id "gooo://schema/body-outcomes-delta/v1" fields {
+    field schema id "gooo://outcome-delta/report/schema" type Text required one
+    field declaration_sha256 id "gooo://outcome-delta/report/declaration" type Text required one
+    field before_input_sha256 id "gooo://outcome-delta/report/before" type Text required one
+    field after_input_sha256 id "gooo://outcome-delta/report/after" type Text required one
+    field before_runtime id "gooo://outcome-delta/report/before-runtime" type Record required one
+    field after_runtime id "gooo://outcome-delta/report/after-runtime" type Record required one
+    field rows id "gooo://outcome-delta/report/rows" type OutcomeChange required many
+    field counts id "gooo://outcome-delta/report/counts" type Counts required one
+    field comparator_operations id "gooo://outcome-delta/report/operations" type Counts required one
+    field scope id "gooo://outcome-delta/report/scope" type Text required one
+}

@@ -49,6 +49,10 @@ func sourceAssemblyRecipe(spec *assemblyspec.Spec) sourcePathRecipe {
 	for _, c := range spec.Cases {
 		recipe.TestCases = append(recipe.TestCases, pathplan.TestCase{Input: c.Input, Expected: c.Expected})
 	}
+	for _, c := range spec.ConditionCases {
+		recipe.ConditionCases = append(recipe.ConditionCases, pathplan.ConditionCase{
+			ChoiceID: c.ChoiceID, Input: c.Input, Expected: c.Expected})
+	}
 	return recipe
 }
 

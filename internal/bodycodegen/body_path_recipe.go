@@ -19,11 +19,12 @@ import (
 const SourcePathRecipeSchema = "gooo/source-typed-path-recipe/v1"
 
 type sourcePathRecipe struct {
-	Schema      string               `json:"schema"`
-	Choices     []sourceRecipeChoice `json:"choices"`
-	TestCases   []pathplan.TestCase  `json:"test_cases"`
-	MaxAttempts int                  `json:"max_attempts"`
-	Seed        string               `json:"seed,omitempty"`
+	Schema         string                   `json:"schema"`
+	Choices        []sourceRecipeChoice     `json:"choices"`
+	TestCases      []pathplan.TestCase      `json:"test_cases"`
+	ConditionCases []pathplan.ConditionCase `json:"condition_cases,omitempty"`
+	MaxAttempts    int                      `json:"max_attempts"`
+	Seed           string                   `json:"seed,omitempty"`
 }
 
 type sourceRecipeChoice struct {
@@ -146,6 +147,7 @@ func sourceRecipeDocument(ctx context.Context, base Result, activity string, rec
 	}
 	document := pathplan.Document{Schema: pathplan.DocumentSchema, TestCases: recipe.TestCases,
 		MaxAttempts: recipe.MaxAttempts, Seed: recipe.Seed, Plan: pathplan.Plan{Schema: pathplan.Schema,
+			ConditionCases: append([]pathplan.ConditionCase(nil), recipe.ConditionCases...),
 			Base: bodyplan.Plan{Schema: bodyplan.Schema, ID: base.Report.ActivityID, Name: activity,
 				ResultType: decision.TypeInt, Expressions: b.expressions[:b.expressionCount],
 				Statements: b.statements[:b.statementCount], Root: root}}}

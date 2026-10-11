@@ -27,7 +27,13 @@ func relativeTracePath(t *testing.T, root, value string) string {
 	if value == "" {
 		return ""
 	}
-	relative, err := filepath.Rel(root, value)
+	// planSource resolves the repository root before emitting absolute paths.
+	// Use that same root for receipts, including macOS /var -> /private/var.
+	canonicalRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	relative, err := filepath.Rel(canonicalRoot, value)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -37,6 +37,7 @@ type PathCandidate struct {
 	Cases                []IRBodyFillCaseResult `json:"case_results,omitempty"`
 	Passed               int                    `json:"local_passed"`
 	Total                int                    `json:"local_total"`
+	Conditions           *PathConditionReceipt  `json:"conditions,omitempty"`
 }
 
 type SourcePathCandidateRejection struct{ cause error }
@@ -142,6 +143,11 @@ func RealizeSourcePathCandidate(ctx context.Context, filename string, source []b
 	if err != nil {
 		return rejectPathCandidate(ctx, result, err)
 	}
+	result.Stage = "SOURCE_CONDITIONS"
+	result.Conditions, err = inspectPathConditions(ctx, prepared, choices)
+	if err != nil {
+		return rejectPathCandidate(ctx, result, err)
+	}
 	bound, err := bindTypedPathSource(ctx, filename, source, activity, prepared, &BodyPathReceipt{})
 	if err != nil {
 		return result, nil, err
@@ -158,6 +164,10 @@ func RealizeSourcePathCandidate(ctx context.Context, filename string, source []b
 	projection, err := GenerateWithPlanner(ctx, filename, []byte(fixed), activity, "", "")
 	if err != nil || projection.Report.ActivityID != result.ActivityID {
 		return result, nil, fmt.Errorf("typed path candidate projection or stable identity differs: %v", err)
+	}
+	result.Conditions, err = selectedPathConditions(ctx, prepared, choices, selected, activity, []byte(projection.Source))
+	if err != nil {
+		return result, nil, err
 	}
 	result, err = scoreSourcePathCandidate(ctx, []byte(projection.Source), activity, selected, document.TestCases, result)
 	if err != nil {

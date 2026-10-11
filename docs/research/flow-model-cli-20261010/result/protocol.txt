@@ -1,0 +1,42 @@
+NEW protocol, fixed before observed learned-model CLI results.
+
+Purpose: use the unchanged SDK33 Gooo flow model in the compiler's assignment
+body construction path. This is integration dogfood, not independent accuracy.
+No fitting, ablation sweep or repetition of prior completed studies.
+
+Producer: a clean committed compiler source with public SDK0.2.33-experimental,
+Go1.27.2, trimpath build. Record full revision, version and binary SHA first.
+Model: public SDK33 model-flow_on.json, SHA256
+8380505096525a640a06418526530cbc7f76d3efebc2923ee04b018539c5c13f.
+Do not change weights or model metadata. Related max/min source families were
+used in training. Do not call this example unseen-task generalization.
+
+Source: examples/body-codegen/source-value-flow.gooo.fixture, max(input,10)
+through let/copy/assignment and a return after the branch. Gooo declares two
+choices, six output cases, three condition cases and four attempts. Main calls
+Choose. Use existing source-output-construction-cases.json (caller input11)
+and source-output-evaluation-cases.json (eight native cases, some overlapping).
+Preserve exact int64 including 9007199254740993, +/-9007199254740995 and
+18014398509481990. Never decode these observations through float64.
+
+Execute six fresh CLI commands once each in order, retaining unfavorable results:
+1 body-context with model; expect384-cell input, zero predictions/candidate tests.
+2 body-codegen deterministic, no model.
+3 body-codegen with model, step1, zero additional feedback rounds.
+4 body-codegen with model, step1, feedback rounds3.
+5 body-construct Main, model, suites, budget4, explicit Go binary, saved output.
+  Ordinary body-construct initial ranking; no interleaved-feedback claim here.
+6 Delete only the owned model copy. Replay saved construction with the same
+  evaluation suite; expect no new model call. Record native cache behavior.
+
+Record per-command stdout/stderr and time-l, start/completion markers, producer
+and model identities, actual attempts, condition/output/native completeness,
+model and feedback calls, prediction/load/whole-command times,384-cell digest
+parity, empty initial observation channels and source-only static suffix.
+CPU(user+system)/wall is mean core demand, not host CPU utilization delta.
+RSS includes the full command and native tooling, not only model weights.
+
+Audit saved records without new inference/compile/evaluation/native processes.
+Use gzip-n with decompressed byte comparison, and SHA256 publication manifest.
+Preserve raw originals and distinguish derived privacy-safe native observations.
+Do not restart any completed command after an observation timeout.

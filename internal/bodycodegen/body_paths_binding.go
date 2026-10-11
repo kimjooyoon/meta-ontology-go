@@ -13,6 +13,7 @@ import (
 type typedPathSource struct {
 	base     Result
 	activity *syntax.ActivityDecl
+	prepared *pathplan.PreparedPlan
 }
 
 // Shared source authority check for generation and explicit training export.
@@ -47,7 +48,7 @@ func bindTypedPathSourceProjection(ctx context.Context, filename string, source 
 	if err := ctx.Err(); err != nil {
 		return typedPathSource{}, err
 	}
-	return typedPathSource{base: base, activity: activity}, nil
+	return typedPathSource{base: base, activity: activity, prepared: prepared}, nil
 }
 
 func typedPathBindingProjection(ctx context.Context, filename string, source []byte, activityName string,
@@ -77,5 +78,10 @@ func bindTypedPathDocument(document pathplan.Document, receipt *BodyPathReceipt)
 	testBytes, _ := json.Marshal(document.TestCases)
 	receipt.TestSuiteSHA256 = digest(testBytes)
 	receipt.DeclaredTestCases = len(document.TestCases)
+	if len(document.Plan.ConditionCases) > 0 {
+		raw, _ := json.Marshal(document.Plan.ConditionCases)
+		receipt.Conditions = &PathConditionReceipt{Schema: pathConditionSchema, SuiteSHA256: digest(raw),
+			Declared: len(document.Plan.ConditionCases), Status: "UNOBSERVED"}
+	}
 	return nil
 }

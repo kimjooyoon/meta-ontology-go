@@ -1,0 +1,19 @@
+package queuebatch
+namespace queuebatch
+entity Integer id "queuebatch://integer"
+
+activity Normalize(Integer) -> Integer computes "if input < 0 { return 0 } else { return input }"
+
+activity BatchSize(Integer) -> Integer computes "if input < 32 { return 32 } else { return input }" assembling {
+    choice "limit" operand_order at "0" intent "대기 작업 수와 배치 상한을 비교한다. Compare pending jobs with the batch limit."
+    choice "batch" branch_layout at "0" intent "대기 작업 수와 상한 중 작은 값을 돌려준다. Return the smaller of pending jobs and the limit."
+    case "0" -> "0"
+    case "1" -> "1"
+    case "32" -> "32"
+    case "33" -> "32"
+    condition_case "limit" input "1" -> "true"
+    condition_case "limit" input "32" -> "false"
+    attempts "4"
+}
+
+activity Main(Integer) -> Integer computes "let pending = Normalize(input); return BatchSize(pending)"

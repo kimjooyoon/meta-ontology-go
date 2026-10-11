@@ -1,0 +1,19 @@
+/tmp/gooo-interaction-native-20261011: go1.27.2
+	path	github.com/kimjooyoon/meta-ontology-go/cmd/gooo
+	mod	github.com/kimjooyoon/meta-ontology-go	v0.6.14-dev.0.20261010171030-73024efdd8f5	
+	dep	github.com/kimjooyoon/gooo-decision-runtime	v0.2.39-experimental	h1:t/+GPAnW5c4snAZDdIFHjlbyHP8YUrt+IfRA+kk56PY=
+	dep	github.com/kimjooyoon/gooo-jev	v0.0.0-20260928032625-e146e6dbb34a	h1:1/uDBg0hud6IiZzOhTKXokIWdmlnU4HdYz7TGl729+s=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	CGO_ENABLED=1
+	build	CGO_CFLAGS=
+	build	CGO_CPPFLAGS=
+	build	CGO_CXXFLAGS=
+	build	CGO_LDFLAGS=
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0
+	build	vcs=git
+	build	vcs.revision=73024efdd8f5bb877071460011bfb2137420e54a
+	build	vcs.time=2026-10-10T17:10:30Z
+	build	vcs.modified=false

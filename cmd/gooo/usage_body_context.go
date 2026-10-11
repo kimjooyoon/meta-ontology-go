@@ -16,6 +16,15 @@ Inspection makes zero predictions and candidate tests. It prepares and typecheck
 source alternatives; assembly checks their finite cases. A recorded representation
 decline is a successful inspection result. Invalid files or source return failure.
 
+Declared-case model for typed integer bodies:
+  gooo body-context --activity Choose --include-plan \
+    --model out/choice-model/model-choice-v1.json \
+    examples/body-codegen/source-condition-cases.gooo.fixture
+
+This export includes every authored output case, exact integer features, source
+choices and the verified model format. See gooo help models for download and
+construction commands. Gooo checks intermediate condition cases during assembly.
+
 Typed branches and variables:
   gooo body-context --activity Choose --include-plan \
     --model examples/scalar-identity/model/model.json examples/caller-typed-paths/unary.gooo.fixture

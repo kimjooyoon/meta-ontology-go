@@ -28,6 +28,9 @@ type CompletePathModelInput struct {
 func (m typedPathModel) prepareContext(ctx context.Context, document pathplan.Document,
 	original *pathplan.PreparedPlan, activityID, semanticSHA string) (
 	*pathplan.PreparedPlan, *PathModelContextReceipt, bool, error) {
+	if m.condition != nil {
+		return prepareConditionModelContext(ctx, document, original, m.condition, activityID, semanticSHA)
+	}
 	if m.three != nil {
 		return prepareThreeModelContext(ctx, document, original, m.three, activityID, semanticSHA)
 	}
@@ -73,7 +76,7 @@ func exportBoundPathModelContext(ctx context.Context, document pathplan.Document
 		return fail(fmt.Errorf("explicit feature version differs from loaded model feature %q", info.FeatureVersion))
 	}
 	contextStarted := time.Now()
-	models := typedPathModel{model: g.model, joint: g.joint, three: g.three}
+	models := typedPathModel{model: g.model, joint: g.joint, three: g.three, condition: g.condition}
 	ranked, modelContext, declined, err := models.prepareContext(ctx, document, prepared,
 		activityID, receipt.SourceBinding.SourceSemanticDigest)
 	if err != nil {
@@ -86,13 +89,28 @@ func exportBoundPathModelContext(ctx context.Context, document pathplan.Document
 	if err != nil {
 		return fail(err)
 	}
-	return finishPathModelContext(ctx, ranked, g, modelContext, inputs, declined, receipt, started)
+	result, err := finishPathModelContext(ctx, ranked, g, modelContext, inputs, declined, receipt, started)
+	if err == nil && !declined && g.condition != nil && g.condition.contract != nil {
+		result.ContractCases, err = exportContractCases(document, prepared)
+		result.Scope = "source-bound source and declared-case arrays; zero predictions, candidate tests, selected emissions and writes; expected outputs are goals, observed execution is absent"
+		if err == nil && g.condition.orderedContract() {
+			result.ContractConditions, err = exportContractConditions(ctx, document, prepared)
+			result.Scope = "source-bound ordered source, output goals and Boolean condition goals; zero predictions, candidate tests, selected emissions and writes"
+			if g.condition.canonicalContract() {
+				result.Scope = "source-bound canonical branch input, output goals and Boolean condition goals; zero predictions, candidate tests, selected emissions and writes"
+			}
+		}
+	}
+	return result, err
 }
 
 func modelContextInputs(document pathplan.Document, prepared *pathplan.PreparedPlan, g *TypedPathGenerator,
 	modelContext **PathModelContextReceipt, declined bool, activityID, semanticSHA string) ([]ExportedPathInput, error) {
 	if declined {
 		return []ExportedPathInput{}, nil
+	}
+	if g.condition != nil {
+		return exportedConditionInputs(document, prepared, g.condition)
 	}
 	if *modelContext != nil {
 		feature := decision.SemanticContextIntentFeatureVersion

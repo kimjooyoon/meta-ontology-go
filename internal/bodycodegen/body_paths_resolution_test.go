@@ -139,7 +139,11 @@ func TestUniquePathResolutionReplaysChoicesAndSkippedWork(t *testing.T) {
 			t.Fatal(err)
 		}
 		mutate(&p)
-		if err := replayPathResolution(doc, &p); err == nil {
+		prepared, err := doc.Prepare()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := replayPathResolution(context.Background(), doc, prepared, &p); err == nil {
 			t.Fatal("changed resolution accepted")
 		}
 	}

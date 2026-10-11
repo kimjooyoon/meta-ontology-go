@@ -1,0 +1,15 @@
+{
+  "args": [
+    "body-codegen",
+    "--json",
+    "--activity",
+    "Choose",
+    "--path-model",
+    "model.json",
+    "--path-step-attempts",
+    "1",
+    "source.gooo"
+  ],
+  "wall_ns": 12495125,
+  "exit_code": 0
+}

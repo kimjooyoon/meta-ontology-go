@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	mode := flag.String("mode", "", "identity, authorize, receipt, certify, run, or verify")
+	mode := flag.String("mode", "", "generate, identity, authorize, receipt, certify, run, or verify")
 	contract := flag.String("contract", "", "canonical compatibility .gooo policy")
 	input := flag.String("input", "", "canonical input .gooo")
 	root := flag.String("output-root", "", "generate output root")
@@ -31,6 +31,8 @@ func main() {
 
 	var err error
 	switch *mode {
+	case "generate":
+		err = runGeneratePolicy(*contract, *output)
 	case "identity":
 		err = runIdentity(*contract, *output)
 	case "authorize":

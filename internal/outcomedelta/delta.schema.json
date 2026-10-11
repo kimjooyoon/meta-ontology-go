@@ -1,0 +1,210 @@
+{
+  "$defs": {
+    "OutcomeChange": {
+      "additionalProperties": false,
+      "properties": {
+        "activity_id": {
+          "type": "string",
+          "x-gooo-id": "gooo://outcome-delta/change/activity",
+          "x-gooo-source-span": {
+            "end": 366,
+            "start": 284
+          }
+        },
+        "after": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://outcome-delta/change/after",
+          "x-gooo-source-span": {
+            "end": 976,
+            "start": 900
+          }
+        },
+        "assessment": {
+          "type": "string",
+          "x-gooo-id": "gooo://outcome-delta/change/assessment",
+          "x-gooo-source-span": {
+            "end": 812,
+            "start": 729
+          }
+        },
+        "before": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://outcome-delta/change/before",
+          "x-gooo-source-span": {
+            "end": 895,
+            "start": 817
+          }
+        },
+        "outcome_change": {
+          "type": "string",
+          "x-gooo-id": "gooo://outcome-delta/change/outcome",
+          "x-gooo-source-span": {
+            "end": 627,
+            "start": 543
+          }
+        },
+        "presence": {
+          "type": "string",
+          "x-gooo-id": "gooo://outcome-delta/change/presence",
+          "x-gooo-source-span": {
+            "end": 538,
+            "start": 459
+          }
+        },
+        "requirement_change": {
+          "type": "string",
+          "x-gooo-id": "gooo://outcome-delta/change/requirement",
+          "x-gooo-source-span": {
+            "end": 724,
+            "start": 632
+          }
+        },
+        "root_inputs": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://outcome-delta/change/inputs",
+          "x-gooo-source-span": {
+            "end": 454,
+            "start": 371
+          }
+        }
+      },
+      "required": [
+        "activity_id",
+        "root_inputs",
+        "presence",
+        "outcome_change",
+        "requirement_change",
+        "assessment",
+        "before",
+        "after"
+      ],
+      "type": "object",
+      "x-gooo-id": "gooo://outcome-delta/entity/change"
+    },
+    "OutcomeDelta": {
+      "additionalProperties": false,
+      "properties": {
+        "after_input_sha256": {
+          "type": "string",
+          "x-gooo-id": "gooo://outcome-delta/report/after",
+          "x-gooo-source-span": {
+            "end": 1411,
+            "start": 1325
+          }
+        },
+        "after_runtime": {
+          "type": "object",
+          "x-gooo-id": "gooo://outcome-delta/report/after-runtime",
+          "x-gooo-source-span": {
+            "end": 1605,
+            "start": 1514
+          }
+        },
+        "before_input_sha256": {
+          "type": "string",
+          "x-gooo-id": "gooo://outcome-delta/report/before",
+          "x-gooo-source-span": {
+            "end": 1320,
+            "start": 1232
+          }
+        },
+        "before_runtime": {
+          "type": "object",
+          "x-gooo-id": "gooo://outcome-delta/report/before-runtime",
+          "x-gooo-source-span": {
+            "end": 1509,
+            "start": 1416
+          }
+        },
+        "comparator_operations": {
+          "additionalProperties": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "object",
+          "x-gooo-id": "gooo://outcome-delta/report/operations",
+          "x-gooo-source-span": {
+            "end": 1874,
+            "start": 1778
+          }
+        },
+        "counts": {
+          "additionalProperties": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "object",
+          "x-gooo-id": "gooo://outcome-delta/report/counts",
+          "x-gooo-source-span": {
+            "end": 1773,
+            "start": 1696
+          }
+        },
+        "declaration_sha256": {
+          "type": "string",
+          "x-gooo-id": "gooo://outcome-delta/report/declaration",
+          "x-gooo-source-span": {
+            "end": 1227,
+            "start": 1135
+          }
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/OutcomeChange"
+          },
+          "type": "array",
+          "x-gooo-id": "gooo://outcome-delta/report/rows",
+          "x-gooo-source-span": {
+            "end": 1691,
+            "start": 1610
+          }
+        },
+        "schema": {
+          "const": "gooo/body-outcomes-delta/v1",
+          "type": "string",
+          "x-gooo-id": "gooo://outcome-delta/report/schema",
+          "x-gooo-source-span": {
+            "end": 1130,
+            "start": 1055
+          }
+        },
+        "scope": {
+          "type": "string",
+          "x-gooo-id": "gooo://outcome-delta/report/scope",
+          "x-gooo-source-span": {
+            "end": 1952,
+            "start": 1879
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "declaration_sha256",
+        "before_input_sha256",
+        "after_input_sha256",
+        "before_runtime",
+        "after_runtime",
+        "rows",
+        "counts",
+        "comparator_operations",
+        "scope"
+      ],
+      "type": "object",
+      "x-gooo-id": "gooo://schema/body-outcomes-delta/v1"
+    }
+  },
+  "$id": "gooo/body-outcomes-delta/v1",
+  "$ref": "#/$defs/OutcomeDelta",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "x-gooo-declaration-sha256": "d933dbe2fb64c71fa87bea5304551c01b7702dcde312e5982c513e005d69a678",
+  "x-gooo-projection-profile": "gooo/receipt-structure-projection/v1"
+}
