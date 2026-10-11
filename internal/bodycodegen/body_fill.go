@@ -202,6 +202,7 @@ type IRBodyFillReceipt struct {
 	SelectedValueHoldoutCaseResults []RecordAssemblyCase                  `json:"selected_value_holdout_case_results,omitempty"`
 	AccuracyScope                   string                                `json:"accuracy_scope"`
 	Timing                          IRBodyFillTiming                      `json:"timing"`
+	LocalCalls                      *LocalCallHistory                     `json:"local_calls,omitempty"`
 }
 
 type IRBodyFillHoleFill struct {
@@ -357,6 +358,7 @@ func generateWithIRBodyFillOptions(
 	if err != nil {
 		return Result{}, err
 	}
+	ctx, capture := captureFillCalls(ctx)
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
 	var rejected []IRBodyFillCandidateRejection
 	eligible := make([]IRBodyFillCandidate, 0, len(plan.Candidates))
@@ -380,7 +382,9 @@ func generateWithIRBodyFillOptions(
 			rejected = append(rejected, rejectedBodyFillCandidate(plan, candidate, "TYPECHECK", err))
 			continue
 		}
-		_, passed, err := evaluateIntegerCasesContext(ctx, []byte(generated.source), activityName, plan.TestCases)
+		capture.bind(generated.source, generated.report)
+		_, passed, err := evaluateIntegerCasesContext(localCallPhase(ctx, "fill-training", candidate.ID),
+			generated.source, activityName, plan.TestCases)
 		if err != nil {
 			if ctx.Err() != nil {
 				return Result{}, ctx.Err()
@@ -523,7 +527,9 @@ func generateWithIRBodyFillOptions(
 		return Result{}, fmt.Errorf("emit selected Gooo IR body: %w", err)
 	}
 	result.GoooSource = string(completedSource)
-	caseResults, passed, err := evaluateIntegerCasesContext(ctx, []byte(result.Source), activityName, plan.TestCases)
+	capture.bind([]byte(result.Source), result.Report)
+	caseResults, passed, err := evaluateIntegerCasesContext(localCallPhase(ctx, "fill-selected-training", selected.ID),
+		[]byte(result.Source), activityName, plan.TestCases)
 	if err != nil {
 		return Result{}, fmt.Errorf("evaluate selected generated body: %w", err)
 	}
@@ -533,7 +539,8 @@ func generateWithIRBodyFillOptions(
 	var holdoutSuiteSHA256 string
 	holdoutPassed := 0
 	if len(plan.HoldoutTestCases) > 0 {
-		holdoutResults, holdoutPassed, err = evaluateIntegerCasesContext(ctx, []byte(result.Source), activityName, plan.HoldoutTestCases)
+		holdoutResults, holdoutPassed, err = evaluateIntegerCasesContext(localCallPhase(ctx, "fill-selected-holdout", selected.ID),
+			[]byte(result.Source), activityName, plan.HoldoutTestCases)
 		if err != nil {
 			return Result{}, fmt.Errorf("evaluate selected generated body on held-out cases: %w", err)
 		}
@@ -559,6 +566,7 @@ func generateWithIRBodyFillOptions(
 	}
 	result.Report.BodyFill = &IRBodyFillReceipt{
 		OriginalSourceDigest: digest(source),
+		LocalCalls:           capture.history,
 		Schema:               plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
 		HoleToken: bodyFillHoleToken(holes[0].ID), IRPlanSHA256: digest(planBytes),
 		ProposedCandidateID: proposed.ID, ProposedAccuracyPct: proposedScore.AccuracyPercent,

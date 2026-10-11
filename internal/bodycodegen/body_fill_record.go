@@ -156,6 +156,7 @@ func generateWithRecordIRBodyFillOptions(
 	// Record assignments may introduce a declared record absent from the
 	// unfilled skeleton. Keep the existing complete record layout for scoring.
 	prepared.records = records
+	ctx, capture := captureFillCalls(ctx)
 
 	started := time.Now()
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
@@ -178,7 +179,9 @@ func generateWithRecordIRBodyFillOptions(
 			rejected = append(rejected, rejectedBodyFillCandidate(plan, candidate, "TYPECHECK", err))
 			continue
 		}
-		observed, err := evaluateRecordAssembly(ctx, []byte(generated.source), activityName, records, plan.ValueCases)
+		capture.bind(generated.source, generated.report)
+		observed, err := evaluateRecordAssembly(localCallPhase(ctx, "fill-training", candidate.ID),
+			generated.source, activityName, records, plan.ValueCases)
 		if err != nil {
 			if ctx.Err() != nil {
 				return Result{}, ctx.Err()
@@ -308,7 +311,9 @@ func generateWithRecordIRBodyFillOptions(
 	if err != nil {
 		return Result{}, fmt.Errorf("emit selected Gooo record body: %w", err)
 	}
-	selectedCases, err := evaluateRecordAssembly(ctx, []byte(result.Source), activityName, records, plan.ValueCases)
+	capture.bind([]byte(result.Source), result.Report)
+	selectedCases, err := evaluateRecordAssembly(localCallPhase(ctx, "fill-selected-training", selected.ID),
+		[]byte(result.Source), activityName, records, plan.ValueCases)
 	if err != nil {
 		return Result{}, fmt.Errorf("evaluate selected generated record body: %w", err)
 	}
@@ -324,7 +329,8 @@ func generateWithRecordIRBodyFillOptions(
 	var holdoutAccuracy *float64
 	var holdoutSuiteSHA256 string
 	if len(plan.ValueHoldoutCases) > 0 {
-		holdoutResults, err = evaluateRecordAssembly(ctx, []byte(result.Source), activityName, records, plan.ValueHoldoutCases)
+		holdoutResults, err = evaluateRecordAssembly(localCallPhase(ctx, "fill-selected-holdout", selected.ID),
+			[]byte(result.Source), activityName, records, plan.ValueHoldoutCases)
 		if err != nil {
 			return Result{}, fmt.Errorf("evaluate selected generated record body on holdout cases: %w", err)
 		}
@@ -357,6 +363,7 @@ func generateWithRecordIRBodyFillOptions(
 	planBytes, _ := json.Marshal(plan)
 	result.Report.BodyFill = &IRBodyFillReceipt{
 		OriginalSourceDigest: digest(source),
+		LocalCalls:           capture.history,
 		Schema:               plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
 		HoleToken: bodyFillHoleToken(holes[0].ID), IRPlanSHA256: digest(planBytes),
 		ProposedCandidateID: proposed.ID, ProposedAccuracyPct: proposedScore.AccuracyPercent,

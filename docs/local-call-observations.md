@@ -1,7 +1,7 @@
 # Inputs observed during local candidate evaluation
 
-Development source records the helper inputs used while evaluating IR search
-candidates. Public compiler 0.6.29 predates this observation. The record is useful
+Development source records the helper inputs used while evaluating IR search,
+record and body-fill candidates. Public compiler 0.6.29 predates this observation. The record is useful
 when a candidate calls a helper and then fails: its inputs still influenced what
 the constructor tried, even though the candidate has no completed accuracy score.
 
@@ -11,6 +11,9 @@ generated Go digest, root activity ID, case-suite digest, phase and candidate ID
 Calls bind a source activity ID, helper program digest, case index and typed input
 tuple. Integers remain exact JSON integers. Record inputs use source field names;
 an absent optional field is `null`, distinct from present zero, false or empty text.
+The input-exposure reader maps this recorded `null` to an omitted optional field
+when comparing with value-case inputs. The saved trace stays unchanged, and
+required fields still require a typed value.
 
 The phases are `candidate-generation`, `candidate`, `selected-training` and
 `selected-holdout`. Probes retain their own generated program and case-suite
@@ -46,8 +49,25 @@ it receives no completed case score. Cancellation stops construction. Exhausting
 the budget before any candidate completes produces an error with its original
 record receipt. `body-construct` exposes this as `initial.record_failure`.
 
+Body fill retains its original evaluator passes in `body_fill.local_calls`.
+The phases are `fill-training`, `fill-probe`, `fill-selected-training` and
+`fill-selected-holdout`. Scalar and vector probes use their actual positional
+arguments. Record fill retains its value-case passes; it has no synthetic probe
+stage. Each candidate binds its generated helper closure, including helpers
+introduced by a hole assignment. A failed training pass retains the entered
+prefix. When every assignment is rejected, `initial.fill_failure.local_calls`
+keeps those observations without inventing a completed score.
+
+Caller-selected assignments retain `local_calls` with `fill-caller-training`
+and `fill-caller-holdout` phases. A rejected caller assignment retains its entered
+prefix and no native execution. One fill invocation shares the 8,192-call,
+1 MiB tuple and 512-pass bounds across its candidate and selected passes.
+Candidate scoring continues when capture reaches its bound, with history marked
+`UNKNOWN`. The existing replay pass checks the saved typed history, including
+failed prefixes. Legacy absence remains absent.
+
 The input-separation metric now includes these recorded helper arguments from
-initial construction and every consumed record/search candidate. This includes
+initial construction and every consumed record/search/fill candidate. This includes
 local rejections that never reached native execution. An input reached before a
 failure counts as used during construction, even if that candidate received no
 completed score. The metric compares source activity identities and typed values;
@@ -70,7 +90,7 @@ history stay readable and do not acquire invented observations. Original
 record/search selection histories retain their existing replay behavior.
 
 A retained prefix is positive evidence of use. It does not prove that an input
-absent from the prefix was never used. Path/fill preflight and assembly evaluations,
+absent from the prefix was never used. Path assembly, path/fill preflight,
 candidate-set planning and the remaining construction boundaries still need
 complete capture. Missing or partial coverage therefore
 keeps other affected inputs `UNKNOWN`. The metric reads source-replayed records;
@@ -82,3 +102,9 @@ saved trace classifies two of the three evaluation inputs as overlapping, with
 one still unknown. The finite 3/3 result is unchanged; it is not three independent
 cases or a general correctness claim. The saved `47b80a0f` observation remains
 the original producer's report, with its earlier one-overlap/two-unknown metric.
+
+The [caller-fill-history example](../examples/caller-fill-history/README.md)
+retains `Seed(2)` and `Seed(0)` from a rejected assignment. Later successful calls
+use those same helper inputs, so two of the three evaluation inputs count as
+overlapping. One remains unknown. Its finite output count is separate from this
+exposure count; a successful program can still be checked on already used inputs.

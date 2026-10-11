@@ -65,6 +65,10 @@ func compareSourceFillReplay(prior, expected Result) error {
 	if err != nil {
 		return err
 	}
+	if a.BodyFill.LocalCalls != nil && !equalLocalCallEvidence(a.BodyFill.LocalCalls, b.BodyFill.LocalCalls) {
+		return fmt.Errorf("body-fill local helper input history differs")
+	}
+	a.BodyFill.LocalCalls, b.BodyFill.LocalCalls = nil, nil
 	a.CompilerSourceSHA, b.CompilerSourceSHA = "", ""
 	a.RouteDecisionLatencyMS, b.RouteDecisionLatencyMS = 0, 0
 	a.CompletenessReceipt, b.CompletenessReceipt = nil, nil

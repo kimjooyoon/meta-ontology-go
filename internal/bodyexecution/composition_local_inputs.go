@@ -1,6 +1,7 @@
 package bodyexecution
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -23,6 +24,11 @@ func (graph compositionGraph) includeCompositionLocalInputs(seen *compositionSel
 				return err
 			}
 		}
+		if report.BodyFill != nil {
+			if err := graph.includeLocalCallHistory(seen, report.ActivityID, report.BodyFill.LocalCalls); err != nil {
+				return err
+			}
+		}
 		if report.RecordAssembly != nil {
 			for _, attempt := range report.RecordAssembly.Attempts {
 				if err := graph.includeLocalCallObservation(seen, report.ActivityID, attempt.LocalCalls); err != nil {
@@ -35,6 +41,11 @@ func (graph compositionGraph) includeCompositionLocalInputs(seen *compositionSel
 }
 
 func (graph compositionGraph) includeJointLocalInputs(seen *compositionSelectionInputs, attempt JointAttempt) error {
+	for _, candidate := range attempt.FillCandidates {
+		if err := graph.includeLocalCallHistory(seen, candidate.ActivityID, candidate.LocalCalls); err != nil {
+			return err
+		}
+	}
 	for _, candidate := range attempt.Candidates {
 		if err := graph.includeLocalCallObservation(seen, candidate.ActivityID, candidate.Attempt.LocalCalls); err != nil {
 			return err
@@ -88,11 +99,45 @@ func (graph compositionGraph) includeLocalCallObservation(seen *compositionSelec
 		if err := json.Unmarshal(call.Inputs, &inputs); err != nil {
 			return fmt.Errorf("local helper input tuple: %w", err)
 		}
+		inputs, err := graph.localObservationTuple(node, inputs)
+		if err != nil {
+			return err
+		}
 		if err := graph.includeJointTuple(node, inputs, set); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// The local recorder uses null for an absent optional field. Public value cases
+// and selection keys use omission. Normalize only this recorded representation.
+func (graph compositionGraph) localObservationTuple(node CompositionActivity, inputs []json.RawMessage) ([]json.RawMessage, error) {
+	slots := node.inputSlots()
+	if len(inputs) != len(slots) {
+		return nil, fmt.Errorf("local helper input arity differs")
+	}
+	result := append([]json.RawMessage(nil), inputs...)
+	for i, slot := range slots {
+		record, ok := graph.recordType(slot.Type)
+		if !ok {
+			continue
+		}
+		fields, err := recordObject(inputs[i])
+		if err != nil {
+			return nil, err
+		}
+		for _, field := range record.Fields {
+			if field.Presence == "optional" && bytes.Equal(bytes.TrimSpace(fields[field.Name]), []byte("null")) {
+				delete(fields, field.Name)
+			}
+		}
+		result[i], err = json.Marshal(fields)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func (graph compositionGraph) constructedInputSet(activityID string, seen *compositionSelectionInputs) (

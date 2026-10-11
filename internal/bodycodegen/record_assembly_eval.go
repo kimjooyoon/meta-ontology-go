@@ -192,6 +192,9 @@ func (e *integerBodyEvaluator) evaluateRecordField(selector *ast.SelectorExpr) (
 
 func evaluateRecordAssembly(ctx context.Context, source []byte, activity string, records []RecordType,
 	cases []assemblyspec.ValueCase) ([]RecordAssemblyCase, error) {
+	if fill, ok := ctx.Value(fillCaptureKey{}).(*fillCallCapture); ok {
+		return fill.record(ctx, source, activity, records, cases)
+	}
 	return evaluateRecordAssemblyRecorded(ctx, source, activity, records, cases, nil)
 }
 

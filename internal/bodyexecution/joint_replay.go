@@ -91,7 +91,7 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 		}
 		if !bodycodegen.EqualRecordCandidateHistory(recorded.Candidates, attempt.Candidates) ||
 			!bodycodegen.EqualSearchCandidateHistory(recorded.SearchCandidates, attempt.SearchCandidates) ||
-			compositionDigest(attempt.FillCandidates) != compositionDigest(recorded.FillCandidates) ||
+			!bodycodegen.EqualFillCandidateHistory(recorded.FillCandidates, attempt.FillCandidates) ||
 			compositionDigest(attempt.PathCandidates) != compositionDigest(recorded.PathCandidates) ||
 			compositionDigest(attempt.Rejection) != compositionDigest(recorded.Rejection) ||
 			attempt.LocalPassed != recorded.LocalPassed || attempt.LocalTotal != recorded.LocalTotal {

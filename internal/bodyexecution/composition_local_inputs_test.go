@@ -88,3 +88,50 @@ func TestLocalInputEvidencePreservesUnknownAndRejectsMalformedBindings(t *testin
 		t.Fatal("fixed helper invented a constructed target", err)
 	}
 }
+
+func TestFillLocalInputsIncludeBothInitialAndRejectedCallerCalls(t *testing.T) {
+	graph, seen := localInputFixture()
+	history := func(input string) *bodycodegen.LocalCallHistory {
+		return &bodycodegen.LocalCallHistory{Schema: "gooo/local-call-inputs/v1", Status: "RECORDED",
+			Evaluations: []*bodycodegen.LocalCallObservation{localInputObservation("seed", input)}}
+	}
+	prior := Composition{Preparations: []CompositionStep{{Generation: bodycodegen.Result{Report: bodycodegen.Report{
+		ActivityID: "root", BodyFill: &bodycodegen.IRBodyFillReceipt{LocalCalls: history("[11]")},
+	}}}}}
+	if err := graph.includeCompositionLocalInputs(&seen, prior); err != nil {
+		t.Fatal(err)
+	}
+	attempt := JointAttempt{Rejection: &JointCandidateRejection{Stage: "LOCAL_SOURCE_FILL"},
+		FillCandidates: []bodycodegen.FillCandidate{{ActivityID: "root", LocalCalls: history("[12]")}}}
+	if err := graph.includeJointLocalInputs(&seen, attempt); err != nil {
+		t.Fatal(err)
+	}
+	if len(seen.called["seed"]) != 2 || !seen.unobservedConstructionCalls || attempt.Runtime.Stage != "" {
+		t.Fatal("fill observations were dropped or unobserved stages gained coverage")
+	}
+}
+
+func TestLocalHelperInputsNormalizeAbsentOptionalFields(t *testing.T) {
+	graph, seen := localInputFixture()
+	graph.plan.Records = []bodycodegen.RecordType{{Name: "Box", Fields: []bodycodegen.RecordField{
+		{Name: "amount", TypeID: "urn:gooo:type:integer"},
+		{Name: "note", TypeID: "urn:gooo:type:string", Presence: "optional"},
+	}}}
+	graph.called["seed"] = CompositionActivity{ID: "seed", Name: "Seed", InputType: "Box"}
+	for _, input := range []string{`[{"amount":9007199254740993,"note":null}]`, `[{"amount":9007199254740993,"note":""}]`} {
+		if err := graph.includeLocalCallObservation(&seen, "root", localInputObservation("seed", input)); err != nil {
+			t.Fatal("typed optional absence could not be compared", err)
+		}
+	}
+	for _, want := range []string{`[{"amount":9007199254740993}]`, `[{"amount":9007199254740993,"note":""}]`} {
+		if _, ok := seen.called["seed"][want]; !ok {
+			t.Fatal("optional absence, presence or exact integer collapsed", seen.called["seed"])
+		}
+	}
+	if err := graph.includeLocalCallObservation(&seen, "root", localInputObservation("seed", `[{"amount":null}]`)); err == nil {
+		t.Fatal("required null gained a typed value")
+	}
+	if _, err := graph.selectionInputKey(graph.called["seed"], []json.RawMessage{json.RawMessage(`{"amount":1,"note":null}`)}); err == nil {
+		t.Fatal("recorded absence changed the public input syntax")
+	}
+}
