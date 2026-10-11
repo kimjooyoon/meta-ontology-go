@@ -1,0 +1,115 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "app/search:Main": {
+          "text": "",
+          "needle": 97
+        }
+      },
+      "expected": {
+        "app/search:Main": -1
+      }
+    },
+    {
+      "inputs": {
+        "app/search:Main": {
+          "text": "gooo",
+          "needle": 111
+        }
+      },
+      "expected": {
+        "app/search:Main": 1
+      }
+    },
+    {
+      "inputs": {
+        "app/search:Main": {
+          "text": "gooo",
+          "needle": 120
+        }
+      },
+      "expected": {
+        "app/search:Main": -1
+      }
+    },
+    {
+      "inputs": {
+        "app/search:Main": {
+          "text": "가x",
+          "needle": 120
+        }
+      },
+      "expected": {
+        "app/search:Main": 3
+      }
+    },
+    {
+      "inputs": {
+        "app/search:Main": {
+          "text": "가",
+          "needle": 176
+        }
+      },
+      "expected": {
+        "app/search:Main": 1
+      }
+    },
+    {
+      "inputs": {
+        "app/search:Main": {
+          "text": "🙂x",
+          "needle": 120
+        }
+      },
+      "expected": {
+        "app/search:Main": 4
+      }
+    },
+    {
+      "inputs": {
+        "app/search:Main": {
+          "text": "a\u0000b",
+          "needle": 0
+        }
+      },
+      "expected": {
+        "app/search:Main": 1
+      }
+    },
+    {
+      "inputs": {
+        "app/search:Main": {
+          "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz",
+          "needle": 122
+        }
+      },
+      "expected": {
+        "app/search:Main": 1023
+      }
+    },
+    {
+      "inputs": {
+        "app/search:Main": {
+          "text": "gooo",
+          "needle": -1
+        }
+      },
+      "expected": {
+        "app/search:Main": -1
+      }
+    },
+    {
+      "inputs": {
+        "app/search:Main": {
+          "text": "gooo",
+          "needle": 256
+        }
+      },
+      "expected": {
+        "app/search:Main": -1
+      }
+    }
+  ]
+}
