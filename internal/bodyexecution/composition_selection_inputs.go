@@ -67,6 +67,9 @@ func (graph compositionGraph) selectionInputSet(ctx context.Context, filename st
 			tuples = append(tuples, scalarInputTuple(c.Input))
 		}
 	}
+	for _, c := range spec.ConditionCases {
+		tuples = append(tuples, scalarInputTuple(c.Input))
+	}
 	for _, cases := range [][]assemblyspec.ValueCase{spec.ValueCases, spec.ValueHoldoutCases} {
 		for _, c := range cases {
 			var tuple []json.RawMessage

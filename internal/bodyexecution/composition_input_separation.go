@@ -22,7 +22,7 @@ type CompositionInputSeparation struct {
 
 func unknownCompositionInputSeparation(reason string) CompositionInputSeparation {
 	return CompositionInputSeparation{Status: "UNKNOWN", Reason: reason,
-		Scope: "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source selection/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"}
+		Scope: "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"}
 }
 
 type compositionInputObservation struct {

@@ -261,7 +261,7 @@ After source replay and two matching native executions, `runtime.json` includes
 
 - `unique_inputs` counts distinct root inputs; `duplicate_rows` counts repeats.
 - `overlapping_inputs` counts cases whose actual input at any assembling
-  activity occurs in source selection/holdout cases or recorded probes.
+  activity occurs in source output/Boolean-condition/holdout cases or recorded probes.
 - `disjoint_inputs` counts cases with new actual inputs at every assembling
   activity; downstream inputs come from the native delivery trace.
 - `disjoint_cases_passed` counts disjoint cases satisfying every supplied
@@ -272,6 +272,9 @@ The fraction is `disjoint_cases_passed / disjoint_inputs`. One case may name
 several outputs, so its unit differs from `finite_passed / finite_total`.
 Optional absence remains distinct from zero, record key order is normalized,
 and int64 values retain their exact identity.
+An input used only by an intermediate Boolean requirement is already part of
+construction. It remains overlapping even when no output example uses that input,
+and even when a different root input maps to it through a helper call.
 
 With complete input observations, a positive denominator is `PASS` when all
 disjoint cases match and `PROGRESS` otherwise, including measured `0/N`.
