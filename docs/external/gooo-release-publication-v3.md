@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.30-dev
-version  = 0.6.30-dev
+tag      = v0.6.31-dev
+version  = 0.6.31-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -160,6 +160,15 @@ planning source, current helper source, local call input and fixed initial pool.
 The witness compares native values with the independent case files and requires
 zero model calls. All three evaluation inputs retain unknown construction
 exposure. These finite counts remain separate from the structural release corpus.
+
+For 0.6.31, the bounded Text profile adds two raw package receipts per platform.
+It executes the Gooo search library through an importing caller, then replays
+that exact receipt. Ten cases cover empty Text, absent/repeated bytes, NUL,
+multibyte byte offsets, the 1,024-byte boundary and invalid needle values.
+The reader compares every actual value with Go `strings.IndexByte`, binds the
+manifest and case-file digests, checks the selected program and exact original
+receipt digest, and requires zero model calls. These are ten finite cases on each
+platform; platform repetition does not increase the independent case count.
 
 The helper-fill history profile adds another two raw outputs per platform.
 The candidate binary constructs and replays `examples/caller-fill-history`.
