@@ -624,14 +624,22 @@ it does not turn the declared user suite into a full-domain proof.
 This path is deliberately sequential: Gooo creates and scores the typed IR
 plan, then makes one synchronous Laya call, then fills and emits the final
 body. No body-emission goroutines run beside the model request. The request
-inherits cancellation and has an eight-second decision budget for the larger
-IR-and-test context; a timeout or unavailable provider records deterministic
-fallback, then the same score gate picks the best declared candidate. The report records IR preparation,
-decision, final-emission, and total wall latency. Tests cover the blocking
-call order, provider cancellation, exact functional percentages, and disconnected
-replay. The eight seconds bounds provider work only; parsing, candidate scoring,
-and final emission do not have an operation-wide deadline. An expired provider
-request still allows deterministic fallback and emission to finish.
+inherits the caller's context and has an eight-second decision budget for the
+larger IR-and-test context. Provider failure or an exhausted provider-only budget
+allows deterministic fallback while the caller's context is active. The same
+score gate then picks the best declared candidate. Cancellation or expiry of the
+caller context stops the operation and returns an error with no completed fill
+receipt. Candidate scoring, scalar/vector behavioral probes, and the selected
+training and holdout evaluations all inherit that context. An interrupted probe
+does not become a candidate-failure count or functional score.
+
+The report records IR preparation, decision, final-emission and total wall
+latency. Tests cover blocking call order, caller deadline, mid-probe and selected
+evaluation cancellation, provider failure fallback, finite case scores and
+disconnected replay. The eight seconds bounds provider work only. A caller can
+supply an earlier deadline; synchronous parsing and typechecking finish their
+current bounded step before the next cancellation check. Gooo does not add a
+separate operation-wide timer in this path.
 This bounded evaluator accepts only the existing pure expression and
 statement profile; it does not run arbitrary model-authored source.
 
