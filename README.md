@@ -18,7 +18,7 @@ This example needs **Go 1.27.2** and no model or API key. In a new working
 directory on macOS or Linux:
 
 ```sh
-GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.28-dev
+GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.29-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -26,12 +26,11 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 ```
 
-This walkthrough pins the published 0.6.28 compiler. The
-[0.6.28 release guide](docs/releases/0.6.28-dev.md) covers saved construction reports
-and comparing outcomes when a rule changes. The [0.6.29 candidate guide](docs/releases/0.6.29-dev.md)
-covers source-relative local decision models and more precise construction-input
-accounting. Its published observation retains the first failed candidate and shows
-the same candidate count with the model and fixed ordering.
+This walkthrough pins the published 0.6.29 compiler. The
+[0.6.29 release guide](docs/releases/0.6.29-dev.md) covers source-relative local
+decision models, saved construction reports and actual function-input history.
+Failed candidates remain visible. The original model observation used the same
+candidate count with model ranking and deterministic ordering.
 
 The last command prints:
 
@@ -277,12 +276,12 @@ reads every authored input/expected-output example before one initial ranking.
 Its SDK 0.2.36 artifact has 9,746 parameters; ordinary finite checks and saved
 model-free execution remain part of the compiler path.
 
-Development source also accepts the [SDK0.2.40 canonical branch model](docs/canonical-contract-model.md).
+The public compiler accepts the [canonical branch model introduced in SDK 0.2.40](docs/canonical-contract-model.md).
 The [SDK0.2.41 source-relative model](docs/source-relative-contract-model.md) adds explicit
 comparison/condition relations and a batch-amount example for construction and saved replay.
 It reads supported direct-return and assignment forms as the same calculation,
 while retaining original source identities and execution. Its research weights
-and low first-choice results are public; the released compiler0.6.27 predates this adapter.
+and low first-choice results are public. Compiler 0.6.29 includes this adapter through SDK 0.2.41.
 
 ## What we are developing
 
@@ -432,7 +431,7 @@ The latest model study and the deployed integration have separate evidence:
   and broader task coverage are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
-This compiler revision uses **Go SDK v0.2.24-experimental**, with V3/V4 feature
+This compiler revision uses **Go SDK v0.2.41-experimental**, retaining V3/V4 feature
 contracts, versioned arithmetic, bounded probe sessions and prepared candidate reuse. The
 [observation loop](docs/path-observation-loop.md) can choose a distinguishing
 input, obtain its result from a declared Gooo reference activity, and use that
@@ -453,9 +452,10 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| Compiler at this revision | SDK v0.2.24; source recipes, bounded observation/reuse, prepared candidates, file/stream construction and execution | Usability, finite completion and construction cost |
-| [SDK v0.2.24 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.24-experimental) | V3/V4 inference, explicit arithmetic, owned probes, reusable candidates and bounded Unix model-file loading | Broader source and behavior coverage |
-| [Hugging Face model](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Wording, operation order and new-task evaluation |
+| [Compiler 0.6.29](docs/releases/0.6.29-dev.md) | SDK 0.2.41; finite program construction, native execution, saved replay and actual construction-input history | Broader useful programs and unmet requirements |
+| [SDK 0.2.41 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.41-experimental) | Go model loaders, source-relative inputs and bounded construction sessions | Broader source and behavior coverage |
+| [Canonical and relation models](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1) | Freshly initialized small models, complete authored study records and failed candidates | Expected-output relations and new-task evaluation |
+| [Earlier shared judgment models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Historical wording and operation-order results |
 
 At SDK revision `59c8d34`, local arm64 and
 [Linux CI](https://github.com/kimjooyoon/gooo-decision-runtime/actions/runs/37070241916)
