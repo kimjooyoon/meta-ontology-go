@@ -1,0 +1,27 @@
+package fillhistory
+namespace fillhistory
+
+entity Integer id "fillhistory://integer"
+entity Box id "fillhistory://box" fields {
+  field value id "fillhistory://value" type integer required one
+}
+
+activity Seed(Integer) -> Box computes "return Box{value: input}" assembling {
+  choice "value" field_value at "0" alternative "input * 2" intent "Keep the seed value."
+  value_case "[1000]" -> "{\"value\":1000}"
+  attempts "2"
+}
+
+activity Build(Integer) -> Integer computes "let box = Seed(__GOOO_BODY_HOLE_seed__); return 12 / __GOOO_BODY_HOLE_divisor__ + box.value" assembling {
+  source_fill intent "Use the shifted seed and divide twelve by the input." {
+    hole "seed"
+    hole "divisor"
+    candidate "fails" { fill "seed" "input - 2" fill "divisor" "input - 2" }
+    candidate "works" { fill "seed" "input - 6" fill "divisor" "input" }
+  }
+  case "4" -> "1"
+  case "2" -> "2"
+  holdout_case "3" -> "1"
+}
+
+activity Main(Integer) -> Integer computes "return Build(input)"

@@ -651,8 +651,14 @@ report. Integer, multiple-argument and declared record signatures follow the
 existing pure-call rules and bounds. Composition realizes required assembled
 helpers before evaluating the dependent fill. See the
 [runnable helper-fill example](../../examples/caller-fill-calls/README.md).
-Complete recording of helper arguments during every fill pass remains pending;
-input-exposure metrics retain `UNKNOWN` where those observations are missing.
+The `body_fill.local_calls` history records candidate training, scalar/vector
+probes, selected training and selected holdout passes against each actual helper
+closure. Record fill records its value-case passes. Failed evaluations retain
+their entered prefix; caller-selected assignments retain their own local passes.
+See [fill history](../../examples/caller-fill-history/README.md) and the
+[recording contract](../local-call-observations.md). Separate fill preflight and
+other construction boundaries still have incomplete capture. Input-exposure
+metrics count recorded overlaps while retaining `UNKNOWN` for missing coverage.
 
 The evidence sent in this call is candidate-level TDD data computed before
 emission, not a GitHub Actions result. CI runs after a generated revision

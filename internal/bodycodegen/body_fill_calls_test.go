@@ -38,6 +38,9 @@ activity Build(Integer) -> Integer computes %q
 				t.Fatal("fill scoring omitted source helper", err)
 			}
 			fill := r.Report.BodyFill
+			if fill.LocalCalls == nil || fill.LocalCalls.Status != "RECORDED" {
+				t.Fatal("typed helper closure was not observed", fill.LocalCalls)
+			}
 			if fill.SelectedCandidateID != "helper" || fill.TestCasesPassed != 2 || fill.HoldoutCasesPassed != 1 ||
 				r.Report.CallClosure == nil || len(r.Report.CallClosure.Activities) != 1 ||
 				fill.LocalModelPredictions != 0 || fill.ExternalProviderCalls != 0 {

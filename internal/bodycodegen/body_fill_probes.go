@@ -58,7 +58,7 @@ func measureIRBodyFillBehavioralProbes(ctx context.Context, activity string, can
 	slices.Sort(candidateIDs)
 	outputs := make(map[string][]int64, len(candidateIDs))
 	for _, id := range candidateIDs {
-		results, _, evalErr := evaluateIntegerCasesContext(ctx, candidateSources[id], activity, probeCases)
+		results, _, evalErr := evaluateIntegerCasesContext(localCallPhase(ctx, "fill-probe", id), candidateSources[id], activity, probeCases)
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
@@ -148,7 +148,7 @@ func measureIRBodyFillBehavioralProbeVectors(ctx context.Context, activity strin
 	slices.Sort(candidateIDs)
 	outputs := make(map[string][]int64, len(candidateIDs))
 	for _, id := range candidateIDs {
-		results, _, evalErr := evaluateIntegerCasesContext(ctx, candidateSources[id], activity, probeCases)
+		results, _, evalErr := evaluateIntegerCasesContext(localCallPhase(ctx, "fill-probe", id), candidateSources[id], activity, probeCases)
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}

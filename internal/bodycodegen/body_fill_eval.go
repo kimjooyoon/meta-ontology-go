@@ -35,7 +35,11 @@ func evaluateIntegerCases(
 func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity string,
 	cases []IRBodyFillTestCase,
 ) ([]IRBodyFillCaseResult, int, error) {
-	if capture, ok := ctx.Value(localCaptureKey{}).(*searchCallCapture); ok {
+	capture, ok := ctx.Value(localCaptureKey{}).(*searchCallCapture)
+	if fill, present := ctx.Value(fillCaptureKey{}).(*fillCallCapture); present {
+		return fill.integer(ctx, source, activity, cases)
+	}
+	if ok {
 		return capture.evaluate(ctx, source, activity, cases)
 	}
 	return evaluateIntegerCasesRecorded(ctx, source, activity, cases, nil)

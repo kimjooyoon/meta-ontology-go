@@ -1,0 +1,327 @@
+{
+  "schema": "gooo/fill-local-call-observation/v1",
+  "producer": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.29-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.2",
+    "module_version": "v0.6.14-dev.0.20261011071100-47cb0221f524",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.14-dev.0.20261011071100-47cb0221f524"
+    },
+    "compiler_source_sha": "47cb0221f52472504b5278edfe43706c8b303bdc",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "47cb0221f52472504b5278edfe43706c8b303bdc",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.41-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.2"
+  },
+  "scope": "One new synthetic construction/evaluation command and one saved replay. Existing studies and observations were not repeated. Finite outputs, recorded helper exposure and model quality are separate measurements.",
+  "resource_scope": "Single macOS command accounting including compilation and subprocesses. No instantaneous system CPU utilization or controlled performance comparison was measured.",
+  "original": {
+    "decision": "COMPLETE_FINITE",
+    "original_source_sha256": "sha256:fb5c4c8f4d0346382e5a7c8f5ccfede49ad6947b3a0568ff835189903289fa4b",
+    "model": {
+      "schema": "gooo/retained-path-model/v1",
+      "loaded": false,
+      "resident_tensor_bytes": 0,
+      "setup_ms": 0.000042,
+      "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+    },
+    "body_fill": {
+      "selected_candidate_id": "works",
+      "test_cases_passed": 2,
+      "test_cases_total": 2,
+      "holdout_cases_passed": 1,
+      "holdout_cases_total": 1,
+      "local_model_predictions": 0,
+      "external_provider_calls": 0,
+      "rejected_candidates": [
+        {
+          "candidate_id": "fails",
+          "stage": "TRAINING_EVALUATION",
+          "reason": "inputs [2]: zero divisor for integer operator /",
+          "hole_fills": [
+            {
+              "hole_id": "seed",
+              "expression": "input - 2"
+            },
+            {
+              "hole_id": "divisor",
+              "expression": "input - 2"
+            }
+          ]
+        }
+      ],
+      "local_calls": {
+        "schema": "gooo/local-call-inputs/v1",
+        "status": "RECORDED",
+        "evaluations": [
+          {
+            "schema": "gooo/local-call-inputs/v1",
+            "generated_sha256": "sha256:719f3c522a606f1e91162ff19601f8c543cad65cd2937219ffda26345e575569",
+            "activity_id": "fillhistory://activity/build",
+            "suite_sha256": "sha256:15b1fd5d745b206453640483196f452b685ac26af1dc9d8f761afd349ecba7df",
+            "phase": "fill-training",
+            "candidate_id": "fails",
+            "status": "RECORDED",
+            "evaluation_completed": false,
+            "evaluation_error": "inputs [2]: zero divisor for integer operator /",
+            "cases_started": 2,
+            "cases_completed": 1,
+            "calls": [
+              {
+                "case_index": 0,
+                "activity_id": "fillhistory://activity/seed",
+                "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                "inputs": [
+                  2
+                ]
+              },
+              {
+                "case_index": 1,
+                "activity_id": "fillhistory://activity/seed",
+                "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                "inputs": [
+                  0
+                ]
+              }
+            ]
+          },
+          {
+            "schema": "gooo/local-call-inputs/v1",
+            "generated_sha256": "sha256:3335ff20770706537cb679cd14e690d52ed5279c2942244ddf192bd309c19234",
+            "activity_id": "fillhistory://activity/build",
+            "suite_sha256": "sha256:15b1fd5d745b206453640483196f452b685ac26af1dc9d8f761afd349ecba7df",
+            "phase": "fill-training",
+            "candidate_id": "works",
+            "status": "RECORDED",
+            "evaluation_completed": true,
+            "cases_started": 2,
+            "cases_completed": 2,
+            "calls": [
+              {
+                "case_index": 0,
+                "activity_id": "fillhistory://activity/seed",
+                "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                "inputs": [
+                  -2
+                ]
+              },
+              {
+                "case_index": 1,
+                "activity_id": "fillhistory://activity/seed",
+                "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                "inputs": [
+                  -4
+                ]
+              }
+            ]
+          },
+          {
+            "schema": "gooo/local-call-inputs/v1",
+            "generated_sha256": "sha256:3335ff20770706537cb679cd14e690d52ed5279c2942244ddf192bd309c19234",
+            "activity_id": "fillhistory://activity/build",
+            "suite_sha256": "sha256:8f526fd15232772a15a8fd989dcd0fd62f58405b193ebcbe9bc15cbabf46d0e2",
+            "phase": "fill-probe",
+            "candidate_id": "works",
+            "status": "RECORDED",
+            "evaluation_completed": true,
+            "cases_started": 2,
+            "cases_completed": 2,
+            "calls": [
+              {
+                "case_index": 0,
+                "activity_id": "fillhistory://activity/seed",
+                "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                "inputs": [
+                  -5
+                ]
+              },
+              {
+                "case_index": 1,
+                "activity_id": "fillhistory://activity/seed",
+                "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                "inputs": [
+                  -1
+                ]
+              }
+            ]
+          },
+          {
+            "schema": "gooo/local-call-inputs/v1",
+            "generated_sha256": "sha256:3335ff20770706537cb679cd14e690d52ed5279c2942244ddf192bd309c19234",
+            "activity_id": "fillhistory://activity/build",
+            "suite_sha256": "sha256:15b1fd5d745b206453640483196f452b685ac26af1dc9d8f761afd349ecba7df",
+            "phase": "fill-selected-training",
+            "candidate_id": "works",
+            "status": "RECORDED",
+            "evaluation_completed": true,
+            "cases_started": 2,
+            "cases_completed": 2,
+            "calls": [
+              {
+                "case_index": 0,
+                "activity_id": "fillhistory://activity/seed",
+                "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                "inputs": [
+                  -2
+                ]
+              },
+              {
+                "case_index": 1,
+                "activity_id": "fillhistory://activity/seed",
+                "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                "inputs": [
+                  -4
+                ]
+              }
+            ]
+          },
+          {
+            "schema": "gooo/local-call-inputs/v1",
+            "generated_sha256": "sha256:3335ff20770706537cb679cd14e690d52ed5279c2942244ddf192bd309c19234",
+            "activity_id": "fillhistory://activity/build",
+            "suite_sha256": "sha256:f47095e0e9b569ee34bc6cca09f61002ccbc35ad88eb744e8695ff715c926dc0",
+            "phase": "fill-selected-holdout",
+            "candidate_id": "works",
+            "status": "RECORDED",
+            "evaluation_completed": true,
+            "cases_started": 1,
+            "cases_completed": 1,
+            "calls": [
+              {
+                "case_index": 0,
+                "activity_id": "fillhistory://activity/seed",
+                "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                "inputs": [
+                  -3
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "caller_attempts": [
+      {
+        "fill_candidates": [
+          {
+            "candidate_id": "works",
+            "local_calls": {
+              "schema": "gooo/local-call-inputs/v1",
+              "status": "RECORDED",
+              "evaluations": [
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:3335ff20770706537cb679cd14e690d52ed5279c2942244ddf192bd309c19234",
+                  "activity_id": "fillhistory://activity/build",
+                  "suite_sha256": "sha256:15b1fd5d745b206453640483196f452b685ac26af1dc9d8f761afd349ecba7df",
+                  "phase": "fill-caller-training",
+                  "candidate_id": "works",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": [
+                    {
+                      "case_index": 0,
+                      "activity_id": "fillhistory://activity/seed",
+                      "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                      "inputs": [
+                        -2
+                      ]
+                    },
+                    {
+                      "case_index": 1,
+                      "activity_id": "fillhistory://activity/seed",
+                      "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                      "inputs": [
+                        -4
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:3335ff20770706537cb679cd14e690d52ed5279c2942244ddf192bd309c19234",
+                  "activity_id": "fillhistory://activity/build",
+                  "suite_sha256": "sha256:f47095e0e9b569ee34bc6cca09f61002ccbc35ad88eb744e8695ff715c926dc0",
+                  "phase": "fill-caller-holdout",
+                  "candidate_id": "works",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 1,
+                  "cases_completed": 1,
+                  "calls": [
+                    {
+                      "case_index": 0,
+                      "activity_id": "fillhistory://activity/seed",
+                      "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+                      "inputs": [
+                        -3
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "finite_passed": 1,
+        "finite_total": 1
+      }
+    ],
+    "finite_passed": 3,
+    "finite_total": 3,
+    "evaluation_new_model_calls": 0,
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 2,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 1,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "resources": {
+      "wall_seconds": 0.64,
+      "user_seconds": 0.29,
+      "system_seconds": 0.23,
+      "max_rss_bytes": 87080960
+    }
+  },
+  "replay": {
+    "generated_now": false,
+    "construction_replayed": true,
+    "finite_passed": 3,
+    "finite_total": 3,
+    "new_model_calls": 0,
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 2,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 1,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "resources": {
+      "wall_seconds": 0.35,
+      "user_seconds": 0.17,
+      "system_seconds": 0.11,
+      "max_rss_bytes": 86376448
+    }
+  }
+}

@@ -40,6 +40,7 @@ type FillCandidate struct {
 	HoldoutCasesTotal    int                                   `json:"holdout_cases_total"`
 	HoldoutCaseResults   []IRBodyFillCaseResult                `json:"holdout_case_results,omitempty"`
 	ValueHoldoutResults  []RecordAssemblyCase                  `json:"value_holdout_results,omitempty"`
+	LocalCalls           *LocalCallHistory                     `json:"local_calls,omitempty"`
 }
 
 func sourceFillCandidatePlan(ctx context.Context, filename string, source []byte, activity string) (IRBodyFillPlan, SourceFillCandidateSet, error) {
@@ -102,11 +103,14 @@ func RealizeSourceFillCandidate(ctx context.Context, filename string, source []b
 		InputSourceSHA256: digest(source), SelectedSourceSHA256: digest(selected), PlanSHA256: set.PlanSHA256,
 		CandidateCount: len(set.Candidates), Generation: set.Generation, CandidateID: candidate.ID,
 		SelectionMethod: "caller_selected_assignment", HoleFills: bodyFillHoleResults(bodyFillPlanHoles(plan), candidate.Fills)}
+	ctx, capture := captureFillCalls(ctx)
+	observation.LocalCalls = capture.history
 	generated, err := GenerateWithPlanner(ctx, filename, selected, activity, "", "")
 	if err != nil {
 		err = rejectSourceFillCandidate(ctx, &observation, "TYPECHECK", err)
 		return observation, nil, err
 	}
+	capture.bind([]byte(generated.Source), generated.Report)
 	if err = scoreSourceFillCandidate(ctx, filename, selected, generated.Source, activity, plan, &observation); err != nil {
 		return observation, nil, err
 	}
