@@ -62,6 +62,7 @@ type IRBodySearchAttempt struct {
 // IRBodySearchReceipt records candidate evidence and provider resolver activity.
 // ProviderOperations counts calls with an endpoint, including canceled calls, rather than HTTP requests.
 type IRBodySearchReceipt struct {
+	LocalCalls                  *LocalCallHistory                       `json:"local_calls,omitempty"`
 	Schema                      string                                  `json:"schema"`
 	IRPlanSHA256                string                                  `json:"ir_plan_sha256"`
 	OriginalSourceDigest        string                                  `json:"original_source_digest"`
@@ -137,6 +138,7 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	if err := validateIRBodySearchPlan(plan); err != nil {
 		return Result{}, err
 	}
+	ctx, localCalls := captureSearchCalls(ctx, filename, source, activityName)
 	candidateGeneration, err := generateIRBodySearchCandidatesForSource(ctx, filename, source, activityName, &plan)
 	if err != nil {
 		return Result{}, err
@@ -159,7 +161,8 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	planBytes, _ := json.Marshal(plan)
 	trainingBytes, _ := json.Marshal(plan.TestCases)
 	receipt := &IRBodySearchReceipt{
-		Schema: bodySearchPlanSchema, IRPlanSHA256: digest(planBytes), OriginalSourceDigest: digest(source),
+		LocalCalls: localCalls,
+		Schema:     bodySearchPlanSchema, IRPlanSHA256: digest(planBytes), OriginalSourceDigest: digest(source),
 		TrainingSuiteSHA256: digest(trainingBytes), TrainingTotal: len(plan.TestCases),
 		HoldoutTotal: len(plan.HoldoutTestCases), CandidateCount: len(plan.Candidates),
 		UntestedCandidates: len(plan.Candidates), Attempts: []IRBodySearchAttempt{}, AttemptBudget: &plan.MaxAttempts,
@@ -243,7 +246,8 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 		}
 		attempt.CandidateID, attempt.Expression = chosen.ID, chosen.Expression
 		evaluationStarted := time.Now()
-		candidateBody, results, passed, typed, err := evaluateSearchCandidate(ctx, p,
+		candidateBody, results, passed, typed, err := evaluateSearchCandidate(
+			localCallPhase(ctx, "candidate", chosen.ID), p,
 			bodyFillHoleToken(plan.HoleID), chosen.Expression, plan.TestCases)
 		attempt.EvaluationMS, attempt.TypecheckPassed = elapsedMS(evaluationStarted), typed
 		if err != nil {
@@ -295,7 +299,9 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	if err != nil {
 		return fail("EMISSION_FAILED", err)
 	}
-	finalTraining, finalPassed, err := evaluateIntegerCasesContext(ctx, []byte(result.Source), activityName, plan.TestCases)
+	finalTraining, finalPassed, err := evaluateIntegerCasesContext(
+		localCallPhase(ctx, "selected-training", receipt.SelectedCandidateID),
+		[]byte(result.Source), activityName, plan.TestCases)
 	if err := ctx.Err(); err != nil {
 		return fail("CALLER_CANCELLED", err)
 	}
@@ -310,7 +316,9 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	}
 	// The selection is now final. Holdout results never feed a choice request.
 	if len(plan.HoldoutTestCases) > 0 {
-		receipt.HoldoutCaseResults, receipt.HoldoutPassed, err = evaluateIntegerCasesContext(ctx, []byte(result.Source), activityName, plan.HoldoutTestCases)
+		receipt.HoldoutCaseResults, receipt.HoldoutPassed, err = evaluateIntegerCasesContext(
+			localCallPhase(ctx, "selected-holdout", receipt.SelectedCandidateID),
+			[]byte(result.Source), activityName, plan.HoldoutTestCases)
 		if err != nil {
 			receipt.HoldoutError = err.Error()
 		} else {

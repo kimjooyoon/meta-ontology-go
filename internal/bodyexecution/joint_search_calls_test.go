@@ -2,6 +2,7 @@ package bodyexecution
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"strings"
 	"testing"
@@ -49,12 +50,27 @@ func TestJointSearchCallsConstructedRecordHelper(t *testing.T) {
 	if failed == 0 {
 		t.Fatal("local arithmetic failure was omitted from search history", search.Attempts)
 	}
+	if search.LocalCalls == nil || search.LocalCalls.Status != "RECORDED" || len(search.LocalCalls.Evaluations) < 1 {
+		t.Fatal("original search evaluation inputs were not retained", search.LocalCalls)
+	}
+	first := search.LocalCalls.Evaluations[0]
+	if first.EvaluationCompleted || first.CasesCompleted != 1 || len(first.Calls) != 2 || string(first.Calls[1].Inputs) != "[0]" {
+		t.Fatal("failed local helper input was lost", first)
+	}
 	m := got.Runtime.InputSeparation
 	if m.Status != "UNKNOWN" || m.Reason != "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED" ||
 		m.UnknownInputs != 2 || m.OverlappingInputs != 1 {
 		t.Fatal("unrecorded local helper inputs gained an invented separation score", m)
 	}
-	replayed, err := ReplayJointComposition(ctx, "calls.gooo", source, prior, evaluation, nativeTool())
+	raw, err := json.MarshalIndent(prior, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	saved, err := DecodeJointConstruction(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	replayed, err := ReplayJointComposition(ctx, "calls.gooo", source, saved, evaluation, nativeTool())
 	if err != nil || !replayed.ConstructionReplayed || replayed.NewModelCalls != 0 || replayed.Runtime.FinitePassed != 3 {
 		t.Fatal("helper search did not replay without inference", replayed, err)
 	}

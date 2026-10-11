@@ -33,10 +33,12 @@ func (e *integerBodyEvaluator) evaluatePureCall(call *ast.CallExpr) (any, error)
 		return nil, fmt.Errorf("pure call evaluation exceeds %d calls", pureCallLimit)
 	}
 	frame := integerBodyEvaluator{context: e.context, information: e.information,
-		functions: e.functions, callDepth: e.callDepth + 1, callCount: e.callCount, environment: map[types.Object]any{}}
+		functions: e.functions, callDepth: e.callDepth + 1, callCount: e.callCount, environment: map[types.Object]any{},
+		localCalls: e.localCalls, caseIndex: e.caseIndex}
 	if err := e.bindPureCallArguments(call, function, &frame); err != nil {
 		return nil, err
 	}
+	e.localCalls.enter(e.caseIndex, function, &frame)
 	value, returned, err := frame.evaluateBlock(function.Body)
 	if err != nil {
 		return nil, fmt.Errorf("pure call %q: %w", name.Name, err)

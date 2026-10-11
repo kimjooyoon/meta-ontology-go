@@ -17,6 +17,8 @@ type integerBodyEvaluator struct {
 	functions   map[types.Object]*ast.FuncDecl
 	callDepth   int
 	callCount   *int
+	localCalls  *localCallRecorder
+	caseIndex   int
 }
 
 // evaluateIntegerCases interprets only the already typechecked, pure integer
@@ -32,6 +34,15 @@ func evaluateIntegerCases(
 
 func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity string,
 	cases []IRBodyFillTestCase,
+) ([]IRBodyFillCaseResult, int, error) {
+	if capture, ok := ctx.Value(localCaptureKey{}).(*searchCallCapture); ok {
+		return capture.evaluate(ctx, source, activity, cases)
+	}
+	return evaluateIntegerCasesRecorded(ctx, source, activity, cases, nil)
+}
+
+func evaluateIntegerCasesRecorded(ctx context.Context, source []byte, activity string,
+	cases []IRBodyFillTestCase, recorder *localCallRecorder,
 ) ([]IRBodyFillCaseResult, int, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, 0, err
@@ -76,10 +87,11 @@ func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity st
 	if len(inputs) == 0 || len(inputs) > 16 {
 		return nil, 0, fmt.Errorf("integer evaluator requires 1..16 named inputs")
 	}
-	evaluator := integerBodyEvaluator{context: ctx, information: information, functions: pureEvaluatorFunctions(file, information)}
+	evaluator := integerBodyEvaluator{context: ctx, information: information,
+		functions: pureEvaluatorFunctions(file, information), localCalls: recorder}
 	results := make([]IRBodyFillCaseResult, 0, len(cases))
 	passed := 0
-	for _, testCase := range cases {
+	for caseIndex, testCase := range cases {
 		if err := ctx.Err(); err != nil {
 			return nil, 0, err
 		}
@@ -91,6 +103,10 @@ func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity st
 		evaluator.callCount = nil
 		for index, input := range inputs {
 			evaluator.environment[input] = values[index]
+		}
+		evaluator.caseIndex = caseIndex
+		if recorder != nil {
+			recorder.observation.CasesStarted++
 		}
 		value, returned, err := evaluator.evaluateBlock(function.Body)
 		if err := ctx.Err(); err != nil {
@@ -115,6 +131,9 @@ func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity st
 			caseResult.Inputs = append([]int64(nil), values...)
 		}
 		results = append(results, caseResult)
+		if recorder != nil {
+			recorder.observation.CasesCompleted++
+		}
 	}
 	return results, passed, nil
 }

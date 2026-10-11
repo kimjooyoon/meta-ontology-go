@@ -39,7 +39,7 @@ func replayIRSearchAttempts(ctx context.Context, p preparedBody, prior Result, p
 
 func replayIRSearchAttempt(ctx context.Context, p preparedBody,
 	plan IRBodySearchPlan, a IRBodySearchAttempt) error {
-	_, results, passed, typed, evaluationErr := evaluateSearchCandidate(ctx, p,
+	_, results, passed, typed, evaluationErr := evaluateSearchCandidate(localCallPhase(ctx, "candidate", a.CandidateID), p,
 		bodyFillHoleToken(plan.HoleID), a.Expression, plan.TestCases)
 	if err := ctx.Err(); err != nil {
 		return err

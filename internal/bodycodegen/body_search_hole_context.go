@@ -35,6 +35,7 @@ func generateIRBodySearchCandidatesForSource(ctx context.Context, filename strin
 	if ctx == nil {
 		return nil, fmt.Errorf("hole candidate construction requires a context")
 	}
+	ctx = localCallPhase(ctx, "candidate-generation", "")
 	if err := validateIRBodySearchCandidateGeneration(*plan.CandidateGeneration); err != nil {
 		return nil, err
 	}

@@ -28,7 +28,21 @@ Use a new output directory. This example uses deterministic selection and no
 model. Replay verifies the source, helper implementation, failed search attempts
 and selected program before running the supplied evaluation suite.
 
-The local evaluator still does not retain the arguments of every helper call.
-Input separation therefore remains `UNKNOWN` for inputs whose exposure cannot
-be established. Successful finite outputs and complete input-history coverage
-are separate measurements; this change supplies the missing function connection.
+Development search receipts now include `local_calls`: helper inputs observed
+during candidate-generation probes, candidate scoring, selected training and
+selected holdout passes. A failed candidate keeps the calls already entered,
+including earlier cases. The trace records coerced values at actual call entry;
+it does not execute an expression again to collect a value.
+
+This covers the IR search engine invocation. Separate preflight evaluations,
+other assembly profiles and the combination of local and native histories still
+need coverage before input separation can improve. That metric remains `UNKNOWN`
+for inputs whose exposure cannot be established. See the
+[local call observation contract](../../docs/local-call-observations.md).
+
+The [saved synthetic observation](observed-local-calls-47b80a0f.json) binds a clean
+development build at `47b80a0f` to the original source digest. Its one constructor
+invocation retained eight helper calls across four local evaluation passes,
+including `Seed(0)` before the first candidate failed. Native evaluation and
+saved JSON replay each matched 3/3 supplied rows with zero model calls. Full
+construction input separation remained `UNKNOWN`; these are finite observations.
