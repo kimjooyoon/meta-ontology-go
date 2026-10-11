@@ -353,6 +353,10 @@ func generateWithIRBodyFillOptions(
 		}
 	}
 	planStarted := time.Now()
+	prepared, err := prepareActivityBodySource(filename, source, activityName)
+	if err != nil {
+		return Result{}, err
+	}
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
 	var rejected []IRBodyFillCandidateRejection
 	eligible := make([]IRBodyFillCandidate, 0, len(plan.Candidates))
@@ -371,9 +375,7 @@ func generateWithIRBodyFillOptions(
 				return Result{}, fmt.Errorf("fill candidate %q at hole %q: %w", candidate.ID, hole.ID, err)
 			}
 		}
-		generated, err := generateRouteParameters(
-			file.Package.Name, activityName, activityID, bodyFillInputParameters(activity.Inputs), "int64", candidateBody, preserveRoute,
-		)
+		generated, err := prepared.generateBody(candidateBody, preserveRoute)
 		if err != nil {
 			rejected = append(rejected, rejectedBodyFillCandidate(plan, candidate, "TYPECHECK", err))
 			continue

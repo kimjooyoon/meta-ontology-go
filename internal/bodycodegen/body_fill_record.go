@@ -149,18 +149,13 @@ func generateWithRecordIRBodyFillOptions(
 			return Result{}, fmt.Errorf("activity %q must contain exactly one IR body hole %q", activityName, hole.ID)
 		}
 	}
-	parameters := make([]InputParameter, len(activity.Inputs))
-	for index, input := range activity.Inputs {
-		name := "input"
-		if len(activity.Inputs) > 1 {
-			name = fmt.Sprintf("input%d", index)
-		}
-		typeName, ok := bodyEntityType(input.Name, records, file)
-		if !ok {
-			return Result{}, fmt.Errorf("activity input %q is outside the scalar or declared-record profile", input.Name)
-		}
-		parameters[index] = InputParameter{Name: name, Type: typeName}
+	prepared, err := prepareActivityBodySource(filename, source, activityName)
+	if err != nil {
+		return Result{}, err
 	}
+	// Record assignments may introduce a declared record absent from the
+	// unfilled skeleton. Keep the existing complete record layout for scoring.
+	prepared.records = records
 
 	started := time.Now()
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
@@ -178,8 +173,7 @@ func generateWithRecordIRBodyFillOptions(
 				return Result{}, fmt.Errorf("fill candidate %q at hole %q: %w", candidate.ID, hole.ID, err)
 			}
 		}
-		generated, err := generateRouteParameters(file.Package.Name, activityName, activityID, parameters,
-			activity.Output, candidateBody, preserveRoute, records...)
+		generated, err := prepared.generateBody(candidateBody, preserveRoute)
 		if err != nil {
 			rejected = append(rejected, rejectedBodyFillCandidate(plan, candidate, "TYPECHECK", err))
 			continue

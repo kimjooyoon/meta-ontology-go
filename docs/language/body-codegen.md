@@ -643,6 +643,17 @@ separate operation-wide timer in this path.
 This bounded evaluator accepts only the existing pure expression and
 statement profile; it does not run arbitrary model-authored source.
 
+Body-fill candidates can call fixed pure activities declared in the same Gooo
+source. Calls can occur in the body skeleton or inside a hole assignment. The
+compiler includes each candidate's actual helper closure during typechecking,
+training and behavioral probes, then binds the selected closure in the emitted
+report. Integer, multiple-argument and declared record signatures follow the
+existing pure-call rules and bounds. Composition realizes required assembled
+helpers before evaluating the dependent fill. See the
+[runnable helper-fill example](../../examples/caller-fill-calls/README.md).
+Complete recording of helper arguments during every fill pass remains pending;
+input-exposure metrics retain `UNKNOWN` where those observations are missing.
+
 The evidence sent in this call is candidate-level TDD data computed before
 emission, not a GitHub Actions result. CI runs after a generated revision
 exists, so it can verify this output and inform a later generation round, but

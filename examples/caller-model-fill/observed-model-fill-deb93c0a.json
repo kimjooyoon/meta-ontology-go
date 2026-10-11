@@ -1,0 +1,234 @@
+{
+  "schema": "gooo/mixed-model-fill-observation/v1",
+  "producer": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.29-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.2",
+    "module_version": "v0.6.14-dev.0.20261011064144-deb93c0a1a62",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.14-dev.0.20261011064144-deb93c0a1a62"
+    },
+    "compiler_source_sha": "deb93c0a1a62b33453e11d8eaed2a1fdd71019a6",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "deb93c0a1a62b33453e11d8eaed2a1fdd71019a6",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.41-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.2"
+  },
+  "scope": "One new synthetic source-choice/helper-fill construction using existing public source-relative weights, followed by one saved replay. Original studies were not rerun. No language-understanding, general accuracy or benefit over deterministic order is established.",
+  "resource_scope": "Single macOS command accounting including compilation and subprocesses; model predict_ns and resident_tensor_bytes are separate reported measurements, not total process latency or memory. No instantaneous system CPU utilization was measured.",
+  "original": {
+    "decision": "COMPLETE_FINITE",
+    "original_source_sha256": "sha256:9a27bc177d1a166880393abe34fd0f85204a24f45edfe47964389134b7df405e",
+    "model": {
+      "schema": "gooo/retained-path-model/v1",
+      "loaded": true,
+      "resident_tensor_bytes": 76136,
+      "setup_ms": 6.376458,
+      "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+      "model_schema": "gooo/source-relative-condition-research-model/v1",
+      "feature_version": "canonical_branch_intent_ordered_condition_relations_v1",
+      "artifact_sha256": "sha256:cae32bdad17ab818498c6099066918cd9c9c591eb118afe1bc6a7ef82dc83cc4",
+      "model_fingerprint": "sha256:cae32bdad17ab818498c6099066918cd9c9c591eb118afe1bc6a7ef82dc83cc4"
+    },
+    "ranking": {
+      "schema": "gooo/source-relative-requirement-path-ranking/v1",
+      "ranking_sha256": "c6b80bc180bf635dcc21ae96181262afb08758f712871fcb9fb8019ab2b8825a",
+      "plan_sha256": "fc7f0b36283708c5e4ed62b0800c0997c76d71b191b67c3e82a841496115badb",
+      "finite_cases_sha256": "f45e570d36a946879a0dd3d3c013a0128f08a95207d1b5a9ac4cc830026d2dcc",
+      "model_fingerprint": "cae32bdad17ab818498c6099066918cd9c9c591eb118afe1bc6a7ef82dc83cc4",
+      "source_feature_version": "canonical_branch_intent_ordered_condition_relations_v1",
+      "case_feature_version": "declared_integer_case_v1",
+      "condition_feature_version": "declared_boolean_condition_v1",
+      "condition_feature_sha256": "3594c09b4e056b3126def9f1e74ebca1842397c1ac50a21eac6d1ca50e4fedd5",
+      "declared_condition_count": 3,
+      "source_feature_sha256": [
+        "ed2ae1e6b0ce575bb3891cef8df9990424080bcea0a44bb9743f24a9090768ee",
+        "ea85e4fe8576b2e583dc228c49d69548da8eeeb4e0a08461577bc674624ce342",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "declared_case_count": 4,
+      "choice_count": 2,
+      "choice_logits": [
+        [
+          0.13320082,
+          -0.18284237
+        ],
+        [
+          0.14733204,
+          -0.18320595
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "proposed_mask": 0,
+      "local_model_predictions": 1,
+      "predict_ns": 93083,
+      "ranking_applied": true,
+      "representation_declined": false
+    },
+    "path_search": {
+      "local_model_predictions": 1,
+      "external_provider_calls": 0,
+      "evaluated_candidates": 2,
+      "declared_combinations": 4,
+      "initial_proposals": {
+        "boundary": "layout_forward",
+        "layout": "layout_forward"
+      },
+      "selected_choices": {
+        "boundary": "layout_forward",
+        "layout": "layout_reverse"
+      },
+      "attempts": [
+        {
+          "choice_mask": 0,
+          "choices": {
+            "boundary": "layout_forward",
+            "layout": "layout_forward"
+          },
+          "status": "EVALUATED",
+          "training_cases_passed": 0,
+          "training_cases_total": 4
+        },
+        {
+          "choice_mask": 1,
+          "choices": {
+            "boundary": "layout_forward",
+            "layout": "layout_reverse"
+          },
+          "status": "EVALUATED",
+          "training_cases_passed": 4,
+          "training_cases_total": 4
+        }
+      ]
+    },
+    "fill": {
+      "selected_candidate_id": "increment",
+      "test_cases_passed": 1,
+      "test_cases_total": 1,
+      "holdout_cases_passed": 1,
+      "holdout_cases_total": 1,
+      "local_model_predictions": 0
+    },
+    "finite_passed": 3,
+    "finite_total": 3,
+    "evaluation_new_model_calls": 0,
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 3,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "resources": {
+      "wall_seconds": 0.91,
+      "user_seconds": 0.32,
+      "system_seconds": 0.23,
+      "max_rss_bytes": 87015424
+    }
+  },
+  "replay": {
+    "generated_now": false,
+    "construction_replayed": true,
+    "finite_passed": 3,
+    "finite_total": 3,
+    "new_model_calls": 0,
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 3,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "resources": {
+      "wall_seconds": 0.36,
+      "user_seconds": 0.18,
+      "system_seconds": 0.11,
+      "max_rss_bytes": 87179264
+    }
+  }
+}
