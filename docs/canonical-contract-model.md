@@ -1,8 +1,9 @@
 # 변수 대입과 직접 반환을 같은 계산으로 읽기
 
-개발 소스에서 [SDK 0.2.40의 연구 모델](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.40-experimental)을
-일반 분기 조립에 연결합니다. 공개 컴파일러 0.6.27은 이 모델 형식을 지원하지 않습니다.
-아래 명령은 이 기능이 포함된 소스 체크아웃과 Go 1.27.2를 기준으로 합니다.
+[공개 컴파일러 0.6.29](releases/0.6.29-dev.md)는
+[SDK 0.2.40에서 도입한 연구 모델](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.40-experimental)을
+일반 분기 조립에 연결합니다. 포함된 SDK는 0.2.41이며 기존 모델 형식을 계속 읽습니다.
+아래 명령은 `v0.6.29-dev` 소스 체크아웃과 Go 1.27.2를 기준으로 합니다.
 
 `return input - limit`과 `let result = input - limit; return result`처럼 같은 계산을
 다르게 적은 경우, 지원하는 순수 분기에서 모델이 같은 입력을 받게 합니다. 비교식과 각
