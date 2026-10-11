@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"time"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 func DecodeJointConstruction(raw []byte) (JointConstruction, error) {
@@ -88,7 +90,7 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 			return nil, err
 		}
 		if compositionDigest(attempt.Candidates) != compositionDigest(recorded.Candidates) ||
-			compositionDigest(attempt.SearchCandidates) != compositionDigest(recorded.SearchCandidates) ||
+			!bodycodegen.EqualSearchCandidateHistory(recorded.SearchCandidates, attempt.SearchCandidates) ||
 			compositionDigest(attempt.FillCandidates) != compositionDigest(recorded.FillCandidates) ||
 			compositionDigest(attempt.PathCandidates) != compositionDigest(recorded.PathCandidates) ||
 			compositionDigest(attempt.Rejection) != compositionDigest(recorded.Rejection) ||

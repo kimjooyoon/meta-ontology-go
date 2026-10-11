@@ -65,7 +65,9 @@ func replayIRSearchFiniteEvidence(ctx context.Context, prior Result, plan IRBody
 			encoded, _ := json.Marshal(suite.cases)
 			suiteDigest = digest(encoded)
 			var err error
-			results, passed, err = evaluateIntegerCasesContext(ctx, []byte(prior.Source), prior.Report.Activity, suite.cases)
+			results, passed, err = evaluateIntegerCasesContext(
+				localCallPhase(ctx, "selected-"+suite.name, s.SelectedCandidateID),
+				[]byte(prior.Source), prior.Report.Activity, suite.cases)
 			if err != nil {
 				failure = err.Error()
 			} else {

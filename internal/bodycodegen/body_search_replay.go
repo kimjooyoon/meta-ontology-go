@@ -14,6 +14,7 @@ func VerifyIRBodySearchProjection(ctx context.Context, filename string, source [
 	if search == nil || search.OriginalSourceDigest != digest(source) || search.SelectedExpression == "" {
 		return fmt.Errorf("IR body-search source binding is missing or changed")
 	}
+	ctx, localCalls := captureSearchCalls(ctx, filename, source, prior.Report.Activity)
 	plan, err := replaySourceIRSearchPlan(ctx, filename, source, prior)
 	if err != nil {
 		return err
@@ -46,5 +47,11 @@ func VerifyIRBodySearchProjection(ctx context.Context, filename string, source [
 		replayed.Report.ProgramDigest != prior.Report.ProgramDigest {
 		return fmt.Errorf("IR body-search Go projection does not replay")
 	}
-	return replayIRSearchFiniteEvidence(ctx, prior, plan)
+	if err := replayIRSearchFiniteEvidence(ctx, prior, plan); err != nil {
+		return err
+	}
+	if search.LocalCalls != nil && !equalLocalCallEvidence(search.LocalCalls, localCalls) {
+		return fmt.Errorf("IR search local call observations differ from the source replay")
+	}
+	return nil
 }

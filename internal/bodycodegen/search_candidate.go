@@ -16,6 +16,7 @@ type SourceSearchCandidateSet struct {
 }
 
 type SearchCandidate struct {
+	LocalCalls           *LocalCallHistory                       `json:"local_calls,omitempty"`
 	Schema               string                                  `json:"schema"`
 	Activity             string                                  `json:"activity"`
 	ActivityID           string                                  `json:"activity_id"`
@@ -73,6 +74,10 @@ func PlanSourceSearchCandidates(ctx context.Context, filename string, source []b
 // weakening local cases or replacing a search winner's historical receipt.
 // Holdout cases do not influence its admissibility or local selection score.
 func RealizeSourceSearchCandidate(ctx context.Context, filename string, source []byte, activity, candidateID string) (SearchCandidate, []byte, error) {
+	if ctx == nil {
+		return SearchCandidate{}, nil, fmt.Errorf("source search candidate requires a context")
+	}
+	ctx, localCalls := captureSearchCalls(ctx, filename, source, activity)
 	plan, set, err := sourceSearchCandidatePlan(ctx, filename, source, activity)
 	if err != nil {
 		return SearchCandidate{}, nil, err
@@ -85,8 +90,9 @@ func RealizeSourceSearchCandidate(ctx context.Context, filename string, source [
 	if err != nil {
 		return SearchCandidate{}, nil, err
 	}
-	filled, cases, passed, typed, err := evaluateSearchCandidate(ctx, p, bodyFillHoleToken(plan.HoleID), candidate.Expression, plan.TestCases)
-	observation := SearchCandidate{Schema: "gooo/search-candidate/v1", Activity: activity, ActivityID: p.activityID,
+	filled, cases, passed, typed, err := evaluateSearchCandidate(localCallPhase(ctx, "candidate", candidate.ID), p,
+		bodyFillHoleToken(plan.HoleID), candidate.Expression, plan.TestCases)
+	observation := SearchCandidate{LocalCalls: localCalls, Schema: "gooo/search-candidate/v1", Activity: activity, ActivityID: p.activityID,
 		InputSourceSHA256: digest(source), PlanSHA256: set.PlanSHA256,
 		AttemptBudget: set.AttemptBudget, CandidateCount: len(set.Candidates), Generation: set.Generation,
 		Attempt: IRBodySearchAttempt{CandidateID: candidate.ID, Expression: candidate.Expression,
