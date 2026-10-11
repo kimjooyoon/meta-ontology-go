@@ -31,6 +31,7 @@ type Composition struct {
 	Steps                []CompositionStep                  `json:"steps"`
 	Preparations         []CompositionStep                  `json:"preparations,omitempty"`
 	SearchValidations    []CompositionSearchValidation      `json:"search_validations,omitempty"`
+	FillValidations      []CompositionFillValidation        `json:"fill_validations,omitempty"`
 	GoooSource           string                             `json:"gooo_source"`
 	Source               string                             `json:"source"`
 	Driver               string                             `json:"driver_source"`
@@ -81,7 +82,7 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 		return finish(err)
 	}
 	result.Stage = "BODY_PREFLIGHT"
-	if err := graph.preflight(ctx, filename, source, &result.SearchValidations); err != nil {
+	if err := graph.preflight(ctx, filename, source, &result.SearchValidations, &result.FillValidations); err != nil {
 		return finish(err)
 	}
 	if err := graph.validateModelRoute(ctx, filename, source, options); err != nil {
@@ -110,7 +111,8 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 
 func generateCompositionSteps(ctx context.Context, filename string, source []byte,
 	graph compositionGraph, options CompositionOptions, result *Composition) ([]byte, error) {
-	generator := compositionAssemblyGenerator{options: options, validations: &result.SearchValidations}
+	generator := compositionAssemblyGenerator{options: options,
+		validations: &result.SearchValidations, fillValidations: &result.FillValidations}
 	current, err := generateCalledBodies(ctx, filename, source, graph, &generator, result)
 	if err != nil {
 		return nil, err
@@ -168,7 +170,8 @@ func DecodeComposition(raw []byte) (Composition, error) {
 }
 
 // VerifyComposition reconstructs all selected bodies and the exact graph Go
-// projection without loading a model or repeating candidate selection.
+// projection without loading a model. Recorded validation boundaries repeat
+// their deterministic probes or bounded fill scoring against source checkpoints.
 func VerifyComposition(ctx context.Context, filename string, source []byte, prior Composition) error {
 	_, err := replayComposition(ctx, filename, source, prior)
 	return err
@@ -185,8 +188,8 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 		!sameCompositionPlan(prior.Plan, graph.plan) || len(prior.Steps) != graph.count {
 		return graph, fmt.Errorf("composition original source, typed plan or step order differs")
 	}
-	validations := compositionValidationReplay{checks: prior.SearchValidations}
-	if err := graph.replaySearchPreflights(ctx, filename, source, &validations); err != nil {
+	validations := compositionValidationReplay{checks: prior.SearchValidations, fills: prior.FillValidations}
+	if err := graph.replayAssemblyPreflights(ctx, filename, source, &validations); err != nil {
 		return graph, err
 	}
 	current, err := replayCalledBodies(ctx, filename, source, graph, prior, &validations)
@@ -213,6 +216,9 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 	}
 	if validations.next != len(validations.checks) {
 		return graph, fmt.Errorf("source search validation has unconsumed observations")
+	}
+	if validations.nextFill != len(validations.fills) {
+		return graph, fmt.Errorf("source fill validation has unconsumed observations")
 	}
 	generated, err := emitCompositionProjection(prior.Steps, graph)
 	if err != nil || generated != prior.Source || prior.GeneratedSHA256 != digest([]byte(generated)) ||

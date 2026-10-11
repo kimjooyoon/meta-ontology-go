@@ -359,6 +359,9 @@ func generateWithIRBodyFillOptions(
 		return Result{}, err
 	}
 	ctx, capture := captureFillCalls(ctx)
+	if options.localCalls != nil {
+		*options.localCalls = capture.history
+	}
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
 	var rejected []IRBodyFillCandidateRejection
 	eligible := make([]IRBodyFillCandidate, 0, len(plan.Candidates))

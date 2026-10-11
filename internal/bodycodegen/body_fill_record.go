@@ -157,6 +157,9 @@ func generateWithRecordIRBodyFillOptions(
 	// unfilled skeleton. Keep the existing complete record layout for scoring.
 	prepared.records = records
 	ctx, capture := captureFillCalls(ctx)
+	if options.localCalls != nil {
+		*options.localCalls = capture.history
+	}
 
 	started := time.Now()
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))

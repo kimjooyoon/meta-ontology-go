@@ -9,11 +9,12 @@ import (
 )
 
 type compositionAssemblyGenerator struct {
-	options      CompositionOptions
-	retained     *bodycodegen.TypedPathGenerator
-	fillProvider *decisionroute.TinyGoProvider
-	fillInfo     *CompositionFillModelInfo
-	validations  *[]CompositionSearchValidation
+	options         CompositionOptions
+	retained        *bodycodegen.TypedPathGenerator
+	fillProvider    *decisionroute.TinyGoProvider
+	fillInfo        *CompositionFillModelInfo
+	validations     *[]CompositionSearchValidation
+	fillValidations *[]CompositionFillValidation
 }
 
 func (g *compositionAssemblyGenerator) generate(ctx context.Context, filename string, source []byte,
@@ -22,7 +23,8 @@ func (g *compositionAssemblyGenerator) generate(ctx context.Context, filename st
 	if err != nil {
 		return bodycodegen.Result{}, err
 	}
-	if err := validateCompositionAssembly(ctx, filename, source, activity, "ACTIVITY_GENERATION", g.validations); err != nil {
+	if err := validateCompositionAssembly(ctx, filename, source, activity, "ACTIVITY_GENERATION",
+		g.validations, g.fillValidations); err != nil {
 		return bodycodegen.Result{}, err
 	}
 	if bodycodegen.IsSourceIRBodyFill(spec) {

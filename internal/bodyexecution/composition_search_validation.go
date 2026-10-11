@@ -13,15 +13,20 @@ type CompositionSearchValidation struct {
 }
 
 func validateCompositionAssembly(ctx context.Context, filename string, source []byte, activity, stage string,
-	checks *[]CompositionSearchValidation) error {
-	if checks == nil {
+	checks *[]CompositionSearchValidation, fills *[]CompositionFillValidation) error {
+	if checks == nil && fills == nil {
 		return bodycodegen.ValidateSourceAssembly(ctx, filename, source, activity)
 	}
 	spec, err := bodycodegen.SourceAssembly(ctx, filename, source, activity)
 	if err != nil {
 		return err
 	}
-	if !bodycodegen.IsSourceIRSearch(spec) {
+	if bodycodegen.IsSourceIRBodyFill(spec) && fills != nil {
+		observation, err := bodycodegen.ObserveSourceIRBodyFillValidation(ctx, filename, source, activity)
+		*fills = append(*fills, CompositionFillValidation{Stage: stage, Observation: observation})
+		return err
+	}
+	if !bodycodegen.IsSourceIRSearch(spec) || checks == nil {
 		return bodycodegen.ValidateSourceAssembly(ctx, filename, source, activity)
 	}
 	observation, err := bodycodegen.ObserveSourceIRSearchValidation(ctx, filename, source, activity)
@@ -30,21 +35,29 @@ func validateCompositionAssembly(ctx context.Context, filename string, source []
 }
 
 type compositionValidationReplay struct {
-	checks []CompositionSearchValidation
-	next   int
+	checks   []CompositionSearchValidation
+	next     int
+	fills    []CompositionFillValidation
+	nextFill int
 }
 
 // Historical absence does not acquire new observations. When a producer did
 // record validation, replay checks that boundary against the original source
-// checkpoint. This can repeat pure preflight probes, but never model selection.
+// checkpoint. This repeats deterministic preflight work, but never a model call.
 func (r *compositionValidationReplay) check(ctx context.Context, filename string, source []byte,
 	activity, stage string) error {
-	if r.checks == nil {
+	if r.checks == nil && r.fills == nil {
 		return nil
 	}
 	spec, err := bodycodegen.SourceAssembly(ctx, filename, source, activity)
-	if err != nil || !bodycodegen.IsSourceIRSearch(spec) {
+	if err != nil {
 		return err
+	}
+	if bodycodegen.IsSourceIRBodyFill(spec) {
+		return r.checkFill(ctx, filename, source, activity, stage)
+	}
+	if !bodycodegen.IsSourceIRSearch(spec) || r.checks == nil {
+		return nil
 	}
 	if r.next >= len(r.checks) {
 		return fmt.Errorf("source search validation observation is missing")
@@ -64,9 +77,9 @@ func (r *compositionValidationReplay) check(ctx context.Context, filename string
 	return nil
 }
 
-func (graph compositionGraph) replaySearchPreflights(ctx context.Context, filename string, source []byte,
+func (graph compositionGraph) replayAssemblyPreflights(ctx context.Context, filename string, source []byte,
 	r *compositionValidationReplay) error {
-	if r.checks == nil {
+	if r.checks == nil && r.fills == nil {
 		return nil
 	}
 	for _, node := range graph.nodes[:graph.count] {
