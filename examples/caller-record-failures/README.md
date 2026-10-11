@@ -31,3 +31,12 @@ When the source budget is reduced to one, construction stops with
 candidate and no finite execution score. A caller-selected failing record mask
 likewise consumes a program attempt and retains a `LOCAL_RECORD_ASSEMBLY`
 rejection. Successful alternatives remain eligible within the original budget.
+
+## Original development observation
+
+[The saved observation](observed-recovery-3a1628ed.json) binds clean compiler
+source `3a1628ed413fbbaa9d9168acdee2b9fb13f4749a`. One construction invocation
+recorded `Step(2)` and `Step(0)` before mask 0 failed, then selected mask 1 after
+it completed both local cases. Native evaluation and one saved-JSON replay each
+passed 3/3 supplied cases, with zero model calls. The earlier producer stopped
+before native execution; it has no comparable native accuracy denominator.

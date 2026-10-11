@@ -1,0 +1,206 @@
+{
+  "schema": "gooo/record-recovery-observation/v1",
+  "producer": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.29-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.2",
+    "module_version": "v0.6.14-dev.0.20261011060345-3a1628ed413f",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.14-dev.0.20261011060345-3a1628ed413f"
+    },
+    "compiler_source_sha": "3a1628ed413fbbaa9d9168acdee2b9fb13f4749a",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "3a1628ed413fbbaa9d9168acdee2b9fb13f4749a",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.41-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.2"
+  },
+  "scope": "One synthetic constructor invocation and one saved replay from clean development source. Finite cases only; no general accuracy, independence, model quality or speedup claim.",
+  "original": {
+    "decision": "COMPLETE_FINITE",
+    "record_receipts": [
+      {
+        "activity": "Build",
+        "record_assembly": {
+          "schema": "gooo/record-field-assembly/v1",
+          "original_source_sha256": "sha256:a2bc90a272f5561672f536726adfc5c91470d8ff1ee344949936f09a23eabf83",
+          "selected_source_sha256": "sha256:1a5ee5e4f44b71c0a487d075731f58cce0f79b39ecacc479b775113f34652ec5",
+          "contract_sha256": "sha256:c05b774a522895ac15efecb8fb84e152192d89b7d83895c45ebac4539a20fc4f",
+          "test_suite_sha256": "sha256:ad91695c144d95f13df7ddabba66b86ea9c00841fc7fd3fd56ab5aac63900da0",
+          "selected_mask": 1,
+          "attempt_budget": 2,
+          "choices": [
+            {
+              "id": "value",
+              "record_id": "recordfailure://box",
+              "field_id": "recordfailure://value",
+              "field": "value",
+              "occurrence": 0,
+              "intent": "Keep the helper result for every supplied input.",
+              "first": "Step(input) / denominator",
+              "second": "Step(input)",
+              "picked": "value_second"
+            }
+          ],
+          "attempts": [
+            {
+              "local_calls": {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:c2f272adc20e5cea9ff15db047361f2ca9cd1c0937294c06b0c78e8f4b969098",
+                "activity_id": "recordfailure://activity/build",
+                "suite_sha256": "sha256:ad91695c144d95f13df7ddabba66b86ea9c00841fc7fd3fd56ab5aac63900da0",
+                "phase": "record-candidate",
+                "candidate_id": "0",
+                "status": "RECORDED",
+                "evaluation_completed": false,
+                "evaluation_error": "record case did not return: zero divisor for integer operator /",
+                "cases_started": 2,
+                "cases_completed": 1,
+                "calls": [
+                  {
+                    "case_index": 0,
+                    "activity_id": "recordfailure://activity/step",
+                    "program_sha256": "sha256:1bac694c22441cd8b7c384677a8b0562f8d881783f5ce475e40e90b646cff8cb",
+                    "inputs": [
+                      2
+                    ]
+                  },
+                  {
+                    "case_index": 1,
+                    "activity_id": "recordfailure://activity/step",
+                    "program_sha256": "sha256:1bac694c22441cd8b7c384677a8b0562f8d881783f5ce475e40e90b646cff8cb",
+                    "inputs": [
+                      0
+                    ]
+                  }
+                ]
+              },
+              "mask": 0,
+              "status": "EVALUATION_FAILED",
+              "reason": "record case did not return: zero divisor for integer operator /",
+              "passed": 0,
+              "total": 0,
+              "fields_passed": 0,
+              "fields_total": 0
+            },
+            {
+              "local_calls": {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:46f3677079cb8f15b4475e5b9fdff9e67b1d1a0985c120c6217569773c34d50d",
+                "activity_id": "recordfailure://activity/build",
+                "suite_sha256": "sha256:ad91695c144d95f13df7ddabba66b86ea9c00841fc7fd3fd56ab5aac63900da0",
+                "phase": "record-candidate",
+                "candidate_id": "1",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 2,
+                "cases_completed": 2,
+                "calls": [
+                  {
+                    "case_index": 0,
+                    "activity_id": "recordfailure://activity/step",
+                    "program_sha256": "sha256:1bac694c22441cd8b7c384677a8b0562f8d881783f5ce475e40e90b646cff8cb",
+                    "inputs": [
+                      2
+                    ]
+                  },
+                  {
+                    "case_index": 1,
+                    "activity_id": "recordfailure://activity/step",
+                    "program_sha256": "sha256:1bac694c22441cd8b7c384677a8b0562f8d881783f5ce475e40e90b646cff8cb",
+                    "inputs": [
+                      0
+                    ]
+                  }
+                ]
+              },
+              "mask": 1,
+              "passed": 2,
+              "total": 2,
+              "fields_passed": 2,
+              "fields_total": 2
+            }
+          ],
+          "cases": [
+            {
+              "inputs": [
+                2
+              ],
+              "expected": {
+                "value": 3
+              },
+              "actual": {
+                "value": 3
+              },
+              "passed": true,
+              "fields": [
+                {
+                  "id": "recordfailure://value",
+                  "name": "value",
+                  "type_id": "urn:gooo:type:integer",
+                  "expected": "3",
+                  "actual": "3",
+                  "passed": true
+                }
+              ]
+            },
+            {
+              "inputs": [
+                0
+              ],
+              "expected": {
+                "value": 1
+              },
+              "actual": {
+                "value": 1
+              },
+              "passed": true,
+              "fields": [
+                {
+                  "id": "recordfailure://value",
+                  "name": "value",
+                  "type_id": "urn:gooo:type:integer",
+                  "expected": "1",
+                  "actual": "1",
+                  "passed": true
+                }
+              ]
+            }
+          ],
+          "passed": 2,
+          "total": 2,
+          "fields_passed": 2,
+          "fields_total": 2,
+          "status": "COMPLETE_FINITE",
+          "model_requested": false,
+          "model_calls": 0,
+          "predict_ns": 0,
+          "ranking": [
+            0,
+            1
+          ],
+          "generation_ns": 1074042,
+          "scope": "source-declared record field alternatives; finite case and field coverage; candidate interpretation followed by ordinary typed Go emission; no model updates"
+        }
+      }
+    ],
+    "finite_passed": 3,
+    "finite_total": 3,
+    "new_model_calls": 0
+  },
+  "replay": {
+    "generated_now": false,
+    "construction_replayed": true,
+    "finite_passed": 3,
+    "finite_total": 3,
+    "new_model_calls": 0
+  }
+}
