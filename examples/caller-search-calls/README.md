@@ -1,8 +1,8 @@
 # Search an expression around an assembled helper
 
-This development example connects a record helper to integer IR search.
-Public 0.6.29 rejects this combination before caller execution. Use the source
-containing the helper-call fix and Go 1.27.2 for these commands.
+This example connects a record helper to integer IR search. It requires Gooo
+0.6.30 or later and Go 1.27.2. Earlier compiler 0.6.29 rejected this combination
+before caller execution. See the [release guide](../../docs/releases/0.6.30-dev.md).
 
 `Seed` first chooses its record field expression. `Divide` then calls that helper
 inside a body with a denominator hole. Its source cases require `1 -> 2` and
@@ -28,15 +28,15 @@ Use a new output directory. This example uses deterministic selection and no
 model. Replay verifies the source, helper implementation, failed search attempts
 and selected program before running the supplied evaluation suite.
 
-Development search receipts now include `local_calls`: helper inputs observed
+Search receipts include `local_calls`: helper inputs observed
 during candidate-generation probes, candidate scoring, selected training and
 selected holdout passes. A failed candidate keeps the calls already entered,
 including earlier cases. The trace records coerced values at actual call entry;
 it does not execute an expression again to collect a value.
 
 The metric includes recorded local record/search inputs and consumed native
-caller attempts. Separate preflight and other assembly profiles still need
-complete capture. It remains `UNKNOWN` for inputs whose exposure cannot be
+caller attempts. Gooo 0.6.30 also records search and fill preflight calls.
+Construction coverage remains partial; an input stays `UNKNOWN` when exposure cannot be
 established. See the
 [local call observation contract](../../docs/local-call-observations.md).
 

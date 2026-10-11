@@ -1,6 +1,6 @@
 # Inputs used by a rejected fill candidate
 
-This development example assembles `Seed`, then fills two expressions in `Build`.
+This example requires Gooo 0.6.30 or later. It assembles `Seed`, then fills two expressions in `Build`.
 It shows why failed local evaluations belong to a program's construction history.
 
 The first assignment calls `Seed(2)` and then `Seed(0)`. Its second case divides
@@ -12,11 +12,11 @@ The selected assignment matches both local cases and its separate holdout case.
 inputs are different from the local training inputs, but the inner function has
 already received these values. The input-separation report counts two overlapping
 inputs and leaves the remaining input unknown. The recorded producer predates
-fill-preflight capture. Newer development source records that boundary, while
+fill-preflight capture. Gooo 0.6.30 records that boundary, while
 other construction coverage remains incomplete. This example establishes no general
 correctness or model-quality result.
 
-## Run from development source
+## Run from a compiler checkout
 
 Use a checkout containing fill-local observation support and a new output directory:
 
@@ -57,5 +57,6 @@ Whole-command accounting, including compilation and subprocesses, measured
 87,080,960 bytes maximum RSS. Saved replay measured 0.35 seconds wall,
 0.17 seconds user CPU, 0.11 seconds system CPU and 86,376,448 bytes maximum RSS.
 These are single observations. Instantaneous CPU utilization and a controlled
-performance comparison were not measured. The public compiler remains 0.6.29;
-this observation belongs to the development source above.
+performance comparison were not measured. This observation belongs to the
+development source above. The [0.6.30 release guide](../../docs/releases/0.6.30-dev.md)
+links the separately produced native platform evidence.

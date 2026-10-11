@@ -1,7 +1,8 @@
 # Fill a body that uses another Gooo activity
 
-This development example lets a complete hole assignment call a fixed pure
-activity from the same Gooo source. Public compiler 0.6.29 predates this change.
+This example lets a complete hole assignment call a fixed pure activity from
+the same Gooo source. It requires Gooo 0.6.30 or later; see the
+[release and installation guide](../../docs/releases/0.6.30-dev.md).
 
 `Step` doubles its argument. `Build` chooses where to put the declared offset
 and bias in `Step(input + offset) + bias`. Its local case requires `2 -> 6`;
@@ -32,8 +33,8 @@ candidate evaluation without calling a model.
 
 Helpers must have fixed pure bodies when an assignment is evaluated. Composition
 can assemble required helpers first. Existing type checks, recursion rejection
-and call bounds apply. Newer development source records helper arguments during
-fill preflight and selection; the original observation below predates that
+and call bounds apply. Gooo 0.6.30 records helper arguments during fill preflight
+and selection; the original observation below predates that
 capture. Other construction boundaries still have incomplete coverage, so
 constructed-helper input independence can remain `UNKNOWN`. Finite passing
 examples cover only their declared rows.
