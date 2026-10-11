@@ -1,0 +1,138 @@
+{
+  "original_completed": "2026-10-11T01:26:01Z",
+  "original_records": {
+    "context": {
+      "raw_bytes": 13557,
+      "raw_sha256": "208dcd550ae7dd34a74212df360e793dff20db78ba2a1cb41e44ccabe1faf299"
+    },
+    "fixed": {
+      "raw_bytes": 80948,
+      "raw_sha256": "bf66cd399d2f6c1d0a8a60c5c83d5f5795e16e6e12eab7066a43d15fa56e9793"
+    },
+    "model": {
+      "raw_bytes": 95731,
+      "raw_sha256": "b2864eba71bb8ed3ff542d03b741c3088611cc3cc0e0d3c4c7df80cafda38b8d"
+    },
+    "replay": {
+      "raw_bytes": 97025,
+      "raw_sha256": "30076512dec145a5e373834f4dd4a6530e93250f35aaaf6c2d2d45468454c931"
+    }
+  },
+  "policies": {
+    "fixed": {
+      "candidate_masks": [
+        0,
+        1
+      ],
+      "condition_passed": 3,
+      "condition_total": 3,
+      "final_output_passed": 4,
+      "final_output_total": 4,
+      "first_output_passed": 1,
+      "first_output_total": 4,
+      "later_passed": 4,
+      "later_total": 4,
+      "outer_passed": 1,
+      "outer_total": 1,
+      "retention": {
+        "loaded": false,
+        "resident_tensor_bytes": 0,
+        "schema": "gooo/retained-path-model/v1",
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "setup_ms": 0.000166
+      },
+      "selection_calls": 0,
+      "timing": {
+        "bounded_search_ms": 0.087167,
+        "decision_stage": "all_local_predictions_before_candidate_tests_and_final_native_emission",
+        "execution_model": "single_process_source_bind_then_rank_then_finite_tdd_then_native_emit",
+        "final_emission_ms": 0.37475,
+        "model_load_ms": 0,
+        "plan_prepare_ms": 0.41125,
+        "source_binding_ms": 0.708625,
+        "total_ms": 1.618667
+      }
+    },
+    "model": {
+      "candidate_masks": [
+        0,
+        1
+      ],
+      "condition_passed": 3,
+      "condition_total": 3,
+      "final_output_passed": 4,
+      "final_output_total": 4,
+      "first_output_passed": 1,
+      "first_output_total": 4,
+      "later_passed": 4,
+      "later_total": 4,
+      "outer_passed": 1,
+      "outer_total": 1,
+      "retention": {
+        "artifact_sha256": "sha256:cae32bdad17ab818498c6099066918cd9c9c591eb118afe1bc6a7ef82dc83cc4",
+        "feature_version": "canonical_branch_intent_ordered_condition_relations_v1",
+        "loaded": true,
+        "model_fingerprint": "sha256:cae32bdad17ab818498c6099066918cd9c9c591eb118afe1bc6a7ef82dc83cc4",
+        "model_schema": "gooo/source-relative-condition-research-model/v1",
+        "resident_tensor_bytes": 76136,
+        "schema": "gooo/retained-path-model/v1",
+        "scope": "one constructor load; excluded from request timing; fresh source and plan each request",
+        "setup_ms": 7.822417
+      },
+      "selection_calls": 1,
+      "timing": {
+        "bounded_search_ms": 0.484792,
+        "context_prepare_ms": 0.048792,
+        "decision_stage": "declared_cases_ranked_once_before_candidate_tests_and_final_native_emission",
+        "execution_model": "single_process_source_bind_then_rank_then_finite_tdd_then_native_emit",
+        "final_emission_ms": 0.371583,
+        "model_load_ms": 0,
+        "plan_prepare_ms": 0.376375,
+        "source_binding_ms": 1.023292,
+        "total_ms": 2.333292
+      }
+    }
+  },
+  "prediction_ns": 106833,
+  "progress": [
+    {
+      "attempts": 0,
+      "new_predictions": 0,
+      "sequence": 1,
+      "status": "PARTIAL"
+    },
+    {
+      "attempts": 1,
+      "new_predictions": 0,
+      "sequence": 2,
+      "status": "PARTIAL"
+    },
+    {
+      "attempts": 2,
+      "new_predictions": 0,
+      "sequence": 3,
+      "status": "TRAINING_COMPLETE"
+    }
+  ],
+  "replay": {
+    "construction_replayed": true,
+    "finite_passed": 4,
+    "finite_total": 4,
+    "new_predictions": 0
+  },
+  "runtime_input_separation": "UNKNOWN",
+  "scope": "Read-only byte/digest/receipt audit; no new prediction, candidate execution or fitting. First-candidate failures and runtime UNKNOWN classification are retained in full records.",
+  "source_inputs": [
+    {
+      "decision_id": "layout",
+      "float32_cells": 528,
+      "sha256": "ca017710226d653445ecb8427cd17c682c93e9457df8601ef7474c3ff282934f"
+    },
+    {
+      "decision_id": "boundary",
+      "float32_cells": 528,
+      "sha256": "b0277ece962e6013eeb232822095695c5010b0355d5042466bc4c74734b34de7"
+    }
+  ],
+  "status": "PASS"
+}

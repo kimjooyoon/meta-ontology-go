@@ -85,3 +85,6 @@ GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-construct \
 관련 첫 선택은64/128이었고 간단한 규칙도64/128이었습니다. 새 연결은 일반 SDK 후보 큐를
 사용하므로 원래 네 조합 정렬 실험의 시간과 후보 수를 그대로 적용할 수는 없습니다.
 이번 네이티브 연결의 별도 관찰은 [고정 계획](research/source-relative-native-20261011/protocol.md)을 따릅니다.
+[원래 실행 결과](research/source-relative-native-20261011/results.md)에서 모델과 고정 순서는
+모두 후보2개를 확인했습니다. 첫 출력 검사는1/4, 최종4/4였으며 저장 재실행은 새 모델 호출0회로
+같은 네이티브 사례4개를 통과했습니다. 판단 시간·가중치 준비·전체 실행 비용은 따로 기록했습니다.
