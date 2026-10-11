@@ -83,5 +83,6 @@ func IsKnownNonPromotingTerminal(report Report) bool {
 	return report.Decision == DecisionFailClosed && report.Reason == ReasonMixed &&
 		report.Resolution == "EXACT" && report.Mode == ModeMixed &&
 		report.MetaOperation == OperationMixed &&
-		knownMixedRecovery(report.Source.ExpectedHeadSHA, report.Source.Guard, report.Source.Recovery)
+		(knownMixedRecovery(report.Source.ExpectedHeadSHA, report.Source.Guard, report.Source.Recovery) ||
+			knownAppliedRecovery(report.Source.ExpectedHeadSHA, report.Source.Guard, report.Source.Recovery))
 }

@@ -1,0 +1,105 @@
+{
+  "code": "CI-ARTIFACT-001",
+  "failure_codes": [
+    "CI-ARTIFACT-001",
+    "CI-TEST-001"
+  ],
+  "message": "Semantic conformance concluded failure for exact run 9 attempt 2; codes=CI-ARTIFACT-001,CI-TEST-001",
+  "remediation": "Regenerate the required artifact from this exact run and verify its count, digest, and tuple binding.",
+  "head_branch": "agent/ci-workflow",
+  "rejections": [
+    "proof_artifact_missing"
+  ],
+  "missing_reasons": {},
+  "artifacts": [],
+  "proof_artifact": null,
+  "artifact_status": "missing",
+  "artifact_reason": "artifact_missing",
+  "terminal_failures": [
+    {
+      "id": 11,
+      "name": "Semantic conformance",
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "run_id": 9,
+      "run_attempt": 2
+    },
+    {
+      "id": 12,
+      "name": "CI evidence",
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "run_id": 9,
+      "run_attempt": 2
+    },
+    {
+      "id": 13,
+      "name": "CI proof bundle",
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "run_id": 9,
+      "run_attempt": 2
+    }
+  ],
+  "terminal_failure_codes": [
+    "CI-TEST-001",
+    "CI-ARTIFACT-001",
+    "CI-ARTIFACT-001"
+  ],
+  "terminal_failure_evidence": [
+    {
+      "job": {
+        "id": 11,
+        "name": "Semantic conformance",
+        "status": "completed",
+        "conclusion": "failure",
+        "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "run_id": 9,
+        "run_attempt": 2
+      },
+      "code": "CI-TEST-001",
+      "classification": "known_job",
+      "reason": "catalog_mapping:failed step"
+    },
+    {
+      "job": {
+        "id": 12,
+        "name": "CI evidence",
+        "status": "completed",
+        "conclusion": "failure",
+        "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "run_id": 9,
+        "run_attempt": 2
+      },
+      "code": "CI-ARTIFACT-001",
+      "classification": "known_job",
+      "reason": "catalog_mapping:Verify and write CI evidence bundle"
+    },
+    {
+      "job": {
+        "id": 13,
+        "name": "CI proof bundle",
+        "status": "completed",
+        "conclusion": "failure",
+        "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "run_id": 9,
+        "run_attempt": 2
+      },
+      "code": "CI-ARTIFACT-001",
+      "classification": "proof_evidence",
+      "reason": "proof_state:artifact_missing"
+    }
+  ],
+  "job": {
+    "id": 11,
+    "name": "Semantic conformance",
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "run_id": 9,
+    "run_attempt": 2
+  }
+}
