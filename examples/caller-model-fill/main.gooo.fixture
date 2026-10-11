@@ -1,0 +1,30 @@
+package modelfill
+namespace modelfill
+
+entity Integer id "modelfill://integer"
+
+activity Choose(Integer) -> Integer computes "let quantity = input; let cutoff = 6; let units = quantity; if quantity < cutoff { units = quantity * 3 } else { units = quantity + 2 }; return units" assembling {
+  choice "layout" branch_layout at "0" intent "수량이 6 미만이면 2를 더하고, 그 이상이면 세 배로 계산한다. Add two below six, otherwise triple the quantity."
+  choice "boundary" operand_order at "0" intent "수량이 6 미만인지 판단한다. Check whether quantity is below six."
+  case "0" -> "2"
+  case "4" -> "6"
+  case "6" -> "18"
+  case "9" -> "27"
+  condition_case "boundary" input "0" -> "true"
+  condition_case "boundary" input "6" -> "false"
+  condition_case "boundary" input "9" -> "false"
+  attempts "4"
+}
+
+activity Build(Integer) -> Integer computes "let base = Choose(input); return base + __GOOO_BODY_HOLE_extra__ + __GOOO_BODY_HOLE_bias__" assembling {
+  source_fill intent "조립한 수량 계산 결과에 1을 더한다. Add one to the assembled quantity calculation." {
+    hole "extra"
+    hole "bias"
+    candidate "unchanged" { fill "extra" "0" fill "bias" "0" }
+    candidate "increment" { fill "extra" "1" fill "bias" "0" }
+  }
+  case "4" -> "7"
+  holdout_case "8" -> "25"
+}
+
+activity Main(Integer) -> Integer computes "return Build(input)"

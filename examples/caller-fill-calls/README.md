@@ -49,3 +49,8 @@ bytes maximum RSS. Replay reported 0.35 seconds wall, 0.16 seconds user CPU,
 0.11 seconds system CPU and 86,736,896 bytes maximum RSS. These single runs
 include compilation and subprocesses; cache state and startup affect the totals.
 Instantaneous system CPU utilization was not measured.
+
+The [model-to-helper-fill example](../caller-model-fill/README.md) uses the public
+source-relative model to rank an upstream helper's branch choices, then runs the
+fill stage deterministically. It records the model's weak initial proposal as
+well as the later passing construction.
