@@ -40,6 +40,8 @@ implements substring search, non-overlapping counts and UTF-8 rune counts in Goo
 Its importing app and saved replay are checked against 20 Go reference cases.
 For development source, [single-condition assembly](docs/source-assembly.md)
 leaves one predicate open while retaining the declared loop and return structure.
+The [0.6.32 source guide](docs/releases/0.6.32-dev.md) describes its package example
+and the new native release checks while publication is prepared.
 
 The existing small decision model can suggest which declared path to try first.
 Gooo checks the supplied cases and saves the selected program for replay. The

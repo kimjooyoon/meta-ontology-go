@@ -1,0 +1,19 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "gooo/examples/bytefill",
+    "activity": "IndexByte"
+  },
+  "packages": [
+    {
+      "path": "gooo/examples/bytefill",
+      "name": "bytefill",
+      "imports": [
+
+      ],
+      "sources": [
+        "byte.gooo.fixture"
+      ]
+    }
+  ]
+}

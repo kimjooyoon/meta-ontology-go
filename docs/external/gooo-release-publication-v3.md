@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.31-dev
-version  = 0.6.31-dev
+tag      = v0.6.32-dev
+version  = 0.6.32-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -169,6 +169,15 @@ The reader compares every actual value with Go `strings.IndexByte`, binds the
 manifest and case-file digests, checks the selected program and exact original
 receipt digest, and requires zero model calls. These are ten finite cases on each
 platform; platform repetition does not increase the independent case count.
+
+For 0.6.32, two computation profiles each add execution and exact saved-replay
+receipts per platform: the importing string package has twenty finite queries,
+and the single-condition byte package has ten. The reader lowers the committed
+source without executing it, binds that complete graph and all source digests,
+and independently checks the case outputs with Go string functions. The byte
+profile requires its one-hole source fill and separate six selection/four
+held-out counts. The ten external byte queries reuse those source cases; model
+calls are zero and no unseen-model accuracy is claimed.
 
 The helper-fill history profile adds another two raw outputs per platform.
 The candidate binary constructs and replays `examples/caller-fill-history`.
