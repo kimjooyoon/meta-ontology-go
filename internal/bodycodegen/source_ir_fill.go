@@ -8,7 +8,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-// IsSourceIRBodyFill reports whether the activity owns a complete multi-hole
+// IsSourceIRBodyFill reports whether the activity owns a complete source-declared
 // body-fill plan in its Gooo assembling block.
 func IsSourceIRBodyFill(spec *assemblyspec.Spec) bool {
 	return spec != nil && spec.FillPlan != nil

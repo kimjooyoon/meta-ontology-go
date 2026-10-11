@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "app/stringops", "activity": "Main"},
+  "packages": [
+    {"path": "app/stringops", "name": "app", "imports": ["gooo/std/stringops"], "sources": ["app.gooo.fixture"]},
+    {"path": "gooo/std/stringops", "name": "stringops", "imports": [], "sources": ["strings.gooo.fixture"]}
+  ]
+}

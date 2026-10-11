@@ -43,7 +43,7 @@ type SearchAlternative struct {
 	MaxCandidates int    `json:"max_candidates"`
 }
 
-// FillPlan declares complete candidate assignments for multiple typed holes.
+// FillPlan declares complete candidate assignments for one or more typed holes.
 // Models can rank these assignments but cannot add or rewrite expressions.
 type FillPlan struct {
 	Intent     string          `json:"intent"`
@@ -208,8 +208,8 @@ func (s Spec) validateFillPlan() error {
 	if len(s.Cases) == 0 && !recordCases || len(s.Cases) > 0 && recordCases ||
 		len(s.Choices) != 0 || s.Search != nil || s.MaxAttempts != 0 || s.Seed != "" ||
 		s.Baseline != "" || len(s.Picked) != 0 || !boundedText(plan.Intent, 2000) ||
-		len(plan.Holes) < 2 || len(plan.Holes) > 8 {
-		return fmt.Errorf("source fill plan requires intent, 2..8 holes and either integer cases or typed record value cases; it cannot mix with other assembly modes")
+		len(plan.Holes) < 1 || len(plan.Holes) > 8 {
+		return fmt.Errorf("source fill plan requires intent, 1..8 holes and either integer cases or typed record value cases; it cannot mix with other assembly modes")
 	}
 	if recordCases {
 		if len(s.HoldoutCases) != 0 {

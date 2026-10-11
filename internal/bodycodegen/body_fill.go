@@ -620,8 +620,8 @@ func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
 		if !validBodyFillIdentifier(plan.HoleID) || len(plan.Holes) != 0 {
 			return fmt.Errorf("IR body-fill v1 requires one valid hole_id and no holes array")
 		}
-	} else if plan.HoleID != "" || len(holes) < 2 || len(holes) > 8 {
-		return fmt.Errorf("IR body-fill v2 requires 2..8 holes and no hole_id")
+	} else if plan.HoleID != "" || len(holes) < 1 || len(holes) > 8 {
+		return fmt.Errorf("IR body-fill v2 requires 1..8 holes and no hole_id")
 	}
 	seenHoles := make(map[string]bool, len(holes))
 	for _, hole := range holes {
