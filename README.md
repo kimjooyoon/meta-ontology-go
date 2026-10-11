@@ -4,9 +4,12 @@
 assembling programs, and keeping the evidence of how they behave. This repository
 contains its Go compiler. Source files use the `.gooo` extension.
 
-[Try 13 HTTP, Unicode, and byte functions in your browser](https://kimjooyoon.github.io/gooo-go-ports/)
-without installing anything or using a model. The demo runs fixed, precompiled
-Gooo → Go → WebAssembly programs; it does not compile arbitrary source.
+[Try a small Gooo program in your browser](https://kimjooyoon.github.io/gooo-go-ports/tutorial.html)
+without installing anything or using a model. Change a score and a label, inspect
+four returned fields, then download the source and inputs to edit and run locally.
+The tutorial runs a fixed, precompiled Gooo → Go → WebAssembly program; it does
+not compile arbitrary source. The separate [library explorer](https://kimjooyoon.github.io/gooo-go-ports/)
+lets you try selected Go function ports.
 
 ## Try a working Gooo program
 
@@ -45,9 +48,10 @@ supplied cases. Replay uses the saved choices with zero new model calls. Edit
 [Installation, platform downloads, and next steps](docs/getting-started.md)
 explain what the finite checks establish and how to change the source.
 For a separate library example, [Gooo Go Ports](https://github.com/kimjooyoon/gooo-go-ports)
-implements thirteen HTTP, Unicode, and byte functions and compares them with Go originals;
-its [recorded native checks](https://github.com/kimjooyoon/gooo-go-ports/blob/a58b55b798c95da04cc51cf779df76399ea59a55/evidence/math-bits-20261010.json)
-cover named inputs, not whole-package compatibility.
+implements selected Go standard-library functions in Gooo and compares them with
+pinned Go originals. Its [verification results and limits](https://github.com/kimjooyoon/gooo-go-ports/blob/75d0655101d1468f9a94eb10571d34378b98293b/README.md)
+separate finite native cases, Unicode enumeration and browser checks; they do not
+establish whole-package compatibility.
 
 Think of Gooo as a workshop: declarations provide the plan, a small local model
 can suggest which permitted parts to assemble, and the compiler checks the fit
