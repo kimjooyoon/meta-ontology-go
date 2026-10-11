@@ -8,7 +8,7 @@ import (
 
 // Replay the finite observations in their recorded order. This does not attest
 // historical provider calls, timings or the origin of the recorded ordering.
-func replayIRSearchAttempts(ctx context.Context, pkg, body string, prior Result, plan IRBodySearchPlan) error {
+func replayIRSearchAttempts(ctx context.Context, p preparedBody, prior Result, plan IRBodySearchPlan) error {
 	s := prior.Report.BodySearch
 	if len(s.Attempts) == 0 || len(s.Attempts) > min(plan.MaxAttempts, len(plan.Candidates)) {
 		return fmt.Errorf("IR search attempt count exceeds its source contract")
@@ -21,7 +21,7 @@ func replayIRSearchAttempts(ctx context.Context, pkg, body string, prior Result,
 			return fmt.Errorf("IR search attempt %d has an unknown, repeated or changed candidate", i)
 		}
 		seen[a.CandidateID] = true
-		if err := replayIRSearchAttempt(ctx, pkg, body, prior.Report, plan, a); err != nil {
+		if err := replayIRSearchAttempt(ctx, p, plan, a); err != nil {
 			return fmt.Errorf("IR search attempt %d: %w", i, err)
 		}
 		if a.ScoringCompleted {
@@ -37,10 +37,10 @@ func replayIRSearchAttempts(ctx context.Context, pkg, body string, prior Result,
 	return replayIRSearchAttemptTotals(s, plan, best, selected, evaluated)
 }
 
-func replayIRSearchAttempt(ctx context.Context, pkg, body string, report Report,
+func replayIRSearchAttempt(ctx context.Context, p preparedBody,
 	plan IRBodySearchPlan, a IRBodySearchAttempt) error {
-	_, results, passed, typed, evaluationErr := evaluateSearchCandidate(ctx, pkg, report.Activity,
-		report.ActivityID, body, bodyFillHoleToken(plan.HoleID), a.Expression, plan.TestCases)
+	_, results, passed, typed, evaluationErr := evaluateSearchCandidate(ctx, p,
+		bodyFillHoleToken(plan.HoleID), a.Expression, plan.TestCases)
 	if err := ctx.Err(); err != nil {
 		return err
 	}

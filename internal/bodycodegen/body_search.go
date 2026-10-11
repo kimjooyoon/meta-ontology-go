@@ -9,7 +9,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/decisionroute"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -181,10 +180,11 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	if err := ctx.Err(); err != nil {
 		return fail("CALLER_CANCELLED", err)
 	}
-	file, activity, activityID, body, err := prepareBodySearch(filename, source, activityName, plan.HoleID)
+	p, err := prepareSearchBody(filename, source, activityName, plan.HoleID)
 	if err != nil {
 		return fail("INVALID_SOURCE", err)
 	}
+	activity, activityID, body := p.activity, p.activityID, p.body
 	remainingProviderBudget := providerBudget
 	remaining := append([]IRBodyFillCandidate(nil), plan.Candidates...)
 	bestPassed, bestBody := -1, ""
@@ -243,8 +243,8 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 		}
 		attempt.CandidateID, attempt.Expression = chosen.ID, chosen.Expression
 		evaluationStarted := time.Now()
-		candidateBody, results, passed, typed, err := evaluateSearchCandidate(ctx, file.Package.Name, activityName,
-			activityID, body, bodyFillHoleToken(plan.HoleID), chosen.Expression, plan.TestCases)
+		candidateBody, results, passed, typed, err := evaluateSearchCandidate(ctx, p,
+			bodyFillHoleToken(plan.HoleID), chosen.Expression, plan.TestCases)
 		attempt.EvaluationMS, attempt.TypecheckPassed = elapsedMS(evaluationStarted), typed
 		if err != nil {
 			attempt.Error = err.Error()
@@ -327,7 +327,7 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	return result, nil
 }
 
-func evaluateSearchCandidate(ctx context.Context, packageName, activity, activityID, body, hole, expression string,
+func evaluateSearchCandidate(ctx context.Context, p preparedBody, hole, expression string,
 	cases []IRBodyFillTestCase,
 ) (string, []IRBodyFillCaseResult, int, bool, error) {
 	expr, err := parser.ParseExpr(expression)
@@ -337,15 +337,15 @@ func evaluateSearchCandidate(ctx context.Context, packageName, activity, activit
 	if err := validateExpression(expr); err != nil {
 		return "", nil, 0, false, err
 	}
-	filled, err := replaceIdentifier(body, hole, expression)
+	filled, err := replaceIdentifier(p.body, hole, expression)
 	if err != nil {
 		return "", nil, 0, false, err
 	}
-	generated, err := generateRoute(packageName, activity, activityID, "int64", "int64", filled, preserveRoute)
+	generated, err := p.generateBody(filled, preserveRoute)
 	if err != nil {
 		return "", nil, 0, false, err
 	}
-	results, passed, err := evaluateIntegerCasesContext(ctx, generated.source, activity, cases)
+	results, passed, err := evaluateIntegerCasesContext(ctx, generated.source, p.activity.Name, cases)
 	return filled, results, passed, true, err
 }
 
@@ -502,43 +502,11 @@ func validateIRBodySearchPlan(plan IRBodySearchPlan) error {
 }
 
 func prepareBodySearch(filename string, source []byte, activityName, holeID string) (*syntax.File, *syntax.ActivityDecl, string, string, error) {
-	file, diagnostics := ParseBodyFile(filename, source)
-	if diagnostics.HasErrors() {
-		return nil, nil, "", "", diagnostics.Error()
-	}
-	if file == nil || file.Package == nil {
-		return nil, nil, "", "", fmt.Errorf(".gooo source has no package declaration")
-	}
-	var activity *syntax.ActivityDecl
-	for _, declaration := range file.Declarations {
-		if candidate, ok := declaration.(*syntax.ActivityDecl); ok && candidate.Name == activityName {
-			activity = candidate
-		}
-	}
-	if activity == nil || !activity.ValueProgramPresent || activity.ValueProgram == "" {
-		return nil, nil, "", "", fmt.Errorf("activity %q has no computes body", activityName)
-	}
-	if len(activity.Inputs) != 1 || sourceScalarKind(file, activity.Inputs[0].Name) != "Integer" || sourceScalarKind(file, activity.Output) != "Integer" {
-		return nil, nil, "", "", fmt.Errorf("IR body search requires one Integer input and one Integer output")
-	}
-	model, _, err := resolveBodyModel(file)
+	p, err := prepareSearchBody(filename, source, activityName, holeID)
 	if err != nil {
 		return nil, nil, "", "", err
 	}
-	activityID := ""
-	for _, node := range model.Nodes {
-		if node.Kind == bidir.ActivityKind && node.Name == activityName {
-			activityID = string(node.ID)
-		}
-	}
-	if activityID == "" {
-		return nil, nil, "", "", fmt.Errorf("activity %q has no stable semantic identity", activityName)
-	}
-	body, err := rewriteLetDeclarations(activity.ValueProgram)
-	if err != nil || countIdentifier(body, bodyFillHoleToken(holeID)) != 1 {
-		return nil, nil, "", "", fmt.Errorf("activity %q must contain exactly one body-search hole", activityName)
-	}
-	return file, activity, activityID, body, nil
+	return p.file, p.activity, p.activityID, p.body, nil
 }
 
 func elapsedMS(started time.Time) float64 {

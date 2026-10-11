@@ -19,6 +19,15 @@ type preparedBody struct {
 }
 
 func prepareActivityBody(filename string, source []byte, activityName string) (preparedBody, error) {
+	p, err := prepareActivityBodySource(filename, source, activityName)
+	if err == nil {
+		p.base, err = p.generate(preserveRoute)
+	}
+	return p, err
+}
+
+// Prepare source identities and types before a search replaces its body hole.
+func prepareActivityBodySource(filename string, source []byte, activityName string) (preparedBody, error) {
 	var p preparedBody
 	file, diagnostics := ParseBodyFile(filename, source)
 	if diagnostics.HasErrors() {
@@ -58,10 +67,6 @@ func prepareActivityBody(filename string, source []byte, activityName string) (p
 	}
 	p.packageName = file.Package.Name
 	p.body, err = rewriteLetDeclarations(p.activity.ValueProgram)
-	if err != nil {
-		return p, err
-	}
-	p.base, err = p.generate(preserveRoute)
 	return p, err
 }
 

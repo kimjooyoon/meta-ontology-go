@@ -81,12 +81,12 @@ func RealizeSourceSearchCandidate(ctx context.Context, filename string, source [
 	if !found {
 		return SearchCandidate{}, nil, fmt.Errorf("search candidate exceeds the source grammar or attempt budget")
 	}
-	file, declaration, id, body, err := prepareBodySearch(filename, source, activity, plan.HoleID)
+	p, err := prepareSearchBody(filename, source, activity, plan.HoleID)
 	if err != nil {
 		return SearchCandidate{}, nil, err
 	}
-	filled, cases, passed, typed, err := evaluateSearchCandidate(ctx, file.Package.Name, activity, id, body, bodyFillHoleToken(plan.HoleID), candidate.Expression, plan.TestCases)
-	observation := SearchCandidate{Schema: "gooo/search-candidate/v1", Activity: activity, ActivityID: id,
+	filled, cases, passed, typed, err := evaluateSearchCandidate(ctx, p, bodyFillHoleToken(plan.HoleID), candidate.Expression, plan.TestCases)
+	observation := SearchCandidate{Schema: "gooo/search-candidate/v1", Activity: activity, ActivityID: p.activityID,
 		InputSourceSHA256: digest(source), PlanSHA256: set.PlanSHA256,
 		AttemptBudget: set.AttemptBudget, CandidateCount: len(set.Candidates), Generation: set.Generation,
 		Attempt: IRBodySearchAttempt{CandidateID: candidate.ID, Expression: candidate.Expression,
@@ -98,7 +98,7 @@ func RealizeSourceSearchCandidate(ctx context.Context, filename string, source [
 		observation.Attempt.Error = err.Error()
 		return observation, nil, &SourceSearchCandidateRejection{cause: err}
 	}
-	selected, err := replaceActivityProgram(source, declaration.ValueProgramSpan, filled)
+	selected, err := replaceActivityProgram(source, p.activity.ValueProgramSpan, filled)
 	if err != nil {
 		return SearchCandidate{}, nil, err
 	}

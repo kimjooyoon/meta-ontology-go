@@ -124,6 +124,14 @@ a graph containing only source IR search rejects that option before loading a
 model. No provider is inferred from environment variables in `body-compose`.
 Multi-hole `source_fill` plans use the additional route below.
 
+Development source also connects pure activity calls inside an IR search body.
+The [helper search example](../examples/caller-search-calls/README.md) assembles a
+record helper before selecting a caller's denominator. Candidate checks, residual
+probes, final emission and replay resolve the same source-declared helpers.
+Failed local arithmetic attempts remain in the search record. Their indirect
+argument history is still incomplete, so affected input-separation measurements
+remain `UNKNOWN`. Public 0.6.29 predates this connection.
+
 ## Source-owned multi-hole construction
 
 ```sh
