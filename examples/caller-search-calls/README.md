@@ -39,3 +39,10 @@ other assembly profiles and the combination of local and native histories still
 need coverage before input separation can improve. That metric remains `UNKNOWN`
 for inputs whose exposure cannot be established. See the
 [local call observation contract](../../docs/local-call-observations.md).
+
+The [saved synthetic observation](observed-local-calls-47b80a0f.json) binds a clean
+development build at `47b80a0f` to the original source digest. Its one constructor
+invocation retained eight helper calls across four local evaluation passes,
+including `Seed(0)` before the first candidate failed. Native evaluation and
+saved JSON replay each matched 3/3 supplied rows with zero model calls. Full
+construction input separation remained `UNKNOWN`; these are finite observations.
