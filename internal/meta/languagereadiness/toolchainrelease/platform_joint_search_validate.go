@@ -91,6 +91,10 @@ func validateJointSearchRejection(a jointSmokeAttempt, c jointSmokeSearchCandida
 }
 
 func validateJointSearchRuntime(r jointSmokeRuntime, cases []jointSmokeCase, baseline bool) error {
+	return validateSearchRuntimeActivity(r, cases, baseline, "candidateerror://activity/main")
+}
+
+func validateSearchRuntimeActivity(r jointSmokeRuntime, cases []jointSmokeCase, baseline bool, activity string) error {
 	passed := len(cases)
 	if baseline {
 		passed = 0
@@ -111,7 +115,7 @@ func validateJointSearchRuntime(r jointSmokeRuntime, cases []jointSmokeCase, bas
 		if baseline {
 			actual = []byte("1")
 		}
-		if d.ID != "candidateerror://activity/main" || !samePackageSourceValue(d.Input, cases[i].Inputs["Main"]) ||
+		if d.ID != activity || !samePackageSourceValue(d.Input, cases[i].Inputs["Main"]) ||
 			!samePackageSourceValue(d.Expected, expected) || !samePackageSourceValue(d.Actual, actual) || !jointSmokeBool(d.Passed, !baseline) {
 			return fmt.Errorf("caller IR search native actual value differs")
 		}

@@ -11,8 +11,9 @@ The selected assignment matches both local cases and its separate holdout case.
 `Main(6)` later reaches `Seed(0)`, while `Main(8)` reaches `Seed(2)`. Both root
 inputs are different from the local training inputs, but the inner function has
 already received these values. The input-separation report counts two overlapping
-inputs and leaves the remaining input unknown. Fill preflight and other construction
-boundaries still have incomplete capture. This example establishes no general
+inputs and leaves the remaining input unknown. The recorded producer predates
+fill-preflight capture. Newer development source records that boundary, while
+other construction coverage remains incomplete. This example establishes no general
 correctness or model-quality result.
 
 ## Run from development source

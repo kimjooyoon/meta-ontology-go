@@ -38,9 +38,10 @@ weak model proposal, so its finite score must be read separately from the model
 ranking. The source includes Korean and English intent text plus typed cases;
 one such example cannot measure Korean or English language understanding.
 
-Local helper-input recording during fill preflight and selection remains
-incomplete. Input separation for this constructed-helper pipeline can remain
-`UNKNOWN`, even when the supplied native cases pass.
+The original observation below predates local helper-input recording during fill
+preflight and selection. Newer development source records those boundaries;
+remaining construction coverage is still incomplete. Input separation for this
+pipeline can remain `UNKNOWN`, even when the supplied native cases pass.
 
 ## Recorded use of the public model
 
