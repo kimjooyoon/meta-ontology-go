@@ -1,6 +1,6 @@
 # A local model ranks a helper, then Gooo fills its caller
 
-This development example joins two construction stages in one Gooo source.
+This example requires Gooo 0.6.30 or later and joins two construction stages\nin one Gooo source.
 `Choose` declares variable assignments, a comparison, alternative branch layouts
 and output/condition cases. The public source-relative model can rank those
 declared paths. Gooo evaluates them within the source attempt budget.
@@ -39,7 +39,7 @@ ranking. The source includes Korean and English intent text plus typed cases;
 one such example cannot measure Korean or English language understanding.
 
 The original observation below predates local helper-input recording during fill
-preflight and selection. Newer development source records those boundaries;
+preflight and selection. Gooo 0.6.30 records those boundaries;
 remaining construction coverage is still incomplete. Input separation for this
 pipeline can remain `UNKNOWN`, even when the supplied native cases pass.
 

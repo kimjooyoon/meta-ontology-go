@@ -1,7 +1,8 @@
 # Observe inputs used before candidate selection
 
-This development example records the pure probes used to validate an IR-search
-grammar before choosing a body. Public compiler 0.6.29 predates this feature.
+This example records the pure probes used to validate an IR-search grammar
+before choosing a body. It requires Gooo 0.6.30 or later; see the
+[release guide](../../docs/releases/0.6.30-dev.md).
 
 `Build` must choose an offset inside `Step(input + offset)`. Its source case is
 `2 -> 6`, and `Step` doubles its argument. The residual grammar probes offsets

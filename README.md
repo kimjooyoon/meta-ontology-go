@@ -18,7 +18,7 @@ This example needs **Go 1.27.2** and no model or API key. In a new working
 directory on macOS or Linux:
 
 ```sh
-GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.29-dev
+GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.30-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -26,16 +26,16 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 ```
 
-This walkthrough pins the published 0.6.29 compiler. The
-[0.6.29 release guide](docs/releases/0.6.29-dev.md) covers source-relative local
-decision models, saved construction reports and actual function-input history.
-Failed candidates remain visible. The original model observation used the same
-candidate count with model ranking and deterministic ordering.
+This walkthrough pins the published 0.6.30 compiler. The
+[0.6.30 release guide](docs/releases/0.6.30-dev.md) explains failed-candidate
+recovery, body fill using helpers, retained search pools and the inputs actually
+used during construction. A failed attempt keeps its reached inputs and consumes
+its attempt budget; a later declared candidate can still produce a usable program.
 
-The next [0.6.30 development release](docs/releases/0.6.30-dev.md) is being
-prepared with failed-candidate recovery, body fill using helpers, retained search
-pools and local input histories. Its guide distinguishes development observations
-from the still-pending release build.
+The existing small decision model can suggest which declared path to try first.
+Gooo checks the supplied cases and saves the selected program for replay. The
+model-to-fill example keeps its original 0/4 first proposal alongside the later
+4/4 result. Those are finite case counts; model-free ordering is also available.
 
 The last command prints:
 
@@ -457,7 +457,7 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| [Compiler 0.6.29](docs/releases/0.6.29-dev.md) | SDK 0.2.41; finite program construction, native execution, saved replay and actual construction-input history | Broader useful programs and unmet requirements |
+| [Compiler 0.6.30](docs/releases/0.6.30-dev.md) | SDK 0.2.41; helper-aware body fill, failed-candidate recovery, fixed search pools and saved input histories | Broader useful programs and unmet requirements |
 | [SDK 0.2.41 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.41-experimental) | Go model loaders, source-relative inputs and bounded construction sessions | Broader source and behavior coverage |
 | [Canonical and relation models](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1) | Freshly initialized small models, complete authored study records and failed candidates | Expected-output relations and new-task evaluation |
 | [Earlier shared judgment models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Historical wording and operation-order results |
