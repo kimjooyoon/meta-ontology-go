@@ -1,0 +1,23 @@
+package divisionlayout
+namespace divisionlayout
+entity Integer id "division-layout://integer"
+
+activity Choose(Integer) -> Integer id "division-layout://choose" computes `let remaining = input
+let amount = remaining
+if 23 < remaining { amount = remaining + 7 } else { amount = remaining / 3 }
+return amount` assembling {
+    choice "comparison" operand_order at "0" intent "입력이 23 미만인지 확인한다. Check whether input is below 23."
+    choice "branches" branch_layout at "0" intent "23 미만이면 3으로 나눈 몫을 쓰고, 그 외에는 7을 더한다. Below 23 use remaining / 3; otherwise use remaining + 7."
+    case "-9" -> "-3"
+    case "0" -> "0"
+    case "22" -> "7"
+    case "23" -> "30"
+    case "25" -> "32"
+    case "44" -> "51"
+    condition_case "comparison" input "22" -> "true"
+    condition_case "comparison" input "23" -> "false"
+    condition_case "comparison" input "25" -> "false"
+    attempts "4"
+}
+
+activity Main(Integer) -> Integer id "division-layout://main" computes "return Choose(input)"

@@ -107,6 +107,8 @@ func recipeOperation(op token.Token) string {
 		return "subtract"
 	case token.MUL:
 		return "multiply"
+	case token.QUO:
+		return "divide"
 	case token.LSS:
 		return "less_than"
 	case token.LEQ:

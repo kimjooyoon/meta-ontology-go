@@ -1,6 +1,6 @@
 package main
 
-const modelsHelp = modelsCoreHelp + modelsSourceRelativeHelp + modelsFinishHelp
+const modelsHelp = modelsCoreHelp + modelsSourceRelativeHelp + modelsSourceRelativeV2Help + modelsFinishHelp
 
 const modelsCoreHelp = `Use a local decision model with Gooo
 
@@ -10,8 +10,8 @@ Omit --path-model (body-codegen) or --model (body-construct/body-compose)
 for deterministic order. A supplied unreadable or incompatible file is an error.
 
 Check the compiler's included SDK with gooo version --build --json.
-This source checkout includes SDK 0.2.41 and the source-relative model connection.
-The public compiler 0.6.28 includes SDK 0.2.40 and its canonical model connection.
+This source checkout adds the explicitly versioned V2 return-layout connection.
+The public compiler 0.6.32 includes SDK 0.2.41 and the V1 source-relative connection.
 
 Typed integer branches, comparisons and variables:
   1. From the matching source checkout, get model-choice-v1.json and its checksum
@@ -95,4 +95,17 @@ caller case results measure the constructed program. Saved replay makes zero
 new predictions. Native execution requires Go1.27.2 on the host.
 
 See docs/declared-contract-model.md and docs/record-model-preflight.md.
+`
+
+const modelsSourceRelativeV2Help = `V2 source-relative return-layout model:
+  See docs/source-relative-v2-contract-model.md for the pinned new model.
+  This source connection supports fixed Integer division in typed choices.
+
+  gooo body-context --activity Choose --model model-v2.json \
+    examples/body-codegen/source-division-layout-cases.gooo.fixture
+
+  V2 metadata selects the V2 input encoder. V1 retains its original meaning.
+  Omit the model for deterministic order. A supplied incompatible model is an error.
+  Recorded first-choice accuracy and checked completion are reported separately.
+
 `
