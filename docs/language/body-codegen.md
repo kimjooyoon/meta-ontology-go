@@ -656,9 +656,12 @@ probes, selected training and selected holdout passes against each actual helper
 closure. Record fill records its value-case passes. Failed evaluations retain
 their entered prefix; caller-selected assignments retain their own local passes.
 See [fill history](../../examples/caller-fill-history/README.md) and the
-[recording contract](../local-call-observations.md). Separate fill preflight and
-other construction boundaries still have incomplete capture. Input-exposure
-metrics count recorded overlaps while retaining `UNKNOWN` for missing coverage.
+[recording contract](../local-call-observations.md). Composition also retains
+`fill_validations` from the original independent-body and prepared-helper checks.
+Their replay repeats bounded deterministic preflight scoring without a model.
+Path preflight and other construction boundaries still have incomplete capture.
+Input-exposure metrics count recorded overlaps while retaining `UNKNOWN` for
+missing coverage.
 
 The evidence sent in this call is candidate-level TDD data computed before
 emission, not a GitHub Actions result. CI runs after a generated revision

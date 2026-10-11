@@ -85,12 +85,26 @@ validation error keeps all earlier validation entries in the failed composition.
 
 Saved replay verifies these explicit preflight boundaries against their original
 source checkpoints. This repeats their pure validation probes; it does not load
-a model or repeat candidate selection. Older compositions with no validation
+a model. Older compositions with no validation
 history stay readable and do not acquire invented observations. Original
 record/search selection histories retain their existing replay behavior.
 
+Compositions retain `fill_validations` for the same two stages of source body
+fill. Existing fill validation already performs bounded deterministic candidate
+scoring, probes and selected-case checks. Each entry now keeps those original
+passes with its source checkpoint and activity identity. Failed and canceled
+validation keeps its entered prefix; a failure before the evaluator has no call
+history. `completed` means validation returned successfully, even when finite
+case scores are below 100%.
+
+Replay of a recorded fill validation repeats that deterministic preflight work
+and compares its history. It loads no model. These replay passes are additional
+work relative to older receipts that did not record fill validation; they do not
+provide new independent evaluation cases. Recording during original construction
+does not add another scoring pass. Older receipts retain their missing history.
+
 A retained prefix is positive evidence of use. It does not prove that an input
-absent from the prefix was never used. Path assembly, path/fill preflight,
+absent from the prefix was never used. Path assembly, path preflight,
 candidate-set planning and the remaining construction boundaries still need
 complete capture. Missing or partial coverage therefore
 keeps other affected inputs `UNKNOWN`. The metric reads source-replayed records;
