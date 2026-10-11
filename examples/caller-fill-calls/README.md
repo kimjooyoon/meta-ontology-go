@@ -36,3 +36,16 @@ and call bounds apply. Full recording of helper arguments throughout fill
 preflight and selection remains work in progress, so constructed-helper input
 independence can remain `UNKNOWN`. Finite passing examples cover only their
 declared rows.
+
+The [saved synthetic observation](observed-helper-fill-deb93c0a.json) binds clean
+development source `deb93c0a` to one original construction and saved replay. It
+selected `shifted`, matching 1/1 local training and 1/1 holdout cases. Native
+evaluation and saved replay each matched 3/3 supplied rows, with zero model
+calls. The report retained `Step`'s source identity and body digest.
+
+Command accounting on macOS ARM64 reported construction plus evaluation at
+0.62 seconds wall, 0.28 seconds user CPU, 0.22 seconds system CPU and 86,228,992
+bytes maximum RSS. Replay reported 0.35 seconds wall, 0.16 seconds user CPU,
+0.11 seconds system CPU and 86,736,896 bytes maximum RSS. These single runs
+include compilation and subprocesses; cache state and startup affect the totals.
+Instantaneous system CPU utilization was not measured.
