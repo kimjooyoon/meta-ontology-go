@@ -1,0 +1,135 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "gooo/examples/bytefill:IndexByte": {
+          "needle": 111,
+          "text": "gooo"
+        }
+      },
+      "expected": {
+        "gooo/examples/bytefill:IndexByte": {
+          "offset": 1
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/examples/bytefill:IndexByte": {
+          "needle": 108,
+          "text": "hello"
+        }
+      },
+      "expected": {
+        "gooo/examples/bytefill:IndexByte": {
+          "offset": 2
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/examples/bytefill:IndexByte": {
+          "needle": 97,
+          "text": ""
+        }
+      },
+      "expected": {
+        "gooo/examples/bytefill:IndexByte": {
+          "offset": -1
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/examples/bytefill:IndexByte": {
+          "needle": 122,
+          "text": "abcd"
+        }
+      },
+      "expected": {
+        "gooo/examples/bytefill:IndexByte": {
+          "offset": -1
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/examples/bytefill:IndexByte": {
+          "needle": 97,
+          "text": "aaaa"
+        }
+      },
+      "expected": {
+        "gooo/examples/bytefill:IndexByte": {
+          "offset": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/examples/bytefill:IndexByte": {
+          "needle": 98,
+          "text": "abc"
+        }
+      },
+      "expected": {
+        "gooo/examples/bytefill:IndexByte": {
+          "offset": 1
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/examples/bytefill:IndexByte": {
+          "needle": 176,
+          "text": "가"
+        }
+      },
+      "expected": {
+        "gooo/examples/bytefill:IndexByte": {
+          "offset": 1
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/examples/bytefill:IndexByte": {
+          "needle": 0,
+          "text": "\u0000x"
+        }
+      },
+      "expected": {
+        "gooo/examples/bytefill:IndexByte": {
+          "offset": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/examples/bytefill:IndexByte": {
+          "needle": 122,
+          "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz"
+        }
+      },
+      "expected": {
+        "gooo/examples/bytefill:IndexByte": {
+          "offset": 1023
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/examples/bytefill:IndexByte": {
+          "needle": 120,
+          "text": "가x"
+        }
+      },
+      "expected": {
+        "gooo/examples/bytefill:IndexByte": {
+          "offset": 3
+        }
+      }
+    }
+  ]
+}

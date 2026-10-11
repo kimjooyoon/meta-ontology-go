@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	goooVersion   = "0.6.31-dev"
+	goooVersion   = "0.6.32-dev"
 	versionSchema = "gooo-version/v1"
 	versionStatus = "development"
 	versionUsage  = "usage: gooo version [--build] [--json]"

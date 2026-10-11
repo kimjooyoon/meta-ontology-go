@@ -44,6 +44,9 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 	if err := smokeBoundedText(binary, input); err != nil {
 		return err
 	}
+	if err := smokeComputationPackages(binary, input); err != nil {
+		return err
+	}
 	if err := smokePackageSource(binary, input); err != nil {
 		return err
 	}
