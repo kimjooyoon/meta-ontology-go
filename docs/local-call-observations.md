@@ -39,6 +39,21 @@ or an additional scoring pass. Saved JSON indentation does not change typed
 values. Historical receipts without this field remain readable with their
 original absence; replay does not add a claim about past execution.
 
+New source-search receipts also retain `initial_candidate_set`, including the
+ordered expressions, plan digest and attempt budget created at that source
+checkpoint. Caller-guided construction reads this pool without rerunning its
+candidate-generation probes. Later candidates record `planning_source_sha256`
+for the pool's origin and `input_source_sha256` for the helper implementation
+actually tested. Their call history contains the new candidate evaluation; the
+initial generation's probes remain in the original receipt.
+
+The caller's finite search space uses those fixed initial pools. It does not
+include expressions that a new context-dependent grammar pass might propose
+after changing another helper. Saved replay checks the pool against its original
+source before checking the combinations. Older receipts without a retained pool
+keep their previous planning and replay behavior. See the
+[helper-checkpoint example](../examples/caller-search-checkpoint/README.md).
+
 Record assembly also captures each original candidate evaluation in
 `record_assembly.attempts[].local_calls`, including caller-selected record
 candidates. Its phase is `record-candidate`; the candidate ID is the decimal

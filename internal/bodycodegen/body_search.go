@@ -62,6 +62,7 @@ type IRBodySearchAttempt struct {
 // IRBodySearchReceipt records candidate evidence and provider resolver activity.
 // ProviderOperations counts calls with an endpoint, including canceled calls, rather than HTTP requests.
 type IRBodySearchReceipt struct {
+	CandidateSet                *RetainedSearchCandidateSet             `json:"initial_candidate_set,omitempty"`
 	LocalCalls                  *LocalCallHistory                       `json:"local_calls,omitempty"`
 	Schema                      string                                  `json:"schema"`
 	IRPlanSHA256                string                                  `json:"ir_plan_sha256"`
@@ -161,8 +162,9 @@ func generateWithIRBodySearchBudget(ctx context.Context, filename string, source
 	planBytes, _ := json.Marshal(plan)
 	trainingBytes, _ := json.Marshal(plan.TestCases)
 	receipt := &IRBodySearchReceipt{
-		LocalCalls: localCalls,
-		Schema:     bodySearchPlanSchema, IRPlanSHA256: digest(planBytes), OriginalSourceDigest: digest(source),
+		CandidateSet: retainedSearchCandidateSet(plan, digest(planBytes), candidateGeneration),
+		LocalCalls:   localCalls,
+		Schema:       bodySearchPlanSchema, IRPlanSHA256: digest(planBytes), OriginalSourceDigest: digest(source),
 		TrainingSuiteSHA256: digest(trainingBytes), TrainingTotal: len(plan.TestCases),
 		HoldoutTotal: len(plan.HoldoutTestCases), CandidateCount: len(plan.Candidates),
 		UntestedCandidates: len(plan.Candidates), Attempts: []IRBodySearchAttempt{}, AttemptBudget: &plan.MaxAttempts,
