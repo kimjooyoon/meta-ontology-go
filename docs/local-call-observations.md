@@ -46,8 +46,23 @@ it receives no completed case score. Cancellation stops construction. Exhausting
 the budget before any candidate completes produces an error with its original
 record receipt. `body-construct` exposes this as `initial.record_failure`.
 
-Input separation still needs the rest of the construction history: separate
-preflight, path/fill assembly evaluations, and every consumed caller
-candidate. The current input-separation metric continues to report `UNKNOWN`
-when those inputs are unavailable. The new local trace provides evidence for
-that next integration; it supplies no general correctness or independence score.
+The input-separation metric now includes these recorded helper arguments from
+initial construction and every consumed record/search candidate. This includes
+local rejections that never reached native execution. An input reached before a
+failure counts as used during construction, even if that candidate received no
+completed score. The metric compares source activity identities and typed values;
+it preserves exact integers and optional record fields. Fixed pure helpers have
+no source-owned candidate selection and do not create another learned target.
+
+A retained prefix is positive evidence of use. It does not prove that an input
+absent from the prefix was never used. Separate preflight and path/fill assembly
+evaluations still need complete capture. Missing or partial coverage therefore
+keeps other affected inputs `UNKNOWN`. The metric reads source-replayed records;
+it runs no extra candidate or model evaluation and does not rewrite old receipts.
+
+In the `caller-search-calls` example, `Main(-1)` reaches `Seed(0)`. That same
+helper input was reached by a failing construction candidate. Including the
+saved trace classifies two of the three evaluation inputs as overlapping, with
+one still unknown. The finite 3/3 result is unchanged; it is not three independent
+cases or a general correctness claim. The saved `47b80a0f` observation remains
+the original producer's report, with its earlier one-overlap/two-unknown metric.

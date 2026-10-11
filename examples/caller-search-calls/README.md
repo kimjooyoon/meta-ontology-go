@@ -34,10 +34,10 @@ selected holdout passes. A failed candidate keeps the calls already entered,
 including earlier cases. The trace records coerced values at actual call entry;
 it does not execute an expression again to collect a value.
 
-This covers the IR search engine invocation. Separate preflight evaluations,
-other assembly profiles and the combination of local and native histories still
-need coverage before input separation can improve. That metric remains `UNKNOWN`
-for inputs whose exposure cannot be established. See the
+The metric includes recorded local record/search inputs and consumed native
+caller attempts. Separate preflight and other assembly profiles still need
+complete capture. It remains `UNKNOWN` for inputs whose exposure cannot be
+established. See the
 [local call observation contract](../../docs/local-call-observations.md).
 
 The [saved synthetic observation](observed-local-calls-47b80a0f.json) binds a clean
@@ -46,3 +46,10 @@ invocation retained eight helper calls across four local evaluation passes,
 including `Seed(0)` before the first candidate failed. Native evaluation and
 saved JSON replay each matched 3/3 supplied rows with zero model calls. Full
 construction input separation remained `UNKNOWN`; these are finite observations.
+
+The [later input-exposure observation](observed-input-exposure-ade411e9.json)
+binds clean development source `ade411e9` to one new construction and saved
+replay using the same source and case files. Including recorded `Seed(0)` now
+classifies two evaluation inputs as overlapping and one as unknown. It declares
+no new disjoint inputs. Native results remain 3/3, with zero model calls. The
+earlier observation stays unchanged.

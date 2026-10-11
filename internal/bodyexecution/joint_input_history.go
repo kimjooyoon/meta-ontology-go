@@ -38,6 +38,10 @@ func (calls *jointCallContext) measureHistory(ctx context.Context, filename stri
 		return calls.graph.unclassifiedJointInputs(suite, result)
 	}
 	for _, attempt := range prior.Attempts {
+		if err := calls.graph.includeJointLocalInputs(&seen, attempt); err != nil {
+			result.Reason = "LOCAL_CONSTRUCTION_INPUTS_UNAVAILABLE"
+			return calls.graph.unclassifiedJointInputs(suite, result)
+		}
 		if attempt.Rejection != nil {
 			continue // A rejected candidate never reached the native caller.
 		}
