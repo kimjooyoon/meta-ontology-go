@@ -62,6 +62,11 @@ func TestRetainedSearchCandidatesBindOriginalPoolAndCurrentExecution(t *testing.
 	if _, err := RetainedSourceSearchCandidates(canceled, "retained.gooo", current, "Build", search); err == nil {
 		t.Fatal("canceled planning succeeded")
 	}
+	assertRetainedSearchSavedReplay(t, ctx, source, r)
+}
+
+func assertRetainedSearchSavedReplay(t *testing.T, ctx context.Context, source []byte, r Result) {
+	t.Helper()
 	raw, _ := json.MarshalIndent(r, "", "  ")
 	var saved Result
 	if err := json.Unmarshal(raw, &saved); err != nil {
