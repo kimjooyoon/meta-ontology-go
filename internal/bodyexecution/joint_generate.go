@@ -61,6 +61,12 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 	if r.Schema == jointPathSchema {
 		r.Scope = "source-bounded typed paths, record masks, search expressions and fill assignments; initial local model observations retained unchanged; typed paths use the initial selected mask first, then deterministic fallback distance and numeric order within the source attempt cap; record ranking and source search/fill orders retain their own contracts; local cases and native caller cases remain separate; no model calls in subsequent candidates or saved replay; rejected combined paths consume attempts without caller scores; finite observations only"
 	}
+	for _, slot := range slots {
+		if slot.searchReceipt != nil {
+			r.Scope += "; source search candidate sets stay fixed at their initial source checkpoints; changed helper combinations rerun local cases without regenerating context-dependent pools"
+			break
+		}
+	}
 	calls, err := prepareJointCallContext(ctx, filename, source, r)
 	if err != nil {
 		return finish(err)
@@ -146,7 +152,7 @@ func materializeJoint(ctx context.Context, filename string, source []byte, cases
 			if int(masks[i]) >= len(slot.searchIDs) {
 				return attempt, nil, Composition{}, fmt.Errorf("search candidate index exceeds the source bound")
 			}
-			candidate, selected, err := bodycodegen.RealizeSourceSearchCandidate(ctx, filename, current, slot.activity, slot.searchIDs[masks[i]])
+			candidate, selected, err := realizeJointSearch(ctx, filename, current, slot, slot.searchIDs[masks[i]])
 			if err != nil {
 				var rejected *bodycodegen.SourceSearchCandidateRejection
 				if errors.As(err, &rejected) && ctx.Err() == nil {

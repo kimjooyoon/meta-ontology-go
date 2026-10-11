@@ -16,6 +16,7 @@ type SourceSearchCandidateSet struct {
 }
 
 type SearchCandidate struct {
+	PlanningSourceSHA256 string                                  `json:"planning_source_sha256,omitempty"`
 	LocalCalls           *LocalCallHistory                       `json:"local_calls,omitempty"`
 	Schema               string                                  `json:"schema"`
 	Activity             string                                  `json:"activity"`
@@ -82,6 +83,11 @@ func RealizeSourceSearchCandidate(ctx context.Context, filename string, source [
 	if err != nil {
 		return SearchCandidate{}, nil, err
 	}
+	return realizeSourceSearchCandidatePlan(ctx, filename, source, activity, candidateID, plan, set, localCalls, "")
+}
+
+func realizeSourceSearchCandidatePlan(ctx context.Context, filename string, source []byte, activity, candidateID string,
+	plan IRBodySearchPlan, set SourceSearchCandidateSet, localCalls *LocalCallHistory, planningSource string) (SearchCandidate, []byte, error) {
 	candidate, found := candidateByID(plan.Candidates[:min(plan.MaxAttempts, len(plan.Candidates))], candidateID)
 	if !found {
 		return SearchCandidate{}, nil, fmt.Errorf("search candidate exceeds the source grammar or attempt budget")
@@ -92,7 +98,8 @@ func RealizeSourceSearchCandidate(ctx context.Context, filename string, source [
 	}
 	filled, cases, passed, typed, err := evaluateSearchCandidate(localCallPhase(ctx, "candidate", candidate.ID), p,
 		bodyFillHoleToken(plan.HoleID), candidate.Expression, plan.TestCases)
-	observation := SearchCandidate{LocalCalls: localCalls, Schema: "gooo/search-candidate/v1", Activity: activity, ActivityID: p.activityID,
+	observation := SearchCandidate{PlanningSourceSHA256: planningSource, LocalCalls: localCalls,
+		Schema: "gooo/search-candidate/v1", Activity: activity, ActivityID: p.activityID,
 		InputSourceSHA256: digest(source), PlanSHA256: set.PlanSHA256,
 		AttemptBudget: set.AttemptBudget, CandidateCount: len(set.Candidates), Generation: set.Generation,
 		Attempt: IRBodySearchAttempt{CandidateID: candidate.ID, Expression: candidate.Expression,

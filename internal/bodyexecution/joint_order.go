@@ -10,14 +10,15 @@ import (
 )
 
 type jointSlot struct {
-	activity     string
-	initial      uint16
-	ranking      []uint16
-	searchIDs    []string
-	fillIDs      []string
-	fillRejected bool
-	pathMasks    []uint16
-	pathReceipt  *bodycodegen.BodyPathReceipt
+	activity      string
+	initial       uint16
+	ranking       []uint16
+	searchIDs     []string
+	searchReceipt *bodycodegen.IRBodySearchReceipt
+	fillIDs       []string
+	fillRejected  bool
+	pathMasks     []uint16
+	pathReceipt   *bodycodegen.BodyPathReceipt
 }
 
 func jointSlots(ctx context.Context, filename string, source []byte, prior Composition) ([]jointSlot, string, error) {
@@ -44,7 +45,7 @@ func jointSlots(ctx context.Context, filename string, source []byte, prior Compo
 			continue
 		}
 		if search := step.Generation.Report.BodySearch; search != nil {
-			set, err := bodycodegen.PlanSourceSearchCandidates(ctx, filename, source, step.Generation.Report.Activity)
+			set, err := jointSearchCandidateSet(ctx, filename, source, step.Generation.Report.Activity, search)
 			if err != nil {
 				return nil, "", err
 			}
@@ -52,6 +53,9 @@ func jointSlots(ctx context.Context, filename string, source []byte, prior Compo
 				return nil, "", fmt.Errorf("joint source search contract differs from initial construction")
 			}
 			slot := jointSlot{activity: step.Generation.Report.Activity}
+			if search.CandidateSet != nil {
+				slot.searchReceipt = search
+			}
 			found := false
 			for i, candidate := range set.Candidates[:min(set.AttemptBudget, len(set.Candidates))] {
 				slot.searchIDs = append(slot.searchIDs, candidate.ID)
