@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"strings"
 )
 
 func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (Declaration, error) {
@@ -20,7 +21,7 @@ func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (De
 		declaration.ID = ID(id)
 	}
 	if activity.ValueProgramPresent || activity.ValueProgram != "" {
-		declaration.Attributes = map[string]string{ActivityValueProgramAttribute: activity.ValueProgram}
+		declaration.Attributes = map[string]string{ActivityValueProgramAttribute: strings.TrimSpace(activity.ValueProgram)}
 	}
 	if activity.Assembly != nil {
 		if declaration.Attributes == nil {
