@@ -340,7 +340,10 @@ func TestGenerateWithIRBodyFillTimesOutWithoutDeadlockAndUsesFallback(t *testing
 		t.Fatalf("timeout did not produce a deterministic fallback receipt: %#v", result.Report.BodyFill)
 	}
 	timing := result.Report.BodyFill.Timing
-	if timing.LayaDecisionMS != 0 || timing.TinyDecisionMS != 0 || timing.ProviderDecisionMS < 50 {
+	// The caller deadline also covers planning and probes, so it does not
+	// guarantee a minimum duration for the later provider decision stage.
+	if timing.LayaDecisionMS != 0 || timing.TinyDecisionMS != 0 ||
+		timing.ProviderDecisionMS <= 0 || timing.ProviderDecisionMS > timing.TotalMS {
 		t.Fatalf("failed Laya request timing was attributed incorrectly: %#v", timing)
 	}
 	if result.Report.BodyFill.SelectedCandidateID != "zero" || result.Report.BodyFill.FunctionalAccuracyPct != 100 {

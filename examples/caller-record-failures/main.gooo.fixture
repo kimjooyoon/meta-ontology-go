@@ -1,0 +1,14 @@
+package recordfailure
+namespace recordfailure
+entity Integer id "recordfailure://integer"
+entity Box id "recordfailure://box" fields {
+    field value id "recordfailure://value" type integer required one
+}
+activity Step(Integer) -> Integer computes "return input + 1"
+activity Build(Integer) -> Box computes "let denominator = input; return Box{value: Step(input) / denominator}" assembling {
+    choice "value" field_value at "0" alternative "Step(input)" intent "Keep the helper result for every supplied input."
+    value_case "[2]" -> "{\"value\":3}"
+    value_case "[0]" -> "{\"value\":1}"
+    attempts "2"
+}
+activity Main(Integer) -> Integer computes "let result = Build(input); return result.value"

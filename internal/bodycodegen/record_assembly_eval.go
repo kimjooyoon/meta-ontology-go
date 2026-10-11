@@ -192,6 +192,11 @@ func (e *integerBodyEvaluator) evaluateRecordField(selector *ast.SelectorExpr) (
 
 func evaluateRecordAssembly(ctx context.Context, source []byte, activity string, records []RecordType,
 	cases []assemblyspec.ValueCase) ([]RecordAssemblyCase, error) {
+	return evaluateRecordAssemblyRecorded(ctx, source, activity, records, cases, nil)
+}
+
+func evaluateRecordAssemblyRecorded(ctx context.Context, source []byte, activity string, records []RecordType,
+	cases []assemblyspec.ValueCase, recorder *localCallRecorder) ([]RecordAssemblyCase, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -204,7 +209,7 @@ func evaluateRecordAssembly(ctx context.Context, source []byte, activity string,
 	if !ok {
 		return nil, fmt.Errorf("record function is missing")
 	}
-	e := integerBodyEvaluator{context: ctx, information: types.Info{Types: make(map[ast.Expr]types.TypeAndValue),
+	e := integerBodyEvaluator{context: ctx, localCalls: recorder, information: types.Info{Types: make(map[ast.Expr]types.TypeAndValue),
 		Defs: make(map[*ast.Ident]types.Object), Uses: make(map[*ast.Ident]types.Object)}}
 	if _, err = new(types.Config).Check(file.Name.Name, fset, []*ast.File{file}, &e.information); err != nil {
 		return nil, err
@@ -222,15 +227,19 @@ func evaluateRecordAssembly(ctx context.Context, source []byte, activity string,
 		return nil, fmt.Errorf("record output contract is missing")
 	}
 	results := make([]RecordAssemblyCase, 0, len(cases))
-	for _, c := range cases {
+	for caseIndex, c := range cases {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
+		e.caseIndex = caseIndex
 		result, err := e.evaluateRecordCase(function, inputs, output, *record, records, c)
 		if err != nil {
 			return nil, err
 		}
 		results = append(results, result)
+		if recorder != nil {
+			recorder.observation.CasesCompleted++
+		}
 	}
 	return results, ctx.Err()
 }
@@ -253,6 +262,9 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 	expected, err := decodeRecordCaseValue([]byte(c.Expected), output, records)
 	if err != nil {
 		return RecordAssemblyCase{}, fmt.Errorf("value_case expected: %w", err)
+	}
+	if e.localCalls != nil {
+		e.localCalls.observation.CasesStarted++
 	}
 	value, returned, err := e.evaluateBlock(function.Body)
 	if err != nil || !returned {

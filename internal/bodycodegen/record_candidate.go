@@ -21,6 +21,13 @@ type RecordCandidate struct {
 	Cases                []RecordAssemblyCase  `json:"cases"`
 }
 
+// SourceRecordCandidateRejection is a typed or evaluated source candidate that
+// cannot satisfy an evaluable local contract. Cancellation is not a rejection.
+type SourceRecordCandidateRejection struct{ cause error }
+
+func (e *SourceRecordCandidateRejection) Error() string { return e.cause.Error() }
+func (e *SourceRecordCandidateRejection) Unwrap() error { return e.cause }
+
 // RealizeRecordCandidate checks one source-declared combination and makes its
 // body callable. It does not change local expectations, claim a local optimum,
 // load a model or write a legacy assembly receipt with different semantics.
@@ -37,10 +44,14 @@ func RealizeRecordCandidate(ctx context.Context, filename string, source []byte,
 	if err != nil {
 		return RecordCandidate{}, nil, err
 	}
-	if attempt.Total == 0 {
-		return RecordCandidate{}, nil, fmt.Errorf("record candidate has no evaluable local obligations: %s", attempt.Reason)
-	}
 	r := newRecordAssemblyReceipt(source, p)
+	observation := RecordCandidate{Schema: "gooo/record-candidate/v1", Activity: activity, ActivityID: p.body.activityID,
+		InputSourceSHA256: digest(source), ContractSHA256: r.ContractSHA256, AttemptBudget: p.spec.MaxAttempts,
+		CandidateCount: len(r.Ranking), Attempt: attempt, Cases: cases}
+	if attempt.Total == 0 {
+		return observation, nil, &SourceRecordCandidateRejection{
+			cause: fmt.Errorf("record candidate has no evaluable local obligations: %s", attempt.Reason)}
+	}
 	r.SelectedMask, r.Attempts, r.Cases = mask, []RecordAssemblyAttempt{attempt}, cases
 	r.Passed, r.Total = attempt.Passed, attempt.Total
 	r.FieldsPassed, r.FieldsTotal = attempt.FieldsPassed, attempt.FieldsTotal
@@ -53,8 +64,6 @@ func RealizeRecordCandidate(ctx context.Context, filename string, source []byte,
 	if err != nil {
 		return RecordCandidate{}, nil, err
 	}
-	return RecordCandidate{Schema: "gooo/record-candidate/v1", Activity: activity, ActivityID: p.body.activityID,
-		InputSourceSHA256: digest(source), SelectedSourceSHA256: digest([]byte(selected)),
-		ContractSHA256: r.ContractSHA256, AttemptBudget: p.spec.MaxAttempts,
-		CandidateCount: len(r.Ranking), Attempt: attempt, Cases: cases}, []byte(selected), nil
+	observation.SelectedSourceSHA256 = digest([]byte(selected))
+	return observation, []byte(selected), nil
 }

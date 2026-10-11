@@ -55,14 +55,25 @@ type RecordValueChoice struct {
 }
 
 type RecordAssemblyAttempt struct {
-	Mask         uint16 `json:"mask"`
-	Status       string `json:"status,omitempty"`
-	Reason       string `json:"reason,omitempty"`
-	Passed       int    `json:"passed"`
-	Total        int    `json:"total"`
-	FieldsPassed int    `json:"fields_passed"`
-	FieldsTotal  int    `json:"fields_total"`
+	LocalCalls   *LocalCallObservation `json:"local_calls,omitempty"`
+	Mask         uint16                `json:"mask"`
+	Status       string                `json:"status,omitempty"`
+	Reason       string                `json:"reason,omitempty"`
+	Passed       int                   `json:"passed"`
+	Total        int                   `json:"total"`
+	FieldsPassed int                   `json:"fields_passed"`
+	FieldsTotal  int                   `json:"fields_total"`
 }
+
+// RecordAssemblyError retains a bounded attempted prefix even when no candidate
+// can be emitted. Caller cancellation remains available through errors.Is.
+type RecordAssemblyError struct {
+	Receipt *RecordAssemblyReceipt
+	Cause   error
+}
+
+func (e *RecordAssemblyError) Error() string { return e.Cause.Error() }
+func (e *RecordAssemblyError) Unwrap() error { return e.Cause }
 
 type RecordAssemblyCase struct {
 	Inputs   json.RawMessage       `json:"inputs"`

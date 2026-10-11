@@ -17,26 +17,27 @@ type CompositionStep struct {
 }
 
 type Composition struct {
-	Schema               string                         `json:"schema"`
-	Stage                string                         `json:"stage"`
-	Failure              string                         `json:"failure,omitempty"`
-	FillFailure          *bodycodegen.IRBodyFillFailure `json:"fill_failure,omitempty"`
-	ActiveActivity       string                         `json:"active_activity,omitempty"`
-	OriginalSourceSHA256 string                         `json:"original_source_sha256"`
-	SelectedSourceSHA256 string                         `json:"selected_source_sha256"`
-	GeneratedSHA256      string                         `json:"generated_sha256"`
-	DriverSHA256         string                         `json:"driver_sha256"`
-	Plan                 CompositionPlan                `json:"plan"`
-	Steps                []CompositionStep              `json:"steps"`
-	Preparations         []CompositionStep              `json:"preparations,omitempty"`
-	GoooSource           string                         `json:"gooo_source"`
-	Source               string                         `json:"source"`
-	Driver               string                         `json:"driver_source"`
-	Model                *bodycodegen.RetainedModelInfo `json:"model,omitempty"`
-	FillModel            *CompositionFillModelInfo      `json:"fill_model,omitempty"`
-	ElapsedNS            int64                          `json:"elapsed_ns"`
-	Scope                string                         `json:"scope"`
-	Continuation         *CompositionContinuation       `json:"continuation,omitempty"`
+	Schema               string                             `json:"schema"`
+	Stage                string                             `json:"stage"`
+	Failure              string                             `json:"failure,omitempty"`
+	FillFailure          *bodycodegen.IRBodyFillFailure     `json:"fill_failure,omitempty"`
+	RecordFailure        *bodycodegen.RecordAssemblyReceipt `json:"record_failure,omitempty"`
+	ActiveActivity       string                             `json:"active_activity,omitempty"`
+	OriginalSourceSHA256 string                             `json:"original_source_sha256"`
+	SelectedSourceSHA256 string                             `json:"selected_source_sha256"`
+	GeneratedSHA256      string                             `json:"generated_sha256"`
+	DriverSHA256         string                             `json:"driver_sha256"`
+	Plan                 CompositionPlan                    `json:"plan"`
+	Steps                []CompositionStep                  `json:"steps"`
+	Preparations         []CompositionStep                  `json:"preparations,omitempty"`
+	GoooSource           string                             `json:"gooo_source"`
+	Source               string                             `json:"source"`
+	Driver               string                             `json:"driver_source"`
+	Model                *bodycodegen.RetainedModelInfo     `json:"model,omitempty"`
+	FillModel            *CompositionFillModelInfo          `json:"fill_model,omitempty"`
+	ElapsedNS            int64                              `json:"elapsed_ns"`
+	Scope                string                             `json:"scope"`
+	Continuation         *CompositionContinuation           `json:"continuation,omitempty"`
 }
 
 // GenerateComposition constructs each activity in typed plan order, retaining
@@ -62,6 +63,9 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 			result.Failure = err.Error()
 			if rejected, ok := errors.AsType[*bodycodegen.NoValidBodyFillCandidates](err); ok {
 				result.FillFailure = &rejected.Observation
+			}
+			if rejected, ok := errors.AsType[*bodycodegen.RecordAssemblyError](err); ok {
+				result.RecordFailure = rejected.Receipt
 			}
 		}
 		return result, err
@@ -175,6 +179,7 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 		return graph, err
 	}
 	if prior.Schema != "gooo/body-composition/v1" || prior.Stage != "COMPLETE" || prior.Failure != "" ||
+		prior.FillFailure != nil || prior.RecordFailure != nil ||
 		prior.OriginalSourceSHA256 != digest(source) ||
 		!sameCompositionPlan(prior.Plan, graph.plan) || len(prior.Steps) != graph.count {
 		return graph, fmt.Errorf("composition original source, typed plan or step order differs")
