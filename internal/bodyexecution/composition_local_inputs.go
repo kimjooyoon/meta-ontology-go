@@ -11,6 +11,11 @@ import (
 // historical inputs. A partial capture proves exposure for its retained prefix;
 // it cannot establish that other inputs were absent during construction.
 func (graph compositionGraph) includeCompositionLocalInputs(seen *compositionSelectionInputs, prior Composition) error {
+	for _, check := range prior.SearchValidations {
+		if err := graph.includeLocalCallHistory(seen, check.Observation.ActivityID, check.Observation.LocalCalls); err != nil {
+			return err
+		}
+	}
 	for _, step := range prior.ConstructionSteps() {
 		report := step.Generation.Report
 		if report.BodySearch != nil {
