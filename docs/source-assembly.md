@@ -197,9 +197,9 @@ program's supplied-case and holdout counts remain separate from its first choice
 
 The [single-condition byte search](../examples/body-codegen/source-ir-fill-single-byte.gooo.fixture)
 keeps its loop and return structure in Gooo while choosing one match predicate.
-It has six selection cases and four separate holdout cases. Build the development
-source containing single-hole `source_fill` support to run it; the published
-0.6.31 compiler predates this source grammar extension.
+It has six selection cases and four separate holdout cases. The public
+[0.6.32 compiler](releases/0.6.32-dev.md) supports this grammar. The earlier
+0.6.31 compiler predates the single-hole extension.
 
 ```sh
 env -u GOOO_LAYA_URL -u GOOO_LAYA_API_KEY \

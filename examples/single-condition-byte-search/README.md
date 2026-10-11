@@ -5,9 +5,9 @@ predicates. Only `match` is left open. The first candidate uses `<`; the second
 uses `==`. Selection checks six source-declared cases, then reports four held-out
 cases separately. No model file or API key is required.
 
-This example needs development source containing the one-hole grammar, introduced
-after the published 0.6.31 compiler. The [0.6.32 source guide](../../docs/releases/0.6.32-dev.md)
-describes the release preparation.
+Use the public Gooo 0.6.32 compiler containing the one-hole grammar. The
+[0.6.32 guide](../../docs/releases/0.6.32-dev.md) identifies the actual source,
+platform checks and published files. The earlier 0.6.31 compiler predates this grammar.
 
 From the compiler checkout with Go 1.27.2:
 
