@@ -18,7 +18,7 @@ This example needs **Go 1.27.2** and no model or API key. In a new working
 directory on macOS or Linux:
 
 ```sh
-GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.30-dev
+GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.31-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -26,11 +26,20 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 ```
 
-This walkthrough pins the published 0.6.30 compiler. The
-[0.6.30 release guide](docs/releases/0.6.30-dev.md) explains failed-candidate
-recovery, body fill using helpers, retained search pools and the inputs actually
-used during construction. A failed attempt keeps its reached inputs and consumes
-its attempt budget; a later declared candidate can still produce a usable program.
+This walkthrough pins the published 0.6.31 compiler. The
+[0.6.31 guide](docs/releases/0.6.31-dev.md) adds counted loops and byte access
+for bounded Text operations, including a search function imported by another
+Gooo package. It also accepts indentation and line breaks around a computes body.
+The [0.6.30 guide](docs/releases/0.6.30-dev.md) explains failed-candidate recovery,
+helper-aware body fill, retained search pools and actual construction inputs.
+A failed attempt consumes its budget; later declared candidates can still yield
+a usable program.
+
+The [bounded string operations example](examples/bounded-string-operations/README.md)
+implements substring search, non-overlapping counts and UTF-8 rune counts in Gooo.
+Its importing app and saved replay are checked against 20 Go reference cases.
+For development source, [single-condition assembly](docs/source-assembly.md)
+leaves one predicate open while retaining the declared loop and return structure.
 
 The existing small decision model can suggest which declared path to try first.
 Gooo checks the supplied cases and saves the selected program for replay. The
@@ -457,7 +466,7 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| [Compiler 0.6.30](docs/releases/0.6.30-dev.md) | SDK 0.2.41; helper-aware body fill, failed-candidate recovery, fixed search pools and saved input histories | Broader useful programs and unmet requirements |
+| [Compiler 0.6.31](docs/releases/0.6.31-dev.md) | SDK 0.2.41; counted loops, Text byte access, helper-aware construction and saved replay | Broader useful programs and unmet requirements |
 | [SDK 0.2.41 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.41-experimental) | Go model loaders, source-relative inputs and bounded construction sessions | Broader source and behavior coverage |
 | [Canonical and relation models](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1) | Freshly initialized small models, complete authored study records and failed candidates | Expected-output relations and new-task evaluation |
 | [Earlier shared judgment models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Historical wording and operation-order results |

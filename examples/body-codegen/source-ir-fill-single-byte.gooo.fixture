@@ -1,0 +1,32 @@
+package bytefill
+namespace bytefill
+entity Query id "gooo://bytefill/query" fields {
+    field text id "gooo://bytefill/query/text" type string required one
+    field needle id "gooo://bytefill/query/needle" type integer required one
+}
+entity Result id "gooo://bytefill/result" fields {
+    field offset id "gooo://bytefill/result/offset" type integer required one
+}
+activity IndexByte(Query) -> Result id "gooo://bytefill/index-byte" computes `if input.needle < 0 || input.needle > 255 { return Result{offset: -1} }
+let offset = 0
+for offset = 0; offset < 1024; offset = offset + 1 {
+    if offset >= int64(len(input.text)) { return Result{offset: -1} }
+    if __GOOO_BODY_HOLE_match__ { return Result{offset: offset} }
+}
+return Result{offset: -1}` assembling {
+    source_fill intent "Find the first byte matching the needle and return its byte offset." {
+        hole "match"
+        candidate "lower" { fill "match" "int64(input.text[offset]) < input.needle" }
+        candidate "equal" { fill "match" "int64(input.text[offset]) == input.needle" }
+    }
+    value_case "[{\"needle\":111,\"text\":\"gooo\"}]" -> "{\"offset\":1}"
+    value_case "[{\"needle\":108,\"text\":\"hello\"}]" -> "{\"offset\":2}"
+    value_case "[{\"needle\":97,\"text\":\"\"}]" -> "{\"offset\":-1}"
+    value_case "[{\"needle\":122,\"text\":\"abcd\"}]" -> "{\"offset\":-1}"
+    value_case "[{\"needle\":97,\"text\":\"aaaa\"}]" -> "{\"offset\":0}"
+    value_case "[{\"needle\":98,\"text\":\"abc\"}]" -> "{\"offset\":1}"
+    holdout_value_case "[{\"needle\":176,\"text\":\"가\"}]" -> "{\"offset\":1}"
+    holdout_value_case "[{\"needle\":0,\"text\":\"\\u0000x\"}]" -> "{\"offset\":0}"
+    holdout_value_case "[{\"needle\":122,\"text\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz\"}]" -> "{\"offset\":1023}"
+    holdout_value_case "[{\"needle\":120,\"text\":\"가x\"}]" -> "{\"offset\":3}"
+}

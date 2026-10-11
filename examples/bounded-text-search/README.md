@@ -3,9 +3,9 @@
 Gooo로 문자열을 한 바이트씩 읽어 원하는 값의 위치를 찾는 예제입니다.
 작은 검색 함수를 다른 Gooo 패키지에서 가져오고, 저장한 프로그램도 다시 실행합니다.
 
-This example needs development source containing counted-loop and Text byte-index
-support. The existing public 0.6.30 release predates this change. Build the matching
-source with Go 1.27.2 before running it.
+This example runs with [Gooo 0.6.31-dev](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.31-dev).
+The [release guide](../../docs/releases/0.6.31-dev.md) identifies its source and
+four native platform checks. Generated code execution needs Go 1.27.2.
 
 `search.gooo.fixture` implements byte search in Gooo. `app.gooo.fixture` imports it
 and passes a declared `Query` record. The loop counter is a local initialized to

@@ -9,7 +9,7 @@ expectations in one declaration. `assembling` is a typed syntax node, preserved 
 bidirectional lowering into semantic IR. It expands through the existing recipe
 arena and optional-model/TDD pipeline.
 
-For multi-hole IR body generation, Gooo can own a finite set of complete
+For IR body generation with one or more holes, Gooo can own a finite set of complete
 assignments or derive expressions and their combinations from a closed grammar.
 A model ranks the complete assignments as one decision; it cannot add expressions
 outside that set. Every selected hole is checked against the declared integer cases,
@@ -183,11 +183,29 @@ activity ... computes <quoted-or-raw-body> assembling {
 Canonical formatting puts each choice on one line. Whitespace/comments separate
 fields. Quoted decimal numbers follow the existing policy grammar. Input and
 expected values span int64. Formatting preserves decoded Korean/English intent.
-`source_fill` requires 2–8 holes, and either 2–16 candidates with exactly one fill
+`source_fill` requires 1–8 holes, and either 2–16 candidates with exactly one fill
 per hole in declaration order, or one bounded `derive` clause with 2–16 expressions
 per hole and 2–16 complete assignments. Manual candidates and `derive` are mutually
 exclusive. It is mutually exclusive with path
 choices, search, checkpoints, sampling seeds, and attempt budgets.
+
+A single hole is useful when the surrounding control flow is already declared
+and only one condition or value remains to be chosen. It uses the same finite
+candidate assignments and typed checks. A counted loop can keep its fixed bound
+and counter update while the fill plan selects its match condition. The selected
+program's supplied-case and holdout counts remain separate from its first choice.
+
+The [single-condition byte search](../examples/body-codegen/source-ir-fill-single-byte.gooo.fixture)
+keeps its loop and return structure in Gooo while choosing one match predicate.
+It has six selection cases and four separate holdout cases. Build the development
+source containing single-hole `source_fill` support to run it; the published
+0.6.31 compiler predates this source grammar extension.
+
+```sh
+env -u GOOO_LAYA_URL -u GOOO_LAYA_API_KEY \
+  go run ./cmd/gooo body-codegen --json --activity IndexByte \
+  examples/body-codegen/source-ir-fill-single-byte.gooo.fixture
+```
 
 ### Intermediate conditions
 
