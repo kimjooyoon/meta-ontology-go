@@ -161,6 +161,16 @@ The witness compares native values with the independent case files and requires
 zero model calls. All three evaluation inputs retain unknown construction
 exposure. These finite counts remain separate from the structural release corpus.
 
+The helper-fill history profile adds another two raw outputs per platform.
+The candidate binary constructs and replays `examples/caller-fill-history`.
+Its first rejected assignment must retain both entered helper arguments and an
+incomplete local evaluation. The profile checks the prepared-source preflight,
+helper identity, selected hole assignment, 2/2 local training and 1/1 holdout
+results, and 3/3 native outputs against the independent evaluation file. Two
+evaluation inputs overlap construction and one remains unknown. Missing inference
+counts fail the profile. Saved replay preserves the complete original history;
+a failed command retains its raw output and stops the profile.
+
 The selected readiness run must have all of these properties:
 
 - workflow name `Gooo release readiness`;
