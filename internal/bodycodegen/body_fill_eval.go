@@ -192,6 +192,8 @@ func (e *integerBodyEvaluator) evaluateExpression(expression ast.Expr) (any, err
 			return result, err
 		}
 		return e.evaluatePureCall(value)
+	case *ast.IndexExpr:
+		return e.evaluateTextByte(value)
 	case *ast.SliceExpr:
 		return e.evaluateTextSlice(value)
 	case *ast.CompositeLit:
@@ -293,12 +295,14 @@ func coerceBodyValue(value any, valueType types.Type) (any, error) {
 		return nil, fmt.Errorf("unsupported generated value type %s", valueType)
 	}
 	switch basic.Kind() {
-	case types.Int, types.Int32, types.Int64, types.UntypedInt, types.UntypedRune:
+	case types.Int, types.Int32, types.Int64, types.Uint8, types.UntypedInt, types.UntypedRune:
 		number, ok := value.(int64)
 		if !ok {
 			return nil, fmt.Errorf("generated integer value has type %T", value)
 		}
-		if basic.Kind() == types.Int32 {
+		if basic.Kind() == types.Uint8 {
+			number = int64(uint8(number))
+		} else if basic.Kind() == types.Int32 {
 			number = int64(int32(number))
 		} else if basic.Kind() == types.Int {
 			number = int64(int(number))

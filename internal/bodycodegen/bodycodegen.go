@@ -411,6 +411,11 @@ func validateExpression(expression ast.Expr) error {
 	switch value := expression.(type) {
 	case *ast.CallExpr:
 		return validatePureCallExpression(value)
+	case *ast.IndexExpr:
+		if err := validateExpression(value.X); err != nil {
+			return err
+		}
+		return validateExpression(value.Index)
 	case *ast.SliceExpr:
 		if value.Slice3 {
 			return fmt.Errorf("Text slices accept only low and high byte offsets")

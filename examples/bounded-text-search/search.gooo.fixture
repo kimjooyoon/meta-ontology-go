@@ -1,0 +1,17 @@
+package search
+namespace gooo_bounded_search
+
+entity Text id "gooo://std/text"
+entity Integer id "gooo://std/integer"
+entity Query id "gooo://bounded-search/query" fields {
+    field text id "gooo://bounded-search/query/text" type string required one
+    field needle id "gooo://bounded-search/query/needle" type integer required one
+}
+
+activity IndexByte(Text, Integer) -> Integer id "gooo://bounded-search/index-byte" computes `if input1 < 0 || input1 > 255 { return -1 }
+let offset = 0
+for offset = 0; offset < 1024; offset = offset + 1 {
+    if offset >= int64(len(input0)) { return -1 }
+    if int64(input0[offset]) == input1 { return offset }
+}
+return -1`
