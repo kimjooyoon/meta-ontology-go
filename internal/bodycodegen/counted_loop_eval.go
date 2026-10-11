@@ -13,7 +13,7 @@ func (e *integerBodyEvaluator) evaluateCountedLoop(loop *ast.ForStmt) (any, bool
 	if err := e.evaluateAssignment(loop.Init.(*ast.AssignStmt)); err != nil {
 		return nil, false, err
 	}
-	for iteration := 0; iteration < bound; iteration++ {
+	for range bound {
 		value, err := e.evaluateExpression(loop.Cond)
 		if err != nil {
 			return nil, false, err
