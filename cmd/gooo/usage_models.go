@@ -1,6 +1,8 @@
 package main
 
-const modelsHelp = `Use a local decision model with Gooo
+const modelsHelp = modelsCoreHelp + modelsSourceRelativeHelp + modelsFinishHelp
+
+const modelsCoreHelp = `Use a local decision model with Gooo
 
 Gooo declares the available code paths and required output/condition cases.
 A compatible local model proposes candidate order; Gooo checks each candidate.
@@ -8,8 +10,8 @@ Omit --path-model (body-codegen) or --model (body-construct/body-compose)
 for deterministic order. A supplied unreadable or incompatible file is an error.
 
 Check the compiler's included SDK with gooo version --build --json.
-This 0.6.28 candidate includes SDK 0.2.40 and supports the ordered-source and
-canonical models described below. The earlier public 0.6.27 includes SDK 0.2.37.
+This source checkout includes SDK 0.2.41 and the source-relative model connection.
+The public compiler 0.6.28 includes SDK 0.2.40 and its canonical model connection.
 
 Typed integer branches, comparisons and variables:
   1. From the matching source checkout, get model-choice-v1.json and its checksum
@@ -66,7 +68,23 @@ Canonical direct-return and assignment source, research model:
   retain a decline reason and continue deterministic search with zero predictions.
   The paired study reports weak first-choice results; existing defaults remain unchanged.
 
-Included record-field example:
+`
+
+const modelsSourceRelativeHelp = `Source-relative comparison conditions, research model:
+  The source-relative artifact on Hugging Face is supported by this checkout.
+  See docs/source-relative-contract-model.md for the pinned file and checksum.
+
+  gooo body-context --activity Choose --model model-relative.json \
+    examples/body-codegen/source-relative-batch.gooo.fixture
+
+  source_relative_features holds the exact 528 inputs used for ranking.
+  source_relative_conditions explains the 16 relation cells at [192:208].
+  One prediction precedes candidate execution; later steps reuse the finite queue.
+  The guide includes native construction, deterministic use and model-free replay.
+
+`
+
+const modelsFinishHelp = `Included record-field example:
   gooo body-context --activity Describe \
     --model examples/scalar-identity/model/model.json examples/scalar-identity/source.gooo.fixture
   See gooo help body-compose for record assembly and saved replay.

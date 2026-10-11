@@ -18,7 +18,7 @@ This example needs **Go 1.27.2** and no model or API key. In a new working
 directory on macOS or Linux:
 
 ```sh
-GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.27-dev
+GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.28-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -26,11 +26,12 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 ```
 
-This walkthrough pins the published 0.6.27 compiler. The
-[0.6.27 release guide](docs/releases/0.6.27-dev.md) covers comparing saved outcomes
-when a rule changes. The [0.6.28 candidate guide](docs/releases/0.6.28-dev.md)
-covers readable construction reports, reading saved results without execution,
-Markdown outcome comparisons and the latest supported local decision models.
+This walkthrough pins the published 0.6.28 compiler. The
+[0.6.28 release guide](docs/releases/0.6.28-dev.md) covers saved construction reports
+and comparing outcomes when a rule changes. The [0.6.29 candidate guide](docs/releases/0.6.29-dev.md)
+covers source-relative local decision models and more precise construction-input
+accounting. Its published observation retains the first failed candidate and shows
+the same candidate count with the model and fixed ordering.
 
 The last command prints:
 
@@ -277,6 +278,8 @@ Its SDK 0.2.36 artifact has 9,746 parameters; ordinary finite checks and saved
 model-free execution remain part of the compiler path.
 
 Development source also accepts the [SDK0.2.40 canonical branch model](docs/canonical-contract-model.md).
+The [SDK0.2.41 source-relative model](docs/source-relative-contract-model.md) adds explicit
+comparison/condition relations and a batch-amount example for construction and saved replay.
 It reads supported direct-return and assignment forms as the same calculation,
 while retaining original source identities and execution. Its research weights
 and low first-choice results are public; the released compiler0.6.27 predates this adapter.

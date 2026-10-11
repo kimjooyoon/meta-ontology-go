@@ -30,7 +30,9 @@ func checkOrderedContractScores(t *testing.T, g *TypedPathGenerator,
 	t.Helper()
 	inputs := make([][contractdecision.OrderedFeatureDim]float32, len(before.Inputs))
 	for i, row := range before.Inputs {
-		if row.CanonicalFeatures != nil {
+		if row.SourceRelativeFeatures != nil {
+			inputs[i] = *row.SourceRelativeFeatures
+		} else if row.CanonicalFeatures != nil {
 			inputs[i] = *row.CanonicalFeatures
 		} else {
 			inputs[i] = *row.OrderedFeatures
@@ -40,6 +42,9 @@ func checkOrderedContractScores(t *testing.T, g *TypedPathGenerator,
 	var expected contractdecision.ChoicePrediction
 	var err error
 	switch model := g.condition.contract.(type) {
+	case *contractdecision.SourceRelativeRequirementModel:
+		var workspace contractdecision.InteractionRequirementWorkspace
+		err = model.PredictChoicesInto(inputs, cases, cases, &workspace, &expected)
 	case *contractdecision.CanonicalInteractionRequirementModel:
 		var workspace contractdecision.InteractionRequirementWorkspace
 		err = model.PredictChoicesInto(inputs, cases, cases, &workspace, &expected)
