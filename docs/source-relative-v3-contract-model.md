@@ -1,8 +1,9 @@
 # V3에서 소스 상수와 반환값 예시의 관계 읽기
 
-현재 소스 체크아웃은 공개 SDK0.2.44의 V3 모델을 `body-context`,
-`body-codegen`, `body-construct` 경로에 연결합니다. 설치된 공개 Gooo0.6.33은
-SDK0.2.42와 V2 연결을 사용합니다. V3 공개 컴파일러 배포는 별도 단계입니다.
+[공개 Gooo0.6.34](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.34-dev)는
+SDK0.2.44의 V3 모델을 `body-context`, `body-codegen`, `body-construct` 경로에
+연결합니다. 공개 소스는 `b266c0e2cf6878385b59788945861a03e33f766b`, Go는1.27.2입니다.
+V2 연결도 유지합니다. [설치와 결과 읽기](https://github.com/kimjooyoon/meta-ontology-go/wiki/V3-Output-Relations-Release-0.6.34).
 
 Gooo는 원본 조건식·반환 계산·변수와 허용된 대안을 유지합니다. 모델은 먼저
 검사할 조합을 정합니다. V3는 선언된 입력·기대값과 소스 정수 상수의 관계를
@@ -46,7 +47,7 @@ hf download asketeddy/gooo-canonical-decision-tiny-v1 \
 
 모델 파일의 SHA256은
 `683a19f86fb3a7b5b4e436d1b692884b96b613652caa693e321818bde8645816`입니다.
-현재 소스에서 빌드한 Gooo에 이 파일을 `--model` 또는 `--path-model`로
+공개 Gooo0.6.34에 이 파일을 `--model` 또는 `--path-model`로
 명시해 사용합니다. 구체적인 원본 소스·호출·평가 파일은
 [V2 실행 안내](source-relative-v2-contract-model.md#모델과-소스)의 명령과 같습니다.
 
@@ -59,3 +60,21 @@ hf download asketeddy/gooo-canonical-decision-tiny-v1 \
 새 영점 가중치 회귀 검사는 소스 검사, 원본 바디 조립, 별도 native8/8,
 모델 삭제 후 저장 결과8/8과 큰 Integer 값의 유지를 확인합니다.
 학습된 모델의 위 평가 결과와 회귀 검사 결과는 각각의 분모로 읽습니다.
+
+## 공개 릴리스의 확인 범위
+
+[원본 핵심 CI](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38227814300),
+[원본 native 준비](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38227814162),
+[원본 발행](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38231010673)이
+같은 공개 소스로 완료됐습니다. 네 플랫폼의 V3 회귀는 같은8입력을 반복하며
+독립 행동 입력의 분모를 늘리지 않습니다.
+
+공개9파일 식별값·8체크섬·7출처 목록·소스 태그와 최종 발행 기록을 대조했습니다.
+필요한6파일의 바이트를 확인하고 실제 macOS arm64 배포 파일을 설치했습니다.
+다른 세 플랫폼 압축 파일은 API·체크섬 식별값을 대조했습니다.
+원래 학습·예측·native 실험은 문서 갱신을 위해 다시 실행하지 않았습니다.
+
+[보존된64평가 행의 언어·연산별 세부 결과](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1/tree/028ad98923f3d05a5404604bf33d89adde454c64/research/output-relations-v3-learning-20261012/audit)는
+한국어 첫 성공11/32→8/32, 영어10/32→10/32를 보여 줍니다. 같은64행의 사후
+분류이며 표현의 인과 효과나 일반적인 언어 이해율로 읽지 않습니다. 다음 실험은
+한영 표현·소스 배치·매개변수를 분리한 새 계약과 반대 요구를 사전에 계획합니다.
