@@ -37,6 +37,16 @@ func inspectAssemblyDependencies(s *snapshot, node semantic.Node, names map[stri
 			s.addUnknown(revision, id, "observe:oracle", observation.OracleActivity, "undeclared oracle activity")
 		}
 	}
+	if criteria := spec.Criteria; criteria != nil {
+		for _, predicate := range criteria.Predicates {
+			surface := "criteria:" + predicate.ID
+			if target, ok := names[predicate.Activity]; ok {
+				s.addEdge(target, id, "assembly_criterion", surface)
+			} else {
+				s.addUnknown(revision, id, surface, predicate.Activity, "undeclared criterion activity")
+			}
+		}
+	}
 	if plan := spec.FillPlan; plan != nil && plan.Generation != nil {
 		s.addUnknown(revision, id, "fill_generation", "", "generated candidate call set has not been materialized")
 	}

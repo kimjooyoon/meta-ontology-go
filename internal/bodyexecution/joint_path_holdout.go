@@ -38,6 +38,14 @@ func (r *JointConstruction) finishSourceHoldoutEvaluation(ctx context.Context, f
 		r.Schema = jointRecordHoldoutSchema
 		r.Scope += "; final record holdouts are measured after caller selection; field and case outcomes are separate; exact caller input overlap remains explicit"
 	}
+	r.FinalCriteriaHoldouts, err = evaluateJointCriteriaHoldouts(ctx, filename, source, *r)
+	if err != nil {
+		return err
+	}
+	if jointHasCriteria(*r) {
+		r.Schema = jointCriteriaSchema
+		r.Scope += "; local predicate/input pairs have separate satisfied, unsatisfied and unknown counts; final criteria holdouts are evaluated after caller selection"
+	}
 	r.Stage = "COMPLETE"
 	return ctx.Err()
 }

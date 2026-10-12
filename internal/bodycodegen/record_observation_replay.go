@@ -9,6 +9,9 @@ import (
 )
 
 func validateRecordObservationProbes(ctx context.Context, p recordAssemblyPlan) error {
+	if isCriteriaQuestionPlan(p) {
+		return validateCriteriaQuestionInputs(ctx, p)
+	}
 	if p.spec.Observation == nil {
 		return nil
 	}
@@ -33,6 +36,12 @@ func canonicalRecordObservation(r *RecordObservationReceipt) (*RecordObservation
 // checkpoints inherit those answers and check their current oracle against them.
 func replayRecordObservation(ctx context.Context, filename string, source []byte, plans []recordAssemblyPlan,
 	history []RecordAssemblyControlStage, prior, expected *RecordAssemblyReceipt) error {
+	if isCriteriaQuestionPlan(plans[0]) {
+		return replayCriteriaQuestions(ctx, source, plans, history, prior, expected)
+	}
+	if prior.CriteriaQuestions != nil {
+		return fmt.Errorf("criteria questions are absent from source")
+	}
 	original := source
 	if len(history) > 0 && history[0].Source != "" {
 		original = []byte(history[0].Source)

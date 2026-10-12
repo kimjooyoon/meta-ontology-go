@@ -160,7 +160,7 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 		if err != nil {
 			return err
 		}
-		if policyCases != nil {
+		if usableRecordAttempt(policyBest) {
 			best = 0
 		}
 	}
@@ -179,17 +179,15 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 			return err
 		}
 		r.Attempts = append(r.Attempts, attempt)
-		if attempt.Total == 0 {
+		if !usableRecordAttempt(attempt) {
 			continue
 		}
-		if policy != nil && (policyCases == nil || attempt.Passed > policyBest.Passed ||
-			(attempt.Passed == policyBest.Passed && attempt.FieldsPassed > policyBest.FieldsPassed)) {
+		if policy != nil && (!usableRecordAttempt(policyBest) || betterRecordAttempt(attempt, policyBest, true)) {
 			policyBest, policyCases = attempt, cases
 		}
-		if best < 0 || attempt.FieldsPassed > r.FieldsPassed || (attempt.FieldsPassed == r.FieldsPassed && attempt.Passed > r.Passed) {
+		if best < 0 || betterRecordAttempt(attempt, selectedRecordAttempt(r), false) {
 			best = len(r.Attempts) - 1
-			r.SelectedMask, r.Cases = mask, cases
-			r.Passed, r.Total, r.FieldsPassed, r.FieldsTotal = attempt.Passed, attempt.Total, attempt.FieldsPassed, attempt.FieldsTotal
+			selectRecordAttempt(r, attempt, cases)
 		}
 		keepGoing := true
 		if policy != nil {
@@ -200,12 +198,10 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 			if r.Control.Decisions[len(r.Control.Decisions)-1].Operation == "USE_OBSERVED_CANDIDATE" {
 				// The policy's best count refers to whole cases. Preserve that
 				// meaning even when another candidate matches more individual fields.
-				r.SelectedMask, r.Cases = policyBest.Mask, policyCases
-				r.Passed, r.Total = policyBest.Passed, policyBest.Total
-				r.FieldsPassed, r.FieldsTotal = policyBest.FieldsPassed, policyBest.FieldsTotal
+				selectRecordAttempt(r, policyBest, policyCases)
 			}
 		}
-		if !keepGoing || attempt.Passed == attempt.Total {
+		if !keepGoing || completeRecordAttempt(attempt) {
 			break
 		}
 	}
@@ -218,7 +214,7 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 
 func finishRecordAssemblySearch(r *RecordAssemblyReceipt) {
 	r.Status = "PARTIAL_FINITE"
-	if r.Passed == r.Total {
+	if completeRecordAttempt(selectedRecordAttempt(r)) {
 		r.Status = "COMPLETE_FINITE"
 	}
 	for i := range r.Choices {

@@ -21,8 +21,13 @@ func recordAssemblyDimensions(r *RecordAssemblyReceipt) []CompletenessDimension 
 			dimensions[i].Status = "PROGRESS"
 		}
 	}
+	if r.Criteria != nil && r.Total == 0 {
+		dimensions = nil
+	}
 	if r.Holdout != nil {
 		dimensions = append(dimensions, recordHoldoutDimensions(r.Holdout)...)
 	}
+	dimensions = append(dimensions, recordCriteriaDimensions(r.Criteria, "criteria_selection")...)
+	dimensions = append(dimensions, recordCriteriaDimensions(r.CriteriaHoldout, "criteria_holdout")...)
 	return dimensions
 }

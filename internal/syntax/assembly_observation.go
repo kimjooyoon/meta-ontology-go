@@ -14,7 +14,7 @@ func (p *Parser) parseAssemblyObservation() *assemblyspec.Observation {
 	seen := make(map[string]bool)
 	for !p.at(TokenRBrace) && !p.at(TokenEOF) {
 		field := p.expectIdentifier("observe field", DiagExpectedIdentifier)
-		if field.Name != "input" && field.Name != "value_input" && seen[field.Name] {
+		if field.Name != "input" && field.Name != "value_input" && field.Name != "criteria_input" && seen[field.Name] {
 			p.error(DiagUnexpectedDeclaration, field.Span, "duplicate observe field "+field.Name)
 		}
 		seen[field.Name] = true
@@ -32,6 +32,13 @@ func (p *Parser) parseAssemblyObservation() *assemblyspec.Observation {
 				p.error(DiagUnexpectedDeclaration, field.Span, "observe exceeds 32 value inputs")
 			} else {
 				o.ValueInputs = append(o.ValueInputs, input)
+			}
+		case "criteria_input":
+			input := p.assemblyValue()
+			if len(o.CriteriaInputs) == 32 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "observe exceeds 32 criteria inputs")
+			} else {
+				o.CriteriaInputs = append(o.CriteriaInputs, input)
 			}
 		case "oracle":
 			name := p.expectString()
@@ -82,6 +89,9 @@ func formatAssemblyObservation(out *strings.Builder, o *assemblyspec.Observation
 	}
 	for _, input := range o.ValueInputs {
 		fmt.Fprintf(out, "        value_input %s\n", quoteString(input))
+	}
+	for _, input := range o.CriteriaInputs {
+		fmt.Fprintf(out, "        criteria_input %s\n", quoteString(input))
 	}
 	if o.OracleActivity != "" {
 		fmt.Fprintf(out, "        oracle %s\n", quoteString(o.OracleActivity))

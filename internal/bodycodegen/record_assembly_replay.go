@@ -25,6 +25,8 @@ func bindRecordAssemblyScope(common *CompletenessReceipt, result Report) {
 			"effective_cases_sha256": o.EffectiveCasesSHA256, "oracle_evaluations": o.OracleEvaluations,
 			"candidate_evaluations": o.CandidateEvaluations, "reused_outputs": o.ReusedOutputs}
 	}
+	bindRecordCriteriaScope(common, r)
+	bindCriteriaQuestionScope(common, r)
 	common.Scope["domain_scope"] = "one source-owned pure record assembly with 1..16 typed inputs and declared scalar record fields"
 	common.Scope["decision_mode"], common.Scope["decision_provider"] = "deterministic_finite_tdd", "deterministic"
 	if r.ModelCalls > 0 {
@@ -99,6 +101,7 @@ func verifyRecordAssemblyObservations(expected, r *RecordAssemblyReceipt) error 
 		{"field choices", reflect.DeepEqual(expected.Choices, r.Choices)},
 		{"selected combination", expected.SelectedMask == r.SelectedMask},
 		{"case counts", expected.Passed == r.Passed && expected.Total == r.Total},
+		{"criteria evidence", equalLocalCallEvidence(expected.Criteria, r.Criteria)},
 		{"field counts", expected.FieldsPassed == r.FieldsPassed && expected.FieldsTotal == r.FieldsTotal},
 		{"finite status", expected.Status == r.Status},
 		{"policy decisions", reflect.DeepEqual(expected.Control, r.Control)},
@@ -122,6 +125,9 @@ func realizeRecordAssemblyProjection(ctx context.Context, filename string, sourc
 	}
 	if err := verifyRecordHoldout(expected.Holdout, r.Holdout); err != nil {
 		return Realization{}, err
+	}
+	if !equalLocalCallEvidence(expected.CriteriaHoldout, r.CriteriaHoldout) {
+		return Realization{}, fmt.Errorf("record criteria holdout does not replay")
 	}
 	a, b := prior.Report, generated.Report
 	if generated.Source != prior.Source || generated.GoooSource != prior.GoooSource || expected.SelectedSourceSHA256 != r.SelectedSourceSHA256 ||
@@ -237,6 +243,16 @@ func verifyRecordCommonReceipt(report Report) error {
 	actualObservation, _ := json.Marshal(report.CompletenessReceipt.Scope["record_observation"])
 	if string(expectedObservation) != string(actualObservation) {
 		return fmt.Errorf("record observation summary differs")
+	}
+	wantCriteria, _ := json.Marshal(expectedScope.Scope["record_criteria"])
+	gotCriteria, _ := json.Marshal(report.CompletenessReceipt.Scope["record_criteria"])
+	if string(wantCriteria) != string(gotCriteria) {
+		return fmt.Errorf("record criteria summary differs")
+	}
+	wantQuestions, _ := json.Marshal(expectedScope.Scope["criteria_questions"])
+	gotQuestions, _ := json.Marshal(report.CompletenessReceipt.Scope["criteria_questions"])
+	if string(wantQuestions) != string(gotQuestions) {
+		return fmt.Errorf("criteria question summary differs")
 	}
 	for _, expected := range recordAssemblyDimensions(report.RecordAssembly) {
 		index := slices.IndexFunc(report.CompletenessReceipt.Dimensions, func(d CompletenessDimension) bool { return d.ID == expected.ID })
