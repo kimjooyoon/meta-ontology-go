@@ -152,8 +152,11 @@ func (s Spec) Validate() error {
 		}
 		return nil
 	}
-	if len(s.HoldoutCases) != 0 || len(s.Choices) < 1 || len(s.Choices) > 16 {
-		return fmt.Errorf("assembly requires 1..16 choices and holdout cases are available only to IR search")
+	if len(s.Choices) < 1 || len(s.Choices) > 16 {
+		return fmt.Errorf("assembly requires 1..16 choices")
+	}
+	if err := s.validatePathHoldout(); err != nil {
+		return err
 	}
 	var seen [16]string
 	for i, c := range s.Choices {

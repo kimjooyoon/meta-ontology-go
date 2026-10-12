@@ -28,12 +28,42 @@ func constructionPathRows(c bodyexecution.JointConstruction) [][2]string {
 		name := reportedValue(step.Generation.Report.Activity)
 		rows = append(rows, [2]string{"Initial typed path body", name})
 		rows = append(rows, constructionInitialPathRows(p)...)
+		if p.Holdout != nil {
+			rows = append(rows, [2]string{"Initial local body holdout", constructionPathHoldoutShare(p.Holdout)})
+		}
 		selected := constructionSelectedPath(c, step.Generation.Report.ActivityID)
 		rows = append(rows, [2]string{"Selected caller-program body checks", constructionSelectedPathShare(selected)})
 		rows = append(rows, constructionPathObservationRows(p, selected)...)
 	}
 	if omitted > 0 {
 		rows = append(rows, [2]string{"Additional initial typed path bodies", fmt.Sprintf("%d; use --format json", omitted)})
+	}
+	return append(rows, constructionFinalPathHoldoutRows(c)...)
+}
+
+func constructionPathHoldoutShare(r *bodycodegen.PathHoldoutReceipt) string {
+	if r == nil {
+		return "not recorded"
+	}
+	if r.AccuracyPercent == nil {
+		return "unavailable: " + reportedValue(r.Error)
+	}
+	return constructionShare(r.Passed, r.Total)
+}
+
+func constructionFinalPathHoldoutRows(c bodyexecution.JointConstruction) [][2]string {
+	var rows [][2]string
+	for _, held := range c.FinalPathHoldouts {
+		if held.Evaluation == nil {
+			rows = append(rows, [2]string{"Final source holdout", "missing evaluation; inspect JSON"})
+			continue
+		}
+		rows = append(rows, [2]string{"Final selected body holdout", reportedValue(held.Evaluation.Activity) + ": " + constructionPathHoldoutShare(held.Evaluation)})
+		e := held.CallerExposure
+		rows = append(rows, [2]string{"Holdout inputs across caller attempts", fmt.Sprintf("%d observed; %d other; %d unknown", len(e.ObservedInputs), len(e.OtherInputs), len(e.UnknownInputs))})
+	}
+	if len(rows) > 0 {
+		rows = append(rows, [2]string{"Holdout selection effect", "measured after selection; does not change candidate choice or construction decision"})
 	}
 	return rows
 }

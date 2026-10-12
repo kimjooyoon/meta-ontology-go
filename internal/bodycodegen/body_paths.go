@@ -49,6 +49,7 @@ type BodyPathReceipt struct {
 	Resolution             *PathResolutionReceipt       `json:"resolution,omitempty"`
 	NativeCases            []IRBodyFillCaseResult       `json:"native_case_results,omitempty"`
 	Conditions             *PathConditionReceipt        `json:"conditions,omitempty"`
+	Holdout                *PathHoldoutReceipt          `json:"holdout,omitempty"`
 	FunctionalCompleteness float64                      `json:"finite_functional_completeness_percent"`
 	Scope                  string                       `json:"scope"`
 	Timing                 BodyPathTiming               `json:"timing"`
@@ -390,6 +391,12 @@ func emitSelectedTypedPath(ctx context.Context, filename string, source []byte, 
 	}
 	receipt.NativeCases = results
 	receipt.FunctionalCompleteness = 100 * float64(passed) / float64(len(cases))
+	if bound.activity.Assembly != nil {
+		receipt.Holdout, err = evaluateSelectedPathHoldout(ctx, source, completed, &bound.activity.Assembly.Spec, result)
+		if err != nil {
+			return fail(err)
+		}
+	}
 	receipt.Timing.FinalEmissionMS = elapsedMS(emitStarted)
 	receipt.Timing.TotalMS = elapsedMS(started)
 	result.Report.BodyPaths = receipt

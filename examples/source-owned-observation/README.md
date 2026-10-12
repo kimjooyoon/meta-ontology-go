@@ -51,8 +51,9 @@ With `max_candidates "1"`, one alternative is still unobserved. The status is
 This development feature reuses the existing candidate-observation algorithm.
 The language change makes its questions, reference and bounds part of the source
 contract, semantic IR and saved replay. It currently supports Integer typed-path
-assembly. The path profile does not accept inline `holdout_case`; separate final
-evaluation inputs are used here. IR search and record assembly keep their existing
+assembly. [Inline path holdouts](../source-path-holdouts/README.md) are also available
+for disjoint inputs; this example uses separate final native evaluation inputs.
+IR search and record assembly keep their existing
 interfaces. Public compiler 0.6.34 does not contain this syntax.
 
 Workspace preparation also retains a local oracle declared in another source file

@@ -9,29 +9,31 @@ const jointFillSchema = "gooo/joint-construction/v4"
 const jointFillRejectionSchema = "gooo/joint-construction/v5"
 const jointFaultSchema = "gooo/joint-construction/v6"
 const jointPathSchema = "gooo/joint-construction/v7"
+const jointPathHoldoutSchema = "gooo/joint-construction/v8"
 
 // JointConstruction keeps local preparation, caller feedback and subsequent
 // evaluation distinct. Initial is also the source-bound historical model order.
 type JointConstruction struct {
-	Schema               string           `json:"schema"`
-	InputObservation     string           `json:"input_observation,omitempty"`
-	Stage                string           `json:"stage"`
-	Failure              string           `json:"failure,omitempty"`
-	OriginalSourceSHA256 string           `json:"original_source_sha256"`
-	ConstructionCases    CompositionCases `json:"construction_cases"`
-	ConstructionSHA256   string           `json:"construction_sha256"`
-	Initial              Composition      `json:"initial"`
-	ProgramBudget        int              `json:"program_budget"`
-	CandidateSpace       string           `json:"candidate_space"`
-	CandidateKinds       []string         `json:"candidate_kinds,omitempty"`
-	Attempts             []JointAttempt   `json:"attempts"`
-	SelectedAttempt      int              `json:"selected_attempt"`
-	SelectedSource       string           `json:"selected_source"`
-	Selected             Composition      `json:"selected"`
-	Decision             string           `json:"decision"`
-	StopReason           string           `json:"stop_reason"`
-	ElapsedNS            int64            `json:"elapsed_ns"`
-	Scope                string           `json:"scope"`
+	Schema               string             `json:"schema"`
+	InputObservation     string             `json:"input_observation,omitempty"`
+	Stage                string             `json:"stage"`
+	Failure              string             `json:"failure,omitempty"`
+	OriginalSourceSHA256 string             `json:"original_source_sha256"`
+	ConstructionCases    CompositionCases   `json:"construction_cases"`
+	ConstructionSHA256   string             `json:"construction_sha256"`
+	Initial              Composition        `json:"initial"`
+	ProgramBudget        int                `json:"program_budget"`
+	CandidateSpace       string             `json:"candidate_space"`
+	CandidateKinds       []string           `json:"candidate_kinds,omitempty"`
+	Attempts             []JointAttempt     `json:"attempts"`
+	SelectedAttempt      int                `json:"selected_attempt"`
+	SelectedSource       string             `json:"selected_source"`
+	Selected             Composition        `json:"selected"`
+	FinalPathHoldouts    []JointPathHoldout `json:"final_path_holdouts,omitempty"`
+	Decision             string             `json:"decision"`
+	StopReason           string             `json:"stop_reason"`
+	ElapsedNS            int64              `json:"elapsed_ns"`
+	Scope                string             `json:"scope"`
 }
 
 type JointAttempt struct {

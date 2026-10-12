@@ -22,13 +22,19 @@ func declaredPathObservation(spec *assemblyspec.Spec) *PathObservationOptions {
 // Source-owned observation is resolved once, after source binding and before
 // oracle execution or model loading. External options cannot replace that meaning.
 func sourcePathObservation(activity *syntax.ActivityDecl, external *PathObservationOptions) (*PathObservationOptions, error) {
-	if activity.Assembly == nil || activity.Assembly.Spec.Observation == nil {
-		return copyPathObservation(external)
+	options := external
+	if activity.Assembly != nil && activity.Assembly.Spec.Observation != nil {
+		if external != nil {
+			return nil, fmt.Errorf("observe is declared by the Gooo activity; omit external path observation options")
+		}
+		options = declaredPathObservation(&activity.Assembly.Spec)
 	}
-	if external != nil {
-		return nil, fmt.Errorf("observe is declared by the Gooo activity; omit external path observation options")
+	if activity.Assembly != nil {
+		if err := observationAvoidsHoldout(&activity.Assembly.Spec, options); err != nil {
+			return nil, err
+		}
 	}
-	return copyPathObservation(declaredPathObservation(&activity.Assembly.Spec))
+	return copyPathObservation(options)
 }
 
 func verifySourcePathObservation(ctx context.Context, filename string, source []byte, activity string,
@@ -40,6 +46,23 @@ func verifySourcePathObservation(ctx context.Context, filename string, source []
 	declared := declaredPathObservation(spec)
 	if declared != nil && (prior == nil || !reflect.DeepEqual(*declared, prior.Options)) {
 		return fmt.Errorf("saved observation differs from the source observe declaration")
+	}
+	if prior != nil {
+		return observationAvoidsHoldout(spec, &prior.Options)
+	}
+	return nil
+}
+
+func observationAvoidsHoldout(spec *assemblyspec.Spec, options *PathObservationOptions) error {
+	if spec == nil || options == nil {
+		return nil
+	}
+	for _, input := range options.Inputs {
+		for _, held := range spec.HoldoutCases {
+			if input == held.Input {
+				return fmt.Errorf("path observation input %d is reserved by holdout_case", input)
+			}
+		}
 	}
 	return nil
 }

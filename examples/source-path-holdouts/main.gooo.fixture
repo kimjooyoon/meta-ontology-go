@@ -1,0 +1,12 @@
+package heldfee
+namespace heldfee
+entity Integer id "held-fee://integer"
+
+activity Fee(Integer) -> Integer id "held-fee://fee" computes "return input - 47" assembling {
+    choice "direction" operand_order at "0" intent "47에서 입력을 뺀다. Subtract the input from forty seven."
+    case "47" -> "0"
+    holdout_case "59" -> "-12"
+    attempts "2"
+}
+
+activity Main(Integer) -> Integer id "held-fee://main" computes "return Fee(input + 5)"

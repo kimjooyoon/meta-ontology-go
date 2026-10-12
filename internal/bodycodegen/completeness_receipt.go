@@ -520,6 +520,7 @@ func nextCompletenessOperation(id string) string {
 
 		"typed_path_source_binding":          "BIND_ORIGINAL_SOURCE_DOCUMENT_SEARCH_CONFIG_AND_SELECTED_BODY",
 		"typed_path_finite_accuracy":         "CONTINUE_TYPED_CANDIDATES_AGAINST_DECLARED_FAILURES_AND_MEASURE_UNSEEN_INPUTS_SEPARATELY",
+		"typed_path_holdout_accuracy":        "INSPECT_POST_SELECTION_FAILURES_AND_REVISE_THE_SOURCE_EXPLICITLY_WITH_SEPARATE_FUTURE_EVALUATION",
 		"typed_path_provider_accounting":     "RECORD_LOCAL_PREDICTIONS_MODEL_PINS_AND_EXTERNAL_CALL_COUNTS",
 		"typed_path_candidate_observation":   "CONTINUE_UNATTEMPTED_TYPED_PATHS_WITHIN_THE_DECLARED_BUDGET",
 		"typed_path_candidate_scoring":       "REPAIR_TYPE_REJECTIONS_AND_SCORE_REMAINING_DECLARED_CANDIDATES",

@@ -782,7 +782,45 @@ Original observation receipts remain unchanged when other source slots are
 assembled; the current reference must still agree with the retained finite suite.
 
 See the [source-owned observation example](../examples/source-owned-observation/README.md).
-The current path profile requires at least one original Integer `case`; it does
-not support inline `holdout_case`, IR search/fill or record-value observation.
-Final evaluation can use a separate cases file after construction. A finite
-match, a unique surviving candidate and a native evaluation are distinct results.
+The current observation profile requires at least one original Integer `case`;
+IR search/fill and record-value observation keep their existing interfaces.
+A finite match, a unique surviving candidate and a native evaluation are distinct results.
+
+## Keep path evaluation separate from selection
+
+Integer typed paths also accept `holdout_case`. At least one initial `case` is
+required, and all declared output cases together remain bounded to 128. Holdout
+inputs must be unique and disjoint from local `case`, `condition_case` and
+`observe` inputs. External observation options cannot consume a held input.
+
+```gooo
+assembling {
+    choice "direction" operand_order at "0" intent "Choose the subtraction direction."
+    case "47" -> "0"
+    holdout_case "59" -> "-12"
+    attempts "2"
+}
+```
+
+Only the initial cases reach candidate scoring and model input arrays. The held
+suite is evaluated after the local body is chosen. A mismatch is recorded without
+reselection; an evaluator error keeps the score unavailable. Its own suite,
+source and generated-body digests survive checkpoint and saved-result replay.
+The source meaning changes when an evaluation expectation changes, while its
+path selection document and ranking inputs remain unchanged.
+
+`body-construct` records the initial local evaluation and evaluates the final
+caller-selected body again after its candidate loop stops. This final record
+uses `gooo/joint-construction/v8`; each body evaluation uses
+`gooo/typed-path-holdout/v1`. Neither initial nor final holdout scores enter the
+caller chooser, local selection totals or construction stopping decision.
+The final evaluation is outside individual candidate histories.
+
+Actual arguments from all consumed native caller attempts identify held inputs
+already observed during that feedback. Root input 54 can deliver input 59 to a
+helper; the report follows that helper argument. Missing caller traces produce
+unknown exposure. The overlap measure covers native caller attempts; other local
+helper evaluations and model-training exposure remain outside its scope.
+
+[Runnable example and overlapping-input variant](../examples/source-path-holdouts/README.md).
+Separate final native cases remain available after these source evaluations.

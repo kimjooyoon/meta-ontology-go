@@ -543,7 +543,7 @@ func hasReturnTailBindingHazard(functionBody *ast.BlockStmt, statements []ast.St
 				}
 			case *ast.UnaryExpr:
 				if value.Op == token.AND {
-					object, known := returnTailAssignedObject(value.X, info)
+					object, known := returnTailAddressedObject(value, info)
 					if !known {
 						hazard = failWithDiagnostics("derive-recipe", "prove-free-bindings", "FREE_BINDINGS_UNPROVEN", "DIRECT_MISSING", "restore-free-binding-evidence", []string{"obligation=" + obligationFreeBindings})
 					} else if free[object] {
@@ -563,7 +563,7 @@ func hasReturnTailBindingHazard(functionBody *ast.BlockStmt, statements []ast.St
 			return false
 		}
 		if value, ok := node.(*ast.UnaryExpr); ok && value.Op == token.AND {
-			object, known := returnTailAssignedObject(value.X, info)
+			object, known := returnTailAddressedObject(value, info)
 			if !known {
 				hazard = failWithDiagnostics("derive-recipe", "prove-free-bindings", "FREE_BINDINGS_UNPROVEN", "DIRECT_MISSING", "restore-free-binding-evidence", []string{"obligation=" + obligationFreeBindings})
 			} else if free[object] {
@@ -658,8 +658,12 @@ func returnTailCalleeEffectsWithContext(statements []ast.Stmt, evidence typeEvid
 		}
 		validation := returnTailCalleeAllowed(call, evidence, helperProofRegistry, context)
 		if !validation.valid {
-			diagnostics := []string{"obligation=" + obligationCalleeEffects}
+			diagnostics := []string{"obligation=" + obligationCalleeEffects, fmt.Sprintf("call_kind=%T", call.Fun)}
+			if evidence.fset != nil {
+				diagnostics = append(diagnostics, "call_start="+evidence.fset.Position(call.Pos()).String())
+			}
 			if function, ok := returnTailCalleeFunction(call, evidence); ok {
+				diagnostics = append(diagnostics, "callee="+function.FullName())
 				if proof, exists := helperProofRegistry[function.Name()]; exists {
 					diagnostics = append(diagnostics, returnTailHelperProofDiagnostics(function, evidence, proof)...)
 				}
