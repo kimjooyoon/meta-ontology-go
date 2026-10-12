@@ -10,6 +10,7 @@ import (
 )
 
 type jointSlot struct {
+	recordReceipt *bodycodegen.RecordAssemblyReceipt
 	activity      string
 	initial       uint16
 	ranking       []uint16
@@ -64,7 +65,7 @@ func jointSlots(ctx context.Context, filename string, source []byte, prior Compo
 		if !slices.Contains(ranking, r.SelectedMask) {
 			return nil, "", fmt.Errorf("initial selection exceeds the source budget")
 		}
-		slots = append(slots, jointSlot{activity: step.Generation.Report.Activity, initial: r.SelectedMask, ranking: ranking})
+		slots = append(slots, jointSlot{activity: step.Generation.Report.Activity, initial: r.SelectedMask, ranking: ranking, recordReceipt: r})
 		space.Mul(space, big.NewInt(int64(len(ranking))))
 	}
 	if len(slots) < 1 || len(slots) > compositionLimit {

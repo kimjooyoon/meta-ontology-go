@@ -76,7 +76,7 @@ func obligations(node semantic.Node) *Obligations {
 	}
 	r := &Obligations{Cases: len(s.Cases) + len(s.ValueCases), Conditions: len(s.ConditionCases), Holdouts: len(s.HoldoutCases) + len(s.ValueHoldoutCases), MaxAttempts: s.MaxAttempts}
 	if s.Observation != nil {
-		r.ObservationInputs = len(s.Observation.Inputs)
+		r.ObservationInputs = len(s.Observation.Inputs) + len(s.Observation.ValueInputs)
 		r.Oracle = s.Observation.OracleActivity
 	}
 	if s.Search != nil {

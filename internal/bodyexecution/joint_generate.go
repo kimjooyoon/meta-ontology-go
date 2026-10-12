@@ -168,7 +168,7 @@ func materializeJoint(ctx context.Context, filename string, source []byte, cases
 			current = selected
 			continue
 		}
-		candidate, selected, err := bodycodegen.RealizeRecordCandidate(ctx, filename, current, slot.activity, masks[i])
+		candidate, selected, err := bodycodegen.RealizeObservedRecordCandidate(ctx, filename, current, slot.activity, slot.recordReceipt, masks[i])
 		if err != nil {
 			var rejected *bodycodegen.SourceRecordCandidateRejection
 			if errors.As(err, &rejected) && ctx.Err() == nil {
