@@ -179,7 +179,7 @@ func (s Spec) Validate() error {
 				return fmt.Errorf("assembly name choice %q requires an alternative local", c.ID)
 			}
 		case "field_value", "field_update":
-			if !boundedText(c.Alternative, 512) || len(s.Cases) != 0 || len(s.ValueCases) == 0 || len(s.ValueHoldoutCases) != 0 || len(s.Choices) > 6 {
+			if !boundedText(c.Alternative, 512) || len(s.Cases) != 0 || len(s.ValueCases) == 0 || len(s.Choices) > 6 {
 				return fmt.Errorf("field assembly requires an alternative expression, 1..6 choices and value_case expectations")
 			}
 		default:
@@ -187,8 +187,8 @@ func (s Spec) Validate() error {
 		}
 	}
 	if len(s.ValueCases) != 0 || len(s.ValueHoldoutCases) != 0 {
-		if len(s.ValueHoldoutCases) != 0 {
-			return fmt.Errorf("holdout_value_case is available only for source_fill plans")
+		if err := s.validateRecordHoldout(); err != nil {
+			return err
 		}
 		for _, choice := range s.Choices {
 			if choice.Kind != "field_value" && choice.Kind != "field_update" {

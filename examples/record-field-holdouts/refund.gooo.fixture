@@ -1,0 +1,15 @@
+package refunds
+namespace refunds
+entity Boolean id "refunds://boolean"
+entity Order id "refunds://order" fields {
+ field amount id "refunds://order/amount" type integer required one
+ field label id "refunds://order/label" type string required one
+ field approved id "refunds://order/approved" type boolean required one
+}
+activity Decide(Order,Boolean) -> Order computes "let result = input0; if input1 { result.amount = input0.amount; result.approved = true }; return result" assembling {
+ choice "refund" field_update at "0" alternative "0 - input0.amount" intent "Record an approved refund as a negative amount."
+ value_case "[{\"amount\":0,\"approved\":false,\"label\":\"seed\"},true]" -> "{\"amount\":0,\"approved\":true,\"label\":\"seed\"}"
+ holdout_value_case "[{\"amount\":30,\"approved\":false,\"label\":\"반품\"},true]" -> "{\"amount\":-30,\"approved\":true,\"label\":\"반품\"}"
+ holdout_value_case "[{\"amount\":40,\"approved\":false,\"label\":\"keep\"},false]" -> "{\"amount\":40,\"approved\":false,\"label\":\"keep\"}"
+ attempts "2"
+}

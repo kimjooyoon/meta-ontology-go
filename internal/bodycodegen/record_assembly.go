@@ -68,7 +68,7 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 	if err = searchRecordAssemblyWithPolicy(ctx, plan, r, controller); err != nil {
 		return Result{}, &RecordAssemblyError{Receipt: r, Cause: err}
 	}
-	result, err := emitRecordAssembly(ctx, filename, source, plan, r)
+	result, err := emitSelectedRecordAssembly(ctx, filename, source, plan, r)
 	r.GenerationNS = time.Since(started).Nanoseconds()
 	if err == nil {
 		populateCompletenessReceipt(&result.Report, "")

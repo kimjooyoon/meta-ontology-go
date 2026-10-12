@@ -54,7 +54,7 @@ func ResumeRecordAssembly(ctx context.Context, filename string, priorSource, sou
 	if err := replayRecordSearchStages(ctx, plans, r, history, current); err != nil {
 		return Result{}, err
 	}
-	result, err := emitRecordAssembly(ctx, filename, source, plan, r)
+	result, err := emitSelectedRecordAssembly(ctx, filename, source, plan, r)
 	r.GenerationNS = time.Since(started).Nanoseconds()
 	if err == nil {
 		populateCompletenessReceipt(&result.Report, "")

@@ -1,0 +1,11 @@
+package recordcaller
+namespace recordcaller
+entity Integer id "recordcaller://integer"
+entity Box id "recordcaller://box" fields { field value id "recordcaller://box/value" type integer required one }
+activity Choose(Integer) -> Box id "recordcaller://choose" computes "return Box{value: input}" assembling {
+ choice "direction" field_value at "0" alternative "0 - input" intent "Negate the input."
+ value_case "[0]" -> "{\"value\":0}"
+ holdout_value_case "[5]" -> "{\"value\":-5}"
+ attempts "2"
+}
+activity Main(Integer) -> Integer id "recordcaller://main" computes "let result = Choose(input + 3); return result.value"
