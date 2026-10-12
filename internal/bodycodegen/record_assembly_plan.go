@@ -11,6 +11,7 @@ import (
 )
 
 type recordAssemblyPlan struct {
+	effectiveCases   []assemblyspec.ValueCase
 	body             preparedBody
 	original         preparedBody
 	spec             *assemblyspec.Spec
@@ -93,6 +94,9 @@ func prepareRecordAssembly(ctx context.Context, filename string, source []byte, 
 		if err = validateRecordAssemblyCases(ctx, plan.body.base.source, activity, plan.body.records, plan.spec.ValueHoldoutCases); err != nil {
 			return plan, fmt.Errorf("record holdout: %w", err)
 		}
+	}
+	if err = validateRecordObservationProbes(ctx, plan); err != nil {
+		return plan, err
 	}
 	if err = plan.validateAlternatives(ctx); err != nil {
 		return plan, err

@@ -19,6 +19,12 @@ func bindRecordAssemblyScope(common *CompletenessReceipt, result Report) {
 		"contract_sha256": r.ContractSHA256, "test_suite_sha256": r.TestSuiteSHA256,
 		"finite_passed": r.Passed, "finite_total": r.Total, "fields_passed": r.FieldsPassed, "fields_total": r.FieldsTotal,
 		"local_model_predictions": r.ModelCalls, "external_provider_calls": 0}
+	if o := r.Observation; o != nil {
+		common.Scope["record_observation"] = map[string]any{"status": o.Status,
+			"initial_cases": len(o.InitialCases), "acquired_cases": o.EffectiveCases - len(o.InitialCases),
+			"effective_cases_sha256": o.EffectiveCasesSHA256, "oracle_evaluations": o.OracleEvaluations,
+			"candidate_evaluations": o.CandidateEvaluations, "reused_outputs": o.ReusedOutputs}
+	}
 	common.Scope["domain_scope"] = "one source-owned pure record assembly with 1..16 typed inputs and declared scalar record fields"
 	common.Scope["decision_mode"], common.Scope["decision_provider"] = "deterministic_finite_tdd", "deterministic"
 	if r.ModelCalls > 0 {
@@ -61,6 +67,9 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 	}
 	if r.RankingSourceSHA256 != origin {
 		return Realization{}, fmt.Errorf("record ranking source differs")
+	}
+	if err = replayRecordObservation(ctx, filename, source, plans, r.ControlHistory, r, expected); err != nil {
+		return Realization{}, err
 	}
 	expected.RankingSourceSHA256 = origin
 	if err = verifyRecordAssemblyRanking(r, expected, plans[0]); err != nil {
@@ -147,6 +156,13 @@ func verifyRecordAssemblyRanking(r, expected *RecordAssemblyReceipt, plan record
 		}
 		seen[mask] = true
 	}
+	if resolveRecordObservationRanking(expected) {
+		if r.ModelCalls != 0 || r.PredictNS != 0 || r.Context != nil || r.Prediction != nil ||
+			!slices.Equal(r.Ranking, expected.Ranking) || r.ModelRequested != (r.Model != nil && r.Model.Loaded) {
+			return fmt.Errorf("record source observation resolution differs")
+		}
+		return nil
+	}
 	if !r.ModelRequested {
 		if r.Model != nil || r.Context != nil || r.Prediction != nil || r.ModelCalls != 0 || !slices.Equal(r.Ranking, expected.Ranking) {
 			return fmt.Errorf("disconnected record selection must preserve deterministic ranking")
@@ -215,6 +231,13 @@ func verifyRecordCommonReceipt(report Report) error {
 	if err := completeness.Validate(report.CompletenessReceipt); err != nil {
 		return err
 	}
+	expectedScope := &CompletenessReceipt{Scope: map[string]any{}}
+	bindRecordAssemblyScope(expectedScope, report)
+	expectedObservation, _ := json.Marshal(expectedScope.Scope["record_observation"])
+	actualObservation, _ := json.Marshal(report.CompletenessReceipt.Scope["record_observation"])
+	if string(expectedObservation) != string(actualObservation) {
+		return fmt.Errorf("record observation summary differs")
+	}
 	for _, expected := range recordAssemblyDimensions(report.RecordAssembly) {
 		index := slices.IndexFunc(report.CompletenessReceipt.Dimensions, func(d CompletenessDimension) bool { return d.ID == expected.ID })
 		if index < 0 || !reflect.DeepEqual(report.CompletenessReceipt.Dimensions[index], expected) ||
@@ -225,6 +248,10 @@ func verifyRecordCommonReceipt(report Report) error {
 	observation := *report.RecordAssembly
 	var err error
 	observation.Cases, err = canonicalRecordCaseValues(observation.Cases)
+	if err != nil {
+		return err
+	}
+	observation.Observation, err = canonicalRecordObservation(observation.Observation)
 	if err != nil {
 		return err
 	}

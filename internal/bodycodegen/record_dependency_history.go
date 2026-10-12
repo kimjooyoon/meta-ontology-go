@@ -114,7 +114,7 @@ func evaluateRecordMask(ctx context.Context, p recordAssemblyPlan, mask uint16) 
 		}
 		return RecordAssemblyAttempt{}, nil, err
 	}
-	cases, calls, err := evaluateRecordCasesObserved(ctx, candidate, mask, p.spec.ValueCases)
+	cases, calls, err := evaluateRecordCasesObserved(ctx, candidate, mask, recordSelectionCases(p))
 	attempt := scoreRecordCases(mask, cases)
 	attempt.LocalCalls = calls
 	if err != nil {

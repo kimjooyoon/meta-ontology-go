@@ -782,8 +782,10 @@ Original observation receipts remain unchanged when other source slots are
 assembled; the current reference must still agree with the retained finite suite.
 
 See the [source-owned observation example](../examples/source-owned-observation/README.md).
-The current observation profile requires at least one original Integer `case`;
-IR search/fill and record-value observation keep their existing interfaces.
+Integer observation requires at least one original Integer `case`. Record field
+assembly accepts typed `value_input` tuples and an original `value_case` suite;
+see [record source observation](record-source-observation.md). IR search/fill keep
+their existing interfaces.
 A finite match, a unique surviving candidate and a native evaluation are distinct results.
 
 ## Keep path evaluation separate from selection

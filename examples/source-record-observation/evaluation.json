@@ -1,0 +1,9 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"Decide.input0": {"amount": 103, "approved": false, "label": "새 반품"}, "Decide.input1": true},
+     "expected": {"Decide": {"amount": -103, "approved": true, "label": "새 반품"}}},
+    {"inputs": {"Decide.input0": {"amount": 109, "approved": false, "label": "unchanged"}, "Decide.input1": false},
+     "expected": {"Decide": {"amount": 109, "approved": false, "label": "unchanged"}}}
+  ]
+}

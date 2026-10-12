@@ -46,6 +46,9 @@ func ResumeRecordAssembly(ctx context.Context, filename string, priorSource, sou
 	if err != nil {
 		return Result{}, err
 	}
+	if err := replayRecordObservation(ctx, filename, source, plans, history, old, r); err != nil {
+		return Result{}, err
+	}
 	if err := verifyRecordAssemblyRanking(old, r, plans[0]); err != nil {
 		return Result{}, err
 	}

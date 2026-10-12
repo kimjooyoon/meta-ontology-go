@@ -62,6 +62,9 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 		}
 		r.Control = controller.receipt
 	}
+	if err = observeRecordAssembly(ctx, filename, source, &plan, r); err != nil {
+		return Result{}, &RecordAssemblyError{Receipt: r, Cause: err}
+	}
 	if err = g.rankRecordAssembly(plan, r); err != nil {
 		return Result{}, err
 	}
@@ -78,6 +81,13 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 
 func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *RecordAssemblyReceipt) error {
 	r.ModelRequested = g.info.Loaded
+	if resolveRecordObservationRanking(r) {
+		if g.info.Loaded {
+			info := g.Info()
+			r.Model = &info
+		}
+		return nil
+	}
 	if g.info.Loaded {
 		info := g.Info()
 		r.Model = &info

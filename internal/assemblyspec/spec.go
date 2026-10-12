@@ -397,6 +397,7 @@ func (s Spec) Clone() *Spec {
 	if s.Observation != nil {
 		observation := *s.Observation
 		observation.Inputs = append([]int64(nil), s.Observation.Inputs...)
+		observation.ValueInputs = append([]string(nil), s.Observation.ValueInputs...)
 		clone.Observation = &observation
 	}
 	clone.Choices = append([]Choice(nil), s.Choices...)
