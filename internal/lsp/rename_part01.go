@@ -26,6 +26,12 @@ func (server *Server) renameRequest(request requestEnvelope) (*responseEnvelope,
 	if targetID == "" || targetName == "" {
 		return resultResponse(request.ID, nil), nil, nil
 	}
+	if edits, handled, err := activityRenameEdits(document, params.TextDocument.URI, targetID, targetName, params.NewName); handled {
+		if err != nil {
+			return responseOrNil(request.ID, invalidParams, err.Error()), nil, nil
+		}
+		return resultResponse(request.ID, WorkspaceEdit{Changes: map[string][]TextEdit{params.TextDocument.URI: edits}}), nil, nil
+	}
 	edits := renameEditsForTarget(params.TextDocument.URI, targetID, targetName, allSymbols(document.result), document.result.References, params.NewName)
 	if len(edits) == 0 {
 		return resultResponse(request.ID, nil), nil, nil

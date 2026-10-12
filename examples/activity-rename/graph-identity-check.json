@@ -1,0 +1,54 @@
+{
+  "schema": "gooo/refactor-source-graph-check/v1",
+  "compiler_source_base": "3d23e560ea79daf43775682e9b15982df635a370",
+  "compiler_overlay_sha256": {
+    "cmd/gooo/body_context_criteria_flow_test.go": "a29ef5b1a937d524cfe855764dc755e9379e4eef429f2619f48439651351cb9f",
+    "cmd/gooo/emit_dispatch.go": "cf0529d10b610c9d7d0e50716e69a4297866d4486f42b3ed676fb9cdd2ed12dd",
+    "cmd/gooo/source_refactor.go": "cbbb99fefab730151d6ce456603f763ae70d2dad9f735a909272568b0b5b2b99",
+    "cmd/gooo/source_refactor_test.go": "3b4c21f07b00ed9e697a80aae5139ec0bb764cb357d08fa6df4fc9da93d15c3b",
+    "cmd/gooo/usage.go": "d4f6c35d0982bea2d28c03d0b99758dbc78533974f6b9314dd1a7a016008c024",
+    "cmd/gooo/usage_topics_4.go": "0fadc07b9087523f693cfb07551ef021b57d0a2948f263fbf447a9dc916617ab",
+    "internal/bodycodegen/criteria_source_flow.go": "eb7c7e23afc75cb3f2cd9ca51b3dfc6e7777e3008f831bc429a355ec5feb2593",
+    "internal/bodycodegen/criteria_source_flow_test.go": "21a5f4602b7967b0aefb68d2850709170e378f20ba51e9cd1f6a99cced312211",
+    "internal/bodycodegen/record_assembly_export.go": "0d7e067c158757a3558ebe459d7269f21bc3a295b056a6d6edb1afd21e715cda",
+    "internal/bodycodegen/rename_assembly.go": "785f8a96ef4f4529e7c0d2985b8e115bfc93b23246bb5ada6e8752704512d08b",
+    "internal/bodycodegen/rename_body.go": "647f14834d72b7708ac748d83a7e7006597f586688eefa92b18051dbb27c64c9",
+    "internal/bodycodegen/rename_criteria_graph_test.go": "a577306861ce8bb3eeb6c0257d5490d92cfdfb8ed9c358d645473283bd87bce8",
+    "internal/bodycodegen/rename_string_test.go": "107d23fade2a735a2914e1b78e0edfd2192c7981fb087b1a4d3f8a05424e3ffe",
+    "internal/bodycodegen/scalar_criteria_plan.go": "39b3481186a9c6b7e4425fe77d0247caa5f019a0fc81c55d7154b270fa10e21f",
+    "internal/bodycodegen/source_rename.go": "1e06eeafca52bad32e1a38c53fc4888260d23b8f6f178cd44614c9785d3862cc",
+    "internal/bodycodegen/source_rename_test.go": "8c2b45ec59a106b4bc0739310cdfc171143f6b0a1696f4dd04284cebbf14f9b8",
+    "internal/lsp/activity_rename.go": "54de9dabacb4d1be320c4261da5b60b8f998b6398af4b0a3dbcba3990e670dc4",
+    "internal/lsp/activity_rename_test.go": "78e9866a3d2ac81c971fc6ad51ce013ca952427892cab8e88c362c0aba9b2c86",
+    "internal/lsp/rename_part01.go": "140163ac51319c0bfe5b583adca54abd51fd2ef80e60aa1109e40d40785f130e"
+  },
+  "sdk_source_head": "4de73fd45511714a596f58ce0b766c444eaff72b",
+  "sdk_module_replaced_locally": true,
+  "test": "TestActivityRenameKeepsCriterionGraphIdentity",
+  "result": "PASS",
+  "renames": [
+    {
+      "from": "Delta",
+      "to": "차액"
+    },
+    {
+      "from": "Difference",
+      "to": "일치조건"
+    },
+    {
+      "from": "Fee",
+      "to": "요금"
+    }
+  ],
+  "checked": [
+    "stable activity and helper IDs",
+    "typed predicate nodes and graph digest",
+    "original input/result roles",
+    "candidate source feature bytes",
+    "new source digest"
+  ],
+  "source_only": true,
+  "model_predictions": 0,
+  "training_runs": 0,
+  "program_executions": 0
+}

@@ -26,9 +26,18 @@ Declarations without `id` continue to derive their activity ID from namespace an
 name. Formatting preserves an authored ID even when it equals the derived value.
 This allows a later rename to keep that identity.
 
+## File-local refactoring
+
+The development compiler provides `gooo refactor rename-activity` to pin the
+existing ID and update calls, bindings and requirement references within one file.
+See [activity refactoring](activity-refactoring.md) for commands, receipts and
+supported source profiles. The experimental LSP uses the same operation when
+renaming from an activity declaration.
+
 ## What a rename still requires
 
-Update calls, bindings, the workspace entry and input keys that use the old name.
+For consumers outside that file, update calls, bindings, the workspace entry and
+input keys that use the old name.
 The activity ID does not create an alias for those references. Source hashes and
 interface digests change when source names change. A saved execution receipt is
 bound to its exact source and must be regenerated for the renamed source.
