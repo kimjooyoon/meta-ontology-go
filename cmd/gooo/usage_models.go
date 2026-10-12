@@ -1,6 +1,6 @@
 package main
 
-const modelsHelp = modelsCoreHelp + modelsSourceRelativeHelp + modelsSourceRelativeV2Help + modelsFinishHelp
+const modelsHelp = modelsCoreHelp + modelsSourceRelativeHelp + modelsSourceRelativeV2Help + modelsSourceRelativeV3Help + modelsFinishHelp
 
 const modelsCoreHelp = `Use a local decision model with Gooo
 
@@ -10,8 +10,8 @@ Omit --path-model (body-codegen) or --model (body-construct/body-compose)
 for deterministic order. A supplied unreadable or incompatible file is an error.
 
 Check the compiler's included SDK with gooo version --build --json.
-This source checkout adds the explicitly versioned V2 return-layout connection.
-The public compiler 0.6.32 includes SDK 0.2.41 and the V1 source-relative connection.
+This source checkout includes the explicitly versioned V3 output-relation connection.
+The public compiler 0.6.33 includes SDK 0.2.42 and the V2 connection.
 
 Typed integer branches, comparisons and variables:
   1. From the matching source checkout, get model-choice-v1.json and its checksum
@@ -107,5 +107,14 @@ const modelsSourceRelativeV2Help = `V2 source-relative return-layout model:
   V2 metadata selects the V2 input encoder. V1 retains its original meaning.
   Omit the model for deterministic order. A supplied incompatible model is an error.
   Recorded first-choice accuracy and checked completion are reported separately.
+
+`
+
+const modelsSourceRelativeV3Help = `Experimental V3 source/output relationship model:
+  See docs/source-relative-v3-contract-model.md for pinned model files and results.
+  V3 metadata selects its own 528-cell encoder and declared-output relationships.
+  The fresh study had first completion18/64 versus V2 21/64; keep it an explicit option.
+  Inspection predicts zero times. Construction predicts once before finite checking.
+  Omitting a model retains deterministic traversal; saved replay makes zero new predictions.
 
 `
