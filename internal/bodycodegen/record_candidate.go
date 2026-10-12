@@ -72,6 +72,9 @@ func RealizeObservedRecordCandidate(ctx context.Context, filename string, source
 		observation.Schema = "gooo/record-candidate/v3"
 		observation.CriteriaQuestions = questions
 	}
+	if p.scalar != nil {
+		observation.Schema = "gooo/scalar-criteria-candidate/v1"
+	}
 	if !usableRecordAttempt(attempt) {
 		return observation, nil, &SourceRecordCandidateRejection{
 			cause: fmt.Errorf("record candidate has no evaluable local obligations: %s", attempt.Reason)}

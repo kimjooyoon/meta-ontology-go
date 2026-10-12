@@ -112,6 +112,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [source path holdouts](examples/source-path-holdouts/README.md)
 · [language problems and direction, 한국어](docs/language-identity-problems.ko.md)
 · [source-owned behavior criteria](docs/source-behavior-criteria.md)
+· [Integer paths judged by Gooo conditions](docs/source-scalar-criteria.md)
 · [source-owned criteria questions](docs/source-criteria-questions.md)
 · [compose activity bodies](docs/native-body-composition.md)
 · [inspect inputs before assembly](docs/composition-plan-inspection.md)

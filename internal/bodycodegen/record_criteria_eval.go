@@ -108,12 +108,12 @@ func encodeCriteriaOutput(value any, output types.Type, records []RecordType) (j
 	if err != nil {
 		return nil, err
 	}
-	if output == types.Typ[types.Bool] {
+	if output == types.Typ[types.Bool] || output == types.Typ[types.Int64] {
 		return json.Marshal(coerced)
 	}
 	named, ok := output.(*types.Named)
 	if !ok {
-		return nil, fmt.Errorf("criteria output must be Boolean or a declared record")
+		return nil, fmt.Errorf("criteria output must be Integer, Boolean or a declared record")
 	}
 	record := recordTypeByName(records, named.Obj().Name())
 	actual, ok := coerced.(recordBodyValue)

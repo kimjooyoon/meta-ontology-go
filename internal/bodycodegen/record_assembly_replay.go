@@ -28,8 +28,14 @@ func bindRecordAssemblyScope(common *CompletenessReceipt, result Report) {
 	bindRecordCriteriaScope(common, r)
 	bindCriteriaQuestionScope(common, r)
 	common.Scope["domain_scope"] = "one source-owned pure record assembly with 1..16 typed inputs and declared scalar record fields"
+	if r.Schema == scalarCriteriaAssemblySchema {
+		common.Scope["domain_scope"] = "one source-owned Integer -> Integer assembly with fixed predicates and finite input obligations"
+	}
 	common.Scope["decision_mode"], common.Scope["decision_provider"] = "deterministic_finite_tdd", "deterministic"
 	if r.ModelCalls > 0 {
+		if r.Schema == scalarCriteriaAssemblySchema {
+			common.Scope["domain_scope"] = "one source-owned Integer -> Integer assembly with fixed predicates and finite input obligations"
+		}
 		common.Scope["decision_mode"], common.Scope["decision_provider"] = "local_ordinal_prediction_then_finite_tdd", "tiny_go"
 		if r.Context != nil && r.Context.FeatureVersion == jointdecision.RecordFieldFeatureVersion {
 			common.Scope["decision_mode"] = "local_field_expression_prediction_then_finite_tdd"
@@ -53,7 +59,7 @@ func realizeRecordAssembly(ctx context.Context, filename string, source []byte, 
 		return Realization{}, fmt.Errorf("record realization requires bounded source and context")
 	}
 	r := prior.Report.RecordAssembly
-	if r.Schema != recordAssemblySchema || prior.Report.Schema != schema || prior.Report.Decision != "PASS" ||
+	if (r.Schema != recordAssemblySchema && r.Schema != scalarCriteriaAssemblySchema) || prior.Report.Schema != schema || prior.Report.Decision != "PASS" ||
 		prior.Report.BodyPaths != nil || prior.Report.BodyFill != nil || prior.Report.BodySearch != nil ||
 		!prior.Report.TypecheckPassed || !prior.Report.DeterministicReplay || r.OriginalSourceSHA256 != digest(source) {
 		return Realization{}, fmt.Errorf("record assembly observation is missing or unbound")
@@ -151,7 +157,7 @@ func verifyRecordAssemblyRanking(r, expected *RecordAssemblyReceipt, plan record
 	if r.AttemptBudget != nil && *r.AttemptBudget != plan.spec.MaxAttempts {
 		return fmt.Errorf("record attempt budget differs from source")
 	}
-	if r.ContractSHA256 != expected.ContractSHA256 || r.TestSuiteSHA256 != expected.TestSuiteSHA256 ||
+	if r.Schema != expected.Schema || r.ContractSHA256 != expected.ContractSHA256 || r.TestSuiteSHA256 != expected.TestSuiteSHA256 ||
 		len(r.Ranking) != len(expected.Ranking) {
 		return fmt.Errorf("record contract or ranking differs")
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-// AssemblyCounts uses whole construction cases, not individual record fields.
+// AssemblyCounts uses exact case rows plus criteria input rows satisfying all predicates.
 // Budget caps attempts by available candidates and subtracts unscored attempts
 // observed so far. Counts are meaningful only when ScoringCompleted is true.
 type AssemblyCounts struct {
@@ -92,15 +92,25 @@ func observeRecordAttempts(report bodycodegen.Report, budget int) []Construction
 	var rows []ConstructionObservation
 	best, scored, rejected := 0, 0, 0
 	for i, a := range r.Attempts {
+		passed, total := a.Passed, a.Total
+		complete := a.Status == ""
+		if a.Criteria != nil {
+			passed += a.Criteria.InputsPassed
+			total += a.Criteria.InputsTotal
+			complete = complete && a.Criteria.InputsCompleted == a.Criteria.InputsTotal && a.Criteria.Unknown == 0
+		}
 		row := ConstructionObservation{Activity: report.Activity, ActivityID: report.ActivityID,
 			Profile: "record_choices", View: "attempt_prefix", AttemptIndex: &i, CandidateMask: &a.Mask,
 			Proposed: r.Prediction != nil && a.Mask == r.Prediction.Mask,
 			Selected: a.Mask == r.SelectedMask, AttemptStatus: a.Status, Reason: a.Reason,
-			DeclaredBudget: budget, CandidateCount: len(r.Ranking), ScoringCompleted: a.Total > 0}
+			DeclaredBudget: budget, CandidateCount: len(r.Ranking), ScoringCompleted: total > 0 && complete}
+		if report.OutputType == "int64" {
+			row.Profile = "scalar_criteria_choices"
+		}
 		if row.ScoringCompleted {
 			scored++
-			best = max(best, a.Passed)
-			row.Counts = AssemblyCounts{Matched: a.Passed, Total: a.Total, Best: best,
+			best = max(best, passed)
+			row.Counts = AssemblyCounts{Matched: passed, Total: total, Best: best,
 				Scored: scored, Budget: min(budget, len(r.Ranking)) - rejected}
 		} else {
 			rejected++

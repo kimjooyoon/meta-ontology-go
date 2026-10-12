@@ -105,6 +105,9 @@ func (r *CompositionInspection) addAssembly(ctx context.Context, filename string
 		kind = "source_search"
 	case bodycodegen.IsRecordAssembly(spec):
 		kind = "record_choices"
+		if assemblyspec.IsScalarCriteria(spec) {
+			kind = "scalar_criteria_choices"
+		}
 	}
 	r.Assemblies = append(r.Assemblies, CompositionAssemblyInput{Name: name, ID: id, Phase: phase, Kind: kind,
 		CriteriaPredicates: criteriaPredicateCount(spec), CriteriaInputs: criteriaSelectionCount(spec), CriteriaHoldouts: criteriaHoldoutCount(spec),

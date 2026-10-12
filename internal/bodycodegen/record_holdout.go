@@ -36,7 +36,7 @@ func emitSelectedRecordAssembly(ctx context.Context, filename string, source []b
 	if err != nil {
 		return Result{}, err
 	}
-	r.Holdout, err = evaluateProjectedRecordHoldout(ctx, source, []byte(result.GoooSource), p.spec.ValueHoldoutCases, result)
+	r.Holdout, err = evaluateProjectedRecordHoldout(ctx, source, []byte(result.GoooSource), criteriaValueCases(p.spec, true), result)
 	if err == nil && p.spec.Criteria != nil {
 		candidate := generatedRoute{source: []byte(result.Source), report: result.Report}
 		r.CriteriaHoldout, err = evaluateRecordCriteria(ctx, p, candidate, p.spec.Criteria.HoldoutInputs, "holdout")
@@ -57,6 +57,10 @@ func evaluateProjectedRecordHoldout(ctx context.Context, original, selected []by
 		SelectedSourceSHA256: digest(selected), GeneratedSHA256: projection.Report.GeneratedDigest,
 		SuiteSHA256: digest(raw), Cases: cases, Total: len(cases),
 		Scope: "source holdout values after record field selection; excluded from ranking, policy and stopping; bounded AST evaluation; caller and model-training exposure are unmeasured"}
+	if projection.Report.OutputType == "int64" {
+		r.Schema = "gooo/scalar-criteria-holdout/v1"
+		r.Scope = "source Integer holdout values after selection; excluded from ranking, policy and stopping; finite evaluation; caller and model-training exposure are separate"
+	}
 	if record := recordTypeByName(projection.Report.RecordTypes, projection.Report.OutputType); record != nil {
 		r.FieldsTotal = r.Total * len(record.Fields)
 	}
@@ -101,6 +105,11 @@ func recordHoldoutDimensions(r *RecordHoldoutReceipt) []CompletenessDimension {
 			"Separate evaluation; caller and model-training exposure are unmeasured.", evidence, false),
 		completenessDimension("record_holdout_field_accuracy", r.FieldsPassed, r.FieldsTotal, "source record holdout output fields after selection",
 			"Expected fields are counted separately from whole-record matches.", evidence, false),
+	}
+	if r.Schema == "gooo/scalar-criteria-holdout/v1" {
+		dimensions = dimensions[:1]
+		dimensions[0].ID = "scalar_holdout_case_accuracy"
+		dimensions[0].Unit = "source Integer holdout cases after selection"
 	}
 	for i := range dimensions {
 		if r.AccuracyPercent == nil {

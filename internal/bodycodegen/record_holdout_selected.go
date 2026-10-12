@@ -11,7 +11,7 @@ import (
 func EvaluateSourceRecordHoldout(ctx context.Context, filename string, original, selected []byte,
 	activity string) (*RecordHoldoutReceipt, error) {
 	spec, err := SourceAssembly(ctx, filename, original, activity)
-	if err != nil || spec == nil || len(spec.ValueHoldoutCases) == 0 || len(spec.Choices) == 0 || !IsRecordAssembly(spec) {
+	if err != nil || spec == nil || len(criteriaValueCases(spec, true)) == 0 || len(spec.Choices) == 0 || !IsRecordAssembly(spec) {
 		return nil, err
 	}
 	if len(selected) == 0 || len(selected) > 128<<10 {
@@ -33,7 +33,7 @@ func EvaluateSourceRecordHoldout(ctx context.Context, filename string, original,
 	if err != nil {
 		return nil, err
 	}
-	return evaluateProjectedRecordHoldout(ctx, original, selected, spec.ValueHoldoutCases, projection)
+	return evaluateProjectedRecordHoldout(ctx, original, selected, criteriaValueCases(spec, true), projection)
 }
 
 // EqualRecordHoldoutObservations normalizes only JSON value formatting. Every

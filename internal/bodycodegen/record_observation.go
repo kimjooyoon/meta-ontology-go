@@ -13,7 +13,7 @@ func recordSelectionCases(p recordAssemblyPlan) []assemblyspec.ValueCase {
 	if p.effectiveCases != nil {
 		return p.effectiveCases
 	}
-	return p.spec.ValueCases
+	return criteriaValueCases(p.spec, false)
 }
 
 func recordCasesSHA(cases []assemblyspec.ValueCase) string {

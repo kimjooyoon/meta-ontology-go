@@ -6,7 +6,7 @@ func (s Spec) validatePathHoldout() error {
 	if len(s.HoldoutCases) == 0 {
 		return nil
 	}
-	if len(s.Cases) == 0 || len(s.ValueCases)+len(s.ValueHoldoutCases) != 0 {
+	if (len(s.Cases) == 0 && s.Criteria == nil) || len(s.ValueCases)+len(s.ValueHoldoutCases) != 0 {
 		return fmt.Errorf("typed path holdout_case requires initial Integer case declarations")
 	}
 	used := make(map[int64]bool, len(s.Cases)+len(s.ConditionCases))

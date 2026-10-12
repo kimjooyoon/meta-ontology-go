@@ -4,7 +4,7 @@ const bodyConstructHelp = `Construct a program using caller feedback
 
 ` + bodyConstructUsage + `
 
-Record choices, integer search and source_fill helpers keep their own Gooo cases.
+Record choices, Integer path criteria, integer search and source_fill helpers keep their Gooo obligations.
 Each completed combination is
 compiled and run on --construction-cases; --cases runs after selection. The
 optional --model ranks record choices; --fill-model uses a compatible operation
