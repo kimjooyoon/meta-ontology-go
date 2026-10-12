@@ -15,20 +15,21 @@ diagnostic tool and reuses it on new inputs. It needs no model or API key.
 
 Use **Go 1.27.2** for native execution, matching your Gooo executable's operating
 system and architecture. Check with `go version`. The compiler below is the
-experimental [v0.6.32-dev release](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.32-dev).
+experimental [v0.6.33-dev release](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.33-dev).
 The release is pinned so these instructions do not silently select later changes.
 
 On macOS or Linux, start in a new working directory and install locally:
 
 ```sh
-GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.32-dev
+GOBIN="$PWD/.gooo-bin" GOWORK=off GOTOOLCHAIN=go1.27.2 \
+  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.33-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo version --build --json
 ```
 
-The version output includes `version: "0.6.32-dev"`. Module and VCS fields depend
-on the installation method; the public release archives bind to source
-`83928fa4538245abe33b08549da47f8cbdc50ed2` and SDK `v0.2.41-experimental`.
+The version output includes `version: "0.6.33-dev"`. Module and VCS fields depend
+on the installation method; the release manifest binds the public archives to
+source `44118d5fa5130912493862d389c28dec67f8e034`, which pins SDK `v0.2.42-experimental`.
 Keep this compiler with your experiment for later replay.
 The `export` applies to this shell; a new shell needs the same absolute directory
 on its `PATH`.
@@ -36,15 +37,15 @@ on its `PATH`.
 Alternatively, download and extract the matching archive, then add its directory
 to `PATH` (or invoke the extracted `gooo` / `gooo.exe` by its full path):
 
-| Platform | v0.6.32-dev archive |
+| Platform | v0.6.33-dev archive |
 | --- | --- |
-| macOS Apple Silicon | [darwin-arm64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.32-dev/gooo-darwin-arm64.tar.gz) |
-| macOS Intel | [darwin-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.32-dev/gooo-darwin-amd64.tar.gz) |
-| Linux x86-64 | [linux-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.32-dev/gooo-linux-amd64.tar.gz) |
-| Windows x86-64 | [windows-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.32-dev/gooo-windows-amd64.zip) |
+| macOS Apple Silicon | [darwin-arm64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.33-dev/gooo-darwin-arm64.tar.gz) |
+| macOS Intel | [darwin-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.33-dev/gooo-darwin-amd64.tar.gz) |
+| Linux x86-64 | [linux-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.33-dev/gooo-linux-amd64.tar.gz) |
+| Windows x86-64 | [windows-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.33-dev/gooo-windows-amd64.zip) |
 
 Compare the archive's SHA-256 with the published
-[SHA256SUMS](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.32-dev/SHA256SUMS).
+[SHA256SUMS](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.33-dev/SHA256SUMS).
 These archives contain the compiler; native execution still needs Go 1.27.2.
 When Go is elsewhere, add `--go /path/to/go1.27.2` to each execute/replay command.
 On Windows, run the commands below in **Command Prompt (`cmd.exe`)**, using
