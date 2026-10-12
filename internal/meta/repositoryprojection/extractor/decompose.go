@@ -641,6 +641,10 @@ func suffixFreeObjects(statements []ast.Stmt, function *ast.FuncDecl, inside map
 				return true
 			}
 			object := info.Uses[identifier]
+			// Struct fields are selected through their receiver, never lexical arguments.
+			if field, ok := object.(*types.Var); ok && field.IsField() {
+				return true
+			}
 			if object == nil || inside[object] || object.Pos() == token.NoPos ||
 				object.Pos() >= statements[0].Pos() ||
 				object.Pos() < function.Pos() || object.Pos() >= function.End() {

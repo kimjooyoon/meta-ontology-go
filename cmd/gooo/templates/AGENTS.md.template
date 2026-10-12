@@ -1,0 +1,47 @@
+# Working on this Gooo project
+
+Read README.md and the existing .gooo examples first. They show this project's
+supported syntax, construction choices and commands. Discover installed commands
+with `gooo help`; record the compiler identity with `gooo version --build --json`.
+Native execution uses Go 1.27.2 for the same host architecture as Gooo.
+
+## Find the declaration to change
+
+For the single-file app starter, use these read-only commands:
+
+```sh
+gooo check main.gooo
+gooo inspect main.gooo
+gooo context main.gooo starter://activity/clamp --depth 1 --max-bytes 16384
+```
+
+For a library or diagnostic workspace, read gooo.workspace.json and use:
+
+```sh
+gooo package resolve gooo.workspace.json
+gooo package interface --json gooo.workspace.json
+```
+
+`context` follows a single file's explicit relationships. `truncated` and
+`next_root` describe omitted neighbors; use the returned source_digest as
+`--expect-source` when following another root. Workspace interfaces include
+imports and record fields. Consult `gooo help context` or `gooo help package`
+for the installed command's scope.
+
+## Implement and retain the evidence
+
+- Edit intent, conditions, assignments, choices and expected cases in .gooo
+  source. Keep stable declaration IDs when changing display names.
+- Use the existing source forms as examples. Find a supported command or source
+  example before introducing new syntax or a different construction model.
+- Follow README.md for generation, workspace execution and replay. Keep generated
+  Go and receipts as outputs; make implementation changes in their source owner.
+- Keep construction cases and holdout cases in their declared roles. Record first
+  failures and later attempts, with matched outputs and their actual denominator.
+  Input-only observations have no expected-output accuracy score.
+- With no model provider configured, construction follows deterministic ordering.
+  A compatible local model ranks the source's permitted choices. Check inherited
+  GOOO_LAYA_URL and GOOO_LAYA_API_KEY settings when choosing that route.
+- Reuse a saved program through replay when only caller inputs change. Source
+  changes require a fresh construction receipt. Report unmeasured behavior and
+  remaining requirements alongside the finite results.

@@ -143,6 +143,9 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 	if options.continuityCertificateFilename != "" && (options.observationLedgerDir != "" || options.retentionReport || options.publicRetentionRequested() || options.compatibilityCertificateFilename != "") {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
+	if options.compatibilityCertificateFilename != "" && options.previousGo != "" {
+		return generateOptions{}, fmt.Errorf("--compatibility-certificate does not bind --previous-go; omit the certificate to regenerate with existing Go")
+	}
 	if options.compatibilityCertificateFilename != "" && (options.observationLedgerDir != "" || options.retentionReport || options.publicRetentionRequested()) {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}

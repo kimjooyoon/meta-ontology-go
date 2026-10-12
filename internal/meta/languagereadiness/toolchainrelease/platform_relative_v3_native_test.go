@@ -38,7 +38,7 @@ func TestRelativeV3ReleaseProfileNativeCI(t *testing.T) {
 	if !ok {
 		t.Fatal("native release target is unregistered")
 	}
-	input := BuildInput{Root: root, ExpectedHead: strings.TrimSpace(string(head)), Target: target}
+	input := BuildInput{Root: root, OutputDir: work, ExpectedHead: strings.TrimSpace(string(head)), Target: target}
 	err = smokeRelativeV3(binary, work, input)
 	if state != "" {
 		if err == nil || err.Error() != "TOOLCHAIN_RELEASE_DIRTY_BUILD" {
@@ -52,5 +52,14 @@ func TestRelativeV3ReleaseProfileNativeCI(t *testing.T) {
 	}
 	if err != nil {
 		t.Fatal(err)
+	}
+	for _, mode := range []string{"preflight", "construct", "replay"} {
+		name := filepath.Join(work, target.ID+"-relative-v3-"+mode+".json")
+		if data, err := os.ReadFile(name); err != nil || len(data) == 0 {
+			t.Fatalf("missing retained profile output %s: %v", mode, err)
+		}
+	}
+	if after, err := repositoryState(root); err != nil || after != state {
+		t.Fatalf("profile changed source tree: %q -> %q, %v", state, after, err)
 	}
 }
