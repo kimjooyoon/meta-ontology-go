@@ -1,0 +1,1587 @@
+{
+  "schema": "gooo/source-relational-callers-observation/v1",
+  "scope": "five finite Gooo source programs: monotonicity, inverse composition, insufficient choices, and conflicting local/caller conditions",
+  "new_compiler_syntax": false,
+  "new_compiler_runtime_logic": false,
+  "model_training_performed": false,
+  "performance_measured": false,
+  "variants": {
+    "monotonic": {
+      "decision": "COMPLETE_FINITE",
+      "stop_reason": "LOCAL_AND_CALLER_CASES_MATCHED",
+      "candidate_space": 2,
+      "selected_attempt_zero_based": 1,
+      "attempts": [
+        {
+          "index_zero_based": 0,
+          "criteria": {
+            "passed": 1,
+            "failed": 0,
+            "unknown": 0,
+            "total": 1
+          },
+          "caller": {
+            "passed": 0,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Fee",
+              "mask": 0,
+              "activity_id": "relation://fee",
+              "input_source_sha256": "sha256:2e9f9357a90cb68b19e98790c10b82a6c9a4d0f61273e4073f9b962c124cd58f",
+              "selected_source_sha256": "sha256:157a5001e83e0f593ff1695d9fe27d0c00f99b326db5be0c4b4b73e296bf1c12",
+              "contract_sha256": "sha256:008f34599c288d5015eadbca099c8d03f4d3f16b901e7521c968c37eb21355f7",
+              "local_criteria": {
+                "suite_sha256": "sha256:db60a7b36c1d2584ea723e0206077a5a0bdc4944cfa8bf83736ce47d2fab515e",
+                "bindings": [
+                  {
+                    "id": "anchor",
+                    "activity": "ZeroAtEleven",
+                    "activity_id": "relation://activity/zero-at-eleven",
+                    "generated_sha256": "sha256:c7dc7289e7fc64bbf53bbc31452ee208b3772cab9888b35fe86b58f5cdb2f348"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[11]",
+                    "actual_json": "0",
+                    "checks": [
+                      {
+                        "id": "anchor",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:157a5001e83e0f593ff1695d9fe27d0c00f99b326db5be0c4b4b73e296bf1c12",
+          "executable_sha256": "sha256:2546929255704a2b99677871f55cf1ff20e56219d3b92889edfa63d22c7d3341",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation://nondecreasing",
+                  "input": 4,
+                  "actual": false,
+                  "expected": true,
+                  "passed": false
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    4
+                  ]
+                },
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    5
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index_zero_based": 1,
+          "criteria": {
+            "passed": 1,
+            "failed": 0,
+            "unknown": 0,
+            "total": 1
+          },
+          "caller": {
+            "passed": 1,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Fee",
+              "mask": 1,
+              "activity_id": "relation://fee",
+              "input_source_sha256": "sha256:2e9f9357a90cb68b19e98790c10b82a6c9a4d0f61273e4073f9b962c124cd58f",
+              "selected_source_sha256": "sha256:ce36cceb401b27e5fdbb30d6843d802a0fabab8de79d1085f55ee59fbce69e33",
+              "contract_sha256": "sha256:008f34599c288d5015eadbca099c8d03f4d3f16b901e7521c968c37eb21355f7",
+              "local_criteria": {
+                "suite_sha256": "sha256:db60a7b36c1d2584ea723e0206077a5a0bdc4944cfa8bf83736ce47d2fab515e",
+                "bindings": [
+                  {
+                    "id": "anchor",
+                    "activity": "ZeroAtEleven",
+                    "activity_id": "relation://activity/zero-at-eleven",
+                    "generated_sha256": "sha256:c7dc7289e7fc64bbf53bbc31452ee208b3772cab9888b35fe86b58f5cdb2f348"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[11]",
+                    "actual_json": "0",
+                    "checks": [
+                      {
+                        "id": "anchor",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:ce36cceb401b27e5fdbb30d6843d802a0fabab8de79d1085f55ee59fbce69e33",
+          "executable_sha256": "sha256:40357e32b3ca5203c1e6e761c650506010f432523283b558d0d01a0a925fa6fa",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation://nondecreasing",
+                  "input": 4,
+                  "actual": true,
+                  "expected": true,
+                  "passed": true
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    4
+                  ]
+                },
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    5
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "native_evaluation": {
+        "passed": 1,
+        "total": 1,
+        "traces": [
+          {
+            "case_index": 0,
+            "deliveries": [
+              {
+                "activity_id": "relation://nondecreasing",
+                "input": 23,
+                "actual": true,
+                "expected": true,
+                "passed": true
+              }
+            ],
+            "called_inputs_observed": true,
+            "calls": [
+              {
+                "root_activity_id": "relation://nondecreasing",
+                "activity_id": "relation://fee",
+                "inputs": [
+                  23
+                ]
+              },
+              {
+                "root_activity_id": "relation://nondecreasing",
+                "activity_id": "relation://fee",
+                "inputs": [
+                  24
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "new_model_calls": 0,
+      "execution": {
+        "compiler_sha256": "24a717eecbbb807c68dada6f3871da4affc026e56f95f108e877fcc82a5c367e",
+        "compiler_source_base": "fb3dc26d748404a8987134f349a748f2cc29e062",
+        "compiler_overlay_manifest_sha256": "e9d4ed7056760a6d95c965e16558f3591224b9ab88dd5ec78a7f490ff7beeae3",
+        "current_repository_head": "f1b33a67903af2cddbbffada0a5b89cd8f8c6a02",
+        "source_sha256": "2e9f9357a90cb68b19e98790c10b82a6c9a4d0f61273e4073f9b962c124cd58f",
+        "construction_cases_sha256": "3ff1901fe401bb2c853eb3a9132761a964a65d0b40bbec70385745092d1ab2aa",
+        "evaluation_cases_sha256": "2830e6a4dd669469359c5f4b6a210f7f258d73bea7538b22b92ee2e83e8aadba",
+        "model_requested": false,
+        "exit_code": 0,
+        "output_sha256": "7deb8d9952d046b097d025f59968f37559eac5202747838e1668e63e2bdc510f"
+      },
+      "selected_source_sha256": "ce36cceb401b27e5fdbb30d6843d802a0fabab8de79d1085f55ee59fbce69e33",
+      "saved_report": {
+        "sha256": "8f675c79a58f6897621341cb3718a7b26d96719a58554376a40f6c1992292f45",
+        "exit_code": 0,
+        "program_executions": 0,
+        "model_calls": 0
+      },
+      "original_source_sha256": "sha256:2e9f9357a90cb68b19e98790c10b82a6c9a4d0f61273e4073f9b962c124cd58f",
+      "recorded_selected_source": "package relation\nnamespace relation\nentity Integer id \"relation://integer\"\nentity Boolean id \"relation://boolean\"\nactivity Fee(Integer) -> Integer id \"relation://fee\" computes \"return (input - 11)\" \nactivity ZeroAtEleven(Integer,Integer) -> Boolean computes \"return input1 == 0\"\nactivity Nondecreasing(Integer) -> Boolean id \"relation://nondecreasing\" computes \"let first=Fee(input); let second=Fee(input+1); return first <= second\"\n",
+      "selected_fixture_sha256": "sha256:33e16e91954d5606ed0b3996e5a14819fd61c89f54026c96ef0ed2ac32bcc57c",
+      "selected_fixture_transform": "trim source-line trailing spaces and tabs; raw selected source is retained verbatim"
+    },
+    "insufficient": {
+      "decision": "PARTIAL_FINITE",
+      "stop_reason": "DECLARED_SPACE_EXHAUSTED",
+      "candidate_space": 2,
+      "selected_attempt_zero_based": 0,
+      "attempts": [
+        {
+          "index_zero_based": 0,
+          "criteria": {
+            "passed": 1,
+            "failed": 0,
+            "unknown": 0,
+            "total": 1
+          },
+          "caller": {
+            "passed": 0,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Fee",
+              "mask": 0,
+              "activity_id": "relation://fee",
+              "input_source_sha256": "sha256:48bd48d605335a60f62da8b32eaf5c267f37e190e396334e6e092c6bd23c4313",
+              "selected_source_sha256": "sha256:748983c5a24d491aaf4ce332ab8c9660308b283a8e975d2325aaa03a99c14f8a",
+              "contract_sha256": "sha256:008f34599c288d5015eadbca099c8d03f4d3f16b901e7521c968c37eb21355f7",
+              "local_criteria": {
+                "suite_sha256": "sha256:db60a7b36c1d2584ea723e0206077a5a0bdc4944cfa8bf83736ce47d2fab515e",
+                "bindings": [
+                  {
+                    "id": "anchor",
+                    "activity": "ZeroAtEleven",
+                    "activity_id": "relation://activity/zero-at-eleven",
+                    "generated_sha256": "sha256:c7dc7289e7fc64bbf53bbc31452ee208b3772cab9888b35fe86b58f5cdb2f348"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[11]",
+                    "actual_json": "0",
+                    "checks": [
+                      {
+                        "id": "anchor",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:748983c5a24d491aaf4ce332ab8c9660308b283a8e975d2325aaa03a99c14f8a",
+          "executable_sha256": "sha256:55e06be6001c23ca369f686c49419f008293a0b35a460d6356f8f72c5d5ac171",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation://nondecreasing",
+                  "input": 4,
+                  "actual": false,
+                  "expected": true,
+                  "passed": false
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    4
+                  ]
+                },
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    5
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index_zero_based": 1,
+          "criteria": {
+            "passed": 1,
+            "failed": 0,
+            "unknown": 0,
+            "total": 1
+          },
+          "caller": {
+            "passed": 0,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Fee",
+              "mask": 1,
+              "activity_id": "relation://fee",
+              "input_source_sha256": "sha256:48bd48d605335a60f62da8b32eaf5c267f37e190e396334e6e092c6bd23c4313",
+              "selected_source_sha256": "sha256:db00bbf79d59bc83ef3e95f9c6ab8b8ac5f20ec0b626f60b730932701ae6e522",
+              "contract_sha256": "sha256:008f34599c288d5015eadbca099c8d03f4d3f16b901e7521c968c37eb21355f7",
+              "local_criteria": {
+                "suite_sha256": "sha256:db60a7b36c1d2584ea723e0206077a5a0bdc4944cfa8bf83736ce47d2fab515e",
+                "bindings": [
+                  {
+                    "id": "anchor",
+                    "activity": "ZeroAtEleven",
+                    "activity_id": "relation://activity/zero-at-eleven",
+                    "generated_sha256": "sha256:c7dc7289e7fc64bbf53bbc31452ee208b3772cab9888b35fe86b58f5cdb2f348"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[11]",
+                    "actual_json": "0",
+                    "checks": [
+                      {
+                        "id": "anchor",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:db00bbf79d59bc83ef3e95f9c6ab8b8ac5f20ec0b626f60b730932701ae6e522",
+          "executable_sha256": "sha256:4ad50c26f0a537eaeb9b5e9a237b08b02303a7951f816a713b75713c156d7098",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation://nondecreasing",
+                  "input": 4,
+                  "actual": false,
+                  "expected": true,
+                  "passed": false
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    4
+                  ]
+                },
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    5
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "native_evaluation": {
+        "passed": 0,
+        "total": 1,
+        "traces": [
+          {
+            "case_index": 0,
+            "deliveries": [
+              {
+                "activity_id": "relation://nondecreasing",
+                "input": 23,
+                "actual": false,
+                "expected": true,
+                "passed": false
+              }
+            ],
+            "called_inputs_observed": true,
+            "calls": [
+              {
+                "root_activity_id": "relation://nondecreasing",
+                "activity_id": "relation://fee",
+                "inputs": [
+                  23
+                ]
+              },
+              {
+                "root_activity_id": "relation://nondecreasing",
+                "activity_id": "relation://fee",
+                "inputs": [
+                  24
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "new_model_calls": 0,
+      "execution": {
+        "compiler_sha256": "24a717eecbbb807c68dada6f3871da4affc026e56f95f108e877fcc82a5c367e",
+        "compiler_source_base": "fb3dc26d748404a8987134f349a748f2cc29e062",
+        "compiler_overlay_manifest_sha256": "e9d4ed7056760a6d95c965e16558f3591224b9ab88dd5ec78a7f490ff7beeae3",
+        "current_repository_head": "f1b33a67903af2cddbbffada0a5b89cd8f8c6a02",
+        "source_sha256": "48bd48d605335a60f62da8b32eaf5c267f37e190e396334e6e092c6bd23c4313",
+        "construction_cases_sha256": "3ff1901fe401bb2c853eb3a9132761a964a65d0b40bbec70385745092d1ab2aa",
+        "evaluation_cases_sha256": "2830e6a4dd669469359c5f4b6a210f7f258d73bea7538b22b92ee2e83e8aadba",
+        "model_requested": false,
+        "exit_code": 0,
+        "output_sha256": "292c01cd9b5c12aa9f2646bb22ea19dc9ff0eb3c8f8ffcf92766501745783f8a"
+      },
+      "selected_source_sha256": "748983c5a24d491aaf4ce332ab8c9660308b283a8e975d2325aaa03a99c14f8a",
+      "saved_report": {
+        "sha256": "5ca1975cf8273b7532096b667b875a919c0d6c1bf8d970bd40781441e99aa14f",
+        "exit_code": 0,
+        "program_executions": 0,
+        "model_calls": 0
+      },
+      "original_source_sha256": "sha256:48bd48d605335a60f62da8b32eaf5c267f37e190e396334e6e092c6bd23c4313",
+      "recorded_selected_source": "package relation\nnamespace relation\nentity Integer id \"relation://integer\"\nentity Boolean id \"relation://boolean\"\nactivity Fee(Integer) -> Integer id \"relation://fee\" computes \"return ((11 - input) + 0)\" \nactivity ZeroAtEleven(Integer,Integer) -> Boolean computes \"return input1 == 0\"\nactivity Nondecreasing(Integer) -> Boolean id \"relation://nondecreasing\" computes \"let first=Fee(input); let second=Fee(input+1); return first <= second\"\n",
+      "selected_fixture_sha256": "sha256:665003fefc8b5a690237700b8f676e4a0bc51ffe771c7ab809e394f2c9f8f0f4",
+      "selected_fixture_transform": "trim source-line trailing spaces and tabs; raw selected source is retained verbatim"
+    },
+    "roundtrip": {
+      "decision": "COMPLETE_FINITE",
+      "stop_reason": "LOCAL_AND_CALLER_CASES_MATCHED",
+      "candidate_space": 4,
+      "selected_attempt_zero_based": 1,
+      "attempts": [
+        {
+          "index_zero_based": 0,
+          "criteria": {
+            "passed": 2,
+            "failed": 0,
+            "unknown": 0,
+            "total": 2
+          },
+          "caller": {
+            "passed": 0,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Decode",
+              "mask": 0,
+              "activity_id": "relation-codec://decode",
+              "input_source_sha256": "sha256:134842ed8baae47ed829bf930206e5c2b71ee4d723790c03ed9220f206c44fcb",
+              "selected_source_sha256": "sha256:eabb4ec4083cee098de4b814eb278230f58338d94607f7c0706a4e0bd516f799",
+              "contract_sha256": "sha256:11530b9d28387bb583259e865f6ab8ca6eca08851b90ed5ee22b81b06a14f5b6",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "activity": "Encode",
+              "mask": 0,
+              "activity_id": "relation-codec://encode",
+              "input_source_sha256": "sha256:eabb4ec4083cee098de4b814eb278230f58338d94607f7c0706a4e0bd516f799",
+              "selected_source_sha256": "sha256:01e0771c0b6a84f7c7628e91b43732c2aac98ce118895e4fac00d5e75fcedb55",
+              "contract_sha256": "sha256:42c706a4ae7edd64e39e3f50bc3eb3071b002ec7ee77e5842694f425db369679",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:01e0771c0b6a84f7c7628e91b43732c2aac98ce118895e4fac00d5e75fcedb55",
+          "executable_sha256": "sha256:f9bbaaade0a2e9888cfe3dab91b8e274316f958ef4823ec0a66e118efa0799ec",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation-codec://roundtrip",
+                  "input": 12,
+                  "actual": false,
+                  "expected": true,
+                  "passed": false
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://encode",
+                  "inputs": [
+                    12
+                  ]
+                },
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://decode",
+                  "inputs": [
+                    19
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index_zero_based": 1,
+          "criteria": {
+            "passed": 2,
+            "failed": 0,
+            "unknown": 0,
+            "total": 2
+          },
+          "caller": {
+            "passed": 1,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Decode",
+              "mask": 0,
+              "activity_id": "relation-codec://decode",
+              "input_source_sha256": "sha256:134842ed8baae47ed829bf930206e5c2b71ee4d723790c03ed9220f206c44fcb",
+              "selected_source_sha256": "sha256:eabb4ec4083cee098de4b814eb278230f58338d94607f7c0706a4e0bd516f799",
+              "contract_sha256": "sha256:11530b9d28387bb583259e865f6ab8ca6eca08851b90ed5ee22b81b06a14f5b6",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "activity": "Encode",
+              "mask": 1,
+              "activity_id": "relation-codec://encode",
+              "input_source_sha256": "sha256:eabb4ec4083cee098de4b814eb278230f58338d94607f7c0706a4e0bd516f799",
+              "selected_source_sha256": "sha256:ea73a7f9e0a1dc9209303c329a6f096426788d475a171b418755630c0e177796",
+              "contract_sha256": "sha256:42c706a4ae7edd64e39e3f50bc3eb3071b002ec7ee77e5842694f425db369679",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "-7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:ea73a7f9e0a1dc9209303c329a6f096426788d475a171b418755630c0e177796",
+          "executable_sha256": "sha256:a11e9d1494a9ca5348ba49e21e6ea4f206783a8c14474c6266f7295aa09ba3a6",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation-codec://roundtrip",
+                  "input": 12,
+                  "actual": true,
+                  "expected": true,
+                  "passed": true
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://encode",
+                  "inputs": [
+                    12
+                  ]
+                },
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://decode",
+                  "inputs": [
+                    5
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "native_evaluation": {
+        "passed": 1,
+        "total": 1,
+        "traces": [
+          {
+            "case_index": 0,
+            "deliveries": [
+              {
+                "activity_id": "relation-codec://roundtrip",
+                "input": -23,
+                "actual": true,
+                "expected": true,
+                "passed": true
+              }
+            ],
+            "called_inputs_observed": true,
+            "calls": [
+              {
+                "root_activity_id": "relation-codec://roundtrip",
+                "activity_id": "relation-codec://encode",
+                "inputs": [
+                  -23
+                ]
+              },
+              {
+                "root_activity_id": "relation-codec://roundtrip",
+                "activity_id": "relation-codec://decode",
+                "inputs": [
+                  -30
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "new_model_calls": 0,
+      "execution": {
+        "compiler_sha256": "24a717eecbbb807c68dada6f3871da4affc026e56f95f108e877fcc82a5c367e",
+        "compiler_source_base": "fb3dc26d748404a8987134f349a748f2cc29e062",
+        "compiler_overlay_manifest_sha256": "e9d4ed7056760a6d95c965e16558f3591224b9ab88dd5ec78a7f490ff7beeae3",
+        "current_repository_head": "f1b33a67903af2cddbbffada0a5b89cd8f8c6a02",
+        "source_sha256": "134842ed8baae47ed829bf930206e5c2b71ee4d723790c03ed9220f206c44fcb",
+        "construction_cases_sha256": "34a0875338a65fba74ea3d0db5c7b760c9869de15e8fecb130f597b7f4ee37cf",
+        "evaluation_cases_sha256": "353809546e2a21bd4c09d07104858cd01b4a7ac2965d677b826319c01697976a",
+        "model_requested": false,
+        "exit_code": 0,
+        "output_sha256": "2014113c1eb6472ce431e0eced4b65fe1d95902492fadfc63a3f74774c36cb03"
+      },
+      "selected_source_sha256": "ea73a7f9e0a1dc9209303c329a6f096426788d475a171b418755630c0e177796",
+      "saved_report": {
+        "sha256": "3d88ba7b2364caf7a268211732819dc3eb8e4705c9b92eea7cba61d4e54c594e",
+        "exit_code": 0,
+        "program_executions": 0,
+        "model_calls": 0
+      },
+      "original_source_sha256": "sha256:134842ed8baae47ed829bf930206e5c2b71ee4d723790c03ed9220f206c44fcb",
+      "recorded_selected_source": "package relationcodec\nnamespace relationcodec\nentity Integer id \"relation-codec://integer\"\nentity Boolean id \"relation-codec://boolean\"\nactivity Encode(Integer) -> Integer id \"relation-codec://encode\" computes \"let plus = (input + 7)\\nlet minus = (input - 7)\\nreturn minus\" \nactivity Decode(Integer) -> Integer id \"relation-codec://decode\" computes \"let plus = (input + 7)\\nlet minus = (input - 7)\\nreturn plus\" \nactivity OffsetAtZero(Integer,Integer) -> Boolean computes \"return input1 == 7 || input1 == -7\"\nactivity RoundTrip(Integer) -> Boolean id \"relation-codec://roundtrip\" computes \"return Decode(Encode(input)) == input\"\n",
+      "selected_fixture_sha256": "sha256:3d81484ba6331e9bdabdadb0f191d36fe571b5f4583c799dde49a3fa216f5a07",
+      "selected_fixture_transform": "trim source-line trailing spaces and tabs; raw selected source is retained verbatim"
+    },
+    "roundtrip-insufficient": {
+      "decision": "PARTIAL_FINITE",
+      "stop_reason": "DECLARED_SPACE_EXHAUSTED",
+      "candidate_space": 4,
+      "selected_attempt_zero_based": 0,
+      "attempts": [
+        {
+          "index_zero_based": 0,
+          "criteria": {
+            "passed": 2,
+            "failed": 0,
+            "unknown": 0,
+            "total": 2
+          },
+          "caller": {
+            "passed": 0,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Decode",
+              "mask": 0,
+              "activity_id": "relation-codec://decode",
+              "input_source_sha256": "sha256:2cf66d17a1a6f5aee204f6ecb7d9b41d246867bc45df8aebbab646c2c41cbcd9",
+              "selected_source_sha256": "sha256:92a562ac500f9eb9b681385b5bd3c2e39ab7d6488aacb3528be3ea512398bad3",
+              "contract_sha256": "sha256:11530b9d28387bb583259e865f6ab8ca6eca08851b90ed5ee22b81b06a14f5b6",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "activity": "Encode",
+              "mask": 0,
+              "activity_id": "relation-codec://encode",
+              "input_source_sha256": "sha256:92a562ac500f9eb9b681385b5bd3c2e39ab7d6488aacb3528be3ea512398bad3",
+              "selected_source_sha256": "sha256:40fcb590e5aab51ca741f6b2174c461dd87087ebad71629e3ff26d010529178a",
+              "contract_sha256": "sha256:42c706a4ae7edd64e39e3f50bc3eb3071b002ec7ee77e5842694f425db369679",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:40fcb590e5aab51ca741f6b2174c461dd87087ebad71629e3ff26d010529178a",
+          "executable_sha256": "sha256:0eba1bb181cee042d4045af83da094f55794cd7294c49d626c86ca9e617147e4",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation-codec://roundtrip",
+                  "input": 12,
+                  "actual": false,
+                  "expected": true,
+                  "passed": false
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://encode",
+                  "inputs": [
+                    12
+                  ]
+                },
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://decode",
+                  "inputs": [
+                    19
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index_zero_based": 1,
+          "criteria": {
+            "passed": 2,
+            "failed": 0,
+            "unknown": 0,
+            "total": 2
+          },
+          "caller": {
+            "passed": 0,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Decode",
+              "mask": 0,
+              "activity_id": "relation-codec://decode",
+              "input_source_sha256": "sha256:2cf66d17a1a6f5aee204f6ecb7d9b41d246867bc45df8aebbab646c2c41cbcd9",
+              "selected_source_sha256": "sha256:92a562ac500f9eb9b681385b5bd3c2e39ab7d6488aacb3528be3ea512398bad3",
+              "contract_sha256": "sha256:11530b9d28387bb583259e865f6ab8ca6eca08851b90ed5ee22b81b06a14f5b6",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "activity": "Encode",
+              "mask": 1,
+              "activity_id": "relation-codec://encode",
+              "input_source_sha256": "sha256:92a562ac500f9eb9b681385b5bd3c2e39ab7d6488aacb3528be3ea512398bad3",
+              "selected_source_sha256": "sha256:4a3a58d8c2d1a550d7b4e07c1b8e26f761f7526d295f85f6bcd2522c747c9569",
+              "contract_sha256": "sha256:42c706a4ae7edd64e39e3f50bc3eb3071b002ec7ee77e5842694f425db369679",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:4a3a58d8c2d1a550d7b4e07c1b8e26f761f7526d295f85f6bcd2522c747c9569",
+          "executable_sha256": "sha256:688972f209e451ac2d697769f6d62e35cdd4f3a4f21d0e0d667cb816be23b255",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation-codec://roundtrip",
+                  "input": 12,
+                  "actual": false,
+                  "expected": true,
+                  "passed": false
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://encode",
+                  "inputs": [
+                    12
+                  ]
+                },
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://decode",
+                  "inputs": [
+                    19
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index_zero_based": 2,
+          "criteria": {
+            "passed": 2,
+            "failed": 0,
+            "unknown": 0,
+            "total": 2
+          },
+          "caller": {
+            "passed": 0,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Decode",
+              "mask": 1,
+              "activity_id": "relation-codec://decode",
+              "input_source_sha256": "sha256:2cf66d17a1a6f5aee204f6ecb7d9b41d246867bc45df8aebbab646c2c41cbcd9",
+              "selected_source_sha256": "sha256:cc34ed47aea0290ca60d2a92a28447d63e715f99a29bb6ba791b7583c7f90f0c",
+              "contract_sha256": "sha256:11530b9d28387bb583259e865f6ab8ca6eca08851b90ed5ee22b81b06a14f5b6",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "activity": "Encode",
+              "mask": 0,
+              "activity_id": "relation-codec://encode",
+              "input_source_sha256": "sha256:cc34ed47aea0290ca60d2a92a28447d63e715f99a29bb6ba791b7583c7f90f0c",
+              "selected_source_sha256": "sha256:c60a4d888b79bfb709578dc9de6b8a21073ca8418df062f8c0a5379d13ca3181",
+              "contract_sha256": "sha256:42c706a4ae7edd64e39e3f50bc3eb3071b002ec7ee77e5842694f425db369679",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:c60a4d888b79bfb709578dc9de6b8a21073ca8418df062f8c0a5379d13ca3181",
+          "executable_sha256": "sha256:1ab8c5147efaad4a09f1141fd6e9ffac9afdb2307968b05c40a0ca4e7b337c04",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation-codec://roundtrip",
+                  "input": 12,
+                  "actual": false,
+                  "expected": true,
+                  "passed": false
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://encode",
+                  "inputs": [
+                    12
+                  ]
+                },
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://decode",
+                  "inputs": [
+                    19
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index_zero_based": 3,
+          "criteria": {
+            "passed": 2,
+            "failed": 0,
+            "unknown": 0,
+            "total": 2
+          },
+          "caller": {
+            "passed": 0,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Decode",
+              "mask": 1,
+              "activity_id": "relation-codec://decode",
+              "input_source_sha256": "sha256:2cf66d17a1a6f5aee204f6ecb7d9b41d246867bc45df8aebbab646c2c41cbcd9",
+              "selected_source_sha256": "sha256:cc34ed47aea0290ca60d2a92a28447d63e715f99a29bb6ba791b7583c7f90f0c",
+              "contract_sha256": "sha256:11530b9d28387bb583259e865f6ab8ca6eca08851b90ed5ee22b81b06a14f5b6",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "activity": "Encode",
+              "mask": 1,
+              "activity_id": "relation-codec://encode",
+              "input_source_sha256": "sha256:cc34ed47aea0290ca60d2a92a28447d63e715f99a29bb6ba791b7583c7f90f0c",
+              "selected_source_sha256": "sha256:f248e31270be3c0599e68abbee4814118ae308a11263e455afa0040409b3eeb3",
+              "contract_sha256": "sha256:42c706a4ae7edd64e39e3f50bc3eb3071b002ec7ee77e5842694f425db369679",
+              "local_criteria": {
+                "suite_sha256": "sha256:17628fd9f9a027e5b2ea1de865f35665d6e510b96f36076269b9ba51eaf879a2",
+                "bindings": [
+                  {
+                    "id": "offset",
+                    "activity": "OffsetAtZero",
+                    "activity_id": "relationcodec://activity/offset-at-zero",
+                    "generated_sha256": "sha256:31d7fd3819ce23921b104fe029de2b5aa6002e46b8af57ac98111457fe85844f"
+                  }
+                ],
+                "passed": 1,
+                "failed": 0,
+                "unknown": 0,
+                "total": 1,
+                "inputs": [
+                  {
+                    "input_json": "[0]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "offset",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:f248e31270be3c0599e68abbee4814118ae308a11263e455afa0040409b3eeb3",
+          "executable_sha256": "sha256:cba0eb3fdc14ebe501d5757f76115ac1034e54578ef8d3756bbf18834c6546ef",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation-codec://roundtrip",
+                  "input": 12,
+                  "actual": false,
+                  "expected": true,
+                  "passed": false
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://encode",
+                  "inputs": [
+                    12
+                  ]
+                },
+                {
+                  "root_activity_id": "relation-codec://roundtrip",
+                  "activity_id": "relation-codec://decode",
+                  "inputs": [
+                    19
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "native_evaluation": {
+        "passed": 0,
+        "total": 1,
+        "traces": [
+          {
+            "case_index": 0,
+            "deliveries": [
+              {
+                "activity_id": "relation-codec://roundtrip",
+                "input": -23,
+                "actual": false,
+                "expected": true,
+                "passed": false
+              }
+            ],
+            "called_inputs_observed": true,
+            "calls": [
+              {
+                "root_activity_id": "relation-codec://roundtrip",
+                "activity_id": "relation-codec://encode",
+                "inputs": [
+                  -23
+                ]
+              },
+              {
+                "root_activity_id": "relation-codec://roundtrip",
+                "activity_id": "relation-codec://decode",
+                "inputs": [
+                  -16
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "new_model_calls": 0,
+      "execution": {
+        "compiler_sha256": "24a717eecbbb807c68dada6f3871da4affc026e56f95f108e877fcc82a5c367e",
+        "compiler_source_base": "fb3dc26d748404a8987134f349a748f2cc29e062",
+        "compiler_overlay_manifest_sha256": "e9d4ed7056760a6d95c965e16558f3591224b9ab88dd5ec78a7f490ff7beeae3",
+        "current_repository_head": "f1b33a67903af2cddbbffada0a5b89cd8f8c6a02",
+        "source_sha256": "2cf66d17a1a6f5aee204f6ecb7d9b41d246867bc45df8aebbab646c2c41cbcd9",
+        "construction_cases_sha256": "34a0875338a65fba74ea3d0db5c7b760c9869de15e8fecb130f597b7f4ee37cf",
+        "evaluation_cases_sha256": "353809546e2a21bd4c09d07104858cd01b4a7ac2965d677b826319c01697976a",
+        "model_requested": false,
+        "exit_code": 0,
+        "output_sha256": "2c223c2afbdcaa2bb47bef36822e54c4f710b7b672b5be9c6e3d7fe0c09a737b"
+      },
+      "selected_source_sha256": "40fcb590e5aab51ca741f6b2174c461dd87087ebad71629e3ff26d010529178a",
+      "saved_report": {
+        "sha256": "750ca0adcbde4d832a78d723ca8922bd3a5784fc4e8d5ce04839a4859b59b408",
+        "exit_code": 0,
+        "program_executions": 0,
+        "model_calls": 0
+      },
+      "original_source_sha256": "sha256:2cf66d17a1a6f5aee204f6ecb7d9b41d246867bc45df8aebbab646c2c41cbcd9",
+      "recorded_selected_source": "package relationcodec\nnamespace relationcodec\nentity Integer id \"relation-codec://integer\"\nentity Boolean id \"relation-codec://boolean\"\nactivity Encode(Integer) -> Integer id \"relation-codec://encode\" computes \"let plus = (input + 7)\\nlet minus = (input + 7)\\nreturn plus\" \nactivity Decode(Integer) -> Integer id \"relation-codec://decode\" computes \"let plus = (input + 7)\\nlet minus = (input + 7)\\nreturn plus\" \nactivity OffsetAtZero(Integer,Integer) -> Boolean computes \"return input1 == 7 || input1 == -7\"\nactivity RoundTrip(Integer) -> Boolean id \"relation-codec://roundtrip\" computes \"return Decode(Encode(input)) == input\"\n",
+      "selected_fixture_sha256": "sha256:2929eb8e9c7eaf77156a5d968b3d60dfbbfa41d10c3676580e7b9250a630aa55",
+      "selected_fixture_transform": "trim source-line trailing spaces and tabs; raw selected source is retained verbatim"
+    },
+    "conflicting": {
+      "decision": "PARTIAL_FINITE",
+      "stop_reason": "DECLARED_SPACE_EXHAUSTED",
+      "candidate_space": 2,
+      "selected_attempt_zero_based": 0,
+      "attempts": [
+        {
+          "index_zero_based": 0,
+          "criteria": {
+            "passed": 2,
+            "failed": 0,
+            "unknown": 0,
+            "total": 2
+          },
+          "caller": {
+            "passed": 0,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Fee",
+              "mask": 0,
+              "activity_id": "relation://fee",
+              "input_source_sha256": "sha256:016c7868e76caf48e4839360686add1e4c4e6254ac983236a88876baeb953bac",
+              "selected_source_sha256": "sha256:74f8629ecbc5422ed9e9e5f47d3e757c96df9c17a766e193d0e0a99ba1280823",
+              "contract_sha256": "sha256:7f0cae873f3fed189e99edf146a1bdaef8c42c3dce33316d26104e34a88b19b9",
+              "local_criteria": {
+                "suite_sha256": "sha256:4db4ee874a153eb1e925e6d992ee5466ad0c161514bbfdea344ca8408713b87b",
+                "bindings": [
+                  {
+                    "id": "decreasing",
+                    "activity": "Decreasing",
+                    "activity_id": "relation://activity/decreasing",
+                    "generated_sha256": "sha256:c2a81a47dd8fd13f0936e61ffc2112d51453824251affb8306c7f2f799147ae4"
+                  }
+                ],
+                "passed": 2,
+                "failed": 0,
+                "unknown": 0,
+                "total": 2,
+                "inputs": [
+                  {
+                    "input_json": "[4]",
+                    "actual_json": "7",
+                    "checks": [
+                      {
+                        "id": "decreasing",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  },
+                  {
+                    "input_json": "[5]",
+                    "actual_json": "6",
+                    "checks": [
+                      {
+                        "id": "decreasing",
+                        "status": "SATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:74f8629ecbc5422ed9e9e5f47d3e757c96df9c17a766e193d0e0a99ba1280823",
+          "executable_sha256": "sha256:2546929255704a2b99677871f55cf1ff20e56219d3b92889edfa63d22c7d3341",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation://nondecreasing",
+                  "input": 4,
+                  "actual": false,
+                  "expected": true,
+                  "passed": false
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    4
+                  ]
+                },
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    5
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index_zero_based": 1,
+          "criteria": {
+            "passed": 0,
+            "failed": 2,
+            "unknown": 0,
+            "total": 2
+          },
+          "caller": {
+            "passed": 1,
+            "total": 1
+          },
+          "choices": [
+            {
+              "activity": "Fee",
+              "mask": 1,
+              "activity_id": "relation://fee",
+              "input_source_sha256": "sha256:016c7868e76caf48e4839360686add1e4c4e6254ac983236a88876baeb953bac",
+              "selected_source_sha256": "sha256:71fe78d13e30e574a44225896327131fb70217301d84aeb841dd035c8221292f",
+              "contract_sha256": "sha256:7f0cae873f3fed189e99edf146a1bdaef8c42c3dce33316d26104e34a88b19b9",
+              "local_criteria": {
+                "suite_sha256": "sha256:4db4ee874a153eb1e925e6d992ee5466ad0c161514bbfdea344ca8408713b87b",
+                "bindings": [
+                  {
+                    "id": "decreasing",
+                    "activity": "Decreasing",
+                    "activity_id": "relation://activity/decreasing",
+                    "generated_sha256": "sha256:c2a81a47dd8fd13f0936e61ffc2112d51453824251affb8306c7f2f799147ae4"
+                  }
+                ],
+                "passed": 0,
+                "failed": 2,
+                "unknown": 0,
+                "total": 2,
+                "inputs": [
+                  {
+                    "input_json": "[4]",
+                    "actual_json": "-7",
+                    "checks": [
+                      {
+                        "id": "decreasing",
+                        "status": "UNSATISFIED"
+                      }
+                    ]
+                  },
+                  {
+                    "input_json": "[5]",
+                    "actual_json": "-6",
+                    "checks": [
+                      {
+                        "id": "decreasing",
+                        "status": "UNSATISFIED"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "native_source_sha256": "sha256:71fe78d13e30e574a44225896327131fb70217301d84aeb841dd035c8221292f",
+          "executable_sha256": "sha256:40357e32b3ca5203c1e6e761c650506010f432523283b558d0d01a0a925fa6fa",
+          "traces": [
+            {
+              "case_index": 0,
+              "deliveries": [
+                {
+                  "activity_id": "relation://nondecreasing",
+                  "input": 4,
+                  "actual": true,
+                  "expected": true,
+                  "passed": true
+                }
+              ],
+              "called_inputs_observed": true,
+              "calls": [
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    4
+                  ]
+                },
+                {
+                  "root_activity_id": "relation://nondecreasing",
+                  "activity_id": "relation://fee",
+                  "inputs": [
+                    5
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "native_evaluation": {
+        "passed": 0,
+        "total": 1,
+        "traces": [
+          {
+            "case_index": 0,
+            "deliveries": [
+              {
+                "activity_id": "relation://nondecreasing",
+                "input": 23,
+                "actual": false,
+                "expected": true,
+                "passed": false
+              }
+            ],
+            "called_inputs_observed": true,
+            "calls": [
+              {
+                "root_activity_id": "relation://nondecreasing",
+                "activity_id": "relation://fee",
+                "inputs": [
+                  23
+                ]
+              },
+              {
+                "root_activity_id": "relation://nondecreasing",
+                "activity_id": "relation://fee",
+                "inputs": [
+                  24
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "new_model_calls": 0,
+      "execution": {
+        "compiler_sha256": "24a717eecbbb807c68dada6f3871da4affc026e56f95f108e877fcc82a5c367e",
+        "compiler_source_base": "fb3dc26d748404a8987134f349a748f2cc29e062",
+        "compiler_overlay_manifest_sha256": "e9d4ed7056760a6d95c965e16558f3591224b9ab88dd5ec78a7f490ff7beeae3",
+        "current_repository_head": "f1b33a67903af2cddbbffada0a5b89cd8f8c6a02",
+        "source_sha256": "016c7868e76caf48e4839360686add1e4c4e6254ac983236a88876baeb953bac",
+        "construction_cases_sha256": "3ff1901fe401bb2c853eb3a9132761a964a65d0b40bbec70385745092d1ab2aa",
+        "evaluation_cases_sha256": "2830e6a4dd669469359c5f4b6a210f7f258d73bea7538b22b92ee2e83e8aadba",
+        "model_requested": false,
+        "exit_code": 0,
+        "output_sha256": "f749d70677592667d743e06cae3594e894f02d0994a506b23789edb6314944d2"
+      },
+      "selected_source_sha256": "74f8629ecbc5422ed9e9e5f47d3e757c96df9c17a766e193d0e0a99ba1280823",
+      "saved_report": {
+        "sha256": "fa3892966c2be36335a94a7912f59f8ee328cc0526707d8ff28e63704bf5f9fc",
+        "exit_code": 0,
+        "program_executions": 0,
+        "model_calls": 0
+      },
+      "original_source_sha256": "sha256:016c7868e76caf48e4839360686add1e4c4e6254ac983236a88876baeb953bac",
+      "recorded_selected_source": "package relation\nnamespace relation\nentity Integer id \"relation://integer\"\nentity Boolean id \"relation://boolean\"\nactivity Fee(Integer) -> Integer id \"relation://fee\" computes \"return (11 - input)\" \nactivity Decreasing(Integer,Integer) -> Boolean computes \"return input1 == 11-input0\"\nactivity Nondecreasing(Integer) -> Boolean id \"relation://nondecreasing\" computes \"let first=Fee(input); let second=Fee(input+1); return first <= second\"\n",
+      "selected_fixture_sha256": "sha256:54313e584e34bab469064370ece20f77b69cc2f950eeb4ef4ee7a26cde19b248",
+      "selected_fixture_transform": "trim source-line trailing spaces and tabs; raw selected source is retained verbatim"
+    }
+  },
+  "source_files": {
+    "insufficient.selected.gooo.fixture": "665003fefc8b5a690237700b8f676e4a0bc51ffe771c7ab809e394f2c9f8f0f4",
+    "conflicting.selected.gooo.fixture": "54313e584e34bab469064370ece20f77b69cc2f950eeb4ef4ee7a26cde19b248",
+    "monotonic.selected.gooo.fixture": "33e16e91954d5606ed0b3996e5a14819fd61c89f54026c96ef0ed2ac32bcc57c",
+    "evaluation-cases.json": "2830e6a4dd669469359c5f4b6a210f7f258d73bea7538b22b92ee2e83e8aadba",
+    "construction-cases.json": "3ff1901fe401bb2c853eb3a9132761a964a65d0b40bbec70385745092d1ab2aa",
+    "conflicting.gooo.fixture": "016c7868e76caf48e4839360686add1e4c4e6254ac983236a88876baeb953bac",
+    "roundtrip.gooo.fixture": "134842ed8baae47ed829bf930206e5c2b71ee4d723790c03ed9220f206c44fcb",
+    "roundtrip-insufficient.gooo.fixture": "2cf66d17a1a6f5aee204f6ecb7d9b41d246867bc45df8aebbab646c2c41cbcd9",
+    "roundtrip-evaluation-cases.json": "353809546e2a21bd4c09d07104858cd01b4a7ac2965d677b826319c01697976a",
+    "monotonic.gooo.fixture": "2e9f9357a90cb68b19e98790c10b82a6c9a4d0f61273e4073f9b962c124cd58f",
+    "roundtrip.selected.gooo.fixture": "3d81484ba6331e9bdabdadb0f191d36fe571b5f4583c799dde49a3fa216f5a07",
+    "insufficient.gooo.fixture": "48bd48d605335a60f62da8b32eaf5c267f37e190e396334e6e092c6bd23c4313",
+    "roundtrip-insufficient.selected.gooo.fixture": "2929eb8e9c7eaf77156a5d968b3d60dfbbfa41d10c3676580e7b9250a630aa55",
+    "roundtrip-construction-cases.json": "34a0875338a65fba74ea3d0db5c7b760c9869de15e8fecb130f597b7f4ee37cf"
+  }
+}
