@@ -27,11 +27,30 @@ func TestRelativeV3ReleaseProfileNativeCI(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		binary += ".exe"
 	}
-	if _, err := commandOutput(root, nil, "go", "build", "-o", binary, "./cmd/gooo"); err != nil {
+	state, err := repositoryState(root)
+	if err != nil {
 		t.Fatal(err)
 	}
-	input := BuildInput{Root: root, ExpectedHead: strings.TrimSpace(string(head))}
-	if err := smokeRelativeV3(binary, work, input); err != nil {
+	if err := buildBinary(root, binary); err != nil {
+		t.Fatal(err)
+	}
+	target, ok := expectedTarget(runtime.GOOS + "-" + runtime.GOARCH)
+	if !ok {
+		t.Fatal("native release target is unregistered")
+	}
+	input := BuildInput{Root: root, ExpectedHead: strings.TrimSpace(string(head)), Target: target}
+	err = smokeRelativeV3(binary, work, input)
+	if state != "" {
+		if err == nil || err.Error() != "TOOLCHAIN_RELEASE_DIRTY_BUILD" {
+			t.Fatalf("rewritten source must be rejected before inference: %v", err)
+		}
+		entries, readErr := os.ReadDir(work)
+		if readErr != nil || len(entries) != 1 || entries[0].Name() != filepath.Base(binary) {
+			t.Fatalf("rejected source created profile artifacts: %v, %v", entries, readErr)
+		}
+		return
+	}
+	if err != nil {
 		t.Fatal(err)
 	}
 }

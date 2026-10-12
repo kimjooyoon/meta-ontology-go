@@ -11,6 +11,11 @@ const relativeV3Root = "examples/body-codegen/source-output-relations-v3-"
 
 // New zero-weight release regression; original fitted study weights are not read.
 func smokeRelativeV3(binary, work string, input BuildInput) error {
+	// A projected or rewritten workspace must not acquire release authority.
+	// Check the executable before creating a model or running any profile command.
+	if _, err := inspectBuild(binary, input); err != nil {
+		return err
+	}
 	m, err := contractdecision.NewSourceRelativeV3([contractdecision.InteractionRequirementParameterCount]float32{})
 	if err != nil {
 		return err
