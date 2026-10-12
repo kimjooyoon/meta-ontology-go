@@ -142,8 +142,7 @@ func resumeRecordSearch(ctx context.Context, p recordAssemblyPlan, r *RecordAsse
 	var best RecordAssemblyAttempt
 	found := false
 	for _, attempt := range r.Attempts {
-		if attempt.Total > 0 && (!found || attempt.Passed > best.Passed ||
-			(attempt.Passed == best.Passed && attempt.FieldsPassed > best.FieldsPassed)) {
+		if usableRecordAttempt(attempt) && (!found || betterRecordAttempt(attempt, best, true)) {
 			best, found = attempt, true
 		}
 	}
@@ -155,7 +154,7 @@ func resumeRecordSearch(ctx context.Context, p recordAssemblyPlan, r *RecordAsse
 			return best, nil, nil, err
 		}
 	}
-	if r.Total > 0 && r.Passed == r.Total {
+	if completeRecordAttempt(selectedRecordAttempt(r)) {
 		remaining = nil
 	}
 	if policy != nil {
@@ -165,8 +164,7 @@ func resumeRecordSearch(ctx context.Context, p recordAssemblyPlan, r *RecordAsse
 		}
 		r.Control.Entry = &entry
 		if found && entry.Operation == "USE_OBSERVED_CANDIDATE" {
-			r.SelectedMask, r.Cases = best.Mask, cases
-			r.Passed, r.Total, r.FieldsPassed, r.FieldsTotal = best.Passed, best.Total, best.FieldsPassed, best.FieldsTotal
+			selectRecordAttempt(r, best, cases)
 		}
 		if !entry.Continue {
 			remaining = nil

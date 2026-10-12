@@ -10,7 +10,7 @@ func (s Spec) validateRecordHoldout() error {
 	if len(s.ValueHoldoutCases) == 0 {
 		return nil
 	}
-	if len(s.ValueCases) == 0 {
+	if len(s.ValueCases) == 0 && s.Criteria == nil {
 		return fmt.Errorf("record holdout_value_case requires value_case selection examples")
 	}
 	inputs := make(map[string]bool, len(s.ValueCases)+len(s.ValueHoldoutCases))

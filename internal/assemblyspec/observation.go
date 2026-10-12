@@ -5,9 +5,11 @@ import (
 	"go/token"
 )
 
-// Observation declares how to distinguish source-owned candidates that satisfy
-// the initial examples. Inputs are questions; only a separate oracle supplies answers.
+// Observation declares source questions and their finite budget. Answers come
+// from a fixed oracle or from fixed criteria applied after input acquisition.
 type Observation struct {
+	CriteriaStrategy       string   `json:"criteria_strategy,omitempty"`
+	CriteriaInputs         []string `json:"criteria_inputs,omitempty"`
 	Inputs                 []int64  `json:"inputs"`
 	ValueInputs            []string `json:"value_inputs,omitempty"`
 	MaxCandidates          int      `json:"max_candidates"`
@@ -22,15 +24,24 @@ func (s Spec) validateObservation() error {
 	if o == nil {
 		return nil
 	}
-	if s.Search != nil || s.FillPlan != nil || len(s.Cases)+len(s.ValueCases) == 0 {
+	if s.Search != nil || s.FillPlan != nil || len(s.Cases)+len(s.ValueCases) == 0 && s.Criteria == nil {
 		return fmt.Errorf("observe requires typed choices and initial case or value_case declarations")
 	}
-	if len(o.Inputs)+len(o.ValueInputs) == 0 || len(o.Inputs)+len(o.ValueInputs) > 32 || o.MaxCandidates < 1 || o.MaxCandidates > 64 ||
+	if len(o.Inputs)+len(o.ValueInputs)+len(o.CriteriaInputs) == 0 || len(o.Inputs)+len(o.ValueInputs)+len(o.CriteriaInputs) > 32 || o.MaxCandidates < 1 || o.MaxCandidates > 64 ||
 		o.MaxRounds < 1 || o.MaxRounds > 8 {
 		return fmt.Errorf("observe requires 1..32 inputs, max_candidates 1..64 and max_rounds 1..8")
 	}
 	if o.OracleActivity != "" && (len(o.OracleActivity) > 128 || !token.IsIdentifier(o.OracleActivity)) {
 		return fmt.Errorf("observe oracle must name a Gooo activity")
+	}
+	if o.CriteriaStrategy != "" && len(o.CriteriaInputs) == 0 {
+		return fmt.Errorf("criteria_strategy requires criteria_input declarations")
+	}
+	if len(o.CriteriaInputs) > 0 {
+		return s.validateCriteriaQuestions()
+	}
+	if s.Criteria != nil && len(s.ValueCases) == 0 {
+		return fmt.Errorf("criteria-only observe requires criteria_input")
 	}
 	if len(s.ValueCases) > 0 {
 		return s.validateRecordObservationInputs()

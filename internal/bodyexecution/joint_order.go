@@ -129,7 +129,8 @@ func jointMaskOrder(slots []jointSlot, budget int) [][]uint16 {
 }
 
 func jointLocalComplete(attempt JointAttempt) bool {
-	return attempt.Rejection == nil && attempt.LocalTotal > 0 && attempt.LocalPassed == attempt.LocalTotal
+	return attempt.Rejection == nil && (attempt.LocalTotal > 0 || attempt.CriteriaTotal > 0) &&
+		attempt.LocalPassed == attempt.LocalTotal && attempt.CriteriaPassed == attempt.CriteriaTotal
 }
 
 func jointComplete(attempt JointAttempt) bool {
@@ -147,11 +148,20 @@ func betterJoint(a, b JointAttempt) bool {
 	if hasCompositionFault(a.Runtime) != hasCompositionFault(b.Runtime) {
 		return !hasCompositionFault(a.Runtime)
 	}
-	return a.LocalPassed > b.LocalPassed
+	if a.LocalPassed != b.LocalPassed {
+		return a.LocalPassed > b.LocalPassed
+	}
+	return a.CriteriaPassed > b.CriteriaPassed
 }
 
 func appendJointLocal(attempt *JointAttempt, candidate bodycodegen.RecordCandidate) {
 	attempt.Candidates = append(attempt.Candidates, candidate)
 	attempt.LocalPassed += candidate.Attempt.Passed
 	attempt.LocalTotal += candidate.Attempt.Total
+	if c := candidate.Attempt.Criteria; c != nil {
+		attempt.CriteriaPassed += c.Passed
+		attempt.CriteriaFailed += c.Failed
+		attempt.CriteriaUnknown += c.Unknown
+		attempt.CriteriaTotal += c.Total
+	}
 }

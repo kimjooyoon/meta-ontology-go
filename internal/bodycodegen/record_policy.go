@@ -161,22 +161,26 @@ func observeRecordPolicy(ctx context.Context, p recordAssemblyPlan, r *RecordAss
 func recordPolicyDecision(ctx context.Context, p recordAssemblyPlan, r *RecordAssemblyReceipt, policy *preparedRecordPolicy) (RecordPolicyDecision, error) {
 	counts := RecordPolicyCounts{Budget: min(p.spec.MaxAttempts, len(r.Ranking))}
 	for _, attempt := range r.Attempts {
-		if attempt.Total == 0 {
+		if !usableRecordAttempt(attempt) {
 			counts.Budget--
 			continue
 		}
 		counts.Scored++
-		counts.Best = max(counts.Best, attempt.Passed)
+		matched, _ := recordPolicyScore(attempt)
+		counts.Best = max(counts.Best, matched)
 	}
 	latestIndex := len(r.Attempts) - 1
-	for latestIndex > 0 && r.Attempts[latestIndex].Total == 0 {
+	for latestIndex > 0 && !usableRecordAttempt(r.Attempts[latestIndex]) {
 		latestIndex--
 	}
 	latest := r.Attempts[latestIndex]
-	counts.Matched, counts.Total = latest.Passed, latest.Total
+	counts.Matched, counts.Total = recordPolicyScore(latest)
 	decision, err := policy.decide(ctx, counts)
 	if err != nil {
 		return decision, err
+	}
+	if p.spec.Criteria != nil {
+		decision.CountUnit = "exact-value case rows plus criteria input rows satisfying all predicates"
 	}
 	decision.AttemptIndex, decision.Mask = latestIndex, latest.Mask
 	return decision, nil

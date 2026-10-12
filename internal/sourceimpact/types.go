@@ -35,6 +35,9 @@ type Cause struct {
 	Via       *Edge  `json:"via,omitempty"`
 }
 type Obligations struct {
+	CriteriaPredicates      int    `json:"criteria_predicates,omitempty"`
+	CriteriaInputs          int    `json:"criteria_inputs,omitempty"`
+	CriteriaHoldouts        int    `json:"criteria_holdouts,omitempty"`
 	Cases                   int    `json:"selection_cases"`
 	Conditions              int    `json:"condition_cases"`
 	Holdouts                int    `json:"holdout_cases"`
