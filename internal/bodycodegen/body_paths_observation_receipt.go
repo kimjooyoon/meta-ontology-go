@@ -11,6 +11,9 @@ import (
 
 func replayPathObservation(ctx context.Context, filename string, source []byte, activity string,
 	prepared *pathplan.PreparedPlan, original []pathplan.TestCase, prior *BodyPathReceipt) ([]pathplan.TestCase, error) {
+	if err := verifySourcePathObservation(ctx, filename, source, activity, prior.Observation); err != nil {
+		return nil, err
+	}
 	if prior.Observation == nil {
 		return original, nil
 	}

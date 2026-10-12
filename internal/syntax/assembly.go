@@ -33,6 +33,11 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 			continue
 		}
 		switch field.Value {
+		case "observe":
+			if d.Spec.Observation != nil {
+				p.error(DiagUnexpectedDeclaration, field.Span, "duplicate assembly observe declaration")
+			}
+			d.Spec.Observation = p.parseAssemblyObservation()
 		case "choice":
 			if len(d.Spec.Choices) == 16 {
 				p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds 16 choices")
@@ -413,6 +418,7 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 		fmt.Fprintf(output, "    condition_case %s input %s -> %s\n", quoteString(c.ChoiceID),
 			quoteString(strconv.FormatInt(c.Input, 10)), quoteString(strconv.FormatBool(c.Expected)))
 	}
+	formatAssemblyObservation(output, d.Spec.Observation)
 	for _, c := range d.Spec.HoldoutCases {
 		fmt.Fprintf(output, "    holdout_case %s -> %s\n", quoteString(strconv.FormatInt(c.Input, 10)),
 			quoteString(strconv.FormatInt(c.Expected, 10)))

@@ -11,6 +11,7 @@ import (
 )
 
 type Spec struct {
+	Observation        *Observation        `json:"observation,omitempty"`
 	Choices            []Choice            `json:"choices"`
 	Cases              []Case              `json:"cases"`
 	ConditionCases     []ConditionCase     `json:"condition_cases,omitempty"`
@@ -113,6 +114,9 @@ type ValueCase struct {
 }
 
 func (s Spec) Validate() error {
+	if err := s.validateObservation(); err != nil {
+		return err
+	}
 	if err := s.validateConditionCases(); err != nil {
 		return err
 	}
@@ -148,8 +152,11 @@ func (s Spec) Validate() error {
 		}
 		return nil
 	}
-	if len(s.HoldoutCases) != 0 || len(s.Choices) < 1 || len(s.Choices) > 16 {
-		return fmt.Errorf("assembly requires 1..16 choices and holdout cases are available only to IR search")
+	if len(s.Choices) < 1 || len(s.Choices) > 16 {
+		return fmt.Errorf("assembly requires 1..16 choices")
+	}
+	if err := s.validatePathHoldout(); err != nil {
+		return err
 	}
 	var seen [16]string
 	for i, c := range s.Choices {
@@ -387,6 +394,11 @@ func identifier(value string) bool {
 
 func (s Spec) Clone() *Spec {
 	clone := s
+	if s.Observation != nil {
+		observation := *s.Observation
+		observation.Inputs = append([]int64(nil), s.Observation.Inputs...)
+		clone.Observation = &observation
+	}
 	clone.Choices = append([]Choice(nil), s.Choices...)
 	clone.Cases = append([]Case(nil), s.Cases...)
 	clone.ConditionCases = append([]ConditionCase(nil), s.ConditionCases...)

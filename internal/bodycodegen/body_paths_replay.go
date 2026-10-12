@@ -122,6 +122,13 @@ func replayTypedPathProjection(ctx context.Context, filename string, source []by
 	if !equalIRBodyFillCaseResults(results, p.NativeCases) || passed != selectedPassed || len(results) != selectedTotal {
 		return fmt.Errorf("selected-body finite observations do not replay")
 	}
+	var holdout *PathHoldoutReceipt
+	if bound.activity.Assembly != nil {
+		holdout, err = evaluateSelectedPathHoldout(ctx, source, completed, &bound.activity.Assembly.Spec, replayed)
+	}
+	if err != nil || !reflect.DeepEqual(holdout, p.Holdout) {
+		return fmt.Errorf("selected-body holdout observations do not replay: %v", err)
+	}
 	if completedSource != nil {
 		*completedSource = completed
 	}
