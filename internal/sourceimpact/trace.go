@@ -75,6 +75,11 @@ func obligations(node semantic.Node) *Obligations {
 		return nil
 	}
 	r := &Obligations{Cases: len(s.Cases) + len(s.ValueCases), Conditions: len(s.ConditionCases), Holdouts: len(s.HoldoutCases) + len(s.ValueHoldoutCases), MaxAttempts: s.MaxAttempts}
+	if s.Criteria != nil {
+		r.CriteriaPredicates = len(s.Criteria.Predicates)
+		r.CriteriaInputs = len(s.Criteria.Inputs)
+		r.CriteriaHoldouts = len(s.Criteria.HoldoutInputs)
+	}
 	if s.Observation != nil {
 		r.ObservationInputs = len(s.Observation.Inputs) + len(s.Observation.ValueInputs)
 		r.Oracle = s.Observation.OracleActivity

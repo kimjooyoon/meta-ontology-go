@@ -111,6 +111,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [source-owned observation](examples/source-owned-observation/README.md)
 · [source path holdouts](examples/source-path-holdouts/README.md)
 · [language problems and direction, 한국어](docs/language-identity-problems.ko.md)
+· [source-owned behavior criteria](docs/source-behavior-criteria.md)
 · [compose activity bodies](docs/native-body-composition.md)
 · [inspect inputs before assembly](docs/composition-plan-inspection.md)
 · [read a bounded semantic neighborhood (development)](docs/semantic-context.md)

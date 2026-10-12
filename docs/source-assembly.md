@@ -839,3 +839,15 @@ overlap is reported separately from the held score.
 See [record field holdouts](record-field-holdouts.md) and the
 [complete source example](../examples/record-field-holdouts/README.md) for
 ambiguity at the first selection, later caller requirements and saved replay.
+
+## Record behavior criteria
+
+Record field construction and updates may declare `criteria`: named fixed Gooo
+Boolean activities applied to original inputs and the candidate's actual result.
+Criteria-only selection requires no expected `value_case`. Exact cases may also
+coexist and retain separate case/field denominators.
+
+See [behavior criteria](source-behavior-criteria.md) for source syntax, partial
+and unknown results, deterministic selection order, policy units, caller
+construction, held inputs, and replay. The [refund example](../examples/source-behavior-criteria/README.md)
+shows three source-owned conditions for one body.

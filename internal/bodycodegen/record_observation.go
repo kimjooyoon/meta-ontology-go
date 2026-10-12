@@ -66,7 +66,11 @@ func observeRecordAssembly(ctx context.Context, filename string, source []byte, 
 			r.Status = "ROUND_BUDGET"
 			return nil
 		}
-		if len(p.effectiveCases)+len(p.spec.ValueHoldoutCases) >= 128 {
+		criteriaInputs := 0
+		if p.spec.Criteria != nil {
+			criteriaInputs = len(p.spec.Criteria.Inputs) + len(p.spec.Criteria.HoldoutInputs)
+		}
+		if len(p.effectiveCases)+len(p.spec.ValueHoldoutCases)+criteriaInputs >= 128 {
 			r.Status = "CASE_BUDGET"
 			return nil
 		}

@@ -80,6 +80,17 @@ func (graph compositionGraph) selectionInputSet(ctx context.Context, filename st
 			tuples = append(tuples, tuple)
 		}
 	}
+	if spec.Criteria != nil {
+		for _, group := range [][]string{spec.Criteria.Inputs, spec.Criteria.HoldoutInputs} {
+			for _, input := range group {
+				var tuple []json.RawMessage
+				if err := json.Unmarshal([]byte(input), &tuple); err != nil {
+					return nil, err
+				}
+				tuples = append(tuples, tuple)
+			}
+		}
+	}
 	tuples = append(tuples, recordedInputTuples(report)...)
 	set := make(map[string]struct{}, len(tuples))
 	for _, tuple := range tuples {

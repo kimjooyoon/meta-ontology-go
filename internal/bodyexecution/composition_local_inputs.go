@@ -35,7 +35,13 @@ func (graph compositionGraph) includeCompositionLocalInputs(seen *compositionSel
 			}
 		}
 		if report.RecordAssembly != nil {
+			if err := graph.includeCriteriaLocalInputs(seen, report.ActivityID, report.RecordAssembly.CriteriaHoldout); err != nil {
+				return err
+			}
 			for _, attempt := range report.RecordAssembly.Attempts {
+				if err := graph.includeCriteriaLocalInputs(seen, report.ActivityID, attempt.Criteria); err != nil {
+					return err
+				}
 				if err := graph.includeLocalCallObservation(seen, report.ActivityID, attempt.LocalCalls); err != nil {
 					return err
 				}
@@ -52,6 +58,9 @@ func (graph compositionGraph) includeJointLocalInputs(seen *compositionSelection
 		}
 	}
 	for _, candidate := range attempt.Candidates {
+		if err := graph.includeCriteriaLocalInputs(seen, candidate.ActivityID, candidate.Attempt.Criteria); err != nil {
+			return err
+		}
 		if err := graph.includeLocalCallObservation(seen, candidate.ActivityID, candidate.Attempt.LocalCalls); err != nil {
 			return err
 		}

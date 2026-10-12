@@ -11,6 +11,8 @@ import (
 )
 
 type recordAssemblyPlan struct {
+	criteria         []preparedRecordCriterion
+	sourceSHA256     string
 	effectiveCases   []assemblyspec.ValueCase
 	body             preparedBody
 	original         preparedBody
@@ -26,7 +28,9 @@ type recordValueSite struct {
 	choice     RecordValueChoice
 }
 
-func IsRecordAssembly(spec *assemblyspec.Spec) bool { return spec != nil && len(spec.ValueCases) != 0 }
+func IsRecordAssembly(spec *assemblyspec.Spec) bool {
+	return spec != nil && (len(spec.ValueCases) != 0 || spec.Criteria != nil)
+}
 
 // ValidateSourceAssembly checks field alternatives and typed cases before any
 // optional model is loaded. Source IR search validates its grammar and bodies;
@@ -67,8 +71,9 @@ func prepareRecordAssembly(ctx context.Context, filename string, source []byte, 
 		return plan, err
 	}
 	if !IsRecordAssembly(plan.spec) || plan.spec.Seed != "" {
-		return plan, fmt.Errorf("record assembly requires value_case and unseeded bounded selection")
+		return plan, fmt.Errorf("record assembly requires value_case or criteria and unseeded bounded selection")
 	}
+	plan.sourceSHA256 = digest(source)
 	plan.original, err = prepareActivityBody(filename, source, activity)
 	if err != nil {
 		return plan, err
@@ -83,6 +88,13 @@ func prepareRecordAssembly(ctx context.Context, filename string, source []byte, 
 	}
 	if recordTypeByName(plan.body.records, plan.body.outputType) == nil {
 		return plan, fmt.Errorf("field assembly requires a declared record result")
+	}
+	plan.criteria, err = prepareRecordCriteria(ctx, filename, source, plan.body, plan.spec.Criteria)
+	if err != nil {
+		return plan, err
+	}
+	if err = validateRecordCriteriaInputs(ctx, plan); err != nil {
+		return plan, err
 	}
 	if err = plan.bindSites(); err != nil {
 		return plan, err
@@ -197,6 +209,10 @@ func (p *recordAssemblyPlan) validateAlternatives(ctx context.Context) error {
 			return fmt.Errorf("field choice %q: %w", p.choices[i].ID, err)
 		}
 		fingerprint.WriteString(digest(candidate.source))
+	}
+	for _, criterion := range p.criteria {
+		fingerprint.WriteString(criterion.activityID)
+		fingerprint.WriteString(criterion.goSHA256)
 	}
 	p.dependencySHA256 = digest([]byte(fingerprint.String()))
 	return nil

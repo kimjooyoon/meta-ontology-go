@@ -61,6 +61,7 @@ func constructionReportRows(result bodyConstructOutput) [][2]string {
 	rows = append(rows, constructionPathRows(c)...)
 	rows = append(rows, constructionRecordObservationRows(c)...)
 	rows = append(rows, constructionRecordHoldoutRows(c)...)
+	rows = append(rows, constructionCriteriaRows(c)...)
 	rows = append(rows, [2]string{"Evaluation stage", reportedValue(e.Runtime.Stage)},
 		[2]string{"Evaluation expected outputs", constructionRuntimeShare(e.Runtime)})
 	if e.InputSeparation.Scope == "" {

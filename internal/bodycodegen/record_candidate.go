@@ -63,13 +63,12 @@ func RealizeObservedRecordCandidate(ctx context.Context, filename string, source
 	if retained != nil {
 		observation.Schema, observation.Observation = "gooo/record-candidate/v2", retained
 	}
-	if attempt.Total == 0 {
+	if !usableRecordAttempt(attempt) {
 		return observation, nil, &SourceRecordCandidateRejection{
 			cause: fmt.Errorf("record candidate has no evaluable local obligations: %s", attempt.Reason)}
 	}
-	r.SelectedMask, r.Attempts, r.Cases = mask, []RecordAssemblyAttempt{attempt}, cases
-	r.Passed, r.Total = attempt.Passed, attempt.Total
-	r.FieldsPassed, r.FieldsTotal = attempt.FieldsPassed, attempt.FieldsTotal
+	r.Attempts = []RecordAssemblyAttempt{attempt}
+	selectRecordAttempt(r, attempt, cases)
 	finishRecordAssemblySearch(r)
 	generation, err := emitRecordAssembly(ctx, filename, source, p, r)
 	if err != nil {

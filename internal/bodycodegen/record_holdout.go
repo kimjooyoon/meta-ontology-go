@@ -37,6 +37,10 @@ func emitSelectedRecordAssembly(ctx context.Context, filename string, source []b
 		return Result{}, err
 	}
 	r.Holdout, err = evaluateProjectedRecordHoldout(ctx, source, []byte(result.GoooSource), p.spec.ValueHoldoutCases, result)
+	if err == nil && p.spec.Criteria != nil {
+		candidate := generatedRoute{source: []byte(result.Source), report: result.Report}
+		r.CriteriaHoldout, err = evaluateRecordCriteria(ctx, p, candidate, p.spec.Criteria.HoldoutInputs, "holdout")
+	}
 	return result, err
 }
 
