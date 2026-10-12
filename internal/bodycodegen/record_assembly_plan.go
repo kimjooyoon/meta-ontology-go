@@ -89,6 +89,11 @@ func prepareRecordAssembly(ctx context.Context, filename string, source []byte, 
 	if err = validateRecordAssemblyCases(ctx, plan.body.base.source, activity, plan.body.records, plan.spec.ValueCases); err != nil {
 		return plan, err
 	}
+	if len(plan.spec.ValueHoldoutCases) > 0 {
+		if err = validateRecordAssemblyCases(ctx, plan.body.base.source, activity, plan.body.records, plan.spec.ValueHoldoutCases); err != nil {
+			return plan, fmt.Errorf("record holdout: %w", err)
+		}
+	}
 	if err = plan.validateAlternatives(ctx); err != nil {
 		return plan, err
 	}

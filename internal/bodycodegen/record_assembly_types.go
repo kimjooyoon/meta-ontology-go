@@ -9,6 +9,7 @@ import (
 const recordAssemblySchema = "gooo/record-field-assembly/v1"
 
 type RecordAssemblyReceipt struct {
+	Holdout              *RecordHoldoutReceipt          `json:"holdout,omitempty"`
 	Schema               string                         `json:"schema"`
 	OriginalSourceSHA256 string                         `json:"original_source_sha256"`
 	SelectedSourceSHA256 string                         `json:"selected_source_sha256"`

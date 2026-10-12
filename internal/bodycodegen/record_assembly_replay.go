@@ -19,7 +19,7 @@ func bindRecordAssemblyScope(common *CompletenessReceipt, result Report) {
 		"contract_sha256": r.ContractSHA256, "test_suite_sha256": r.TestSuiteSHA256,
 		"finite_passed": r.Passed, "finite_total": r.Total, "fields_passed": r.FieldsPassed, "fields_total": r.FieldsTotal,
 		"local_model_predictions": r.ModelCalls, "external_provider_calls": 0}
-	common.Scope["domain_scope"] = "one source-owned pure record assembly with 1..16 typed inputs and required string fields"
+	common.Scope["domain_scope"] = "one source-owned pure record assembly with 1..16 typed inputs and declared scalar record fields"
 	common.Scope["decision_mode"], common.Scope["decision_provider"] = "deterministic_finite_tdd", "deterministic"
 	if r.ModelCalls > 0 {
 		common.Scope["decision_mode"], common.Scope["decision_provider"] = "local_ordinal_prediction_then_finite_tdd", "tiny_go"
@@ -107,8 +107,11 @@ func verifyRecordAssemblyObservations(expected, r *RecordAssemblyReceipt) error 
 func realizeRecordAssemblyProjection(ctx context.Context, filename string, source []byte, prior Result,
 	plan recordAssemblyPlan, expected *RecordAssemblyReceipt) (Realization, error) {
 	r := prior.Report.RecordAssembly
-	generated, err := emitRecordAssembly(ctx, filename, source, plan, expected)
+	generated, err := emitSelectedRecordAssembly(ctx, filename, source, plan, expected)
 	if err != nil {
+		return Realization{}, err
+	}
+	if err := verifyRecordHoldout(expected.Holdout, r.Holdout); err != nil {
 		return Realization{}, err
 	}
 	a, b := prior.Report, generated.Report
@@ -222,6 +225,10 @@ func verifyRecordCommonReceipt(report Report) error {
 	observation := *report.RecordAssembly
 	var err error
 	observation.Cases, err = canonicalRecordCaseValues(observation.Cases)
+	if err != nil {
+		return err
+	}
+	observation.Holdout, err = canonicalRecordHoldout(observation.Holdout)
 	if err != nil {
 		return err
 	}

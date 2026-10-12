@@ -59,6 +59,7 @@ func constructionReportRows(result bodyConstructOutput) [][2]string {
 		{"Source-bounded candidate combinations", reportedValue(c.CandidateSpace)}}
 	rows = append(rows, constructionSelectionRows(c)...)
 	rows = append(rows, constructionPathRows(c)...)
+	rows = append(rows, constructionRecordHoldoutRows(c)...)
 	rows = append(rows, [2]string{"Evaluation stage", reportedValue(e.Runtime.Stage)},
 		[2]string{"Evaluation expected outputs", constructionRuntimeShare(e.Runtime)})
 	if e.InputSeparation.Scope == "" {

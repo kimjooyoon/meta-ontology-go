@@ -824,3 +824,16 @@ helper evaluations and model-training exposure remain outside its scope.
 
 [Runnable example and overlapping-input variant](../examples/source-path-holdouts/README.md).
 Separate final native cases remain available after these source evaluations.
+
+
+## Evaluate record field choices after selection
+
+Development source accepts `holdout_value_case` alongside `field_value` and
+`field_update` choices. Selection uses `value_case`; held cases evaluate the
+selected body with separate whole-record and field counts. A continuation or
+caller-guided selection records its own final evaluation. Actual caller input
+overlap is reported separately from the held score.
+
+See [record field holdouts](record-field-holdouts.md) and the
+[complete source example](../examples/record-field-holdouts/README.md) for
+ambiguity at the first selection, later caller requirements and saved replay.

@@ -20,7 +20,7 @@ type PathHoldoutCallerExposure struct {
 
 // Final evaluation runs after the construction decision is fixed. Its result
 // records a separate observation and cannot request another selection attempt.
-func (r *JointConstruction) finishPathHoldoutEvaluation(ctx context.Context, filename string, source []byte) error {
+func (r *JointConstruction) finishSourceHoldoutEvaluation(ctx context.Context, filename string, source []byte) error {
 	var err error
 	r.FinalPathHoldouts, err = evaluateJointPathHoldouts(ctx, filename, source, *r)
 	if err != nil {
@@ -29,6 +29,14 @@ func (r *JointConstruction) finishPathHoldoutEvaluation(ctx context.Context, fil
 	if len(r.FinalPathHoldouts) > 0 {
 		r.Schema = jointPathHoldoutSchema
 		r.Scope += "; final typed-path holdouts are measured after caller selection; their scores do not alter construction decision, selection or stopping; caller input overlap remains explicit"
+	}
+	r.FinalRecordHoldouts, err = evaluateJointRecordHoldouts(ctx, filename, source, *r)
+	if err != nil {
+		return err
+	}
+	if len(r.FinalRecordHoldouts) > 0 {
+		r.Schema = jointRecordHoldoutSchema
+		r.Scope += "; final record holdouts are measured after caller selection; field and case outcomes are separate; exact caller input overlap remains explicit"
 	}
 	r.Stage = "COMPLETE"
 	return ctx.Err()

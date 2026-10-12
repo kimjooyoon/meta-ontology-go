@@ -75,7 +75,7 @@ func ConstructJointComposition(ctx context.Context, filename string, source []by
 		return finish(err)
 	}
 	r.Decision, r.StopReason = jointOutcome(r)
-	return finish(r.finishPathHoldoutEvaluation(ctx, filename, source))
+	return finish(r.finishSourceHoldoutEvaluation(ctx, filename, source))
 }
 
 func validateJointSource(ctx context.Context, filename string, source []byte, cases CompositionCases, entry string) error {

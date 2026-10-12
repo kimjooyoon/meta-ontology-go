@@ -38,6 +38,9 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 	if len(prior.FinalPathHoldouts) > 0 {
 		schema = jointPathHoldoutSchema
 	}
+	if len(prior.FinalRecordHoldouts) > 0 {
+		schema = jointRecordHoldoutSchema
+	}
 	if prior.Schema != schema || !slices.Equal(prior.CandidateKinds, kinds) {
 		return result, fmt.Errorf("joint candidate kinds or schema differ")
 	}
@@ -57,6 +60,11 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 		result.ConstructionReplayed = false
 		return result, fmt.Errorf("final selected path holdouts or caller exposure differ: %v", err)
 	}
+	records, err := evaluateJointRecordHoldouts(ctx, filename, source, prior)
+	if err != nil || !equalJointRecordHoldouts(records, prior.FinalRecordHoldouts) {
+		result.ConstructionReplayed = false
+		return result, fmt.Errorf("final selected record holdouts or caller exposure differ: %v", err)
+	}
 	result.Runtime, err = evaluateJointInputs(ctx, filename, source, prior, cases, goBinary, executor)
 	if err == nil {
 		result.InputSeparation, err = measureJointInputs(ctx, filename, []byte(prior.SelectedSource), prior, cases)
@@ -68,7 +76,7 @@ func verifyJointHeader(ctx context.Context, filename string, source []byte, r Jo
 	if r.InputObservation != "" && r.InputObservation != jointInputObservation {
 		return fmt.Errorf("joint input observation contract differs")
 	}
-	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema && r.Schema != jointFaultSchema && r.Schema != jointPathSchema && r.Schema != jointPathHoldoutSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
+	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema && r.Schema != jointFaultSchema && r.Schema != jointPathSchema && r.Schema != jointPathHoldoutSchema && r.Schema != jointRecordHoldoutSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
 		r.OriginalSourceSHA256 != digest(source) || r.ConstructionSHA256 != compositionDigest(r.ConstructionCases) ||
 		r.ProgramBudget < 1 || r.ProgramBudget > 64 || r.SelectedAttempt < 0 || r.SelectedAttempt >= len(r.Attempts) {
 		return fmt.Errorf("joint construction identity, stage or budget differs")
