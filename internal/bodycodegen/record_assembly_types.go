@@ -9,6 +9,9 @@ import (
 const recordAssemblySchema = "gooo/record-field-assembly/v1"
 
 type RecordAssemblyReceipt struct {
+	CriteriaQuestions    *CriteriaQuestionReceipt       `json:"criteria_questions,omitempty"`
+	Criteria             *RecordCriteriaEvidence        `json:"criteria,omitempty"`
+	CriteriaHoldout      *RecordCriteriaEvidence        `json:"criteria_holdout,omitempty"`
 	Observation          *RecordObservationReceipt      `json:"observation,omitempty"`
 	Holdout              *RecordHoldoutReceipt          `json:"holdout,omitempty"`
 	Schema               string                         `json:"schema"`
@@ -57,14 +60,15 @@ type RecordValueChoice struct {
 }
 
 type RecordAssemblyAttempt struct {
-	LocalCalls   *LocalCallObservation `json:"local_calls,omitempty"`
-	Mask         uint16                `json:"mask"`
-	Status       string                `json:"status,omitempty"`
-	Reason       string                `json:"reason,omitempty"`
-	Passed       int                   `json:"passed"`
-	Total        int                   `json:"total"`
-	FieldsPassed int                   `json:"fields_passed"`
-	FieldsTotal  int                   `json:"fields_total"`
+	Criteria     *RecordCriteriaEvidence `json:"criteria,omitempty"`
+	LocalCalls   *LocalCallObservation   `json:"local_calls,omitempty"`
+	Mask         uint16                  `json:"mask"`
+	Status       string                  `json:"status,omitempty"`
+	Reason       string                  `json:"reason,omitempty"`
+	Passed       int                     `json:"passed"`
+	Total        int                     `json:"total"`
+	FieldsPassed int                     `json:"fields_passed"`
+	FieldsTotal  int                     `json:"fields_total"`
 }
 
 // RecordAssemblyError retains a bounded attempted prefix even when no candidate

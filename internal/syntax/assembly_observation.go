@@ -14,7 +14,7 @@ func (p *Parser) parseAssemblyObservation() *assemblyspec.Observation {
 	seen := make(map[string]bool)
 	for !p.at(TokenRBrace) && !p.at(TokenEOF) {
 		field := p.expectIdentifier("observe field", DiagExpectedIdentifier)
-		if field.Name != "input" && field.Name != "value_input" && seen[field.Name] {
+		if field.Name != "input" && field.Name != "value_input" && field.Name != "criteria_input" && seen[field.Name] {
 			p.error(DiagUnexpectedDeclaration, field.Span, "duplicate observe field "+field.Name)
 		}
 		seen[field.Name] = true
@@ -33,26 +33,27 @@ func (p *Parser) parseAssemblyObservation() *assemblyspec.Observation {
 			} else {
 				o.ValueInputs = append(o.ValueInputs, input)
 			}
+		case "criteria_input":
+			input := p.assemblyValue()
+			if len(o.CriteriaInputs) == 32 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "observe exceeds 32 criteria inputs")
+			} else {
+				o.CriteriaInputs = append(o.CriteriaInputs, input)
+			}
+		case "criteria_strategy":
+			value := p.expectString()
+			if value.Name != "distinguish_then_check" {
+				p.error(DiagUnexpectedDeclaration, value.Span, "criteria_strategy expects distinguish_then_check")
+			}
+			o.CriteriaStrategy = value.Name
 		case "oracle":
 			name := p.expectString()
 			if name.Name == "" {
 				p.error(DiagUnexpectedDeclaration, name.Span, "observe oracle must be nonempty when declared")
 			}
 			o.OracleActivity = name.Name
-		case "max_candidates":
-			value := p.assemblyInteger(field.Name)
-			if value < 1 || value > 64 {
-				p.error(DiagUnexpectedDeclaration, field.Span, "max_candidates must be 1..64")
-			} else {
-				o.MaxCandidates = int(value)
-			}
-		case "max_rounds":
-			value := p.assemblyInteger(field.Name)
-			if value < 1 || value > 8 {
-				p.error(DiagUnexpectedDeclaration, field.Span, "max_rounds must be 1..8")
-			} else {
-				o.MaxRounds = int(value)
-			}
+		case "max_candidates", "max_rounds":
+			p.parseObservationBudget(o, field)
 		case "reuse_outputs", "resolve_unique":
 			value := p.expectString()
 			if value.Name != "true" && value.Name != "false" {
@@ -83,6 +84,12 @@ func formatAssemblyObservation(out *strings.Builder, o *assemblyspec.Observation
 	for _, input := range o.ValueInputs {
 		fmt.Fprintf(out, "        value_input %s\n", quoteString(input))
 	}
+	for _, input := range o.CriteriaInputs {
+		fmt.Fprintf(out, "        criteria_input %s\n", quoteString(input))
+	}
+	if o.CriteriaStrategy != "" {
+		fmt.Fprintf(out, "        criteria_strategy %s\n", quoteString(o.CriteriaStrategy))
+	}
 	if o.OracleActivity != "" {
 		fmt.Fprintf(out, "        oracle %s\n", quoteString(o.OracleActivity))
 	}
@@ -95,4 +102,19 @@ func formatAssemblyObservation(out *strings.Builder, o *assemblyspec.Observation
 		out.WriteString("        resolve_unique \"true\"\n")
 	}
 	out.WriteString("    }\n")
+}
+
+func (p *Parser) parseObservationBudget(o *assemblyspec.Observation, field NameRef) {
+	limit := int64(64)
+	if field.Name == "max_rounds" {
+		limit = 8
+	}
+	value := p.assemblyInteger(field.Name)
+	if value < 1 || value > limit {
+		p.error(DiagUnexpectedDeclaration, field.Span, fmt.Sprintf("%s must be 1..%d", field.Name, limit))
+	} else if field.Name == "max_candidates" {
+		o.MaxCandidates = int(value)
+	} else {
+		o.MaxRounds = int(value)
+	}
 }

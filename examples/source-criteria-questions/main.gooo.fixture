@@ -1,0 +1,43 @@
+package refundquestions
+namespace refundquestions
+entity Boolean id "refundquestions://boolean"
+entity Order id "refundquestions://order" fields {
+ field amount id "refundquestions://order/amount" type integer required one
+ field approved id "refundquestions://order/approved" type boolean required one
+ field label id "refundquestions://order/label" type string required one
+}
+activity Decide(Order,Boolean) -> Order computes `let result = input0
+if input1 {
+ result.amount = input0.amount
+ result.approved = false
+ result.label = "processed"
+}
+return result` assembling {
+ choice "amount" field_update at "0" alternative "0 - input0.amount" intent "승인된 반품은 원래 금액의 반대 부호를 기록한다. Negate an approved refund amount."
+ choice "approval" field_update at "1" alternative "true" intent "승인 요청을 처리 결과에 남긴다. Record the approval."
+ choice "label" field_update at "2" alternative "input0.label" intent "사용자가 적은 설명을 보존한다. Preserve the original label."
+ criteria {
+  predicate "refund-amount" activity "AmountSatisfied"
+  predicate "approval" activity "ApprovalSatisfied"
+  predicate "label" activity "LabelSatisfied"
+  input "[{\"amount\":0,\"approved\":false,\"label\":\"반품 사유 보존\"},true]"
+  holdout_input "[{\"amount\":73,\"approved\":false,\"label\":\"별도 평가\"},true]"
+ }
+ observe {
+  criteria_input "[{\"amount\":41,\"approved\":false,\"label\":\"추가 확인\"},true]"
+  criteria_input "[{\"amount\":-13,\"approved\":false,\"label\":\"다른 질문\"},true]"
+  max_candidates "8"
+  max_rounds "1"
+  reuse_outputs "true"
+  resolve_unique "true"
+ }
+ attempts "8"
+}
+
+activity AmountSatisfied(Order,Boolean,Order) -> Boolean computes `if input1 { return input2.amount == 0 - input0.amount }
+return input2.amount == input0.amount`
+
+activity ApprovalSatisfied(Order,Boolean,Order) -> Boolean computes `if input1 { return input2.approved }
+return input2.approved == input0.approved`
+
+activity LabelSatisfied(Order,Boolean,Order) -> Boolean computes "return input2.label == input0.label"

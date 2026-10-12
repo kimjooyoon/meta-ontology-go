@@ -11,6 +11,7 @@ import (
 )
 
 type Spec struct {
+	Criteria           *Criteria           `json:"criteria,omitempty"`
 	Observation        *Observation        `json:"observation,omitempty"`
 	Choices            []Choice            `json:"choices"`
 	Cases              []Case              `json:"cases"`
@@ -114,6 +115,9 @@ type ValueCase struct {
 }
 
 func (s Spec) Validate() error {
+	if err := s.validateCriteria(); err != nil {
+		return err
+	}
 	if err := s.validateObservation(); err != nil {
 		return err
 	}
@@ -123,8 +127,8 @@ func (s Spec) Validate() error {
 	if err := s.validateSearchAlternatives(); err != nil {
 		return err
 	}
-	if len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases) < 1 ||
-		len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases) > 128 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
+	if len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases)+s.criteriaInputCount() < 1 ||
+		len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases)+s.criteriaInputCount() > 128 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
 		return fmt.Errorf("assembly requires 1..16 choices, 1..128 cases and 1..64 attempts")
 	}
 	if s.FillPlan != nil {
@@ -179,8 +183,8 @@ func (s Spec) Validate() error {
 				return fmt.Errorf("assembly name choice %q requires an alternative local", c.ID)
 			}
 		case "field_value", "field_update":
-			if !boundedText(c.Alternative, 512) || len(s.Cases) != 0 || len(s.ValueCases) == 0 || len(s.Choices) > 6 {
-				return fmt.Errorf("field assembly requires an alternative expression, 1..6 choices and value_case expectations")
+			if !boundedText(c.Alternative, 512) || len(s.Cases) != 0 || (len(s.ValueCases) == 0 && s.Criteria == nil) || len(s.Choices) > 6 {
+				return fmt.Errorf("field assembly requires an alternative expression, 1..6 choices and value_case or criteria obligations")
 			}
 		default:
 			return fmt.Errorf("unknown assembly choice kind %q", c.Kind)
@@ -394,10 +398,12 @@ func identifier(value string) bool {
 
 func (s Spec) Clone() *Spec {
 	clone := s
+	clone.Criteria = s.Criteria.Clone()
 	if s.Observation != nil {
 		observation := *s.Observation
 		observation.Inputs = append([]int64(nil), s.Observation.Inputs...)
 		observation.ValueInputs = append([]string(nil), s.Observation.ValueInputs...)
+		observation.CriteriaInputs = append([]string(nil), s.Observation.CriteriaInputs...)
 		clone.Observation = &observation
 	}
 	clone.Choices = append([]Choice(nil), s.Choices...)

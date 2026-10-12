@@ -68,6 +68,9 @@ func exportRecordAssemblyContext(ctx context.Context, filename string, source []
 	result := RecordAssemblyContextExport{Schema: "gooo/record-assembly-input-export/v1", OriginalSourceSHA256: digest(source),
 		ContractSHA256: digest([]byte(contract)), ActivityID: plan.body.activityID, Choices: append([]RecordValueChoice(nil), plan.choices...),
 		Context: modelContext, Scope: "explicit source-bound model context; shape and type preflight; zero predictions or candidate outcomes; optional expanded plan carries the separate finite cases"}
+	if plan.spec.Criteria != nil {
+		result.Scope += "; predicate bodies and criteria inputs are outside the existing model feature encoding; the optional expanded plan retains them separately"
+	}
 	if includePlan {
 		result.ExpandedPlan = plan.spec.Clone()
 	}

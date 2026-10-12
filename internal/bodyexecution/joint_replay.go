@@ -41,6 +41,9 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 	if len(prior.FinalRecordHoldouts) > 0 {
 		schema = jointRecordHoldoutSchema
 	}
+	if jointHasCriteria(prior) {
+		schema = jointCriteriaSchema
+	}
 	if prior.Schema != schema || !slices.Equal(prior.CandidateKinds, kinds) {
 		return result, fmt.Errorf("joint candidate kinds or schema differ")
 	}
@@ -65,6 +68,11 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 		result.ConstructionReplayed = false
 		return result, fmt.Errorf("final selected record holdouts or caller exposure differ: %v", err)
 	}
+	criteria, err := evaluateJointCriteriaHoldouts(ctx, filename, source, prior)
+	if err != nil || !equalJointCriteriaHoldouts(criteria, prior.FinalCriteriaHoldouts) {
+		result.ConstructionReplayed = false
+		return result, fmt.Errorf("final criteria holdouts or caller exposure differ: %v", err)
+	}
 	result.Runtime, err = evaluateJointInputs(ctx, filename, source, prior, cases, goBinary, executor)
 	if err == nil {
 		result.InputSeparation, err = measureJointInputs(ctx, filename, []byte(prior.SelectedSource), prior, cases)
@@ -76,7 +84,7 @@ func verifyJointHeader(ctx context.Context, filename string, source []byte, r Jo
 	if r.InputObservation != "" && r.InputObservation != jointInputObservation {
 		return fmt.Errorf("joint input observation contract differs")
 	}
-	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema && r.Schema != jointFaultSchema && r.Schema != jointPathSchema && r.Schema != jointPathHoldoutSchema && r.Schema != jointRecordHoldoutSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
+	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema && r.Schema != jointFaultSchema && r.Schema != jointPathSchema && r.Schema != jointPathHoldoutSchema && r.Schema != jointRecordHoldoutSchema && r.Schema != jointCriteriaSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
 		r.OriginalSourceSHA256 != digest(source) || r.ConstructionSHA256 != compositionDigest(r.ConstructionCases) ||
 		r.ProgramBudget < 1 || r.ProgramBudget > 64 || r.SelectedAttempt < 0 || r.SelectedAttempt >= len(r.Attempts) {
 		return fmt.Errorf("joint construction identity, stage or budget differs")
@@ -110,7 +118,9 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 			!bodycodegen.EqualFillCandidateHistory(recorded.FillCandidates, attempt.FillCandidates) ||
 			compositionDigest(attempt.PathCandidates) != compositionDigest(recorded.PathCandidates) ||
 			compositionDigest(attempt.Rejection) != compositionDigest(recorded.Rejection) ||
-			attempt.LocalPassed != recorded.LocalPassed || attempt.LocalTotal != recorded.LocalTotal {
+			attempt.LocalPassed != recorded.LocalPassed || attempt.LocalTotal != recorded.LocalTotal ||
+			attempt.CriteriaPassed != recorded.CriteriaPassed || attempt.CriteriaFailed != recorded.CriteriaFailed ||
+			attempt.CriteriaUnknown != recorded.CriteriaUnknown || attempt.CriteriaTotal != recorded.CriteriaTotal {
 			return nil, fmt.Errorf("joint attempt %d local obligations differ", i)
 		}
 		if attempt.Rejection != nil {

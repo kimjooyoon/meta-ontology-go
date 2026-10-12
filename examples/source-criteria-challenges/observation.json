@@ -1,0 +1,130 @@
+{
+  "schema": "gooo/source-criteria-challenge-observation/v1",
+  "scope": "one deliberately insufficient source-owned candidate set; finite evidence only",
+  "baseline": {
+    "execution": {
+      "exit_code": 0,
+      "compiler_sha256": "7c7d1261de05f3aaa816bbced958d89d5329fb792441e73795e1ce34b4209b90",
+      "source_sha256": "f88af359222add00cd0c8a263279c6cc539247b0f85ad050fcf1d185b8ed63ff"
+    },
+    "output_sha256": "e2ab6d9128d101cb13ff45361d98d940da61445cb6ea23fd7544486fe2df9a75",
+    "construction": {
+      "status": "COMPLETE_FINITE",
+      "selected_mask": 0,
+      "model_calls": 0,
+      "criteria": {
+        "passed": 1,
+        "failed": 0,
+        "unknown": 0,
+        "total": 1
+      },
+      "held_criteria": {
+        "passed": 0,
+        "failed": 1,
+        "unknown": 0,
+        "total": 1
+      },
+      "questions": {
+        "schema": "gooo/criteria-questions/v1",
+        "status": "NO_DISTINGUISHING_INPUT",
+        "initial_inputs": [
+          "[0]"
+        ],
+        "acquired_inputs": null,
+        "candidate_evaluations": 6,
+        "predicate_evaluations": 2
+      },
+      "rounds": [
+        {
+          "unobserved": 0,
+          "surviving_masks": [
+            0,
+            1
+          ],
+          "unavailable_masks": null,
+          "rejected_masks": null
+        }
+      ]
+    },
+    "native_executed": false
+  },
+  "challenge": {
+    "execution": {
+      "compiler_sha256": "37c2314cfb6e0bfc9ce22960272b7b4c2a8aabceb4f939bf001cbacfb4c0bc80",
+      "source_sha256": "e2b4b53c5ac94ca4691034d157172626fc2fdc47c3130cda26b9d50da6998938",
+      "cases_sha256": "c415d0f1cf48cf8763b7d9865c693466e8687e13c997d347ac49ceba3ed888f7",
+      "overlay_manifest_sha256": "7ff9100c289864226dde04635c44e456c8120d6e8ebf855ae8e340b4beb291c3",
+      "base_sha": "481d8f9fcfc813aef398531bff44648df6369f78",
+      "build_vcs": false,
+      "exit_code": 0,
+      "output_sha256": "0c5052950d85f1e6670c4847a66ae4eadbdee8b9449094fa5924f91ceed8fad1"
+    },
+    "construction": {
+      "status": "PARTIAL_FINITE",
+      "selected_mask": 0,
+      "model_calls": 0,
+      "criteria": {
+        "passed": 1,
+        "failed": 1,
+        "unknown": 0,
+        "total": 2
+      },
+      "held_criteria": {
+        "passed": 0,
+        "failed": 1,
+        "unknown": 0,
+        "total": 1
+      },
+      "questions": {
+        "schema": "gooo/criteria-questions/v2",
+        "status": "NO_SURVIVING_CANDIDATE",
+        "initial_inputs": [
+          "[0]"
+        ],
+        "acquired_inputs": [
+          "[7]"
+        ],
+        "candidate_evaluations": 6,
+        "predicate_evaluations": 4
+      },
+      "rounds": [
+        {
+          "recommendation_reason": "CHECK_CRITERIA",
+          "unobserved": 0,
+          "surviving_masks": [
+            0,
+            1
+          ],
+          "unavailable_masks": null,
+          "rejected_masks": null,
+          "acquired_input": "[7]"
+        },
+        {
+          "unobserved": 0,
+          "surviving_masks": null,
+          "unavailable_masks": null,
+          "rejected_masks": [
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    "native": {
+      "stage": "COMPLETE",
+      "finite_passed": 0,
+      "finite_total": 2
+    },
+    "exit_code_means": "execution completed; functional success is recorded separately"
+  },
+  "sources": {
+    "main.gooo.fixture": "e2b4b53c5ac94ca4691034d157172626fc2fdc47c3130cda26b9d50da6998938",
+    "distinguish.gooo.fixture": "f88af359222add00cd0c8a263279c6cc539247b0f85ad050fcf1d185b8ed63ff",
+    "evaluation.json": "c415d0f1cf48cf8763b7d9865c693466e8687e13c997d347ac49ceba3ed888f7"
+  },
+  "baseline_held_failure_already_observed": true,
+  "new_behavior": "the acquired counterexample persists as a construction obligation",
+  "model_training_performed": false,
+  "performance_measured": false,
+  "published_implementation_difference": "The question-receipt scope sentence now explicitly includes initial inputs alongside acquired inputs. Candidate evaluation and question selection are unchanged; the native experiment was not repeated."
+}

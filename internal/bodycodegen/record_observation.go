@@ -23,6 +23,9 @@ func recordCasesSHA(cases []assemblyspec.ValueCase) string {
 
 func observeRecordAssembly(ctx context.Context, filename string, source []byte, p *recordAssemblyPlan,
 	receipt *RecordAssemblyReceipt) (failure error) {
+	if isCriteriaQuestionPlan(*p) {
+		return observeRecordCriteriaQuestions(ctx, source, p, receipt)
+	}
 	if p.spec.Observation == nil {
 		return nil
 	}
@@ -66,7 +69,11 @@ func observeRecordAssembly(ctx context.Context, filename string, source []byte, 
 			r.Status = "ROUND_BUDGET"
 			return nil
 		}
-		if len(p.effectiveCases)+len(p.spec.ValueHoldoutCases) >= 128 {
+		criteriaInputs := 0
+		if p.spec.Criteria != nil {
+			criteriaInputs = len(p.spec.Criteria.Inputs) + len(p.spec.Criteria.HoldoutInputs)
+		}
+		if len(p.effectiveCases)+len(p.spec.ValueHoldoutCases)+criteriaInputs >= 128 {
 			r.Status = "CASE_BUDGET"
 			return nil
 		}
@@ -144,6 +151,10 @@ func evaluateRecordOracle(ctx context.Context, oracle Result, cases []assemblysp
 }
 
 func resolveRecordObservationRanking(r *RecordAssemblyReceipt) bool {
+	if r.CriteriaQuestions != nil && r.CriteriaQuestions.ResolvedMask != nil {
+		applyResolvedRecordMask(r, *r.CriteriaQuestions.ResolvedMask)
+		return true
+	}
 	if r.Observation == nil || r.Observation.ResolvedMask == nil {
 		return false
 	}

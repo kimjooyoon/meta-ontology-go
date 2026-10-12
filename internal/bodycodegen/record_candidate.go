@@ -9,6 +9,7 @@ import (
 // the activity's local search. A caller-level search owns the choice of mask.
 // The observation keeps the original local obligations and their actual values.
 type RecordCandidate struct {
+	CriteriaQuestions    *CriteriaQuestionRetention  `json:"criteria_questions,omitempty"`
 	Observation          *RecordCandidateObservation `json:"observation,omitempty"`
 	Schema               string                      `json:"schema"`
 	Activity             string                      `json:"activity"`
@@ -48,6 +49,10 @@ func RealizeObservedRecordCandidate(ctx context.Context, filename string, source
 	if int(mask) >= 1<<len(p.choices) {
 		return RecordCandidate{}, nil, fmt.Errorf("candidate mask exceeds source choices")
 	}
+	questions, err := retainCriteriaQuestions(&p, prior)
+	if err != nil {
+		return RecordCandidate{}, nil, err
+	}
 	retained, err := retainRecordCandidateObservation(ctx, filename, source, &p, prior)
 	if err != nil {
 		return RecordCandidate{}, nil, err
@@ -63,13 +68,16 @@ func RealizeObservedRecordCandidate(ctx context.Context, filename string, source
 	if retained != nil {
 		observation.Schema, observation.Observation = "gooo/record-candidate/v2", retained
 	}
-	if attempt.Total == 0 {
+	if questions != nil {
+		observation.Schema = "gooo/record-candidate/v3"
+		observation.CriteriaQuestions = questions
+	}
+	if !usableRecordAttempt(attempt) {
 		return observation, nil, &SourceRecordCandidateRejection{
 			cause: fmt.Errorf("record candidate has no evaluable local obligations: %s", attempt.Reason)}
 	}
-	r.SelectedMask, r.Attempts, r.Cases = mask, []RecordAssemblyAttempt{attempt}, cases
-	r.Passed, r.Total = attempt.Passed, attempt.Total
-	r.FieldsPassed, r.FieldsTotal = attempt.FieldsPassed, attempt.FieldsTotal
+	r.Attempts = []RecordAssemblyAttempt{attempt}
+	selectRecordAttempt(r, attempt, cases)
 	finishRecordAssemblySearch(r)
 	generation, err := emitRecordAssembly(ctx, filename, source, p, r)
 	if err != nil {
