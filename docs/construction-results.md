@@ -51,6 +51,45 @@ The text reports `not recorded` for older results without that history contract.
 Missing observations remain unknown, including unrecorded calls made while
 scoring local candidates. Model-training exposure remains unknown.
 
+## Which requirements each attempted program met
+
+Development builds containing the agreement report compare local checks with
+caller checks for every recorded program attempt. The table counts attempts in
+five groups: both sides satisfied, local only, caller only, neither, and
+unclassified. These are counts of attempted programs; the local and caller
+checks retain their separate denominators in the surrounding rows.
+
+The [Gooo relational examples](../examples/source-relational-callers/README.md)
+show why the distinction matters:
+
+- With insufficient fee choices, both recorded attempts satisfy the local
+  anchor and miss the caller's increasing-value relationship: `2 local only`.
+- With the conflicting fee requirements, one attempt satisfies the local
+  decreasing-value condition and the other satisfies the caller's increasing
+  relationship: `1 local only; 1 caller only`. The report links the first witness
+  on each side to its attempt number and recorded failed output or Gooo criterion.
+- With a working inverse pair, a later attempt satisfies both sides. Earlier
+  attempts and the combinations that were never tried retain their own status.
+
+A side is classified only when its finite check counts and recorded results are
+complete enough for the comparison. Rejected candidates, unavailable predicates,
+unobserved or faulted caller execution, and inconsistent counts remain
+unclassified. Having no checks also remains unclassified. This row never infers
+that all declared choices were examined from the number of recorded attempts.
+
+The saved [insufficient-choice report](../examples/source-relational-callers/insufficient-agreement-report.md)
+and [split-requirement report](../examples/source-relational-callers/conflicting-agreement-report.md)
+were formatted from the original observations with no new program or model calls.
+Their [formatting provenance](../examples/source-relational-callers/agreement-observation.json)
+binds the original record, development compiler and report digests.
+
+The witnesses explain the supplied observations. A split between local-only and
+caller-only candidates directs attention to the source requirements and permitted
+choices; proving a logical contradiction would require a separate analysis.
+Formatting leaves the source, selected attempt, completion decision and original
+JSON unchanged. Saved reports keep their existing unverified-history label and
+can be read without model weights or a Go toolchain.
+
 ## First local choice and the selected program
 
 For typed-path bodies, the report also reads the initial local search history.
