@@ -1,0 +1,15 @@
+package criteriaview
+namespace criteriaview
+entity Integer id "criteria-view://integer"
+entity Boolean id "criteria-view://boolean"
+activity Fee(Integer) -> Integer id "criteria-view://fee" computes "return 11 - input" assembling {
+ choice "direction" operand_order at "0" intent "입력에서 11을 뺀다. Subtract eleven from the input."
+ criteria {
+  predicate "difference" activity "Difference"
+  input "[11]"
+  holdout_input "[20]"
+ }
+ attempts "2"
+}
+activity Difference(Integer,Integer) -> Boolean id "criteria-view://difference" computes "let expected = Delta(input0); return input1 == expected"
+activity Delta(Integer) -> Integer id "criteria-view://delta" computes "return input - 11"

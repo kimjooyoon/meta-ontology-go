@@ -113,6 +113,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [language problems and direction, 한국어](docs/language-identity-problems.ko.md)
 · [source-owned behavior criteria](docs/source-behavior-criteria.md)
 · [Integer paths judged by Gooo conditions](docs/source-scalar-criteria.md)
+· [typed choices and requirement graphs, 한국어](docs/criteria-source-flow.ko.md)
 · [relationships between executions, 한국어](docs/source-relational-callers.ko.md)
 · [source-owned criteria questions](docs/source-criteria-questions.md)
 · [compose activity bodies](docs/native-body-composition.md)

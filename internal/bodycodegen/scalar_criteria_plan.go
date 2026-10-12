@@ -15,8 +15,9 @@ type scalarCriteriaCandidateError struct{ error }
 func (e *scalarCriteriaCandidateError) Unwrap() error { return e.error }
 
 type scalarCriteriaPlan struct {
-	prepared *pathplan.PreparedPlan
-	choices  []pathplan.Choice
+	sourcePlan pathplan.Plan
+	prepared   *pathplan.PreparedPlan
+	choices    []pathplan.Choice
 }
 
 func prepareScalarCriteriaAssembly(ctx context.Context, filename string, source []byte,
@@ -36,7 +37,7 @@ func prepareScalarCriteriaAssembly(ctx context.Context, filename string, source 
 	if _, err = bindTypedPathSource(ctx, filename, source, activity, prepared, &BodyPathReceipt{}); err != nil {
 		return p, fmt.Errorf("scalar criteria source binding: %w", err)
 	}
-	p.scalar = &scalarCriteriaPlan{prepared: prepared, choices: document.Plan.Decisions}
+	p.scalar = &scalarCriteriaPlan{prepared: prepared, choices: document.Plan.Decisions, sourcePlan: document.Plan}
 	for i, choice := range document.Plan.Decisions {
 		p.choices = append(p.choices, RecordValueChoice{ID: choice.ID, Kind: choice.Kind,
 			Occurrence: p.spec.Choices[i].Occurrence, Intent: choice.Intent,

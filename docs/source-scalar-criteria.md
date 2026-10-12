@@ -105,7 +105,9 @@ represent scalar criteria; the model route records
 `SCALAR_CRITERIA_FEATURE_CONTRACT_UNAVAILABLE` and declines to deterministic
 selection. The examples make zero model calls. No training is part of this
 feature. A later decision model needs an explicit feature contract for these
-source choices and obligations.
+source choices and obligations. The optional [criteria source flow](criteria-source-flow.ko.md)
+now exports their typed structure through `body-context --value-flow`; current
+model features and weights keep their existing scope.
 
 For compatibility, JSON still uses the shared `record_assembly` container.
 Its schema identifies the actual profile: `gooo/scalar-criteria-assembly/v1`.
