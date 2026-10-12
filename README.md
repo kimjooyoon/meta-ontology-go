@@ -454,8 +454,9 @@ The latest model study and the deployed integration have separate evidence:
   and broader task coverage are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
-This compiler revision uses **Go SDK v0.2.41-experimental**, retaining V3/V4 feature
-contracts, versioned arithmetic, bounded probe sessions and prepared candidate reuse. The
+This compiler revision uses **Go SDK v0.2.46-experimental**, including the optional
+[branch-owned V4 decision input](docs/source-branch-output-v4.md), versioned
+arithmetic, bounded probe sessions and prepared candidate reuse. The
 [observation loop](docs/path-observation-loop.md) can choose a distinguishing
 input, obtain its result from a declared Gooo reference activity, and use that
 additional case during body construction. Verified probe outputs can be reused,
@@ -475,8 +476,8 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| [Compiler 0.6.34](docs/releases/0.6.34-dev.md) | SDK0.2.44; explicit V2/V3 source/requirement inspection, finite construction and source-bound replay | Explicit neutral-model integration and bounded semantic context |
-| [SDK0.2.45 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.45-experimental) | Explicit prose-neutral V3 input policy, retained source identities and numerical compatibility checks | Broader source and behavior coverage |
+| [Compiler 0.6.34](docs/releases/0.6.34-dev.md) | SDK0.2.44; explicit V2/V3 source/requirement inspection, finite construction and source-bound replay | Neutral/V4 model integration and bounded semantic context |
+| [SDK0.2.46 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.46-experimental) | Separate return-branch output relations, explicit neutral input policy and numerical compatibility checks | Fresh V4 training and behavior coverage |
 | [Canonical and relation models](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1) | Freshly initialized small models, complete authored study records and failed candidates | Expected-output relations and new-task evaluation |
 | [Earlier shared judgment models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Historical wording and operation-order results |
 

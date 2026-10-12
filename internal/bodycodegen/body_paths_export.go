@@ -25,6 +25,7 @@ type ExportedPathInput struct {
 	SourceRelativeFeatures   *[contractdecision.OrderedFeatureDim]float32 `json:"source_relative_features,omitempty"`
 	SourceRelativeConditions *pathplan.SourceRelativeConditionContext     `json:"source_relative_conditions,omitempty"`
 	SourceRelativeOutputs    *pathplan.SourceRelativeOutputContext        `json:"source_relative_outputs,omitempty"`
+	BranchOutputs            *pathplan.BranchOutputContext                `json:"branch_outputs,omitempty"`
 	SemanticFlow             *pathplan.SemanticBranchContext              `json:"semantic_flow_context,omitempty"`
 }
 

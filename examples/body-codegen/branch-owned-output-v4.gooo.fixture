@@ -1,0 +1,21 @@
+package v4charge
+namespace v4charge
+entity Integer id "v4-charge-example://integer"
+activity Charge(Integer) -> Integer id "v4-charge-example://charge" computes `let amount = input
+let next = amount
+if 149 < amount { next = amount + 23 } else { next = amount / 9 }
+return next` assembling {
+ choice "comparison" operand_order at "0" intent "149 미만인지 확인한다. Check whether input is below 149."
+ choice "branches" branch_layout at "0" intent "149 미만이면 9로 나눈 몫, 나머지는 23을 더한다."
+ case "-28" -> "-3"
+ case "0" -> "0"
+ case "148" -> "16"
+ case "149" -> "172"
+ case "150" -> "173"
+ case "277" -> "300"
+ condition_case "comparison" input "-1" -> "true"
+ condition_case "comparison" input "148" -> "true"
+ condition_case "comparison" input "149" -> "false"
+ attempts "4"
+}
+activity Main(Integer) -> Integer id "v4-charge-example://main" computes "return Charge(input)"
