@@ -3,38 +3,14 @@ package bodycodegen
 import (
 	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/token"
 	"slices"
 	"sort"
-	"strings"
 )
 
 // renameBodyCalls edits resolved free call names, retaining every other byte.
 // Parser objects distinguish parameters and local declarations from activities.
 func renameBodyCalls(body string, arity int, from, to string) (string, int, error) {
-	if arity < 0 || arity > 16 {
-		return "", 0, fmt.Errorf("rename supports bodies with 0..16 inputs")
-	}
-	parameters := make([]string, arity)
-	for i := range parameters {
-		name := "input"
-		if arity > 1 {
-			name = fmt.Sprintf("input%d", i)
-		}
-		parameters[i] = name + " any"
-	}
-	header := "package p\nvar _ = func(" + strings.Join(parameters, ",") + "){\n"
-	parse := func(value string) (*ast.File, *token.FileSet, error) {
-		lowered, err := rewriteLetDeclarations(value)
-		if err != nil {
-			return nil, nil, err
-		}
-		set := token.NewFileSet()
-		file, err := parser.ParseFile(set, "rename.go", header+lowered+"\n}", 0)
-		return file, set, err
-	}
-	file, set, err := parse(body)
+	file, set, header, err := parseRenameBody(body, arity)
 	if err != nil {
 		return "", 0, err
 	}
@@ -57,7 +33,7 @@ func renameBodyCalls(body string, arity int, from, to string) (string, int, erro
 	var offsets []int
 	ast.Inspect(file, func(node ast.Node) bool {
 		id, ok := node.(*ast.Ident)
-		if !ok || id.Obj != nil || ignored[id] || set.Position(id.Pos()).Offset < len(header) {
+		if !ok || id.Obj != nil || ignored[id] || set.Position(id.Pos()).Offset < header {
 			return true
 		}
 		if id.Name == to {
@@ -67,7 +43,7 @@ func renameBodyCalls(body string, arity int, from, to string) (string, int, erro
 			if !calls[id] {
 				err = fmt.Errorf("activity %q is used outside a direct call", from)
 			} else {
-				offsets = append(offsets, set.Position(id.Pos()).Offset-len(header))
+				offsets = append(offsets, set.Position(id.Pos()).Offset-header)
 			}
 		}
 		return true
@@ -80,7 +56,7 @@ func renameBodyCalls(body string, arity int, from, to string) (string, int, erro
 	for _, offset := range slices.Backward(offsets) {
 		updated = updated[:offset] + to + updated[offset+len(from):]
 	}
-	after, _, err := parse(updated)
+	after, _, _, err := parseRenameBody(updated, arity)
 	if err != nil {
 		return "", 0, err
 	}

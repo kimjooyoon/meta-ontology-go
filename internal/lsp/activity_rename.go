@@ -42,3 +42,11 @@ func activityRenameEdits(document document, uri, id, name, newName string) ([]Te
 	}
 	return edits, true, nil
 }
+
+func activityCallRenameTarget(document document, uri string, position Position) (bodycodegen.SourceActivityReference, bool, error) {
+	offset, err := PositionToOffset(document.text, position)
+	if err != nil {
+		return bodycodegen.SourceActivityReference{}, false, err
+	}
+	return bodycodegen.ResolveActivityReference(context.Background(), uri, []byte(document.text), offset)
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "gooo/activity-rename/v1",
+  "scope": "single_source_file",
+  "activity_id": "urn:cursor:charge",
+  "from": "Charge",
+  "to": "요금",
+  "identity_pinned": false,
+  "input_sha256": "sha256:e4af29234bc8db822df2202b4abdb84463b8c60624c2e4b8d32b1fa487be7d7a",
+  "output_sha256": "sha256:44628cd4047bc82695ebb69d3d0b8cd20122f06efda17cf1da13608f2b5349a2",
+  "call_sites": 2,
+  "edits": [
+    {
+      "start_byte": 93,
+      "end_byte": 99,
+      "kind": "declaration",
+      "before": "Charge",
+      "after": "요금"
+    },
+    {
+      "start_byte": 216,
+      "end_byte": 321,
+      "kind": "body_calls",
+      "before": "\"let label = \\\"Charge(input) stays text\\\"; if len(label) \u003e 0 { return \\u0043harge(input) }; return input\"",
+      "after": "\"let label = \\\"Charge(input) stays text\\\"; if len(label) \u003e 0 { return 요금(input) }; return input\""
+    },
+    {
+      "start_byte": 366,
+      "end_byte": 422,
+      "kind": "body_calls",
+      "before": "`// Charge in this note is prose.\nreturn Charge(input)\n`",
+      "after": "`// Charge in this note is prose.\nreturn 요금(input)\n`"
+    }
+  ],
+  "source": "package cursor_flow\nnamespace cursor_flow\nentity Integer id \"urn:gooo:type:integer\"\nactivity 요금(Integer) -\u003e Integer id \"urn:cursor:charge\" computes \"return input + 7\"\nactivity Runner(Integer) -\u003e Integer computes \"let label = \\\"Charge(input) stays text\\\"; if len(label) \u003e 0 { return 요금(input) }; return input\"\nactivity Notes(Integer) -\u003e Integer computes `// Charge in this note is prose.\nreturn 요금(input)\n`\n"
+}

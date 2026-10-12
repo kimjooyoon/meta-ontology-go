@@ -11,13 +11,15 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const sourceRefactorUsage = "usage: gooo refactor rename-activity --from <name> --to <name> [--json] <file.gooo>"
+const sourceRefactorUsage = "usage: gooo refactor rename-activity (--from <name> | --at-byte <offset>) --to <name> [--json] <file.gooo>"
 
 const sourceRefactorHelp = `Rename a Gooo activity while retaining its semantic identity
 
 ` + sourceRefactorUsage + `
 
 Print renamed source to stdout, or a source-bound edit receipt with --json.
+--at-byte selects a zero-based source byte within an activity declaration or a
+free direct computes call. Escaped quoted bodies and raw bodies retain locations.
 The input file is read only. Save source output to a different filename.
 Updates local calls, bindings, criteria and observation references. Pins the
 previous semantic ID when the declaration derived it from its name.
@@ -39,12 +41,19 @@ func runSourceRefactor(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("rename-activity", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	from := flags.String("from", "", "existing activity name")
+	atByte := flags.Int("at-byte", -1, "zero-based source byte of declaration or direct call")
 	to := flags.String("to", "", "new activity name")
 	asJSON := flags.Bool("json", false, "print source-bound edit receipt")
 	if err := flags.Parse(args[1:]); err != nil {
 		return exitUsage
 	}
-	if *from == "" || *to == "" || flags.NArg() != 1 {
+	atPresent := false
+	flags.Visit(func(f *flag.Flag) {
+		if f.Name == "at-byte" {
+			atPresent = true
+		}
+	})
+	if (*from != "") == atPresent || *to == "" || flags.NArg() != 1 || (atPresent && *atByte < 0) {
 		fmt.Fprintln(stderr, sourceRefactorUsage)
 		return exitUsage
 	}
@@ -59,6 +68,17 @@ func runSourceRefactor(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintln(stderr, "gooo refactor:", err)
 		return exitFailure
+	}
+	if atPresent {
+		reference, resolved, resolveErr := bodycodegen.ResolveActivityReference(context.Background(), filename, source, *atByte)
+		if resolveErr != nil || !resolved {
+			if resolveErr == nil {
+				resolveErr = fmt.Errorf("source position does not resolve to a Gooo activity")
+			}
+			fmt.Fprintln(stderr, "gooo refactor:", resolveErr)
+			return exitFailure
+		}
+		*from = reference.Name
 	}
 	result, err := bodycodegen.RenameActivitySource(context.Background(), filename, source, *from, *to)
 	if err != nil {

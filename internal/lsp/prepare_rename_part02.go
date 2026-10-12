@@ -1,5 +1,7 @@
 package lsp
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+
 // PrepareRenameResult identifies the exact client-side range that a later
 // rename request may edit. It carries no mutation authority.
 type PrepareRenameResult struct {
@@ -22,6 +24,20 @@ func (server *Server) prepareRenameRequest(request requestEnvelope) (*responseEn
 	targetID, targetName, err := referenceTargetForDocument(document, params.Position)
 	if err != nil {
 		return responseOrNil(request.ID, invalidParams, "Invalid prepare rename position"), nil, nil
+	}
+	if targetID == "" {
+		reference, resolved, err := activityCallRenameTarget(document, params.TextDocument.URI, params.Position)
+		if err != nil {
+			return responseOrNil(request.ID, invalidParams, err.Error()), nil, nil
+		}
+		if resolved {
+			span := syntax.Span{Start: syntax.Position{Offset: reference.Start}, End: syntax.Position{Offset: reference.End}}
+			rangeValue, err := syntaxRange(document.text, span)
+			if err != nil {
+				return responseOrNil(request.ID, invalidParams, err.Error()), nil, nil
+			}
+			return resultResponse(request.ID, PrepareRenameResult{Range: rangeValue, Placeholder: reference.Name}), nil, nil
+		}
 	}
 	if targetID == "" || targetName == "" {
 		return resultResponse(request.ID, nil), nil, nil

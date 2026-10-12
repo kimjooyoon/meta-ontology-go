@@ -1,0 +1,8 @@
+package cursor_flow
+namespace cursor_flow
+entity Integer id "urn:gooo:type:integer"
+activity 요금(Integer) -> Integer id "urn:cursor:charge" computes "return input + 7"
+activity Runner(Integer) -> Integer computes "let label = \"Charge(input) stays text\"; if len(label) > 0 { return 요금(input) }; return input"
+activity Notes(Integer) -> Integer computes `// Charge in this note is prose.
+return 요금(input)
+`
