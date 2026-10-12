@@ -32,16 +32,17 @@ func (p *Parser) parseAssemblyObservation() *assemblyspec.Observation {
 				p.error(DiagUnexpectedDeclaration, name.Span, "observe oracle must be nonempty when declared")
 			}
 			o.OracleActivity = name.Name
-		case "max_candidates", "max_rounds":
+		case "max_candidates":
 			value := p.assemblyInteger(field.Name)
-			limit := int64(64)
-			if field.Name == "max_rounds" {
-				limit = 8
-			}
-			if value < 1 || value > limit {
-				p.error(DiagUnexpectedDeclaration, field.Span, fmt.Sprintf("%s must be 1..%d", field.Name, limit))
-			} else if field.Name == "max_candidates" {
+			if value < 1 || value > 64 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "max_candidates must be 1..64")
+			} else {
 				o.MaxCandidates = int(value)
+			}
+		case "max_rounds":
+			value := p.assemblyInteger(field.Name)
+			if value < 1 || value > 8 {
+				p.error(DiagUnexpectedDeclaration, field.Span, "max_rounds must be 1..8")
 			} else {
 				o.MaxRounds = int(value)
 			}

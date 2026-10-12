@@ -1,6 +1,22 @@
 package main
 
 var topicHelpGroup4 = map[string]string{
+	"impact": `Explain potential effects of a source change
+
+` + sourceImpactUsage + `
+
+Compare declarations by stable ID. Follow source calls, observation oracles,
+input/output types, field types and explicit runtime bindings in each revision.
+The default text report lists reasons and source-owned selection, condition,
+held-evaluation and observation counts. Use --format json for structured output.
+Each affected declaration has one nearest-change explanation per revision.
+Unresolved calls, generated candidate call sets and policy consumers remain explicit.
+Exit 0 means a report was produced. Check its static status and unresolved list.
+Bodies, candidates and models are not executed. Recheck means potential impact;
+source replay or evaluation must establish the actual result.
+See docs/source-change-impact.md.
+`,
+
 	"context": `Read a semantic neighborhood
 
 ` + semanticContextUsage + `
@@ -69,7 +85,7 @@ Use --build to include compiler build information.
 	"commands": `Core commands
 
   init, check, test, run, body-codegen, generate, emit
-  format, fix, inspect, query, graph, receipt-schema
+  format, fix, inspect, query, context, impact, graph, receipt-schema
   package, body-context, body-compose, body-construct, body-execute, body-search-run, body-realize, body-refine
   body-outcomes-delta, profile, debug, decide, invoke, lsp, version
 

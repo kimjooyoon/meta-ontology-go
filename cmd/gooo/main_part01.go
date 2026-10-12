@@ -216,6 +216,8 @@ func runWithInputCommandsTwo(args []string, input io.Reader, stdout, stderr io.W
 		return runQuery(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr), true
 	case "inspect":
 		return runInspect(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr), true
+	case "impact":
+		return runSourceImpact(args[1:], OSFileReader{}, stdout, stderr), true
 	case "context":
 		return runSemanticContext(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr), true
 	case "graph":
