@@ -38,7 +38,7 @@ func writeBodyConstructResult(out io.Writer, result bodyConstructOutput, format 
 	} else {
 		fmt.Fprint(&text, "Caller overlap counts root tuples. Constructed-input coverage follows actual arguments and recorded local/caller history; model-training exposure remains unknown.\n")
 	}
-	fmt.Fprint(&text, "Source observation rows describe only the declared alternatives and budgets. Behavior on other inputs remains unmeasured.\n")
+	fmt.Fprint(&text, "Source observation rows describe only the declared alternatives and budgets. Behavior on other inputs is not assessed by this report.\n")
 	fmt.Fprint(&text, "Typed-path rows retain initial local search history; these candidates differ from caller program attempts.\n")
 	fmt.Fprint(&text, "Recorded local model calls belong to that history, including when a saved construction is replayed.\n")
 	fmt.Fprint(&text, "Use --format json for all attempts, values and evidence. Saved --out files remain full JSON and source.\n")
