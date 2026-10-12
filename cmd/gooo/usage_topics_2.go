@@ -39,7 +39,9 @@ Then check and generate:
   gooo body-codegen --json --activity Clamp main.gooo
 
 The starters work without a model. Library and diagnostic module paths customize
-the generated workspace and source identity. The diagnostic starter assembles a
+the generated workspace and source identity. Each starter includes a local
+AGENTS.md guide for supported source forms, inspection, finite cases and replay.
+The diagnostic starter assembles a
 Gooo tool from declared choices and includes saved-program replay instructions.
 `,
 	"check": `Check Gooo source

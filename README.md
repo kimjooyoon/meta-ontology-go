@@ -110,6 +110,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [Gooo source assembly](docs/source-assembly.md)
 · [compose activity bodies](docs/native-body-composition.md)
 · [inspect inputs before assembly](docs/composition-plan-inspection.md)
+· [read a bounded semantic neighborhood (development)](docs/semantic-context.md)
 · [compare workflow outcomes after a rule change](docs/workflow-outcome-delta.md)
 · [small model integration](docs/three-choice-path-model.md)
 · [source-bound condition/output models and CLI](docs/condition-decision-model.md)
@@ -474,8 +475,8 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| [Compiler 0.6.33](docs/releases/0.6.33-dev.md) | SDK0.2.42; V2 source/requirement inspection, Integer division, finite construction and source-bound replay | Broader useful programs and unmet requirements |
-| [SDK0.2.43 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.43-experimental) | V2 Go input/search example, empty requirement arrays and explicit unsupported reasons | Broader source and behavior coverage |
+| [Compiler 0.6.34](docs/releases/0.6.34-dev.md) | SDK0.2.44; explicit V2/V3 source/requirement inspection, finite construction and source-bound replay | Explicit neutral-model integration and bounded semantic context |
+| [SDK0.2.45 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.45-experimental) | Explicit prose-neutral V3 input policy, retained source identities and numerical compatibility checks | Broader source and behavior coverage |
 | [Canonical and relation models](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1) | Freshly initialized small models, complete authored study records and failed candidates | Expected-output relations and new-task evaluation |
 | [Earlier shared judgment models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Historical wording and operation-order results |
 

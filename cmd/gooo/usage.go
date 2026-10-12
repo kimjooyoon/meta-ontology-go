@@ -23,7 +23,7 @@ Gooo declares the permitted choices and checks their results. An optional local 
 can propose their order. Omitting the model selects deterministic candidate order.
 
 Commands:
-  init             Create an app or library starter
+  init             Create an app, library or diagnostic starter
   check            Parse and validate a Gooo source file
   test             Check declared activity-output test markers
   run              Resolve an activity or execute a supported value plan
@@ -37,13 +37,14 @@ Commands:
   discover         Map a natural-language question to a source-bound capability
   format, fix      Format or repair Gooo source
   inspect, query   Inspect declarations and semantic relationships
+  context          Read a bounded semantic neighborhood by stable ID
   package          Check and execute a multi-file Gooo workspace
   version          Show the compiler version and build information
 
 Use ` + "`gooo help <topic>`" + ` for guides and examples.
 Topics: start, language, models, body-codegen, body-context, body-plan, body-compose, body-construct,
         body-outcomes-delta, discover, init, check, test, run,
-        generate, format, package, inspect, query, version, commands
+        generate, format, package, inspect, query, context, version, commands
 `
 
 func printUsage(writer io.Writer) {

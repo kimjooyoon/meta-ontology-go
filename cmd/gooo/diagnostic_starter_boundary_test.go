@@ -16,8 +16,8 @@ func TestDiagnosticStarterBindsModuleAndPreservesExistingProject(t *testing.T) {
 		t.Fatal(code, stderr.String())
 	}
 	entries, err := os.ReadDir(root)
-	if err != nil || len(entries) != 6 {
-		t.Fatal("expected six self-contained starter files", entries, err)
+	if err != nil || len(entries) != 7 {
+		t.Fatal("expected seven self-contained starter files including AGENTS.md", entries, err)
 	}
 	for _, entry := range entries {
 		data, err := os.ReadFile(filepath.Join(root, entry.Name()))

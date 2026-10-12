@@ -11,10 +11,23 @@ gooo package resolve gooo.workspace.json
 gooo package execute --json --cases cases.json gooo.workspace.json
 ```
 
+## Project-local guidance for development agents
+
+The development compiler writes an `AGENTS.md` beside the README for all three
+starters. It links the source-owned editing workflow to installed CLI help,
+stable IDs, finite expectations and saved replay. The app instructions use
+`inspect` and the bounded `context` view; workspace instructions use `package
+resolve` and `package interface` to include imports and record fields.
+
+This is a small text file embedded in the executable. Creating the project
+requires no model or network request. Existing destinations remain unchanged.
+The guide describes deterministic construction when no provider is configured,
+and keeps source-declared model choices and evaluation cases visible to agents.
+
 ## Start a reusable diagnostic tool
 
 The `diagnostic` starter creates a Gooo tool that turns counts and diagnostic
-text into a suggested next operation. Its six files are embedded in the CLI:
+text into a suggested next operation. Its source, inputs and guides are embedded in the CLI:
 
 ```sh
 gooo init --template diagnostic my-diagnostic

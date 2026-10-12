@@ -1,6 +1,23 @@
 package main
 
 var topicHelpGroup4 = map[string]string{
+	"context": `Read a semantic neighborhood
+
+` + semanticContextUsage + `
+
+Start with a stable ID from gooo inspect. Context follows deterministic PROV-O
+relations in both directions and the participants of explicit runtime bindings.
+Depth, node and JSON byte limits keep the response bounded. Truncated responses
+name the reason and a next_root; query that ID with the same --expect-source digest
+to inspect another neighborhood. The count covers omitted adjacent nodes only.
+
+Each activity keeps its value program, explicit multi-input order and full assembly contract.
+Output preserves whole nodes, relations and bindings. Exit 0 means the requested
+view was returned; inspect truncated before assuming the neighborhood is complete.
+Source digests bind all source bytes, including bodies. The context command reads
+declarations without executing activities or calling a model. Use body-context for
+the separate body-assembly input view. See docs/semantic-context.md.
+`,
 	"body-outcomes-delta": `Compare saved workflow outcomes
 
 ` + bodyOutcomesDeltaUsage + `
