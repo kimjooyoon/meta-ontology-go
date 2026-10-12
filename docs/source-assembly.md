@@ -751,3 +751,38 @@ The complete output remains bounded to 128 KiB. A new baseline starts a new plan
 edit `computes`, remove the old `baseline`/`picked` fields, and align the choices
 and cases with that body. Re-generating an existing checkpoint runs fresh bounded
 search; known selections do not skip testing or guarantee broader intent coverage.
+
+## Declare the next observation in source
+
+For Integer typed paths, an `observe` block inside `assembling` carries the same
+bounded candidate-observation operation previously supplied through
+`--path-observation`. It declares 1..32 distinct quoted int64 `input` values,
+`max_candidates` (1..64), `max_rounds` (1..8), and optionally an `oracle` activity
+name. Optional `reuse_outputs` and `resolve_unique` accept quoted `true` or
+`false`. Both default to false. The oracle, when supplied, must be a separate
+pure Integer-to-Integer Gooo activity and agree with every initial case. Its body
+must be fixed; an activity with its own `assembling` choices cannot supply the
+answers. Calls from the reference use the existing fixed pure-call closure.
+
+The source owns this operation across syntax, semantic IR and saved replay.
+External observation options cannot override it. Questions keep their declared
+order, exact integers and limits. Generation retains the original suite and
+records newly acquired answers separately. Without an oracle, it reports the
+next distinguishing question and `ORACLE_UNAVAILABLE`; no answer is invented.
+A candidate cap leaves the remaining alternatives unobserved even if only one
+observed candidate survived.
+
+Caller-guided construction retains the acquired answers as local obligations.
+Each candidate records the original observation digest and the current source's
+reference checks (`gooo/path-candidate/v2`). It checks both initial and acquired
+cases without new questions or ranking. A caller match that loses an acquired
+local answer cannot become a complete construction. The text/Markdown report
+shows how many original and acquired answers the selected candidate retained.
+Original observation receipts remain unchanged when other source slots are
+assembled; the current reference must still agree with the retained finite suite.
+
+See the [source-owned observation example](../examples/source-owned-observation/README.md).
+The current path profile requires at least one original Integer `case`; it does
+not support inline `holdout_case`, IR search/fill or record-value observation.
+Final evaluation can use a separate cases file after construction. A finite
+match, a unique surviving candidate and a native evaluation are distinct results.

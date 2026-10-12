@@ -108,6 +108,8 @@ Gooo source + intent + permitted choices + finite expectations
 · [practical adoption plan, 한국어](docs/adoption-plan.ko.md)
 · [body generation](docs/language/body-codegen.md)
 · [Gooo source assembly](docs/source-assembly.md)
+· [source-owned observation](examples/source-owned-observation/README.md)
+· [language problems and direction, 한국어](docs/language-identity-problems.ko.md)
 · [compose activity bodies](docs/native-body-composition.md)
 · [inspect inputs before assembly](docs/composition-plan-inspection.md)
 · [read a bounded semantic neighborhood (development)](docs/semantic-context.md)

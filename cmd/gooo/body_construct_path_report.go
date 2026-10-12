@@ -30,11 +30,27 @@ func constructionPathRows(c bodyexecution.JointConstruction) [][2]string {
 		rows = append(rows, constructionInitialPathRows(p)...)
 		selected := constructionSelectedPath(c, step.Generation.Report.ActivityID)
 		rows = append(rows, [2]string{"Selected caller-program body checks", constructionSelectedPathShare(selected)})
+		rows = append(rows, constructionPathObservationRows(p, selected)...)
 	}
 	if omitted > 0 {
 		rows = append(rows, [2]string{"Additional initial typed path bodies", fmt.Sprintf("%d; use --format json", omitted)})
 	}
 	return rows
+}
+
+func constructionPathObservationRows(p *bodycodegen.BodyPathReceipt, candidate *bodycodegen.PathCandidate) [][2]string {
+	if p.Observation == nil {
+		return nil
+	}
+	o := p.Observation
+	rows := [][2]string{{"Initial question outcome", reportedValue(o.Status)},
+		{"Initial observation cases", fmt.Sprintf("%d original; %d effective", len(o.InitialCases), o.EffectiveCases)}}
+	if candidate == nil || candidate.Observation == nil {
+		return append(rows, [2]string{"Answers retained during caller selection", "not recorded; inspect JSON"})
+	}
+	bound := candidate.Observation
+	return append(rows, [2]string{"Answers retained during caller selection",
+		fmt.Sprintf("%d original + %d acquired; included in selected local checks", bound.InitialCases, bound.AddedCases)})
 }
 
 func constructionInitialPathRows(p *bodycodegen.BodyPathReceipt) [][2]string {

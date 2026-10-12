@@ -11,6 +11,7 @@ import (
 )
 
 type Spec struct {
+	Observation        *Observation        `json:"observation,omitempty"`
 	Choices            []Choice            `json:"choices"`
 	Cases              []Case              `json:"cases"`
 	ConditionCases     []ConditionCase     `json:"condition_cases,omitempty"`
@@ -113,6 +114,9 @@ type ValueCase struct {
 }
 
 func (s Spec) Validate() error {
+	if err := s.validateObservation(); err != nil {
+		return err
+	}
 	if err := s.validateConditionCases(); err != nil {
 		return err
 	}
@@ -387,6 +391,11 @@ func identifier(value string) bool {
 
 func (s Spec) Clone() *Spec {
 	clone := s
+	if s.Observation != nil {
+		observation := *s.Observation
+		observation.Inputs = append([]int64(nil), s.Observation.Inputs...)
+		clone.Observation = &observation
+	}
 	clone.Choices = append([]Choice(nil), s.Choices...)
 	clone.Cases = append([]Case(nil), s.Cases...)
 	clone.ConditionCases = append([]ConditionCase(nil), s.ConditionCases...)

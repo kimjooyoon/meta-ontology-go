@@ -22,22 +22,23 @@ type SourcePathCandidateSet struct {
 }
 
 type PathCandidate struct {
-	Schema               string                 `json:"schema"`
-	Activity             string                 `json:"activity"`
-	ActivityID           string                 `json:"activity_id"`
-	InputSourceSHA256    string                 `json:"input_source_sha256"`
-	SelectedSourceSHA256 string                 `json:"selected_source_sha256,omitempty"`
-	DocumentSHA256       string                 `json:"document_sha256"`
-	PlanSHA256           string                 `json:"plan_sha256"`
-	Mask                 uint16                 `json:"mask"`
-	Choices              map[string]string      `json:"choices"`
-	CandidateSet         SourcePathCandidateSet `json:"candidate_set"`
-	Stage                string                 `json:"stage"`
-	Failure              string                 `json:"failure,omitempty"`
-	Cases                []IRBodyFillCaseResult `json:"case_results,omitempty"`
-	Passed               int                    `json:"local_passed"`
-	Total                int                    `json:"local_total"`
-	Conditions           *PathConditionReceipt  `json:"conditions,omitempty"`
+	Schema               string                    `json:"schema"`
+	Activity             string                    `json:"activity"`
+	ActivityID           string                    `json:"activity_id"`
+	InputSourceSHA256    string                    `json:"input_source_sha256"`
+	SelectedSourceSHA256 string                    `json:"selected_source_sha256,omitempty"`
+	DocumentSHA256       string                    `json:"document_sha256"`
+	PlanSHA256           string                    `json:"plan_sha256"`
+	Mask                 uint16                    `json:"mask"`
+	Choices              map[string]string         `json:"choices"`
+	CandidateSet         SourcePathCandidateSet    `json:"candidate_set"`
+	Stage                string                    `json:"stage"`
+	Failure              string                    `json:"failure,omitempty"`
+	Cases                []IRBodyFillCaseResult    `json:"case_results,omitempty"`
+	Passed               int                       `json:"local_passed"`
+	Total                int                       `json:"local_total"`
+	Conditions           *PathConditionReceipt     `json:"conditions,omitempty"`
+	Observation          *PathCandidateObservation `json:"observation,omitempty"`
 }
 
 type SourcePathCandidateRejection struct{ cause error }
@@ -139,6 +140,11 @@ func RealizeSourcePathCandidate(ctx context.Context, filename string, source []b
 	result = PathCandidate{Schema: "gooo/path-candidate/v1", Activity: activity, ActivityID: document.Plan.Base.ID,
 		InputSourceSHA256: digest(source), DocumentSHA256: digest(raw), PlanSHA256: prepared.PlanSHA256(),
 		Mask: mask, Choices: choices, CandidateSet: set, Stage: "TYPE_CHECK"}
+	effectiveCases, err := sourcePathCandidateCases(ctx, filename, source, activity, document, prior, &result)
+	if err != nil {
+		return rejectPathCandidate(ctx, result, err)
+	}
+	result.Stage = "TYPE_CHECK"
 	selected, err := prepared.Compile(choices)
 	if err != nil {
 		return rejectPathCandidate(ctx, result, err)
@@ -169,7 +175,7 @@ func RealizeSourcePathCandidate(ctx context.Context, filename string, source []b
 	if err != nil {
 		return result, nil, err
 	}
-	result, err = scoreSourcePathCandidate(ctx, []byte(projection.Source), activity, selected, document.TestCases, result)
+	result, err = scoreSourcePathCandidate(ctx, []byte(projection.Source), activity, selected, effectiveCases, result)
 	if err != nil {
 		return result, nil, err
 	}

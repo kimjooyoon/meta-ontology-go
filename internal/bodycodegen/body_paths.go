@@ -183,6 +183,10 @@ func generateTypedPathRequest(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return fail(err)
 	}
+	models.observation, err = sourcePathObservation(bound.activity, models.observation)
+	if err != nil {
+		return fail(err)
+	}
 	base := bound.base
 	effectiveCases, err := observeTypedPaths(ctx, filename, source, activityName, prepared,
 		document.TestCases, models.observation, receipt)
