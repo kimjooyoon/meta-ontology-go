@@ -63,7 +63,7 @@ func callbackObservationToolchain(ctx context.Context, root string) (string, str
 	query := func(args ...string) (string, error) {
 		command := exec.CommandContext(ctx, "go", args...)
 		command.Dir = root
-		command.Env = append(os.Environ(), "GOWORK=off", "GOTOOLCHAIN=local")
+		command.Env = callbackObservationEnvironment()
 		output, err := command.Output()
 		return strings.TrimSpace(string(output)), err
 	}
@@ -79,6 +79,11 @@ func callbackObservationToolchain(ctx context.Context, root string) (string, str
 		return "", "", fmt.Errorf("callback observation requires a source module and Go 1.27 toolchain")
 	}
 	return module, version, nil
+}
+
+func callbackObservationEnvironment() []string {
+	// Observe the ordinary pinned build, without inherited overlays or build flags.
+	return append(os.Environ(), "GOWORK=off", "GOTOOLCHAIN=local", "GOFLAGS=")
 }
 
 func materializeCallbackObservation(parent, variant, logical string, moduleFiles, packageFiles map[string][]byte) (string, error) {

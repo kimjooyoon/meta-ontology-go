@@ -31,6 +31,16 @@ Interpret these independently:
 - CompletedTestRuns counts completed runs, not attempts or passing artifacts.
 - External dependency binding remains UNBOUND. Matching finite test events
   does not prove arbitrary semantic equivalence.
+- Each run retains dependency_inputs_before and dependency_inputs_after. These
+  identify the selected external package files, embed inputs and effective
+  module declarations from Go's transitive test dependency selection. Local
+  replacement locations are normalized; their actual bytes remain in the
+  identity. A detected change within or between runs is REFUTED and retained.
+  This scope excludes standard-library bytes, native libraries and arbitrary
+  runtime test data. Before/after agreement cannot exclude a temporary change
+  during execution, so it does not authorize cross-workflow evidence reuse.
+  Selection and test commands both clear GOFLAGS, so inherited overlays and
+  build flags cannot substitute different bytes for the recorded source files.
 - WallMS is per-run elapsed time, not an improvement claim or total CI latency.
 
 CI tests cover argument rejection and the local-execution boundary. Existing
