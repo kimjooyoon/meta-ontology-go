@@ -38,13 +38,14 @@ Commands:
   format, fix      Format or repair Gooo source
   inspect, query   Inspect declarations and semantic relationships
   context          Read a bounded semantic neighborhood by stable ID
+  impact           Explain source changes and declarations to recheck
   package          Check and execute a multi-file Gooo workspace
   version          Show the compiler version and build information
 
 Use ` + "`gooo help <topic>`" + ` for guides and examples.
 Topics: start, language, models, body-codegen, body-context, body-plan, body-compose, body-construct,
         body-outcomes-delta, discover, init, check, test, run,
-        generate, format, package, inspect, query, context, version, commands
+        generate, format, package, inspect, query, context, impact, version, commands
 `
 
 func printUsage(writer io.Writer) {
