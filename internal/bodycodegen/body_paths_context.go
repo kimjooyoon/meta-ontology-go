@@ -36,6 +36,8 @@ type PathModelContextReceipt struct {
 	ModelFingerprint   string                    `json:"model_fingerprint,omitempty"`
 	FeatureVersion     string                    `json:"feature_version"`
 	ArithmeticVersion  string                    `json:"arithmetic_version,omitempty"`
+	IntentPolicy       string                    `json:"intent_policy,omitempty"`
+	ClearedIntentCells *[2]int                   `json:"cleared_intent_cells_half_open,omitempty"`
 	Inputs             []PathContextInput        `json:"inputs"`
 	DeclinedDecision   string                    `json:"declined_decision,omitempty"`
 	Reason             string                    `json:"reason,omitempty"`

@@ -15,6 +15,11 @@ V2에서도 모든 반환값 예시는 별도 입력 스트림으로 모델에 �
 V3는 기존 빈 영역 중48개 값과 명시적인 새 모델 형식을 사용합니다.
 원래 V1·V2 파일은 각각의 기존 해석을 유지합니다.
 
+[설명 표현의 영향을 줄이는 선택 경로](prose-neutral-contract-model.md)는
+SDK0.2.45의 별도 파일 형식을 사용합니다. 이 개발 연결은 원본 설명을
+기록하면서 모델 입력에서 설명문128개 값만 제외합니다. 공개0.6.34의
+일반 V3 경로와 새 개발 경로의 지원 범위를 안내에서 구분합니다.
+
 ## 공개된 새 학습 결과
 
 [원본 소스와 분할](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1/tree/d63359863c7a685eca81239e00626aebef3a7b05/research/output-relations-v3-learning-20261012/prefit),

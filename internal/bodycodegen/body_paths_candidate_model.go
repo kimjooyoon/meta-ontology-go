@@ -15,6 +15,9 @@ import (
 // Shape and version come from the decoded artifact. A v1 artifact never gains
 // branch or output channels just because a newer runtime is available.
 func (m *conditionPathModel) featureVersion() string {
+	if m.sourceRelativeV3ProseNeutralContract() {
+		return contractdecision.SourceRelativeV3ProseNeutralFeatureVersion
+	}
 	if m.sourceRelativeV3Contract() {
 		return contractdecision.SourceRelativeV3FeatureVersion
 	}
@@ -68,7 +71,8 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 	case *contractdecision.OrderedRequirementModel:
 		info.ResidentTensorBytes = contractdecision.OrderedRequirementParameterCount * 4
 	case *contractdecision.InteractionRequirementModel, *contractdecision.CanonicalInteractionRequirementModel,
-		*contractdecision.SourceRelativeRequirementModel, *contractdecision.SourceRelativeV2Model, *contractdecision.SourceRelativeV3Model:
+		*contractdecision.SourceRelativeRequirementModel, *contractdecision.SourceRelativeV2Model, *contractdecision.SourceRelativeV3Model,
+		*contractdecision.SourceRelativeV3ProseNeutralModel:
 		info.ResidentTensorBytes = contractdecision.InteractionRequirementParameterCount * 4
 	}
 	if m.execution != nil {
@@ -82,7 +86,9 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 func decodeCandidateModel(raw []byte, schema string) (typedPathModel, error) {
 	m := &conditionPathModel{artifactSHA: digest(raw)}
 	var err error
-	if schema == contractdecision.SourceRelativeV3Schema {
+	if schema == contractdecision.SourceRelativeV3ProseNeutralSchema {
+		m.contract, err = contractdecision.DecodeSourceRelativeV3ProseNeutral(raw)
+	} else if schema == contractdecision.SourceRelativeV3Schema {
 		m.contract, err = contractdecision.DecodeSourceRelativeV3(raw)
 	} else if schema == contractdecision.SourceRelativeV2Schema {
 		m.contract, err = contractdecision.DecodeSourceRelativeV2(raw)
