@@ -1,0 +1,35 @@
+{
+  "schema": "gooo/activity-rename/v1",
+  "scope": "single_source_file",
+  "activity_id": "escapes://activity/calculate",
+  "from": "Calculate",
+  "to": "요금",
+  "identity_pinned": true,
+  "input_sha256": "sha256:19773981d1884fe9aa675fce5714187bc6a61647a72c928e73ff9b354c39d319",
+  "output_sha256": "sha256:fe843d5c0babdab66977a5d25140ec6a458b1c2d9d685220400944ddc72c3b18",
+  "call_sites": 1,
+  "edits": [
+    {
+      "start_byte": 85,
+      "end_byte": 94,
+      "kind": "declaration",
+      "before": "Calculate",
+      "after": "요금"
+    },
+    {
+      "start_byte": 114,
+      "end_byte": 114,
+      "kind": "pin_identity",
+      "before": "",
+      "after": " id \"escapes://activity/calculate\""
+    },
+    {
+      "start_byte": 183,
+      "end_byte": 245,
+      "kind": "body_calls",
+      "before": "\"let text = \\\"\\\\\\\\b\\\\\\\\f\\\"; _ = text; return Calculate(input)\"",
+      "after": "\"let text = \\\"\\\\\\\\b\\\\\\\\f\\\"; _ = text; return 요금(input)\""
+    }
+  ],
+  "source": "package escapes\nnamespace escapes\nentity Integer id \"urn:gooo:type:integer\"\nactivity 요금(Integer) -\u003e Integer id \"escapes://activity/calculate\" computes \"return input\"\nactivity Total(Integer) -\u003e Integer computes \"let text = \\\"\\\\\\\\b\\\\\\\\f\\\"; _ = text; return 요금(input)\"\n"
+}

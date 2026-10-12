@@ -163,6 +163,10 @@ types and presence from the validated workspace, including imported packages.
 Activities may declare an [explicit stable ID](docs/language/activity-identity.md)
 after the result type, so a display rename retains that identity in interfaces,
 generated markers and native delivery traces.
+The development [activity refactoring command](docs/language/activity-refactoring.md)
+([한국어](docs/language/activity-refactoring.ko.md))
+renames an activity and its file-local calls, conditions and bindings while
+retaining the stable ID. It prints a source proposal and a record of the edits.
 Native scalar declarations can also keep [recognized type identities](docs/language/scalar-identity.md)
 while using English or Korean names. The source example includes a small own graph
 model for three field choices and separate native execution cases.

@@ -1,0 +1,5 @@
+package escapes
+namespace escapes
+entity Integer id "urn:gooo:type:integer"
+activity Calculate(Integer) -> Integer computes "return input"
+activity Total(Integer) -> Integer computes "let text = \"\\\\b\\\\f\"; _ = text; return Calculate(input)"

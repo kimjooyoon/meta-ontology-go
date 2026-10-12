@@ -1,0 +1,49 @@
+{
+  "schema": "gooo/activity-rename/v1",
+  "scope": "single_source_file",
+  "activity_id": "pricing://activity/calculate",
+  "from": "Calculate",
+  "to": "요금",
+  "identity_pinned": true,
+  "input_sha256": "sha256:082cf531b461e4a2fbee71822e5929ee0b12590019ee0a23f4e677f1253741f1",
+  "output_sha256": "sha256:23ae8170a9b17869fa4b2c6a0171ff9128adeb45d5349f26abfe33a86aec4c5d",
+  "call_sites": 3,
+  "edits": [
+    {
+      "start_byte": 175,
+      "end_byte": 184,
+      "kind": "declaration",
+      "before": "Calculate",
+      "after": "요금"
+    },
+    {
+      "start_byte": 204,
+      "end_byte": 204,
+      "kind": "pin_identity",
+      "before": "",
+      "after": " id \"pricing://activity/calculate\""
+    },
+    {
+      "start_byte": 286,
+      "end_byte": 322,
+      "kind": "body_calls",
+      "before": "\"return input1 == Calculate(input0)\"",
+      "after": "\"return input1 == 요금(input0)\""
+    },
+    {
+      "start_byte": 368,
+      "end_byte": 393,
+      "kind": "body_calls",
+      "before": "\"return Calculate(input)\"",
+      "after": "\"return 요금(input)\""
+    },
+    {
+      "start_byte": 454,
+      "end_byte": 476,
+      "kind": "assembly_reference",
+      "before": "\"Calculate(input) + 1\"",
+      "after": "\"요금(input) + 1\""
+    }
+  ],
+  "source": "package pricing\nnamespace pricing\nentity Integer id \"urn:gooo:type:integer\"\nentity Boolean id \"urn:gooo:type:boolean\"\n// Calculate is the original term in this note.\nactivity 요금(Integer) -\u003e Integer id \"pricing://activity/calculate\" computes \"return input - 11\"\nactivity Check(Integer,Integer) -\u003e Boolean computes \"return input1 == 요금(input0)\"\nactivity Select(Integer) -\u003e Integer computes \"return 요금(input)\" assembling {\n choice \"value\" field_value at \"0\" alternative \"요금(input) + 1\" intent \"Calculate the fee.\"\n criteria {\n  predicate \"fee\" activity \"Check\"\n  input \"[4]\"\n  holdout_input \"[23]\"\n }\n attempts \"2\"\n}\n"
+}
