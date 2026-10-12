@@ -18,7 +18,8 @@ This example needs **Go 1.27.2** and no model or API key. In a new working
 directory on macOS or Linux:
 
 ```sh
-GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.32-dev
+GOBIN="$PWD/.gooo-bin" GOWORK=off GOTOOLCHAIN=go1.27.2 \
+  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.33-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -26,7 +27,11 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 ```
 
-This walkthrough pins the published 0.6.32 compiler. The
+This walkthrough pins the published 0.6.33 compiler. The
+[0.6.33 guide](docs/releases/0.6.33-dev.md) connects the explicit V2 return-layout
+model to source inspection, body construction and saved replay. Source-owned
+assignments, comparison order and Integer division remain visible to the model;
+omitting it keeps deterministic construction. The earlier
 [0.6.32 guide](docs/releases/0.6.32-dev.md) covers Gooo string functions and assembly
 of one predicate inside a declared loop. The earlier
 [0.6.31 guide](docs/releases/0.6.31-dev.md) introduces counted loops, byte access
@@ -469,8 +474,8 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| [Compiler 0.6.32](docs/releases/0.6.32-dev.md) | SDK 0.2.41; Gooo string functions, one-condition assembly and source-bound saved replay | Broader useful programs and unmet requirements |
-| [SDK 0.2.41 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.41-experimental) | Go model loaders, source-relative inputs and bounded construction sessions | Broader source and behavior coverage |
+| [Compiler 0.6.33](docs/releases/0.6.33-dev.md) | SDK0.2.42; V2 source/requirement inspection, Integer division, finite construction and source-bound replay | Broader useful programs and unmet requirements |
+| [SDK0.2.43 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.43-experimental) | V2 Go input/search example, empty requirement arrays and explicit unsupported reasons | Broader source and behavior coverage |
 | [Canonical and relation models](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1) | Freshly initialized small models, complete authored study records and failed candidates | Expected-output relations and new-task evaluation |
 | [Earlier shared judgment models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Historical wording and operation-order results |
 

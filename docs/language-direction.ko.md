@@ -8,20 +8,23 @@
 
 **지금의 위치:** Gooo로 허용된 코드 조립 경로를 표현하고, 자체 소형 모델이
 시도할 순서를 제안하며, 실행 결과를 다음 판단과 개발에 연결하고 있습니다.
-[공개 0.6.32](releases/0.6.32-dev.md)는 재사용할 문자열 함수와 반복문 안의 단일 조건 조립을 제공합니다.
+[공개0.6.33](releases/0.6.33-dev.md)는 자체 V2 모델을 비교 순서·변수 대입·정수 나눗셈·반환 가지에 연결합니다.
+앞선 [0.6.32](releases/0.6.32-dev.md)의 문자열 함수와 반복문 안의 단일 조건 조립도 유지합니다.
 [0.6.30](releases/0.6.30-dev.md)에서 도입한 보조 함수 본문 채우기와 실패한 후보 이후의 탐색도 이어집니다.
 보조 함수를 기준으로 만든 후보 목록을 보존하고, 각 시도에서는 현재 함수로 다시 실행해 점수를 계산합니다.
 실제로 호출한 입력은 사전 검사와 후보 평가 이력에 남깁니다. 실패 중간까지 도달한 입력도 포함합니다.
-SDK 0.2.41과 기존 관계 모델을 연결할 수 있으며, 모델 없이도 정해진 순서로 진행합니다.
+SDK0.2.42로 V2와 앞선 관계 모델을 연결할 수 있으며, 모델 없이도 정해진 순서로 진행합니다.
 기록하지 못한 경계와 모델 학습 데이터에 대한 노출은 미측정으로 남깁니다.
 모델의 연결법과 고정 순서 비교는 [소스 관계 모델 안내](source-relative-contract-model.md)에서 볼 수 있습니다.
 
 [공개 SDK 0.2.42](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.42-experimental)는
 새 V2 반환 경로 모델을 읽는 Go API를 제공합니다. 나눗셈을 포함한 정수 계산,
 비교 순서와 반환 가지의 배치를 같은 소스 요구 안에서 판단합니다. 컴파일러 연결은
-[PR1479](https://github.com/kimjooyoon/meta-ontology-go/pull/1479)로 병합됐으며 다음 배포를 준비하고 있습니다.
+[PR1479](https://github.com/kimjooyoon/meta-ontology-go/pull/1479)로 병합됐으며0.6.33에 배포했습니다.
 [V2 사용 안내](source-relative-v2-contract-model.md)에 입력 조회, 한 번의 최초 판단,
 결정론적 선택과 모델 파일 없는 저장 결과 재실행을 설명했습니다.
+[SDK0.2.43](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.43-experimental)은
+같은 API의 Go 명령 예제를 제공합니다. 빈 요구 목록과 미지원 구조의 이유도 그대로 보여줍니다.
 
 [새 학습 기록](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1/tree/ece9b3a7934fa5aae5ca7faecb3bc035a05ba917/research/return-layout-learning-20261012/result)은
 25개 계약의 네 변형, 총100개 소스를 다룹니다. 한 계약의 변형은 같은 분할에 두고
