@@ -10,6 +10,7 @@ import (
 )
 
 type RecordAssemblyContextExport struct {
+	CriteriaFlow         *CriteriaSourceFlow       `json:"criteria_flow,omitempty"`
 	Schema               string                    `json:"schema"`
 	OriginalSourceSHA256 string                    `json:"original_source_sha256"`
 	ContractSHA256       string                    `json:"contract_sha256"`
@@ -74,13 +75,14 @@ func exportRecordAssemblyContext(ctx context.Context, filename string, source []
 		result.Schema = "gooo/scalar-criteria-input-export/v1"
 	}
 	if plan.spec.Criteria != nil {
-		result.Scope += "; predicate bodies and criteria inputs are outside the existing model feature encoding; the optional expanded plan retains them separately"
+		result.Scope += "; predicate bodies and criteria inputs are outside the existing model feature encoding; the optional expanded plan retains finite input declarations separately"
 	}
 	if includePlan {
 		result.ExpandedPlan = plan.spec.Clone()
 	}
 	if includeFlow {
 		result.ValueFlow = flow
+		result.CriteriaFlow = criteriaSourceFlow(ctx, filename, source, plan)
 	}
 	return result, ctx.Err()
 }

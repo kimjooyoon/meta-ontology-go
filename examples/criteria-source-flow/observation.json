@@ -1,0 +1,36 @@
+{
+  "schema": "gooo/criteria-source-flow-observation/v1",
+  "operation": "body-context --value-flow --activity Fee",
+  "source": "main.gooo.fixture",
+  "source_sha256": "sha256:c9847a906ff148bbf7865e76372245b8fac545b102b4e23f596c0f8bf2467103",
+  "context": "context.json",
+  "context_sha256": "sha256:c4be50ab94b99445ec3b16b48525478b44c125525f69029c6b720f91871a7ae4",
+  "compiler_sha256": "sha256:daf5968aa43ee76bf50391e3cdf35dedf7b51a70a74cb82d72b248e51d49bd08",
+  "compiler_source_base_commit": "93e392a09a5b70b1c1a30752dff1eb8c06f5efeb",
+  "compiler_production_overlays": [
+    {
+      "path": "internal/bodycodegen/criteria_source_flow.go",
+      "sha256": "sha256:eb7c7e23afc75cb3f2cd9ca51b3dfc6e7777e3008f831bc429a355ec5feb2593"
+    },
+    {
+      "path": "internal/bodycodegen/record_assembly_export.go",
+      "sha256": "sha256:0d7e067c158757a3558ebe459d7269f21bc3a295b056a6d6edb1afd21e715cda"
+    },
+    {
+      "path": "internal/bodycodegen/scalar_criteria_plan.go",
+      "sha256": "sha256:39b3481186a9c6b7e4425fe77d0247caa5f019a0fc81c55d7154b270fa10e21f"
+    }
+  ],
+  "model_predictions": 0,
+  "candidate_tests": 0,
+  "program_executions": 0,
+  "training_runs": 0,
+  "toolchain_search_path": "empty",
+  "source_unchanged": true,
+  "predicates": 1,
+  "predicate_nodes": 14,
+  "helpers": 1,
+  "candidate_choices": 1,
+  "model_status": "DECLINED_TO_DETERMINISTIC",
+  "scope": "One source-only CLI export. Existing scalar model feature contract remains unavailable. No accuracy, runtime performance, or native behavior observation."
+}
