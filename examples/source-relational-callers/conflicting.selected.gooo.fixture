@@ -1,0 +1,7 @@
+package relation
+namespace relation
+entity Integer id "relation://integer"
+entity Boolean id "relation://boolean"
+activity Fee(Integer) -> Integer id "relation://fee" computes "return (11 - input)"
+activity Decreasing(Integer,Integer) -> Boolean computes "return input1 == 11-input0"
+activity Nondecreasing(Integer) -> Boolean id "relation://nondecreasing" computes "let first=Fee(input); let second=Fee(input+1); return first <= second"

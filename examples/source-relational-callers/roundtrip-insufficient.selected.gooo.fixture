@@ -1,0 +1,8 @@
+package relationcodec
+namespace relationcodec
+entity Integer id "relation-codec://integer"
+entity Boolean id "relation-codec://boolean"
+activity Encode(Integer) -> Integer id "relation-codec://encode" computes "let plus = (input + 7)\nlet minus = (input + 7)\nreturn plus"
+activity Decode(Integer) -> Integer id "relation-codec://decode" computes "let plus = (input + 7)\nlet minus = (input + 7)\nreturn plus"
+activity OffsetAtZero(Integer,Integer) -> Boolean computes "return input1 == 7 || input1 == -7"
+activity RoundTrip(Integer) -> Boolean id "relation-codec://roundtrip" computes "return Decode(Encode(input)) == input"
