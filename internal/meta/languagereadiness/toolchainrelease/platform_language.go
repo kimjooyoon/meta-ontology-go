@@ -69,6 +69,9 @@ func smokeCallerExamples(binary, work string, input BuildInput) error {
 	if err := smokeRelativeV2(binary, work, input); err != nil {
 		return err
 	}
+	if err := smokeRelativeV3(binary, work, input); err != nil {
+		return err
+	}
 	if err := smokeJointConstruction(binary, work, input); err != nil {
 		return err
 	}
