@@ -115,6 +115,9 @@ func evaluateRecordMask(ctx context.Context, p recordAssemblyPlan, mask uint16) 
 		return RecordAssemblyAttempt{}, nil, err
 	}
 	cases, calls, err := evaluateRecordCasesObserved(ctx, candidate, mask, recordSelectionCases(p))
+	if len(cases) == 0 {
+		cases = nil
+	}
 	attempt := scoreRecordCases(mask, cases)
 	attempt.LocalCalls = calls
 	if err != nil {
@@ -127,6 +130,12 @@ func evaluateRecordMask(ctx context.Context, p recordAssemblyPlan, mask uint16) 
 		// source budget. Its incomplete suite does not gain a partial score.
 		return attempt, nil, nil
 	}
+	if p.spec.Criteria != nil {
+		attempt.Criteria, err = evaluateRecordCriteria(ctx, p, candidate, criteriaSelectionInputs(p), "selection")
+		if err != nil {
+			return attempt, cases, err
+		}
+	}
 	return attempt, cases, nil
 }
 
@@ -136,7 +145,7 @@ func transitionRecordDependencies(ctx context.Context, plans []recordAssemblyPla
 	}
 	// Evaluate each retained mask under the new closure, even if an early one
 	// passes. These are rechecks of attempted identities, not new budget slots.
-	r.Cases = nil
+	r.Cases, r.Criteria = nil, nil
 	r.SelectedMask, r.Passed, r.Total, r.FieldsPassed, r.FieldsTotal = 0, 0, 0, 0, 0
 	for i, prior := range r.Attempts {
 		attempt, cases, err := evaluateRecordMask(ctx, plans[index], prior.Mask)
@@ -144,10 +153,8 @@ func transitionRecordDependencies(ctx context.Context, plans []recordAssemblyPla
 			return 0, err
 		}
 		r.Attempts[i] = attempt
-		if attempt.Total > 0 && (r.Cases == nil || attempt.FieldsPassed > r.FieldsPassed ||
-			(attempt.FieldsPassed == r.FieldsPassed && attempt.Passed > r.Passed)) {
-			r.SelectedMask, r.Cases = attempt.Mask, cases
-			r.Passed, r.Total, r.FieldsPassed, r.FieldsTotal = attempt.Passed, attempt.Total, attempt.FieldsPassed, attempt.FieldsTotal
+		if usableRecordAttempt(attempt) && (!usableRecordAttempt(selectedRecordAttempt(r)) || betterRecordAttempt(attempt, selectedRecordAttempt(r), false)) {
+			selectRecordAttempt(r, attempt, cases)
 		}
 	}
 	return len(r.Attempts), nil

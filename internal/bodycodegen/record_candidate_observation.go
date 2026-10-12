@@ -26,6 +26,9 @@ type RecordCandidateObservation struct {
 // rechecks the fixed oracle without asking or ranking any additional question.
 func retainRecordCandidateObservation(ctx context.Context, filename string, source []byte, p *recordAssemblyPlan,
 	prior *RecordAssemblyReceipt) (*RecordCandidateObservation, error) {
+	if isCriteriaQuestionPlan(*p) {
+		return nil, nil
+	}
 	if p.spec.Observation == nil {
 		if prior != nil && prior.Observation != nil {
 			return nil, fmt.Errorf("record observation declaration was removed")
@@ -100,7 +103,11 @@ func retainedRecordObservationCases(p *recordAssemblyPlan, prior *RecordAssembly
 		seen[key] = true
 		cases = append(cases, *c)
 	}
-	if len(cases)+len(p.spec.ValueHoldoutCases) > 128 || r.EffectiveCases != len(cases) || r.EffectiveCasesSHA256 != recordCasesSHA(cases) {
+	criteriaInputs := 0
+	if p.spec.Criteria != nil {
+		criteriaInputs = len(p.spec.Criteria.Inputs) + len(p.spec.Criteria.HoldoutInputs)
+	}
+	if len(cases)+len(p.spec.ValueHoldoutCases)+criteriaInputs > 128 || r.EffectiveCases != len(cases) || r.EffectiveCasesSHA256 != recordCasesSHA(cases) {
 		return nil, fmt.Errorf("record effective cases differ from retained observation")
 	}
 	return cases, nil

@@ -1,0 +1,39 @@
+{
+  "schema": "gooo/criteria-example-observation/v1",
+  "native_cases_sha256": "d571031580e824f47ed28ba78280e61bfb6830319be02fca85f941a6205c707c",
+  "development_compiler_sha256": "2280976579aa44474d77aa93248115b8453bde02398d4a18d96a74935ebd1dc8",
+  "compiler_vcs_binding": "UNBOUND_LOCAL_SOURCE; temporary source overlay",
+  "saved_cli_output_sha256": "30ead392ec8d4d877a044f37e8fe7c15bfed4c6091ea9878bb29aa82c21dfa98",
+  "selected_mask": 7,
+  "selection_predicate_pairs": {
+    "passed": 3,
+    "failed": 0,
+    "unknown": 0,
+    "total": 3
+  },
+  "held_predicate_pairs": {
+    "passed": 3,
+    "failed": 0,
+    "unknown": 0,
+    "total": 3
+  },
+  "native_outputs": {
+    "passed": 2,
+    "total": 2
+  },
+  "candidate_predicate_matches": [
+    0,
+    1,
+    1,
+    2,
+    1,
+    2,
+    2,
+    3
+  ],
+  "local_model_predictions": 0,
+  "scope": "one fresh refund program; no training, model-accuracy, latency or CPU measurement",
+  "measured_source_sha256": "3064a851ff02c6bf5b5180da3b4fab103865a91ce113bc72c665db863be08a80",
+  "published_source_sha256": "8aeded01b52ca38f71afe426f8a11eb62d27c77bf3bd5999f781d9abe1eb8ecf",
+  "source_normalization": "Publication removes one final blank line; append one newline to the published source to reconstruct the measured source bytes."
+}

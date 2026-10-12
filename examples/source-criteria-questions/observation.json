@@ -1,0 +1,41 @@
+{
+  "schema": "gooo/criteria-question-example/v1",
+  "source_sha256": "05cfa975f939a0591408c6ab986eac42d8e778885d4d0e41a363928b19dcd009",
+  "native_cases_sha256": "dab7a8e37922b6df6650d0f18f13b51ad41ab058749cfd805c5a4116ea2249ae",
+  "development_compiler_sha256": "7c7d1261de05f3aaa816bbced958d89d5329fb792441e73795e1ce34b4209b90",
+  "compiler_vcs_binding": "UNBOUND_LOCAL_SOURCE; temporary overlay on 905d659ab848cebffdee78e6b7c4ef455fa7b63a",
+  "saved_cli_output_sha256": "c6b9f90d8cc12806e78c7c9a3f4a2e0d6c098f7cba49139db3455547b30a4ca4",
+  "initial_surviving_masks": [
+    6,
+    7
+  ],
+  "acquired_inputs": [
+    "[{\"amount\":41,\"approved\":false,\"label\":\"추가 확인\"},true]"
+  ],
+  "selected_mask": 7,
+  "criteria": {
+    "passed": 6,
+    "failed": 0,
+    "unknown": 0,
+    "total": 6
+  },
+  "held_criteria": {
+    "passed": 3,
+    "failed": 0,
+    "unknown": 0,
+    "total": 3
+  },
+  "native_outputs": {
+    "passed": 2,
+    "total": 2
+  },
+  "question_work": {
+    "candidate_evaluations": 12,
+    "predicate_evaluations": 30,
+    "reused_outputs": 3,
+    "reused_criteria_results": 8
+  },
+  "model_calls": 0,
+  "unselected_probes_predicate_scored": false,
+  "scope": "one fresh source-owned refund question program; finite observations only; no training, latency, CPU or model-accuracy measurement"
+}
