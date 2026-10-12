@@ -54,6 +54,11 @@ func TestCallbackExtractionObservesOriginalAndFinalPackageCI(t *testing.T) {
 	}
 	t.Logf("callback Gooo observer record=%s", recordJSON)
 	for _, run := range observation.Runs {
+		if run.InputsBefore == nil || run.InputsAfter == nil || run.InputsBefore.Digest == "" ||
+			run.InputsBefore.Digest != run.InputsAfter.Digest ||
+			run.InputsBefore.Digest != observation.Runs[0].InputsBefore.Digest {
+			t.Fatalf("selected external dependency inputs were not retained consistently: %+v", run)
+		}
 		if run.ExitCode != 0 || !run.TestEventsComplete || run.WallMS < 0 || len(run.Events) == 0 ||
 			run.StdoutDigest != proofDigest(run.Stdout) || run.StderrDigest != proofDigest(run.Stderr) {
 			t.Fatalf("invalid native package execution receipt: %+v", run)
