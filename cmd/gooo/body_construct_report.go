@@ -58,6 +58,7 @@ func constructionReportRows(result bodyConstructOutput) [][2]string {
 		{"Attempted programs / budget", fmt.Sprintf("%d / %d", len(c.Attempts), c.ProgramBudget)},
 		{"Source-bounded candidate combinations", reportedValue(c.CandidateSpace)}}
 	rows = append(rows, constructionSelectionRows(c)...)
+	rows = append(rows, constructionAgreementRows(c)...)
 	rows = append(rows, constructionPathRows(c)...)
 	rows = append(rows, constructionRecordObservationRows(c)...)
 	rows = append(rows, constructionRecordHoldoutRows(c)...)
