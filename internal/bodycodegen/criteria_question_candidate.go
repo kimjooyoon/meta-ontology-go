@@ -65,7 +65,7 @@ func retainCriteriaQuestions(p *recordAssemblyPlan, prior *RecordAssemblyReceipt
 		inputs = append(inputs, input)
 		acquired = append(acquired, input)
 	}
-	if !slices.Equal(acquired, r.AcquiredInputs) || len(inputs)+len(p.spec.Criteria.HoldoutInputs)+len(p.spec.ValueCases)+len(p.spec.ValueHoldoutCases) > 128 ||
+	if !slices.Equal(acquired, r.AcquiredInputs) || len(inputs)+len(p.spec.Criteria.HoldoutInputs)+len(p.spec.ValueCases)+len(p.spec.ValueHoldoutCases)+len(p.spec.Cases)+len(p.spec.HoldoutCases) > 128 ||
 		r.EffectiveInputs != len(inputs) || r.EffectiveInputsSHA256 != criteriaInputsSHA(inputs) {
 		return nil, fmt.Errorf("effective criteria inputs differ from history")
 	}

@@ -225,7 +225,14 @@ func evaluateRecordAssemblyRecorded(ctx context.Context, source []byte, activity
 		}
 	}
 	output := e.information.Types[function.Type.Results.List[0].Type].Type
-	record := recordTypeByName(records, output.(*types.Named).Obj().Name())
+	if output == types.Typ[types.Int64] {
+		return evaluateScalarCriteriaCases(ctx, source, activity, records, cases, recorder)
+	}
+	named, ok := output.(*types.Named)
+	if !ok {
+		return nil, fmt.Errorf("record output contract is missing")
+	}
+	record := recordTypeByName(records, named.Obj().Name())
 	if record == nil {
 		return nil, fmt.Errorf("record output contract is missing")
 	}

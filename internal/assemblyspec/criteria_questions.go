@@ -14,6 +14,9 @@ func (s Spec) validateCriteriaQuestions() error {
 	}
 	seen := make(map[string]bool, len(o.CriteriaInputs))
 	held := make(map[string]bool)
+	for _, c := range s.HoldoutCases {
+		held[fmt.Sprintf("[%d]", c.Input)] = true
+	}
 	for _, input := range s.Criteria.HoldoutInputs {
 		key, _ := RecordValueKey(input)
 		held[key] = true

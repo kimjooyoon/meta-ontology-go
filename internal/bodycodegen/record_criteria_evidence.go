@@ -81,6 +81,9 @@ func evaluateRecordCriteria(ctx context.Context, p recordAssemblyPlan, candidate
 		SourceSHA256: p.sourceSHA256, GeneratedSHA256: digest(candidate.source), SuiteSHA256: digest(raw),
 		InputsTotal: len(inputs), Total: len(inputs) * len(p.criteria), Unknown: len(inputs) * len(p.criteria),
 		Scope: "declared predicates on finite input tuples; false and unavailable results remain separate; no natural-language intent coverage or training-independence claim"}
+	if p.body.outputType == "int64" {
+		r.Schema = "gooo/scalar-criteria/v1"
+	}
 	for _, predicate := range p.criteria {
 		r.Bindings = append(r.Bindings, RecordCriterionBinding{predicate.declaration.ID, predicate.declaration.Activity,
 			predicate.activityID, predicate.goSHA256})

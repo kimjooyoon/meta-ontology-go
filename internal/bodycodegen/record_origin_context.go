@@ -7,6 +7,11 @@ import (
 )
 
 func recordPlanModelContext(p recordAssemblyPlan, version string) *RecordOrdinalContext {
+	if p.scalar != nil {
+		return &RecordOrdinalContext{Schema: "gooo/scalar-criteria-model-context/v1", FeatureVersion: version,
+			Status: "DECLINED_TO_DETERMINISTIC", Reason: "SCALAR_CRITERIA_FEATURE_CONTRACT_UNAVAILABLE",
+			Scope: "existing record model features do not encode this scalar predicate contract"}
+	}
 	if version == jointdecision.RecordGraphSharedFeatureVersion {
 		return recordGraphContext(p, recordValueFlow(p))
 	}

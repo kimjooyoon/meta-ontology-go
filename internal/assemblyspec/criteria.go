@@ -44,13 +44,11 @@ func (s Spec) validateCriteria() error {
 	}
 	if len(c.Predicates) < 1 || len(c.Predicates) > 8 || len(c.Inputs) < 1 ||
 		s.criteriaInputCount() > 128 || s.Search != nil || s.FillPlan != nil ||
-		len(s.Cases)+len(s.ConditionCases)+len(s.HoldoutCases) != 0 {
-		return fmt.Errorf("criteria requires 1..8 predicates, 1..128 typed input tuples and record field choices")
+		len(s.ConditionCases) != 0 || len(s.Choices) > 6 || s.Seed != "" {
+		return fmt.Errorf("criteria requires 1..8 predicates, 1..128 typed input tuples, at most 6 choices and unseeded selection")
 	}
-	for _, choice := range s.Choices {
-		if choice.Kind != "field_value" && choice.Kind != "field_update" {
-			return fmt.Errorf("criteria requires record field choices")
-		}
+	if err := s.validateCriteriaChoiceKinds(); err != nil {
+		return err
 	}
 	seen := make(map[string]bool, len(c.Predicates))
 	for _, predicate := range c.Predicates {
@@ -64,6 +62,9 @@ func (s Spec) validateCriteria() error {
 
 func (s Spec) validateCriteriaInputs() error {
 	selection := make(map[string]bool)
+	for _, c := range s.Cases {
+		selection[fmt.Sprintf("[%d]", c.Input)] = true
+	}
 	for _, c := range s.ValueCases {
 		key, err := RecordValueKey(c.Inputs)
 		if err != nil {
@@ -90,6 +91,9 @@ func (s Spec) validateCriteriaInputs() error {
 		selection[key], seen[key] = true, true
 	}
 	var held []string
+	for _, c := range s.HoldoutCases {
+		held = append(held, fmt.Sprintf("[%d]", c.Input))
+	}
 	for _, c := range s.ValueHoldoutCases {
 		held = append(held, c.Inputs)
 	}

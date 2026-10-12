@@ -76,7 +76,7 @@ func observeRecordCriteriaQuestions(ctx context.Context, source []byte, p *recor
 			r.Status = "ROUND_BUDGET"
 			return nil
 		}
-		if len(p.effectiveCriteriaInputs)+len(p.spec.Criteria.HoldoutInputs)+len(p.spec.ValueCases)+len(p.spec.ValueHoldoutCases) >= 128 {
+		if len(p.effectiveCriteriaInputs)+len(p.spec.Criteria.HoldoutInputs)+len(p.spec.ValueCases)+len(p.spec.ValueHoldoutCases)+len(p.spec.Cases)+len(p.spec.HoldoutCases) >= 128 {
 			r.Status = "CASE_BUDGET"
 			return nil
 		}

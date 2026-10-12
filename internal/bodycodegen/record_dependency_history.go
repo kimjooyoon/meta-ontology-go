@@ -109,7 +109,8 @@ func evaluateRecordMask(ctx context.Context, p recordAssemblyPlan, mask uint16) 
 		if contextError := ctx.Err(); contextError != nil {
 			return RecordAssemblyAttempt{}, nil, contextError
 		}
-		if _, ok := errors.AsType[types.Error](err); ok {
+		_, scalarRejected := errors.AsType[*scalarCriteriaCandidateError](err)
+		if _, ok := errors.AsType[types.Error](err); ok || scalarRejected {
 			return RecordAssemblyAttempt{Mask: mask, Status: "TYPECHECK_FAILED", Reason: err.Error()}, nil, nil
 		}
 		return RecordAssemblyAttempt{}, nil, err

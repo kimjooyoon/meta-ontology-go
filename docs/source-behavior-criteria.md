@@ -1,4 +1,4 @@
-# Describe acceptable record behavior in Gooo
+# Describe acceptable behavior in Gooo
 
 A refund has several requirements: reverse the amount when approved, record the
 approval, and preserve the customer's explanation. An exact expected record is
@@ -31,7 +31,7 @@ containing this feature.
   result is Boolean. Fixed, acyclic pure helper calls are supported; a predicate
   cannot call an unresolved assembling activity.
 - `input` supplies a canonical positional JSON tuple. The candidate produces an
-  actual record. Each predicate receives that record alongside the original
+  actual result. Each predicate receives that result alongside the original
   inputs. No expected record is manufactured.
 - `holdout_input` supplies a separate tuple evaluated after selection. Its result
   does not change ranking, stopping, or the selected candidate. Held tuples must
@@ -39,9 +39,11 @@ containing this feature.
 - `value_case` may coexist with criteria. Its exact-value cases and field counts
   retain their own denominators. Criteria-only programs need no `value_case`.
 
-The current scope is declared record construction and field updates, with 1–8
-predicates, up to 15 original parameters, and the existing 128-input combined
-budget. There are at most six binary field choices. Integer search and body-fill
+The supported profiles are declared record construction/field updates (up to
+15 original parameters) and [Integer -> Integer path choices](source-scalar-criteria.md).
+Both allow 1–8 predicates and at most six binary choices, within the existing
+128-input combined budget. Scalar paths use `case` and `holdout_case` for optional
+exact examples; field counts apply to record results. Integer search and body-fill
 profiles keep their existing contracts. `observe { criteria_input "[...]" }` can acquire additional criterion inputs
 from source-declared questions. See [criteria questions](source-criteria-questions.md)
 for the selection rule, retained obligations and unresolved outcomes.
@@ -98,5 +100,7 @@ formats remain unchanged: they do not encode predicate bodies or held inputs.
 The expanded plan export retains the declarations separately. This feature adds
 no training and makes no claim that the model understands the predicates.
 
-Without a model, the same source uses deterministic candidate order. Gooo owns
+Scalar criteria currently decline model routing because the record feature
+contract does not represent them; they record the reason and use deterministic
+selection. Without a model, the same source uses deterministic candidate order. Gooo owns
 the choices, obligations, unresolved outcomes and evidence in either path.

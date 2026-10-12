@@ -9,6 +9,12 @@ func recordAssemblyDimensions(r *RecordAssemblyReceipt) []CompletenessDimension 
 			"Counts each expected field in the supplied selection cases; preserves partially matching record outputs.",
 			[]string{"record_assembly.contract_sha256:" + r.ContractSHA256}, false),
 	}
+	if r.Schema == scalarCriteriaAssemblySchema {
+		dimensions = dimensions[:1]
+		dimensions[0].ID = "declared_scalar_case_accuracy"
+		dimensions[0].Unit = "declared Integer selection cases"
+		dimensions[0].Reason = "Matches supplied scalar expectations; predicate/input obligations have separate counts."
+	}
 	if o := r.Observation; o != nil {
 		dimensions[0].Unit = "original and acquired typed selection cases"
 		dimensions[0].Reason = "Counts original cases plus retained oracle answers; held and native cases remain separate."

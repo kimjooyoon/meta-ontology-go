@@ -34,9 +34,10 @@ func RecordAssemblyStageSource(ctx context.Context, filename string, source []by
 	}
 	choices := make(map[string]string, len(p.choices))
 	for i, choice := range p.choices {
-		choices[choice.ID] = "value_first"
+		first, second := assemblyChoiceLabels(choice.Kind)
+		choices[choice.ID] = first
 		if mask&(1<<i) != 0 {
-			choices[choice.ID] = "value_second"
+			choices[choice.ID] = second
 		}
 	}
 	completed, err := selectedTypedPathSource(source, p.original.activity, body, choices, true)

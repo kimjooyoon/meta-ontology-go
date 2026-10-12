@@ -54,11 +54,13 @@ func exportRecordAssemblyContext(ctx context.Context, filename string, source []
 	}
 	contract, _ := plan.spec.Canonical()
 	var flow *RecordValueFlow
-	if includeFlow || version == jointdecision.RecordOriginSharedFeatureVersion || version == jointdecision.RecordGraphSharedFeatureVersion {
+	if plan.scalar == nil && (includeFlow || version == jointdecision.RecordOriginSharedFeatureVersion || version == jointdecision.RecordGraphSharedFeatureVersion) {
 		flow = recordValueFlow(plan)
 	}
 	var modelContext *RecordOrdinalContext
-	if version == jointdecision.RecordOriginSharedFeatureVersion {
+	if plan.scalar != nil {
+		modelContext = recordPlanModelContext(plan, version)
+	} else if version == jointdecision.RecordOriginSharedFeatureVersion {
 		modelContext = recordOriginContext(plan.choices, flow)
 	} else if version == jointdecision.RecordGraphSharedFeatureVersion {
 		modelContext = recordGraphContext(plan, flow)
@@ -68,6 +70,9 @@ func exportRecordAssemblyContext(ctx context.Context, filename string, source []
 	result := RecordAssemblyContextExport{Schema: "gooo/record-assembly-input-export/v1", OriginalSourceSHA256: digest(source),
 		ContractSHA256: digest([]byte(contract)), ActivityID: plan.body.activityID, Choices: append([]RecordValueChoice(nil), plan.choices...),
 		Context: modelContext, Scope: "explicit source-bound model context; shape and type preflight; zero predictions or candidate outcomes; optional expanded plan carries the separate finite cases"}
+	if plan.scalar != nil {
+		result.Schema = "gooo/scalar-criteria-input-export/v1"
+	}
 	if plan.spec.Criteria != nil {
 		result.Scope += "; predicate bodies and criteria inputs are outside the existing model feature encoding; the optional expanded plan retains them separately"
 	}

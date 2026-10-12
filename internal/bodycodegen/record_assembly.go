@@ -92,7 +92,7 @@ func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *Reco
 		info := g.Info()
 		r.Model = &info
 		r.Context = recordPlanModelContext(plan, info.FeatureVersion)
-		if g.three == nil {
+		if g.three == nil && plan.scalar == nil {
 			r.Context.Status, r.Context.Reason = "DECLINED_TO_DETERMINISTIC", "THREE_CHOICE_MODEL_REQUIRED"
 		}
 		if r.Context.Status == "ENCODED" {
@@ -133,12 +133,16 @@ func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *Reco
 
 func newRecordAssemblyReceipt(source []byte, p recordAssemblyPlan) *RecordAssemblyReceipt {
 	contract, _ := p.spec.Canonical()
-	cases, _ := json.Marshal(p.spec.ValueCases)
+	cases, _ := json.Marshal(criteriaValueCases(p.spec, false))
 	budget := p.spec.MaxAttempts
 	r := &RecordAssemblyReceipt{Schema: recordAssemblySchema, OriginalSourceSHA256: digest(source),
 		ContractSHA256: digest([]byte(contract)), TestSuiteSHA256: digest(cases), AttemptBudget: &budget,
 		Choices: append([]RecordValueChoice(nil), p.choices...),
 		Scope:   "source-declared record field alternatives; finite case and field coverage; candidate interpretation followed by ordinary typed Go emission; no model updates"}
+	if p.scalar != nil {
+		r.Schema = scalarCriteriaAssemblySchema
+		r.Scope = "source-declared Integer path choices with actual scalar results and fixed Gooo predicates; finite source inputs; record_assembly is the legacy receipt container; no record fields or model predicate understanding are implied"
+	}
 	for mask := 0; mask < 1<<len(p.choices); mask++ {
 		r.Ranking = append(r.Ranking, uint16(mask))
 	}
@@ -218,9 +222,10 @@ func finishRecordAssemblySearch(r *RecordAssemblyReceipt) {
 		r.Status = "COMPLETE_FINITE"
 	}
 	for i := range r.Choices {
-		r.Choices[i].Picked = "value_first"
+		first, second := assemblyChoiceLabels(r.Choices[i].Kind)
+		r.Choices[i].Picked = first
 		if r.SelectedMask&(1<<i) != 0 {
-			r.Choices[i].Picked = "value_second"
+			r.Choices[i].Picked = second
 		}
 	}
 }

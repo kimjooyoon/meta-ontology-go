@@ -7,6 +7,7 @@ import (
 )
 
 const recordAssemblySchema = "gooo/record-field-assembly/v1"
+const scalarCriteriaAssemblySchema = "gooo/scalar-criteria-assembly/v1"
 
 type RecordAssemblyReceipt struct {
 	CriteriaQuestions    *CriteriaQuestionReceipt       `json:"criteria_questions,omitempty"`

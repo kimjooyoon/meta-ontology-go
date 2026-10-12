@@ -27,7 +27,9 @@ observe {
 This fragment belongs inside a record `assembling` declaration. `Negated` is a
 fixed Boolean activity receiving the original input and the candidate's result.
 See the [complete refund program](../examples/source-criteria-questions/README.md)
-and [criteria reference](source-behavior-criteria.md).
+and [criteria reference](source-behavior-criteria.md). The same question rules
+also apply to [Integer path criteria](source-scalar-criteria.md), where the
+predicate receives the original Integer input and actual Integer result.
 
 ## The source owns the question and the criterion
 
@@ -87,7 +89,8 @@ as selection inputs even when some questions were not consumed.
 
 The small decision model can still order source-permitted candidates when the
 questions leave several possibilities. Its current feature formats do not encode
-predicate bodies. This capability has a deterministic path and adds no training.
+predicate bodies. Scalar criteria explicitly decline those record feature
+formats and use deterministic selection. This capability adds no training.
 
 ## Check an answer even when candidates agree
 
