@@ -29,7 +29,9 @@ GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-codegen \
   --json --activity Charge examples/body-codegen/branch-owned-output-v4.gooo.fixture
 ```
 
-A separately trained V4 artifact can be inspected and used with the same source:
+The [published research artifact](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1/blob/8d5c1c2310017ec5d147b77b891bce894aaa03e4/research/branch-owned-learning-20261012/result/v4-branch-owned/model.json)
+can be downloaded and explicitly selected with this newer compiler. Save that
+file as `/path/to/v4-model.json` in the commands below:
 
 ```sh
 gooo body-context --activity Charge --model /path/to/v4-model.json \
@@ -62,12 +64,47 @@ digest agreement, one prediction followed by finite construction, deterministic
 omission and format mismatch handling. Completion covers the six declared output
 cases and three Boolean cases; it is not a general correctness percentage.
 
-No fitted V4 weights or V4 quality measurements are published with this change.
+## The first fitted comparison regressed
+
+A [preregistered paired study](https://github.com/kimjooyoon/gooo-decision-runtime/tree/1f2ad49255d825b61dc696b668af5a4b58954984/studies/branch-owned-learning-20261012)
+now publishes both fitted artifacts, training histories and original per-row
+outcomes. It prepared 1,536 fresh Gooo documents from 96 goal contracts in 16
+operator-pair families. Each profile fitted once on the same 768 training rows;
+384 evaluation rows represent 24 contracts in four held-out operator families.
+
+| Evaluation observation | V3 prose-neutral | V4 branch-owned |
+| --- | ---: | ---: |
+| First candidate meets all 8 output and 3 Boolean requirements | 112/384 (29.17%) | 60/384 (15.63%) |
+| Candidate checks until finite completion | 960 | 1,016 |
+| Complete after checking the four-candidate palette | 384/384 | 384/384 |
+| Contracts complete on the first choice across all 16 sibling variants | 1/24 | 0/24 |
+
+A fixed first candidate completes 96/384 rows. V4 therefore underperforms that
+simple baseline on this cohort. The separate probes after checked completion
+pass 1,536/1,536 observations, covering 96 unique contract/input pairs. Sibling
+layouts, forms and languages repeat contracts; the row totals are not counts of
+independent tasks or experimental methods. Both profiles leave intent text cells
+zero, so Korean/English agreement measures identical inputs rather than language
+understanding.
+
+The array design preserves more explicit branch ownership, but this study does
+not show a quality improvement. Both profiles also have low first completion on
+their training rows (240/768 and 196/768). These observations leave the source and
+requirement interaction at the decision head as a question for a fresh study;
+they do not identify a single cause. The default ordering remains deterministic.
+
+The study used the public compiler library and SDK 0.2.46; it did not measure a
+released compiler executable with V4, native behavior, latency, CPU use, process
+memory or quantization. Its fitted-task collection and predictions ran once. The
+repository's retained-results check reads the saved corpus and observations and
+performs no fitting, prediction or candidate execution.
+
 The [retained diagnosis](https://github.com/kimjooyoon/gooo-decision-runtime/tree/a7cf509bb7e6c54b5b9165817dfe9a51dd5e27a1/studies/factorized-input-diagnosis-20261012)
 found a branch-layout gap in the earlier neutral model. It motivated this explicit
-ownership channel. A new study must publish fresh tasks, splits and fit settings
-before learning or prediction. The [public model history](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1)
-keeps earlier outcomes and failures available for comparison.
+ownership channel. Subsequent learning studies must publish fresh tasks, splits
+and fit settings before learning or prediction. The
+[public model history](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1)
+keeps the earlier outcomes and this regression available for comparison.
 
 ## Existing Go and compatibility certificates
 
