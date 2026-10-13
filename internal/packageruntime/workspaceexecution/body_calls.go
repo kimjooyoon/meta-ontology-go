@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -101,11 +102,11 @@ func (c workspaceCalls) identities(keys map[string]bool) ([]WorkspaceCallActivit
 	var result []WorkspaceCallActivity
 	for _, key := range ordered {
 		d := c[key]
-		original, err := workspaceActivityIdentity(d.namespace, d.ref.Activity)
+		original, err := workspaceActivityIdentity(d.namespace, d.ref.Activity, d.activity.ID)
 		if err != nil {
 			return nil, err
 		}
-		lowered, err := workspaceActivityIdentity("gooo_workspace", d.ref.LoweredName)
+		lowered, err := workspaceActivityIdentity("gooo_workspace", d.ref.LoweredName, d.activity.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -114,9 +115,17 @@ func (c workspaceCalls) identities(keys map[string]bool) ([]WorkspaceCallActivit
 	return result, nil
 }
 
-func workspaceActivityIdentity(namespace, name string) (string, error) {
+func workspaceActivityIdentity(namespace, name, authoredID string) (string, error) {
+	declaration := bidir.Declaration{Kind: bidir.ActivityKind, Name: name}
+	if authoredID != "" {
+		id, err := semantic.ParseIdentity(authoredID)
+		if err != nil {
+			return "", err
+		}
+		declaration.ID = bidir.ID(id)
+	}
 	model, err := bidir.Get(bidir.Document{Namespace: namespace,
-		Declarations: []bidir.Declaration{{Kind: bidir.ActivityKind, Name: name}}})
+		Declarations: []bidir.Declaration{declaration}})
 	if err != nil {
 		return "", err
 	}
