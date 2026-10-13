@@ -17,6 +17,7 @@ type CriteriaSourceFlow struct {
 	CandidatePlan       *pathplan.Plan        `json:"candidate_plan,omitempty"`
 	CandidatePlanSHA256 string                `json:"candidate_plan_sha256,omitempty"`
 	Predicates          []CriterionSourceFlow `json:"predicates"`
+	Dependencies        *CriteriaDependencies `json:"dependencies"`
 	Scope               string                `json:"scope"`
 }
 
@@ -29,6 +30,7 @@ type CriterionSourceFlow struct {
 	ValueFlow       *RecordValueFlow                `json:"value_flow"`
 	Nodes           []jointdecision.RecordGraphNode `json:"nodes,omitempty"`
 	GraphSHA256     string                          `json:"graph_sha256,omitempty"`
+	CallClosure     *PureCallClosure                `json:"call_closure,omitempty"`
 }
 
 type CriterionSourceInput struct {
@@ -54,12 +56,19 @@ func criteriaSourceFlow(ctx context.Context, filename string, source []byte, own
 		}
 		r.Predicates = append(r.Predicates, entry)
 	}
+	r.Dependencies = criteriaDependencies(owner)
 	return r
 }
 
 func criterionSourceFlow(ctx context.Context, filename string, source []byte, prepared preparedRecordCriterion) CriterionSourceFlow {
 	entry := CriterionSourceFlow{ID: prepared.declaration.ID, Activity: prepared.declaration.Activity,
 		ActivityID: prepared.activityID, GeneratedSHA256: prepared.goSHA256}
+	if closure := prepared.program.Report.CallClosure; closure != nil {
+		copyClosure := *closure
+		copyClosure.Activities = append([]PureCallActivity(nil), closure.Activities...)
+		copyClosure.Edges = append([]PureCallEdge(nil), closure.Edges...)
+		entry.CallClosure = &copyClosure
+	}
 	body, err := prepareActivityBodySource(filename, source, prepared.declaration.Activity)
 	if err == nil {
 		err = ctx.Err()

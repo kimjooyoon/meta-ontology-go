@@ -38,6 +38,8 @@ go run ./cmd/gooo body-context --value-flow --activity Fee \
 | `predicates[].value_flow` | 조건식의 정의·읽기·연산·분기·반환과 원문 위치 |
 | `predicates[].nodes` | 인자 타입, 정규화한 상수, 연산자, 순서가 있는 연결 |
 | `predicates[].graph_sha256` | 정규화한 노드 배열의 식별값 |
+| `predicates[].call_closure` | 생성된 고정 조건 프로그램에서 준비한 보조 활동, 호출 관계와 예산 |
+| `dependencies` | 후보 활동 → 요구조건 → 보조 활동으로 이어지는 의미 ID의 관계 |
 | `activity_id`, `generated_sha256` | 조건 함수의 의미 ID와 생성된 고정 프로그램의 식별값 |
 
 레코드 결과의 조건도 지원합니다. 레코드 구현의 후보 구조는 기존 `value_flow`와
@@ -49,6 +51,24 @@ go run ./cmd/gooo body-context --value-flow --activity Fee \
 지역 변수의 표시 이름과 원문 위치를 제외합니다. 변수 이름만 고치면 구조가
 유지되고, 빼기의 방향이나 분기 조건을 고치면 구조가 바뀌는지를 회귀 검사합니다.
 이 식별값은 정규화한 표현을 비교하는 값이며, 수학적 동치 판정의 범위는 다루지 않습니다.
+
+## 규칙을 고칠 때 따라갈 관계
+
+`criteria_flow.dependencies`는 이미 준비한 요구조건과 고정 프로그램의 호출
+관계를 읽기 위한 뷰입니다. 후보 활동에서 조건 활동으로 `requires_predicate`,
+조건이나 보조 활동에서 다른 보조 활동으로 `calls` 관계가 이어집니다.
+활동의 이름 대신 의미 ID가 연결을 소유하고, `criterion_id`가 어느 조건의
+호출 경로인지 구분합니다.
+
+예를 들어 `Fee → Allowed → Within → Ceiling`이면 `Ceiling`의 규칙을 고칠 때
+이 경로를 거꾸로 따라가서 `Fee`의 해당 조건을 살펴볼 수 있습니다. 모든 분기에
+적힌 호출을 포함한 정적 관계입니다. 실행되지 않은 분기도 남을 수 있습니다.
+이 뷰의 `RESOLVED`는 호출 관계가 준비됐다는 뜻이며 조건 평가 결과는 별도로
+관찰합니다. 그래프 표현이 `UNRESOLVED`여도 생성에 필요한 호출 관계가
+준비되어 있을 수 있어 두 뷰는 각자의 상태를 가집니다.
+
+[호출 관계 안내](source-criteria-dependencies.md)와
+[새 소스 예제](../examples/criteria-dependencies/README.md)에 범위를 설명합니다.
 
 ## 평가 입력과 구분하기
 
