@@ -1,0 +1,15 @@
+package app
+namespace scope83_app
+import fees "scope83/helpers"
+entity Integer id "urn:scope83:integer"
+activity Build(Integer) -> Integer id "urn:scope83:build" computes "if input < -2 { let fees = input; _ = fees }; let base = __GOOO_BODY_HOLE_base__; return fees.Boost(base)+__GOOO_BODY_HOLE_bias__" assembling {
+ source_fill intent "Fill two expressions; a local alias in another block does not own this call." {
+  hole "base"
+  hole "bias"
+  candidate "plain" { fill "base" "input" fill "bias" "0" }
+  candidate "nested" { fill "base" "fees.\u0042oost(input)" fill "bias" "fees.Boost(0)" }
+  candidate "offset" { fill "base" "fees.Boost(input+2)" fill "bias" "fees.Boost(1)" }
+ }
+ case "5" -> "56"
+ holdout_case "9" -> "60"
+}

@@ -22,7 +22,13 @@ func (index workspaceRenameIndex) references(ctx context.Context) ([]renameRefer
 			return nil, err
 		}
 		d := index.calls[key]
-		body, err := index.literalReferences(key, d, d.activity.ValueProgramSpan, d.body, "computes", true, false)
+		var body []renameReference
+		var err error
+		if d.activity.Assembly != nil && d.activity.Assembly.Spec.FillPlan != nil {
+			body, err = index.sourceFillReferences(ctx, key, d)
+		} else {
+			body, err = index.literalReferences(key, d, d.activity.ValueProgramSpan, d.body, "computes", true, false)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("activity %s: %w", key, err)
 		}
@@ -88,8 +94,8 @@ func (index workspaceRenameIndex) assemblyReferences(key string, d workspaceCall
 	if assembly == nil {
 		return nil, nil
 	}
-	if assembly.Spec.FillPlan != nil || assembly.Spec.Search != nil {
-		return nil, fmt.Errorf("source_fill/search rename requires a candidate-scope map")
+	if assembly.Spec.Search != nil {
+		return nil, fmt.Errorf("search rename requires a candidate-scope map")
 	}
 	raw := index.sources[d.ref.PackagePath][d.source]
 	start, end := assembly.Span.Start.Offset, assembly.Span.End.Offset

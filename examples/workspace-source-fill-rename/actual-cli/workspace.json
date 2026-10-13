@@ -1,0 +1,26 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "coupons106/app",
+    "activity": "Quote"
+  },
+  "packages": [
+    {
+      "path": "coupons106/helpers",
+      "name": "helpers",
+      "sources": [
+        "add.gooo.fixture"
+      ]
+    },
+    {
+      "path": "coupons106/app",
+      "name": "app",
+      "imports": [
+        "coupons106/helpers"
+      ],
+      "sources": [
+        "quote.gooo.fixture"
+      ]
+    }
+  ]
+}
