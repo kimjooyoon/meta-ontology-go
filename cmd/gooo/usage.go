@@ -58,6 +58,12 @@ func runHelp(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stdout, rootHelp)
 		return exitOK
 	}
+	if len(args) > 1 {
+		if content, ok := topicHelp[strings.Join(args, " ")]; ok {
+			fmt.Fprint(stdout, content)
+			return exitOK
+		}
+	}
 	if len(args) != 1 {
 		fmt.Fprintln(stderr, "usage: gooo help [topic]")
 		return exitUsage

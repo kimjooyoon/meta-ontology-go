@@ -1,0 +1,11 @@
+package adjustment
+namespace adjustment5381
+entity Integer id "urn:gooo:type:integer"
+activity Adjust(Integer) -> Integer id "urn:adjustment5381:adjust" computes "let enough = input > __GOOO_BODY_HOLE_minimum__; let result = input; if enough { result = input * 3 } else { result = input - 8 }; return result" assembling {
+ source_fill intent "기준을 넘으면 세 배로, 그렇지 않으면 8을 뺀다" {
+  hole "minimum"
+  candidate "minimum5381" { fill "minimum" "67" }
+  candidate "other5381" { fill "minimum" "267" }
+ }
+ case "71" -> "213"
+}

@@ -1,0 +1,5 @@
+=== RUN   TestFrozenOriginSnapshotWithGrowingRegistry6863
+    denominator_frozen_origin_test.go:22: 6863: frozen v48 target=80; live syntax target=81; scope separated without source or model execution
+--- PASS: TestFrozenOriginSnapshotWithGrowingRegistry6863 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow	0.463s

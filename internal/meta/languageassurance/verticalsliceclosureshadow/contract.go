@@ -96,3 +96,5 @@ const (
 	// DenominatorMigrationV47Digest binds the expanded four-platform release denominator.
 	DenominatorMigrationV47Digest = "sha256:f2e749bb032eb8e83d3e467f049091ec18ecb4562517788b16697bd095597dd4"
 )
+
+const DenominatorMigrationV48Digest = "sha256:2b9ac5c2293e7c61f23de5e0fbb1ca59d843e43ed9b78cba21054173fdaabfab"

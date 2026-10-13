@@ -97,6 +97,24 @@ then repeat `package execute` to create a fresh receipt. A source edit invalidat
 the old receipt; keep the old source and receipt together if you need both versions.
 The [starter guide](language/project-starters.md) also explains imported library projects.
 
+## Edit Gooo in VS Code
+
+The existing [Gooo extension](https://github.com/kimjooyoon/gooo-ecosystem-workbench/tree/b94b3adb4845782743a1c1a45071a600824f81e6/editors/vscode)
+provides a `source.gooo` TextMate grammar, snippets and compiler commands.
+Its [0.2.1 release](https://github.com/kimjooyoon/gooo-ecosystem-workbench/releases/tag/vscode-v0.2.1)
+contains a VSIX package for **Extensions: Install from VSIX...**.
+Set **`gooo.compilerPath`** to the absolute path of the compiler installed above,
+such as the `gooo` executable in your `.gooo-bin` directory.
+
+Open the generated project folder and use **Gooo: Check Current File** and
+**Gooo: Format Document**. The extension also connects to the compiler's
+experimental language server; editor and compiler compatibility remains under
+development. This documentation update did not run a new interactive VS Code check.
+Leave the optional provider settings empty for deterministic construction.
+
+The [language product priorities](language/language-product-priorities.ko.md)
+describe the planned improvements to everyday programs, reuse and editor support.
+
 ## Scope and feedback
 
 The language and receipt formats are experimental. These finite examples do not

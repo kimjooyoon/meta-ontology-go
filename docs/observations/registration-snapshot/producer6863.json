@@ -1,0 +1,21 @@
+{
+  "baseline": "b87072bef6017b8c04af7c8c4af17adce6361e35",
+  "overlays": [
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_v48_test.go",
+      "sha256": "6262369f137506a1cc0de2bf03ee546b1d443f4b829fe8bf63c0a31535f55593",
+      "synthetic_observation_only": false
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_frozen_origin_test.go",
+      "sha256": "9c33b3e04855bafaf39a1a331f15a08a91ff400921de5d1ab6db0ef29c81c3d1",
+      "synthetic_observation_only": false
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/model.go",
+      "sha256": "a30c6487af5e5e1e57e1969b4ad767d42b6c047f01b14cc6b8cee65621342db4",
+      "synthetic_observation_only": true
+    }
+  ],
+  "scope": "new static test only; future counters simulated, corpus and historic source not executed"
+}

@@ -1,0 +1,68 @@
+{
+  "baseline": "f1d6ab92831408acd0b559a1e2e1a740cbc5e19a",
+  "overlays": [
+    {
+      "path": "internal/bodycodegen/body_value_origin.go",
+      "sha256": "b5d4e4ef9737e7ee5c5621f08f295334a536e635a6e6f4f897e9fb49e7da541c"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_bounds_test.go",
+      "sha256": "ec1d32532e1f143a9cde27a23dba0e3ff37c0a0334e50be03927d35cc20c3042"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_compatibility_test.go",
+      "sha256": "e3f8eecbea29ecaddce4559b6eeb89aab7d154ec284bc4f3e019e6f3c313ed7f"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_expr.go",
+      "sha256": "dee19fa71bf7ac8364560299f632bdf66d4677c03654ada2dd20aaad752cda87"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_slice.go",
+      "sha256": "43e3da8b3a9f64fc55c4f9bec7a38c8774a77b7d09ba69d949ee92cf3baaa7af"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_statements.go",
+      "sha256": "87bc2fbad3e986a8eb61b2eeb79c4c59de256c843703769830ace85de72784c0"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_test.go",
+      "sha256": "259a5a91529b045307723e729d1eefe3d699c68c15278ddebdfcc573993e83fa"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_input_origin.go",
+      "sha256": "d212d39dd138d5faa3685f813ec17d4a11045d9aa9eb2325bc39cf96bf015b6a"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin.go",
+      "sha256": "bee6d5d8788b6892d83c1045a5cac8593c5380ef323811d0569564ac254f182a"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_replay.go",
+      "sha256": "f1434270885f5f95d4428bf91532e30ebd59f9a36db54f5b41ab6714136b1e6e"
+    },
+    {
+      "path": "internal/bodyexecution/condition_dependency_facts.go",
+      "sha256": "38b0421b971ded66c4a6e4b8f9510ea8d8c4b3c68d791edbc1e6bee689badf71"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/fill_input_bind.go",
+      "sha256": "592197b1ca57cb7eee7469d793d6964f49a954ea4e06dfc1270f7fabcf904734"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/fill_value_origin_test.go",
+      "sha256": "b3bafa03183930a464adc8561af634829f7524d46ccb981d65a26574200fdf60"
+    }
+  ],
+  "fresh_tests": [
+    "TestValueOriginsNodeBudgetAndControlLinks5297"
+  ],
+  "historical_replays": 0,
+  "source": "CLI5381 built with overlay5297; execute79/59 then saved construction with new inputs83/61",
+  "sources": {
+    "workspace.json": "3b7c69e7d6dc1cea563038209498bf829d068370407e11005ee144d494f12c21",
+    "\ud560\ub2f9.gooo.fixture": "57bc57b7e94c5e13dd022f5a5908e7eaf73bcd87a2bbaaffeb63f946e25c6abe",
+    "cases.json": "4bce2f12433d57af4cb622955e2dc8eb1b60ec230cd73d44d3b5dbf16bce1494",
+    "next-cases.json": "07248948080550dc79bc8d2eb9e70f47b5a0797082660a113debb8b13239fc1a"
+  }
+}

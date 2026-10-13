@@ -1,0 +1,8 @@
+=== RUN   TestSelectedClosureCallFramesAndBind6373
+    value_transfer_closure_test.go:114: 6373: native4/4; candidate origins=1; distinct external activity origins=2; original return-only source retained; query read-only; model0
+--- PASS: TestSelectedClosureCallFramesAndBind6373 (0.70s)
+=== RUN   TestUnusedTupleCandidate6389
+    value_transfer_closure_test.go:161: 6389: native2/2; unused second argument and its candidate do not become returned-value origins
+--- PASS: TestUnusedTupleCandidate6389 (0.92s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	2.125s
