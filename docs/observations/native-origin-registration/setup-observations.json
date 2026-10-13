@@ -1,0 +1,12 @@
+{
+  "preflight_failures": 2,
+  "preflight_reason": "REGISTRATION_TOOLCHAIN_VERSION_STALE",
+  "generation_before_driver_fix": 0,
+  "v1_registration_rejections": 1,
+  "v1_reason": "REGISTRATION_SOURCE_CONFORMANCE_FAILED",
+  "final_profile": "EntityFieldsV5Support",
+  "final_cases": 4,
+  "native_consumer_executions": 0,
+  "model_calls": 0,
+  "note": "V1 supports string-only fields; these fact records contain integers and Booleans. Final V5 registration admits the scalar subset. ordered_collections is the existing registry selector for that exact V5 profile."
+}

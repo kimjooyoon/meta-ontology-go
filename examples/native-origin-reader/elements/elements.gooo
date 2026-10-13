@@ -1,0 +1,32 @@
+package origins
+namespace origins
+
+entity Origin id "gooo://origin-reader/elements" fields {
+    field case_index id "gooo://origin-reader/elements/case_index" type integer required one
+    field instance_index id "gooo://origin-reader/elements/instance_index" type integer required one
+    field element_index id "gooo://origin-reader/elements/element_index" type integer required one
+    field root_activity_id id "gooo://origin-reader/elements/root_activity_id" type string required one
+    field activity_id id "gooo://origin-reader/elements/activity_id" type string required one
+    field completed id "gooo://origin-reader/elements/completed" type boolean required one
+    field read_start id "gooo://origin-reader/elements/read_start" type integer required one
+    field read_end id "gooo://origin-reader/elements/read_end" type integer required one
+    field reads_dropped id "gooo://origin-reader/elements/reads_dropped" type integer required one
+    field source_sha256 id "gooo://origin-reader/elements/source_sha256" type string required one
+    field source_start id "gooo://origin-reader/elements/source_start" type integer required one
+    field source_end id "gooo://origin-reader/elements/source_end" type integer required one
+    field expression id "gooo://origin-reader/elements/expression" type string required one
+    field mapping id "gooo://origin-reader/elements/mapping" type string required one
+}
+
+entity Explanation id "gooo://origin-reader/elements/explanation" fields {
+    field category id "gooo://origin-reader/elements/category" type string required one
+    field count id "gooo://origin-reader/elements/count" type integer required one
+}
+
+activity Explain(Origin) -> Explanation computes `let count = input.read_end - input.read_start
+if !input.completed { return Explanation{category: "INTERRUPTED", count: count} }
+if input.mapping != "MAPPED" { return Explanation{category: "SOURCE_UNMAPPED", count: count} }
+if input.reads_dropped > 0 { return Explanation{category: "READS_PARTIAL", count: count} }
+if count == 0 { return Explanation{category: "NO_READ_IN_WINDOW", count: count} }
+if count == 1 { return Explanation{category: "ONE_READ", count: count} }
+return Explanation{category: "MULTIPLE_READS", count: count}`

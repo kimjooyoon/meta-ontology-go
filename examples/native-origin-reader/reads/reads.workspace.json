@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "gooo/tools/origin-reader/reads",
+    "activity": "Explain"
+  },
+  "packages": [
+    {
+      "path": "gooo/tools/origin-reader/reads",
+      "name": "origins",
+      "imports": [],
+      "sources": [
+        "reads.gooo"
+      ]
+    }
+  ]
+}

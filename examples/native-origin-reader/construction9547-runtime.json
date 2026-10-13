@@ -1,0 +1,345 @@
+{
+  "schema": "gooo/body-composition-runtime/v1",
+  "stage": "COMPLETE",
+  "composition_sha256": "sha256:6604c6f02d71123c6367bfd4e96d0cdba9340582cb467978a0099e20d19babf7",
+  "original_source_sha256": "sha256:3356a123890c641978dbefa3d5efb908ace3509bb9d2ec20800a9a1f0ab9f3bb",
+  "selected_source_sha256": "sha256:3356a123890c641978dbefa3d5efb908ace3509bb9d2ec20800a9a1f0ab9f3bb",
+  "typed_plan_sha256": "sha256:1d70e471e623b2920bfb84dc81c7d60de928f18c6cf3801ae7fac9e3304a224a",
+  "generated_sha256": "sha256:f81d6c5190c64ac474fce70eb1b7cc7554a1019dcbdec120b9965d26701d50aa",
+  "driver_sha256": "sha256:61cbcc9f21940bedb221878709f3de29c986f81d1904f1c93e67a37583213be0",
+  "observed_projection_sha256": "sha256:36db2e02b413da15b27a72030fa2d9913dce6b651f653b6324cad18ab7d20820",
+  "observed_driver_sha256": "sha256:da98bec046c533b5fc98a5a279937c4000d8c3ae3e865e5c8edf2e32d465af8a",
+  "runtime_suite_sha256": "sha256:225ce25a440bc6be066e17fac523a9dfb91423e6cf14d0d5f16ee91655d4c9ec",
+  "executable_sha256": "sha256:3d60d7f78cc46e3b7aea163c8665766058f46d61f0cf66de7a907de32b573ff0",
+  "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+  "go_tool_selection": "path",
+  "go_version": "go version go1.27.2 darwin/arm64",
+  "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+  "producer_module": {
+    "path": "github.com/kimjooyoon/meta-ontology-go",
+    "version": "(devel)"
+  },
+  "toolchain": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 7798042,
+    "user_ns": 3400000,
+    "system_ns": 2592000,
+    "peak_rss_bytes": 14368768,
+    "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 1135792,
+      "wait_ns": 6662250,
+      "deadline_remaining_ns": 59986840667,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "build": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 110324500,
+    "user_ns": 126940000,
+    "system_ns": 93979000,
+    "peak_rss_bytes": 87687168,
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 816375,
+      "wait_ns": 109508125,
+      "deadline_remaining_ns": 59977916125,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "runs": [
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 354257417,
+      "user_ns": 3343000,
+      "system_ns": 6502000,
+      "peak_rss_bytes": 5095424,
+      "stdout_sha256": "sha256:9f8e794fc2bae4d0eb327ac44eaffe94b04e415a6a6b2ab12eee9ff106e54778",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 814292,
+        "wait_ns": 353443125,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59866155625,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 7344458,
+      "user_ns": 2686000,
+      "system_ns": 3240000,
+      "peak_rss_bytes": 4882432,
+      "stdout_sha256": "sha256:9f8e794fc2bae4d0eb327ac44eaffe94b04e415a6a6b2ab12eee9ff106e54778",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 2279708,
+        "wait_ns": 5064750,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59510921458,
+        "context_at_start_return": "ACTIVE"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "urn:only9547:build",
+          "input": {
+            "name": "싹"
+          },
+          "input_fields": [
+            {
+              "id": "urn:only9547:name",
+              "name": "name",
+              "value": "싹"
+            }
+          ],
+          "actual": {
+            "labels": [
+              "싹"
+            ],
+            "values": []
+          },
+          "actual_fields": [
+            {
+              "id": "urn:only9547:values",
+              "name": "values",
+              "value": []
+            },
+            {
+              "id": "urn:only9547:labels",
+              "name": "labels",
+              "value": [
+                "싹"
+              ]
+            }
+          ],
+          "expected": {
+            "labels": [
+              "싹"
+            ],
+            "values": []
+          },
+          "passed": true
+        }
+      ],
+      "constructions": [
+        {
+          "site_index": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "completed": true,
+          "elements": []
+        },
+        {
+          "site_index": 1,
+          "read_start": 0,
+          "read_end": 0,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 0,
+              "read_end": 0,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        }
+      ],
+      "reads_observed": true
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "urn:only9547:build",
+          "input": {
+            "name": "bud"
+          },
+          "input_fields": [
+            {
+              "id": "urn:only9547:name",
+              "name": "name",
+              "value": "bud"
+            }
+          ],
+          "actual": {
+            "labels": [
+              "bud"
+            ],
+            "values": []
+          },
+          "actual_fields": [
+            {
+              "id": "urn:only9547:values",
+              "name": "values",
+              "value": []
+            },
+            {
+              "id": "urn:only9547:labels",
+              "name": "labels",
+              "value": [
+                "bud"
+              ]
+            }
+          ],
+          "expected": {
+            "labels": [
+              "bud"
+            ],
+            "values": []
+          },
+          "passed": true
+        }
+      ],
+      "constructions": [
+        {
+          "site_index": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "completed": true,
+          "elements": []
+        },
+        {
+          "site_index": 1,
+          "read_start": 0,
+          "read_end": 0,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 0,
+              "read_end": 0,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        }
+      ],
+      "reads_observed": true
+    }
+  ],
+  "projection_replayed": true,
+  "runtime_replayed": true,
+  "finite_passed": 2,
+  "finite_total": 2,
+  "construction_sites": [
+    {
+      "expression_id": "sha256:fedfae9f88a3e0d74bf9e15662706f184e28b360415e41db8eb068bf37a24574",
+      "root_activity_id": "urn:only9547:build",
+      "activity_id": "urn:only9547:build",
+      "native_ordinal": 0,
+      "element_type": "int64",
+      "expression": "[]int64{}",
+      "projection_sha256": "sha256:f81d6c5190c64ac474fce70eb1b7cc7554a1019dcbdec120b9965d26701d50aa",
+      "start_byte": 1144,
+      "end_byte": 1153,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:3356a123890c641978dbefa3d5efb908ace3509bb9d2ec20800a9a1f0ab9f3bb",
+        "body_sha256": "sha256:8cb6d636b8051edc7e6b8b0c84816d7a16efe7c95dfde3c971accc4e63c70f26",
+        "start_byte": 427,
+        "end_byte": 436,
+        "decoded_start": 21,
+        "decoded_end": 30,
+        "expression": "[]int64{}"
+      },
+      "elements": []
+    },
+    {
+      "expression_id": "sha256:c44c71c057a0b4db28d1d39432aeef904745b3de67bc0f2fe125d3420dc4f6bb",
+      "root_activity_id": "urn:only9547:build",
+      "activity_id": "urn:only9547:build",
+      "native_ordinal": 1,
+      "element_type": "string",
+      "expression": "[]string{input.GoooField60ad787d906e0a94d19c09af0274ebbee80d3bc49cfe3eecd895f969eb0fb5e6}",
+      "projection_sha256": "sha256:f81d6c5190c64ac474fce70eb1b7cc7554a1019dcbdec120b9965d26701d50aa",
+      "start_byte": 1230,
+      "end_byte": 1319,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:3356a123890c641978dbefa3d5efb908ace3509bb9d2ec20800a9a1f0ab9f3bb",
+        "body_sha256": "sha256:8cb6d636b8051edc7e6b8b0c84816d7a16efe7c95dfde3c971accc4e63c70f26",
+        "start_byte": 444,
+        "end_byte": 464,
+        "decoded_start": 38,
+        "decoded_end": 58,
+        "expression": "[]string{input.name}"
+      },
+      "elements": [
+        {
+          "expression": "input.GoooField60ad787d906e0a94d19c09af0274ebbee80d3bc49cfe3eecd895f969eb0fb5e6",
+          "start_byte": 1239,
+          "end_byte": 1318,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:3356a123890c641978dbefa3d5efb908ace3509bb9d2ec20800a9a1f0ab9f3bb",
+            "body_sha256": "sha256:8cb6d636b8051edc7e6b8b0c84816d7a16efe7c95dfde3c971accc4e63c70f26",
+            "start_byte": 453,
+            "end_byte": 463,
+            "decoded_start": 47,
+            "decoded_end": 57,
+            "expression": "input.name"
+          }
+        }
+      ]
+    }
+  ],
+  "read_observation": {
+    "schema": "gooo/native-read-summary/v2",
+    "status": "COMPLETE",
+    "recorded_reads": 0,
+    "resolved_reads": 0,
+    "recorded_constructions": 4,
+    "unresolved_reads": 0,
+    "dropped_reads": 0,
+    "registration_dropped": 0,
+    "sha256": "sha256:6d2319d93d34ea0d4cff638b30f9bd3eb594bd4d398c8d284bf6626a9a59db5a",
+    "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+  },
+  "input_separation": {
+    "status": "UNKNOWN",
+    "reason": "UNCLASSIFIED_INPUTS",
+    "unique_inputs": 2,
+    "duplicate_rows": 0,
+    "overlapping_inputs": 0,
+    "disjoint_inputs": 0,
+    "disjoint_cases_passed": 0,
+    "unknown_inputs": 2,
+    "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+  },
+  "model_calls": 0,
+  "elapsed_ns": 496988541,
+  "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+}

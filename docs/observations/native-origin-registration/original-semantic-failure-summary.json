@@ -1,0 +1,10 @@
+{
+  "job": 115572903008,
+  "sha256": "56fba7fb2e5d864d481cd4c04b417f11ca81f78b257d8110883230c058771dcf",
+  "bytes": 181669,
+  "failure_lines": [
+    "2026-10-13T22:35:39.0707355Z function-extractor: residual=968 applied=968 created=2767",
+    "2026-10-13T22:43:28.9344962Z ##[error]Process completed with exit code 1.",
+    "2026-10-13T22:43:28.9558367Z Post job cleanup."
+  ]
+}

@@ -1,0 +1,25 @@
+=== RUN   TestOriginEnvelope9721
+--- PASS: TestOriginEnvelope9721 (0.02s)
+=== RUN   TestOriginQuery9721
+--- PASS: TestOriginQuery9721 (0.01s)
+=== RUN   TestOriginReferences9721
+--- PASS: TestOriginReferences9721 (0.01s)
+=== RUN   TestOriginConsumers9719
+=== RUN   TestOriginConsumers9719/elements
+    package_origin_native_test.go:40: 1 {"schema":"gooo/workspace-body-execution-receipt/v1","decision":"FAIL_CLOSED","manifest":"/tmp/gooo-origin-inputs-20261014/producer9719/examples/native-origin-reader/elements.workspace.json","manifest_digest":"sha256:56fd4aaf74e9d8a096a3c84b09f654df49a7fc627ccadfdd3c111c0124401434","inputs_digest":"sha256:18ed8c8ad0dcf924c3981bb7ce223516b741ef585a5c9433538af6fe3e311c96","error":"generate workspace activity bodies: activity \"GoooPackage0ActivityExplain\": assignment requires one existing local and one value","origin_input":{"schema":"gooo/native-origin-input/v1","receipt_sha256":"sha256:3daf1057c0f301d5cc036950be3fc368b7bb6272877514213c30a819441c4ee1","selected_source_sha256":"sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc","runtime_suite_sha256":"sha256:f10242ed9f37ab3f963c0cee8c8ca6b95d96ad9a774875080fbe1c823c4af62e","query":{"kind":"elements","offset":2,"limit":7},"total_rows":24,"returned_rows":7,"next_offset":9,"truncated":true,"recorded_observation":{"schema":"gooo/native-read-summary/v2","status":"COMPLETE","recorded_reads":24,"resolved_reads":12,"constructed_reads":12,"recorded_constructions":15,"unresolved_reads":0,"dropped_reads":0,"registration_dropped":0,"sha256":"sha256:72c1c6afe318a1401bd8e7c4a13f79bbba96e61d2e2d4f23409fa62e9ce5a97e","scope":"successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"},"producer_program_executions":0,"producer_model_calls":0,"scope":"recorded claims read without re-execution; the new consumer evaluates these rows only; construction read windows describe reads during evaluation, not complete scalar dependencies; inspect original observation drops and the selected page"}}
+         
+=== RUN   TestOriginConsumers9719/empty-lists
+=== RUN   TestOriginConsumers9719/reads
+=== RUN   TestOriginConsumers9719/links
+=== RUN   TestOriginConsumers9719/interrupted
+    package_origin_native_test.go:40: 1 {"schema":"gooo/workspace-body-execution-receipt/v1","decision":"FAIL_CLOSED","manifest":"/tmp/gooo-origin-inputs-20261014/producer9719/examples/native-origin-reader/elements.workspace.json","manifest_digest":"sha256:56fd4aaf74e9d8a096a3c84b09f654df49a7fc627ccadfdd3c111c0124401434","inputs_digest":"sha256:7d1f30a8b88633fcbcb004e1c9d3690cd9411aaa0064be8565e88265008ce36c","error":"generate workspace activity bodies: activity \"GoooPackage0ActivityExplain\": assignment requires one existing local and one value","origin_input":{"schema":"gooo/native-origin-input/v1","receipt_sha256":"sha256:5acff02dfca7454425e76a83c0b69b7564e79c17fce8c5b7e5a41db6b1c341a3","selected_source_sha256":"sha256:fd64cf1380c1806d470f5672e2825e86390d2caaf6e909fa627cc485e5efbef4","runtime_suite_sha256":"sha256:a1c8484877a21bb9bd6134d54055ad3ba98c2a14439914ea13a1f69983df85c9","query":{"kind":"elements","offset":0,"limit":32},"total_rows":5,"returned_rows":5,"truncated":false,"recorded_observation":{"schema":"gooo/native-read-summary/v2","status":"PARTIAL","recorded_reads":5,"resolved_reads":4,"constructed_reads":1,"interrupted_constructions":1,"recorded_constructions":2,"unresolved_reads":0,"dropped_reads":0,"registration_dropped":0,"sha256":"sha256:f1435983c002cb6f597c2494f09522be3ab94859fc85da214b8421680b076877","scope":"successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"},"producer_program_executions":0,"producer_model_calls":0,"scope":"recorded claims read without re-execution; the new consumer evaluates these rows only; construction read windows describe reads during evaluation, not complete scalar dependencies; inspect original observation drops and the selected page"}}
+         
+--- FAIL: TestOriginConsumers9719 (1.72s)
+    --- FAIL: TestOriginConsumers9719/elements (0.00s)
+    --- PASS: TestOriginConsumers9719/empty-lists (0.68s)
+    --- PASS: TestOriginConsumers9719/reads (0.52s)
+    --- PASS: TestOriginConsumers9719/links (0.51s)
+    --- FAIL: TestOriginConsumers9719/interrupted (0.01s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	2.300s
+FAIL

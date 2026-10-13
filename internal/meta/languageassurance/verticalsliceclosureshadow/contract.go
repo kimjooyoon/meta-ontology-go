@@ -101,3 +101,11 @@ const DenominatorMigrationV48Digest = "sha256:2b9ac5c2293e7c61f23de5e0fbb1ca59d8
 
 // V49 registers the ordered batch planner and cross-activity list handoff.
 const DenominatorMigrationV49Digest = "sha256:aafb7676a5c22606f120f179a23af86ab760ea545ed8cfd31ece275221fd5669"
+
+const DenominatorMigrationV50Digest = "sha256:23dc86403c183f670592830888982d6f0d5400f9b3872802f1bed4966c475a1f"
+
+const DenominatorMigrationV51Digest = "sha256:a686959b74edb42d15e8614d5c55dca1c10a587b8f8a9c8fac52d71a971e83c3"
+
+const DenominatorMigrationV52Digest = "sha256:14d07aa72214a1487878fef1d0bdfd28ca745ba8f9bfdb63e5341a881454e1af"
+
+const DenominatorMigrationV53Digest = "sha256:c37c31268a9e1be706d4fd6ef50dca4d495db9c8311b824df9dc6b8331b229ba"

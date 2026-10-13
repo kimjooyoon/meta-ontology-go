@@ -1,0 +1,17 @@
+package origins
+namespace origins
+
+entity Origin id "gooo://origin-reader/links" fields {
+    field case_index id "gooo://origin-reader/links/case_index" type integer required one
+    field read_index id "gooo://origin-reader/links/read_index" type integer required one
+    field instance_index id "gooo://origin-reader/links/instance_index" type integer required one
+    field element_index id "gooo://origin-reader/links/element_index" type integer required one
+}
+
+entity Explanation id "gooo://origin-reader/links/explanation" fields {
+    field category id "gooo://origin-reader/links/category" type string required one
+    field count id "gooo://origin-reader/links/count" type integer required one
+}
+
+activity Explain(Origin) -> Explanation computes `if input.element_index == 0 { return Explanation{category: "FIRST_ELEMENT_LINK", count: 1} }
+return Explanation{category: "LATER_ELEMENT_LINK", count: 1}`

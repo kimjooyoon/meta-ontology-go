@@ -1,0 +1,8 @@
+=== RUN   TestOriginElementWindows9743
+=== RUN   TestOriginElementWindows9743/window9743
+=== RUN   TestOriginElementWindows9743/fault-window9743
+--- PASS: TestOriginElementWindows9743 (0.99s)
+    --- PASS: TestOriginElementWindows9743/window9743 (0.67s)
+    --- PASS: TestOriginElementWindows9743/fault-window9743 (0.33s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.458s
