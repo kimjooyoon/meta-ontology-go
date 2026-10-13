@@ -1,0 +1,46 @@
+{
+  "schema": "gooo/scalar-source-fee-observation/v1",
+  "observed_at": "2026-10-13T12:24:52.21034+09:00",
+  "producer": {
+    "compiler_base": "a94fe484359a60d5dcc518cbf1d21b47c5c550c6",
+    "overlays": [
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_fee_shared_inputs_test.go",
+        "sha256": "28cee07d9715b4ac6f638a026a0d02f2beb158d65c6689c98dd6f1c40de48302",
+        "scope": "one new test only; no production overlays"
+      }
+    ],
+    "sdk_version": "v0.2.51-experimental",
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "sum_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e",
+    "test": "TestScalarSourceModelAssemblesFeeBranchesWithSharedPredicateInputs",
+    "source_sha256": "sha256:fe2565e392d8a2f89a32ef8446300a2e74caa58c2647aa2c50da0d96af246661",
+    "scope": "distinct bounded fee source with shared criteria inputs and new identities/constants/tuples; prior duplicate-input failure retained and never replayed",
+    "started_at": "2026-10-13T03:24:48.711448+00:00"
+  },
+  "observation": {
+    "candidate_count": 4,
+    "choices": 2,
+    "first_proposal_passed": 4,
+    "first_proposal_total": 8,
+    "held_passed": 8,
+    "held_total": 8,
+    "model_calls": 1,
+    "proposed_mask": 3,
+    "selected_mask": 1,
+    "selection_passed": 8,
+    "selection_total": 8,
+    "source_sha256": "sha256:fe2565e392d8a2f89a32ef8446300a2e74caa58c2647aa2c50da0d96af246661"
+  },
+  "weights": "synthetic_untrained_shared_second_option_bias",
+  "selection_input_tuples": 4,
+  "held_input_tuples": 4,
+  "fixed_predicates": 2,
+  "training_runs": 0,
+  "generated_gooo_native_program_executions": 0,
+  "cpu_utilization": "UNOBSERVED",
+  "process_memory": "UNOBSERVED",
+  "trained_quality": "UNOBSERVED",
+  "replays": 0,
+  "log_sha256": "3ca439862bbc208c7b984d86fe2c4c0e99f47f1034ec8b9e72453b8a5de75c4d"
+}

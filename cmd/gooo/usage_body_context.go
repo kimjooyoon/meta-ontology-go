@@ -36,13 +36,13 @@ models also export their complete framed input when compatible.
 --value-flow applies to record assembly and Integer assembly with fixed criteria.
 It exports predicate input/result roles, source graphs and dependency edges from
 the prepared pure-call closure. These source views do not execute the predicates.
-Integer criteria retain deterministic ranking while their model feature contract
-is unavailable. Example:
+Integer criteria can use the scalar-criteria-features/v1 model contract.
+Without a model, ranking stays deterministic. Inspect the predicate source:
   gooo body-context --value-flow --activity Fee \
     examples/criteria-dependencies/main.gooo.fixture
 
 An explicit --feature-version must match the
 loaded model. Whole-candidate judges and source IR search have separate contracts.
-See docs/source-criteria-dependencies.md, docs/typed-model-preflight.md,
+See docs/scalar-source-model.ko.md, docs/source-criteria-dependencies.md, docs/typed-model-preflight.md,
 docs/record-model-preflight.md and gooo help body-compose.
 `

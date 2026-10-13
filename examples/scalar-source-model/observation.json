@@ -1,0 +1,620 @@
+{
+  "schema": "gooo/scalar-source-model-integration-observation/v1",
+  "scope": "five new root API tests on four source snapshots plus one distinct new CLI source; synthetic artifacts; no fitting or historical replay",
+  "construction_test_producer": {
+    "schema": "gooo/scalar-model-bridge-test-producer/v1",
+    "compiler_source_base": "02075696e32ae7a06e21d007b2f62adb18f24f6b",
+    "overlays": [
+      {
+        "path": "go.mod",
+        "original_sha256": "a8e14a07811a86dce0296b1877b435bf05cbf92ac7b0e3817b65c3e2f154c168",
+        "pending_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5"
+      },
+      {
+        "path": "go.sum",
+        "original_sha256": "b0129fe5ad2fb415c25f4abe2ad31ba55f612f85431dfbe24b7c752ff01a0219",
+        "pending_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e"
+      },
+      {
+        "path": "internal/bodycodegen/body_paths_joint.go",
+        "original_sha256": "1bf46d6982ab8df97e3abc8db79366167fed5806fcabd40cc81f0a8a5133ad5f",
+        "pending_sha256": "32c49bf86a2f2f2a8d40376ef0cc8ab76c36c5547cba78acab5907b209e96502"
+      },
+      {
+        "path": "internal/bodycodegen/body_paths_retained.go",
+        "original_sha256": "3a0c9349a687c6989840bb90a97b094e1be02fd526dd24edf033ef8596c6fcdb",
+        "pending_sha256": "6e03cc5b616d9a422738228bbd5b1f1c18f51ef26949ed78b6cabd6e0a4a9b55"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly.go",
+        "original_sha256": "4af6e5c8510a949d6e33b002c29fc74d5577a7610b7704e312d0c47544de14a3",
+        "pending_sha256": "aa787f02ea5bc27c1c909c7a6c856f308956b379b97201dc7987c6f2fdc2d6d5"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_plan.go",
+        "original_sha256": "4a33197f9d618f87a0c0fcf6b2dc1e42c828d24f09c7dbf1eb0e02bb501d877b",
+        "pending_sha256": "a978072abe2d6601daf560bbf9666e5e5e40dde7f332179c2844543e5c016a57"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_replay.go",
+        "original_sha256": "4079022ceffbe95bb8db62922a7cfa9560c11bb02a7153f6c588eac055fe9306",
+        "pending_sha256": "452af465f6494d795b54eddc54cd11d8fdd927828c702d841e05c008ba13cd54"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_types.go",
+        "original_sha256": "e06e995075f74cc02f1ed639456f182f41346517ac0f1f79c35cb13d8d28f27f",
+        "pending_sha256": "7e32b2f9ab8638fd4279f2cfaf06488f95aadb33e05b6f52ad4ab00347f5e985"
+      },
+      {
+        "path": "internal/bodycodegen/record_resume.go",
+        "original_sha256": "daaa0f7f5042d16926ac24353c03875c6327e132ba05a2caecdba8b5917f3400",
+        "pending_sha256": "142c6d7c62cf88c4e8a17d05a5901df839accc7779f0038e6fb8af61a4dd4560"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model.go",
+        "original_sha256": null,
+        "pending_sha256": "f49fb4100bb60cac35f4c3aa72fd106b4a88c384c809d2a0b1a33f8b73981dbd"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_input.go",
+        "original_sha256": null,
+        "pending_sha256": "fb4af685dd7214d57d0baa0d65958c40fcfe701720ca6689d72b6b3316b12c46"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_replay.go",
+        "original_sha256": null,
+        "pending_sha256": "1a2bc9a87e7334ad7be9fe9893dec186c34bae451078e1d368ea599f4c2ddc3f"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_test.go",
+        "original_sha256": null,
+        "pending_sha256": "edef184f662aeed1dfd5baf28b49a4783d8490c626f890fcde6a99a1381e9e2b"
+      }
+    ],
+    "sdk_version": "v0.2.51-experimental",
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "sum_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e",
+    "test_log_sha256": "8854a4b64af404a9443b714038aec23252c003610e00c04d2bdaab337d41bbea",
+    "tests": 2,
+    "model_predictions": 1,
+    "source_fixtures": 2,
+    "trained_model": false,
+    "rebound_to_later_source": false
+  },
+  "context_test_producer": {
+    "compiler_source_base": "02075696e32ae7a06e21d007b2f62adb18f24f6b",
+    "overlays": [
+      {
+        "path": "go.mod",
+        "original_sha256": "a8e14a07811a86dce0296b1877b435bf05cbf92ac7b0e3817b65c3e2f154c168",
+        "pending_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5"
+      },
+      {
+        "path": "go.sum",
+        "original_sha256": "b0129fe5ad2fb415c25f4abe2ad31ba55f612f85431dfbe24b7c752ff01a0219",
+        "pending_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e"
+      },
+      {
+        "path": "internal/bodycodegen/body_paths_joint.go",
+        "original_sha256": "1bf46d6982ab8df97e3abc8db79366167fed5806fcabd40cc81f0a8a5133ad5f",
+        "pending_sha256": "32c49bf86a2f2f2a8d40376ef0cc8ab76c36c5547cba78acab5907b209e96502"
+      },
+      {
+        "path": "internal/bodycodegen/body_paths_model_context.go",
+        "original_sha256": "0f236e72122cd4f473367ec647777a1ee46999e28d62efbe8d209802ab0d832d",
+        "pending_sha256": "701d7dca835f5e853d3d07733567a31777688bc325d0eeb8e094f24ec87f6cd2"
+      },
+      {
+        "path": "internal/bodycodegen/body_paths_retained.go",
+        "original_sha256": "3a0c9349a687c6989840bb90a97b094e1be02fd526dd24edf033ef8596c6fcdb",
+        "pending_sha256": "6e03cc5b616d9a422738228bbd5b1f1c18f51ef26949ed78b6cabd6e0a4a9b55"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly.go",
+        "original_sha256": "4af6e5c8510a949d6e33b002c29fc74d5577a7610b7704e312d0c47544de14a3",
+        "pending_sha256": "aa787f02ea5bc27c1c909c7a6c856f308956b379b97201dc7987c6f2fdc2d6d5"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_export.go",
+        "original_sha256": "0d7e067c158757a3558ebe459d7269f21bc3a295b056a6d6edb1afd21e715cda",
+        "pending_sha256": "c092ad15d34d894b2ee7b524e1e4ec9c5d6edec2b26aba6d6e67729c042f49c7"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_plan.go",
+        "original_sha256": "4a33197f9d618f87a0c0fcf6b2dc1e42c828d24f09c7dbf1eb0e02bb501d877b",
+        "pending_sha256": "a978072abe2d6601daf560bbf9666e5e5e40dde7f332179c2844543e5c016a57"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_replay.go",
+        "original_sha256": "4079022ceffbe95bb8db62922a7cfa9560c11bb02a7153f6c588eac055fe9306",
+        "pending_sha256": "452af465f6494d795b54eddc54cd11d8fdd927828c702d841e05c008ba13cd54"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_types.go",
+        "original_sha256": "e06e995075f74cc02f1ed639456f182f41346517ac0f1f79c35cb13d8d28f27f",
+        "pending_sha256": "7e32b2f9ab8638fd4279f2cfaf06488f95aadb33e05b6f52ad4ab00347f5e985"
+      },
+      {
+        "path": "internal/bodycodegen/record_model_context.go",
+        "original_sha256": "b44ce5378e2e11cb9fdbf892d1a09e04454d8867941c5758f150b3418e4ccce8",
+        "pending_sha256": "ce83b68eb5002ec2481c458a899d4a6be3e91d534064112c66c4ac21df6f9dd4"
+      },
+      {
+        "path": "internal/bodycodegen/record_resume.go",
+        "original_sha256": "daaa0f7f5042d16926ac24353c03875c6327e132ba05a2caecdba8b5917f3400",
+        "pending_sha256": "142c6d7c62cf88c4e8a17d05a5901df839accc7779f0038e6fb8af61a4dd4560"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model.go",
+        "original_sha256": null,
+        "pending_sha256": "f49fb4100bb60cac35f4c3aa72fd106b4a88c384c809d2a0b1a33f8b73981dbd"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_context.go",
+        "original_sha256": null,
+        "pending_sha256": "71065b9e3b5a7ba8559dc5ed28cde2451ec1f7ff17daae522e2a51466b455494"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_context_test.go",
+        "original_sha256": null,
+        "pending_sha256": "65c9bbdb22b62e312273c895de3afafefff856853420278e2609667b1fab5345"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_input.go",
+        "original_sha256": null,
+        "pending_sha256": "fb4af685dd7214d57d0baa0d65958c40fcfe701720ca6689d72b6b3316b12c46"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_replay.go",
+        "original_sha256": null,
+        "pending_sha256": "1a2bc9a87e7334ad7be9fe9893dec186c34bae451078e1d368ea599f4c2ddc3f"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_test.go",
+        "original_sha256": null,
+        "pending_sha256": "edef184f662aeed1dfd5baf28b49a4783d8490c626f890fcde6a99a1381e9e2b"
+      }
+    ],
+    "sdk": "v0.2.51-experimental",
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "sum_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e",
+    "scope": "one new source-context fixture; no prediction or candidate execution"
+  },
+  "tests_passed": [
+    "TestScalarSourceModelRanksActualGoooCriteria",
+    "TestScalarSourceModelDisconnectedKeepsFiniteSearch",
+    "TestScalarSourceModelContextIncludesPredicateHelper",
+    "TestScalarSourceModelConcurrentCallsUseSeparateReceipts",
+    "TestScalarSourceModelKeepsWrongProposalAndBudgetEvidence"
+  ],
+  "ranked_source": {
+    "mode": "synthetic_untrained_second_option_bias",
+    "ranked_candidates": 2,
+    "attempted_candidates": 1,
+    "selection_predicate_matches": 2,
+    "selection_predicate_inputs": 2,
+    "held_predicate_matches": 1,
+    "held_predicate_inputs": 1,
+    "saved_result_reconstruction": "passed_without_model_files",
+    "changed_feature_digest_rejected": true
+  },
+  "disconnected_source": {
+    "model_predictions": 0,
+    "attempted_candidates": 2,
+    "selection_predicate_matches": 2,
+    "selection_predicate_inputs": 2
+  },
+  "source_context": {
+    "predicate_helpers": 1,
+    "choice_rows": 1,
+    "predicate_rows": 1,
+    "model_predictions": 0,
+    "candidate_evaluations": 0,
+    "status": "READY_FOR_RANKING"
+  },
+  "training_runs": 0,
+  "model_predictions": 8,
+  "native_process_runs": 0,
+  "model_quality_evaluated": false,
+  "observations_rebound_to_publication": false,
+  "concurrent_source_observation": {
+    "producer": {
+      "compiler_base": "cfa08c0c185cd2ec59f526c690cfb6153c36f3eb",
+      "production_and_test_overlays": [
+        {
+          "path": "cmd/gooo/usage_body_context.go",
+          "sha256": "17caa7f4a61425c291db3e8ee205ca7944fe409719410791d9868921578aed16"
+        },
+        {
+          "path": "internal/bodycodegen/body_paths_joint.go",
+          "sha256": "32c49bf86a2f2f2a8d40376ef0cc8ab76c36c5547cba78acab5907b209e96502"
+        },
+        {
+          "path": "internal/bodycodegen/body_paths_model_context.go",
+          "sha256": "701d7dca835f5e853d3d07733567a31777688bc325d0eeb8e094f24ec87f6cd2"
+        },
+        {
+          "path": "internal/bodycodegen/body_paths_retained.go",
+          "sha256": "6e03cc5b616d9a422738228bbd5b1f1c18f51ef26949ed78b6cabd6e0a4a9b55"
+        },
+        {
+          "path": "internal/bodycodegen/record_assembly.go",
+          "sha256": "aa787f02ea5bc27c1c909c7a6c856f308956b379b97201dc7987c6f2fdc2d6d5"
+        },
+        {
+          "path": "internal/bodycodegen/record_assembly_export.go",
+          "sha256": "c092ad15d34d894b2ee7b524e1e4ec9c5d6edec2b26aba6d6e67729c042f49c7"
+        },
+        {
+          "path": "internal/bodycodegen/record_assembly_plan.go",
+          "sha256": "a978072abe2d6601daf560bbf9666e5e5e40dde7f332179c2844543e5c016a57"
+        },
+        {
+          "path": "internal/bodycodegen/record_assembly_replay.go",
+          "sha256": "452af465f6494d795b54eddc54cd11d8fdd927828c702d841e05c008ba13cd54"
+        },
+        {
+          "path": "internal/bodycodegen/record_assembly_types.go",
+          "sha256": "7e32b2f9ab8638fd4279f2cfaf06488f95aadb33e05b6f52ad4ab00347f5e985"
+        },
+        {
+          "path": "internal/bodycodegen/record_model_context.go",
+          "sha256": "ce83b68eb5002ec2481c458a899d4a6be3e91d534064112c66c4ac21df6f9dd4"
+        },
+        {
+          "path": "internal/bodycodegen/record_resume.go",
+          "sha256": "142c6d7c62cf88c4e8a17d05a5901df839accc7779f0038e6fb8af61a4dd4560"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model.go",
+          "sha256": "f49fb4100bb60cac35f4c3aa72fd106b4a88c384c809d2a0b1a33f8b73981dbd"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_concurrent_test.go",
+          "sha256": "92f3f03129dc95c7620794f138bc69992cb1db1b5494210812e5c0e54e13be69"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_context.go",
+          "sha256": "71065b9e3b5a7ba8559dc5ed28cde2451ec1f7ff17daae522e2a51466b455494"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_context_test.go",
+          "sha256": "65c9bbdb22b62e312273c895de3afafefff856853420278e2609667b1fab5345"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_input.go",
+          "sha256": "fb4af685dd7214d57d0baa0d65958c40fcfe701720ca6689d72b6b3316b12c46"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_replay.go",
+          "sha256": "1a2bc9a87e7334ad7be9fe9893dec186c34bae451078e1d368ea599f4c2ddc3f"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_test.go",
+          "sha256": "edef184f662aeed1dfd5baf28b49a4783d8490c626f890fcde6a99a1381e9e2b"
+        }
+      ],
+      "sdk_version": "v0.2.51-experimental",
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "sum_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e",
+      "test": "TestScalarSourceModelConcurrentCallsUseSeparateReceipts",
+      "scope": "one new test: four distinct source requests share one immutable synthetic model; one already-canceled source request; no historical test or experiment replay",
+      "started_at": "2026-10-13T02:38:00.798289+00:00",
+      "test_log_sha256": "63f15a2d9b9bcdfc0bfe7e5c90b209b37fd15d4fb2562d905d0a594d9f88b7c0",
+      "exit_code": 0,
+      "tests": 1,
+      "model_predictions": 4,
+      "source_requests": 4,
+      "already_canceled_requests": 1,
+      "rebound_to_later_source": false
+    },
+    "scope": "Four new finite source requests on this PC with one immutable synthetic untrained model; one already-canceled request; no historical replay",
+    "observations": [
+      {
+        "generation_ns": 2569208,
+        "held_passed": 1,
+        "held_total": 1,
+        "index": 0,
+        "model_calls": 1,
+        "predict_ns": 16417,
+        "scope": "one fresh concurrent source request with synthetic untrained weights",
+        "selection_passed": 2,
+        "selection_total": 2,
+        "source_sha256": "sha256:0cf7a67715119f5e008d8b99c64ced04ab2727934ad004e4b223bc249503aca3"
+      },
+      {
+        "generation_ns": 5618834,
+        "held_passed": 1,
+        "held_total": 1,
+        "index": 1,
+        "model_calls": 1,
+        "predict_ns": 18000,
+        "scope": "one fresh concurrent source request with synthetic untrained weights",
+        "selection_passed": 2,
+        "selection_total": 2,
+        "source_sha256": "sha256:78d2ba771cc4bb6d095b1d6583c507c656dd0498d889b33fe8d4f3fadd91245b"
+      },
+      {
+        "generation_ns": 4020541,
+        "held_passed": 1,
+        "held_total": 1,
+        "index": 2,
+        "model_calls": 1,
+        "predict_ns": 16792,
+        "scope": "one fresh concurrent source request with synthetic untrained weights",
+        "selection_passed": 2,
+        "selection_total": 2,
+        "source_sha256": "sha256:c9cb061ec7ffc045c9f4273b0a3b47d11f7bc2120c3c9b79901e5cd1fdce422a"
+      },
+      {
+        "generation_ns": 7015709,
+        "held_passed": 1,
+        "held_total": 1,
+        "index": 3,
+        "model_calls": 1,
+        "predict_ns": 20791,
+        "scope": "one fresh concurrent source request with synthetic untrained weights",
+        "selection_passed": 2,
+        "selection_total": 2,
+        "source_sha256": "sha256:5a81b392d345ecb9e53a9c3cee3b7bf7e5a7bc02bf1742a7d5d5bf30b48e65c3"
+      }
+    ],
+    "process_ram": "UNOBSERVED",
+    "cpu_utilization": "UNOBSERVED",
+    "long_running_or_broad_stress": "UNOBSERVED"
+  },
+  "root_api_tests": 5,
+  "additional_api_subcases": 2,
+  "cli_source_observations": 1,
+  "source_fixtures_evaluated_or_prepared": 10,
+  "wrong_proposal_observation": {
+    "producer": {
+      "compiler_base": "cfa08c0c185cd2ec59f526c690cfb6153c36f3eb",
+      "production_and_test_overlays": [
+        {
+          "path": "cmd/gooo/usage_body_context.go",
+          "sha256": "17caa7f4a61425c291db3e8ee205ca7944fe409719410791d9868921578aed16"
+        },
+        {
+          "path": "internal/bodycodegen/body_paths_joint.go",
+          "sha256": "32c49bf86a2f2f2a8d40376ef0cc8ab76c36c5547cba78acab5907b209e96502"
+        },
+        {
+          "path": "internal/bodycodegen/body_paths_model_context.go",
+          "sha256": "701d7dca835f5e853d3d07733567a31777688bc325d0eeb8e094f24ec87f6cd2"
+        },
+        {
+          "path": "internal/bodycodegen/body_paths_retained.go",
+          "sha256": "6e03cc5b616d9a422738228bbd5b1f1c18f51ef26949ed78b6cabd6e0a4a9b55"
+        },
+        {
+          "path": "internal/bodycodegen/record_assembly.go",
+          "sha256": "aa787f02ea5bc27c1c909c7a6c856f308956b379b97201dc7987c6f2fdc2d6d5"
+        },
+        {
+          "path": "internal/bodycodegen/record_assembly_export.go",
+          "sha256": "c092ad15d34d894b2ee7b524e1e4ec9c5d6edec2b26aba6d6e67729c042f49c7"
+        },
+        {
+          "path": "internal/bodycodegen/record_assembly_plan.go",
+          "sha256": "a978072abe2d6601daf560bbf9666e5e5e40dde7f332179c2844543e5c016a57"
+        },
+        {
+          "path": "internal/bodycodegen/record_assembly_replay.go",
+          "sha256": "452af465f6494d795b54eddc54cd11d8fdd927828c702d841e05c008ba13cd54"
+        },
+        {
+          "path": "internal/bodycodegen/record_assembly_types.go",
+          "sha256": "7e32b2f9ab8638fd4279f2cfaf06488f95aadb33e05b6f52ad4ab00347f5e985"
+        },
+        {
+          "path": "internal/bodycodegen/record_model_context.go",
+          "sha256": "ce83b68eb5002ec2481c458a899d4a6be3e91d534064112c66c4ac21df6f9dd4"
+        },
+        {
+          "path": "internal/bodycodegen/record_resume.go",
+          "sha256": "142c6d7c62cf88c4e8a17d05a5901df839accc7779f0038e6fb8af61a4dd4560"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model.go",
+          "sha256": "f49fb4100bb60cac35f4c3aa72fd106b4a88c384c809d2a0b1a33f8b73981dbd"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_budget_test.go",
+          "sha256": "eb2926fca6205c24259655e7ba1e5b06f13c0711285035ff5adda74453b6ab5f"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_concurrent_test.go",
+          "sha256": "92f3f03129dc95c7620794f138bc69992cb1db1b5494210812e5c0e54e13be69"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_context.go",
+          "sha256": "71065b9e3b5a7ba8559dc5ed28cde2451ec1f7ff17daae522e2a51466b455494"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_context_test.go",
+          "sha256": "65c9bbdb22b62e312273c895de3afafefff856853420278e2609667b1fab5345"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_input.go",
+          "sha256": "fb4af685dd7214d57d0baa0d65958c40fcfe701720ca6689d72b6b3316b12c46"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_replay.go",
+          "sha256": "1a2bc9a87e7334ad7be9fe9893dec186c34bae451078e1d368ea599f4c2ddc3f"
+        },
+        {
+          "path": "internal/bodycodegen/scalar_criteria_model_test.go",
+          "sha256": "edef184f662aeed1dfd5baf28b49a4783d8490c626f890fcde6a99a1381e9e2b"
+        }
+      ],
+      "sdk_version": "v0.2.51-experimental",
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "sum_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e",
+      "test": "TestScalarSourceModelKeepsWrongProposalAndBudgetEvidence",
+      "scope": "one new root test with two distinct finite source fixtures and different budgets; a deliberately wrong synthetic model proposal; no historical test/experiment replay",
+      "started_at": "2026-10-13T02:45:29.314079+00:00",
+      "exit_code": 0,
+      "test_log_sha256": "445c514c9dc8721a8d309d03e14f8818f1c123a826ae76d7d767b580069aa269",
+      "root_tests": 1,
+      "subcases": 2,
+      "model_predictions": 2,
+      "source_fixtures": 2,
+      "rebound_to_later_source": false
+    },
+    "observations": [
+      {
+        "attempts": 2,
+        "first_proposal_passed": 0,
+        "first_proposal_total": 2,
+        "held_passed": 1,
+        "held_total": 1,
+        "model_calls": 1,
+        "proposed_mask": 1,
+        "proposed_probability": 0.9525741268224334,
+        "scope": "fresh wrong synthetic model proposal with source-owned finite budget",
+        "selected_mask": 0,
+        "selection_passed": 2,
+        "selection_total": 2,
+        "source_sha256": "sha256:452ef26fad3edfe6762c39d97d15707d05cdf86fc20318b9df4c9286e725fe6d",
+        "status": "COMPLETE_FINITE"
+      },
+      {
+        "attempts": 1,
+        "first_proposal_passed": 0,
+        "first_proposal_total": 2,
+        "held_passed": 0,
+        "held_total": 1,
+        "model_calls": 1,
+        "proposed_mask": 1,
+        "proposed_probability": 0.9525741268224334,
+        "scope": "fresh wrong synthetic model proposal with source-owned finite budget",
+        "selected_mask": 1,
+        "selection_passed": 0,
+        "selection_total": 2,
+        "source_sha256": "sha256:4f0a299eb375cddf5c5cbd6d4351e2ff8fc034d4969dadbc91a758b80b0db9bf",
+        "status": "PARTIAL_FINITE"
+      }
+    ],
+    "scope": "two new source fixtures; deliberately wrong synthetic model preference; first-proposal probability is an observed score distribution; source finite conditions decide completeness"
+  },
+  "plain_cli_observation": {
+    "compiler_base": "cfa08c0c185cd2ec59f526c690cfb6153c36f3eb",
+    "production_overlays": [
+      {
+        "path": "cmd/gooo/body_codegen.go",
+        "sha256": "d984cf0cf5aa54e3262a898ce9e72909ea31a3db450fd20f46bb9bc35e7a1df9"
+      },
+      {
+        "path": "cmd/gooo/body_codegen_criteria_summary.go",
+        "sha256": "5bbb002268daaa6ce97ba09ab2be5da3f5e00c8d12dfb4444d86bd4b6350a33f"
+      },
+      {
+        "path": "cmd/gooo/usage_body_context.go",
+        "sha256": "17caa7f4a61425c291db3e8ee205ca7944fe409719410791d9868921578aed16"
+      },
+      {
+        "path": "internal/bodycodegen/body_paths_joint.go",
+        "sha256": "32c49bf86a2f2f2a8d40376ef0cc8ab76c36c5547cba78acab5907b209e96502"
+      },
+      {
+        "path": "internal/bodycodegen/body_paths_model_context.go",
+        "sha256": "701d7dca835f5e853d3d07733567a31777688bc325d0eeb8e094f24ec87f6cd2"
+      },
+      {
+        "path": "internal/bodycodegen/body_paths_retained.go",
+        "sha256": "6e03cc5b616d9a422738228bbd5b1f1c18f51ef26949ed78b6cabd6e0a4a9b55"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly.go",
+        "sha256": "aa787f02ea5bc27c1c909c7a6c856f308956b379b97201dc7987c6f2fdc2d6d5"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_export.go",
+        "sha256": "c092ad15d34d894b2ee7b524e1e4ec9c5d6edec2b26aba6d6e67729c042f49c7"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_plan.go",
+        "sha256": "a978072abe2d6601daf560bbf9666e5e5e40dde7f332179c2844543e5c016a57"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_replay.go",
+        "sha256": "452af465f6494d795b54eddc54cd11d8fdd927828c702d841e05c008ba13cd54"
+      },
+      {
+        "path": "internal/bodycodegen/record_assembly_types.go",
+        "sha256": "7e32b2f9ab8638fd4279f2cfaf06488f95aadb33e05b6f52ad4ab00347f5e985"
+      },
+      {
+        "path": "internal/bodycodegen/record_model_context.go",
+        "sha256": "ce83b68eb5002ec2481c458a899d4a6be3e91d534064112c66c4ac21df6f9dd4"
+      },
+      {
+        "path": "internal/bodycodegen/record_resume.go",
+        "sha256": "142c6d7c62cf88c4e8a17d05a5901df839accc7779f0038e6fb8af61a4dd4560"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model.go",
+        "sha256": "f49fb4100bb60cac35f4c3aa72fd106b4a88c384c809d2a0b1a33f8b73981dbd"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_context.go",
+        "sha256": "71065b9e3b5a7ba8559dc5ed28cde2451ec1f7ff17daae522e2a51466b455494"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_input.go",
+        "sha256": "fb4af685dd7214d57d0baa0d65958c40fcfe701720ca6689d72b6b3316b12c46"
+      },
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_replay.go",
+        "sha256": "1a2bc9a87e7334ad7be9fe9893dec186c34bae451078e1d368ea599f4c2ddc3f"
+      }
+    ],
+    "sdk_version": "v0.2.51-experimental",
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "sum_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e",
+    "scope": "one fresh plain-output CLI generation on clipartial source; no native Gooo process or old source/model experiment replay",
+    "created_at": "2026-10-13T02:48:59.420495+00:00",
+    "cli_binary_sha256": "6d2b66dc6908e8f699ca8315b506e30a435eaaf91e13f5f3aaba8050d82f108f",
+    "helper_binary_sha256": "686f23b3d80e82118293e637ea5bf4a732913d113124a1f7cbaaf6bfa11b1bf6",
+    "helper_source_sha256": "68985fe6b5616eaf0089a73cd937e93a4a89db4a98809c07ba7b9f3cb6e782fc",
+    "source_sha256": "sha256:8348dd33818d18bc238b55a0ea5bfba9f7e0cbbf6554333104eef5b861ec910d",
+    "source_filename": "/tmp/gooo-scalar-criteria-bridge-20261013/pending/examples/scalar-source-model/cli-partial.gooo.fixture",
+    "model_metadata_sha256": "sha256:56a6a8a21d8c225b5aa0c594fd4f71d9dcb69314a6ef088ebf7300b2d48e42ff",
+    "model_weights_sha256": "sha256:cbc47fea922c3432becbc853bcf4870a2c2023e246a9aeceb9adb144c7bc5e29",
+    "model_weight_bytes": 74504,
+    "synthetic_untrained": true,
+    "commands": [
+      {
+        "command": [
+          "/tmp/gooo-scalar-criteria-bridge-20261013/synthetic-artifact-tool",
+          "--out",
+          "/tmp/gooo-scalar-criteria-bridge-20261013/fresh-cli-synthetic-model"
+        ],
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/tmp/gooo-scalar-criteria-bridge-20261013/fresh-criteria-cli",
+          "body-codegen",
+          "--activity",
+          "Deduct",
+          "--path-model",
+          "/tmp/gooo-scalar-criteria-bridge-20261013/fresh-cli-synthetic-model/metadata.json",
+          "/tmp/gooo-scalar-criteria-bridge-20261013/pending/examples/scalar-source-model/cli-partial.gooo.fixture"
+        ],
+        "exit_code": 0,
+        "PATH": ""
+      }
+    ],
+    "summary": "gooo: Deduct: PARTIAL_FINITE; selection conditions 0/2 passed, 2 failed, 0 unobserved; separate conditions 0/1 passed, 1 failed, 0 unobserved; attempts 1/1; model calls 1\n",
+    "summary_sha256": "0ef992b6a6e266e4f22f7ae1c60bee652881584b2db5856ddb485ef5606b697e",
+    "generated_go_sha256": "0ebd141e98b9c1fc0ef52d5ade70b478ed9c7eb989040c4f83d6b69a65f9c8bd",
+    "model_predictions": 1,
+    "native_program_executions": 0,
+    "training_runs": 0,
+    "historical_observations_replayed": 0,
+    "source_unchanged": true,
+    "synthetic_model_files_removed_after_observation": true
+  }
+}

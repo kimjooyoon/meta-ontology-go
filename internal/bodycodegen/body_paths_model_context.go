@@ -68,6 +68,9 @@ func exportBoundPathModelContext(ctx context.Context, document pathplan.Document
 		return fail(err)
 	}
 	receipt.Timing.DecisionStage = "model_loaded_without_predictions_or_candidate_tests_or_selected_emission"
+	if g.criteria != nil {
+		return fail(fmt.Errorf("scalar criteria models require a source assembly context with fixed predicates"))
+	}
 	if g.order != nil {
 		return fail(fmt.Errorf("body-context model preflight does not yet cover whole-candidate judges"))
 	}

@@ -7,7 +7,7 @@ const bodyConstructHelp = `Construct a program using caller feedback
 Record choices, Integer path criteria, integer search and source_fill helpers keep their Gooo obligations.
 Each completed combination is
 compiled and run on --construction-cases; --cases runs after selection. The
-optional --model ranks record choices; --fill-model uses a compatible operation
+optional --model ranks compatible declared choices; --fill-model uses a compatible operation
 classifier for initial fill selection. Local fill holdouts stay separate from
 training/caller scores and never decide completion. Without models,
 the order is deterministic. Saved construction rechecks every attempted program

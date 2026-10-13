@@ -7,6 +7,7 @@ import (
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
 	"github.com/kimjooyoon/gooo-decision-runtime/conditiondecision"
+	"github.com/kimjooyoon/gooo-decision-runtime/criteriadecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/executiondecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/flowdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
@@ -37,6 +38,10 @@ func loadTypedStructuralModel(name string) (typedPathModel, error) {
 	}
 	if len(raw) > 64<<10 {
 		return typedPathModel{}, fmt.Errorf("bounded regular structural metadata required")
+	}
+	if selector.Schema == criteriadecision.Schema {
+		model, err := loadScalarCriteriaModel(name, raw)
+		return typedPathModel{criteria: model}, err
 	}
 	if selector.Schema == orderjudge.Schema {
 		model, err := loadOrderJudge(name, raw)

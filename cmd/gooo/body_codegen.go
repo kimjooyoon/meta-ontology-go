@@ -339,6 +339,7 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		}
 		return exitOK
 	}
+	writeBodyCodegenCriteriaSummary(stderr, result)
 	if _, err := io.WriteString(stdout, result.Source); err != nil {
 		fmt.Fprintf(stderr, "gooo: body-codegen output: %v\n", err)
 		return exitFailure

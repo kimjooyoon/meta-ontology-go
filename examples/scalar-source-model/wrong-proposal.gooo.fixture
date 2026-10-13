@@ -1,0 +1,10 @@
+package budgetcomplete
+namespace budgetcomplete
+entity Integer id "urn:budgetcomplete:integer"
+entity Boolean id "urn:budgetcomplete:boolean"
+activity Deduct(Integer) -> Integer id "urn:budgetcomplete:deduct" computes "return input - 43" assembling {
+ choice "direction" operand_order at "0" intent "입력에서 43을 뺀다. Subtract forty-three from the input."
+ criteria { predicate "difference" activity "CorrectDifference" input "[8]" input "[29]" holdout_input "[46]" }
+ attempts "2"
+}
+activity CorrectDifference(Integer,Integer) -> Boolean computes "return input1 == input0 - 43"
