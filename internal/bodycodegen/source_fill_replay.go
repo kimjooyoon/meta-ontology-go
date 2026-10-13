@@ -79,6 +79,10 @@ func compareSourceFillReplay(prior, expected Result) error {
 	}
 	if a.BodyFill.SourceOrigin == nil {
 		b.BodyFill.SourceOrigin = nil
+	} else if a.BodyFill.SourceOrigin.DataFlow == nil && b.BodyFill.SourceOrigin != nil {
+		copy := *b.BodyFill.SourceOrigin
+		copy.DataFlow = nil
+		b.BodyFill.SourceOrigin = &copy
 	}
 	if a.BodyFill.LocalCalls != nil && !equalLocalCallEvidence(a.BodyFill.LocalCalls, b.BodyFill.LocalCalls) {
 		return fmt.Errorf("body-fill local helper input history differs")

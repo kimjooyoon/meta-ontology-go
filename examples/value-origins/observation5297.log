@@ -1,0 +1,5 @@
+=== RUN   TestValueOriginsNodeBudgetAndControlLinks5297
+    body_value_origin_bounds_test.go:45: 5297: 320 declarations stop at bounded graph; dependency traversal retains earlier controlling condition and its variable origin
+--- PASS: TestValueOriginsNodeBudgetAndControlLinks5297 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.447s

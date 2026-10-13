@@ -1,0 +1,8 @@
+=== RUN   TestValueOriginAbsentMetadataAndChangedClaim5179
+    body_value_origin_compatibility_test.go:58: 5179: fresh return lineage; absent optional metadata accepted; changed recorded range differs; original graph preserved
+--- PASS: TestValueOriginAbsentMetadataAndChangedClaim5179 (0.00s)
+=== RUN   TestSimultaneousAssignmentAndDiscardedCalls5231
+    body_value_origin_compatibility_test.go:87: 5231: parallel assignment uses preceding definitions; discarded call effects remain partial; source size bounded
+--- PASS: TestSimultaneousAssignmentAndDiscardedCalls5231 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.465s

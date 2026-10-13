@@ -1,0 +1,22 @@
+{
+  "historical_local_replays": 0,
+  "new_runtime_inputs": [
+    83,
+    61
+  ],
+  "saved_construction": "execute5381.json",
+  "build_exit_code": 0,
+  "binary_sha256": "7b371f226e946483fe203bea69f81358effe8c5d23bffb59fcbf42dcd4d2fb55",
+  "binary_bytes": 25937682,
+  "exit_code": 0,
+  "wall_ns": 871973250,
+  "native_passed": 2,
+  "native_total": 2,
+  "original_filename": "\ud560\ub2f9.gooo.fixture",
+  "candidate": "minimum5381",
+  "relation": "static_dependency",
+  "analysis_status": "MAPPED",
+  "model_calls": 0,
+  "sources_unchanged": true,
+  "binary_removed": true
+}
