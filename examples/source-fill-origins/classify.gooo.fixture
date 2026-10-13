@@ -1,0 +1,15 @@
+package originconsumer3607
+namespace originconsumer3607
+entity Text id "urn:gooo:type:string"
+entity Fact id "urn:originconsumer3607:fact" fields {
+ field site_id id "urn:originconsumer3607:site" type string required one
+ field activity_id id "urn:originconsumer3607:activity" type string required one
+ field candidate_id id "urn:originconsumer3607:candidate" type string required one
+ field hole_id id "urn:originconsumer3607:hole" type string required one
+ field category id "urn:originconsumer3607:category" type string required one
+ field filename id "urn:originconsumer3607:filename" type string required one
+ field source_sha id "urn:originconsumer3607:source" type string required one
+ field source_start id "urn:originconsumer3607:start" type integer required one
+ field source_end id "urn:originconsumer3607:end" type integer required one
+}
+activity Describe(Fact) -> Text id "urn:originconsumer3607:describe" computes "if input.category == \"declared_candidate\" { return \"declared\" }; if input.category == \"derived_grammar\" { return \"derived\" }; if input.category == \"retained_template\" { return \"retained\" }; return \"missing\""

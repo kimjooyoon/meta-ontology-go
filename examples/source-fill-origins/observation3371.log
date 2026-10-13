@@ -1,0 +1,8 @@
+=== RUN   TestSourceFillOriginFragments3371
+    source_fill_origin_test.go:52: fragment3371: identical candidate expressions retain selected ID; two filled fragments and template fragments located; escaped intent range exact; changed origin rejected; model0
+--- PASS: TestSourceFillOriginFragments3371 (0.01s)
+=== RUN   TestSourceFillDerivedOrigin3491
+    source_fill_origin_test.go:119: derived3491: two expressions cite grammar and assembly input; no fabricated expression/candidate source range; generation scoring retained separately; model0
+--- PASS: TestSourceFillDerivedOrigin3491 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.528s

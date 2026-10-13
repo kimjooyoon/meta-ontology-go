@@ -7,7 +7,8 @@ This repository contains its Go compiler. Source files use the `.gooo` extension
 Development source now connects native conditions to the selected Gooo body,
 authored activity and field declarations, and original package files through
 name lowering. The [source and origin guide](docs/language/source-origins.ko.md)
-explains these links and remaining gaps. A [Gooo metaprogram](examples/condition-origins/README.md)
+explains these links and remaining gaps. Filled condition fragments also retain their
+[original package files](examples/workspace-fill-origins/README.md), selected candidates and grammar declarations. A [Gooo metaprogram](examples/condition-origins/README.md)
 uses the resulting typed records to describe available origins. Runtime cases
 remain observations attached to that history.
 

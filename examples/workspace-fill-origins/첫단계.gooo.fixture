@@ -1,0 +1,11 @@
+package step
+namespace step4393
+entity Integer id "urn:gooo:type:integer"
+activity Check(Integer) -> Integer id "urn:step4393:check" computes "if input > __GOOO_BODY_HOLE_limit__ { return input + 9 }; return input - 2" assembling {
+ source_fill intent "첫 번째 금액 기준" {
+  hole "limit"
+  candidate "step4393" { fill "limit" "31" }
+  candidate "other4393" { fill "limit" "131" }
+ }
+ case "41" -> "50"
+}

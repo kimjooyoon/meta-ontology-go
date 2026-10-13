@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "discount3937:Discount": 13
+      },
+      "expected": {
+        "discount3937:Discount": 80
+      }
+    },
+    {
+      "inputs": {
+        "discount3937:Discount": 59
+      },
+      "expected": {
+        "discount3937:Discount": 50
+      }
+    }
+  ]
+}

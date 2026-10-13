@@ -1,0 +1,12 @@
+package shipping
+namespace shipping4799
+import 기준 "shipping4799/rule"
+activity Fee(기준.Integer) -> 기준.Integer id "urn:shipping4799:fee" computes "if __GOOO_BODY_HOLE_gate__ { return input + 23 }; return input - 11" assembling {
+ source_fill intent "배송 규칙의 실제 작성 위치를 남긴다" {
+  hole "gate"
+  candidate "cycle4799" { fill "gate" "기준.Shift(input) % 3 == 0" }
+  candidate "different4799" { fill "gate" "기준.Shift(input) % 5 == 0" }
+ }
+ case "10" -> "33"
+ case "11" -> "0"
+}

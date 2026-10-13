@@ -1,0 +1,10 @@
+=== RUN   TestSourceFillOriginSurvivesRelocation4177
+    source_fill_relocated_origin_test.go:46: relocation4177: source label retained across a different read path; actual declaration ranges still compared; model0
+--- PASS: TestSourceFillOriginSurvivesRelocation4177 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.527s
+=== RUN   TestImportedFillInputOrigins4051
+    fill_input_origin_test.go:96: import4051: native2/2; imported candidate and retained template point to original Unicode file; strict saved decoding and construction read; same-name activities stay separate; model0
+--- PASS: TestImportedFillInputOrigins4051 (0.67s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.611s

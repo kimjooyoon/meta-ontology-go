@@ -126,7 +126,10 @@ func workspaceInputConditionSource(file string, d workspaceCallDeclaration, acti
 	return input
 }
 
-func bindWorkspaceConditionSources(program Program, runtime *bodyexecution.CompositionRuntime) {
+func bindWorkspaceConditionSources(program Program, runtime *bodyexecution.CompositionRuntime, fills ...[]BodyFillStep) {
+	for _, steps := range fills {
+		bindWorkspaceFillConditionSources(runtime, steps)
+	}
 	type key struct {
 		activity, body string
 		start, end     int
@@ -137,6 +140,7 @@ func bindWorkspaceConditionSources(program Program, runtime *bodyexecution.Compo
 		index[key{origin.ActivityID, origin.BodySHA256, origin.Start, origin.End}] = origin.Input
 		activities[origin.ActivityID], bodies[origin.ActivityID+"\x00"+origin.BodySHA256] = true, true
 	}
+	bindWorkspaceFillInputSources(program, runtime)
 	for i := range runtime.ConditionSites {
 		site := &runtime.ConditionSites[i]
 		if site.Source == nil || site.Source.Status != "MAPPED" {

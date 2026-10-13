@@ -23,6 +23,7 @@ type ConditionInputSource struct {
 }
 
 type BodyConditionSource struct {
+	Construction  *SourceFillConditionOrigin  `json:"construction,omitempty"`
 	Declaration   *ConditionDeclarationSource `json:"declaration,omitempty"`
 	Input         *ConditionInputSource       `json:"input_source,omitempty"`
 	Status        string                      `json:"status"`

@@ -1,0 +1,5 @@
+=== RUN   TestOriginalGrammarInputOrigins4741
+    source_fill_input_grammar_test.go:36: grammar4741: two distinct original per-hole grammar ranges; generated expressions have no authored expression or candidate position; static syntax only; model0
+--- PASS: TestOriginalGrammarInputOrigins4741 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.512s

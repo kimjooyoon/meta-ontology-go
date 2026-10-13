@@ -1,0 +1,26 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "shipping4799/app",
+    "activity": "Fee"
+  },
+  "packages": [
+    {
+      "path": "shipping4799/rule",
+      "name": "rule",
+      "sources": [
+        "기준.gooo.fixture"
+      ]
+    },
+    {
+      "path": "shipping4799/app",
+      "name": "shipping",
+      "imports": [
+        "shipping4799/rule"
+      ],
+      "sources": [
+        "배송.gooo.fixture"
+      ]
+    }
+  ]
+}

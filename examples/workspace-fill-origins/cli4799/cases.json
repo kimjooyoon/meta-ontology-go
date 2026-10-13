@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "shipping4799/app:Fee": 16
+      },
+      "expected": {
+        "shipping4799/app:Fee": 39
+      }
+    },
+    {
+      "inputs": {
+        "shipping4799/app:Fee": 18
+      },
+      "expected": {
+        "shipping4799/app:Fee": 7
+      }
+    }
+  ]
+}
