@@ -1,0 +1,5 @@
+package app
+namespace qualified_app
+import 청구 "example/left"
+import 보조 "example/right"
+activity Main(청구.Amount) -> 청구.Amount id "urn:qualified:entry" computes "return 청구.요금(input)"

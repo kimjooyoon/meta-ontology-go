@@ -44,10 +44,12 @@ called helpers, declared criteria and supported alternatives. The workspace imag
 covers the declared packages; the entry call closure covers its dependencies.
 These are separate scopes when planning a rename across files.
 
-Activity signatures currently use visible entity names such as `Integer`.
-Qualified imported calls such as `rules.요금(input)` are supported in the body;
-qualified signature types such as `rules.Integer` require further grammar and
-resolution work. Import ambiguity remains an error in the current type resolver.
+Activity signatures can use visible entity names such as `Integer` or qualified
+import types such as `rules.Integer` in development source containing the
+[qualified activity type change](qualified-activity-types.ko.md). The qualified
+spelling resolves through that declaring file's import alias to the entity ID.
+Qualified calls such as `rules.요금(input)` remain supported in the body. Bare
+type ambiguity and conflicting aliases within a file remain resolution errors.
 
 The existing loader limits apply: up to 64 packages and 512 source files, 1 MiB
 per source and 16 MiB across the source set. Source preparation uses the existing

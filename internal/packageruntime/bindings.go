@@ -1,7 +1,6 @@
 package packageruntime
 
 import (
-	"path"
 	"sort"
 	"strconv"
 
@@ -19,16 +18,9 @@ func localBindings(bindings []syntax.BindingDecl) []syntax.BindingDecl {
 }
 
 func resolveImportedBindings(spec PackageSpec, file *syntax.File, local []Export, dependencies map[string][]Export) ([]PackageBinding, error) {
-	imports := make(map[string]string, len(file.Imports))
-	for _, declaration := range file.Imports {
-		alias := declaration.Alias
-		if alias == "" {
-			alias = path.Base(declaration.Path)
-		}
-		if previous, exists := imports[alias]; exists && previous != declaration.Path {
-			return nil, reject("PACKAGE_IMPORT_ALIAS_AMBIGUOUS", "%s uses alias %q for both %q and %q", spec.Path, alias, previous, declaration.Path)
-		}
-		imports[alias] = declaration.Path
+	imports, err := sourceImportAliases(spec, file)
+	if err != nil {
+		return nil, err
 	}
 	var result []PackageBinding
 	for _, binding := range file.Bindings {

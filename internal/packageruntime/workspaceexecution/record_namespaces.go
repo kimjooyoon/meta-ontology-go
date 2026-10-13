@@ -149,14 +149,22 @@ func (n workspaceRecordNames) rewriteActivity(ref ActivityRef, activity *syntax.
 				continue
 			}
 			for i, id := range export.InputTypes {
-				if lowered := n.canonical[id]; lowered != "" {
+				lowered, err := n.signatureTypeName(activity.Inputs[i].Name, id, image)
+				if err != nil {
+					return err
+				}
+				if lowered != "" {
 					activity.Inputs[i].Name = lowered
 					if i < len(activity.Parameters) {
 						activity.Parameters[i].Name = lowered
 					}
 				}
 			}
-			if lowered := n.canonical[export.OutputType]; lowered != "" {
+			lowered, err := n.signatureTypeName(activity.Output, export.OutputType, image)
+			if err != nil {
+				return err
+			}
+			if lowered != "" {
 				activity.Output, activity.Result.Name = lowered, lowered
 			}
 		}
@@ -167,6 +175,24 @@ func (n workspaceRecordNames) rewriteActivity(ref ActivityRef, activity *syntax.
 	}
 	activity.ValueProgram = body
 	return n.rewriteAssembly(ref.PackagePath, activity.Assembly)
+}
+
+func (n workspaceRecordNames) signatureTypeName(spelling, id string, image packageruntime.Image) (string, error) {
+	if lowered := n.canonical[id]; lowered != "" {
+		return lowered, nil
+	}
+	_, member, qualified := strings.Cut(spelling, ".")
+	if !qualified {
+		return "", nil
+	}
+	for _, pkg := range image.Packages {
+		for _, export := range pkg.Exports {
+			if export.Kind == "entity" && export.ID == id && export.Name == member {
+				return member, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("qualified signature type %q has no prepared entity for stable ID %q", spelling, id)
 }
 
 func collectWorkspaceEntities(ordered []packageruntime.PackageSpec, files map[string][]*syntax.File) ([]syntax.Declaration, error) {

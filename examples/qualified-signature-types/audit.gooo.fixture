@@ -1,0 +1,4 @@
+package app
+namespace qualified_app
+import 청구 "example/right"
+activity Alternate(청구.Amount) -> 청구.Amount id "urn:qualified:alternate" computes "return input"

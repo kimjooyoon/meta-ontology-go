@@ -1,0 +1,137 @@
+{
+  "schema": "gooo/record-source-format-observation/v1",
+  "producer": {
+    "source_base": "14d3b10042cabc459326f48305e19beacc17762e",
+    "binary_sha256": "0422b1163c6406c8c607fd9917c0fc9775ab3c5e10889f85c37d33b706715cf5",
+    "production_overlays": [
+      {
+        "path": "cmd/gooo/package_inspect.go",
+        "sha256": "d1ae8edef18f88607403d00760cf7c43e1f2c9ef8a53068c83d148505085fcf3"
+      },
+      {
+        "path": "cmd/gooo/package_resolve.go",
+        "sha256": "5c315bba57ca6f01811a9280cbe76ef3b4f64a8f75b6589f86ab6fff10086c4b"
+      },
+      {
+        "path": "cmd/gooo/usage_body_context.go",
+        "sha256": "1f68350153885cd9fd7f6375f0920eb1af7571dff37fed64a27e37b42133d004"
+      },
+      {
+        "path": "cmd/gooo/usage_topics_3.go",
+        "sha256": "9371a6de3460798a08aaecb0c6da35359d87f77be4aa245400d78ed0a2b4dd53"
+      },
+      {
+        "path": "internal/bodycodegen/criteria_dependencies.go",
+        "sha256": "f822ffcc06746b36adc4dced83b7458c061646484b3c8ca3c573877a9a277a8b"
+      },
+      {
+        "path": "internal/bodycodegen/criteria_source_flow.go",
+        "sha256": "fec60e9a66c2e0a217ad62285f9093ab1ad686fab00eeb915a6ca3d4b003275b"
+      },
+      {
+        "path": "internal/formatfix/build.go",
+        "sha256": "702b2580c5445524b456e1cb7de1d47bb5da640590ab8a94dc67dfaf65fa5e77"
+      },
+      {
+        "path": "internal/formatfix/source_surface.go",
+        "sha256": "52c43fb47b4ed624e951c51b81c0cdea81218d69f3bd9dbab73dbe6cf3118271"
+      },
+      {
+        "path": "internal/formatter/syntax_adapter_part02.go",
+        "sha256": "68090e7305d934776fc4ccfdf0fd26ece9d46714069157b80e2f28e51c826749"
+      },
+      {
+        "path": "internal/packageruntime/bindings.go",
+        "sha256": "89c85cd73ba8b274bb2340fc2a757ca7ba9e82974f795928df3cd3e42fbc0b23"
+      },
+      {
+        "path": "internal/packageruntime/compile.go",
+        "sha256": "78abd46ad3cd5afde5bbbbebea61d6b74caf334d3251ae8824494084b3289579"
+      },
+      {
+        "path": "internal/packageruntime/qualified_type_environment.go",
+        "sha256": "0caacf95ef13624ab46b5943e19c65c1b2fdd87d0174ffac05a5ae90b1ab0dbc"
+      },
+      {
+        "path": "internal/packageruntime/source_import_types.go",
+        "sha256": "5c87c95c579d39d590a08bd3f48edb8f58277d2c1ffe82aa9eaaa4b9913d3047"
+      },
+      {
+        "path": "internal/packageruntime/type_resolution.go",
+        "sha256": "5d12d0036a519cc8a5b91c135774a984bf267c21f3914d7936716ae1b633415f"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/body_calls.go",
+        "sha256": "e4d5e38b7c591c8c3ffdbddc6da33fa4791dd122528c5e2ed23977b73422ed50"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_namespaces.go",
+        "sha256": "7e7fa9ad1fe2e3fa23d97e372e0ae6dd0e506c643c7f3f7f1ea8f8a8a68a974d"
+      },
+      {
+        "path": "internal/syntax/activity_parser.go",
+        "sha256": "6ece8b515a5426f4516e12adb1fc063a6c01e2212df306fae939ccf62ff94ada"
+      },
+      {
+        "path": "internal/syntax/activity_type_reference.go",
+        "sha256": "6fc296f825eaf8cb773fd6be07bcc6bb05ef486471a92cc373ebebdf45042f03"
+      },
+      {
+        "path": "internal/syntax/format_part04.go",
+        "sha256": "853fd66f2980ec96b3f7a16d5a1515d72b670b512985ce57723f4da31076f522"
+      }
+    ],
+    "sdk_version": "v0.2.48-experimental",
+    "module_sha256": "a8e14a07811a86dce0296b1877b435bf05cbf92ac7b0e3817b65c3e2f154c168",
+    "sum_sha256": "b0129fe5ad2fb415c25f4abe2ad31ba55f612f85431dfbe24b7c752ff01a0219",
+    "scope": "actual current source and three pending source slices; immutable production snapshot; no rebinding to future PR",
+    "tests_run": 0
+  },
+  "command": [
+    "gooo",
+    "format",
+    "--json",
+    "main.gooo.fixture"
+  ],
+  "exit_code": 0,
+  "source_sha256": "sha256:af7ba64a337c8d12e4acdf243a15016cd43d2a77f562fee149191995a727705e",
+  "input_unchanged": true,
+  "source_formats": 1,
+  "program_executions": 0,
+  "model_predictions": 0,
+  "training_runs": 0,
+  "tests_run": 0,
+  "scope": "one fresh source transformation; syntax field carrier retention, no imported type resolution, lowering, record evaluation or model prediction",
+  "status": "formatted",
+  "direct_writes": 0,
+  "fields_declared": 3,
+  "fields_preserved": 3,
+  "field_carriers_equal": true,
+  "ordered_field_carriers": [
+    {
+      "name": "caption",
+      "id": "urn:record-format:caption",
+      "type": "urn:gooo:type:string",
+      "presence": "required",
+      "cardinality": "one"
+    },
+    {
+      "name": "approved",
+      "id": "urn:record-format:approved",
+      "type": "urn:gooo:type:boolean",
+      "presence": "required",
+      "cardinality": "one"
+    },
+    {
+      "name": "discount",
+      "id": "urn:record-format:discount",
+      "type": "urn:gooo:type:integer",
+      "presence": "optional",
+      "cardinality": "one"
+    }
+  ],
+  "preserved_imports": 1,
+  "preserved_bindings": 1,
+  "preserved_compute_bodies": 2,
+  "formatted_sha256": "sha256:5bb52ec7ad8eaf9f373a724ce50114264e8111d45dc3e9b81c6b3957954fb249"
+}

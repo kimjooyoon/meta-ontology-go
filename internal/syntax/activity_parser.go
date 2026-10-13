@@ -17,8 +17,8 @@ func (p *Parser) parseActivity() *ActivityDecl {
 		for {
 			p.skipIllegal()
 			if p.at(TokenIdentifier) {
-				parameter := p.advance()
-				activity.Inputs = append(activity.Inputs, NameRef{Span: parameter.Span, Name: parameter.Value})
+				parameter := p.parseActivityTypeReference("activity parameter", DiagExpectedIdentifier)
+				activity.Inputs = append(activity.Inputs, parameter)
 				activity.Span.End = parameter.Span.End
 			} else {
 				p.error(DiagExpectedIdentifier, p.peek().Span, "expected activity parameter name")
@@ -51,7 +51,7 @@ func (p *Parser) parseActivity() *ActivityDecl {
 		activity.Span.End = closing.Span.End
 	}
 	p.expect(TokenArrow, "->", DiagExpectedArrow)
-	result := p.expectIdentifier("activity result", DiagExpectedResult)
+	result := p.parseActivityTypeReference("activity result", DiagExpectedResult)
 	activity.Result = result
 	activity.Parameters = append([]NameRef(nil), activity.Inputs...)
 	activity.Output = result.Name
