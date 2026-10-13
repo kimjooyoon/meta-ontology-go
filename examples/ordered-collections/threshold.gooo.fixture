@@ -1,0 +1,20 @@
+package fill7523
+namespace fill7523
+entity Basket id "urn:fill7523:basket" fields {
+ field amounts id "urn:fill7523:amounts" type integer required many
+}
+entity Summary id "urn:fill7523:summary" fields {
+ field total id "urn:fill7523:total" type integer required one
+ field amounts id "urn:fill7523:originals" type integer required many
+}
+activity Compute(Basket) -> Summary id "urn:fill7523:compute" computes "let 합계 = 0; for 값 in input.amounts[0:] { if __GOOO_BODY_HOLE_gate__ { 합계 = 합계 + 값 } }; return Summary{total: 합계, amounts: input.amounts}" assembling {
+ source_fill intent "33 이상인 항목만 더하고 원래 순서를 보존한다" {
+  hole "gate"
+  candidate "negative7523" { fill "gate" "값 < 0" }
+  candidate "threshold7523" { fill "gate" "값 >= 33" }
+ }
+ value_case "[{\"amounts\":[37,-4,8]}]" -> "{\"amounts\":[37,-4,8],\"total\":37}"
+ value_case "[{\"amounts\":[]}]" -> "{\"amounts\":[],\"total\":0}"
+ value_case "[{\"amounts\":[-7,34,33]}]" -> "{\"amounts\":[-7,34,33],\"total\":67}"
+ holdout_value_case "[{\"amounts\":[9007199254741013,32]}]" -> "{\"amounts\":[9007199254741013,32],\"total\":9007199254741013}"
+}

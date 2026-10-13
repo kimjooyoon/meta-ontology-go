@@ -19,11 +19,12 @@ type RecordType struct {
 }
 
 type RecordField struct {
-	Name     string `json:"name"`
-	ID       string `json:"id"`
-	TypeID   string `json:"type_id"`
-	GoName   string `json:"go_name"`
-	Presence string `json:"presence,omitempty"`
+	Name        string `json:"name"`
+	ID          string `json:"id"`
+	TypeID      string `json:"type_id"`
+	GoName      string `json:"go_name"`
+	Presence    string `json:"presence,omitempty"`
+	Cardinality string `json:"cardinality,omitempty"`
 }
 
 // RecordTypesFromModel accepts a model already validated under the body profile.
@@ -57,7 +58,7 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 				presence = string(field.Presence)
 			}
 			record.Fields = append(record.Fields, RecordField{Name: field.Name, ID: string(field.ID),
-				TypeID: typeID, GoName: recordGoName("Field", string(field.ID)), Presence: presence})
+				TypeID: typeID, GoName: recordGoName("Field", string(field.ID)), Presence: presence, Cardinality: repeatedCardinality(field.Cardinality)})
 		}
 		result = append(result, record)
 	}
@@ -128,6 +129,9 @@ func resolveBodyModel(file *syntax.File) (bidir.Model, []RecordType, error) {
 }
 
 func bodyEntityFieldsSupport(file *syntax.File) bidir.EntityFieldsSupport {
+	if support := syntax.EntityFieldsSupportForFile(file, syntax.EntityFieldsV3Support()); support.Profile.ID == syntax.EntityFieldsV5ProfileID {
+		return support
+	}
 	for _, declaration := range file.Declarations {
 		entity, ok := declaration.(*syntax.EntityDecl)
 		if !ok {
@@ -146,4 +150,11 @@ func bodyEntityFieldsSupport(file *syntax.File) bidir.EntityFieldsSupport {
 // fields, keeping existing required-field body fingerprints on V3.
 func BodyEntityFieldsSupport(file *syntax.File) bidir.EntityFieldsSupport {
 	return bodyEntityFieldsSupport(file)
+}
+
+func repeatedCardinality(cardinality semantic.Cardinality) string {
+	if cardinality == semantic.Many {
+		return "many"
+	}
+	return ""
 }

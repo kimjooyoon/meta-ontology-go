@@ -81,3 +81,8 @@ func GenerateFromProjectionV1(input any, options Options) (ProjectionMetadataV1,
 func (g Generator) Generate(input SemanticIR, previous []byte) (Result, error) {
 	return g.generateWithEntityFieldsSupport(input, previous, checkedEntityFieldsSupport())
 }
+
+// GenerateEntityFieldsV5 projects ordered scalar collections with their declared presence.
+func GenerateEntityFieldsV5(ir SemanticIR, previous []byte) (Result, error) {
+	return GenerateWithEntityFieldsSupport(ir, previous, syntax.EntityFieldsV5Support())
+}

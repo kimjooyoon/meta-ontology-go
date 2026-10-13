@@ -1,0 +1,5 @@
+=== RUN   TestOriginReaderRenderedCapacity8161
+    origin_reader_capacity_test.go:46: 8161: seven origin-reader methods observed with the actual helper renderer; maximum function lines=44/helper lines=49; no source program execution
+--- PASS: TestOriginReaderRenderedCapacity8161 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.566s

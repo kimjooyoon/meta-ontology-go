@@ -72,7 +72,9 @@ type SourceFillConditionOrigin struct {
 
 // ConditionOrigin includes direct fragments and, when recorded, bounded static
 // value/control dependencies. Template ranges retain their original scope.
-func (o SourceFillOrigin) ConditionOrigin(condition BodyConditionOrigin) *SourceFillConditionOrigin {
+// originalDecoded is needed when a projection report uses expanded for-in offsets.
+// Source-bound callers supply the original decoded range from BodyConditionSource.
+func (o SourceFillOrigin) ConditionOrigin(condition BodyConditionOrigin, originalDecoded ...FillOriginRange) *SourceFillConditionOrigin {
 	if condition.ActivityID != o.ActivityID || condition.BodySHA256 != o.SelectedBodySHA256 {
 		return nil
 	}
@@ -83,6 +85,12 @@ func (o SourceFillOrigin) ConditionOrigin(condition BodyConditionOrigin) *Source
 		Intent: o.Intent, IntentSource: o.IntentSource, CandidateID: o.CandidateID,
 		CandidateSource: o.CandidateSource, PlanSHA256: o.PlanSHA256,
 		ConditionDecoded: FillOriginRange{condition.Start, condition.End}}
+	if len(originalDecoded) > 1 {
+		return nil
+	}
+	if len(originalDecoded) == 1 {
+		link.ConditionDecoded = originalDecoded[0]
+	}
 	link.Schema = "gooo/source-fill-condition-origin/v1"
 	link.CandidateSource = cloneFillOriginRange(o.CandidateSource)
 	link.Fragments = nil

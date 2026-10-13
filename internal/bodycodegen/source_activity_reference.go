@@ -90,6 +90,7 @@ func bodyActivityReference(source []byte, activity *syntax.ActivityDecl, offset 
 	if err != nil {
 		return "", 0, 0, err
 	}
+	_, mapping, _ := rewriteBodySurface(activity.ValueProgram)
 	var found *ast.Ident
 	ast.Inspect(file, func(node ast.Node) bool {
 		call, ok := node.(*ast.CallExpr)
@@ -100,7 +101,7 @@ func bodyActivityReference(source []byte, activity *syntax.ActivityDecl, offset 
 		if !ok || id.Obj != nil {
 			return true
 		}
-		start := set.Position(id.Pos()).Offset - header
+		start := mapping.originalOffset(set.Position(id.Pos()).Offset - header)
 		if position >= start && position < start+len(id.Name) {
 			found = id
 		}
@@ -109,7 +110,7 @@ func bodyActivityReference(source []byte, activity *syntax.ActivityDecl, offset 
 	if found == nil {
 		return "", 0, 0, nil
 	}
-	start := set.Position(found.Pos()).Offset - header
+	start := mapping.originalOffset(set.Position(found.Pos()).Offset - header)
 	first, err := sourceLiteralPosition(raw, activity.ValueProgram, start, false)
 	if err != nil {
 		return "", 0, 0, err

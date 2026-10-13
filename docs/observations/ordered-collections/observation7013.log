@@ -1,0 +1,5 @@
+=== RUN   TestOrderedIntegerAggregation7013
+    composition_collection_native_test.go:50: 7013: ordered Integer field, empty array and exact large integer native results3/3; model0
+--- PASS: TestOrderedIntegerAggregation7013 (0.67s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.269s

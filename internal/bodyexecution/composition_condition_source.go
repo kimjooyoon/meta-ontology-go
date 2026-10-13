@@ -48,7 +48,7 @@ func compositionSourceConditions(prior Composition) (map[conditionOriginKey]*bod
 		result[key] = bound[i]
 		for _, step := range prior.Steps {
 			if fill := step.Generation.Report.BodyFill; fill != nil && fill.SourceOrigin != nil {
-				if link := fill.SourceOrigin.ConditionOrigin(origins[i]); link != nil {
+				if link := fill.SourceOrigin.ConditionOrigin(origins[i], bodycodegen.FillOriginRange{Start: bound[i].DecodedStart, End: bound[i].DecodedEnd}); link != nil {
 					bound[i].Construction = link
 					break
 				}
@@ -56,7 +56,7 @@ func compositionSourceConditions(prior Composition) (map[conditionOriginKey]*bod
 		}
 		for _, preparation := range prior.Preparations {
 			if fill := preparation.Generation.Report.BodyFill; fill != nil && fill.SourceOrigin != nil {
-				if link := fill.SourceOrigin.ConditionOrigin(origins[i]); link != nil {
+				if link := fill.SourceOrigin.ConditionOrigin(origins[i], bodycodegen.FillOriginRange{Start: bound[i].DecodedStart, End: bound[i].DecodedEnd}); link != nil {
 					bound[i].Construction = link
 					break
 				}

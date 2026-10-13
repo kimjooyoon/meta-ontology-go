@@ -1,0 +1,5 @@
+=== RUN   TestSourceDeclaredCardinalityMatrix8017
+    record_cardinality_test.go:96: 8017: 12 source declarations x 10 input forms; 120 expected decisions, 84 decoded, 30 executed; type, presence, cardinality and exact values preserved; model0
+--- PASS: TestSourceDeclaredCardinalityMatrix8017 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/valueexecution	0.537s

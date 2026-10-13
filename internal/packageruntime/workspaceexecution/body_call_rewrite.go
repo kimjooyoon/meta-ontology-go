@@ -18,9 +18,15 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 	prefix := ""
 	var root ast.Node
 	var err error
+	var mapping bodycodegen.BodySourceMap
 	if body {
 		prefix = "package scoped\nvar _ = func() {\n"
-		root, err = parser.ParseFile(set, "computes", prefix+recordBodyGoSyntax(source)+"\n}", 0)
+		normalized, sourceMap, normalizeErr := bodycodegen.NormalizeBodySource(source)
+		if normalizeErr != nil {
+			return "", nil, normalizeErr
+		}
+		mapping = sourceMap
+		root, err = parser.ParseFile(set, "computes", prefix+normalized+"\n}", 0)
 	} else {
 		root, err = parser.ParseExprFrom(set, "expression", source, 0)
 	}
@@ -43,8 +49,8 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 		var target string
 		target, err = c.resolveCall(d, call)
 		if err == nil {
-			sites = append(sites, WorkspaceCallSite{key, target, surface,
-				set.Position(call.Fun.Pos()).Offset - len(prefix), set.Position(call.Fun.End()).Offset - len(prefix)})
+			span := mapping.OriginalRange(set.Position(call.Fun.Pos()).Offset-len(prefix), set.Position(call.Fun.End()).Offset-len(prefix))
+			sites = append(sites, WorkspaceCallSite{key, target, surface, span.Start, span.End})
 		}
 		return err == nil
 	})

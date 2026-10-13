@@ -15,6 +15,11 @@ func expectedRegistry() Registry {
 	valid := func(id, path string) CaseDefinition {
 		return CaseDefinition{ID: id, Path: path, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability}
 	}
+	ordered := func(id, path string) CaseDefinition {
+		item := valid(id, path)
+		item.OrderedCollections = true
+		return item
+	}
 	invalid := func(id, path, diagnostic string) CaseDefinition {
 		return CaseDefinition{ID: id, Path: path, Kind: KindInvalid, ExpectedDecision: DecisionClosed, ExpectedDiagnostic: diagnostic, ProofChoice: "REGRESSION", MetaOperation: "reject-invalid-syntax", Scope: ScopeLanguageCapability}
 	}
@@ -112,6 +117,8 @@ func expectedRegistry() Registry {
 		governance("self-improvement-ci-continuation", "examples/self-improvement-ci-continuation/continuation.gooo"),
 		governance("domain-completeness-profile", "scripts/domain-completeness/profile.gooo"),
 		valid("value-origins-local-candidate", "examples/value-origins/eligibility.gooo"),
+		ordered("batch-planner", "examples/batch-planner/main.gooo"),
+		ordered("batch-handoff", "examples/batch-handoff/main.gooo"),
 	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit, selfImprovementObservationUnit, partialReuseUnit}, MetaSources: []string{"internal/meta/syntaxregistration/contract.gooo", "internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo", "internal/meta/generation/operation-input-contract.gooo", "internal/meta/generation/callback-preview-contract.gooo", "internal/meta/generation/callback-extraction-contract.gooo", "internal/meta/generation/self_improvement_outcome_contract.gooo", "internal/meta/policycompilation/revision-operation.gooo", "examples/relay-game-contract/main.gooo", "internal/meta/generation/experience_memory_receipt_contract.gooo"}}
 }
 

@@ -1,6 +1,7 @@
 package bodycodegen
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -28,6 +29,18 @@ func collectPureCallSites(root ast.Node, maximum int, sites *[]pureCallSite) err
 			return false
 		}
 		switch value := node.(type) {
+		case *ast.RangeStmt:
+			if _, shapeErr := collectionLoopShape(value); shapeErr != nil {
+				err = shapeErr
+			} else if maximum > 1024/RepeatedFieldLimit {
+				err = fmt.Errorf("collection call expansion exceeds 1024")
+			} else {
+				err = collectPureCallSites(value.X, maximum, sites)
+				if err == nil {
+					err = collectPureCallSites(value.Body, maximum*RepeatedFieldLimit, sites)
+				}
+			}
+			return false
 		case *ast.ForStmt:
 			_, bound, shapeErr := countedLoopShape(value)
 			if shapeErr != nil {

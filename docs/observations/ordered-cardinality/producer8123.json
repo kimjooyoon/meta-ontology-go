@@ -1,0 +1,25 @@
+{
+  "baseline": "547ad4cdd34001186509659ea208fc48b0567106",
+  "files": [
+    {
+      "path": "internal/bodycodegen/body_value_origin_branches.go",
+      "sha256": "cd1d9ff2e5a1faa472f278a31a726d22afc2c741f57c5d0891d30540466ad267"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_branches_test.go",
+      "sha256": "b404d688f8295ef5cc4dd67f33e90e446e82ac11200623b619a3eaffe0822da6"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_statements.go",
+      "sha256": "f0be5ce56bc9aa76c45e83b69a4d99a85aae9f19c79c8aa43adafb53c7f8cb74"
+    },
+    {
+      "path": "internal/valueexecution/record_cardinality_test.go",
+      "sha256": "d04e03b66c8dbd615fdef1aa334fa0a9e8218ce97b424ece6d10e22ea9881f2f"
+    },
+    {
+      "path": "internal/valueexecution/record_plan_test.go",
+      "sha256": "728541715c7cd1936eb844bac849c1b6a3d785aa31369c3c97bfb1bb47bbe9b8"
+    }
+  ]
+}

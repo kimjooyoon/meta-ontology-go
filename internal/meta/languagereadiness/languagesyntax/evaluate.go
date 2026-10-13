@@ -39,11 +39,15 @@ func Evaluate(repository fs.FS, headSHA string, registryRaw []byte,
 		return finish(report)
 	}
 	for _, definition := range registry.Cases {
-		evidence := replay.Execute(repository, definition.Path, definition.Kind, definition.ExpectedDiagnostic)
-		if definition.ImplicitActivityPorts {
+		var evidence replay.Result
+		if definition.OrderedCollections {
+			evidence = replay.ExecuteWithOrderedCollections(repository, definition.Path, definition.Kind, definition.ExpectedDiagnostic)
+		} else if definition.ImplicitActivityPorts {
 			evidence = replay.ExecuteWithImplicitActivityPorts(repository, definition.Path, definition.Kind, definition.ExpectedDiagnostic)
 		} else if definition.EntityFields {
 			evidence = replay.ExecuteWithEntityFieldsSupport(repository, definition.Path, definition.Kind, definition.ExpectedDiagnostic)
+		} else {
+			evidence = replay.Execute(repository, definition.Path, definition.Kind, definition.ExpectedDiagnostic)
 		}
 		item := CaseResult{Definition: definition, Evidence: evidence}
 		item.Status = caseStatus(item)

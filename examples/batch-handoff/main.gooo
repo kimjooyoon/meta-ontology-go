@@ -1,0 +1,48 @@
+package batchhandoff8411
+namespace batchhandoff8411
+
+entity Batch id "urn:handoff8411:batch" fields {
+    field budget id "urn:handoff8411:budget" type integer required one
+    field durations id "urn:handoff8411:durations" type integer required many
+}
+entity Selection id "urn:handoff8411:selection" fields {
+    field durations id "urn:handoff8411:selected" type integer required many
+}
+entity Summary id "urn:handoff8411:summary" fields {
+    field count id "urn:handoff8411:count" type integer required one
+    field total id "urn:handoff8411:total" type integer required one
+}
+
+activity Select(Batch) -> Selection id "urn:handoff8411:select" computes `
+if input.budget < 0 { return Selection{durations: input.durations[:0]} }
+let accepted = 0
+let spent = 0
+for duration in input.durations {
+    if duration < 0 { return Selection{durations: input.durations[:accepted]} }
+    if __GOOO_BODY_HOLE_fits__ {
+        spent = spent + duration
+        accepted = accepted + 1
+    } else {
+        return Selection{durations: input.durations[:accepted]}
+    }
+}
+return Selection{durations: input.durations[:accepted]}
+` assembling {
+    source_fill intent "예산에 들어오는 앞부분을 다음 활동에 넘긴다. 합계가 예산과 같아도 포함한다." {
+        hole "fits"
+        candidate "inclusive" { fill "fits" "duration <= input.budget - spent" }
+        candidate "strict" { fill "fits" "duration < input.budget - spent" }
+    }
+    value_case "[{\"budget\":24,\"durations\":[7,17]}]" -> "{\"durations\":[7,17]}"
+    value_case "[{\"budget\":0,\"durations\":[2]}]" -> "{\"durations\":[]}"
+    value_case "[{\"budget\":9,\"durations\":[3,8]}]" -> "{\"durations\":[3]}"
+    holdout_value_case "[{\"budget\":13,\"durations\":[5,-1,2]}]" -> "{\"durations\":[5]}"
+}
+
+activity Summarize(Selection) -> Summary id "urn:handoff8411:summarize" computes `
+let total = 0
+for duration in input.durations { total = total + duration }
+return Summary{count: int64(len(input.durations)), total: total}
+`
+
+bind Select.result -> Summarize.input
