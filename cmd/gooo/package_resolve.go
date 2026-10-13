@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	packageResolveUsage       = "usage: gooo package <resolve|interface|execute|replay|resume|construct> ..."
+	packageResolveUsage       = "usage: gooo package <resolve|interface|inspect|execute|replay|resume|construct> ..."
 	workspaceSchema           = "gooo/package-workspace-manifest/v1"
 	workspaceMaxSourceCount   = 512
 	workspaceMaxSourceBytes   = 1 << 20
@@ -44,6 +44,9 @@ type workspaceResolutionReceipt struct {
 }
 
 func runPackageCommand(args []string, reader SourceReader, stdout, stderr io.Writer) int {
+	if len(args) > 0 && args[0] == "inspect" {
+		return runPackageInspect(args[1:], reader, stdout, stderr)
+	}
 	if len(args) > 0 && args[0] == "interface" {
 		return runPackageInterface(args[1:], reader, stdout, stderr)
 	}

@@ -1,0 +1,142 @@
+{
+  "schema": "gooo/workspace-source-identity-observation/v1",
+  "producer": {
+    "schema": "gooo/development-source-identity/v1",
+    "compiler_base": "fc5c8c5176f0eeb6fd1bce8de289cfd138022100",
+    "source_overlays": [
+      {
+        "path": "cmd/gooo/emit_dispatch.go",
+        "sha256": "cf0529d10b610c9d7d0e50716e69a4297866d4486f42b3ed676fb9cdd2ed12dd"
+      },
+      {
+        "path": "cmd/gooo/package_inspect.go",
+        "sha256": "d1ae8edef18f88607403d00760cf7c43e1f2c9ef8a53068c83d148505085fcf3"
+      },
+      {
+        "path": "cmd/gooo/package_resolve.go",
+        "sha256": "5c315bba57ca6f01811a9280cbe76ef3b4f64a8f75b6589f86ab6fff10086c4b"
+      },
+      {
+        "path": "cmd/gooo/source_refactor.go",
+        "sha256": "d19cca5acc99344b527bff5257a9b3c07db5479749e00870c454fb9300f57cc9"
+      },
+      {
+        "path": "cmd/gooo/usage.go",
+        "sha256": "d4f6c35d0982bea2d28c03d0b99758dbc78533974f6b9314dd1a7a016008c024"
+      },
+      {
+        "path": "cmd/gooo/usage_body_context.go",
+        "sha256": "1f68350153885cd9fd7f6375f0920eb1af7571dff37fed64a27e37b42133d004"
+      },
+      {
+        "path": "cmd/gooo/usage_topics_4.go",
+        "sha256": "0fadc07b9087523f693cfb07551ef021b57d0a2948f263fbf447a9dc916617ab"
+      },
+      {
+        "path": "internal/bodycodegen/criteria_dependencies.go",
+        "sha256": "f822ffcc06746b36adc4dced83b7458c061646484b3c8ca3c573877a9a277a8b"
+      },
+      {
+        "path": "internal/bodycodegen/criteria_source_flow.go",
+        "sha256": "fec60e9a66c2e0a217ad62285f9093ab1ad686fab00eeb915a6ca3d4b003275b"
+      },
+      {
+        "path": "internal/bodycodegen/rename_assembly.go",
+        "sha256": "785f8a96ef4f4529e7c0d2985b8e115bfc93b23246bb5ada6e8752704512d08b"
+      },
+      {
+        "path": "internal/bodycodegen/rename_body.go",
+        "sha256": "cd0ffe69d678a4b5ca4a22e081c3e37d63a06e2f9e39eefb206ea0f8aa5266b2"
+      },
+      {
+        "path": "internal/bodycodegen/rename_body_parse.go",
+        "sha256": "11e295e45ec14864e39f88f6a3184e44f392bd72c205de53bc74af95d25a148a"
+      },
+      {
+        "path": "internal/bodycodegen/source_activity_reference.go",
+        "sha256": "253ab04310a7f141513ab466ef4df263ad9585c2ec87a78cc018f8da1612edb0"
+      },
+      {
+        "path": "internal/bodycodegen/source_literal_position.go",
+        "sha256": "3442c58ae14b904be64a092c2134d26db2e3e06c22c6338a2523a248218e83bb"
+      },
+      {
+        "path": "internal/bodycodegen/source_rename.go",
+        "sha256": "1e06eeafca52bad32e1a38c53fc4888260d23b8f6f178cd44614c9785d3862cc"
+      },
+      {
+        "path": "internal/lsp/activity_rename.go",
+        "sha256": "e56152bfd639eb4277dd7d1f2ffc2f8180948628964081492957ccf8a8605b9c"
+      },
+      {
+        "path": "internal/lsp/prepare_rename_part02.go",
+        "sha256": "dad11e34cf2629b0206bc76a3caf7f74c703a0ebe093c96d7ba81d8c909a6f15"
+      },
+      {
+        "path": "internal/lsp/rename_part01.go",
+        "sha256": "134dde7630048fdae3673b4d8551ba19d6f5c0616cb2339ff579c7084bfb55e0"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/body_calls.go",
+        "sha256": "e4d5e38b7c591c8c3ffdbddc6da33fa4791dd122528c5e2ed23977b73422ed50"
+      }
+    ],
+    "module_overlay": {
+      "go_mod_sha256": "a8e14a07811a86dce0296b1877b435bf05cbf92ac7b0e3817b65c3e2f154c168",
+      "go_sum_sha256": "b0129fe5ad2fb415c25f4abe2ad31ba55f612f85431dfbe24b7c752ff01a0219",
+      "sdk_version": "v0.2.48-experimental"
+    },
+    "binary_sha256": "3f8f9ec0ebb0dc98327bdea6f933ec4e10eb79394a1f6b66dcccf96a93643ed7",
+    "toolchain": "go1.27.2",
+    "scope": "composite source inspection build; actual source identity before later help additions; no public compiler release claim"
+  },
+  "command": "gooo package inspect --json workspace.json",
+  "source_inputs": [
+    {
+      "path": "workspace.json",
+      "sha256": "sha256:beac50a58280ab38d4f0d2a52d10518d6d4280ef9d790236bd6a5fe929ed92c4"
+    },
+    {
+      "path": "core.gooo.fixture",
+      "sha256": "sha256:c6f047c998e30ce6dc814c93e9cb2b685b78927e1eaa024fdf2f15a5a76cac43"
+    },
+    {
+      "path": "app.gooo.fixture",
+      "sha256": "sha256:eda4532a1e2da75fc5fc89f09ad51b22b2b7844139f349ab642e07d3c6d952ca"
+    }
+  ],
+  "output_sha256": "sha256:701b0dc3039aa40f77c22a795e80cd4912645142f59ee3ebe6e3788c6d01e2db",
+  "source_inspections": 1,
+  "source_files_unchanged": true,
+  "prepared_package_count": 2,
+  "source_call_count": 1,
+  "call_participants": [
+    {
+      "activity": {
+        "package_path": "example/app",
+        "activity": "Main",
+        "lowered_name": "GoooPackage1ActivityMain"
+      },
+      "activity_id": "urn:workspace:entry",
+      "lowered_activity_id": "urn:workspace:entry",
+      "source": "app.gooo.fixture",
+      "source_body_sha256": "sha256:836a487849984ef7980003a13caa2da9a8505abfbfbc20e7b0577e04042393bd"
+    },
+    {
+      "activity": {
+        "package_path": "example/core",
+        "activity": "\uc694\uae08",
+        "lowered_name": "GoooPackage0Activity\uc694\uae08"
+      },
+      "activity_id": "urn:workspace:charge",
+      "lowered_activity_id": "urn:workspace:charge",
+      "source": "core.gooo.fixture",
+      "source_body_sha256": "sha256:afacd5fdfb9a626cac59409d39dabf5720bcae76b0dc1af61580945a7a5f1f27"
+    }
+  ],
+  "program_executions": 0,
+  "model_predictions": 0,
+  "training_runs": 0,
+  "scope": "one new valid-signature imported Korean call inspection; authored IDs agree in original/lowered reports and declarations; native values and saved replay not executed",
+  "prior_fixture": "An earlier fixture used unsupported qualified signature types and was declined; its source/output retained in source-qualification-failure; that source was not replayed"
+}

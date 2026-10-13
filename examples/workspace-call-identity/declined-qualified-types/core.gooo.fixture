@@ -1,0 +1,4 @@
+package core
+namespace source_core
+entity Integer id "urn:workspace:integer"
+activity 요금(Integer) -> Integer id "urn:workspace:charge" computes "return input + 3"
