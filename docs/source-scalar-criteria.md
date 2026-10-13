@@ -37,6 +37,14 @@ original input and the candidate's actual Integer result. The criterion can
 express an equality, inequality or another supported Boolean relationship.
 The compiler connects those activities and records each observed result.
 
+All predicates in one `criteria` block share its input tuples. Declare each
+selection tuple once, then declare the separate held tuples once. Two predicates
+and four selection tuples produce eight predicate/input observations. Repeating
+the same tuple after each predicate is a duplicate-input error; indentation does
+not make an input belong to just the preceding predicate. The
+[bounded fee example](../examples/scalar-source-model-fee-shared-inputs/README.md)
+shows two fixed predicates over shared selection and held inputs.
+
 ## What happens
 
 1. Check both permitted paths against `Difference` at 11. Both pass.
@@ -100,14 +108,24 @@ the original question history and the earlier predicate identity.
 
 ## Model and recorded format
 
-This profile uses deterministic selection. Current record model features cannot
-represent scalar criteria; the model route records
-`SCALAR_CRITERIA_FEATURE_CONTRACT_UNAVAILABLE` and declines to deterministic
-selection. The examples make zero model calls. No training is part of this
-feature. A later decision model needs an explicit feature contract for these
-source choices and obligations. The optional [criteria source flow](criteria-source-flow.ko.md)
-now exports their typed structure through `body-context --value-flow`; current
-model features and weights keep their existing scope.
+This profile retains deterministic selection when no model is connected. The
+original paired examples make zero model calls. Record model features keep their
+record scope and decline scalar criteria with
+`SCALAR_CRITERIA_FEATURE_CONTRACT_UNAVAILABLE`.
+
+Development source containing the [scalar source model adapter](scalar-source-model.ko.md)
+can load the separate `gooo/scalar-criteria-model/v1` artifact from SDK
+`v0.2.51-experimental`. It ranks the declared combinations once per request;
+the existing source evaluator checks candidates against the fixed predicates.
+The optional [criteria source flow](criteria-source-flow.ko.md) exports their
+typed structure through `body-context --value-flow`, and `--model` prepares the
+compatible scalar numerical features without prediction. Finite input tuples
+and observed answers are excluded from those numerical rows.
+
+The new adapter examples use synthetic parameters. Learned weights and
+source-family evaluation remain separate work. Existing observations keep their
+original source/model producers; adding the adapter does not reclassify the
+earlier deterministic examples as model observations.
 
 For compatibility, JSON still uses the shared `record_assembly` container.
 Its schema identifies the actual profile: `gooo/scalar-criteria-assembly/v1`.

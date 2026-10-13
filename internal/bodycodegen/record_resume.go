@@ -49,7 +49,7 @@ func ResumeRecordAssembly(ctx context.Context, filename string, priorSource, sou
 	if err := replayRecordObservation(ctx, filename, source, plans, history, old, r); err != nil {
 		return Result{}, err
 	}
-	if err := verifyRecordAssemblyRanking(old, r, plans[0]); err != nil {
+	if err := verifyRecordAssemblyRankingContext(ctx, old, r, plans[0]); err != nil {
 		return Result{}, err
 	}
 	r.RankingSourceSHA256 = origin
@@ -71,6 +71,10 @@ func copyRecordModelObservation(dst, src *RecordAssemblyReceipt) {
 	if src.Model != nil {
 		value := *src.Model
 		dst.Model = &value
+	}
+	if src.ScalarPrediction != nil {
+		value := *src.ScalarPrediction
+		dst.ScalarPrediction = &value
 	}
 	if src.Prediction != nil {
 		value := *src.Prediction

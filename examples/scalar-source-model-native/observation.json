@@ -1,0 +1,50 @@
+{
+  "schema": "gooo/scalar-source-native-observation/v1",
+  "observed_at": "2026-10-13T12:32:44.223078+09:00",
+  "producer": {
+    "compiler_base": "a94fe484359a60d5dcc518cbf1d21b47c5c550c6",
+    "overlays": [
+      {
+        "path": "internal/bodyexecution/scalar_criteria_model_native_test.go",
+        "sha256": "36d9993af7cfbc9c7838bb10500b3dd9c1e8dc9affbd2e9cd5a6b3972b40a626",
+        "scope": "one new test only; no production overlays"
+      }
+    ],
+    "sdk_version": "v0.2.51-experimental",
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "sum_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e",
+    "test": "TestScalarSourceModelEmitsAndExecutesCalledFeeNatively",
+    "source_sha256": "sha256:d2c7bc24995a1c4a59c9221de03a8620388b22a2a0b5440c65f59cd66caf7a96",
+    "scope": "one distinct called fee source with initial native observation; ExecuteComposition internally performs two native processes as one observation; no historical cohort/test replay",
+    "started_at": "2026-10-13T03:32:40.848260+00:00"
+  },
+  "observation": {
+    "activity_id": "urn:nativedecision:fee",
+    "construction_model_calls": 1,
+    "executable_sha256": "sha256:92a4c458d4e15757988ebdf201990f10bc6346134aa44baa34d566db551a0be9",
+    "generated_sha256": "sha256:5b7e19dc552c619c9dfbe586e5528845c88d6d6b6cf243054a40dbe2d3993cdd",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "held_passed": 3,
+    "held_total": 3,
+    "native_elapsed_ns": 731048125,
+    "native_model_calls": 0,
+    "native_passed": 3,
+    "native_processes": 2,
+    "native_total": 3,
+    "selected_mask": 1,
+    "selection_passed": 2,
+    "selection_total": 2,
+    "source_sha256": "sha256:d2c7bc24995a1c4a59c9221de03a8620388b22a2a0b5440c65f59cd66caf7a96"
+  },
+  "weights": "synthetic_untrained_shared_second_option_bias",
+  "training_runs": 0,
+  "generated_gooo_native_program_executions": 2,
+  "observation_invocations": 1,
+  "internal_execution_scope": "ExecuteComposition reconstructs once, builds once, runs its case suite in two native processes and compares the outputs",
+  "cpu_utilization": "UNOBSERVED",
+  "process_memory": "UNOBSERVED",
+  "trained_quality": "UNOBSERVED",
+  "historical_replays": 0,
+  "log_sha256": "50cf8556f90229ce34579bbbc7df28be7db0353f349ae3d46ce53b1e8c89a267",
+  "cases_file_sha256": "768d8aacfaf8be26ebfd9393708e78a852d8ee50647cdfad435bcc6c3058fe2c"
+}

@@ -11,6 +11,8 @@ import (
 )
 
 type recordAssemblyPlan struct {
+	sourceFilename          string
+	sourceCarrier           []byte
 	scalar                  *scalarCriteriaPlan
 	effectiveCriteriaInputs []string
 	criteria                []preparedRecordCriterion
@@ -76,6 +78,7 @@ func prepareRecordAssembly(ctx context.Context, filename string, source []byte, 
 		return plan, fmt.Errorf("record assembly requires value_case or criteria and unseeded bounded selection")
 	}
 	plan.sourceSHA256 = digest(source)
+	plan.sourceFilename, plan.sourceCarrier = filename, source
 	plan.original, err = prepareActivityBody(filename, source, activity)
 	if err != nil {
 		return plan, err

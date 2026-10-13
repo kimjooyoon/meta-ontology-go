@@ -124,6 +124,15 @@ a graph containing only source IR search rejects that option before loading a
 model. No provider is inferred from environment variables in `body-compose`.
 Multi-hole `source_fill` plans use the additional route below.
 
+Development source containing the [scalar source adapter](scalar-source-model.ko.md)
+also accepts `gooo/scalar-criteria-model/v1` for Integer choices with fixed Boolean
+criteria. Its artifact and numerical features are distinct from the record profile.
+The [fresh native scalar caller](../examples/scalar-source-model-native/README.md)
+made one synthetic construction prediction, preserved selection criteria 2/2 and
+held criteria 3/3, then matched native caller expectations 3/3 with zero additional
+inference during execution. Its two native processes belong to one initial
+execution observation. Earlier examples retain their original producers and scope.
+
 Development source also connects pure activity calls inside an IR search body.
 The [helper search example](../examples/caller-search-calls/README.md) assembles a
 record helper before selecting a caller's denominator. Candidate checks, residual
@@ -506,7 +515,8 @@ holdouts never enter ranking or `COMPLETE_FINITE`. Those finite cases can all pa
 while a holdout fails. Final evaluation remains a separate native execution.
 
 `--fill-model` accepts the existing operation-classifier profile for initial local
-fills; `--model` accepts the record-choice profile. Both are optional. Initial
+fills; `--model` accepts compatible declared-choice profiles. Scalar fixed criteria
+use the separately versioned adapter described above. Both models are optional. Initial
 model observations are retained; subsequent search and saved replay load no model.
 Source-fill preflight still checks every assignment and stops on invalid ones.
 The mixed v4 path preserves integer-search rejection rows and their scored-prefix

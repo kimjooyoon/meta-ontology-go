@@ -54,6 +54,14 @@ Gooo checks the supplied cases and saves the selected program for replay. The
 model-to-fill example keeps its original 0/4 first proposal alongside the later
 4/4 result. Those are finite case counts; model-free ordering is also available.
 
+Development source also connects Integer path choices and fixed Boolean criteria
+to the [source-only scalar model adapter](docs/scalar-source-model.ko.md). A model
+ranks permitted paths, and Gooo records actual selection and separate-input
+conditions. The integration examples use synthetic parameters, including a wrong
+first proposal and an explicit source attempt budget. Learned weights and
+evaluation across separate source families are next. Plain body-codegen output
+shows finite condition status alongside the generated Go.
+
 The last command prints:
 
 ```text
@@ -114,6 +122,10 @@ Gooo source + intent + permitted choices + finite expectations
 · [source-owned behavior criteria](docs/source-behavior-criteria.md)
 · [Integer paths judged by Gooo conditions](docs/source-scalar-criteria.md)
 · [typed choices and requirement graphs, 한국어](docs/criteria-source-flow.ko.md)
+· [source choices and small decision models, 한국어](docs/scalar-source-model.ko.md)
+· [related ontology languages and gaps, 한국어](docs/ontology-language-comparison.ko.md)
+· [file-local imported types, 한국어](docs/qualified-activity-types.ko.md)
+· [source-preserving formatting, 한국어](docs/source-preserving-format.ko.md)
 · [relationships between executions, 한국어](docs/source-relational-callers.ko.md)
 · [source-owned criteria questions](docs/source-criteria-questions.md)
 · [compose activity bodies](docs/native-body-composition.md)
