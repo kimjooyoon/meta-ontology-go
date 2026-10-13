@@ -1,0 +1,8 @@
+=== RUN   TestOptionalReadInputs9311
+    composition_read_optional_test.go:41: optional9311: absent/empty/present optional collection with required reads3/3, resolved3/3; model0
+--- PASS: TestOptionalReadInputs9311 (0.76s)
+=== RUN   TestLiteralDecisions9281
+    sequence_literal_native_test.go:72: literal9281: Text/Boolean selected bodies, empty Text collection, native9/9; six constructed reads explicitly unresolved; model0
+--- PASS: TestLiteralDecisions9281 (0.61s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.850s

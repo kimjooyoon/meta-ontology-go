@@ -1,0 +1,198 @@
+{
+  "schema": "gooo/construction-origin-observation/v1",
+  "scope": "development source; local observations; own successor CI pending",
+  "source_base": "3a36686cb498e3be6179bb9f2e20512a8b0f97dc",
+  "producer": "producer9661.json",
+  "historical_local_replays": 0,
+  "model_calls": 0,
+  "new_observations": {
+    "construction9533": {
+      "finite_passed": 3,
+      "finite_total": 3,
+      "runtime_replayed": true,
+      "read_observation": {
+        "schema": "gooo/native-read-summary/v2",
+        "status": "COMPLETE",
+        "recorded_reads": 24,
+        "resolved_reads": 12,
+        "constructed_reads": 12,
+        "recorded_constructions": 15,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:72c1c6afe318a1401bd8e7c4a13f79bbba96e61d2e2d4f23409fa62e9ce5a97e",
+        "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+      },
+      "runs": [
+        {
+          "wall_ms": 355.618917,
+          "cpu_ms": 6.51,
+          "peak_rss_MiB": 4.953125
+        },
+        {
+          "wall_ms": 4.00475,
+          "cpu_ms": 3.125,
+          "peak_rss_MiB": 4.890625
+        }
+      ]
+    },
+    "construction9547": {
+      "finite_passed": 2,
+      "finite_total": 2,
+      "runtime_replayed": true,
+      "read_observation": {
+        "schema": "gooo/native-read-summary/v2",
+        "status": "COMPLETE",
+        "recorded_reads": 0,
+        "resolved_reads": 0,
+        "recorded_constructions": 4,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:6d2319d93d34ea0d4cff638b30f9bd3eb594bd4d398c8d284bf6626a9a59db5a",
+        "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+      },
+      "runs": [
+        {
+          "wall_ms": 354.257417,
+          "cpu_ms": 9.845,
+          "peak_rss_MiB": 4.859375
+        },
+        {
+          "wall_ms": 7.344458,
+          "cpu_ms": 5.926,
+          "peak_rss_MiB": 4.65625
+        }
+      ]
+    },
+    "construction9551": {
+      "finite_passed": 1,
+      "finite_total": 2,
+      "runtime_replayed": true,
+      "read_observation": {
+        "schema": "gooo/native-read-summary/v2",
+        "status": "PARTIAL",
+        "recorded_reads": 5,
+        "resolved_reads": 4,
+        "constructed_reads": 1,
+        "interrupted_constructions": 1,
+        "recorded_constructions": 2,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:f1435983c002cb6f597c2494f09522be3ab94859fc85da214b8421680b076877",
+        "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+      },
+      "runs": [
+        {
+          "wall_ms": 354.766667,
+          "cpu_ms": 10.107,
+          "peak_rss_MiB": 4.921875
+        },
+        {
+          "wall_ms": 7.907125,
+          "cpu_ms": 6.253,
+          "peak_rss_MiB": 4.90625
+        }
+      ]
+    },
+    "construction9571": {
+      "finite_passed": 2,
+      "finite_total": 2,
+      "runtime_replayed": true,
+      "read_observation": {
+        "schema": "gooo/native-read-summary/v2",
+        "status": "COMPLETE",
+        "recorded_reads": 8,
+        "resolved_reads": 6,
+        "constructed_reads": 2,
+        "recorded_constructions": 2,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:da00b9b76476c0a10cc76dc661913d5498503c501d43bf187b20fc63eaab0138",
+        "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+      },
+      "runs": [
+        {
+          "wall_ms": 361.011958,
+          "cpu_ms": 10.642,
+          "peak_rss_MiB": 4.765625
+        },
+        {
+          "wall_ms": 7.609792,
+          "cpu_ms": 6.115,
+          "peak_rss_MiB": 4.890625
+        }
+      ]
+    },
+    "construction9661": {
+      "finite_passed": 2,
+      "finite_total": 2,
+      "runtime_replayed": true,
+      "read_observation": {
+        "schema": "gooo/native-read-summary/v2",
+        "status": "COMPLETE",
+        "recorded_reads": 8,
+        "resolved_reads": 6,
+        "constructed_reads": 2,
+        "recorded_constructions": 2,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:da00b9b76476c0a10cc76dc661913d5498503c501d43bf187b20fc63eaab0138",
+        "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+      },
+      "runs": [
+        {
+          "wall_ms": 351.8595,
+          "cpu_ms": 9.744,
+          "peak_rss_MiB": 4.796875
+        },
+        {
+          "wall_ms": 7.697291,
+          "cpu_ms": 6.172,
+          "peak_rss_MiB": 4.9375
+        }
+      ]
+    },
+    "consumer9593": {
+      "finite_passed": 24,
+      "finite_total": 24,
+      "runtime_replayed": true,
+      "read_observation": null,
+      "runs": [
+        {
+          "wall_ms": 345.709709,
+          "cpu_ms": 5.092,
+          "peak_rss_MiB": 4.859375
+        },
+        {
+          "wall_ms": 4.103125,
+          "cpu_ms": 3.168,
+          "peak_rss_MiB": 5.0
+        }
+      ]
+    }
+  },
+  "failures": {
+    "9473": "compile failed: bytes import removed but still used; no native execution",
+    "9571": "native outputs 2/2; test expected unparenthesized source while selected expression retained parentheses"
+  },
+  "prior_ci": {
+    "pr": 1543,
+    "projection_run": 38443987679,
+    "semantic_run": 38443987576,
+    "semantic_job": 115457475541,
+    "cause": "observeCompositionRuns helper extraction NO_SAFE_DECLARATION_CAPACITY; original head/body/runs unchanged"
+  },
+  "limits": {
+    "sites": 4096,
+    "reads_per_process": 65536,
+    "construction_instances_per_process": 4096,
+    "reserved_elements_per_process": 65536,
+    "elements_per_literal": 256,
+    "cases": 128,
+    "sidecar_bytes": 33554432
+  }
+}

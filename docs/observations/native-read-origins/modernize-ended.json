@@ -1,0 +1,14 @@
+{
+  "exit_code": 0,
+  "elapsed_seconds": 0.49010883399999994,
+  "stdout_bytes": 0,
+  "stderr_bytes": 0,
+  "args": [
+    "go",
+    "fix",
+    "-diff",
+    "-overlay=/tmp/gooo-native-read-origin-20261014/overlay9361.json",
+    "./internal/bodycodegen",
+    "./internal/bodyexecution"
+  ]
+}

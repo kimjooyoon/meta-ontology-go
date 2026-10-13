@@ -1,0 +1,6 @@
+=== RUN   TestNativeReadOrigins9023
+    composition_read_native_test.go:60: new source construction called activity "At" plan: activity At has no valid body-fill assignment: first9023 (TYPECHECK): record construction requires a declared record name; requested9023 (TYPECHECK): record construction requires a declared record name
+--- FAIL: TestNativeReadOrigins9023 (0.01s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.621s
+FAIL

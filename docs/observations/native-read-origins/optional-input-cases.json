@@ -1,0 +1,48 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Read": {
+          "values": [
+            379,
+            383
+          ]
+        }
+      },
+      "expected": {
+        "Read": 379
+      }
+    },
+    {
+      "inputs": {
+        "Read": {
+          "values": [
+            389,
+            397
+          ],
+          "notes": []
+        }
+      },
+      "expected": {
+        "Read": 389
+      }
+    },
+    {
+      "inputs": {
+        "Read": {
+          "values": [
+            401,
+            409
+          ],
+          "notes": [
+            "메모"
+          ]
+        }
+      },
+      "expected": {
+        "Read": 401
+      }
+    }
+  ]
+}

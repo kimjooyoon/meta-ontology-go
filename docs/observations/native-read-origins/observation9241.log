@@ -1,0 +1,6 @@
+=== RUN   TestLiteralDecisions9241
+    sequence_literal_native_test.go:57: typed literal selection activity "Label" plan: record IR body-fill candidate "alwaysLeft9241" must have a unique id and fill every hole exactly once
+--- FAIL: TestLiteralDecisions9241 (0.01s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.607s
+FAIL

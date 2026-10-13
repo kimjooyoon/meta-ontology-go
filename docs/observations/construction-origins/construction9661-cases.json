@@ -1,0 +1,33 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Delta": {
+          "values": [
+            647,
+            653
+          ],
+          "pick": 1
+        }
+      },
+      "expected": {
+        "Delta": 1300
+      }
+    },
+    {
+      "inputs": {
+        "Delta": {
+          "values": [
+            659,
+            661
+          ],
+          "pick": 0
+        }
+      },
+      "expected": {
+        "Delta": 659
+      }
+    }
+  ]
+}

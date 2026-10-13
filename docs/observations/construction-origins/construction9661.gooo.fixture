@@ -1,0 +1,16 @@
+package filledcollection
+namespace filled9661
+entity Integer id "urn:gooo:type:integer"
+entity Request id "urn:filled9661:request" fields {
+ field values id "urn:filled9661:values" type integer required many
+ field pick id "urn:filled9661:pick" type integer required one
+}
+activity Delta(Request) -> Integer id "urn:filled9661:delta" computes "let choices=[]int64{input.values[0],__GOOO_BODY_HOLE_delta__};return choices[input.pick]" assembling {
+ source_fill intent "두 번째 원소는 원본 두 값의 합을 계산한다" {
+  hole "delta"
+  candidate "reverse9661" { fill "delta" "input.values[0]-input.values[1]" }
+  candidate "forward9661" { fill "delta" "input.values[1]+input.values[0]" }
+ }
+ value_case "[{\"values\":[13,17],\"pick\":1}]" -> "30"
+ holdout_value_case "[{\"values\":[19,23],\"pick\":1}]" -> "42"
+}

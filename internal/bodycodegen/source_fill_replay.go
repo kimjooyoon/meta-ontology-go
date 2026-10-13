@@ -65,6 +65,12 @@ func compareSourceFillReplay(prior, expected Result) error {
 		return fmt.Errorf("body-fill selected source or projection differs")
 	}
 	a, b := prior.Report, expected.Report
+	if a.BodyConstructions == nil {
+		b.BodyConstructions = nil
+	}
+	if a.BodyReads == nil {
+		b.BodyReads = nil
+	}
 	if a.BodyConditions == nil {
 		b.BodyConditions = nil
 	}

@@ -39,43 +39,45 @@ type Result struct {
 
 // Report describes what was lowered and how the output was checked.
 type Report struct {
-	Schema                 string                  `json:"schema"`
-	Decision               string                  `json:"decision"`
-	Activity               string                  `json:"activity"`
-	ActivityID             string                  `json:"activity_id"`
-	InputType              string                  `json:"input_type"`
-	InputParameters        []InputParameter        `json:"input_parameters,omitempty"`
-	RecordTypes            []RecordType            `json:"record_types,omitempty"`
-	OutputType             string                  `json:"output_type"`
-	PlanSHA256             string                  `json:"plan_sha256"`
-	CompilerSourceSHA      string                  `json:"compiler_source_sha"`
-	SourceDigest           string                  `json:"source_digest"`
-	ProgramDigest          string                  `json:"program_digest"`
-	GeneratedDigest        string                  `json:"generated_digest"`
-	ReplayDigest           string                  `json:"replay_digest"`
-	Route                  string                  `json:"route"`
-	RouteDecision          decisionroute.Receipt   `json:"route_decision"`
-	RouteSelection         RouteSelectionReceipt   `json:"route_selection"`
-	RouteDecisionLatencyMS float64                 `json:"route_decision_latency_ms"`
-	BodyFill               *IRBodyFillReceipt      `json:"body_fill,omitempty"`
-	BodySearch             *IRBodySearchReceipt    `json:"body_search,omitempty"`
-	BodyPaths              *BodyPathReceipt        `json:"body_paths,omitempty"`
-	RecordAssembly         *RecordAssemblyReceipt  `json:"record_assembly,omitempty"`
-	BodyConditions         []BodyConditionOrigin   `json:"body_conditions,omitempty"`
-	CallClosure            *PureCallClosure        `json:"call_closure,omitempty"`
-	CandidateRoutes        []string                `json:"candidate_routes"`
-	EquivalenceRule        string                  `json:"equivalence_rule"`
-	SourceConstructs       int                     `json:"source_constructs"`
-	LoweredConstructs      int                     `json:"lowered_constructs"`
-	SourceSemanticUnits    int                     `json:"source_semantic_units"`
-	LoweredSemanticUnits   int                     `json:"lowered_semantic_units"`
-	CompletenessPercent    float64                 `json:"completeness_percent"`
-	RouteEquivalence       RouteEquivalenceReceipt `json:"route_equivalence"`
-	TypecheckPassed        bool                    `json:"typecheck_passed"`
-	DeterministicReplay    bool                    `json:"deterministic_replay"`
-	RepositoryWrites       int                     `json:"repository_writes"`
-	UnsupportedConstructs  string                  `json:"unsupported_constructs"`
-	CompletenessReceipt    *CompletenessReceipt    `json:"completeness_receipt,omitempty"`
+	Schema                 string                   `json:"schema"`
+	Decision               string                   `json:"decision"`
+	Activity               string                   `json:"activity"`
+	ActivityID             string                   `json:"activity_id"`
+	InputType              string                   `json:"input_type"`
+	InputParameters        []InputParameter         `json:"input_parameters,omitempty"`
+	RecordTypes            []RecordType             `json:"record_types,omitempty"`
+	OutputType             string                   `json:"output_type"`
+	PlanSHA256             string                   `json:"plan_sha256"`
+	CompilerSourceSHA      string                   `json:"compiler_source_sha"`
+	SourceDigest           string                   `json:"source_digest"`
+	ProgramDigest          string                   `json:"program_digest"`
+	GeneratedDigest        string                   `json:"generated_digest"`
+	ReplayDigest           string                   `json:"replay_digest"`
+	Route                  string                   `json:"route"`
+	RouteDecision          decisionroute.Receipt    `json:"route_decision"`
+	RouteSelection         RouteSelectionReceipt    `json:"route_selection"`
+	RouteDecisionLatencyMS float64                  `json:"route_decision_latency_ms"`
+	BodyFill               *IRBodyFillReceipt       `json:"body_fill,omitempty"`
+	BodySearch             *IRBodySearchReceipt     `json:"body_search,omitempty"`
+	BodyPaths              *BodyPathReceipt         `json:"body_paths,omitempty"`
+	RecordAssembly         *RecordAssemblyReceipt   `json:"record_assembly,omitempty"`
+	BodyConditions         []BodyConditionOrigin    `json:"body_conditions,omitempty"`
+	BodyReads              []BodyReadOrigin         `json:"body_reads,omitempty"`
+	BodyConstructions      []BodyConstructionOrigin `json:"body_constructions,omitempty"`
+	CallClosure            *PureCallClosure         `json:"call_closure,omitempty"`
+	CandidateRoutes        []string                 `json:"candidate_routes"`
+	EquivalenceRule        string                   `json:"equivalence_rule"`
+	SourceConstructs       int                      `json:"source_constructs"`
+	LoweredConstructs      int                      `json:"lowered_constructs"`
+	SourceSemanticUnits    int                      `json:"source_semantic_units"`
+	LoweredSemanticUnits   int                      `json:"lowered_semantic_units"`
+	CompletenessPercent    float64                  `json:"completeness_percent"`
+	RouteEquivalence       RouteEquivalenceReceipt  `json:"route_equivalence"`
+	TypecheckPassed        bool                     `json:"typecheck_passed"`
+	DeterministicReplay    bool                     `json:"deterministic_replay"`
+	RepositoryWrites       int                      `json:"repository_writes"`
+	UnsupportedConstructs  string                   `json:"unsupported_constructs"`
+	CompletenessReceipt    *CompletenessReceipt     `json:"completeness_receipt,omitempty"`
 }
 
 // RouteSelectionReceipt makes an optional weighted route draw replayable without
@@ -151,7 +153,7 @@ func generateRouteParameters(packageName, activityName, activityID string, param
 
 func generateRouteWithCalls(packageName, activityName, activityID string, parameters []InputParameter,
 	outputType, body, route string, calls []pureCallFunction, records []RecordType) (generatedRoute, error) {
-	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, conditionOrigins, err := renderParametersWithConditionSources(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
+	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, conditionOrigins, readOrigins, constructionOrigins, err := renderParametersWithSourceOrigins(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
 	if err != nil {
 		return generatedRoute{}, err
 	}
@@ -178,7 +180,7 @@ func generateRouteWithCalls(packageName, activityName, activityID string, parame
 		Route: route, EquivalenceRule: equivalenceRule,
 		SourceConstructs: sourceConstructs, LoweredConstructs: loweredConstructs,
 		SourceSemanticUnits: sourceUnits, LoweredSemanticUnits: loweredUnits,
-		CompletenessPercent: completeness, RouteEquivalence: equivalence, BodyConditions: conditionOrigins,
+		CompletenessPercent: completeness, RouteEquivalence: equivalence, BodyConditions: conditionOrigins, BodyReads: readOrigins, BodyConstructions: constructionOrigins,
 		TypecheckPassed: true,
 	}}, nil
 }

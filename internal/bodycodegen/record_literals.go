@@ -20,6 +20,9 @@ func validateRecordLiterals(body *ast.BlockStmt, records []RecordType) error {
 }
 
 func validateRecordLiteral(literal *ast.CompositeLit, records []RecordType) error {
+	if _, ok := literal.Type.(*ast.ArrayType); ok {
+		return validateSequenceLiteral(literal)
+	}
 	name, ok := literal.Type.(*ast.Ident)
 	if !ok {
 		return fmt.Errorf("record construction requires a declared record name")
@@ -63,6 +66,9 @@ func validateRecordLiteral(literal *ast.CompositeLit, records []RecordType) erro
 }
 
 func validateRecordExpression(literal *ast.CompositeLit) error {
+	if _, ok := literal.Type.(*ast.ArrayType); ok {
+		return validateSequenceLiteral(literal)
+	}
 	if _, ok := literal.Type.(*ast.Ident); !ok {
 		return fmt.Errorf("record construction requires a declared record name")
 	}

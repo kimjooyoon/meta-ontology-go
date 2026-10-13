@@ -1,0 +1,35 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Build": {
+          "name": "싹"
+        }
+      },
+      "expected": {
+        "Build": {
+          "labels": [
+            "싹"
+          ],
+          "values": []
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Build": {
+          "name": "bud"
+        }
+      },
+      "expected": {
+        "Build": {
+          "labels": [
+            "bud"
+          ],
+          "values": []
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,3740 @@
+{
+  "cases": {
+    "schema": "gooo/body-composition-cases/v1",
+    "cases": [
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "range_value",
+            "index": 0,
+            "length": 3,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-values",
+            "origin_index": 1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1302,
+            "source_end": 1316,
+            "expression": "input.readings"
+          }
+        },
+        "expected": {
+          "Explain": "슬라이스 위치 이동"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "range_value",
+            "index": 1,
+            "length": 3,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-values",
+            "origin_index": 2,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1302,
+            "source_end": 1316,
+            "expression": "input.readings"
+          }
+        },
+        "expected": {
+          "Explain": "슬라이스 위치 이동"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "range_value",
+            "index": 2,
+            "length": 3,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-values",
+            "origin_index": 3,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1302,
+            "source_end": 1316,
+            "expression": "input.readings"
+          }
+        },
+        "expected": {
+          "Explain": "슬라이스 위치 이동"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 1,
+            "length": 3,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-flags",
+            "origin_index": 2,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1345,
+            "source_end": 1368,
+            "expression": "input.flags[input.pick]"
+          }
+        },
+        "expected": {
+          "Explain": "슬라이스 위치 이동"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 1,
+            "length": 3,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-labels",
+            "origin_index": 2,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1372,
+            "source_end": 1396,
+            "expression": "input.labels[input.pick]"
+          }
+        },
+        "expected": {
+          "Explain": "슬라이스 위치 이동"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 1,
+            "length": 3,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-labels",
+            "origin_index": 2,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1414,
+            "source_end": 1438,
+            "expression": "input.labels[input.pick]"
+          }
+        },
+        "expected": {
+          "Explain": "슬라이스 위치 이동"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 1,
+            "length": 3,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-values",
+            "origin_index": 2,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1529,
+            "source_end": 1555,
+            "expression": "input.readings[input.pick]"
+          }
+        },
+        "expected": {
+          "Explain": "슬라이스 위치 이동"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "range_value",
+            "index": 0,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-values",
+            "origin_index": 1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1302,
+            "source_end": 1316,
+            "expression": "input.readings"
+          }
+        },
+        "expected": {
+          "Explain": "슬라이스 위치 이동"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "range_value",
+            "index": 1,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-values",
+            "origin_index": 2,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1302,
+            "source_end": 1316,
+            "expression": "input.readings"
+          }
+        },
+        "expected": {
+          "Explain": "슬라이스 위치 이동"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 0,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-flags",
+            "origin_index": 1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1345,
+            "source_end": 1368,
+            "expression": "input.flags[input.pick]"
+          }
+        },
+        "expected": {
+          "Explain": "슬라이스 위치 이동"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 4,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "range_value",
+            "index": 0,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-values",
+            "origin_index": 0,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1302,
+            "source_end": 1316,
+            "expression": "input.readings"
+          }
+        },
+        "expected": {
+          "Explain": "입력 위치 유지"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 4,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "range_value",
+            "index": 1,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-values",
+            "origin_index": 1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1302,
+            "source_end": 1316,
+            "expression": "input.readings"
+          }
+        },
+        "expected": {
+          "Explain": "입력 위치 유지"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 4,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 1,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-flags",
+            "origin_index": 1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1345,
+            "source_end": 1368,
+            "expression": "input.flags[input.pick]"
+          }
+        },
+        "expected": {
+          "Explain": "입력 위치 유지"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 4,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 1,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-labels",
+            "origin_index": 1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1372,
+            "source_end": 1396,
+            "expression": "input.labels[input.pick]"
+          }
+        },
+        "expected": {
+          "Explain": "입력 위치 유지"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 6,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "range_value",
+            "index": 0,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-values",
+            "origin_index": 0,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1302,
+            "source_end": 1316,
+            "expression": "input.readings"
+          }
+        },
+        "expected": {
+          "Explain": "입력 위치 유지"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 6,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "range_value",
+            "index": 1,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-values",
+            "origin_index": 1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1302,
+            "source_end": 1316,
+            "expression": "input.readings"
+          }
+        },
+        "expected": {
+          "Explain": "입력 위치 유지"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 6,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 1,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-flags",
+            "origin_index": 1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1345,
+            "source_end": 1368,
+            "expression": "input.flags[input.pick]"
+          }
+        },
+        "expected": {
+          "Explain": "입력 위치 유지"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 6,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 1,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-labels",
+            "origin_index": 1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1372,
+            "source_end": 1396,
+            "expression": "input.labels[input.pick]"
+          }
+        },
+        "expected": {
+          "Explain": "입력 위치 유지"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 6,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 1,
+            "length": 2,
+            "status": "RESOLVED",
+            "input_key": "Clip",
+            "field_id": "urn:read9059:request-labels",
+            "origin_index": 1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1414,
+            "source_end": 1438,
+            "expression": "input.labels[input.pick]"
+          }
+        },
+        "expected": {
+          "Explain": "입력 위치 유지"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 6,
+            "root_activity_id": "urn:read9059:run",
+            "activity_id": "urn:read9059:at",
+            "kind": "index",
+            "index": 1,
+            "length": 2,
+            "status": "UNRESOLVED",
+            "input_key": "",
+            "field_id": "",
+            "origin_index": -1,
+            "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+            "source_start": 1461,
+            "source_end": 1491,
+            "expression": "[]int64{37,37}[input.pick % 2]"
+          }
+        },
+        "expected": {
+          "Explain": "입력 기원 미연결"
+        }
+      }
+    ]
+  },
+  "composition": {
+    "schema": "gooo/body-composition/v1",
+    "stage": "COMPLETE",
+    "original_source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+    "selected_source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+    "generated_sha256": "sha256:4a969fae539ad9827513dcdbbfd3994c71ff0c26cffbaa5115852e9f22e481e8",
+    "driver_sha256": "sha256:f230cdc531a8021234b33c5155e0b852e8e9f09be44f00071092564ebb023de9",
+    "plan": {
+      "schema": "gooo/body-composition-plan/v1",
+      "typed_plan_sha256": "sha256:3586a10cb287135230e50f6bd0cbda3378bbb52689e53355b19eae113d480822",
+      "semantic_fingerprint": "04f8b1d22c13c7443e0e04cfadc2bc3f28085bcd3dc777eec3a610356da8b3b8",
+      "activities": [
+        {
+          "name": "Explain",
+          "id": "urn:read9127:explain",
+          "input_type": "Read",
+          "output_type": "Text",
+          "input_entity_id": "urn:read9127:fact",
+          "output_entity_id": "urn:gooo:type:string",
+          "go_function": "GoooComposedActivity0",
+          "input_from": -1,
+          "assembling": false
+        }
+      ],
+      "edges": [],
+      "record_types": [
+        {
+          "name": "Read",
+          "id": "urn:read9127:fact",
+          "go_name": "GoooRecord81b16388c67f3a301333da4855957653861dd04ca71d61075412a3a70d34d0eb",
+          "fields": [
+            {
+              "name": "case_index",
+              "id": "urn:read9127:case",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField36f09abda8d33f69bef3f3bc192999b95e2b2a78c168e91ad71db20a41b57012"
+            },
+            {
+              "name": "root_activity_id",
+              "id": "urn:read9127:root",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField19707b99f49bcb507730a87e5d8e163ba656683db202e9d4fd3340305d7133d4"
+            },
+            {
+              "name": "activity_id",
+              "id": "urn:read9127:activity",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField7cc88c50e616689c1aac8f12f7f33a14b91ae107b009ee5a45a1a6259dacfdf9"
+            },
+            {
+              "name": "kind",
+              "id": "urn:read9127:kind",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooFieldab42e987bddb01cf45500c93201668ce507fe5742a5965c009e59632bb2c69c7"
+            },
+            {
+              "name": "index",
+              "id": "urn:read9127:index",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField4dc108520be22e8f953c7f8bcae7b4238a63639c69e174883c42490a886a8695"
+            },
+            {
+              "name": "length",
+              "id": "urn:read9127:length",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooFieldb0a5448aa7b22c1aa1b002226667795c6caf19fc4816c1b0401c8ca218b6438b"
+            },
+            {
+              "name": "status",
+              "id": "urn:read9127:status",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField2227c439dc02ca6bcb689ac80c3a98bbbcc8d08ebd4ca9ac9fbf556afb8b3ccb"
+            },
+            {
+              "name": "input_key",
+              "id": "urn:read9127:input",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooFieldc8d3c0863e4916372898e01076392641d33094d4931a8accd5aa1ce9e3319b3a"
+            },
+            {
+              "name": "field_id",
+              "id": "urn:read9127:field",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooFieldfca145e37ad2fe81e6c520554744acdd0afe813a9a4c8a0055d48b95ffe15f8b"
+            },
+            {
+              "name": "origin_index",
+              "id": "urn:read9127:origin",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField7b017b382f24b131bf60b84ffc833ababbd71b2c06547f0feebaa1200305fa0d"
+            },
+            {
+              "name": "source_sha256",
+              "id": "urn:read9127:sha",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooFielddf0ea8c66d05709b73c096d0ea4e7ec3dec6f53b27820520938bc0ca6adfa760"
+            },
+            {
+              "name": "source_start",
+              "id": "urn:read9127:start",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooFieldc80f89621dd9f22e33aa2dc2e24baa031014fb0b419b71f98b0c61caacf88c70"
+            },
+            {
+              "name": "source_end",
+              "id": "urn:read9127:end",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField51a6bcfdd089d86288e0e4c85c692161f878ac678e322ed64412940fa7fc7282"
+            },
+            {
+              "name": "expression",
+              "id": "urn:read9127:expression",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField609ea4b152393e67553510ef6314a6ac789ea0e8bf6cb6144492e86e06067fdc"
+            }
+          ]
+        }
+      ]
+    },
+    "steps": [
+      {
+        "input_source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+        "generation": {
+          "report": {
+            "schema": "gooo/body-codegen-report/v3",
+            "decision": "PASS",
+            "activity": "Explain",
+            "activity_id": "urn:read9127:explain",
+            "input_type": "Read",
+            "record_types": [
+              {
+                "name": "Read",
+                "id": "urn:read9127:fact",
+                "go_name": "GoooRecord81b16388c67f3a301333da4855957653861dd04ca71d61075412a3a70d34d0eb",
+                "fields": [
+                  {
+                    "name": "case_index",
+                    "id": "urn:read9127:case",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField36f09abda8d33f69bef3f3bc192999b95e2b2a78c168e91ad71db20a41b57012"
+                  },
+                  {
+                    "name": "root_activity_id",
+                    "id": "urn:read9127:root",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField19707b99f49bcb507730a87e5d8e163ba656683db202e9d4fd3340305d7133d4"
+                  },
+                  {
+                    "name": "activity_id",
+                    "id": "urn:read9127:activity",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField7cc88c50e616689c1aac8f12f7f33a14b91ae107b009ee5a45a1a6259dacfdf9"
+                  },
+                  {
+                    "name": "kind",
+                    "id": "urn:read9127:kind",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooFieldab42e987bddb01cf45500c93201668ce507fe5742a5965c009e59632bb2c69c7"
+                  },
+                  {
+                    "name": "index",
+                    "id": "urn:read9127:index",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField4dc108520be22e8f953c7f8bcae7b4238a63639c69e174883c42490a886a8695"
+                  },
+                  {
+                    "name": "length",
+                    "id": "urn:read9127:length",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldb0a5448aa7b22c1aa1b002226667795c6caf19fc4816c1b0401c8ca218b6438b"
+                  },
+                  {
+                    "name": "status",
+                    "id": "urn:read9127:status",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField2227c439dc02ca6bcb689ac80c3a98bbbcc8d08ebd4ca9ac9fbf556afb8b3ccb"
+                  },
+                  {
+                    "name": "input_key",
+                    "id": "urn:read9127:input",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooFieldc8d3c0863e4916372898e01076392641d33094d4931a8accd5aa1ce9e3319b3a"
+                  },
+                  {
+                    "name": "field_id",
+                    "id": "urn:read9127:field",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooFieldfca145e37ad2fe81e6c520554744acdd0afe813a9a4c8a0055d48b95ffe15f8b"
+                  },
+                  {
+                    "name": "origin_index",
+                    "id": "urn:read9127:origin",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField7b017b382f24b131bf60b84ffc833ababbd71b2c06547f0feebaa1200305fa0d"
+                  },
+                  {
+                    "name": "source_sha256",
+                    "id": "urn:read9127:sha",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooFielddf0ea8c66d05709b73c096d0ea4e7ec3dec6f53b27820520938bc0ca6adfa760"
+                  },
+                  {
+                    "name": "source_start",
+                    "id": "urn:read9127:start",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldc80f89621dd9f22e33aa2dc2e24baa031014fb0b419b71f98b0c61caacf88c70"
+                  },
+                  {
+                    "name": "source_end",
+                    "id": "urn:read9127:end",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField51a6bcfdd089d86288e0e4c85c692161f878ac678e322ed64412940fa7fc7282"
+                  },
+                  {
+                    "name": "expression",
+                    "id": "urn:read9127:expression",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField609ea4b152393e67553510ef6314a6ac789ea0e8bf6cb6144492e86e06067fdc"
+                  }
+                ]
+              }
+            ],
+            "output_type": "string",
+            "plan_sha256": "sha256:ff93b757c89dc344ff30873f6751b0f3e3567443f71b3a4748ae941231322978",
+            "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+            "source_digest": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+            "program_digest": "sha256:f715179ac3aae43511e91f2d2fe70d4f01c962582182c5b3a2a748bd376fd47d",
+            "generated_digest": "sha256:d94d436ad0770fa4f687318ab94d2e40902c965ecb5ea4fbf95cfdf571eedd8f",
+            "replay_digest": "sha256:d94d436ad0770fa4f687318ab94d2e40902c965ecb5ea4fbf95cfdf571eedd8f",
+            "route": "preserve",
+            "route_decision": {
+              "schema": "gooo/typed-decision-receipt/v1",
+              "mode": "deterministic_fallback",
+              "selected": "preserve",
+              "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+              "provider": "deterministic",
+              "request_sha256": ""
+            },
+            "route_selection": {
+              "method": "single_eligible_route",
+              "proposed_route": "preserve",
+              "final_route": "preserve"
+            },
+            "route_decision_latency_ms": 0,
+            "body_conditions": [
+              {
+                "activity_id": "urn:read9127:explain",
+                "native_ordinal": 0,
+                "source_ordinal": 0,
+                "body_sha256": "sha256:f715179ac3aae43511e91f2d2fe70d4f01c962582182c5b3a2a748bd376fd47d",
+                "decoded_start": 3,
+                "decoded_end": 29,
+                "expression": "input.status != \"RESOLVED\"",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:read9127:fact",
+                    "field_id": "urn:read9127:status",
+                    "name": "status"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:read9127:explain",
+                "native_ordinal": 1,
+                "source_ordinal": 1,
+                "body_sha256": "sha256:f715179ac3aae43511e91f2d2fe70d4f01c962582182c5b3a2a748bd376fd47d",
+                "decoded_start": 71,
+                "decoded_end": 104,
+                "expression": "input.index != input.origin_index",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:read9127:fact",
+                    "field_id": "urn:read9127:index",
+                    "name": "index"
+                  },
+                  {
+                    "entity_id": "urn:read9127:fact",
+                    "field_id": "urn:read9127:origin",
+                    "name": "origin_index"
+                  }
+                ]
+              }
+            ],
+            "candidate_routes": [
+              "preserve"
+            ],
+            "equivalence_rule": "source-shape-preserving-v1",
+            "source_constructs": 5,
+            "lowered_constructs": 5,
+            "source_semantic_units": 20,
+            "lowered_semantic_units": 20,
+            "completeness_percent": 100,
+            "route_equivalence": {
+              "schema": "gooo/body-codegen-route-equivalence/v1",
+              "decision": "PASS",
+              "method": "canonical_control_flow_form/v2",
+              "rule": "source-shape-preserving-v1",
+              "source_semantic_digest": "sha256:7f45b6855e8695e606e5837952b32b4043bf2e5247a4a13d4033c7b8cf35f5d3",
+              "generated_semantic_digest": "sha256:7f45b6855e8695e606e5837952b32b4043bf2e5247a4a13d4033c7b8cf35f5d3",
+              "equivalent": true,
+              "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+            },
+            "typecheck_passed": true,
+            "deterministic_replay": true,
+            "repository_writes": 0,
+            "unsupported_constructs": "calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
+            "completeness_receipt": {
+              "schema": "gooo/metaprogramming-completeness-receipt/v2",
+              "profile_id": "gooo/body-codegen-pure-v1",
+              "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+              "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+              "scope": {
+                "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                "boundary": {
+                  "excluded_effects": [
+                    "generated code execution",
+                    "repository mutation",
+                    "external authority"
+                  ],
+                  "non_authorizing": true,
+                  "non_executing": true
+                },
+                "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                "decision_mode": "deterministic_fallback",
+                "decision_provider": "deterministic",
+                "domain_scope": "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
+                "excluded_scope": [
+                  "unstated natural-language intent",
+                  "independently sourced production workflows",
+                  "generated runtime behavior",
+                  "unrestricted Gooo body syntax",
+                  "route clarity or utility"
+                ],
+                "execution_environment": "darwin/arm64",
+                "input_type": "Read",
+                "laya_mode": "deterministic_fallback",
+                "laya_provider": "deterministic",
+                "observed_system_cost": {
+                  "human_actions": 0,
+                  "repository_writes": 0
+                },
+                "output_type": "string",
+                "plan_sha256": "sha256:ff93b757c89dc344ff30873f6751b0f3e3567443f71b3a4748ae941231322978",
+                "receipt_declaration": {
+                  "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "projection_profile": "gooo/receipt-structure-projection/v1",
+                  "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                },
+                "record_types": [
+                  {
+                    "name": "Read",
+                    "id": "urn:read9127:fact",
+                    "go_name": "GoooRecord81b16388c67f3a301333da4855957653861dd04ca71d61075412a3a70d34d0eb",
+                    "fields": [
+                      {
+                        "name": "case_index",
+                        "id": "urn:read9127:case",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField36f09abda8d33f69bef3f3bc192999b95e2b2a78c168e91ad71db20a41b57012"
+                      },
+                      {
+                        "name": "root_activity_id",
+                        "id": "urn:read9127:root",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField19707b99f49bcb507730a87e5d8e163ba656683db202e9d4fd3340305d7133d4"
+                      },
+                      {
+                        "name": "activity_id",
+                        "id": "urn:read9127:activity",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField7cc88c50e616689c1aac8f12f7f33a14b91ae107b009ee5a45a1a6259dacfdf9"
+                      },
+                      {
+                        "name": "kind",
+                        "id": "urn:read9127:kind",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooFieldab42e987bddb01cf45500c93201668ce507fe5742a5965c009e59632bb2c69c7"
+                      },
+                      {
+                        "name": "index",
+                        "id": "urn:read9127:index",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField4dc108520be22e8f953c7f8bcae7b4238a63639c69e174883c42490a886a8695"
+                      },
+                      {
+                        "name": "length",
+                        "id": "urn:read9127:length",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldb0a5448aa7b22c1aa1b002226667795c6caf19fc4816c1b0401c8ca218b6438b"
+                      },
+                      {
+                        "name": "status",
+                        "id": "urn:read9127:status",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField2227c439dc02ca6bcb689ac80c3a98bbbcc8d08ebd4ca9ac9fbf556afb8b3ccb"
+                      },
+                      {
+                        "name": "input_key",
+                        "id": "urn:read9127:input",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooFieldc8d3c0863e4916372898e01076392641d33094d4931a8accd5aa1ce9e3319b3a"
+                      },
+                      {
+                        "name": "field_id",
+                        "id": "urn:read9127:field",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooFieldfca145e37ad2fe81e6c520554744acdd0afe813a9a4c8a0055d48b95ffe15f8b"
+                      },
+                      {
+                        "name": "origin_index",
+                        "id": "urn:read9127:origin",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField7b017b382f24b131bf60b84ffc833ababbd71b2c06547f0feebaa1200305fa0d"
+                      },
+                      {
+                        "name": "source_sha256",
+                        "id": "urn:read9127:sha",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooFielddf0ea8c66d05709b73c096d0ea4e7ec3dec6f53b27820520938bc0ca6adfa760"
+                      },
+                      {
+                        "name": "source_start",
+                        "id": "urn:read9127:start",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldc80f89621dd9f22e33aa2dc2e24baa031014fb0b419b71f98b0c61caacf88c70"
+                      },
+                      {
+                        "name": "source_end",
+                        "id": "urn:read9127:end",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField51a6bcfdd089d86288e0e4c85c692161f878ac678e322ed64412940fa7fc7282"
+                      },
+                      {
+                        "name": "expression",
+                        "id": "urn:read9127:expression",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField609ea4b152393e67553510ef6314a6ac789ea0e8bf6cb6144492e86e06067fdc"
+                      }
+                    ]
+                  }
+                ],
+                "system_budget": {
+                  "maximum_human_actions": 0,
+                  "maximum_repository_writes": 0
+                },
+                "toolchain": "go1.27.2"
+              },
+              "core_dimensions": [
+                "declaration_coverage",
+                "generation_coverage",
+                "internal_replay_coverage",
+                "provenance_integrity",
+                "receipt_schema_binding",
+                "repository_write_boundary",
+                "route_choice_protocol",
+                "route_semantic_equivalence",
+                "source_ast_coverage",
+                "typecheck_coverage"
+              ],
+              "dimensions": [
+                {
+                  "id": "declaration_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "stable activity declarations",
+                  "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                  "evidence": [
+                    "source_digest:sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+                    "activity_id:urn:read9127:explain"
+                  ]
+                },
+                {
+                  "id": "generation_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated Go functions",
+                  "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                  "evidence": [
+                    "generated_digest:sha256:d94d436ad0770fa4f687318ab94d2e40902c965ecb5ea4fbf95cfdf571eedd8f",
+                    "report decision:PASS"
+                  ]
+                },
+                {
+                  "id": "source_ast_coverage",
+                  "status": "PASS",
+                  "numerator": 20,
+                  "denominator": 20,
+                  "unit": "source semantic units lowered",
+                  "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                  "evidence": [
+                    "source_semantic_units",
+                    "lowered_semantic_units"
+                  ]
+                },
+                {
+                  "id": "route_semantic_equivalence",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source/generated route pairs",
+                  "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                  "evidence": [
+                    "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                    "route_equivalence.rule:source-shape-preserving-v1",
+                    "source_semantic_digest:sha256:7f45b6855e8695e606e5837952b32b4043bf2e5247a4a13d4033c7b8cf35f5d3",
+                    "generated_semantic_digest:sha256:7f45b6855e8695e606e5837952b32b4043bf2e5247a4a13d4033c7b8cf35f5d3"
+                  ]
+                },
+                {
+                  "id": "typecheck_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated functions accepted by Go type checking",
+                  "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                  "evidence": [
+                    "typecheck_passed"
+                  ]
+                },
+                {
+                  "id": "internal_replay_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "deterministic compiler emission replays",
+                  "reason": "Requires replayed generated bytes to match the selected output digest.",
+                  "evidence": [
+                    "generated_digest:sha256:d94d436ad0770fa4f687318ab94d2e40902c965ecb5ea4fbf95cfdf571eedd8f",
+                    "replay_digest:sha256:d94d436ad0770fa4f687318ab94d2e40902c965ecb5ea4fbf95cfdf571eedd8f"
+                  ]
+                },
+                {
+                  "id": "route_choice_protocol",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "selected routes in the compiler-declared candidate set",
+                  "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                  "evidence": [
+                    "candidate_routes",
+                    "selected_route:preserve"
+                  ]
+                },
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "numerator": 7,
+                  "denominator": 8,
+                  "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "evidence": [
+                    "source_digest:sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+                    "program_digest:sha256:f715179ac3aae43511e91f2d2fe70d4f01c962582182c5b3a2a748bd376fd47d",
+                    "generated_digest:sha256:d94d436ad0770fa4f687318ab94d2e40902c965ecb5ea4fbf95cfdf571eedd8f",
+                    "replay_digest:sha256:d94d436ad0770fa4f687318ab94d2e40902c965ecb5ea4fbf95cfdf571eedd8f",
+                    "activity_id:urn:read9127:explain",
+                    "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                    "route_equivalence semantic digests"
+                  ]
+                },
+                {
+                  "id": "receipt_schema_binding",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source-owned receipt schema and generated structure bindings",
+                  "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                  "evidence": [
+                    "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile:gooo/receipt-structure-projection/v1"
+                  ]
+                },
+                {
+                  "id": "repository_write_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "repository writes",
+                  "reason": "The command emits generated source without mutating the repository.",
+                  "evidence": [
+                    "repository_writes:0"
+                  ]
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated package runtime executions",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "evidence": [
+                    "body-codegen does not run generated Go"
+                  ]
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "observed host permission profiles",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "evidence": [
+                    "host permission profile is not observed"
+                  ]
+                },
+                {
+                  "id": "external_network_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "runs with no Laya provider request",
+                  "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                  "evidence": [
+                    "decision.mode:deterministic_fallback",
+                    "decision.provider:deterministic",
+                    "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                  ]
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 0,
+                  "unit": "eligible multi-route Laya decisions",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "evidence": [
+                    "candidate_routes",
+                    "route_decision.mode:deterministic_fallback",
+                    "route_decision.request_sha256:",
+                    "route_decision.model_revision:"
+                  ]
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independently sourced real workflows",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "evidence": [
+                    "no independent workflow corpus is bound"
+                  ]
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated runtime observations mapped back to source",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "evidence": [
+                    "no source-bound reverse-observation trace"
+                  ]
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete input-domain behavior proofs",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "evidence": [
+                    "generated package execution and an independent domain oracle are not part of this command"
+                  ]
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independent route-clarity or utility criteria",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "evidence": [
+                    "no independent route-quality oracle"
+                  ]
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete process resource profiles",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "evidence": [
+                    "route_decision_latency_ms is recorded",
+                    "CPU and peak RSS are not captured"
+                  ]
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible prior resource receipts",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "evidence": [
+                    "no compatible prior resource receipt"
+                  ]
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible before/after semantic receipts",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "evidence": [
+                    "no comparable prior semantic receipt"
+                  ]
+                }
+              ],
+              "status_counts": {
+                "FAIL_CLOSED": 0,
+                "PASS": 10,
+                "PROGRESS": 1,
+                "UNKNOWN": 10
+              },
+              "aggregate_completeness_score": null,
+              "first_unresolved": {
+                "id": "provenance_integrity",
+                "status": "PROGRESS",
+                "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+              },
+              "unresolved_claims": [
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                }
+              ],
+              "not_claimed": [
+                "user-intent completeness",
+                "real-workflow coverage",
+                "generated runtime behavior",
+                "full-domain semantics",
+                "route quality",
+                "universal language completeness"
+              ],
+              "fail_closed_reason": null
+            }
+          },
+          "source": "package originview\n\n//gooo:generated:start id=\"urn:read9127:fact\" kind=\"entity\"\ntype GoooRecord81b16388c67f3a301333da4855957653861dd04ca71d61075412a3a70d34d0eb struct {\n\tGoooField36f09abda8d33f69bef3f3bc192999b95e2b2a78c168e91ad71db20a41b57012 int64  `json:\"case_index\"`\n\tGoooField19707b99f49bcb507730a87e5d8e163ba656683db202e9d4fd3340305d7133d4 string `json:\"root_activity_id\"`\n\tGoooField7cc88c50e616689c1aac8f12f7f33a14b91ae107b009ee5a45a1a6259dacfdf9 string `json:\"activity_id\"`\n\tGoooFieldab42e987bddb01cf45500c93201668ce507fe5742a5965c009e59632bb2c69c7 string `json:\"kind\"`\n\tGoooField4dc108520be22e8f953c7f8bcae7b4238a63639c69e174883c42490a886a8695 int64  `json:\"index\"`\n\tGoooFieldb0a5448aa7b22c1aa1b002226667795c6caf19fc4816c1b0401c8ca218b6438b int64  `json:\"length\"`\n\tGoooField2227c439dc02ca6bcb689ac80c3a98bbbcc8d08ebd4ca9ac9fbf556afb8b3ccb string `json:\"status\"`\n\tGoooFieldc8d3c0863e4916372898e01076392641d33094d4931a8accd5aa1ce9e3319b3a string `json:\"input_key\"`\n\tGoooFieldfca145e37ad2fe81e6c520554744acdd0afe813a9a4c8a0055d48b95ffe15f8b string `json:\"field_id\"`\n\tGoooField7b017b382f24b131bf60b84ffc833ababbd71b2c06547f0feebaa1200305fa0d int64  `json:\"origin_index\"`\n\tGoooFielddf0ea8c66d05709b73c096d0ea4e7ec3dec6f53b27820520938bc0ca6adfa760 string `json:\"source_sha256\"`\n\tGoooFieldc80f89621dd9f22e33aa2dc2e24baa031014fb0b419b71f98b0c61caacf88c70 int64  `json:\"source_start\"`\n\tGoooField51a6bcfdd089d86288e0e4c85c692161f878ac678e322ed64412940fa7fc7282 int64  `json:\"source_end\"`\n\tGoooField609ea4b152393e67553510ef6314a6ac789ea0e8bf6cb6144492e86e06067fdc string `json:\"expression\"`\n}\n\n//gooo:generated:end id=\"urn:read9127:fact\" kind=\"entity\"\n//gooo:generated:start id=\"urn:read9127:explain\" kind=\"activity\"\nfunc Explain(input GoooRecord81b16388c67f3a301333da4855957653861dd04ca71d61075412a3a70d34d0eb) string {\n\tif input.GoooField2227c439dc02ca6bcb689ac80c3a98bbbcc8d08ebd4ca9ac9fbf556afb8b3ccb != \"RESOLVED\" {\n\t\treturn \"입력 기원 미연결\"\n\t}\n\tif input.GoooField4dc108520be22e8f953c7f8bcae7b4238a63639c69e174883c42490a886a8695 != input.GoooField7b017b382f24b131bf60b84ffc833ababbd71b2c06547f0feebaa1200305fa0d {\n\t\treturn \"슬라이스 위치 이동\"\n\t}\n\treturn \"입력 위치 유지\"\n}\n\n//gooo:generated:end id=\"urn:read9127:explain\" kind=\"activity\"\n"
+        }
+      }
+    ],
+    "gooo_source": "package originview\nnamespace originview9127\nentity Text id \"urn:gooo:type:string\"\nentity Read id \"urn:read9127:fact\" fields {\n field case_index id \"urn:read9127:case\" type integer required one\n field root_activity_id id \"urn:read9127:root\" type string required one\n field activity_id id \"urn:read9127:activity\" type string required one\n field kind id \"urn:read9127:kind\" type string required one\n field index id \"urn:read9127:index\" type integer required one\n field length id \"urn:read9127:length\" type integer required one\n field status id \"urn:read9127:status\" type string required one\n field input_key id \"urn:read9127:input\" type string required one\n field field_id id \"urn:read9127:field\" type string required one\n field origin_index id \"urn:read9127:origin\" type integer required one\n field source_sha256 id \"urn:read9127:sha\" type string required one\n field source_start id \"urn:read9127:start\" type integer required one\n field source_end id \"urn:read9127:end\" type integer required one\n field expression id \"urn:read9127:expression\" type string required one\n}\nactivity Explain(Read) -> Text id \"urn:read9127:explain\" computes \"if input.status != \\\"RESOLVED\\\" { return \\\"입력 기원 미연결\\\" }; if input.index != input.origin_index { return \\\"슬라이스 위치 이동\\\" }; return \\\"입력 위치 유지\\\"\"\n",
+    "source": "package main\n\n//gooo:generated:start id=\"urn:read9127:fact\" kind=\"entity\"\ntype GoooRecord81b16388c67f3a301333da4855957653861dd04ca71d61075412a3a70d34d0eb struct {\n\tGoooField36f09abda8d33f69bef3f3bc192999b95e2b2a78c168e91ad71db20a41b57012 int64  `json:\"case_index\"`\n\tGoooField19707b99f49bcb507730a87e5d8e163ba656683db202e9d4fd3340305d7133d4 string `json:\"root_activity_id\"`\n\tGoooField7cc88c50e616689c1aac8f12f7f33a14b91ae107b009ee5a45a1a6259dacfdf9 string `json:\"activity_id\"`\n\tGoooFieldab42e987bddb01cf45500c93201668ce507fe5742a5965c009e59632bb2c69c7 string `json:\"kind\"`\n\tGoooField4dc108520be22e8f953c7f8bcae7b4238a63639c69e174883c42490a886a8695 int64  `json:\"index\"`\n\tGoooFieldb0a5448aa7b22c1aa1b002226667795c6caf19fc4816c1b0401c8ca218b6438b int64  `json:\"length\"`\n\tGoooField2227c439dc02ca6bcb689ac80c3a98bbbcc8d08ebd4ca9ac9fbf556afb8b3ccb string `json:\"status\"`\n\tGoooFieldc8d3c0863e4916372898e01076392641d33094d4931a8accd5aa1ce9e3319b3a string `json:\"input_key\"`\n\tGoooFieldfca145e37ad2fe81e6c520554744acdd0afe813a9a4c8a0055d48b95ffe15f8b string `json:\"field_id\"`\n\tGoooField7b017b382f24b131bf60b84ffc833ababbd71b2c06547f0feebaa1200305fa0d int64  `json:\"origin_index\"`\n\tGoooFielddf0ea8c66d05709b73c096d0ea4e7ec3dec6f53b27820520938bc0ca6adfa760 string `json:\"source_sha256\"`\n\tGoooFieldc80f89621dd9f22e33aa2dc2e24baa031014fb0b419b71f98b0c61caacf88c70 int64  `json:\"source_start\"`\n\tGoooField51a6bcfdd089d86288e0e4c85c692161f878ac678e322ed64412940fa7fc7282 int64  `json:\"source_end\"`\n\tGoooField609ea4b152393e67553510ef6314a6ac789ea0e8bf6cb6144492e86e06067fdc string `json:\"expression\"`\n}\n\n//gooo:generated:end id=\"urn:read9127:fact\" kind=\"entity\"\n\n//gooo:generated:start id=\"urn:read9127:explain\" kind=\"activity\"\nfunc GoooComposedActivity0(input GoooRecord81b16388c67f3a301333da4855957653861dd04ca71d61075412a3a70d34d0eb) string {\n\tif input.GoooField2227c439dc02ca6bcb689ac80c3a98bbbcc8d08ebd4ca9ac9fbf556afb8b3ccb != \"RESOLVED\" {\n\t\treturn \"입력 기원 미연결\"\n\t}\n\tif input.GoooField4dc108520be22e8f953c7f8bcae7b4238a63639c69e174883c42490a886a8695 != input.GoooField7b017b382f24b131bf60b84ffc833ababbd71b2c06547f0feebaa1200305fa0d {\n\t\treturn \"슬라이스 위치 이동\"\n\t}\n\treturn \"입력 위치 유지\"\n}\n\n//gooo:generated:end id=\"urn:read9127:explain\" kind=\"activity\"\n",
+    "driver_source": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc main() {\n\tvar in [][1]json.RawMessage\n\tif json.NewDecoder(os.Stdin).Decode(&in) != nil || len(in) > 128 {\n\t\tos.Exit(2)\n\t}\n\tout := make([][1]json.RawMessage, len(in))\n\tfor c, row := range in {\n\t\tvar input0 GoooRecord81b16388c67f3a301333da4855957653861dd04ca71d61075412a3a70d34d0eb\n\t\tif json.Unmarshal(row[0], &input0) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv0 := GoooComposedActivity0(input0)\n\t\tout[c][0], _ = json.Marshal(v0)\n\t}\n\tif json.NewEncoder(os.Stdout).Encode(out) != nil {\n\t\tos.Exit(3)\n\t}\n}\n",
+    "elapsed_ns": 7324042,
+    "scope": "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"
+  },
+  "counts": {
+    "슬라이스 위치 이동": 10,
+    "입력 기원 미연결": 1,
+    "입력 위치 유지": 9
+  },
+  "original_program_executions": 0,
+  "runtime": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "composition_sha256": "sha256:fd4a9a628e0a81e827f002c1fc6190724d6a898870269d2bc632a104d8797a94",
+    "original_source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+    "selected_source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+    "typed_plan_sha256": "sha256:3586a10cb287135230e50f6bd0cbda3378bbb52689e53355b19eae113d480822",
+    "generated_sha256": "sha256:4a969fae539ad9827513dcdbbfd3994c71ff0c26cffbaa5115852e9f22e481e8",
+    "driver_sha256": "sha256:f230cdc531a8021234b33c5155e0b852e8e9f09be44f00071092564ebb023de9",
+    "observed_projection_sha256": "sha256:9e29d59854483a12d2beb32de3c42076f38bf97d10e13833433da61b6ed96d22",
+    "observed_driver_sha256": "sha256:3c675a02683d67acab506c0fe79921fdb26f77dc7edb0d49a3426d1f0166e706",
+    "runtime_suite_sha256": "sha256:0e5400725c80829a850e2b68c6ce1ae68bbee3b9de4fab65bbfcecf7249d8e98",
+    "executable_sha256": "sha256:bfa2ea4d5aa9c66baba428ee5703cbe1a085d39104c8e39d3841df82a26d6602",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_tool_selection": "path",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "(devel)"
+    },
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 8638625,
+      "user_ns": 3825000,
+      "system_ns": 2760000,
+      "peak_rss_bytes": 14434304,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1175416,
+        "wait_ns": 7463209,
+        "deadline_remaining_ns": 59983793541,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 255850542,
+      "user_ns": 130565000,
+      "system_ns": 94451000,
+      "peak_rss_bytes": 86392832,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 808250,
+        "wait_ns": 255042292,
+        "deadline_remaining_ns": 59973689083,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 351639083,
+        "user_ns": 3891000,
+        "system_ns": 6501000,
+        "peak_rss_bytes": 5210112,
+        "stdout_sha256": "sha256:ee732cddef772f1f931b7d688c11a0c27ea142ffc933d52315d7878f3b1f8deb",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 930875,
+          "wait_ns": 350708208,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59716162583,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 7474208,
+        "user_ns": 2744000,
+        "system_ns": 3192000,
+        "peak_rss_bytes": 5160960,
+        "stdout_sha256": "sha256:ee732cddef772f1f931b7d688c11a0c27ea142ffc933d52315d7878f3b1f8deb",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 2369458,
+          "wait_ns": 5104750,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59362518791,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "traces": [
+      {
+        "case_index": 0,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 0,
+              "expression": "input.readings",
+              "field_id": "urn:read9059:request-values",
+              "index": 0,
+              "input_key": "Clip",
+              "kind": "range_value",
+              "length": 3,
+              "origin_index": 1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1316,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1302,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "range_value"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 3
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-values"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1302
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1316
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.readings"
+              }
+            ],
+            "actual": "슬라이스 위치 이동",
+            "expected": "슬라이스 위치 이동",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 1,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 0,
+              "expression": "input.readings",
+              "field_id": "urn:read9059:request-values",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "range_value",
+              "length": 3,
+              "origin_index": 2,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1316,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1302,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "range_value"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 3
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-values"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1302
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1316
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.readings"
+              }
+            ],
+            "actual": "슬라이스 위치 이동",
+            "expected": "슬라이스 위치 이동",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 2,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 0,
+              "expression": "input.readings",
+              "field_id": "urn:read9059:request-values",
+              "index": 2,
+              "input_key": "Clip",
+              "kind": "range_value",
+              "length": 3,
+              "origin_index": 3,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1316,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1302,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "range_value"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 3
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-values"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 3
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1302
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1316
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.readings"
+              }
+            ],
+            "actual": "슬라이스 위치 이동",
+            "expected": "슬라이스 위치 이동",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 3,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 0,
+              "expression": "input.flags[input.pick]",
+              "field_id": "urn:read9059:request-flags",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "index",
+              "length": 3,
+              "origin_index": 2,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1368,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1345,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 3
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-flags"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1345
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1368
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.flags[input.pick]"
+              }
+            ],
+            "actual": "슬라이스 위치 이동",
+            "expected": "슬라이스 위치 이동",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 4,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 0,
+              "expression": "input.labels[input.pick]",
+              "field_id": "urn:read9059:request-labels",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "index",
+              "length": 3,
+              "origin_index": 2,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1396,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1372,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 3
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-labels"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1372
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1396
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.labels[input.pick]"
+              }
+            ],
+            "actual": "슬라이스 위치 이동",
+            "expected": "슬라이스 위치 이동",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 5,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 0,
+              "expression": "input.labels[input.pick]",
+              "field_id": "urn:read9059:request-labels",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "index",
+              "length": 3,
+              "origin_index": 2,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1438,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1414,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 3
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-labels"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1414
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1438
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.labels[input.pick]"
+              }
+            ],
+            "actual": "슬라이스 위치 이동",
+            "expected": "슬라이스 위치 이동",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 6,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 0,
+              "expression": "input.readings[input.pick]",
+              "field_id": "urn:read9059:request-values",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "index",
+              "length": 3,
+              "origin_index": 2,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1555,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1529,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 3
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-values"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1529
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1555
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.readings[input.pick]"
+              }
+            ],
+            "actual": "슬라이스 위치 이동",
+            "expected": "슬라이스 위치 이동",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 7,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 2,
+              "expression": "input.readings",
+              "field_id": "urn:read9059:request-values",
+              "index": 0,
+              "input_key": "Clip",
+              "kind": "range_value",
+              "length": 2,
+              "origin_index": 1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1316,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1302,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "range_value"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-values"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1302
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1316
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.readings"
+              }
+            ],
+            "actual": "슬라이스 위치 이동",
+            "expected": "슬라이스 위치 이동",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 8,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 2,
+              "expression": "input.readings",
+              "field_id": "urn:read9059:request-values",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "range_value",
+              "length": 2,
+              "origin_index": 2,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1316,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1302,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "range_value"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-values"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1302
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1316
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.readings"
+              }
+            ],
+            "actual": "슬라이스 위치 이동",
+            "expected": "슬라이스 위치 이동",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 9,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 2,
+              "expression": "input.flags[input.pick]",
+              "field_id": "urn:read9059:request-flags",
+              "index": 0,
+              "input_key": "Clip",
+              "kind": "index",
+              "length": 2,
+              "origin_index": 1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1368,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1345,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-flags"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1345
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1368
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.flags[input.pick]"
+              }
+            ],
+            "actual": "슬라이스 위치 이동",
+            "expected": "슬라이스 위치 이동",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 10,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 4,
+              "expression": "input.readings",
+              "field_id": "urn:read9059:request-values",
+              "index": 0,
+              "input_key": "Clip",
+              "kind": "range_value",
+              "length": 2,
+              "origin_index": 0,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1316,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1302,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 4
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "range_value"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-values"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1302
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1316
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.readings"
+              }
+            ],
+            "actual": "입력 위치 유지",
+            "expected": "입력 위치 유지",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 11,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 4,
+              "expression": "input.readings",
+              "field_id": "urn:read9059:request-values",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "range_value",
+              "length": 2,
+              "origin_index": 1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1316,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1302,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 4
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "range_value"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-values"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1302
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1316
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.readings"
+              }
+            ],
+            "actual": "입력 위치 유지",
+            "expected": "입력 위치 유지",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 12,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 4,
+              "expression": "input.flags[input.pick]",
+              "field_id": "urn:read9059:request-flags",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "index",
+              "length": 2,
+              "origin_index": 1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1368,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1345,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 4
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-flags"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1345
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1368
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.flags[input.pick]"
+              }
+            ],
+            "actual": "입력 위치 유지",
+            "expected": "입력 위치 유지",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 13,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 4,
+              "expression": "input.labels[input.pick]",
+              "field_id": "urn:read9059:request-labels",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "index",
+              "length": 2,
+              "origin_index": 1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1396,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1372,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 4
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-labels"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1372
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1396
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.labels[input.pick]"
+              }
+            ],
+            "actual": "입력 위치 유지",
+            "expected": "입력 위치 유지",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 14,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 6,
+              "expression": "input.readings",
+              "field_id": "urn:read9059:request-values",
+              "index": 0,
+              "input_key": "Clip",
+              "kind": "range_value",
+              "length": 2,
+              "origin_index": 0,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1316,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1302,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 6
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "range_value"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-values"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 0
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1302
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1316
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.readings"
+              }
+            ],
+            "actual": "입력 위치 유지",
+            "expected": "입력 위치 유지",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 15,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 6,
+              "expression": "input.readings",
+              "field_id": "urn:read9059:request-values",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "range_value",
+              "length": 2,
+              "origin_index": 1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1316,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1302,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 6
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "range_value"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-values"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1302
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1316
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.readings"
+              }
+            ],
+            "actual": "입력 위치 유지",
+            "expected": "입력 위치 유지",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 16,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 6,
+              "expression": "input.flags[input.pick]",
+              "field_id": "urn:read9059:request-flags",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "index",
+              "length": 2,
+              "origin_index": 1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1368,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1345,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 6
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-flags"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1345
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1368
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.flags[input.pick]"
+              }
+            ],
+            "actual": "입력 위치 유지",
+            "expected": "입력 위치 유지",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 17,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 6,
+              "expression": "input.labels[input.pick]",
+              "field_id": "urn:read9059:request-labels",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "index",
+              "length": 2,
+              "origin_index": 1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1396,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1372,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 6
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-labels"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1372
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1396
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.labels[input.pick]"
+              }
+            ],
+            "actual": "입력 위치 유지",
+            "expected": "입력 위치 유지",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 18,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 6,
+              "expression": "input.labels[input.pick]",
+              "field_id": "urn:read9059:request-labels",
+              "index": 1,
+              "input_key": "Clip",
+              "kind": "index",
+              "length": 2,
+              "origin_index": 1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1438,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1414,
+              "status": "RESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 6
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "RESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": "Clip"
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": "urn:read9059:request-labels"
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1414
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1438
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "input.labels[input.pick]"
+              }
+            ],
+            "actual": "입력 위치 유지",
+            "expected": "입력 위치 유지",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 19,
+        "deliveries": [
+          {
+            "activity_id": "urn:read9127:explain",
+            "input": {
+              "activity_id": "urn:read9059:at",
+              "case_index": 6,
+              "expression": "[]int64{37,37}[input.pick % 2]",
+              "field_id": "",
+              "index": 1,
+              "input_key": "",
+              "kind": "index",
+              "length": 2,
+              "origin_index": -1,
+              "root_activity_id": "urn:read9059:run",
+              "source_end": 1491,
+              "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+              "source_start": 1461,
+              "status": "UNRESOLVED"
+            },
+            "input_fields": [
+              {
+                "id": "urn:read9127:case",
+                "name": "case_index",
+                "value": 6
+              },
+              {
+                "id": "urn:read9127:root",
+                "name": "root_activity_id",
+                "value": "urn:read9059:run"
+              },
+              {
+                "id": "urn:read9127:activity",
+                "name": "activity_id",
+                "value": "urn:read9059:at"
+              },
+              {
+                "id": "urn:read9127:kind",
+                "name": "kind",
+                "value": "index"
+              },
+              {
+                "id": "urn:read9127:index",
+                "name": "index",
+                "value": 1
+              },
+              {
+                "id": "urn:read9127:length",
+                "name": "length",
+                "value": 2
+              },
+              {
+                "id": "urn:read9127:status",
+                "name": "status",
+                "value": "UNRESOLVED"
+              },
+              {
+                "id": "urn:read9127:input",
+                "name": "input_key",
+                "value": ""
+              },
+              {
+                "id": "urn:read9127:field",
+                "name": "field_id",
+                "value": ""
+              },
+              {
+                "id": "urn:read9127:origin",
+                "name": "origin_index",
+                "value": -1
+              },
+              {
+                "id": "urn:read9127:sha",
+                "name": "source_sha256",
+                "value": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0"
+              },
+              {
+                "id": "urn:read9127:start",
+                "name": "source_start",
+                "value": 1461
+              },
+              {
+                "id": "urn:read9127:end",
+                "name": "source_end",
+                "value": 1491
+              },
+              {
+                "id": "urn:read9127:expression",
+                "name": "expression",
+                "value": "[]int64{37,37}[input.pick % 2]"
+              }
+            ],
+            "actual": "입력 기원 미연결",
+            "expected": "입력 기원 미연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          }
+        ]
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "finite_passed": 20,
+    "finite_total": 20,
+    "condition_sites": [
+      {
+        "expression_id": "sha256:a509623fef5d4e0383754e4cc3a55230c200b2ca37eab1f3716c108dc3f930a0",
+        "root_activity_id": "urn:read9127:explain",
+        "activity_id": "urn:read9127:explain",
+        "expression": "input.GoooField2227c439dc02ca6bcb689ac80c3a98bbbcc8d08ebd4ca9ac9fbf556afb8b3ccb != \"RESOLVED\"",
+        "projection_sha256": "sha256:4a969fae539ad9827513dcdbbfd3994c71ff0c26cffbaa5115852e9f22e481e8",
+        "start": 1832,
+        "end": 1925,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:read9127:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+            "start_byte": 1068,
+            "end_byte": 1319
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+          "body_sha256": "sha256:f715179ac3aae43511e91f2d2fe70d4f01c962582182c5b3a2a748bd376fd47d",
+          "start_byte": 1138,
+          "end_byte": 1166,
+          "decoded_start": 3,
+          "decoded_end": 29,
+          "source_ordinal": 0,
+          "expression": "input.status != \"RESOLVED\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:read9127:status",
+                "name": "status",
+                "source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+                "start_byte": 525,
+                "end_byte": 587
+              },
+              "entity_id": "urn:read9127:fact",
+              "field_id": "urn:read9127:status",
+              "name": "status"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:315cfc84d6e014ae9414d2f51b1240edf220bf6c1a6c1130e15d7f261d138352",
+        "root_activity_id": "urn:read9127:explain",
+        "activity_id": "urn:read9127:explain",
+        "expression": "input.GoooField4dc108520be22e8f953c7f8bcae7b4238a63639c69e174883c42490a886a8695 != input.GoooField7b017b382f24b131bf60b84ffc833ababbd71b2c06547f0feebaa1200305fa0d",
+        "projection_sha256": "sha256:4a969fae539ad9827513dcdbbfd3994c71ff0c26cffbaa5115852e9f22e481e8",
+        "start": 1970,
+        "end": 2132,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:read9127:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+            "start_byte": 1068,
+            "end_byte": 1319
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+          "body_sha256": "sha256:f715179ac3aae43511e91f2d2fe70d4f01c962582182c5b3a2a748bd376fd47d",
+          "start_byte": 1210,
+          "end_byte": 1243,
+          "decoded_start": 71,
+          "decoded_end": 104,
+          "source_ordinal": 1,
+          "expression": "input.index != input.origin_index",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:read9127:index",
+                "name": "index",
+                "source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+                "start_byte": 397,
+                "end_byte": 458
+              },
+              "entity_id": "urn:read9127:fact",
+              "field_id": "urn:read9127:index",
+              "name": "index"
+            },
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:read9127:origin",
+                "name": "origin_index",
+                "source_sha256": "sha256:04e2a5d5afb48b29ff52dabb3c6fdd371926dbd7bd5861f1e6fdae6f27cee399",
+                "start_byte": 720,
+                "end_byte": 789
+              },
+              "entity_id": "urn:read9127:fact",
+              "field_id": "urn:read9127:origin",
+              "name": "origin_index"
+            }
+          ]
+        }
+      }
+    ],
+    "condition_observation": {
+      "schema": "gooo/native-condition-summary/v1",
+      "status": "COMPLETE",
+      "recorded_events": 39,
+      "dropped_events": 0,
+      "sha256": "sha256:61dbdaf0864c1125ce564452a773ab251006c98487670a30f76b77a42c2de48c"
+    },
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "UNCLASSIFIED_INPUTS",
+      "unique_inputs": 20,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 20,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    },
+    "model_calls": 0,
+    "elapsed_ns": 646801542,
+    "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+  },
+  "source": "package originview\nnamespace originview9127\nentity Text id \"urn:gooo:type:string\"\nentity Read id \"urn:read9127:fact\" fields {\n field case_index id \"urn:read9127:case\" type integer required one\n field root_activity_id id \"urn:read9127:root\" type string required one\n field activity_id id \"urn:read9127:activity\" type string required one\n field kind id \"urn:read9127:kind\" type string required one\n field index id \"urn:read9127:index\" type integer required one\n field length id \"urn:read9127:length\" type integer required one\n field status id \"urn:read9127:status\" type string required one\n field input_key id \"urn:read9127:input\" type string required one\n field field_id id \"urn:read9127:field\" type string required one\n field origin_index id \"urn:read9127:origin\" type integer required one\n field source_sha256 id \"urn:read9127:sha\" type string required one\n field source_start id \"urn:read9127:start\" type integer required one\n field source_end id \"urn:read9127:end\" type integer required one\n field expression id \"urn:read9127:expression\" type string required one\n}\nactivity Explain(Read) -> Text id \"urn:read9127:explain\" computes \"if input.status != \\\"RESOLVED\\\" { return \\\"입력 기원 미연결\\\" }; if input.index != input.origin_index { return \\\"슬라이스 위치 이동\\\" }; return \\\"입력 위치 유지\\\"\"\n"
+}
