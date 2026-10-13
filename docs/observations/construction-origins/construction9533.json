@@ -1,0 +1,3632 @@
+{
+  "cases": {
+    "schema": "gooo/body-composition-cases/v1",
+    "cases": [
+      {
+        "inputs": {
+          "Build": {
+            "values": [
+              541,
+              541
+            ],
+            "pick": 0
+          }
+        },
+        "expected": {
+          "Read": 1082
+        }
+      },
+      {
+        "inputs": {
+          "Build": {
+            "values": [
+              547,
+              557
+            ],
+            "pick": 1
+          }
+        },
+        "expected": {
+          "Read": 549
+        }
+      },
+      {
+        "inputs": {
+          "Build": {
+            "values": [
+              557,
+              563
+            ],
+            "pick": 0
+          }
+        },
+        "expected": {
+          "Read": 1120
+        }
+      }
+    ]
+  },
+  "composition": {
+    "schema": "gooo/body-composition/v1",
+    "stage": "COMPLETE",
+    "original_source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+    "selected_source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+    "generated_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+    "driver_sha256": "sha256:8bb1d3e945757fec41bf494c4f31b313db9592c8c3e7921025ff7890dd645f64",
+    "plan": {
+      "schema": "gooo/body-composition-plan/v1",
+      "entry_activity": "Read",
+      "typed_plan_sha256": "sha256:18560e947d2e78c9f5f475d720450d35a522eff497ee8b7a224326c8b217cf91",
+      "semantic_fingerprint": "cc76f7d0e7272107f35afcf8eecdfb8a8e51444e3029b495536c16645bfaa46c",
+      "activities": [
+        {
+          "name": "Build",
+          "id": "urn:make9533:build",
+          "input_type": "Input",
+          "output_type": "Batch",
+          "input_entity_id": "urn:make9533:input",
+          "output_entity_id": "urn:make9533:batch",
+          "go_function": "GoooComposedActivity0",
+          "input_from": -1,
+          "assembling": false
+        },
+        {
+          "name": "Read",
+          "id": "urn:make9533:read",
+          "input_type": "Batch",
+          "output_type": "Integer",
+          "input_entity_id": "urn:make9533:batch",
+          "output_entity_id": "urn:gooo:type:integer",
+          "go_function": "GoooComposedActivity1",
+          "input_from": 0,
+          "assembling": false
+        }
+      ],
+      "edges": [
+        {
+          "producer": "urn:make9533:build",
+          "consumer": "urn:make9533:read",
+          "producer_port": "result",
+          "consumer_port": "input",
+          "entity": "urn:make9533:batch"
+        }
+      ],
+      "record_types": [
+        {
+          "name": "Batch",
+          "id": "urn:make9533:batch",
+          "go_name": "GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71",
+          "fields": [
+            {
+              "name": "values",
+              "id": "urn:make9533:batch-values",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c",
+              "cardinality": "many"
+            },
+            {
+              "name": "pick",
+              "id": "urn:make9533:batch-pick",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087"
+            },
+            {
+              "name": "labels",
+              "id": "urn:make9533:labels",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56",
+              "cardinality": "many"
+            },
+            {
+              "name": "flags",
+              "id": "urn:make9533:flags",
+              "type_id": "urn:gooo:type:boolean",
+              "go_name": "GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50",
+              "cardinality": "many"
+            },
+            {
+              "name": "empty",
+              "id": "urn:make9533:empty",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f",
+              "cardinality": "many"
+            }
+          ]
+        },
+        {
+          "name": "Input",
+          "id": "urn:make9533:input",
+          "go_name": "GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5",
+          "fields": [
+            {
+              "name": "values",
+              "id": "urn:make9533:values",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7",
+              "cardinality": "many"
+            },
+            {
+              "name": "pick",
+              "id": "urn:make9533:pick",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooFieldf46d08ab0b06efde4603584c6bf3698dd3c26758761302241a9461bbc157b349"
+            }
+          ]
+        }
+      ]
+    },
+    "steps": [
+      {
+        "input_source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "generation": {
+          "report": {
+            "schema": "gooo/body-codegen-report/v3",
+            "decision": "PASS",
+            "activity": "Build",
+            "activity_id": "urn:make9533:build",
+            "input_type": "Input",
+            "record_types": [
+              {
+                "name": "Batch",
+                "id": "urn:make9533:batch",
+                "go_name": "GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71",
+                "fields": [
+                  {
+                    "name": "values",
+                    "id": "urn:make9533:batch-values",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c",
+                    "cardinality": "many"
+                  },
+                  {
+                    "name": "pick",
+                    "id": "urn:make9533:batch-pick",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087"
+                  },
+                  {
+                    "name": "labels",
+                    "id": "urn:make9533:labels",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56",
+                    "cardinality": "many"
+                  },
+                  {
+                    "name": "flags",
+                    "id": "urn:make9533:flags",
+                    "type_id": "urn:gooo:type:boolean",
+                    "go_name": "GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50",
+                    "cardinality": "many"
+                  },
+                  {
+                    "name": "empty",
+                    "id": "urn:make9533:empty",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f",
+                    "cardinality": "many"
+                  }
+                ]
+              },
+              {
+                "name": "Input",
+                "id": "urn:make9533:input",
+                "go_name": "GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5",
+                "fields": [
+                  {
+                    "name": "values",
+                    "id": "urn:make9533:values",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7",
+                    "cardinality": "many"
+                  },
+                  {
+                    "name": "pick",
+                    "id": "urn:make9533:pick",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldf46d08ab0b06efde4603584c6bf3698dd3c26758761302241a9461bbc157b349"
+                  }
+                ]
+              }
+            ],
+            "output_type": "Batch",
+            "plan_sha256": "sha256:67fbc9ea36d6afd6520c465b84a5fc8e061076beb8bb8d6aeb633d13fb97746f",
+            "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+            "source_digest": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "program_digest": "sha256:d2f26acadcf2778f5e3d0ea5092c743ec3cbbafa3d630e92d9b1d91475a1e561",
+            "generated_digest": "sha256:8e664f8c4f1704b16d63bd61616dd2f86e2e62fbb34cd2a58c95faf0de9e27b9",
+            "replay_digest": "sha256:8e664f8c4f1704b16d63bd61616dd2f86e2e62fbb34cd2a58c95faf0de9e27b9",
+            "route": "preserve",
+            "route_decision": {
+              "schema": "gooo/typed-decision-receipt/v1",
+              "mode": "deterministic_fallback",
+              "selected": "preserve",
+              "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+              "provider": "deterministic",
+              "request_sha256": ""
+            },
+            "route_selection": {
+              "method": "single_eligible_route",
+              "proposed_route": "preserve",
+              "final_route": "preserve"
+            },
+            "route_decision_latency_ms": 0,
+            "body_reads": [
+              {
+                "activity_id": "urn:make9533:build",
+                "kind": "index",
+                "native_ordinal": 0,
+                "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+                "decoded_start": 13,
+                "decoded_end": 28,
+                "expression": "input.values[0]"
+              },
+              {
+                "activity_id": "urn:make9533:build",
+                "kind": "index",
+                "native_ordinal": 1,
+                "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+                "decoded_start": 62,
+                "decoded_end": 77,
+                "expression": "input.values[0]"
+              },
+              {
+                "activity_id": "urn:make9533:build",
+                "kind": "index",
+                "native_ordinal": 2,
+                "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+                "decoded_start": 78,
+                "decoded_end": 93,
+                "expression": "input.values[1]"
+              },
+              {
+                "activity_id": "urn:make9533:inner",
+                "kind": "index",
+                "native_ordinal": 0,
+                "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+                "decoded_start": 19,
+                "decoded_end": 34,
+                "expression": "input.values[1]"
+              },
+              {
+                "activity_id": "urn:make9533:inner",
+                "kind": "index",
+                "native_ordinal": 1,
+                "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+                "decoded_start": 43,
+                "decoded_end": 52,
+                "expression": "values[0]"
+              }
+            ],
+            "body_constructions": [
+              {
+                "activity_id": "urn:make9533:build",
+                "native_ordinal": 0,
+                "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+                "decoded_start": 41,
+                "decoded_end": 105,
+                "expression": "[]int64{Inner(input),input.values[0]+input.values[1],previous+2}",
+                "elements": [
+                  {
+                    "decoded_start": 49,
+                    "decoded_end": 61,
+                    "expression": "Inner(input)"
+                  },
+                  {
+                    "decoded_start": 62,
+                    "decoded_end": 93,
+                    "expression": "input.values[0]+input.values[1]"
+                  },
+                  {
+                    "decoded_start": 94,
+                    "decoded_end": 104,
+                    "expression": "previous+2"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:make9533:build",
+                "native_ordinal": 1,
+                "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+                "decoded_start": 117,
+                "decoded_end": 140,
+                "expression": "[]string{\"start\",\"끝\"}",
+                "elements": [
+                  {
+                    "decoded_start": 126,
+                    "decoded_end": 133,
+                    "expression": "\"start\""
+                  },
+                  {
+                    "decoded_start": 134,
+                    "decoded_end": 139,
+                    "expression": "\"끝\""
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:make9533:build",
+                "native_ordinal": 2,
+                "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+                "decoded_start": 154,
+                "decoded_end": 172,
+                "expression": "[]bool{true,false}",
+                "elements": [
+                  {
+                    "decoded_start": 161,
+                    "decoded_end": 165,
+                    "expression": "true"
+                  },
+                  {
+                    "decoded_start": 166,
+                    "decoded_end": 171,
+                    "expression": "false"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:make9533:build",
+                "native_ordinal": 3,
+                "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+                "decoded_start": 183,
+                "decoded_end": 192,
+                "expression": "[]int64{}",
+                "elements": []
+              },
+              {
+                "activity_id": "urn:make9533:inner",
+                "native_ordinal": 0,
+                "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+                "decoded_start": 11,
+                "decoded_end": 35,
+                "expression": "[]int64{input.values[1]}",
+                "elements": [
+                  {
+                    "decoded_start": 19,
+                    "decoded_end": 34,
+                    "expression": "input.values[1]"
+                  }
+                ]
+              }
+            ],
+            "call_closure": {
+              "schema": "gooo/pure-activity-call-closure/v1",
+              "activities": [
+                {
+                  "name": "Inner",
+                  "activity_id": "urn:make9533:inner",
+                  "program_sha256": "sha256:2254ec5a617a3f7ce0b065faeeb4c49d51e7971c0f920187b6c8d3db7f576ece"
+                }
+              ],
+              "edges": [
+                {
+                  "caller_id": "urn:make9533:build",
+                  "callee_id": "urn:make9533:inner",
+                  "ordinal": 0
+                }
+              ],
+              "max_calls_per_invocation": 1
+            },
+            "candidate_routes": [
+              "preserve"
+            ],
+            "equivalence_rule": "source-shape-preserving-v1",
+            "source_constructs": 8,
+            "lowered_constructs": 8,
+            "source_semantic_units": 84,
+            "lowered_semantic_units": 84,
+            "completeness_percent": 100,
+            "route_equivalence": {
+              "schema": "gooo/body-codegen-route-equivalence/v1",
+              "decision": "PASS",
+              "method": "canonical_control_flow_form/v2",
+              "rule": "source-shape-preserving-v1",
+              "source_semantic_digest": "sha256:c2a0988d4d37c48ceef10e8a041d880b85072aacaa70c4075e61abfe45789ed9",
+              "generated_semantic_digest": "sha256:c2a0988d4d37c48ceef10e8a041d880b85072aacaa70c4075e61abfe45789ed9",
+              "equivalent": true,
+              "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+            },
+            "typecheck_passed": true,
+            "deterministic_replay": true,
+            "repository_writes": 0,
+            "unsupported_constructs": "recursive, indirect, external and assembling-callee calls; loops, imports, external effects, optional-field synthesis and repeated record fields",
+            "completeness_receipt": {
+              "schema": "gooo/metaprogramming-completeness-receipt/v2",
+              "profile_id": "gooo/body-codegen-pure-v1",
+              "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+              "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+              "scope": {
+                "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                "boundary": {
+                  "excluded_effects": [
+                    "generated code execution",
+                    "repository mutation",
+                    "external authority"
+                  ],
+                  "non_authorizing": true,
+                  "non_executing": true
+                },
+                "call_closure": {
+                  "schema": "gooo/pure-activity-call-closure/v1",
+                  "activities": [
+                    {
+                      "name": "Inner",
+                      "activity_id": "urn:make9533:inner",
+                      "program_sha256": "sha256:2254ec5a617a3f7ce0b065faeeb4c49d51e7971c0f920187b6c8d3db7f576ece"
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "caller_id": "urn:make9533:build",
+                      "callee_id": "urn:make9533:inner",
+                      "ordinal": 0
+                    }
+                  ],
+                  "max_calls_per_invocation": 1
+                },
+                "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                "decision_mode": "deterministic_fallback",
+                "decision_provider": "deterministic",
+                "domain_scope": "one pure typed Gooo activity with source-declared fixed callees; bounded acyclic call closure",
+                "excluded_scope": [
+                  "unstated natural-language intent",
+                  "independently sourced production workflows",
+                  "generated runtime behavior",
+                  "unrestricted Gooo body syntax",
+                  "route clarity or utility"
+                ],
+                "execution_environment": "darwin/arm64",
+                "input_type": "Input",
+                "laya_mode": "deterministic_fallback",
+                "laya_provider": "deterministic",
+                "observed_system_cost": {
+                  "human_actions": 0,
+                  "repository_writes": 0
+                },
+                "output_type": "Batch",
+                "plan_sha256": "sha256:67fbc9ea36d6afd6520c465b84a5fc8e061076beb8bb8d6aeb633d13fb97746f",
+                "receipt_declaration": {
+                  "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "projection_profile": "gooo/receipt-structure-projection/v1",
+                  "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                },
+                "record_types": [
+                  {
+                    "name": "Batch",
+                    "id": "urn:make9533:batch",
+                    "go_name": "GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71",
+                    "fields": [
+                      {
+                        "name": "values",
+                        "id": "urn:make9533:batch-values",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c",
+                        "cardinality": "many"
+                      },
+                      {
+                        "name": "pick",
+                        "id": "urn:make9533:batch-pick",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087"
+                      },
+                      {
+                        "name": "labels",
+                        "id": "urn:make9533:labels",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56",
+                        "cardinality": "many"
+                      },
+                      {
+                        "name": "flags",
+                        "id": "urn:make9533:flags",
+                        "type_id": "urn:gooo:type:boolean",
+                        "go_name": "GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50",
+                        "cardinality": "many"
+                      },
+                      {
+                        "name": "empty",
+                        "id": "urn:make9533:empty",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f",
+                        "cardinality": "many"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Input",
+                    "id": "urn:make9533:input",
+                    "go_name": "GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5",
+                    "fields": [
+                      {
+                        "name": "values",
+                        "id": "urn:make9533:values",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7",
+                        "cardinality": "many"
+                      },
+                      {
+                        "name": "pick",
+                        "id": "urn:make9533:pick",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldf46d08ab0b06efde4603584c6bf3698dd3c26758761302241a9461bbc157b349"
+                      }
+                    ]
+                  }
+                ],
+                "system_budget": {
+                  "maximum_human_actions": 0,
+                  "maximum_repository_writes": 0
+                },
+                "toolchain": "go1.27.2"
+              },
+              "core_dimensions": [
+                "declaration_coverage",
+                "generation_coverage",
+                "internal_replay_coverage",
+                "provenance_integrity",
+                "receipt_schema_binding",
+                "repository_write_boundary",
+                "route_choice_protocol",
+                "route_semantic_equivalence",
+                "source_ast_coverage",
+                "typecheck_coverage"
+              ],
+              "dimensions": [
+                {
+                  "id": "declaration_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "stable activity declarations",
+                  "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                  "evidence": [
+                    "source_digest:sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+                    "activity_id:urn:make9533:build"
+                  ]
+                },
+                {
+                  "id": "generation_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated Go functions",
+                  "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                  "evidence": [
+                    "generated_digest:sha256:8e664f8c4f1704b16d63bd61616dd2f86e2e62fbb34cd2a58c95faf0de9e27b9",
+                    "report decision:PASS"
+                  ]
+                },
+                {
+                  "id": "source_ast_coverage",
+                  "status": "PASS",
+                  "numerator": 84,
+                  "denominator": 84,
+                  "unit": "source semantic units lowered",
+                  "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                  "evidence": [
+                    "source_semantic_units",
+                    "lowered_semantic_units"
+                  ]
+                },
+                {
+                  "id": "route_semantic_equivalence",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source/generated route pairs",
+                  "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                  "evidence": [
+                    "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                    "route_equivalence.rule:source-shape-preserving-v1",
+                    "source_semantic_digest:sha256:c2a0988d4d37c48ceef10e8a041d880b85072aacaa70c4075e61abfe45789ed9",
+                    "generated_semantic_digest:sha256:c2a0988d4d37c48ceef10e8a041d880b85072aacaa70c4075e61abfe45789ed9"
+                  ]
+                },
+                {
+                  "id": "typecheck_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated functions accepted by Go type checking",
+                  "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                  "evidence": [
+                    "typecheck_passed"
+                  ]
+                },
+                {
+                  "id": "internal_replay_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "deterministic compiler emission replays",
+                  "reason": "Requires replayed generated bytes to match the selected output digest.",
+                  "evidence": [
+                    "generated_digest:sha256:8e664f8c4f1704b16d63bd61616dd2f86e2e62fbb34cd2a58c95faf0de9e27b9",
+                    "replay_digest:sha256:8e664f8c4f1704b16d63bd61616dd2f86e2e62fbb34cd2a58c95faf0de9e27b9"
+                  ]
+                },
+                {
+                  "id": "route_choice_protocol",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "selected routes in the compiler-declared candidate set",
+                  "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                  "evidence": [
+                    "candidate_routes",
+                    "selected_route:preserve"
+                  ]
+                },
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "numerator": 7,
+                  "denominator": 8,
+                  "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "evidence": [
+                    "source_digest:sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+                    "program_digest:sha256:d2f26acadcf2778f5e3d0ea5092c743ec3cbbafa3d630e92d9b1d91475a1e561",
+                    "generated_digest:sha256:8e664f8c4f1704b16d63bd61616dd2f86e2e62fbb34cd2a58c95faf0de9e27b9",
+                    "replay_digest:sha256:8e664f8c4f1704b16d63bd61616dd2f86e2e62fbb34cd2a58c95faf0de9e27b9",
+                    "activity_id:urn:make9533:build",
+                    "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                    "route_equivalence semantic digests"
+                  ]
+                },
+                {
+                  "id": "receipt_schema_binding",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source-owned receipt schema and generated structure bindings",
+                  "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                  "evidence": [
+                    "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile:gooo/receipt-structure-projection/v1"
+                  ]
+                },
+                {
+                  "id": "repository_write_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "repository writes",
+                  "reason": "The command emits generated source without mutating the repository.",
+                  "evidence": [
+                    "repository_writes:0"
+                  ]
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated package runtime executions",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "evidence": [
+                    "body-codegen does not run generated Go"
+                  ]
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "observed host permission profiles",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "evidence": [
+                    "host permission profile is not observed"
+                  ]
+                },
+                {
+                  "id": "external_network_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "runs with no Laya provider request",
+                  "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                  "evidence": [
+                    "decision.mode:deterministic_fallback",
+                    "decision.provider:deterministic",
+                    "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                  ]
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 0,
+                  "unit": "eligible multi-route Laya decisions",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "evidence": [
+                    "candidate_routes",
+                    "route_decision.mode:deterministic_fallback",
+                    "route_decision.request_sha256:",
+                    "route_decision.model_revision:"
+                  ]
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independently sourced real workflows",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "evidence": [
+                    "no independent workflow corpus is bound"
+                  ]
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated runtime observations mapped back to source",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "evidence": [
+                    "no source-bound reverse-observation trace"
+                  ]
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete input-domain behavior proofs",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "evidence": [
+                    "generated package execution and an independent domain oracle are not part of this command"
+                  ]
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independent route-clarity or utility criteria",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "evidence": [
+                    "no independent route-quality oracle"
+                  ]
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete process resource profiles",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "evidence": [
+                    "route_decision_latency_ms is recorded",
+                    "CPU and peak RSS are not captured"
+                  ]
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible prior resource receipts",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "evidence": [
+                    "no compatible prior resource receipt"
+                  ]
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible before/after semantic receipts",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "evidence": [
+                    "no comparable prior semantic receipt"
+                  ]
+                }
+              ],
+              "status_counts": {
+                "FAIL_CLOSED": 0,
+                "PASS": 10,
+                "PROGRESS": 1,
+                "UNKNOWN": 10
+              },
+              "aggregate_completeness_score": null,
+              "first_unresolved": {
+                "id": "provenance_integrity",
+                "status": "PROGRESS",
+                "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+              },
+              "unresolved_claims": [
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                }
+              ],
+              "not_claimed": [
+                "user-intent completeness",
+                "real-workflow coverage",
+                "generated runtime behavior",
+                "full-domain semantics",
+                "route quality",
+                "universal language completeness"
+              ],
+              "fail_closed_reason": null
+            }
+          },
+          "source": "package constructing\n\n//gooo:generated:start id=\"urn:make9533:batch\" kind=\"entity\"\ntype GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71 struct {\n\tGoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c []int64  `json:\"values\"`\n\tGoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087 int64    `json:\"pick\"`\n\tGoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56 []string `json:\"labels\"`\n\tGoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50 []bool   `json:\"flags\"`\n\tGoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f []int64  `json:\"empty\"`\n}\n\n//gooo:generated:end id=\"urn:make9533:batch\" kind=\"entity\"\n//gooo:generated:start id=\"urn:make9533:input\" kind=\"entity\"\ntype GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5 struct {\n\tGoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7 []int64 `json:\"values\"`\n\tGoooFieldf46d08ab0b06efde4603584c6bf3698dd3c26758761302241a9461bbc157b349 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:make9533:input\" kind=\"entity\"\n//gooo:generated:start id=\"urn:make9533:build\" kind=\"activity\"\nfunc Build(input GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5) GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71 {\n\tvar previous = input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0]\n\tvar numbers = []int64{Inner(input), input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0] + input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1], previous + 2}\n\tvar labels = []string{\"start\", \"끝\"}\n\tvar switches = []bool{true, false}\n\tvar empty = []int64{}\n\treturn GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71{GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c: numbers[1:], GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087: input.GoooFieldf46d08ab0b06efde4603584c6bf3698dd3c26758761302241a9461bbc157b349, GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56: labels, GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50: switches, GoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f: empty}\n}\n\n//gooo:generated:end id=\"urn:make9533:build\" kind=\"activity\"\n//gooo:generated:start id=\"urn:make9533:inner\" kind=\"activity\"\nfunc Inner(input GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5) int64 {\n\tvar values = []int64{input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]}\n\treturn values[0]\n}\n\n//gooo:generated:end id=\"urn:make9533:inner\" kind=\"activity\"\n"
+        }
+      },
+      {
+        "input_source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "generation": {
+          "report": {
+            "schema": "gooo/body-codegen-report/v3",
+            "decision": "PASS",
+            "activity": "Read",
+            "activity_id": "urn:make9533:read",
+            "input_type": "Batch",
+            "record_types": [
+              {
+                "name": "Batch",
+                "id": "urn:make9533:batch",
+                "go_name": "GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71",
+                "fields": [
+                  {
+                    "name": "values",
+                    "id": "urn:make9533:batch-values",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c",
+                    "cardinality": "many"
+                  },
+                  {
+                    "name": "pick",
+                    "id": "urn:make9533:batch-pick",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087"
+                  },
+                  {
+                    "name": "labels",
+                    "id": "urn:make9533:labels",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56",
+                    "cardinality": "many"
+                  },
+                  {
+                    "name": "flags",
+                    "id": "urn:make9533:flags",
+                    "type_id": "urn:gooo:type:boolean",
+                    "go_name": "GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50",
+                    "cardinality": "many"
+                  },
+                  {
+                    "name": "empty",
+                    "id": "urn:make9533:empty",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f",
+                    "cardinality": "many"
+                  }
+                ]
+              },
+              {
+                "name": "Input",
+                "id": "urn:make9533:input",
+                "go_name": "GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5",
+                "fields": [
+                  {
+                    "name": "values",
+                    "id": "urn:make9533:values",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7",
+                    "cardinality": "many"
+                  },
+                  {
+                    "name": "pick",
+                    "id": "urn:make9533:pick",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldf46d08ab0b06efde4603584c6bf3698dd3c26758761302241a9461bbc157b349"
+                  }
+                ]
+              }
+            ],
+            "output_type": "int64",
+            "plan_sha256": "sha256:4917afc24c8c714f6163ed5172009e49a72766921f2d9ce0cd796962e64e741a",
+            "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+            "source_digest": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "program_digest": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+            "generated_digest": "sha256:6a8ebc72568db8a62f2d7a0f43a4c25a22f6ecbc1a19d5466b217265a5445e55",
+            "replay_digest": "sha256:6a8ebc72568db8a62f2d7a0f43a4c25a22f6ecbc1a19d5466b217265a5445e55",
+            "route": "preserve",
+            "route_decision": {
+              "schema": "gooo/typed-decision-receipt/v1",
+              "mode": "deterministic_fallback",
+              "selected": "preserve",
+              "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+              "provider": "deterministic",
+              "request_sha256": ""
+            },
+            "route_selection": {
+              "method": "single_eligible_route",
+              "proposed_route": "preserve",
+              "final_route": "preserve"
+            },
+            "route_decision_latency_ms": 0,
+            "body_conditions": [
+              {
+                "activity_id": "urn:make9533:read",
+                "native_ordinal": 0,
+                "source_ordinal": 0,
+                "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+                "decoded_start": 3,
+                "decoded_end": 43,
+                "expression": "input.flags[0] \u0026\u0026 input.labels[1]==\"끝\"",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:make9533:batch",
+                    "field_id": "urn:make9533:flags",
+                    "name": "flags"
+                  },
+                  {
+                    "entity_id": "urn:make9533:batch",
+                    "field_id": "urn:make9533:labels",
+                    "name": "labels"
+                  }
+                ]
+              }
+            ],
+            "body_reads": [
+              {
+                "activity_id": "urn:make9533:read",
+                "kind": "index",
+                "native_ordinal": 0,
+                "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+                "decoded_start": 3,
+                "decoded_end": 17,
+                "expression": "input.flags[0]"
+              },
+              {
+                "activity_id": "urn:make9533:read",
+                "kind": "index",
+                "native_ordinal": 1,
+                "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+                "decoded_start": 21,
+                "decoded_end": 36,
+                "expression": "input.labels[1]"
+              },
+              {
+                "activity_id": "urn:make9533:read",
+                "kind": "index",
+                "native_ordinal": 2,
+                "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+                "decoded_start": 52,
+                "decoded_end": 76,
+                "expression": "input.values[input.pick]"
+              }
+            ],
+            "candidate_routes": [
+              "preserve"
+            ],
+            "equivalence_rule": "source-shape-preserving-v1",
+            "source_constructs": 3,
+            "lowered_constructs": 3,
+            "source_semantic_units": 33,
+            "lowered_semantic_units": 33,
+            "completeness_percent": 100,
+            "route_equivalence": {
+              "schema": "gooo/body-codegen-route-equivalence/v1",
+              "decision": "PASS",
+              "method": "canonical_control_flow_form/v2",
+              "rule": "source-shape-preserving-v1",
+              "source_semantic_digest": "sha256:f6ca78a59985d08b5b59a79767d4a4e507d877e7a5445345f7c0b11383f3cccf",
+              "generated_semantic_digest": "sha256:f6ca78a59985d08b5b59a79767d4a4e507d877e7a5445345f7c0b11383f3cccf",
+              "equivalent": true,
+              "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+            },
+            "typecheck_passed": true,
+            "deterministic_replay": true,
+            "repository_writes": 0,
+            "unsupported_constructs": "calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
+            "completeness_receipt": {
+              "schema": "gooo/metaprogramming-completeness-receipt/v2",
+              "profile_id": "gooo/body-codegen-pure-v1",
+              "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+              "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+              "scope": {
+                "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                "boundary": {
+                  "excluded_effects": [
+                    "generated code execution",
+                    "repository mutation",
+                    "external authority"
+                  ],
+                  "non_authorizing": true,
+                  "non_executing": true
+                },
+                "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                "decision_mode": "deterministic_fallback",
+                "decision_provider": "deterministic",
+                "domain_scope": "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
+                "excluded_scope": [
+                  "unstated natural-language intent",
+                  "independently sourced production workflows",
+                  "generated runtime behavior",
+                  "unrestricted Gooo body syntax",
+                  "route clarity or utility"
+                ],
+                "execution_environment": "darwin/arm64",
+                "input_type": "Batch",
+                "laya_mode": "deterministic_fallback",
+                "laya_provider": "deterministic",
+                "observed_system_cost": {
+                  "human_actions": 0,
+                  "repository_writes": 0
+                },
+                "output_type": "int64",
+                "plan_sha256": "sha256:4917afc24c8c714f6163ed5172009e49a72766921f2d9ce0cd796962e64e741a",
+                "receipt_declaration": {
+                  "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "projection_profile": "gooo/receipt-structure-projection/v1",
+                  "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                },
+                "record_types": [
+                  {
+                    "name": "Batch",
+                    "id": "urn:make9533:batch",
+                    "go_name": "GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71",
+                    "fields": [
+                      {
+                        "name": "values",
+                        "id": "urn:make9533:batch-values",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c",
+                        "cardinality": "many"
+                      },
+                      {
+                        "name": "pick",
+                        "id": "urn:make9533:batch-pick",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087"
+                      },
+                      {
+                        "name": "labels",
+                        "id": "urn:make9533:labels",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56",
+                        "cardinality": "many"
+                      },
+                      {
+                        "name": "flags",
+                        "id": "urn:make9533:flags",
+                        "type_id": "urn:gooo:type:boolean",
+                        "go_name": "GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50",
+                        "cardinality": "many"
+                      },
+                      {
+                        "name": "empty",
+                        "id": "urn:make9533:empty",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f",
+                        "cardinality": "many"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Input",
+                    "id": "urn:make9533:input",
+                    "go_name": "GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5",
+                    "fields": [
+                      {
+                        "name": "values",
+                        "id": "urn:make9533:values",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7",
+                        "cardinality": "many"
+                      },
+                      {
+                        "name": "pick",
+                        "id": "urn:make9533:pick",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldf46d08ab0b06efde4603584c6bf3698dd3c26758761302241a9461bbc157b349"
+                      }
+                    ]
+                  }
+                ],
+                "system_budget": {
+                  "maximum_human_actions": 0,
+                  "maximum_repository_writes": 0
+                },
+                "toolchain": "go1.27.2"
+              },
+              "core_dimensions": [
+                "declaration_coverage",
+                "generation_coverage",
+                "internal_replay_coverage",
+                "provenance_integrity",
+                "receipt_schema_binding",
+                "repository_write_boundary",
+                "route_choice_protocol",
+                "route_semantic_equivalence",
+                "source_ast_coverage",
+                "typecheck_coverage"
+              ],
+              "dimensions": [
+                {
+                  "id": "declaration_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "stable activity declarations",
+                  "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                  "evidence": [
+                    "source_digest:sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+                    "activity_id:urn:make9533:read"
+                  ]
+                },
+                {
+                  "id": "generation_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated Go functions",
+                  "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                  "evidence": [
+                    "generated_digest:sha256:6a8ebc72568db8a62f2d7a0f43a4c25a22f6ecbc1a19d5466b217265a5445e55",
+                    "report decision:PASS"
+                  ]
+                },
+                {
+                  "id": "source_ast_coverage",
+                  "status": "PASS",
+                  "numerator": 33,
+                  "denominator": 33,
+                  "unit": "source semantic units lowered",
+                  "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                  "evidence": [
+                    "source_semantic_units",
+                    "lowered_semantic_units"
+                  ]
+                },
+                {
+                  "id": "route_semantic_equivalence",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source/generated route pairs",
+                  "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                  "evidence": [
+                    "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                    "route_equivalence.rule:source-shape-preserving-v1",
+                    "source_semantic_digest:sha256:f6ca78a59985d08b5b59a79767d4a4e507d877e7a5445345f7c0b11383f3cccf",
+                    "generated_semantic_digest:sha256:f6ca78a59985d08b5b59a79767d4a4e507d877e7a5445345f7c0b11383f3cccf"
+                  ]
+                },
+                {
+                  "id": "typecheck_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated functions accepted by Go type checking",
+                  "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                  "evidence": [
+                    "typecheck_passed"
+                  ]
+                },
+                {
+                  "id": "internal_replay_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "deterministic compiler emission replays",
+                  "reason": "Requires replayed generated bytes to match the selected output digest.",
+                  "evidence": [
+                    "generated_digest:sha256:6a8ebc72568db8a62f2d7a0f43a4c25a22f6ecbc1a19d5466b217265a5445e55",
+                    "replay_digest:sha256:6a8ebc72568db8a62f2d7a0f43a4c25a22f6ecbc1a19d5466b217265a5445e55"
+                  ]
+                },
+                {
+                  "id": "route_choice_protocol",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "selected routes in the compiler-declared candidate set",
+                  "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                  "evidence": [
+                    "candidate_routes",
+                    "selected_route:preserve"
+                  ]
+                },
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "numerator": 7,
+                  "denominator": 8,
+                  "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "evidence": [
+                    "source_digest:sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+                    "program_digest:sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+                    "generated_digest:sha256:6a8ebc72568db8a62f2d7a0f43a4c25a22f6ecbc1a19d5466b217265a5445e55",
+                    "replay_digest:sha256:6a8ebc72568db8a62f2d7a0f43a4c25a22f6ecbc1a19d5466b217265a5445e55",
+                    "activity_id:urn:make9533:read",
+                    "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                    "route_equivalence semantic digests"
+                  ]
+                },
+                {
+                  "id": "receipt_schema_binding",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source-owned receipt schema and generated structure bindings",
+                  "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                  "evidence": [
+                    "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile:gooo/receipt-structure-projection/v1"
+                  ]
+                },
+                {
+                  "id": "repository_write_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "repository writes",
+                  "reason": "The command emits generated source without mutating the repository.",
+                  "evidence": [
+                    "repository_writes:0"
+                  ]
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated package runtime executions",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "evidence": [
+                    "body-codegen does not run generated Go"
+                  ]
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "observed host permission profiles",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "evidence": [
+                    "host permission profile is not observed"
+                  ]
+                },
+                {
+                  "id": "external_network_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "runs with no Laya provider request",
+                  "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                  "evidence": [
+                    "decision.mode:deterministic_fallback",
+                    "decision.provider:deterministic",
+                    "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                  ]
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 0,
+                  "unit": "eligible multi-route Laya decisions",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "evidence": [
+                    "candidate_routes",
+                    "route_decision.mode:deterministic_fallback",
+                    "route_decision.request_sha256:",
+                    "route_decision.model_revision:"
+                  ]
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independently sourced real workflows",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "evidence": [
+                    "no independent workflow corpus is bound"
+                  ]
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated runtime observations mapped back to source",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "evidence": [
+                    "no source-bound reverse-observation trace"
+                  ]
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete input-domain behavior proofs",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "evidence": [
+                    "generated package execution and an independent domain oracle are not part of this command"
+                  ]
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independent route-clarity or utility criteria",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "evidence": [
+                    "no independent route-quality oracle"
+                  ]
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete process resource profiles",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "evidence": [
+                    "route_decision_latency_ms is recorded",
+                    "CPU and peak RSS are not captured"
+                  ]
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible prior resource receipts",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "evidence": [
+                    "no compatible prior resource receipt"
+                  ]
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible before/after semantic receipts",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "evidence": [
+                    "no comparable prior semantic receipt"
+                  ]
+                }
+              ],
+              "status_counts": {
+                "FAIL_CLOSED": 0,
+                "PASS": 10,
+                "PROGRESS": 1,
+                "UNKNOWN": 10
+              },
+              "aggregate_completeness_score": null,
+              "first_unresolved": {
+                "id": "provenance_integrity",
+                "status": "PROGRESS",
+                "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+              },
+              "unresolved_claims": [
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                }
+              ],
+              "not_claimed": [
+                "user-intent completeness",
+                "real-workflow coverage",
+                "generated runtime behavior",
+                "full-domain semantics",
+                "route quality",
+                "universal language completeness"
+              ],
+              "fail_closed_reason": null
+            }
+          },
+          "source": "package constructing\n\n//gooo:generated:start id=\"urn:make9533:batch\" kind=\"entity\"\ntype GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71 struct {\n\tGoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c []int64  `json:\"values\"`\n\tGoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087 int64    `json:\"pick\"`\n\tGoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56 []string `json:\"labels\"`\n\tGoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50 []bool   `json:\"flags\"`\n\tGoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f []int64  `json:\"empty\"`\n}\n\n//gooo:generated:end id=\"urn:make9533:batch\" kind=\"entity\"\n//gooo:generated:start id=\"urn:make9533:input\" kind=\"entity\"\ntype GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5 struct {\n\tGoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7 []int64 `json:\"values\"`\n\tGoooFieldf46d08ab0b06efde4603584c6bf3698dd3c26758761302241a9461bbc157b349 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:make9533:input\" kind=\"entity\"\n//gooo:generated:start id=\"urn:make9533:read\" kind=\"activity\"\nfunc Read(input GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71) int64 {\n\tif input.GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50[0] \u0026\u0026 input.GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56[1] == \"끝\" {\n\t\treturn input.GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c[input.GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087] + int64(len(input.GoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f))\n\t}\n\treturn -1\n}\n\n//gooo:generated:end id=\"urn:make9533:read\" kind=\"activity\"\n"
+        }
+      }
+    ],
+    "gooo_source": "package constructing\nnamespace constructing9533\nentity Integer id \"urn:gooo:type:integer\"\nentity Input id \"urn:make9533:input\" fields {\n field values id \"urn:make9533:values\" type integer required many\n field pick id \"urn:make9533:pick\" type integer required one\n}\nentity Batch id \"urn:make9533:batch\" fields {\n field values id \"urn:make9533:batch-values\" type integer required many\n field pick id \"urn:make9533:batch-pick\" type integer required one\n field labels id \"urn:make9533:labels\" type string required many\n field flags id \"urn:make9533:flags\" type boolean required many\n field empty id \"urn:make9533:empty\" type integer required many\n}\nactivity Inner(Input) -\u003e Integer id \"urn:make9533:inner\" computes \"let values=[]int64{input.values[1]};return values[0]\"\nactivity Build(Input) -\u003e Batch id \"urn:make9533:build\" computes \"let previous=input.values[0];let numbers=[]int64{Inner(input),input.values[0]+input.values[1],previous+2};let labels=[]string{\\\"start\\\",\\\"끝\\\"};let switches=[]bool{true,false};let empty=[]int64{};return Batch{values:numbers[1:],pick:input.pick,labels:labels,flags:switches,empty:empty}\"\nactivity Read(Batch) -\u003e Integer id \"urn:make9533:read\" computes \"if input.flags[0] \u0026\u0026 input.labels[1]==\\\"끝\\\" {return input.values[input.pick]+int64(len(input.empty))};return -1\"\nbind Build.result -\u003e Read.input\n",
+    "source": "package main\n\n//gooo:generated:start id=\"urn:make9533:batch\" kind=\"entity\"\ntype GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71 struct {\n\tGoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c []int64  `json:\"values\"`\n\tGoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087 int64    `json:\"pick\"`\n\tGoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56 []string `json:\"labels\"`\n\tGoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50 []bool   `json:\"flags\"`\n\tGoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f []int64  `json:\"empty\"`\n}\n\n//gooo:generated:end id=\"urn:make9533:batch\" kind=\"entity\"\n//gooo:generated:start id=\"urn:make9533:input\" kind=\"entity\"\ntype GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5 struct {\n\tGoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7 []int64 `json:\"values\"`\n\tGoooFieldf46d08ab0b06efde4603584c6bf3698dd3c26758761302241a9461bbc157b349 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:make9533:input\" kind=\"entity\"\n\n//gooo:generated:start id=\"urn:make9533:build\" kind=\"activity\"\nfunc GoooComposedActivity0(input GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5) GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71 {\n\tvar previous = input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0]\n\tvar numbers = []int64{GoooComposedActivity0Call0(input), input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0] + input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1], previous + 2}\n\tvar labels = []string{\"start\", \"끝\"}\n\tvar switches = []bool{true, false}\n\tvar empty = []int64{}\n\treturn GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71{GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c: numbers[1:], GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087: input.GoooFieldf46d08ab0b06efde4603584c6bf3698dd3c26758761302241a9461bbc157b349, GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56: labels, GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50: switches, GoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f: empty}\n}\nfunc GoooComposedActivity0Call0(input GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5) int64 {\n\tvar values = []int64{input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]}\n\treturn values[0]\n}\n\n//gooo:generated:end id=\"urn:make9533:build\" kind=\"activity\"\n\n//gooo:generated:start id=\"urn:make9533:read\" kind=\"activity\"\nfunc GoooComposedActivity1(input GoooRecord4b6dd35743f6f7792773016d60ecb46b93a4e2cf8e081fb2a65327e261760e71) int64 {\n\tif input.GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50[0] \u0026\u0026 input.GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56[1] == \"끝\" {\n\t\treturn input.GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c[input.GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087] + int64(len(input.GoooField7ec13e59443b69d53d5990c3615e902fe3fb7515d2a8a03bf1b857f308fa1c6f))\n\t}\n\treturn -1\n}\n\n//gooo:generated:end id=\"urn:make9533:read\" kind=\"activity\"\n",
+    "driver_source": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc main() {\n\tvar in [][1]json.RawMessage\n\tif json.NewDecoder(os.Stdin).Decode(\u0026in) != nil || len(in) \u003e 128 {\n\t\tos.Exit(2)\n\t}\n\tout := make([][2]json.RawMessage, len(in))\n\tfor c, row := range in {\n\t\tvar input0 GoooRecord64a12686005d29582ecdac870aaaee83aa12068f72def327fdc2a59b9322dae5\n\t\tif json.Unmarshal(row[0], \u0026input0) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv0 := GoooComposedActivity0(input0)\n\t\tout[c][0], _ = json.Marshal(v0)\n\t\tv1 := GoooComposedActivity1(v0)\n\t\tout[c][1], _ = json.Marshal(v1)\n\t}\n\tif json.NewEncoder(os.Stdout).Encode(out) != nil {\n\t\tos.Exit(3)\n\t}\n}\n",
+    "elapsed_ns": 10844917,
+    "scope": "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"
+  },
+  "constructed_read_facts": [
+    {
+      "case_index": 0,
+      "read_index": 2,
+      "instance_index": 1,
+      "element_index": 0
+    },
+    {
+      "case_index": 0,
+      "read_index": 5,
+      "instance_index": 3,
+      "element_index": 0
+    },
+    {
+      "case_index": 0,
+      "read_index": 6,
+      "instance_index": 2,
+      "element_index": 1
+    },
+    {
+      "case_index": 0,
+      "read_index": 7,
+      "instance_index": 0,
+      "element_index": 1
+    },
+    {
+      "case_index": 1,
+      "read_index": 2,
+      "instance_index": 1,
+      "element_index": 0
+    },
+    {
+      "case_index": 1,
+      "read_index": 5,
+      "instance_index": 3,
+      "element_index": 0
+    },
+    {
+      "case_index": 1,
+      "read_index": 6,
+      "instance_index": 2,
+      "element_index": 1
+    },
+    {
+      "case_index": 1,
+      "read_index": 7,
+      "instance_index": 0,
+      "element_index": 2
+    },
+    {
+      "case_index": 2,
+      "read_index": 2,
+      "instance_index": 1,
+      "element_index": 0
+    },
+    {
+      "case_index": 2,
+      "read_index": 5,
+      "instance_index": 3,
+      "element_index": 0
+    },
+    {
+      "case_index": 2,
+      "read_index": 6,
+      "instance_index": 2,
+      "element_index": 1
+    },
+    {
+      "case_index": 2,
+      "read_index": 7,
+      "instance_index": 0,
+      "element_index": 1
+    }
+  ],
+  "construction_facts": [
+    {
+      "case_index": 0,
+      "instance_index": 0,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 1,
+      "read_end": 3,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 880,
+      "source_end": 892,
+      "expression": "Inner(input)",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 0,
+      "instance_index": 0,
+      "element_index": 1,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 3,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 893,
+      "source_end": 924,
+      "expression": "input.values[0]+input.values[1]",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 0,
+      "instance_index": 0,
+      "element_index": 2,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 925,
+      "source_end": 935,
+      "expression": "previous+2",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 0,
+      "instance_index": 1,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:inner",
+      "completed": true,
+      "read_start": 1,
+      "read_end": 2,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 731,
+      "source_end": 746,
+      "expression": "input.values[1]",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 0,
+      "instance_index": 2,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 957,
+      "source_end": 966,
+      "expression": "\"start\"",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 0,
+      "instance_index": 2,
+      "element_index": 1,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 967,
+      "source_end": 974,
+      "expression": "\"끝\"",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 0,
+      "instance_index": 3,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 996,
+      "source_end": 1000,
+      "expression": "true",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 0,
+      "instance_index": 3,
+      "element_index": 1,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 1001,
+      "source_end": 1006,
+      "expression": "false",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 1,
+      "instance_index": 0,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 1,
+      "read_end": 3,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 880,
+      "source_end": 892,
+      "expression": "Inner(input)",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 1,
+      "instance_index": 0,
+      "element_index": 1,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 3,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 893,
+      "source_end": 924,
+      "expression": "input.values[0]+input.values[1]",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 1,
+      "instance_index": 0,
+      "element_index": 2,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 925,
+      "source_end": 935,
+      "expression": "previous+2",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 1,
+      "instance_index": 1,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:inner",
+      "completed": true,
+      "read_start": 1,
+      "read_end": 2,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 731,
+      "source_end": 746,
+      "expression": "input.values[1]",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 1,
+      "instance_index": 2,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 957,
+      "source_end": 966,
+      "expression": "\"start\"",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 1,
+      "instance_index": 2,
+      "element_index": 1,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 967,
+      "source_end": 974,
+      "expression": "\"끝\"",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 1,
+      "instance_index": 3,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 996,
+      "source_end": 1000,
+      "expression": "true",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 1,
+      "instance_index": 3,
+      "element_index": 1,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 1001,
+      "source_end": 1006,
+      "expression": "false",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 2,
+      "instance_index": 0,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 1,
+      "read_end": 3,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 880,
+      "source_end": 892,
+      "expression": "Inner(input)",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 2,
+      "instance_index": 0,
+      "element_index": 1,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 3,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 893,
+      "source_end": 924,
+      "expression": "input.values[0]+input.values[1]",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 2,
+      "instance_index": 0,
+      "element_index": 2,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 925,
+      "source_end": 935,
+      "expression": "previous+2",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 2,
+      "instance_index": 1,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:inner",
+      "completed": true,
+      "read_start": 1,
+      "read_end": 2,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 731,
+      "source_end": 746,
+      "expression": "input.values[1]",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 2,
+      "instance_index": 2,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 957,
+      "source_end": 966,
+      "expression": "\"start\"",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 2,
+      "instance_index": 2,
+      "element_index": 1,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 967,
+      "source_end": 974,
+      "expression": "\"끝\"",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 2,
+      "instance_index": 3,
+      "element_index": 0,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 996,
+      "source_end": 1000,
+      "expression": "true",
+      "mapping": "MAPPED"
+    },
+    {
+      "case_index": 2,
+      "instance_index": 3,
+      "element_index": 1,
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "completed": true,
+      "read_start": 5,
+      "read_end": 5,
+      "reads_dropped": 0,
+      "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+      "source_start": 1001,
+      "source_end": 1006,
+      "expression": "false",
+      "mapping": "MAPPED"
+    }
+  ],
+  "runtime": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "composition_sha256": "sha256:45ff1fecf4588da954cbe68931d1db5bdd4699e69d4c054943f379013eeb86ce",
+    "original_source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+    "selected_source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+    "typed_plan_sha256": "sha256:18560e947d2e78c9f5f475d720450d35a522eff497ee8b7a224326c8b217cf91",
+    "generated_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+    "driver_sha256": "sha256:8bb1d3e945757fec41bf494c4f31b313db9592c8c3e7921025ff7890dd645f64",
+    "observed_projection_sha256": "sha256:61edd5781b32f9383e6cc04610c2974c84af1dd5c082baba8237de173b74f61f",
+    "observed_driver_sha256": "sha256:5e478717d805531f0386bccb2b32adfee465d914d7e59a0875d9fb12b0d51329",
+    "runtime_suite_sha256": "sha256:f10242ed9f37ab3f963c0cee8c8ca6b95d96ad9a774875080fbe1c823c4af62e",
+    "executable_sha256": "sha256:b42873fc3d053c27e128e7528244c339f06bb81f7b87bb21f4dc01825327b798",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_tool_selection": "path",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "(devel)"
+    },
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 7875000,
+      "user_ns": 3421000,
+      "system_ns": 2616000,
+      "peak_rss_bytes": 14368768,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1154416,
+        "wait_ns": 6720584,
+        "deadline_remaining_ns": 59981330375,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 314734916,
+      "user_ns": 141514000,
+      "system_ns": 91066000,
+      "peak_rss_bytes": 88342528,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 915416,
+        "wait_ns": 313819500,
+        "deadline_remaining_ns": 59970707375,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 355618917,
+        "user_ns": 2036000,
+        "system_ns": 4474000,
+        "peak_rss_bytes": 5193728,
+        "stdout_sha256": "sha256:a7acc7a41dbac8303f6725e0fcc7551c087f18ca460b526eb5e5655ccaa4a1a6",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 832417,
+          "wait_ns": 354786500,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59654399042,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 4004750,
+        "user_ns": 1477000,
+        "system_ns": 1648000,
+        "peak_rss_bytes": 5128192,
+        "stdout_sha256": "sha256:a7acc7a41dbac8303f6725e0fcc7551c087f18ca460b526eb5e5655ccaa4a1a6",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 1163958,
+          "wait_ns": 2840792,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59297890542,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "traces": [
+      {
+        "case_index": 0,
+        "deliveries": [
+          {
+            "activity_id": "urn:make9533:build",
+            "input": {
+              "pick": 0,
+              "values": [
+                541,
+                541
+              ]
+            },
+            "input_fields": [
+              {
+                "id": "urn:make9533:values",
+                "name": "values",
+                "value": [
+                  541,
+                  541
+                ]
+              },
+              {
+                "id": "urn:make9533:pick",
+                "name": "pick",
+                "value": 0
+              }
+            ],
+            "actual": {
+              "empty": [],
+              "flags": [
+                true,
+                false
+              ],
+              "labels": [
+                "start",
+                "끝"
+              ],
+              "pick": 0,
+              "values": [
+                1082,
+                543
+              ]
+            },
+            "actual_fields": [
+              {
+                "id": "urn:make9533:batch-values",
+                "name": "values",
+                "value": [
+                  1082,
+                  543
+                ]
+              },
+              {
+                "id": "urn:make9533:batch-pick",
+                "name": "pick",
+                "value": 0
+              },
+              {
+                "id": "urn:make9533:labels",
+                "name": "labels",
+                "value": [
+                  "start",
+                  "끝"
+                ]
+              },
+              {
+                "id": "urn:make9533:flags",
+                "name": "flags",
+                "value": [
+                  true,
+                  false
+                ]
+              },
+              {
+                "id": "urn:make9533:empty",
+                "name": "empty",
+                "value": []
+              }
+            ]
+          },
+          {
+            "activity_id": "urn:make9533:read",
+            "producer_id": "urn:make9533:build",
+            "input": {
+              "empty": [],
+              "flags": [
+                true,
+                false
+              ],
+              "labels": [
+                "start",
+                "끝"
+              ],
+              "pick": 0,
+              "values": [
+                1082,
+                543
+              ]
+            },
+            "input_fields": [
+              {
+                "id": "urn:make9533:batch-values",
+                "name": "values",
+                "value": [
+                  1082,
+                  543
+                ]
+              },
+              {
+                "id": "urn:make9533:batch-pick",
+                "name": "pick",
+                "value": 0
+              },
+              {
+                "id": "urn:make9533:labels",
+                "name": "labels",
+                "value": [
+                  "start",
+                  "끝"
+                ]
+              },
+              {
+                "id": "urn:make9533:flags",
+                "name": "flags",
+                "value": [
+                  true,
+                  false
+                ]
+              },
+              {
+                "id": "urn:make9533:empty",
+                "name": "empty",
+                "value": []
+              }
+            ],
+            "actual": 1082,
+            "expected": 1082,
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          }
+        ],
+        "constructions": [
+          {
+            "site_index": 0,
+            "read_start": 1,
+            "read_end": 5,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 1,
+                "read_end": 3,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 3,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 4,
+            "read_start": 1,
+            "read_end": 2,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 1,
+                "read_end": 2,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 1,
+            "read_start": 5,
+            "read_end": 5,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 2,
+            "read_start": 5,
+            "read_end": 5,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 3,
+            "read_start": 5,
+            "read_end": 5,
+            "completed": true,
+            "elements": []
+          }
+        ],
+        "reads_observed": true,
+        "reads": [
+          {
+            "site_index": 0,
+            "index": 0,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 3,
+            "index": 1,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 1
+            }
+          },
+          {
+            "site_index": 4,
+            "index": 0,
+            "length": 1,
+            "construction": {
+              "instance_index": 1,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 1,
+            "index": 0,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 2,
+            "index": 1,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 1
+            }
+          },
+          {
+            "site_index": 5,
+            "index": 0,
+            "length": 2,
+            "construction": {
+              "instance_index": 3,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 6,
+            "index": 1,
+            "length": 2,
+            "construction": {
+              "instance_index": 2,
+              "element_index": 1
+            }
+          },
+          {
+            "site_index": 7,
+            "index": 0,
+            "length": 2,
+            "construction": {
+              "instance_index": 0,
+              "element_index": 1
+            }
+          }
+        ]
+      },
+      {
+        "case_index": 1,
+        "deliveries": [
+          {
+            "activity_id": "urn:make9533:build",
+            "input": {
+              "pick": 1,
+              "values": [
+                547,
+                557
+              ]
+            },
+            "input_fields": [
+              {
+                "id": "urn:make9533:values",
+                "name": "values",
+                "value": [
+                  547,
+                  557
+                ]
+              },
+              {
+                "id": "urn:make9533:pick",
+                "name": "pick",
+                "value": 1
+              }
+            ],
+            "actual": {
+              "empty": [],
+              "flags": [
+                true,
+                false
+              ],
+              "labels": [
+                "start",
+                "끝"
+              ],
+              "pick": 1,
+              "values": [
+                1104,
+                549
+              ]
+            },
+            "actual_fields": [
+              {
+                "id": "urn:make9533:batch-values",
+                "name": "values",
+                "value": [
+                  1104,
+                  549
+                ]
+              },
+              {
+                "id": "urn:make9533:batch-pick",
+                "name": "pick",
+                "value": 1
+              },
+              {
+                "id": "urn:make9533:labels",
+                "name": "labels",
+                "value": [
+                  "start",
+                  "끝"
+                ]
+              },
+              {
+                "id": "urn:make9533:flags",
+                "name": "flags",
+                "value": [
+                  true,
+                  false
+                ]
+              },
+              {
+                "id": "urn:make9533:empty",
+                "name": "empty",
+                "value": []
+              }
+            ]
+          },
+          {
+            "activity_id": "urn:make9533:read",
+            "producer_id": "urn:make9533:build",
+            "input": {
+              "empty": [],
+              "flags": [
+                true,
+                false
+              ],
+              "labels": [
+                "start",
+                "끝"
+              ],
+              "pick": 1,
+              "values": [
+                1104,
+                549
+              ]
+            },
+            "input_fields": [
+              {
+                "id": "urn:make9533:batch-values",
+                "name": "values",
+                "value": [
+                  1104,
+                  549
+                ]
+              },
+              {
+                "id": "urn:make9533:batch-pick",
+                "name": "pick",
+                "value": 1
+              },
+              {
+                "id": "urn:make9533:labels",
+                "name": "labels",
+                "value": [
+                  "start",
+                  "끝"
+                ]
+              },
+              {
+                "id": "urn:make9533:flags",
+                "name": "flags",
+                "value": [
+                  true,
+                  false
+                ]
+              },
+              {
+                "id": "urn:make9533:empty",
+                "name": "empty",
+                "value": []
+              }
+            ],
+            "actual": 549,
+            "expected": 549,
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          }
+        ],
+        "constructions": [
+          {
+            "site_index": 0,
+            "read_start": 1,
+            "read_end": 5,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 1,
+                "read_end": 3,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 3,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 4,
+            "read_start": 1,
+            "read_end": 2,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 1,
+                "read_end": 2,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 1,
+            "read_start": 5,
+            "read_end": 5,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 2,
+            "read_start": 5,
+            "read_end": 5,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 3,
+            "read_start": 5,
+            "read_end": 5,
+            "completed": true,
+            "elements": []
+          }
+        ],
+        "reads_observed": true,
+        "reads": [
+          {
+            "site_index": 0,
+            "index": 0,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 3,
+            "index": 1,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 1
+            }
+          },
+          {
+            "site_index": 4,
+            "index": 0,
+            "length": 1,
+            "construction": {
+              "instance_index": 1,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 1,
+            "index": 0,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 2,
+            "index": 1,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 1
+            }
+          },
+          {
+            "site_index": 5,
+            "index": 0,
+            "length": 2,
+            "construction": {
+              "instance_index": 3,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 6,
+            "index": 1,
+            "length": 2,
+            "construction": {
+              "instance_index": 2,
+              "element_index": 1
+            }
+          },
+          {
+            "site_index": 7,
+            "index": 1,
+            "length": 2,
+            "construction": {
+              "instance_index": 0,
+              "element_index": 2
+            }
+          }
+        ]
+      },
+      {
+        "case_index": 2,
+        "deliveries": [
+          {
+            "activity_id": "urn:make9533:build",
+            "input": {
+              "pick": 0,
+              "values": [
+                557,
+                563
+              ]
+            },
+            "input_fields": [
+              {
+                "id": "urn:make9533:values",
+                "name": "values",
+                "value": [
+                  557,
+                  563
+                ]
+              },
+              {
+                "id": "urn:make9533:pick",
+                "name": "pick",
+                "value": 0
+              }
+            ],
+            "actual": {
+              "empty": [],
+              "flags": [
+                true,
+                false
+              ],
+              "labels": [
+                "start",
+                "끝"
+              ],
+              "pick": 0,
+              "values": [
+                1120,
+                559
+              ]
+            },
+            "actual_fields": [
+              {
+                "id": "urn:make9533:batch-values",
+                "name": "values",
+                "value": [
+                  1120,
+                  559
+                ]
+              },
+              {
+                "id": "urn:make9533:batch-pick",
+                "name": "pick",
+                "value": 0
+              },
+              {
+                "id": "urn:make9533:labels",
+                "name": "labels",
+                "value": [
+                  "start",
+                  "끝"
+                ]
+              },
+              {
+                "id": "urn:make9533:flags",
+                "name": "flags",
+                "value": [
+                  true,
+                  false
+                ]
+              },
+              {
+                "id": "urn:make9533:empty",
+                "name": "empty",
+                "value": []
+              }
+            ]
+          },
+          {
+            "activity_id": "urn:make9533:read",
+            "producer_id": "urn:make9533:build",
+            "input": {
+              "empty": [],
+              "flags": [
+                true,
+                false
+              ],
+              "labels": [
+                "start",
+                "끝"
+              ],
+              "pick": 0,
+              "values": [
+                1120,
+                559
+              ]
+            },
+            "input_fields": [
+              {
+                "id": "urn:make9533:batch-values",
+                "name": "values",
+                "value": [
+                  1120,
+                  559
+                ]
+              },
+              {
+                "id": "urn:make9533:batch-pick",
+                "name": "pick",
+                "value": 0
+              },
+              {
+                "id": "urn:make9533:labels",
+                "name": "labels",
+                "value": [
+                  "start",
+                  "끝"
+                ]
+              },
+              {
+                "id": "urn:make9533:flags",
+                "name": "flags",
+                "value": [
+                  true,
+                  false
+                ]
+              },
+              {
+                "id": "urn:make9533:empty",
+                "name": "empty",
+                "value": []
+              }
+            ],
+            "actual": 1120,
+            "expected": 1120,
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          }
+        ],
+        "constructions": [
+          {
+            "site_index": 0,
+            "read_start": 1,
+            "read_end": 5,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 1,
+                "read_end": 3,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 3,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 4,
+            "read_start": 1,
+            "read_end": 2,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 1,
+                "read_end": 2,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 1,
+            "read_start": 5,
+            "read_end": 5,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 2,
+            "read_start": 5,
+            "read_end": 5,
+            "completed": true,
+            "elements": [
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              },
+              {
+                "read_start": 5,
+                "read_end": 5,
+                "reads_dropped": 0,
+                "completed": true
+              }
+            ]
+          },
+          {
+            "site_index": 3,
+            "read_start": 5,
+            "read_end": 5,
+            "completed": true,
+            "elements": []
+          }
+        ],
+        "reads_observed": true,
+        "reads": [
+          {
+            "site_index": 0,
+            "index": 0,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 3,
+            "index": 1,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 1
+            }
+          },
+          {
+            "site_index": 4,
+            "index": 0,
+            "length": 1,
+            "construction": {
+              "instance_index": 1,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 1,
+            "index": 0,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 2,
+            "index": 1,
+            "length": 2,
+            "origin": {
+              "input_collection": 0,
+              "element_index": 1
+            }
+          },
+          {
+            "site_index": 5,
+            "index": 0,
+            "length": 2,
+            "construction": {
+              "instance_index": 3,
+              "element_index": 0
+            }
+          },
+          {
+            "site_index": 6,
+            "index": 1,
+            "length": 2,
+            "construction": {
+              "instance_index": 2,
+              "element_index": 1
+            }
+          },
+          {
+            "site_index": 7,
+            "index": 0,
+            "length": 2,
+            "construction": {
+              "instance_index": 0,
+              "element_index": 1
+            }
+          }
+        ]
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "finite_passed": 3,
+    "finite_total": 3,
+    "condition_sites": [
+      {
+        "expression_id": "sha256:039d6c28b2a71c868fa4d9dd2a297bca01649e3e408ccda00caf18f9c4ec7c44",
+        "root_activity_id": "urn:make9533:read",
+        "activity_id": "urn:make9533:read",
+        "expression": "input.GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50[0] \u0026\u0026 input.GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56[1] == \"끝\"",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start": 2891,
+        "end": 3068,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:make9533:read",
+            "name": "Read",
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "start_byte": 1119,
+            "end_byte": 1298
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+          "start_byte": 1187,
+          "end_byte": 1229,
+          "decoded_start": 3,
+          "decoded_end": 43,
+          "source_ordinal": 0,
+          "expression": "input.flags[0] \u0026\u0026 input.labels[1]==\"끝\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:make9533:flags",
+                "name": "flags",
+                "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+                "start_byte": 516,
+                "end_byte": 578
+              },
+              "entity_id": "urn:make9533:batch",
+              "field_id": "urn:make9533:flags",
+              "name": "flags"
+            },
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:make9533:labels",
+                "name": "labels",
+                "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+                "start_byte": 451,
+                "end_byte": 514
+              },
+              "entity_id": "urn:make9533:batch",
+              "field_id": "urn:make9533:labels",
+              "name": "labels"
+            }
+          ]
+        }
+      }
+    ],
+    "condition_observation": {
+      "schema": "gooo/native-condition-summary/v1",
+      "status": "COMPLETE",
+      "recorded_events": 3,
+      "dropped_events": 0,
+      "sha256": "sha256:1c5188955756167f705daca97fea2be54fe9f5f087e958930cb5ba025d3eb875"
+    },
+    "construction_sites": [
+      {
+        "expression_id": "sha256:3f8462a374f4f073f3af412d3c6448daf07c5d519270338aa0a1da2bd6d99b87",
+        "root_activity_id": "urn:make9533:build",
+        "activity_id": "urn:make9533:build",
+        "native_ordinal": 0,
+        "element_type": "int64",
+        "expression": "[]int64{GoooComposedActivity0Call0(input), input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0] + input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1], previous + 2}",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 1494,
+        "end_byte": 1719,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+          "start_byte": 872,
+          "end_byte": 936,
+          "decoded_start": 41,
+          "decoded_end": 105,
+          "expression": "[]int64{Inner(input),input.values[0]+input.values[1],previous+2}"
+        },
+        "elements": [
+          {
+            "expression": "GoooComposedActivity0Call0(input)",
+            "start_byte": 1502,
+            "end_byte": 1535,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+              "start_byte": 880,
+              "end_byte": 892,
+              "decoded_start": 49,
+              "decoded_end": 61,
+              "expression": "Inner(input)"
+            }
+          },
+          {
+            "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0] + input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]",
+            "start_byte": 1537,
+            "end_byte": 1704,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+              "start_byte": 893,
+              "end_byte": 924,
+              "decoded_start": 62,
+              "decoded_end": 93,
+              "expression": "input.values[0]+input.values[1]"
+            }
+          },
+          {
+            "expression": "previous + 2",
+            "start_byte": 1706,
+            "end_byte": 1718,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+              "start_byte": 925,
+              "end_byte": 935,
+              "decoded_start": 94,
+              "decoded_end": 104,
+              "expression": "previous+2"
+            }
+          }
+        ]
+      },
+      {
+        "expression_id": "sha256:99757e05117f833f00cbe111002768de8a0a4e1d9e161908617330cc52a3b369",
+        "root_activity_id": "urn:make9533:build",
+        "activity_id": "urn:make9533:build",
+        "native_ordinal": 1,
+        "element_type": "string",
+        "expression": "[]string{\"start\", \"끝\"}",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 1734,
+        "end_byte": 1758,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+          "start_byte": 948,
+          "end_byte": 975,
+          "decoded_start": 117,
+          "decoded_end": 140,
+          "expression": "[]string{\"start\",\"끝\"}"
+        },
+        "elements": [
+          {
+            "expression": "\"start\"",
+            "start_byte": 1743,
+            "end_byte": 1750,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+              "start_byte": 957,
+              "end_byte": 966,
+              "decoded_start": 126,
+              "decoded_end": 133,
+              "expression": "\"start\""
+            }
+          },
+          {
+            "expression": "\"끝\"",
+            "start_byte": 1752,
+            "end_byte": 1757,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+              "start_byte": 967,
+              "end_byte": 974,
+              "decoded_start": 134,
+              "decoded_end": 139,
+              "expression": "\"끝\""
+            }
+          }
+        ]
+      },
+      {
+        "expression_id": "sha256:486b92a275ddc738c9571105f7ca3f34067938945e2c332c283c561d1d5be2fa",
+        "root_activity_id": "urn:make9533:build",
+        "activity_id": "urn:make9533:build",
+        "native_ordinal": 2,
+        "element_type": "bool",
+        "expression": "[]bool{true, false}",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 1775,
+        "end_byte": 1794,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+          "start_byte": 989,
+          "end_byte": 1007,
+          "decoded_start": 154,
+          "decoded_end": 172,
+          "expression": "[]bool{true,false}"
+        },
+        "elements": [
+          {
+            "expression": "true",
+            "start_byte": 1782,
+            "end_byte": 1786,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+              "start_byte": 996,
+              "end_byte": 1000,
+              "decoded_start": 161,
+              "decoded_end": 165,
+              "expression": "true"
+            }
+          },
+          {
+            "expression": "false",
+            "start_byte": 1788,
+            "end_byte": 1793,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+              "start_byte": 1001,
+              "end_byte": 1006,
+              "decoded_start": 166,
+              "decoded_end": 171,
+              "expression": "false"
+            }
+          }
+        ]
+      },
+      {
+        "expression_id": "sha256:cfb72b16fd3379679377f379152ac71922358a4ceed785d163a593c0c8b875e3",
+        "root_activity_id": "urn:make9533:build",
+        "activity_id": "urn:make9533:build",
+        "native_ordinal": 3,
+        "element_type": "int64",
+        "expression": "[]int64{}",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 1808,
+        "end_byte": 1817,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+          "start_byte": 1018,
+          "end_byte": 1027,
+          "decoded_start": 183,
+          "decoded_end": 192,
+          "expression": "[]int64{}"
+        },
+        "elements": []
+      },
+      {
+        "expression_id": "sha256:a200af53203968791a8c870fed1d864bff50d4761135caf6354e68167ecb24f1",
+        "root_activity_id": "urn:make9533:build",
+        "activity_id": "urn:make9533:inner",
+        "native_ordinal": 0,
+        "element_type": "int64",
+        "expression": "[]int64{input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]}",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 2533,
+        "end_byte": 2624,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+          "start_byte": 723,
+          "end_byte": 747,
+          "decoded_start": 11,
+          "decoded_end": 35,
+          "expression": "[]int64{input.values[1]}"
+        },
+        "elements": [
+          {
+            "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]",
+            "start_byte": 2541,
+            "end_byte": 2623,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+              "start_byte": 731,
+              "end_byte": 746,
+              "decoded_start": 19,
+              "decoded_end": 34,
+              "expression": "input.values[1]"
+            }
+          }
+        ]
+      }
+    ],
+    "read_sites": [
+      {
+        "expression_id": "sha256:c13744bd718bace754cbd5f969a1660a4de580f8afa8674061ad4cf77103d461",
+        "root_activity_id": "urn:make9533:build",
+        "activity_id": "urn:make9533:build",
+        "kind": "index",
+        "element_type": "int64",
+        "native_ordinal": 0,
+        "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0]",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 1396,
+        "end_byte": 1478,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+          "start_byte": 844,
+          "end_byte": 859,
+          "decoded_start": 13,
+          "decoded_end": 28,
+          "expression": "input.values[0]"
+        }
+      },
+      {
+        "expression_id": "sha256:e30170df194830a5c15aa33026fe4aac3e8a9a57bcdd03af9cd284f4e5762537",
+        "root_activity_id": "urn:make9533:build",
+        "activity_id": "urn:make9533:build",
+        "kind": "index",
+        "element_type": "int64",
+        "native_ordinal": 1,
+        "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0]",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 1537,
+        "end_byte": 1619,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+          "start_byte": 893,
+          "end_byte": 908,
+          "decoded_start": 62,
+          "decoded_end": 77,
+          "expression": "input.values[0]"
+        }
+      },
+      {
+        "expression_id": "sha256:de2de09ece40b2406992a2d16c5b91b3318e361b9703a3985e70498f888a2b10",
+        "root_activity_id": "urn:make9533:build",
+        "activity_id": "urn:make9533:build",
+        "kind": "index",
+        "element_type": "int64",
+        "native_ordinal": 2,
+        "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 1622,
+        "end_byte": 1704,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+          "start_byte": 909,
+          "end_byte": 924,
+          "decoded_start": 78,
+          "decoded_end": 93,
+          "expression": "input.values[1]"
+        }
+      },
+      {
+        "expression_id": "sha256:9c982fd9e1719b5579dcb575184973f145a8c801da953230d8663949fa54b737",
+        "root_activity_id": "urn:make9533:build",
+        "activity_id": "urn:make9533:inner",
+        "kind": "index",
+        "element_type": "int64",
+        "native_ordinal": 0,
+        "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 2541,
+        "end_byte": 2623,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+          "start_byte": 731,
+          "end_byte": 746,
+          "decoded_start": 19,
+          "decoded_end": 34,
+          "expression": "input.values[1]"
+        }
+      },
+      {
+        "expression_id": "sha256:871df262b573459705165c48a61d68ad67a65368017423245334e240a341f2ec",
+        "root_activity_id": "urn:make9533:build",
+        "activity_id": "urn:make9533:inner",
+        "kind": "index",
+        "element_type": "int64",
+        "native_ordinal": 1,
+        "expression": "values[0]",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 2633,
+        "end_byte": 2642,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+          "start_byte": 755,
+          "end_byte": 764,
+          "decoded_start": 43,
+          "decoded_end": 52,
+          "expression": "values[0]"
+        }
+      },
+      {
+        "expression_id": "sha256:2b3cdcc0e64a3145ab2e3946dfbdcada106c26779c69b9b48891843e3e781de7",
+        "root_activity_id": "urn:make9533:read",
+        "activity_id": "urn:make9533:read",
+        "kind": "index",
+        "element_type": "bool",
+        "native_ordinal": 0,
+        "expression": "input.GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50[0]",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 2891,
+        "end_byte": 2973,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+          "start_byte": 1187,
+          "end_byte": 1201,
+          "decoded_start": 3,
+          "decoded_end": 17,
+          "expression": "input.flags[0]"
+        }
+      },
+      {
+        "expression_id": "sha256:8d587d100c38446cda82a462e38a43689d2536a979424343891fad939120f51d",
+        "root_activity_id": "urn:make9533:read",
+        "activity_id": "urn:make9533:read",
+        "kind": "index",
+        "element_type": "string",
+        "native_ordinal": 1,
+        "expression": "input.GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56[1]",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 2977,
+        "end_byte": 3059,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+          "start_byte": 1205,
+          "end_byte": 1220,
+          "decoded_start": 21,
+          "decoded_end": 36,
+          "expression": "input.labels[1]"
+        }
+      },
+      {
+        "expression_id": "sha256:edc6fc95e9b5bb8a6e060534eaa74183cd366ca2045327c0e54178af0da099e0",
+        "root_activity_id": "urn:make9533:read",
+        "activity_id": "urn:make9533:read",
+        "kind": "index",
+        "element_type": "int64",
+        "native_ordinal": 2,
+        "expression": "input.GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c[input.GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087]",
+        "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+        "start_byte": 3080,
+        "end_byte": 3240,
+        "source": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+          "start_byte": 1238,
+          "end_byte": 1262,
+          "decoded_start": 52,
+          "decoded_end": 76,
+          "expression": "input.values[input.pick]"
+        }
+      }
+    ],
+    "read_inputs": [
+      {
+        "activity_id": "urn:make9533:build",
+        "input_key": "Build",
+        "port": "input",
+        "entity_id": "urn:make9533:input",
+        "field_id": "urn:make9533:values",
+        "field_name": "values",
+        "element_type": "int64"
+      }
+    ],
+    "read_observation": {
+      "schema": "gooo/native-read-summary/v2",
+      "status": "COMPLETE",
+      "recorded_reads": 24,
+      "resolved_reads": 12,
+      "constructed_reads": 12,
+      "recorded_constructions": 15,
+      "unresolved_reads": 0,
+      "dropped_reads": 0,
+      "registration_dropped": 0,
+      "sha256": "sha256:72c1c6afe318a1401bd8e7c4a13f79bbba96e61d2e2d4f23409fa62e9ce5a97e",
+      "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+    },
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "UNCLASSIFIED_INPUTS",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 3,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    },
+    "model_calls": 0,
+    "elapsed_ns": 707278875,
+    "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+  },
+  "source": "package constructing\nnamespace constructing9533\nentity Integer id \"urn:gooo:type:integer\"\nentity Input id \"urn:make9533:input\" fields {\n field values id \"urn:make9533:values\" type integer required many\n field pick id \"urn:make9533:pick\" type integer required one\n}\nentity Batch id \"urn:make9533:batch\" fields {\n field values id \"urn:make9533:batch-values\" type integer required many\n field pick id \"urn:make9533:batch-pick\" type integer required one\n field labels id \"urn:make9533:labels\" type string required many\n field flags id \"urn:make9533:flags\" type boolean required many\n field empty id \"urn:make9533:empty\" type integer required many\n}\nactivity Inner(Input) -\u003e Integer id \"urn:make9533:inner\" computes \"let values=[]int64{input.values[1]};return values[0]\"\nactivity Build(Input) -\u003e Batch id \"urn:make9533:build\" computes \"let previous=input.values[0];let numbers=[]int64{Inner(input),input.values[0]+input.values[1],previous+2};let labels=[]string{\\\"start\\\",\\\"끝\\\"};let switches=[]bool{true,false};let empty=[]int64{};return Batch{values:numbers[1:],pick:input.pick,labels:labels,flags:switches,empty:empty}\"\nactivity Read(Batch) -\u003e Integer id \"urn:make9533:read\" computes \"if input.flags[0] \u0026\u0026 input.labels[1]==\\\"끝\\\" {return input.values[input.pick]+int64(len(input.empty))};return -1\"\nbind Build.result -\u003e Read.input\n"
+}

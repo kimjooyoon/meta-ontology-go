@@ -1,0 +1,130 @@
+[
+  {
+    "path": "internal/bodycodegen/body_paths_replay.go",
+    "sha256": "75a64f38ba86750bf53e6174be38cb56adecc87d3167724d19fa1dbdca7362a0"
+  },
+  {
+    "path": "internal/bodycodegen/body_projection.go",
+    "sha256": "aa4c531ee4d085c02b872efd01e72f78789b272a9735230737fdd28688323502"
+  },
+  {
+    "path": "internal/bodycodegen/body_read_origin.go",
+    "sha256": "f22734f56591a44b0819a73c77a91938c324a9203aa5614296ed54f59784aa86"
+  },
+  {
+    "path": "internal/bodycodegen/body_read_source.go",
+    "sha256": "0c79b6bb2a870a14cb02d223ca984c2a4ac44d15f1ffc7963479ca273db39162"
+  },
+  {
+    "path": "internal/bodycodegen/body_search_replay.go",
+    "sha256": "ecfc24bf1f3c9434ab9495fdbd287c082bd841b5ea04a365702ad95bca38fd0d"
+  },
+  {
+    "path": "internal/bodycodegen/bodycodegen.go",
+    "sha256": "f7c8a917ec0a2338b5c8a848102c1975a79495a3e77b0daa3239337a3c6113fb"
+  },
+  {
+    "path": "internal/bodycodegen/record_assembly_eval.go",
+    "sha256": "8859c09f842ffda72cd7e91fa3bae43583aba9d8aa714c29abef932bd9b0d540"
+  },
+  {
+    "path": "internal/bodycodegen/record_assembly_replay.go",
+    "sha256": "633f32369b4997e43a0edb591d2870da12b915b0d34c3ef288df0aad8eb0a49e"
+  },
+  {
+    "path": "internal/bodycodegen/record_literals.go",
+    "sha256": "adbf2a7f0fd4a1628c4bb853a64b45938de09a4c45c717deb6b6da1501191e89"
+  },
+  {
+    "path": "internal/bodycodegen/sequence_literal.go",
+    "sha256": "e9398198a86cbad04d6b7ccb7c2323c0ba8842fd050b13c7b1c82880e653a5ba"
+  },
+  {
+    "path": "internal/bodycodegen/sequence_literal_test.go",
+    "sha256": "b4fd78b8236681caac3e7e4c4deb911a4d6e01f3483125085b195b7ab527ebf3"
+  },
+  {
+    "path": "internal/bodycodegen/source_fill_replay.go",
+    "sha256": "2784b154567e461b07e19d481d418bef4be89acb94dc2a3ff122cf7c27382627"
+  },
+  {
+    "path": "internal/bodyexecution/composition.go",
+    "sha256": "2fbe27910e1179360273f19fa98d50c0019585340104e68c1f784e06e8d4a95e"
+  },
+  {
+    "path": "internal/bodyexecution/composition_executor.go",
+    "sha256": "248e135f065ce2d4cb57415593f34292d804f21da6b10c30e9d268c70e9388d3"
+  },
+  {
+    "path": "internal/bodyexecution/composition_fault_projection.go",
+    "sha256": "10bbf421d1e96c6b14bce93571fdf7033516f10accb103bd66af937336d083b3"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_consumer_test.go",
+    "sha256": "c753da329d0144138d74d9504b742453179cdb7faf15c7679a9b9d85073ba2a8"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_driver.go",
+    "sha256": "dba0f7a4847767108ea83f7b03e45e5e9e9be10decc5c8498a0e4ae52cc70b55"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_evidence.go",
+    "sha256": "aa318c5f68c8c58a76422bebf43238285b8b2357c40256e9f70c51b04fbb387b"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_facts.go",
+    "sha256": "9199ef30ac3a81ad39f3fdbffc1f39d644a32d59d7d37f6414adb9cad59134c4"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_native_test.go",
+    "sha256": "85c6d1f38d897081cf3940472bdc996bdd6a5fac7bc612044097f62eb5bdb326"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_observer.go",
+    "sha256": "0fd9de558ffbff9f3f94286dc89021de2fa5325abd741f39772de6b0f55ce24c"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_optional_test.go",
+    "sha256": "1037eb97169c4c702f142731395f7d405bd9a734370a5a1b81ccac8d71a87f7e"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_order_test.go",
+    "sha256": "8d1388755dbcb698cdb6a899c741d3e6b2d469c2246a3fce011d1f0ea4727913"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_projection.go",
+    "sha256": "98df320d8d42390fd97a6f79e1d0874b3423338872192734c52a9fe0ab1d5d1c"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_protocol_test.go",
+    "sha256": "c3fd44b78d6e533499ff6759bd0cd19275da01ffafb857419e8042d0d5ed43a4"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_rows.go",
+    "sha256": "5bb2d7d691b7a010e07352fd768ace12f88658a185341fa1bad9d0fccaaa4eae"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_run.go",
+    "sha256": "79478d8ac76c66b6e9924bce8aaaef158db5eb6ee454ce132300d754593d6861"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_sites.go",
+    "sha256": "1611ef47e526f7bc6960c61b1beec200ee2ab8767443d4437215175e44a46045"
+  },
+  {
+    "path": "internal/bodyexecution/composition_reads.go",
+    "sha256": "b96ffe97aa5e7effff97a8da1976d5bd3b06f3a782735911e98186bd0a82ec37"
+  },
+  {
+    "path": "internal/bodyexecution/composition_runtime.go",
+    "sha256": "bd0f198e6a0a649dc961835137e81e444eacf71d12d5ba081366152f6290e081"
+  },
+  {
+    "path": "internal/bodyexecution/joint_replay.go",
+    "sha256": "b9c18fae4e57afb85b80ef93e740276ff48691f3116d7acd6e3845dcaea0ec2a"
+  },
+  {
+    "path": "internal/bodyexecution/sequence_literal_native_test.go",
+    "sha256": "e823fbefb9040c2409f4f65cc7cffcae87693b9fd565dd533a3a22847d0a8721"
+  }
+]

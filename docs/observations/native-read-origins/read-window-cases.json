@@ -1,0 +1,182 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Clip": {
+          "readings": [
+            17,
+            37,
+            37,
+            43
+          ],
+          "labels": [
+            "yes",
+            "yes",
+            "yes",
+            "yes"
+          ],
+          "flags": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "lower": 1,
+          "upper": 4,
+          "pick": 1
+        }
+      },
+      "expected": {
+        "Run": 95
+      }
+    },
+    {
+      "inputs": {
+        "Clip": {
+          "readings": [
+            181,
+            191
+          ],
+          "labels": [
+            "yes",
+            "yes"
+          ],
+          "flags": [
+            true,
+            true
+          ],
+          "lower": 0,
+          "upper": 2,
+          "pick": 4
+        }
+      },
+      "expected": {
+        "Run": -9
+      }
+    },
+    {
+      "inputs": {
+        "Clip": {
+          "readings": [
+            127,
+            131,
+            137
+          ],
+          "labels": [
+            "yes",
+            "yes",
+            "yes"
+          ],
+          "flags": [
+            true,
+            false,
+            true
+          ],
+          "lower": 1,
+          "upper": 3,
+          "pick": 0
+        }
+      },
+      "expected": {
+        "Run": -7
+      }
+    },
+    {
+      "inputs": {
+        "Clip": {
+          "readings": [
+            193,
+            197
+          ],
+          "labels": [
+            "yes",
+            "yes"
+          ],
+          "flags": [
+            true,
+            true
+          ],
+          "lower": 1,
+          "upper": 1,
+          "pick": 0
+        }
+      },
+      "expected": {
+        "Run": -9
+      }
+    },
+    {
+      "inputs": {
+        "Clip": {
+          "readings": [
+            139,
+            149
+          ],
+          "labels": [
+            "yes",
+            "skip"
+          ],
+          "flags": [
+            true,
+            true
+          ],
+          "lower": 0,
+          "upper": 2,
+          "pick": 1
+        }
+      },
+      "expected": {
+        "Run": -7
+      }
+    },
+    {
+      "inputs": {
+        "Clip": {
+          "readings": [
+            199,
+            211
+          ],
+          "labels": [
+            "yes",
+            "yes"
+          ],
+          "flags": [
+            true,
+            true
+          ],
+          "lower": 0,
+          "upper": 2,
+          "pick": -1
+        }
+      },
+      "expected": {
+        "Run": -9
+      }
+    },
+    {
+      "inputs": {
+        "Clip": {
+          "readings": [
+            37,
+            37
+          ],
+          "labels": [
+            "fresh",
+            "fresh"
+          ],
+          "flags": [
+            true,
+            true
+          ],
+          "lower": 0,
+          "upper": 2,
+          "pick": 1
+        }
+      },
+      "expected": {
+        "Run": 37
+      }
+    }
+  ]
+}

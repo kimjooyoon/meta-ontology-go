@@ -1,0 +1,50 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Seed": {
+          "left": "모래",
+          "right": "돌",
+          "flag": true,
+          "position": 1
+        }
+      },
+      "expected": {
+        "Empty": 0,
+        "Flag": true,
+        "Label": "돌"
+      }
+    },
+    {
+      "inputs": {
+        "Seed": {
+          "left": "들판",
+          "right": "언덕",
+          "flag": false,
+          "position": 0
+        }
+      },
+      "expected": {
+        "Empty": 0,
+        "Flag": false,
+        "Label": "들판"
+      }
+    },
+    {
+      "inputs": {
+        "Seed": {
+          "left": "rock",
+          "right": "sand",
+          "flag": true,
+          "position": 1
+        }
+      },
+      "expected": {
+        "Empty": 0,
+        "Flag": true,
+        "Label": "sand"
+      }
+    }
+  ]
+}

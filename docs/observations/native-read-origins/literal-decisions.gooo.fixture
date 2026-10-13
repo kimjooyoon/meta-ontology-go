@@ -1,0 +1,34 @@
+package literaldecisions
+namespace literal9281
+entity Integer id "urn:gooo:type:integer"
+entity Boolean id "urn:gooo:type:boolean"
+entity Text id "urn:gooo:type:string"
+entity Request id "urn:literal9281:request" fields {
+ field left id "urn:literal9281:left" type string required one
+ field right id "urn:literal9281:right" type string required one
+ field flag id "urn:literal9281:flag" type boolean required one
+ field position id "urn:literal9281:position" type integer required one
+}
+activity Label(Request) -> Text id "urn:literal9281:label" computes "return []string{input.left,input.right}[__GOOO_BODY_HOLE_pick__]" assembling {
+ source_fill intent "요청한 위치의 이름을 구성한 목록에서 읽는다" {
+  hole "pick"
+  candidate "first9281" { fill "pick" "0" }
+  candidate "requested9281" { fill "pick" "input.position" }
+ }
+ value_case "[{\"left\":\"전\",\"right\":\"후\",\"flag\":true,\"position\":1}]" -> "\"후\""
+ holdout_value_case "[{\"left\":\"위\",\"right\":\"아래\",\"flag\":false,\"position\":0}]" -> "\"위\""
+}
+activity Flag(Request) -> Boolean id "urn:literal9281:flag-result" computes "return []bool{input.flag,false}[__GOOO_BODY_HOLE_pick__]" assembling {
+ source_fill intent "입력에서 받은 불리언을 선택한다" {
+  hole "pick"
+  candidate "false9281" { fill "pick" "1" }
+  candidate "input9281" { fill "pick" "0" }
+ }
+ value_case "[{\"left\":\"자\",\"right\":\"컴퍼스\",\"flag\":true,\"position\":1}]" -> "true"
+ holdout_value_case "[{\"left\":\"desk\",\"right\":\"chair\",\"flag\":false,\"position\":0}]" -> "false"
+}
+activity Seed(Request) -> Request id "urn:literal9281:seed" computes "return input"
+activity Empty(Request) -> Integer id "urn:literal9281:empty" computes "let names = []string{}; return int64(len(names))"
+bind Seed.result -> Label.input
+bind Seed.result -> Flag.input
+bind Seed.result -> Empty.input

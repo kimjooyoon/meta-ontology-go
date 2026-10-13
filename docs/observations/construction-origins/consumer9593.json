@@ -1,0 +1,4275 @@
+{
+  "cases": {
+    "schema": "gooo/body-composition-cases/v1",
+    "cases": [
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "instance_index": 0,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 1,
+            "read_end": 3,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 880,
+            "source_end": 892,
+            "expression": "Inner(input)",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "계산 중 읽기 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "instance_index": 0,
+            "element_index": 1,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 3,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 893,
+            "source_end": 924,
+            "expression": "input.values[0]+input.values[1]",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "계산 중 읽기 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "instance_index": 0,
+            "element_index": 2,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 925,
+            "source_end": 935,
+            "expression": "previous+2",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "instance_index": 1,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:inner",
+            "completed": true,
+            "read_start": 1,
+            "read_end": 2,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 731,
+            "source_end": 746,
+            "expression": "input.values[1]",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "계산 중 읽기 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "instance_index": 2,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 957,
+            "source_end": 966,
+            "expression": "\"start\"",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "instance_index": 2,
+            "element_index": 1,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 967,
+            "source_end": 974,
+            "expression": "\"끝\"",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "instance_index": 3,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 996,
+            "source_end": 1000,
+            "expression": "true",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 0,
+            "instance_index": 3,
+            "element_index": 1,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 1001,
+            "source_end": 1006,
+            "expression": "false",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 1,
+            "instance_index": 0,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 1,
+            "read_end": 3,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 880,
+            "source_end": 892,
+            "expression": "Inner(input)",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "계산 중 읽기 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 1,
+            "instance_index": 0,
+            "element_index": 1,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 3,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 893,
+            "source_end": 924,
+            "expression": "input.values[0]+input.values[1]",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "계산 중 읽기 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 1,
+            "instance_index": 0,
+            "element_index": 2,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 925,
+            "source_end": 935,
+            "expression": "previous+2",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 1,
+            "instance_index": 1,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:inner",
+            "completed": true,
+            "read_start": 1,
+            "read_end": 2,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 731,
+            "source_end": 746,
+            "expression": "input.values[1]",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "계산 중 읽기 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 1,
+            "instance_index": 2,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 957,
+            "source_end": 966,
+            "expression": "\"start\"",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 1,
+            "instance_index": 2,
+            "element_index": 1,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 967,
+            "source_end": 974,
+            "expression": "\"끝\"",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 1,
+            "instance_index": 3,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 996,
+            "source_end": 1000,
+            "expression": "true",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 1,
+            "instance_index": 3,
+            "element_index": 1,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 1001,
+            "source_end": 1006,
+            "expression": "false",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "instance_index": 0,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 1,
+            "read_end": 3,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 880,
+            "source_end": 892,
+            "expression": "Inner(input)",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "계산 중 읽기 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "instance_index": 0,
+            "element_index": 1,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 3,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 893,
+            "source_end": 924,
+            "expression": "input.values[0]+input.values[1]",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "계산 중 읽기 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "instance_index": 0,
+            "element_index": 2,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 925,
+            "source_end": 935,
+            "expression": "previous+2",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "instance_index": 1,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:inner",
+            "completed": true,
+            "read_start": 1,
+            "read_end": 2,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 731,
+            "source_end": 746,
+            "expression": "input.values[1]",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "계산 중 읽기 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "instance_index": 2,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 957,
+            "source_end": 966,
+            "expression": "\"start\"",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "instance_index": 2,
+            "element_index": 1,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 967,
+            "source_end": 974,
+            "expression": "\"끝\"",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "instance_index": 3,
+            "element_index": 0,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 996,
+            "source_end": 1000,
+            "expression": "true",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "case_index": 2,
+            "instance_index": 3,
+            "element_index": 1,
+            "root_activity_id": "urn:make9533:build",
+            "activity_id": "urn:make9533:build",
+            "completed": true,
+            "read_start": 5,
+            "read_end": 5,
+            "reads_dropped": 0,
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "source_start": 1001,
+            "source_end": 1006,
+            "expression": "false",
+            "mapping": "MAPPED"
+          }
+        },
+        "expected": {
+          "Explain": "표현 위치 연결"
+        }
+      }
+    ]
+  },
+  "composition": {
+    "schema": "gooo/body-composition/v1",
+    "stage": "COMPLETE",
+    "original_source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+    "selected_source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+    "generated_sha256": "sha256:926a99c8fef1ea88667ff33c5eea028da7a56f64f3e9738e9baaa412048b8f4b",
+    "driver_sha256": "sha256:01b46224032025c8aa4b4ae9ccbc5232bf3bfd671185c49d4f5941d96d763362",
+    "plan": {
+      "schema": "gooo/body-composition-plan/v1",
+      "typed_plan_sha256": "sha256:a3e3eaa691697092772fc9fe348d259741af5956aac857c22a070bd2a5659c2f",
+      "semantic_fingerprint": "f494e6d6c95087375a6ba5567aa4c4b014c3029ab40aaa7f2921fc24560cafe5",
+      "activities": [
+        {
+          "name": "Explain",
+          "id": "urn:view9593:explain",
+          "input_type": "Element",
+          "output_type": "Text",
+          "input_entity_id": "urn:view9593:element",
+          "output_entity_id": "urn:gooo:type:string",
+          "go_function": "GoooComposedActivity0",
+          "input_from": -1,
+          "assembling": false
+        }
+      ],
+      "edges": [],
+      "record_types": [
+        {
+          "name": "Element",
+          "id": "urn:view9593:element",
+          "go_name": "GoooRecord681f21269055a4731de3bfdda328a50da8435c7086361d9f2989577e4504ac04",
+          "fields": [
+            {
+              "name": "case_index",
+              "id": "urn:view9593:case",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField2b4b88d6f3e4a00b63609c86958b15e621424dfaa01a65285348f3912e97d33f"
+            },
+            {
+              "name": "instance_index",
+              "id": "urn:view9593:instance",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField0bfa087b9787a27e20f26d34b906f2ac2f2b7eb171b0f79c14a28e83aee97ec2"
+            },
+            {
+              "name": "element_index",
+              "id": "urn:view9593:element-index",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField7dd9c1c0a60b8b3396c4c982663046ab33cf95cf41e352ef2cefb16f5f22386c"
+            },
+            {
+              "name": "root_activity_id",
+              "id": "urn:view9593:root",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField4dd05b30171ffbeeb3f9d9fd5e7f9a27d401b657c0339c96f5caad7ee0787eff"
+            },
+            {
+              "name": "activity_id",
+              "id": "urn:view9593:activity",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField3aac51d186cb8e970ef645d27571bcfdf9ebe9b2941ed1bd5e24b46cfdac3c4c"
+            },
+            {
+              "name": "completed",
+              "id": "urn:view9593:completed",
+              "type_id": "urn:gooo:type:boolean",
+              "go_name": "GoooFielde31dfc6f3c58cec3fe4c0f7d4ded79143803b0c3efa8e29e02bcf84f1d84443c"
+            },
+            {
+              "name": "read_start",
+              "id": "urn:view9593:read-start",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooFieldf3ceef6f1eb721d35b11f5a9cff497102a9de81d3b2ab5ed3b05777e342c0681"
+            },
+            {
+              "name": "read_end",
+              "id": "urn:view9593:read-end",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooFieldc26a484c9726b6ab4f69fb36159b2563ea4fe26db8b7a2c632f810b0cd9d7d06"
+            },
+            {
+              "name": "reads_dropped",
+              "id": "urn:view9593:lost",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooFieldfcdb9d65b3a018b6d4b76ddb1fafdd95cec82f604f0d463f6f26d1a5ed9dce91"
+            },
+            {
+              "name": "source_sha256",
+              "id": "urn:view9593:sha",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooFieldfccc57c059e7edc3ab0815fa2021732a3d66492e1c9a34430247aef1af0415f5"
+            },
+            {
+              "name": "source_start",
+              "id": "urn:view9593:start",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField7a555b2a2a0652978d4993c2a70cff6947c2fbfb119ab7acb9dbef9c0d9d13d8"
+            },
+            {
+              "name": "source_end",
+              "id": "urn:view9593:end",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField37019a6da675cce1b3d7fb6c9b0edf3b01b50e440f849382e1b38ad5c3074575"
+            },
+            {
+              "name": "expression",
+              "id": "urn:view9593:expression",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField2d594a2dfb322ad9e89d81c044cd64644d0c4b8567c8ac063421b3baae5c61a2"
+            },
+            {
+              "name": "mapping",
+              "id": "urn:view9593:mapping",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField6b2c957d17b5854c1496573ca4ef61f91d0306643cbb78e951c7882d6227347c"
+            }
+          ]
+        }
+      ]
+    },
+    "steps": [
+      {
+        "input_source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+        "generation": {
+          "report": {
+            "schema": "gooo/body-codegen-report/v3",
+            "decision": "PASS",
+            "activity": "Explain",
+            "activity_id": "urn:view9593:explain",
+            "input_type": "Element",
+            "record_types": [
+              {
+                "name": "Element",
+                "id": "urn:view9593:element",
+                "go_name": "GoooRecord681f21269055a4731de3bfdda328a50da8435c7086361d9f2989577e4504ac04",
+                "fields": [
+                  {
+                    "name": "case_index",
+                    "id": "urn:view9593:case",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField2b4b88d6f3e4a00b63609c86958b15e621424dfaa01a65285348f3912e97d33f"
+                  },
+                  {
+                    "name": "instance_index",
+                    "id": "urn:view9593:instance",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField0bfa087b9787a27e20f26d34b906f2ac2f2b7eb171b0f79c14a28e83aee97ec2"
+                  },
+                  {
+                    "name": "element_index",
+                    "id": "urn:view9593:element-index",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField7dd9c1c0a60b8b3396c4c982663046ab33cf95cf41e352ef2cefb16f5f22386c"
+                  },
+                  {
+                    "name": "root_activity_id",
+                    "id": "urn:view9593:root",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField4dd05b30171ffbeeb3f9d9fd5e7f9a27d401b657c0339c96f5caad7ee0787eff"
+                  },
+                  {
+                    "name": "activity_id",
+                    "id": "urn:view9593:activity",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField3aac51d186cb8e970ef645d27571bcfdf9ebe9b2941ed1bd5e24b46cfdac3c4c"
+                  },
+                  {
+                    "name": "completed",
+                    "id": "urn:view9593:completed",
+                    "type_id": "urn:gooo:type:boolean",
+                    "go_name": "GoooFielde31dfc6f3c58cec3fe4c0f7d4ded79143803b0c3efa8e29e02bcf84f1d84443c"
+                  },
+                  {
+                    "name": "read_start",
+                    "id": "urn:view9593:read-start",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldf3ceef6f1eb721d35b11f5a9cff497102a9de81d3b2ab5ed3b05777e342c0681"
+                  },
+                  {
+                    "name": "read_end",
+                    "id": "urn:view9593:read-end",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldc26a484c9726b6ab4f69fb36159b2563ea4fe26db8b7a2c632f810b0cd9d7d06"
+                  },
+                  {
+                    "name": "reads_dropped",
+                    "id": "urn:view9593:lost",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldfcdb9d65b3a018b6d4b76ddb1fafdd95cec82f604f0d463f6f26d1a5ed9dce91"
+                  },
+                  {
+                    "name": "source_sha256",
+                    "id": "urn:view9593:sha",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooFieldfccc57c059e7edc3ab0815fa2021732a3d66492e1c9a34430247aef1af0415f5"
+                  },
+                  {
+                    "name": "source_start",
+                    "id": "urn:view9593:start",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField7a555b2a2a0652978d4993c2a70cff6947c2fbfb119ab7acb9dbef9c0d9d13d8"
+                  },
+                  {
+                    "name": "source_end",
+                    "id": "urn:view9593:end",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField37019a6da675cce1b3d7fb6c9b0edf3b01b50e440f849382e1b38ad5c3074575"
+                  },
+                  {
+                    "name": "expression",
+                    "id": "urn:view9593:expression",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField2d594a2dfb322ad9e89d81c044cd64644d0c4b8567c8ac063421b3baae5c61a2"
+                  },
+                  {
+                    "name": "mapping",
+                    "id": "urn:view9593:mapping",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField6b2c957d17b5854c1496573ca4ef61f91d0306643cbb78e951c7882d6227347c"
+                  }
+                ]
+              }
+            ],
+            "output_type": "string",
+            "plan_sha256": "sha256:3995e9bc4585b2a3ca51c150b99ba6e424bc191687814d804a4f3dc41c158a51",
+            "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+            "source_digest": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+            "program_digest": "sha256:2f22a95a0103c12499472dabe04e416bf4f1d102c0351d4987f2f6ab12b4f459",
+            "generated_digest": "sha256:577c285c5b9c66eb927b7ca1f6711c778800e6cec77bf32c72614717f912870b",
+            "replay_digest": "sha256:577c285c5b9c66eb927b7ca1f6711c778800e6cec77bf32c72614717f912870b",
+            "route": "preserve",
+            "route_decision": {
+              "schema": "gooo/typed-decision-receipt/v1",
+              "mode": "deterministic_fallback",
+              "selected": "preserve",
+              "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+              "provider": "deterministic",
+              "request_sha256": ""
+            },
+            "route_selection": {
+              "method": "single_eligible_route",
+              "proposed_route": "preserve",
+              "final_route": "preserve"
+            },
+            "route_decision_latency_ms": 0,
+            "body_conditions": [
+              {
+                "activity_id": "urn:view9593:explain",
+                "native_ordinal": 0,
+                "source_ordinal": 0,
+                "body_sha256": "sha256:2f22a95a0103c12499472dabe04e416bf4f1d102c0351d4987f2f6ab12b4f459",
+                "decoded_start": 3,
+                "decoded_end": 19,
+                "expression": "!input.completed",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:view9593:element",
+                    "field_id": "urn:view9593:completed",
+                    "name": "completed"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:view9593:explain",
+                "native_ordinal": 1,
+                "source_ordinal": 1,
+                "body_sha256": "sha256:2f22a95a0103c12499472dabe04e416bf4f1d102c0351d4987f2f6ab12b4f459",
+                "decoded_start": 48,
+                "decoded_end": 79,
+                "expression": "input.read_end\u003einput.read_start",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:view9593:element",
+                    "field_id": "urn:view9593:read-end",
+                    "name": "read_end"
+                  },
+                  {
+                    "entity_id": "urn:view9593:element",
+                    "field_id": "urn:view9593:read-start",
+                    "name": "read_start"
+                  }
+                ]
+              }
+            ],
+            "candidate_routes": [
+              "preserve"
+            ],
+            "equivalence_rule": "source-shape-preserving-v1",
+            "source_constructs": 5,
+            "lowered_constructs": 5,
+            "source_semantic_units": 19,
+            "lowered_semantic_units": 19,
+            "completeness_percent": 100,
+            "route_equivalence": {
+              "schema": "gooo/body-codegen-route-equivalence/v1",
+              "decision": "PASS",
+              "method": "canonical_control_flow_form/v2",
+              "rule": "source-shape-preserving-v1",
+              "source_semantic_digest": "sha256:6afb3fce47594dafae93b421a75a573d5e2c06b230363d859c14158bd59d32f0",
+              "generated_semantic_digest": "sha256:6afb3fce47594dafae93b421a75a573d5e2c06b230363d859c14158bd59d32f0",
+              "equivalent": true,
+              "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+            },
+            "typecheck_passed": true,
+            "deterministic_replay": true,
+            "repository_writes": 0,
+            "unsupported_constructs": "calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
+            "completeness_receipt": {
+              "schema": "gooo/metaprogramming-completeness-receipt/v2",
+              "profile_id": "gooo/body-codegen-pure-v1",
+              "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+              "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+              "scope": {
+                "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                "boundary": {
+                  "excluded_effects": [
+                    "generated code execution",
+                    "repository mutation",
+                    "external authority"
+                  ],
+                  "non_authorizing": true,
+                  "non_executing": true
+                },
+                "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                "decision_mode": "deterministic_fallback",
+                "decision_provider": "deterministic",
+                "domain_scope": "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
+                "excluded_scope": [
+                  "unstated natural-language intent",
+                  "independently sourced production workflows",
+                  "generated runtime behavior",
+                  "unrestricted Gooo body syntax",
+                  "route clarity or utility"
+                ],
+                "execution_environment": "darwin/arm64",
+                "input_type": "Element",
+                "laya_mode": "deterministic_fallback",
+                "laya_provider": "deterministic",
+                "observed_system_cost": {
+                  "human_actions": 0,
+                  "repository_writes": 0
+                },
+                "output_type": "string",
+                "plan_sha256": "sha256:3995e9bc4585b2a3ca51c150b99ba6e424bc191687814d804a4f3dc41c158a51",
+                "receipt_declaration": {
+                  "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "projection_profile": "gooo/receipt-structure-projection/v1",
+                  "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                },
+                "record_types": [
+                  {
+                    "name": "Element",
+                    "id": "urn:view9593:element",
+                    "go_name": "GoooRecord681f21269055a4731de3bfdda328a50da8435c7086361d9f2989577e4504ac04",
+                    "fields": [
+                      {
+                        "name": "case_index",
+                        "id": "urn:view9593:case",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField2b4b88d6f3e4a00b63609c86958b15e621424dfaa01a65285348f3912e97d33f"
+                      },
+                      {
+                        "name": "instance_index",
+                        "id": "urn:view9593:instance",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField0bfa087b9787a27e20f26d34b906f2ac2f2b7eb171b0f79c14a28e83aee97ec2"
+                      },
+                      {
+                        "name": "element_index",
+                        "id": "urn:view9593:element-index",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField7dd9c1c0a60b8b3396c4c982663046ab33cf95cf41e352ef2cefb16f5f22386c"
+                      },
+                      {
+                        "name": "root_activity_id",
+                        "id": "urn:view9593:root",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField4dd05b30171ffbeeb3f9d9fd5e7f9a27d401b657c0339c96f5caad7ee0787eff"
+                      },
+                      {
+                        "name": "activity_id",
+                        "id": "urn:view9593:activity",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField3aac51d186cb8e970ef645d27571bcfdf9ebe9b2941ed1bd5e24b46cfdac3c4c"
+                      },
+                      {
+                        "name": "completed",
+                        "id": "urn:view9593:completed",
+                        "type_id": "urn:gooo:type:boolean",
+                        "go_name": "GoooFielde31dfc6f3c58cec3fe4c0f7d4ded79143803b0c3efa8e29e02bcf84f1d84443c"
+                      },
+                      {
+                        "name": "read_start",
+                        "id": "urn:view9593:read-start",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldf3ceef6f1eb721d35b11f5a9cff497102a9de81d3b2ab5ed3b05777e342c0681"
+                      },
+                      {
+                        "name": "read_end",
+                        "id": "urn:view9593:read-end",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldc26a484c9726b6ab4f69fb36159b2563ea4fe26db8b7a2c632f810b0cd9d7d06"
+                      },
+                      {
+                        "name": "reads_dropped",
+                        "id": "urn:view9593:lost",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldfcdb9d65b3a018b6d4b76ddb1fafdd95cec82f604f0d463f6f26d1a5ed9dce91"
+                      },
+                      {
+                        "name": "source_sha256",
+                        "id": "urn:view9593:sha",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooFieldfccc57c059e7edc3ab0815fa2021732a3d66492e1c9a34430247aef1af0415f5"
+                      },
+                      {
+                        "name": "source_start",
+                        "id": "urn:view9593:start",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField7a555b2a2a0652978d4993c2a70cff6947c2fbfb119ab7acb9dbef9c0d9d13d8"
+                      },
+                      {
+                        "name": "source_end",
+                        "id": "urn:view9593:end",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField37019a6da675cce1b3d7fb6c9b0edf3b01b50e440f849382e1b38ad5c3074575"
+                      },
+                      {
+                        "name": "expression",
+                        "id": "urn:view9593:expression",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField2d594a2dfb322ad9e89d81c044cd64644d0c4b8567c8ac063421b3baae5c61a2"
+                      },
+                      {
+                        "name": "mapping",
+                        "id": "urn:view9593:mapping",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField6b2c957d17b5854c1496573ca4ef61f91d0306643cbb78e951c7882d6227347c"
+                      }
+                    ]
+                  }
+                ],
+                "system_budget": {
+                  "maximum_human_actions": 0,
+                  "maximum_repository_writes": 0
+                },
+                "toolchain": "go1.27.2"
+              },
+              "core_dimensions": [
+                "declaration_coverage",
+                "generation_coverage",
+                "internal_replay_coverage",
+                "provenance_integrity",
+                "receipt_schema_binding",
+                "repository_write_boundary",
+                "route_choice_protocol",
+                "route_semantic_equivalence",
+                "source_ast_coverage",
+                "typecheck_coverage"
+              ],
+              "dimensions": [
+                {
+                  "id": "declaration_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "stable activity declarations",
+                  "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                  "evidence": [
+                    "source_digest:sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+                    "activity_id:urn:view9593:explain"
+                  ]
+                },
+                {
+                  "id": "generation_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated Go functions",
+                  "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                  "evidence": [
+                    "generated_digest:sha256:577c285c5b9c66eb927b7ca1f6711c778800e6cec77bf32c72614717f912870b",
+                    "report decision:PASS"
+                  ]
+                },
+                {
+                  "id": "source_ast_coverage",
+                  "status": "PASS",
+                  "numerator": 19,
+                  "denominator": 19,
+                  "unit": "source semantic units lowered",
+                  "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                  "evidence": [
+                    "source_semantic_units",
+                    "lowered_semantic_units"
+                  ]
+                },
+                {
+                  "id": "route_semantic_equivalence",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source/generated route pairs",
+                  "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                  "evidence": [
+                    "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                    "route_equivalence.rule:source-shape-preserving-v1",
+                    "source_semantic_digest:sha256:6afb3fce47594dafae93b421a75a573d5e2c06b230363d859c14158bd59d32f0",
+                    "generated_semantic_digest:sha256:6afb3fce47594dafae93b421a75a573d5e2c06b230363d859c14158bd59d32f0"
+                  ]
+                },
+                {
+                  "id": "typecheck_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated functions accepted by Go type checking",
+                  "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                  "evidence": [
+                    "typecheck_passed"
+                  ]
+                },
+                {
+                  "id": "internal_replay_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "deterministic compiler emission replays",
+                  "reason": "Requires replayed generated bytes to match the selected output digest.",
+                  "evidence": [
+                    "generated_digest:sha256:577c285c5b9c66eb927b7ca1f6711c778800e6cec77bf32c72614717f912870b",
+                    "replay_digest:sha256:577c285c5b9c66eb927b7ca1f6711c778800e6cec77bf32c72614717f912870b"
+                  ]
+                },
+                {
+                  "id": "route_choice_protocol",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "selected routes in the compiler-declared candidate set",
+                  "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                  "evidence": [
+                    "candidate_routes",
+                    "selected_route:preserve"
+                  ]
+                },
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "numerator": 7,
+                  "denominator": 8,
+                  "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "evidence": [
+                    "source_digest:sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+                    "program_digest:sha256:2f22a95a0103c12499472dabe04e416bf4f1d102c0351d4987f2f6ab12b4f459",
+                    "generated_digest:sha256:577c285c5b9c66eb927b7ca1f6711c778800e6cec77bf32c72614717f912870b",
+                    "replay_digest:sha256:577c285c5b9c66eb927b7ca1f6711c778800e6cec77bf32c72614717f912870b",
+                    "activity_id:urn:view9593:explain",
+                    "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                    "route_equivalence semantic digests"
+                  ]
+                },
+                {
+                  "id": "receipt_schema_binding",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source-owned receipt schema and generated structure bindings",
+                  "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                  "evidence": [
+                    "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile:gooo/receipt-structure-projection/v1"
+                  ]
+                },
+                {
+                  "id": "repository_write_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "repository writes",
+                  "reason": "The command emits generated source without mutating the repository.",
+                  "evidence": [
+                    "repository_writes:0"
+                  ]
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated package runtime executions",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "evidence": [
+                    "body-codegen does not run generated Go"
+                  ]
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "observed host permission profiles",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "evidence": [
+                    "host permission profile is not observed"
+                  ]
+                },
+                {
+                  "id": "external_network_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "runs with no Laya provider request",
+                  "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                  "evidence": [
+                    "decision.mode:deterministic_fallback",
+                    "decision.provider:deterministic",
+                    "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                  ]
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 0,
+                  "unit": "eligible multi-route Laya decisions",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "evidence": [
+                    "candidate_routes",
+                    "route_decision.mode:deterministic_fallback",
+                    "route_decision.request_sha256:",
+                    "route_decision.model_revision:"
+                  ]
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independently sourced real workflows",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "evidence": [
+                    "no independent workflow corpus is bound"
+                  ]
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated runtime observations mapped back to source",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "evidence": [
+                    "no source-bound reverse-observation trace"
+                  ]
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete input-domain behavior proofs",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "evidence": [
+                    "generated package execution and an independent domain oracle are not part of this command"
+                  ]
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independent route-clarity or utility criteria",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "evidence": [
+                    "no independent route-quality oracle"
+                  ]
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete process resource profiles",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "evidence": [
+                    "route_decision_latency_ms is recorded",
+                    "CPU and peak RSS are not captured"
+                  ]
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible prior resource receipts",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "evidence": [
+                    "no compatible prior resource receipt"
+                  ]
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible before/after semantic receipts",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "evidence": [
+                    "no comparable prior semantic receipt"
+                  ]
+                }
+              ],
+              "status_counts": {
+                "FAIL_CLOSED": 0,
+                "PASS": 10,
+                "PROGRESS": 1,
+                "UNKNOWN": 10
+              },
+              "aggregate_completeness_score": null,
+              "first_unresolved": {
+                "id": "provenance_integrity",
+                "status": "PROGRESS",
+                "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+              },
+              "unresolved_claims": [
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                }
+              ],
+              "not_claimed": [
+                "user-intent completeness",
+                "real-workflow coverage",
+                "generated runtime behavior",
+                "full-domain semantics",
+                "route quality",
+                "universal language completeness"
+              ],
+              "fail_closed_reason": null
+            }
+          },
+          "source": "package constructionview\n\n//gooo:generated:start id=\"urn:view9593:element\" kind=\"entity\"\ntype GoooRecord681f21269055a4731de3bfdda328a50da8435c7086361d9f2989577e4504ac04 struct {\n\tGoooField2b4b88d6f3e4a00b63609c86958b15e621424dfaa01a65285348f3912e97d33f int64  `json:\"case_index\"`\n\tGoooField0bfa087b9787a27e20f26d34b906f2ac2f2b7eb171b0f79c14a28e83aee97ec2 int64  `json:\"instance_index\"`\n\tGoooField7dd9c1c0a60b8b3396c4c982663046ab33cf95cf41e352ef2cefb16f5f22386c int64  `json:\"element_index\"`\n\tGoooField4dd05b30171ffbeeb3f9d9fd5e7f9a27d401b657c0339c96f5caad7ee0787eff string `json:\"root_activity_id\"`\n\tGoooField3aac51d186cb8e970ef645d27571bcfdf9ebe9b2941ed1bd5e24b46cfdac3c4c string `json:\"activity_id\"`\n\tGoooFielde31dfc6f3c58cec3fe4c0f7d4ded79143803b0c3efa8e29e02bcf84f1d84443c bool   `json:\"completed\"`\n\tGoooFieldf3ceef6f1eb721d35b11f5a9cff497102a9de81d3b2ab5ed3b05777e342c0681 int64  `json:\"read_start\"`\n\tGoooFieldc26a484c9726b6ab4f69fb36159b2563ea4fe26db8b7a2c632f810b0cd9d7d06 int64  `json:\"read_end\"`\n\tGoooFieldfcdb9d65b3a018b6d4b76ddb1fafdd95cec82f604f0d463f6f26d1a5ed9dce91 int64  `json:\"reads_dropped\"`\n\tGoooFieldfccc57c059e7edc3ab0815fa2021732a3d66492e1c9a34430247aef1af0415f5 string `json:\"source_sha256\"`\n\tGoooField7a555b2a2a0652978d4993c2a70cff6947c2fbfb119ab7acb9dbef9c0d9d13d8 int64  `json:\"source_start\"`\n\tGoooField37019a6da675cce1b3d7fb6c9b0edf3b01b50e440f849382e1b38ad5c3074575 int64  `json:\"source_end\"`\n\tGoooField2d594a2dfb322ad9e89d81c044cd64644d0c4b8567c8ac063421b3baae5c61a2 string `json:\"expression\"`\n\tGoooField6b2c957d17b5854c1496573ca4ef61f91d0306643cbb78e951c7882d6227347c string `json:\"mapping\"`\n}\n\n//gooo:generated:end id=\"urn:view9593:element\" kind=\"entity\"\n//gooo:generated:start id=\"urn:view9593:explain\" kind=\"activity\"\nfunc Explain(input GoooRecord681f21269055a4731de3bfdda328a50da8435c7086361d9f2989577e4504ac04) string {\n\tif !input.GoooFielde31dfc6f3c58cec3fe4c0f7d4ded79143803b0c3efa8e29e02bcf84f1d84443c {\n\t\treturn \"계산 중단\"\n\t}\n\tif input.GoooFieldc26a484c9726b6ab4f69fb36159b2563ea4fe26db8b7a2c632f810b0cd9d7d06 \u003e input.GoooFieldf3ceef6f1eb721d35b11f5a9cff497102a9de81d3b2ab5ed3b05777e342c0681 {\n\t\treturn \"계산 중 읽기 연결\"\n\t}\n\treturn \"표현 위치 연결\"\n}\n\n//gooo:generated:end id=\"urn:view9593:explain\" kind=\"activity\"\n"
+        }
+      }
+    ],
+    "gooo_source": "package constructionview\nnamespace constructionview9593\nentity Text id \"urn:gooo:type:string\"\nentity Element id \"urn:view9593:element\" fields {\n field case_index id \"urn:view9593:case\" type integer required one\n field instance_index id \"urn:view9593:instance\" type integer required one\n field element_index id \"urn:view9593:element-index\" type integer required one\n field root_activity_id id \"urn:view9593:root\" type string required one\n field activity_id id \"urn:view9593:activity\" type string required one\n field completed id \"urn:view9593:completed\" type boolean required one\n field read_start id \"urn:view9593:read-start\" type integer required one\n field read_end id \"urn:view9593:read-end\" type integer required one\n field reads_dropped id \"urn:view9593:lost\" type integer required one\n field source_sha256 id \"urn:view9593:sha\" type string required one\n field source_start id \"urn:view9593:start\" type integer required one\n field source_end id \"urn:view9593:end\" type integer required one\n field expression id \"urn:view9593:expression\" type string required one\n field mapping id \"urn:view9593:mapping\" type string required one\n}\nactivity Explain(Element) -\u003e Text id \"urn:view9593:explain\" computes \"if !input.completed {return \\\"계산 중단\\\"};if input.read_end\u003einput.read_start {return \\\"계산 중 읽기 연결\\\"};return \\\"표현 위치 연결\\\"\"\n",
+    "source": "package main\n\n//gooo:generated:start id=\"urn:view9593:element\" kind=\"entity\"\ntype GoooRecord681f21269055a4731de3bfdda328a50da8435c7086361d9f2989577e4504ac04 struct {\n\tGoooField2b4b88d6f3e4a00b63609c86958b15e621424dfaa01a65285348f3912e97d33f int64  `json:\"case_index\"`\n\tGoooField0bfa087b9787a27e20f26d34b906f2ac2f2b7eb171b0f79c14a28e83aee97ec2 int64  `json:\"instance_index\"`\n\tGoooField7dd9c1c0a60b8b3396c4c982663046ab33cf95cf41e352ef2cefb16f5f22386c int64  `json:\"element_index\"`\n\tGoooField4dd05b30171ffbeeb3f9d9fd5e7f9a27d401b657c0339c96f5caad7ee0787eff string `json:\"root_activity_id\"`\n\tGoooField3aac51d186cb8e970ef645d27571bcfdf9ebe9b2941ed1bd5e24b46cfdac3c4c string `json:\"activity_id\"`\n\tGoooFielde31dfc6f3c58cec3fe4c0f7d4ded79143803b0c3efa8e29e02bcf84f1d84443c bool   `json:\"completed\"`\n\tGoooFieldf3ceef6f1eb721d35b11f5a9cff497102a9de81d3b2ab5ed3b05777e342c0681 int64  `json:\"read_start\"`\n\tGoooFieldc26a484c9726b6ab4f69fb36159b2563ea4fe26db8b7a2c632f810b0cd9d7d06 int64  `json:\"read_end\"`\n\tGoooFieldfcdb9d65b3a018b6d4b76ddb1fafdd95cec82f604f0d463f6f26d1a5ed9dce91 int64  `json:\"reads_dropped\"`\n\tGoooFieldfccc57c059e7edc3ab0815fa2021732a3d66492e1c9a34430247aef1af0415f5 string `json:\"source_sha256\"`\n\tGoooField7a555b2a2a0652978d4993c2a70cff6947c2fbfb119ab7acb9dbef9c0d9d13d8 int64  `json:\"source_start\"`\n\tGoooField37019a6da675cce1b3d7fb6c9b0edf3b01b50e440f849382e1b38ad5c3074575 int64  `json:\"source_end\"`\n\tGoooField2d594a2dfb322ad9e89d81c044cd64644d0c4b8567c8ac063421b3baae5c61a2 string `json:\"expression\"`\n\tGoooField6b2c957d17b5854c1496573ca4ef61f91d0306643cbb78e951c7882d6227347c string `json:\"mapping\"`\n}\n\n//gooo:generated:end id=\"urn:view9593:element\" kind=\"entity\"\n\n//gooo:generated:start id=\"urn:view9593:explain\" kind=\"activity\"\nfunc GoooComposedActivity0(input GoooRecord681f21269055a4731de3bfdda328a50da8435c7086361d9f2989577e4504ac04) string {\n\tif !input.GoooFielde31dfc6f3c58cec3fe4c0f7d4ded79143803b0c3efa8e29e02bcf84f1d84443c {\n\t\treturn \"계산 중단\"\n\t}\n\tif input.GoooFieldc26a484c9726b6ab4f69fb36159b2563ea4fe26db8b7a2c632f810b0cd9d7d06 \u003e input.GoooFieldf3ceef6f1eb721d35b11f5a9cff497102a9de81d3b2ab5ed3b05777e342c0681 {\n\t\treturn \"계산 중 읽기 연결\"\n\t}\n\treturn \"표현 위치 연결\"\n}\n\n//gooo:generated:end id=\"urn:view9593:explain\" kind=\"activity\"\n",
+    "driver_source": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc main() {\n\tvar in [][1]json.RawMessage\n\tif json.NewDecoder(os.Stdin).Decode(\u0026in) != nil || len(in) \u003e 128 {\n\t\tos.Exit(2)\n\t}\n\tout := make([][1]json.RawMessage, len(in))\n\tfor c, row := range in {\n\t\tvar input0 GoooRecord681f21269055a4731de3bfdda328a50da8435c7086361d9f2989577e4504ac04\n\t\tif json.Unmarshal(row[0], \u0026input0) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv0 := GoooComposedActivity0(input0)\n\t\tout[c][0], _ = json.Marshal(v0)\n\t}\n\tif json.NewEncoder(os.Stdout).Encode(out) != nil {\n\t\tos.Exit(3)\n\t}\n}\n",
+    "elapsed_ns": 5016542,
+    "scope": "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"
+  },
+  "counts": {
+    "계산 중 읽기 연결": 9,
+    "표현 위치 연결": 15
+  },
+  "original_program_executions": 0,
+  "runtime": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "composition_sha256": "sha256:8b5752cfff2d4b01d7fee12b7b40d82ca90d6e61cd217546654b1200eeb5bf18",
+    "original_source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+    "selected_source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+    "typed_plan_sha256": "sha256:a3e3eaa691697092772fc9fe348d259741af5956aac857c22a070bd2a5659c2f",
+    "generated_sha256": "sha256:926a99c8fef1ea88667ff33c5eea028da7a56f64f3e9738e9baaa412048b8f4b",
+    "driver_sha256": "sha256:01b46224032025c8aa4b4ae9ccbc5232bf3bfd671185c49d4f5941d96d763362",
+    "observed_projection_sha256": "sha256:6723fcdaa677a0e8bfb66a09fa2cbcae00f899b903645065ba32d7c7759a7cf1",
+    "observed_driver_sha256": "sha256:c6eee43abe2ba787f26c056863461f1f8d145fb7dd655b81c8cf56f8fcdce694",
+    "runtime_suite_sha256": "sha256:eea1215dcca27a06b6f41b0bb07f78a98012ea61380375da177a4db82619d92a",
+    "executable_sha256": "sha256:1c51385983ee18bded23f69d8033784db93dc6a7fbe8fe901fde12b0cd34c1f7",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_tool_selection": "path",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "(devel)"
+    },
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 8835917,
+      "user_ns": 4269000,
+      "system_ns": 2725000,
+      "peak_rss_bytes": 14499840,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1055583,
+        "wait_ns": 7780334,
+        "deadline_remaining_ns": 59984093667,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 110248916,
+      "user_ns": 124594000,
+      "system_ns": 102838000,
+      "peak_rss_bytes": 86622208,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 764083,
+        "wait_ns": 109484833,
+        "deadline_remaining_ns": 59973915875,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 345709709,
+        "user_ns": 1638000,
+        "system_ns": 3454000,
+        "peak_rss_bytes": 5095424,
+        "stdout_sha256": "sha256:50097e6a0c841c3d5135dba82851232132f777a0fdf6a477447231d0ce7fb7e5",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 929584,
+          "wait_ns": 344780125,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59862083084,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 4103125,
+        "user_ns": 1575000,
+        "system_ns": 1593000,
+        "peak_rss_bytes": 5242880,
+        "stdout_sha256": "sha256:50097e6a0c841c3d5135dba82851232132f777a0fdf6a477447231d0ce7fb7e5",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 1215875,
+          "wait_ns": 2887250,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59515556875,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "traces": [
+      {
+        "case_index": 0,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 0,
+              "completed": true,
+              "element_index": 0,
+              "expression": "Inner(input)",
+              "instance_index": 0,
+              "mapping": "MAPPED",
+              "read_end": 3,
+              "read_start": 1,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 892,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 880
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 880
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 892
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "Inner(input)"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "계산 중 읽기 연결",
+            "expected": "계산 중 읽기 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 1,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 0,
+              "completed": true,
+              "element_index": 1,
+              "expression": "input.values[0]+input.values[1]",
+              "instance_index": 0,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 3,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 924,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 893
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 893
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 924
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "input.values[0]+input.values[1]"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "계산 중 읽기 연결",
+            "expected": "계산 중 읽기 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 2,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 0,
+              "completed": true,
+              "element_index": 2,
+              "expression": "previous+2",
+              "instance_index": 0,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 935,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 925
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 925
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 935
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "previous+2"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 3,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:inner",
+              "case_index": 0,
+              "completed": true,
+              "element_index": 0,
+              "expression": "input.values[1]",
+              "instance_index": 1,
+              "mapping": "MAPPED",
+              "read_end": 2,
+              "read_start": 1,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 746,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 731
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:inner"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 731
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 746
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "input.values[1]"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "계산 중 읽기 연결",
+            "expected": "계산 중 읽기 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 4,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 0,
+              "completed": true,
+              "element_index": 0,
+              "expression": "\"start\"",
+              "instance_index": 2,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 966,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 957
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 957
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 966
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "\"start\""
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 5,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 0,
+              "completed": true,
+              "element_index": 1,
+              "expression": "\"끝\"",
+              "instance_index": 2,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 974,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 967
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 967
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 974
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "\"끝\""
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 6,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 0,
+              "completed": true,
+              "element_index": 0,
+              "expression": "true",
+              "instance_index": 3,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 1000,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 996
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 996
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 1000
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "true"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 7,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 0,
+              "completed": true,
+              "element_index": 1,
+              "expression": "false",
+              "instance_index": 3,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 1006,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 1001
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 1001
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 1006
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "false"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 8,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 1,
+              "completed": true,
+              "element_index": 0,
+              "expression": "Inner(input)",
+              "instance_index": 0,
+              "mapping": "MAPPED",
+              "read_end": 3,
+              "read_start": 1,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 892,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 880
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 880
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 892
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "Inner(input)"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "계산 중 읽기 연결",
+            "expected": "계산 중 읽기 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 9,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 1,
+              "completed": true,
+              "element_index": 1,
+              "expression": "input.values[0]+input.values[1]",
+              "instance_index": 0,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 3,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 924,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 893
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 893
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 924
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "input.values[0]+input.values[1]"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "계산 중 읽기 연결",
+            "expected": "계산 중 읽기 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 10,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 1,
+              "completed": true,
+              "element_index": 2,
+              "expression": "previous+2",
+              "instance_index": 0,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 935,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 925
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 925
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 935
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "previous+2"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 11,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:inner",
+              "case_index": 1,
+              "completed": true,
+              "element_index": 0,
+              "expression": "input.values[1]",
+              "instance_index": 1,
+              "mapping": "MAPPED",
+              "read_end": 2,
+              "read_start": 1,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 746,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 731
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:inner"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 731
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 746
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "input.values[1]"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "계산 중 읽기 연결",
+            "expected": "계산 중 읽기 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 12,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 1,
+              "completed": true,
+              "element_index": 0,
+              "expression": "\"start\"",
+              "instance_index": 2,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 966,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 957
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 957
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 966
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "\"start\""
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 13,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 1,
+              "completed": true,
+              "element_index": 1,
+              "expression": "\"끝\"",
+              "instance_index": 2,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 974,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 967
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 967
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 974
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "\"끝\""
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 14,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 1,
+              "completed": true,
+              "element_index": 0,
+              "expression": "true",
+              "instance_index": 3,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 1000,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 996
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 996
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 1000
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "true"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 15,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 1,
+              "completed": true,
+              "element_index": 1,
+              "expression": "false",
+              "instance_index": 3,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 1006,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 1001
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 1001
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 1006
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "false"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 16,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 2,
+              "completed": true,
+              "element_index": 0,
+              "expression": "Inner(input)",
+              "instance_index": 0,
+              "mapping": "MAPPED",
+              "read_end": 3,
+              "read_start": 1,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 892,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 880
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 880
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 892
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "Inner(input)"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "계산 중 읽기 연결",
+            "expected": "계산 중 읽기 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 17,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 2,
+              "completed": true,
+              "element_index": 1,
+              "expression": "input.values[0]+input.values[1]",
+              "instance_index": 0,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 3,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 924,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 893
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 893
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 924
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "input.values[0]+input.values[1]"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "계산 중 읽기 연결",
+            "expected": "계산 중 읽기 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 18,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 2,
+              "completed": true,
+              "element_index": 2,
+              "expression": "previous+2",
+              "instance_index": 0,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 935,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 925
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 925
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 935
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "previous+2"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 19,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:inner",
+              "case_index": 2,
+              "completed": true,
+              "element_index": 0,
+              "expression": "input.values[1]",
+              "instance_index": 1,
+              "mapping": "MAPPED",
+              "read_end": 2,
+              "read_start": 1,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 746,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 731
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:inner"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 731
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 746
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "input.values[1]"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "계산 중 읽기 연결",
+            "expected": "계산 중 읽기 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 20,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 2,
+              "completed": true,
+              "element_index": 0,
+              "expression": "\"start\"",
+              "instance_index": 2,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 966,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 957
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 957
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 966
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "\"start\""
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 21,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 2,
+              "completed": true,
+              "element_index": 1,
+              "expression": "\"끝\"",
+              "instance_index": 2,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 974,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 967
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 967
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 974
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "\"끝\""
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 22,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 2,
+              "completed": true,
+              "element_index": 0,
+              "expression": "true",
+              "instance_index": 3,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 1000,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 996
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 996
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 1000
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "true"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 23,
+        "deliveries": [
+          {
+            "activity_id": "urn:view9593:explain",
+            "input": {
+              "activity_id": "urn:make9533:build",
+              "case_index": 2,
+              "completed": true,
+              "element_index": 1,
+              "expression": "false",
+              "instance_index": 3,
+              "mapping": "MAPPED",
+              "read_end": 5,
+              "read_start": 5,
+              "reads_dropped": 0,
+              "root_activity_id": "urn:make9533:build",
+              "source_end": 1006,
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "source_start": 1001
+            },
+            "input_fields": [
+              {
+                "id": "urn:view9593:case",
+                "name": "case_index",
+                "value": 2
+              },
+              {
+                "id": "urn:view9593:instance",
+                "name": "instance_index",
+                "value": 3
+              },
+              {
+                "id": "urn:view9593:element-index",
+                "name": "element_index",
+                "value": 1
+              },
+              {
+                "id": "urn:view9593:root",
+                "name": "root_activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:activity",
+                "name": "activity_id",
+                "value": "urn:make9533:build"
+              },
+              {
+                "id": "urn:view9593:completed",
+                "name": "completed",
+                "value": true
+              },
+              {
+                "id": "urn:view9593:read-start",
+                "name": "read_start",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:read-end",
+                "name": "read_end",
+                "value": 5
+              },
+              {
+                "id": "urn:view9593:lost",
+                "name": "reads_dropped",
+                "value": 0
+              },
+              {
+                "id": "urn:view9593:sha",
+                "name": "source_sha256",
+                "value": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc"
+              },
+              {
+                "id": "urn:view9593:start",
+                "name": "source_start",
+                "value": 1001
+              },
+              {
+                "id": "urn:view9593:end",
+                "name": "source_end",
+                "value": 1006
+              },
+              {
+                "id": "urn:view9593:expression",
+                "name": "expression",
+                "value": "false"
+              },
+              {
+                "id": "urn:view9593:mapping",
+                "name": "mapping",
+                "value": "MAPPED"
+              }
+            ],
+            "actual": "표현 위치 연결",
+            "expected": "표현 위치 연결",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          }
+        ]
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "finite_passed": 24,
+    "finite_total": 24,
+    "condition_sites": [
+      {
+        "expression_id": "sha256:3aa97ad6aab960c02bed57ec858c9f72385040b966eac62e0516dd51385dd185",
+        "root_activity_id": "urn:view9593:explain",
+        "activity_id": "urn:view9593:explain",
+        "expression": "!input.GoooFielde31dfc6f3c58cec3fe4c0f7d4ded79143803b0c3efa8e29e02bcf84f1d84443c",
+        "projection_sha256": "sha256:926a99c8fef1ea88667ff33c5eea028da7a56f64f3e9738e9baaa412048b8f4b",
+        "start": 1862,
+        "end": 1942,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:view9593:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+            "start_byte": 1135,
+            "end_byte": 1357
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+          "body_sha256": "sha256:2f22a95a0103c12499472dabe04e416bf4f1d102c0351d4987f2f6ab12b4f459",
+          "start_byte": 1208,
+          "end_byte": 1224,
+          "decoded_start": 3,
+          "decoded_end": 19,
+          "source_ordinal": 0,
+          "expression": "!input.completed",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:view9593:completed",
+                "name": "completed",
+                "source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+                "start_byte": 509,
+                "end_byte": 578
+              },
+              "entity_id": "urn:view9593:element",
+              "field_id": "urn:view9593:completed",
+              "name": "completed"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:17ca27f1edf17ba9f138ff638c6a6a0e8512ee9869b49f6dfd1fc8d8f436a5f0",
+        "root_activity_id": "urn:view9593:explain",
+        "activity_id": "urn:view9593:explain",
+        "expression": "input.GoooFieldc26a484c9726b6ab4f69fb36159b2563ea4fe26db8b7a2c632f810b0cd9d7d06 \u003e input.GoooFieldf3ceef6f1eb721d35b11f5a9cff497102a9de81d3b2ab5ed3b05777e342c0681",
+        "projection_sha256": "sha256:926a99c8fef1ea88667ff33c5eea028da7a56f64f3e9738e9baaa412048b8f4b",
+        "start": 1977,
+        "end": 2138,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:view9593:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+            "start_byte": 1135,
+            "end_byte": 1357
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+          "body_sha256": "sha256:2f22a95a0103c12499472dabe04e416bf4f1d102c0351d4987f2f6ab12b4f459",
+          "start_byte": 1255,
+          "end_byte": 1286,
+          "decoded_start": 48,
+          "decoded_end": 79,
+          "source_ordinal": 1,
+          "expression": "input.read_end\u003einput.read_start",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:view9593:read-end",
+                "name": "read_end",
+                "source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+                "start_byte": 653,
+                "end_byte": 720
+              },
+              "entity_id": "urn:view9593:element",
+              "field_id": "urn:view9593:read-end",
+              "name": "read_end"
+            },
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:view9593:read-start",
+                "name": "read_start",
+                "source_sha256": "sha256:5751aaf66b02279a1da12964011eb9394724648f81e104986355d00985a0bd76",
+                "start_byte": 580,
+                "end_byte": 651
+              },
+              "entity_id": "urn:view9593:element",
+              "field_id": "urn:view9593:read-start",
+              "name": "read_start"
+            }
+          ]
+        }
+      }
+    ],
+    "condition_observation": {
+      "schema": "gooo/native-condition-summary/v1",
+      "status": "COMPLETE",
+      "recorded_events": 48,
+      "dropped_events": 0,
+      "sha256": "sha256:5a30803d54ad7398061c643ab0374a895df9128e2ee3dc74b0f3e7a298cc2ef4"
+    },
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "UNCLASSIFIED_INPUTS",
+      "unique_inputs": 24,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 24,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    },
+    "model_calls": 0,
+    "elapsed_ns": 489907250,
+    "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+  },
+  "source": "package constructionview\nnamespace constructionview9593\nentity Text id \"urn:gooo:type:string\"\nentity Element id \"urn:view9593:element\" fields {\n field case_index id \"urn:view9593:case\" type integer required one\n field instance_index id \"urn:view9593:instance\" type integer required one\n field element_index id \"urn:view9593:element-index\" type integer required one\n field root_activity_id id \"urn:view9593:root\" type string required one\n field activity_id id \"urn:view9593:activity\" type string required one\n field completed id \"urn:view9593:completed\" type boolean required one\n field read_start id \"urn:view9593:read-start\" type integer required one\n field read_end id \"urn:view9593:read-end\" type integer required one\n field reads_dropped id \"urn:view9593:lost\" type integer required one\n field source_sha256 id \"urn:view9593:sha\" type string required one\n field source_start id \"urn:view9593:start\" type integer required one\n field source_end id \"urn:view9593:end\" type integer required one\n field expression id \"urn:view9593:expression\" type string required one\n field mapping id \"urn:view9593:mapping\" type string required one\n}\nactivity Explain(Element) -\u003e Text id \"urn:view9593:explain\" computes \"if !input.completed {return \\\"계산 중단\\\"};if input.read_end\u003einput.read_start {return \\\"계산 중 읽기 연결\\\"};return \\\"표현 위치 연결\\\"\"\n"
+}

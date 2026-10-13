@@ -178,7 +178,7 @@ func sameJointRuntime(a, b CompositionRuntime) bool {
 		r.InputSeparation.Scope = ""
 		return []any{r.Stage, r.Failure, r.OriginalSourceSHA256, r.SelectedSourceSHA256,
 			r.TypedPlanSHA256, r.GeneratedSHA256, r.DriverSHA256, r.RuntimeSuiteSHA256,
-			comparableConditionSites(r), r.ConditionObservation, r.Traces, r.FinitePassed, r.FiniteTotal, r.ModelCalls, r.ProjectionReplayed, r.RuntimeReplayed,
+			comparableConditionSites(r), r.ConditionObservation, r.ReadSites, r.ReadInputs, r.ReadObservation, r.ConstructionSites, r.Traces, r.FinitePassed, r.FiniteTotal, r.ModelCalls, r.ProjectionReplayed, r.RuntimeReplayed,
 			r.InputSeparation}
 	}
 	return compositionDigest(semantic(a)) == compositionDigest(semantic(b))

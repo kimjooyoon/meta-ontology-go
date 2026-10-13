@@ -1,0 +1,40 @@
+=== RUN   TestConstructionSourceFill9571
+    composition_construction_meta_test.go:47: chosen expression location &{MAPPED  selected_gooo_source sha256:0ece3b8b2fd83d75704b1d04cc2224c445f869a3ce00dca9b5c5037fbed4829f sha256:19296410a34c1476ffafb70650da583ce08c383051b41e3ba320f809ee7a001f 380 415 36 71 (input.values[1] - input.values[0])}
+--- FAIL: TestConstructionSourceFill9571 (0.69s)
+=== RUN   TestConstructionGoooConsumer9593
+--- PASS: TestConstructionGoooConsumer9593 (0.50s)
+=== RUN   TestConstructionProtocol9613
+=== RUN   TestConstructionProtocol9613/missing_case
+=== RUN   TestConstructionProtocol9613/missing_end
+=== RUN   TestConstructionProtocol9613/missing_completion
+=== RUN   TestConstructionProtocol9613/missing_element_start
+=== RUN   TestConstructionProtocol9613/future_origin
+=== RUN   TestConstructionProtocol9613/ambiguous_origin
+=== RUN   TestConstructionProtocol9613/unknown_instance
+=== RUN   TestConstructionProtocol9613/unknown_element
+=== RUN   TestConstructionProtocol9613/false_complete_count
+=== RUN   TestConstructionProtocol9613/unfinished_reference
+=== RUN   TestConstructionProtocol9613/unexpected_drop
+=== RUN   TestConstructionProtocol9613/wrong_version
+--- PASS: TestConstructionProtocol9613 (0.00s)
+    --- PASS: TestConstructionProtocol9613/missing_case (0.00s)
+    --- PASS: TestConstructionProtocol9613/missing_end (0.00s)
+    --- PASS: TestConstructionProtocol9613/missing_completion (0.00s)
+    --- PASS: TestConstructionProtocol9613/missing_element_start (0.00s)
+    --- PASS: TestConstructionProtocol9613/future_origin (0.00s)
+    --- PASS: TestConstructionProtocol9613/ambiguous_origin (0.00s)
+    --- PASS: TestConstructionProtocol9613/unknown_instance (0.00s)
+    --- PASS: TestConstructionProtocol9613/unknown_element (0.00s)
+    --- PASS: TestConstructionProtocol9613/false_complete_count (0.00s)
+    --- PASS: TestConstructionProtocol9613/unfinished_reference (0.00s)
+    --- PASS: TestConstructionProtocol9613/unexpected_drop (0.00s)
+    --- PASS: TestConstructionProtocol9613/wrong_version (0.00s)
+=== RUN   TestConstructionBounds9629
+=== RUN   TestConstructionBounds9629/instances
+=== RUN   TestConstructionBounds9629/elements
+--- PASS: TestConstructionBounds9629 (0.19s)
+    --- PASS: TestConstructionBounds9629/instances (0.02s)
+    --- PASS: TestConstructionBounds9629/elements (0.17s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.891s
+FAIL

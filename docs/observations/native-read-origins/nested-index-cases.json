@@ -1,0 +1,49 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Seed": {
+          "values": [
+            421,
+            431,
+            431
+          ],
+          "order": [
+            2,
+            0
+          ],
+          "position": 0
+        }
+      },
+      "expected": {
+        "ByAddress": {
+          "item": 431
+        },
+        "ByValue": 431
+      }
+    },
+    {
+      "inputs": {
+        "Seed": {
+          "values": [
+            433,
+            439,
+            443
+          ],
+          "order": [
+            2,
+            1
+          ],
+          "position": 1
+        }
+      },
+      "expected": {
+        "ByAddress": {
+          "item": 439
+        },
+        "ByValue": 439
+      }
+    }
+  ]
+}

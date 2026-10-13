@@ -1,0 +1,114 @@
+[
+  {
+    "path": "internal/bodycodegen/body_construction_origin.go",
+    "sha256": "54a07e1f8151a7847f79e8ee9664858b00115e8a72c69ee2e13d70af36d81000"
+  },
+  {
+    "path": "internal/bodycodegen/body_construction_source.go",
+    "sha256": "e20be5f16de71d2a87658f8dbe8cec73e22d8ab1182090c80391f8004f38134e"
+  },
+  {
+    "path": "internal/bodycodegen/body_paths_replay.go",
+    "sha256": "a6faa28e907efa7a29b6d1081ef3a047241ddb49a06fcd2f17f60ffe63779704"
+  },
+  {
+    "path": "internal/bodycodegen/body_projection.go",
+    "sha256": "8e893b5261aeb619182cff29a21bf6d67ba644f18517e6491023fe2ea2e2f120"
+  },
+  {
+    "path": "internal/bodycodegen/body_read_source.go",
+    "sha256": "e767c8117d29641b79980771ef7ee34281f62d95a7f5d19d1fe2ff5e88807f95"
+  },
+  {
+    "path": "internal/bodycodegen/body_search_replay.go",
+    "sha256": "eb0416e7d245c236de5cb83cb8ad349853b49fbb1f5fee1b37512a8d801a5860"
+  },
+  {
+    "path": "internal/bodycodegen/bodycodegen.go",
+    "sha256": "bd2559a5b3e7c098438a4fe5097ed46b9e870aefb009e45ab6522dfe6c2f0037"
+  },
+  {
+    "path": "internal/bodycodegen/record_assembly_replay.go",
+    "sha256": "9c50ca94591251328de832b7accd8df6462c6b44a0ae8bfc89e94bda0da10794"
+  },
+  {
+    "path": "internal/bodycodegen/source_fill_replay.go",
+    "sha256": "b609085b531efde2f1ae3fd446beeb8d10e7561e312cf39a15fcd5bc074e76f3"
+  },
+  {
+    "path": "internal/bodyexecution/composition.go",
+    "sha256": "28f6b1239eb4957a04b7919ed8e24f04d219cf1d4a8543a754331aab4a52f37c"
+  },
+  {
+    "path": "internal/bodyexecution/composition_construction_facts.go",
+    "sha256": "90ffb8fe9e8eb71332f8fd7ec406a74d43ea3ed7d9562a819bf8acb96f6a04ce"
+  },
+  {
+    "path": "internal/bodyexecution/composition_construction_native_test.go",
+    "sha256": "126a7d19d5ec31f7ec4523b983930b509581ecac057400b3b04fba146d6bce1a"
+  },
+  {
+    "path": "internal/bodyexecution/composition_construction_observer.go",
+    "sha256": "b39c74a6c8ac67245d3627e13af0c88259fd2b6180b3a21bfa852998a3b0ca06"
+  },
+  {
+    "path": "internal/bodyexecution/composition_construction_rows.go",
+    "sha256": "30cb7a3bbf812dde58d0307dbc28ed0596268e9e4e1f86b92fdce2319a8a9639"
+  },
+  {
+    "path": "internal/bodyexecution/composition_construction_sites.go",
+    "sha256": "66f24e21847a190906de5f774c378333851a850656237285f12a040f1ffa1f17"
+  },
+  {
+    "path": "internal/bodyexecution/composition_constructions.go",
+    "sha256": "6b9137c11b9e1a53562bba377e06bd50e820da8d5ca8280e4f033e5ded09495c"
+  },
+  {
+    "path": "internal/bodyexecution/composition_executor.go",
+    "sha256": "e8cf02bd602f8c5928678258de2f2a83a390425383b2a2a88a9c27267500f146"
+  },
+  {
+    "path": "internal/bodyexecution/composition_fault_projection.go",
+    "sha256": "c18ab5cda7e2581b89a99cc67addf19ac1f14ba2b9d4d74d2f9744cb88508ce4"
+  },
+  {
+    "path": "internal/bodyexecution/composition_native_observation.go",
+    "sha256": "91d37671e79f4c7890281780ce5f5a158be239f26c80e9b0ff71420bf5ff7f3b"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_driver.go",
+    "sha256": "f3d5b8a383c643aeb8c79f2d2a2d14adf8d87987792a40ec1643f467e9df4eeb"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_evidence.go",
+    "sha256": "309e4b0f6e1b076e569b8688ba19ee38b064d6f5392d1477f31bcb063f35deb4"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_facts.go",
+    "sha256": "1b6460621249398940f59a2fff5b4ae21b31fed76b92e2adf879c52c5d8a13d4"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_projection.go",
+    "sha256": "7b50b613d36a5767fb18da96abc1eff9cf89c673798baf6529aa77d368627694"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_rows.go",
+    "sha256": "c9bc08852bd55ea3e82ae2a31568d7b9cb945d47e7edd974726172d494be54d2"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_run.go",
+    "sha256": "da9f1112aff6c19979449b722c9845b93b3e9d8e4c4d490578ec9f7adc201019"
+  },
+  {
+    "path": "internal/bodyexecution/composition_reads.go",
+    "sha256": "49bfb907b7fc9c62ca74752e45ef2b36a4d02960f2612f02ac928e6f2e57d135"
+  },
+  {
+    "path": "internal/bodyexecution/composition_runtime.go",
+    "sha256": "54c29e93b929c2a44df89432afd23fcd7e9de20c447891a4d0d86cd502b243a4"
+  },
+  {
+    "path": "internal/bodyexecution/joint_replay.go",
+    "sha256": "501305996f3ef2c0552dfcdcccb2f3f7e76c6f73f34ffd18186319de1e043229"
+  }
+]

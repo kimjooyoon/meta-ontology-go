@@ -1,0 +1,18 @@
+package constructing
+namespace constructing9533
+entity Integer id "urn:gooo:type:integer"
+entity Input id "urn:make9533:input" fields {
+ field values id "urn:make9533:values" type integer required many
+ field pick id "urn:make9533:pick" type integer required one
+}
+entity Batch id "urn:make9533:batch" fields {
+ field values id "urn:make9533:batch-values" type integer required many
+ field pick id "urn:make9533:batch-pick" type integer required one
+ field labels id "urn:make9533:labels" type string required many
+ field flags id "urn:make9533:flags" type boolean required many
+ field empty id "urn:make9533:empty" type integer required many
+}
+activity Inner(Input) -> Integer id "urn:make9533:inner" computes "let values=[]int64{input.values[1]};return values[0]"
+activity Build(Input) -> Batch id "urn:make9533:build" computes "let previous=input.values[0];let numbers=[]int64{Inner(input),input.values[0]+input.values[1],previous+2};let labels=[]string{\"start\",\"끝\"};let switches=[]bool{true,false};let empty=[]int64{};return Batch{values:numbers[1:],pick:input.pick,labels:labels,flags:switches,empty:empty}"
+activity Read(Batch) -> Integer id "urn:make9533:read" computes "if input.flags[0] && input.labels[1]==\"끝\" {return input.values[input.pick]+int64(len(input.empty))};return -1"
+bind Build.result -> Read.input

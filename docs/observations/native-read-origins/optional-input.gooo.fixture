@@ -1,0 +1,8 @@
+package optionalread
+namespace optional9311
+entity Integer id "urn:gooo:type:integer"
+entity Bundle id "urn:optional9311:bundle" fields {
+ field values id "urn:optional9311:values" type integer required many
+ field notes id "urn:optional9311:notes" type string optional many
+}
+activity Read(Bundle) -> Integer id "urn:optional9311:read" computes "return input.values[0]"

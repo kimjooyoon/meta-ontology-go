@@ -1,0 +1,20 @@
+package constructionview
+namespace constructionview9593
+entity Text id "urn:gooo:type:string"
+entity Element id "urn:view9593:element" fields {
+ field case_index id "urn:view9593:case" type integer required one
+ field instance_index id "urn:view9593:instance" type integer required one
+ field element_index id "urn:view9593:element-index" type integer required one
+ field root_activity_id id "urn:view9593:root" type string required one
+ field activity_id id "urn:view9593:activity" type string required one
+ field completed id "urn:view9593:completed" type boolean required one
+ field read_start id "urn:view9593:read-start" type integer required one
+ field read_end id "urn:view9593:read-end" type integer required one
+ field reads_dropped id "urn:view9593:lost" type integer required one
+ field source_sha256 id "urn:view9593:sha" type string required one
+ field source_start id "urn:view9593:start" type integer required one
+ field source_end id "urn:view9593:end" type integer required one
+ field expression id "urn:view9593:expression" type string required one
+ field mapping id "urn:view9593:mapping" type string required one
+}
+activity Explain(Element) -> Text id "urn:view9593:explain" computes "if !input.completed {return \"계산 중단\"};if input.read_end>input.read_start {return \"계산 중 읽기 연결\"};return \"표현 위치 연결\""

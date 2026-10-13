@@ -144,7 +144,9 @@ func realizeRecordAssemblyProjection(ctx context.Context, filename string, sourc
 		a.GeneratedDigest != b.GeneratedDigest || a.GeneratedDigest != a.ReplayDigest || a.InputType != b.InputType || a.OutputType != b.OutputType ||
 		!reflect.DeepEqual(a.InputParameters, b.InputParameters) || !reflect.DeepEqual(a.RecordTypes, b.RecordTypes) ||
 		!reflect.DeepEqual(a.CallClosure, b.CallClosure) ||
-		(a.BodyConditions != nil && !reflect.DeepEqual(a.BodyConditions, b.BodyConditions)) {
+		(a.BodyConditions != nil && !reflect.DeepEqual(a.BodyConditions, b.BodyConditions)) ||
+		!EqualRetainedReadOrigins(a.BodyReads, b.BodyReads) ||
+		!EqualRetainedConstructionOrigins(a.BodyConstructions, b.BodyConstructions) {
 		return Realization{}, fmt.Errorf("record selected source, typed signature or projection differs")
 	}
 	if err = verifyRecordCommonReceipt(prior.Report); err != nil {

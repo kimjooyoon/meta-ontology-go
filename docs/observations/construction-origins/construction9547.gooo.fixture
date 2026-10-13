@@ -1,0 +1,8 @@
+package constructoronly
+namespace constructoronly9547
+entity Input id "urn:only9547:input" fields {field name id "urn:only9547:name" type string required one}
+entity Output id "urn:only9547:output" fields {
+ field values id "urn:only9547:values" type integer required many
+ field labels id "urn:only9547:labels" type string required many
+}
+activity Build(Input) -> Output id "urn:only9547:build" computes "return Output{values:[]int64{},labels:[]string{input.name}}"
