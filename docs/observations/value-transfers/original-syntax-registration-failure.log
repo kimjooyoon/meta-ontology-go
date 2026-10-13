@@ -1,0 +1,127 @@
+native-candidate	Generate and apply candidate only to a temporary copy	﻿2026-10-13T13:44:08.0028118Z ##[group]Run go test -count=1 -v ./internal/meta/syntaxregistration ./cmd/syntax-registration-candidate
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:08.0028809Z ^[[36;1mgo test -count=1 -v ./internal/meta/syntaxregistration ./cmd/syntax-registration-candidate^[[0m
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:08.0616338Z shell: /usr/bin/bash -e {0}
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:08.0616625Z env:
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:08.0616809Z   GOTOOLCHAIN: local
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:08.0617011Z   GOOO_SYNTAX_REGISTRATION_E2E: 1
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:08.0617377Z   GOOO_SYNTAX_REGISTRATION_EVIDENCE_DIR: /home/runner/work/_temp/syntax-registration-evidence
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:08.0618000Z ##[endgroup]
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:08.1242334Z go: downloading github.com/kimjooyoon/gooo-decision-runtime v0.2.51-experimental
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5205326Z === RUN   TestCandidateIsCompleteSourceBoundReplayWithoutAuthority
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5206071Z     candidate_test.go:92: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5206670Z --- FAIL: TestCandidateIsCompleteSourceBoundReplayWithoutAuthority (0.12s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5207240Z === RUN   TestRegistrationSourceDomains
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5207545Z === RUN   TestRegistrationSourceDomains/examples/new/main.gooo
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5208008Z === RUN   TestRegistrationSourceDomains/internal/meta/new/contract.gooo
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5208373Z === RUN   TestRegistrationSourceDomains/../examples/main.gooo
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5208778Z === RUN   TestRegistrationSourceDomains/examples/../main.gooo
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5209178Z === RUN   TestRegistrationSourceDomains//absolute/main.gooo
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5209622Z === RUN   TestRegistrationSourceDomains/internal/meta/../main.gooo
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5209992Z === RUN   TestRegistrationSourceDomains/internal/meta-other/main.gooo
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5210444Z === RUN   TestRegistrationSourceDomains/internal/other/main.gooo
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5210803Z === RUN   TestRegistrationSourceDomains/.github/workflows/main.gooo
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5211220Z === RUN   TestRegistrationSourceDomains/docs/main.gooo
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5211543Z === RUN   TestRegistrationSourceDomains/internal/meta/main.go
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5211920Z === RUN   TestRegistrationSourceDomains/#00
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5212207Z --- PASS: TestRegistrationSourceDomains (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5212694Z     --- PASS: TestRegistrationSourceDomains/examples/new/main.gooo (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5213338Z     --- PASS: TestRegistrationSourceDomains/internal/meta/new/contract.gooo (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5213825Z     --- PASS: TestRegistrationSourceDomains/../examples/main.gooo (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5214365Z     --- PASS: TestRegistrationSourceDomains/examples/../main.gooo (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5214836Z     --- PASS: TestRegistrationSourceDomains//absolute/main.gooo (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5215327Z     --- PASS: TestRegistrationSourceDomains/internal/meta/../main.gooo (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5215897Z     --- PASS: TestRegistrationSourceDomains/internal/meta-other/main.gooo (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5216398Z     --- PASS: TestRegistrationSourceDomains/internal/other/main.gooo (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5216919Z     --- PASS: TestRegistrationSourceDomains/.github/workflows/main.gooo (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5217440Z     --- PASS: TestRegistrationSourceDomains/docs/main.gooo (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5217866Z     --- PASS: TestRegistrationSourceDomains/internal/meta/main.go (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5218338Z     --- PASS: TestRegistrationSourceDomains/#00 (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5218691Z === RUN   TestInternalMetaSourceRegistrationPreservesAllNineRoles
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5219309Z     candidate_test.go:190: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5219821Z --- FAIL: TestInternalMetaSourceRegistrationPreservesAllNineRoles (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5220253Z === RUN   TestMetaSourcePromotionPreservesExactCohortAndNineRoles
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5220814Z     candidate_test.go:261: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5221337Z --- FAIL: TestMetaSourcePromotionPreservesExactCohortAndNineRoles (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5222133Z === RUN   TestMetaSourcePromotionRequiresExplicitUniqueMembership
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5222576Z === RUN   TestMetaSourcePromotionRequiresExplicitUniqueMembership/not-requested
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5223290Z === RUN   TestMetaSourcePromotionRequiresExplicitUniqueMembership/not-registered
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5223830Z === RUN   TestMetaSourcePromotionRequiresExplicitUniqueMembership/duplicate-meta-source
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5224441Z === RUN   TestMetaSourcePromotionRequiresExplicitUniqueMembership/already-executed
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5225189Z === RUN   TestMetaSourcePromotionRequiresExplicitUniqueMembership/package-member
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5225739Z --- PASS: TestMetaSourcePromotionRequiresExplicitUniqueMembership (0.78s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5226304Z     --- PASS: TestMetaSourcePromotionRequiresExplicitUniqueMembership/not-requested (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5227013Z     --- PASS: TestMetaSourcePromotionRequiresExplicitUniqueMembership/not-registered (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5227756Z     --- PASS: TestMetaSourcePromotionRequiresExplicitUniqueMembership/duplicate-meta-source (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5228477Z     --- PASS: TestMetaSourcePromotionRequiresExplicitUniqueMembership/already-executed (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5229180Z     --- PASS: TestMetaSourcePromotionRequiresExplicitUniqueMembership/package-member (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5229630Z === RUN   TestMetaSourcePromotionRejectsResealedMembership
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5230048Z === RUN   TestMetaSourcePromotionRejectsResealedMembership/keep-promoted-meta-source
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5230659Z     candidate_test.go:357: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5231119Z === RUN   TestMetaSourcePromotionRejectsResealedMembership/drop-unrelated-meta-source
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5231606Z     candidate_test.go:357: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5231995Z --- FAIL: TestMetaSourcePromotionRejectsResealedMembership (0.20s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5232591Z     --- FAIL: TestMetaSourcePromotionRejectsResealedMembership/keep-promoted-meta-source (0.04s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5233561Z     --- FAIL: TestMetaSourcePromotionRejectsResealedMembership/drop-unrelated-meta-source (0.04s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5234365Z === RUN   TestMissingAndStaleInputsDoNotProduceCandidates
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5234750Z --- PASS: TestMissingAndStaleInputsDoNotProduceCandidates (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5235089Z === RUN   TestDuplicateIdentityAndPathAreRefuted
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5235412Z --- PASS: TestDuplicateIdentityAndPathAreRefuted (0.24s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5235830Z === RUN   TestCandidateCannotDropMembersRewriteHistoryOrAcquireAuthority
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5236526Z     counterexample_test.go:64: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5237012Z --- FAIL: TestCandidateCannotDropMembersRewriteHistoryOrAcquireAuthority (0.12s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5237427Z === RUN   TestAmbiguousJSONAndForgedPlanAreRejected
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5237760Z --- PASS: TestAmbiguousJSONAndForgedPlanAreRejected (0.12s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5238127Z === RUN   TestGenerateDenominatorPreservesExpandedLinkBaseline
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5238528Z --- PASS: TestGenerateDenominatorPreservesExpandedLinkBaseline (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5238934Z === RUN   TestExecutionIdentityPinsThreeBinariesAndLoweredInput
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5239415Z     execution_identity_test.go:26: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5239853Z --- FAIL: TestExecutionIdentityPinsThreeBinariesAndLoweredInput (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5240273Z === RUN   TestVersionOnlyOrChangedExecutionIdentityCannotGenerate
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5240682Z === RUN   TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/missing
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5241117Z === RUN   TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/generator
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5241556Z === RUN   TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/driver
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5241983Z === RUN   TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/compiler
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5242596Z === RUN   TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/goos
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5243007Z === RUN   TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/goarch
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5243990Z === RUN   TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/malformed
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5244708Z --- PASS: TestVersionOnlyOrChangedExecutionIdentityCannotGenerate (0.39s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5245247Z     --- PASS: TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/missing (0.04s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5245936Z     --- PASS: TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/generator (0.04s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5246505Z     --- PASS: TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/driver (0.04s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5247054Z     --- PASS: TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/compiler (0.04s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5247600Z     --- PASS: TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/goos (0.04s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5248134Z     --- PASS: TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/goarch (0.04s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5248681Z     --- PASS: TestVersionOnlyOrChangedExecutionIdentityCannotGenerate/malformed (0.04s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5249115Z === RUN   TestExecutionBinaryDigestTracksBytesNotVersionLabel
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5249506Z --- PASS: TestExecutionBinaryDigestTracksBytesNotVersionLabel (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5249886Z === RUN   TestRegistrationContractRejectsUnpinnedInputRoute
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5250301Z --- PASS: TestRegistrationContractRejectsUnpinnedInputRoute (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5250927Z === RUN   TestNativeNineMemberCandidatePassesExistingConformance
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5251591Z     native_test.go:36: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5252248Z --- FAIL: TestNativeNineMemberCandidatePassesExistingConformance (0.82s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5252927Z === RUN   TestNativeInternalMetaSourceRegistrationPassesExistingConformance
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5253956Z     native_test.go:40: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5254750Z --- FAIL: TestNativeInternalMetaSourceRegistrationPassesExistingConformance (0.85s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5255616Z === RUN   TestNativeRegisteredMetaSourcePromotionPassesExistingConformance
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5256345Z     native_test.go:44: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5256793Z --- FAIL: TestNativeRegisteredMetaSourcePromotionPassesExistingConformance (0.86s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5257285Z === RUN   TestRegistrationFindsRolesAfterArbitrarySourceFileRelocation
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5257759Z     source_units_test.go:32: REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5258336Z --- FAIL: TestRegistrationFindsRolesAfterArbitrarySourceFileRelocation (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5258754Z === RUN   TestRegistrationRejectsAmbiguousSymbolOwners
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5259413Z     source_units_test.go:70: expected complete UNKNOWN/AMBIGUOUS evidence, got REFUTED/REGISTRATION_BASELINE_DENOMINATOR_MISMATCH
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5259956Z --- FAIL: TestRegistrationRejectsAmbiguousSymbolOwners (0.16s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5260282Z === RUN   TestRegistrationPinsAddedSourceUnits
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5260574Z --- PASS: TestRegistrationPinsAddedSourceUnits (0.12s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5260911Z === RUN   TestSourceUnitLocationsIgnoreLineDirectiveAliases
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5261291Z --- PASS: TestSourceUnitLocationsIgnoreLineDirectiveAliases (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5261584Z FAIL
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5261907Z FAIL	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	5.568s
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5262345Z === RUN   TestCandidateExportRefusesInputAndExistingDirectories
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5262763Z --- PASS: TestCandidateExportRefusesInputAndExistingDirectories (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5263421Z === RUN   TestCandidateExportResolvesSymlinkParents
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5263755Z --- PASS: TestCandidateExportResolvesSymlinkParents (0.00s)
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5264022Z PASS
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5264473Z ok  	github.com/kimjooyoon/meta-ontology-go/cmd/syntax-registration-candidate	0.004s
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.5264811Z FAIL
+native-candidate	Generate and apply candidate only to a temporary copy	2026-10-13T13:44:33.7082257Z ##[error]Process completed with exit code 1.

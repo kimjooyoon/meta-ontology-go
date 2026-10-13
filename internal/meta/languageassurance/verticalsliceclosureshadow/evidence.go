@@ -143,6 +143,8 @@ func activeDenominator() []byte {
 		return embeddedDenominatorV43
 	case 77:
 		return embeddedDenominatorV45
+	case 80:
+		return embeddedDenominatorV48
 	case 79:
 		return embeddedDenominatorV47
 	default:
@@ -194,6 +196,8 @@ func activeDenominatorDigest() string {
 		return DenominatorMigrationV43Digest
 	case 77:
 		return DenominatorMigrationV45Digest
+	case 80:
+		return DenominatorMigrationV48Digest
 	case 79:
 		return DenominatorMigrationV47Digest
 	default:
@@ -241,3 +245,6 @@ func inspectAssurance(raw []byte) (string, string, string) {
 	}
 	return report.SubjectSHA, ResolutionExact, ""
 }
+
+//go:embed evidence/denominator-v48.json
+var embeddedDenominatorV48 []byte

@@ -1,0 +1,5 @@
+=== RUN   TestContinuationCarriesSavedFillOrigins6841
+    value_transfer_continuation_test.go:47: 6841: continuation retains saved original fill sources; over-limit metadata reports an issue; source/candidate/model executions0
+--- PASS: TestContinuationCarriesSavedFillOrigins6841 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	0.484s

@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "adjustment5381:Adjust": 79
+      },
+      "expected": {
+        "adjustment5381:Adjust": 237
+      }
+    },
+    {
+      "inputs": {
+        "adjustment5381:Adjust": 59
+      },
+      "expected": {
+        "adjustment5381:Adjust": 51
+      }
+    }
+  ]
+}

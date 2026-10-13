@@ -1,0 +1,51 @@
+{
+  "baseline": "f1d6ab92831408acd0b559a1e2e1a740cbc5e19a",
+  "overlays": [
+    {
+      "path": "internal/bodycodegen/body_value_origin.go",
+      "sha256": "0f4024e01e9ac3125961d2f425c03ebfce99140bceef48ed5e8d71ad878017c2"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_expr.go",
+      "sha256": "ed1981d8d1bdb5dcdff654927468dbfc964e6c6ddb4f8afe3aaa1b511b699862"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_slice.go",
+      "sha256": "43e3da8b3a9f64fc55c4f9bec7a38c8774a77b7d09ba69d949ee92cf3baaa7af"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_statements.go",
+      "sha256": "47837b7d105a8c6fdffbb4f365ea61c7501874e2dcedcc0baadddad5dab8078d"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_test.go",
+      "sha256": "259a5a91529b045307723e729d1eefe3d699c68c15278ddebdfcc573993e83fa"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_input_origin.go",
+      "sha256": "d212d39dd138d5faa3685f813ec17d4a11045d9aa9eb2325bc39cf96bf015b6a"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin.go",
+      "sha256": "bee6d5d8788b6892d83c1045a5cac8593c5380ef323811d0569564ac254f182a"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_replay.go",
+      "sha256": "f1434270885f5f95d4428bf91532e30ebd59f9a36db54f5b41ab6714136b1e6e"
+    },
+    {
+      "path": "internal/bodyexecution/condition_dependency_facts.go",
+      "sha256": "38b0421b971ded66c4a6e4b8f9510ea8d8c4b3c68d791edbc1e6bee689badf71"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/fill_input_bind.go",
+      "sha256": "592197b1ca57cb7eee7469d793d6964f49a954ea4e06dfc1270f7fabcf904734"
+    }
+  ],
+  "fresh_tests": [
+    "TestLexicalValueOrigins5011",
+    "TestJoinedValuesAndReturns5039",
+    "TestLoopAndUnsupportedValueOrigins5077"
+  ],
+  "historical_replays": 0
+}

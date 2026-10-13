@@ -1,0 +1,12 @@
+Recorded candidate origins: 1 uses; 1 matching constructions; 1 recorded value graphs
+
+urn:accumulated5801:accumulate / candidate step5801 / hole step
+  return: "total" [static_dependency; PARTIAL]
+  source assembly_input: workspace.gooo bytes 514..516 (sha256:64d65e159b3f4fb00aebcb06c325b9b85f3c7d02452aaa8f64a483ed7684e4a3)
+  path from use to origin:
+     return : "total"
+    input assignment total: "total + 11"
+
+Partial urn:accumulated5801:accumulate / step5801: LOOP_EXIT_PATHS_NOT_EXPANDED
+
+one shortest recorded static path per condition/return root and filled hole; selected construction only; no body, candidate or model execution

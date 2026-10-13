@@ -45,7 +45,7 @@ func workspaceFillInputOrigin(input workspaceFillInput, link *bodycodegen.Source
 func workspaceFillInputFragment(input workspaceFillInput, decl bodycodegen.SourceFillDeclarationOrigins,
 	fragment bodycodegen.SourceFillFragment) bodycodegen.SourceFillInputFragment {
 	row := bodycodegen.SourceFillInputFragment{Status: "UNMAPPED", Reason: "FRAGMENT_DECLARATION_UNAVAILABLE",
-		Kind: fragment.Kind, HoleID: fragment.HoleID, SelectedDecoded: fragment.SelectedDecoded}
+		Relation: fragment.Relation, Kind: fragment.Kind, HoleID: fragment.HoleID, SelectedDecoded: fragment.SelectedDecoded}
 	row.TemplateSource, _ = originalFillTemplateRange(input, decl, fragment.TemplateDecoded)
 	if fragment.Kind == "retained_template" {
 		if row.TemplateSource != nil {

@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "accumulated5801:Accumulate": 17
+      },
+      "expected": {
+        "accumulated5801:Accumulate": 50
+      }
+    },
+    {
+      "inputs": {
+        "accumulated5801:Accumulate": -5
+      },
+      "expected": {
+        "accumulated5801:Accumulate": 28
+      }
+    }
+  ]
+}

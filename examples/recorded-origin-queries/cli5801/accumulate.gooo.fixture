@@ -1,0 +1,11 @@
+package accumulated
+namespace accumulated5801
+entity Integer id "urn:gooo:type:integer"
+activity Accumulate(Integer) -> Integer id "urn:accumulated5801:accumulate" computes "let total = input; let index = 0; for index = 0; index < 3; index = index + 1 { total = total + __GOOO_BODY_HOLE_step__ }; return total" assembling {
+ source_fill intent "Add the selected step three times, preserving its return origin" {
+  hole "step"
+  candidate "step5801" { fill "step" "11" }
+  candidate "zero5801" { fill "step" "0" }
+ }
+ case "5" -> "38"
+}
