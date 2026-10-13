@@ -47,7 +47,7 @@ func ResumeWorkspace(ctx context.Context, manifest packageruntime.Manifest, prio
 		return Result{}, err
 	}
 	result.Runtime, err = bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, composition, translated, goBinary)
-	bindWorkspaceConditionSources(program, &result.Runtime)
+	bindWorkspaceConditionSources(program, &result.Runtime, result.BodyFills)
 	if err == nil {
 		result.Runtime.InputSeparation = measureWorkspaceInputs(ctx, current, result, translated)
 	}

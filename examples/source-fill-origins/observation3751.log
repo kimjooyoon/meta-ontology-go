@@ -1,0 +1,5 @@
+=== RUN   TestRecordFillPerHoleOriginAndAbsentHistory3751
+    source_fill_origin_record_test.go:62: record3751: two distinct per-hole grammars and exact source positions; absent optional origin stays absent; typed generation only; model0
+--- PASS: TestRecordFillPerHoleOriginAndAbsentHistory3751 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.528s

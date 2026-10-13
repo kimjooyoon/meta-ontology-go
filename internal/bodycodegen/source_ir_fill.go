@@ -39,6 +39,9 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 		return Result{}, err
 	}
 	result.GoooSource = string(output)
+	if err := retainSourceFillOrigin(filename, source, activity, &result); err != nil {
+		return Result{}, err
+	}
 	if generationReceipt != nil && result.Report.BodyFill != nil {
 		result.Report.BodyFill.CandidateGeneration = generationReceipt
 		populateCompletenessReceipt(&result.Report, "")

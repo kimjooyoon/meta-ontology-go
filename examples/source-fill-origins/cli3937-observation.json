@@ -1,0 +1,15 @@
+{
+  "binary_sha256": "7ac03ea3ab0eff41b81cc62b1feda25f63640f6a0d07e7eb746cd670f48ede00",
+  "binary_bytes": 25866882,
+  "exit_code": 0,
+  "wall_ns": 1225182209,
+  "source_files_unchanged": true,
+  "binary_removed": true,
+  "native_passed": 2,
+  "native_total": 2,
+  "condition_origins": 1,
+  "model_calls": 0,
+  "source_programs": 1,
+  "cli_processes": 1,
+  "decision": "PASS"
+}

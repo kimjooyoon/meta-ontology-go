@@ -1,0 +1,77 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Describe": {
+          "site_id": "sha256:07ccff6b2d46e4a76db1ddef9d5a51431f70e150cd64e12c7b2d681c740ba4b1",
+          "activity_id": "urn:origin3607:quote",
+          "candidate_id": "bounded3607",
+          "hole_id": "open",
+          "category": "declared_candidate",
+          "filename": "기원3607.gooo",
+          "source_sha": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+          "source_start": 427,
+          "source_end": 437
+        }
+      },
+      "expected": {
+        "Describe": "declared"
+      }
+    },
+    {
+      "inputs": {
+        "Describe": {
+          "site_id": "",
+          "activity_id": "",
+          "candidate_id": "",
+          "hole_id": "",
+          "category": "derived_grammar",
+          "filename": "",
+          "source_sha": "",
+          "source_start": 0,
+          "source_end": 0
+        }
+      },
+      "expected": {
+        "Describe": "derived"
+      }
+    },
+    {
+      "inputs": {
+        "Describe": {
+          "site_id": "",
+          "activity_id": "",
+          "candidate_id": "",
+          "hole_id": "",
+          "category": "retained_template",
+          "filename": "",
+          "source_sha": "",
+          "source_start": 0,
+          "source_end": 0
+        }
+      },
+      "expected": {
+        "Describe": "retained"
+      }
+    },
+    {
+      "inputs": {
+        "Describe": {
+          "site_id": "",
+          "activity_id": "",
+          "candidate_id": "",
+          "hole_id": "",
+          "category": "unknown",
+          "filename": "",
+          "source_sha": "",
+          "source_start": 0,
+          "source_end": 0
+        }
+      },
+      "expected": {
+        "Describe": "missing"
+      }
+    }
+  ]
+}

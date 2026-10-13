@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "discount3937",
+    "activity": "Discount"
+  },
+  "packages": [
+    {
+      "path": "discount3937",
+      "name": "discount3937",
+      "sources": [
+        "discount.gooo.fixture"
+      ]
+    }
+  ]
+}
