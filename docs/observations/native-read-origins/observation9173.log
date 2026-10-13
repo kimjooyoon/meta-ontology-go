@@ -1,0 +1,4 @@
+# github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution [github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution.test]
+/tmp/gooo-native-read-origin-20261014/producer9173/internal/bodyexecution/sequence_literal_native_test.go:47:17: undefined: apchaird
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution [build failed]
+FAIL

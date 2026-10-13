@@ -1,0 +1,30 @@
+package reading
+namespace reading9059
+entity Integer id "urn:gooo:type:integer"
+entity Request id "urn:read9059:request" fields {
+ field readings id "urn:read9059:request-values" type integer required many
+ field labels id "urn:read9059:request-labels" type string required many
+ field flags id "urn:read9059:request-flags" type boolean required many
+ field lower id "urn:read9059:lower" type integer required one
+ field upper id "urn:read9059:upper" type integer required one
+ field pick id "urn:read9059:pick" type integer required one
+}
+entity Window id "urn:read9059:window" fields {
+ field readings id "urn:read9059:window-values" type integer required many
+ field labels id "urn:read9059:window-labels" type string required many
+ field flags id "urn:read9059:window-flags" type boolean required many
+ field pick id "urn:read9059:window-pick" type integer required one
+}
+activity Clip(Request) -> Window id "urn:read9059:clip" computes "let 시작 = input.lower; let 끝 = input.upper; return Window{readings: input.readings[시작:끝], labels: input.labels[시작:끝], flags: input.flags[시작:끝], pick: input.pick}"
+activity At(Window) -> Integer id "urn:read9059:at" computes "if input.pick < 0 || input.pick >= int64(len(input.readings)) { return -9 }; let total = 0; for 값 in input.readings { total = total + 값 }; if input.flags[input.pick] && input.labels[input.pick] != \"skip\" { if input.labels[input.pick] == \"fresh\" { return []int64{37,37}[input.pick % 2] }; return total / (input.pick + 1) + input.readings[__GOOO_BODY_HOLE_position__] }; return -7" assembling {
+ source_fill intent "원본 순서를 유지한 구간에서 요청한 위치와 합계를 사용한다" {
+  hole "position"
+  candidate "first9059" { fill "position" "0" }
+  candidate "requested9059" { fill "position" "input.pick" }
+ }
+ value_case "[{\"readings\":[31,47],\"labels\":[\"yes\",\"yes\"],\"flags\":[true,true],\"pick\":1}]" -> "86"
+ value_case "[{\"readings\":[61,71,89],\"labels\":[\"yes\",\"yes\",\"yes\"],\"flags\":[true,true,true],\"pick\":2}]" -> "162"
+ holdout_value_case "[{\"readings\":[101,107],\"labels\":[\"yes\",\"yes\"],\"flags\":[true,true],\"pick\":1}]" -> "211"
+}
+activity Run(Window) -> Integer id "urn:read9059:run" computes "return At(input)"
+bind Clip.result -> Run.input

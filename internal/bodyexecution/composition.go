@@ -252,7 +252,8 @@ func replayCompositionPlain(ctx context.Context, filename string, source []byte,
 		r.InputType != expected.InputType || r.OutputType != expected.OutputType ||
 		!reflect.DeepEqual(r.InputParameters, expected.InputParameters) || !reflect.DeepEqual(r.RecordTypes, expected.RecordTypes) ||
 		!reflect.DeepEqual(r.CallClosure, expected.CallClosure) ||
-		(r.BodyConditions != nil && !reflect.DeepEqual(r.BodyConditions, expected.BodyConditions)) {
+		(r.BodyConditions != nil && !reflect.DeepEqual(r.BodyConditions, expected.BodyConditions)) ||
+		!bodycodegen.EqualRetainedReadOrigins(r.BodyReads, expected.BodyReads) {
 		return fmt.Errorf("ordinary body projection differs from its source")
 	}
 	return nil

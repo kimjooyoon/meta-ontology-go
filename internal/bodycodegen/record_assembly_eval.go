@@ -153,6 +153,9 @@ func recordBodyScalarValue(value recordBodyScalar) any {
 }
 
 func (e *integerBodyEvaluator) evaluateRecordLiteral(literal *ast.CompositeLit) (any, error) {
+	if sequence, ok := e.information.Types[literal].Type.Underlying().(*types.Slice); ok {
+		return e.evaluateSequenceLiteral(literal, sequence)
+	}
 	value, err := zeroRecordBodyValue(e.information.Types[literal].Type)
 	if err != nil {
 		return nil, err

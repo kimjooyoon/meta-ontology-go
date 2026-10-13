@@ -28,6 +28,15 @@ Integer, Text and Boolean elements, up to 256 per field, with original source
 positions for conditions and calls. See the [collection guide](ordered-collections.ko.md)
 and its separate construction, holdout, native and source-origin observations.
 
+Body expressions can also construct bounded scalar collections with `[]int64{...}`,
+`[]string{...}` and `[]bool{...}`. Empty collections are supported. Native
+composition records successful index and range reads, linking shared input
+elements through slice views, record copies, binds and calls. The selected Gooo
+expression retains its own source range. Constructed collection elements remain
+explicitly unresolved against external input element identity.
+See [native read origins](../observations/native-read-origins/README.md) for
+separate output and origin coverage counts, Gooo consumers and saved failures.
+
 ### Text length and slicing
 
 Ordinary bodies and declared record candidates support `len(text)`,

@@ -62,6 +62,7 @@ type Report struct {
 	BodyPaths              *BodyPathReceipt        `json:"body_paths,omitempty"`
 	RecordAssembly         *RecordAssemblyReceipt  `json:"record_assembly,omitempty"`
 	BodyConditions         []BodyConditionOrigin   `json:"body_conditions,omitempty"`
+	BodyReads              []BodyReadOrigin        `json:"body_reads,omitempty"`
 	CallClosure            *PureCallClosure        `json:"call_closure,omitempty"`
 	CandidateRoutes        []string                `json:"candidate_routes"`
 	EquivalenceRule        string                  `json:"equivalence_rule"`
@@ -151,7 +152,7 @@ func generateRouteParameters(packageName, activityName, activityID string, param
 
 func generateRouteWithCalls(packageName, activityName, activityID string, parameters []InputParameter,
 	outputType, body, route string, calls []pureCallFunction, records []RecordType) (generatedRoute, error) {
-	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, conditionOrigins, err := renderParametersWithConditionSources(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
+	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, conditionOrigins, readOrigins, err := renderParametersWithSourceOrigins(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
 	if err != nil {
 		return generatedRoute{}, err
 	}
@@ -178,7 +179,7 @@ func generateRouteWithCalls(packageName, activityName, activityID string, parame
 		Route: route, EquivalenceRule: equivalenceRule,
 		SourceConstructs: sourceConstructs, LoweredConstructs: loweredConstructs,
 		SourceSemanticUnits: sourceUnits, LoweredSemanticUnits: loweredUnits,
-		CompletenessPercent: completeness, RouteEquivalence: equivalence, BodyConditions: conditionOrigins,
+		CompletenessPercent: completeness, RouteEquivalence: equivalence, BodyConditions: conditionOrigins, BodyReads: readOrigins,
 		TypecheckPassed: true,
 	}}, nil
 }

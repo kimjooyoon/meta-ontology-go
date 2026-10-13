@@ -1,0 +1,49 @@
+=== RUN   TestLiteralProfile9143
+=== RUN   TestLiteralProfile9143/keyed
+=== RUN   TestLiteralProfile9143/fixed_array
+=== RUN   TestLiteralProfile9143/nested
+=== RUN   TestLiteralProfile9143/float
+=== RUN   TestLiteralProfile9143/mutation
+=== RUN   TestLiteralProfile9143/bounded
+=== NAME  TestLiteralProfile9143
+    sequence_literal_test.go:25: literal9143: bound, keyed/fixed/nested/non-scalar layouts and element mutation rejected without native execution
+--- PASS: TestLiteralProfile9143 (0.00s)
+    --- PASS: TestLiteralProfile9143/keyed (0.00s)
+    --- PASS: TestLiteralProfile9143/fixed_array (0.00s)
+    --- PASS: TestLiteralProfile9143/nested (0.00s)
+    --- PASS: TestLiteralProfile9143/float (0.00s)
+    --- PASS: TestLiteralProfile9143/mutation (0.00s)
+    --- PASS: TestLiteralProfile9143/bounded (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.619s
+=== RUN   TestReadFactsGoooConsumer9127
+    composition_read_consumer_test.go:81: consumer9127: Gooo classified20/20 saved reads:10 shifted positions,9 unchanged,1 unresolved; original execution0; model0
+--- PASS: TestReadFactsGoooConsumer9127 (0.66s)
+=== RUN   TestReadProtocol9113
+=== RUN   TestReadProtocol9113/missing_origin_input
+=== RUN   TestReadProtocol9113/origin_outside_input
+=== RUN   TestReadProtocol9113/origin_with_reason
+=== RUN   TestReadProtocol9113/unknown_site
+=== RUN   TestReadProtocol9113/unknown_case
+=== RUN   TestReadProtocol9113/unexplained_unknown
+=== RUN   TestReadProtocol9113/missing_index
+=== RUN   TestReadProtocol9113/negative_index
+=== RUN   TestReadProtocol9113/length_boundary
+=== NAME  TestReadProtocol9113
+    composition_read_protocol_test.go:60: protocol9113: required zero-valued coordinates, bounds, explicit unknowns, blocked roots and65536-event drops checked
+--- PASS: TestReadProtocol9113 (0.30s)
+    --- PASS: TestReadProtocol9113/missing_origin_input (0.00s)
+    --- PASS: TestReadProtocol9113/origin_outside_input (0.00s)
+    --- PASS: TestReadProtocol9113/origin_with_reason (0.00s)
+    --- PASS: TestReadProtocol9113/unknown_site (0.00s)
+    --- PASS: TestReadProtocol9113/unknown_case (0.00s)
+    --- PASS: TestReadProtocol9113/unexplained_unknown (0.00s)
+    --- PASS: TestReadProtocol9113/missing_index (0.00s)
+    --- PASS: TestReadProtocol9113/negative_index (0.00s)
+    --- PASS: TestReadProtocol9113/length_boundary (0.00s)
+=== RUN   TestLiteralDecisions9137
+    sequence_literal_native_test.go:53: typed literal selection composition source: [목록결정9137.gooo:12:136-20:2: error parse.unexpected-token: source fill candidate "always-left9137" must have a valid id and fill every declared hole]
+--- FAIL: TestLiteralDecisions9137 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.396s
+FAIL

@@ -122,7 +122,7 @@ func observedCompositionSources(prior Composition) (string, string, error) {
 }
 
 func observedCompositionArtifacts(prior Composition) (string, string, []CompositionFaultSite, error) {
-	projection, driver, faults, _, err := observedCompositionEvidence(prior)
+	projection, driver, faults, _, _, _, err := observedCompositionReadEvidence(prior)
 	return projection, driver, faults, err
 }
 

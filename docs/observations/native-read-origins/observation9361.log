@@ -1,0 +1,5 @@
+=== RUN   TestReadIndexOrder9361
+    composition_read_order_test.go:61: order9361: native4/4, input origins6/6; inner index executes first, taking an element address keeps original Go semantics
+--- PASS: TestReadIndexOrder9361 (0.71s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.196s

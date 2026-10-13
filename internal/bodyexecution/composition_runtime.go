@@ -37,13 +37,17 @@ type CompositionPortDelivery struct {
 }
 
 type CompositionTrace struct {
-	CaseIndex            int                               `json:"case_index"`
-	Deliveries           []CompositionDelivery             `json:"deliveries"`
-	CalledInputsObserved bool                              `json:"called_inputs_observed,omitempty"`
-	Calls                []CompositionCallInput            `json:"calls,omitempty"`
-	ConditionsObserved   bool                              `json:"conditions_observed,omitempty"`
-	Conditions           []CompositionConditionObservation `json:"conditions,omitempty"`
-	ConditionsDropped    int                               `json:"conditions_dropped,omitempty"`
+	CaseIndex               int                               `json:"case_index"`
+	Deliveries              []CompositionDelivery             `json:"deliveries"`
+	CalledInputsObserved    bool                              `json:"called_inputs_observed,omitempty"`
+	Calls                   []CompositionCallInput            `json:"calls,omitempty"`
+	ConditionsObserved      bool                              `json:"conditions_observed,omitempty"`
+	Conditions              []CompositionConditionObservation `json:"conditions,omitempty"`
+	ConditionsDropped       int                               `json:"conditions_dropped,omitempty"`
+	ReadsObserved           bool                              `json:"reads_observed,omitempty"`
+	Reads                   []CompositionReadObservation      `json:"reads,omitempty"`
+	ReadsDropped            int                               `json:"reads_dropped,omitempty"`
+	ReadRegistrationDropped int                               `json:"read_registration_dropped,omitempty"`
 }
 
 type CompositionRuntime struct {
@@ -78,6 +82,9 @@ type CompositionRuntime struct {
 	FaultSites                     []CompositionFaultSite       `json:"fault_sites,omitempty"`
 	ConditionSites                 []CompositionConditionSite   `json:"condition_sites,omitempty"`
 	ConditionObservation           *CompositionConditionSummary `json:"condition_observation,omitempty"`
+	ReadSites                      []CompositionReadSite        `json:"read_sites,omitempty"`
+	ReadInputs                     []CompositionReadInput       `json:"read_inputs,omitempty"`
+	ReadObservation                *CompositionReadSummary      `json:"read_observation,omitempty"`
 	Outcomes                       *CompositionOutcomes         `json:"outcomes,omitempty"`
 	InputSeparation                CompositionInputSeparation   `json:"input_separation"`
 	ModelCalls                     int                          `json:"model_calls"`
@@ -212,9 +219,13 @@ func observeCompositionRuns(ctx context.Context, root, executable string, rows [
 	input, _ := json.Marshal(rows)
 	var first []byte
 	var firstConditions []byte
+	var reads compositionReadRun
 	var outcomes *CompositionOutcomes
 	for run := range 2 {
 		r.Stage = fmt.Sprintf("EXECUTE_%d", run+1)
+		if err := reads.reset(root, r); err != nil {
+			return err
+		}
 		conditionPath := filepath.Join(root, conditionObservationFile)
 		if len(r.ConditionSites) != 0 {
 			if err := os.Remove(conditionPath); err != nil && !os.IsNotExist(err) {
@@ -225,6 +236,9 @@ func observeCompositionRuns(ctx context.Context, root, executable string, rows [
 		r.Runs = append(r.Runs, observation)
 		if runErr != nil {
 			return runErr
+		}
+		if err := reads.observe(run, root, graph, suite, r); err != nil {
+			return err
 		}
 		var conditionRows [][]CompositionConditionObservation
 		var dropped []int
@@ -254,6 +268,9 @@ func observeCompositionRuns(ctx context.Context, root, executable string, rows [
 			}
 			for c, lost := range dropped {
 				traces[c].ConditionsDropped = lost
+			}
+			if err := reads.bind(graph, traces, r); err != nil {
+				return err
 			}
 			r.Traces, r.FinitePassed = traces, passed
 			outcomes = observed

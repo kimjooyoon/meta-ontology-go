@@ -1,0 +1,5 @@
+=== RUN   TestNativeReadOrigins9059
+    composition_read_native_test.go:107: native9059: seven fresh cases7/7;20 successful reads;19 exact input origins;1 constructed sequence unresolved; Integer/Text/Boolean, range/slice/bind/helper/source_fill/short circuit/arithmetic; model0
+--- PASS: TestNativeReadOrigins9059 (0.75s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.355s

@@ -17,6 +17,7 @@ type bodyProjection struct {
 	constructs, units int
 	calls             []pureCallFunction
 	conditions        map[ast.Expr]BodyConditionOrigin
+	reads             map[ast.Node]BodyReadOrigin
 }
 
 func renderParameters(packageName, activityName, activityID string, parameters []InputParameter,
@@ -32,17 +33,24 @@ func renderParametersWithCalls(packageName, activityName, activityID string, par
 
 func renderParametersWithConditionSources(packageName, activityName, activityID string, parameters []InputParameter,
 	outputType, body, route string, calls []pureCallFunction, records []RecordType) ([]byte, int, int, int, int, []BodyConditionOrigin, error) {
+	raw, constructs, lowered, units, loweredUnits, conditions, _, err := renderParametersWithSourceOrigins(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
+	return raw, constructs, lowered, units, loweredUnits, conditions, err
+}
+
+func renderParametersWithSourceOrigins(packageName, activityName, activityID string, parameters []InputParameter,
+	outputType, body, route string, calls []pureCallFunction, records []RecordType) ([]byte, int, int, int, int, []BodyConditionOrigin, []BodyReadOrigin, error) {
 	p, err := prepareBodyProjectionWithCalls(packageName, activityName, parameters, outputType, body, calls, records)
 	if err != nil {
-		return nil, 0, 0, 0, 0, nil, err
+		return nil, 0, 0, 0, 0, nil, nil, err
 	}
 	p.conditions = p.captureConditionOrigins(activityID, body)
+	p.reads = p.captureReadOrigins(activityID, body)
 	lowered, units, err := p.lower(packageName, activityName, outputType, route, parameterNames(parameters), records)
 	if err != nil {
-		return nil, 0, 0, 0, 0, nil, err
+		return nil, 0, 0, 0, 0, nil, nil, err
 	}
 	raw, err := p.emit(packageName, activityID, records)
-	return raw, p.constructs, lowered, p.units, units, p.emittedConditionOrigins(), err
+	return raw, p.constructs, lowered, p.units, units, p.emittedConditionOrigins(), p.emittedReadOrigins(), err
 }
 
 func prepareBodyProjection(packageName, activityName string, parameters []InputParameter,
