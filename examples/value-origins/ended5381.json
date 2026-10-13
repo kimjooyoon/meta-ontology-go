@@ -1,0 +1,17 @@
+{
+  "historical_local_replays": 0,
+  "distinct_runtime_inputs": [
+    79,
+    59,
+    83,
+    61
+  ],
+  "build_exit_code": 0,
+  "binary_sha256": "7b371f226e946483fe203bea69f81358effe8c5d23bffb59fcbf42dcd4d2fb55",
+  "binary_bytes": 25937682,
+  "execute": {
+    "exit_code": 0,
+    "wall_ns": 1118696208
+  },
+  "binary_removed": true
+}

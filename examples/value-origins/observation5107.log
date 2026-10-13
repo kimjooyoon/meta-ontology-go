@@ -1,0 +1,5 @@
+=== RUN   TestCandidateThroughLocalValue5107
+    fill_value_origin_test.go:68: 5107: native2/2; candidate -> local variable -> condition -> original package file; Gooo reads one actual dependency1/1; strict saved construction read; model0
+--- PASS: TestCandidateThroughLocalValue5107 (1.27s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.919s

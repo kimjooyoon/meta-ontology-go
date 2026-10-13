@@ -1,0 +1,78 @@
+{
+  "baseline": "c7483747864e2f6a8899a583f2ec3f4f85b0a96b",
+  "format_toolchain": "go1.27.2",
+  "overlays": [
+    {
+      "path": "cmd/gooo/origin_help_scope_test.go",
+      "sha256": "c2d91f3a168b63e9816557cf6da33337cd64097c74df01d23d8e22771db74d9e"
+    },
+    {
+      "path": "cmd/gooo/origin_source_roundtrip_test.go",
+      "sha256": "a1342a68f6b5b5c0b1db1ed40dc4224137509d2890cc5900f57a8688976b7ea9"
+    },
+    {
+      "path": "cmd/gooo/package_origins.go",
+      "sha256": "d9fbbb35ecf922e715c0b4334ed878d074ae750c643fcad52047fceb8d6ee0bd"
+    },
+    {
+      "path": "cmd/gooo/package_origins_test.go",
+      "sha256": "faec63dff6eeaf0fcabfc9f569ae11f5f8a29a64069596bc56a095dd142671ce"
+    },
+    {
+      "path": "cmd/gooo/package_resolve.go",
+      "sha256": "c2c11f9dcc8d4959f78cbd9b0750257499812052f54144bc24b48ed4c55c1faf"
+    },
+    {
+      "path": "cmd/gooo/usage.go",
+      "sha256": "9b34537a975f7c7572e5ea431ad1303edbdb0295fcb088e1bfd92b28b6ae50d5"
+    },
+    {
+      "path": "cmd/gooo/usage_package.go",
+      "sha256": "a5ea419a3e8d08460262fa3ece317a0ed1813b1944695d2742c0121d83bdc3fb"
+    },
+    {
+      "path": "cmd/gooo/usage_topics_3.go",
+      "sha256": "9e39b666e571afe7c5cfbcbe0b8bd1de5d7627a776253e7d57a7208cb0221f5e"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_bounds_test.go",
+      "sha256": "ec1d32532e1f143a9cde27a23dba0e3ff37c0a0334e50be03927d35cc20c3042"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_statements.go",
+      "sha256": "87bc2fbad3e986a8eb61b2eeb79c4c59de256c843703769830ace85de72784c0"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin_uses.go",
+      "sha256": "dd5265a99b39b930fe7458f1c105c93397b0ea800b11513d9a788c839f69779a"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin_uses_test.go",
+      "sha256": "85bf068c18a799c75f286a24e0d110cb386359d43a19dd5f5437fef5ed44045c"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/origin_query.go",
+      "sha256": "d93c90cdf4c565e72574548681ea23ea998b10a6749e423ec67c92af523b7d64"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/origin_query_facts.go",
+      "sha256": "ffa391204450571c318bbc5c2ee8891d4077a33bb1b7431625e56bb5546ebbce"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/origin_query_source.go",
+      "sha256": "554143f1ab28098068e0ea00ca043b07a427e85baa07281762c47f6e0967beda"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/origin_query_test.go",
+      "sha256": "25712bbf4e4fe4f2eced7d968eac753ad8c9085fe6203fda8e9c40333fce2d48"
+    }
+  ],
+  "fresh_test_ids": [],
+  "historical_replays": 0,
+  "scope": "fresh counted-loop program, then read-only JSON/text/help queries on its receipt",
+  "sources": {
+    "workspace.json": "e0fb73637da34b52fd2d582d889343fced0aa17c9cc06c82b782bedaac12e7b4",
+    "cases.json": "fea220159c69cfa0eaee0711bbb1063bfe081285eec48adab1f84b9f60f83d1a",
+    "accumulate.gooo.fixture": "93037ff7a49e5d5b899177efdc978e93d662cb5424fded7e1b420bb1ef81a538"
+  }
+}

@@ -1,0 +1,11 @@
+=== RUN   TestLexicalValueOrigins5011
+    body_value_origin_test.go:29: 5011: lexical identity preserves outer assignment despite same-name inner variable
+--- PASS: TestLexicalValueOrigins5011 (0.00s)
+=== RUN   TestJoinedValuesAndReturns5039
+    body_value_origin_test.go:71: 5039: both branch definitions and controlling input retained; two return roots; detached graph
+--- PASS: TestJoinedValuesAndReturns5039 (0.00s)
+=== RUN   TestLoopAndUnsupportedValueOrigins5077
+    body_value_origin_test.go:95: 5077: bounded loop dependencies terminate; unsupported control forms explicitly partial
+--- PASS: TestLoopAndUnsupportedValueOrigins5077 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.424s

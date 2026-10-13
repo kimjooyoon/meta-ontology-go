@@ -1,0 +1,36 @@
+{
+  "historical_local_replays": 0,
+  "runtime_inputs": [
+    17,
+    -5
+  ],
+  "build_exit_code": 0,
+  "binary_sha256": "af7e5876515673d98095b48698ad8d230f9f41f6d31809d7cb33a337840d15d9",
+  "binary_bytes": 25989138,
+  "execute": {
+    "exit_code": 0,
+    "wall_ns": 1290285208,
+    "native_passed": 2,
+    "native_total": 2,
+    "model_calls": 0
+  },
+  "query_json": {
+    "exit_code": 0,
+    "wall_ns": 9821417,
+    "rows": 1,
+    "analysis_status": "PARTIAL",
+    "root_kind": "return",
+    "path_steps": 2
+  },
+  "query_text": {
+    "exit_code": 0,
+    "wall_ns": 8681541
+  },
+  "help": {
+    "exit_code": 0,
+    "wall_ns": 6915500
+  },
+  "sources_unchanged": true,
+  "receipt_unchanged": true,
+  "binary_removed": true
+}
