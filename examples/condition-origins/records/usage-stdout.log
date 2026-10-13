@@ -1,0 +1,14 @@
+=== RUN   TestConditionOriginsLegacyAbsence2357
+    composition_condition_legacy_origin_test.go:37: legacy2357: native2/2; unavailable source origin retained as absence; no fabricated link
+--- PASS: TestConditionOriginsLegacyAbsence2357 (1.07s)
+=== RUN   TestConditionOriginsCopiedHelperAndGoooUsage2117
+    composition_condition_origin_usage_test.go:63: composition source: [classify.gooo:9:8-9:14: error parse.expected-identifier: expected field name classify.gooo:9:8-9:14: error parse.expected-id: expected id classify.gooo:9:8-9:14: error parse.expected-string: expected quoted semantic identifier classify.gooo:9:8-9:14: error parse.expected-field-type: expected type classify.gooo:9:8-9:14: error parse.expected-field-type: expected type reference classify.gooo:9:8-9:14: error parse.expected-field-presence: expected required or optional classify.gooo:9:8-9:14: error parse.expected-field-cardinality: expected one or many]
+--- FAIL: TestConditionOriginsCopiedHelperAndGoooUsage2117 (0.51s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	2.054s
+=== RUN   TestConditionOriginRetainedAcrossRoutes2303
+    body_condition_routes_test.go:27: three distinct route bodies retain source conditions and activity declarations; static projection only
+--- PASS: TestConditionOriginRetainedAcrossRoutes2303 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.435s
+FAIL

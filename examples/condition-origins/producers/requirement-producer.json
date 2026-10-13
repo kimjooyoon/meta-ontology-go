@@ -1,0 +1,12 @@
+{
+  "compiler_head": "6715f8fb19ec96bb92085b924e29f649d0f1b59a",
+  "accepted_parent": "a1f54143d4746ad72d17f499807d9cbb4ba15a0a",
+  "overlays": [
+    {
+      "path": "internal/bodyexecution/composition_source_anchor_requirement_test.go",
+      "sha256": "8f140e978bddc8d554a7103ea0101ade8d79646e3682305abb1f7d7f24be9359"
+    }
+  ],
+  "source_case": "anchor1447",
+  "historical_replays": 0
+}

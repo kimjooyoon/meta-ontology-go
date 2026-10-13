@@ -20,16 +20,17 @@ type ActivityRef struct {
 }
 
 type Program struct {
-	Schema          string               `json:"schema"`
-	Workspace       packageruntime.Image `json:"workspace_image"`
-	Entry           ActivityRef          `json:"entry"`
-	Activities      []ActivityRef        `json:"activities"`
-	Source          string               `json:"lowered_gooo_source"`
-	Scope           string               `json:"scope"`
-	EntityAliases   []EntityAlias        `json:"entity_aliases,omitempty"`
-	PureCalls       *WorkspacePureCalls  `json:"pure_calls,omitempty"`
-	sourceFillSpecs map[string]*assemblyspec.Spec
-	recordNames     workspaceRecordNames
+	ConditionOrigins []WorkspaceConditionOrigin `json:"condition_origins,omitempty"`
+	Schema           string                     `json:"schema"`
+	Workspace        packageruntime.Image       `json:"workspace_image"`
+	Entry            ActivityRef                `json:"entry"`
+	Activities       []ActivityRef              `json:"activities"`
+	Source           string                     `json:"lowered_gooo_source"`
+	Scope            string                     `json:"scope"`
+	EntityAliases    []EntityAlias              `json:"entity_aliases,omitempty"`
+	PureCalls        *WorkspacePureCalls        `json:"pure_calls,omitempty"`
+	sourceFillSpecs  map[string]*assemblyspec.Spec
+	recordNames      workspaceRecordNames
 }
 
 // Prepare validates the package manifest and flattens its reachable package
@@ -187,6 +188,10 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 	if len(needed) > 1 && len(bindings) == 0 {
 		return Program{}, fmt.Errorf("workspace body execution requires at least one explicit activity binding")
 	}
+	conditionOrigins, err := prepareWorkspaceConditionSources(manifest, callNames, recordNames, allNeeded)
+	if err != nil {
+		return Program{}, err
+	}
 	sourceFillSpecs := make(map[string]*assemblyspec.Spec)
 	for _, key := range activityOrder {
 		if !needed[key] {
@@ -218,7 +223,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		scope = "entry and explicit bind producers with source-resolved pure activity calls; original package identities map to lowered names; finite native observations"
 	}
 	return Program{Schema: "gooo/workspace-body-program/v1", Workspace: image, Entry: entry,
-		Activities: activities, Source: source, sourceFillSpecs: sourceFillSpecs,
+		Activities: activities, Source: source, sourceFillSpecs: sourceFillSpecs, ConditionOrigins: conditionOrigins,
 		EntityAliases: recordNames.aliases, recordNames: recordNames, PureCalls: pureCalls,
 		Scope: scope}, nil
 }

@@ -42,10 +42,16 @@ func computationPackageProgram(root string, raw []byte) (workspaceexecution.Prog
 	return workspaceexecution.Prepare(manifest)
 }
 
-func computationPackageProgramEqual(actual, expected workspaceexecution.Program) bool {
-	a, ae := json.Marshal(actual)
-	b, be := json.Marshal(expected)
-	return ae == nil && be == nil && samePackageSourceValue(a, b)
+// Compare the raw recorded program so absent, empty and null origins remain distinct.
+func computationPackageReceiptProgramEqual(raw []byte, expected workspaceexecution.Program) bool {
+	var recorded struct {
+		Result struct{ Program json.RawMessage }
+	}
+	if json.Unmarshal(raw, &recorded) != nil {
+		return false
+	}
+	current, err := json.Marshal(expected)
+	return err == nil && samePackageProgramSource(recorded.Result.Program, current)
 }
 
 func computationDigest(raw []byte) string {

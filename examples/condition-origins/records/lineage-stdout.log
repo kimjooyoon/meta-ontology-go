@@ -1,0 +1,14 @@
+=== RUN   TestNativeConditionLineageHelpers1699
+    composition_condition_lineage_test.go:22: case 0: root input "Gate" requires an explicit value
+--- FAIL: TestNativeConditionLineageHelpers1699 (0.00s)
+=== RUN   TestNativeConditionLineageSelectedFill1753
+    composition_condition_lineage_test.go:87: fill1753: selected-carrier origin after earlier hole replacement; native2/2; original/selected source hashes distinct; model0
+--- PASS: TestNativeConditionLineageSelectedFill1753 (0.72s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.224s
+=== RUN   TestWorkspaceConditionLineageOriginalFiles1879
+    condition_lineage_test.go:88: workspace1879: original-file condition2/2 and activity declarations2/2; typed field declaration1/1; qualified call/constructor length changes retained; native2/2; model0
+--- PASS: TestWorkspaceConditionLineageOriginalFiles1879 (0.68s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.561s
+FAIL

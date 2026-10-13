@@ -1,0 +1,9 @@
+=== RUN   TestNativeSourceAnchorUnicode1567
+    composition_source_anchors_test.go:57: unicode1567 native3/3 conditions5; source sites2/2; typed field references3/3; escaped Unicode bytes exact; model0
+--- PASS: TestNativeSourceAnchorUnicode1567 (0.73s)
+=== RUN   TestNativeSourceAnchorCopiedHelpers1627
+    composition_source_anchors_test.go:71: composition source: [helpers1627.gooo:8:12-8:14: error parse.expected-dot: expected . helpers1627.gooo:8:12-8:14: error parse.expected-identifier: expected binding activity or port helpers1627.gooo:9:1: error parse.expected-dot: expected . helpers1627.gooo:9:1: error parse.expected-identifier: expected binding activity or port]
+--- FAIL: TestNativeSourceAnchorCopiedHelpers1627 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.235s
+FAIL

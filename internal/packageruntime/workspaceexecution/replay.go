@@ -44,6 +44,7 @@ func ReplayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prio
 		Scope: "saved workspace construction with two fresh native executions; current finite expectations or input-only observations"}
 	result.Runtime, err = bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, prior.Composition, translated, goBinary)
 	if err == nil {
+		bindWorkspaceConditionSources(program, &result.Runtime)
 		result.Runtime.InputSeparation = measureWorkspaceInputs(ctx, current, result, translated)
 	}
 	return result, err
@@ -65,7 +66,11 @@ func reconstructWorkspace(ctx context.Context, manifest packageruntime.Manifest,
 	if err != nil {
 		return Program{}, nil, err
 	}
-	currentProgram, _ := json.Marshal(program)
+	comparisonProgram := program
+	if prior.Program.ConditionOrigins == nil {
+		comparisonProgram.ConditionOrigins = nil
+	}
+	currentProgram, _ := json.Marshal(comparisonProgram)
 	savedProgram, _ := json.Marshal(prior.Program)
 	if !bytes.Equal(currentProgram, savedProgram) {
 		return Program{}, nil, fmt.Errorf("saved workspace differs from current sources, dependencies, entry or lowered graph")

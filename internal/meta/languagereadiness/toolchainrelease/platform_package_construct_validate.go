@@ -54,7 +54,7 @@ func validatePackageConstructionRun(raw []byte, reference packageConstructionRef
 	}
 	if envelope.Schema != "gooo/workspace-caller-construction-receipt/v1" || envelope.Decision != decision || envelope.Error != "" ||
 		envelope.Manifest != packageSmokeSHA(reference.Manifest) || !bound ||
-		result.Schema != "gooo/workspace-caller-construction/v1" || !samePackageSourceValue(result.Program, reference.Program) ||
+		result.Schema != "gooo/workspace-caller-construction/v1" || !samePackageProgramSource(result.Program, reference.Program) ||
 		!samePackageSourceValue(result.Cases, reference.Feedback) {
 		return fmt.Errorf("package construction envelope or original package binding differs")
 	}

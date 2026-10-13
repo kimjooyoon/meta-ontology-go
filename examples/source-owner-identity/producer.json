@@ -1,0 +1,21 @@
+{
+  "compiler_source": "4ca8181d28f4051e255fdc3841a52193793977e1",
+  "snapshot_root": "/tmp/gooo-field-owner-origin-20261013/observed-producer3001",
+  "overlays": [
+    {
+      "path": "internal/bidir/fields_part03.go",
+      "sha256": "349c864c29c3f212f69c15359a193ca244f119fbe92d98556f4847eaf28958e2"
+    },
+    {
+      "path": "internal/bodyexecution/composition_owner_identity_views_test.go",
+      "sha256": "3a3955bfc96ab9ba0a74981621c275d8722b0a998c09c49f05efa0d574536cf6"
+    },
+    {
+      "path": "internal/bodyexecution/composition_owner_origin_test.go",
+      "sha256": "505226b36ff9c5bdda3219a115f582b416226f84e51654f5c12f524b8f24b9b5"
+    }
+  ],
+  "fresh_source": "owner3001",
+  "historical_local_replays": 0,
+  "model_predictions": 0
+}

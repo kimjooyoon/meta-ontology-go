@@ -18,6 +18,10 @@ func compositionConditionSites(prior Composition) ([]CompositionConditionSite, e
 		return nil, err
 	}
 	bindings, sourceSHA := arithmeticFunctionIDs(prior), digest([]byte(prior.Source))
+	origins, err := compositionSourceConditions(prior)
+	if err != nil {
+		return nil, err
+	}
 	var sites []CompositionConditionSite
 	for _, declaration := range file.Decls {
 		function, ok := declaration.(*ast.FuncDecl)
@@ -25,6 +29,7 @@ func compositionConditionSites(prior Composition) ([]CompositionConditionSite, e
 			continue
 		}
 		ids := bindings[function.Name.Name]
+		ordinal := 0
 		ast.Inspect(function.Body, func(node ast.Node) bool {
 			condition, ok := node.(*ast.IfStmt)
 			if !ok {
@@ -33,7 +38,13 @@ func compositionConditionSites(prior Composition) ([]CompositionConditionSite, e
 			start, end := fset.Position(condition.Cond.Pos()).Offset, fset.Position(condition.Cond.End()).Offset
 			site := CompositionConditionSite{RootActivityID: ids[0], ActivityID: ids[1],
 				Expression: prior.Source[start:end], ProjectionSHA256: sourceSHA, Start: start, End: end}
-			site.ExpressionID = compositionDigest(site)
+			originKey := conditionOriginKey{ids[0], ids[1], ordinal}
+			site.Source = origins[originKey]
+			if site.Source == nil {
+				site.Source = unmappedConditionSource(prior.SelectedSourceSHA256, "NO_RETAINED_ORIGIN")
+			}
+			ordinal++
+			site.ExpressionID = conditionSiteIdentity(site)
 			sites = append(sites, site)
 			return true
 		})
@@ -47,6 +58,13 @@ func compositionConditionSites(prior Composition) ([]CompositionConditionSite, e
 		}
 	}
 	return sites, nil
+}
+
+// Native expression identity depends on the pure projection, independently of
+// source annotations that may gain original-file or declaration lineage later.
+func conditionSiteIdentity(site CompositionConditionSite) string {
+	site.ExpressionID, site.Source = "", nil
+	return compositionDigest(site)
 }
 
 // Arithmetic observation adds calls, preserving each original if statement.

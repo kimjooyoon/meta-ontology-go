@@ -16,6 +16,7 @@ type bodyProjection struct {
 	function          *ast.FuncDecl
 	constructs, units int
 	calls             []pureCallFunction
+	conditions        map[ast.Expr]BodyConditionOrigin
 }
 
 func renderParameters(packageName, activityName, activityID string, parameters []InputParameter,
@@ -25,16 +26,23 @@ func renderParameters(packageName, activityName, activityID string, parameters [
 
 func renderParametersWithCalls(packageName, activityName, activityID string, parameters []InputParameter,
 	outputType, body, route string, calls []pureCallFunction, records []RecordType) ([]byte, int, int, int, int, error) {
+	raw, constructs, lowered, units, loweredUnits, _, err := renderParametersWithConditionSources(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
+	return raw, constructs, lowered, units, loweredUnits, err
+}
+
+func renderParametersWithConditionSources(packageName, activityName, activityID string, parameters []InputParameter,
+	outputType, body, route string, calls []pureCallFunction, records []RecordType) ([]byte, int, int, int, int, []BodyConditionOrigin, error) {
 	p, err := prepareBodyProjectionWithCalls(packageName, activityName, parameters, outputType, body, calls, records)
 	if err != nil {
-		return nil, 0, 0, 0, 0, err
+		return nil, 0, 0, 0, 0, nil, err
 	}
+	p.conditions = p.captureConditionOrigins(activityID, body)
 	lowered, units, err := p.lower(packageName, activityName, outputType, route, parameterNames(parameters), records)
 	if err != nil {
-		return nil, 0, 0, 0, 0, err
+		return nil, 0, 0, 0, 0, nil, err
 	}
 	raw, err := p.emit(packageName, activityID, records)
-	return raw, p.constructs, lowered, p.units, units, err
+	return raw, p.constructs, lowered, p.units, units, p.emittedConditionOrigins(), err
 }
 
 func prepareBodyProjection(packageName, activityName string, parameters []InputParameter,
@@ -112,7 +120,7 @@ func (p bodyProjection) lower(packageName, activityName, outputType, route strin
 	if err := typecheck(packageName, p.file, p.fset); err != nil {
 		return 0, 0, fmt.Errorf("typecheck generated activity: %w", err)
 	}
-	return constructs, units, typecheckAndLowerRecords(packageName, p.file, p.fset, records)
+	return constructs, units, typecheckAndLowerRecords(packageName, p.file, p.fset, records, p.conditions)
 }
 
 func (p bodyProjection) emit(packageName, activityID string, records []RecordType) ([]byte, error) {
