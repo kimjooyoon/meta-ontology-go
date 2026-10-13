@@ -54,6 +54,14 @@ Export declaration shapes for documentation and API comparison tools:
 The interface includes imported packages, stable IDs, ordered activity inputs,
 and record field types, presence, and cardinality. See docs/language/package-interface.md.
 
+Inspect the entry's prepared source calls before execution:
+  gooo package inspect --json gooo.workspace.json
+
+PREPARED shows package exports, source digests, bindings and the entry call closure.
+Authored activity IDs remain attached to original and lowered call participants.
+Inspection makes zero program executions and model predictions. See
+docs/workspace-source-inspection.md for coverage and source-relative call spans.
+
 Reuse a saved package execution without a model:
   gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 

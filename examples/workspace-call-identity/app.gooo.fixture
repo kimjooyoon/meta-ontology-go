@@ -1,0 +1,4 @@
+package app
+namespace source_app
+import rules "example/core"
+activity Main(Integer) -> Integer id "urn:workspace:entry" computes "return rules.요금(input)"
