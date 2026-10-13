@@ -15,12 +15,34 @@ func checkBodyTypes(packageName string, file *ast.File, fset *token.FileSet, inf
 	restore := insertLocalReads(file, func(*ast.Ident) bool { return true })
 	defer restore()
 	configuration := types.Config{Importer: importer.Default()}
-	return configuration.Check(packageName, fset, []*ast.File{file}, info)
+	if info == nil {
+		info = &types.Info{}
+	}
+	if info.Types == nil {
+		info.Types = make(map[ast.Expr]types.TypeAndValue)
+	}
+	result, err := configuration.Check(packageName, fset, []*ast.File{file}, info)
+	if err == nil {
+		err = validateCollectionLoopTypes(file, info)
+	}
+	return result, err
 }
 
 func insertLocalReads(file *ast.File, include func(*ast.Ident) bool) func() {
 	originals := make(map[*ast.BlockStmt][]ast.Stmt)
+	save := func(block *ast.BlockStmt) {
+		if _, found := originals[block]; !found {
+			originals[block] = block.List
+		}
+	}
 	ast.Inspect(file, func(node ast.Node) bool {
+		if loop, ok := node.(*ast.RangeStmt); ok && loop.Tok == token.DEFINE {
+			if name, ok := loop.Value.(*ast.Ident); ok && name.Name != "_" && include(name) {
+				save(loop.Body)
+				marker := &ast.AssignStmt{Tok: token.ASSIGN, Lhs: []ast.Expr{ast.NewIdent("_")}, Rhs: []ast.Expr{ast.NewIdent(name.Name)}}
+				loop.Body.List = append([]ast.Stmt{marker}, loop.Body.List...)
+			}
+		}
 		block, ok := node.(*ast.BlockStmt)
 		if !ok {
 			return true
@@ -36,7 +58,8 @@ func insertLocalReads(file *ast.File, include func(*ast.Ident) bool) func() {
 			}
 		}
 		if len(statements) != len(block.List) {
-			originals[block], block.List = block.List, statements
+			save(block)
+			block.List = statements
 		}
 		return true
 	})
@@ -100,6 +123,21 @@ func emitUnusedLocalReads(packageName string, file *ast.File, fset *token.FileSe
 func removeLocalReadMarkers(file *ast.File, fset *token.FileSet) {
 	lines := make(map[*token.File]map[int]bool)
 	ast.Inspect(file, func(node ast.Node) bool {
+		if loop, ok := node.(*ast.RangeStmt); ok && loop.Tok == token.DEFINE && len(loop.Body.List) != 0 {
+			if name, ok := loop.Value.(*ast.Ident); ok && isLocalReadMarker(loop.Body.List[0], name.Name) {
+				marker := loop.Body.List[0]
+				if source := fset.File(marker.Pos()); source != nil {
+					line := source.Line(marker.Pos())
+					if line > source.Line(loop.Body.Lbrace) && line < source.LineCount() {
+						if lines[source] == nil {
+							lines[source] = map[int]bool{}
+						}
+						lines[source][line] = true
+					}
+				}
+				loop.Body.List = loop.Body.List[1:]
+			}
+		}
 		block, ok := node.(*ast.BlockStmt)
 		if !ok {
 			return true

@@ -40,6 +40,8 @@ func validateBodyStatement(statement ast.Stmt, readonly, locals map[string]bool,
 			return 0, fmt.Errorf("assignment target must be an existing local")
 		}
 		return 0, validateExpression(value.Rhs[0])
+	case *ast.RangeStmt:
+		return validateCollectionLoop(value, readonly, locals, allowGuardReturn, records)
 	case *ast.ForStmt:
 		return validateCountedLoop(value, readonly, locals, allowGuardReturn, records)
 	case *ast.IfStmt:

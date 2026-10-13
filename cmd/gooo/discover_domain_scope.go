@@ -48,7 +48,7 @@ func loadDiscoveryDomainContract(reader SourceReader, sourcePath string, source 
 	if len(file.Bindings) != 0 {
 		return nil, "DOMAIN_CONTRACT_HAS_RUNTIME_BINDINGS", fmt.Errorf("domain contract may declare expected entities and activities but cannot declare runtime binds")
 	}
-	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsV4Support())
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsSupportForFile(file, syntax.EntityFieldsV4Support()))
 	if err != nil {
 		return nil, "DOMAIN_CONTRACT_LOWER_FAILED", err
 	}

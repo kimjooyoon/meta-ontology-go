@@ -7,7 +7,7 @@ import (
 	"unicode"
 )
 
-func validateSupportedField(entity Entity, index int, field Field, used map[string]string, seenNames map[string]string, sourceURI string, previousStart int, hasPrevious, allowBoolean, allowInteger, allowOptional bool) error {
+func validateSupportedField(entity Entity, index int, field Field, used map[string]string, seenNames map[string]string, sourceURI string, previousStart int, hasPrevious, allowBoolean, allowInteger, allowOptional, allowMany bool) error {
 	context := fmt.Sprintf("entity %q field %d", entity.ID, index)
 	if field.ID == "" || field.Name == "" || field.Parent == "" || field.TypeRefID == "" || field.Presence == "" || field.Cardinality == "" {
 		return entityFieldsError(entityFieldsIncompleteDiagnostic, field, context+" is missing a required identity, name, type, shape, or parent")
@@ -38,6 +38,9 @@ func validateSupportedField(entity Entity, index int, field Field, used map[stri
 	} else if field.TypeRefID == entityFieldsIntegerTypeID && allowInteger {
 		expectedGoType = "int64"
 	}
+	if field.Cardinality == "many" && allowMany {
+		expectedGoType = "[]" + expectedGoType
+	}
 	if field.Presence == "optional" && allowOptional {
 		expectedGoType = "*" + expectedGoType
 	}
@@ -55,7 +58,7 @@ func validateSupportedField(entity Entity, index int, field Field, used map[stri
 		return entityFieldsError(entityFieldsUnsupportedTypeDiagnostic, field, fmt.Sprintf("resolved type %q is not in the bound profile", field.TypeRefID))
 	}
 	validPresence := field.Presence == "required" || allowOptional && field.Presence == "optional"
-	if !validPresence || field.Cardinality != "one" {
+	if !validPresence || field.Cardinality != "one" && !(allowMany && field.Cardinality == "many") {
 		return entityFieldsError(entityFieldsUnsupportedShapeDiagnostic, field, "the bound profile does not support this presence/cardinality shape")
 	}
 	if err := validateFieldSource(entity, field, sourceURI, previousStart, hasPrevious); err != nil {

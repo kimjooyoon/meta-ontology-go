@@ -1,9 +1,7 @@
 package valueexecution
 
 import (
-	"maps"
 	"slices"
-	"unicode/utf8"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
@@ -96,21 +94,7 @@ func validateRecordFields(schema []RecordField, fields RecordFields) error {
 			}
 			return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
 		}
-		switch field.TypeID {
-		case string(semantic.BuiltinStringTypeID):
-			text, ok := value.(string)
-			if !ok || !utf8.ValidString(text) {
-				return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
-			}
-		case string(semantic.BuiltinBooleanTypeID):
-			if _, ok := value.(bool); !ok {
-				return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
-			}
-		case string(semantic.BuiltinIntegerTypeID):
-			if _, ok := value.(int64); !ok {
-				return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
-			}
-		default:
+		if !recordFieldValueMatches(field, value) {
 			return failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "validate-record-fields", field.Name)
 		}
 	}
@@ -120,7 +104,7 @@ func validateRecordFields(schema []RecordField, fields RecordFields) error {
 func (plan RecordPlan) recordInput(name string, roots map[string]RecordFields, values map[string]ProducedRecord) (RecordFields, string, string, string, error) {
 	producer, bound := plan.incoming[name]
 	if !bound {
-		fields := maps.Clone(roots[name])
+		fields := cloneRecordFields(roots[name])
 		return fields, name, digestValue(fields), "", nil
 	}
 	result, found := values[producer]
@@ -128,5 +112,5 @@ func (plan RecordPlan) recordInput(name string, roots map[string]RecordFields, v
 		result.authority.outputEntityID != plan.programs[name].authority.outputEntityID {
 		return nil, "", "", "", failAt(ReasonBindingResultInvalid, "EXECUTE", "validate-bound-record", name)
 	}
-	return maps.Clone(result.fields), result.rootActivity, result.rootDigest, result.digest, nil
+	return cloneRecordFields(result.fields), result.rootActivity, result.rootDigest, result.digest, nil
 }

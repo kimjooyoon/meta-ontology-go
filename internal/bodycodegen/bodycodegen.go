@@ -11,7 +11,6 @@ import (
 	"go/ast"
 	"go/importer"
 	"go/parser"
-	"go/scanner"
 	"go/token"
 	"go/types"
 	"maps"
@@ -419,7 +418,7 @@ func validateExpression(expression ast.Expr) error {
 		return validateExpression(value.Index)
 	case *ast.SliceExpr:
 		if value.Slice3 {
-			return fmt.Errorf("Text slices accept only low and high byte offsets")
+			return fmt.Errorf("slices accept only low and high offsets")
 		}
 		for _, part := range []ast.Expr{value.X, value.Low, value.High} {
 			if part != nil {
@@ -523,35 +522,8 @@ func normalizeIntegerLocalInitializers(packageName string, file *ast.File, fset 
 }
 
 func rewriteLetDeclarations(body string) (string, error) {
-	fset := token.NewFileSet()
-	file := fset.AddFile("computes", fset.Base(), len(body))
-	var sourceScanner scanner.Scanner
-	sourceScanner.Init(file, []byte(body), nil, scanner.ScanComments)
-	var offsets []int
-	for {
-		position, kind, literal := sourceScanner.Scan()
-		if kind == token.EOF {
-			break
-		}
-		if kind == token.IDENT && literal == "let" {
-			offsets = append(offsets, file.Offset(position))
-		}
-	}
-	if len(offsets) == 0 {
-		return body, nil
-	}
-	var output strings.Builder
-	last := 0
-	for _, offset := range offsets {
-		if offset < last || offset+3 > len(body) {
-			return "", fmt.Errorf("invalid let token in computes body")
-		}
-		output.WriteString(body[last:offset])
-		output.WriteString("var")
-		last = offset + 3
-	}
-	output.WriteString(body[last:])
-	return output.String(), nil
+	normalized, _, err := rewriteBodySurface(body)
+	return normalized, err
 }
 
 func digest(value []byte) string { return fmt.Sprintf("sha256:%x", sha256.Sum256(value)) }

@@ -14,6 +14,7 @@ func renameBodyCalls(body string, arity int, from, to string) (string, int, erro
 	if err != nil {
 		return "", 0, err
 	}
+	_, mapping, _ := rewriteBodySurface(body)
 	calls, ignored := map[*ast.Ident]bool{}, map[*ast.Ident]bool{}
 	ast.Inspect(file, func(node ast.Node) bool {
 		switch n := node.(type) {
@@ -43,7 +44,7 @@ func renameBodyCalls(body string, arity int, from, to string) (string, int, erro
 			if !calls[id] {
 				err = fmt.Errorf("activity %q is used outside a direct call", from)
 			} else {
-				offsets = append(offsets, set.Position(id.Pos()).Offset-header)
+				offsets = append(offsets, mapping.originalOffset(set.Position(id.Pos()).Offset-header))
 			}
 		}
 		return true

@@ -1,0 +1,6 @@
+=== RUN   TestCollectionSourceOrderAndOrigins7139
+    composition_collection_surface_test.go:41: generate for-in source typed plan: no explicit binding edges
+--- FAIL: TestCollectionSourceOrderAndOrigins7139 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.589s
+FAIL
