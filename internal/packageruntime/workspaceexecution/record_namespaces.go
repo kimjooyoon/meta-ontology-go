@@ -40,6 +40,12 @@ func scopeWorkspaceRecords(ordered []packageruntime.PackageSpec, files map[strin
 				}
 				byName[entity.Name][entity.ID] = true
 				if !entity.FieldsPresent {
+					if isWorkspaceScalarIdentity(entity.ID) {
+						n.known[entity.Name] = true
+						if previous := n.canonical[entity.ID]; previous == "" || entity.Name < previous {
+							n.canonical[entity.ID] = entity.Name
+						}
+					}
 					continue
 				}
 				if entity.Name == "Integer" || entity.Name == "Boolean" || entity.Name == "Text" {

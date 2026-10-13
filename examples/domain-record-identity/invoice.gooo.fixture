@@ -1,0 +1,10 @@
+package app
+namespace domain438_app
+import price "domain438/money"
+import quantity "domain438/count"
+entity Total id "urn:domain438:total" fields {
+ field value id "urn:domain438:total-value" type "urn:gooo:type:integer" required one
+}
+activity Multiply(price.Value, quantity.Value) -> Total id "urn:domain438:multiply" computes "return Total{value: input0.value * input1.value}"
+bind price.Keep.result -> Multiply.input0
+bind quantity.Keep.result -> Multiply.input1

@@ -1,0 +1,39 @@
+{
+  "schema": "gooo/domain-record-identity-observation/v1",
+  "outcome": "PASS",
+  "producer": {
+    "compiler_base": "d8779545bf82b8688993d77ef50c1aa0feec2b82",
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "overlays": [
+      {
+        "path": "internal/packageruntime/workspaceexecution/domain_record_identity_test.go",
+        "sha256": "91e13d2d61d52855b3cc9292d26d153622dd9e8606c0e1a81c09a30987650db7"
+      }
+    ],
+    "scope": "fresh domain438 two same-name same-layout records, money and quantity IDs, wrong import binding decline and two native cases",
+    "created_at": "2026-10-13T06:42:42.264760+00:00"
+  },
+  "observation": {
+    "activity_outputs": 6,
+    "domain_ids": 2,
+    "finite_passed": 6,
+    "finite_total": 6,
+    "input_cases": 2,
+    "input_unchanged": true,
+    "lowered_domain_names": {
+      "urn:domain438:money": "GoooEntitydce31bb0522e771a56f2441b133ac78cd319c2435815673e89395fd4cf371d2a",
+      "urn:domain438:quantity": "GoooEntity6d9fea42e3f9d9d73a322c032e3332c6a6cb438dfa9caf46bea038b07b58c51d"
+    },
+    "model_calls": 0,
+    "partial_images_accepted": 0,
+    "runtime_replayed": true,
+    "same_named_record_layouts": 2,
+    "source_sha256": "sha256:45b4aea5436f92b62d8e943aa2b602b965ea4446248610265986e73efb0aed06",
+    "typed_bindings": 2,
+    "wrong_domain_bindings_declined": 1
+  },
+  "scope": "one fresh source family; two native cases; authored money and quantity IDs and bindings; external input JSON carries no inferred domain origin",
+  "historical_replays": 0,
+  "training_runs": 0,
+  "publication_note": "Fixtures preserve source content but the external CLI manifest uses .fixture filenames. This package has not been locally rerun; the observation belongs to the original in-memory test producer."
+}

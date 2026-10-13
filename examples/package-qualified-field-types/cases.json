@@ -1,0 +1,54 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "field270/app:Pass": {
+          "amount": 0
+        }
+      },
+      "expected": {
+        "field270/app:Pass": {
+          "amount": 0
+        },
+        "field270/app:Decide": {
+          "eligible": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "field270/app:Pass": {
+          "amount": 31,
+          "note": ""
+        }
+      },
+      "expected": {
+        "field270/app:Pass": {
+          "amount": 31,
+          "note": ""
+        },
+        "field270/app:Decide": {
+          "eligible": true
+        }
+      }
+    },
+    {
+      "inputs": {
+        "field270/app:Pass": {
+          "amount": 9007199254740995,
+          "note": "한글"
+        }
+      },
+      "expected": {
+        "field270/app:Pass": {
+          "amount": 9007199254740995,
+          "note": "한글"
+        },
+        "field270/app:Decide": {
+          "eligible": true
+        }
+      }
+    }
+  ]
+}

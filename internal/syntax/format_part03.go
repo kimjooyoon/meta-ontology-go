@@ -57,5 +57,10 @@ func formatTypeReference(spelling string) string {
 	if err := validateIdentifier(spelling, "field type reference"); err == nil {
 		return spelling
 	}
+	if alias, member, qualified := strings.Cut(spelling, "."); qualified &&
+		!isEntityFieldsReservedWord(alias) && !isEntityFieldsReservedWord(member) &&
+		validateActivityTypeReference(spelling, "field type reference") == nil {
+		return spelling
+	}
 	return quoteString(spelling)
 }

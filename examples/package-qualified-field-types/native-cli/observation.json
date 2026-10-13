@@ -1,0 +1,202 @@
+{
+  "schema": "gooo/fresh-unicode-native-cli-observation/v1",
+  "producer": {
+    "compiler_base": "959490f56ac19780469455dd21f3d8c0d6bf27c0",
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "overlays": [
+      {
+        "path": "internal/packageruntime/bindings.go",
+        "sha256": "4cbb3bed62341a4ed2b9b3e7fd94722414695f707de16b38e58aeb6a5a32c786"
+      },
+      {
+        "path": "internal/packageruntime/compile.go",
+        "sha256": "ff6712e7f5ed98ed449892b6c07e2e9b4a7d7648d38e484372a6a06b5ff299d3"
+      },
+      {
+        "path": "internal/packageruntime/compile_source.go",
+        "sha256": "287057f48897d076e0cb9e275dbfdb6c93277f1c7f6742eb07f2e43dfb10bd73"
+      },
+      {
+        "path": "internal/packageruntime/model.go",
+        "sha256": "f540a21f64312cc738cbe5faa9f32e2e7b01db04046d14eb2b33ead6f4e5db8d"
+      },
+      {
+        "path": "internal/packageruntime/qualified_field_decline_test.go",
+        "sha256": "28849ced762fef5c7556cfac3f39b7e5850072e52d8e81b96ecac7885fb5be74"
+      },
+      {
+        "path": "internal/packageruntime/qualified_field_profile_test.go",
+        "sha256": "4661b1b855f8dc1b35b7e98301ad65c513ee3818e1bb510b9fcb87469b05583c"
+      },
+      {
+        "path": "internal/packageruntime/qualified_field_types_test.go",
+        "sha256": "0473647ac7406ed46b4c9066994c65dda60a73d501f0cc16da4f5ac02fea12e5"
+      },
+      {
+        "path": "internal/packageruntime/source_field_types.go",
+        "sha256": "0a398384b4f3fa0a95606c4a14b07e400075dc65c0f8e2dcdb6a77d693c39eef"
+      },
+      {
+        "path": "internal/packageruntime/source_local_bindings.go",
+        "sha256": "4b0f0eea3ba081acb29bdce379815bd603ee5b2a44432779ba3081095390b1bb"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/program.go",
+        "sha256": "d3266a8fd45971ba3b388676cdf31dfaccaa04ffa0c8671e32fe0226f79a5eaa"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_cross_file_test.go",
+        "sha256": "462898fafdbfd6229d4312c9a1ef24152e84bc54a20a81dfb7fd3581a43d8403"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_module_test.go",
+        "sha256": "59dbd95e7cfafb30ca24548226587e24ff74eb4f8823d81a3c157d52725e4881"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_native_test.go",
+        "sha256": "987afad829afa16aeecce69e90d776a0c5d50473cd0d3f88eefa98da507e0291"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_transport_test.go",
+        "sha256": "406c936002cdafcc789f981e20b2be17df4e61505746012c65c6f7ea41783298"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_unicode_test.go",
+        "sha256": "bb4b9e7ca0071aa4b9ed9c8b9c57131a4caa30c75f0cd886c1435699211acc9c"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_values_test.go",
+        "sha256": "81cd6d87ec76eb2dc4db7782a529c27da976538ec34d92ba677a1de4a00f2abd"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_namespaces.go",
+        "sha256": "cab84a6189981e28bbf35a8dff1823a589233162460f81f3b4646a78119061a2"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/scalar_type_names.go",
+        "sha256": "3d86e5dcba129a5c05275a2c770c4b13674e2c54b29639a29d85552c7f302e0b"
+      },
+      {
+        "path": "internal/syntax/entity_fields_parser_part02.go",
+        "sha256": "34896893ea66c445c874b30c88d6c9898dfaa5e53cfe693062ecb87db319350d"
+      },
+      {
+        "path": "internal/syntax/format_part03.go",
+        "sha256": "64d42fd548d90959876e5dc5c1a7dee22f230d02e445a520bd17e06d1711f2c7"
+      }
+    ],
+    "scope": "fresh field352 Unicode aliases and source filenames; threshold43 two native cases; no historical test source replay",
+    "created_at": "2026-10-13T05:59:17.824237+00:00"
+  },
+  "binary_sha256": "667bc0a0fcb48c756ec3686834f8f039744f6bceb3cbdecea1e753cb06fe57ae",
+  "binary_bytes": 25674978,
+  "argv": [
+    "/tmp/gooo-qualified-field-types-20261013/actual-unicode-native-cli/gooo",
+    "package",
+    "execute",
+    "--json",
+    "--cases",
+    "cases.json",
+    "workspace.json"
+  ],
+  "input_sha256": {
+    "workspace.json": "3f9a2e729ac7de565fe85193e0a37dd8c24d8bbb7314f7009d3dfe5bd5a77ff5",
+    "\uc0c1\ud0dc.gooo.fixture": "f259812944964a1757cdcb259b70571ee1d4fd1694af2333a222f8954c1e54eb",
+    "\uacc4\uc218.gooo.fixture": "fc7c2740afbf6603f5ba38daafdd6f58e97f3b25c558b219ec4892782bcc8242",
+    "\ud310\uc815.gooo.fixture": "9685c2be6060fe28b9e3e34ac17511fa77cda6b313f53c7555cedfbdd7f7cbdd",
+    "cases.json": "255b7263b0267fee1de787ff69346f9259c6d69cb8c01772f4060a1fb437ad2b",
+    "\uc6d0\uc7a5.gooo.fixture": "57a05cfdc070bffd9061a71e3fca32bdf2e059ee7ee9a89f34385a2dc181fe6c"
+  },
+  "decision": "PASS",
+  "cli_processes": 1,
+  "input_cases": 2,
+  "source_references": 3,
+  "source_reference_total": 3,
+  "source_binding_edges": 1,
+  "original_byte_ranges_verified": true,
+  "finite_passed": 4,
+  "finite_total": 4,
+  "runtime_replayed": true,
+  "model_predictions": 0,
+  "native_build": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 456753334,
+    "user_ns": 125055000,
+    "system_ns": 120949000,
+    "peak_rss_bytes": 87195648,
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 976292,
+      "wait_ns": 455777042,
+      "deadline_remaining_ns": 59966865875,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "native_runs": [
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 366419583,
+      "user_ns": 3501000,
+      "system_ns": 6505000,
+      "peak_rss_bytes": 4947968,
+      "stdout_sha256": "sha256:ac25d4eed2ed16dbf36526d4cb37ccfd3205862d40495b507aee01252513ab74",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 818625,
+        "wait_ns": 365600958,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59508573333,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 8239333,
+      "user_ns": 2766000,
+      "system_ns": 3375000,
+      "peak_rss_bytes": 4915200,
+      "stdout_sha256": "sha256:ac25d4eed2ed16dbf36526d4cb37ccfd3205862d40495b507aee01252513ab74",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 2600708,
+        "wait_ns": 5638625,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59141760541,
+        "context_at_start_return": "ACTIVE"
+      }
+    }
+  ],
+  "native_executable_sha256": "sha256:29ce89acb18f03573fe64fa2d7d38bbfe4fde380b2295e51855200fe577e1890",
+  "runtime_embedded_producer_base": "959490f56ac19780469455dd21f3d8c0d6bf27c0",
+  "go_version": "go version go1.27.2 darwin/arm64",
+  "execution_source_sha256": "sha256:6c5cab07b61f9376addd143db1265bebce2c9a065f8ac2b01f636e775bb88ab8",
+  "wall_ns_including_start_codegen_build_execution": 1439670917,
+  "child_cpu_user_seconds": 0.166825,
+  "child_cpu_system_seconds": 0.163154,
+  "input_files_unchanged": true,
+  "binary_removed_after_observation": true,
+  "execution": "71857 consumed_closed_0",
+  "build_execution": "88867 consumed_closed_0",
+  "observed_at": "2026-10-13T06:12:22.965989+00:00",
+  "historical_replays": 0,
+  "training_runs": 0
+}

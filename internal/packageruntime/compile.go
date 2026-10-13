@@ -101,7 +101,7 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeI
 		exports[index].OutputType = resolvedOutput
 	}
 	for _, source := range sources {
-		bindings, err := resolveImportedBindings(spec, source.file, exports, dependencies)
+		bindings, err := resolvePackageBindings(spec, source.file, exports, dependencies, activitySources)
 		if err != nil {
 			return compiledPackage{}, err
 		}
@@ -109,8 +109,11 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeI
 	}
 	identities := make(map[string]string)
 	for _, source := range sources {
-		fileForLowering := source.file.Clone()
-		fileForLowering.Bindings = localBindings(fileForLowering.Bindings)
+		fileForLowering, fieldTypes, err := resolveSourceFieldTypes(spec, source.file, entityTypes, dependencies)
+		if err != nil {
+			return compiledPackage{}, err
+		}
+		fileForLowering.Bindings = sameFileBindings(fileForLowering.Bindings, source.file)
 		types := sourceTypeEnvironment(bareTypes, typeEnvironments[source.file])
 		fileWithTypes := appendEntityTypeEnvironment(fileForLowering, types)
 		ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), fileWithTypes, bidir.EntityFieldsV4Support())
@@ -131,6 +134,7 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeI
 		compiled.image.Sources = append(compiled.image.Sources, SourceImage{
 			Filename: source.source.Filename, SourceDigest: digestValue(source.source.Content),
 			SemanticDigest: "sha256:" + ir.StableHash(), Declarations: len(source.names),
+			FieldTypes: fieldTypes,
 		})
 	}
 	sortExports(exports)

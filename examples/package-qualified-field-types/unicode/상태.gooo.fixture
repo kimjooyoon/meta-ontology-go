@@ -1,0 +1,3 @@
+package flags
+namespace field352_flags
+entity 값 id "urn:gooo:type:boolean"
