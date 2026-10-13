@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/package-runtime-manifest/v1",
+  "entry": {
+    "package_path": "access8887",
+    "activity": "Read"
+  },
+  "packages": [
+    {
+      "path": "access8887",
+      "name": "readings",
+      "imports": null,
+      "sources": [
+        {
+          "filename": "측정구간.gooo",
+          "content": "package readings\nnamespace access8887\nentity Integer id \"urn:gooo:type:integer\"\nentity Request id \"urn:access8887:request\" fields {\n field readings id \"urn:access8887:request-readings\" type integer required many\n field lower id \"urn:access8887:lower\" type integer required one\n field upper id \"urn:access8887:upper\" type integer required one\n field pick id \"urn:access8887:request-pick\" type integer required one\n}\nentity Window id \"urn:access8887:window\" fields {\n field readings id \"urn:access8887:window-readings\" type integer required many\n field pick id \"urn:access8887:window-pick\" type integer required one\n}\nactivity TakeWindow(Request) -> Window id \"urn:access8887:take\" computes \"let 시작 = input.lower; let 끝 = input.upper; return Window{readings: input.readings[시작:끝], pick: input.pick}\"\nactivity At(Window) -> Integer id \"urn:access8887:at\" computes \"if input.pick < 0 || input.pick >= int64(len(input.readings)) { return -1 }; return input.readings[__GOOO_BODY_HOLE_position__]\" assembling {\n source_fill intent \"선택한 구간에서 요청한 위치의 측정값을 읽는다\" {\n  hole \"position\"\n  candidate \"first8887\" { fill \"position\" \"0\" }\n  candidate \"requested8887\" { fill \"position\" \"input.pick\" }\n }\n value_case \"[{\\\"readings\\\":[31,47,73],\\\"pick\\\":1}]\" -> \"47\"\n value_case \"[{\\\"readings\\\":[97,41],\\\"pick\\\":1}]\" -> \"41\"\n holdout_value_case \"[{\\\"readings\\\":[67,103,53],\\\"pick\\\":2}]\" -> \"53\"\n}\nactivity Read(Window) -> Integer id \"urn:access8887:read\" computes \"return At(input)\"\nbind TakeWindow.result -> Read.input\n"
+        }
+      ]
+    }
+  ],
+  "mutation_authorized": false
+}

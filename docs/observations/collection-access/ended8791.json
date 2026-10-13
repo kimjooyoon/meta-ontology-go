@@ -1,0 +1,18 @@
+{
+  "exit_code": 1,
+  "elapsed_seconds": 6.668622584,
+  "command": [
+    "go",
+    "test",
+    "-overlay",
+    "/tmp/gooo-collection-access-20261014/overlay8791.json",
+    "-count=1",
+    "-p=1",
+    "-run",
+    "^(TestSourceAccessOccurrences8753|TestAccessNodeBudget8761|TestWorkspaceCollectionAccess8791)$",
+    "-v",
+    "./internal/bodycodegen",
+    "./internal/packageruntime/workspaceexecution"
+  ],
+  "baseline": "674c5b63ab49e633524e81bc899d91e545518e9d"
+}

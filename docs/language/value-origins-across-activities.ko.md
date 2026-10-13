@@ -37,6 +37,38 @@ JSON의 `report.rows`는 기존 후보 사용처이며, `report.value_flow`는 �
 activity 선언의 위치가 붙는다. 파일 해시, 안정적인 ID, 바이트 범위로 같은 출처를
 다시 찾을 수 있다. 조건문이 없는 반환식도 최초 파일의 후보 조각과 연결된다.
 
+## 목록에서 어느 위치를 읽는지 살펴보기
+
+`input.readings[위치]`는 읽을 목록과 위치를 정하는 식을 함께 가진다. 구간을 고른 뒤
+다른 activity로 넘기면 시작·끝 경계도 결과에 관여한다. `--follow`의 JSON에는
+`report.value_flow.accesses`가 있어 다음 표현을 구분한다.
+
+| 종류 | 예 |
+| --- | --- |
+| `field_access` | `input.readings` 또는 `input.pick` |
+| `access_base` | 인덱스나 구간 접근의 대상 |
+| `index_access` | `input.readings[input.pick]` |
+| `index_operand` | 위치를 정하는 `input.pick` |
+| `slice_access` | `input.readings[시작:끝]` |
+| `slice_low`, `slice_high`, `slice_max` | 소스에 명시한 각 경계 |
+
+생략한 경계는 소스 위치를 만들어내지 않는다. 상수 인덱스도 별도 표현으로 남으며,
+한글 변수의 위치는 원래 계산 본문의 UTF-8 바이트 범위를 사용한다. 각 항목은 activity의
+안정적인 ID와 본문 해시를 갖는다. 함수 인자나 `bind`로 여러 경로가 합쳐져도 조회 중
+방문한 접근 표현을 별도로 모으므로 최단 기원 경로에 없는 인덱스도 볼 수 있다.
+
+접근 목록은 후보 필터가 없는 조회에서 최대 256건을 수집한다. `accesses_truncated`와
+전체 `truncated`, `analysis`, `issues`를 함께 읽는다. `--candidate` 조회는 해당 후보의
+기원 행에 집중하며 별도 접근 목록을 만들지 않는다.
+
+`ProgramAccessFacts`로 이 목록을 Gooo 레코드에 전달할 수 있다. 새 Gooo 설명 프로그램은
+실제 저장된 접근 16건을 읽고 “위치를 정하는 식”, “구간 시작”, “필드 읽기”로 분류했다.
+원래 측정 프로그램은 다시 실행하지 않았다. [소스와 관찰](../observations/collection-access/README.md)에
+입력, 결과와 초기 실패가 함께 있다.
+
+이 목록은 소스에 적힌 접근을 설명한다. 분기와 레코드 구성에서 여러 가능한 기원이
+합쳐질 수 있으며, 실제 입력에서 읽은 원소의 개별 기원 추적은 후속 작업이다.
+
 ## 여러 정수 입력을 받는 후보 작성
 
 `value_case`의 입력 배열은 선언 순서대로 대응한다. 다음 형태는 기존 정수 평가기를
@@ -87,5 +119,5 @@ Gooo 활동에서 읽을 수 있다. `call_returns`와 `bind_steps`는 표시한
 생략한다. 기원 수집이 한도를 넘으면 실행 기록의 `fill_origin_issue`에 이유가 남는다.
 
 이 기능의 [실행 관찰과 초기 실패](../observations/value-transfers/README.md)는 범위별로
-읽을 수 있다. 작은 결정 모델의 제공자·모델 파일 기원 연결, 컬렉션과 중첩 값의 표현,
+읽을 수 있다. 작은 결정 모델의 제공자·모델 파일 기원 연결, 개별 컬렉션 원소의 실행 기원과 중첩 값의 표현,
 제3자의 첫 사용 경험은 이어서 다룰 과제다.

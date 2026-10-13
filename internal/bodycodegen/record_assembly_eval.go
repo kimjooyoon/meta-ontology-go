@@ -241,7 +241,7 @@ func evaluateRecordAssemblyRecorded(ctx context.Context, source []byte, activity
 		}
 	}
 	output := e.information.Types[function.Type.Results.List[0].Type].Type
-	if output == types.Typ[types.Int64] {
+	if output == types.Typ[types.Int64] || output == types.Typ[types.Bool] || output == types.Typ[types.String] {
 		return evaluateScalarCriteriaCases(ctx, source, activity, records, cases, recorder)
 	}
 	named, ok := output.(*types.Named)

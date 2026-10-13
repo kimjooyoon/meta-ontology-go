@@ -9,6 +9,16 @@ import (
 
 func formatPackageValueOrigins(out *strings.Builder, flow workspaceexecution.ProgramValueOrigins) {
 	fmt.Fprintf(out, "\nSelected program value origins: %s [%s]\n", flow.RootActivityID, flow.Analysis)
+	if len(flow.Accesses) > 0 {
+		fmt.Fprintln(out, "\n  Source access occurrences:")
+		for _, access := range flow.Accesses {
+			fmt.Fprintf(out, "    %s %s: %q (body bytes %d..%d)\n",
+				access.ActivityID, access.Kind, access.Expression, access.Start, access.End)
+		}
+	}
+	if flow.AccessesTruncated {
+		fmt.Fprintln(out, "  Source accesses truncated at 256 occurrences.")
+	}
 	for _, row := range flow.Rows {
 		fmt.Fprintf(out, "\n  %s -> %s in %s", row.RootKind, row.Kind, row.ActivityID)
 		if row.CandidateID != "" {

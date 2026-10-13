@@ -27,6 +27,9 @@ exist. The query reads only the selected construction in this receipt.
 With --follow, --activity selects the root activity (default: workspace entry);
 call arguments keep their own invocation context. This includes original
 activity declarations and external input boundaries where retained.
+Unfiltered --follow also lists field, index and slice source occurrences in
+value_flow.accesses (up to 256); inspect accesses_truncated with truncated.
+These expressions describe source choices without assigning runtime element identities.
 
 Without --follow, --activity filters the recorded assembly activity ID. --candidate filters a
 candidate ID within matching activities. The default limit is 32 rows; inspect

@@ -15,6 +15,8 @@ type ProgramValueOrigins struct {
 	Analysis             string               `json:"analysis"`
 	Truncated            bool                 `json:"truncated"`
 	Rows                 []ProgramValueOrigin `json:"rows"`
+	Accesses             []ProgramAccessFact  `json:"accesses,omitempty"`
+	AccessesTruncated    bool                 `json:"accesses_truncated,omitempty"`
 	Issues               []OriginQueryIssue   `json:"issues"`
 	Scope                string               `json:"scope"`
 }
@@ -62,7 +64,7 @@ type valueTransferCatalog struct {
 func InspectSelectedValueOrigins(ctx context.Context, result Result, query OriginQuery) (ProgramValueOrigins, error) {
 	out := ProgramValueOrigins{Schema: "gooo/selected-program-value-origins/v1", Analysis: "MAPPED",
 		SelectedSourceSHA256: result.Composition.SelectedSourceSHA256,
-		Scope:                "current static analysis of retained selected source; use-to-origin paths across pure calls and binds; one shortest path per root and origin; branch alternatives are joined; zero program or model execution"}
+		Scope:                "current static analysis of retained selected source; use-to-origin paths across pure calls and binds; field/index/slice steps retain source expressions, not runtime element identities; one shortest path per root and origin; branch alternatives are joined; zero program or model execution"}
 	if ctx == nil || query.Limit < 1 || query.Limit > 128 {
 		return out, fmt.Errorf("value-origin query requires context and limit 1..128")
 	}
@@ -90,7 +92,7 @@ func InspectSelectedValueOrigins(ctx context.Context, result Result, query Origi
 			break
 		}
 	}
-	if len(out.Issues) > 0 || out.Truncated {
+	if len(out.Issues) > 0 || out.Truncated || out.AccessesTruncated {
 		out.Analysis = "PARTIAL"
 	}
 	sort.Slice(out.Rows, func(i, j int) bool {
