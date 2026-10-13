@@ -20,7 +20,12 @@ func (index workspaceRenameIndex) sourceFillReferences(ctx context.Context, key 
 	d workspaceCallDeclaration) ([]renameReference, error) {
 	plan := d.activity.Assembly.Spec.FillPlan
 	if plan.Generation != nil {
-		return nil, fmt.Errorf("derived source_fill rename requires a generated candidate-scope map")
+		if err := bodycodegen.ValidateCallFreeFillGeneration(plan.Generation); err != nil {
+			return nil, err
+		}
+		// These versioned grammars introduce no calls or bindings. Activity
+		// references keep their template scope and original source positions.
+		return index.literalReferences(key, d, d.activity.ValueProgramSpan, d.body, "computes", true, false)
 	}
 	literals, err := sourceFillLiteralSpans(index.sources[d.ref.PackagePath][d.source], d.activity.Assembly)
 	if err != nil {

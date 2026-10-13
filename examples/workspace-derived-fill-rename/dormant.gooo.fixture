@@ -1,0 +1,4 @@
+package app
+namespace derive129_app
+import fees "derive129/helpers"
+activity Bare(Integer) -> Integer computes "return fees.Base(input)-1"

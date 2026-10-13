@@ -1,0 +1,4 @@
+package helpers
+namespace derive129_helpers
+entity Integer id "urn:derive129:integer"
+activity Base(Integer) -> Integer id "urn:derive129:base" computes "return input+83"
