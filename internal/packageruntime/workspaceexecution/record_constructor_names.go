@@ -13,6 +13,10 @@ import (
 )
 
 func (n workspaceRecordNames) rewriteConstructors(pkg, source string, body bool, scopes ...recordConstructorScope) (string, error) {
+	return n.rewriteConstructorsWithEdits(pkg, source, body, scopes, nil)
+}
+
+func (n workspaceRecordNames) rewriteConstructorsWithEdits(pkg, source string, body bool, scopes []recordConstructorScope, edits *[]BodySourceEdit) (string, error) {
 	if source == "" || len(n.canonical) == 0 {
 		return source, nil
 	}
@@ -61,6 +65,9 @@ func (n workspaceRecordNames) rewriteConstructors(pkg, source string, body bool,
 	}
 	sort.Slice(changes, func(i, j int) bool { return changes[i].start > changes[j].start })
 	for _, change := range changes {
+		if edits != nil {
+			*edits = append(*edits, BodySourceEdit{change.start, change.end, change.name})
+		}
 		source = source[:change.start] + change.name + source[change.end:]
 	}
 	return source, nil

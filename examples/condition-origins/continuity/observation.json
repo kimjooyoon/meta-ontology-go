@@ -1,0 +1,267 @@
+{
+  "historical_fixtures_replayed": 0,
+  "model_calls": 0,
+  "native_executions": 0,
+  "origin_absence_preserved": true,
+  "prepared_with_origins": {
+    "condition_origins": [
+      {
+        "lowered_activity_id": "urn:dispatch3179:route",
+        "lowered_body_sha256": "sha256:4cc60770b1780a74df043ddc76e4422217d78a38fd2e0eed26794ef9762cd73d",
+        "lowered_decoded_start": 3,
+        "lowered_decoded_end": 13,
+        "input_source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "kind": "activity",
+            "stable_id": "urn:dispatch3179:route",
+            "name": "Route",
+            "source_sha256": "sha256:e831bf492b6105a124064f203ccc68482e7661d10eaf81d1c6c51c16346f8bdc",
+            "start_byte": 86,
+            "end_byte": 214
+          },
+          "status": "MAPPED",
+          "view": "workspace_input_file",
+          "package_path": "dispatch3179",
+          "filename": "기원3179.gooo",
+          "activity_id": "urn:dispatch3179:route",
+          "source_sha256": "sha256:e831bf492b6105a124064f203ccc68482e7661d10eaf81d1c6c51c16346f8bdc",
+          "start_byte": 162,
+          "end_byte": 172,
+          "expression": "input \u003c 83"
+        }
+      }
+    ],
+    "schema": "gooo/workspace-body-program/v1",
+    "workspace_image": {
+      "schema": "gooo/package-runtime-image/v1",
+      "init_order": [
+        "dispatch3179"
+      ],
+      "packages": [
+        {
+          "path": "dispatch3179",
+          "name": "dispatch3179",
+          "namespace": "dispatch3179",
+          "imports": null,
+          "exports": [
+            {
+              "name": "Route",
+              "kind": "activity",
+              "id": "urn:dispatch3179:route",
+              "input_types": [
+                "urn:gooo:type:integer"
+              ],
+              "output_type": "urn:gooo:type:integer"
+            },
+            {
+              "name": "Integer",
+              "kind": "entity",
+              "id": "urn:gooo:type:integer"
+            }
+          ],
+          "sources": [
+            {
+              "filename": "기원3179.gooo",
+              "source_digest": "sha256:9e0cb41a3c6f022a852083fd98b6c31a4883e8579e7f371f1797abfb0ad71416",
+              "semantic_digest": "sha256:3700f9ad85ec936b249e0fa2d7302340f41109b1426e05156a597ab48c97f995",
+              "declarations": 2
+            }
+          ],
+          "declarations": 2,
+          "semantic_digest": "sha256:2c671a207920197a8d115830c1ae475e98a597b1fead8eb6ddb7a287c00423ae"
+        }
+      ],
+      "entry": {
+        "package_path": "dispatch3179",
+        "source": "기원3179.gooo",
+        "activity": "Route",
+        "inputs": [
+          "Integer"
+        ],
+        "output": "Integer"
+      },
+      "digest": "sha256:934a0ebcada26e076dc336bd501508ea65bc05e5e1bbeb2c91c2115ed7815830"
+    },
+    "entry": {
+      "package_path": "dispatch3179",
+      "activity": "Route",
+      "lowered_name": "GoooPackage0ActivityRoute"
+    },
+    "activities": [
+      {
+        "package_path": "dispatch3179",
+        "activity": "Route",
+        "lowered_name": "GoooPackage0ActivityRoute"
+      }
+    ],
+    "lowered_gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nactivity GoooPackage0ActivityRoute(Integer) -\u003e Integer id \"urn:dispatch3179:route\" computes \"if input \u003c 83 { return input + 19 }; return input - 23\"\n",
+    "scope": "explicitly bound workspace activity bodies lowered to one typed Gooo graph; execution requires finite cases and native Go compilation"
+  },
+  "program": {
+    "condition_origins": [
+      {
+        "lowered_activity_id": "urn:dispatch3179:route",
+        "lowered_body_sha256": "sha256:4cc60770b1780a74df043ddc76e4422217d78a38fd2e0eed26794ef9762cd73d",
+        "lowered_decoded_start": 3,
+        "lowered_decoded_end": 13,
+        "input_source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "kind": "activity",
+            "stable_id": "urn:dispatch3179:route",
+            "name": "Route",
+            "source_sha256": "sha256:e831bf492b6105a124064f203ccc68482e7661d10eaf81d1c6c51c16346f8bdc",
+            "start_byte": 86,
+            "end_byte": 214
+          },
+          "status": "MAPPED",
+          "view": "workspace_input_file",
+          "package_path": "dispatch3179",
+          "filename": "기원3179.gooo",
+          "activity_id": "urn:dispatch3179:route",
+          "source_sha256": "sha256:e831bf492b6105a124064f203ccc68482e7661d10eaf81d1c6c51c16346f8bdc",
+          "start_byte": 162,
+          "end_byte": 172,
+          "expression": "input \u003c 83"
+        }
+      }
+    ],
+    "schema": "gooo/workspace-body-program/v1",
+    "workspace_image": {
+      "schema": "gooo/package-runtime-image/v1",
+      "init_order": [
+        "dispatch3179"
+      ],
+      "packages": [
+        {
+          "path": "dispatch3179",
+          "name": "dispatch3179",
+          "namespace": "dispatch3179",
+          "imports": null,
+          "exports": [
+            {
+              "name": "Route",
+              "kind": "activity",
+              "id": "urn:dispatch3179:route",
+              "input_types": [
+                "urn:gooo:type:integer"
+              ],
+              "output_type": "urn:gooo:type:integer"
+            },
+            {
+              "name": "Integer",
+              "kind": "entity",
+              "id": "urn:gooo:type:integer"
+            }
+          ],
+          "sources": [
+            {
+              "filename": "기원3179.gooo",
+              "source_digest": "sha256:9e0cb41a3c6f022a852083fd98b6c31a4883e8579e7f371f1797abfb0ad71416",
+              "semantic_digest": "sha256:3700f9ad85ec936b249e0fa2d7302340f41109b1426e05156a597ab48c97f995",
+              "declarations": 2
+            }
+          ],
+          "declarations": 2,
+          "semantic_digest": "sha256:2c671a207920197a8d115830c1ae475e98a597b1fead8eb6ddb7a287c00423ae"
+        }
+      ],
+      "entry": {
+        "package_path": "dispatch3179",
+        "source": "기원3179.gooo",
+        "activity": "Route",
+        "inputs": [
+          "Integer"
+        ],
+        "output": "Integer"
+      },
+      "digest": "sha256:934a0ebcada26e076dc336bd501508ea65bc05e5e1bbeb2c91c2115ed7815830"
+    },
+    "entry": {
+      "package_path": "dispatch3179",
+      "activity": "Route",
+      "lowered_name": "GoooPackage0ActivityRoute"
+    },
+    "activities": [
+      {
+        "package_path": "dispatch3179",
+        "activity": "Route",
+        "lowered_name": "GoooPackage0ActivityRoute"
+      }
+    ],
+    "lowered_gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nactivity GoooPackage0ActivityRoute(Integer) -\u003e Integer id \"urn:dispatch3179:route\" computes \"if input \u003c 83 { return input + 19 }; return input - 23\"\n",
+    "scope": "explicitly bound workspace activity bodies lowered to one typed Gooo graph; execution requires finite cases and native Go compilation"
+  },
+  "recorded_origins_compared": true,
+  "recorded_without_origins": {
+    "schema": "gooo/workspace-body-program/v1",
+    "workspace_image": {
+      "schema": "gooo/package-runtime-image/v1",
+      "init_order": [
+        "dispatch3179"
+      ],
+      "packages": [
+        {
+          "path": "dispatch3179",
+          "name": "dispatch3179",
+          "namespace": "dispatch3179",
+          "imports": null,
+          "exports": [
+            {
+              "name": "Route",
+              "kind": "activity",
+              "id": "urn:dispatch3179:route",
+              "input_types": [
+                "urn:gooo:type:integer"
+              ],
+              "output_type": "urn:gooo:type:integer"
+            },
+            {
+              "name": "Integer",
+              "kind": "entity",
+              "id": "urn:gooo:type:integer"
+            }
+          ],
+          "sources": [
+            {
+              "filename": "기원3179.gooo",
+              "source_digest": "sha256:9e0cb41a3c6f022a852083fd98b6c31a4883e8579e7f371f1797abfb0ad71416",
+              "semantic_digest": "sha256:3700f9ad85ec936b249e0fa2d7302340f41109b1426e05156a597ab48c97f995",
+              "declarations": 2
+            }
+          ],
+          "declarations": 2,
+          "semantic_digest": "sha256:2c671a207920197a8d115830c1ae475e98a597b1fead8eb6ddb7a287c00423ae"
+        }
+      ],
+      "entry": {
+        "package_path": "dispatch3179",
+        "source": "기원3179.gooo",
+        "activity": "Route",
+        "inputs": [
+          "Integer"
+        ],
+        "output": "Integer"
+      },
+      "digest": "sha256:934a0ebcada26e076dc336bd501508ea65bc05e5e1bbeb2c91c2115ed7815830"
+    },
+    "entry": {
+      "package_path": "dispatch3179",
+      "activity": "Route",
+      "lowered_name": "GoooPackage0ActivityRoute"
+    },
+    "activities": [
+      {
+        "package_path": "dispatch3179",
+        "activity": "Route",
+        "lowered_name": "GoooPackage0ActivityRoute"
+      }
+    ],
+    "lowered_gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nactivity GoooPackage0ActivityRoute(Integer) -\u003e Integer id \"urn:dispatch3179:route\" computes \"if input \u003c 83 { return input + 19 }; return input - 23\"\n",
+    "scope": "explicitly bound workspace activity bodies lowered to one typed Gooo graph; execution requires finite cases and native Go compilation"
+  },
+  "source": "package dispatch3179\nnamespace dispatch3179\nentity Integer id \"urn:gooo:type:integer\"\nactivity Route(Integer) -\u003e Integer id \"urn:dispatch3179:route\" computes \"if input \u003c 83 { return input + 19 }; return input - 23\"\n"
+}

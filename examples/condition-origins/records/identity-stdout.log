@@ -1,0 +1,6 @@
+=== RUN   TestConditionDeclarationOriginCanonicalIDs2617
+    body_condition_declaration_test.go:19: lower activity identity: bidir field is not representable: invalid bidir field: field urn:Origin2617:Amount parent is urn:Origin2617:Request, want URN:Origin2617:Request
+--- FAIL: TestConditionDeclarationOriginCanonicalIDs2617 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.509s
+FAIL

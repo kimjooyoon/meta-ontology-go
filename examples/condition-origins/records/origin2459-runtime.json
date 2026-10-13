@@ -1,0 +1,329 @@
+{
+  "schema": "gooo/body-composition-runtime/v1",
+  "stage": "COMPLETE",
+  "composition_sha256": "sha256:7ff282f5d8b92d14d26daf5683be0a380493e281e0a29a8e244e7cd273de93ef",
+  "original_source_sha256": "sha256:16a670fc9e4f6b32f81cf07119e32f531430cf98bd7bf88a324cd4e54b7154db",
+  "selected_source_sha256": "sha256:16a670fc9e4f6b32f81cf07119e32f531430cf98bd7bf88a324cd4e54b7154db",
+  "typed_plan_sha256": "sha256:389e0d5f17619b21a1777aca38cf260e1ebb9125b521cd9cb83d7def0d2b4ae5",
+  "generated_sha256": "sha256:4436ac34e331fdca5cbd5bb9089670435bb39024beea3ba870f58a50f340867c",
+  "driver_sha256": "sha256:23fa038fc2b3ad36a724ab8712ba3eb76afb6d6d041c17b835807cc15f1c2fa6",
+  "observed_projection_sha256": "sha256:f7e17aba06f17ffe1a9d9e911e235f6ec1fb35dd7a035d67c8ce43abf609151b",
+  "observed_driver_sha256": "sha256:ada60ed9f18b2e1b9bd05b42abc49087ae389a60d628b5a2598e4ed07f5763ee",
+  "runtime_suite_sha256": "sha256:5fad461558c968ace59ac7a6f18b194a2b99fc94133b0fd3915ca451580d7024",
+  "executable_sha256": "sha256:9c7263972d6a36e7dc0c0617dd7c13b9c88b95cbd31da990f669cc3b8bca2561",
+  "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+  "go_tool_selection": "explicit",
+  "go_version": "go version go1.27.2 darwin/arm64",
+  "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+  "producer_module": {
+    "path": "github.com/kimjooyoon/meta-ontology-go",
+    "version": "(devel)"
+  },
+  "toolchain": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 9093917,
+    "user_ns": 4038000,
+    "system_ns": 2882000,
+    "peak_rss_bytes": 14434304,
+    "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 1223792,
+      "wait_ns": 7870125,
+      "deadline_remaining_ns": 59987238458,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "build": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 293693542,
+    "user_ns": 128299000,
+    "system_ns": 89866000,
+    "peak_rss_bytes": 87506944,
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 949833,
+      "wait_ns": 292743709,
+      "deadline_remaining_ns": 59977127208,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "runs": [
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 358049125,
+      "user_ns": 3655000,
+      "system_ns": 6473000,
+      "peak_rss_bytes": 4997120,
+      "stdout_sha256": "sha256:fa29d4573d89dbe607c7780504d4ad8ecb3f77967eccc968c5f27d9fb02ee33b",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 925208,
+        "wait_ns": 357123917,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59681998916,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 8536000,
+      "user_ns": 2765000,
+      "system_ns": 3987000,
+      "peak_rss_bytes": 5062656,
+      "stdout_sha256": "sha256:fa29d4573d89dbe607c7780504d4ad8ecb3f77967eccc968c5f27d9fb02ee33b",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 2650375,
+        "wait_ns": 5885625,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59323262833,
+        "context_at_start_return": "ACTIVE"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "origin2459://calculate",
+          "input": {
+            "quantity": -3
+          },
+          "input_fields": [
+            {
+              "id": "origin2459://quantity",
+              "name": "quantity",
+              "value": -3
+            }
+          ],
+          "actual": -2,
+          "expected": -2,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "origin2459://calculate",
+          "input": {
+            "quantity": 7
+          },
+          "input_fields": [
+            {
+              "id": "origin2459://quantity",
+              "name": "quantity",
+              "value": 7
+            }
+          ],
+          "actual": 21,
+          "expected": 21,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_index": 2,
+      "deliveries": [
+        {
+          "activity_id": "origin2459://calculate",
+          "input": {
+            "quantity": 58
+          },
+          "input_fields": [
+            {
+              "id": "origin2459://quantity",
+              "name": "quantity",
+              "value": 58
+            }
+          ],
+          "actual": 68,
+          "expected": 68,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": true
+        }
+      ]
+    }
+  ],
+  "projection_replayed": true,
+  "runtime_replayed": true,
+  "finite_passed": 3,
+  "finite_total": 3,
+  "condition_sites": [
+    {
+      "expression_id": "sha256:54fc25e5fffb4caec13e9cbb5b821ca72e006c9e8aa8ce0a15fba9e89592783e",
+      "root_activity_id": "origin2459://calculate",
+      "activity_id": "origin2459://calculate",
+      "expression": "input.GoooFieldf95ae860137b19641834f3e8d32af4132c528dce6d98c38e0d3dab6373ec5063 \u003c 0",
+      "projection_sha256": "sha256:4436ac34e331fdca5cbd5bb9089670435bb39024beea3ba870f58a50f340867c",
+      "start": 518,
+      "end": 601,
+      "source": {
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "origin2459://calculate",
+          "name": "Calculate",
+          "source_sha256": "sha256:16a670fc9e4f6b32f81cf07119e32f531430cf98bd7bf88a324cd4e54b7154db",
+          "start_byte": 218,
+          "end_byte": 413
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:16a670fc9e4f6b32f81cf07119e32f531430cf98bd7bf88a324cd4e54b7154db",
+        "body_sha256": "sha256:923ae9521f2c11bbe5accd51b30fb3d0ca44410446074069fa43ef5466a8c44b",
+        "start_byte": 298,
+        "end_byte": 316,
+        "decoded_start": 3,
+        "decoded_end": 21,
+        "source_ordinal": 0,
+        "expression": "input.quantity \u003c 0",
+        "relation": "retained_condition_node",
+        "fields": [
+          {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "kind": "field",
+              "stable_id": "origin2459://quantity",
+              "name": "quantity",
+              "source_sha256": "sha256:16a670fc9e4f6b32f81cf07119e32f531430cf98bd7bf88a324cd4e54b7154db",
+              "start_byte": 91,
+              "end_byte": 174
+            },
+            "entity_id": "origin2459://request",
+            "field_id": "origin2459://quantity",
+            "name": "quantity"
+          }
+        ]
+      }
+    },
+    {
+      "expression_id": "sha256:bb9585fce45625547b0440d55e550c0363eb3600e8eeec6ca569e09110bed559",
+      "root_activity_id": "origin2459://calculate",
+      "activity_id": "origin2459://calculate",
+      "expression": "input.GoooFieldf95ae860137b19641834f3e8d32af4132c528dce6d98c38e0d3dab6373ec5063 \u003e 52",
+      "projection_sha256": "sha256:4436ac34e331fdca5cbd5bb9089670435bb39024beea3ba870f58a50f340867c",
+      "start": 623,
+      "end": 707,
+      "source": {
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "origin2459://calculate",
+          "name": "Calculate",
+          "source_sha256": "sha256:16a670fc9e4f6b32f81cf07119e32f531430cf98bd7bf88a324cd4e54b7154db",
+          "start_byte": 218,
+          "end_byte": 413
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:16a670fc9e4f6b32f81cf07119e32f531430cf98bd7bf88a324cd4e54b7154db",
+        "body_sha256": "sha256:923ae9521f2c11bbe5accd51b30fb3d0ca44410446074069fa43ef5466a8c44b",
+        "start_byte": 335,
+        "end_byte": 354,
+        "decoded_start": 40,
+        "decoded_end": 59,
+        "source_ordinal": 1,
+        "expression": "input.quantity \u003e 52",
+        "relation": "retained_condition_node",
+        "fields": [
+          {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "kind": "field",
+              "stable_id": "origin2459://quantity",
+              "name": "quantity",
+              "source_sha256": "sha256:16a670fc9e4f6b32f81cf07119e32f531430cf98bd7bf88a324cd4e54b7154db",
+              "start_byte": 91,
+              "end_byte": 174
+            },
+            "entity_id": "origin2459://request",
+            "field_id": "origin2459://quantity",
+            "name": "quantity"
+          }
+        ]
+      }
+    }
+  ],
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "COMPLETE",
+    "recorded_events": 5,
+    "dropped_events": 0,
+    "sha256": "sha256:f8c00c830d2800a3b1129c9e0e19c8759ab7af2d8a19e71fec781b821d9730b3"
+  },
+  "input_separation": {
+    "status": "UNKNOWN",
+    "reason": "UNCLASSIFIED_INPUTS",
+    "unique_inputs": 3,
+    "duplicate_rows": 0,
+    "overlapping_inputs": 0,
+    "disjoint_inputs": 0,
+    "disjoint_cases_passed": 0,
+    "unknown_inputs": 3,
+    "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+  },
+  "model_calls": 0,
+  "elapsed_ns": 686916958,
+  "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+}

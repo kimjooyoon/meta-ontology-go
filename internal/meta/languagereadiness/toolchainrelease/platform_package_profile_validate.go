@@ -22,7 +22,7 @@ func validateComputationPackage(raw, manifest, cases []byte, program workspaceex
 	if r.Schema != "gooo/workspace-body-execution-receipt/v1" || r.Decision != "PASS" || r.Error != "" ||
 		r.Manifest != fmt.Sprintf("sha256:%x", sha256.Sum256(manifest)) ||
 		r.Cases != fmt.Sprintf("sha256:%x", sha256.Sum256(cases)) ||
-		!computationPackageProgramEqual(r.Result.Program, program) ||
+		!computationPackageReceiptProgramEqual(raw, program) ||
 		!boundedTextDigest(r.Result.SourceSHA) ||
 		r.Result.Program.Entry.PackagePath != profile.Package || r.Result.Program.Entry.Activity != profile.Activity ||
 		!boundedTextDigest(sha) || selected.Program != "" && selected.Program != sha {

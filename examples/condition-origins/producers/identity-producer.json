@@ -1,0 +1,156 @@
+{
+  "compiler_source": "6715f8fb19ec96bb92085b924e29f649d0f1b59a",
+  "snapshot_root": "/tmp/gooo-native-source-anchors-20261013/observed-producer2617",
+  "overlays": [
+    {
+      "path": "internal/bodycodegen/body_condition_declaration.go",
+      "sha256": "cc75e15cecda0c9e9e3ae04cf7c54405f84f08dd3e13d4286b0b4a082bdfa137"
+    },
+    {
+      "path": "internal/bodycodegen/body_condition_declaration_test.go",
+      "sha256": "32339392c78e980676fc84bcfff03e381d2aced8ea45042e45f28c55fd2f6ebd"
+    },
+    {
+      "path": "internal/bodycodegen/body_condition_fields.go",
+      "sha256": "f9319b9939a6ec0d83a1b7c3d99d02e27c934b8fe7838d08dc9a5c855ebe5944"
+    },
+    {
+      "path": "internal/bodycodegen/body_condition_origin.go",
+      "sha256": "a69340458b13075ec1339ca54f4c5e4a03494fc37fb77846382d434328236f6a"
+    },
+    {
+      "path": "internal/bodycodegen/body_condition_ranges.go",
+      "sha256": "db59f409f4f211823b1c346517c34b34ef388c686c0a1ea3e2cb37cc76422219"
+    },
+    {
+      "path": "internal/bodycodegen/body_condition_routes_test.go",
+      "sha256": "3873b6943048d434724595515607ca70be1bde8b8dc570debe51e8b73a23e488"
+    },
+    {
+      "path": "internal/bodycodegen/body_condition_source.go",
+      "sha256": "a890d3b73f1bf59460191dc75ef4c039034fe71391539867a017a231d1dd5be2"
+    },
+    {
+      "path": "internal/bodycodegen/body_paths_replay.go",
+      "sha256": "53670ce681a9e02177af4a7067b29870d7265145a2ae54f0d49632da22a0b0ad"
+    },
+    {
+      "path": "internal/bodycodegen/body_projection.go",
+      "sha256": "470a313b2ca4f4b41c3ff4f461cdb37a228fe59325e59d85da7f20119aa0723b"
+    },
+    {
+      "path": "internal/bodycodegen/body_search_replay.go",
+      "sha256": "f1ad4c20aef71fdebed587b91f88c18a534f55ad7822be3b0c4db0cdbfea7815"
+    },
+    {
+      "path": "internal/bodycodegen/bodycodegen.go",
+      "sha256": "7a45203466b5e2e50d4785e7f26e466dc48b62c55eab8082011ea4cb82d8e16f"
+    },
+    {
+      "path": "internal/bodycodegen/record_assembly_replay.go",
+      "sha256": "cd5822a27b1988051777c8725aa0f95e8f2eeca6a4d1c60fd835df225fbe364e"
+    },
+    {
+      "path": "internal/bodycodegen/record_projection.go",
+      "sha256": "213ad87d1dbf8bc184e5aa0ea7529b96bab4440a05a3e7e9f3f3ae21b3b69030"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_replay.go",
+      "sha256": "4dba97267a64d2cecaed88e295a4053741c1add9f2f974710ed49182ffe6c24b"
+    },
+    {
+      "path": "internal/bodyexecution/composition.go",
+      "sha256": "237be29b8566a471d23487833dc202c24954684280008a609e020f44c114318c"
+    },
+    {
+      "path": "internal/bodyexecution/composition_condition_legacy_origin_test.go",
+      "sha256": "3dcf174d6a912adb6633a89d30940c1f29827b6e3ca422e58e195f713c2c7c5f"
+    },
+    {
+      "path": "internal/bodyexecution/composition_condition_lineage_test.go",
+      "sha256": "b9b1f1c2901cac8f99bdeeaa063b569a606b8c9eca8a0e7b59c5825b3e16d805"
+    },
+    {
+      "path": "internal/bodyexecution/composition_condition_origin_usage_test.go",
+      "sha256": "086cecd61fd50c912cd7d0b6e8b43cd0e0aa60014d6052f03dd654dd9574fb60"
+    },
+    {
+      "path": "internal/bodyexecution/composition_condition_projection.go",
+      "sha256": "91bcbacde699e790a047a21debb5263282ee18499886b4f82b6fa820a6a1c1dc"
+    },
+    {
+      "path": "internal/bodyexecution/composition_condition_source.go",
+      "sha256": "730ac5b8296c3079c184c60ec14e936b732434dd0c73eec14fe4db783953a8e2"
+    },
+    {
+      "path": "internal/bodyexecution/composition_conditions.go",
+      "sha256": "2c34c493e5f6b00801d3d56fe6fd07e4909db78b2b870c6a822fa25895d70add"
+    },
+    {
+      "path": "internal/bodyexecution/composition_source_anchor_requirement_test.go",
+      "sha256": "8f140e978bddc8d554a7103ea0101ade8d79646e3682305abb1f7d7f24be9359"
+    },
+    {
+      "path": "internal/bodyexecution/composition_source_anchors_test.go",
+      "sha256": "1b995f0e43ccb6e041af974dae6d091ecdcd76789d3ce26871c34ac32bdde5d7"
+    },
+    {
+      "path": "internal/bodyexecution/condition_origin_consumer_test.go",
+      "sha256": "1901a22c446234aaa48cac1b57ac90e110db724e4cc340147105f161fedb0e76"
+    },
+    {
+      "path": "internal/bodyexecution/condition_origin_facts.go",
+      "sha256": "d3799d02eb4aa5a6db6426c231739bec710da4ee22e4295e817595d06cda2961"
+    },
+    {
+      "path": "internal/bodyexecution/condition_origin_static_consumer_test.go",
+      "sha256": "843a6d7f3f35d8a3fec49d8d4a6a26fb8ac3ee0ff5b641dacde352e46747f0ac"
+    },
+    {
+      "path": "internal/bodyexecution/joint_replay.go",
+      "sha256": "e42a186b9bb1423424a3b82475bfb1cf5f603e920db433276b14f128a5871656"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/body_call_rewrite.go",
+      "sha256": "d07dcd8e8a6a8c62d323649f1e34a28b0c84fee42503e33ff20fdecb4b11fbed"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/condition_lineage_test.go",
+      "sha256": "aaa36a1d42cd84b4ba58200d45c240f2fcd2155b1b0d9c4eb976d9f6b97faa9d"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/condition_source.go",
+      "sha256": "3d651424ba00cba3d3f19fd34d3ec20220f900fb831ab2ed34b5356a708ef6f5"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/construct.go",
+      "sha256": "e26e6786bce19bd19b2280fdd9a720b9f4fc2a79e55145cffdf132318afb0ba8"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/execute.go",
+      "sha256": "d6143499a952e3ecabeee225b2b3521fba730ae2aced4abadd49677f92b9de12"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/program.go",
+      "sha256": "af6024b24120fdcf1c8c5e9ba75766c02a4c2fa4acbcce542f8a0f9c5fb7eee5"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/record_constructor_names.go",
+      "sha256": "47f0bb572dac9254a909fff06fec7ea2710b4035b499015a7f7437ac38a5519b"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/replay.go",
+      "sha256": "b14afc3031516653382d74e06018f1da9288e9df4dc5d2c84504116b0219bdb8"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/resume.go",
+      "sha256": "c7f854b2ae695c8aeaf2ab649c1af3f615217c30192a787f898fb259c14067c4"
+    }
+  ],
+  "fresh_sources": [
+    "origin2617-static"
+  ],
+  "native_execution": false,
+  "historical_local_replays": 0,
+  "model_predictions": 0
+}
