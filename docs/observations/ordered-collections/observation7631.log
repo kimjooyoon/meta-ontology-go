@@ -1,0 +1,17 @@
+=== RUN   TestCollectionCandidateAssembly7523
+    collection_fill_test.go:78: 7523: two declared candidates, selected finite cases3/3, disjoint holdout1/1; ordered arrays compared by values; candidate source linked; model0
+--- PASS: TestCollectionCandidateAssembly7523 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.589s
+=== RUN   TestCollectionUnusedElementAndIndex7567
+    collection_unused_element_test.go:33: 7567: unused element allowed without changing Gooo source; guarded collection index; native3/3 model0
+--- PASS: TestCollectionUnusedElementAndIndex7567 (0.61s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.014s
+=== RUN   TestCollectionCLIGeneration7631
+    entity_fields_collection_test.go:47: CLI check 1  /var/folders/t4/mkd0zjsn2hj2mqwsjftxcfmc0000gn/T/TestCollectionCLIGeneration76312919144230/001/목록7631.gooo:3:37-3:43: error parse.entity-fields-deferred: entity fields are deferred and unsupported by the public syntax
+        
+--- FAIL: TestCollectionCLIGeneration7631 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	0.452s
+FAIL

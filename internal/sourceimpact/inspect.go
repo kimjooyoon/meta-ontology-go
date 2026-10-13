@@ -43,7 +43,7 @@ func parseImpactSource(ctx context.Context, filename string, source []byte, revi
 	if diagnostics.HasErrors() || file == nil {
 		return nil, semantic.IR{}, fmt.Errorf("%s source: %s", revision, diagnostics.Error())
 	}
-	ir, err := bidir.LowerContextWithEntityFieldsSupport(ctx, file, bidir.EntityFieldsV4Support())
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(ctx, file, syntax.EntityFieldsSupportForFile(file, bidir.EntityFieldsV4Support()))
 	if err != nil {
 		return nil, semantic.IR{}, fmt.Errorf("%s source: %w", revision, err)
 	}

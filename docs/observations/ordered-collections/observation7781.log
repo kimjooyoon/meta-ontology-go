@@ -1,0 +1,5 @@
+=== RUN   TestCollectionBoundsAndSourceRules7781
+    collection_bounds_test.go:47: 7781: 256-item finite sum exact; 257-item input and four unsupported source loop forms rejected; model0
+--- PASS: TestCollectionBoundsAndSourceRules7781 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.612s

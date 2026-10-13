@@ -1,0 +1,29 @@
+{
+  "scope": "fresh typed collection registration and storage lifecycle observations",
+  "source_baseline": "0d8a4bfb3afe33c028b9686cc410950a9a832f1f",
+  "registration": {
+    "distinct_fresh_sources": 3,
+    "types": [
+      "integer",
+      "string",
+      "boolean"
+    ],
+    "required_artifact_roles_per_source": 9,
+    "emitted_artifact_roles_per_source": 9,
+    "conflicting_profile_rejections": 9,
+    "historical_denominators_rewritten": 0,
+    "repository_writes": 0,
+    "model_calls": 0
+  },
+  "other_checks": [
+    "v49 adds exactly two language cases while preserving other boundaries",
+    "read-only snapshot cleanup removes owned tree and preserves symlink target",
+    "obsolete exact-text recipe retains retirement origin and loses execution authority"
+  ],
+  "test_functions_passed": 4,
+  "fresh_run_wall_ns": 6586172000,
+  "timing_scope": "one local test invocation including compilation, not an inference benchmark",
+  "historical_local_replays": 0,
+  "producer_archive_sha256": "491f769c9a817eaafe5f2827c209dfcde73960c8d357ea006acef87caf8416d5",
+  "own_public_ci": "required after publication"
+}

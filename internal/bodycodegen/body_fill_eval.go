@@ -290,6 +290,16 @@ func coerceBodyValue(value any, valueType types.Type) (any, error) {
 		}
 		return nil, fmt.Errorf("record value differs from nominal type %s", valueType)
 	}
+	if sequence, ok := value.(*recordBodySequence); ok {
+		slice, sliceOK := valueType.Underlying().(*types.Slice)
+		if sliceOK && sequence != nil {
+			kind, optional, err := recordBodyScalarKind(slice.Elem())
+			if err == nil && !optional && kind == sequence.Kind && len(sequence.Values) <= RepeatedFieldLimit {
+				return sequence, nil
+			}
+		}
+		return nil, fmt.Errorf("collection value differs from declared type %s", valueType)
+	}
 	basic, ok := valueType.Underlying().(*types.Basic)
 	if !ok {
 		return nil, fmt.Errorf("unsupported generated value type %s", valueType)

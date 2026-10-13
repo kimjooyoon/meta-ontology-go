@@ -17,11 +17,12 @@ import (
 
 // Scalar slots keep records value-shaped and bounded; local copies never alias.
 type recordBodyScalar struct {
-	Text    string
-	Boolean bool
-	Integer int64
-	Kind    uint8
-	Present bool
+	Text       string
+	Boolean    bool
+	Integer    int64
+	Kind       uint8
+	Present    bool
+	Collection *recordBodySequence
 }
 
 type recordBodyOptionalScalar struct {
@@ -61,6 +62,13 @@ func recordBodyScalarKind(valueType types.Type) (uint8, bool, error) {
 		optional = true
 		valueType = pointer.Elem()
 	}
+	if sequence, ok := valueType.Underlying().(*types.Slice); ok {
+		kind, nestedOptional, err := recordBodyScalarKind(sequence.Elem())
+		if err != nil || nestedOptional || kind > 3 {
+			return 0, optional, fmt.Errorf("collection elements must be scalar values")
+		}
+		return kind + 3, optional, nil
+	}
 	basic, ok := valueType.Underlying().(*types.Basic)
 	if !ok {
 		return 0, optional, fmt.Errorf("record field type is outside the scalar profile")
@@ -80,6 +88,12 @@ func recordBodyScalarKind(valueType types.Type) (uint8, bool, error) {
 func recordBodyScalarFromValue(value any, kind uint8) (recordBodyScalar, error) {
 	scalar := recordBodyScalar{Kind: kind, Present: true}
 	switch kind {
+	case 4, 5, 6:
+		collection, ok := value.(*recordBodySequence)
+		if !ok || collection == nil || collection.Kind != kind-3 || len(collection.Values) > RepeatedFieldLimit {
+			return recordBodyScalar{}, fmt.Errorf("record field requires its declared collection element type")
+		}
+		scalar.Collection = collection
 	case 1:
 		text, ok := value.(string)
 		if !ok {
@@ -127,6 +141,8 @@ func recordBodyScalarForField(value any, fieldType types.Type) (recordBodyScalar
 
 func recordBodyScalarValue(value recordBodyScalar) any {
 	switch value.Kind {
+	case 4, 5, 6:
+		return value.Collection
 	case 2:
 		return value.Boolean
 	case 3:
@@ -285,23 +301,23 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 		return RecordAssemblyCase{}, fmt.Errorf("record case returned %T", value)
 	}
 	wanted := expected.(recordBodyValue)
-	result := RecordAssemblyCase{Inputs: json.RawMessage(c.Inputs), Expected: json.RawMessage(c.Expected), Passed: actual == wanted}
+	result := RecordAssemblyCase{Inputs: json.RawMessage(c.Inputs), Expected: json.RawMessage(c.Expected), Passed: equalRecordBodyValue(actual, wanted)}
 	object := make(map[string]any, len(record.Fields))
 	for i, field := range record.Fields {
 		actualScalar, expectedScalar := actual.Values[i], wanted.Values[i]
 		actualValue, expectedValue := "ABSENT", "ABSENT"
 		if actualScalar.Present {
-			actualValue = fmt.Sprint(recordScalarJSONValue(actualScalar))
+			actualValue = recordScalarDisplay(actualScalar)
 		}
 		if expectedScalar.Present {
-			expectedValue = fmt.Sprint(recordScalarJSONValue(expectedScalar))
+			expectedValue = recordScalarDisplay(expectedScalar)
 		}
 		typeID := ""
 		if field.TypeID == "urn:gooo:type:boolean" || field.TypeID == "urn:gooo:type:integer" {
 			typeID = field.TypeID
 		}
 		fieldResult := RecordAssemblyField{ID: field.ID, Name: field.Name, TypeID: typeID, Expected: expectedValue,
-			Actual: actualValue, Passed: actualScalar == expectedScalar}
+			Actual: actualValue, Passed: equalRecordBodyScalar(actualScalar, expectedScalar)}
 		if field.Presence == "optional" {
 			fieldResult.Presence = field.Presence
 			fieldResult.ExpectedPresent = new(expectedScalar.Present)
@@ -362,6 +378,9 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 			} else if field.TypeID == "urn:gooo:type:integer" {
 				fieldType = types.Typ[types.Int64]
 			}
+			if field.Cardinality == "many" {
+				fieldType = types.NewSlice(fieldType)
+			}
 			decoded, err := decodeRecordCaseValue(fieldRaw, fieldType, records)
 			if err != nil {
 				return nil, err
@@ -376,6 +395,9 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 			}
 		}
 		return value, nil
+	}
+	if sequence, ok := t.(*types.Slice); ok {
+		return decodeRecordSequence(raw, sequence, records)
 	}
 	switch t {
 	case types.Typ[types.Int64]:

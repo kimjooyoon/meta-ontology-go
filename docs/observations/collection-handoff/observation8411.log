@@ -1,0 +1,11 @@
+=== RUN   TestCollectionHandoff8411
+    collection_handoff_test.go:51: construction cases and holdout remain separate <nil>
+--- FAIL: TestCollectionHandoff8411 (0.75s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.356s
+=== RUN   TestOrderedCollectionSyntax8429
+    ordered_collection_test.go:47: 8429: six fresh ordered-field syntax programs preserve AST/format/semantics/GetPut/PutGet under V5; V1 refuses all six; no native/model execution
+--- PASS: TestOrderedCollectionSyntax8429 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay	0.419s
+FAIL

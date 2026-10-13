@@ -323,7 +323,7 @@ func materializeSplitWithReplayWorkspace(workspace, gitDir, metricsPath string, 
 	if snapshotErr != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "isolate-git-context", "GIT_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context")
 	}
-	defer os.RemoveAll(filepath.Dir(snapshot))
+	defer cleanupGitSnapshot(filepath.Dir(snapshot))
 	environment := childEnvironment(snapshot, temporary)
 	command := []string{"go", "run", "./scripts/source-splitter", "-root", "<workspace>", "-metrics", "<source-metrics>", "-sha", plan.HeadSHA, "-subject", action.Subject, "-evidence-json"}
 	result, runErr := runProcessObserved(temporary, environment, command, []string{"go", "run", "./scripts/source-splitter", "-root", temporary, "-metrics", metricsPath, "-sha", plan.HeadSHA, "-subject", action.Subject, "-evidence-json"}, &trace, pass, "executor")
@@ -400,7 +400,7 @@ func materializeExtract(workspace, gitDir, metricsPath string, plan generation.P
 	if snapshotErr != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "isolate-git-context", "GIT_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context")
 	}
-	defer os.RemoveAll(filepath.Dir(snapshot))
+	defer cleanupGitSnapshot(filepath.Dir(snapshot))
 	environment := childEnvironment(snapshot, temporary)
 	sourcePath := filepath.Join(temporary, filepath.FromSlash(subject.Path))
 	before, err := os.ReadFile(sourcePath)
@@ -874,18 +874,18 @@ func readOnlyGitSnapshot(source, expected string) (string, error) {
 	command := exec.Command("git", "clone", "--bare", "--no-local", source, target)
 	command.Env = gitEnvironment
 	if err := command.Run(); err != nil {
-		_ = os.RemoveAll(parent)
+		cleanupGitSnapshot(parent)
 		return "", err
 	}
 	headCommand := exec.Command("git", "--git-dir", target, "rev-parse", "HEAD")
 	headCommand.Env = gitEnvironment
 	head, err := headCommand.Output()
 	if err != nil || strings.TrimSpace(string(head)) != expected {
-		_ = os.RemoveAll(parent)
+		cleanupGitSnapshot(parent)
 		return "", fmt.Errorf("git snapshot head does not match expected head")
 	}
 	if err := makeReadOnlySnapshot(target); err != nil {
-		_ = os.RemoveAll(parent)
+		cleanupGitSnapshot(parent)
 		return "", err
 	}
 	return target, nil

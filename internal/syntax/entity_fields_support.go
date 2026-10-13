@@ -82,3 +82,32 @@ func EntityFieldsV4Support() EntityFieldsSupport {
 		ID: EntityFieldsV4ProfileID, Version: EntityFieldsV4ProfileVersion, Digest: EntityFieldsV4ProfileDigest,
 	}}
 }
+
+// EntityFieldsV5Support represents ordered scalar collections. Required fields
+// must be present; empty arrays are present values, and null is never a value.
+// The profile binds a maximum of 256 elements per repeated field.
+func EntityFieldsV5Support() EntityFieldsSupport {
+	return EntityFieldsSupport{State: EntityFieldsSupported, Profile: EntityFieldsProfile{
+		ID: EntityFieldsV5ProfileID, Version: EntityFieldsV5ProfileVersion, Digest: EntityFieldsV5ProfileDigest,
+	}}
+}
+
+const RepeatedFieldLimit = 256
+
+// EntityFieldsSupportForFile advances only source that declares many fields.
+// Scalar-only source retains the caller's original profile and fingerprints.
+func EntityFieldsSupportForFile(file *File, prior EntityFieldsSupport) EntityFieldsSupport {
+	if file == nil {
+		return prior
+	}
+	for _, declaration := range file.Declarations {
+		if entity, ok := declaration.(*EntityDecl); ok {
+			for _, field := range entity.Fields {
+				if field.Cardinality == FieldCardinalityMany {
+					return EntityFieldsV5Support()
+				}
+			}
+		}
+	}
+	return prior
+}

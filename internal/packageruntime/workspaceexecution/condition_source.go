@@ -38,7 +38,7 @@ func prepareWorkspaceConditionSources(manifest packageruntime.Manifest, calls wo
 		if d.body == "" {
 			continue
 		}
-		ranges, err := bodycodegen.BodyConditionRanges(d.body, len(d.activity.Inputs))
+		ranges, err := bodycodegen.BodyConditionSourceRanges(d.body, len(d.activity.Inputs))
 		if err != nil {
 			return nil, err
 		}

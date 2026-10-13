@@ -1,0 +1,1395 @@
+{
+  "cases": {
+    "schema": "gooo/body-composition-cases/v1",
+    "cases": [
+      {
+        "inputs": {
+          "collection7379/app:Compute": {
+            "amounts": [
+              3,
+              -8,
+              20
+            ]
+          }
+        },
+        "expected": {
+          "collection7379/app:Compute": {
+            "total": 27,
+            "amounts": [
+              3,
+              -8,
+              20
+            ]
+          }
+        }
+      },
+      {
+        "inputs": {
+          "collection7379/app:Compute": {
+            "amounts": [],
+            "flags": []
+          }
+        },
+        "expected": {
+          "collection7379/app:Compute": {
+            "total": 0,
+            "amounts": []
+          }
+        }
+      },
+      {
+        "inputs": {
+          "collection7379/app:Compute": {
+            "amounts": [
+              9007199254741001
+            ],
+            "flags": [
+              true,
+              false
+            ]
+          }
+        },
+        "expected": {
+          "collection7379/app:Compute": {
+            "total": 9007199254741003,
+            "amounts": [
+              9007199254741001
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "historical_source_executions": 0,
+  "manifest": {
+    "schema": "gooo/package-runtime-manifest/v1",
+    "entry": {
+      "package_path": "collection7379/app",
+      "activity": "Compute"
+    },
+    "packages": [
+      {
+        "path": "collection7379/math",
+        "name": "math",
+        "imports": null,
+        "sources": [
+          {
+            "filename": "보정.gooo",
+            "content": "package math\nnamespace workspace7379_math\nentity Integer id \"urn:gooo:type:integer\"\nactivity Adjust(Integer) -\u003e Integer id \"urn:workspace7379:adjust\" computes \"return input + 2\"\n"
+          }
+        ]
+      },
+      {
+        "path": "collection7379/app",
+        "name": "app",
+        "imports": [
+          "collection7379/math"
+        ],
+        "sources": [
+          {
+            "filename": "계산.gooo",
+            "content": "package app\nnamespace workspace7379_app\nimport 계산 \"collection7379/math\"\nentity Basket id \"urn:workspace7379:basket\" fields {\n field amounts id \"urn:workspace7379:amounts\" type integer required many\n field flags id \"urn:workspace7379:flags\" type boolean optional many\n}\nentity Summary id \"urn:workspace7379:summary\" fields {\n field total id \"urn:workspace7379:total\" type integer required one\n field amounts id \"urn:workspace7379:originals\" type integer required many\n}\nactivity Compute(Basket) -\u003e Summary id \"urn:workspace7379:compute\" computes \"let 합계 = 0; for 값 in input.amounts { let 조정 = 계산.Adjust(값); if 조정 \u003e 0 { 합계 = 합계 + 조정 } }; return Summary{total: 합계, amounts: input.amounts}\"\n"
+          }
+        ]
+      }
+    ],
+    "mutation_authorized": false
+  },
+  "result": {
+    "schema": "gooo/workspace-body-execution/v1",
+    "program": {
+      "activity_origins": [
+        {
+          "lowered_activity_id": "urn:workspace7379:compute",
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:workspace7379:compute",
+              "name": "Compute",
+              "source_sha256": "sha256:1b579b709320814c61997d15a10a17ee3b46b284ab3130f13d90ca9f510c1035",
+              "start_byte": 473,
+              "end_byte": 726
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "collection7379/app",
+            "filename": "계산.gooo",
+            "activity_id": "urn:workspace7379:compute",
+            "source_sha256": "sha256:1b579b709320814c61997d15a10a17ee3b46b284ab3130f13d90ca9f510c1035",
+            "start_byte": 550,
+            "end_byte": 725
+          }
+        },
+        {
+          "lowered_activity_id": "urn:workspace7379:adjust",
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:workspace7379:adjust",
+              "name": "Adjust",
+              "source_sha256": "sha256:1573c6a8138520fcc007536bf36ebc602b0153ba2cf4a48f1102091812022aa8",
+              "start_byte": 84,
+              "end_byte": 177
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "collection7379/math",
+            "filename": "보정.gooo",
+            "activity_id": "urn:workspace7379:adjust",
+            "source_sha256": "sha256:1573c6a8138520fcc007536bf36ebc602b0153ba2cf4a48f1102091812022aa8",
+            "start_byte": 160,
+            "end_byte": 176
+          }
+        }
+      ],
+      "condition_origins": [
+        {
+          "lowered_activity_id": "urn:workspace7379:compute",
+          "lowered_body_sha256": "sha256:5e8d5e773b021711202030ea67b8c19057bfb93cd5bedff0a2b8ea35cde89ad0",
+          "lowered_decoded_start": 92,
+          "lowered_decoded_end": 102,
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:workspace7379:compute",
+              "name": "Compute",
+              "source_sha256": "sha256:1b579b709320814c61997d15a10a17ee3b46b284ab3130f13d90ca9f510c1035",
+              "start_byte": 473,
+              "end_byte": 726
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "collection7379/app",
+            "filename": "계산.gooo",
+            "activity_id": "urn:workspace7379:compute",
+            "source_sha256": "sha256:1b579b709320814c61997d15a10a17ee3b46b284ab3130f13d90ca9f510c1035",
+            "start_byte": 629,
+            "end_byte": 639,
+            "expression": "조정 \u003e 0"
+          }
+        }
+      ],
+      "schema": "gooo/workspace-body-program/v1",
+      "workspace_image": {
+        "schema": "gooo/package-runtime-image/v1",
+        "init_order": [
+          "collection7379/math",
+          "collection7379/app"
+        ],
+        "packages": [
+          {
+            "path": "collection7379/math",
+            "name": "math",
+            "namespace": "workspace7379_math",
+            "imports": null,
+            "exports": [
+              {
+                "name": "Adjust",
+                "kind": "activity",
+                "id": "urn:workspace7379:adjust",
+                "input_types": [
+                  "urn:gooo:type:integer"
+                ],
+                "output_type": "urn:gooo:type:integer"
+              },
+              {
+                "name": "Integer",
+                "kind": "entity",
+                "id": "urn:gooo:type:integer"
+              }
+            ],
+            "sources": [
+              {
+                "filename": "보정.gooo",
+                "source_digest": "sha256:31977ef8b185202bfdfc7bd12bc24b1504efaebbcbea7b3ccb1e7b8a38695163",
+                "semantic_digest": "sha256:a6d9ce8fbfcf95b5092c69f9f2f0f185b355ba8c12ba6c4778361e860c28be30",
+                "declarations": 2
+              }
+            ],
+            "declarations": 2,
+            "semantic_digest": "sha256:ac2c2117e04dc45535c6ab25c63f3eb6deb9ba8e5a0395fce68ca3f2b46080f6"
+          },
+          {
+            "path": "collection7379/app",
+            "name": "app",
+            "namespace": "workspace7379_app",
+            "imports": [
+              "collection7379/math"
+            ],
+            "exports": [
+              {
+                "name": "Compute",
+                "kind": "activity",
+                "id": "urn:workspace7379:compute",
+                "input_types": [
+                  "urn:workspace7379:basket"
+                ],
+                "output_type": "urn:workspace7379:summary"
+              },
+              {
+                "name": "Basket",
+                "kind": "entity",
+                "id": "urn:workspace7379:basket"
+              },
+              {
+                "name": "Summary",
+                "kind": "entity",
+                "id": "urn:workspace7379:summary"
+              }
+            ],
+            "sources": [
+              {
+                "filename": "계산.gooo",
+                "source_digest": "sha256:6dd7fac149e04a877de617b40c0f6561d54b25f0081095f90417fb0e7dc944c9",
+                "semantic_digest": "sha256:43e920a0a1484763786f6146b40639c115008841a9d0296ddbe8a26c1a913d5c",
+                "declarations": 3
+              }
+            ],
+            "declarations": 3,
+            "semantic_digest": "sha256:9f0ccfe9361f599792f5f60ed82a9f8581ac4aefb474f51177f19be71886b0d7"
+          }
+        ],
+        "entry": {
+          "package_path": "collection7379/app",
+          "source": "계산.gooo",
+          "activity": "Compute",
+          "inputs": [
+            "Basket"
+          ],
+          "output": "Summary"
+        },
+        "digest": "sha256:bb801f5bee5b3a9f0cf60b696ed8f7f2db6c1c52db56c1c26415c882779a2c33"
+      },
+      "entry": {
+        "package_path": "collection7379/app",
+        "activity": "Compute",
+        "lowered_name": "GoooPackage1ActivityCompute"
+      },
+      "activities": [
+        {
+          "package_path": "collection7379/app",
+          "activity": "Compute",
+          "lowered_name": "GoooPackage1ActivityCompute"
+        }
+      ],
+      "lowered_gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nentity Basket id \"urn:workspace7379:basket\" fields {\n    field amounts id \"urn:workspace7379:amounts\" type integer required many\n    field flags id \"urn:workspace7379:flags\" type boolean optional many\n}\nentity Summary id \"urn:workspace7379:summary\" fields {\n    field total id \"urn:workspace7379:total\" type integer required one\n    field amounts id \"urn:workspace7379:originals\" type integer required many\n}\nactivity GoooPackage0ActivityAdjust(Integer) -\u003e Integer id \"urn:workspace7379:adjust\" computes \"return input + 2\"\nactivity GoooPackage1ActivityCompute(Basket) -\u003e Summary id \"urn:workspace7379:compute\" computes \"let 합계 = 0; for 값 in input.amounts { let 조정 = GoooPackage0ActivityAdjust(값); if 조정 \u003e 0 { 합계 = 합계 + 조정 } }; return Summary{total: 합계, amounts: input.amounts}\"\n",
+      "scope": "entry and explicit bind producers with source-resolved pure activity calls; original package identities map to lowered names; finite native observations",
+      "pure_calls": {
+        "schema": "gooo/workspace-pure-calls/v1",
+        "activities": [
+          {
+            "activity": {
+              "package_path": "collection7379/app",
+              "activity": "Compute",
+              "lowered_name": "GoooPackage1ActivityCompute"
+            },
+            "activity_id": "urn:workspace7379:compute",
+            "lowered_activity_id": "urn:workspace7379:compute",
+            "source": "계산.gooo",
+            "source_body_sha256": "sha256:fefd3e091d0634f5f3b5663caa0f6443609b39259c087298fbef7e6a80c4a5ec"
+          },
+          {
+            "activity": {
+              "package_path": "collection7379/math",
+              "activity": "Adjust",
+              "lowered_name": "GoooPackage0ActivityAdjust"
+            },
+            "activity_id": "urn:workspace7379:adjust",
+            "lowered_activity_id": "urn:workspace7379:adjust",
+            "source": "보정.gooo",
+            "source_body_sha256": "sha256:5d2dc7f32509c0f4a884beafbf9ab1830ed627a7a6ca04aa242996bf9b1e38e4"
+          }
+        ],
+        "sites": [
+          {
+            "caller": "collection7379/app:Compute",
+            "callee": "collection7379/math:Adjust",
+            "surface": "computes",
+            "start_byte": 56,
+            "end_byte": 69
+          }
+        ]
+      }
+    },
+    "execution_source_sha256": "sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+    "composition": {
+      "schema": "gooo/body-composition/v1",
+      "stage": "COMPLETE",
+      "original_source_sha256": "sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+      "selected_source_sha256": "sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+      "generated_sha256": "sha256:19ad17c6e17b561fa4aa22743cf5da00c11a3b920b68b93d630194ca6e8ca759",
+      "driver_sha256": "sha256:a1c8a44fdfb90fc3fca16d35ae434a8751b9259957af088550520a74ea58bb08",
+      "plan": {
+        "schema": "gooo/body-composition-plan/v1",
+        "entry_activity": "GoooPackage1ActivityCompute",
+        "typed_plan_sha256": "sha256:9fd405a537660ff8a21412ab0f4397d9983e9258ab14c0ac4e5537c609cf0a5e",
+        "semantic_fingerprint": "8a4a5711e69b5dd764f4f3132bb36d2a6be97c42cb8200fd10f9fac0696ec989",
+        "activities": [
+          {
+            "name": "GoooPackage1ActivityCompute",
+            "id": "urn:workspace7379:compute",
+            "input_type": "Basket",
+            "output_type": "Summary",
+            "input_entity_id": "urn:workspace7379:basket",
+            "output_entity_id": "urn:workspace7379:summary",
+            "go_function": "GoooComposedActivity0",
+            "input_from": -1,
+            "assembling": false
+          }
+        ],
+        "edges": [],
+        "record_types": [
+          {
+            "name": "Basket",
+            "id": "urn:workspace7379:basket",
+            "go_name": "GoooRecordbdce0f47c715f1271d307597105e7820ca72150a5409721cfee3d06df1c98eeb",
+            "fields": [
+              {
+                "name": "amounts",
+                "id": "urn:workspace7379:amounts",
+                "type_id": "urn:gooo:type:integer",
+                "go_name": "GoooField193e278cd0e6e562b3d97842851caf600ff2cc752d6b38f8236e03973ef796cc",
+                "cardinality": "many"
+              },
+              {
+                "name": "flags",
+                "id": "urn:workspace7379:flags",
+                "type_id": "urn:gooo:type:boolean",
+                "go_name": "GoooFieldc4f5492fe30974cb09585ca83b57bbb77e91c5022939280996b8fc423a48ba18",
+                "presence": "optional",
+                "cardinality": "many"
+              }
+            ]
+          },
+          {
+            "name": "Summary",
+            "id": "urn:workspace7379:summary",
+            "go_name": "GoooRecord9dbb5768c1b1357caea135e85caf79c89d686d95e0d35dc9d74038b2e34c7490",
+            "fields": [
+              {
+                "name": "total",
+                "id": "urn:workspace7379:total",
+                "type_id": "urn:gooo:type:integer",
+                "go_name": "GoooField6b85dc642b7b2635bb61a4ddeb0a833d3d25d684e82624fd739766ccf172fe0d"
+              },
+              {
+                "name": "amounts",
+                "id": "urn:workspace7379:originals",
+                "type_id": "urn:gooo:type:integer",
+                "go_name": "GoooFieldbb7f8e74a8bd8bda9ad94abe292a67a81447f276ea375a7f8e448b09391bb43c",
+                "cardinality": "many"
+              }
+            ]
+          }
+        ]
+      },
+      "steps": [
+        {
+          "input_source_sha256": "sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+          "generation": {
+            "report": {
+              "schema": "gooo/body-codegen-report/v3",
+              "decision": "PASS",
+              "activity": "GoooPackage1ActivityCompute",
+              "activity_id": "urn:workspace7379:compute",
+              "input_type": "Basket",
+              "record_types": [
+                {
+                  "name": "Basket",
+                  "id": "urn:workspace7379:basket",
+                  "go_name": "GoooRecordbdce0f47c715f1271d307597105e7820ca72150a5409721cfee3d06df1c98eeb",
+                  "fields": [
+                    {
+                      "name": "amounts",
+                      "id": "urn:workspace7379:amounts",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField193e278cd0e6e562b3d97842851caf600ff2cc752d6b38f8236e03973ef796cc",
+                      "cardinality": "many"
+                    },
+                    {
+                      "name": "flags",
+                      "id": "urn:workspace7379:flags",
+                      "type_id": "urn:gooo:type:boolean",
+                      "go_name": "GoooFieldc4f5492fe30974cb09585ca83b57bbb77e91c5022939280996b8fc423a48ba18",
+                      "presence": "optional",
+                      "cardinality": "many"
+                    }
+                  ]
+                },
+                {
+                  "name": "Summary",
+                  "id": "urn:workspace7379:summary",
+                  "go_name": "GoooRecord9dbb5768c1b1357caea135e85caf79c89d686d95e0d35dc9d74038b2e34c7490",
+                  "fields": [
+                    {
+                      "name": "total",
+                      "id": "urn:workspace7379:total",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField6b85dc642b7b2635bb61a4ddeb0a833d3d25d684e82624fd739766ccf172fe0d"
+                    },
+                    {
+                      "name": "amounts",
+                      "id": "urn:workspace7379:originals",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooFieldbb7f8e74a8bd8bda9ad94abe292a67a81447f276ea375a7f8e448b09391bb43c",
+                      "cardinality": "many"
+                    }
+                  ]
+                }
+              ],
+              "output_type": "Summary",
+              "plan_sha256": "sha256:b09d1ccd60942a7fc2cca480140f152084c4e81dd07960814f709bb858b86958",
+              "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+              "source_digest": "sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+              "program_digest": "sha256:44aaf366c43859cad6a1f4953350cd30df5134fec337922cd00221f24bb41265",
+              "generated_digest": "sha256:5353a8aa42905c04553f2383cfeebe4d3cf9e7bb98b3b406cb7bafac4f5344b7",
+              "replay_digest": "sha256:5353a8aa42905c04553f2383cfeebe4d3cf9e7bb98b3b406cb7bafac4f5344b7",
+              "route": "preserve",
+              "route_decision": {
+                "schema": "gooo/typed-decision-receipt/v1",
+                "mode": "deterministic_fallback",
+                "selected": "preserve",
+                "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+                "provider": "deterministic",
+                "request_sha256": ""
+              },
+              "route_selection": {
+                "method": "single_eligible_route",
+                "proposed_route": "preserve",
+                "final_route": "preserve"
+              },
+              "route_decision_latency_ms": 0,
+              "body_conditions": [
+                {
+                  "activity_id": "urn:workspace7379:compute",
+                  "native_ordinal": 0,
+                  "source_ordinal": 0,
+                  "body_sha256": "sha256:5e8d5e773b021711202030ea67b8c19057bfb93cd5bedff0a2b8ea35cde89ad0",
+                  "decoded_start": 101,
+                  "decoded_end": 111,
+                  "expression": "조정 \u003e 0",
+                  "relation": "retained_condition_node"
+                }
+              ],
+              "call_closure": {
+                "schema": "gooo/pure-activity-call-closure/v1",
+                "activities": [
+                  {
+                    "name": "GoooPackage0ActivityAdjust",
+                    "activity_id": "urn:workspace7379:adjust",
+                    "program_sha256": "sha256:5d2dc7f32509c0f4a884beafbf9ab1830ed627a7a6ca04aa242996bf9b1e38e4"
+                  }
+                ],
+                "edges": [
+                  {
+                    "caller_id": "urn:workspace7379:compute",
+                    "callee_id": "urn:workspace7379:adjust",
+                    "ordinal": 0
+                  }
+                ],
+                "max_calls_per_invocation": 256
+              },
+              "candidate_routes": [
+                "preserve"
+              ],
+              "equivalence_rule": "source-shape-preserving-v1",
+              "source_constructs": 7,
+              "lowered_constructs": 7,
+              "source_semantic_units": 38,
+              "lowered_semantic_units": 38,
+              "completeness_percent": 100,
+              "route_equivalence": {
+                "schema": "gooo/body-codegen-route-equivalence/v1",
+                "decision": "PASS",
+                "method": "canonical_control_flow_form/v2",
+                "rule": "source-shape-preserving-v1",
+                "source_semantic_digest": "sha256:efa8cedba088accb9bcfffae50beeb3a8f9436522f3e7b29338ba7365523706c",
+                "generated_semantic_digest": "sha256:efa8cedba088accb9bcfffae50beeb3a8f9436522f3e7b29338ba7365523706c",
+                "equivalent": true,
+                "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+              },
+              "typecheck_passed": true,
+              "deterministic_replay": true,
+              "repository_writes": 0,
+              "unsupported_constructs": "recursive, indirect, external and assembling-callee calls; loops, imports, external effects, optional-field synthesis and repeated record fields",
+              "completeness_receipt": {
+                "schema": "gooo/metaprogramming-completeness-receipt/v2",
+                "profile_id": "gooo/body-codegen-pure-v1",
+                "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+                "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+                "scope": {
+                  "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                  "boundary": {
+                    "excluded_effects": [
+                      "generated code execution",
+                      "repository mutation",
+                      "external authority"
+                    ],
+                    "non_authorizing": true,
+                    "non_executing": true
+                  },
+                  "call_closure": {
+                    "schema": "gooo/pure-activity-call-closure/v1",
+                    "activities": [
+                      {
+                        "name": "GoooPackage0ActivityAdjust",
+                        "activity_id": "urn:workspace7379:adjust",
+                        "program_sha256": "sha256:5d2dc7f32509c0f4a884beafbf9ab1830ed627a7a6ca04aa242996bf9b1e38e4"
+                      }
+                    ],
+                    "edges": [
+                      {
+                        "caller_id": "urn:workspace7379:compute",
+                        "callee_id": "urn:workspace7379:adjust",
+                        "ordinal": 0
+                      }
+                    ],
+                    "max_calls_per_invocation": 256
+                  },
+                  "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                  "decision_mode": "deterministic_fallback",
+                  "decision_provider": "deterministic",
+                  "domain_scope": "one pure typed Gooo activity with source-declared fixed callees; bounded acyclic call closure",
+                  "excluded_scope": [
+                    "unstated natural-language intent",
+                    "independently sourced production workflows",
+                    "generated runtime behavior",
+                    "unrestricted Gooo body syntax",
+                    "route clarity or utility"
+                  ],
+                  "execution_environment": "darwin/arm64",
+                  "input_type": "Basket",
+                  "laya_mode": "deterministic_fallback",
+                  "laya_provider": "deterministic",
+                  "observed_system_cost": {
+                    "human_actions": 0,
+                    "repository_writes": 0
+                  },
+                  "output_type": "Summary",
+                  "plan_sha256": "sha256:b09d1ccd60942a7fc2cca480140f152084c4e81dd07960814f709bb858b86958",
+                  "receipt_declaration": {
+                    "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile": "gooo/receipt-structure-projection/v1",
+                    "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                  },
+                  "record_body_scope": "optional single scalar fields use typed pointers for copy and transport; source-declared field synthesis requires record assembly",
+                  "record_types": [
+                    {
+                      "name": "Basket",
+                      "id": "urn:workspace7379:basket",
+                      "go_name": "GoooRecordbdce0f47c715f1271d307597105e7820ca72150a5409721cfee3d06df1c98eeb",
+                      "fields": [
+                        {
+                          "name": "amounts",
+                          "id": "urn:workspace7379:amounts",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField193e278cd0e6e562b3d97842851caf600ff2cc752d6b38f8236e03973ef796cc",
+                          "cardinality": "many"
+                        },
+                        {
+                          "name": "flags",
+                          "id": "urn:workspace7379:flags",
+                          "type_id": "urn:gooo:type:boolean",
+                          "go_name": "GoooFieldc4f5492fe30974cb09585ca83b57bbb77e91c5022939280996b8fc423a48ba18",
+                          "presence": "optional",
+                          "cardinality": "many"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Summary",
+                      "id": "urn:workspace7379:summary",
+                      "go_name": "GoooRecord9dbb5768c1b1357caea135e85caf79c89d686d95e0d35dc9d74038b2e34c7490",
+                      "fields": [
+                        {
+                          "name": "total",
+                          "id": "urn:workspace7379:total",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField6b85dc642b7b2635bb61a4ddeb0a833d3d25d684e82624fd739766ccf172fe0d"
+                        },
+                        {
+                          "name": "amounts",
+                          "id": "urn:workspace7379:originals",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooFieldbb7f8e74a8bd8bda9ad94abe292a67a81447f276ea375a7f8e448b09391bb43c",
+                          "cardinality": "many"
+                        }
+                      ]
+                    }
+                  ],
+                  "system_budget": {
+                    "maximum_human_actions": 0,
+                    "maximum_repository_writes": 0
+                  },
+                  "toolchain": "go1.27.2"
+                },
+                "core_dimensions": [
+                  "declaration_coverage",
+                  "generation_coverage",
+                  "internal_replay_coverage",
+                  "provenance_integrity",
+                  "receipt_schema_binding",
+                  "repository_write_boundary",
+                  "route_choice_protocol",
+                  "route_semantic_equivalence",
+                  "source_ast_coverage",
+                  "typecheck_coverage"
+                ],
+                "dimensions": [
+                  {
+                    "id": "declaration_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "stable activity declarations",
+                    "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                    "evidence": [
+                      "source_digest:sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+                      "activity_id:urn:workspace7379:compute"
+                    ]
+                  },
+                  {
+                    "id": "generation_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated Go functions",
+                    "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                    "evidence": [
+                      "generated_digest:sha256:5353a8aa42905c04553f2383cfeebe4d3cf9e7bb98b3b406cb7bafac4f5344b7",
+                      "report decision:PASS"
+                    ]
+                  },
+                  {
+                    "id": "source_ast_coverage",
+                    "status": "PASS",
+                    "numerator": 38,
+                    "denominator": 38,
+                    "unit": "source semantic units lowered",
+                    "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                    "evidence": [
+                      "source_semantic_units",
+                      "lowered_semantic_units"
+                    ]
+                  },
+                  {
+                    "id": "route_semantic_equivalence",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source/generated route pairs",
+                    "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                    "evidence": [
+                      "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                      "route_equivalence.rule:source-shape-preserving-v1",
+                      "source_semantic_digest:sha256:efa8cedba088accb9bcfffae50beeb3a8f9436522f3e7b29338ba7365523706c",
+                      "generated_semantic_digest:sha256:efa8cedba088accb9bcfffae50beeb3a8f9436522f3e7b29338ba7365523706c"
+                    ]
+                  },
+                  {
+                    "id": "typecheck_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated functions accepted by Go type checking",
+                    "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                    "evidence": [
+                      "typecheck_passed"
+                    ]
+                  },
+                  {
+                    "id": "internal_replay_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "deterministic compiler emission replays",
+                    "reason": "Requires replayed generated bytes to match the selected output digest.",
+                    "evidence": [
+                      "generated_digest:sha256:5353a8aa42905c04553f2383cfeebe4d3cf9e7bb98b3b406cb7bafac4f5344b7",
+                      "replay_digest:sha256:5353a8aa42905c04553f2383cfeebe4d3cf9e7bb98b3b406cb7bafac4f5344b7"
+                    ]
+                  },
+                  {
+                    "id": "route_choice_protocol",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "selected routes in the compiler-declared candidate set",
+                    "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                    "evidence": [
+                      "candidate_routes",
+                      "selected_route:preserve"
+                    ]
+                  },
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "numerator": 7,
+                    "denominator": 8,
+                    "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "evidence": [
+                      "source_digest:sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+                      "program_digest:sha256:44aaf366c43859cad6a1f4953350cd30df5134fec337922cd00221f24bb41265",
+                      "generated_digest:sha256:5353a8aa42905c04553f2383cfeebe4d3cf9e7bb98b3b406cb7bafac4f5344b7",
+                      "replay_digest:sha256:5353a8aa42905c04553f2383cfeebe4d3cf9e7bb98b3b406cb7bafac4f5344b7",
+                      "activity_id:urn:workspace7379:compute",
+                      "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                      "route_equivalence semantic digests"
+                    ]
+                  },
+                  {
+                    "id": "receipt_schema_binding",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source-owned receipt schema and generated structure bindings",
+                    "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                    "evidence": [
+                      "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                      "projection_profile:gooo/receipt-structure-projection/v1"
+                    ]
+                  },
+                  {
+                    "id": "repository_write_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "repository writes",
+                    "reason": "The command emits generated source without mutating the repository.",
+                    "evidence": [
+                      "repository_writes:0"
+                    ]
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated package runtime executions",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "evidence": [
+                      "body-codegen does not run generated Go"
+                    ]
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "observed host permission profiles",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "evidence": [
+                      "host permission profile is not observed"
+                    ]
+                  },
+                  {
+                    "id": "external_network_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "runs with no Laya provider request",
+                    "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                    "evidence": [
+                      "decision.mode:deterministic_fallback",
+                      "decision.provider:deterministic",
+                      "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                    ]
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 0,
+                    "unit": "eligible multi-route Laya decisions",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "evidence": [
+                      "candidate_routes",
+                      "route_decision.mode:deterministic_fallback",
+                      "route_decision.request_sha256:",
+                      "route_decision.model_revision:"
+                    ]
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independently sourced real workflows",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "evidence": [
+                      "no independent workflow corpus is bound"
+                    ]
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated runtime observations mapped back to source",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "evidence": [
+                      "no source-bound reverse-observation trace"
+                    ]
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete input-domain behavior proofs",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "evidence": [
+                      "generated package execution and an independent domain oracle are not part of this command"
+                    ]
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independent route-clarity or utility criteria",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "evidence": [
+                      "no independent route-quality oracle"
+                    ]
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete process resource profiles",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "evidence": [
+                      "route_decision_latency_ms is recorded",
+                      "CPU and peak RSS are not captured"
+                    ]
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible prior resource receipts",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "evidence": [
+                      "no compatible prior resource receipt"
+                    ]
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible before/after semantic receipts",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "evidence": [
+                      "no comparable prior semantic receipt"
+                    ]
+                  }
+                ],
+                "status_counts": {
+                  "FAIL_CLOSED": 0,
+                  "PASS": 10,
+                  "PROGRESS": 1,
+                  "UNKNOWN": 10
+                },
+                "aggregate_completeness_score": null,
+                "first_unresolved": {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                "unresolved_claims": [
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                  }
+                ],
+                "not_claimed": [
+                  "user-intent completeness",
+                  "real-workflow coverage",
+                  "generated runtime behavior",
+                  "full-domain semantics",
+                  "route quality",
+                  "universal language completeness",
+                  "source-declared synthesis of optional record values"
+                ],
+                "fail_closed_reason": null
+              }
+            },
+            "source": "package gooo_workspace\n\n//gooo:generated:start id=\"urn:workspace7379:basket\" kind=\"entity\"\ntype GoooRecordbdce0f47c715f1271d307597105e7820ca72150a5409721cfee3d06df1c98eeb struct {\n\tGoooField193e278cd0e6e562b3d97842851caf600ff2cc752d6b38f8236e03973ef796cc []int64 `json:\"amounts\"`\n\tGoooFieldc4f5492fe30974cb09585ca83b57bbb77e91c5022939280996b8fc423a48ba18 *[]bool `json:\"flags,omitempty\"`\n}\n\n//gooo:generated:end id=\"urn:workspace7379:basket\" kind=\"entity\"\n//gooo:generated:start id=\"urn:workspace7379:summary\" kind=\"entity\"\ntype GoooRecord9dbb5768c1b1357caea135e85caf79c89d686d95e0d35dc9d74038b2e34c7490 struct {\n\tGoooField6b85dc642b7b2635bb61a4ddeb0a833d3d25d684e82624fd739766ccf172fe0d int64   `json:\"total\"`\n\tGoooFieldbb7f8e74a8bd8bda9ad94abe292a67a81447f276ea375a7f8e448b09391bb43c []int64 `json:\"amounts\"`\n}\n\n//gooo:generated:end id=\"urn:workspace7379:summary\" kind=\"entity\"\n//gooo:generated:start id=\"urn:workspace7379:compute\" kind=\"activity\"\nfunc GoooPackage1ActivityCompute(input GoooRecordbdce0f47c715f1271d307597105e7820ca72150a5409721cfee3d06df1c98eeb) GoooRecord9dbb5768c1b1357caea135e85caf79c89d686d95e0d35dc9d74038b2e34c7490 {\n\tvar 합계 int64 = 0\n\tfor _, 값 := range input.GoooField193e278cd0e6e562b3d97842851caf600ff2cc752d6b38f8236e03973ef796cc {\n\t\tvar 조정 = GoooPackage0ActivityAdjust(값)\n\t\tif 조정 \u003e 0 {\n\t\t\t합계 = 합계 + 조정\n\t\t}\n\t}\n\treturn GoooRecord9dbb5768c1b1357caea135e85caf79c89d686d95e0d35dc9d74038b2e34c7490{GoooField6b85dc642b7b2635bb61a4ddeb0a833d3d25d684e82624fd739766ccf172fe0d: 합계, GoooFieldbb7f8e74a8bd8bda9ad94abe292a67a81447f276ea375a7f8e448b09391bb43c: input.GoooField193e278cd0e6e562b3d97842851caf600ff2cc752d6b38f8236e03973ef796cc}\n}\n\n//gooo:generated:end id=\"urn:workspace7379:compute\" kind=\"activity\"\n//gooo:generated:start id=\"urn:workspace7379:adjust\" kind=\"activity\"\nfunc GoooPackage0ActivityAdjust(input int64) int64 {\n\treturn input + 2\n}\n\n//gooo:generated:end id=\"urn:workspace7379:adjust\" kind=\"activity\"\n"
+          }
+        }
+      ],
+      "gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nentity Basket id \"urn:workspace7379:basket\" fields {\n    field amounts id \"urn:workspace7379:amounts\" type integer required many\n    field flags id \"urn:workspace7379:flags\" type boolean optional many\n}\nentity Summary id \"urn:workspace7379:summary\" fields {\n    field total id \"urn:workspace7379:total\" type integer required one\n    field amounts id \"urn:workspace7379:originals\" type integer required many\n}\nactivity GoooPackage0ActivityAdjust(Integer) -\u003e Integer id \"urn:workspace7379:adjust\" computes \"return input + 2\"\nactivity GoooPackage1ActivityCompute(Basket) -\u003e Summary id \"urn:workspace7379:compute\" computes \"let 합계 = 0; for 값 in input.amounts { let 조정 = GoooPackage0ActivityAdjust(값); if 조정 \u003e 0 { 합계 = 합계 + 조정 } }; return Summary{total: 합계, amounts: input.amounts}\"\n",
+      "source": "package main\n\n//gooo:generated:start id=\"urn:workspace7379:basket\" kind=\"entity\"\ntype GoooRecordbdce0f47c715f1271d307597105e7820ca72150a5409721cfee3d06df1c98eeb struct {\n\tGoooField193e278cd0e6e562b3d97842851caf600ff2cc752d6b38f8236e03973ef796cc []int64 `json:\"amounts\"`\n\tGoooFieldc4f5492fe30974cb09585ca83b57bbb77e91c5022939280996b8fc423a48ba18 *[]bool `json:\"flags,omitempty\"`\n}\n\n//gooo:generated:end id=\"urn:workspace7379:basket\" kind=\"entity\"\n//gooo:generated:start id=\"urn:workspace7379:summary\" kind=\"entity\"\ntype GoooRecord9dbb5768c1b1357caea135e85caf79c89d686d95e0d35dc9d74038b2e34c7490 struct {\n\tGoooField6b85dc642b7b2635bb61a4ddeb0a833d3d25d684e82624fd739766ccf172fe0d int64   `json:\"total\"`\n\tGoooFieldbb7f8e74a8bd8bda9ad94abe292a67a81447f276ea375a7f8e448b09391bb43c []int64 `json:\"amounts\"`\n}\n\n//gooo:generated:end id=\"urn:workspace7379:summary\" kind=\"entity\"\n\n//gooo:generated:start id=\"urn:workspace7379:compute\" kind=\"activity\"\nfunc GoooComposedActivity0(input GoooRecordbdce0f47c715f1271d307597105e7820ca72150a5409721cfee3d06df1c98eeb) GoooRecord9dbb5768c1b1357caea135e85caf79c89d686d95e0d35dc9d74038b2e34c7490 {\n\tvar 합계 int64 = 0\n\tfor _, 값 := range input.GoooField193e278cd0e6e562b3d97842851caf600ff2cc752d6b38f8236e03973ef796cc {\n\t\tvar 조정 = GoooComposedActivity0Call0(값)\n\t\tif 조정 \u003e 0 {\n\t\t\t합계 = 합계 + 조정\n\t\t}\n\t}\n\treturn GoooRecord9dbb5768c1b1357caea135e85caf79c89d686d95e0d35dc9d74038b2e34c7490{GoooField6b85dc642b7b2635bb61a4ddeb0a833d3d25d684e82624fd739766ccf172fe0d: 합계, GoooFieldbb7f8e74a8bd8bda9ad94abe292a67a81447f276ea375a7f8e448b09391bb43c: input.GoooField193e278cd0e6e562b3d97842851caf600ff2cc752d6b38f8236e03973ef796cc}\n}\nfunc GoooComposedActivity0Call0(input int64) int64 {\n\treturn input + 2\n}\n\n//gooo:generated:end id=\"urn:workspace7379:compute\" kind=\"activity\"\n",
+      "driver_source": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc main() {\n\tvar in [][1]json.RawMessage\n\tif json.NewDecoder(os.Stdin).Decode(\u0026in) != nil || len(in) \u003e 128 {\n\t\tos.Exit(2)\n\t}\n\tout := make([][1]json.RawMessage, len(in))\n\tfor c, row := range in {\n\t\tvar input0 GoooRecordbdce0f47c715f1271d307597105e7820ca72150a5409721cfee3d06df1c98eeb\n\t\tif json.Unmarshal(row[0], \u0026input0) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv0 := GoooComposedActivity0(input0)\n\t\tout[c][0], _ = json.Marshal(v0)\n\t}\n\tif json.NewEncoder(os.Stdout).Encode(out) != nil {\n\t\tos.Exit(3)\n\t}\n}\n",
+      "elapsed_ns": 5079500,
+      "scope": "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"
+    },
+    "runtime": {
+      "schema": "gooo/body-composition-runtime/v1",
+      "stage": "COMPLETE",
+      "composition_sha256": "sha256:199c6f6eb2b45ec0c57ba59e0fea9af557be3602648c6c7134535f634941b970",
+      "original_source_sha256": "sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+      "selected_source_sha256": "sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+      "typed_plan_sha256": "sha256:9fd405a537660ff8a21412ab0f4397d9983e9258ab14c0ac4e5537c609cf0a5e",
+      "generated_sha256": "sha256:19ad17c6e17b561fa4aa22743cf5da00c11a3b920b68b93d630194ca6e8ca759",
+      "driver_sha256": "sha256:a1c8a44fdfb90fc3fca16d35ae434a8751b9259957af088550520a74ea58bb08",
+      "observed_projection_sha256": "sha256:5d25aed379bb4e881b2f2196a61a3125e88e1cd4fd62ce2802b13c044e0536e8",
+      "observed_driver_sha256": "sha256:8779072d4de9029611056175dc5168ff31cbd41b780113624901d4cf7f08c739",
+      "runtime_suite_sha256": "sha256:48da43dafd64c614ab0b2d4f8df70353c52691a31026ee09610913b563dfc12c",
+      "executable_sha256": "sha256:c54bfaa5b4c3643bb6b65fdfc39be8ea0552227fa5ecd38f30741ecaa5ab280b",
+      "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+      "go_tool_selection": "path",
+      "go_version": "go version go1.27.2 darwin/arm64",
+      "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+      "producer_module": {
+        "path": "github.com/kimjooyoon/meta-ontology-go",
+        "version": "(devel)"
+      },
+      "toolchain": {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 8350500,
+        "user_ns": 3780000,
+        "system_ns": 2760000,
+        "peak_rss_bytes": 14368768,
+        "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 1138833,
+          "wait_ns": 7211667,
+          "deadline_remaining_ns": 59983414250,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      "build": {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 273990000,
+        "user_ns": 128229000,
+        "system_ns": 101016000,
+        "peak_rss_bytes": 87441408,
+        "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 891041,
+          "wait_ns": 273098959,
+          "deadline_remaining_ns": 59973556875,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      "runs": [
+        {
+          "started": true,
+          "completed": true,
+          "canceled": false,
+          "timed_out": false,
+          "diagnostics_bytes": 0,
+          "output_truncated": false,
+          "exit_code": 0,
+          "wall_ns": 408703584,
+          "user_ns": 3717000,
+          "system_ns": 6571000,
+          "peak_rss_bytes": 4997120,
+          "stdout_sha256": "sha256:d15ec5f67df128eabc1a6fd0bc7a99f4c139b744174e1c50d06d13613595fbb9",
+          "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "timing": {
+            "start_ns": 825167,
+            "wait_ns": 407878417,
+            "wait_limit_ns": 2000000000,
+            "deadline_remaining_ns": 59698157709,
+            "context_at_start_return": "ACTIVE"
+          }
+        },
+        {
+          "started": true,
+          "completed": true,
+          "canceled": false,
+          "timed_out": false,
+          "diagnostics_bytes": 0,
+          "output_truncated": false,
+          "exit_code": 0,
+          "wall_ns": 7264584,
+          "user_ns": 2529000,
+          "system_ns": 3336000,
+          "peak_rss_bytes": 5062656,
+          "stdout_sha256": "sha256:d15ec5f67df128eabc1a6fd0bc7a99f4c139b744174e1c50d06d13613595fbb9",
+          "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "timing": {
+            "start_ns": 2252625,
+            "wait_ns": 5011959,
+            "wait_limit_ns": 2000000000,
+            "deadline_remaining_ns": 59288481959,
+            "context_at_start_return": "ACTIVE"
+          }
+        }
+      ],
+      "traces": [
+        {
+          "case_index": 0,
+          "deliveries": [
+            {
+              "activity_id": "urn:workspace7379:compute",
+              "input": {
+                "amounts": [
+                  3,
+                  -8,
+                  20
+                ]
+              },
+              "input_fields": [
+                {
+                  "id": "urn:workspace7379:amounts",
+                  "name": "amounts",
+                  "value": [
+                    3,
+                    -8,
+                    20
+                  ]
+                },
+                {
+                  "id": "urn:workspace7379:flags",
+                  "name": "flags",
+                  "value": null,
+                  "presence": "optional",
+                  "present": false
+                }
+              ],
+              "actual": {
+                "amounts": [
+                  3,
+                  -8,
+                  20
+                ],
+                "total": 27
+              },
+              "actual_fields": [
+                {
+                  "id": "urn:workspace7379:total",
+                  "name": "total",
+                  "value": 27
+                },
+                {
+                  "id": "urn:workspace7379:originals",
+                  "name": "amounts",
+                  "value": [
+                    3,
+                    -8,
+                    20
+                  ]
+                }
+              ],
+              "expected": {
+                "amounts": [
+                  3,
+                  -8,
+                  20
+                ],
+                "total": 27
+              },
+              "passed": true
+            }
+          ],
+          "conditions_observed": true,
+          "conditions": [
+            {
+              "site_index": 0,
+              "value": true
+            },
+            {
+              "site_index": 0,
+              "value": false
+            },
+            {
+              "site_index": 0,
+              "value": true
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "deliveries": [
+            {
+              "activity_id": "urn:workspace7379:compute",
+              "input": {
+                "amounts": [],
+                "flags": []
+              },
+              "input_fields": [
+                {
+                  "id": "urn:workspace7379:amounts",
+                  "name": "amounts",
+                  "value": []
+                },
+                {
+                  "id": "urn:workspace7379:flags",
+                  "name": "flags",
+                  "value": [],
+                  "presence": "optional",
+                  "present": true
+                }
+              ],
+              "actual": {
+                "amounts": [],
+                "total": 0
+              },
+              "actual_fields": [
+                {
+                  "id": "urn:workspace7379:total",
+                  "name": "total",
+                  "value": 0
+                },
+                {
+                  "id": "urn:workspace7379:originals",
+                  "name": "amounts",
+                  "value": []
+                }
+              ],
+              "expected": {
+                "amounts": [],
+                "total": 0
+              },
+              "passed": true
+            }
+          ],
+          "conditions_observed": true
+        },
+        {
+          "case_index": 2,
+          "deliveries": [
+            {
+              "activity_id": "urn:workspace7379:compute",
+              "input": {
+                "amounts": [
+                  9007199254741001
+                ],
+                "flags": [
+                  true,
+                  false
+                ]
+              },
+              "input_fields": [
+                {
+                  "id": "urn:workspace7379:amounts",
+                  "name": "amounts",
+                  "value": [
+                    9007199254741001
+                  ]
+                },
+                {
+                  "id": "urn:workspace7379:flags",
+                  "name": "flags",
+                  "value": [
+                    true,
+                    false
+                  ],
+                  "presence": "optional",
+                  "present": true
+                }
+              ],
+              "actual": {
+                "amounts": [
+                  9007199254741001
+                ],
+                "total": 9007199254741003
+              },
+              "actual_fields": [
+                {
+                  "id": "urn:workspace7379:total",
+                  "name": "total",
+                  "value": 9007199254741003
+                },
+                {
+                  "id": "urn:workspace7379:originals",
+                  "name": "amounts",
+                  "value": [
+                    9007199254741001
+                  ]
+                }
+              ],
+              "expected": {
+                "amounts": [
+                  9007199254741001
+                ],
+                "total": 9007199254741003
+              },
+              "passed": true
+            }
+          ],
+          "conditions_observed": true,
+          "conditions": [
+            {
+              "site_index": 0,
+              "value": true
+            }
+          ]
+        }
+      ],
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "finite_passed": 3,
+      "finite_total": 3,
+      "condition_sites": [
+        {
+          "expression_id": "sha256:f8f64d87419c65e18ed2840f92e5764065d1b294ad23270080fc33a8bb64727e",
+          "root_activity_id": "urn:workspace7379:compute",
+          "activity_id": "urn:workspace7379:compute",
+          "expression": "조정 \u003e 0",
+          "projection_sha256": "sha256:19ad17c6e17b561fa4aa22743cf5da00c11a3b920b68b93d630194ca6e8ca759",
+          "start": 1304,
+          "end": 1314,
+          "source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "kind": "activity",
+              "stable_id": "urn:workspace7379:compute",
+              "name": "GoooPackage1ActivityCompute",
+              "source_sha256": "sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+              "start_byte": 614,
+              "end_byte": 900
+            },
+            "input_source": {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "workspace_input_file",
+                "kind": "activity",
+                "stable_id": "urn:workspace7379:compute",
+                "name": "Compute",
+                "source_sha256": "sha256:1b579b709320814c61997d15a10a17ee3b46b284ab3130f13d90ca9f510c1035",
+                "start_byte": 473,
+                "end_byte": 726
+              },
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "package_path": "collection7379/app",
+              "filename": "계산.gooo",
+              "activity_id": "urn:workspace7379:compute",
+              "source_sha256": "sha256:1b579b709320814c61997d15a10a17ee3b46b284ab3130f13d90ca9f510c1035",
+              "start_byte": 629,
+              "end_byte": 639,
+              "expression": "조정 \u003e 0"
+            },
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:e43cf9d9d3b1d0382410b5d0d4c708c4f41db2e17d45cf18c158de03d8a3a341",
+            "body_sha256": "sha256:5e8d5e773b021711202030ea67b8c19057bfb93cd5bedff0a2b8ea35cde89ad0",
+            "start_byte": 803,
+            "end_byte": 813,
+            "decoded_start": 92,
+            "decoded_end": 102,
+            "source_ordinal": 0,
+            "expression": "조정 \u003e 0",
+            "relation": "retained_condition_node"
+          }
+        }
+      ],
+      "condition_observation": {
+        "schema": "gooo/native-condition-summary/v1",
+        "status": "COMPLETE",
+        "recorded_events": 4,
+        "dropped_events": 0,
+        "sha256": "sha256:571c5c755f0bb6612e2222c8602027cf45dc2f84dc3bf5a043b14c2a3db90ac5"
+      },
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "UNCLASSIFIED_INPUTS",
+        "unique_inputs": 3,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 3,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "model_calls": 0,
+      "elapsed_ns": 720301333,
+      "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+    },
+    "scope": "typed imported activity bindings; generated Go compiled and run twice; finite named expectations only"
+  }
+}

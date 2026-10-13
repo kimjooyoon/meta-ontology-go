@@ -56,6 +56,9 @@ func RecordDeclarations(records []RecordType, native bool) string {
 				name = field.GoName
 			}
 			fieldType := recordGoType(field.TypeID)
+			if field.Cardinality == "many" {
+				fieldType = "[]" + fieldType
+			}
 			jsonOptions := ""
 			if field.Presence == "optional" {
 				fieldType = "*" + fieldType

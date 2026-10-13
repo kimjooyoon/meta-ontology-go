@@ -1,0 +1,66 @@
+{
+  "baseline": "0d8a4bfb3afe33c028b9686cc410950a9a832f1f",
+  "files": [
+    {
+      "path": "internal/meta/functionextractorrecipe/collection_retirement_test.go",
+      "sha256": "af72b3eca3515595c724dfd68538552280b612694ee162717205f2c0e9aada69"
+    },
+    {
+      "path": "internal/meta/functionextractorrecipe/recipe_test.go",
+      "sha256": "fc3805620bae9368844b45c778c4974f9b1027d6fb0f130dc60a9a2134f18eef"
+    },
+    {
+      "path": "internal/meta/functionextractorrecipe/recipes.json",
+      "sha256": "59cc0330e336e0e9448c93792d0f7cedf6773c00d916e0dba2386f46b1320e3d"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+      "sha256": "86d60cbb0f9c4fcff5b214a2b6585bf0e41d18e117244cd0479071b532da6532"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+      "sha256": "a2a11aba7071826e166ca75e3f1bb32817e75f96639a9bcec7abc5673025dc1f"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_collections_test.go",
+      "sha256": "400afeade8c3432c9452b5d256683688dce5e6a844e3dbd869aa89997d1f5c44"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+      "sha256": "c94ec2467b6e4e0eb2a511b9e171583711da2b61c8e59dae80585b5075eacc2f"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v49.json",
+      "sha256": "aafb7676a5c22606f120f179a23af86ab760ea545ed8cfd31ece275221fd5669"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+      "sha256": "301ed0030ed4f76fcdbda2977c3ea30090f2b12a0e4919b016597928c1653547"
+    },
+    {
+      "path": "internal/meta/syntaxregistration/collections_registration_test.go",
+      "sha256": "0f19692358891f0405c62b1ec84afa35ace70c693693251470219f64c6833f28"
+    },
+    {
+      "path": "internal/meta/syntaxregistration/corpus.go",
+      "sha256": "93a315b147e19fb0a7722daefd59a52e842eb7bd5288b2e31fc4655a5892a995"
+    },
+    {
+      "path": "internal/meta/syntaxregistration/input.go",
+      "sha256": "b4087b2cb585228222b82f5ed1ef3576b954d1d6ace84fc3a1cceb5bb669dcf1"
+    },
+    {
+      "path": "scripts/meta-execution/operations.go",
+      "sha256": "0b0c372921f93c183c1294816969b58bd8230729dbeb818ceb83e192b58f9d5e"
+    },
+    {
+      "path": "scripts/meta-execution/snapshot_cleanup.go",
+      "sha256": "0b9a3a71b5f59a6a70d3eb6e07b4939030342f9a3a942e92683a65928ef190b6"
+    },
+    {
+      "path": "scripts/meta-execution/snapshot_cleanup_test.go",
+      "sha256": "58de5935e28fc7f2435f7e56c4e6dcf2ff2d57627e6528a8182b2525abf78401"
+    }
+  ],
+  "purpose": "Fresh 8551/8553/8557/8559 observations only; no old source/test/model cohort"
+}

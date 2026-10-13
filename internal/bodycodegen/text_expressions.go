@@ -43,11 +43,17 @@ func (e *integerBodyEvaluator) evaluateBodyPrimitive(call *ast.CallExpr) (any, b
 		return nil, true, err
 	}
 	if builtin {
-		text, ok := value.(string)
-		if !ok {
-			return nil, true, fmt.Errorf("len requires Text, got %T", value)
+		switch item := value.(type) {
+		case string:
+			value = int64(len(item))
+		case *recordBodySequence:
+			if item == nil {
+				return nil, true, fmt.Errorf("len requires a present collection")
+			}
+			value = int64(len(item.Values))
+		default:
+			return nil, true, fmt.Errorf("len requires Text or a repeated field, got %T", value)
 		}
-		value = int64(len(text))
 	}
 	value, err = coerceBodyValue(value, e.information.Types[call].Type)
 	return value, true, err
@@ -70,15 +76,32 @@ func (e *integerBodyEvaluator) textOffset(expression ast.Expr, fallback int64) (
 
 func (e *integerBodyEvaluator) evaluateTextSlice(slice *ast.SliceExpr) (any, error) {
 	if slice.Slice3 {
-		return nil, fmt.Errorf("Text slices accept only low and high byte offsets")
+		return nil, fmt.Errorf("slices accept only low and high offsets")
 	}
 	value, err := e.evaluateExpression(slice.X)
 	if err != nil {
 		return nil, err
 	}
+	if sequence, ok := value.(*recordBodySequence); ok {
+		if sequence == nil {
+			return nil, fmt.Errorf("slice requires a present collection")
+		}
+		low, err := e.textOffset(slice.Low, 0)
+		if err != nil {
+			return nil, err
+		}
+		high, err := e.textOffset(slice.High, int64(len(sequence.Values)))
+		if err != nil {
+			return nil, err
+		}
+		if low < 0 || high < low || high > int64(len(sequence.Values)) {
+			return nil, fmt.Errorf("collection slice [%d:%d] exceeds length %d", low, high, len(sequence.Values))
+		}
+		return &recordBodySequence{Kind: sequence.Kind, Values: sequence.Values[low:high]}, nil
+	}
 	text, ok := value.(string)
 	if !ok {
-		return nil, fmt.Errorf("slice requires Text, got %T", value)
+		return nil, fmt.Errorf("slice requires Text or an ordered collection, got %T", value)
 	}
 	low, err := e.textOffset(slice.Low, 0)
 	if err != nil {
