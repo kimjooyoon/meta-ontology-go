@@ -1,0 +1,62 @@
+[
+  {
+    "path": "cmd/gooo/package_execute.go",
+    "sha256": "b9c4104e4e132898308f0ca3a5c7a8d9178b6b28f710b25b451c77f57bb53f4e"
+  },
+  {
+    "path": "cmd/gooo/package_execute_input.go",
+    "sha256": "862a08abba3f8d77704c630d125d732c3474a13d6289fb4f3d3844fd470a2681"
+  },
+  {
+    "path": "cmd/gooo/package_origin_decode.go",
+    "sha256": "e7e0267cbe07206c66bc04014cbe99dbfe11ea32de3b19ed82fcde1195ca3731"
+  },
+  {
+    "path": "cmd/gooo/package_origin_input.go",
+    "sha256": "4df6efbcaf2e2003d8ccd0b7559c241f4c514b6fb0dcdedad0b1fc2208e971c7"
+  },
+  {
+    "path": "cmd/gooo/package_origin_input_test.go",
+    "sha256": "40e943f37507d5dc418366b70b7808280636924cb10ab1821a7c6ebb28089b79"
+  },
+  {
+    "path": "cmd/gooo/package_origin_legacy_test.go",
+    "sha256": "21a9799f54930d5c35d17322c89de1f9c401af68f287baee95e5f4e1bbc53097"
+  },
+  {
+    "path": "cmd/gooo/package_origin_native_test.go",
+    "sha256": "e1805df82d30ff2b6d8d38a72560c0a13d825f829ad480c042f0a463dac84975"
+  },
+  {
+    "path": "cmd/gooo/usage_package.go",
+    "sha256": "eac950064ea452f418b7ddabc89e2d0021803769cb523c8fa730381c9373f953"
+  },
+  {
+    "path": "internal/bodyexecution/composition_construction_facts.go",
+    "sha256": "e31c867868c5b5a4140f948237b45b4f74943fdcec8381c374ae778894b1d4f4"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_facts.go",
+    "sha256": "e93fb0ec64b1a75b62e7d73bdaf611c807fddb3e1cdc1fa553fde36a79aa3c4c"
+  },
+  {
+    "path": "internal/bodyexecution/native_origin_construction.go",
+    "sha256": "516225c3c264ed5974f235e32d3cba0109a04e8c501826c888f5f970d8e1c1db"
+  },
+  {
+    "path": "internal/bodyexecution/native_origin_input.go",
+    "sha256": "b6e64aa975dc42bdb116f551250eb6a47b7a5512df2be958a4af39fdb8b941ce"
+  },
+  {
+    "path": "internal/bodyexecution/native_origin_instance.go",
+    "sha256": "658160e487b392a22ac3c3ac5c2e301bfa39433f25e8e0495253a05b427fd065"
+  },
+  {
+    "path": "internal/bodyexecution/native_origin_trace.go",
+    "sha256": "7a875eed7d6aa1341df08bf68caefb9303581118f9ff757826c8d314851bca76"
+  },
+  {
+    "path": "internal/bodyexecution/native_origin_validate.go",
+    "sha256": "4b308e66dd341afebb70b526100840096a4bc287b26881f934392523c3f439ab"
+  }
+]

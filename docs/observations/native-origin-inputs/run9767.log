@@ -1,0 +1,5 @@
+=== RUN   TestRecordedLegacyOrigins9767
+    package_origin_legacy_test.go:36: saved v1: 2/20 read rows selected, PARTIAL retained, construction query rejected, detached summary; producer execution 0
+--- PASS: TestRecordedLegacyOrigins9767 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	0.557s

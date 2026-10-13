@@ -30,14 +30,7 @@ func CompositionConstructionFacts(runtime CompositionRuntime) []CompositionConst
 				if i >= len(site.Elements) {
 					continue
 				}
-				f := CompositionConstructionFact{CaseIndex: trace.CaseIndex, InstanceIndex: instance, ElementIndex: i, RootActivityID: site.RootActivityID, ActivityID: site.ActivityID, Completed: element.Completed, ReadStart: element.ReadStart, ReadEnd: element.ReadEnd, ReadsDropped: element.ReadsDropped, Expression: site.Elements[i].Expression, Mapping: "UNMAPPED"}
-				if source := site.Elements[i].Source; source != nil && source.Status == "MAPPED" {
-					f.Mapping = source.Status
-					f.SourceSHA256 = source.SourceSHA256
-					f.SourceStart = source.Start
-					f.SourceEnd = source.End
-					f.Expression = source.Expression
-				}
+				f := compositionConstructionFact(trace.CaseIndex, instance, i, element, site)
 				facts = append(facts, f)
 			}
 		}
@@ -62,4 +55,16 @@ func CompositionConstructedReadFacts(runtime CompositionRuntime) []CompositionCo
 		}
 	}
 	return facts
+}
+
+func compositionConstructionFact(caseIndex, instance, i int, element CompositionConstructionElement, site CompositionConstructionSite) CompositionConstructionFact {
+	f := CompositionConstructionFact{CaseIndex: caseIndex, InstanceIndex: instance, ElementIndex: i, RootActivityID: site.RootActivityID, ActivityID: site.ActivityID, Completed: element.Completed, ReadStart: element.ReadStart, ReadEnd: element.ReadEnd, ReadsDropped: element.ReadsDropped, Expression: site.Elements[i].Expression, Mapping: "UNMAPPED"}
+	if source := site.Elements[i].Source; source != nil && source.Status == "MAPPED" {
+		f.Mapping = source.Status
+		f.SourceSHA256 = source.SourceSHA256
+		f.SourceStart = source.Start
+		f.SourceEnd = source.End
+		f.Expression = source.Expression
+	}
+	return f
 }

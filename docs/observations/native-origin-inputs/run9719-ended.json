@@ -1,0 +1,17 @@
+{
+  "exit_code": 1,
+  "elapsed_seconds": 7.8758769035339355,
+  "command": [
+    "go",
+    "test",
+    "-overlay",
+    "/tmp/gooo-origin-inputs-20261014/overlay9719.json",
+    "-p=1",
+    "-vet=off",
+    "-count=1",
+    "-run",
+    "^(TestOriginConsumers9719|TestOriginEnvelope9721|TestOriginQuery9721|TestOriginReferences9721)$",
+    "-v",
+    "./cmd/gooo"
+  ]
+}

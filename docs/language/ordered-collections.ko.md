@@ -110,3 +110,9 @@ V5 사례로 등록해 서식과 의미의 왕복도 확인한다.
 
 [목록 생성 기원](../observations/construction-origins/README.md)은 중첩 호출, 빈 목록,
 계산 중단, 후보로 채운 원소 표현과 Gooo가 자신의 생성 기록을 설명하는 예제를 담는다.
+
+## 저장된 기원으로 다음 프로그램 작성하기
+
+[기원 입력](native-origin-inputs.ko.md)의 `package execute --origin-receipt`로
+읽기·생성·원소·연결을 Gooo 레코드 입력으로 넘길 수 있다.
+[네 가지 예제](../../examples/native-origin-reader/README.md)에서 분류 규칙을 수정하며 시작한다.
