@@ -59,6 +59,7 @@ func ConstructWorkspace(ctx context.Context, manifest packageruntime.Manifest,
 		[]byte(r.Program.Source), feedback, cases, bodyexecution.JointOptions{
 			EntryActivity: constructionEntry(r.Program), ProgramBudget: options.ProgramBudget,
 			ModelPath: options.ModelPath, FillModelPath: options.FillModelPath, GoBinary: options.GoBinary})
+	bindWorkspaceConditionSources(r.Program, &r.Evaluation.Runtime)
 	return r, err
 }
 
@@ -91,11 +92,16 @@ func ReplayWorkspaceConstruction(ctx context.Context, manifest packageruntime.Ma
 		Scope:              "current package image and caller cases rebound; all saved construction attempts re-executed without inference; prior evaluation remains historical; current evaluation is fresh"}
 	r.Evaluation, err = bodyexecution.ReplayJointComposition(ctx, "workspace.gooo", []byte(program.Source),
 		prior.Construction, cases, goBinary)
+	bindWorkspaceConditionSources(program, &r.Evaluation.Runtime)
 	return r, err
 }
 
 func verifyWorkspaceConstruction(program Program, prior ConstructionResult) error {
-	if prior.Schema != workspaceConstructionSchema || !sameConstructionJSON(program, prior.Program) {
+	comparison := program
+	if prior.Program.ConditionOrigins == nil {
+		comparison.ConditionOrigins = nil
+	}
+	if prior.Schema != workspaceConstructionSchema || !sameConstructionJSON(comparison, prior.Program) {
 		return fmt.Errorf("saved construction differs from current package sources, identities, dependencies, entry or lowered graph")
 	}
 	feedback, err := translateCases(program, prior.ConstructionCases)

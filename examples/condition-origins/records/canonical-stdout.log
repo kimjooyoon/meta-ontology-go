@@ -1,0 +1,6 @@
+=== RUN   TestConditionDeclarationOriginCanonicalHost2683
+    body_condition_declaration_test.go:51: canonical identity lost authored spelling &{MAPPED  selected_gooo_source field ORIGIN2683://Fields/Count count sha256:628e5ebf77f0e750426760005d1b41bc9c5f84c32a51aca80796a855956978c8 93 177}
+--- FAIL: TestConditionDeclarationOriginCanonicalHost2683 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.519s
+FAIL

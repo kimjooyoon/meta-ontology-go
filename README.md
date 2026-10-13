@@ -1,8 +1,15 @@
 # meta-ontology-go
 
 **Gooo — Go Of Ontology** is an experimental language for expressing intent,
-assembling programs, and keeping the evidence of how they behave. This repository
-contains its Go compiler. Source files use the `.gooo` extension.
+assembling programs, and preserving where their concepts and choices come from.
+This repository contains its Go compiler. Source files use the `.gooo` extension.
+
+Development source now connects native conditions to the selected Gooo body,
+authored activity and field declarations, and original package files through
+name lowering. The [source and origin guide](docs/language/source-origins.ko.md)
+explains these links and remaining gaps. A [Gooo metaprogram](examples/condition-origins/README.md)
+uses the resulting typed records to describe available origins. Runtime cases
+remain observations attached to that history.
 
 [Try a small Gooo program in your browser](https://kimjooyoon.github.io/gooo-go-ports/tutorial.html)
 without installing anything or using a model. Change a score and a label, inspect
@@ -123,6 +130,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [Integer paths judged by Gooo conditions](docs/source-scalar-criteria.md)
 · [typed choices and requirement graphs, 한국어](docs/criteria-source-flow.ko.md)
 · [source choices and small decision models, 한국어](docs/scalar-source-model.ko.md)
+· [source and origin, 한국어](docs/language/source-origins.ko.md)
 · [related ontology languages and gaps, 한국어](docs/ontology-language-comparison.ko.md)
 · [file-local imported types, 한국어](docs/qualified-activity-types.ko.md)
 · [source-preserving formatting, 한국어](docs/source-preserving-format.ko.md)

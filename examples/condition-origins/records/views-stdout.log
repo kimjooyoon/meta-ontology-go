@@ -1,0 +1,5 @@
+=== RUN   TestConditionDeclarationSourceAndSemanticViews2791
+    body_condition_identity_views_test.go:39: origin2791: source-facing IDs retained2/2 alongside URI-normalized identities; authored field declaration bytes2/2; static only
+--- PASS: TestConditionDeclarationSourceAndSemanticViews2791 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.519s

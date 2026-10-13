@@ -133,13 +133,16 @@ func restoreRecordNames(file *ast.File, records []RecordType) {
 	})
 }
 
-func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.FileSet, records []RecordType) error {
+func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.FileSet, records []RecordType, origins ...map[ast.Expr]BodyConditionOrigin) error {
 	if len(records) == 0 {
 		return nil
 	}
 	information := &types.Info{Defs: make(map[*ast.Ident]types.Object), Uses: make(map[*ast.Ident]types.Object)}
 	if _, err := checkBodyTypes(packageName, file, fset, information); err != nil {
 		return fmt.Errorf("typecheck record bodies: %w", err)
+	}
+	for _, conditions := range origins {
+		captureConditionFields(file, information, records, conditions)
 	}
 	if err := lowerRecordNames(file, information, records); err != nil {
 		return err

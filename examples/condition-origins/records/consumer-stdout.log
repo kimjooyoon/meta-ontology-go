@@ -1,0 +1,6 @@
+=== RUN   TestFreshConditionOriginConsumer2459
+    condition_origin_consumer_test.go:56: composition activity "Describe" requires a scalar or declared record
+--- FAIL: TestFreshConditionOriginConsumer2459 (0.69s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.195s
+FAIL

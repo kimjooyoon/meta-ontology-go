@@ -1,0 +1,6 @@
+=== RUN   TestNativeSourceAnchorRequirement1447
+    composition_source_anchor_requirement_test.go:38: GOOO_SOURCE_ANCHOR_MISSING: native2/2 sites=[{"expression_id":"sha256:f270f3ac7ee0ca27d9d660ed6a0f1454c5f5997d5e34387eb811d3ac166be905","root_activity_id":"anchor1447://decide","activity_id":"anchor1447://decide","expression":"input \u003c 41","projection_sha256":"sha256:5e29530c6b9cce488a03ae82f4040e189c08bf8485fdc18b1ef6eb33fb4bbf64","start":130,"end":140}]
+--- FAIL: TestNativeSourceAnchorRequirement1447 (0.74s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.245s
+FAIL

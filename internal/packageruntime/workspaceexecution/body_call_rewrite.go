@@ -10,7 +10,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, source, surface string, body bool) (string, []WorkspaceCallSite, error) {
+func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, source, surface string, body bool, edits ...*[]BodySourceEdit) (string, []WorkspaceCallSite, error) {
 	if source == "" {
 		return source, nil, nil
 	}
@@ -54,6 +54,11 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 	changes := append([]WorkspaceCallSite(nil), sites...)
 	sort.Slice(changes, func(i, j int) bool { return changes[i].Start > changes[j].Start })
 	for _, change := range changes {
+		for _, target := range edits {
+			if target != nil {
+				*target = append(*target, BodySourceEdit{change.Start, change.End, c[change.Callee].ref.LoweredName})
+			}
+		}
 		source = source[:change.Start] + c[change.Callee].ref.LoweredName + source[change.End:]
 	}
 	return source, sites, nil
