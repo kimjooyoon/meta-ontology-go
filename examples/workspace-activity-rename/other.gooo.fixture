@@ -1,0 +1,4 @@
+package app
+namespace review_app
+import rules "review/peer"
+activity Peer(Integer) -> Boolean computes `return rules.Review(input,0)`

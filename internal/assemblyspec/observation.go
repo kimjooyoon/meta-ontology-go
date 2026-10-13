@@ -3,6 +3,7 @@ package assemblyspec
 import (
 	"fmt"
 	"go/token"
+	"strings"
 )
 
 // Observation declares source questions and their finite budget. Answers come
@@ -31,8 +32,8 @@ func (s Spec) validateObservation() error {
 		o.MaxRounds < 1 || o.MaxRounds > 8 {
 		return fmt.Errorf("observe requires 1..32 inputs, max_candidates 1..64 and max_rounds 1..8")
 	}
-	if o.OracleActivity != "" && (len(o.OracleActivity) > 128 || !token.IsIdentifier(o.OracleActivity)) {
-		return fmt.Errorf("observe oracle must name a Gooo activity")
+	if o.OracleActivity != "" && !validOracleActivityReference(o.OracleActivity) {
+		return fmt.Errorf("observe oracle must name a Gooo activity or alias.activity")
 	}
 	if o.CriteriaStrategy != "" && len(o.CriteriaInputs) == 0 {
 		return fmt.Errorf("criteria_strategy requires criteria_input declarations")
@@ -62,4 +63,20 @@ func (s Spec) validateObservation() error {
 		}
 	}
 	return nil
+}
+
+func validOracleActivityReference(name string) bool {
+	if len(name) > 128 {
+		return false
+	}
+	parts := strings.Split(name, ".")
+	if len(parts) > 2 {
+		return false
+	}
+	for _, part := range parts {
+		if !token.IsIdentifier(part) {
+			return false
+		}
+	}
+	return true
 }

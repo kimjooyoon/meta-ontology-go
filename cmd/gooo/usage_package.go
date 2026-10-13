@@ -8,6 +8,13 @@ Start from a library template:
 For workspace manifests and execution, see docs/language/workspace-manifest.md
 and docs/language/language-package-execution.md.
 
+Propose a rename by package and stable activity ID across all declared sources:
+  gooo package rename-activity --package example.org/team/rules --id urn:rules:fee --to 요금 --json gooo.workspace.json
+
+The JSON proposal includes source edits and an updated workspace manifest. It
+also inspects callers outside the entry closure and leaves source files intact.
+See docs/language/workspace-activity-refactoring.ko.md.
+
 Export declaration shapes for documentation and API comparison tools:
   gooo package interface --json gooo.workspace.json
 
