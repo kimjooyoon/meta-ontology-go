@@ -26,28 +26,33 @@ func CompositionReadFacts(runtime CompositionRuntime) []CompositionReadFact {
 			if event.SiteIndex < 0 || event.SiteIndex >= len(runtime.ReadSites) {
 				continue
 			}
-			site := runtime.ReadSites[event.SiteIndex]
-			fact := CompositionReadFact{CaseIndex: trace.CaseIndex, RootActivityID: site.RootActivityID, ActivityID: site.ActivityID, Kind: site.Kind,
-				Index: event.Index, Length: event.Length, Status: "UNRESOLVED", OriginIndex: -1, Expression: site.Expression}
-			if site.Source != nil && site.Source.Status == "MAPPED" {
-				fact.SourceSHA256 = site.Source.SourceSHA256
-				fact.SourceStart = site.Source.Start
-				fact.SourceEnd = site.Source.End
-				fact.Expression = site.Source.Expression
-			}
-			if origin := event.Origin; origin != nil && origin.Input >= 0 && origin.Input < len(runtime.ReadInputs) {
-				input := runtime.ReadInputs[origin.Input]
-				fact.Status = "RESOLVED"
-				fact.InputKey = input.InputKey
-				fact.FieldID = input.FieldID
-				fact.OriginIndex = origin.Index
-			}
-			if origin := event.Construction; origin != nil {
-				fact.Status = "CONSTRUCTED"
-				fact.OriginIndex = origin.Index
-			}
+			fact := compositionReadFact(runtime, trace.CaseIndex, event)
 			facts = append(facts, fact)
 		}
 	}
 	return facts
+}
+
+func compositionReadFact(runtime CompositionRuntime, caseIndex int, event CompositionReadObservation) CompositionReadFact {
+	site := runtime.ReadSites[event.SiteIndex]
+	fact := CompositionReadFact{CaseIndex: caseIndex, RootActivityID: site.RootActivityID, ActivityID: site.ActivityID, Kind: site.Kind,
+		Index: event.Index, Length: event.Length, Status: "UNRESOLVED", OriginIndex: -1, Expression: site.Expression}
+	if site.Source != nil && site.Source.Status == "MAPPED" {
+		fact.SourceSHA256 = site.Source.SourceSHA256
+		fact.SourceStart = site.Source.Start
+		fact.SourceEnd = site.Source.End
+		fact.Expression = site.Source.Expression
+	}
+	if origin := event.Origin; origin != nil && origin.Input >= 0 && origin.Input < len(runtime.ReadInputs) {
+		input := runtime.ReadInputs[origin.Input]
+		fact.Status = "RESOLVED"
+		fact.InputKey = input.InputKey
+		fact.FieldID = input.FieldID
+		fact.OriginIndex = origin.Index
+	}
+	if origin := event.Construction; origin != nil {
+		fact.Status = "CONSTRUCTED"
+		fact.OriginIndex = origin.Index
+	}
+	return fact
 }

@@ -151,6 +151,18 @@ func activeDenominator() []byte {
 		return embeddedDenominatorV47
 	default:
 		return nil
+
+	case 83:
+		return embeddedDenominatorV50
+
+	case 84:
+		return embeddedDenominatorV51
+
+	case 85:
+		return embeddedDenominatorV52
+
+	case 86:
+		return embeddedDenominatorV53
 	}
 }
 
@@ -206,6 +218,18 @@ func activeDenominatorDigest() string {
 		return DenominatorMigrationV47Digest
 	default:
 		return ""
+
+	case 83:
+		return DenominatorMigrationV50Digest
+
+	case 84:
+		return DenominatorMigrationV51Digest
+
+	case 85:
+		return DenominatorMigrationV52Digest
+
+	case 86:
+		return DenominatorMigrationV53Digest
 	}
 }
 
@@ -255,3 +279,15 @@ var embeddedDenominatorV48 []byte
 
 //go:embed evidence/denominator-v49.json
 var embeddedDenominatorV49 []byte
+
+//go:embed evidence/denominator-v50.json
+var embeddedDenominatorV50 []byte
+
+//go:embed evidence/denominator-v51.json
+var embeddedDenominatorV51 []byte
+
+//go:embed evidence/denominator-v52.json
+var embeddedDenominatorV52 []byte
+
+//go:embed evidence/denominator-v53.json
+var embeddedDenominatorV53 []byte

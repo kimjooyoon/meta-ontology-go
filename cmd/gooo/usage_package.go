@@ -6,6 +6,14 @@ Read recorded candidate paths:
   gooo package origins --receipt execution.json [--candidate <id>] [--json]
 See gooo help package origins for source scope and limits.
 
+Interpret recorded native origins using a Gooo workspace:
+  gooo package execute --origin-receipt execution.json --origin-kind elements --origin-limit 32 gooo.workspace.json
+Kinds: reads, constructions (including empty lists), elements, links.
+Use --origin-offset for the next page. The saved producer is not executed;
+only the new workspace consumes recorded claims. Original partial observations
+and the source receipt digest stay visible in the new result.
+See examples/native-origin-reader/README.md.
+
 Start from a library template:
   gooo init --template library --module example.org/team/my-library my-library
 

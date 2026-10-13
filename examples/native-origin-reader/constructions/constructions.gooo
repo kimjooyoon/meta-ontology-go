@@ -1,0 +1,28 @@
+package origins
+namespace origins
+
+entity Origin id "gooo://origin-reader/constructions" fields {
+    field case_index id "gooo://origin-reader/constructions/case_index" type integer required one
+    field instance_index id "gooo://origin-reader/constructions/instance_index" type integer required one
+    field root_activity_id id "gooo://origin-reader/constructions/root_activity_id" type string required one
+    field activity_id id "gooo://origin-reader/constructions/activity_id" type string required one
+    field completed id "gooo://origin-reader/constructions/completed" type boolean required one
+    field element_count id "gooo://origin-reader/constructions/element_count" type integer required one
+    field attempted_elements id "gooo://origin-reader/constructions/attempted_elements" type integer required one
+    field read_start id "gooo://origin-reader/constructions/read_start" type integer required one
+    field read_end id "gooo://origin-reader/constructions/read_end" type integer required one
+    field source_sha256 id "gooo://origin-reader/constructions/source_sha256" type string required one
+    field source_start id "gooo://origin-reader/constructions/source_start" type integer required one
+    field source_end id "gooo://origin-reader/constructions/source_end" type integer required one
+    field expression id "gooo://origin-reader/constructions/expression" type string required one
+    field mapping id "gooo://origin-reader/constructions/mapping" type string required one
+}
+
+entity Explanation id "gooo://origin-reader/constructions/explanation" fields {
+    field category id "gooo://origin-reader/constructions/category" type string required one
+    field count id "gooo://origin-reader/constructions/count" type integer required one
+}
+
+activity Explain(Origin) -> Explanation computes `if !input.completed { return Explanation{category: "INTERRUPTED_LIST", count: input.attempted_elements} }
+if input.element_count == 0 { return Explanation{category: "EMPTY_LIST", count: 0} }
+return Explanation{category: "COMPLETED_LIST", count: input.element_count}`

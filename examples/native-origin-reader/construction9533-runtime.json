@@ -1,0 +1,1598 @@
+{
+  "schema": "gooo/body-composition-runtime/v1",
+  "stage": "COMPLETE",
+  "composition_sha256": "sha256:45ff1fecf4588da954cbe68931d1db5bdd4699e69d4c054943f379013eeb86ce",
+  "original_source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+  "selected_source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+  "typed_plan_sha256": "sha256:18560e947d2e78c9f5f475d720450d35a522eff497ee8b7a224326c8b217cf91",
+  "generated_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+  "driver_sha256": "sha256:8bb1d3e945757fec41bf494c4f31b313db9592c8c3e7921025ff7890dd645f64",
+  "observed_projection_sha256": "sha256:61edd5781b32f9383e6cc04610c2974c84af1dd5c082baba8237de173b74f61f",
+  "observed_driver_sha256": "sha256:5e478717d805531f0386bccb2b32adfee465d914d7e59a0875d9fb12b0d51329",
+  "runtime_suite_sha256": "sha256:f10242ed9f37ab3f963c0cee8c8ca6b95d96ad9a774875080fbe1c823c4af62e",
+  "executable_sha256": "sha256:b42873fc3d053c27e128e7528244c339f06bb81f7b87bb21f4dc01825327b798",
+  "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+  "go_tool_selection": "path",
+  "go_version": "go version go1.27.2 darwin/arm64",
+  "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+  "producer_module": {
+    "path": "github.com/kimjooyoon/meta-ontology-go",
+    "version": "(devel)"
+  },
+  "toolchain": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 7875000,
+    "user_ns": 3421000,
+    "system_ns": 2616000,
+    "peak_rss_bytes": 14368768,
+    "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 1154416,
+      "wait_ns": 6720584,
+      "deadline_remaining_ns": 59981330375,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "build": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 314734916,
+    "user_ns": 141514000,
+    "system_ns": 91066000,
+    "peak_rss_bytes": 88342528,
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 915416,
+      "wait_ns": 313819500,
+      "deadline_remaining_ns": 59970707375,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "runs": [
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 355618917,
+      "user_ns": 2036000,
+      "system_ns": 4474000,
+      "peak_rss_bytes": 5193728,
+      "stdout_sha256": "sha256:a7acc7a41dbac8303f6725e0fcc7551c087f18ca460b526eb5e5655ccaa4a1a6",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 832417,
+        "wait_ns": 354786500,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59654399042,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 4004750,
+      "user_ns": 1477000,
+      "system_ns": 1648000,
+      "peak_rss_bytes": 5128192,
+      "stdout_sha256": "sha256:a7acc7a41dbac8303f6725e0fcc7551c087f18ca460b526eb5e5655ccaa4a1a6",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1163958,
+        "wait_ns": 2840792,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59297890542,
+        "context_at_start_return": "ACTIVE"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "urn:make9533:build",
+          "input": {
+            "pick": 0,
+            "values": [
+              541,
+              541
+            ]
+          },
+          "input_fields": [
+            {
+              "id": "urn:make9533:values",
+              "name": "values",
+              "value": [
+                541,
+                541
+              ]
+            },
+            {
+              "id": "urn:make9533:pick",
+              "name": "pick",
+              "value": 0
+            }
+          ],
+          "actual": {
+            "empty": [],
+            "flags": [
+              true,
+              false
+            ],
+            "labels": [
+              "start",
+              "끝"
+            ],
+            "pick": 0,
+            "values": [
+              1082,
+              543
+            ]
+          },
+          "actual_fields": [
+            {
+              "id": "urn:make9533:batch-values",
+              "name": "values",
+              "value": [
+                1082,
+                543
+              ]
+            },
+            {
+              "id": "urn:make9533:batch-pick",
+              "name": "pick",
+              "value": 0
+            },
+            {
+              "id": "urn:make9533:labels",
+              "name": "labels",
+              "value": [
+                "start",
+                "끝"
+              ]
+            },
+            {
+              "id": "urn:make9533:flags",
+              "name": "flags",
+              "value": [
+                true,
+                false
+              ]
+            },
+            {
+              "id": "urn:make9533:empty",
+              "name": "empty",
+              "value": []
+            }
+          ]
+        },
+        {
+          "activity_id": "urn:make9533:read",
+          "producer_id": "urn:make9533:build",
+          "input": {
+            "empty": [],
+            "flags": [
+              true,
+              false
+            ],
+            "labels": [
+              "start",
+              "끝"
+            ],
+            "pick": 0,
+            "values": [
+              1082,
+              543
+            ]
+          },
+          "input_fields": [
+            {
+              "id": "urn:make9533:batch-values",
+              "name": "values",
+              "value": [
+                1082,
+                543
+              ]
+            },
+            {
+              "id": "urn:make9533:batch-pick",
+              "name": "pick",
+              "value": 0
+            },
+            {
+              "id": "urn:make9533:labels",
+              "name": "labels",
+              "value": [
+                "start",
+                "끝"
+              ]
+            },
+            {
+              "id": "urn:make9533:flags",
+              "name": "flags",
+              "value": [
+                true,
+                false
+              ]
+            },
+            {
+              "id": "urn:make9533:empty",
+              "name": "empty",
+              "value": []
+            }
+          ],
+          "actual": 1082,
+          "expected": 1082,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ],
+      "constructions": [
+        {
+          "site_index": 0,
+          "read_start": 1,
+          "read_end": 5,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 1,
+              "read_end": 3,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 3,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 4,
+          "read_start": 1,
+          "read_end": 2,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 1,
+              "read_end": 2,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 1,
+          "read_start": 5,
+          "read_end": 5,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 2,
+          "read_start": 5,
+          "read_end": 5,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 3,
+          "read_start": 5,
+          "read_end": 5,
+          "completed": true,
+          "elements": []
+        }
+      ],
+      "reads_observed": true,
+      "reads": [
+        {
+          "site_index": 0,
+          "index": 0,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 3,
+          "index": 1,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 1
+          }
+        },
+        {
+          "site_index": 4,
+          "index": 0,
+          "length": 1,
+          "construction": {
+            "instance_index": 1,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 1,
+          "index": 0,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 2,
+          "index": 1,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 1
+          }
+        },
+        {
+          "site_index": 5,
+          "index": 0,
+          "length": 2,
+          "construction": {
+            "instance_index": 3,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 6,
+          "index": 1,
+          "length": 2,
+          "construction": {
+            "instance_index": 2,
+            "element_index": 1
+          }
+        },
+        {
+          "site_index": 7,
+          "index": 0,
+          "length": 2,
+          "construction": {
+            "instance_index": 0,
+            "element_index": 1
+          }
+        }
+      ]
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "urn:make9533:build",
+          "input": {
+            "pick": 1,
+            "values": [
+              547,
+              557
+            ]
+          },
+          "input_fields": [
+            {
+              "id": "urn:make9533:values",
+              "name": "values",
+              "value": [
+                547,
+                557
+              ]
+            },
+            {
+              "id": "urn:make9533:pick",
+              "name": "pick",
+              "value": 1
+            }
+          ],
+          "actual": {
+            "empty": [],
+            "flags": [
+              true,
+              false
+            ],
+            "labels": [
+              "start",
+              "끝"
+            ],
+            "pick": 1,
+            "values": [
+              1104,
+              549
+            ]
+          },
+          "actual_fields": [
+            {
+              "id": "urn:make9533:batch-values",
+              "name": "values",
+              "value": [
+                1104,
+                549
+              ]
+            },
+            {
+              "id": "urn:make9533:batch-pick",
+              "name": "pick",
+              "value": 1
+            },
+            {
+              "id": "urn:make9533:labels",
+              "name": "labels",
+              "value": [
+                "start",
+                "끝"
+              ]
+            },
+            {
+              "id": "urn:make9533:flags",
+              "name": "flags",
+              "value": [
+                true,
+                false
+              ]
+            },
+            {
+              "id": "urn:make9533:empty",
+              "name": "empty",
+              "value": []
+            }
+          ]
+        },
+        {
+          "activity_id": "urn:make9533:read",
+          "producer_id": "urn:make9533:build",
+          "input": {
+            "empty": [],
+            "flags": [
+              true,
+              false
+            ],
+            "labels": [
+              "start",
+              "끝"
+            ],
+            "pick": 1,
+            "values": [
+              1104,
+              549
+            ]
+          },
+          "input_fields": [
+            {
+              "id": "urn:make9533:batch-values",
+              "name": "values",
+              "value": [
+                1104,
+                549
+              ]
+            },
+            {
+              "id": "urn:make9533:batch-pick",
+              "name": "pick",
+              "value": 1
+            },
+            {
+              "id": "urn:make9533:labels",
+              "name": "labels",
+              "value": [
+                "start",
+                "끝"
+              ]
+            },
+            {
+              "id": "urn:make9533:flags",
+              "name": "flags",
+              "value": [
+                true,
+                false
+              ]
+            },
+            {
+              "id": "urn:make9533:empty",
+              "name": "empty",
+              "value": []
+            }
+          ],
+          "actual": 549,
+          "expected": 549,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ],
+      "constructions": [
+        {
+          "site_index": 0,
+          "read_start": 1,
+          "read_end": 5,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 1,
+              "read_end": 3,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 3,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 4,
+          "read_start": 1,
+          "read_end": 2,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 1,
+              "read_end": 2,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 1,
+          "read_start": 5,
+          "read_end": 5,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 2,
+          "read_start": 5,
+          "read_end": 5,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 3,
+          "read_start": 5,
+          "read_end": 5,
+          "completed": true,
+          "elements": []
+        }
+      ],
+      "reads_observed": true,
+      "reads": [
+        {
+          "site_index": 0,
+          "index": 0,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 3,
+          "index": 1,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 1
+          }
+        },
+        {
+          "site_index": 4,
+          "index": 0,
+          "length": 1,
+          "construction": {
+            "instance_index": 1,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 1,
+          "index": 0,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 2,
+          "index": 1,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 1
+          }
+        },
+        {
+          "site_index": 5,
+          "index": 0,
+          "length": 2,
+          "construction": {
+            "instance_index": 3,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 6,
+          "index": 1,
+          "length": 2,
+          "construction": {
+            "instance_index": 2,
+            "element_index": 1
+          }
+        },
+        {
+          "site_index": 7,
+          "index": 1,
+          "length": 2,
+          "construction": {
+            "instance_index": 0,
+            "element_index": 2
+          }
+        }
+      ]
+    },
+    {
+      "case_index": 2,
+      "deliveries": [
+        {
+          "activity_id": "urn:make9533:build",
+          "input": {
+            "pick": 0,
+            "values": [
+              557,
+              563
+            ]
+          },
+          "input_fields": [
+            {
+              "id": "urn:make9533:values",
+              "name": "values",
+              "value": [
+                557,
+                563
+              ]
+            },
+            {
+              "id": "urn:make9533:pick",
+              "name": "pick",
+              "value": 0
+            }
+          ],
+          "actual": {
+            "empty": [],
+            "flags": [
+              true,
+              false
+            ],
+            "labels": [
+              "start",
+              "끝"
+            ],
+            "pick": 0,
+            "values": [
+              1120,
+              559
+            ]
+          },
+          "actual_fields": [
+            {
+              "id": "urn:make9533:batch-values",
+              "name": "values",
+              "value": [
+                1120,
+                559
+              ]
+            },
+            {
+              "id": "urn:make9533:batch-pick",
+              "name": "pick",
+              "value": 0
+            },
+            {
+              "id": "urn:make9533:labels",
+              "name": "labels",
+              "value": [
+                "start",
+                "끝"
+              ]
+            },
+            {
+              "id": "urn:make9533:flags",
+              "name": "flags",
+              "value": [
+                true,
+                false
+              ]
+            },
+            {
+              "id": "urn:make9533:empty",
+              "name": "empty",
+              "value": []
+            }
+          ]
+        },
+        {
+          "activity_id": "urn:make9533:read",
+          "producer_id": "urn:make9533:build",
+          "input": {
+            "empty": [],
+            "flags": [
+              true,
+              false
+            ],
+            "labels": [
+              "start",
+              "끝"
+            ],
+            "pick": 0,
+            "values": [
+              1120,
+              559
+            ]
+          },
+          "input_fields": [
+            {
+              "id": "urn:make9533:batch-values",
+              "name": "values",
+              "value": [
+                1120,
+                559
+              ]
+            },
+            {
+              "id": "urn:make9533:batch-pick",
+              "name": "pick",
+              "value": 0
+            },
+            {
+              "id": "urn:make9533:labels",
+              "name": "labels",
+              "value": [
+                "start",
+                "끝"
+              ]
+            },
+            {
+              "id": "urn:make9533:flags",
+              "name": "flags",
+              "value": [
+                true,
+                false
+              ]
+            },
+            {
+              "id": "urn:make9533:empty",
+              "name": "empty",
+              "value": []
+            }
+          ],
+          "actual": 1120,
+          "expected": 1120,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ],
+      "constructions": [
+        {
+          "site_index": 0,
+          "read_start": 1,
+          "read_end": 5,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 1,
+              "read_end": 3,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 3,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 4,
+          "read_start": 1,
+          "read_end": 2,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 1,
+              "read_end": 2,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 1,
+          "read_start": 5,
+          "read_end": 5,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 2,
+          "read_start": 5,
+          "read_end": 5,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 5,
+              "read_end": 5,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        },
+        {
+          "site_index": 3,
+          "read_start": 5,
+          "read_end": 5,
+          "completed": true,
+          "elements": []
+        }
+      ],
+      "reads_observed": true,
+      "reads": [
+        {
+          "site_index": 0,
+          "index": 0,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 3,
+          "index": 1,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 1
+          }
+        },
+        {
+          "site_index": 4,
+          "index": 0,
+          "length": 1,
+          "construction": {
+            "instance_index": 1,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 1,
+          "index": 0,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 2,
+          "index": 1,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 1
+          }
+        },
+        {
+          "site_index": 5,
+          "index": 0,
+          "length": 2,
+          "construction": {
+            "instance_index": 3,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 6,
+          "index": 1,
+          "length": 2,
+          "construction": {
+            "instance_index": 2,
+            "element_index": 1
+          }
+        },
+        {
+          "site_index": 7,
+          "index": 0,
+          "length": 2,
+          "construction": {
+            "instance_index": 0,
+            "element_index": 1
+          }
+        }
+      ]
+    }
+  ],
+  "projection_replayed": true,
+  "runtime_replayed": true,
+  "finite_passed": 3,
+  "finite_total": 3,
+  "condition_sites": [
+    {
+      "expression_id": "sha256:039d6c28b2a71c868fa4d9dd2a297bca01649e3e408ccda00caf18f9c4ec7c44",
+      "root_activity_id": "urn:make9533:read",
+      "activity_id": "urn:make9533:read",
+      "expression": "input.GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50[0] && input.GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56[1] == \"끝\"",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start": 2891,
+      "end": 3068,
+      "source": {
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "urn:make9533:read",
+          "name": "Read",
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "start_byte": 1119,
+          "end_byte": 1298
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+        "start_byte": 1187,
+        "end_byte": 1229,
+        "decoded_start": 3,
+        "decoded_end": 43,
+        "source_ordinal": 0,
+        "expression": "input.flags[0] && input.labels[1]==\"끝\"",
+        "relation": "retained_condition_node",
+        "fields": [
+          {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "kind": "field",
+              "stable_id": "urn:make9533:flags",
+              "name": "flags",
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "start_byte": 516,
+              "end_byte": 578
+            },
+            "entity_id": "urn:make9533:batch",
+            "field_id": "urn:make9533:flags",
+            "name": "flags"
+          },
+          {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "kind": "field",
+              "stable_id": "urn:make9533:labels",
+              "name": "labels",
+              "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+              "start_byte": 451,
+              "end_byte": 514
+            },
+            "entity_id": "urn:make9533:batch",
+            "field_id": "urn:make9533:labels",
+            "name": "labels"
+          }
+        ]
+      }
+    }
+  ],
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "COMPLETE",
+    "recorded_events": 3,
+    "dropped_events": 0,
+    "sha256": "sha256:1c5188955756167f705daca97fea2be54fe9f5f087e958930cb5ba025d3eb875"
+  },
+  "construction_sites": [
+    {
+      "expression_id": "sha256:3f8462a374f4f073f3af412d3c6448daf07c5d519270338aa0a1da2bd6d99b87",
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "native_ordinal": 0,
+      "element_type": "int64",
+      "expression": "[]int64{GoooComposedActivity0Call0(input), input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0] + input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1], previous + 2}",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 1494,
+      "end_byte": 1719,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+        "start_byte": 872,
+        "end_byte": 936,
+        "decoded_start": 41,
+        "decoded_end": 105,
+        "expression": "[]int64{Inner(input),input.values[0]+input.values[1],previous+2}"
+      },
+      "elements": [
+        {
+          "expression": "GoooComposedActivity0Call0(input)",
+          "start_byte": 1502,
+          "end_byte": 1535,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+            "start_byte": 880,
+            "end_byte": 892,
+            "decoded_start": 49,
+            "decoded_end": 61,
+            "expression": "Inner(input)"
+          }
+        },
+        {
+          "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0] + input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]",
+          "start_byte": 1537,
+          "end_byte": 1704,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+            "start_byte": 893,
+            "end_byte": 924,
+            "decoded_start": 62,
+            "decoded_end": 93,
+            "expression": "input.values[0]+input.values[1]"
+          }
+        },
+        {
+          "expression": "previous + 2",
+          "start_byte": 1706,
+          "end_byte": 1718,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+            "start_byte": 925,
+            "end_byte": 935,
+            "decoded_start": 94,
+            "decoded_end": 104,
+            "expression": "previous+2"
+          }
+        }
+      ]
+    },
+    {
+      "expression_id": "sha256:99757e05117f833f00cbe111002768de8a0a4e1d9e161908617330cc52a3b369",
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "native_ordinal": 1,
+      "element_type": "string",
+      "expression": "[]string{\"start\", \"끝\"}",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 1734,
+      "end_byte": 1758,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+        "start_byte": 948,
+        "end_byte": 975,
+        "decoded_start": 117,
+        "decoded_end": 140,
+        "expression": "[]string{\"start\",\"끝\"}"
+      },
+      "elements": [
+        {
+          "expression": "\"start\"",
+          "start_byte": 1743,
+          "end_byte": 1750,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+            "start_byte": 957,
+            "end_byte": 966,
+            "decoded_start": 126,
+            "decoded_end": 133,
+            "expression": "\"start\""
+          }
+        },
+        {
+          "expression": "\"끝\"",
+          "start_byte": 1752,
+          "end_byte": 1757,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+            "start_byte": 967,
+            "end_byte": 974,
+            "decoded_start": 134,
+            "decoded_end": 139,
+            "expression": "\"끝\""
+          }
+        }
+      ]
+    },
+    {
+      "expression_id": "sha256:486b92a275ddc738c9571105f7ca3f34067938945e2c332c283c561d1d5be2fa",
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "native_ordinal": 2,
+      "element_type": "bool",
+      "expression": "[]bool{true, false}",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 1775,
+      "end_byte": 1794,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+        "start_byte": 989,
+        "end_byte": 1007,
+        "decoded_start": 154,
+        "decoded_end": 172,
+        "expression": "[]bool{true,false}"
+      },
+      "elements": [
+        {
+          "expression": "true",
+          "start_byte": 1782,
+          "end_byte": 1786,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+            "start_byte": 996,
+            "end_byte": 1000,
+            "decoded_start": 161,
+            "decoded_end": 165,
+            "expression": "true"
+          }
+        },
+        {
+          "expression": "false",
+          "start_byte": 1788,
+          "end_byte": 1793,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+            "start_byte": 1001,
+            "end_byte": 1006,
+            "decoded_start": 166,
+            "decoded_end": 171,
+            "expression": "false"
+          }
+        }
+      ]
+    },
+    {
+      "expression_id": "sha256:cfb72b16fd3379679377f379152ac71922358a4ceed785d163a593c0c8b875e3",
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "native_ordinal": 3,
+      "element_type": "int64",
+      "expression": "[]int64{}",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 1808,
+      "end_byte": 1817,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+        "start_byte": 1018,
+        "end_byte": 1027,
+        "decoded_start": 183,
+        "decoded_end": 192,
+        "expression": "[]int64{}"
+      },
+      "elements": []
+    },
+    {
+      "expression_id": "sha256:a200af53203968791a8c870fed1d864bff50d4761135caf6354e68167ecb24f1",
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:inner",
+      "native_ordinal": 0,
+      "element_type": "int64",
+      "expression": "[]int64{input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]}",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 2533,
+      "end_byte": 2624,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+        "start_byte": 723,
+        "end_byte": 747,
+        "decoded_start": 11,
+        "decoded_end": 35,
+        "expression": "[]int64{input.values[1]}"
+      },
+      "elements": [
+        {
+          "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]",
+          "start_byte": 2541,
+          "end_byte": 2623,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+            "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+            "start_byte": 731,
+            "end_byte": 746,
+            "decoded_start": 19,
+            "decoded_end": 34,
+            "expression": "input.values[1]"
+          }
+        }
+      ]
+    }
+  ],
+  "read_sites": [
+    {
+      "expression_id": "sha256:c13744bd718bace754cbd5f969a1660a4de580f8afa8674061ad4cf77103d461",
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "kind": "index",
+      "element_type": "int64",
+      "native_ordinal": 0,
+      "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0]",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 1396,
+      "end_byte": 1478,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+        "start_byte": 844,
+        "end_byte": 859,
+        "decoded_start": 13,
+        "decoded_end": 28,
+        "expression": "input.values[0]"
+      }
+    },
+    {
+      "expression_id": "sha256:e30170df194830a5c15aa33026fe4aac3e8a9a57bcdd03af9cd284f4e5762537",
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "kind": "index",
+      "element_type": "int64",
+      "native_ordinal": 1,
+      "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[0]",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 1537,
+      "end_byte": 1619,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+        "start_byte": 893,
+        "end_byte": 908,
+        "decoded_start": 62,
+        "decoded_end": 77,
+        "expression": "input.values[0]"
+      }
+    },
+    {
+      "expression_id": "sha256:de2de09ece40b2406992a2d16c5b91b3318e361b9703a3985e70498f888a2b10",
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:build",
+      "kind": "index",
+      "element_type": "int64",
+      "native_ordinal": 2,
+      "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 1622,
+      "end_byte": 1704,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:6eae13338d53584921123223507af116d3e15c9dc23c5a1d4f358998215046be",
+        "start_byte": 909,
+        "end_byte": 924,
+        "decoded_start": 78,
+        "decoded_end": 93,
+        "expression": "input.values[1]"
+      }
+    },
+    {
+      "expression_id": "sha256:9c982fd9e1719b5579dcb575184973f145a8c801da953230d8663949fa54b737",
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:inner",
+      "kind": "index",
+      "element_type": "int64",
+      "native_ordinal": 0,
+      "expression": "input.GoooFieldf350fe7ef4a3277a9a681c7961c34b072d988236b01d20afb9a636e12d2c57e7[1]",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 2541,
+      "end_byte": 2623,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+        "start_byte": 731,
+        "end_byte": 746,
+        "decoded_start": 19,
+        "decoded_end": 34,
+        "expression": "input.values[1]"
+      }
+    },
+    {
+      "expression_id": "sha256:871df262b573459705165c48a61d68ad67a65368017423245334e240a341f2ec",
+      "root_activity_id": "urn:make9533:build",
+      "activity_id": "urn:make9533:inner",
+      "kind": "index",
+      "element_type": "int64",
+      "native_ordinal": 1,
+      "expression": "values[0]",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 2633,
+      "end_byte": 2642,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:f847e88664865a4f9c393a387e8f27bc944fc5f240d7fd4f175c5e7b3378c962",
+        "start_byte": 755,
+        "end_byte": 764,
+        "decoded_start": 43,
+        "decoded_end": 52,
+        "expression": "values[0]"
+      }
+    },
+    {
+      "expression_id": "sha256:2b3cdcc0e64a3145ab2e3946dfbdcada106c26779c69b9b48891843e3e781de7",
+      "root_activity_id": "urn:make9533:read",
+      "activity_id": "urn:make9533:read",
+      "kind": "index",
+      "element_type": "bool",
+      "native_ordinal": 0,
+      "expression": "input.GoooField392c3f4d52c7d8b1d4484efe2eb80ed535671a52c323f665e3725550da32be50[0]",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 2891,
+      "end_byte": 2973,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+        "start_byte": 1187,
+        "end_byte": 1201,
+        "decoded_start": 3,
+        "decoded_end": 17,
+        "expression": "input.flags[0]"
+      }
+    },
+    {
+      "expression_id": "sha256:8d587d100c38446cda82a462e38a43689d2536a979424343891fad939120f51d",
+      "root_activity_id": "urn:make9533:read",
+      "activity_id": "urn:make9533:read",
+      "kind": "index",
+      "element_type": "string",
+      "native_ordinal": 1,
+      "expression": "input.GoooField880d2e4b34b0992755850dbd702fc49a81a3183bbde2522d11989a94b9e9db56[1]",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 2977,
+      "end_byte": 3059,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+        "start_byte": 1205,
+        "end_byte": 1220,
+        "decoded_start": 21,
+        "decoded_end": 36,
+        "expression": "input.labels[1]"
+      }
+    },
+    {
+      "expression_id": "sha256:edc6fc95e9b5bb8a6e060534eaa74183cd366ca2045327c0e54178af0da099e0",
+      "root_activity_id": "urn:make9533:read",
+      "activity_id": "urn:make9533:read",
+      "kind": "index",
+      "element_type": "int64",
+      "native_ordinal": 2,
+      "expression": "input.GoooField5377eb69fb766764631106edfb5d7dd73cc91918af59c3aa7d5ef39226cfb90c[input.GoooFieldadbddce846296dacd2120598bf784474d9b2cd261dafc43813d7879d75ca7087]",
+      "projection_sha256": "sha256:cece6e6e4f9fb773256b0e127810fdb67784c7bc60fcb70ac830f3eafd27dced",
+      "start_byte": 3080,
+      "end_byte": 3240,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+        "body_sha256": "sha256:a9db922af4ead953727aee7e04164dc0a1aa16f5311ddbbb6d59300504de612b",
+        "start_byte": 1238,
+        "end_byte": 1262,
+        "decoded_start": 52,
+        "decoded_end": 76,
+        "expression": "input.values[input.pick]"
+      }
+    }
+  ],
+  "read_inputs": [
+    {
+      "activity_id": "urn:make9533:build",
+      "input_key": "Build",
+      "port": "input",
+      "entity_id": "urn:make9533:input",
+      "field_id": "urn:make9533:values",
+      "field_name": "values",
+      "element_type": "int64"
+    }
+  ],
+  "read_observation": {
+    "schema": "gooo/native-read-summary/v2",
+    "status": "COMPLETE",
+    "recorded_reads": 24,
+    "resolved_reads": 12,
+    "constructed_reads": 12,
+    "recorded_constructions": 15,
+    "unresolved_reads": 0,
+    "dropped_reads": 0,
+    "registration_dropped": 0,
+    "sha256": "sha256:72c1c6afe318a1401bd8e7c4a13f79bbba96e61d2e2d4f23409fa62e9ce5a97e",
+    "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+  },
+  "input_separation": {
+    "status": "UNKNOWN",
+    "reason": "UNCLASSIFIED_INPUTS",
+    "unique_inputs": 3,
+    "duplicate_rows": 0,
+    "overlapping_inputs": 0,
+    "disjoint_inputs": 0,
+    "disjoint_cases_passed": 0,
+    "unknown_inputs": 3,
+    "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+  },
+  "model_calls": 0,
+  "elapsed_ns": 707278875,
+  "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+}

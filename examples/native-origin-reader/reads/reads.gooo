@@ -1,0 +1,29 @@
+package origins
+namespace origins
+
+entity Origin id "gooo://origin-reader/reads" fields {
+    field case_index id "gooo://origin-reader/reads/case_index" type integer required one
+    field root_activity_id id "gooo://origin-reader/reads/root_activity_id" type string required one
+    field activity_id id "gooo://origin-reader/reads/activity_id" type string required one
+    field kind id "gooo://origin-reader/reads/kind" type string required one
+    field index id "gooo://origin-reader/reads/index" type integer required one
+    field length id "gooo://origin-reader/reads/length" type integer required one
+    field status id "gooo://origin-reader/reads/status" type string required one
+    field input_key id "gooo://origin-reader/reads/input_key" type string required one
+    field field_id id "gooo://origin-reader/reads/field_id" type string required one
+    field origin_index id "gooo://origin-reader/reads/origin_index" type integer required one
+    field source_sha256 id "gooo://origin-reader/reads/source_sha256" type string required one
+    field source_start id "gooo://origin-reader/reads/source_start" type integer required one
+    field source_end id "gooo://origin-reader/reads/source_end" type integer required one
+    field expression id "gooo://origin-reader/reads/expression" type string required one
+}
+
+entity Explanation id "gooo://origin-reader/reads/explanation" fields {
+    field category id "gooo://origin-reader/reads/category" type string required one
+    field count id "gooo://origin-reader/reads/count" type integer required one
+}
+
+activity Explain(Origin) -> Explanation computes `if input.source_sha256 == "" { return Explanation{category: "SOURCE_UNMAPPED", count: 1} }
+if input.status == "RESOLVED" { return Explanation{category: "EXTERNAL_INPUT", count: 1} }
+if input.status == "CONSTRUCTED" { return Explanation{category: "CONSTRUCTED_ELEMENT", count: 1} }
+return Explanation{category: "ORIGIN_UNRESOLVED", count: 1}`

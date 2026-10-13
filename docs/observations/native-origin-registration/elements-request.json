@@ -1,0 +1,24 @@
+{
+  "case": {
+    "id": "native-origin-reader-elements",
+    "path": "examples/native-origin-reader/elements/elements.gooo",
+    "kind": "VALID",
+    "expected_decision": "PASS",
+    "proof_choice": "COHERENCE",
+    "meta_operation": "replay-language-syntax",
+    "scope": "LANGUAGE_CAPABILITY",
+    "ordered_collections": true
+  },
+  "base_version": 50,
+  "snapshot_digest": "sha256:918acf4018ac55bcf2a30e504c1d5f6e357b14f4dbf5fa7a29a52e95717ec00e",
+  "source_digest": "sha256:d2a8391f9a840dc42558357eaa56d1530558d94079c23ac26d75c73e9adbca23",
+  "toolchain": "go1.27.2",
+  "execution_identity": {
+    "go_version": "go1.27.2",
+    "goos": "darwin",
+    "goarch": "arm64",
+    "executable_sha256": "sha256:fc4a5a4c33be88424e7026b7b6c2aed3aa9afa98dc699c9190ffb18d4e4f81df",
+    "go_command_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "compiler_sha256": "sha256:8a3add4030b0f724c535afe946a4fcd27ca235ba869d4d4b91091e0ef8a611e2"
+  }
+}
