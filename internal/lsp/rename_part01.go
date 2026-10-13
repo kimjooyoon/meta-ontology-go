@@ -23,6 +23,15 @@ func (server *Server) renameRequest(request requestEnvelope) (*responseEnvelope,
 	if err != nil {
 		return responseOrNil(request.ID, invalidParams, "Invalid rename position"), nil, nil
 	}
+	if targetID == "" {
+		reference, resolved, err := activityCallRenameTarget(document, params.TextDocument.URI, params.Position)
+		if err != nil {
+			return responseOrNil(request.ID, invalidParams, err.Error()), nil, nil
+		}
+		if resolved {
+			targetID, targetName = reference.ActivityID, reference.Name
+		}
+	}
 	if targetID == "" || targetName == "" {
 		return resultResponse(request.ID, nil), nil, nil
 	}

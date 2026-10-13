@@ -45,8 +45,9 @@ PROV 관계 ID, 실행 바인딩의 연결이 유지됐는지도 확인합니다
 
 다른 파일의 호출자, 워크스페이스 진입점, 케이스 파일의 입력 키와 외부 API 소비자는
 별도로 연결해야 합니다. 실험적 LSP에서 활동 선언의 rename도 같은 변환을 사용합니다.
-본문 호출에서 활동 ID를 확정하지 못하면 선언 위치에서 시작하도록 안내합니다.
-본문 호출에서 시작하는 탐색과 워크스페이스 전체 rename은 다음 범위입니다.
+본문의 자유 직접 호출도 ID를 확인해 같은 변환으로 연결합니다. 지역 변수나
+문자열 설명이 같은 이름을 갖는 경우는 활동 참조로 삼지 않습니다. import된 활동,
+대안 표현식의 커서 위치와 워크스페이스 전체 rename은 다음 범위입니다.
 
 [작은 예제와 실제 변경 기록](../../examples/activity-rename/README.md),
 [영문 참조 문서](activity-refactoring.md)에 현재 근거를 남겼습니다.
@@ -54,3 +55,18 @@ PROV 관계 ID, 실행 바인딩의 연결이 유지됐는지도 확인합니다
 [v0.2.48-experimental](https://github.com/kimjooyoon/gooo-decision-runtime/releases/tag/v0.2.48-experimental)로
 이어집니다. 모델이 활동 분리나 이름 변경을 제안할 때도 이처럼 Gooo가 변경 범위와
 연결 관계를 확인하는 소스 연산이 바탕이 됩니다.
+
+## 호출 위치에서 시작하기
+
+`--at-byte`는 파일 처음을 0으로 세는 바이트 위치입니다. `--from`과 둘 중 하나를
+고릅니다. 활동 선언 이름이나 `computes` 안의 직접 호출 이름을 가리킬 수 있습니다.
+
+```sh
+gooo refactor rename-activity --at-byte 289 --to 요금 --json examples/activity-call-rename/main.gooo.fixture
+```
+
+289는 [저장한 호출 예제](../../examples/activity-call-rename/README.md)의 실제 위치입니다.
+자신의 파일에서는 가리키는 이름의 바이트 위치를 사용합니다.
+인용 문자열의 Unicode escape와 raw 본문을 원문 위치에 연결해 해석합니다.
+편집기의 준비 요청은 해당 호출 이름의 실제 원문 범위를 반환하고, rename 요청은
+활동 ID를 확인한 뒤 기존 변환을 사용합니다. 이 경로도 실험적 LSP 범위입니다.

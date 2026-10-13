@@ -37,8 +37,8 @@ output. A local variable that would capture the new call name produces an error.
 So do declaration collisions and names reserved by the current Go projection.
 
 In the experimental LSP, renaming an activity from its declaration uses this same
-operation. It returns edits for the client to apply. Activity-call navigation
-inside body strings and workspace-wide rename remain future work.
+operation. It returns edits for the client to apply. Free direct computes calls also resolve to the activity identity. Cursor targets
+in alternatives, imported references and workspace-wide rename remain future work.
 
 ## Scope and evidence
 
@@ -85,6 +85,21 @@ A decision model could later propose which activity to split, merge or rename.
 Gooo would still need a source operation that records exactly what changed. The
 current rename path is deterministic and provides that first reusable operation.
 
-The editor declines an activity-name request without a resolved reference and asks
-the caller to start at its declaration. An unresolved body call must not fall back
-to changing only the declaration by matching its spelling.
+The editor resolves free direct computes calls to activity IDs before renaming.
+Other unresolved activity-name requests ask to start at the declaration. A cursor
+that cannot resolve must not fall back to changing only a declaration by spelling.
+
+## Select by source position
+
+Use either `--from NAME` or `--at-byte OFFSET` with `--to NAME`. The offset is a
+zero-based byte in the original file, within a declaration name or a free direct
+computes call. A quoted body maps escapes to decoded AST positions; raw bodies
+retain their source bytes. Local bindings, selectors and prose do not identify
+activities. No imports or assembly-alternative cursor targets are supported.
+
+The experimental LSP prepare request returns the actual encoded call-name range,
+and rename uses the same identity-preserving source operation. UTF-16 editor
+positions are converted through the existing source-position adapter.
+
+[The call-selector example](../../examples/activity-call-rename/README.md) retains
+one actual source transformation and its development build/source identity.
