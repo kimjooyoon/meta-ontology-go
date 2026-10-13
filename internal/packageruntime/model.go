@@ -31,10 +31,11 @@ type Source struct {
 }
 
 type SourceImage struct {
-	Filename       string `json:"filename"`
-	SourceDigest   string `json:"source_digest"`
-	SemanticDigest string `json:"semantic_digest"`
-	Declarations   int    `json:"declarations"`
+	Filename       string               `json:"filename"`
+	SourceDigest   string               `json:"source_digest"`
+	SemanticDigest string               `json:"semantic_digest"`
+	Declarations   int                  `json:"declarations"`
+	FieldTypes     []FieldTypeReference `json:"field_types,omitempty"`
 }
 
 type PackageImage struct {
@@ -53,14 +54,23 @@ type PackageImage struct {
 // local activity input. It describes the package-level execution graph; it
 // does not claim that generated code has executed.
 type PackageBinding struct {
-	ProducerPackage  string `json:"producer_package"`
-	ProducerActivity string `json:"producer_activity"`
-	ProducerPort     string `json:"producer_port"`
-	ConsumerPackage  string `json:"consumer_package"`
-	ConsumerActivity string `json:"consumer_activity"`
-	ConsumerPort     string `json:"consumer_port"`
-	EntityID         string `json:"entity_id"`
-	Feedback         bool   `json:"feedback,omitempty"`
+	ProducerPackage  string                `json:"producer_package"`
+	ProducerActivity string                `json:"producer_activity"`
+	ProducerPort     string                `json:"producer_port"`
+	ConsumerPackage  string                `json:"consumer_package"`
+	ConsumerActivity string                `json:"consumer_activity"`
+	ConsumerPort     string                `json:"consumer_port"`
+	EntityID         string                `json:"entity_id"`
+	Feedback         bool                  `json:"feedback,omitempty"`
+	Source           *PackageBindingSource `json:"source,omitempty"`
+}
+
+type PackageBindingSource struct {
+	Filename   string `json:"filename"`
+	Start      int    `json:"start"`
+	End        int    `json:"end"`
+	ProducerID string `json:"producer_id"`
+	ConsumerID string `json:"consumer_id"`
 }
 
 // Export is the statically resolved public surface of a Gooo package.

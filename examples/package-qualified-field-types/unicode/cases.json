@@ -1,0 +1,4 @@
+{"schema":"gooo/body-composition-cases/v1","cases":[
+ {"inputs":{"field352/app:Pass":{"amount":42}},"expected":{"field352/app:Pass":{"amount":42},"field352/app:Decide":{"eligible":false}}},
+ {"inputs":{"field352/app:Pass":{"amount":43,"note":"기준 충족"}},"expected":{"field352/app:Pass":{"amount":43,"note":"기준 충족"},"field352/app:Decide":{"eligible":true}}}
+]}

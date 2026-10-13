@@ -1,0 +1,8 @@
+package app
+namespace field376_app
+import 자료 "field376/counts"
+entity Ledger id "urn:field376:ledger" fields {
+ field amount id "urn:field376:amount" type 자료.값 required one
+ field note id "urn:field376:note" type 자료.문장 optional one
+}
+activity Pass(Ledger) -> Ledger id "urn:field376:pass" computes "return input"

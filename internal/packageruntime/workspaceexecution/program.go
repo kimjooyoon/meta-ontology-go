@@ -60,9 +60,9 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		sources := append([]packageruntime.Source(nil), spec.Sources...)
 		sort.Slice(sources, func(i, j int) bool { return sources[i].Filename < sources[j].Filename })
 		for _, source := range sources {
-			file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(source.Filename, source.Content, syntax.EntityFieldsV4Support())
-			if diagnostics.HasErrors() || file == nil {
-				return Program{}, fmt.Errorf("workspace source %q has syntax errors", source.Filename)
+			file, err := packageruntime.ParseResolvedPackageSource(image, spec.Path, source)
+			if err != nil {
+				return Program{}, err
 			}
 			files[spec.Path] = append(files[spec.Path], file)
 			for _, declaration := range file.Declarations {

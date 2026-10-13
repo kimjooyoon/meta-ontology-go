@@ -38,7 +38,17 @@ func (p *Parser) expectTypeReference() TypeRefDecl {
 	p.skipIllegal()
 	if p.at(TokenString) || (p.at(TokenIdentifier) && !isEntityFieldsReservedWord(p.peek().Value)) {
 		token := p.advance()
-		return TypeRefDecl{Span: token.Span, Spelling: token.Value}
+		ref := TypeRefDecl{Span: token.Span, Spelling: token.Value}
+		if token.Kind == TokenIdentifier && p.at(TokenDot) {
+			p.advance()
+			member := p.expectFieldIdentifier()
+			if member.Span.IsEmpty() {
+				return TypeRefDecl{}
+			}
+			ref.Span = startSpan(p.filename, token.Span.Start, member.Span.End)
+			ref.Spelling += "." + member.Name
+		}
+		return ref
 	}
 	p.error(DiagExpectedFieldType, p.peek().Span, "expected type reference")
 	return TypeRefDecl{}

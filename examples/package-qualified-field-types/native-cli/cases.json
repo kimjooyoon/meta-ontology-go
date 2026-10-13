@@ -1,0 +1,37 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "field376/app:Pass": {
+          "amount": 46
+        }
+      },
+      "expected": {
+        "field376/app:Pass": {
+          "amount": 46
+        },
+        "field376/app:Decide": {
+          "eligible": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "field376/app:Pass": {
+          "amount": 47,
+          "note": "기준 충족"
+        }
+      },
+      "expected": {
+        "field376/app:Pass": {
+          "amount": 47,
+          "note": "기준 충족"
+        },
+        "field376/app:Decide": {
+          "eligible": true
+        }
+      }
+    }
+  ]
+}

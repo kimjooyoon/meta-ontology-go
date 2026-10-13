@@ -1,0 +1,8 @@
+package app
+namespace field286_app
+import data "field286/counts"
+entity Ledger id "urn:field286:ledger" fields {
+ field amount id "urn:field286:amount" type data.Count required one
+ field note id "urn:field286:note" type data.Label optional one
+}
+activity Pass(Ledger) -> Ledger id "urn:field286:pass" computes "return input"

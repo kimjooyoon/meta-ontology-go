@@ -1,0 +1,8 @@
+package app
+namespace field352_app
+import 자료 "field352/flags"
+entity Claim id "urn:field352:claim" fields {
+ field eligible id "urn:field352:eligible" type 자료.값 required one
+}
+activity Decide(Ledger) -> Claim id "urn:field352:decide" computes "return Claim{eligible: input.amount >= 43}"
+bind Pass.result -> Decide.input
