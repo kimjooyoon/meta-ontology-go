@@ -3,6 +3,7 @@ package bodycodegen
 import (
 	"encoding/json"
 
+	"github.com/kimjooyoon/gooo-decision-runtime/criteriadecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
 )
 
@@ -35,6 +36,7 @@ type RecordAssemblyReceipt struct {
 	PredictNS            int64                          `json:"predict_ns"`
 	Model                *RetainedModelInfo             `json:"model,omitempty"`
 	Context              *RecordOrdinalContext          `json:"model_context,omitempty"`
+	ScalarPrediction     *criteriadecision.Prediction   `json:"scalar_criteria_prediction,omitempty"`
 	Prediction           *jointdecision.ThreePrediction `json:"prediction,omitempty"`
 	Ranking              []uint16                       `json:"ranking"`
 	RankingSourceSHA256  string                         `json:"ranking_source_sha256,omitempty"`

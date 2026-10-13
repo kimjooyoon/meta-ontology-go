@@ -1,0 +1,15 @@
+package sourcedecision
+namespace sourcedecision
+entity Integer id "urn:sourcedecision:integer"
+entity Boolean id "urn:sourcedecision:boolean"
+activity Offset(Integer) -> Integer id "urn:sourcedecision:offset" computes "return input - 37" assembling {
+ choice "direction" operand_order at "0" intent "37에서 입력을 뺀다. Subtract the input from thirty-seven."
+ criteria {
+  predicate "sum" activity "SumIs37"
+  input "[5]"
+  input "[12]"
+  holdout_input "[41]"
+ }
+ attempts "1"
+}
+activity SumIs37(Integer,Integer) -> Boolean computes "return input0 + input1 == 37"

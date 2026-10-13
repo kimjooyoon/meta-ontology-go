@@ -65,8 +65,8 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 	if err = observeRecordAssembly(ctx, filename, source, &plan, r); err != nil {
 		return Result{}, &RecordAssemblyError{Receipt: r, Cause: err}
 	}
-	if err = g.rankRecordAssembly(plan, r); err != nil {
-		return Result{}, err
+	if err = g.rankRecordAssemblyContext(ctx, plan, r); err != nil {
+		return Result{}, &RecordAssemblyError{Receipt: r, Cause: err}
 	}
 	if err = searchRecordAssemblyWithPolicy(ctx, plan, r, controller); err != nil {
 		return Result{}, &RecordAssemblyError{Receipt: r, Cause: err}
@@ -80,6 +80,10 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 }
 
 func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *RecordAssemblyReceipt) error {
+	return g.rankRecordAssemblyContext(context.Background(), plan, r)
+}
+
+func (g *TypedPathGenerator) rankRecordAssemblyContext(ctx context.Context, plan recordAssemblyPlan, r *RecordAssemblyReceipt) error {
 	r.ModelRequested = g.info.Loaded
 	if resolveRecordObservationRanking(r) {
 		if g.info.Loaded {
@@ -87,6 +91,9 @@ func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *Reco
 			r.Model = &info
 		}
 		return nil
+	}
+	if g.criteria != nil {
+		return g.rankScalarCriteria(ctx, plan, r)
 	}
 	if g.info.Loaded {
 		info := g.Info()

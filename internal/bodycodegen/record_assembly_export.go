@@ -5,11 +5,13 @@ import (
 	"fmt"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
+	"github.com/kimjooyoon/gooo-decision-runtime/criteriainput"
 	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
 	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 )
 
 type RecordAssemblyContextExport struct {
+	ScalarFeatures       *criteriainput.Features   `json:"scalar_features,omitempty"`
 	CriteriaFlow         *CriteriaSourceFlow       `json:"criteria_flow,omitempty"`
 	Schema               string                    `json:"schema"`
 	OriginalSourceSHA256 string                    `json:"original_source_sha256"`
