@@ -1,0 +1,4 @@
+package core
+namespace reward
+entity Integer id "urn:reward:integer"
+activity Credit(Integer) -> Integer computes `return input+75`

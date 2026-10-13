@@ -25,7 +25,7 @@ func TestSourceObserveSpecKeepsCanonicalOwnedMeaning(t *testing.T) {
 		func(s *Spec) { s.Observation.Inputs = []int64{7, 7} },
 		func(s *Spec) { s.Observation.MaxCandidates = 65 },
 		func(s *Spec) { s.Observation.MaxRounds = 9 },
-		func(s *Spec) { s.Observation.OracleActivity = "a.b" },
+		func(s *Spec) { s.Observation.OracleActivity = "a..b" },
 		func(s *Spec) { s.Search = &Search{} },
 		func(s *Spec) { s.FillPlan = &FillPlan{} },
 		func(s *Spec) { s.Cases = nil },
