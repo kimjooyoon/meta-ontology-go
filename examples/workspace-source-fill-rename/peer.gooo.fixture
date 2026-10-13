@@ -1,0 +1,5 @@
+package peer
+namespace scope83_peer
+entity Integer id "urn:scope83:integer"
+activity Boost(Integer) -> Integer id "urn:scope83:peer-boost" computes "return input+99"
+activity Read(Integer) -> Integer computes "return Boost(input)"

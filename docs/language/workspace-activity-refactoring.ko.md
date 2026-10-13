@@ -83,8 +83,10 @@ CLI 프로세스 1회와 Gooo 소스 프로그램 실행 0회를 구분해 기�
 ## 범위와 다음 과제
 
 지원 범위는 명시한 워크스페이스의 소스와 현재 분류할 수 있는 직접 참조다.
-동적 함수 값, parenthesized 호출, legacy 값 프로그램, `source_fill`과 `search`의
-후보별 lexical scope는 추가 위치 정보가 필요해 오류로 남긴다. 해석 실패와 이름 충돌은
+직접 선언한 `source_fill` 후보는 빈자리에 넣은 전체 본문에서 호출을 해석하고
+원래 소스 위치로 연결한다. [후보 참조 안내](workspace-source-fill-refactoring.ko.md)에
+별도 새 관찰과 범위를 기록했다. 동적 함수 값, parenthesized 호출, legacy 값 프로그램,
+자동 `derive`와 `search`의 후보별 lexical scope는 추가 위치 정보가 필요해 오류로 남긴다. 해석 실패와 이름 충돌은
 부분 제안을 반환하지 않는다. 여러 단계의 import selector도 받지 않는다.
 
 명령은 소스와 manifest를 자동으로 덮어쓰지 않는다. 외부 API 소비자, case 파일의 이름 키,

@@ -1,0 +1,4 @@
+package helpers
+namespace scope83_helpers
+entity Integer id "urn:scope83:integer"
+activity Boost(Integer) -> Integer id "urn:scope83:boost" computes "return input+17"

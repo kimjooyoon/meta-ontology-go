@@ -1,0 +1,4 @@
+package app
+namespace scope83_app
+import fees "scope83/helpers"
+activity Carry(Integer) -> Integer computes "return fees.Boost(input)+5"
