@@ -2,6 +2,10 @@ package main
 
 const packageTopicHelp = `Work with a multi-file Gooo workspace
 
+Read recorded candidate paths:
+  gooo package origins --receipt execution.json [--candidate <id>] [--json]
+See gooo help package origins for source scope and limits.
+
 Start from a library template:
   gooo init --template library --module example.org/team/my-library my-library
 

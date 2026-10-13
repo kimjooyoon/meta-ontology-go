@@ -84,6 +84,9 @@ supplied cases. Replay uses the saved choices with zero new model calls. Edit
 
 [Installation, platform downloads, and next steps](docs/getting-started.md)
 explain what the finite checks establish and how to change the source.
+The [language product priorities](docs/language/language-product-priorities.ko.md)
+connect everyday programs, editor support, package reuse and source origins to
+the next development steps, including preparation for GitHub Linguist.
 For a separate library example, [Gooo Go Ports](https://github.com/kimjooyoon/gooo-go-ports)
 implements selected Go standard-library functions in Gooo and compares them with
 pinned Go originals. Its [verification results and limits](https://github.com/kimjooyoon/gooo-go-ports/blob/75d0655101d1468f9a94eb10571d34378b98293b/README.md)

@@ -20,6 +20,7 @@ type ActivityRef struct {
 }
 
 type Program struct {
+	ActivityOrigins  []WorkspaceActivityOrigin  `json:"activity_origins,omitempty"`
 	ConditionOrigins []WorkspaceConditionOrigin `json:"condition_origins,omitempty"`
 	Schema           string                     `json:"schema"`
 	Workspace        packageruntime.Image       `json:"workspace_image"`
@@ -193,6 +194,10 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 	if err != nil {
 		return Program{}, err
 	}
+	activityOrigins, err := prepareWorkspaceActivityOrigins(manifest, callNames, allNeeded)
+	if err != nil {
+		return Program{}, err
+	}
 	fillInputs := prepareWorkspaceFillInputs(manifest, callNames, recordNames, allNeeded)
 	sourceFillSpecs := make(map[string]*assemblyspec.Spec)
 	for _, key := range activityOrder {
@@ -225,7 +230,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		scope = "entry and explicit bind producers with source-resolved pure activity calls; original package identities map to lowered names; finite native observations"
 	}
 	return Program{Schema: "gooo/workspace-body-program/v1", Workspace: image, Entry: entry,
-		Activities: activities, Source: source, sourceFillSpecs: sourceFillSpecs, ConditionOrigins: conditionOrigins,
+		Activities: activities, Source: source, sourceFillSpecs: sourceFillSpecs, ConditionOrigins: conditionOrigins, ActivityOrigins: activityOrigins,
 		EntityAliases: recordNames.aliases, recordNames: recordNames, PureCalls: pureCalls, fillInputs: fillInputs,
 		Scope: scope}, nil
 }

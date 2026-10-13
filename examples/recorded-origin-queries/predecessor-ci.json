@@ -1,0 +1,32 @@
+{
+  "predecessor_pr": "https://github.com/kimjooyoon/meta-ontology-go/pull/1534",
+  "head": "c7483747864e2f6a8899a583f2ec3f4f85b0a96b",
+  "original_workflows": 21,
+  "success": 16,
+  "failure": 5,
+  "reruns": 0,
+  "source_and_pr_body_changed": false,
+  "format": {
+    "workflow_run": 38401740006,
+    "job": 115310815650,
+    "toolchain": "go1.27.2",
+    "paths": [
+      "internal/bodycodegen/body_value_origin_statements.go",
+      "internal/bodycodegen/body_value_origin_bounds_test.go"
+    ],
+    "cause": "bare host formatter did not apply the exact toolchain integer-range normalization"
+  },
+  "syntax": {
+    "workflow_run": 38401740015,
+    "job": 115310815527,
+    "artifact_id": 11815742084,
+    "artifact_zip_sha256": "e886d7f48d32be91e0a9812f5cfc6545913eeb4219d98a786866a7042f61a3c4",
+    "satisfied": 81,
+    "total": 81,
+    "unregistered": [
+      "examples/value-origins/eligibility.gooo"
+    ],
+    "new_required_cases": 1,
+    "old_cases_changed": 0
+  }
+}

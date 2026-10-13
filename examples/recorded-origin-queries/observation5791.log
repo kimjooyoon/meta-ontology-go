@@ -1,0 +1,5 @@
+=== RUN   TestRegisteredOriginHelpForms5791
+    origin_help_scope_test.go:20: 5791: three registered origin help forms resolve; unknown multi-word topic retains usage error
+--- PASS: TestRegisteredOriginHelpForms5791 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	0.573s

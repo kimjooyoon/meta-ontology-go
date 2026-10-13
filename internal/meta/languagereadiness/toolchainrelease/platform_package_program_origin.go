@@ -11,8 +11,10 @@ func samePackageProgramSource(recorded, current json.RawMessage) bool {
 		json.Unmarshal(current, &prepared) != nil || prepared == nil {
 		return false
 	}
-	if _, present := prior["condition_origins"]; !present {
-		delete(prepared, "condition_origins")
+	for _, key := range []string{"condition_origins", "activity_origins"} {
+		if _, present := prior[key]; !present {
+			delete(prepared, key)
+		}
 	}
 	comparison, err := json.Marshal(prepared)
 	return err == nil && samePackageSourceValue(recorded, comparison)

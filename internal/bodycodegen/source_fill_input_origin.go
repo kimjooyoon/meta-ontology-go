@@ -23,6 +23,7 @@ type SourceFillInputOrigin struct {
 }
 
 type SourceFillInputFragment struct {
+	Relation         string           `json:"relation,omitempty"`
 	Status           string           `json:"status"`
 	Reason           string           `json:"reason,omitempty"`
 	Kind             string           `json:"kind"`

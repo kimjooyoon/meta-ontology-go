@@ -1,0 +1,5 @@
+=== RUN   TestRecordedOriginAbsenceAndSchema5879
+    origin_query_absence_test.go:33: 5879: synthetic absent-metadata query states retain missing reasons and candidate filter; unknown graph schema reported; no body or model execution
+--- PASS: TestRecordedOriginAbsenceAndSchema5879 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	0.535s

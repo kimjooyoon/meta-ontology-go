@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "accumulated5801",
+    "activity": "Accumulate"
+  },
+  "packages": [
+    {
+      "path": "accumulated5801",
+      "name": "accumulated",
+      "sources": [
+        "accumulate.gooo.fixture"
+      ]
+    }
+  ]
+}

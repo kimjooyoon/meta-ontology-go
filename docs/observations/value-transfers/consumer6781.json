@@ -1,0 +1,862 @@
+{
+  "cases": {
+    "schema": "gooo/body-composition-cases/v1",
+    "cases": [
+      {
+        "inputs": {
+          "Explain": {
+            "root_activity_id": "urn:transfer6373:main",
+            "root_id": "return:128:142:",
+            "source_activity_id": "urn:transfer6373:bump",
+            "origin_kind": "candidate",
+            "candidate_id": "plus6373",
+            "hole_id": "delta",
+            "call_returns": 2,
+            "bind_steps": 1,
+            "source_view": "assembly_input",
+            "filename": "workspace.gooo",
+            "source_sha": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+            "source_start": 383,
+            "source_end": 385
+          }
+        },
+        "expected": {
+          "Explain": "후보가 패키지 연결을 거쳐 전달됨"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "root_activity_id": "urn:transfer6373:main",
+            "root_id": "return:128:142:",
+            "source_activity_id": "urn:transfer6373:bump",
+            "origin_kind": "candidate",
+            "candidate_id": "plus6373",
+            "hole_id": "delta",
+            "call_returns": 2,
+            "bind_steps": 1,
+            "source_view": "workspace_input_file",
+            "filename": "보정.gooo",
+            "source_sha": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4",
+            "source_start": 323,
+            "source_end": 325
+          }
+        },
+        "expected": {
+          "Explain": "후보가 패키지 연결을 거쳐 전달됨"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "root_activity_id": "urn:transfer6373:main",
+            "root_id": "return:128:142:",
+            "source_activity_id": "urn:transfer6373:main",
+            "origin_kind": "external_input",
+            "candidate_id": "",
+            "hole_id": "",
+            "call_returns": 1,
+            "bind_steps": 0,
+            "source_view": "workspace_input_declaration",
+            "filename": "계산.gooo",
+            "source_sha": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+            "source_start": 170,
+            "source_end": 362
+          }
+        },
+        "expected": {
+          "Explain": "현재 활동의 외부 입력"
+        }
+      },
+      {
+        "inputs": {
+          "Explain": {
+            "root_activity_id": "urn:transfer6373:main",
+            "root_id": "return:128:142:",
+            "source_activity_id": "urn:transfer6373:start",
+            "origin_kind": "external_input",
+            "candidate_id": "",
+            "hole_id": "",
+            "call_returns": 2,
+            "bind_steps": 1,
+            "source_view": "workspace_input_declaration",
+            "filename": "계산.gooo",
+            "source_sha": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+            "source_start": 70,
+            "source_end": 169
+          }
+        },
+        "expected": {
+          "Explain": "연결된 활동의 외부 입력"
+        }
+      }
+    ]
+  },
+  "consumer_runtime": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "composition_sha256": "sha256:c9f260f56df3246e55c059eb87110a363045cc6a569836e9ea76ec13bdc1024c",
+    "original_source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+    "selected_source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+    "typed_plan_sha256": "sha256:c2e62e4cb9118d3a9716695182686bebcb0fd6d9f514bd8963335ff6d6c6044f",
+    "generated_sha256": "sha256:d6459047c6e043daa38e1eed086931fae284756b0450759dae8a88693a231365",
+    "driver_sha256": "sha256:43a6ad07b83bb9cfb25fa8591459b5a54f047b313029cf316770b2c0b1646221",
+    "observed_projection_sha256": "sha256:a26f7198ef5aff88184f913f3d8418ab86821eacfcd0e7fb536fc9376aa383dc",
+    "observed_driver_sha256": "sha256:e671ea6c046ac94e340f303c80b7e76dd09fa06a9155c6f7f58971411ddabd95",
+    "runtime_suite_sha256": "sha256:1eeb7a55d1e0b48e7e53c8d08a6b50a9713cfc0fb332c0d3da698427373aaed2",
+    "executable_sha256": "sha256:d0cd05e9a66bea28619abd7d42fe47d313daee0018f567720ac13fe5a05a7790",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_tool_selection": "path",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "(devel)"
+    },
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 8395750,
+      "user_ns": 3549000,
+      "system_ns": 3602000,
+      "peak_rss_bytes": 14401536,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1083500,
+        "wait_ns": 7312250,
+        "deadline_remaining_ns": 59979681166,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 332779792,
+      "user_ns": 139126000,
+      "system_ns": 108912000,
+      "peak_rss_bytes": 88031232,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 952833,
+        "wait_ns": 331826959,
+        "deadline_remaining_ns": 59969531458,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 361670875,
+        "user_ns": 2003000,
+        "system_ns": 5139000,
+        "peak_rss_bytes": 5160960,
+        "stdout_sha256": "sha256:3d814773b4c7dd8fe73d731ec8f2552b1a5cb033fc080f67d72c95495700ddbf",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 1032833,
+          "wait_ns": 360638042,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59635009041,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 5440292,
+        "user_ns": 1466000,
+        "system_ns": 2777000,
+        "peak_rss_bytes": 4964352,
+        "stdout_sha256": "sha256:3d814773b4c7dd8fe73d731ec8f2552b1a5cb033fc080f67d72c95495700ddbf",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 1425209,
+          "wait_ns": 4015083,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59272781375,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "traces": [
+      {
+        "case_index": 0,
+        "deliveries": [
+          {
+            "activity_id": "urn:explain6781:explain",
+            "input": {
+              "bind_steps": 1,
+              "call_returns": 2,
+              "candidate_id": "plus6373",
+              "filename": "workspace.gooo",
+              "hole_id": "delta",
+              "origin_kind": "candidate",
+              "root_activity_id": "urn:transfer6373:main",
+              "root_id": "return:128:142:",
+              "source_activity_id": "urn:transfer6373:bump",
+              "source_end": 385,
+              "source_sha": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+              "source_start": 383,
+              "source_view": "assembly_input"
+            },
+            "input_fields": [
+              {
+                "id": "urn:explain6781:root-activity",
+                "name": "root_activity_id",
+                "value": "urn:transfer6373:main"
+              },
+              {
+                "id": "urn:explain6781:root",
+                "name": "root_id",
+                "value": "return:128:142:"
+              },
+              {
+                "id": "urn:explain6781:activity",
+                "name": "source_activity_id",
+                "value": "urn:transfer6373:bump"
+              },
+              {
+                "id": "urn:explain6781:kind",
+                "name": "origin_kind",
+                "value": "candidate"
+              },
+              {
+                "id": "urn:explain6781:candidate",
+                "name": "candidate_id",
+                "value": "plus6373"
+              },
+              {
+                "id": "urn:explain6781:hole",
+                "name": "hole_id",
+                "value": "delta"
+              },
+              {
+                "id": "urn:explain6781:calls",
+                "name": "call_returns",
+                "value": 2
+              },
+              {
+                "id": "urn:explain6781:binds",
+                "name": "bind_steps",
+                "value": 1
+              },
+              {
+                "id": "urn:explain6781:view",
+                "name": "source_view",
+                "value": "assembly_input"
+              },
+              {
+                "id": "urn:explain6781:file",
+                "name": "filename",
+                "value": "workspace.gooo"
+              },
+              {
+                "id": "urn:explain6781:sha",
+                "name": "source_sha",
+                "value": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895"
+              },
+              {
+                "id": "urn:explain6781:start",
+                "name": "source_start",
+                "value": 383
+              },
+              {
+                "id": "urn:explain6781:end",
+                "name": "source_end",
+                "value": 385
+              }
+            ],
+            "actual": "후보가 패키지 연결을 거쳐 전달됨",
+            "expected": "후보가 패키지 연결을 거쳐 전달됨",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 1,
+        "deliveries": [
+          {
+            "activity_id": "urn:explain6781:explain",
+            "input": {
+              "bind_steps": 1,
+              "call_returns": 2,
+              "candidate_id": "plus6373",
+              "filename": "보정.gooo",
+              "hole_id": "delta",
+              "origin_kind": "candidate",
+              "root_activity_id": "urn:transfer6373:main",
+              "root_id": "return:128:142:",
+              "source_activity_id": "urn:transfer6373:bump",
+              "source_end": 325,
+              "source_sha": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4",
+              "source_start": 323,
+              "source_view": "workspace_input_file"
+            },
+            "input_fields": [
+              {
+                "id": "urn:explain6781:root-activity",
+                "name": "root_activity_id",
+                "value": "urn:transfer6373:main"
+              },
+              {
+                "id": "urn:explain6781:root",
+                "name": "root_id",
+                "value": "return:128:142:"
+              },
+              {
+                "id": "urn:explain6781:activity",
+                "name": "source_activity_id",
+                "value": "urn:transfer6373:bump"
+              },
+              {
+                "id": "urn:explain6781:kind",
+                "name": "origin_kind",
+                "value": "candidate"
+              },
+              {
+                "id": "urn:explain6781:candidate",
+                "name": "candidate_id",
+                "value": "plus6373"
+              },
+              {
+                "id": "urn:explain6781:hole",
+                "name": "hole_id",
+                "value": "delta"
+              },
+              {
+                "id": "urn:explain6781:calls",
+                "name": "call_returns",
+                "value": 2
+              },
+              {
+                "id": "urn:explain6781:binds",
+                "name": "bind_steps",
+                "value": 1
+              },
+              {
+                "id": "urn:explain6781:view",
+                "name": "source_view",
+                "value": "workspace_input_file"
+              },
+              {
+                "id": "urn:explain6781:file",
+                "name": "filename",
+                "value": "보정.gooo"
+              },
+              {
+                "id": "urn:explain6781:sha",
+                "name": "source_sha",
+                "value": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4"
+              },
+              {
+                "id": "urn:explain6781:start",
+                "name": "source_start",
+                "value": 323
+              },
+              {
+                "id": "urn:explain6781:end",
+                "name": "source_end",
+                "value": 325
+              }
+            ],
+            "actual": "후보가 패키지 연결을 거쳐 전달됨",
+            "expected": "후보가 패키지 연결을 거쳐 전달됨",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 2,
+        "deliveries": [
+          {
+            "activity_id": "urn:explain6781:explain",
+            "input": {
+              "bind_steps": 0,
+              "call_returns": 1,
+              "candidate_id": "",
+              "filename": "계산.gooo",
+              "hole_id": "",
+              "origin_kind": "external_input",
+              "root_activity_id": "urn:transfer6373:main",
+              "root_id": "return:128:142:",
+              "source_activity_id": "urn:transfer6373:main",
+              "source_end": 362,
+              "source_sha": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+              "source_start": 170,
+              "source_view": "workspace_input_declaration"
+            },
+            "input_fields": [
+              {
+                "id": "urn:explain6781:root-activity",
+                "name": "root_activity_id",
+                "value": "urn:transfer6373:main"
+              },
+              {
+                "id": "urn:explain6781:root",
+                "name": "root_id",
+                "value": "return:128:142:"
+              },
+              {
+                "id": "urn:explain6781:activity",
+                "name": "source_activity_id",
+                "value": "urn:transfer6373:main"
+              },
+              {
+                "id": "urn:explain6781:kind",
+                "name": "origin_kind",
+                "value": "external_input"
+              },
+              {
+                "id": "urn:explain6781:candidate",
+                "name": "candidate_id",
+                "value": ""
+              },
+              {
+                "id": "urn:explain6781:hole",
+                "name": "hole_id",
+                "value": ""
+              },
+              {
+                "id": "urn:explain6781:calls",
+                "name": "call_returns",
+                "value": 1
+              },
+              {
+                "id": "urn:explain6781:binds",
+                "name": "bind_steps",
+                "value": 0
+              },
+              {
+                "id": "urn:explain6781:view",
+                "name": "source_view",
+                "value": "workspace_input_declaration"
+              },
+              {
+                "id": "urn:explain6781:file",
+                "name": "filename",
+                "value": "계산.gooo"
+              },
+              {
+                "id": "urn:explain6781:sha",
+                "name": "source_sha",
+                "value": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936"
+              },
+              {
+                "id": "urn:explain6781:start",
+                "name": "source_start",
+                "value": 170
+              },
+              {
+                "id": "urn:explain6781:end",
+                "name": "source_end",
+                "value": 362
+              }
+            ],
+            "actual": "현재 활동의 외부 입력",
+            "expected": "현재 활동의 외부 입력",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 3,
+        "deliveries": [
+          {
+            "activity_id": "urn:explain6781:explain",
+            "input": {
+              "bind_steps": 1,
+              "call_returns": 2,
+              "candidate_id": "",
+              "filename": "계산.gooo",
+              "hole_id": "",
+              "origin_kind": "external_input",
+              "root_activity_id": "urn:transfer6373:main",
+              "root_id": "return:128:142:",
+              "source_activity_id": "urn:transfer6373:start",
+              "source_end": 169,
+              "source_sha": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+              "source_start": 70,
+              "source_view": "workspace_input_declaration"
+            },
+            "input_fields": [
+              {
+                "id": "urn:explain6781:root-activity",
+                "name": "root_activity_id",
+                "value": "urn:transfer6373:main"
+              },
+              {
+                "id": "urn:explain6781:root",
+                "name": "root_id",
+                "value": "return:128:142:"
+              },
+              {
+                "id": "urn:explain6781:activity",
+                "name": "source_activity_id",
+                "value": "urn:transfer6373:start"
+              },
+              {
+                "id": "urn:explain6781:kind",
+                "name": "origin_kind",
+                "value": "external_input"
+              },
+              {
+                "id": "urn:explain6781:candidate",
+                "name": "candidate_id",
+                "value": ""
+              },
+              {
+                "id": "urn:explain6781:hole",
+                "name": "hole_id",
+                "value": ""
+              },
+              {
+                "id": "urn:explain6781:calls",
+                "name": "call_returns",
+                "value": 2
+              },
+              {
+                "id": "urn:explain6781:binds",
+                "name": "bind_steps",
+                "value": 1
+              },
+              {
+                "id": "urn:explain6781:view",
+                "name": "source_view",
+                "value": "workspace_input_declaration"
+              },
+              {
+                "id": "urn:explain6781:file",
+                "name": "filename",
+                "value": "계산.gooo"
+              },
+              {
+                "id": "urn:explain6781:sha",
+                "name": "source_sha",
+                "value": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936"
+              },
+              {
+                "id": "urn:explain6781:start",
+                "name": "source_start",
+                "value": 70
+              },
+              {
+                "id": "urn:explain6781:end",
+                "name": "source_end",
+                "value": 169
+              }
+            ],
+            "actual": "연결된 활동의 외부 입력",
+            "expected": "연결된 활동의 외부 입력",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": true
+          }
+        ]
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "finite_passed": 4,
+    "finite_total": 4,
+    "condition_sites": [
+      {
+        "expression_id": "sha256:4707c5d771fd7db5bfddef0f8cb112406dfc1739e866dbe3db0716c10e942fa1",
+        "root_activity_id": "urn:explain6781:explain",
+        "activity_id": "urn:explain6781:explain",
+        "expression": "input.GoooFielde2270854469201816ad1bdc2667f0bb68aaa2cffaeb9181574e8db361b715ddb == \"candidate\"",
+        "projection_sha256": "sha256:d6459047c6e043daa38e1eed086931fae284756b0450759dae8a88693a231365",
+        "start": 1765,
+        "end": 1859,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:explain6781:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+            "start_byte": 1067,
+            "end_byte": 1423
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+          "body_sha256": "sha256:2a15f2e0ec4e44c13849f387c1d450c33a7509889d354424cdad12ae75e05927",
+          "start_byte": 1142,
+          "end_byte": 1176,
+          "decoded_start": 3,
+          "decoded_end": 35,
+          "source_ordinal": 0,
+          "expression": "input.origin_kind == \"candidate\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:explain6781:kind",
+                "name": "origin_kind",
+                "source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+                "start_byte": 363,
+                "end_byte": 431
+              },
+              "entity_id": "urn:explain6781:origin",
+              "field_id": "urn:explain6781:kind",
+              "name": "origin_kind"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:76bf07fd3b6cf18f418a64a2da4c819112ab0f260507e9fd9db60dacbb198886",
+        "root_activity_id": "urn:explain6781:explain",
+        "activity_id": "urn:explain6781:explain",
+        "expression": "input.GoooFieldd342122cf4313011ea9be45032c8bd1f6de8cace7089b1f5b070e09c8f368e25 \u003e 0",
+        "projection_sha256": "sha256:d6459047c6e043daa38e1eed086931fae284756b0450759dae8a88693a231365",
+        "start": 1867,
+        "end": 1950,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:explain6781:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+            "start_byte": 1067,
+            "end_byte": 1423
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+          "body_sha256": "sha256:2a15f2e0ec4e44c13849f387c1d450c33a7509889d354424cdad12ae75e05927",
+          "start_byte": 1182,
+          "end_byte": 1202,
+          "decoded_start": 41,
+          "decoded_end": 61,
+          "source_ordinal": 1,
+          "expression": "input.bind_steps \u003e 0",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:explain6781:binds",
+                "name": "bind_steps",
+                "source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+                "start_byte": 648,
+                "end_byte": 717
+              },
+              "entity_id": "urn:explain6781:origin",
+              "field_id": "urn:explain6781:binds",
+              "name": "bind_steps"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:88adc9af421fed1ff6cae4a2e022cb3860dacca3237c9a0b931f48912af34330",
+        "root_activity_id": "urn:explain6781:explain",
+        "activity_id": "urn:explain6781:explain",
+        "expression": "input.GoooFieldd342122cf4313011ea9be45032c8bd1f6de8cace7089b1f5b070e09c8f368e25 \u003e 0",
+        "projection_sha256": "sha256:d6459047c6e043daa38e1eed086931fae284756b0450759dae8a88693a231365",
+        "start": 2061,
+        "end": 2144,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:explain6781:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+            "start_byte": 1067,
+            "end_byte": 1423
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+          "body_sha256": "sha256:2a15f2e0ec4e44c13849f387c1d450c33a7509889d354424cdad12ae75e05927",
+          "start_byte": 1310,
+          "end_byte": 1330,
+          "decoded_start": 165,
+          "decoded_end": 185,
+          "source_ordinal": 2,
+          "expression": "input.bind_steps \u003e 0",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:explain6781:binds",
+                "name": "bind_steps",
+                "source_sha256": "sha256:e3f0a10ee921ba4b5c6617d52b394ead97b0a3e71081a95810fe998181c83dfc",
+                "start_byte": 648,
+                "end_byte": 717
+              },
+              "entity_id": "urn:explain6781:origin",
+              "field_id": "urn:explain6781:binds",
+              "name": "bind_steps"
+            }
+          ]
+        }
+      }
+    ],
+    "condition_observation": {
+      "schema": "gooo/native-condition-summary/v1",
+      "status": "COMPLETE",
+      "recorded_events": 8,
+      "dropped_events": 0,
+      "sha256": "sha256:7f6da3b1a710ae8a6af7b708fafff16b14207c1566e98175a681976680dca7a5"
+    },
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "UNCLASSIFIED_INPUTS",
+      "unique_inputs": 4,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 4,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    },
+    "model_calls": 0,
+    "elapsed_ns": 733715959,
+    "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+  },
+  "consumer_source": "package explanation\nnamespace explain6781\nentity Text id \"urn:gooo:type:string\"\nentity Origin id \"urn:explain6781:origin\" fields {\n field root_activity_id id \"urn:explain6781:root-activity\" type string required one\n field root_id id \"urn:explain6781:root\" type string required one\n field source_activity_id id \"urn:explain6781:activity\" type string required one\n field origin_kind id \"urn:explain6781:kind\" type string required one\n field candidate_id id \"urn:explain6781:candidate\" type string required one\n field hole_id id \"urn:explain6781:hole\" type string required one\n field call_returns id \"urn:explain6781:calls\" type integer required one\n field bind_steps id \"urn:explain6781:binds\" type integer required one\n field source_view id \"urn:explain6781:view\" type string required one\n field filename id \"urn:explain6781:file\" type string required one\n field source_sha id \"urn:explain6781:sha\" type string required one\n field source_start id \"urn:explain6781:start\" type integer required one\n field source_end id \"urn:explain6781:end\" type integer required one\n}\nactivity Explain(Origin) -\u003e Text id \"urn:explain6781:explain\" computes \"if input.origin_kind == \\\"candidate\\\" { if input.bind_steps \u003e 0 { return \\\"후보가 패키지 연결을 거쳐 전달됨\\\" }; return \\\"후보가 직접 전달됨\\\" }; if input.bind_steps \u003e 0 { return \\\"연결된 활동의 외부 입력\\\" }; return \\\"현재 활동의 외부 입력\\\"\"\n",
+  "facts": [
+    {
+      "root_activity_id": "urn:transfer6373:main",
+      "root_id": "return:128:142:",
+      "source_activity_id": "urn:transfer6373:bump",
+      "origin_kind": "candidate",
+      "candidate_id": "plus6373",
+      "hole_id": "delta",
+      "call_returns": 2,
+      "bind_steps": 1,
+      "source_view": "assembly_input",
+      "filename": "workspace.gooo",
+      "source_sha": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+      "source_start": 383,
+      "source_end": 385
+    },
+    {
+      "root_activity_id": "urn:transfer6373:main",
+      "root_id": "return:128:142:",
+      "source_activity_id": "urn:transfer6373:bump",
+      "origin_kind": "candidate",
+      "candidate_id": "plus6373",
+      "hole_id": "delta",
+      "call_returns": 2,
+      "bind_steps": 1,
+      "source_view": "workspace_input_file",
+      "filename": "보정.gooo",
+      "source_sha": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4",
+      "source_start": 323,
+      "source_end": 325
+    },
+    {
+      "root_activity_id": "urn:transfer6373:main",
+      "root_id": "return:128:142:",
+      "source_activity_id": "urn:transfer6373:main",
+      "origin_kind": "external_input",
+      "candidate_id": "",
+      "hole_id": "",
+      "call_returns": 1,
+      "bind_steps": 0,
+      "source_view": "workspace_input_declaration",
+      "filename": "계산.gooo",
+      "source_sha": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+      "source_start": 170,
+      "source_end": 362
+    },
+    {
+      "root_activity_id": "urn:transfer6373:main",
+      "root_id": "return:128:142:",
+      "source_activity_id": "urn:transfer6373:start",
+      "origin_kind": "external_input",
+      "candidate_id": "",
+      "hole_id": "",
+      "call_returns": 2,
+      "bind_steps": 1,
+      "source_view": "workspace_input_declaration",
+      "filename": "계산.gooo",
+      "source_sha": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+      "source_start": 70,
+      "source_end": 169
+    }
+  ],
+  "saved_source_execution": false,
+  "synthetic_fixtures": 0
+}

@@ -1,0 +1,15 @@
+=== RUN   TestSourceIntegerTupleCaseTypes6533
+    source_integer_tuple_cases_test.go:26: 6533: six malformed/unsupported integer tuples rejected; int64 above2^53 preserved; holdout remains separate; no body/model execution
+--- PASS: TestSourceIntegerTupleCaseTypes6533 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.545s
+=== RUN   TestSelectedValueQueryScope6571
+    value_transfer_scope_test.go:41: 6571: static source path; unchanged source/plan identities required; cancellation; no execution
+--- PASS: TestSelectedValueQueryScope6571 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	0.767s
+=== RUN   TestOriginSourceRegistrationV48KeepsOtherBoundaries6599
+    denominator_v48_test.go:33: 6599: new v48 syntax target80; other five boundaries and all link targets unchanged; no historical source cases executed
+--- PASS: TestOriginSourceRegistrationV48KeepsOtherBoundaries6599 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow	0.377s

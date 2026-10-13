@@ -1,0 +1,12 @@
+package amounts
+namespace amounts5581
+entity Integer id "urn:gooo:type:integer"
+activity Amount(Integer) -> Integer id "urn:amounts5581:amount" computes "let passed = input >= __GOOO_BODY_HOLE_gate__; let output = input + __GOOO_BODY_HOLE_adjust__; if passed { output = output * 2 }; return output" assembling {
+ source_fill intent "기준을 통과하면 보정 금액의 두 배를 반환한다" {
+  hole "gate"
+  hole "adjust"
+  candidate "amount5581" { fill "gate" "61" fill "adjust" "5" }
+  candidate "other5581" { fill "gate" "161" fill "adjust" "0" }
+ }
+ case "67" -> "144"
+}

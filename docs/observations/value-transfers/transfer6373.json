@@ -1,0 +1,3144 @@
+{
+  "cases": {
+    "schema": "gooo/body-composition-cases/v1",
+    "cases": [
+      {
+        "inputs": {
+          "transfer6373/app:Main.input1": 6,
+          "transfer6373/app:Start": 55
+        },
+        "expected": {
+          "transfer6373/app:Main": 80,
+          "transfer6373/app:Start": 74
+        }
+      },
+      {
+        "inputs": {
+          "transfer6373/app:Main.input1": 3,
+          "transfer6373/app:Start": -31
+        },
+        "expected": {
+          "transfer6373/app:Main": -9,
+          "transfer6373/app:Start": -12
+        }
+      }
+    ]
+  },
+  "manifest": {
+    "schema": "gooo/package-runtime-manifest/v1",
+    "entry": {
+      "package_path": "transfer6373/app",
+      "activity": "Main"
+    },
+    "packages": [
+      {
+        "path": "transfer6373/core",
+        "name": "core",
+        "imports": null,
+        "sources": [
+          {
+            "filename": "보정.gooo",
+            "content": "package core\nnamespace transfer6373\nentity Integer id \"urn:gooo:type:integer\"\nactivity Offset(Integer) -\u003e Integer id \"urn:transfer6373:bump\" computes \"return input + __GOOO_BODY_HOLE_delta__\" assembling {\n source_fill intent \"수량에 고정 보정치를 더한다\" {\n  hole \"delta\"\n  candidate \"plus6373\" { fill \"delta\" \"19\" }\n  candidate \"zero6373\" { fill \"delta\" \"0\" }\n }\n case \"5\" -\u003e \"24\"\n}\nactivity SelectLeft(Integer,Integer) -\u003e Integer id \"urn:transfer6373:first\" computes \"return input0\"\n"
+          }
+        ]
+      },
+      {
+        "path": "transfer6373/app",
+        "name": "app",
+        "imports": [
+          "transfer6373/core"
+        ],
+        "sources": [
+          {
+            "filename": "계산.gooo",
+            "content": "package app\nnamespace transferapp6373\nimport core \"transfer6373/core\"\nactivity Start(Integer) -\u003e Integer id \"urn:transfer6373:start\" computes \"return core.Offset(input)\"\nactivity Main(Integer,Integer) -\u003e Integer id \"urn:transfer6373:main\" computes \"let first = core.SelectLeft(input0, input1); let second = core.SelectLeft(input1, input0); return first + second\"\nbind Start.result -\u003e Main.input0\n"
+          }
+        ]
+      }
+    ],
+    "mutation_authorized": false
+  },
+  "report": {
+    "value_flow": {
+      "schema": "gooo/selected-program-value-origins/v1",
+      "selected_source_sha256": "sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+      "root_activity_id": "urn:transfer6373:main",
+      "analysis": "MAPPED",
+      "truncated": false,
+      "rows": [
+        {
+          "root_id": "return:128:142:",
+          "root_kind": "return",
+          "kind": "candidate",
+          "activity_id": "urn:transfer6373:bump",
+          "candidate_id": "plus6373",
+          "hole_id": "delta",
+          "path": [
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "return:128:142:",
+              "kind": "return",
+              "via": "root",
+              "expression": "first + second",
+              "start_byte": 128,
+              "end_byte": 142
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "declaration:12:58:first",
+              "kind": "declaration",
+              "via": "input",
+              "expression": "GoooPackage1ActivitySelectLeft(input0, input1)",
+              "start_byte": 12,
+              "end_byte": 58
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "call_result:12:58:",
+              "kind": "call_result",
+              "via": "input",
+              "expression": "GoooPackage1ActivitySelectLeft(input0, input1)",
+              "start_byte": 12,
+              "end_byte": 58
+            },
+            {
+              "activity_id": "urn:transfer6373:first",
+              "body_sha256": "sha256:b2bc4ccc64498c01572588c57d518a0feec2c59e57c913366d79372de5e7b8a4",
+              "node_id": "return:7:13:",
+              "kind": "return",
+              "via": "call_return",
+              "expression": "input0",
+              "start_byte": 7,
+              "end_byte": 13
+            },
+            {
+              "activity_id": "urn:transfer6373:first",
+              "body_sha256": "sha256:b2bc4ccc64498c01572588c57d518a0feec2c59e57c913366d79372de5e7b8a4",
+              "node_id": "input_reference:7:13:input0",
+              "kind": "input_reference",
+              "via": "input",
+              "expression": "input0",
+              "start_byte": 7,
+              "end_byte": 13
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "call_argument:43:49:0",
+              "kind": "call_argument",
+              "via": "call_argument",
+              "expression": "input0",
+              "start_byte": 43,
+              "end_byte": 49
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "input_reference:43:49:input0",
+              "kind": "input_reference",
+              "via": "input",
+              "expression": "input0",
+              "start_byte": 43,
+              "end_byte": 49
+            },
+            {
+              "activity_id": "urn:transfer6373:start",
+              "body_sha256": "sha256:23ae913de9bc67232d67d1341d8e8e2cc50cba0c92c57a8ae6cd69fdca4631a4",
+              "node_id": "return:7:40:",
+              "kind": "return",
+              "via": "bind",
+              "expression": "GoooPackage0ActivityOffset(input)",
+              "start_byte": 7,
+              "end_byte": 40
+            },
+            {
+              "activity_id": "urn:transfer6373:start",
+              "body_sha256": "sha256:23ae913de9bc67232d67d1341d8e8e2cc50cba0c92c57a8ae6cd69fdca4631a4",
+              "node_id": "call_result:7:40:",
+              "kind": "call_result",
+              "via": "input",
+              "expression": "GoooPackage0ActivityOffset(input)",
+              "start_byte": 7,
+              "end_byte": 40
+            },
+            {
+              "activity_id": "urn:transfer6373:bump",
+              "body_sha256": "sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015",
+              "node_id": "return:7:17:",
+              "kind": "return",
+              "via": "call_return",
+              "expression": "input + 19",
+              "start_byte": 7,
+              "end_byte": 17
+            }
+          ],
+          "locations": [
+            {
+              "view": "assembly_input",
+              "filename": "workspace.gooo",
+              "source_sha256": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+              "activity_id": "urn:transfer6373:bump",
+              "start_byte": 383,
+              "end_byte": 385
+            },
+            {
+              "view": "workspace_input_file",
+              "package_path": "transfer6373/core",
+              "filename": "보정.gooo",
+              "source_sha256": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4",
+              "activity_id": "urn:transfer6373:bump",
+              "start_byte": 323,
+              "end_byte": 325
+            }
+          ]
+        },
+        {
+          "root_id": "return:128:142:",
+          "root_kind": "return",
+          "kind": "external_input",
+          "activity_id": "urn:transfer6373:main",
+          "path": [
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "return:128:142:",
+              "kind": "return",
+              "via": "root",
+              "expression": "first + second",
+              "start_byte": 128,
+              "end_byte": 142
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "declaration:73:119:second",
+              "kind": "declaration",
+              "via": "input",
+              "expression": "GoooPackage1ActivitySelectLeft(input1, input0)",
+              "start_byte": 73,
+              "end_byte": 119
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "call_result:73:119:",
+              "kind": "call_result",
+              "via": "input",
+              "expression": "GoooPackage1ActivitySelectLeft(input1, input0)",
+              "start_byte": 73,
+              "end_byte": 119
+            },
+            {
+              "activity_id": "urn:transfer6373:first",
+              "body_sha256": "sha256:b2bc4ccc64498c01572588c57d518a0feec2c59e57c913366d79372de5e7b8a4",
+              "node_id": "return:7:13:",
+              "kind": "return",
+              "via": "call_return",
+              "expression": "input0",
+              "start_byte": 7,
+              "end_byte": 13
+            },
+            {
+              "activity_id": "urn:transfer6373:first",
+              "body_sha256": "sha256:b2bc4ccc64498c01572588c57d518a0feec2c59e57c913366d79372de5e7b8a4",
+              "node_id": "input_reference:7:13:input0",
+              "kind": "input_reference",
+              "via": "input",
+              "expression": "input0",
+              "start_byte": 7,
+              "end_byte": 13
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "call_argument:104:110:0",
+              "kind": "call_argument",
+              "via": "call_argument",
+              "expression": "input1",
+              "start_byte": 104,
+              "end_byte": 110
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "input_reference:104:110:input1",
+              "kind": "input_reference",
+              "via": "input",
+              "expression": "input1",
+              "start_byte": 104,
+              "end_byte": 110
+            }
+          ],
+          "locations": [
+            {
+              "view": "workspace_input_declaration",
+              "package_path": "transfer6373/app",
+              "filename": "계산.gooo",
+              "source_sha256": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+              "activity_id": "urn:transfer6373:main",
+              "start_byte": 170,
+              "end_byte": 362
+            }
+          ]
+        },
+        {
+          "root_id": "return:128:142:",
+          "root_kind": "return",
+          "kind": "external_input",
+          "activity_id": "urn:transfer6373:start",
+          "path": [
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "return:128:142:",
+              "kind": "return",
+              "via": "root",
+              "expression": "first + second",
+              "start_byte": 128,
+              "end_byte": 142
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "declaration:12:58:first",
+              "kind": "declaration",
+              "via": "input",
+              "expression": "GoooPackage1ActivitySelectLeft(input0, input1)",
+              "start_byte": 12,
+              "end_byte": 58
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "call_result:12:58:",
+              "kind": "call_result",
+              "via": "input",
+              "expression": "GoooPackage1ActivitySelectLeft(input0, input1)",
+              "start_byte": 12,
+              "end_byte": 58
+            },
+            {
+              "activity_id": "urn:transfer6373:first",
+              "body_sha256": "sha256:b2bc4ccc64498c01572588c57d518a0feec2c59e57c913366d79372de5e7b8a4",
+              "node_id": "return:7:13:",
+              "kind": "return",
+              "via": "call_return",
+              "expression": "input0",
+              "start_byte": 7,
+              "end_byte": 13
+            },
+            {
+              "activity_id": "urn:transfer6373:first",
+              "body_sha256": "sha256:b2bc4ccc64498c01572588c57d518a0feec2c59e57c913366d79372de5e7b8a4",
+              "node_id": "input_reference:7:13:input0",
+              "kind": "input_reference",
+              "via": "input",
+              "expression": "input0",
+              "start_byte": 7,
+              "end_byte": 13
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "call_argument:43:49:0",
+              "kind": "call_argument",
+              "via": "call_argument",
+              "expression": "input0",
+              "start_byte": 43,
+              "end_byte": 49
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "body_sha256": "sha256:0bee26a10bc5c854972dab0a943e98baa75c5818b7782cbf08b6ca1d9f41fa38",
+              "node_id": "input_reference:43:49:input0",
+              "kind": "input_reference",
+              "via": "input",
+              "expression": "input0",
+              "start_byte": 43,
+              "end_byte": 49
+            },
+            {
+              "activity_id": "urn:transfer6373:start",
+              "body_sha256": "sha256:23ae913de9bc67232d67d1341d8e8e2cc50cba0c92c57a8ae6cd69fdca4631a4",
+              "node_id": "return:7:40:",
+              "kind": "return",
+              "via": "bind",
+              "expression": "GoooPackage0ActivityOffset(input)",
+              "start_byte": 7,
+              "end_byte": 40
+            },
+            {
+              "activity_id": "urn:transfer6373:start",
+              "body_sha256": "sha256:23ae913de9bc67232d67d1341d8e8e2cc50cba0c92c57a8ae6cd69fdca4631a4",
+              "node_id": "call_result:7:40:",
+              "kind": "call_result",
+              "via": "input",
+              "expression": "GoooPackage0ActivityOffset(input)",
+              "start_byte": 7,
+              "end_byte": 40
+            },
+            {
+              "activity_id": "urn:transfer6373:bump",
+              "body_sha256": "sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015",
+              "node_id": "return:7:17:",
+              "kind": "return",
+              "via": "call_return",
+              "expression": "input + 19",
+              "start_byte": 7,
+              "end_byte": 17
+            },
+            {
+              "activity_id": "urn:transfer6373:bump",
+              "body_sha256": "sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015",
+              "node_id": "input_reference:7:12:input",
+              "kind": "input_reference",
+              "via": "input",
+              "expression": "input",
+              "start_byte": 7,
+              "end_byte": 12
+            },
+            {
+              "activity_id": "urn:transfer6373:start",
+              "body_sha256": "sha256:23ae913de9bc67232d67d1341d8e8e2cc50cba0c92c57a8ae6cd69fdca4631a4",
+              "node_id": "call_argument:34:39:0",
+              "kind": "call_argument",
+              "via": "call_argument",
+              "expression": "input",
+              "start_byte": 34,
+              "end_byte": 39
+            },
+            {
+              "activity_id": "urn:transfer6373:start",
+              "body_sha256": "sha256:23ae913de9bc67232d67d1341d8e8e2cc50cba0c92c57a8ae6cd69fdca4631a4",
+              "node_id": "input_reference:34:39:input",
+              "kind": "input_reference",
+              "via": "input",
+              "expression": "input",
+              "start_byte": 34,
+              "end_byte": 39
+            }
+          ],
+          "locations": [
+            {
+              "view": "workspace_input_declaration",
+              "package_path": "transfer6373/app",
+              "filename": "계산.gooo",
+              "source_sha256": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+              "activity_id": "urn:transfer6373:start",
+              "start_byte": 70,
+              "end_byte": 169
+            }
+          ]
+        }
+      ],
+      "issues": null,
+      "scope": "current static analysis of retained selected source; use-to-origin paths across pure calls and binds; one shortest path per root and origin; branch alternatives are joined; zero program or model execution"
+    },
+    "schema": "gooo/recorded-origin-uses/v1",
+    "query": {
+      "follow": true,
+      "limit": 128
+    },
+    "origins_seen": 1,
+    "origins_matched": 1,
+    "graphs_available": 1,
+    "truncated": false,
+    "rows": [
+      {
+        "activity_id": "urn:transfer6373:bump",
+        "candidate_id": "plus6373",
+        "body_sha256": "sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015",
+        "analysis_status": "MAPPED",
+        "use": {
+          "root_id": "return:7:17:",
+          "root_kind": "return",
+          "hole_id": "delta",
+          "fragment_kind": "declared_candidate",
+          "relation": "direct",
+          "path": [
+            {
+              "node": {
+                "id": "return:7:17:",
+                "kind": "return",
+                "decoded": {
+                  "start_byte": 7,
+                  "end_byte": 17
+                }
+              }
+            }
+          ]
+        },
+        "expressions": [
+          "input + 19"
+        ],
+        "locations": [
+          {
+            "view": "assembly_input",
+            "filename": "workspace.gooo",
+            "source_sha256": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+            "activity_id": "urn:transfer6373:bump",
+            "start_byte": 383,
+            "end_byte": 385
+          },
+          {
+            "view": "workspace_input_file",
+            "package_path": "transfer6373/core",
+            "filename": "보정.gooo",
+            "source_sha256": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4",
+            "activity_id": "urn:transfer6373:bump",
+            "start_byte": 323,
+            "end_byte": 325
+          }
+        ]
+      }
+    ],
+    "issues": null,
+    "scope": "one shortest recorded static path per condition/return root and filled hole; selected construction only; no body, candidate or model execution"
+  },
+  "result": {
+    "fill_origins": [
+      {
+        "lowered_activity_id": "urn:transfer6373:bump",
+        "assembly_source_sha256": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+        "selected_body_sha256": "sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015",
+        "candidate_id": "plus6373",
+        "input_source": {
+          "schema": "gooo/source-fill-input-origin/v1",
+          "status": "MAPPED",
+          "view": "workspace_input_file",
+          "package_path": "transfer6373/core",
+          "filename": "보정.gooo",
+          "source_sha256": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4",
+          "activity_id": "urn:transfer6373:bump",
+          "activity_source": {
+            "start_byte": 78,
+            "end_byte": 395
+          },
+          "assembly_source": {
+            "start_byte": 192,
+            "end_byte": 395
+          },
+          "intent": "수량에 고정 보정치를 더한다",
+          "intent_source": {
+            "start_byte": 226,
+            "end_byte": 265
+          },
+          "candidate_id": "plus6373",
+          "candidate_source": {
+            "start_byte": 297,
+            "end_byte": 305
+          },
+          "fragments": [
+            {
+              "status": "MAPPED",
+              "kind": "retained_template",
+              "selected_decoded": {
+                "start_byte": 0,
+                "end_byte": 15
+              },
+              "template_source": {
+                "start_byte": 151,
+                "end_byte": 166
+              }
+            },
+            {
+              "status": "MAPPED",
+              "kind": "declared_candidate",
+              "hole_id": "delta",
+              "expression": "19",
+              "selected_decoded": {
+                "start_byte": 15,
+                "end_byte": 17
+              },
+              "template_source": {
+                "start_byte": 166,
+                "end_byte": 190
+              },
+              "hole_declaration": {
+                "start_byte": 271,
+                "end_byte": 283
+              },
+              "expression_source": {
+                "start_byte": 323,
+                "end_byte": 325
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "schema": "gooo/workspace-body-execution/v1",
+    "program": {
+      "activity_origins": [
+        {
+          "lowered_activity_id": "urn:transfer6373:main",
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:transfer6373:main",
+              "name": "Main",
+              "source_sha256": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+              "start_byte": 170,
+              "end_byte": 362
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "transfer6373/app",
+            "filename": "계산.gooo",
+            "activity_id": "urn:transfer6373:main",
+            "source_sha256": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+            "start_byte": 249,
+            "end_byte": 361
+          }
+        },
+        {
+          "lowered_activity_id": "urn:transfer6373:start",
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:transfer6373:start",
+              "name": "Start",
+              "source_sha256": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+              "start_byte": 70,
+              "end_byte": 169
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "transfer6373/app",
+            "filename": "계산.gooo",
+            "activity_id": "urn:transfer6373:start",
+            "source_sha256": "sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936",
+            "start_byte": 143,
+            "end_byte": 168
+          }
+        },
+        {
+          "lowered_activity_id": "urn:transfer6373:bump",
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:transfer6373:bump",
+              "name": "Offset",
+              "source_sha256": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4",
+              "start_byte": 78,
+              "end_byte": 395
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "transfer6373/core",
+            "filename": "보정.gooo",
+            "activity_id": "urn:transfer6373:bump",
+            "source_sha256": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4",
+            "start_byte": 151,
+            "end_byte": 190
+          }
+        },
+        {
+          "lowered_activity_id": "urn:transfer6373:first",
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:transfer6373:first",
+              "name": "SelectLeft",
+              "source_sha256": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4",
+              "start_byte": 396,
+              "end_byte": 496
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "transfer6373/core",
+            "filename": "보정.gooo",
+            "activity_id": "urn:transfer6373:first",
+            "source_sha256": "sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4",
+            "start_byte": 482,
+            "end_byte": 495
+          }
+        }
+      ],
+      "schema": "gooo/workspace-body-program/v1",
+      "workspace_image": {
+        "schema": "gooo/package-runtime-image/v1",
+        "init_order": [
+          "transfer6373/core",
+          "transfer6373/app"
+        ],
+        "packages": [
+          {
+            "path": "transfer6373/core",
+            "name": "core",
+            "namespace": "transfer6373",
+            "imports": null,
+            "exports": [
+              {
+                "name": "Offset",
+                "kind": "activity",
+                "id": "urn:transfer6373:bump",
+                "input_types": [
+                  "urn:gooo:type:integer"
+                ],
+                "output_type": "urn:gooo:type:integer"
+              },
+              {
+                "name": "SelectLeft",
+                "kind": "activity",
+                "id": "urn:transfer6373:first",
+                "input_types": [
+                  "urn:gooo:type:integer",
+                  "urn:gooo:type:integer"
+                ],
+                "output_type": "urn:gooo:type:integer"
+              },
+              {
+                "name": "Integer",
+                "kind": "entity",
+                "id": "urn:gooo:type:integer"
+              }
+            ],
+            "sources": [
+              {
+                "filename": "보정.gooo",
+                "source_digest": "sha256:dce1e435808c5971294e4f759a960175a5aa7cccef4696048fe7ec0ca100b19b",
+                "semantic_digest": "sha256:bc09a53cfa75be207fc176ec002d4b02fbe22cbf6f3fb49c0b47fb5eeb689348",
+                "declarations": 3
+              }
+            ],
+            "declarations": 3,
+            "semantic_digest": "sha256:424d00683466cda0b82f6b5c8b8767118dfc4939484de1367ec20e41310ba496"
+          },
+          {
+            "path": "transfer6373/app",
+            "name": "app",
+            "namespace": "transferapp6373",
+            "imports": [
+              "transfer6373/core"
+            ],
+            "exports": [
+              {
+                "name": "Main",
+                "kind": "activity",
+                "id": "urn:transfer6373:main",
+                "input_types": [
+                  "urn:gooo:type:integer",
+                  "urn:gooo:type:integer"
+                ],
+                "output_type": "urn:gooo:type:integer"
+              },
+              {
+                "name": "Start",
+                "kind": "activity",
+                "id": "urn:transfer6373:start",
+                "input_types": [
+                  "urn:gooo:type:integer"
+                ],
+                "output_type": "urn:gooo:type:integer"
+              }
+            ],
+            "sources": [
+              {
+                "filename": "계산.gooo",
+                "source_digest": "sha256:f7f4f03eb7140aade524ce0a83247212243a6af8516077a792dd4fae2498b0ee",
+                "semantic_digest": "sha256:1001ca1e1df0bfccc8ea6cfe8bd7927c00089be67a1f55448b9d13f4951a0205",
+                "declarations": 2
+              }
+            ],
+            "declarations": 2,
+            "semantic_digest": "sha256:f02197511e37be78d38615cc1f16c16e44434a46003fb62a1e642ce9a859ab54"
+          }
+        ],
+        "entry": {
+          "package_path": "transfer6373/app",
+          "source": "계산.gooo",
+          "activity": "Main",
+          "inputs": [
+            "Integer",
+            "Integer"
+          ],
+          "output": "Integer"
+        },
+        "digest": "sha256:ec49849530c3ba80657149905d27c4ec52fb35a99c1cbec809423ca5703ee60a"
+      },
+      "entry": {
+        "package_path": "transfer6373/app",
+        "activity": "Main",
+        "lowered_name": "GoooPackage3ActivityMain"
+      },
+      "activities": [
+        {
+          "package_path": "transfer6373/app",
+          "activity": "Start",
+          "lowered_name": "GoooPackage2ActivityStart"
+        },
+        {
+          "package_path": "transfer6373/app",
+          "activity": "Main",
+          "lowered_name": "GoooPackage3ActivityMain"
+        }
+      ],
+      "lowered_gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nactivity GoooPackage0ActivityOffset(Integer) -\u003e Integer id \"urn:transfer6373:bump\" computes \"return input + __GOOO_BODY_HOLE_delta__\" assembling {\n    source_fill intent \"수량에 고정 보정치를 더한다\" {\n        hole \"delta\"\n        candidate \"plus6373\" {\n            fill \"delta\" \"19\"\n        }\n        candidate \"zero6373\" {\n            fill \"delta\" \"0\"\n        }\n    }\n    case \"5\" -\u003e \"24\"\n}\nactivity GoooPackage1ActivitySelectLeft(Integer, Integer) -\u003e Integer id \"urn:transfer6373:first\" computes \"return input0\"\nactivity GoooPackage2ActivityStart(Integer) -\u003e Integer id \"urn:transfer6373:start\" computes \"return GoooPackage0ActivityOffset(input)\"\nactivity GoooPackage3ActivityMain(Integer, Integer) -\u003e Integer id \"urn:transfer6373:main\" computes \"let first = GoooPackage1ActivitySelectLeft(input0, input1); let second = GoooPackage1ActivitySelectLeft(input1, input0); return first + second\"\nbind GoooPackage2ActivityStart.result -\u003e GoooPackage3ActivityMain.input0\n",
+      "scope": "entry and explicit bind producers with source-resolved pure activity calls; original package identities map to lowered names; finite native observations",
+      "pure_calls": {
+        "schema": "gooo/workspace-pure-calls/v1",
+        "activities": [
+          {
+            "activity": {
+              "package_path": "transfer6373/app",
+              "activity": "Main",
+              "lowered_name": "GoooPackage3ActivityMain"
+            },
+            "activity_id": "urn:transfer6373:main",
+            "lowered_activity_id": "urn:transfer6373:main",
+            "source": "계산.gooo",
+            "source_body_sha256": "sha256:0f84d6ff8f7c7d02049be06fac80400a6f3c0c91f36f6c8cde1d8b06eccb40f4"
+          },
+          {
+            "activity": {
+              "package_path": "transfer6373/app",
+              "activity": "Start",
+              "lowered_name": "GoooPackage2ActivityStart"
+            },
+            "activity_id": "urn:transfer6373:start",
+            "lowered_activity_id": "urn:transfer6373:start",
+            "source": "계산.gooo",
+            "source_body_sha256": "sha256:664a6948aabddc78cac614219bcaef34717ae3bf728749239004cf2753e21d94"
+          },
+          {
+            "activity": {
+              "package_path": "transfer6373/core",
+              "activity": "Offset",
+              "lowered_name": "GoooPackage0ActivityOffset"
+            },
+            "activity_id": "urn:transfer6373:bump",
+            "lowered_activity_id": "urn:transfer6373:bump",
+            "source": "보정.gooo",
+            "source_body_sha256": "sha256:374f43470ebc4676e7b48e1127a0292202bd70248da47883793cf6c49fbfc0bb"
+          },
+          {
+            "activity": {
+              "package_path": "transfer6373/core",
+              "activity": "SelectLeft",
+              "lowered_name": "GoooPackage1ActivitySelectLeft"
+            },
+            "activity_id": "urn:transfer6373:first",
+            "lowered_activity_id": "urn:transfer6373:first",
+            "source": "보정.gooo",
+            "source_body_sha256": "sha256:b2bc4ccc64498c01572588c57d518a0feec2c59e57c913366d79372de5e7b8a4"
+          }
+        ],
+        "sites": [
+          {
+            "caller": "transfer6373/app:Main",
+            "callee": "transfer6373/core:SelectLeft",
+            "surface": "computes",
+            "start_byte": 12,
+            "end_byte": 27
+          },
+          {
+            "caller": "transfer6373/app:Main",
+            "callee": "transfer6373/core:SelectLeft",
+            "surface": "computes",
+            "start_byte": 58,
+            "end_byte": 73
+          },
+          {
+            "caller": "transfer6373/app:Start",
+            "callee": "transfer6373/core:Offset",
+            "surface": "computes",
+            "start_byte": 7,
+            "end_byte": 18
+          }
+        ]
+      }
+    },
+    "execution_source_sha256": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+    "composition": {
+      "schema": "gooo/body-composition/v1",
+      "stage": "COMPLETE",
+      "original_source_sha256": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+      "selected_source_sha256": "sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+      "generated_sha256": "sha256:b37d3455a696d608e61cdb64968b212c05e808e214068d368234253819147ab5",
+      "driver_sha256": "sha256:b9ab04e9804a4f65b63eadced1dc2e2a936ffb9120bcedf4b00852110e651380",
+      "plan": {
+        "schema": "gooo/body-composition-plan/v1",
+        "entry_activity": "GoooPackage3ActivityMain",
+        "typed_plan_sha256": "sha256:1c39223fa132d714f694020267fa6ab8dde2b7fff0f4e1a0fd38ed030b34731d",
+        "semantic_fingerprint": "0be5a255da1296e289d700f9ca359e396f0d944920880dbb8fc80f70ba2e1fb3",
+        "activities": [
+          {
+            "name": "GoooPackage2ActivityStart",
+            "id": "urn:transfer6373:start",
+            "input_type": "Integer",
+            "output_type": "Integer",
+            "input_entity_id": "urn:gooo:type:integer",
+            "output_entity_id": "urn:gooo:type:integer",
+            "go_function": "GoooComposedActivity0",
+            "input_from": -1,
+            "assembling": false
+          },
+          {
+            "name": "GoooPackage3ActivityMain",
+            "id": "urn:transfer6373:main",
+            "input_type": "Integer",
+            "output_type": "Integer",
+            "input_entity_id": "urn:gooo:type:integer",
+            "output_entity_id": "urn:gooo:type:integer",
+            "go_function": "GoooComposedActivity1",
+            "input_from": 0,
+            "assembling": false,
+            "inputs": [
+              {
+                "port": "input0",
+                "type": "Integer",
+                "entity_id": "urn:gooo:type:integer",
+                "from": 0
+              },
+              {
+                "port": "input1",
+                "type": "Integer",
+                "entity_id": "urn:gooo:type:integer",
+                "from": -1
+              }
+            ]
+          }
+        ],
+        "edges": [
+          {
+            "producer": "urn:transfer6373:start",
+            "consumer": "urn:transfer6373:main",
+            "producer_port": "result",
+            "consumer_port": "input0",
+            "entity": "urn:gooo:type:integer"
+          }
+        ],
+        "preparations": [
+          {
+            "name": "GoooPackage0ActivityOffset",
+            "id": "urn:transfer6373:bump"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "input_source_sha256": "sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+          "generation": {
+            "report": {
+              "schema": "gooo/body-codegen-report/v3",
+              "decision": "PASS",
+              "activity": "GoooPackage2ActivityStart",
+              "activity_id": "urn:transfer6373:start",
+              "input_type": "int64",
+              "output_type": "int64",
+              "plan_sha256": "sha256:dbde2282019267e6308c89b3c80960ab879ec5c7a95c62a715485a2ea4b7c7b8",
+              "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+              "source_digest": "sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+              "program_digest": "sha256:23ae913de9bc67232d67d1341d8e8e2cc50cba0c92c57a8ae6cd69fdca4631a4",
+              "generated_digest": "sha256:dbb8b4be07744aa58baeeb3966c1e19907fb559fd221453b1307cbc4beb41788",
+              "replay_digest": "sha256:dbb8b4be07744aa58baeeb3966c1e19907fb559fd221453b1307cbc4beb41788",
+              "route": "preserve",
+              "route_decision": {
+                "schema": "gooo/typed-decision-receipt/v1",
+                "mode": "deterministic_fallback",
+                "selected": "preserve",
+                "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+                "provider": "deterministic",
+                "request_sha256": ""
+              },
+              "route_selection": {
+                "method": "single_eligible_route",
+                "proposed_route": "preserve",
+                "final_route": "preserve"
+              },
+              "route_decision_latency_ms": 0,
+              "call_closure": {
+                "schema": "gooo/pure-activity-call-closure/v1",
+                "activities": [
+                  {
+                    "name": "GoooPackage0ActivityOffset",
+                    "activity_id": "urn:transfer6373:bump",
+                    "program_sha256": "sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015"
+                  }
+                ],
+                "edges": [
+                  {
+                    "caller_id": "urn:transfer6373:start",
+                    "callee_id": "urn:transfer6373:bump",
+                    "ordinal": 0
+                  }
+                ],
+                "max_calls_per_invocation": 1
+              },
+              "candidate_routes": [
+                "preserve"
+              ],
+              "equivalence_rule": "source-shape-preserving-v1",
+              "source_constructs": 2,
+              "lowered_constructs": 2,
+              "source_semantic_units": 8,
+              "lowered_semantic_units": 8,
+              "completeness_percent": 100,
+              "route_equivalence": {
+                "schema": "gooo/body-codegen-route-equivalence/v1",
+                "decision": "PASS",
+                "method": "canonical_control_flow_form/v2",
+                "rule": "source-shape-preserving-v1",
+                "source_semantic_digest": "sha256:fc13450ec55ca50bd6c4e4b3ff2cb61048d01f55cef493cd6181e42e841dad88",
+                "generated_semantic_digest": "sha256:fc13450ec55ca50bd6c4e4b3ff2cb61048d01f55cef493cd6181e42e841dad88",
+                "equivalent": true,
+                "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+              },
+              "typecheck_passed": true,
+              "deterministic_replay": true,
+              "repository_writes": 0,
+              "unsupported_constructs": "recursive, indirect, external and assembling-callee calls; loops, imports, external effects, optional-field synthesis and repeated record fields",
+              "completeness_receipt": {
+                "schema": "gooo/metaprogramming-completeness-receipt/v2",
+                "profile_id": "gooo/body-codegen-pure-v1",
+                "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+                "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+                "scope": {
+                  "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                  "boundary": {
+                    "excluded_effects": [
+                      "generated code execution",
+                      "repository mutation",
+                      "external authority"
+                    ],
+                    "non_authorizing": true,
+                    "non_executing": true
+                  },
+                  "call_closure": {
+                    "schema": "gooo/pure-activity-call-closure/v1",
+                    "activities": [
+                      {
+                        "name": "GoooPackage0ActivityOffset",
+                        "activity_id": "urn:transfer6373:bump",
+                        "program_sha256": "sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015"
+                      }
+                    ],
+                    "edges": [
+                      {
+                        "caller_id": "urn:transfer6373:start",
+                        "callee_id": "urn:transfer6373:bump",
+                        "ordinal": 0
+                      }
+                    ],
+                    "max_calls_per_invocation": 1
+                  },
+                  "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                  "decision_mode": "deterministic_fallback",
+                  "decision_provider": "deterministic",
+                  "domain_scope": "one pure typed Gooo activity with source-declared fixed callees; bounded acyclic call closure",
+                  "excluded_scope": [
+                    "unstated natural-language intent",
+                    "independently sourced production workflows",
+                    "generated runtime behavior",
+                    "unrestricted Gooo body syntax",
+                    "route clarity or utility"
+                  ],
+                  "execution_environment": "darwin/arm64",
+                  "input_type": "int64",
+                  "laya_mode": "deterministic_fallback",
+                  "laya_provider": "deterministic",
+                  "observed_system_cost": {
+                    "human_actions": 0,
+                    "repository_writes": 0
+                  },
+                  "output_type": "int64",
+                  "plan_sha256": "sha256:dbde2282019267e6308c89b3c80960ab879ec5c7a95c62a715485a2ea4b7c7b8",
+                  "receipt_declaration": {
+                    "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile": "gooo/receipt-structure-projection/v1",
+                    "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                  },
+                  "system_budget": {
+                    "maximum_human_actions": 0,
+                    "maximum_repository_writes": 0
+                  },
+                  "toolchain": "go1.27.2"
+                },
+                "core_dimensions": [
+                  "declaration_coverage",
+                  "generation_coverage",
+                  "internal_replay_coverage",
+                  "provenance_integrity",
+                  "receipt_schema_binding",
+                  "repository_write_boundary",
+                  "route_choice_protocol",
+                  "route_semantic_equivalence",
+                  "source_ast_coverage",
+                  "typecheck_coverage"
+                ],
+                "dimensions": [
+                  {
+                    "id": "declaration_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "stable activity declarations",
+                    "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                    "evidence": [
+                      "source_digest:sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+                      "activity_id:urn:transfer6373:start"
+                    ]
+                  },
+                  {
+                    "id": "generation_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated Go functions",
+                    "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                    "evidence": [
+                      "generated_digest:sha256:dbb8b4be07744aa58baeeb3966c1e19907fb559fd221453b1307cbc4beb41788",
+                      "report decision:PASS"
+                    ]
+                  },
+                  {
+                    "id": "source_ast_coverage",
+                    "status": "PASS",
+                    "numerator": 8,
+                    "denominator": 8,
+                    "unit": "source semantic units lowered",
+                    "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                    "evidence": [
+                      "source_semantic_units",
+                      "lowered_semantic_units"
+                    ]
+                  },
+                  {
+                    "id": "route_semantic_equivalence",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source/generated route pairs",
+                    "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                    "evidence": [
+                      "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                      "route_equivalence.rule:source-shape-preserving-v1",
+                      "source_semantic_digest:sha256:fc13450ec55ca50bd6c4e4b3ff2cb61048d01f55cef493cd6181e42e841dad88",
+                      "generated_semantic_digest:sha256:fc13450ec55ca50bd6c4e4b3ff2cb61048d01f55cef493cd6181e42e841dad88"
+                    ]
+                  },
+                  {
+                    "id": "typecheck_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated functions accepted by Go type checking",
+                    "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                    "evidence": [
+                      "typecheck_passed"
+                    ]
+                  },
+                  {
+                    "id": "internal_replay_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "deterministic compiler emission replays",
+                    "reason": "Requires replayed generated bytes to match the selected output digest.",
+                    "evidence": [
+                      "generated_digest:sha256:dbb8b4be07744aa58baeeb3966c1e19907fb559fd221453b1307cbc4beb41788",
+                      "replay_digest:sha256:dbb8b4be07744aa58baeeb3966c1e19907fb559fd221453b1307cbc4beb41788"
+                    ]
+                  },
+                  {
+                    "id": "route_choice_protocol",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "selected routes in the compiler-declared candidate set",
+                    "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                    "evidence": [
+                      "candidate_routes",
+                      "selected_route:preserve"
+                    ]
+                  },
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "numerator": 7,
+                    "denominator": 8,
+                    "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "evidence": [
+                      "source_digest:sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+                      "program_digest:sha256:23ae913de9bc67232d67d1341d8e8e2cc50cba0c92c57a8ae6cd69fdca4631a4",
+                      "generated_digest:sha256:dbb8b4be07744aa58baeeb3966c1e19907fb559fd221453b1307cbc4beb41788",
+                      "replay_digest:sha256:dbb8b4be07744aa58baeeb3966c1e19907fb559fd221453b1307cbc4beb41788",
+                      "activity_id:urn:transfer6373:start",
+                      "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                      "route_equivalence semantic digests"
+                    ]
+                  },
+                  {
+                    "id": "receipt_schema_binding",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source-owned receipt schema and generated structure bindings",
+                    "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                    "evidence": [
+                      "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                      "projection_profile:gooo/receipt-structure-projection/v1"
+                    ]
+                  },
+                  {
+                    "id": "repository_write_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "repository writes",
+                    "reason": "The command emits generated source without mutating the repository.",
+                    "evidence": [
+                      "repository_writes:0"
+                    ]
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated package runtime executions",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "evidence": [
+                      "body-codegen does not run generated Go"
+                    ]
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "observed host permission profiles",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "evidence": [
+                      "host permission profile is not observed"
+                    ]
+                  },
+                  {
+                    "id": "external_network_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "runs with no Laya provider request",
+                    "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                    "evidence": [
+                      "decision.mode:deterministic_fallback",
+                      "decision.provider:deterministic",
+                      "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                    ]
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 0,
+                    "unit": "eligible multi-route Laya decisions",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "evidence": [
+                      "candidate_routes",
+                      "route_decision.mode:deterministic_fallback",
+                      "route_decision.request_sha256:",
+                      "route_decision.model_revision:"
+                    ]
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independently sourced real workflows",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "evidence": [
+                      "no independent workflow corpus is bound"
+                    ]
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated runtime observations mapped back to source",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "evidence": [
+                      "no source-bound reverse-observation trace"
+                    ]
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete input-domain behavior proofs",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "evidence": [
+                      "generated package execution and an independent domain oracle are not part of this command"
+                    ]
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independent route-clarity or utility criteria",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "evidence": [
+                      "no independent route-quality oracle"
+                    ]
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete process resource profiles",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "evidence": [
+                      "route_decision_latency_ms is recorded",
+                      "CPU and peak RSS are not captured"
+                    ]
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible prior resource receipts",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "evidence": [
+                      "no compatible prior resource receipt"
+                    ]
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible before/after semantic receipts",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "evidence": [
+                      "no comparable prior semantic receipt"
+                    ]
+                  }
+                ],
+                "status_counts": {
+                  "FAIL_CLOSED": 0,
+                  "PASS": 10,
+                  "PROGRESS": 1,
+                  "UNKNOWN": 10
+                },
+                "aggregate_completeness_score": null,
+                "first_unresolved": {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                "unresolved_claims": [
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                  }
+                ],
+                "not_claimed": [
+                  "user-intent completeness",
+                  "real-workflow coverage",
+                  "generated runtime behavior",
+                  "full-domain semantics",
+                  "route quality",
+                  "universal language completeness"
+                ],
+                "fail_closed_reason": null
+              }
+            },
+            "source": "package gooo_workspace\n\n//gooo:generated:start id=\"urn:transfer6373:start\" kind=\"activity\"\nfunc GoooPackage2ActivityStart(input int64) int64 {\n\treturn GoooPackage0ActivityOffset(input)\n}\n\n//gooo:generated:end id=\"urn:transfer6373:start\" kind=\"activity\"\n//gooo:generated:start id=\"urn:transfer6373:bump\" kind=\"activity\"\nfunc GoooPackage0ActivityOffset(input int64) int64 {\n\treturn input + 19\n}\n\n//gooo:generated:end id=\"urn:transfer6373:bump\" kind=\"activity\"\n"
+          }
+        },
+        {
+          "input_source_sha256": "sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+          "generation": {
+            "report": {
+              "schema": "gooo/body-codegen-report/v3",
+              "decision": "PASS",
+              "activity": "GoooPackage3ActivityMain",
+              "activity_id": "urn:transfer6373:main",
+              "input_type": "(int64,int64)",
+              "input_parameters": [
+                {
+                  "name": "input0",
+                  "type": "int64"
+                },
+                {
+                  "name": "input1",
+                  "type": "int64"
+                }
+              ],
+              "output_type": "int64",
+              "plan_sha256": "sha256:3381cb2fc0063cd1a9aa84ce0efdac4ca3ec2933d9c28f8208420665245047c1",
+              "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+              "source_digest": "sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+              "program_digest": "sha256:f368fa4263e7c418b00d4d49c3ee87f6dbe1b457007789bf69de104a3c4add50",
+              "generated_digest": "sha256:02f719bd6485c462beedc914c4de0961c61cc84a63fa2a8c2ce157f3f0a42429",
+              "replay_digest": "sha256:02f719bd6485c462beedc914c4de0961c61cc84a63fa2a8c2ce157f3f0a42429",
+              "route": "preserve",
+              "route_decision": {
+                "schema": "gooo/typed-decision-receipt/v1",
+                "mode": "deterministic_fallback",
+                "selected": "preserve",
+                "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+                "provider": "deterministic",
+                "request_sha256": ""
+              },
+              "route_selection": {
+                "method": "single_eligible_route",
+                "proposed_route": "preserve",
+                "final_route": "preserve"
+              },
+              "route_decision_latency_ms": 0,
+              "call_closure": {
+                "schema": "gooo/pure-activity-call-closure/v1",
+                "activities": [
+                  {
+                    "name": "GoooPackage1ActivitySelectLeft",
+                    "activity_id": "urn:transfer6373:first",
+                    "program_sha256": "sha256:b2bc4ccc64498c01572588c57d518a0feec2c59e57c913366d79372de5e7b8a4"
+                  }
+                ],
+                "edges": [
+                  {
+                    "caller_id": "urn:transfer6373:main",
+                    "callee_id": "urn:transfer6373:first",
+                    "ordinal": 0
+                  },
+                  {
+                    "caller_id": "urn:transfer6373:main",
+                    "callee_id": "urn:transfer6373:first",
+                    "ordinal": 1
+                  }
+                ],
+                "max_calls_per_invocation": 2
+              },
+              "candidate_routes": [
+                "preserve"
+              ],
+              "equivalence_rule": "source-shape-preserving-v1",
+              "source_constructs": 4,
+              "lowered_constructs": 4,
+              "source_semantic_units": 18,
+              "lowered_semantic_units": 18,
+              "completeness_percent": 100,
+              "route_equivalence": {
+                "schema": "gooo/body-codegen-route-equivalence/v1",
+                "decision": "PASS",
+                "method": "canonical_control_flow_form/v2",
+                "rule": "source-shape-preserving-v1",
+                "source_semantic_digest": "sha256:16a59747a4544f8e1ba86f2c834eb305e093df9607eeab45af8c64a1c31151f2",
+                "generated_semantic_digest": "sha256:16a59747a4544f8e1ba86f2c834eb305e093df9607eeab45af8c64a1c31151f2",
+                "equivalent": true,
+                "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+              },
+              "typecheck_passed": true,
+              "deterministic_replay": true,
+              "repository_writes": 0,
+              "unsupported_constructs": "recursive, indirect, external and assembling-callee calls; loops, imports, external effects, optional-field synthesis and repeated record fields",
+              "completeness_receipt": {
+                "schema": "gooo/metaprogramming-completeness-receipt/v2",
+                "profile_id": "gooo/body-codegen-pure-v1",
+                "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+                "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+                "scope": {
+                  "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                  "boundary": {
+                    "excluded_effects": [
+                      "generated code execution",
+                      "repository mutation",
+                      "external authority"
+                    ],
+                    "non_authorizing": true,
+                    "non_executing": true
+                  },
+                  "call_closure": {
+                    "schema": "gooo/pure-activity-call-closure/v1",
+                    "activities": [
+                      {
+                        "name": "GoooPackage1ActivitySelectLeft",
+                        "activity_id": "urn:transfer6373:first",
+                        "program_sha256": "sha256:b2bc4ccc64498c01572588c57d518a0feec2c59e57c913366d79372de5e7b8a4"
+                      }
+                    ],
+                    "edges": [
+                      {
+                        "caller_id": "urn:transfer6373:main",
+                        "callee_id": "urn:transfer6373:first",
+                        "ordinal": 0
+                      },
+                      {
+                        "caller_id": "urn:transfer6373:main",
+                        "callee_id": "urn:transfer6373:first",
+                        "ordinal": 1
+                      }
+                    ],
+                    "max_calls_per_invocation": 2
+                  },
+                  "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                  "decision_mode": "deterministic_fallback",
+                  "decision_provider": "deterministic",
+                  "domain_scope": "one pure typed Gooo activity with source-declared fixed callees; bounded acyclic call closure",
+                  "excluded_scope": [
+                    "unstated natural-language intent",
+                    "independently sourced production workflows",
+                    "generated runtime behavior",
+                    "unrestricted Gooo body syntax",
+                    "route clarity or utility"
+                  ],
+                  "execution_environment": "darwin/arm64",
+                  "input_type": "(int64,int64)",
+                  "laya_mode": "deterministic_fallback",
+                  "laya_provider": "deterministic",
+                  "observed_system_cost": {
+                    "human_actions": 0,
+                    "repository_writes": 0
+                  },
+                  "output_type": "int64",
+                  "plan_sha256": "sha256:3381cb2fc0063cd1a9aa84ce0efdac4ca3ec2933d9c28f8208420665245047c1",
+                  "receipt_declaration": {
+                    "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile": "gooo/receipt-structure-projection/v1",
+                    "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                  },
+                  "system_budget": {
+                    "maximum_human_actions": 0,
+                    "maximum_repository_writes": 0
+                  },
+                  "toolchain": "go1.27.2"
+                },
+                "core_dimensions": [
+                  "declaration_coverage",
+                  "generation_coverage",
+                  "internal_replay_coverage",
+                  "provenance_integrity",
+                  "receipt_schema_binding",
+                  "repository_write_boundary",
+                  "route_choice_protocol",
+                  "route_semantic_equivalence",
+                  "source_ast_coverage",
+                  "typecheck_coverage"
+                ],
+                "dimensions": [
+                  {
+                    "id": "declaration_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "stable activity declarations",
+                    "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                    "evidence": [
+                      "source_digest:sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+                      "activity_id:urn:transfer6373:main"
+                    ]
+                  },
+                  {
+                    "id": "generation_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated Go functions",
+                    "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                    "evidence": [
+                      "generated_digest:sha256:02f719bd6485c462beedc914c4de0961c61cc84a63fa2a8c2ce157f3f0a42429",
+                      "report decision:PASS"
+                    ]
+                  },
+                  {
+                    "id": "source_ast_coverage",
+                    "status": "PASS",
+                    "numerator": 18,
+                    "denominator": 18,
+                    "unit": "source semantic units lowered",
+                    "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                    "evidence": [
+                      "source_semantic_units",
+                      "lowered_semantic_units"
+                    ]
+                  },
+                  {
+                    "id": "route_semantic_equivalence",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source/generated route pairs",
+                    "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                    "evidence": [
+                      "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                      "route_equivalence.rule:source-shape-preserving-v1",
+                      "source_semantic_digest:sha256:16a59747a4544f8e1ba86f2c834eb305e093df9607eeab45af8c64a1c31151f2",
+                      "generated_semantic_digest:sha256:16a59747a4544f8e1ba86f2c834eb305e093df9607eeab45af8c64a1c31151f2"
+                    ]
+                  },
+                  {
+                    "id": "typecheck_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated functions accepted by Go type checking",
+                    "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                    "evidence": [
+                      "typecheck_passed"
+                    ]
+                  },
+                  {
+                    "id": "internal_replay_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "deterministic compiler emission replays",
+                    "reason": "Requires replayed generated bytes to match the selected output digest.",
+                    "evidence": [
+                      "generated_digest:sha256:02f719bd6485c462beedc914c4de0961c61cc84a63fa2a8c2ce157f3f0a42429",
+                      "replay_digest:sha256:02f719bd6485c462beedc914c4de0961c61cc84a63fa2a8c2ce157f3f0a42429"
+                    ]
+                  },
+                  {
+                    "id": "route_choice_protocol",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "selected routes in the compiler-declared candidate set",
+                    "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                    "evidence": [
+                      "candidate_routes",
+                      "selected_route:preserve"
+                    ]
+                  },
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "numerator": 7,
+                    "denominator": 8,
+                    "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "evidence": [
+                      "source_digest:sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+                      "program_digest:sha256:f368fa4263e7c418b00d4d49c3ee87f6dbe1b457007789bf69de104a3c4add50",
+                      "generated_digest:sha256:02f719bd6485c462beedc914c4de0961c61cc84a63fa2a8c2ce157f3f0a42429",
+                      "replay_digest:sha256:02f719bd6485c462beedc914c4de0961c61cc84a63fa2a8c2ce157f3f0a42429",
+                      "activity_id:urn:transfer6373:main",
+                      "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                      "route_equivalence semantic digests"
+                    ]
+                  },
+                  {
+                    "id": "receipt_schema_binding",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source-owned receipt schema and generated structure bindings",
+                    "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                    "evidence": [
+                      "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                      "projection_profile:gooo/receipt-structure-projection/v1"
+                    ]
+                  },
+                  {
+                    "id": "repository_write_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "repository writes",
+                    "reason": "The command emits generated source without mutating the repository.",
+                    "evidence": [
+                      "repository_writes:0"
+                    ]
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated package runtime executions",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "evidence": [
+                      "body-codegen does not run generated Go"
+                    ]
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "observed host permission profiles",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "evidence": [
+                      "host permission profile is not observed"
+                    ]
+                  },
+                  {
+                    "id": "external_network_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "runs with no Laya provider request",
+                    "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                    "evidence": [
+                      "decision.mode:deterministic_fallback",
+                      "decision.provider:deterministic",
+                      "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                    ]
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 0,
+                    "unit": "eligible multi-route Laya decisions",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "evidence": [
+                      "candidate_routes",
+                      "route_decision.mode:deterministic_fallback",
+                      "route_decision.request_sha256:",
+                      "route_decision.model_revision:"
+                    ]
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independently sourced real workflows",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "evidence": [
+                      "no independent workflow corpus is bound"
+                    ]
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated runtime observations mapped back to source",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "evidence": [
+                      "no source-bound reverse-observation trace"
+                    ]
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete input-domain behavior proofs",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "evidence": [
+                      "generated package execution and an independent domain oracle are not part of this command"
+                    ]
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independent route-clarity or utility criteria",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "evidence": [
+                      "no independent route-quality oracle"
+                    ]
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete process resource profiles",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "evidence": [
+                      "route_decision_latency_ms is recorded",
+                      "CPU and peak RSS are not captured"
+                    ]
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible prior resource receipts",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "evidence": [
+                      "no compatible prior resource receipt"
+                    ]
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible before/after semantic receipts",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "evidence": [
+                      "no comparable prior semantic receipt"
+                    ]
+                  }
+                ],
+                "status_counts": {
+                  "FAIL_CLOSED": 0,
+                  "PASS": 10,
+                  "PROGRESS": 1,
+                  "UNKNOWN": 10
+                },
+                "aggregate_completeness_score": null,
+                "first_unresolved": {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                "unresolved_claims": [
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                  }
+                ],
+                "not_claimed": [
+                  "user-intent completeness",
+                  "real-workflow coverage",
+                  "generated runtime behavior",
+                  "full-domain semantics",
+                  "route quality",
+                  "universal language completeness"
+                ],
+                "fail_closed_reason": null
+              }
+            },
+            "source": "package gooo_workspace\n\n//gooo:generated:start id=\"urn:transfer6373:main\" kind=\"activity\"\nfunc GoooPackage3ActivityMain(input0 int64, input1 int64) int64 {\n\tvar first = GoooPackage1ActivitySelectLeft(input0, input1)\n\tvar second = GoooPackage1ActivitySelectLeft(input1, input0)\n\treturn first + second\n}\n\n//gooo:generated:end id=\"urn:transfer6373:main\" kind=\"activity\"\n//gooo:generated:start id=\"urn:transfer6373:first\" kind=\"activity\"\nfunc GoooPackage1ActivitySelectLeft(input0 int64, input1 int64) int64 {\n\treturn input0\n}\n\n//gooo:generated:end id=\"urn:transfer6373:first\" kind=\"activity\"\n"
+          }
+        }
+      ],
+      "preparations": [
+        {
+          "input_source_sha256": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+          "generation": {
+            "report": {
+              "schema": "gooo/body-codegen-report/v3",
+              "decision": "PASS",
+              "activity": "GoooPackage0ActivityOffset",
+              "activity_id": "urn:transfer6373:bump",
+              "input_type": "int64",
+              "output_type": "int64",
+              "plan_sha256": "sha256:24545b1e088bde9bfc62a58fa0090303e543455555abb6d14383b33f2bd31edc",
+              "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+              "source_digest": "sha256:9b2edd2429c2a4b1da9752d965dd2e6e3662503a88b5ab220fe88390cd6d9a53",
+              "program_digest": "sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015",
+              "generated_digest": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+              "replay_digest": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+              "route": "preserve",
+              "route_decision": {
+                "schema": "gooo/typed-decision-receipt/v1",
+                "mode": "deterministic_fallback",
+                "selected": "preserve",
+                "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+                "provider": "deterministic",
+                "request_sha256": ""
+              },
+              "route_selection": {
+                "method": "single_eligible_route",
+                "proposed_route": "preserve",
+                "final_route": "preserve"
+              },
+              "route_decision_latency_ms": 0,
+              "body_fill": {
+                "source_origin": {
+                  "schema": "gooo/source-fill-origin/v1",
+                  "filename": "workspace.gooo",
+                  "view": "assembly_input",
+                  "source_sha256": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+                  "selected_source_sha256": "sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+                  "selected_body_sha256": "sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015",
+                  "activity_id": "urn:transfer6373:bump",
+                  "activity_source": {
+                    "start_byte": 91,
+                    "end_byte": 495
+                  },
+                  "assembly_source": {
+                    "start_byte": 225,
+                    "end_byte": 495
+                  },
+                  "intent": "수량에 고정 보정치를 더한다",
+                  "intent_source": {
+                    "start_byte": 262,
+                    "end_byte": 301
+                  },
+                  "candidate_id": "plus6373",
+                  "candidate_source": {
+                    "start_byte": 345,
+                    "end_byte": 353
+                  },
+                  "plan_sha256": "sha256:7959603efd6703b66825335d4856067727321bde2e21b198d334c3e18b08cdf1",
+                  "fragments": [
+                    {
+                      "kind": "retained_template",
+                      "template_decoded": {
+                        "start_byte": 0,
+                        "end_byte": 15
+                      },
+                      "selected_decoded": {
+                        "start_byte": 0,
+                        "end_byte": 15
+                      },
+                      "template_source": {
+                        "start_byte": 184,
+                        "end_byte": 199
+                      },
+                      "selected_source": {
+                        "start_byte": 184,
+                        "end_byte": 199
+                      },
+                      "expression_source": {
+                        "start_byte": 184,
+                        "end_byte": 199
+                      }
+                    },
+                    {
+                      "kind": "declared_candidate",
+                      "hole_id": "delta",
+                      "expression": "19",
+                      "template_decoded": {
+                        "start_byte": 15,
+                        "end_byte": 39
+                      },
+                      "selected_decoded": {
+                        "start_byte": 15,
+                        "end_byte": 17
+                      },
+                      "template_source": {
+                        "start_byte": 199,
+                        "end_byte": 223
+                      },
+                      "selected_source": {
+                        "start_byte": 199,
+                        "end_byte": 201
+                      },
+                      "hole_declaration": {
+                        "start_byte": 313,
+                        "end_byte": 325
+                      },
+                      "expression_source": {
+                        "start_byte": 383,
+                        "end_byte": 385
+                      }
+                    }
+                  ],
+                  "data_flow": {
+                    "schema": "gooo/body-value-origins/v1",
+                    "status": "MAPPED",
+                    "body_sha256": "sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015",
+                    "nodes": [
+                      {
+                        "id": "input_reference:7:12:input",
+                        "kind": "input_reference",
+                        "name": "input",
+                        "decoded": {
+                          "start_byte": 7,
+                          "end_byte": 12
+                        }
+                      },
+                      {
+                        "id": "return:7:17:",
+                        "kind": "return",
+                        "decoded": {
+                          "start_byte": 7,
+                          "end_byte": 17
+                        },
+                        "inputs": [
+                          "input_reference:7:12:input"
+                        ]
+                      }
+                    ],
+                    "roots": [
+                      "return:7:17:"
+                    ]
+                  }
+                },
+                "schema": "gooo/body-codegen-ir-fill-plan/v2",
+                "original_source_digest": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+                "intent": "수량에 고정 보정치를 더한다",
+                "hole_id": "delta",
+                "hole_token": "__GOOO_BODY_HOLE_delta__",
+                "ir_plan_sha256": "sha256:7959603efd6703b66825335d4856067727321bde2e21b198d334c3e18b08cdf1",
+                "proposed_candidate_id": "plus6373",
+                "proposed_accuracy_percent": 100,
+                "selected_candidate_id": "plus6373",
+                "selected_expression": "delta=19",
+                "hole_fills": [
+                  {
+                    "hole_id": "delta",
+                    "expression": "19"
+                  }
+                ],
+                "best_candidate_id": "plus6373",
+                "best_candidate_accuracy_percent": 100,
+                "selection_regret_percentage_points": 0,
+                "selection_adjustment": "proposal_retained",
+                "decision": {
+                  "schema": "gooo/typed-decision-receipt/v1",
+                  "mode": "deterministic_fallback",
+                  "selected": "plus6373",
+                  "fallback_reason": "NOT_CONFIGURED",
+                  "provider": "deterministic",
+                  "request_sha256": "sha256:c1d4b87a9a9b1ede206cc396d33891af47c37cc6deab717ebe08c0acd925926a"
+                },
+                "candidate_scores": [
+                  {
+                    "id": "plus6373",
+                    "expression": "delta=19",
+                    "typecheck_passed": true,
+                    "test_cases_passed": 1,
+                    "test_cases_total": 1,
+                    "accuracy_percent": 100
+                  },
+                  {
+                    "id": "zero6373",
+                    "expression": "delta=0",
+                    "typecheck_passed": true,
+                    "test_cases_passed": 0,
+                    "test_cases_total": 1,
+                    "accuracy_percent": 0
+                  }
+                ],
+                "behavioral_probes": {
+                  "schema": "gooo/ir-body-fill-behavioral-probe/v1",
+                  "probe_inputs": [
+                    4,
+                    6
+                  ],
+                  "probe_profile_sha256": "sha256:c093a4e976ec4149644819429a86d451c1f484bef529391e535d9d16d64b29ca",
+                  "candidate_profiles": [
+                    {
+                      "candidate_id": "plus6373",
+                      "outputs": [
+                        23,
+                        25
+                      ]
+                    },
+                    {
+                      "candidate_id": "zero6373",
+                      "outputs": [
+                        4,
+                        6
+                      ]
+                    }
+                  ],
+                  "probe_inputs_total": 2,
+                  "probe_inputs_omitted": 0,
+                  "candidate_count": 2,
+                  "candidate_runs_completed": 2,
+                  "candidate_runs_failed": 0,
+                  "candidate_pairs_distinguished": 1,
+                  "candidate_pairs_evaluated": 1,
+                  "candidate_pairs_total": 1,
+                  "candidate_pair_distinguishability_percent": 100,
+                  "probe_inputs_with_disagreement": 2,
+                  "scope": "synthetic integer inputs derived only from training inputs with declared holdout inputs excluded; candidate outputs have no expected-value oracle and measure behavioral distinctions, not intent or correctness"
+                },
+                "test_suite_sha256": "sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                "test_cases_passed": 1,
+                "test_cases_total": 1,
+                "functional_accuracy_percent": 100,
+                "holdout_cases_passed": 0,
+                "holdout_cases_total": 0,
+                "holdout_accuracy_percent": null,
+                "local_model_predictions": 0,
+                "external_provider_calls": 0,
+                "external_provider_calls_known": true,
+                "evaluator": "gooo/bodycodegen-int64-ast-interpreter/v2",
+                "selected_case_results": [
+                  {
+                    "input": 5,
+                    "expected": 24,
+                    "actual": 24,
+                    "passed": true
+                  }
+                ],
+                "accuracy_scope": "exact observed accuracy over the declared finite test suite; not a full-domain proof",
+                "timing": {
+                  "ir_plan_build_ms": 0.341,
+                  "behavioral_probe_ms": 0.035958,
+                  "provider_decision_ms": 0.012583,
+                  "laya_decision_ms": 0,
+                  "tiny_decision_ms": 0,
+                  "final_emission_ms": 0.215208,
+                  "total_ms": 0.805,
+                  "execution_model": "synchronous_sequential_no_background_codegen_goroutines",
+                  "decision_stage": "after_typed_ir_plan_training_scores_and_behavior_probes_before_final_emission"
+                },
+                "local_calls": {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "status": "RECORDED",
+                  "evaluations": [
+                    {
+                      "schema": "gooo/local-call-inputs/v1",
+                      "generated_sha256": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                      "activity_id": "urn:transfer6373:bump",
+                      "suite_sha256": "sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                      "phase": "fill-training",
+                      "candidate_id": "plus6373",
+                      "status": "RECORDED",
+                      "evaluation_completed": true,
+                      "cases_started": 1,
+                      "cases_completed": 1,
+                      "calls": []
+                    },
+                    {
+                      "schema": "gooo/local-call-inputs/v1",
+                      "generated_sha256": "sha256:32916be0f2b28a2f6d4282eb27cc393928eedbe067057750d58d773519b83c14",
+                      "activity_id": "urn:transfer6373:bump",
+                      "suite_sha256": "sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                      "phase": "fill-training",
+                      "candidate_id": "zero6373",
+                      "status": "RECORDED",
+                      "evaluation_completed": true,
+                      "cases_started": 1,
+                      "cases_completed": 1,
+                      "calls": []
+                    },
+                    {
+                      "schema": "gooo/local-call-inputs/v1",
+                      "generated_sha256": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                      "activity_id": "urn:transfer6373:bump",
+                      "suite_sha256": "sha256:9caa807df6afd113e3eecd6039fddb42667f4ac369af9d21108505fc4ca27703",
+                      "phase": "fill-probe",
+                      "candidate_id": "plus6373",
+                      "status": "RECORDED",
+                      "evaluation_completed": true,
+                      "cases_started": 2,
+                      "cases_completed": 2,
+                      "calls": []
+                    },
+                    {
+                      "schema": "gooo/local-call-inputs/v1",
+                      "generated_sha256": "sha256:32916be0f2b28a2f6d4282eb27cc393928eedbe067057750d58d773519b83c14",
+                      "activity_id": "urn:transfer6373:bump",
+                      "suite_sha256": "sha256:9caa807df6afd113e3eecd6039fddb42667f4ac369af9d21108505fc4ca27703",
+                      "phase": "fill-probe",
+                      "candidate_id": "zero6373",
+                      "status": "RECORDED",
+                      "evaluation_completed": true,
+                      "cases_started": 2,
+                      "cases_completed": 2,
+                      "calls": []
+                    },
+                    {
+                      "schema": "gooo/local-call-inputs/v1",
+                      "generated_sha256": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                      "activity_id": "urn:transfer6373:bump",
+                      "suite_sha256": "sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                      "phase": "fill-selected-training",
+                      "candidate_id": "plus6373",
+                      "status": "RECORDED",
+                      "evaluation_completed": true,
+                      "cases_started": 1,
+                      "cases_completed": 1,
+                      "calls": []
+                    }
+                  ]
+                }
+              },
+              "candidate_routes": [
+                "preserve"
+              ],
+              "equivalence_rule": "source-shape-preserving-v1",
+              "source_constructs": 1,
+              "lowered_constructs": 1,
+              "source_semantic_units": 4,
+              "lowered_semantic_units": 4,
+              "completeness_percent": 100,
+              "route_equivalence": {
+                "schema": "gooo/body-codegen-route-equivalence/v1",
+                "decision": "PASS",
+                "method": "canonical_control_flow_form/v2",
+                "rule": "source-shape-preserving-v1",
+                "source_semantic_digest": "sha256:01d9b87a7b5df47a098092f37a2d59b9855f5555e01a12b35821e3094d94bba1",
+                "generated_semantic_digest": "sha256:01d9b87a7b5df47a098092f37a2d59b9855f5555e01a12b35821e3094d94bba1",
+                "equivalent": true,
+                "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+              },
+              "typecheck_passed": true,
+              "deterministic_replay": true,
+              "repository_writes": 0,
+              "unsupported_constructs": "calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
+              "completeness_receipt": {
+                "schema": "gooo/metaprogramming-completeness-receipt/v2",
+                "profile_id": "gooo/body-codegen-pure-v1",
+                "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+                "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+                "scope": {
+                  "allowed_investment": "compiler-controlled assembly from declared expression candidates, measured finite-suite scores, and an optional Laya proposal; no human approval or authorization is required",
+                  "boundary": {
+                    "excluded_effects": [
+                      "generated code execution",
+                      "repository mutation",
+                      "external authority"
+                    ],
+                    "non_authorizing": true,
+                    "non_executing": true
+                  },
+                  "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                  "decision_mode": "deterministic_fallback",
+                  "decision_provider": "deterministic",
+                  "domain_scope": "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
+                  "excluded_scope": [
+                    "unstated natural-language intent",
+                    "independently sourced production workflows",
+                    "generated runtime behavior",
+                    "unrestricted Gooo body syntax",
+                    "route clarity or utility"
+                  ],
+                  "execution_environment": "darwin/arm64",
+                  "input_type": "int64",
+                  "laya_mode": "deterministic_fallback",
+                  "laya_provider": "deterministic",
+                  "observed_system_cost": {
+                    "human_actions": 0,
+                    "repository_writes": 0
+                  },
+                  "output_type": "int64",
+                  "plan_sha256": "sha256:24545b1e088bde9bfc62a58fa0090303e543455555abb6d14383b33f2bd31edc",
+                  "receipt_declaration": {
+                    "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile": "gooo/receipt-structure-projection/v1",
+                    "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                  },
+                  "system_budget": {
+                    "maximum_human_actions": 0,
+                    "maximum_repository_writes": 0
+                  },
+                  "toolchain": "go1.27.2"
+                },
+                "core_dimensions": [
+                  "body_fill_candidate_probe_coverage",
+                  "declaration_coverage",
+                  "declared_suite_functional_accuracy",
+                  "generation_coverage",
+                  "internal_replay_coverage",
+                  "provenance_integrity",
+                  "receipt_schema_binding",
+                  "repository_write_boundary",
+                  "route_choice_protocol",
+                  "route_semantic_equivalence",
+                  "source_ast_coverage",
+                  "typecheck_coverage"
+                ],
+                "dimensions": [
+                  {
+                    "id": "declaration_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "stable activity declarations",
+                    "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                    "evidence": [
+                      "source_digest:sha256:9b2edd2429c2a4b1da9752d965dd2e6e3662503a88b5ab220fe88390cd6d9a53",
+                      "activity_id:urn:transfer6373:bump"
+                    ]
+                  },
+                  {
+                    "id": "generation_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated Go functions",
+                    "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                    "evidence": [
+                      "generated_digest:sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                      "report decision:PASS"
+                    ]
+                  },
+                  {
+                    "id": "source_ast_coverage",
+                    "status": "PASS",
+                    "numerator": 4,
+                    "denominator": 4,
+                    "unit": "source semantic units lowered",
+                    "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                    "evidence": [
+                      "source_semantic_units",
+                      "lowered_semantic_units"
+                    ]
+                  },
+                  {
+                    "id": "route_semantic_equivalence",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source/generated route pairs",
+                    "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                    "evidence": [
+                      "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                      "route_equivalence.rule:source-shape-preserving-v1",
+                      "source_semantic_digest:sha256:01d9b87a7b5df47a098092f37a2d59b9855f5555e01a12b35821e3094d94bba1",
+                      "generated_semantic_digest:sha256:01d9b87a7b5df47a098092f37a2d59b9855f5555e01a12b35821e3094d94bba1"
+                    ]
+                  },
+                  {
+                    "id": "typecheck_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated functions accepted by Go type checking",
+                    "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                    "evidence": [
+                      "typecheck_passed"
+                    ]
+                  },
+                  {
+                    "id": "internal_replay_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "deterministic compiler emission replays",
+                    "reason": "Requires replayed generated bytes to match the selected output digest.",
+                    "evidence": [
+                      "generated_digest:sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                      "replay_digest:sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d"
+                    ]
+                  },
+                  {
+                    "id": "route_choice_protocol",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "selected routes in the compiler-declared candidate set",
+                    "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                    "evidence": [
+                      "candidate_routes",
+                      "selected_route:preserve"
+                    ]
+                  },
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "numerator": 7,
+                    "denominator": 8,
+                    "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "evidence": [
+                      "source_digest:sha256:9b2edd2429c2a4b1da9752d965dd2e6e3662503a88b5ab220fe88390cd6d9a53",
+                      "program_digest:sha256:efa920d4e7df23ac444606b2295e5cafd58798626b7df139fbaa3f5755a3a015",
+                      "generated_digest:sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                      "replay_digest:sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                      "activity_id:urn:transfer6373:bump",
+                      "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                      "route_equivalence semantic digests"
+                    ]
+                  },
+                  {
+                    "id": "receipt_schema_binding",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source-owned receipt schema and generated structure bindings",
+                    "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                    "evidence": [
+                      "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                      "projection_profile:gooo/receipt-structure-projection/v1"
+                    ]
+                  },
+                  {
+                    "id": "repository_write_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "repository writes",
+                    "reason": "The command emits generated source without mutating the repository.",
+                    "evidence": [
+                      "repository_writes:0"
+                    ]
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated package runtime executions",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "evidence": [
+                      "body-codegen does not run generated Go"
+                    ]
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "observed host permission profiles",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "evidence": [
+                      "host permission profile is not observed"
+                    ]
+                  },
+                  {
+                    "id": "external_network_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "runs with no Laya provider request",
+                    "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                    "evidence": [
+                      "decision.mode:deterministic_fallback",
+                      "decision.provider:deterministic",
+                      "decision.fallback_reason:NOT_CONFIGURED"
+                    ]
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "eligible IR body-fill decisions",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "evidence": [
+                      "body_fill.candidate_scores",
+                      "body_fill.decision.mode:deterministic_fallback",
+                      "body_fill.decision.request_sha256:sha256:c1d4b87a9a9b1ede206cc396d33891af47c37cc6deab717ebe08c0acd925926a",
+                      "body_fill.decision.model_revision:"
+                    ]
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independently sourced real workflows",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "evidence": [
+                      "no independent workflow corpus is bound"
+                    ]
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated runtime observations mapped back to source",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "evidence": [
+                      "no source-bound reverse-observation trace"
+                    ]
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete input-domain behavior proofs",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "evidence": [
+                      "generated package execution and an independent domain oracle are not part of this command"
+                    ]
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independent route-clarity or utility criteria",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "evidence": [
+                      "no independent route-quality oracle"
+                    ]
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete process resource profiles",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "evidence": [
+                      "route_decision_latency_ms is recorded",
+                      "CPU and peak RSS are not captured"
+                    ]
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible prior resource receipts",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "evidence": [
+                      "no compatible prior resource receipt"
+                    ]
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible before/after semantic receipts",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "evidence": [
+                      "no comparable prior semantic receipt"
+                    ]
+                  },
+                  {
+                    "id": "declared_suite_functional_accuracy",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "declared test cases matched by the emitted body in the bounded AST evaluator",
+                    "reason": "Measures the declared selection suite only; held-out behavior, generated-package execution, and full-domain correctness require separate evidence.",
+                    "evidence": [
+                      "body_fill.evaluator:gooo/bodycodegen-int64-ast-interpreter/v2",
+                      "body_fill.test_suite_sha256:sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                      "body_fill.ir_plan_sha256:sha256:7959603efd6703b66825335d4856067727321bde2e21b198d334c3e18b08cdf1",
+                      "generated_digest:sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d"
+                    ]
+                  },
+                  {
+                    "id": "body_fill_candidate_probe_coverage",
+                    "status": "PASS",
+                    "numerator": 4,
+                    "denominator": 4,
+                    "unit": "candidate-by-input observations executed over deterministic training-derived integer probes",
+                    "reason": "This measures automatic diagnostic probe execution coverage; candidate disagreement is not correctness or intent evidence.",
+                    "evidence": [
+                      "body_fill.behavioral_probes.schema:gooo/ir-body-fill-behavioral-probe/v1",
+                      "body_fill.behavioral_probes.profile_sha256:sha256:c093a4e976ec4149644819429a86d451c1f484bef529391e535d9d16d64b29ca",
+                      "body_fill.behavioral_probes.candidate_runs_failed:0",
+                      "body_fill.behavioral_probes.distinguished_pairs:1",
+                      "body_fill.behavioral_probes.probe_inputs_with_disagreement:2"
+                    ]
+                  },
+                  {
+                    "id": "provider_execution_accounting",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "body-fill provider executions classified as local predictions or external calls",
+                    "reason": "Counts local model predictions separately from external provider calls; unknown failed request outcomes remain unknown.",
+                    "evidence": [
+                      "body_fill.local_model_predictions:0",
+                      "body_fill.external_provider_calls:0",
+                      "body_fill.external_provider_calls_known:true"
+                    ]
+                  }
+                ],
+                "status_counts": {
+                  "FAIL_CLOSED": 0,
+                  "PASS": 13,
+                  "PROGRESS": 1,
+                  "UNKNOWN": 10
+                },
+                "aggregate_completeness_score": null,
+                "first_unresolved": {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                "unresolved_claims": [
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                  }
+                ],
+                "not_claimed": [
+                  "user-intent completeness",
+                  "real-workflow coverage",
+                  "generated runtime behavior",
+                  "full-domain semantics",
+                  "route quality",
+                  "universal language completeness"
+                ],
+                "fail_closed_reason": null
+              }
+            },
+            "source": "package gooo_workspace\n\n//gooo:generated:start id=\"urn:transfer6373:bump\" kind=\"activity\"\nfunc GoooPackage0ActivityOffset(input int64) int64 {\n\treturn input + 19\n}\n\n//gooo:generated:end id=\"urn:transfer6373:bump\" kind=\"activity\"\n",
+            "gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nactivity GoooPackage0ActivityOffset(Integer) -\u003e Integer id \"urn:transfer6373:bump\" computes \"return input + 19\"\nactivity GoooPackage1ActivitySelectLeft(Integer, Integer) -\u003e Integer id \"urn:transfer6373:first\" computes \"return input0\"\nactivity GoooPackage2ActivityStart(Integer) -\u003e Integer id \"urn:transfer6373:start\" computes \"return GoooPackage0ActivityOffset(input)\"\nactivity GoooPackage3ActivityMain(Integer, Integer) -\u003e Integer id \"urn:transfer6373:main\" computes \"let first = GoooPackage1ActivitySelectLeft(input0, input1); let second = GoooPackage1ActivitySelectLeft(input1, input0); return first + second\"\nbind GoooPackage2ActivityStart.result -\u003e GoooPackage3ActivityMain.input0\n"
+          }
+        }
+      ],
+      "fill_validations": [
+        {
+          "stage": "BODY_PREFLIGHT",
+          "observation": {
+            "schema": "gooo/source-fill-validation/v1",
+            "source_sha256": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+            "activity": "GoooPackage0ActivityOffset",
+            "activity_id": "urn:transfer6373:bump",
+            "completed": true,
+            "local_calls": {
+              "schema": "gooo/local-call-inputs/v1",
+              "status": "RECORDED",
+              "evaluations": [
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                  "activity_id": "urn:transfer6373:bump",
+                  "suite_sha256": "sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                  "phase": "fill-training",
+                  "candidate_id": "plus6373",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 1,
+                  "cases_completed": 1,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:32916be0f2b28a2f6d4282eb27cc393928eedbe067057750d58d773519b83c14",
+                  "activity_id": "urn:transfer6373:bump",
+                  "suite_sha256": "sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                  "phase": "fill-training",
+                  "candidate_id": "zero6373",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 1,
+                  "cases_completed": 1,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                  "activity_id": "urn:transfer6373:bump",
+                  "suite_sha256": "sha256:9caa807df6afd113e3eecd6039fddb42667f4ac369af9d21108505fc4ca27703",
+                  "phase": "fill-probe",
+                  "candidate_id": "plus6373",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:32916be0f2b28a2f6d4282eb27cc393928eedbe067057750d58d773519b83c14",
+                  "activity_id": "urn:transfer6373:bump",
+                  "suite_sha256": "sha256:9caa807df6afd113e3eecd6039fddb42667f4ac369af9d21108505fc4ca27703",
+                  "phase": "fill-probe",
+                  "candidate_id": "zero6373",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                  "activity_id": "urn:transfer6373:bump",
+                  "suite_sha256": "sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                  "phase": "fill-selected-training",
+                  "candidate_id": "plus6373",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 1,
+                  "cases_completed": 1,
+                  "calls": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "stage": "ACTIVITY_GENERATION",
+          "observation": {
+            "schema": "gooo/source-fill-validation/v1",
+            "source_sha256": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+            "activity": "GoooPackage0ActivityOffset",
+            "activity_id": "urn:transfer6373:bump",
+            "completed": true,
+            "local_calls": {
+              "schema": "gooo/local-call-inputs/v1",
+              "status": "RECORDED",
+              "evaluations": [
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                  "activity_id": "urn:transfer6373:bump",
+                  "suite_sha256": "sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                  "phase": "fill-training",
+                  "candidate_id": "plus6373",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 1,
+                  "cases_completed": 1,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:32916be0f2b28a2f6d4282eb27cc393928eedbe067057750d58d773519b83c14",
+                  "activity_id": "urn:transfer6373:bump",
+                  "suite_sha256": "sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                  "phase": "fill-training",
+                  "candidate_id": "zero6373",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 1,
+                  "cases_completed": 1,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                  "activity_id": "urn:transfer6373:bump",
+                  "suite_sha256": "sha256:9caa807df6afd113e3eecd6039fddb42667f4ac369af9d21108505fc4ca27703",
+                  "phase": "fill-probe",
+                  "candidate_id": "plus6373",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:32916be0f2b28a2f6d4282eb27cc393928eedbe067057750d58d773519b83c14",
+                  "activity_id": "urn:transfer6373:bump",
+                  "suite_sha256": "sha256:9caa807df6afd113e3eecd6039fddb42667f4ac369af9d21108505fc4ca27703",
+                  "phase": "fill-probe",
+                  "candidate_id": "zero6373",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:3841098f64237e5d4ba857e6e489ac2b0ccc358963336b7df29b7421136a648d",
+                  "activity_id": "urn:transfer6373:bump",
+                  "suite_sha256": "sha256:9cc7371d0d53adb6931f2e618f991196c5421616daee11bd9a3b13ee1d475694",
+                  "phase": "fill-selected-training",
+                  "candidate_id": "plus6373",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 1,
+                  "cases_completed": 1,
+                  "calls": []
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nactivity GoooPackage0ActivityOffset(Integer) -\u003e Integer id \"urn:transfer6373:bump\" computes \"return input + 19\"\nactivity GoooPackage1ActivitySelectLeft(Integer, Integer) -\u003e Integer id \"urn:transfer6373:first\" computes \"return input0\"\nactivity GoooPackage2ActivityStart(Integer) -\u003e Integer id \"urn:transfer6373:start\" computes \"return GoooPackage0ActivityOffset(input)\"\nactivity GoooPackage3ActivityMain(Integer, Integer) -\u003e Integer id \"urn:transfer6373:main\" computes \"let first = GoooPackage1ActivitySelectLeft(input0, input1); let second = GoooPackage1ActivitySelectLeft(input1, input0); return first + second\"\nbind GoooPackage2ActivityStart.result -\u003e GoooPackage3ActivityMain.input0\n",
+      "source": "package main\n\n//gooo:generated:start id=\"urn:transfer6373:start\" kind=\"activity\"\nfunc GoooComposedActivity0(input int64) int64 {\n\treturn GoooComposedActivity0Call0(input)\n}\nfunc GoooComposedActivity0Call0(input int64) int64 {\n\treturn input + 19\n}\n\n//gooo:generated:end id=\"urn:transfer6373:start\" kind=\"activity\"\n\n//gooo:generated:start id=\"urn:transfer6373:main\" kind=\"activity\"\nfunc GoooComposedActivity1(input0 int64, input1 int64) int64 {\n\tvar first = GoooComposedActivity1Call0(input0, input1)\n\tvar second = GoooComposedActivity1Call0(input1, input0)\n\treturn first + second\n}\nfunc GoooComposedActivity1Call0(input0 int64, input1 int64) int64 {\n\treturn input0\n}\n\n//gooo:generated:end id=\"urn:transfer6373:main\" kind=\"activity\"\n",
+      "driver_source": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc main() {\n\tvar in [][2]json.RawMessage\n\tif json.NewDecoder(os.Stdin).Decode(\u0026in) != nil || len(in) \u003e 128 {\n\t\tos.Exit(2)\n\t}\n\tout := make([][2]json.RawMessage, len(in))\n\tfor c, row := range in {\n\t\tvar input0 int64\n\t\tif json.Unmarshal(row[0], \u0026input0) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv0 := GoooComposedActivity0(input0)\n\t\tout[c][0], _ = json.Marshal(v0)\n\t\tvar input1 int64\n\t\tif json.Unmarshal(row[1], \u0026input1) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv1 := GoooComposedActivity1(v0, input1)\n\t\tout[c][1], _ = json.Marshal(v1)\n\t}\n\tif json.NewEncoder(os.Stdout).Encode(out) != nil {\n\t\tos.Exit(3)\n\t}\n}\n",
+      "elapsed_ns": 7795917,
+      "scope": "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"
+    },
+    "runtime": {
+      "schema": "gooo/body-composition-runtime/v1",
+      "stage": "COMPLETE",
+      "composition_sha256": "sha256:aa5c5bae21ece067e1bcaedf8166bbe968b1230944faaa2ec8d70976c1a73ad6",
+      "original_source_sha256": "sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895",
+      "selected_source_sha256": "sha256:ef404a24309b891e5e1b5f1e81e2797f7c978ddf8412ca985177f521b3d30a5e",
+      "typed_plan_sha256": "sha256:1c39223fa132d714f694020267fa6ab8dde2b7fff0f4e1a0fd38ed030b34731d",
+      "generated_sha256": "sha256:b37d3455a696d608e61cdb64968b212c05e808e214068d368234253819147ab5",
+      "driver_sha256": "sha256:b9ab04e9804a4f65b63eadced1dc2e2a936ffb9120bcedf4b00852110e651380",
+      "observed_projection_sha256": "sha256:f97d4fbbb7961c3ed5f5854fb1c3bc817db521e1e582496213a63c275702a52e",
+      "observed_driver_sha256": "sha256:bc2db6c1cd75d3e6242163f5e7b8d648a3b2cf5a26777c9527161fef266f71d8",
+      "runtime_suite_sha256": "sha256:62a674305a78950768d648cde441800d59895a54e6f2bf22aeb9764b7695f52a",
+      "executable_sha256": "sha256:e19051db47503e8c9c01be646a2c9fb0a36dd5a4aed30f28e7f3dde4ca738344",
+      "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+      "go_tool_selection": "path",
+      "go_version": "go version go1.27.2 darwin/arm64",
+      "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+      "producer_module": {
+        "path": "github.com/kimjooyoon/meta-ontology-go",
+        "version": "(devel)"
+      },
+      "toolchain": {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 7625417,
+        "user_ns": 3307000,
+        "system_ns": 2565000,
+        "peak_rss_bytes": 14467072,
+        "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 1074167,
+          "wait_ns": 6551250,
+          "deadline_remaining_ns": 59981720875,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      "build": {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 275370541,
+        "user_ns": 133176000,
+        "system_ns": 99410000,
+        "peak_rss_bytes": 88211456,
+        "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 866875,
+          "wait_ns": 274503666,
+          "deadline_remaining_ns": 59973066041,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      "runs": [
+        {
+          "started": true,
+          "completed": true,
+          "canceled": false,
+          "timed_out": false,
+          "diagnostics_bytes": 0,
+          "output_truncated": false,
+          "exit_code": 0,
+          "wall_ns": 362106375,
+          "user_ns": 1177000,
+          "system_ns": 3462000,
+          "peak_rss_bytes": 4947968,
+          "stdout_sha256": "sha256:ef9f61f783e5bc49b4702060ac69770248feb2da13a3696b20868a34f67298ad",
+          "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "timing": {
+            "start_ns": 927417,
+            "wait_ns": 361178958,
+            "wait_limit_ns": 2000000000,
+            "deadline_remaining_ns": 59696110125,
+            "context_at_start_return": "ACTIVE"
+          }
+        },
+        {
+          "started": true,
+          "completed": true,
+          "canceled": false,
+          "timed_out": false,
+          "diagnostics_bytes": 0,
+          "output_truncated": false,
+          "exit_code": 0,
+          "wall_ns": 16029834,
+          "user_ns": 1638000,
+          "system_ns": 2727000,
+          "peak_rss_bytes": 4882432,
+          "stdout_sha256": "sha256:ef9f61f783e5bc49b4702060ac69770248feb2da13a3696b20868a34f67298ad",
+          "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "timing": {
+            "start_ns": 6232292,
+            "wait_ns": 9797542,
+            "wait_limit_ns": 2000000000,
+            "deadline_remaining_ns": 59333422250,
+            "context_at_start_return": "ACTIVE"
+          }
+        }
+      ],
+      "traces": [
+        {
+          "case_index": 0,
+          "deliveries": [
+            {
+              "activity_id": "urn:transfer6373:start",
+              "input": 55,
+              "actual": 74,
+              "expected": 74,
+              "passed": true
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "inputs": [
+                {
+                  "port": "input0",
+                  "entity_id": "urn:gooo:type:integer",
+                  "producer_id": "urn:transfer6373:start",
+                  "value": 74
+                },
+                {
+                  "port": "input1",
+                  "entity_id": "urn:gooo:type:integer",
+                  "value": 6
+                }
+              ],
+              "actual": 80,
+              "expected": 80,
+              "passed": true
+            }
+          ],
+          "called_inputs_observed": true,
+          "calls": [
+            {
+              "root_activity_id": "urn:transfer6373:start",
+              "activity_id": "urn:transfer6373:bump",
+              "inputs": [
+                55
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "deliveries": [
+            {
+              "activity_id": "urn:transfer6373:start",
+              "input": -31,
+              "actual": -12,
+              "expected": -12,
+              "passed": true
+            },
+            {
+              "activity_id": "urn:transfer6373:main",
+              "inputs": [
+                {
+                  "port": "input0",
+                  "entity_id": "urn:gooo:type:integer",
+                  "producer_id": "urn:transfer6373:start",
+                  "value": -12
+                },
+                {
+                  "port": "input1",
+                  "entity_id": "urn:gooo:type:integer",
+                  "value": 3
+                }
+              ],
+              "actual": -9,
+              "expected": -9,
+              "passed": true
+            }
+          ],
+          "called_inputs_observed": true,
+          "calls": [
+            {
+              "root_activity_id": "urn:transfer6373:start",
+              "activity_id": "urn:transfer6373:bump",
+              "inputs": [
+                -31
+              ]
+            }
+          ]
+        }
+      ],
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "finite_passed": 4,
+      "finite_total": 4,
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 2,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 2,
+        "disjoint_cases_passed": 2,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "model_calls": 0,
+      "elapsed_ns": 684384958,
+      "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+    },
+    "scope": "typed imported activity bindings; generated Go compiled and run twice; finite named expectations only"
+  }
+}

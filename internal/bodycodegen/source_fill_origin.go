@@ -14,6 +14,7 @@ type FillOriginRange struct {
 }
 
 type SourceFillFragment struct {
+	Relation         string           `json:"relation,omitempty"`
 	Kind             string           `json:"kind"`
 	HoleID           string           `json:"hole_id,omitempty"`
 	Expression       string           `json:"expression,omitempty"`
@@ -45,6 +46,7 @@ type SourceFillOrigin struct {
 	CandidateSource      *FillOriginRange     `json:"candidate_source,omitempty"`
 	PlanSHA256           string               `json:"plan_sha256"`
 	Fragments            []SourceFillFragment `json:"fragments"`
+	DataFlow             *BodyValueOrigins    `json:"data_flow,omitempty"`
 }
 
 type SourceFillConditionOrigin struct {
@@ -65,10 +67,11 @@ type SourceFillConditionOrigin struct {
 	Fragments            []SourceFillFragment   `json:"fragments"`
 	ConditionDecoded     FillOriginRange        `json:"condition_decoded"`
 	Input                *SourceFillInputOrigin `json:"input_source,omitempty"`
+	DataFlow             *BodyValueOrigins      `json:"data_flow,omitempty"`
 }
 
-// ConditionOrigin selects body fragments overlapping this condition. Retained
-// template fragments can extend beyond it; ranges keep that scope visible.
+// ConditionOrigin includes direct fragments and, when recorded, bounded static
+// value/control dependencies. Template ranges retain their original scope.
 func (o SourceFillOrigin) ConditionOrigin(condition BodyConditionOrigin) *SourceFillConditionOrigin {
 	if condition.ActivityID != o.ActivityID || condition.BodySHA256 != o.SelectedBodySHA256 {
 		return nil
@@ -83,8 +86,13 @@ func (o SourceFillOrigin) ConditionOrigin(condition BodyConditionOrigin) *Source
 	link.Schema = "gooo/source-fill-condition-origin/v1"
 	link.CandidateSource = cloneFillOriginRange(o.CandidateSource)
 	link.Fragments = nil
+	link.DataFlow = o.DataFlow.conditionSlice(link.ConditionDecoded, o.SelectedBodySHA256)
 	for _, fragment := range o.Fragments {
-		if fragment.SelectedDecoded.Start < condition.End && fragment.SelectedDecoded.End > condition.Start {
+		relation := fillFragmentRelation(fragment.SelectedDecoded, link.ConditionDecoded, link.DataFlow)
+		if relation != "" {
+			if link.DataFlow != nil {
+				fragment.Relation = relation
+			}
 			fragment.HoleDeclaration = cloneFillOriginRange(fragment.HoleDeclaration)
 			fragment.ExpressionSource = cloneFillOriginRange(fragment.ExpressionSource)
 			fragment.GrammarSource = cloneFillOriginRange(fragment.GrammarSource)
@@ -140,12 +148,13 @@ func retainSourceFillOrigin(filename string, source []byte, activity string, res
 	if err != nil {
 		return err
 	}
+	flow := InspectBodyValueOrigins(output.ValueProgram, len(output.Inputs))
 	r := result.Report.BodyFill
 	r.SourceOrigin = &SourceFillOrigin{Schema: "gooo/source-fill-origin/v1", Filename: filename,
 		View: "assembly_input", SourceSHA256: digest(source), SelectedSourceSHA256: digest(selected),
 		SelectedBodySHA256: bodySHA, ActivityID: result.Report.ActivityID,
 		ActivitySource: fillSpan(input.Span), AssemblySource: fillSpan(input.Assembly.Span),
 		Intent: r.Intent, IntentSource: index.intent, CandidateID: r.SelectedCandidateID,
-		CandidateSource: index.candidate, PlanSHA256: r.IRPlanSHA256, Fragments: fragments}
+		CandidateSource: index.candidate, PlanSHA256: r.IRPlanSHA256, Fragments: fragments, DataFlow: &flow}
 	return nil
 }

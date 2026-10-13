@@ -1,0 +1,21 @@
+=== RUN   TestRecordedOriginUsePaths5527
+    source_fill_origin_uses_test.go:48: 5527: two root/hole uses; return path contains a control edge; one-row truncation explicit; cycles terminate; missing node reported
+--- PASS: TestRecordedOriginUsePaths5527 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.523s
+=== RUN   TestRecordedCandidateQueryAndGoooConsumer5581
+    origin_query_test.go:69: 5581: native2/2; three candidate uses across condition and return; five actual root/location facts consumed by Gooo5/5; filter and truncation explicit; query leaves receipt unchanged
+--- PASS: TestRecordedCandidateQueryAndGoooConsumer5581 (1.39s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	2.254s
+=== RUN   TestLocalCandidateSourceRoundtrip5719
+    origin_source_roundtrip_test.go:39: 5719: fresh local-candidate source passes semantic roundtrip, Get-Put and Put-Get; no body or model execution
+--- PASS: TestLocalCandidateSourceRoundtrip5719 (0.00s)
+=== RUN   TestPackageOriginsReadOnlyCLI5663
+    package_origins_test.go:69: origin help 2 
+--- FAIL: TestPackageOriginsReadOnlyCLI5663 (0.55s)
+=== RUN   TestPackageOriginsArgumentBounds5689
+--- PASS: TestPackageOriginsArgumentBounds5689 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.665s
+FAIL

@@ -1,0 +1,4 @@
+# github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen
+/tmp/gooo-value-transfer-20261013/producer6083/internal/bodycodegen/body_value_origin.go:87:62: nil.Nodes undefined (type untyped nil has no field or method Nodes)
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution [build failed]
+FAIL
