@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/parser"
-	"go/scanner"
 	"go/token"
 	"sort"
 
@@ -21,9 +20,15 @@ func (n workspaceRecordNames) rewriteConstructorsWithEdits(pkg, source string, b
 		return source, nil
 	}
 	prefix, parsed := "", source
+	var mapping bodycodegen.BodySourceMap
 	if body {
 		prefix = "package scoped\nfunc body() {\n"
-		parsed = prefix + recordBodyGoSyntax(source) + "\n}"
+		normalized, sourceMap, err := bodycodegen.NormalizeBodySource(source)
+		if err != nil {
+			return "", err
+		}
+		mapping = sourceMap
+		parsed = prefix + normalized + "\n}"
 	}
 	set := token.NewFileSet()
 	var root ast.Node
@@ -54,6 +59,8 @@ func (n workspaceRecordNames) rewriteConstructorsWithEdits(pkg, source string, b
 		if lowered != "" {
 			start := set.Position(literal.Type.Pos()).Offset - len(prefix)
 			end := set.Position(literal.Type.End()).Offset - len(prefix)
+			span := mapping.OriginalRange(start, end)
+			start, end = span.Start, span.End
 			if source[start:end] != lowered {
 				changes = append(changes, replacement{start, end, lowered})
 			}
@@ -71,24 +78,6 @@ func (n workspaceRecordNames) rewriteConstructorsWithEdits(pkg, source string, b
 		source = source[:change.start] + change.name + source[change.end:]
 	}
 	return source, nil
-}
-
-// let and var have the same byte length, preserving original source offsets.
-func recordBodyGoSyntax(body string) string {
-	raw := []byte(body)
-	file := token.NewFileSet().AddFile("computes", -1, len(raw))
-	var scan scanner.Scanner
-	scan.Init(file, raw, nil, scanner.ScanComments)
-	for {
-		pos, kind, literal := scan.Scan()
-		if kind == token.EOF {
-			break
-		}
-		if kind == token.IDENT && literal == "let" {
-			copy(raw[file.Offset(pos):], "var")
-		}
-	}
-	return string(raw)
 }
 
 func (n workspaceRecordNames) rewriteAssembly(pkg string, assembly *syntax.AssemblyDecl, scopes ...recordConstructorScope) error {

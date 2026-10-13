@@ -56,8 +56,8 @@ func generateRegistry(source *goSource, request Request) error {
 			return true
 		}
 		value := request.Case
-		row := fmt.Sprintf("\n{ID: %q, Path: %q, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: %q, MetaOperation: %q, Scope: ScopeLanguageCapability, EntityFields: %t, ImplicitActivityPorts: %t},\n",
-			value.ID, value.Path, value.ProofChoice, value.MetaOperation, value.EntityFields, value.ImplicitActivityPorts)
+		row := fmt.Sprintf("\n{ID: %q, Path: %q, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: %q, MetaOperation: %q, Scope: ScopeLanguageCapability, EntityFields: %t, ImplicitActivityPorts: %t, OrderedCollections: %t},\n",
+			value.ID, value.Path, value.ProofChoice, value.MetaOperation, value.EntityFields, value.ImplicitActivityPorts, value.OrderedCollections)
 		source.insert(list.Rbrace, row)
 		count++
 		return false

@@ -116,7 +116,7 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeI
 		fileForLowering.Bindings = sameFileBindings(fileForLowering.Bindings, source.file)
 		types := sourceTypeEnvironment(bareTypes, typeEnvironments[source.file])
 		fileWithTypes := appendEntityTypeEnvironment(fileForLowering, types)
-		ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), fileWithTypes, bidir.EntityFieldsV4Support())
+		ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), fileWithTypes, syntax.EntityFieldsSupportForFile(fileWithTypes, bidir.EntityFieldsV4Support()))
 		if err != nil {
 			return compiledPackage{}, reject("PACKAGE_SOURCE_INVALID", "lower source %q: %v", source.source.Filename, err)
 		}

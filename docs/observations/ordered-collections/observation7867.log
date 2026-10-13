@@ -1,0 +1,5 @@
+=== RUN   TestCollectionCallRefactorRetainsSource7867
+    collection_refactor_test.go:35: 7867: for-in call rename changes one source name; Korean replacement and stable reference ID retained; quoted text unchanged; execution0 model0
+--- PASS: TestCollectionCallRefactorRetainsSource7867 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.614s

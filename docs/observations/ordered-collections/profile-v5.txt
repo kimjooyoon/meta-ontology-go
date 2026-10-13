@@ -1,0 +1,9 @@
+id=gooo.entityfields.go-projection.v5
+types=urn:gooo:type:string,urn:gooo:type:boolean,urn:gooo:type:integer
+presence=required,optional
+cardinality=one,many
+ordering=source
+collection=ordered
+collection-limit=256
+empty=present
+null=reject

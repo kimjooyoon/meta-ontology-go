@@ -1,0 +1,35 @@
+package batchplanner8297
+namespace batchplanner8297
+entity Batch id "urn:batchplanner8297:batch" fields {
+ field limit id "urn:batchplanner8297:limit" type integer required one
+ field durations id "urn:batchplanner8297:durations" type integer required many
+}
+entity Plan id "urn:batchplanner8297:plan" fields {
+ field accepted id "urn:batchplanner8297:accepted" type integer required one
+ field spent id "urn:batchplanner8297:spent" type integer required one
+ field complete id "urn:batchplanner8297:complete" type boolean required one
+ field reason id "urn:batchplanner8297:reason" type string required one
+}
+activity Build(Batch) -> Plan id "urn:batchplanner8297:build" computes `if input.limit < 0 { return Plan{accepted: 0, spent: 0, complete: false, reason: "invalid_limit"} }
+let accepted = 0
+let spent = 0
+for duration in input.durations {
+ if duration < 0 { return Plan{accepted: accepted, spent: spent, complete: false, reason: "invalid_duration"} }
+ if __GOOO_BODY_HOLE_fits__ {
+  spent = spent + duration
+  accepted = accepted + 1
+ } else {
+  return Plan{accepted: accepted, spent: spent, complete: false, reason: "budget"}
+ }
+}
+return Plan{accepted: accepted, spent: spent, complete: true, reason: "complete"}` assembling {
+ source_fill intent "입력 순서대로 예산에 맞는 앞부분을 선택한다. 예산과 같은 합계도 허용한다." {
+  hole "fits"
+  candidate "strict" { fill "fits" "duration < input.limit - spent" }
+  candidate "inclusive" { fill "fits" "duration <= input.limit - spent" }
+ }
+ value_case "[{\"limit\":30,\"durations\":[12,18]}]" -> "{\"accepted\":2,\"spent\":30,\"complete\":true,\"reason\":\"complete\"}"
+ value_case "[{\"limit\":30,\"durations\":[31]}]" -> "{\"accepted\":0,\"spent\":0,\"complete\":false,\"reason\":\"budget\"}"
+ value_case "[{\"limit\":0,\"durations\":[]}]" -> "{\"accepted\":0,\"spent\":0,\"complete\":true,\"reason\":\"complete\"}"
+ holdout_value_case "[{\"limit\":90,\"durations\":[22,-9,1]}]" -> "{\"accepted\":1,\"spent\":22,\"complete\":false,\"reason\":\"invalid_duration\"}"
+}

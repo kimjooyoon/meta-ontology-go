@@ -37,6 +37,7 @@ type valueOriginReader struct {
 	roots          map[string]bool
 	calls          map[string]BodyValueCall
 	steps          int
+	mapping        bodySurfaceMap
 }
 
 func InspectBodyValueOrigins(body string, arity int) BodyValueOrigins {
@@ -56,7 +57,8 @@ func inspectBodyValueOrigins(body string, arity int, captureCalls bool) (BodyVal
 		out.Reasons = []string{"BODY_SYNTAX_UNAVAILABLE"}
 		return out, nil
 	}
-	r := valueOriginReader{set: set, header: header, length: len(body), nodes: map[string]*BodyValueOrigin{}, reasons: map[string]bool{}, roots: map[string]bool{}}
+	_, mapping, _ := rewriteBodySurface(body)
+	r := valueOriginReader{mapping: mapping, set: set, header: header, length: len(body), nodes: map[string]*BodyValueOrigin{}, reasons: map[string]bool{}, roots: map[string]bool{}}
 	if captureCalls {
 		r.calls = map[string]BodyValueCall{}
 	}
@@ -98,7 +100,7 @@ func inspectBodyValueOrigins(body string, arity int, captureCalls bool) (BodyVal
 }
 
 func (r *valueOriginReader) node(kind, name string, at ast.Node, inputs, controls []string) string {
-	span := FillOriginRange{r.set.Position(at.Pos()).Offset - r.header, r.set.Position(at.End()).Offset - r.header}
+	span := r.mapping.originalRange(FillOriginRange{r.set.Position(at.Pos()).Offset - r.header, r.set.Position(at.End()).Offset - r.header})
 	if span.Start < 0 || span.End > r.length || span.End < span.Start {
 		r.reasons["SOURCE_RANGE_UNAVAILABLE"] = true
 		return ""

@@ -1,0 +1,16 @@
+=== RUN   TestCollectionCandidateAssembly7301
+    collection_fill_test.go:38: assembly source: [조립7301.gooo:19:2-19:15: error parse.unexpected-token: unknown assembly field value_holdout 조립7301.gooo:19:16-19:55: error parse.unexpected-token: expected an assembly field 조립7301.gooo:19:56-19:58: error parse.unexpected-token: expected an assembly field 조립7301.gooo:19:59-19:123: error parse.unexpected-token: expected an assembly field]
+--- FAIL: TestCollectionCandidateAssembly7301 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.586s
+=== RUN   TestWorkspaceCollectionCallsAndSource7379
+    collection_source_test.go:76: 7379: imported activity per element, record constructor after for-in, optional Boolean arrays, native3/3 and original file condition mapping; model0
+--- PASS: TestWorkspaceCollectionCallsAndSource7379 (0.73s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.216s
+=== RUN   TestOrderedCollectionTransport7409
+    record_collection_test.go:67: 7409: three ordered inputs through two activities, exact int64, absent/empty optional arrays, detached observations and seven invalid forms; model0
+--- PASS: TestOrderedCollectionTransport7409 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/valueexecution	0.412s
+FAIL

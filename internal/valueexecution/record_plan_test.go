@@ -91,8 +91,6 @@ func TestRecordPlanRejectsUnsupportedSource(t *testing.T) {
 	text := string(source)
 	cases := []string{
 		strings.Replace(text, "record.forward:v1", "record.approve:v1", 1),
-		strings.Replace(text, "type string required one", "type string optional many", 1),
-		strings.Replace(text, "type string required one", "type string required many", 1),
 		text + "\nbind Capture.result -> Review.input\n",
 		text + "\nbind Review.result -> Capture.input\n",
 	}
@@ -128,9 +126,9 @@ func TestRecordResultIsOpaqueAndSourceBound(t *testing.T) {
 	}
 }
 
-func TestRecordInputRejectsAmbiguousOrNonScalarJSON(t *testing.T) {
+func TestRecordInputRejectsAmbiguousOrUnsupportedJSON(t *testing.T) {
 	for _, raw := range []string{
-		"null", "[]", "1", `{"State":null}`, `{"State":1.5}`, `{"State":9223372036854775808}`, `{"State":[]}`, `{"State":{}}`,
+		"null", "[]", "1", `{"State":null}`, `{"State":1.5}`, `{"State":9223372036854775808}`, `{"State":[[]]}`, `{"State":{}}`,
 		`{"State":"UNKNOWN","State":"CLOSED"}`, `{"State":"UNKNOWN"} {}`,
 	} {
 		if _, err := DecodeRecordInput([]byte(raw)); err == nil {

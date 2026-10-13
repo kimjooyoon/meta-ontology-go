@@ -14,10 +14,11 @@ const recordForwardProgram = "record.forward:v1"
 const RecordTransportScope = "RECORD_TRANSPORT_ONLY"
 
 type RecordField struct {
-	Name     string            `json:"name"`
-	ID       string            `json:"id"`
-	TypeID   string            `json:"type_id"`
-	Presence semantic.Presence `json:"presence"`
+	Name        string               `json:"name"`
+	ID          string               `json:"id"`
+	TypeID      string               `json:"type_id"`
+	Presence    semantic.Presence    `json:"presence"`
+	Cardinality semantic.Cardinality `json:"cardinality,omitempty"`
 }
 
 type recordProgram struct {
@@ -37,7 +38,7 @@ type RecordPlan struct {
 	order               []string
 }
 
-// CompileRecordPlan supports source-declared single integer, string and Boolean fields.
+// CompileRecordPlan supports source-declared scalar and ordered repeated fields.
 // Required fields must be supplied; omitted optional fields remain absent.
 // It transports data, including claims, without judging or authorizing claims.
 func CompileRecordPlan(filename string, source []byte) (RecordPlan, error) {
@@ -45,7 +46,7 @@ func CompileRecordPlan(filename string, source []byte) (RecordPlan, error) {
 	if file == nil || diagnostics.HasErrors() {
 		return RecordPlan{}, failAt(ReasonSourceParseFailed, "PARSE", "parse-record-source", "record source syntax is invalid")
 	}
-	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, bidir.EntityFieldsV4Support())
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsSupportForFile(file, bidir.EntityFieldsV4Support()))
 	if err != nil {
 		return RecordPlan{}, failAt(ReasonSemanticBindingFailed, "LOWER", "lower-record-source", err.Error())
 	}
@@ -124,12 +125,16 @@ func compileRecordFields(ir semantic.IR, name string) ([]RecordField, error) {
 	seen := map[string]bool{}
 	for _, field := range entity.Fields {
 		typeID := field.TypeRef.ID
-		if (field.Presence != semantic.Required && field.Presence != semantic.Optional) || field.Cardinality != semantic.One ||
+		if (field.Presence != semantic.Required && field.Presence != semantic.Optional) || (field.Cardinality != semantic.One && field.Cardinality != semantic.Many) ||
 			(typeID != semantic.BuiltinStringTypeID && typeID != semantic.BuiltinBooleanTypeID && typeID != semantic.BuiltinIntegerTypeID) || field.ID.String() == "" || seen[field.Name] {
-			return nil, failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "require-supported-single-record-fields", name+"."+field.Name)
+			return nil, failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "require-supported-record-fields", name+"."+field.Name)
 		}
 		seen[field.Name] = true
-		fields = append(fields, RecordField{Name: field.Name, ID: field.ID.String(), TypeID: string(typeID), Presence: field.Presence})
+		projected := RecordField{Name: field.Name, ID: field.ID.String(), TypeID: string(typeID), Presence: field.Presence}
+		if field.Cardinality == semantic.Many {
+			projected.Cardinality = semantic.Many
+		}
+		fields = append(fields, projected)
 	}
 	slices.SortFunc(fields, func(left, right RecordField) int { return strings.Compare(left.Name, right.Name) })
 	return fields, nil

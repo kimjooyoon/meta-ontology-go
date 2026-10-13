@@ -214,7 +214,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		Namespace: &syntax.NamespaceDecl{Name: "gooo_workspace"},
 		Decls:     declarations, Declarations: declarations, Bindings: bindings,
 	}
-	source, err := syntax.FormatWithEntityFieldsSupport(flattened, syntax.EntityFieldsV4Support())
+	source, err := syntax.FormatWithEntityFieldsSupport(flattened, syntax.EntityFieldsSupportForFile(flattened, syntax.EntityFieldsV4Support()))
 	if err != nil {
 		return Program{}, fmt.Errorf("format lowered workspace graph: %w", err)
 	}

@@ -1,0 +1,157 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Select": {
+          "budget": 19,
+          "durations": [
+            6,
+            13,
+            4
+          ]
+        }
+      },
+      "expected": {
+        "Select": {
+          "durations": [
+            6,
+            13
+          ]
+        },
+        "Summarize": {
+          "count": 2,
+          "total": 19
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Select": {
+          "budget": 19,
+          "durations": [
+            13,
+            4,
+            6
+          ]
+        }
+      },
+      "expected": {
+        "Select": {
+          "durations": [
+            13,
+            4
+          ]
+        },
+        "Summarize": {
+          "count": 2,
+          "total": 17
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Select": {
+          "budget": 0,
+          "durations": []
+        }
+      },
+      "expected": {
+        "Select": {
+          "durations": []
+        },
+        "Summarize": {
+          "count": 0,
+          "total": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Select": {
+          "budget": 8,
+          "durations": [
+            -2,
+            1
+          ]
+        }
+      },
+      "expected": {
+        "Select": {
+          "durations": []
+        },
+        "Summarize": {
+          "count": 0,
+          "total": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Select": {
+          "budget": 9223372036854775807,
+          "durations": [
+            9223372036854775804,
+            3,
+            2
+          ]
+        }
+      },
+      "expected": {
+        "Select": {
+          "durations": [
+            9223372036854775804,
+            3
+          ]
+        },
+        "Summarize": {
+          "count": 2,
+          "total": 9223372036854775807
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Select": {
+          "budget": 0,
+          "durations": [
+            0,
+            0,
+            5
+          ]
+        }
+      },
+      "expected": {
+        "Select": {
+          "durations": [
+            0,
+            0
+          ]
+        },
+        "Summarize": {
+          "count": 2,
+          "total": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Select": {
+          "budget": -5,
+          "durations": [
+            2
+          ]
+        }
+      },
+      "expected": {
+        "Select": {
+          "durations": []
+        },
+        "Summarize": {
+          "count": 0,
+          "total": 0
+        }
+      }
+    }
+  ]
+}
