@@ -1,0 +1,26 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "quota1289/app",
+    "activity": "Authorize"
+  },
+  "packages": [
+    {
+      "path": "quota1289/contract",
+      "name": "contract",
+      "sources": [
+        "계약.gooo.fixture"
+      ]
+    },
+    {
+      "path": "quota1289/app",
+      "name": "app",
+      "imports": [
+        "quota1289/contract"
+      ],
+      "sources": [
+        "승인.gooo.fixture"
+      ]
+    }
+  ]
+}

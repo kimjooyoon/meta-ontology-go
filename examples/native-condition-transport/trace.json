@@ -1,0 +1,764 @@
+{
+  "schema": "gooo/native-condition-transport-excerpt/v1",
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "COMPLETE",
+    "recorded_events": 10,
+    "dropped_events": 0,
+    "sha256": "sha256:5dd2e05a0a8904c57aca510cf38714e7d896090e8bea068297dc3bd21f16c50f"
+  },
+  "condition_sites": [
+    {
+      "expression_id": "sha256:ea1c0b28e0ea4fba76d18bfb330af3d7f4c84f4ed42ed912ebd607bcf227b773",
+      "root_activity_id": "urn:quota1289:authorize",
+      "activity_id": "urn:quota1289:authorize",
+      "expression": "input.GoooFieldc6f6554bba6983845893f38b6d316b1869567808f72d13e7ba9b87437e0ce1b6 < 3",
+      "projection_sha256": "sha256:93b17ce92d1d91c2f57630b81252ad0261170f98a09b62ed6aa1ee802b1430cf",
+      "start": 1646,
+      "end": 1729
+    },
+    {
+      "expression_id": "sha256:a58bd5871248886aec06254fbadefb8646afdb2449436fad11a36625d8fd1ce6",
+      "root_activity_id": "urn:quota1289:authorize",
+      "activity_id": "urn:quota1289:authorize",
+      "expression": "input.GoooFieldc6f6554bba6983845893f38b6d316b1869567808f72d13e7ba9b87437e0ce1b6 > input.GoooFielde1939df09bb28ebe1dc53bfc5b4881de737ca2f3cdb0cbcd2978fe7fa8eff2a6",
+      "projection_sha256": "sha256:93b17ce92d1d91c2f57630b81252ad0261170f98a09b62ed6aa1ee802b1430cf",
+      "start": 2156,
+      "end": 2317
+    }
+  ],
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "urn:quota1289:receive",
+          "input": {
+            "available": 27,
+            "quantity": 13,
+            "reference": "ordinary1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 13
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "ordinary1289"
+            }
+          ],
+          "actual": {
+            "available": 27,
+            "quantity": 13,
+            "reference": "ordinary1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 13
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "ordinary1289"
+            }
+          ],
+          "expected": {
+            "available": 27,
+            "quantity": 13,
+            "reference": "ordinary1289"
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:quota1289:authorize",
+          "producer_id": "urn:quota1289:receive",
+          "input": {
+            "available": 27,
+            "quantity": 13,
+            "reference": "ordinary1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 13
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "ordinary1289"
+            }
+          ],
+          "actual": {
+            "approved": true,
+            "reason": "available_capacity",
+            "reference": "ordinary1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:approved",
+              "name": "approved",
+              "value": true
+            },
+            {
+              "id": "urn:quota1289:reason",
+              "name": "reason",
+              "value": "available_capacity"
+            },
+            {
+              "id": "urn:quota1289:decision-reference",
+              "name": "reference",
+              "value": "ordinary1289"
+            }
+          ],
+          "expected": {
+            "approved": true,
+            "reason": "available_capacity",
+            "reference": "ordinary1289"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "urn:quota1289:receive",
+          "input": {
+            "available": 27,
+            "quantity": 27,
+            "reference": "boundary1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "boundary1289"
+            }
+          ],
+          "actual": {
+            "available": 27,
+            "quantity": 27,
+            "reference": "boundary1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "boundary1289"
+            }
+          ],
+          "expected": {
+            "available": 27,
+            "quantity": 27,
+            "reference": "boundary1289"
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:quota1289:authorize",
+          "producer_id": "urn:quota1289:receive",
+          "input": {
+            "available": 27,
+            "quantity": 27,
+            "reference": "boundary1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "boundary1289"
+            }
+          ],
+          "actual": {
+            "approved": true,
+            "reason": "available_capacity",
+            "reference": "boundary1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:approved",
+              "name": "approved",
+              "value": true
+            },
+            {
+              "id": "urn:quota1289:reason",
+              "name": "reason",
+              "value": "available_capacity"
+            },
+            {
+              "id": "urn:quota1289:decision-reference",
+              "name": "reference",
+              "value": "boundary1289"
+            }
+          ],
+          "expected": {
+            "approved": true,
+            "reason": "available_capacity",
+            "reference": "boundary1289"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_index": 2,
+      "deliveries": [
+        {
+          "activity_id": "urn:quota1289:receive",
+          "input": {
+            "available": 10,
+            "quantity": 2,
+            "reference": "invalid1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 2
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 10
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "invalid1289"
+            }
+          ],
+          "actual": {
+            "available": 10,
+            "quantity": 2,
+            "reference": "invalid1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 2
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 10
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "invalid1289"
+            }
+          ],
+          "expected": {
+            "available": 10,
+            "quantity": 2,
+            "reference": "invalid1289"
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:quota1289:authorize",
+          "producer_id": "urn:quota1289:receive",
+          "input": {
+            "available": 10,
+            "quantity": 2,
+            "reference": "invalid1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 2
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 10
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "invalid1289"
+            }
+          ],
+          "actual": {
+            "approved": false,
+            "reason": "invalid_quantity",
+            "reference": "invalid1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:approved",
+              "name": "approved",
+              "value": false
+            },
+            {
+              "id": "urn:quota1289:reason",
+              "name": "reason",
+              "value": "invalid_quantity"
+            },
+            {
+              "id": "urn:quota1289:decision-reference",
+              "name": "reference",
+              "value": "invalid1289"
+            }
+          ],
+          "expected": {
+            "approved": false,
+            "reason": "invalid_quantity",
+            "reference": "invalid1289"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 3,
+      "deliveries": [
+        {
+          "activity_id": "urn:quota1289:receive",
+          "input": {
+            "available": 27,
+            "quantity": 29,
+            "reference": "short1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 29
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "short1289"
+            }
+          ],
+          "actual": {
+            "available": 27,
+            "quantity": 29,
+            "reference": "short1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 29
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "short1289"
+            }
+          ],
+          "expected": {
+            "available": 27,
+            "quantity": 29,
+            "reference": "short1289"
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:quota1289:authorize",
+          "producer_id": "urn:quota1289:receive",
+          "input": {
+            "available": 27,
+            "quantity": 29,
+            "reference": "short1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 29
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 27
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "short1289"
+            }
+          ],
+          "actual": {
+            "approved": false,
+            "reason": "capacity_shortage",
+            "reference": "short1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:approved",
+              "name": "approved",
+              "value": false
+            },
+            {
+              "id": "urn:quota1289:reason",
+              "name": "reason",
+              "value": "capacity_shortage"
+            },
+            {
+              "id": "urn:quota1289:decision-reference",
+              "name": "reference",
+              "value": "short1289"
+            }
+          ],
+          "expected": {
+            "approved": false,
+            "reason": "capacity_shortage",
+            "reference": "short1289"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 4,
+      "deliveries": [
+        {
+          "activity_id": "urn:quota1289:receive",
+          "input": {
+            "available": -4,
+            "quantity": 6,
+            "reference": "inconsistent1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 6
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": -4
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "inconsistent1289"
+            }
+          ],
+          "actual": {
+            "available": -4,
+            "quantity": 6,
+            "reference": "inconsistent1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 6
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": -4
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "inconsistent1289"
+            }
+          ],
+          "expected": {
+            "available": -4,
+            "quantity": 6,
+            "reference": "inconsistent1289"
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:quota1289:authorize",
+          "producer_id": "urn:quota1289:receive",
+          "input": {
+            "available": -4,
+            "quantity": 6,
+            "reference": "inconsistent1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": 6
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": -4
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "inconsistent1289"
+            }
+          ],
+          "actual": {
+            "approved": false,
+            "reason": "capacity_shortage",
+            "reference": "inconsistent1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:approved",
+              "name": "approved",
+              "value": false
+            },
+            {
+              "id": "urn:quota1289:reason",
+              "name": "reason",
+              "value": "capacity_shortage"
+            },
+            {
+              "id": "urn:quota1289:decision-reference",
+              "name": "reference",
+              "value": "inconsistent1289"
+            }
+          ],
+          "expected": {
+            "approved": false,
+            "reason": "capacity_shortage",
+            "reference": "inconsistent1289"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 5,
+      "deliveries": [
+        {
+          "activity_id": "urn:quota1289:receive",
+          "input": {
+            "available": 3,
+            "quantity": -7,
+            "reference": "negative1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": -7
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 3
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "negative1289"
+            }
+          ],
+          "actual": {
+            "available": 3,
+            "quantity": -7,
+            "reference": "negative1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": -7
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 3
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "negative1289"
+            }
+          ],
+          "expected": {
+            "available": 3,
+            "quantity": -7,
+            "reference": "negative1289"
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:quota1289:authorize",
+          "producer_id": "urn:quota1289:receive",
+          "input": {
+            "available": 3,
+            "quantity": -7,
+            "reference": "negative1289"
+          },
+          "input_fields": [
+            {
+              "id": "urn:quota1289:quantity",
+              "name": "quantity",
+              "value": -7
+            },
+            {
+              "id": "urn:quota1289:available",
+              "name": "available",
+              "value": 3
+            },
+            {
+              "id": "urn:quota1289:request-reference",
+              "name": "reference",
+              "value": "negative1289"
+            }
+          ],
+          "actual": {
+            "approved": false,
+            "reason": "invalid_quantity",
+            "reference": "negative1289"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:quota1289:approved",
+              "name": "approved",
+              "value": false
+            },
+            {
+              "id": "urn:quota1289:reason",
+              "name": "reason",
+              "value": "invalid_quantity"
+            },
+            {
+              "id": "urn:quota1289:decision-reference",
+              "name": "reference",
+              "value": "negative1289"
+            }
+          ],
+          "expected": {
+            "approved": false,
+            "reason": "invalid_quantity",
+            "reference": "negative1289"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ]
+    }
+  ],
+  "native_runs_agree": true,
+  "scope": "original quota1289 native values and separate file observation excerpt; not CI authorization"
+}

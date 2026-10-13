@@ -1,0 +1,13 @@
+package contract
+namespace units1067_contract
+entity Request id "urn:units1067:request" fields {
+ field units id "urn:units1067:units" type "urn:gooo:type:integer" required one
+ field capacity id "urn:units1067:capacity" type "urn:gooo:type:integer" required one
+ field reference id "urn:units1067:request-reference" type "urn:gooo:type:string" required one
+}
+entity Decision id "urn:units1067:decision" fields {
+ field approved id "urn:units1067:approved" type "urn:gooo:type:boolean" required one
+ field reason id "urn:units1067:reason" type "urn:gooo:type:string" required one
+ field reference id "urn:units1067:decision-reference" type "urn:gooo:type:string" required one
+}
+activity Receive(Request) -> Request id "urn:units1067:receive" computes "return input"
