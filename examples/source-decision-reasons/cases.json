@@ -1,0 +1,131 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "stock835/contract:Receive": {
+          "quantity": 6,
+          "stock": 13,
+          "reference": "ordinary"
+        }
+      },
+      "expected": {
+        "stock835/contract:Receive": {
+          "quantity": 6,
+          "stock": 13,
+          "reference": "ordinary"
+        },
+        "stock835/app:Reserve": {
+          "approved": true,
+          "reason": "capacity_available",
+          "reference": "ordinary"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "stock835/contract:Receive": {
+          "quantity": 9,
+          "stock": 9,
+          "reference": "boundary"
+        }
+      },
+      "expected": {
+        "stock835/contract:Receive": {
+          "quantity": 9,
+          "stock": 9,
+          "reference": "boundary"
+        },
+        "stock835/app:Reserve": {
+          "approved": true,
+          "reason": "capacity_available",
+          "reference": "boundary"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "stock835/contract:Receive": {
+          "quantity": 0,
+          "stock": 4,
+          "reference": "zero"
+        }
+      },
+      "expected": {
+        "stock835/contract:Receive": {
+          "quantity": 0,
+          "stock": 4,
+          "reference": "zero"
+        },
+        "stock835/app:Reserve": {
+          "approved": false,
+          "reason": "invalid_quantity",
+          "reference": "zero"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "stock835/contract:Receive": {
+          "quantity": 14,
+          "stock": 12,
+          "reference": "short"
+        }
+      },
+      "expected": {
+        "stock835/contract:Receive": {
+          "quantity": 14,
+          "stock": 12,
+          "reference": "short"
+        },
+        "stock835/app:Reserve": {
+          "approved": false,
+          "reason": "insufficient_stock",
+          "reference": "short"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "stock835/contract:Receive": {
+          "quantity": 2,
+          "stock": -1,
+          "reference": "inconsistent"
+        }
+      },
+      "expected": {
+        "stock835/contract:Receive": {
+          "quantity": 2,
+          "stock": -1,
+          "reference": "inconsistent"
+        },
+        "stock835/app:Reserve": {
+          "approved": false,
+          "reason": "insufficient_stock",
+          "reference": "inconsistent"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "stock835/contract:Receive": {
+          "quantity": -4,
+          "stock": 7,
+          "reference": "negative"
+        }
+      },
+      "expected": {
+        "stock835/contract:Receive": {
+          "quantity": -4,
+          "stock": 7,
+          "reference": "negative"
+        },
+        "stock835/app:Reserve": {
+          "approved": false,
+          "reason": "invalid_quantity",
+          "reference": "negative"
+        }
+      }
+    }
+  ]
+}

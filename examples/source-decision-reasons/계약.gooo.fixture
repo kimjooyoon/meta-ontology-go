@@ -1,0 +1,13 @@
+package contract
+namespace stock835_contract
+entity Request id "urn:stock835:request" fields {
+ field quantity id "urn:stock835:quantity" type "urn:gooo:type:integer" required one
+ field stock id "urn:stock835:stock" type "urn:gooo:type:integer" required one
+ field reference id "urn:stock835:request-reference" type "urn:gooo:type:string" required one
+}
+entity Decision id "urn:stock835:decision" fields {
+ field approved id "urn:stock835:approved" type "urn:gooo:type:boolean" required one
+ field reason id "urn:stock835:reason" type "urn:gooo:type:string" required one
+ field reference id "urn:stock835:decision-reference" type "urn:gooo:type:string" required one
+}
+activity Receive(Request) -> Request id "urn:stock835:receive" computes "return input"

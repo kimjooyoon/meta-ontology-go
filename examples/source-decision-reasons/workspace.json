@@ -1,0 +1,26 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "stock835/app",
+    "activity": "Reserve"
+  },
+  "packages": [
+    {
+      "path": "stock835/contract",
+      "name": "contract",
+      "sources": [
+        "계약.gooo.fixture"
+      ]
+    },
+    {
+      "path": "stock835/app",
+      "name": "app",
+      "imports": [
+        "stock835/contract"
+      ],
+      "sources": [
+        "예약.gooo.fixture"
+      ]
+    }
+  ]
+}
