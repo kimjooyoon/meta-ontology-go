@@ -1,0 +1,54 @@
+{
+  "compiler_source": "de8b2b67688b253e9033c557a741927549416b02",
+  "overlays": [
+    {
+      "path": "internal/bodyexecution/condition_fill_origin_facts.go",
+      "sha256": "80b440723df00189f22514dd0cc72e9ad27d7a9f1192f6843b9d0fc144c077f3"
+    },
+    {
+      "path": "internal/bodyexecution/composition_condition_source.go",
+      "sha256": "6d3e81082bf0b9e154e6ade506c74c3341273e3fa361853c333347e771f407df"
+    },
+    {
+      "path": "internal/bodyexecution/composition_fill_origin_test.go",
+      "sha256": "ea3afee0f0a1a8b88ee13a4543413f6803179aa0cf689fa0605967d49a079c04"
+    },
+    {
+      "path": "internal/bodycodegen/body_fill.go",
+      "sha256": "157ba3bd096e5e8b116864d92f96f75cb8e7ba9c9c719950a7912e5ce9080eb4"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin_fragments.go",
+      "sha256": "b0a91a61226627c7ca995f2c9bac45d18cde31671a4aec6eaf21008ed77216f9"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin_test.go",
+      "sha256": "9cf8c88cfbbf2864045302388de600f159c80263edf73ad319813735320f490a"
+    },
+    {
+      "path": "internal/bodycodegen/body_condition_source.go",
+      "sha256": "4bd6731d8f81b263e4eb3a1fa62b50ad53581951ed1329d9f2bf239ee69846e3"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_replay.go",
+      "sha256": "1727b0bc44dc2c835a29e88458e4413d4d7dc5bd5a44a98854cb0c5b8897b118"
+    },
+    {
+      "path": "internal/bodycodegen/source_ir_fill.go",
+      "sha256": "bff9579a262dabdf6280c2468017df4ca026fbb8af881e4999d92c35b2b618cc"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin_literals.go",
+      "sha256": "07d4f7d5b1ef175826b694a977130dc4039a2e2db54a528ea61310b501c4b556"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin.go",
+      "sha256": "3a75c098d298cd87aa4f8f463b0d84a617de4a766eabb077a15413ed1b5c0d2f"
+    }
+  ],
+  "fresh_sources": [
+    "origin3607",
+    "originconsumer3607"
+  ],
+  "historical_replays": 0
+}

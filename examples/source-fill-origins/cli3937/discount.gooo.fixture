@@ -1,0 +1,13 @@
+package discount3937
+namespace discount3937
+entity Integer id "urn:gooo:type:integer"
+activity Discount(Integer) -> Integer id "urn:discount3937:discount" computes "if input < __GOOO_BODY_HOLE_limit__ { return input + __GOOO_BODY_HOLE_extra__ }; return input - 9" assembling {
+ source_fill intent "조건과 가산 금액의 출처를 명령행에서도 읽는다" {
+  hole "limit"
+  hole "extra"
+  candidate "cap3937" { fill "limit" "47" fill "extra" "67" }
+  candidate "small3937" { fill "limit" "2" fill "extra" "1" }
+ }
+ case "11" -> "78"
+ case "81" -> "72"
+}

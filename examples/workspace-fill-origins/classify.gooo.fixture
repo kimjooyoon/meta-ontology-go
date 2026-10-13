@@ -1,0 +1,18 @@
+package origins4393
+namespace origins4393
+entity Text id "urn:gooo:type:string"
+entity Origin id "urn:origins4393:origin" fields {
+ field site_id id "urn:origins4393:site" type string required one
+ field activity_id id "urn:origins4393:activity" type string required one
+ field candidate_id id "urn:origins4393:candidate" type string required one
+ field hole_id id "urn:origins4393:hole" type string required one
+ field category id "urn:origins4393:category" type string required one
+ field status id "urn:origins4393:status" type string required one
+ field reason id "urn:origins4393:reason" type string required one
+ field package_path id "urn:origins4393:package" type string required one
+ field filename id "urn:origins4393:file" type string required one
+ field source_sha id "urn:origins4393:sha" type string required one
+ field source_start id "urn:origins4393:start" type integer required one
+ field source_end id "urn:origins4393:end" type integer required one
+}
+activity Describe(Origin) -> Text id "urn:origins4393:describe" computes "if input.status != \"MAPPED\" { return \"pending\" }; if input.category == \"declared_candidate\" { return input.filename + \"/candidate\" }; return input.filename + \"/template\""

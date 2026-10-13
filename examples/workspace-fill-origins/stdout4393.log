@@ -1,0 +1,5 @@
+=== RUN   TestSequentialFillInputOriginsAndGoooConsumer4393
+    fill_input_chain_test.go:90: chain4393: native4/4; two stages retain distinct assembly inputs and original files; Gooo interprets four actual origin fragments4/4; saved construction read; model0
+--- PASS: TestSequentialFillInputOriginsAndGoooConsumer4393 (1.30s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.836s

@@ -44,7 +44,7 @@ func ReplayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prio
 		Scope: "saved workspace construction with two fresh native executions; current finite expectations or input-only observations"}
 	result.Runtime, err = bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, prior.Composition, translated, goBinary)
 	if err == nil {
-		bindWorkspaceConditionSources(program, &result.Runtime)
+		bindWorkspaceConditionSources(program, &result.Runtime, result.BodyFills)
 		result.Runtime.InputSeparation = measureWorkspaceInputs(ctx, current, result, translated)
 	}
 	return result, err

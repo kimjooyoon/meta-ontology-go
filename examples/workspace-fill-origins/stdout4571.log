@@ -1,0 +1,7 @@
+=== RUN   TestOriginalFillDeclarations4571
+    source_fill_input_declaration_test.go:29: explicit declaration 기원4571.gooo:4:81-10:2: error parse.unexpected-token: source fill plan requires 2..16 complete candidates or a bounded derive clause
+        기원4571.gooo:11:127-20:2: error parse.unexpected-token: assembly requires 1..16 choices, 1..128 cases and 1..64 attempts {{0 0} {0 0} {0 0}   {0 0} <nil> []}
+--- FAIL: TestOriginalFillDeclarations4571 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.514s
+FAIL

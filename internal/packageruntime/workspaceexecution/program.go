@@ -30,6 +30,7 @@ type Program struct {
 	EntityAliases    []EntityAlias              `json:"entity_aliases,omitempty"`
 	PureCalls        *WorkspacePureCalls        `json:"pure_calls,omitempty"`
 	sourceFillSpecs  map[string]*assemblyspec.Spec
+	fillInputs       map[string]workspaceFillInput
 	recordNames      workspaceRecordNames
 }
 
@@ -192,6 +193,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 	if err != nil {
 		return Program{}, err
 	}
+	fillInputs := prepareWorkspaceFillInputs(manifest, callNames, recordNames, allNeeded)
 	sourceFillSpecs := make(map[string]*assemblyspec.Spec)
 	for _, key := range activityOrder {
 		if !needed[key] {
@@ -224,7 +226,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 	}
 	return Program{Schema: "gooo/workspace-body-program/v1", Workspace: image, Entry: entry,
 		Activities: activities, Source: source, sourceFillSpecs: sourceFillSpecs, ConditionOrigins: conditionOrigins,
-		EntityAliases: recordNames.aliases, recordNames: recordNames, PureCalls: pureCalls,
+		EntityAliases: recordNames.aliases, recordNames: recordNames, PureCalls: pureCalls, fillInputs: fillInputs,
 		Scope: scope}, nil
 }
 

@@ -163,6 +163,7 @@ type IRBodyFillCandidateProbeProfile struct {
 }
 
 type IRBodyFillReceipt struct {
+	SourceOrigin                    *SourceFillOrigin                     `json:"source_origin,omitempty"`
 	Schema                          string                                `json:"schema"`
 	OriginalSourceDigest            string                                `json:"original_source_digest"`
 	Intent                          string                                `json:"intent"`

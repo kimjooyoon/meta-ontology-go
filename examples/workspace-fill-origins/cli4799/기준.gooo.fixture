@@ -1,0 +1,4 @@
+package rule
+namespace rule4799
+entity Integer id "urn:gooo:type:integer"
+activity Shift(Integer) -> Integer id "urn:rule4799:shift" computes "return input + 2"

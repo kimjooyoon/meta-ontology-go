@@ -40,6 +40,15 @@ func realizeSourceIRBodyFill(ctx context.Context, filename string, source []byte
 		return Realization{}, err
 	}
 	expected.GoooSource, expected.Report.BodyFill.CandidateGeneration = string(completed), grammar
+	// The saved filename describes where this source was first supplied. Replay
+	// may read identical bytes through a temporary path or a diagnostic label.
+	originFilename := filename
+	if r.BodyFill.SourceOrigin != nil {
+		originFilename = r.BodyFill.SourceOrigin.Filename
+	}
+	if err := retainSourceFillOrigin(originFilename, source, r.Activity, &expected); err != nil {
+		return Realization{}, err
+	}
 	populateCompletenessReceipt(&expected.Report, "")
 	if err := compareSourceFillReplay(prior, expected); err != nil {
 		return Realization{}, err
@@ -67,6 +76,9 @@ func compareSourceFillReplay(prior, expected Result) error {
 	b.BodyFill, err = canonicalFillObservation(b.BodyFill)
 	if err != nil {
 		return err
+	}
+	if a.BodyFill.SourceOrigin == nil {
+		b.BodyFill.SourceOrigin = nil
 	}
 	if a.BodyFill.LocalCalls != nil && !equalLocalCallEvidence(a.BodyFill.LocalCalls, b.BodyFill.LocalCalls) {
 		return fmt.Errorf("body-fill local helper input history differs")
