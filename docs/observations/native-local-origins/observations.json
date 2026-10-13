@@ -1,0 +1,56 @@
+[
+  {
+    "producer": "10301",
+    "observation": "local-native10267.json.gz",
+    "uncompressed_sha256": "239db972a58a30d77bd658c73ba7e5dcaf75acaf19bca0643a73359b6a2791ab",
+    "source_sha256": "99aa8c1ff6b6b55d8ac7afb8c8a85836ac51ea29b62ed07deacec20660aa7783"
+  },
+  {
+    "producer": "10301",
+    "observation": "local-native10289.json.gz",
+    "uncompressed_sha256": "30caf489825e02eeaf1c519979efc8672f78dda1846cca9387ee8eae8f88fc46",
+    "source_sha256": "7321048ed1448e8046308db7051cc71d711d56c8b0683274a5e3b47446bfddf6"
+  },
+  {
+    "producer": "10337",
+    "observation": "local-interrupted10337.json.gz",
+    "uncompressed_sha256": "e0ff9afb9ed95dbf1eb663e8501ca904d2dff3b5cd16f3389ffc5bd4276731d9",
+    "source_sha256": "b91df6299eeea53d1039cf2dc611d7fd0db29590b258336c4fd11b44290a4607"
+  },
+  {
+    "producer": "10337",
+    "observation": "local-limit10357.json.gz",
+    "uncompressed_sha256": "6eedd7ea92612e8e548c2bbab976b4622dea522f642d01bab84a47ba0b99f52a",
+    "source_sha256": "bac359d7693c252a3521f026b04017515e6fde7440f98552723d5e7a46dbf19c"
+  },
+  {
+    "producer": "10399",
+    "observation": "local-consumer10399.json.gz",
+    "uncompressed_sha256": "5b3ae25e8d5bd04567174a5f9268521ef3f321b9e7da1f4f7144c7a3cb41742f",
+    "source_sha256": "54fe64c73ea77241e39bab4ceb8f6267d13c5b12c54d5b1d3f4d6053743fd72e"
+  },
+  {
+    "producer": "10433",
+    "observation": "local-consumer10433.json.gz",
+    "uncompressed_sha256": "b946be1d26a3d392f3356ac8daf1c5b145872f102318d15bd80857771955bcfe",
+    "source_sha256": "56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534"
+  },
+  {
+    "producer": "10433",
+    "observation": "wide10459.json.gz",
+    "uncompressed_sha256": "8454f1385983adedd6931ccc85035efdb7d1166a6869aac9085c870465844b58",
+    "source_sha256": "893fa49df96bab10dbe6363f20320f7ca27b2cd532954f280320a82252e0294a"
+  },
+  {
+    "producer": "10543",
+    "observation": "local-use-cap10543.json.gz",
+    "uncompressed_sha256": "3a08717a2e4ab64effc111c88658cb0de81329ae87239df5ad872a1d1bd73847",
+    "source_sha256": "9154bb3b650bc0f8617fafdf481c735ad8273b1824c181407df9c748768bfd06"
+  },
+  {
+    "producer": "10543",
+    "observation": "local-frame-cap10567.json.gz",
+    "uncompressed_sha256": "ba1a99d384af7acceb0edcd0a6f91c8f041cc364dac3331a3d96842212dcba04",
+    "source_sha256": null
+  }
+]

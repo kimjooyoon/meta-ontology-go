@@ -19,6 +19,7 @@ type bodyProjection struct {
 	conditions        map[ast.Expr]BodyConditionOrigin
 	reads             map[ast.Node]BodyReadOrigin
 	constructions     map[*ast.CompositeLit]BodyConstructionOrigin
+	locals            map[ast.Node]BodyLocalOrigin
 }
 
 func renderParameters(packageName, activityName, activityID string, parameters []InputParameter,
@@ -40,19 +41,26 @@ func renderParametersWithConditionSources(packageName, activityName, activityID 
 
 func renderParametersWithSourceOrigins(packageName, activityName, activityID string, parameters []InputParameter,
 	outputType, body, route string, calls []pureCallFunction, records []RecordType) ([]byte, int, int, int, int, []BodyConditionOrigin, []BodyReadOrigin, []BodyConstructionOrigin, error) {
+	raw, constructs, lowered, units, loweredUnits, conditions, reads, constructions, _, err := renderParametersWithLocalOrigins(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
+	return raw, constructs, lowered, units, loweredUnits, conditions, reads, constructions, err
+}
+
+func renderParametersWithLocalOrigins(packageName, activityName, activityID string, parameters []InputParameter,
+	outputType, body, route string, calls []pureCallFunction, records []RecordType) ([]byte, int, int, int, int, []BodyConditionOrigin, []BodyReadOrigin, []BodyConstructionOrigin, []BodyLocalOrigin, error) {
 	p, err := prepareBodyProjectionWithCalls(packageName, activityName, parameters, outputType, body, calls, records)
 	if err != nil {
-		return nil, 0, 0, 0, 0, nil, nil, nil, err
+		return nil, 0, 0, 0, 0, nil, nil, nil, nil, err
 	}
 	p.conditions = p.captureConditionOrigins(activityID, body)
 	p.reads = p.captureReadOrigins(activityID, body)
 	p.constructions = p.captureConstructionOrigins(activityID, body)
+	p.locals = p.captureLocalOrigins(activityID, body)
 	lowered, units, err := p.lower(packageName, activityName, outputType, route, parameterNames(parameters), records)
 	if err != nil {
-		return nil, 0, 0, 0, 0, nil, nil, nil, err
+		return nil, 0, 0, 0, 0, nil, nil, nil, nil, err
 	}
 	raw, err := p.emit(packageName, activityID, records)
-	return raw, p.constructs, lowered, p.units, units, p.emittedConditionOrigins(), p.emittedReadOrigins(), p.emittedConstructionOrigins(), err
+	return raw, p.constructs, lowered, p.units, units, p.emittedConditionOrigins(), p.emittedReadOrigins(), p.emittedConstructionOrigins(), p.emittedLocalOrigins(), err
 }
 
 func prepareBodyProjection(packageName, activityName string, parameters []InputParameter,

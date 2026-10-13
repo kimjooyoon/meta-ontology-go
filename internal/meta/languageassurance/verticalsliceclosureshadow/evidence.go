@@ -163,6 +163,9 @@ func activeDenominator() []byte {
 
 	case 86:
 		return embeddedDenominatorV53
+
+	case 87:
+		return embeddedDenominatorV54
 	}
 }
 
@@ -230,6 +233,9 @@ func activeDenominatorDigest() string {
 
 	case 86:
 		return DenominatorMigrationV53Digest
+
+	case 87:
+		return DenominatorMigrationV54Digest
 	}
 }
 
@@ -291,3 +297,6 @@ var embeddedDenominatorV52 []byte
 
 //go:embed evidence/denominator-v53.json
 var embeddedDenominatorV53 []byte
+
+//go:embed evidence/denominator-v54.json
+var embeddedDenominatorV54 []byte

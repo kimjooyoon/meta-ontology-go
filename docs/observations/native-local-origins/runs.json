@@ -1,0 +1,80 @@
+[
+  {
+    "producer": "10267",
+    "source_overlay_sha256": "143bb1b7be2ebd99a658380e77a2c6fb2c7cec2899b329db6b67589ae865a974",
+    "source_manifest_sha256": "a85fd113054d5f21865821662a8a64900968876193cc85f85535c9fdc8f87c2c",
+    "base_tree_commit": "e5be04e3ac3ebbbeab87e9e58ad5c32be0136bf8",
+    "started_at": 1791932835.553407,
+    "ended_at": 1791932836.722559,
+    "exit_code": 1,
+    "raw_log_sha256": "aa9499824e399f65872932d1c20fe98225e054113359d11c57c7d91a318b18a7",
+    "published_log_sha256": "c40adb6e42cc5911beed1bcc59cec8b5deb0c45f00c18008c85e1d1ebfd801fa",
+    "log_local_paths_replaced": true,
+    "historical_local_cohorts_executed": 0
+  },
+  {
+    "producer": "10301",
+    "source_overlay_sha256": "ea3a5c3238d914e0bb57bb0b6b37859c03f7407157932862442875d3a5726f68",
+    "source_manifest_sha256": "28093b628aaa659d9cd4047200836077ca31acfa9c7cab23b04f1bc09ed6916f",
+    "base_tree_commit": "e5be04e3ac3ebbbeab87e9e58ad5c32be0136bf8",
+    "started_at": 1791932878.1330628,
+    "ended_at": 1791932882.835974,
+    "exit_code": 0,
+    "raw_log_sha256": "de71112b4f83f6ef5ead1d651a482aabfbf8263bc266c09e5e98369a48e905d3",
+    "published_log_sha256": "de71112b4f83f6ef5ead1d651a482aabfbf8263bc266c09e5e98369a48e905d3",
+    "log_local_paths_replaced": false,
+    "historical_local_cohorts_executed": 0
+  },
+  {
+    "producer": "10337",
+    "source_overlay_sha256": "b60bcd2bcff12f30d90e6eb841ac031d31d83932ec336fab16cbf1974be63ef4",
+    "source_manifest_sha256": "2fca13db1d265da5c842653d5d9bf4d92a34e5bb7d322ae0689e99816e5b17b8",
+    "base_tree_commit": "e5be04e3ac3ebbbeab87e9e58ad5c32be0136bf8",
+    "started_at": 1791932981.275711,
+    "ended_at": 1791932986.764108,
+    "exit_code": 0,
+    "raw_log_sha256": "698ed24643734c18f1568b830f7aad7836c64195b81f17c2b67d63875228576a",
+    "published_log_sha256": "698ed24643734c18f1568b830f7aad7836c64195b81f17c2b67d63875228576a",
+    "log_local_paths_replaced": false,
+    "historical_local_cohorts_executed": 0
+  },
+  {
+    "producer": "10399",
+    "source_overlay_sha256": "2f3891c544a219f0be8a77f2184c7659eeb2e227906f5dcda52c2400a0369fc9",
+    "source_manifest_sha256": "e75f316785a6c8831dafe36eaf79e978c17029f691eb5b802de4851be0301a1c",
+    "base_tree_commit": "e5be04e3ac3ebbbeab87e9e58ad5c32be0136bf8",
+    "started_at": 1791933158.166909,
+    "ended_at": 1791933162.115642,
+    "exit_code": 1,
+    "raw_log_sha256": "c7694580931d3365278dc090b1861787f2e4b125cc9bb84b1329e4ce7993d1fd",
+    "published_log_sha256": "c7694580931d3365278dc090b1861787f2e4b125cc9bb84b1329e4ce7993d1fd",
+    "log_local_paths_replaced": false,
+    "historical_local_cohorts_executed": 0
+  },
+  {
+    "producer": "10433",
+    "source_overlay_sha256": "5cc8d7a0551b9375be20008d6c24bf927084c8fd8d245abf9386bfdf1c455ef9",
+    "source_manifest_sha256": "bc98571b797d1a2ca503be451411eb245ee2dc26a1e0774b4210769876424d07",
+    "base_tree_commit": "e5be04e3ac3ebbbeab87e9e58ad5c32be0136bf8",
+    "started_at": 1791933321.371818,
+    "ended_at": 1791933330.399484,
+    "exit_code": 0,
+    "raw_log_sha256": "b7e9594bd84eedd15c111b6f61894297d85c4ee877ac6a2ff9b716d72e6c4563",
+    "published_log_sha256": "b7e9594bd84eedd15c111b6f61894297d85c4ee877ac6a2ff9b716d72e6c4563",
+    "log_local_paths_replaced": false,
+    "historical_local_cohorts_executed": 0
+  },
+  {
+    "producer": "10543",
+    "source_overlay_sha256": "467dee2e2142e5d95a65df4ed03407f5a6e308f4d65b835083cd5619b2f13673",
+    "source_manifest_sha256": "57b44334d2059748796c8dbe3a45024d88eb326241e8fc0df9bcf74dbc469b79",
+    "base_tree_commit": "e5be04e3ac3ebbbeab87e9e58ad5c32be0136bf8",
+    "started_at": 1791934017.3326972,
+    "ended_at": 1791934022.134316,
+    "exit_code": 0,
+    "raw_log_sha256": "e0431a1ea0c476d60d76f13172db9a99d61e48874dc54cab92e0e83fb909508d",
+    "published_log_sha256": "e0431a1ea0c476d60d76f13172db9a99d61e48874dc54cab92e0e83fb909508d",
+    "log_local_paths_replaced": false,
+    "historical_local_cohorts_executed": 0
+  }
+]
