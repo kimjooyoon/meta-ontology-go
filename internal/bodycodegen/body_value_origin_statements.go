@@ -25,50 +25,15 @@ func (r *valueOriginReader) statement(stmt ast.Stmt, env valueOriginEnv, control
 	case *ast.BlockStmt:
 		return r.block(value, env, controls)
 	case *ast.DeclStmt:
-		decl, ok := value.Decl.(*ast.GenDecl)
-		if !ok || decl.Tok != token.VAR {
-			r.reasons["DECLARATION_FORM_UNRESOLVED"] = true
-			return env, true
-		}
-		for _, spec := range decl.Specs {
-			variable, ok := spec.(*ast.ValueSpec)
-			if !ok {
-				r.reasons["DECLARATION_FORM_UNRESOLVED"] = true
-				continue
-			}
-			var targets []ast.Expr
-			for _, name := range variable.Names {
-				targets = append(targets, name)
-			}
-			env = r.assign(targets, variable.Values, token.DEFINE, env, controls)
-		}
+		return r.declaration(value, env, controls), true
 	case *ast.AssignStmt:
 		env = r.assign(value.Lhs, value.Rhs, value.Tok, env, controls)
 	case *ast.IncDecStmt:
 		env = r.assign([]ast.Expr{value.X}, []ast.Expr{value.X}, value.Tok, env, controls)
 	case *ast.IfStmt:
-		var live bool
-		env, live = r.statement(value.Init, env, controls)
-		if !live {
-			return env, false
-		}
-		id := r.node("condition", "", value.Cond, r.inputs(value.Cond, env), controls)
-		if id != "" {
-			r.roots[id] = true
-		}
-		branchControls := joinValueOriginIDs(controls, []string{id})
-		left, a := r.block(value.Body, copyValueOriginEnv(env), branchControls)
-		right, b := r.statement(value.Else, copyValueOriginEnv(env), branchControls)
-		if a != b {
-			r.reasons["EARLY_EXIT_CONTROLS_NOT_EXPANDED"] = true
-		}
-		if !a {
-			return right, b
-		}
-		if !b {
-			return left, a
-		}
-		return joinValueOriginEnvs(left, right), true
+		return r.branch(value, env, controls)
+	case *ast.RangeStmt:
+		return r.collectionLoop(value, env, controls)
 	case *ast.ForStmt:
 		return r.loop(value, env, controls)
 	case *ast.ReturnStmt:
@@ -154,6 +119,38 @@ func (r *valueOriginReader) loop(loop *ast.ForStmt, env valueOriginEnv, controls
 			next, _ = r.statement(loop.Post, next, branchControls)
 		} else {
 			next = copyValueOriginEnv(entry)
+		}
+		next = joinValueOriginEnvs(entry, next)
+		if reflect.DeepEqual(current, next) {
+			return next, true
+		}
+		current = next
+	}
+	r.reasons["LOOP_ORIGIN_LIMIT"] = true
+	return current, true
+}
+
+func (r *valueOriginReader) collectionLoop(loop *ast.RangeStmt, env valueOriginEnv, controls []string) (valueOriginEnv, bool) {
+	r.reasons["COLLECTION_ELEMENTS_JOINED"] = true
+	r.reasons["LOOP_EXIT_PATHS_NOT_EXPANDED"] = true
+	entry, current := copyValueOriginEnv(env), copyValueOriginEnv(env)
+	for range 16 {
+		id := r.node("collection", "", loop.X, r.inputs(loop.X, current), controls)
+		nested := copyValueOriginEnv(current)
+		for _, variable := range []ast.Expr{loop.Key, loop.Value} {
+			if name, ok := variable.(*ast.Ident); ok && name.Name != "_" && name.Obj != nil {
+				element := r.node("collection_element", name.Name, name, []string{id}, controls)
+				nested[name.Obj] = []string{element}
+			}
+		}
+		next, live := r.block(loop.Body, nested, joinValueOriginIDs(controls, []string{id}))
+		if !live {
+			next = copyValueOriginEnv(entry)
+		}
+		for _, variable := range []ast.Expr{loop.Key, loop.Value} {
+			if name, ok := variable.(*ast.Ident); ok {
+				delete(next, name.Obj)
+			}
 		}
 		next = joinValueOriginEnvs(entry, next)
 		if reflect.DeepEqual(current, next) {

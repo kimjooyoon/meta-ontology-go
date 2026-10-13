@@ -1,0 +1,797 @@
+{
+  "cases": {
+    "schema": "gooo/body-composition-cases/v1",
+    "cases": [
+      {
+        "inputs": {
+          "Total": {
+            "amounts": [
+              3,
+              -5,
+              11
+            ]
+          }
+        },
+        "expected": {
+          "Total": 9
+        }
+      },
+      {
+        "inputs": {
+          "Total": {
+            "amounts": []
+          }
+        },
+        "expected": {
+          "Total": 0
+        }
+      },
+      {
+        "inputs": {
+          "Total": {
+            "amounts": [
+              9007199254740993,
+              7
+            ]
+          }
+        },
+        "expected": {
+          "Total": 9007199254741000
+        }
+      }
+    ]
+  },
+  "generation": {
+    "schema": "gooo/body-composition/v1",
+    "stage": "COMPLETE",
+    "original_source_sha256": "sha256:82e2ff7af1a294d414ad42e61e4fb78407263831f4e0459d6d49038d3af8f722",
+    "selected_source_sha256": "sha256:82e2ff7af1a294d414ad42e61e4fb78407263831f4e0459d6d49038d3af8f722",
+    "generated_sha256": "sha256:92c22824631dafe615cf6708059f199dcd209d7c8609e1dda537b32f216dd0cc",
+    "driver_sha256": "sha256:73fc0402d0ccad1f8b6acae0dda7c568329c28b7312350680052cac54f2f7807",
+    "plan": {
+      "schema": "gooo/body-composition-plan/v1",
+      "typed_plan_sha256": "sha256:093b501061b53a17ffe4d177e154b51d8d7096b72aa65c94a3d457b0f16e46f8",
+      "semantic_fingerprint": "c273c9a7e4ee6d93dd0ba4fe848e497f5f0d605302586d63bd8393274249b006",
+      "activities": [
+        {
+          "name": "Total",
+          "id": "urn:basket7013:total",
+          "input_type": "Basket",
+          "output_type": "Integer",
+          "input_entity_id": "urn:basket7013:basket",
+          "output_entity_id": "urn:gooo:type:integer",
+          "go_function": "GoooComposedActivity0",
+          "input_from": -1,
+          "assembling": false
+        }
+      ],
+      "edges": [],
+      "record_types": [
+        {
+          "name": "Basket",
+          "id": "urn:basket7013:basket",
+          "go_name": "GoooRecordb5fa9f8321631f6aa840c84a276a5ab0abc00c110815d033964442c74de9b2c5",
+          "fields": [
+            {
+              "name": "amounts",
+              "id": "urn:basket7013:amounts",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField836ed392fba71cdc382a896b8470bf2b25d1f4629f919c35710910f576791110",
+              "cardinality": "many"
+            }
+          ]
+        }
+      ]
+    },
+    "steps": [
+      {
+        "input_source_sha256": "sha256:82e2ff7af1a294d414ad42e61e4fb78407263831f4e0459d6d49038d3af8f722",
+        "generation": {
+          "report": {
+            "schema": "gooo/body-codegen-report/v3",
+            "decision": "PASS",
+            "activity": "Total",
+            "activity_id": "urn:basket7013:total",
+            "input_type": "Basket",
+            "record_types": [
+              {
+                "name": "Basket",
+                "id": "urn:basket7013:basket",
+                "go_name": "GoooRecordb5fa9f8321631f6aa840c84a276a5ab0abc00c110815d033964442c74de9b2c5",
+                "fields": [
+                  {
+                    "name": "amounts",
+                    "id": "urn:basket7013:amounts",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField836ed392fba71cdc382a896b8470bf2b25d1f4629f919c35710910f576791110",
+                    "cardinality": "many"
+                  }
+                ]
+              }
+            ],
+            "output_type": "int64",
+            "plan_sha256": "sha256:e9c8f8e265eb612c52bd1903d3a1c93e413b5ac3e9775fcbfc1535a5a68be46e",
+            "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+            "source_digest": "sha256:82e2ff7af1a294d414ad42e61e4fb78407263831f4e0459d6d49038d3af8f722",
+            "program_digest": "sha256:d5ba97468348c15d9f3a2cce617307749505a08af142d290bb0608bfdcac0f35",
+            "generated_digest": "sha256:33c29245bf9b88351cb0571a34aa6f2d467b85c63400973b1cbe98401ebba598",
+            "replay_digest": "sha256:33c29245bf9b88351cb0571a34aa6f2d467b85c63400973b1cbe98401ebba598",
+            "route": "preserve",
+            "route_decision": {
+              "schema": "gooo/typed-decision-receipt/v1",
+              "mode": "deterministic_fallback",
+              "selected": "preserve",
+              "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+              "provider": "deterministic",
+              "request_sha256": ""
+            },
+            "route_selection": {
+              "method": "single_eligible_route",
+              "proposed_route": "preserve",
+              "final_route": "preserve"
+            },
+            "route_decision_latency_ms": 0,
+            "candidate_routes": [
+              "preserve"
+            ],
+            "equivalence_rule": "source-shape-preserving-v1",
+            "source_constructs": 4,
+            "lowered_constructs": 4,
+            "source_semantic_units": 16,
+            "lowered_semantic_units": 16,
+            "completeness_percent": 100,
+            "route_equivalence": {
+              "schema": "gooo/body-codegen-route-equivalence/v1",
+              "decision": "PASS",
+              "method": "canonical_control_flow_form/v2",
+              "rule": "source-shape-preserving-v1",
+              "source_semantic_digest": "sha256:4a71d70e5edba089f2abde8a03970c888d71eb7659332c3f3acf8199899d71ab",
+              "generated_semantic_digest": "sha256:4a71d70e5edba089f2abde8a03970c888d71eb7659332c3f3acf8199899d71ab",
+              "equivalent": true,
+              "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+            },
+            "typecheck_passed": true,
+            "deterministic_replay": true,
+            "repository_writes": 0,
+            "unsupported_constructs": "calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
+            "completeness_receipt": {
+              "schema": "gooo/metaprogramming-completeness-receipt/v2",
+              "profile_id": "gooo/body-codegen-pure-v1",
+              "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+              "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+              "scope": {
+                "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                "boundary": {
+                  "excluded_effects": [
+                    "generated code execution",
+                    "repository mutation",
+                    "external authority"
+                  ],
+                  "non_authorizing": true,
+                  "non_executing": true
+                },
+                "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                "decision_mode": "deterministic_fallback",
+                "decision_provider": "deterministic",
+                "domain_scope": "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
+                "excluded_scope": [
+                  "unstated natural-language intent",
+                  "independently sourced production workflows",
+                  "generated runtime behavior",
+                  "unrestricted Gooo body syntax",
+                  "route clarity or utility"
+                ],
+                "execution_environment": "darwin/arm64",
+                "input_type": "Basket",
+                "laya_mode": "deterministic_fallback",
+                "laya_provider": "deterministic",
+                "observed_system_cost": {
+                  "human_actions": 0,
+                  "repository_writes": 0
+                },
+                "output_type": "int64",
+                "plan_sha256": "sha256:e9c8f8e265eb612c52bd1903d3a1c93e413b5ac3e9775fcbfc1535a5a68be46e",
+                "receipt_declaration": {
+                  "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "projection_profile": "gooo/receipt-structure-projection/v1",
+                  "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                },
+                "record_types": [
+                  {
+                    "name": "Basket",
+                    "id": "urn:basket7013:basket",
+                    "go_name": "GoooRecordb5fa9f8321631f6aa840c84a276a5ab0abc00c110815d033964442c74de9b2c5",
+                    "fields": [
+                      {
+                        "name": "amounts",
+                        "id": "urn:basket7013:amounts",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField836ed392fba71cdc382a896b8470bf2b25d1f4629f919c35710910f576791110",
+                        "cardinality": "many"
+                      }
+                    ]
+                  }
+                ],
+                "system_budget": {
+                  "maximum_human_actions": 0,
+                  "maximum_repository_writes": 0
+                },
+                "toolchain": "go1.27.2"
+              },
+              "core_dimensions": [
+                "declaration_coverage",
+                "generation_coverage",
+                "internal_replay_coverage",
+                "provenance_integrity",
+                "receipt_schema_binding",
+                "repository_write_boundary",
+                "route_choice_protocol",
+                "route_semantic_equivalence",
+                "source_ast_coverage",
+                "typecheck_coverage"
+              ],
+              "dimensions": [
+                {
+                  "id": "declaration_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "stable activity declarations",
+                  "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                  "evidence": [
+                    "source_digest:sha256:82e2ff7af1a294d414ad42e61e4fb78407263831f4e0459d6d49038d3af8f722",
+                    "activity_id:urn:basket7013:total"
+                  ]
+                },
+                {
+                  "id": "generation_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated Go functions",
+                  "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                  "evidence": [
+                    "generated_digest:sha256:33c29245bf9b88351cb0571a34aa6f2d467b85c63400973b1cbe98401ebba598",
+                    "report decision:PASS"
+                  ]
+                },
+                {
+                  "id": "source_ast_coverage",
+                  "status": "PASS",
+                  "numerator": 16,
+                  "denominator": 16,
+                  "unit": "source semantic units lowered",
+                  "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                  "evidence": [
+                    "source_semantic_units",
+                    "lowered_semantic_units"
+                  ]
+                },
+                {
+                  "id": "route_semantic_equivalence",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source/generated route pairs",
+                  "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                  "evidence": [
+                    "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                    "route_equivalence.rule:source-shape-preserving-v1",
+                    "source_semantic_digest:sha256:4a71d70e5edba089f2abde8a03970c888d71eb7659332c3f3acf8199899d71ab",
+                    "generated_semantic_digest:sha256:4a71d70e5edba089f2abde8a03970c888d71eb7659332c3f3acf8199899d71ab"
+                  ]
+                },
+                {
+                  "id": "typecheck_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated functions accepted by Go type checking",
+                  "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                  "evidence": [
+                    "typecheck_passed"
+                  ]
+                },
+                {
+                  "id": "internal_replay_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "deterministic compiler emission replays",
+                  "reason": "Requires replayed generated bytes to match the selected output digest.",
+                  "evidence": [
+                    "generated_digest:sha256:33c29245bf9b88351cb0571a34aa6f2d467b85c63400973b1cbe98401ebba598",
+                    "replay_digest:sha256:33c29245bf9b88351cb0571a34aa6f2d467b85c63400973b1cbe98401ebba598"
+                  ]
+                },
+                {
+                  "id": "route_choice_protocol",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "selected routes in the compiler-declared candidate set",
+                  "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                  "evidence": [
+                    "candidate_routes",
+                    "selected_route:preserve"
+                  ]
+                },
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "numerator": 7,
+                  "denominator": 8,
+                  "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "evidence": [
+                    "source_digest:sha256:82e2ff7af1a294d414ad42e61e4fb78407263831f4e0459d6d49038d3af8f722",
+                    "program_digest:sha256:d5ba97468348c15d9f3a2cce617307749505a08af142d290bb0608bfdcac0f35",
+                    "generated_digest:sha256:33c29245bf9b88351cb0571a34aa6f2d467b85c63400973b1cbe98401ebba598",
+                    "replay_digest:sha256:33c29245bf9b88351cb0571a34aa6f2d467b85c63400973b1cbe98401ebba598",
+                    "activity_id:urn:basket7013:total",
+                    "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                    "route_equivalence semantic digests"
+                  ]
+                },
+                {
+                  "id": "receipt_schema_binding",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source-owned receipt schema and generated structure bindings",
+                  "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                  "evidence": [
+                    "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile:gooo/receipt-structure-projection/v1"
+                  ]
+                },
+                {
+                  "id": "repository_write_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "repository writes",
+                  "reason": "The command emits generated source without mutating the repository.",
+                  "evidence": [
+                    "repository_writes:0"
+                  ]
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated package runtime executions",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "evidence": [
+                    "body-codegen does not run generated Go"
+                  ]
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "observed host permission profiles",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "evidence": [
+                    "host permission profile is not observed"
+                  ]
+                },
+                {
+                  "id": "external_network_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "runs with no Laya provider request",
+                  "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                  "evidence": [
+                    "decision.mode:deterministic_fallback",
+                    "decision.provider:deterministic",
+                    "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                  ]
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 0,
+                  "unit": "eligible multi-route Laya decisions",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "evidence": [
+                    "candidate_routes",
+                    "route_decision.mode:deterministic_fallback",
+                    "route_decision.request_sha256:",
+                    "route_decision.model_revision:"
+                  ]
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independently sourced real workflows",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "evidence": [
+                    "no independent workflow corpus is bound"
+                  ]
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated runtime observations mapped back to source",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "evidence": [
+                    "no source-bound reverse-observation trace"
+                  ]
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete input-domain behavior proofs",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "evidence": [
+                    "generated package execution and an independent domain oracle are not part of this command"
+                  ]
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independent route-clarity or utility criteria",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "evidence": [
+                    "no independent route-quality oracle"
+                  ]
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete process resource profiles",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "evidence": [
+                    "route_decision_latency_ms is recorded",
+                    "CPU and peak RSS are not captured"
+                  ]
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible prior resource receipts",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "evidence": [
+                    "no compatible prior resource receipt"
+                  ]
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible before/after semantic receipts",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "evidence": [
+                    "no comparable prior semantic receipt"
+                  ]
+                }
+              ],
+              "status_counts": {
+                "FAIL_CLOSED": 0,
+                "PASS": 10,
+                "PROGRESS": 1,
+                "UNKNOWN": 10
+              },
+              "aggregate_completeness_score": null,
+              "first_unresolved": {
+                "id": "provenance_integrity",
+                "status": "PROGRESS",
+                "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+              },
+              "unresolved_claims": [
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                }
+              ],
+              "not_claimed": [
+                "user-intent completeness",
+                "real-workflow coverage",
+                "generated runtime behavior",
+                "full-domain semantics",
+                "route quality",
+                "universal language completeness"
+              ],
+              "fail_closed_reason": null
+            }
+          },
+          "source": "package basket7013\n\n//gooo:generated:start id=\"urn:basket7013:basket\" kind=\"entity\"\ntype GoooRecordb5fa9f8321631f6aa840c84a276a5ab0abc00c110815d033964442c74de9b2c5 struct {\n\tGoooField836ed392fba71cdc382a896b8470bf2b25d1f4629f919c35710910f576791110 []int64 `json:\"amounts\"`\n}\n\n//gooo:generated:end id=\"urn:basket7013:basket\" kind=\"entity\"\n//gooo:generated:start id=\"urn:basket7013:total\" kind=\"activity\"\nfunc Total(input GoooRecordb5fa9f8321631f6aa840c84a276a5ab0abc00c110815d033964442c74de9b2c5) int64 {\n\tvar total int64 = 0\n\tfor _, amount := range input.GoooField836ed392fba71cdc382a896b8470bf2b25d1f4629f919c35710910f576791110 {\n\t\ttotal = total + amount\n\t}\n\treturn total\n}\n\n//gooo:generated:end id=\"urn:basket7013:total\" kind=\"activity\"\n"
+        }
+      }
+    ],
+    "gooo_source": "package basket7013\nnamespace basket7013\nentity Integer id \"urn:gooo:type:integer\"\nentity Basket id \"urn:basket7013:basket\" fields {\n field amounts id \"urn:basket7013:amounts\" type integer required many\n}\nactivity Total(Basket) -\u003e Integer id \"urn:basket7013:total\" computes \"let total = 0; for _, amount := range input.amounts { total = total + amount }; return total\"\n",
+    "source": "package main\n\n//gooo:generated:start id=\"urn:basket7013:basket\" kind=\"entity\"\ntype GoooRecordb5fa9f8321631f6aa840c84a276a5ab0abc00c110815d033964442c74de9b2c5 struct {\n\tGoooField836ed392fba71cdc382a896b8470bf2b25d1f4629f919c35710910f576791110 []int64 `json:\"amounts\"`\n}\n\n//gooo:generated:end id=\"urn:basket7013:basket\" kind=\"entity\"\n\n//gooo:generated:start id=\"urn:basket7013:total\" kind=\"activity\"\nfunc GoooComposedActivity0(input GoooRecordb5fa9f8321631f6aa840c84a276a5ab0abc00c110815d033964442c74de9b2c5) int64 {\n\tvar total int64 = 0\n\tfor _, amount := range input.GoooField836ed392fba71cdc382a896b8470bf2b25d1f4629f919c35710910f576791110 {\n\t\ttotal = total + amount\n\t}\n\treturn total\n}\n\n//gooo:generated:end id=\"urn:basket7013:total\" kind=\"activity\"\n",
+    "driver_source": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc main() {\n\tvar in [][1]json.RawMessage\n\tif json.NewDecoder(os.Stdin).Decode(\u0026in) != nil || len(in) \u003e 128 {\n\t\tos.Exit(2)\n\t}\n\tout := make([][1]json.RawMessage, len(in))\n\tfor c, row := range in {\n\t\tvar input0 GoooRecordb5fa9f8321631f6aa840c84a276a5ab0abc00c110815d033964442c74de9b2c5\n\t\tif json.Unmarshal(row[0], \u0026input0) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv0 := GoooComposedActivity0(input0)\n\t\tout[c][0], _ = json.Marshal(v0)\n\t}\n\tif json.NewEncoder(os.Stdout).Encode(out) != nil {\n\t\tos.Exit(3)\n\t}\n}\n",
+    "elapsed_ns": 4104625,
+    "scope": "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"
+  },
+  "historical_source_executions": 0,
+  "runtime": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "composition_sha256": "sha256:43a314e5b7f5ee77ea31445dc536bbffa446bc2a91f6359950baae79bd190d73",
+    "original_source_sha256": "sha256:82e2ff7af1a294d414ad42e61e4fb78407263831f4e0459d6d49038d3af8f722",
+    "selected_source_sha256": "sha256:82e2ff7af1a294d414ad42e61e4fb78407263831f4e0459d6d49038d3af8f722",
+    "typed_plan_sha256": "sha256:093b501061b53a17ffe4d177e154b51d8d7096b72aa65c94a3d457b0f16e46f8",
+    "generated_sha256": "sha256:92c22824631dafe615cf6708059f199dcd209d7c8609e1dda537b32f216dd0cc",
+    "driver_sha256": "sha256:73fc0402d0ccad1f8b6acae0dda7c568329c28b7312350680052cac54f2f7807",
+    "runtime_suite_sha256": "sha256:ed0f8916613934ba3d42eaeb898fb6e7724dd88c632690aa58954cc4e8a18af8",
+    "executable_sha256": "sha256:16d34cfcca18cb1729d66f7f926dcedf9771822c1439b22cf78343e533727560",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_tool_selection": "explicit",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "(devel)"
+    },
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 8590792,
+      "user_ns": 4004000,
+      "system_ns": 2769000,
+      "peak_rss_bytes": 14188544,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1206875,
+        "wait_ns": 7383917,
+        "deadline_remaining_ns": 59987884208,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 272993625,
+      "user_ns": 129920000,
+      "system_ns": 86796000,
+      "peak_rss_bytes": 87064576,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 732375,
+        "wait_ns": 272261250,
+        "deadline_remaining_ns": 59978626791,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 358001666,
+        "user_ns": 2930000,
+        "system_ns": 5278000,
+        "peak_rss_bytes": 4915200,
+        "stdout_sha256": "sha256:4c3c6bc7f347d5d14c5d5ddc2721f75323da5a5da2e3073516a6cdcaa9169434",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 894000,
+          "wait_ns": 357107666,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59704098666,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 7147750,
+        "user_ns": 2663000,
+        "system_ns": 3072000,
+        "peak_rss_bytes": 4915200,
+        "stdout_sha256": "sha256:4c3c6bc7f347d5d14c5d5ddc2721f75323da5a5da2e3073516a6cdcaa9169434",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 1630125,
+          "wait_ns": 5517625,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59345902916,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "traces": [
+      {
+        "case_index": 0,
+        "deliveries": [
+          {
+            "activity_id": "urn:basket7013:total",
+            "input": {
+              "amounts": [
+                3,
+                -5,
+                11
+              ]
+            },
+            "input_fields": [
+              {
+                "id": "urn:basket7013:amounts",
+                "name": "amounts",
+                "value": [
+                  3,
+                  -5,
+                  11
+                ]
+              }
+            ],
+            "actual": 9,
+            "expected": 9,
+            "passed": true
+          }
+        ]
+      },
+      {
+        "case_index": 1,
+        "deliveries": [
+          {
+            "activity_id": "urn:basket7013:total",
+            "input": {
+              "amounts": []
+            },
+            "input_fields": [
+              {
+                "id": "urn:basket7013:amounts",
+                "name": "amounts",
+                "value": []
+              }
+            ],
+            "actual": 0,
+            "expected": 0,
+            "passed": true
+          }
+        ]
+      },
+      {
+        "case_index": 2,
+        "deliveries": [
+          {
+            "activity_id": "urn:basket7013:total",
+            "input": {
+              "amounts": [
+                9007199254740993,
+                7
+              ]
+            },
+            "input_fields": [
+              {
+                "id": "urn:basket7013:amounts",
+                "name": "amounts",
+                "value": [
+                  9007199254740993,
+                  7
+                ]
+              }
+            ],
+            "actual": 9007199254741000,
+            "expected": 9007199254741000,
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "finite_passed": 3,
+    "finite_total": 3,
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "UNCLASSIFIED_INPUTS",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 3,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    },
+    "model_calls": 0,
+    "elapsed_ns": 663256625,
+    "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+  },
+  "source": "package basket7013\nnamespace basket7013\nentity Integer id \"urn:gooo:type:integer\"\nentity Basket id \"urn:basket7013:basket\" fields {\n field amounts id \"urn:basket7013:amounts\" type integer required many\n}\nactivity Total(Basket) -\u003e Integer id \"urn:basket7013:total\" computes \"let total = 0; for _, amount := range input.amounts { total = total + amount }; return total\"\n"
+}

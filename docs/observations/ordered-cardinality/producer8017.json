@@ -1,0 +1,13 @@
+{
+  "baseline": "547ad4cdd34001186509659ea208fc48b0567106",
+  "files": [
+    {
+      "path": "internal/valueexecution/record_cardinality_test.go",
+      "sha256": "d04e03b66c8dbd615fdef1aa334fa0a9e8218ce97b424ece6d10e22ea9881f2f"
+    },
+    {
+      "path": "internal/valueexecution/record_plan_test.go",
+      "sha256": "728541715c7cd1936eb844bac849c1b6a3d785aa31369c3c97bfb1bb47bbe9b8"
+    }
+  ]
+}

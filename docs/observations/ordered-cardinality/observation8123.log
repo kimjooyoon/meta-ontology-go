@@ -1,0 +1,5 @@
+=== RUN   TestOriginBranchAndCollectionLinks8123
+    body_value_origin_branches_test.go:59: 8123: three new bodies retain branch alternatives, lexical shadow boundaries, original Korean byte ranges and collection input dependencies; native0/model0
+--- PASS: TestOriginBranchAndCollectionLinks8123 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.616s

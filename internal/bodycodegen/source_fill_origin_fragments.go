@@ -17,7 +17,7 @@ type fillOriginEdit struct {
 
 func sourceFillFragments(source, selected []byte, input, output *syntax.ActivityDecl,
 	receipt *IRBodyFillReceipt, index fillOriginIndex) ([]SourceFillFragment, string, error) {
-	body, err := rewriteLetDeclarations(input.ValueProgram)
+	body, inputMapping, err := rewriteBodySurface(input.ValueProgram)
 	if err != nil {
 		return nil, "", err
 	}
@@ -29,12 +29,14 @@ func sourceFillFragments(source, selected []byte, input, output *syntax.Activity
 	if err != nil {
 		return nil, "", err
 	}
-	actual, err := rewriteLetDeclarations(output.ValueProgram)
+	actual, outputMapping, err := rewriteBodySurface(output.ValueProgram)
 	if err != nil || actual != assembled {
 		return nil, "", fmt.Errorf("source fill origin selected body differs from its substitutions")
 	}
 	for i := range fragments {
 		f := &fragments[i]
+		f.TemplateDecoded = inputMapping.originalRange(f.TemplateDecoded)
+		f.SelectedDecoded = outputMapping.originalRange(f.SelectedDecoded)
 		f.TemplateSource, err = fillBodySourceRange(source, input, f.TemplateDecoded)
 		if err != nil {
 			return nil, "", err

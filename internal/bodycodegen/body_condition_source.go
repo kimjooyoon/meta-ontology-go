@@ -90,7 +90,7 @@ func bindBodyConditionSource(source []byte, sourceSHA string, activity *syntax.A
 	if activity == nil || !activity.ValueProgramPresent {
 		return fail("ACTIVITY_BODY_UNAVAILABLE")
 	}
-	normalized, err := rewriteLetDeclarations(activity.ValueProgram)
+	normalized, mapping, err := rewriteBodySurface(activity.ValueProgram)
 	if err != nil || digest([]byte(normalized)) != origin.BodySHA256 {
 		return fail("SELECTED_BODY_DIFFERS")
 	}
@@ -101,13 +101,14 @@ func bindBodyConditionSource(source []byte, sourceSHA string, activity *syntax.A
 	if span.Start.Offset < 0 || span.End.Offset > len(source) || span.End.Offset < span.Start.Offset {
 		return fail("BODY_LITERAL_UNAVAILABLE")
 	}
-	start, end, err := SourceLiteralByteRange(string(source[span.Start.Offset:span.End.Offset]), activity.ValueProgram, origin.Start, origin.End)
+	decoded := mapping.originalRange(FillOriginRange{Start: origin.Start, End: origin.End})
+	start, end, err := SourceLiteralByteRange(string(source[span.Start.Offset:span.End.Offset]), activity.ValueProgram, decoded.Start, decoded.End)
 	if err != nil {
 		return fail("BODY_LITERAL_RANGE_UNAVAILABLE")
 	}
 	return &BodyConditionSource{Status: "MAPPED", View: "selected_gooo_source", SourceSHA256: sourceSHA, BodySHA256: origin.BodySHA256,
-		Start: span.Start.Offset + start, End: span.Start.Offset + end, DecodedStart: origin.Start, DecodedEnd: origin.End, SourceOrdinal: origin.SourceOrdinal,
-		Expression: activity.ValueProgram[origin.Start:origin.End], Relation: origin.Relation, Fields: append([]ConditionSourceField(nil), origin.Fields...)}
+		Start: span.Start.Offset + start, End: span.Start.Offset + end, DecodedStart: decoded.Start, DecodedEnd: decoded.End, SourceOrdinal: origin.SourceOrdinal,
+		Expression: activity.ValueProgram[decoded.Start:decoded.End], Relation: origin.Relation, Fields: append([]ConditionSourceField(nil), origin.Fields...)}
 }
 
 func EqualRetainedConditionOrigins(prior, expected []BodyConditionOrigin) bool {

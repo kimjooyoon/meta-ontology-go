@@ -13,6 +13,8 @@ func (e *integerBodyEvaluator) evaluateStatement(statement ast.Stmt) (any, bool,
 		return nil, false, e.evaluateDeclaration(value)
 	case *ast.AssignStmt:
 		return nil, false, e.evaluateAssignment(value)
+	case *ast.RangeStmt:
+		return e.evaluateCollectionLoop(value)
 	case *ast.ForStmt:
 		return e.evaluateCountedLoop(value)
 	case *ast.IfStmt:

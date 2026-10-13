@@ -1,0 +1,5 @@
+=== RUN   TestSourceBatchPlanner8297
+    batch_planner_test.go:60: 8297: source-declared inclusive budget choice selection3/3 holdout1/1; disjoint native4/4 including order-dependent early return, invalid budget and MaxInt64; three original condition sites; model0
+--- PASS: TestSourceBatchPlanner8297 (0.74s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.356s

@@ -19,6 +19,15 @@ read-only while local `let` values may be assigned. See the
 [multiple-input example and case keys](../native-body-composition.md) and
 [record construction and actual value delivery](../native-record-values.md).
 
+### Ordered record collections
+
+Record fields can declare ordered scalar values with `many`. Gooo `for item in
+input.items` lowers to a typed bounded loop, while candidate evaluation and
+native execution retain the same input order. The development profile supports
+Integer, Text and Boolean elements, up to 256 per field, with original source
+positions for conditions and calls. See the [collection guide](ordered-collections.ko.md)
+and its separate construction, holdout, native and source-origin observations.
+
 ### Text length and slicing
 
 Ordinary bodies and declared record candidates support `len(text)`,

@@ -27,7 +27,7 @@ func needsSourceSurface(file *syntax.File) bool {
 }
 
 func buildSourceSurface(plan Plan, file *syntax.File, source string) Plan {
-	formatted, err := syntax.FormatWithEntityFieldsSupport(file, syntax.EntityFieldsV4Support())
+	formatted, err := syntax.FormatWithEntityFieldsSupport(file, syntax.EntityFieldsSupportForFile(file, syntax.EntityFieldsV4Support()))
 	if err != nil {
 		plan.Diagnostics = append(plan.Diagnostics, err.Error())
 		return lower(plan, "FORMAT_FIX_SOURCE_SURFACE_UNKNOWN")
