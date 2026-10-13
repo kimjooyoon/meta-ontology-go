@@ -1,0 +1,3 @@
+package flags
+namespace field270_flags
+entity Count id "urn:gooo:type:boolean"

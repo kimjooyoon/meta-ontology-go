@@ -1,0 +1,41 @@
+{
+  "schema": "gooo/fresh-source-path-inventory-observation/v1",
+  "producer": {
+    "script_sha256": "e73baa88bf24b1d98c61a1414629c4ae407cd2887b2f870ba1c6ee3e2bbda50c",
+    "fragment_sha256": "2a593d9812439c0fd9ea820b05284d8be58fb77e935c888de761f8528b51dd7e",
+    "compiler_base": "d8779545bf82b8688993d77ef50c1aa0feec2b82",
+    "tracked_path_provider": "controlled raw NUL stream; no repository/index mutation",
+    "input_sha256": {
+      "README.md": "fc4e9a7d8b58ca0015b2904087e87d84d39270d32195c67b75a66acde993e4fa",
+      "scope409/한글.gooo": "baedcafae614b9f74af30466977c3fc340ed83e81f40b13b164d53ca4e4cf373",
+      "scope409/name with spaces.gooo.fixture": "9cbdf9850a5179616b4444aafb8d372e190fdcedc1f93206fa6f1be09087fd6d",
+      "scope409/quote\"file.go": "c2c3d5828b09370f5f70444ae6165988a862ce5642a6c912e8df0e6ff2e824e5",
+      "scope409/nested/문장.fixture": "ab5ee9c0827461d1a0f09138fb5b00340c178e4a2faf271a74d168e5e75d4d1f"
+    },
+    "scope": "fresh scope409 metadata-only paths, Unicode, spaces, quotation mark; no source execution or old portfolio replay"
+  },
+  "outcome": "PASS",
+  "expected": {
+    "regular_files": 4,
+    "descendant_directories": 2,
+    "physical_lines": 7,
+    "go_files": 1,
+    "go_lines": 2,
+    "gooo_files": 1,
+    "gooo_lines": 2
+  },
+  "observed": {
+    "regular_files": 4,
+    "descendant_directories": 2,
+    "physical_lines": 7,
+    "go_files": 1,
+    "go_lines": 2,
+    "gooo_files": 1,
+    "gooo_lines": 2
+  },
+  "input_files_unchanged": true,
+  "source_program_executions": 0,
+  "historical_replays": 0,
+  "model_predictions": 0,
+  "local_full_portfolio_executions": 0
+}
