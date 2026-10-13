@@ -10,12 +10,14 @@
 | --- | --- | --- |
 | TypeQL / TypeDB 3 | 데이터 모델과 추론 함수를 구분하고, 인자와 반환값으로 계산 방향을 드러낸다. | 조건식의 원래 입력과 후보 결과를 구분하고, 보조 활동을 호출하는 방향을 설명한다. |
 | Nemo | 사실과 규칙으로 관계를 선언한다. 재귀 관계, Unicode와 IRI 이름, 여러 데이터 형식을 다룬다. | 기존 활동 ID와 조건식의 호출 관계를 읽어 변경의 영향을 보여준다. |
+| Mangle | Go에 내장할 수 있는 Datalog 확장으로 도메인 관계와 결과의 근거를 표현한다. | Gooo 결과를 원래 입력·조건·선택 경로와 연결해 설명하는 작은 단위를 설계한다. |
 | Scallop | 사실에 붙은 태그를 provenance semiring으로 전파한다. 확률적 추론도 이 구조에 포함된다. | 후보 점수, 허용된 선택지, 조건식, 실제 실패 사례를 함께 읽을 수 있게 한다. |
 | OML / openCAESAR | 모듈의 namespace, import, 멤버 IRI로 참조 범위를 정한다. | import 별칭과 활동 ID를 따라 파일 사이의 참조를 해석하고 리팩토링 범위를 정한다. |
 | egglog | 선언한 동치 규칙으로 여러 표현을 같은 것으로 묶고, 그 집합에서 표현을 추출한다. | 코드 조립에서 선언된 동치와 유한 사례의 일치를 구분한다. 도입 전 검토 대상이다. |
 
 근거: [TypeQL 함수와 규칙](https://typedb.com/docs/typeql-reference/functions/functions-vs-rules/),
 [Nemo 언어 안내](https://knowsys.github.io/nemo-doc/intro/tour/),
+[Mangle 공식 설명](https://github.com/google/mangle),
 [Scallop provenance](https://www.scallop-lang.org/doc/probabilistic/provenance.html),
 [OML 명세](https://opencaesar.io/oml/),
 [egglog equality saturation 안내](https://egraphs-good.github.io/egglog-tutorial/01-basics.html).
@@ -432,3 +434,19 @@ Gooo에서 계속 다듬을 지점은 개념 ID, 허용 구현, 확인 기준과
 아직 실행하지 않은 언어·과제의 값은 미관측으로 둔다. 위 값을 단일 종합 점수로 합치면
 각 언어가 맡는 역할과 부족한 요구가 가려질 수 있다. 이번 8/8도 두 입력 사례의 활동 출력에 대한 결과다.
 자체 소형 모델은 Gooo가 정한 선택지의 판단을 계속 담당하며, 모델 없는 실행도 같은 요구로 확인한다.
+
+## 결과의 이유를 공통 과제로 삼기
+
+추가 비교 대상으로 Mangle의 현재 공식 문서와 개발 소스를 읽었다.
+Go 구현, 관계·구조 표현과 질의할 수 있는 provenance가 Gooo의 남은 설명 요구와 연결된다.
+[구체적인 분석](language/mangle-and-source-decisions.ko.md)에 읽은 근거와 도입 범위를 적었다.
+
+먼저 Gooo로 재고 요청의 승인 여부·이유·요청 번호를 함께 반환하는 새 프로그램을 만들었다.
+선택 1/1, 별도 평가 1/1, 실제 입력 6개의 활동 출력 12/12를 기록했다.
+그 안의 결정 레코드 6개와 필드 값 18개도 원래 결과의 좁은 분모로 따로 읽을 수 있다.
+승인 여부가 같아도 이유가 틀린 후보는 선택되지 않았다. 모델·provider 호출은 0회다.
+[소스와 관찰](../examples/source-decision-reasons/README.md)은 실제 공개 개발 소스 bbfcaebb를 생산자로 유지한다.
+
+Gooo에서 다듬을 강점은 이런 업무 조건과 구현 선택을 소스에 함께 적는 흐름이다.
+보완할 부분은 직접 적은 이유를 실제 입력·성립한 조건의 근거 경로까지 연결하는 것이다.
+Mangle의 실행 비교와 자동 분기 설명은 아직 수행하지 않았다.
