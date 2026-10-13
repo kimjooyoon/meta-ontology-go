@@ -36,10 +36,12 @@ type CompositionPortDelivery struct {
 }
 
 type CompositionTrace struct {
-	CaseIndex            int                    `json:"case_index"`
-	Deliveries           []CompositionDelivery  `json:"deliveries"`
-	CalledInputsObserved bool                   `json:"called_inputs_observed,omitempty"`
-	Calls                []CompositionCallInput `json:"calls,omitempty"`
+	CaseIndex            int                               `json:"case_index"`
+	Deliveries           []CompositionDelivery             `json:"deliveries"`
+	CalledInputsObserved bool                              `json:"called_inputs_observed,omitempty"`
+	Calls                []CompositionCallInput            `json:"calls,omitempty"`
+	ConditionsObserved   bool                              `json:"conditions_observed,omitempty"`
+	Conditions           []CompositionConditionObservation `json:"conditions,omitempty"`
 }
 
 type CompositionRuntime struct {
@@ -72,6 +74,7 @@ type CompositionRuntime struct {
 	FinitePassed                   int                        `json:"finite_passed"`
 	FiniteTotal                    int                        `json:"finite_total"`
 	FaultSites                     []CompositionFaultSite     `json:"fault_sites,omitempty"`
+	ConditionSites                 []CompositionConditionSite `json:"condition_sites,omitempty"`
 	Outcomes                       *CompositionOutcomes       `json:"outcomes,omitempty"`
 	InputSeparation                CompositionInputSeparation `json:"input_separation"`
 	ModelCalls                     int                        `json:"model_calls"`
@@ -215,8 +218,15 @@ func observeCompositionRuns(ctx context.Context, root, executable string, rows [
 		}
 		if run == 0 {
 			first = output
-			traces, passed, observed, err := graph.nativeOutcomeTraces(output, suite, r.FaultSites)
+			native, conditions, err := graph.nativeConditionRows(output, len(suite.Cases), r.ConditionSites)
 			if err != nil {
+				return err
+			}
+			traces, passed, observed, err := graph.nativeOutcomeTraces(native, suite, r.FaultSites)
+			if err != nil {
+				return err
+			}
+			if err := graph.bindNativeConditions(traces, conditions, r.ConditionSites); err != nil {
 				return err
 			}
 			r.Traces, r.FinitePassed = traces, passed

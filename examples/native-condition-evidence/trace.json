@@ -1,0 +1,773 @@
+{
+  "schema": "gooo/native-condition-evidence-excerpt/v1",
+  "source_observation_sha256": "d92db6167cb26ee9b0e10ee43267765d95c04f7c83b0ce1a9b50974f50aa4cbf",
+  "scope": "selected identity and actual trace fields from original CLI1067 runtime; process records omitted; not a CI authorization",
+  "runtime_identity": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "original_source_sha256": "sha256:25b98607e4c9ba3acc2f262e4298affabf3ce2324009121f329340df6f69ad1d",
+    "selected_source_sha256": "sha256:25b98607e4c9ba3acc2f262e4298affabf3ce2324009121f329340df6f69ad1d",
+    "typed_plan_sha256": "sha256:eb09b8171329616f9bfb2d87a4e5250a06c1203c6a6c005e1e4827343a2dc118",
+    "generated_sha256": "sha256:0697bd1396a7b69af71a5ccf4349ebb48495048bde775aa8ad9cbea2a65cf04f",
+    "driver_sha256": "sha256:965777328e0406ba0d0a462a5099d53a49cfa5b05e816cb718cb49be01e87692",
+    "observed_projection_sha256": "sha256:802aee3e41777f290b30b43b94ec9d078e76351e5852396d62dc4de51b61e3e8",
+    "observed_driver_sha256": "sha256:958409060a87222484c611df9e2984719d8f23b8861f2b734f2c1c01f185866e",
+    "runtime_suite_sha256": "sha256:044d73eeddd8b2214c6509df61d7844f4ffeec993c4c08827f7d568d48b1a6e7",
+    "executable_sha256": "sha256:bf19bde1bc007e79664591d3d6d29b7f60dee1153dd5d1161bc1c02706b798b4",
+    "producer_source_sha": "61a9bdfc71735e2702bb0475cde66edabf3bc36e",
+    "projection_replayed": true,
+    "runtime_replayed": true
+  },
+  "condition_sites": [
+    {
+      "expression_id": "sha256:63bbdd57542c603a1a4c91bec656051cdc204ed65a1eb3c579ac5c5b32065dd2",
+      "root_activity_id": "urn:units1067:authorize",
+      "activity_id": "urn:units1067:authorize",
+      "expression": "input.GoooField099aa2185db23ccdeb6131a8fd5d26f957a83f7aa4f4652dcc86a00a985d602f < 2",
+      "projection_sha256": "sha256:0697bd1396a7b69af71a5ccf4349ebb48495048bde775aa8ad9cbea2a65cf04f",
+      "start": 1642,
+      "end": 1725
+    },
+    {
+      "expression_id": "sha256:92b49d44233525e9beebe52ecb8b6752bbbf3bc4cb9a786f4621c1b0cb6e3ebe",
+      "root_activity_id": "urn:units1067:authorize",
+      "activity_id": "urn:units1067:authorize",
+      "expression": "input.GoooField099aa2185db23ccdeb6131a8fd5d26f957a83f7aa4f4652dcc86a00a985d602f > input.GoooFieldf37ed9a49786b4f797446e59670c316a81f64517c5b8c30b50bf6e9674c580da",
+      "projection_sha256": "sha256:0697bd1396a7b69af71a5ccf4349ebb48495048bde775aa8ad9cbea2a65cf04f",
+      "start": 2149,
+      "end": 2310
+    }
+  ],
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "urn:units1067:receive",
+          "input": {
+            "capacity": 24,
+            "reference": "ordinary1067",
+            "units": 10
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 10
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 24
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "ordinary1067"
+            }
+          ],
+          "actual": {
+            "capacity": 24,
+            "reference": "ordinary1067",
+            "units": 10
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 10
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 24
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "ordinary1067"
+            }
+          ],
+          "expected": {
+            "capacity": 24,
+            "reference": "ordinary1067",
+            "units": 10
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:units1067:authorize",
+          "producer_id": "urn:units1067:receive",
+          "input": {
+            "capacity": 24,
+            "reference": "ordinary1067",
+            "units": 10
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 10
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 24
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "ordinary1067"
+            }
+          ],
+          "actual": {
+            "approved": true,
+            "reason": "capacity_available",
+            "reference": "ordinary1067"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:approved",
+              "name": "approved",
+              "value": true
+            },
+            {
+              "id": "urn:units1067:reason",
+              "name": "reason",
+              "value": "capacity_available"
+            },
+            {
+              "id": "urn:units1067:decision-reference",
+              "name": "reference",
+              "value": "ordinary1067"
+            }
+          ],
+          "expected": {
+            "approved": true,
+            "reason": "capacity_available",
+            "reference": "ordinary1067"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "urn:units1067:receive",
+          "input": {
+            "capacity": 24,
+            "reference": "boundary1067",
+            "units": 24
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 24
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 24
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "boundary1067"
+            }
+          ],
+          "actual": {
+            "capacity": 24,
+            "reference": "boundary1067",
+            "units": 24
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 24
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 24
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "boundary1067"
+            }
+          ],
+          "expected": {
+            "capacity": 24,
+            "reference": "boundary1067",
+            "units": 24
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:units1067:authorize",
+          "producer_id": "urn:units1067:receive",
+          "input": {
+            "capacity": 24,
+            "reference": "boundary1067",
+            "units": 24
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 24
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 24
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "boundary1067"
+            }
+          ],
+          "actual": {
+            "approved": true,
+            "reason": "capacity_available",
+            "reference": "boundary1067"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:approved",
+              "name": "approved",
+              "value": true
+            },
+            {
+              "id": "urn:units1067:reason",
+              "name": "reason",
+              "value": "capacity_available"
+            },
+            {
+              "id": "urn:units1067:decision-reference",
+              "name": "reference",
+              "value": "boundary1067"
+            }
+          ],
+          "expected": {
+            "approved": true,
+            "reason": "capacity_available",
+            "reference": "boundary1067"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_index": 2,
+      "deliveries": [
+        {
+          "activity_id": "urn:units1067:receive",
+          "input": {
+            "capacity": 9,
+            "reference": "invalid1067",
+            "units": 1
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 1
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 9
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "invalid1067"
+            }
+          ],
+          "actual": {
+            "capacity": 9,
+            "reference": "invalid1067",
+            "units": 1
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 1
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 9
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "invalid1067"
+            }
+          ],
+          "expected": {
+            "capacity": 9,
+            "reference": "invalid1067",
+            "units": 1
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:units1067:authorize",
+          "producer_id": "urn:units1067:receive",
+          "input": {
+            "capacity": 9,
+            "reference": "invalid1067",
+            "units": 1
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 1
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 9
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "invalid1067"
+            }
+          ],
+          "actual": {
+            "approved": false,
+            "reason": "invalid_units",
+            "reference": "invalid1067"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:approved",
+              "name": "approved",
+              "value": false
+            },
+            {
+              "id": "urn:units1067:reason",
+              "name": "reason",
+              "value": "invalid_units"
+            },
+            {
+              "id": "urn:units1067:decision-reference",
+              "name": "reference",
+              "value": "invalid1067"
+            }
+          ],
+          "expected": {
+            "approved": false,
+            "reason": "invalid_units",
+            "reference": "invalid1067"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 3,
+      "deliveries": [
+        {
+          "activity_id": "urn:units1067:receive",
+          "input": {
+            "capacity": 26,
+            "reference": "exceeds1067",
+            "units": 28
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 28
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 26
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "exceeds1067"
+            }
+          ],
+          "actual": {
+            "capacity": 26,
+            "reference": "exceeds1067",
+            "units": 28
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 28
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 26
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "exceeds1067"
+            }
+          ],
+          "expected": {
+            "capacity": 26,
+            "reference": "exceeds1067",
+            "units": 28
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:units1067:authorize",
+          "producer_id": "urn:units1067:receive",
+          "input": {
+            "capacity": 26,
+            "reference": "exceeds1067",
+            "units": 28
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 28
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 26
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "exceeds1067"
+            }
+          ],
+          "actual": {
+            "approved": false,
+            "reason": "capacity_exceeded",
+            "reference": "exceeds1067"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:approved",
+              "name": "approved",
+              "value": false
+            },
+            {
+              "id": "urn:units1067:reason",
+              "name": "reason",
+              "value": "capacity_exceeded"
+            },
+            {
+              "id": "urn:units1067:decision-reference",
+              "name": "reference",
+              "value": "exceeds1067"
+            }
+          ],
+          "expected": {
+            "approved": false,
+            "reason": "capacity_exceeded",
+            "reference": "exceeds1067"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 4,
+      "deliveries": [
+        {
+          "activity_id": "urn:units1067:receive",
+          "input": {
+            "capacity": -3,
+            "reference": "inconsistent1067",
+            "units": 5
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 5
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": -3
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "inconsistent1067"
+            }
+          ],
+          "actual": {
+            "capacity": -3,
+            "reference": "inconsistent1067",
+            "units": 5
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 5
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": -3
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "inconsistent1067"
+            }
+          ],
+          "expected": {
+            "capacity": -3,
+            "reference": "inconsistent1067",
+            "units": 5
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:units1067:authorize",
+          "producer_id": "urn:units1067:receive",
+          "input": {
+            "capacity": -3,
+            "reference": "inconsistent1067",
+            "units": 5
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": 5
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": -3
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "inconsistent1067"
+            }
+          ],
+          "actual": {
+            "approved": false,
+            "reason": "capacity_exceeded",
+            "reference": "inconsistent1067"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:approved",
+              "name": "approved",
+              "value": false
+            },
+            {
+              "id": "urn:units1067:reason",
+              "name": "reason",
+              "value": "capacity_exceeded"
+            },
+            {
+              "id": "urn:units1067:decision-reference",
+              "name": "reference",
+              "value": "inconsistent1067"
+            }
+          ],
+          "expected": {
+            "approved": false,
+            "reason": "capacity_exceeded",
+            "reference": "inconsistent1067"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 5,
+      "deliveries": [
+        {
+          "activity_id": "urn:units1067:receive",
+          "input": {
+            "capacity": 2,
+            "reference": "negative1067",
+            "units": -8
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": -8
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 2
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "negative1067"
+            }
+          ],
+          "actual": {
+            "capacity": 2,
+            "reference": "negative1067",
+            "units": -8
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": -8
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 2
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "negative1067"
+            }
+          ],
+          "expected": {
+            "capacity": 2,
+            "reference": "negative1067",
+            "units": -8
+          },
+          "passed": true
+        },
+        {
+          "activity_id": "urn:units1067:authorize",
+          "producer_id": "urn:units1067:receive",
+          "input": {
+            "capacity": 2,
+            "reference": "negative1067",
+            "units": -8
+          },
+          "input_fields": [
+            {
+              "id": "urn:units1067:units",
+              "name": "units",
+              "value": -8
+            },
+            {
+              "id": "urn:units1067:capacity",
+              "name": "capacity",
+              "value": 2
+            },
+            {
+              "id": "urn:units1067:request-reference",
+              "name": "reference",
+              "value": "negative1067"
+            }
+          ],
+          "actual": {
+            "approved": false,
+            "reason": "invalid_units",
+            "reference": "negative1067"
+          },
+          "actual_fields": [
+            {
+              "id": "urn:units1067:approved",
+              "name": "approved",
+              "value": false
+            },
+            {
+              "id": "urn:units1067:reason",
+              "name": "reason",
+              "value": "invalid_units"
+            },
+            {
+              "id": "urn:units1067:decision-reference",
+              "name": "reference",
+              "value": "negative1067"
+            }
+          ],
+          "expected": {
+            "approved": false,
+            "reason": "invalid_units",
+            "reference": "negative1067"
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ]
+    }
+  ]
+}
