@@ -1,0 +1,194 @@
+{
+  "schema": "gooo/qualified-signature-source-observation/v1",
+  "producer": {
+    "source_base": "fc5c8c5176f0eeb6fd1bce8de289cfd138022100",
+    "binary_sha256": "698dffaa6bf58d34b787cbfa05037ab3b0568cf2335ea6847be53c7c15fcb369",
+    "production_overlays": [
+      {
+        "path": "cmd/gooo/emit_dispatch.go",
+        "overlay": "/tmp/gooo-source-refactor-successor-20261013/pending/cmd/gooo/emit_dispatch.go",
+        "sha256": "cf0529d10b610c9d7d0e50716e69a4297866d4486f42b3ed676fb9cdd2ed12dd"
+      },
+      {
+        "path": "cmd/gooo/source_refactor.go",
+        "overlay": "/tmp/gooo-body-call-refactor-20261013/pending/cmd/gooo/source_refactor.go",
+        "sha256": "d19cca5acc99344b527bff5257a9b3c07db5479749e00870c454fb9300f57cc9"
+      },
+      {
+        "path": "cmd/gooo/usage.go",
+        "overlay": "/tmp/gooo-source-refactor-successor-20261013/pending/cmd/gooo/usage.go",
+        "sha256": "d4f6c35d0982bea2d28c03d0b99758dbc78533974f6b9314dd1a7a016008c024"
+      },
+      {
+        "path": "cmd/gooo/usage_topics_4.go",
+        "overlay": "/tmp/gooo-source-refactor-successor-20261013/pending/cmd/gooo/usage_topics_4.go",
+        "sha256": "0fadc07b9087523f693cfb07551ef021b57d0a2948f263fbf447a9dc916617ab"
+      },
+      {
+        "path": "internal/bodycodegen/rename_assembly.go",
+        "overlay": "/tmp/gooo-source-refactor-successor-20261013/pending/internal/bodycodegen/rename_assembly.go",
+        "sha256": "785f8a96ef4f4529e7c0d2985b8e115bfc93b23246bb5ada6e8752704512d08b"
+      },
+      {
+        "path": "internal/bodycodegen/rename_body.go",
+        "overlay": "/tmp/gooo-body-call-refactor-20261013/pending/internal/bodycodegen/rename_body.go",
+        "sha256": "cd0ffe69d678a4b5ca4a22e081c3e37d63a06e2f9e39eefb206ea0f8aa5266b2"
+      },
+      {
+        "path": "internal/bodycodegen/source_rename.go",
+        "overlay": "/tmp/gooo-source-refactor-successor-20261013/pending/internal/bodycodegen/source_rename.go",
+        "sha256": "1e06eeafca52bad32e1a38c53fc4888260d23b8f6f178cd44614c9785d3862cc"
+      },
+      {
+        "path": "internal/lsp/activity_rename.go",
+        "overlay": "/tmp/gooo-body-call-refactor-20261013/pending/internal/lsp/activity_rename.go",
+        "sha256": "e56152bfd639eb4277dd7d1f2ffc2f8180948628964081492957ccf8a8605b9c"
+      },
+      {
+        "path": "internal/lsp/rename_part01.go",
+        "overlay": "/tmp/gooo-body-call-refactor-20261013/pending/internal/lsp/rename_part01.go",
+        "sha256": "134dde7630048fdae3673b4d8551ba19d6f5c0616cb2339ff579c7084bfb55e0"
+      },
+      {
+        "path": "internal/bodycodegen/rename_body_parse.go",
+        "overlay": "/tmp/gooo-body-call-refactor-20261013/pending/internal/bodycodegen/rename_body_parse.go",
+        "sha256": "11e295e45ec14864e39f88f6a3184e44f392bd72c205de53bc74af95d25a148a"
+      },
+      {
+        "path": "internal/bodycodegen/source_activity_reference.go",
+        "overlay": "/tmp/gooo-body-call-refactor-20261013/pending/internal/bodycodegen/source_activity_reference.go",
+        "sha256": "253ab04310a7f141513ab466ef4df263ad9585c2ec87a78cc018f8da1612edb0"
+      },
+      {
+        "path": "internal/bodycodegen/source_literal_position.go",
+        "overlay": "/tmp/gooo-body-call-refactor-20261013/pending/internal/bodycodegen/source_literal_position.go",
+        "sha256": "3442c58ae14b904be64a092c2134d26db2e3e06c22c6338a2523a248218e83bb"
+      },
+      {
+        "path": "internal/lsp/prepare_rename_part02.go",
+        "overlay": "/tmp/gooo-body-call-refactor-20261013/pending/internal/lsp/prepare_rename_part02.go",
+        "sha256": "dad11e34cf2629b0206bc76a3caf7f74c703a0ebe093c96d7ba81d8c909a6f15"
+      },
+      {
+        "path": "cmd/gooo/usage_body_context.go",
+        "overlay": "/tmp/gooo-criteria-dependency-view-20261013/pending/cmd/gooo/usage_body_context.go",
+        "sha256": "1f68350153885cd9fd7f6375f0920eb1af7571dff37fed64a27e37b42133d004"
+      },
+      {
+        "path": "internal/bodycodegen/criteria_dependencies.go",
+        "overlay": "/tmp/gooo-criteria-dependency-view-20261013/pending/internal/bodycodegen/criteria_dependencies.go",
+        "sha256": "f822ffcc06746b36adc4dced83b7458c061646484b3c8ca3c573877a9a277a8b"
+      },
+      {
+        "path": "internal/bodycodegen/criteria_source_flow.go",
+        "overlay": "/tmp/gooo-criteria-dependency-view-20261013/pending/internal/bodycodegen/criteria_source_flow.go",
+        "sha256": "fec60e9a66c2e0a217ad62285f9093ab1ad686fab00eeb915a6ca3d4b003275b"
+      },
+      {
+        "path": "cmd/gooo/package_inspect.go",
+        "overlay": "/tmp/gooo-workspace-call-identity-20261013/pending/cmd/gooo/package_inspect.go",
+        "sha256": "d1ae8edef18f88607403d00760cf7c43e1f2c9ef8a53068c83d148505085fcf3"
+      },
+      {
+        "path": "cmd/gooo/package_resolve.go",
+        "overlay": "/tmp/gooo-workspace-call-identity-20261013/pending/cmd/gooo/package_resolve.go",
+        "sha256": "5c315bba57ca6f01811a9280cbe76ef3b4f64a8f75b6589f86ab6fff10086c4b"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/body_calls.go",
+        "overlay": "/tmp/gooo-workspace-call-identity-20261013/pending/internal/packageruntime/workspaceexecution/body_calls.go",
+        "sha256": "e4d5e38b7c591c8c3ffdbddc6da33fa4791dd122528c5e2ed23977b73422ed50"
+      },
+      {
+        "path": "cmd/gooo/usage_topics_3.go",
+        "overlay": "/tmp/gooo-workspace-call-identity-20261013/pending/cmd/gooo/usage_topics_3.go",
+        "sha256": "9371a6de3460798a08aaecb0c6da35359d87f77be4aa245400d78ed0a2b4dd53"
+      },
+      {
+        "path": "internal/packageruntime/bindings.go",
+        "overlay": "/tmp/gooo-qualified-signature-types-20261013/pending/internal/packageruntime/bindings.go",
+        "sha256": "89c85cd73ba8b274bb2340fc2a757ca7ba9e82974f795928df3cd3e42fbc0b23"
+      },
+      {
+        "path": "internal/packageruntime/compile.go",
+        "overlay": "/tmp/gooo-qualified-signature-types-20261013/pending/internal/packageruntime/compile.go",
+        "sha256": "3f0aa85485363fc2fb0d5810676b40c4808277f20d562409350abc7e859bf181"
+      },
+      {
+        "path": "internal/packageruntime/qualified_type_environment.go",
+        "overlay": "/tmp/gooo-qualified-signature-types-20261013/pending/internal/packageruntime/qualified_type_environment.go",
+        "sha256": "ebc4a2a03d7e3fe0b644667b2a407e9e53c46df99e971c4bbddb3d0730bb041d"
+      },
+      {
+        "path": "internal/packageruntime/source_import_types.go",
+        "overlay": "/tmp/gooo-qualified-signature-types-20261013/pending/internal/packageruntime/source_import_types.go",
+        "sha256": "5c87c95c579d39d590a08bd3f48edb8f58277d2c1ffe82aa9eaaa4b9913d3047"
+      },
+      {
+        "path": "internal/packageruntime/type_resolution.go",
+        "overlay": "/tmp/gooo-qualified-signature-types-20261013/pending/internal/packageruntime/type_resolution.go",
+        "sha256": "5d12d0036a519cc8a5b91c135774a984bf267c21f3914d7936716ae1b633415f"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_namespaces.go",
+        "overlay": "/tmp/gooo-qualified-signature-types-20261013/pending/internal/packageruntime/workspaceexecution/record_namespaces.go",
+        "sha256": "7e7fa9ad1fe2e3fa23d97e372e0ae6dd0e506c643c7f3f7f1ea8f8a8a68a974d"
+      },
+      {
+        "path": "internal/syntax/activity_parser.go",
+        "overlay": "/tmp/gooo-qualified-signature-types-20261013/pending/internal/syntax/activity_parser.go",
+        "sha256": "6ece8b515a5426f4516e12adb1fc063a6c01e2212df306fae939ccf62ff94ada"
+      },
+      {
+        "path": "internal/syntax/activity_type_reference.go",
+        "overlay": "/tmp/gooo-qualified-signature-types-20261013/pending/internal/syntax/activity_type_reference.go",
+        "sha256": "6fc296f825eaf8cb773fd6be07bcc6bb05ef486471a92cc373ebebdf45042f03"
+      },
+      {
+        "path": "internal/syntax/format_part04.go",
+        "overlay": "/tmp/gooo-qualified-signature-types-20261013/pending/internal/syntax/format_part04.go",
+        "sha256": "853fd66f2980ec96b3f7a16d5a1515d72b670b512985ce57723f4da31076f522"
+      }
+    ],
+    "module_overlay": {
+      "mod_sha256": "a8e14a07811a86dce0296b1877b435bf05cbf92ac7b0e3817b65c3e2f154c168",
+      "sum_sha256": "b0129fe5ad2fb415c25f4abe2ad31ba55f612f85431dfbe24b7c752ff01a0219",
+      "dependency": "github.com/kimjooyoon/gooo-decision-runtime v0.2.48-experimental",
+      "replace_directive": false
+    },
+    "scope": "Actual source inspection binary before later map-copy modernization. Exact producer source snapshots retained; not rebound to future accepted parent. Test overlays unused by CLI build."
+  },
+  "command": "gooo package inspect --json workspace.json",
+  "exit_code": 0,
+  "source_inspections": 1,
+  "source_digests": {
+    "left.gooo.fixture": "291298b0f52890e94ea84b30e0c7af89bee9f7dff7a9c0afb49a96689e312732",
+    "right.gooo.fixture": "f31f586aefb94e37816c78121787fe23f7b98e68753288eb7afb442b5cefb93c",
+    "app.gooo.fixture": "29c5e3214dc811ddeaf31ee0456f75eacfce0a1884ea9f42eae2380da1376dd3",
+    "audit.gooo.fixture": "996098aca8a71e2ca1f85e7f326c9100463299b3d1366ee3fdce795a65810597",
+    "workspace.json": "3e87954848436d14012a03d9076c8c68528b43fd72b756e6afc0ecc644fc4fcf"
+  },
+  "source_unchanged": true,
+  "program_executions": 0,
+  "model_predictions": 0,
+  "training_runs": 0,
+  "inspection_sha256": "sha256:9195717438c465e12fb8ed17fa23c5b8fc0ef7574c7cd50a3ee4709d6168bb0e",
+  "package_count": 3,
+  "qualified_signature_refs": 4,
+  "observed_matching_signature_refs": 4,
+  "mapped_signatures": [
+    {
+      "activity": "Main",
+      "input_type_id": "urn:qualified:left:amount",
+      "output_type_id": "urn:qualified:left:amount"
+    },
+    {
+      "activity": "Alternate",
+      "input_type_id": "urn:qualified:right:amount",
+      "output_type_id": "urn:qualified:right:amount"
+    }
+  ],
+  "source_call_count": 1,
+  "qualified_call_target": "example/left:요금",
+  "scope": "One fresh source preparation. File-local alias resolves two distinct imported record IDs; same-named records are lowered independently. No native values, model quality, saved runtime replay, editor interaction or broad reference coverage observed."
+}

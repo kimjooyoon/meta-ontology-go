@@ -10,12 +10,17 @@ func Build(filename, source string) Plan {
 		Schema: PlanSchema, File: filename, SourceDigest: digestBytes([]byte(source)),
 		SourceBytes: len(source), Edits: []Edit{}, Diagnostics: []string{},
 	}
-	file, diagnostics := syntax.ParseFile(filename, source)
+	// Package source execution already uses the V4 scalar-field grammar.
+	// Formatting retains the same source carrier without lowering or executing it.
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, source, syntax.EntityFieldsV4Support())
 	if diagnostics.HasErrors() {
 		for _, diagnostic := range diagnostics {
 			plan.Diagnostics = append(plan.Diagnostics, diagnostic.String())
 		}
 		return lower(plan, "FORMAT_FIX_SOURCE_UNKNOWN")
+	}
+	if needsSourceSurface(file) {
+		return buildSourceSurface(plan, file, source)
 	}
 	formatted := formatter.FormatSyntax(file)
 	if formatted.HasErrors() {

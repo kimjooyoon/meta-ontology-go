@@ -1,0 +1,5 @@
+package right
+namespace qualified_right
+entity Amount id "urn:qualified:right:amount" fields {
+    field value id "urn:qualified:right:value" type integer required one
+}

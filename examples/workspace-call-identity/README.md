@@ -20,9 +20,12 @@ packages. The two participants keep `urn:workspace:entry` and
 [The observation](observation.json) retains the actual development binary and
 source overlays. Files remained unchanged; no native body or model was run.
 
-The [initial fixture](declined-qualified-types/observation.json) used the
-unsupported `rules.Integer` spelling in a signature and was declined. Its source
-and original response are retained. The valid example uses the visible imported
+The [initial fixture](declined-qualified-types/observation.json) was inspected
+with the earlier producer, which declined `rules.Integer` in a signature. Its
+source and original response are retained. The later
+[qualified activity type change](../../docs/qualified-activity-types.ko.md)
+supports that spelling; this historical fixture has not been replayed.
+The valid recorded example uses the visible imported
 entity name while keeping the qualified Korean activity call. Each distinct
 source fixture was inspected once. The binary was built before the later help
 text addition; its recorded producer identity is retained.

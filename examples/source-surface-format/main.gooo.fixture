@@ -1,0 +1,7 @@
+package pricing
+namespace surface_pricing
+import rules "example/rules"
+entity Integer id "urn:surface:integer"
+activity Fee(Integer) -> Integer id "urn:surface:fee" computes "return input + 7"
+activity Receipt(Integer) -> Integer id "urn:surface:receipt" computes "return input + 2"
+bind Fee.result -> Receipt.input

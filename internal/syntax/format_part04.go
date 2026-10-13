@@ -45,7 +45,7 @@ func activityParameters(activity *ActivityDecl) ([]NameRef, error) {
 		parameters = activity.Inputs
 	}
 	for _, parameter := range parameters {
-		if err := validateIdentifier(parameter.Name, "activity parameter"); err != nil {
+		if err := validateActivityTypeReference(parameter.Name, "activity parameter"); err != nil {
 			return nil, err
 		}
 	}
@@ -59,7 +59,7 @@ func activityResult(activity *ActivityDecl) (string, error) {
 	if result == "" {
 		result = activity.Output
 	}
-	if err := validateIdentifier(result, "activity result"); err != nil {
+	if err := validateActivityTypeReference(result, "activity result"); err != nil {
 		return "", err
 	}
 	return result, nil

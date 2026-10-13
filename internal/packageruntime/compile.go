@@ -2,6 +2,7 @@ package packageruntime
 
 import (
 	"context"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -27,6 +28,7 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeI
 	var exports []Export
 	var sources []parsedPackageSource
 	sourceImports := map[string]bool{}
+	activitySources := map[string]*syntax.File{}
 	for _, source := range spec.Sources {
 		file, names, sourceExports, activities, err := compileSource(spec, source)
 		if err != nil {
@@ -41,6 +43,11 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeI
 				return compiledPackage{}, reject("PACKAGE_DECLARATION_DUPLICATE", "%s:%s", spec.Path, name)
 			}
 			declarations[name] = true
+		}
+		for _, export := range sourceExports {
+			if export.Kind == "activity" {
+				activitySources[export.Name] = file
+			}
 		}
 		exports = append(exports, sourceExports...)
 		sources = append(sources, parsedPackageSource{source: source, file: file, names: names})
@@ -59,25 +66,37 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeI
 			entityTypes[export.Name] = export.ID
 		}
 	}
-	typeEnvironment := make(map[string]string)
+	typeEnvironments := make(map[*syntax.File]map[string]string)
+	bareTypes := make(map[string]string)
 	for index := range exports {
 		if exports[index].Kind != "activity" {
 			continue
 		}
+		file := activitySources[exports[index].Name]
+		if typeEnvironments[file] == nil {
+			typeEnvironments[file] = make(map[string]string)
+		}
+		typeEnvironment := typeEnvironments[file]
 		resolvedInputs := make([]string, len(exports[index].InputTypes))
 		for typeIndex, name := range exports[index].InputTypes {
-			resolved, err := resolveEntityType(spec, name, entityTypes, dependencies)
+			resolved, err := resolveSourceEntityType(spec, file, name, entityTypes, dependencies)
 			if err != nil {
 				return compiledPackage{}, err
 			}
 			resolvedInputs[typeIndex] = resolved
 			typeEnvironment[name] = resolved
+			if !strings.Contains(name, ".") {
+				bareTypes[name] = resolved
+			}
 		}
-		resolvedOutput, err := resolveEntityType(spec, exports[index].OutputType, entityTypes, dependencies)
+		resolvedOutput, err := resolveSourceEntityType(spec, file, exports[index].OutputType, entityTypes, dependencies)
 		if err != nil {
 			return compiledPackage{}, err
 		}
 		typeEnvironment[exports[index].OutputType] = resolvedOutput
+		if !strings.Contains(exports[index].OutputType, ".") {
+			bareTypes[exports[index].OutputType] = resolvedOutput
+		}
 		exports[index].InputTypes = resolvedInputs
 		exports[index].OutputType = resolvedOutput
 	}
@@ -92,7 +111,8 @@ func compilePackage(spec PackageSpec, dependencies map[string][]Export, includeI
 	for _, source := range sources {
 		fileForLowering := source.file.Clone()
 		fileForLowering.Bindings = localBindings(fileForLowering.Bindings)
-		fileWithTypes := appendEntityTypeEnvironment(fileForLowering, typeEnvironment)
+		types := sourceTypeEnvironment(bareTypes, typeEnvironments[source.file])
+		fileWithTypes := appendEntityTypeEnvironment(fileForLowering, types)
 		ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), fileWithTypes, bidir.EntityFieldsV4Support())
 		if err != nil {
 			return compiledPackage{}, reject("PACKAGE_SOURCE_INVALID", "lower source %q: %v", source.source.Filename, err)
