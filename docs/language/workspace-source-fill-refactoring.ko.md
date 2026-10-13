@@ -67,7 +67,8 @@ gooo package rename-activity --package scope83/helpers --id urn:scope83:boost --
 ## 지원 범위
 
 직접 선언한 2~16개 후보, 1~8개 hole과 hole마다 본문에 한 번 나타나는 기존 규칙을 사용한다.
-자동 `derive`와 `search`, 동적 함수 값과 parenthesized 호출에는 각각의 후보 위치 정보가 필요하다.
+현재 값·조건 문법의 자동 `derive`는 [버전별 참조 성질](workspace-derived-fill-refactoring.ko.md)을 따라
+본문 참조를 갱신한다. 새 문법 버전, `search`, 동적 함수 값과 parenthesized 호출에는 각각의 후보 위치 정보가 필요하다.
 이 작업은 분류할 수 있는 소스 참조와 export ID·타입 역할을 비교한다.
 전체 PROV 그래프, 외부 API 소비자, 에디터 적용과 자동 디스크 저장은 별도 범위다.
 

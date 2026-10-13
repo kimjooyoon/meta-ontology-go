@@ -1,0 +1,26 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "derive148/app",
+    "activity": "Bill"
+  },
+  "packages": [
+    {
+      "path": "derive148/helpers",
+      "name": "helpers",
+      "sources": [
+        "add.gooo.fixture"
+      ]
+    },
+    {
+      "path": "derive148/app",
+      "name": "app",
+      "imports": [
+        "derive148/helpers"
+      ],
+      "sources": [
+        "bill.gooo.fixture"
+      ]
+    }
+  ]
+}

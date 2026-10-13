@@ -17,6 +17,12 @@ func (g *TypedPathGenerator) GenerateSourceAssembly(ctx context.Context, filenam
 	if err != nil {
 		return Result{}, err
 	}
+	if IsSourceIRBodyFill(spec) {
+		return Result{}, fmt.Errorf("source_fill requires GenerateWithSourceIRBodyFill; typed path models rank scalar or record choices")
+	}
+	if IsSourceIRSearch(spec) {
+		return Result{}, fmt.Errorf("search requires GenerateWithSourceIRSearch; typed path models rank scalar or record choices")
+	}
 	if IsRecordAssembly(spec) {
 		return g.generateRecordAssembly(ctx, filename, source, activity)
 	}
