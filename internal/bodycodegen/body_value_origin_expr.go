@@ -36,11 +36,24 @@ func (r *valueOriginReader) inputs(expr ast.Expr, env valueOriginEnv) []string {
 	case *ast.ParenExpr:
 		add(value.X)
 	case *ast.SelectorExpr:
+		if r.calls != nil {
+			return r.access("field_access", value.Sel.Name, value, value.X, env)
+		}
 		add(value.X)
 	case *ast.IndexExpr:
+		if r.calls != nil {
+			return r.access("index_access", "", value, value.X, env,
+				valueAccessOperand{"index_operand", value.Index})
+		}
 		add(value.X)
 		add(value.Index)
 	case *ast.SliceExpr:
+		if r.calls != nil {
+			return r.access("slice_access", "", value, value.X, env,
+				valueAccessOperand{"slice_low", value.Low},
+				valueAccessOperand{"slice_high", value.High},
+				valueAccessOperand{"slice_max", value.Max})
+		}
 		add(value.X)
 		add(value.Low)
 		add(value.High)

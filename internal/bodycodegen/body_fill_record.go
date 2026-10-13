@@ -126,8 +126,8 @@ func generateWithRecordIRBodyFillOptions(
 		return Result{}, err
 	}
 	outputRecord := recordTypeByName(records, activity.Output)
-	if outputRecord == nil {
-		return Result{}, fmt.Errorf("record IR body fill currently requires a declared record output")
+	if outputRecord == nil && sourceScalarKind(file, activity.Output) == "" {
+		return Result{}, fmt.Errorf("typed IR body fill requires a declared record, Integer, Boolean or Text output")
 	}
 	activityID := ""
 	for _, node := range model.Nodes {
@@ -389,6 +389,10 @@ func generateWithRecordIRBodyFillOptions(
 			TotalMS:        float64(time.Since(started)) / float64(time.Millisecond),
 			ExecutionModel: "synchronous_sequential_no_background_codegen_goroutines",
 			DecisionStage:  "after_typed_ir_plan_training_scores_before_final_emission"},
+	}
+	if outputRecord == nil {
+		result.Report.BodyFill.Evaluator = "gooo/bodycodegen-typed-value-interpreter/v1"
+		result.Report.BodyFill.AccuracyScope = "exact observed scalar equality over typed training value cases; holdout value cases are measured separately when present; neither is a full-domain proof"
 	}
 	populateCompletenessReceipt(&result.Report, "")
 	return result, nil

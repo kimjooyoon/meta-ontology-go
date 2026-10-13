@@ -23,6 +23,7 @@ type valueTransferWalker struct {
 	catalog         valueTransferCatalog
 	out             *ProgramValueOrigins
 	issues, emitted map[string]bool
+	accesses        map[string]bool
 	visits, steps   int
 }
 
@@ -75,6 +76,7 @@ func (w *valueTransferWalker) walk(root *valueTransferActivity, rootID string) e
 			w.issue(a.id, "VALUE_NODE_UNAVAILABLE")
 			continue
 		}
+		w.recordAccess(rootID, a, node)
 		for _, reason := range a.graph.Reasons {
 			if reason != "CALLEE_BODY_NOT_EXPANDED" {
 				w.issue(a.id, reason)

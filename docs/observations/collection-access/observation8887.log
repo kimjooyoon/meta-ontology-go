@@ -1,0 +1,5 @@
+=== RUN   TestWorkspaceCollectionAccess8887
+    value_access_native_test.go:128: 8887: native10/10 across5 requests, identical values and empty window included; access facts=16; call/bind links and original selected index retained; receipt unchanged; model0
+--- PASS: TestWorkspaceCollectionAccess8887 (0.54s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.151s

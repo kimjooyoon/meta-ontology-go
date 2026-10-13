@@ -131,7 +131,14 @@ operation, focused hole, model timings, finite accuracy, and the two retained
 assignments out of the four declared combinations. A model proposal that scores
 below another candidate is still replaced by Gooo's best-scoring choice.
 Record body fill supports required single string, boolean and integer fields,
-one declared record result, and pure body expressions.
+ordered scalar `many` fields, and pure body expressions. Explicit `source_fill`
+candidates can return a declared record or an Integer, Boolean or Text value.
+For example, a record can carry a list and an index while the activity returns
+the selected element directly. Type checking rejects an index of the wrong
+type; selection cases and separate holdout cases retain independent totals.
+Derived record grammars still require a declared record output. See the
+[collection access observations](../observations/collection-access/README.md)
+for native scalar results, selected index origins, and the original failures.
 
 For external model experiments, set `GOOO_LAYA_URL` to a Laya `/v1/systemone`
 endpoint. Its request includes the typed Gooo body, candidate summaries and
