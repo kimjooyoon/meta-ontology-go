@@ -1,0 +1,131 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "quota1289/contract:Receive": {
+          "quantity": 13,
+          "available": 27,
+          "reference": "ordinary1289"
+        }
+      },
+      "expected": {
+        "quota1289/contract:Receive": {
+          "quantity": 13,
+          "available": 27,
+          "reference": "ordinary1289"
+        },
+        "quota1289/app:Authorize": {
+          "approved": true,
+          "reason": "available_capacity",
+          "reference": "ordinary1289"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quota1289/contract:Receive": {
+          "quantity": 27,
+          "available": 27,
+          "reference": "boundary1289"
+        }
+      },
+      "expected": {
+        "quota1289/contract:Receive": {
+          "quantity": 27,
+          "available": 27,
+          "reference": "boundary1289"
+        },
+        "quota1289/app:Authorize": {
+          "approved": true,
+          "reason": "available_capacity",
+          "reference": "boundary1289"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quota1289/contract:Receive": {
+          "quantity": 2,
+          "available": 10,
+          "reference": "invalid1289"
+        }
+      },
+      "expected": {
+        "quota1289/contract:Receive": {
+          "quantity": 2,
+          "available": 10,
+          "reference": "invalid1289"
+        },
+        "quota1289/app:Authorize": {
+          "approved": false,
+          "reason": "invalid_quantity",
+          "reference": "invalid1289"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quota1289/contract:Receive": {
+          "quantity": 29,
+          "available": 27,
+          "reference": "short1289"
+        }
+      },
+      "expected": {
+        "quota1289/contract:Receive": {
+          "quantity": 29,
+          "available": 27,
+          "reference": "short1289"
+        },
+        "quota1289/app:Authorize": {
+          "approved": false,
+          "reason": "capacity_shortage",
+          "reference": "short1289"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quota1289/contract:Receive": {
+          "quantity": 6,
+          "available": -4,
+          "reference": "inconsistent1289"
+        }
+      },
+      "expected": {
+        "quota1289/contract:Receive": {
+          "quantity": 6,
+          "available": -4,
+          "reference": "inconsistent1289"
+        },
+        "quota1289/app:Authorize": {
+          "approved": false,
+          "reason": "capacity_shortage",
+          "reference": "inconsistent1289"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quota1289/contract:Receive": {
+          "quantity": -7,
+          "available": 3,
+          "reference": "negative1289"
+        }
+      },
+      "expected": {
+        "quota1289/contract:Receive": {
+          "quantity": -7,
+          "available": 3,
+          "reference": "negative1289"
+        },
+        "quota1289/app:Authorize": {
+          "approved": false,
+          "reason": "invalid_quantity",
+          "reference": "negative1289"
+        }
+      }
+    }
+  ]
+}

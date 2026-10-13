@@ -122,9 +122,18 @@ func observedCompositionSources(prior Composition) (string, string, error) {
 }
 
 func observedCompositionArtifacts(prior Composition) (string, string, []CompositionFaultSite, error) {
+	projection, driver, faults, _, err := observedCompositionEvidence(prior)
+	return projection, driver, faults, err
+}
+
+func observedCompositionEvidence(prior Composition) (string, string, []CompositionFaultSite, []CompositionConditionSite, error) {
+	conditions, err := compositionConditionSites(prior)
+	if err != nil {
+		return "", "", nil, nil, err
+	}
 	projection, sites, err := arithmeticCompositionProjection(prior)
 	if err != nil {
-		return "", "", nil, err
+		return "", "", nil, nil, err
 	}
 	instrumented := prior
 	instrumented.Source = projection
@@ -136,5 +145,12 @@ func observedCompositionArtifacts(prior Composition) (string, string, []Composit
 	if err == nil && len(sites) != 0 {
 		driver, err = arithmeticCompositionDriver(prior)
 	}
-	return projection, driver, sites, err
+	if err == nil && len(conditions) != 0 {
+		prefix := conditionObservationPrefix(prior.Source)
+		projection, err = observedConditionProjection(projection, prefix+"Observe", conditions)
+		if err == nil {
+			driver, err = observedConditionDriver(driver, prefix)
+		}
+	}
+	return projection, driver, sites, conditions, err
 }

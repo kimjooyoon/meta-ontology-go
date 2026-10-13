@@ -1,0 +1,203 @@
+{
+  "schema": "gooo/native-condition-development-observations/v1",
+  "scope": "original distinct local observations; no local replays; synthetic source inputs only",
+  "initial_missing_evidence": {
+    "producer": {
+      "compiler_head": "61a9bdfc71735e2702bb0475cde66edabf3bc36e",
+      "compiler_tree": "a19352d91b4b5e6d1fb4ddd86d2b0d0fe543f3ef",
+      "overlays": [
+        {
+          "path": "internal/bodyexecution/composition_native_conditions_test.go",
+          "sha256": "4448b986edf12efa3b1cdba177cbec9f9863523e878b96d88a30a12510111a53"
+        }
+      ],
+      "scope": "fresh permit907 native if evidence requirement, original single probe; no historical cohort replay"
+    },
+    "execution": {
+      "exit_code": 1,
+      "elapsed_ns": 3452325000,
+      "stdout_sha256": "c695d30e7f63857eb61938211914b3f5de5bf2fc502230e0639824c343ae39b7",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_single_execution": true,
+      "never_replay_locally": true
+    },
+    "native_outputs": {
+      "passed": 2,
+      "total": 2
+    },
+    "condition_sites": 0,
+    "failure": "NATIVE_IF_TRACE_MISSING"
+  },
+  "native_source_probes": {
+    "producer": {
+      "compiler_head": "61a9bdfc71735e2702bb0475cde66edabf3bc36e",
+      "compiler_tree": "a19352d91b4b5e6d1fb4ddd86d2b0d0fe543f3ef",
+      "overlays": [
+        {
+          "path": "internal/bodyexecution/composition_condition_driver.go",
+          "sha256": "48aff77eb38261855bae2d995dd991e15c101d0f48b793fbcd64322530906df7"
+        },
+        {
+          "path": "internal/bodyexecution/composition_condition_evidence_test.go",
+          "sha256": "abd43d355a443e9aea9aaa354af04bc9e88df57c6ddc1ec2c86e1378c0395024"
+        },
+        {
+          "path": "internal/bodyexecution/composition_condition_projection.go",
+          "sha256": "3695cee13c93288921b3ddee0d78fa5683c0cda00f8ba2f0eeaf3a476329d2d8"
+        },
+        {
+          "path": "internal/bodyexecution/composition_condition_protocol_test.go",
+          "sha256": "cb2e913c5e8d1ef1f8d66256cdfc591dec6676ef1a4f169020874047aae78a19"
+        },
+        {
+          "path": "internal/bodyexecution/composition_condition_rows.go",
+          "sha256": "1051cffbe743ce0c602db2e138fd24f8a79aa0e394d95398957fe9b57ac58ed3"
+        },
+        {
+          "path": "internal/bodyexecution/composition_conditions.go",
+          "sha256": "8d58be83d92ccd73440a02d56bdcb98fd38360ba343d1b8f0012a3bec71baaf8"
+        },
+        {
+          "path": "internal/bodyexecution/composition_executor.go",
+          "sha256": "5754047f1d65fb4bfb476d50c97870e5a1b746ee70b1c41c37f6403b6e65bce8"
+        },
+        {
+          "path": "internal/bodyexecution/composition_fault_projection.go",
+          "sha256": "b27e3a4fba7c0bb33c9f1aedd35b0ce2c07b4142eaa00740ec69d7a5296f8b5e"
+        },
+        {
+          "path": "internal/bodyexecution/composition_native_conditions_test.go",
+          "sha256": "4448b986edf12efa3b1cdba177cbec9f9863523e878b96d88a30a12510111a53"
+        },
+        {
+          "path": "internal/bodyexecution/composition_runtime.go",
+          "sha256": "514f70d50198ff300dc75a7116862823b5025bce2731d727124b464dbc036923"
+        },
+        {
+          "path": "internal/bodyexecution/joint_replay.go",
+          "sha256": "53bbb5595c4900a4f020c9fce926f5d7d42b2718f354a774d39492e4cf8120d2"
+        }
+      ],
+      "probe_names": [
+        "TestNativeConditionEvidenceKeepsShortCircuitAndFaults941",
+        "TestNativeConditionEvidenceKeepsSelectedRecordReasons973",
+        "TestNativeConditionProtocolBindsPresenceAndOrder991"
+      ],
+      "prior907_local_replays": 0,
+      "historical_local_replays": 0,
+      "model_predictions": 0,
+      "training_runs": 0
+    },
+    "execution": {
+      "exit_code": 0,
+      "elapsed_ns": 3995776000,
+      "stdout_sha256": "6ea43c8d3eb669a8b0d5ba56c6fe106be36d4e85603690d7811efb555239924d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_single_execution": true,
+      "never_replay_locally": true,
+      "overlay_files": 11
+    },
+    "routes941": {
+      "matched": 4,
+      "expected": 5,
+      "faulted": 1,
+      "condition_events": 9,
+      "condition_sites": 3,
+      "observed_site_outcomes": 5,
+      "possible_site_outcomes": 6,
+      "input_separation_status": "UNKNOWN"
+    },
+    "checks973": {
+      "matched": 4,
+      "expected": 4,
+      "matched_record_fields": 8,
+      "record_fields": 8,
+      "condition_events": 7,
+      "condition_sites": 2,
+      "observed_site_outcomes": 4,
+      "possible_site_outcomes": 4,
+      "disjoint_inputs": 4
+    },
+    "protocol991": "presence, type, case/site bounds, evaluation order, duplicate/aliased keys, total-event bound, and blocked-activity claims checked"
+  },
+  "cli_input_key_failure": {
+    "producer": {
+      "compiler_head": "61a9bdfc71735e2702bb0475cde66edabf3bc36e",
+      "compiler_tree": "a19352d91b4b5e6d1fb4ddd86d2b0d0fe543f3ef",
+      "overlays": [
+        {
+          "path": "internal/bodyexecution/composition_condition_driver.go",
+          "sha256": "48aff77eb38261855bae2d995dd991e15c101d0f48b793fbcd64322530906df7"
+        },
+        {
+          "path": "internal/bodyexecution/composition_condition_evidence_test.go",
+          "sha256": "abd43d355a443e9aea9aaa354af04bc9e88df57c6ddc1ec2c86e1378c0395024"
+        },
+        {
+          "path": "internal/bodyexecution/composition_condition_projection.go",
+          "sha256": "5c352716f75374f41163ad6b4c17d31e335837b045b296d81c2305b848c84096"
+        },
+        {
+          "path": "internal/bodyexecution/composition_condition_protocol_test.go",
+          "sha256": "cb2e913c5e8d1ef1f8d66256cdfc591dec6676ef1a4f169020874047aae78a19"
+        },
+        {
+          "path": "internal/bodyexecution/composition_condition_rows.go",
+          "sha256": "1051cffbe743ce0c602db2e138fd24f8a79aa0e394d95398957fe9b57ac58ed3"
+        },
+        {
+          "path": "internal/bodyexecution/composition_conditions.go",
+          "sha256": "8d58be83d92ccd73440a02d56bdcb98fd38360ba343d1b8f0012a3bec71baaf8"
+        },
+        {
+          "path": "internal/bodyexecution/composition_executor.go",
+          "sha256": "5754047f1d65fb4bfb476d50c97870e5a1b746ee70b1c41c37f6403b6e65bce8"
+        },
+        {
+          "path": "internal/bodyexecution/composition_fault_projection.go",
+          "sha256": "b27e3a4fba7c0bb33c9f1aedd35b0ce2c07b4142eaa00740ec69d7a5296f8b5e"
+        },
+        {
+          "path": "internal/bodyexecution/composition_native_conditions_test.go",
+          "sha256": "4448b986edf12efa3b1cdba177cbec9f9863523e878b96d88a30a12510111a53"
+        },
+        {
+          "path": "internal/bodyexecution/composition_runtime.go",
+          "sha256": "514f70d50198ff300dc75a7116862823b5025bce2731d727124b464dbc036923"
+        },
+        {
+          "path": "internal/bodyexecution/joint_replay.go",
+          "sha256": "53bbb5595c4900a4f020c9fce926f5d7d42b2718f354a774d39492e4cf8120d2"
+        }
+      ],
+      "source_input_hashes": {
+        "cases.json": "10e432a7fa7e531c2ee5a2c51cfd1e70d77233bf47919cb7316dc769228e03fd",
+        "workspace.json": "3faa11c1547afbf6d3c7f67f0fd9bf5c2ef3c266fe27d6189e9037d1fdbcf86b",
+        "계약.gooo.fixture": "3bb27e4c1cbc2e1d72031b50737c192babdecd0cbfaedcae39896b5f733fe372",
+        "승인.gooo.fixture": "15f1fa339f9c70161491eba0c441d5c2a43cf0ba40bef57bfa5fdd757e07b312"
+      },
+      "scope": "one fresh payment1031 actual CLI; actual native if truth values with source-owned selected record reasons; prior907 and941/973 local replays0; training0/model0"
+    },
+    "execution": {
+      "exit_code": 1,
+      "wall_ns": 600112125,
+      "children_user_seconds": 0.010098,
+      "children_system_seconds": 0.014661999999999998
+    },
+    "stdout_sha256": "7ba08e42345599ef7cc4065c89ed9f265066b5549f36ac249b78977f2ec5b18e",
+    "decision": "FAIL_CLOSED",
+    "failure": "case 0 input: unknown package activity key \"Receive\"; use <package-path>:<activity>[.<input-port>]",
+    "native_execution_observed": false,
+    "recovery": "distinct units1067 source and cases; original payment1031 never replayed"
+  },
+  "final_cli": {
+    "observation_file": "observation.json",
+    "producer_overlay_files": 11,
+    "production_go_files": 8,
+    "new_test_files": 3,
+    "comment_preservation": "ParseComments enabled after original941/973; final producer separately bound by CLI1067"
+  },
+  "competitor_executions": 0,
+  "model_predictions": 0,
+  "training_runs": 0
+}

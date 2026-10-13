@@ -1,0 +1,70 @@
+{
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "COMPLETE",
+    "recorded_events": 2,
+    "dropped_events": 0,
+    "sha256": "sha256:e7740f8f81fe23193cf9dced45cfa92a0c913bdb466099efaef8091bf3fb0859"
+  },
+  "condition_sites": [
+    {
+      "expression_id": "sha256:b99cac0f3a17b70d9fd157ca28140dcb219f40c128110445afa759ca6024c6cb",
+      "root_activity_id": "thresholds1247://evaluate",
+      "activity_id": "thresholds1247://evaluate",
+      "expression": "input < 37",
+      "projection_sha256": "sha256:795aeafc2d0a44bd7f667a7756f86fbd91e64f7dbfce3339d2f0422587a170bf",
+      "start": 136,
+      "end": 146
+    }
+  ],
+  "finite_passed": 2,
+  "finite_total": 2,
+  "generated_sha256": "sha256:795aeafc2d0a44bd7f667a7756f86fbd91e64f7dbfce3339d2f0422587a170bf",
+  "model_calls": 0,
+  "observed_driver_sha256": "sha256:e2dd0ed64a92992dc957c850fc14f9bbc440e01bdc0b2f55625c526e0dc16c78",
+  "observed_projection_sha256": "sha256:9cbb6daf37bc80c6ca638acb3923b140c21c8f7ce4408b6dd52b4d378e1ba8f5",
+  "runtime_replayed": true,
+  "source": "package thresholds1247\nnamespace thresholds1247\nentity Integer id \"thresholds1247://integer\"\nactivity Evaluate(Integer) -> Integer id \"thresholds1247://evaluate\" computes \"if input < 37 { return input + 3 }; return input - 2\"\n",
+  "source_sha256": "sha256:e63be318a09a84b674c52ae20fa4738e1abfe4d3212c4f8abf5f1311cbed9564",
+  "stage": "COMPLETE",
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "thresholds1247://evaluate",
+          "input": 15,
+          "actual": 18,
+          "expected": 18,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "thresholds1247://evaluate",
+          "input": 43,
+          "actual": 41,
+          "expected": 41,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        }
+      ]
+    }
+  ]
+}

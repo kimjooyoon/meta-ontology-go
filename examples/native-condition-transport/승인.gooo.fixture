@@ -1,0 +1,13 @@
+package app
+namespace quota1289_app
+import 계약 "quota1289/contract"
+activity Authorize(계약.Request) -> 계약.Decision id "urn:quota1289:authorize" computes "if input.quantity < 3 { return 계약.Decision{approved:false, reason: \"invalid_quantity\", reference:input.reference} }; if input.quantity > input.available { return 계약.Decision{approved:false, reason: \"capacity_shortage\", reference:input.reference} }; return __GOOO_BODY_HOLE_result__" assembling {
+ source_fill intent "Carry approval, its source-declared reason and request reference together." {
+  hole "result"
+  candidate "fit" { fill "result" "계약.Decision{approved:true, reason: \"available_capacity\", reference:input.reference}" }
+  candidate "mislabel" { fill "result" "계약.Decision{approved:true, reason: \"unknown\", reference:input.reference}" }
+ }
+ value_case "[{\"quantity\":9,\"available\":22,\"reference\":\"selection1289\"}]" -> "{\"approved\":true,\"reason\":\"available_capacity\",\"reference\":\"selection1289\"}"
+ holdout_value_case "[{\"quantity\":14,\"available\":32,\"reference\":\"held1289\"}]" -> "{\"approved\":true,\"reason\":\"available_capacity\",\"reference\":\"held1289\"}"
+}
+bind 계약.Receive.result -> Authorize.input
