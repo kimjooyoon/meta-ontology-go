@@ -1,0 +1,16 @@
+=== RUN   TestOriginSubjectCapacity24071
+    origin_subject_capacity_fresh_test.go:14: cmd/gooo#hasPackageOriginQueryOptions rendered 11
+    origin_subject_capacity_fresh_test.go:14: cmd/gooo#packageOriginQuery rendered 58
+    origin_subject_capacity_fresh_test.go:14: cmd/gooo#parsePackageExecuteArgs rendered 35
+    origin_subject_capacity_fresh_test.go:14: cmd/gooo#writePackageOriginInput rendered 34
+    origin_subject_capacity_fresh_test.go:14: internal/bodyexecution#NativeOriginQuery.hasSubjectSelection rendered 5
+    origin_subject_capacity_fresh_test.go:14: internal/bodyexecution#ValidateNativeOriginQuery rendered 19
+    origin_subject_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.addField rendered 12
+    origin_subject_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.fieldFileLocation rendered 34
+    origin_subject_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.visitFields rendered 22
+    origin_subject_capacity_fresh_test.go:14: internal/bodyexecution#selectRecordedNativeOrigins rendered 64
+    origin_subject_capacity_fresh_test.go:14: internal/bodyexecution#validateOriginSubjectSelection rendered 10
+    origin_subject_capacity_fresh_test.go:15: complete changed production declarations 11 unchanged75-line helper cap;producer/model0
+--- PASS: TestOriginSubjectCapacity24071 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.899s

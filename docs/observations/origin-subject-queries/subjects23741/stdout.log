@@ -1,0 +1,9 @@
+=== RUN   TestOriginSubjectSelection23741
+    native_origin_subject_fresh_test.go:90: stable ID versus display labels recorded bridge summary differs from windows, clocks or source metadata <nil>
+--- FAIL: TestOriginSubjectSelection23741 (0.00s)
+=== RUN   TestOriginSubjectLineage23741
+    native_origin_subject_fresh_test.go:104: helper original identity <nil> {0 write 3 3 1 urn:directreturn21917:pick urn:directreturn21917:make 0 <return:0> urn:directreturn21917:box urn:directreturn21917:tag record_constructor value MAPPED  origin/directreturn21917 직접반환21917.gooo urn:directreturn21917:make sha256:3c035f1b67875e9da44a82b9733b19abe359af2b7cb6a4db06d5bdce2a3c43e6 386 396 "helper"   }
+--- FAIL: TestOriginSubjectLineage23741 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.517s
+FAIL
