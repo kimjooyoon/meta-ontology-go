@@ -1,0 +1,12 @@
+[
+  "2026-10-14T20:04:50.7413689Z         ok  \tgithub.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance\t8.107s",
+  "2026-10-14T20:04:50.7414704Z         --- FAIL: TestEverydayDenominator73RetainsHistorical72Target67471 (0.00s)",
+  "2026-10-14T20:04:50.7422262Z             everyday_denominator_fresh67471_test.go:13: current registered-source target {gooo/vertical-slice-boundary-denominator/v1 gooo.denominator.capability.vertical-slice-closure.v74 74 [{syntax gooo/language-syntax-roundtrip/v1 prove-language-syntax-roundtrip 110 1} {semantics gooo/language-semantic-model/v1 prove-staged-semantic-model 46 2} {binding gooo/language-semantic-readiness-binding/v2 bind-semantic-readiness-evidence 12 2} {use-cases gooo/toolchain-executable-use-cases/v1 execute-versioned-use-cases 3 1} {toolchain gooo/toolchain-conformance-report/v1 close-toolchain-conformance-ledger 181 3} {release gooo/toolchain-cross-platform-release-report/v1 assemble-exact-cross-platform-release 26 4}]} <nil>",
+  "2026-10-14T20:04:50.7424464Z         FAIL",
+  "2026-10-14T20:04:50.7425029Z         FAIL\tgithub.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow\t0.008s",
+  "2026-10-14T20:04:50.7425461Z         FAIL",
+  "2026-10-14T20:04:51.0251498Z --- FAIL: TestNativeNineMemberCandidatePassesExistingConformance (15.10s)",
+  "2026-10-14T20:04:51.0257068Z FAIL",
+  "2026-10-14T20:04:51.0262839Z FAIL\tgithub.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration\t15.103s",
+  "2026-10-14T20:04:51.0282510Z FAIL"
+]

@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T14:02:10.301890+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-role-origin-write-set-20261014/role34731/overlay.json",
+    "./internal/meta/syntaxregistration",
+    "-run=^TestMultiplePhysicalRoleOrigins34731$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}

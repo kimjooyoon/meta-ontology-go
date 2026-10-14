@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-14T20:25:22.914834+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-race",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-stable-registered-origin-20261015/wire73143/overlay.json",
+    "./internal/bodyexecution",
+    "-run=^TestReceiptWire(Shapes|Counterexamples|SourceTraversal)73143$",
+    "-v"
+  ],
+  "scope": "new synthetic receipt/input cohort only",
+  "historical_test_reruns": 0,
+  "model_calls": 0
+}

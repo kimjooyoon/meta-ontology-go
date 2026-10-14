@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-14T18:14:28.045222+00:00",
+  "source_head": "4dbdbc664418c35869f23501a2677df47bf370c2",
+  "test_executions": 0,
+  "commands": [
+    [
+      "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+      "list",
+      "-race",
+      "-test",
+      "-overlay=/private/tmp/gooo-race-package-order-20261015/scope57213/overlay.json",
+      "./..."
+    ],
+    [
+      "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+      "list",
+      "-race",
+      "-test",
+      "-overlay=/private/tmp/gooo-race-package-order-20261015/scope57213/overlay.json",
+      "./internal/meta/repositoryprojection/extractor",
+      "./..."
+    ]
+  ]
+}

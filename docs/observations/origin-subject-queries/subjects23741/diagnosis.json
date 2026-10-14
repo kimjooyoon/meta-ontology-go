@@ -1,0 +1,9 @@
+{
+  "status": "failed assertion scope;no native producer/model executions",
+  "observed": [
+    "display-label metadata refresh omitted bridge metadata digest",
+    "helper return writes are registered before evaluation;actual helper tag has original event/assignment3,not1"
+  ],
+  "repair": "refresh both metadata digests;assert original event3;new source/queries23963 use five-row offset2 page",
+  "historical_reruns": 0
+}

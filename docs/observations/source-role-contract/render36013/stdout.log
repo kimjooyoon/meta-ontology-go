@@ -1,0 +1,9 @@
+=== RUN   TestRoleSourceRendering36013
+    role_source_render_fresh36013_test.go:38: freshAssertRoleWriteSet34731 rendered 46
+    role_source_render_fresh36013_test.go:38: physicalRoleFixture35917 rendered 54
+    role_source_render_fresh36013_test.go:38: TestMultiplePhysicalRoleOrigins34731 rendered 28
+    role_source_render_fresh36013_test.go:38: assertPhysicalModelOrigins35917 rendered 17
+    role_source_render_fresh36013_test.go:55: all4 verification declarations and actual source partition preserve75-line cap;all9 roles/3 model owners remain;producer/model0
+--- PASS: TestRoleSourceRendering36013 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.487s

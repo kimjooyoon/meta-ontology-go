@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-14T10:43:04.617649+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "fix",
+    "-diff",
+    "-overlay",
+    "/private/tmp/gooo-fill-candidate-origins-20261014/static25871/overlay.json",
+    "./cmd/gooo",
+    "./internal/bodycodegen",
+    "./internal/bodyexecution",
+    "./internal/cliobservations",
+    "./internal/meta/repositoryprojection/extractor"
+  ],
+  "tests_executed": 0
+}

@@ -1,0 +1,15 @@
+package derivedorigins
+namespace derivedorigins
+entity Integer id "urn:gooo:type:integer"
+activity Choose(Integer)->Integer id "urn:derivedorigins:choose" computes "if __GOOO_BODY_HOLE_condition__ { return __GOOO_BODY_HOLE_value__ }; return input" assembling {
+ source_fill intent "Choose a small conditional adjustment." {
+  hole "condition"
+  hole "value"
+  derive assignments max_candidates "4" {
+   hole "condition" grammar "integer-predicate/v1" max_expressions "2"
+   hole "value" grammar "integer-offset-constant/v1" max_expressions "3"
+  }
+ }
+ case "41" -> "42"
+ case "47" -> "48"
+}

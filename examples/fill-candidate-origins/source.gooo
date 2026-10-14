@@ -1,0 +1,22 @@
+package fillcandidatesource
+namespace fillcandidatesource
+
+entity Integer id "urn:fillcandidatesource:integer"
+
+// 선택 전에 후보의 출처와 본문 빈자리만 읽는다.
+activity Choose(Integer) -> Integer computes "if input < 0 { return __GOOO_BODY_HOLE_bias__ }; return __GOOO_BODY_HOLE_value__" assembling {
+ source_fill intent "Adjust the value using a declared assignment." {
+  hole "value"
+  hole "bias"
+  candidate "wrong_type" {
+   fill "value" "true"
+   fill "bias" "input - 1"
+  }
+  candidate "increment" {
+   fill "value" "input + 1"
+   fill "bias" "input - 1"
+  }
+ }
+ case "2" -> "3"
+ case "-2" -> "-3"
+}

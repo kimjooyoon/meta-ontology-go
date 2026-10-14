@@ -1,0 +1,5 @@
+=== RUN   TestGoooCandidateOrigins24731
+    fill_candidate_origins_fresh_test.go:84: reader24731:actual CLI maps explicit unselected candidate2 rows;Gooo classifies mapped2 and ambiguous1+mapped1;finite0,model0;candidate producer not executed
+--- PASS: TestGoooCandidateOrigins24731 (1.61s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/cliobservations	4.664s

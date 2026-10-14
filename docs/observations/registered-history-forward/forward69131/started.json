@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-14T19:57:30.279336+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-stable-registered-origin-20261015/forward69131/overlay.json",
+    "./internal/meta/languageassurance/verticalsliceclosureshadow",
+    "-run=^TestRegisteredHistoryForwardScope69131$",
+    "-v"
+  ],
+  "scope": "new predicate parameter views and immutable historical decoder data;not a new generated native74/75 run",
+  "historical_test_reruns": 0
+}

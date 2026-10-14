@@ -1,0 +1,92 @@
+{
+  "id": 116067764323,
+  "run_id": 38626756252,
+  "workflow_name": "Syntax registration candidate",
+  "head_branch": "agent/everyday-source-registration-20261015",
+  "run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/runs/38626756252",
+  "run_attempt": 1,
+  "node_id": "CR_kwDOT1omE88AAAAbBi2IYw",
+  "head_sha": "cd5ed4381e1800952632ddf72c4ce55ecfe63a25",
+  "url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/jobs/116067764323",
+  "html_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38626756252/job/116067764323",
+  "status": "completed",
+  "conclusion": "failure",
+  "created_at": "2026-10-14T19:48:30Z",
+  "started_at": "2026-10-14T19:50:32Z",
+  "completed_at": "2026-10-14T19:51:47Z",
+  "name": "native-candidate",
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1,
+      "started_at": "2026-10-14T19:50:33Z",
+      "completed_at": "2026-10-14T19:50:35Z"
+    },
+    {
+      "name": "Run actions/checkout@v7",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2,
+      "started_at": "2026-10-14T19:50:35Z",
+      "completed_at": "2026-10-14T19:50:38Z"
+    },
+    {
+      "name": "Run actions/setup-go@v7",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3,
+      "started_at": "2026-10-14T19:50:38Z",
+      "completed_at": "2026-10-14T19:50:45Z"
+    },
+    {
+      "name": "Generate and apply candidate only to a temporary copy",
+      "status": "completed",
+      "conclusion": "failure",
+      "number": 4,
+      "started_at": "2026-10-14T19:50:45Z",
+      "completed_at": "2026-10-14T19:51:45Z"
+    },
+    {
+      "name": "Preserve native candidate evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 5,
+      "started_at": "2026-10-14T19:51:45Z",
+      "completed_at": "2026-10-14T19:51:45Z"
+    },
+    {
+      "name": "Post Run actions/setup-go@v7",
+      "status": "completed",
+      "conclusion": "skipped",
+      "number": 9,
+      "started_at": "2026-10-14T19:51:45Z",
+      "completed_at": "2026-10-14T19:51:45Z"
+    },
+    {
+      "name": "Post Run actions/checkout@v7",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 10,
+      "started_at": "2026-10-14T19:51:45Z",
+      "completed_at": "2026-10-14T19:51:45Z"
+    },
+    {
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 11,
+      "started_at": "2026-10-14T19:51:45Z",
+      "completed_at": "2026-10-14T19:51:45Z"
+    }
+  ],
+  "check_run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/check-runs/116067764323",
+  "labels": [
+    "ubuntu-latest"
+  ],
+  "runner_id": 1000370195,
+  "runner_name": "GitHub Actions 1000370195",
+  "runner_group_id": 0,
+  "runner_group_name": "GitHub Actions"
+}

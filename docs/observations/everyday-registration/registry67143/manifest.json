@@ -1,0 +1,75 @@
+{
+  "base": "8d057a805d284653cf68c5dcf4efc8cc415d1d5a",
+  "files": [
+    {
+      "path": "docs/observations/everyday-registration/prior-corpus.json.gz",
+      "bytes": 2714,
+      "sha256": "572ebc3036d212c4a9f5d8dfbf8aeec96e0bbe7552bb6157bd97b59d36fc5730"
+    },
+    {
+      "path": "examples/language-syntax-roundtrip/corpus.json",
+      "bytes": 38039,
+      "sha256": "e91d9a0dd0ef70493353db6bf0bb31a475323a0ba813cef165f8a983cf3db618"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/everyday_registration_fresh67143_test.go",
+      "bytes": 2834,
+      "sha256": "72d50cd0baf12e8cf134eebac29f5bc8b09390ed27ca5f2ef35bb26ce8934394"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/model.go",
+      "bytes": 3529,
+      "sha256": "db2abd7d9af5a638d206ba18077d1658e025c04a46d6839e0a4473a4671f46c7"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry.go",
+      "bytes": 4558,
+      "sha256": "5e906f9e368037dc6d8b1f24f1a8f10f9181f3385b608b1c5c41bca838f4279d"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases.go",
+      "bytes": 393,
+      "sha256": "5159974e99782afcc5c9fbc33a2f15ac491d20611293f62c3cd1630b8ad01557"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases_group0.go",
+      "bytes": 4907,
+      "sha256": "c59ebb9f64705eb7c76ebbdee636399a64d31ea6928eea1e3fbf6eb9b9bb55c3"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases_group1.go",
+      "bytes": 4921,
+      "sha256": "e6e6d39f590a57afa6ec5aaae00f1d362105f1877fc1eaf6277e5d1781a1720d"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases_group2.go",
+      "bytes": 5091,
+      "sha256": "a4dee914e88d157b3cf06c3c2e25ae589f1c0f3614b04fb933d569edc52cf3f8"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases_group3.go",
+      "bytes": 4978,
+      "sha256": "28a1743f83ffa80cfd514b4a7124651a5c78c7be40ba327f8979b9aa964edf81"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases_group4.go",
+      "bytes": 5372,
+      "sha256": "9d67a4b61a31d8ae7a94b95cab45ed8981cd19ba261e5bd0e827c3c713d6cb37"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go",
+      "bytes": 3080,
+      "sha256": "15ffe6eb8298cc81cae9e061eb7fd5d5181c975e4a43e9ebf13bcec39fb5d938"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_packages.go",
+      "bytes": 2037,
+      "sha256": "29472bcac31a758465085bc2305d8f8cdfb0585f9640ba1be3c60cfd797b07e1"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/source_origin_registration_fresh_test.go",
+      "bytes": 2103,
+      "sha256": "e49d1861e6c65f63628a823287a64ea7e63d245a959f25032799ccfb91f8151b"
+    }
+  ]
+}

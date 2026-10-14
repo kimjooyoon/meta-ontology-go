@@ -1,0 +1,378 @@
+{
+  "source": "b3eb244587cfab6797ece74da9e25fd9bc6e00e7",
+  "run_id": 38601965529,
+  "job_id": 115983186026,
+  "events": 39107,
+  "parse_errors": [],
+  "last_event_time": "2026-10-14T17:19:02.493267196Z",
+  "active_tests": [],
+  "paused_tests": [],
+  "slow_completed_tests": [
+    {
+      "Time": "2026-10-14T17:11:52.855691574Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Test": "TestProducerReplayAndConsumerBindOneReceipt",
+      "Elapsed": 124.21
+    },
+    {
+      "Time": "2026-10-14T17:12:23.973896209Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestCallbackExtractionObservesOriginalAndFinalPackageCI",
+      "Elapsed": 116.77
+    },
+    {
+      "Time": "2026-10-14T17:17:30.304573421Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestClosurePreservationRejectsCoherentSourceMutantsCI",
+      "Elapsed": 80.93
+    },
+    {
+      "Time": "2026-10-14T17:14:57.832273856Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestPaginationCallbackFactoryOriginalAndGeneratedCI",
+      "Elapsed": 79.86
+    },
+    {
+      "Time": "2026-10-14T17:13:37.581423476Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestNormalPaginationFailureCarriesGoooBoundRenderedProposalCI",
+      "Elapsed": 73.47
+    },
+    {
+      "Time": "2026-10-14T17:09:30.338423917Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance",
+      "Test": "TestProjectionCorpusBindsActualSourceAndBothArtifacts",
+      "Elapsed": 66.51
+    },
+    {
+      "Time": "2026-10-14T17:04:49.245048969Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Test": "TestMarshalGraphDumpRejectsOversizeOutput",
+      "Elapsed": 64.92
+    },
+    {
+      "Time": "2026-10-14T17:06:45.278665014Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Test": "TestGoooFieldLocalBridge15317",
+      "Elapsed": 55.97
+    },
+    {
+      "Time": "2026-10-14T17:01:02.495468864Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/callback-preview",
+      "Test": "TestPreviewCLIFactoryUsesTypedLoweringInput",
+      "Elapsed": 53.43
+    },
+    {
+      "Time": "2026-10-14T17:06:57.662213797Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Test": "TestPackageConstructBoundedPartialAndMixedPackages",
+      "Elapsed": 52.06
+    },
+    {
+      "Time": "2026-10-14T17:07:42.32308537Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Test": "TestGoooBridgePartialAndLeaf15717",
+      "Elapsed": 45.77
+    },
+    {
+      "Time": "2026-10-14T17:09:22.969615219Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Test": "TestPackageStringOperationsExecuteAndReplay",
+      "Elapsed": 44.17
+    },
+    {
+      "Time": "2026-10-14T17:12:43.522483251Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Test": "TestConsumerRejectsResealedCohortChanges",
+      "Elapsed": 42.13
+    },
+    {
+      "Time": "2026-10-14T17:14:38.738924938Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution",
+      "Test": "TestCollapseExecutionRouteUsesNativeMaterializer",
+      "Elapsed": 37.52
+    },
+    {
+      "Time": "2026-10-14T17:15:37.342852981Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestPaginationCallbackPreviewCI",
+      "Elapsed": 33.96
+    },
+    {
+      "Time": "2026-10-14T17:10:05.11570256Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "Test": "TestRelativeV3ReleaseProfileNativeCI",
+      "Elapsed": 33.14
+    },
+    {
+      "Time": "2026-10-14T17:18:11.345957724Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestPaginationGenericExtractionTerminatesWithUnprovenCallbackIdentity",
+      "Elapsed": 32.15
+    },
+    {
+      "Time": "2026-10-14T17:16:09.376365073Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestClosurePreservationReplaysAgainstOriginalSourceCI",
+      "Elapsed": 31.75
+    },
+    {
+      "Time": "2026-10-14T17:01:30.714875616Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/assets/ontology-visuals",
+      "Test": "TestVisualContract",
+      "Elapsed": 31.7
+    },
+    {
+      "Time": "2026-10-14T17:05:30.628712937Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Test": "TestGoooRecordedFieldLineage14111",
+      "Elapsed": 30.99
+    },
+    {
+      "Time": "2026-10-14T17:00:57.118594268Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-syntax-witness",
+      "Test": "TestNativeSyntaxNegativeReportCannotBecomeAcceptance",
+      "Elapsed": 29.01
+    },
+    {
+      "Time": "2026-10-14T17:04:59.63414841Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Test": "TestGoooFieldLineageCapacity14611",
+      "Elapsed": 28.87
+    },
+    {
+      "Time": "2026-10-14T17:01:39.717834458Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/assets/metric-pressure-loop",
+      "Test": "TestGeneratedAnimationMetadata",
+      "Elapsed": 28.62
+    },
+    {
+      "Time": "2026-10-14T17:02:05.383025755Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/assets/metric-pressure-loop",
+      "Test": "TestGeneratedBytesAreDeterministic",
+      "Elapsed": 25.67
+    },
+    {
+      "Time": "2026-10-14T17:07:44.312359412Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "Test": "TestJointFillSearchAndRecordWithRejectedPrefix",
+      "Elapsed": 24.3
+    }
+  ],
+  "last_extractor_outputs": [
+    {
+      "Time": "2026-10-14T17:18:51.868789487Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixRejectsRelocatedFunctionLiteralIdentity",
+      "Output": "--- PASS: TestSuffixRejectsRelocatedFunctionLiteralIdentity (0.00s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:51.86883201Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixDoesNotRejectAnUnmovedPrefixLiteral",
+      "Output": "=== RUN   TestSuffixDoesNotRejectAnUnmovedPrefixLiteral\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:51.868952319Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixDoesNotRejectAnUnmovedPrefixLiteral",
+      "Output": "--- PASS: TestSuffixDoesNotRejectAnUnmovedPrefixLiteral (0.00s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:51.869023528Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixClosureOwnerCounterexampleUsesSameModuleCI",
+      "Output": "=== RUN   TestSuffixClosureOwnerCounterexampleUsesSameModuleCI\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.247321302Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixClosureOwnerCounterexampleUsesSameModuleCI",
+      "Output": "    suffix_closure_identity_test.go:103: same-module suffix counterexample before=example.invalid/suffix-identity.TestProbe.func1 after=example.invalid/suffix-identity.extractedSuffix.func1\n"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.247615105Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixClosureOwnerCounterexampleUsesSameModuleCI",
+      "Output": "--- PASS: TestSuffixClosureOwnerCounterexampleUsesSameModuleCI (0.38s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.249599103Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixFieldSelectorsAreNotLexicalCaptures",
+      "Output": "=== RUN   TestSuffixFieldSelectorsAreNotLexicalCaptures\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.249606974Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixFieldSelectorsAreNotLexicalCaptures/anonymous-record",
+      "Output": "=== RUN   TestSuffixFieldSelectorsAreNotLexicalCaptures/anonymous-record\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.24961102Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixFieldSelectorsAreNotLexicalCaptures/anonymous-record",
+      "Output": "--- PASS: TestSuffixFieldSelectorsAreNotLexicalCaptures/anonymous-record (0.00s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.249618954Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixFieldSelectorsAreNotLexicalCaptures/same-named-local",
+      "Output": "=== RUN   TestSuffixFieldSelectorsAreNotLexicalCaptures/same-named-local\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.249621471Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixFieldSelectorsAreNotLexicalCaptures/same-named-local",
+      "Output": "--- PASS: TestSuffixFieldSelectorsAreNotLexicalCaptures/same-named-local (0.00s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.24967473Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixFieldSelectorsAreNotLexicalCaptures/nested-record",
+      "Output": "=== RUN   TestSuffixFieldSelectorsAreNotLexicalCaptures/nested-record\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.250843471Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixFieldSelectorsAreNotLexicalCaptures/nested-record",
+      "Output": "--- PASS: TestSuffixFieldSelectorsAreNotLexicalCaptures/nested-record (0.00s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.250980124Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixFieldSelectorsAreNotLexicalCaptures",
+      "Output": "--- PASS: TestSuffixFieldSelectorsAreNotLexicalCaptures (0.00s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.252048787Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixTypeQualificationCohort",
+      "Output": "=== RUN   TestSuffixTypeQualificationCohort\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.252066608Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixTypeQualificationCohort/local-main",
+      "Output": "=== RUN   TestSuffixTypeQualificationCohort/local-main\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.252072184Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixTypeQualificationCohort/local-main",
+      "Output": "--- PASS: TestSuffixTypeQualificationCohort/local-main (0.00s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.252084402Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixTypeQualificationCohort/foreign-same-name",
+      "Output": "=== RUN   TestSuffixTypeQualificationCohort/foreign-same-name\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.252089666Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixTypeQualificationCohort/foreign-same-name",
+      "Output": "--- PASS: TestSuffixTypeQualificationCohort/foreign-same-name (0.00s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.252106349Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixTypeQualificationCohort/mixed-local-and-foreign",
+      "Output": "=== RUN   TestSuffixTypeQualificationCohort/mixed-local-and-foreign\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.252113873Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixTypeQualificationCohort/mixed-local-and-foreign",
+      "Output": "--- PASS: TestSuffixTypeQualificationCohort/mixed-local-and-foreign (0.00s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.252127759Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestSuffixTypeQualificationCohort",
+      "Output": "--- PASS: TestSuffixTypeQualificationCohort (0.00s)\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:52.252135714Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Output": "PASS\n",
+      "OutputType": "frame"
+    },
+    {
+      "Time": "2026-10-14T17:18:53.275086109Z",
+      "Action": "output",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Output": "ok  \tgithub.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor\t507.492s\n"
+    }
+  ],
+  "scope": "original test2json events;parent/subtest intervals overlap;active tests establish incomplete execution,not deadlock cause"
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "everyday/adjust:Adjust.input0": 5,
+        "everyday/adjust:Adjust.input1": true
+      },
+      "expected": {
+        "everyday/adjust:Adjust": 32
+      }
+    },
+    {
+      "inputs": {
+        "everyday/adjust:Adjust.input0": -7,
+        "everyday/adjust:Adjust.input1": false
+      },
+      "expected": {
+        "everyday/adjust:Adjust": 4
+      }
+    },
+    {
+      "inputs": {
+        "everyday/adjust:Adjust.input0": 0,
+        "everyday/adjust:Adjust.input1": true
+      },
+      "expected": {
+        "everyday/adjust:Adjust": 22
+      }
+    }
+  ]
+}

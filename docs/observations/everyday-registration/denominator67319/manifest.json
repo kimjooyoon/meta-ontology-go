@@ -1,0 +1,45 @@
+{
+  "base": "8d057a805d284653cf68c5dcf4efc8cc415d1d5a",
+  "files": [
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+      "bytes": 10061,
+      "sha256": "5edabf628627c4c4f910ddbf2b1d90da50b04bfbb633223829db09c5e77f6e92"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+      "bytes": 11577,
+      "sha256": "3a1cf96cf4ab0703ae70809b9faa558f7b04c08ac1268dfa7560ef169f64cd06"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+      "bytes": 22880,
+      "sha256": "f85f4695a3fce23a8c4ba33386b8b1997a17f99b2e6b57b60e97c271f29bb80c"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_v72_fresh_test.go",
+      "bytes": 2079,
+      "sha256": "c7f41006a99b45fcecf15b37e00c89d751ea20a1425dd562246a070f219e8ab7"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/everyday_denominator_fresh67319_test.go",
+      "bytes": 1146,
+      "sha256": "800f84d27d4c00d6b2d0b42e0b9b07dc36d29cb4d5e7a753ed924a41d4413970"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v72.json",
+      "bytes": 1363,
+      "sha256": "a2c5f1b122d393aff2fc4f4b5ab21889f9548a4f3eb86559a9ece4a755738351"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v73.json",
+      "bytes": 1363,
+      "sha256": "08c612ba137581d648e49339dcd2e6b95b391b97ce0c28e8204c83091e8d9616"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+      "bytes": 11511,
+      "sha256": "2576b169399f19f922c80cdd1db6574ec14306970891613b94bd9374b0e7e595"
+    }
+  ]
+}
