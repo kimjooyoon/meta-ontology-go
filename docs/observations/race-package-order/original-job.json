@@ -1,0 +1,92 @@
+{
+  "id": 116004690167,
+  "run_id": 38608271678,
+  "workflow_name": "CI [PR authoritative]",
+  "head_branch": "agent/callback-import-origins-20261015",
+  "run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/runs/38608271678",
+  "run_attempt": 1,
+  "node_id": "CR_kwDOT1omE88AAAAbAmsY9w",
+  "head_sha": "4dbdbc664418c35869f23501a2677df47bf370c2",
+  "url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/jobs/116004690167",
+  "html_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38608271678/job/116004690167",
+  "status": "completed",
+  "conclusion": "cancelled",
+  "created_at": "2026-10-14T17:37:49Z",
+  "started_at": "2026-10-14T17:42:57Z",
+  "completed_at": "2026-10-14T18:03:15Z",
+  "name": "go test -race",
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1,
+      "started_at": "2026-10-14T17:42:57Z",
+      "completed_at": "2026-10-14T17:42:58Z"
+    },
+    {
+      "name": "Run actions/checkout@v7",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2,
+      "started_at": "2026-10-14T17:42:58Z",
+      "completed_at": "2026-10-14T17:43:02Z"
+    },
+    {
+      "name": "Run actions/setup-go@v7",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3,
+      "started_at": "2026-10-14T17:43:02Z",
+      "completed_at": "2026-10-14T17:43:11Z"
+    },
+    {
+      "name": "Materialize exact logical workspace",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 4,
+      "started_at": "2026-10-14T17:43:11Z",
+      "completed_at": "2026-10-14T17:43:22Z"
+    },
+    {
+      "name": "Run go test -race -json ./...",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "number": 5,
+      "started_at": "2026-10-14T17:43:22Z",
+      "completed_at": "2026-10-14T18:03:12Z"
+    },
+    {
+      "name": "Post Run actions/setup-go@v7",
+      "status": "completed",
+      "conclusion": "skipped",
+      "number": 9,
+      "started_at": "2026-10-14T18:03:12Z",
+      "completed_at": "2026-10-14T18:03:12Z"
+    },
+    {
+      "name": "Post Run actions/checkout@v7",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 10,
+      "started_at": "2026-10-14T18:03:12Z",
+      "completed_at": "2026-10-14T18:03:12Z"
+    },
+    {
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 11,
+      "started_at": "2026-10-14T18:03:12Z",
+      "completed_at": "2026-10-14T18:03:12Z"
+    }
+  ],
+  "check_run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/check-runs/116004690167",
+  "labels": [
+    "ubuntu-latest"
+  ],
+  "runner_id": 1000369918,
+  "runner_name": "GitHub Actions 1000369918",
+  "runner_group_id": 0,
+  "runner_group_name": "GitHub Actions"
+}

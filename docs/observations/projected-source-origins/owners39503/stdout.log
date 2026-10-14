@@ -1,0 +1,8 @@
+=== RUN   TestPhysicalRoleOwnerLayouts39503
+    role_owner_layout_fresh39503_test.go:58: new whole and empty-original/moved-declaration layouts;all4 roots;actual extraction;unchanged75 cap;models0
+--- PASS: TestPhysicalRoleOwnerLayouts39503 (0.01s)
+=== RUN   TestPhysicalRoleOwnerRefusals39503
+    role_owner_layout_fresh39503_test.go:75: new duplicate and foreign/missing ownership inputs rejected;no invented owner
+--- PASS: TestPhysicalRoleOwnerRefusals39503 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.512s

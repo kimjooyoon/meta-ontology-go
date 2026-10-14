@@ -1,0 +1,42 @@
+=== RUN   TestRegistrySourceOrigins28817
+=== RUN   TestRegistrySourceOrigins28817/inline
+    registry_origins_fresh28817_test.go:60: 2:87: missing ',' before newline in composite literal
+=== RUN   TestRegistrySourceOrigins28817/renamed-and-relocated
+    registry_origins_fresh28817_test.go:60: 2:68: missing ',' before newline in composite literal
+=== RUN   TestRegistrySourceOrigins28817/nested
+    registry_origins_fresh28817_test.go:60: 3:68: missing ',' before newline in composite literal
+--- FAIL: TestRegistrySourceOrigins28817 (0.00s)
+    --- FAIL: TestRegistrySourceOrigins28817/inline (0.00s)
+    --- FAIL: TestRegistrySourceOrigins28817/renamed-and-relocated (0.00s)
+    --- FAIL: TestRegistrySourceOrigins28817/nested (0.00s)
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/cycle
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/duplicate-leaf
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/branch
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/external
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/argument
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/named-return
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/non-slice-append
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/side-effect
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/empty-tail
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/shadowed-append
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/shadowed-helper
+=== RUN   TestRegistrySourceOriginsRejectUnknown28817/ambiguous-helper
+--- PASS: TestRegistrySourceOriginsRejectUnknown28817 (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/cycle (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/duplicate-leaf (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/branch (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/external (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/argument (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/named-return (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/non-slice-append (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/side-effect (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/empty-tail (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/shadowed-append (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/shadowed-helper (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28817/ambiguous-helper (0.00s)
+=== RUN   TestRegistryFullCandidateOrigins28817
+--- PASS: TestRegistryFullCandidateOrigins28817 (0.17s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.634s
+FAIL

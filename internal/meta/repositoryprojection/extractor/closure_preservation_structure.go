@@ -27,7 +27,7 @@ type closureProofBinding struct {
 	slot     string
 }
 
-func closureProofOutput(root, logical string, original *ast.File, target *ast.FuncDecl, candidate CallbackPreviewCandidate) (closureProofCandidate, error) {
+func closureProofOutput(root, logical string, original *ast.File, target *ast.FuncDecl, candidate CallbackPreviewCandidate, standard *standardImportSession) (closureProofCandidate, error) {
 	output := closureProofCandidate{source: []byte(candidate.CandidateSource), fset: token.NewFileSet()}
 	file, err := parser.ParseFile(output.fset, logical, output.source, parser.ParseComments)
 	if err != nil {
@@ -56,7 +56,7 @@ func closureProofOutput(root, logical string, original *ast.File, target *ast.Fu
 	if outputTarget == nil {
 		return output, closureProofFailure("candidate lost its original function")
 	}
-	output.evidence, err = checkTypes(root, logical, output.fset, file, outputTarget)
+	output.evidence, err = checkTypesWithStandard(root, logical, output.fset, file, outputTarget, standard)
 	if err != nil {
 		return output, err
 	}

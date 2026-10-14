@@ -1,0 +1,40 @@
+=== RUN   TestRegistrySourceOrigins28903
+=== RUN   TestRegistrySourceOrigins28903/inline-comment-comma
+=== RUN   TestRegistrySourceOrigins28903/inline
+=== RUN   TestRegistrySourceOrigins28903/renamed-and-relocated
+=== RUN   TestRegistrySourceOrigins28903/nested
+--- PASS: TestRegistrySourceOrigins28903 (0.00s)
+    --- PASS: TestRegistrySourceOrigins28903/inline-comment-comma (0.00s)
+    --- PASS: TestRegistrySourceOrigins28903/inline (0.00s)
+    --- PASS: TestRegistrySourceOrigins28903/renamed-and-relocated (0.00s)
+    --- PASS: TestRegistrySourceOrigins28903/nested (0.00s)
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/cycle
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/duplicate-leaf
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/branch
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/external
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/argument
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/named-return
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/non-slice-append
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/side-effect
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/empty-tail
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/shadowed-append
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/shadowed-helper
+=== RUN   TestRegistrySourceOriginsRejectUnknown28903/ambiguous-helper
+--- PASS: TestRegistrySourceOriginsRejectUnknown28903 (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/cycle (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/duplicate-leaf (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/branch (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/external (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/argument (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/named-return (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/non-slice-append (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/side-effect (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/empty-tail (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/shadowed-append (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/shadowed-helper (0.00s)
+    --- PASS: TestRegistrySourceOriginsRejectUnknown28903/ambiguous-helper (0.00s)
+=== RUN   TestRegistryFullCandidateOrigins28903
+--- PASS: TestRegistryFullCandidateOrigins28903 (0.34s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.816s

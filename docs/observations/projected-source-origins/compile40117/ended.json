@@ -1,0 +1,50 @@
+{
+  "at": "2026-10-14T16:00:53.436020+00:00",
+  "exit": 0,
+  "fresh_synthetic_inputs": 2,
+  "actual_go_tests_executed": 0,
+  "historical_reruns": 0,
+  "model_calls": 0,
+  "results": [
+    {
+      "input_exit": 0,
+      "harness_exit": 0,
+      "caller_status_retained": true,
+      "observation": {
+        "schema": "gooo.projected-compile-observation/v1",
+        "command": [
+          "go",
+          "test",
+          "./..."
+        ],
+        "cwd": "/private/tmp/gooo-projected-source-origins-20261015/compile40117/0",
+        "exit_code": 0,
+        "stdout_bytes": 45,
+        "stdout_digest": "sha256:a3402d57c60b5e7cbc45acc15994bbe5c55969d3371921ddbc9027640f37dab9",
+        "stderr_bytes": 34,
+        "stderr_digest": "sha256:641da6ff303b8e1639bd5bf02529c409b97c33433d6e49c924bc2616a3f5db23",
+        "observed": true
+      }
+    },
+    {
+      "input_exit": 37,
+      "harness_exit": 0,
+      "caller_status_retained": true,
+      "observation": {
+        "schema": "gooo.projected-compile-observation/v1",
+        "command": [
+          "go",
+          "test",
+          "./..."
+        ],
+        "cwd": "/private/tmp/gooo-projected-source-origins-20261015/compile40117/37",
+        "exit_code": 37,
+        "stdout_bytes": 45,
+        "stdout_digest": "sha256:a3402d57c60b5e7cbc45acc15994bbe5c55969d3371921ddbc9027640f37dab9",
+        "stderr_bytes": 34,
+        "stderr_digest": "sha256:641da6ff303b8e1639bd5bf02529c409b97c33433d6e49c924bc2616a3f5db23",
+        "observed": false
+      }
+    }
+  ]
+}

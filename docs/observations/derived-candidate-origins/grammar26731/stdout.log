@@ -1,0 +1,8 @@
+=== RUN   TestDerivedOriginPlan26731
+    source_fill_derived_origins_fresh_test.go:76: grammar26731:4 retained assignments of6;2 omitted;2 original grammar/hole/use rows for selected lookup;no expression/candidate declaration fabricated;producer/model0
+--- PASS: TestDerivedOriginPlan26731 (0.00s)
+=== RUN   TestDerivedOriginUnresolved26731
+    source_fill_derived_origins_fresh_test.go:97: grammar26731:missing use retains grammar with no use range;unknown assignment/context/cancellation remain errors;model0
+--- PASS: TestDerivedOriginUnresolved26731 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.522s

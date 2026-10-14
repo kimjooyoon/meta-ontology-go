@@ -1,0 +1,15 @@
+{
+  "base": "4dbdbc664418c35869f23501a2677df47bf370c2",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 113543,
+      "sha256": "f70c02f9b909fc97e3c562abe796eebcc4351be27bffbcc77a9d031ceb6fbb90"
+    },
+    {
+      "path": "internal/verify/race_scope_fresh57213_test.go",
+      "bytes": 1933,
+      "sha256": "6122ea125bec7dea99bf6a90dadd3283aab7a05f8029472ac8230c3239ff81a4"
+    }
+  ]
+}

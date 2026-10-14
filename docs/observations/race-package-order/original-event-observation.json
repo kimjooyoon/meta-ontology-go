@@ -1,0 +1,2875 @@
+{
+  "schema": "gooo/original-race-event-observation/v1",
+  "pr": 1571,
+  "head": "4dbdbc664418c35869f23501a2677df47bf370c2",
+  "run_id": 38608271678,
+  "run_attempt": 1,
+  "job_id": 116004690167,
+  "job_conclusion": "cancelled",
+  "job_started_at": "2026-10-14T17:42:57Z",
+  "job_completed_at": "2026-10-14T18:03:15Z",
+  "recorded_at": "2026-10-14T18:10:27.695207+00:00",
+  "raw_bytes": 13053698,
+  "raw_sha256": "d96173a19f7eeeb17beb5b37c7ece09012c3fb210c2a8f8a594b6e2f0b73c372",
+  "archive_sha256": "0cd4b521eefeae1b652d58109a365a9fa61b39a7c51f342f81fdfa54f0b958e4",
+  "valid_events": 39116,
+  "parse_error_count": 0,
+  "parse_errors": [],
+  "first_event": "2026-10-14T17:44:15.608489939Z",
+  "last_event": "2026-10-14T18:03:04.155662412Z",
+  "counts": {
+    "package:start": 431,
+    "test:run": 8465,
+    "test:output": 20645,
+    "test:pass": 8448,
+    "package:output": 676,
+    "package:skip": 187,
+    "package:pass": 243,
+    "test:skip": 17,
+    "test:pause": 2,
+    "test:cont": 2
+  },
+  "active_packages": [
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "last_action": "start",
+      "time": "2026-10-14T17:54:40.675101246Z"
+    }
+  ],
+  "active_tests": [],
+  "slow_tests": [
+    {
+      "Time": "2026-10-14T17:56:08.650138013Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Test": "TestProducerReplayAndConsumerBindOneReceipt",
+      "Elapsed": 144.05
+    },
+    {
+      "Time": "2026-10-14T17:56:41.126625498Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestCallbackExtractionObservesOriginalAndFinalPackageCI",
+      "Elapsed": 119.64
+    },
+    {
+      "Time": "2026-10-14T17:59:14.288902Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestPaginationCallbackFactoryOriginalAndGeneratedCI",
+      "Elapsed": 79.71
+    },
+    {
+      "Time": "2026-10-14T18:01:40.625217133Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestClosurePreservationRejectsCoherentSourceMutantsCI",
+      "Elapsed": 78.08
+    },
+    {
+      "Time": "2026-10-14T17:57:53.931636445Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestNormalPaginationFailureCarriesGoooBoundRenderedProposalCI",
+      "Elapsed": 72.64
+    },
+    {
+      "Time": "2026-10-14T17:53:47.772191832Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance",
+      "Test": "TestProjectionCorpusBindsActualSourceAndBothArtifacts",
+      "Elapsed": 67.77
+    },
+    {
+      "Time": "2026-10-14T17:51:06.014752596Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Test": "TestGoooFieldLocalBridge15317",
+      "Elapsed": 59.47
+    },
+    {
+      "Time": "2026-10-14T17:50:51.769271235Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Test": "TestPackageConstructBoundedPartialAndMixedPackages",
+      "Elapsed": 53.37
+    },
+    {
+      "Time": "2026-10-14T17:53:24.346398426Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Test": "TestPackageStringOperationsExecuteAndReplay",
+      "Elapsed": 49.55
+    },
+    {
+      "Time": "2026-10-14T17:45:06.310892743Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/callback-preview",
+      "Test": "TestPreviewCLIFactoryUsesTypedLoweringInput",
+      "Elapsed": 49.49
+    },
+    {
+      "Time": "2026-10-14T17:52:06.295765019Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Test": "TestGoooBridgePartialAndLeaf15717",
+      "Elapsed": 47.45
+    },
+    {
+      "Time": "2026-10-14T17:57:04.865994375Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Test": "TestConsumerRejectsResealedCohortChanges",
+      "Elapsed": 46.84
+    },
+    {
+      "Time": "2026-10-14T17:48:37.144662133Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Test": "TestMarshalGraphDumpRejectsOversizeOutput",
+      "Elapsed": 43.9
+    },
+    {
+      "Time": "2026-10-14T17:58:59.484202085Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution",
+      "Test": "TestCollapseExecutionRouteUsesNativeMaterializer",
+      "Elapsed": 42.01
+    },
+    {
+      "Time": "2026-10-14T17:45:43.264846408Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/assets/ontology-visuals",
+      "Test": "TestVisualContract",
+      "Elapsed": 35.72
+    },
+    {
+      "Time": "2026-10-14T17:59:53.028050913Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestPaginationCallbackPreviewCI",
+      "Elapsed": 34.46
+    },
+    {
+      "Time": "2026-10-14T17:54:22.655017853Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "Test": "TestRelativeV3ReleaseProfileNativeCI",
+      "Elapsed": 33.51
+    },
+    {
+      "Time": "2026-10-14T17:49:46.647897465Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Test": "TestGoooRecordedFieldLineage14111",
+      "Elapsed": 32.73
+    },
+    {
+      "Time": "2026-10-14T18:02:21.111918123Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestPaginationGenericExtractionTerminatesWithUnprovenCallbackIdentity",
+      "Elapsed": 31.71
+    },
+    {
+      "Time": "2026-10-14T17:45:51.039405804Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/assets/metric-pressure-loop",
+      "Test": "TestGeneratedAnimationMetadata",
+      "Elapsed": 31.38
+    },
+    {
+      "Time": "2026-10-14T17:49:13.916130038Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Test": "TestGoooFieldLineageCapacity14611",
+      "Elapsed": 30.88
+    },
+    {
+      "Time": "2026-10-14T18:00:22.548443934Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestClosurePreservationReplaysAgainstOriginalSourceCI",
+      "Elapsed": 29.23
+    },
+    {
+      "Time": "2026-10-14T17:46:17.849951479Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/assets/metric-pressure-loop",
+      "Test": "TestGeneratedBytesAreDeterministic",
+      "Elapsed": 26.81
+    },
+    {
+      "Time": "2026-10-14T17:45:05.17065281Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-syntax-witness",
+      "Test": "TestNativeSyntaxNegativeReportCannotBecomeAcceptance",
+      "Elapsed": 26.58
+    },
+    {
+      "Time": "2026-10-14T17:56:44.263935814Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Test": "TestConsumerRejectsResealedCohortChanges/omitted-direct-missing",
+      "Elapsed": 23.86
+    },
+    {
+      "Time": "2026-10-14T17:51:52.06861815Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "Test": "TestJointFillSearchAndRecordWithRejectedPrefix",
+      "Elapsed": 23.65
+    },
+    {
+      "Time": "2026-10-14T17:55:03.486853134Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation",
+      "Test": "TestGoHumanGuardCanonicalPublicGenerationUsesFrozenNativeOracle",
+      "Elapsed": 23.6
+    },
+    {
+      "Time": "2026-10-14T17:57:27.376643407Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Test": "TestConsumerRejectsValidJSONResealedProgramTamper",
+      "Elapsed": 22.51
+    },
+    {
+      "Time": "2026-10-14T17:57:51.552671385Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Test": "TestConsumerRejectsResealedAndTamperedEvidence",
+      "Elapsed": 21.7
+    },
+    {
+      "Time": "2026-10-14T17:57:04.865977102Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Test": "TestConsumerRejectsResealedCohortChanges/replaced-resealed",
+      "Elapsed": 20.6
+    },
+    {
+      "Time": "2026-10-14T17:57:51.533517807Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Test": "TestConsumerRejectsResealedAndTamperedEvidence/forged-resealed-receipt",
+      "Elapsed": 19.43
+    },
+    {
+      "Time": "2026-10-14T17:54:04.578652304Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "Test": "TestJointSearchLimitsConflictAndBinding",
+      "Elapsed": 18.75
+    },
+    {
+      "Time": "2026-10-14T17:55:21.694635224Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation",
+      "Test": "TestGoErrorGuardGeneratedCandidateUsesFrozenNativeOracle",
+      "Elapsed": 18.05
+    },
+    {
+      "Time": "2026-10-14T17:55:39.702807661Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation",
+      "Test": "TestGoGuardPipelineCanonicalCandidateUsesFrozenNativeOracle",
+      "Elapsed": 18
+    },
+    {
+      "Time": "2026-10-14T18:02:55.061177739Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestTypeSafeSuffixProgressFinalizesWithBoundedFinalEvidence",
+      "Elapsed": 17.95
+    }
+  ],
+  "package_terminals": [
+    {
+      "Time": "2026-10-14T17:44:16.63171044Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor",
+      "Elapsed": 1.023
+    },
+    {
+      "Time": "2026-10-14T17:44:16.630865417Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/line-density-rewriter",
+      "Elapsed": 1.017
+    },
+    {
+      "Time": "2026-10-14T17:44:15.801514499Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/logical-split-planner",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:15.801540518Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/meta-actionability-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:15.801556739Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/meta-binding-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:15.801571486Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-cutover",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:15.801587546Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-materializer",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:15.801630498Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/command",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:16.811330457Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence",
+      "Elapsed": 1.01
+    },
+    {
+      "Time": "2026-10-14T17:44:16.632473422Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/source-repacker",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:16.632495193Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/workspace-activator",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.673679381Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/artifact-feedback-resolution-witness",
+      "Elapsed": 1.041
+    },
+    {
+      "Time": "2026-10-14T17:44:16.633414477Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/artifact-resolution-experiment",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.660353393Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/callback-extraction-observe",
+      "Elapsed": 1.027
+    },
+    {
+      "Time": "2026-10-14T17:45:13.870172838Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/callback-preview",
+      "Elapsed": 57.058
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674757814Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/candidate-leakage-activation-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.67477674Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/candidate-leakage-eligibility-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674795465Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/candidate-leakage-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674812287Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/causal-ci-selection-consumer",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674832355Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/changed-surface-receipt-activation-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674850769Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/changed-surface-receipt-eligibility-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674870847Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/changed-surface-receipt-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674886667Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/ci-plan-scorecard",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674905303Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/directory-kind-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674922275Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/directory-partition-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674939256Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/entity-fields-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674955066Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/external-capability-execution-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.67497288Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/external-capability-execution-witness/authorization",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.674991746Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/external-capability-execution-witness/authorization-foundation",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.675008948Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/external-capability-execution-witness/eligibility",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.675025289Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/external-conformance-activation-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.675042221Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/external-ecosystem-conformance-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:17.675058141Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/external-ecosystem-execution-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:18.7724018Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/feedback-predecessor-witness",
+      "Elapsed": 1.097
+    },
+    {
+      "Time": "2026-10-14T17:44:18.806921227Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/feedback-semantic-state-witness",
+      "Elapsed": 1.124
+    },
+    {
+      "Time": "2026-10-14T17:53:27.306740106Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Elapsed": 534.886
+    },
+    {
+      "Time": "2026-10-14T17:44:32.442064036Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo-body-worker",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:32.442085526Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/guarded-promotion-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:32.442102949Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/integration-progress-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:32.442122236Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-artifact-oracle",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:32.442138967Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-assurance-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:32.442168062Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-assurance-witness/assurance-generator",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:32.442186347Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-assurance-witness/reconstructor",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:32.442205653Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-assurance-witness/write-set-observer",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:32.442222405Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-comparison",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:36.549054107Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-concept-artifact-witness",
+      "Elapsed": 4.107
+    },
+    {
+      "Time": "2026-10-14T17:44:33.100065212Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-debug-experiment",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.1000852Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-delivery-scorecard",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.100104236Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-deterministic-query-readiness-binding",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.100119084Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-deterministic-query-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.100133952Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-diagnostic-provenance-readiness-binding",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.100149581Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-diagnostic-provenance-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.1001649Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-example-experiment",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.100180489Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-go-interoperation-readiness-binding",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.100197692Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-go-interoperation-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.100211989Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-package-execution-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.100230574Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-package-runtime-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:33.100246494Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-profile-experiment",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:36.536227391Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness",
+      "Elapsed": 3.436
+    },
+    {
+      "Time": "2026-10-14T17:44:36.539200802Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/foundation-seed",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:36.539221791Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/guarded-capability",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:37.569368376Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-binding",
+      "Elapsed": 1.03
+    },
+    {
+      "Time": "2026-10-14T17:44:36.560787277Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-binding/transition",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:38.543464503Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-selection",
+      "Elapsed": 1.983
+    },
+    {
+      "Time": "2026-10-14T17:44:37.575888721Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/proposal-compat",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:37.575912566Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/proposal-promotion",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:38.652477965Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/rollback-fixed-point",
+      "Elapsed": 1.077
+    },
+    {
+      "Time": "2026-10-14T17:44:38.554759838Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/transition",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:38.554781899Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-semantic-readiness-binding",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:38.554803771Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-semantic-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:38.554819721Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-source-binding-promotion",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:38.554834759Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-source-execution-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.401615566Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-syntax-witness",
+      "Elapsed": 28.847
+    },
+    {
+      "Time": "2026-10-14T17:44:38.660791512Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-test-experiment",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:38.66081188Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-utility-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:44:58.836614838Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-consumer",
+      "Elapsed": 20.176
+    },
+    {
+      "Time": "2026-10-14T17:45:03.349294052Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-witness",
+      "Elapsed": 4.509
+    },
+    {
+      "Time": "2026-10-14T17:45:03.351550559Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-witness/next-execution",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:03.3515723Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/opentofu-observation-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:03.35160407Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/operation-artifact-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:04.405821558Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/promotion-authorized-continuity",
+      "Elapsed": 1.054
+    },
+    {
+      "Time": "2026-10-14T17:45:04.408834964Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/repository-topology-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:04.408853209Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/rollback-integrity-activation-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:04.408868167Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/rollback-integrity-eligibility-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:04.408882204Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/rollback-integrity-shadow-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:04.408897212Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-activation-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:04.408911148Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-promotion-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:05.462560706Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-shadow-witness",
+      "Elapsed": 1.054
+    },
+    {
+      "Time": "2026-10-14T17:45:06.487375564Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-upstream-witness",
+      "Elapsed": 1.023
+    },
+    {
+      "Time": "2026-10-14T17:45:06.495043703Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/symbolic-invocation-usecase",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.520903583Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-registration-candidate",
+      "Elapsed": 1.026
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406645056Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-cli-witness",
+      "Elapsed": 0.001
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406668821Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-conformance-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406685743Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-format-fix-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406702545Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-lsp-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.40672097Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-release-platform-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406737521Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-release-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406754153Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-usecase-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406769832Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/user-journey-scorecard",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406786253Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/vertical-slice-closure-activation-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406802263Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/vertical-slice-closure-eligibility-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406818815Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/vertical-slice-closure-shadow-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:07.406835827Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/workgraph-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:46:18.925627149Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/assets/metric-pressure-loop",
+      "Elapsed": 71.519
+    },
+    {
+      "Time": "2026-10-14T17:45:44.291839231Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/assets/ontology-visuals",
+      "Elapsed": 36.768
+    },
+    {
+      "Time": "2026-10-14T17:45:13.879212635Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/caller-guided-construction-20261008",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:13.879231902Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/caller-search-rejection-20261009",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:15.125764496Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/choice-contract-cli-20261010/audit",
+      "Elapsed": 1.2469999999999999
+    },
+    {
+      "Time": "2026-10-14T17:45:15.12801913Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/choice-contract-cli-20261010/producer",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:15.1280615Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/condition-feedback-20261010",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:15.128081648Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/condition-model-cli-20261010/audit",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:16.286818956Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/contract-model-cli-20261010/audit",
+      "Elapsed": 1.159
+    },
+    {
+      "Time": "2026-10-14T17:45:16.289947519Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/contract-model-cli-20261010/producer",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:17.555538593Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/execution-model-cli-20261010/audit",
+      "Elapsed": 1.266
+    },
+    {
+      "Time": "2026-10-14T17:45:18.801508982Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/flow-model-cli-20261010/audit",
+      "Elapsed": 1.244
+    },
+    {
+      "Time": "2026-10-14T17:45:21.505954881Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/leaky-flow-cli-20261010/audit",
+      "Elapsed": 2.702
+    },
+    {
+      "Time": "2026-10-14T17:45:21.509315091Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/release-0612-20261008",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:21.509333526Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/release-0613-20261009",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:21.509350057Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/release-0614-20261009",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:23.062517717Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/semantic-flow-cli-20261010/audit",
+      "Elapsed": 1.553
+    },
+    {
+      "Time": "2026-10-14T17:45:23.065263277Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/docs/research/source-conditions-20261010",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:23.065288094Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/examples/billing",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:23.065308964Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/examples/language-profile",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:23.065327909Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/examples/meta-policy-compilation/counterexample-execution",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:23.065345332Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/examples/meta-policy-compilation/counterexample-proposal",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:24.203022557Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/examples/meta-policy-compilation/go-error-guard",
+      "Elapsed": 1.138
+    },
+    {
+      "Time": "2026-10-14T17:45:24.205433206Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/examples/order-prepared-native",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:24.20545644Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/examples/retained-native-runtime",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:24.20547767Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/examples/scalar-source-model/make-model",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:24.205495333Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/examples/source-recipe-cost",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:45:25.22522496Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/examples/workflow-outcome-delta/referencego",
+      "Elapsed": 1.02
+    },
+    {
+      "Time": "2026-10-14T17:45:45.941549553Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/analyzer",
+      "Elapsed": 20.712
+    },
+    {
+      "Time": "2026-10-14T17:45:45.360588382Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/analyzer/couplingmanifest",
+      "Elapsed": 1.064
+    },
+    {
+      "Time": "2026-10-14T17:45:46.402892416Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci",
+      "Elapsed": 1.04
+    },
+    {
+      "Time": "2026-10-14T17:45:47.411313318Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci/impactcoverage",
+      "Elapsed": 1.074
+    },
+    {
+      "Time": "2026-10-14T17:45:48.195667121Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/analyzer/semanticbinding",
+      "Elapsed": 1.034
+    },
+    {
+      "Time": "2026-10-14T17:45:49.120302371Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec",
+      "Elapsed": 1.057
+    },
+    {
+      "Time": "2026-10-14T17:45:54.102517071Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/bidir",
+      "Elapsed": 2.111
+    },
+    {
+      "Time": "2026-10-14T17:48:57.36406576Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen",
+      "Elapsed": 174.067
+    },
+    {
+      "Time": "2026-10-14T17:55:27.121809348Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "Elapsed": 563.336
+    },
+    {
+      "Time": "2026-10-14T17:46:34.487093002Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/bodypathstream",
+      "Elapsed": 14.624
+    },
+    {
+      "Time": "2026-10-14T17:47:36.903216783Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyrefinement",
+      "Elapsed": 61.173
+    },
+    {
+      "Time": "2026-10-14T17:47:38.515845291Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/bodytiming",
+      "Elapsed": 1.024
+    },
+    {
+      "Time": "2026-10-14T17:47:40.005709162Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/buildidentity",
+      "Elapsed": 1.015
+    },
+    {
+      "Time": "2026-10-14T17:47:44.17271274Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cache",
+      "Elapsed": 1.693
+    },
+    {
+      "Time": "2026-10-14T17:52:16.026860217Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Elapsed": 269.857
+    },
+    {
+      "Time": "2026-10-14T17:48:59.200389227Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/completeness",
+      "Elapsed": 1.124
+    },
+    {
+      "Time": "2026-10-14T17:49:04.753862576Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/completenessdelta",
+      "Elapsed": 4.266
+    },
+    {
+      "Time": "2026-10-14T17:49:07.660919036Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/adapter",
+      "Elapsed": 1.396
+    },
+    {
+      "Time": "2026-10-14T17:49:10.163375387Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/coupling",
+      "Elapsed": 1.22
+    },
+    {
+      "Time": "2026-10-14T17:49:12.043802245Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci",
+      "Elapsed": 1.064
+    },
+    {
+      "Time": "2026-10-14T17:49:14.079029812Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/bindingcoverage",
+      "Elapsed": 1.16
+    },
+    {
+      "Time": "2026-10-14T17:49:15.531651997Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/eligibilityregistry",
+      "Elapsed": 1.017
+    },
+    {
+      "Time": "2026-10-14T17:49:17.195299724Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/lanefrontier",
+      "Elapsed": 1.054
+    },
+    {
+      "Time": "2026-10-14T17:49:19.461456909Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/metarecognition",
+      "Elapsed": 1.051
+    },
+    {
+      "Time": "2026-10-14T17:49:21.407185385Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/pressure_independence",
+      "Elapsed": 1.223
+    },
+    {
+      "Time": "2026-10-14T17:49:22.89234544Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/r4safe_workid",
+      "Elapsed": 1.016
+    },
+    {
+      "Time": "2026-10-14T17:49:24.763335999Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/resource_vector",
+      "Elapsed": 1.096
+    },
+    {
+      "Time": "2026-10-14T17:49:26.715262202Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/safeworkbinding",
+      "Elapsed": 1.053
+    },
+    {
+      "Time": "2026-10-14T17:49:34.658508891Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/selectiveci/shadow",
+      "Elapsed": 6.8469999999999995
+    },
+    {
+      "Time": "2026-10-14T17:49:36.83363863Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/decisionroute",
+      "Elapsed": 1.103
+    },
+    {
+      "Time": "2026-10-14T17:49:39.075881174Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling",
+      "Elapsed": 1.169
+    },
+    {
+      "Time": "2026-10-14T17:49:40.885228117Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/cycles",
+      "Elapsed": 1.029
+    },
+    {
+      "Time": "2026-10-14T17:49:42.620796736Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/freshness",
+      "Elapsed": 1.029
+    },
+    {
+      "Time": "2026-10-14T17:49:44.133855033Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/impactgraph",
+      "Elapsed": 1.028
+    },
+    {
+      "Time": "2026-10-14T17:49:46.126008854Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps",
+      "Elapsed": 1.056
+    },
+    {
+      "Time": "2026-10-14T17:49:47.595587782Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/performance",
+      "Elapsed": 1.017
+    },
+    {
+      "Time": "2026-10-14T17:49:49.150448235Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/protectedregions",
+      "Elapsed": 1.019
+    },
+    {
+      "Time": "2026-10-14T17:49:50.810403377Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/resourceenvelope",
+      "Elapsed": 1.035
+    },
+    {
+      "Time": "2026-10-14T17:49:52.70139436Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/roundtrip",
+      "Elapsed": 1.054
+    },
+    {
+      "Time": "2026-10-14T17:49:54.970054257Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci",
+      "Elapsed": 1.098
+    },
+    {
+      "Time": "2026-10-14T17:49:56.976347634Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/bindingcoverage",
+      "Elapsed": 1.17
+    },
+    {
+      "Time": "2026-10-14T17:49:58.784322065Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/fullsoundness",
+      "Elapsed": 1.049
+    },
+    {
+      "Time": "2026-10-14T17:50:00.540243587Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/lanefrontier",
+      "Elapsed": 1.033
+    },
+    {
+      "Time": "2026-10-14T17:50:02.410655877Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/semanticdelta",
+      "Elapsed": 1.032
+    },
+    {
+      "Time": "2026-10-14T17:50:05.770679109Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier",
+      "Elapsed": 2.324
+    },
+    {
+      "Time": "2026-10-14T17:50:07.394230266Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressurecoverage",
+      "Elapsed": 1.041
+    },
+    {
+      "Time": "2026-10-14T17:50:10.226851871Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressureshadow",
+      "Elapsed": 1.5859999999999999
+    },
+    {
+      "Time": "2026-10-14T17:50:10.322074264Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/domaincompleteness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:12.476244442Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/entityfieldsv1",
+      "Elapsed": 1.048
+    },
+    {
+      "Time": "2026-10-14T17:50:12.478960344Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/fileopen",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:14.128583423Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/formatfix",
+      "Elapsed": 1.028
+    },
+    {
+      "Time": "2026-10-14T17:50:15.982435856Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/formatter",
+      "Elapsed": 1.027
+    },
+    {
+      "Time": "2026-10-14T17:50:21.045295513Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/generator",
+      "Elapsed": 1.9300000000000002
+    },
+    {
+      "Time": "2026-10-14T17:50:21.047712711Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/languagecomparison",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:22.530342467Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/languagedebug",
+      "Elapsed": 1.02
+    },
+    {
+      "Time": "2026-10-14T17:50:24.152476117Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/languageprofile",
+      "Elapsed": 1.02
+    },
+    {
+      "Time": "2026-10-14T17:50:25.731367532Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/languagetest",
+      "Elapsed": 1.021
+    },
+    {
+      "Time": "2026-10-14T17:50:30.323646707Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/lsp",
+      "Elapsed": 1.291
+    },
+    {
+      "Time": "2026-10-14T17:50:32.677899522Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/lsp/coupling",
+      "Elapsed": 1.2650000000000001
+    },
+    {
+      "Time": "2026-10-14T17:50:34.697025457Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/actionability",
+      "Elapsed": 1.073
+    },
+    {
+      "Time": "2026-10-14T17:50:36.17522714Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance",
+      "Elapsed": 1.014
+    },
+    {
+      "Time": "2026-10-14T17:50:38.264438886Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactcoverage",
+      "Elapsed": 1.033
+    },
+    {
+      "Time": "2026-10-14T17:50:40.424542268Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactfeedback",
+      "Elapsed": 1.046
+    },
+    {
+      "Time": "2026-10-14T17:50:42.004400324Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactresolutionexperiment",
+      "Elapsed": 1.023
+    },
+    {
+      "Time": "2026-10-14T17:50:44.715636829Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci",
+      "Elapsed": 1.021
+    },
+    {
+      "Time": "2026-10-14T17:50:44.718777522Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci/consumer",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:46.380852778Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/ciplanusecase",
+      "Elapsed": 1.054
+    },
+    {
+      "Time": "2026-10-14T17:50:48.07172292Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/compatibilitypolicy",
+      "Elapsed": 1.03
+    },
+    {
+      "Time": "2026-10-14T17:50:48.074067582Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/compatibilitypolicy/generated",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:48.074091697Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/compilercompatibility",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:49.623347951Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/directorykind",
+      "Elapsed": 1.023
+    },
+    {
+      "Time": "2026-10-14T17:50:51.186006591Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/directorypartition",
+      "Elapsed": 1.019
+    },
+    {
+      "Time": "2026-10-14T17:50:51.187860408Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/discoverypolicy",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:51.187879604Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/discoverypolicy/generated",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:52.600523543Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/duplicates",
+      "Elapsed": 1.019
+    },
+    {
+      "Time": "2026-10-14T17:50:54.71387451Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/entityfields",
+      "Elapsed": 1.06
+    },
+    {
+      "Time": "2026-10-14T17:50:54.716585584Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/exactsha",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:56.422328634Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution",
+      "Elapsed": 1.019
+    },
+    {
+      "Time": "2026-10-14T17:50:56.425273078Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution/assuranceeligibility",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:58.14682428Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution/authorization",
+      "Elapsed": 1.05
+    },
+    {
+      "Time": "2026-10-14T17:50:58.148518235Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution/authorizationfoundation",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:50:59.755566909Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemconformance",
+      "Elapsed": 1.018
+    },
+    {
+      "Time": "2026-10-14T17:51:01.408323931Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemexecution",
+      "Elapsed": 1.023
+    },
+    {
+      "Time": "2026-10-14T17:51:03.057334015Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackpredecessor",
+      "Elapsed": 1.039
+    },
+    {
+      "Time": "2026-10-14T17:51:04.705907246Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackstate",
+      "Elapsed": 1.048
+    },
+    {
+      "Time": "2026-10-14T17:51:06.162968597Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe",
+      "Elapsed": 1.1219999999999999
+    },
+    {
+      "Time": "2026-10-14T17:51:14.839834833Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/generation",
+      "Elapsed": 4.783
+    },
+    {
+      "Time": "2026-10-14T17:51:16.620316242Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/integrationprogress",
+      "Elapsed": 1.053
+    },
+    {
+      "Time": "2026-10-14T17:51:18.230374225Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageartifactoracle",
+      "Elapsed": 1.028
+    },
+    {
+      "Time": "2026-10-14T17:51:20.771799273Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance",
+      "Elapsed": 1.871
+    },
+    {
+      "Time": "2026-10-14T17:51:22.392902817Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakage",
+      "Elapsed": 1.039
+    },
+    {
+      "Time": "2026-10-14T17:51:23.974195075Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageactivation",
+      "Elapsed": 1.032
+    },
+    {
+      "Time": "2026-10-14T17:51:25.598937007Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageeligibility",
+      "Elapsed": 1.059
+    },
+    {
+      "Time": "2026-10-14T17:51:27.187851466Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipt",
+      "Elapsed": 1.051
+    },
+    {
+      "Time": "2026-10-14T17:51:28.78283069Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceiptactivation",
+      "Elapsed": 1.034
+    },
+    {
+      "Time": "2026-10-14T17:51:30.378862357Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipteligibility",
+      "Elapsed": 1.043
+    },
+    {
+      "Time": "2026-10-14T17:51:32.106879426Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/externalconformanceactivation",
+      "Elapsed": 1.127
+    },
+    {
+      "Time": "2026-10-14T17:51:33.805179507Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityactivation",
+      "Elapsed": 1.05
+    },
+    {
+      "Time": "2026-10-14T17:51:35.45548711Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityeligibility",
+      "Elapsed": 1.054
+    },
+    {
+      "Time": "2026-10-14T17:51:37.551846443Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityshadow",
+      "Elapsed": 1.061
+    },
+    {
+      "Time": "2026-10-14T17:51:39.09304294Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthority",
+      "Elapsed": 1.017
+    },
+    {
+      "Time": "2026-10-14T17:51:40.714656295Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityactivation",
+      "Elapsed": 1.024
+    },
+    {
+      "Time": "2026-10-14T17:51:42.246685262Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityeval",
+      "Elapsed": 1.033
+    },
+    {
+      "Time": "2026-10-14T17:51:43.918143966Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthoritypromotion",
+      "Elapsed": 1.031
+    },
+    {
+      "Time": "2026-10-14T17:51:45.476365363Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityshadow",
+      "Elapsed": 1.038
+    },
+    {
+      "Time": "2026-10-14T17:51:47.051896176Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityupstream",
+      "Elapsed": 1.019
+    },
+    {
+      "Time": "2026-10-14T17:51:48.699831603Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureactivation",
+      "Elapsed": 1.051
+    },
+    {
+      "Time": "2026-10-14T17:51:50.484587888Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureeligibility",
+      "Elapsed": 1.186
+    },
+    {
+      "Time": "2026-10-14T17:51:53.03799321Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow",
+      "Elapsed": 1.142
+    },
+    {
+      "Time": "2026-10-14T17:51:54.420289163Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/writeset",
+      "Elapsed": 1.015
+    },
+    {
+      "Time": "2026-10-14T17:51:59.13669461Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept",
+      "Elapsed": 3.057
+    },
+    {
+      "Time": "2026-10-14T17:52:00.749222673Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedebugexperiment",
+      "Elapsed": 1.024
+    },
+    {
+      "Time": "2026-10-14T17:52:02.734192622Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedelivery",
+      "Elapsed": 1.021
+    },
+    {
+      "Time": "2026-10-14T17:52:04.370558316Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageexampleexperiment",
+      "Elapsed": 1.037
+    },
+    {
+      "Time": "2026-10-14T17:52:05.988907945Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagepackageexecution",
+      "Elapsed": 1.029
+    },
+    {
+      "Time": "2026-10-14T17:52:07.624851388Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageprofileexperiment",
+      "Elapsed": 1.037
+    },
+    {
+      "Time": "2026-10-14T17:52:09.73829531Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness",
+      "Elapsed": 1.032
+    },
+    {
+      "Time": "2026-10-14T17:52:11.811163364Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact",
+      "Elapsed": 1.026
+    },
+    {
+      "Time": "2026-10-14T17:52:13.755407795Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/foundationseed",
+      "Elapsed": 1.035
+    },
+    {
+      "Time": "2026-10-14T17:52:15.200205944Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorbinding",
+      "Elapsed": 1.018
+    },
+    {
+      "Time": "2026-10-14T17:52:17.097319555Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorresolution",
+      "Elapsed": 1.022
+    },
+    {
+      "Time": "2026-10-14T17:52:17.956161835Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorselection",
+      "Elapsed": 1.015
+    },
+    {
+      "Time": "2026-10-14T17:52:18.805711416Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability",
+      "Elapsed": 1.051
+    },
+    {
+      "Time": "2026-10-14T17:52:19.75695475Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedpromotion",
+      "Elapsed": 1.032
+    },
+    {
+      "Time": "2026-10-14T17:52:20.627908057Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/improvement",
+      "Elapsed": 1.022
+    },
+    {
+      "Time": "2026-10-14T17:52:19.758697036Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagedeterministicquery",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:52:19.758715751Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagedeterministicquerybinding",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:52:21.724461453Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance",
+      "Elapsed": 1.017
+    },
+    {
+      "Time": "2026-10-14T17:52:20.910177302Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenancebinding",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:52:20.910204894Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagegointeroperation",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:52:20.910226104Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagegointeroperationbinding",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:52:23.451289811Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime",
+      "Elapsed": 1.87
+    },
+    {
+      "Time": "2026-10-14T17:52:48.245572336Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic",
+      "Elapsed": 25.392
+    },
+    {
+      "Time": "2026-10-14T17:52:23.454114979Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic/replay",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:52:25.096325652Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemanticbinding",
+      "Elapsed": 1.022
+    },
+    {
+      "Time": "2026-10-14T17:52:27.566385719Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "Elapsed": 1.2349999999999999
+    },
+    {
+      "Time": "2026-10-14T17:54:12.242152982Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance",
+      "Elapsed": 103.644
+    },
+    {
+      "Time": "2026-10-14T17:52:49.928346131Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay",
+      "Elapsed": 1.09
+    },
+    {
+      "Time": "2026-10-14T17:52:52.318625031Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/promotioncontinuity",
+      "Elapsed": 1.09
+    },
+    {
+      "Time": "2026-10-14T17:52:54.26234294Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalcompat",
+      "Elapsed": 1.024
+    },
+    {
+      "Time": "2026-10-14T17:52:56.380757237Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion",
+      "Elapsed": 1.041
+    },
+    {
+      "Time": "2026-10-14T17:52:58.519403314Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/rollbackfixedpoint",
+      "Elapsed": 1.067
+    },
+    {
+      "Time": "2026-10-14T17:53:02.247225569Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli",
+      "Elapsed": 2.65
+    },
+    {
+      "Time": "2026-10-14T17:53:04.430048947Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainconformance",
+      "Elapsed": 1.465
+    },
+    {
+      "Time": "2026-10-14T17:53:07.84619352Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix",
+      "Elapsed": 2.336
+    },
+    {
+      "Time": "2026-10-14T17:53:10.096471471Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainlsp",
+      "Elapsed": 1.096
+    },
+    {
+      "Time": "2026-10-14T17:54:29.856366396Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "Elapsed": 75.517
+    },
+    {
+      "Time": "2026-10-14T17:53:31.339146638Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases",
+      "Elapsed": 3.059
+    },
+    {
+      "Time": "2026-10-14T17:53:33.071370052Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourcebindingpromotion",
+      "Elapsed": 1.073
+    },
+    {
+      "Time": "2026-10-14T17:53:34.650900043Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourceexecution",
+      "Elapsed": 1.025
+    },
+    {
+      "Time": "2026-10-14T17:53:36.189486032Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagetestexperiment",
+      "Elapsed": 1.025
+    },
+    {
+      "Time": "2026-10-14T17:53:38.187248829Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageutility",
+      "Elapsed": 1.084
+    },
+    {
+      "Time": "2026-10-14T17:53:38.189389426Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metabinding",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:53:38.189410486Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactual",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:53:38.189427538Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:53:38.18944434Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:53:38.189463957Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:53:38.189484095Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention/verify",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:53:39.628466101Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence",
+      "Elapsed": 1.013
+    },
+    {
+      "Time": "2026-10-14T17:53:41.344728961Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram",
+      "Elapsed": 1.146
+    },
+    {
+      "Time": "2026-10-14T17:53:43.202327823Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/closure",
+      "Elapsed": 1.046
+    },
+    {
+      "Time": "2026-10-14T17:53:43.204159658Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/closure/verify",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:57:59.481246063Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Elapsed": 254.897
+    },
+    {
+      "Time": "2026-10-14T17:54:12.258834445Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/verify",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:54:16.219500547Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy",
+      "Elapsed": 2.302
+    },
+    {
+      "Time": "2026-10-14T17:54:18.639425996Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposal",
+      "Elapsed": 1.164
+    },
+    {
+      "Time": "2026-10-14T17:54:21.790441817Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor",
+      "Elapsed": 1.094
+    },
+    {
+      "Time": "2026-10-14T17:54:23.864408805Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/verify",
+      "Elapsed": 1.018
+    },
+    {
+      "Time": "2026-10-14T17:54:26.020431201Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metrictransition",
+      "Elapsed": 1.026
+    },
+    {
+      "Time": "2026-10-14T17:54:28.002383299Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/opentofuobservation",
+      "Elapsed": 1.1280000000000001
+    },
+    {
+      "Time": "2026-10-14T17:54:29.835638974Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/operationconformance",
+      "Elapsed": 1.034
+    },
+    {
+      "Time": "2026-10-14T17:56:31.275836404Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation",
+      "Elapsed": 118.462
+    },
+    {
+      "Time": "2026-10-14T17:54:32.898692348Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publiccontinuity",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:54:32.898716093Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publicdiscovery",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:54:32.898733696Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publicorchestration",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:54:34.032279543Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse",
+      "Elapsed": 1.134
+    },
+    {
+      "Time": "2026-10-14T17:54:34.035083761Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publicresolutionrepair",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:54:34.035113307Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:54:35.628521918Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publictrust",
+      "Elapsed": 1.018
+    },
+    {
+      "Time": "2026-10-14T17:54:35.630535211Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publictrust/generated",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:54:35.870402638Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publicworkflowlineage",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:55:27.135764557Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositorytopology",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:55:30.267579412Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemantics",
+      "Elapsed": 1.27
+    },
+    {
+      "Time": "2026-10-14T17:55:30.270462112Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemanticsconsumer",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:55:30.270483352Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemanticsschema",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:55:30.270500324Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:55:30.270515032Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy/generated",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:55:32.354355581Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementattestation",
+      "Elapsed": 1.024
+    },
+    {
+      "Time": "2026-10-14T17:55:36.892035033Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate",
+      "Elapsed": 1.9889999999999999
+    },
+    {
+      "Time": "2026-10-14T17:55:48.058555274Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcontinuation",
+      "Elapsed": 9.713
+    },
+    {
+      "Time": "2026-10-14T17:55:58.844122072Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutioncontract",
+      "Elapsed": 8.181
+    },
+    {
+      "Time": "2026-10-14T17:56:16.359234278Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutiongrant",
+      "Elapsed": 14.994
+    },
+    {
+      "Time": "2026-10-14T17:56:18.440306047Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementloop",
+      "Elapsed": 1.031
+    },
+    {
+      "Time": "2026-10-14T17:56:20.479661466Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementobservation",
+      "Elapsed": 1.043
+    },
+    {
+      "Time": "2026-10-14T17:56:23.96637717Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport",
+      "Elapsed": 1.733
+    },
+    {
+      "Time": "2026-10-14T17:56:26.546426595Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput",
+      "Elapsed": 1.056
+    },
+    {
+      "Time": "2026-10-14T17:56:28.569907598Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/semanticresolution",
+      "Elapsed": 1.024
+    },
+    {
+      "Time": "2026-10-14T17:56:30.597258783Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy",
+      "Elapsed": 1.033
+    },
+    {
+      "Time": "2026-10-14T17:56:32.773092767Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase",
+      "Elapsed": 1.025
+    },
+    {
+      "Time": "2026-10-14T17:56:33.526569901Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase/claimledger",
+      "Elapsed": 1.038
+    },
+    {
+      "Time": "2026-10-14T17:57:16.18318994Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "Elapsed": 40.877
+    },
+    {
+      "Time": "2026-10-14T17:56:35.764232866Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/toolchain",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:56:37.021538717Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect",
+      "Elapsed": 1.105
+    },
+    {
+      "Time": "2026-10-14T17:56:37.023987822Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect/workspace",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:56:39.818709126Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffectverification",
+      "Elapsed": 1.027
+    },
+    {
+      "Time": "2026-10-14T17:56:39.820678251Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/userjourneyscorecard",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:56:39.820699401Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/workgraph",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:56:41.39555224Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/metainvocation",
+      "Elapsed": 1.021
+    },
+    {
+      "Time": "2026-10-14T17:56:43.928820207Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/outcomedelta",
+      "Elapsed": 1.342
+    },
+    {
+      "Time": "2026-10-14T17:56:45.983777054Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime",
+      "Elapsed": 1.095
+    },
+    {
+      "Time": "2026-10-14T17:56:48.257583277Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/artifactemit",
+      "Elapsed": 1.161
+    },
+    {
+      "Time": "2026-10-14T17:56:50.27610685Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution",
+      "Elapsed": 1.256
+    },
+    {
+      "Time": "2026-10-14T17:59:13.099631606Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution",
+      "Elapsed": 138.486
+    },
+    {
+      "Time": "2026-10-14T17:57:21.71936215Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/provenance",
+      "Elapsed": 3.623
+    },
+    {
+      "Time": "2026-10-14T17:57:23.669148358Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/provenance/pathclosure",
+      "Elapsed": 1.134
+    },
+    {
+      "Time": "2026-10-14T17:57:26.176500324Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/provenance/selectiveci",
+      "Elapsed": 1.345
+    },
+    {
+      "Time": "2026-10-14T17:57:30.471920178Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/query",
+      "Elapsed": 1.655
+    },
+    {
+      "Time": "2026-10-14T17:57:32.638813703Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/query/couplingexplain",
+      "Elapsed": 1.087
+    },
+    {
+      "Time": "2026-10-14T17:57:34.405252223Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/receiptprojection",
+      "Elapsed": 1.15
+    },
+    {
+      "Time": "2026-10-14T17:57:38.428259412Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/semantic",
+      "Elapsed": 1.12
+    },
+    {
+      "Time": "2026-10-14T17:57:40.012037808Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution",
+      "Elapsed": 1.036
+    },
+    {
+      "Time": "2026-10-14T17:57:42.636016526Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/sourceimpact",
+      "Elapsed": 1.3439999999999999
+    },
+    {
+      "Time": "2026-10-14T17:57:48.146056563Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/syntax",
+      "Elapsed": 3.185
+    },
+    {
+      "Time": "2026-10-14T17:57:48.151125091Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:57:50.447240537Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog",
+      "Elapsed": 1.094
+    },
+    {
+      "Time": "2026-10-14T17:57:52.40997939Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog/causality",
+      "Elapsed": 1.048
+    },
+    {
+      "Time": "2026-10-14T17:57:56.496031871Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/valueexecution",
+      "Elapsed": 1.4889999999999999
+    },
+    {
+      "Time": "2026-10-14T17:58:00.087744611Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/verify",
+      "Elapsed": 1.764
+    },
+    {
+      "Time": "2026-10-14T17:58:00.967716254Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/action-runtime",
+      "Elapsed": 1.017
+    },
+    {
+      "Time": "2026-10-14T17:58:01.936005015Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/artifact-feedback-resolution-ci",
+      "Elapsed": 1.03
+    },
+    {
+      "Time": "2026-10-14T17:58:02.537569953Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/authorized-write-set",
+      "Elapsed": 1.017
+    },
+    {
+      "Time": "2026-10-14T17:58:03.669251993Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/causal-ci-selection",
+      "Elapsed": 1.014
+    },
+    {
+      "Time": "2026-10-14T17:58:04.973201569Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation",
+      "Elapsed": 1.037
+    },
+    {
+      "Time": "2026-10-14T17:58:03.971673837Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation/baseline",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:05.664951509Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation-lineage",
+      "Elapsed": 1.071
+    },
+    {
+      "Time": "2026-10-14T17:58:07.154829835Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-evidence",
+      "Elapsed": 1.263
+    },
+    {
+      "Time": "2026-10-14T17:58:10.920142446Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof",
+      "Elapsed": 3.308
+    },
+    {
+      "Time": "2026-10-14T17:58:08.782644244Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof/manifest",
+      "Elapsed": 1.021
+    },
+    {
+      "Time": "2026-10-14T17:58:09.084322113Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/compiler-self-improvement",
+      "Elapsed": 0.001
+    },
+    {
+      "Time": "2026-10-14T17:58:12.7399666Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/domain-completeness",
+      "Elapsed": 1.9220000000000002
+    },
+    {
+      "Time": "2026-10-14T17:58:13.848798676Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/feedback-predecessor-ci",
+      "Elapsed": 1.8599999999999999
+    },
+    {
+      "Time": "2026-10-14T17:58:12.852198696Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/language-operation-catalog",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:12.926397378Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/language-operation-claim-causality",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:13.012959772Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/language-value-witness",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:13.049950995Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/line-metrics",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:14.625065344Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/maintenance",
+      "Elapsed": 1.022
+    },
+    {
+      "Time": "2026-10-14T17:58:15.376024993Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-cost-report",
+      "Elapsed": 1.052
+    },
+    {
+      "Time": "2026-10-14T17:59:11.44321528Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution",
+      "Elapsed": 53.981
+    },
+    {
+      "Time": "2026-10-14T17:58:18.644085466Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution/collapsefixture",
+      "Elapsed": 1.016
+    },
+    {
+      "Time": "2026-10-14T17:58:18.646683113Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-provenance",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:19.672247797Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-receipts",
+      "Elapsed": 1.026
+    },
+    {
+      "Time": "2026-10-14T17:58:20.765894639Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-summary",
+      "Elapsed": 1.032
+    },
+    {
+      "Time": "2026-10-14T17:58:20.836711546Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-counterfactual",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:20.911308489Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-intervention",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:21.007283473Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-meta-program",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:21.109900739Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-meta-program-closure",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:23.609402237Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-strategy",
+      "Elapsed": 1.032
+    },
+    {
+      "Time": "2026-10-14T17:58:23.705359142Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-transition",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:23.808451313Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/public-trust-surface",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:23.909415361Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/receipt-schema",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:26.032560392Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/refactor-metrics",
+      "Elapsed": 1.051
+    },
+    {
+      "Time": "2026-10-14T17:58:26.133548156Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/reproducibility-semantics",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:26.322724509Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-adoption",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:26.429769434Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-attestation",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:26.501019718Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-candidate",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:26.618027573Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-candidate-authorization",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:26.719571358Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-ci-continuation",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:27.101235707Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-compiler-compatibility",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:30.72553663Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-contract",
+      "Elapsed": 1.483
+    },
+    {
+      "Time": "2026-10-14T17:58:33.824946294Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-cycle",
+      "Elapsed": 1.311
+    },
+    {
+      "Time": "2026-10-14T17:58:33.914010288Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-discovery-policy",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:34.038641944Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-execution-contract",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:34.211694585Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-execution-grant",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:34.291309158Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-minimal-loop",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:34.602741707Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-observation",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:34.844196035Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-continuity",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:35.276611684Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-discovery",
+      "Elapsed": 0.001
+    },
+    {
+      "Time": "2026-10-14T17:58:35.642283602Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-generation",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:36.238442785Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-orchestration",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:38.81182702Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-partial-reuse",
+      "Elapsed": 1.032
+    },
+    {
+      "Time": "2026-10-14T17:58:39.312756271Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-resolution-repair",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:39.695524371Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-test-reuse",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:40.107793713Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-utility",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:40.400885593Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-retained-knowledge",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:40.488152439Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-retention-policy",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:40.645022609Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-transport",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:40.746849209Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-transport-selector",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:44.581059357Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter",
+      "Elapsed": 2.416
+    },
+    {
+      "Time": "2026-10-14T17:58:45.021824546Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter-conformance-ci",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:48.548911152Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/source-subject-witness",
+      "Elapsed": 1.045
+    },
+    {
+      "Time": "2026-10-14T17:58:48.6904718Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-schema/readerrequest",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:48.805007581Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-schema/valuecontract",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:48.885104111Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-schema/valuereachability",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:49.011314616Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-schema/valueresolution",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:49.183085454Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-usecase/claim-ledger",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:49.304242376Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-usecase/reader-observation",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:51.986567649Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/transformation-effect",
+      "Elapsed": 1.028
+    },
+    {
+      "Time": "2026-10-14T17:58:52.249441878Z",
+      "Action": "skip",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/transformation-effect-verify",
+      "Elapsed": 0
+    },
+    {
+      "Time": "2026-10-14T17:58:54.317553967Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/scripts/verify",
+      "Elapsed": 1.096
+    }
+  ],
+  "limitations": [
+    "cancelled job is not acceptance",
+    "test and subtest intervals overlap",
+    "no controlled before/after performance comparison",
+    "historical local reruns zero"
+  ]
+}
