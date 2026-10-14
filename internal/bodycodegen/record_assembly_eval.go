@@ -33,7 +33,7 @@ type recordBodyOptionalScalar struct {
 type recordBodyValue struct {
 	Type   string
 	Count  int
-	Values [16]recordBodyScalar
+	Values [RecordFieldLimit]recordBodyScalar
 }
 
 func zeroRecordBodyValue(t types.Type) (recordBodyValue, error) {
@@ -42,7 +42,7 @@ func zeroRecordBodyValue(t types.Type) (recordBodyValue, error) {
 		return recordBodyValue{}, fmt.Errorf("record requires a nominal value type")
 	}
 	structure, ok := named.Underlying().(*types.Struct)
-	if !ok || structure.NumFields() < 1 || structure.NumFields() > 16 {
+	if !ok || structure.NumFields() < 1 || structure.NumFields() > RecordFieldLimit {
 		return recordBodyValue{}, fmt.Errorf("record layout exceeds value bounds")
 	}
 	value := recordBodyValue{Type: named.Obj().Name(), Count: structure.NumFields()}

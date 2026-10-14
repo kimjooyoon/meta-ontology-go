@@ -1,0 +1,78 @@
+[
+  {
+    "producer": "10709",
+    "base": "246772c25a6b78a6b58d8f81689df8c275729816",
+    "source_overlay_sha256": "b0a4d467454bfb99a2763324f7897dde92b0c6a2bbfb5a4714963d1cbc32d752",
+    "files": 7,
+    "log_sha256": "ef1e693838fc8a604c70243ff5fde9ab89333cfac8d8ff2960eb36dd4c7964ca",
+    "started_at": 1791934793.523233,
+    "ended_at": 1791934798.587279,
+    "exit_code": 0,
+    "historical_cohorts_executed": 0,
+    "detailed_native_export": false
+  },
+  {
+    "producer": "10773",
+    "base": "246772c25a6b78a6b58d8f81689df8c275729816",
+    "source_overlay_sha256": "c5297f91f1c8c3cb5acefac22ba8c3fa3c908b1e399d836c055894bbe918348e",
+    "files": 8,
+    "log_sha256": "8792227b145315b8d94395c443c446fc503383e682491c5803a09b79dff0a43f",
+    "started_at": 1791934923.418467,
+    "ended_at": 1791934931.855472,
+    "exit_code": 0,
+    "historical_cohorts_executed": 0,
+    "detailed_native_export": true
+  },
+  {
+    "producer": "10841",
+    "base": "246772c25a6b78a6b58d8f81689df8c275729816",
+    "source_overlay_sha256": "ea45f91b0cd31389c503b620dd662271efeeb7744b0633ecb97078e2cfa5c57f",
+    "files": 13,
+    "log_sha256": "86dd89698ad690918f128a5107b635a436710b961e32d4ab667ffc3a0e395f38",
+    "started_at": 1791935125.270727,
+    "ended_at": 1791935129.761052,
+    "exit_code": 0,
+    "historical_cohorts_executed": 0,
+    "detailed_native_export": true
+  },
+  {
+    "producer": "10921",
+    "base": "246772c25a6b78a6b58d8f81689df8c275729816",
+    "source_overlay_sha256": "95fab09a951e98419ef20c2d1ec6bf16f55cd52f0fd0d016c000e8d74dd46db5",
+    "files": 27,
+    "log_sha256": "7e0337b739521cd134bbb1205d0af3b7a72dcba82f17b2f3ae7fc792c33d9424",
+    "started_at": 1791935429.9798431,
+    "ended_at": 1791935436.507253,
+    "exit_code": 0,
+    "historical_cohorts_executed": 0,
+    "detailed_native_export": true
+  },
+  {
+    "producer": "11017",
+    "base": "246772c25a6b78a6b58d8f81689df8c275729816",
+    "source_overlay_sha256": "470dae33fdf4952a868e48d9173caa63ad5f1fb7af6623a4e7b797c88b8d3e05",
+    "archive_sha256": "4cf5aa77ea05651e7afe0a68358354890c4ef3b04fdd32a8697ce2a59316174b",
+    "files": 29,
+    "log_sha256": "e8c5dd3749e2fdc2a77477622e7cd392c9393c92dc60dc467584a948f791ab0d",
+    "started_at": 1791935990.0242822,
+    "ended_at": 1791935994.2027788,
+    "exit_code": 1,
+    "historical_cohorts_executed": 0,
+    "native_executions": 0,
+    "detailed_native_export": false
+  },
+  {
+    "producer": "11053",
+    "base": "246772c25a6b78a6b58d8f81689df8c275729816",
+    "source_overlay_sha256": "81834869ea9363b809ff12adc2b37f78e423917d3f687fe0a56c7139f78562d4",
+    "archive_sha256": "d420c14a8f0ce42976d8bd1fe9824944af6b1b00315bb952ca4a4e4ece41c4b1",
+    "files": 30,
+    "log_sha256": "a33aae2618d6d95b916cfbb10de7a541116ddb278c4a32897633db51378b3789",
+    "started_at": 1791936036.44943,
+    "ended_at": 1791936040.664599,
+    "exit_code": 0,
+    "historical_cohorts_executed": 0,
+    "native_executions": 0,
+    "detailed_native_export": false
+  }
+]

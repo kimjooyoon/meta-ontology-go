@@ -70,4 +70,8 @@ func writePackageOriginInput(output io.Writer, origin *bodyexecution.NativeOrigi
 	if summary := origin.Observation; summary != nil {
 		fmt.Fprintf(output, "original observation: %s unresolved=%d read_drops=%d registration_drops=%d construction_drops=%d interrupted=%d\n", summary.Status, summary.UnresolvedReads, summary.DroppedReads, summary.RegistrationDropped, summary.ConstructionDropped, summary.InterruptedConstructions)
 	}
+	if summary := origin.LocalObservation; summary != nil {
+		fmt.Fprintf(output, "original local observation: %s writes=%d uses=%d unresolved=%d write_drops=%d use_drops=%d frame_drops=%d interrupted=%d\n", summary.Status, summary.RecordedWrites, summary.RecordedUses, summary.Unresolved, summary.WritesDropped, summary.UsesDropped, summary.FramesDropped, summary.Interrupted)
+	}
+
 }

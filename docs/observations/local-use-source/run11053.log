@@ -1,0 +1,5 @@
+=== RUN   TestRetainedBranchLocalUse11053
+    body_local_use_branch_compatibility_fresh_test.go:54: fresh branch source_fill two cases; four writes; four coordinate contradictions rejected; omitted uses stay absent; native0/model0
+--- PASS: TestRetainedBranchLocalUse11053 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.530s

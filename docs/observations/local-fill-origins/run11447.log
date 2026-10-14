@@ -1,0 +1,5 @@
+=== RUN   TestRegisteredSelectionSplit11447
+    registered_selection_fresh_test.go:62: registered selector functions=6 maximum=37 lines; actual splitter parts=7 each<=75; language executions0
+--- PASS: TestRegisteredSelectionSplit11447 (0.02s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter	0.487s

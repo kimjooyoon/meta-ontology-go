@@ -1,0 +1,49 @@
+{
+  "producer_record_sha256": "a4816e228ccb51dbcca305f8e93fb66ab85251676555ad977cf08569f1bdaea4",
+  "retained_facts_selected_from": "consumer11903.json $.result.runtime.traces[].deliveries[0].input",
+  "input_meaning": "column-wise projection of retained fragment claims; synthetic cases explicitly identified",
+  "cases": [
+    {
+      "index": 0,
+      "name": "actual-full-page",
+      "scope": "actual six retained rows"
+    },
+    {
+      "index": 1,
+      "name": "actual-prefix-page",
+      "scope": "new partial-page input from retained prefix"
+    },
+    {
+      "index": 2,
+      "name": "incomplete-recording",
+      "scope": "explicit synthetic recording completeness flag"
+    },
+    {
+      "index": 3,
+      "name": "unequal-columns",
+      "scope": "synthetic missing column item"
+    },
+    {
+      "index": 4,
+      "name": "repeated-write-fragment",
+      "scope": "synthetic repeated same-write fragment"
+    },
+    {
+      "index": 5,
+      "name": "unsorted-write-keys",
+      "scope": "synthetic order contradiction"
+    },
+    {
+      "index": 6,
+      "name": "one-missing-origin",
+      "scope": "synthetic withheld first origin claim"
+    },
+    {
+      "index": 7,
+      "name": "empty-recording",
+      "scope": "synthetic empty population"
+    }
+  ],
+  "original_producer_executions": 0,
+  "model_calls": 0
+}

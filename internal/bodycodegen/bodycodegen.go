@@ -64,6 +64,7 @@ type Report struct {
 	BodyConditions         []BodyConditionOrigin    `json:"body_conditions,omitempty"`
 	BodyReads              []BodyReadOrigin         `json:"body_reads,omitempty"`
 	BodyConstructions      []BodyConstructionOrigin `json:"body_constructions,omitempty"`
+	BodyLocals             []BodyLocalOrigin        `json:"body_locals,omitempty"`
 	CallClosure            *PureCallClosure         `json:"call_closure,omitempty"`
 	CandidateRoutes        []string                 `json:"candidate_routes"`
 	EquivalenceRule        string                   `json:"equivalence_rule"`
@@ -153,7 +154,7 @@ func generateRouteParameters(packageName, activityName, activityID string, param
 
 func generateRouteWithCalls(packageName, activityName, activityID string, parameters []InputParameter,
 	outputType, body, route string, calls []pureCallFunction, records []RecordType) (generatedRoute, error) {
-	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, conditionOrigins, readOrigins, constructionOrigins, err := renderParametersWithSourceOrigins(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
+	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, conditionOrigins, readOrigins, constructionOrigins, localOrigins, err := renderParametersWithLocalOrigins(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
 	if err != nil {
 		return generatedRoute{}, err
 	}
@@ -180,7 +181,7 @@ func generateRouteWithCalls(packageName, activityName, activityID string, parame
 		Route: route, EquivalenceRule: equivalenceRule,
 		SourceConstructs: sourceConstructs, LoweredConstructs: loweredConstructs,
 		SourceSemanticUnits: sourceUnits, LoweredSemanticUnits: loweredUnits,
-		CompletenessPercent: completeness, RouteEquivalence: equivalence, BodyConditions: conditionOrigins, BodyReads: readOrigins, BodyConstructions: constructionOrigins,
+		CompletenessPercent: completeness, RouteEquivalence: equivalence, BodyConditions: conditionOrigins, BodyReads: readOrigins, BodyConstructions: constructionOrigins, BodyLocals: localOrigins,
 		TypecheckPassed: true,
 	}}, nil
 }

@@ -1,0 +1,12 @@
+{
+  "pr": 1549,
+  "head": "c5ec87a7221918e62ffd2bc2c2359b550c2ba21d",
+  "job": 115615843170,
+  "log_sha256": "71633301b8533bbdf65d983780d521a6302fad08643fcfa63236c7d7e30d9a6b",
+  "excerpt": [
+    "2026-10-14T00:50:22.8570606Z     registered_selection_fresh_extracted_1_test.go:19: registered selection cannot preserve source order split blocked: evidence_split04.go does not require declaration splitting"
+  ],
+  "interpretation": "capacity check attempted splitting an already bounded projected source unit; new small-unit regression passes",
+  "core_semantic_job": 115615844857,
+  "core_semantic_detail": "redirected stage command failed; exact failing subcommand not established from its console log"
+}

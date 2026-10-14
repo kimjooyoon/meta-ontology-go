@@ -1,0 +1,8 @@
+=== RUN   TestLocalInterrupted10337
+    composition_local_boundary_fresh_test.go:53: native3/4; one intended ZERO_DIVISOR;1 interrupted assignment;14 writes;21 uses;7 element windows;changed local source and populations rejected
+--- PASS: TestLocalInterrupted10337 (0.73s)
+=== RUN   TestLocalWriteLimit10357
+    composition_local_boundary_fresh_test.go:85: native2/2; writes4096;write drops4102;uses12292;unresolved6149; bounded recording preserved results
+--- PASS: TestLocalWriteLimit10357 (0.67s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.817s

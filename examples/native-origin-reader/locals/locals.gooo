@@ -1,0 +1,38 @@
+package origins
+namespace native_local_reader
+
+// Consume a page of recorded local-use claims; coordinates keep their own scope.
+entity LocalUse id "urn:gooo:origin-reader:local-use" fields {
+ field case_index id "urn:gooo:origin-reader:local-use:case_index" type integer required one
+ field use_index id "urn:gooo:origin-reader:local-use:use_index" type integer required one
+ field frame id "urn:gooo:origin-reader:local-use:frame" type integer required one
+ field root_activity_id id "urn:gooo:origin-reader:local-use:root_activity_id" type string required one
+ field activity_id id "urn:gooo:origin-reader:local-use:activity_id" type string required one
+ field variable_ordinal id "urn:gooo:origin-reader:local-use:variable_ordinal" type integer required one
+ field variable_name id "urn:gooo:origin-reader:local-use:variable_name" type string required one
+ field assignment_index id "urn:gooo:origin-reader:local-use:assignment_index" type integer required one
+ field resolved id "urn:gooo:origin-reader:local-use:resolved" type boolean required one
+ field reason id "urn:gooo:origin-reader:local-use:reason" type string required one
+ field scalar_type id "urn:gooo:origin-reader:local-use:scalar_type" type string required one
+ field projection_sha256 id "urn:gooo:origin-reader:local-use:projection_sha256" type string required one
+ field projection_start id "urn:gooo:origin-reader:local-use:projection_start" type integer required one
+ field projection_end id "urn:gooo:origin-reader:local-use:projection_end" type integer required one
+ field declaration_sha256 id "urn:gooo:origin-reader:local-use:declaration_sha256" type string required one
+ field declaration_start id "urn:gooo:origin-reader:local-use:declaration_start" type integer required one
+ field declaration_end id "urn:gooo:origin-reader:local-use:declaration_end" type integer required one
+ field declaration_mapping id "urn:gooo:origin-reader:local-use:declaration_mapping" type string required one
+ field source_sha256 id "urn:gooo:origin-reader:local-use:source_sha256" type string required one
+ field source_start id "urn:gooo:origin-reader:local-use:source_start" type integer required one
+ field source_end id "urn:gooo:origin-reader:local-use:source_end" type integer required one
+ field source_mapping id "urn:gooo:origin-reader:local-use:source_mapping" type string required one
+}
+
+entity Finding id "urn:gooo:origin-reader:local-finding" fields {
+ field case_index id "urn:gooo:origin-reader:local-finding:case_index" type integer required one
+ field use_index id "urn:gooo:origin-reader:local-finding:use_index" type integer required one
+ field assignment_index id "urn:gooo:origin-reader:local-finding:assignment_index" type integer required one
+ field variable_name id "urn:gooo:origin-reader:local-finding:variable_name" type string required one
+ field classification id "urn:gooo:origin-reader:local-finding:classification" type string required one
+}
+
+activity Explain(LocalUse) -> Finding id "urn:gooo:origin-reader:explain-local-use" computes "let classification=\"unrecorded\";if input.resolved {classification=\"assignment\";if input.declaration_mapping!=\"MAPPED\" {classification=\"source-unmapped\"}else{if input.source_mapping!=\"MAPPED\" {classification=\"declaration-only\"}}}else{if input.reason==\"WRITE_LIMIT\" {classification=\"write-limit\"}};return Finding{case_index:input.case_index,use_index:input.use_index,assignment_index:input.assignment_index,variable_name:input.variable_name,classification:classification}"

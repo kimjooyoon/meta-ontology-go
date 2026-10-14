@@ -1,0 +1,5 @@
+=== RUN   TestPackageLocalSourceRoundtrip10773
+    package_local_source_roundtrip_fresh_test.go:86: new source CLI3/3;stored-envelope replay with three disjoint inputs3/3;range/short-circuit/three scalar types have selected Gooo use coordinates;models0
+--- PASS: TestPackageLocalSourceRoundtrip10773 (1.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.549s

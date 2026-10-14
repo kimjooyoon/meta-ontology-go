@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "gooo/examples/derived-origin",
+    "activity": "Prepare"
+  },
+  "packages": [
+    {
+      "path": "gooo/examples/derived-origin",
+      "name": "grammarorigin",
+      "imports": [],
+      "sources": ["main.gooo"]
+    }
+  ]
+}

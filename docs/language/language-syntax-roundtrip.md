@@ -10,10 +10,10 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v2` registry declares 88 cases: 85 valid sources and three invalid
-fixtures. Of these, 86 are `LANGUAGE_CAPABILITY` and two
+The `v2` registry declares 92 cases: 89 valid sources and three invalid
+fixtures. Of these, 90 are `LANGUAGE_CAPABILITY` and two
 (`self-improvement-ci-continuation` and `domain-completeness-profile`) are
-`GOVERNANCE_OBSERVATION` cases. The four native origin readers are registered
+`GOVERNANCE_OBSERVATION` cases. The six native origin readers are registered
 as language capability cases under the exact V5 field profile.
 
 Case totals come from the [corpus](../../examples/language-syntax-roundtrip/corpus.json)
@@ -23,7 +23,14 @@ sources and structure projections also have explicit registrations. Each
 observed file carries its own source digest and line count.
 
 The [registration observation](../observations/native-origin-registration/README.md)
-records the four reader additions and denominator versions 50 through 53.
+records the first four reader additions and denominator versions 50 through 53.
+The [local-variable observation](../observations/native-local-origins/README.md)
+adds the fifth reader through the same registration operation, producing version 54.
+The [local assembly observation](../observations/local-fill-origins/README.md)
+adds the sixth reader at version 55 and bounds generated selection helpers to
+16 capability entries each.
+The [derived-origin example](../../examples/derived-origin/README.md) and its Gooo
+coverage reducer are registered at versions 56 and 57.
 These counts identify what a submitted revision must check; CI supplies its
 actual results.
 
@@ -45,7 +52,7 @@ does not become a fixed point; it produces `FAIL_CLOSED` at `LOWER_RESOLUTION`.
 | Choice | Meta-operation | Passing condition |
 | --- | --- | --- |
 | FOUNDATION | bind-versioned-complete-gooo-corpus | exact registry, exact commit, complete path set, bound concept artifact |
-| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 85 valid cases satisfy all five preservation laws |
+| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 86 valid cases satisfy all five preservation laws |
 | REGRESSION | reject-invalid-syntax-with-zero-effects | all three diagnostics reject and writes and authority remain zero |
 
 ## CI authority

@@ -129,6 +129,7 @@ func workspaceInputConditionSource(file string, d workspaceCallDeclaration, acti
 func bindWorkspaceConditionSources(program Program, runtime *bodyexecution.CompositionRuntime, fills ...[]BodyFillStep) {
 	for _, steps := range fills {
 		bindWorkspaceFillConditionSources(runtime, steps)
+		bindWorkspaceFillLocalSources(runtime, steps)
 	}
 	type key struct {
 		activity, body string
