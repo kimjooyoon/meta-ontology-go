@@ -1,0 +1,5 @@
+=== RUN   TestGoooEightCandidateOrigins25717
+    fill_candidate_origins_fresh_test.go:206: reader25717:all8 declared holes transported;Gooo mapped1 and unresolved7;finite0/model0;source candidate not executed
+--- PASS: TestGoooEightCandidateOrigins25717 (1.22s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/cliobservations	3.766s

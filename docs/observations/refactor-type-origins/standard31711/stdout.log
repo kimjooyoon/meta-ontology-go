@@ -1,0 +1,8 @@
+=== RUN   TestStandardTypeStageOrigins31711
+--- PASS: TestStandardTypeStageOrigins31711 (0.10s)
+=== RUN   TestStandardImportScopeChanges31711
+--- PASS: TestStandardImportScopeChanges31711 (0.17s)
+=== RUN   TestStandardConcurrentStages31711
+--- PASS: TestStandardConcurrentStages31711 (0.04s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	1.813s

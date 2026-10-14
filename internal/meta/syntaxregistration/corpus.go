@@ -45,26 +45,22 @@ func generateRegistry(source *goSource, request Request) error {
 	if err != nil {
 		return err
 	}
-	count := 0
-	ast.Inspect(function, func(node ast.Node) bool {
-		list, ok := node.(*ast.CompositeLit)
-		if !ok {
-			return true
-		}
-		array, ok := list.Type.(*ast.ArrayType)
-		if !ok || array.Len != nil || source.text(array.Elt) != "CaseDefinition" {
-			return true
-		}
-		value := request.Case
-		row := fmt.Sprintf("\n{ID: %q, Path: %q, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: %q, MetaOperation: %q, Scope: ScopeLanguageCapability, EntityFields: %t, ImplicitActivityPorts: %t, OrderedCollections: %t},\n",
-			value.ID, value.Path, value.ProofChoice, value.MetaOperation, value.EntityFields, value.ImplicitActivityPorts, value.OrderedCollections)
-		source.insert(list.Rbrace, row)
-		count++
-		return false
-	})
-	if count != 1 {
-		return fmt.Errorf("expected exactly one native case registry, got %d", count)
+	list, err := source.registryCaseTail(function)
+	if err != nil {
+		return err
 	}
+	value := request.Case
+	row := fmt.Sprintf("\n{ID: %q, Path: %q, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: %q, MetaOperation: %q, Scope: ScopeLanguageCapability, EntityFields: %t, ImplicitActivityPorts: %t, OrderedCollections: %t},\n",
+		value.ID, value.Path, value.ProofChoice, value.MetaOperation, value.EntityFields, value.ImplicitActivityPorts, value.OrderedCollections)
+	if source.registryTailNeedsComma(list) {
+		last := list.Elts[len(list.Elts)-1].End()
+		if last == list.Rbrace {
+			row = "," + row
+		} else {
+			source.insert(last, ",")
+		}
+	}
+	source.insert(list.Rbrace, row)
 	if request.PromoteMetaSource {
 		return removeRegistryMetaSource(source, function, request.Case.Path)
 	}

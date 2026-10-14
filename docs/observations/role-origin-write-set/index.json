@@ -1,0 +1,29 @@
+{
+  "predecessor_pr": 1566,
+  "predecessor_head": "8765b824170405dbbcfeb4213645e550532b65bf",
+  "new_source_cohorts": [
+    {
+      "name": "role34731",
+      "result": {
+        "ended": "2026-10-14T14:02:13.041907+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "ada6e204bed69efab34d1902593b3f810c6fdac4053a1503a401b0ba0919debc"
+    },
+    {
+      "name": "static34913",
+      "result": {
+        "at": "2026-10-14T14:04:44.771845+00:00",
+        "exit": 0,
+        "diff_bytes": 0,
+        "stderr_bytes": 0,
+        "tests_executed": 0,
+        "go_files": 72
+      },
+      "archive_sha256": "0d7a27dad57ac03958e50cf31add5eca071efe624c5912afdebe7ed4c7f5d90a"
+    }
+  ],
+  "scope": "nine semantic roles and exact union of source-owned physical members;no fixed projected file count",
+  "historical_local_reruns": 0,
+  "model_calls": 0
+}

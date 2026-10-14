@@ -1,0 +1,5 @@
+=== RUN   TestGeneratedOriginV7332591
+    generated_origin_runtime_fresh_test.go:11: exact generated source:current 73 target 109 history72target108;5 other boundaries+13 links preserved;producer/model0
+--- PASS: TestGeneratedOriginV7332591 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow	0.450s

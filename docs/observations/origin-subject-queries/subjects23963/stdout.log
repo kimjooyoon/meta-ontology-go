@@ -1,0 +1,8 @@
+=== RUN   TestOriginSubjectSelection23963
+    native_origin_subject_fresh_test.go:93: locations27 retained/9 selected/5 paged;original case and event numbering;three exact ID predicates;empty selected table;four incompatible kinds rejected;legacy query bytes retained;display labels independent;producer/model0
+--- PASS: TestOriginSubjectSelection23963 (0.00s)
+=== RUN   TestOriginSubjectLineage23963
+    native_origin_subject_fresh_test.go:116: helper origins20 retained/2 selected;tag use2 retained/1 selected;original use1,assignment1,case2;both field and bridge columns retain complete two-field cases;producer/model0
+--- PASS: TestOriginSubjectLineage23963 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.534s

@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T13:16:47.548159+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-refactor-type-origins-20261014/history32031/overlay.json",
+    "./internal/meta/syntaxregistration",
+    "-run=^TestSourceOwnedHistoryGrowth32031$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}

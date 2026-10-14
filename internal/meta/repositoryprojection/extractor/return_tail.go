@@ -1023,7 +1023,7 @@ func registerReturnTailHelperProof(root, logical string, source []byte, helperNa
 	if helperDeclaration == nil {
 		return returnTailHelperProof{}, fail("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", nil)
 	}
-	helperEvidence, err := checkTypes(root, logical, helperSet, helperFile, helperDeclaration)
+	helperEvidence, err := checkTypesWithStandard(root, logical, helperSet, helperFile, helperDeclaration, evidence.standard)
 	if err != nil {
 		return returnTailHelperProof{}, err
 	}

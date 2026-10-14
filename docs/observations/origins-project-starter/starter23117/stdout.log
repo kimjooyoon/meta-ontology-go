@@ -1,0 +1,6 @@
+=== RUN   TestOriginsStarter23117
+    origins_starter_fresh_test.go:64: practice4/4;relocated replay1 input without finite score;actual saved origins9/27:3 alternative,3 target,3 unresolved;original producer/model0
+    origins_starter_fresh_test.go:78: default/custom modules create six local files with stable IDs;existing projects preserved;three invalid modules rejected before writing;model0
+--- PASS: TestOriginsStarter23117 (2.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/cliobservations	4.303s
