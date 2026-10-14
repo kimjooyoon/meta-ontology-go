@@ -18,7 +18,13 @@ A Gooo reader describes those locations, including assembly candidates and
 grammar declarations. Selected-source and original-file coordinates remain
 separate; absent historical annotations stay unspecified.
 
-A second [Gooo metaprogram](examples/derived-origin/README.md) reads saved assembly
+A [typed source inspection](examples/typed-value-origins/README.md) keeps each record
+field's ancestry through copies, field updates and fixed helpers in ordinary
+computations. It can pass graph arrays to a Gooo program that follows dependencies
+and returns input ports and stable field IDs. The report distinguishes possible
+source dependencies from observed execution paths.
+
+A [Gooo metaprogram](examples/derived-origin/README.md) reads saved assembly
 origins and counts which recorded assignments connect to candidates, grammar
 declarations or retained templates. The CLI can pass a page as aligned arrays;
 Gooo owns the grouping and ratio rules. Partial pages or recordings leave the overall ratio

@@ -75,6 +75,7 @@ type flowState struct {
 }
 
 type recordFlowBuilder struct {
+	sourceValidation func(*ast.File) error
 	body             preparedBody
 	sites            []recordValueSite
 	fset             *token.FileSet

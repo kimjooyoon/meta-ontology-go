@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "typed/ancestry", "activity": "Inputs"},
+  "packages": [{"path": "typed/ancestry", "name": "typedancestry", "imports": [], "sources": ["ancestry.gooo"]}]
+}

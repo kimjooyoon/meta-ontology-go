@@ -187,6 +187,8 @@ func runWithInputCommandsOne(args []string, stdout, stderr io.Writer) (int, bool
 		return runDiscover(args[1:], OSFileReader{}, stdout, stderr), true
 	case "generate":
 		return runGenerate(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
+	case "body-origins":
+		return runBodyOrigins(args[1:], OSFileReader{}, stdout, stderr), true
 	case "body-context":
 		return runBodyContext(args[1:], OSFileReader{}, stdout, stderr), true
 	case "body-plan":

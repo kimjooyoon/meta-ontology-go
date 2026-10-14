@@ -863,6 +863,26 @@
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY",
       "ordered_collections": true
+    },
+    {
+      "id": "typed-field-origin-copy-example",
+      "path": "examples/typed-value-origins/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "typed-field-origin-gooo-ancestry",
+      "path": "examples/typed-value-origins/ancestry.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
     }
   ],
   "package_units": [

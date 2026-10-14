@@ -10,8 +10,8 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v2` registry declares 94 cases: 91 valid sources and three invalid
-fixtures. Of these, 92 are `LANGUAGE_CAPABILITY` and two
+The `v2` registry declares 96 cases: 93 valid sources and three invalid
+fixtures. Of these, 94 are `LANGUAGE_CAPABILITY` and two
 (`self-improvement-ci-continuation` and `domain-completeness-profile`) are
 `GOVERNANCE_OBSERVATION` cases. The seven native origin readers are registered
 as language capability cases under the exact V5 field profile.
@@ -35,6 +35,9 @@ The [original-file reader](../../examples/native-origin-reader/local-files/READM
 and [workspace local-origin example](../../examples/workspace-local-origins/README.md)
 are registered at versions 58 and 59. Their source snapshots and generated
 members are retained in the [file-origin observation](../observations/workspace-local-file-origins/README.md).
+The [typed source and Gooo ancestry examples](../../examples/typed-value-origins/README.md)
+are registered at versions 60 and 61. Their requests, input snapshots and native
+registration outputs are retained in the [typed-origin observation](../observations/typed-value-origins/README.md).
 These counts identify what a submitted revision must check; CI supplies its
 actual results.
 
@@ -56,7 +59,7 @@ does not become a fixed point; it produces `FAIL_CLOSED` at `LOWER_RESOLUTION`.
 | Choice | Meta-operation | Passing condition |
 | --- | --- | --- |
 | FOUNDATION | bind-versioned-complete-gooo-corpus | exact registry, exact commit, complete path set, bound concept artifact |
-| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 91 valid cases satisfy all five preservation laws |
+| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 93 valid cases satisfy all five preservation laws |
 | REGRESSION | reject-invalid-syntax-with-zero-effects | all three diagnostics reject and writes and authority remain zero |
 
 ## CI authority

@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"typed/example:Compute.input0": {"left": 1409, "right": 1423}, "typed/example:Compute.input1": 1427}, "expected": {"typed/example:Compute": 1423}},
+    {"inputs": {"typed/example:Compute.input0": {"left": -1429, "right": -1433}, "typed/example:Compute.input1": -1439}, "expected": {"typed/example:Compute": -1433}}
+  ]
+}

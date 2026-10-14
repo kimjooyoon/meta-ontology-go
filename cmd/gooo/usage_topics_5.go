@@ -1,6 +1,7 @@
 package main
 
 var topicHelpGroup5 = map[string]string{
+	"body-origins": bodyOriginsHelp,
 	"body-plan": `Read caller inputs before assembling a program
 
 ` + bodyPlanUsage + `
