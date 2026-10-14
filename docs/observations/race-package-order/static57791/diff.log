@@ -1,0 +1,11 @@
+--- /private/tmp/gooo-race-package-order-20261015/pending/internal/verify/race_scope_fresh57213_test.go (old)
++++ /private/tmp/gooo-race-package-order-20261015/pending/internal/verify/race_scope_fresh57213_test.go (new)
+@@ -26,7 +26,7 @@
+ 		t.Fatal("race identity, time budget or fresh-build boundary changed")
+ 	}
+ 	commands := []string{}
+-	for _, line := range strings.Split(body, "\n") {
++	for line := range strings.SplitSeq(body, "\n") {
+ 		if command, found := strings.CutPrefix(line, "      - run: "); found {
+ 			commands = append(commands, command)
+ 		}

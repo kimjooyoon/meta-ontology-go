@@ -1,0 +1,11 @@
+{
+  "source_sha256": "0c563e9216d07b1865ff7f24393d85217f83c6a213613ac7a57e2c4fc93b8f67",
+  "prepared_sha256": "8b8a078ed9c10b2644cf2ffb0b3728238e29017563c34ebb47f2cd99215e6d74",
+  "equivalence_except_output_flag": true,
+  "timeout_minutes": 20,
+  "test_selector": "./...",
+  "race_enabled": true,
+  "test_filter_changes": 0,
+  "new_tests_executed": 0,
+  "source_code_changes": 0
+}

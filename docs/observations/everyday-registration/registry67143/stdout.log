@@ -1,0 +1,6 @@
+=== RUN   TestEverydayRegistryRetainsAllPriorCases67143
+--- PASS: TestEverydayRegistryRetainsAllPriorCases67143 (0.00s)
+=== RUN   TestEverydayRegistryCoversActualSourceInventory67143
+--- PASS: TestEverydayRegistryCoversActualSourceInventory67143 (0.09s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax	0.526s

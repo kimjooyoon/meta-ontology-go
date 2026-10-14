@@ -1,0 +1,5 @@
+=== RUN   TestMultiplePhysicalRoleOrigins34731
+    physical_role_write_set_fresh34731_test.go:119: new3-file model role;all9 semantic roles;exact complete physical union;registry/source/toolchain identity preserved;producer/model0
+--- PASS: TestMultiplePhysicalRoleOrigins34731 (0.18s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.642s

@@ -1,0 +1,151 @@
+{
+  "schema": "gooo/original-race-event-observation/v1",
+  "pr": 1572,
+  "head": "10067b26de6d3fa75040173a610fdc522b5da62a",
+  "run_id": 38614678813,
+  "run_attempt": 1,
+  "job_id": 116026606552,
+  "job_conclusion": "success",
+  "job_started_at": "2026-10-14T18:28:13Z",
+  "job_completed_at": "2026-10-14T18:41:09Z",
+  "raw_bytes": 13054903,
+  "raw_sha256": "879d159940a1fc3f4ac9891baa42cee722a290e15b8ef1caf1ddade10e6b3677",
+  "archive_sha256": "afb5375138545696616f0d6192078d0341e1f6021203a5d1a0da033cd16ae4f7",
+  "valid_events": 39125,
+  "parse_error_count": 0,
+  "first_event": "2026-10-14T18:29:11.844045009Z",
+  "last_event": "2026-10-14T18:41:03.096962889Z",
+  "counts": {
+    "package:start": 431,
+    "test:run": 8467,
+    "test:output": 20649,
+    "test:pass": 8450,
+    "package:output": 676,
+    "package:pass": 244,
+    "package:skip": 187,
+    "test:skip": 17,
+    "test:pause": 2,
+    "test:cont": 2
+  },
+  "active_packages": [],
+  "active_tests": [],
+  "extractor_started_at": "2026-10-14T18:29:11.844045009Z",
+  "extractor_terminal": {
+    "Time": "2026-10-14T18:37:22.256649849Z",
+    "Action": "pass",
+    "Elapsed": 490.413
+  },
+  "slow_tests": [
+    {
+      "Time": "2026-10-14T18:35:31.164355832Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestClosurePreservationRejectsCoherentSourceMutantsCI",
+      "Elapsed": 94
+    },
+    {
+      "Time": "2026-10-14T18:39:33.666550032Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "Test": "TestProducerReplayAndConsumerBindOneReceipt",
+      "Elapsed": 82.94
+    },
+    {
+      "Time": "2026-10-14T18:30:32.861842411Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestCallbackExtractionObservesOriginalAndFinalPackageCI",
+      "Elapsed": 80.62
+    },
+    {
+      "Time": "2026-10-14T18:32:24.869661944Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestPaginationCallbackFactoryOriginalAndGeneratedCI",
+      "Elapsed": 62.17
+    },
+    {
+      "Time": "2026-10-14T18:32:33.530663797Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Test": "TestMarshalGraphDumpRejectsOversizeOutput",
+      "Elapsed": 53.94
+    },
+    {
+      "Time": "2026-10-14T18:38:50.023482561Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance",
+      "Test": "TestProjectionCorpusBindsActualSourceAndBothArtifacts",
+      "Elapsed": 51.95
+    },
+    {
+      "Time": "2026-10-14T18:31:22.289687374Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestNormalPaginationFailureCarriesGoooBoundRenderedProposalCI",
+      "Elapsed": 49.33
+    },
+    {
+      "Time": "2026-10-14T18:33:18.709260045Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestPaginationCallbackPreviewCI",
+      "Elapsed": 47
+    },
+    {
+      "Time": "2026-10-14T18:34:22.209142134Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Test": "TestPackageConstructBoundedPartialAndMixedPackages",
+      "Elapsed": 40.09
+    },
+    {
+      "Time": "2026-10-14T18:33:57.159379735Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestClosurePreservationReplaysAgainstOriginalSourceCI",
+      "Elapsed": 38.07
+    },
+    {
+      "Time": "2026-10-14T18:36:45.517270738Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Test": "TestGoooFieldLocalBridge15317",
+      "Elapsed": 36.44
+    },
+    {
+      "Time": "2026-10-14T18:36:19.340445327Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestPaginationGenericExtractionTerminatesWithUnprovenCallbackIdentity",
+      "Elapsed": 36.26
+    },
+    {
+      "Time": "2026-10-14T18:38:54.309275468Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "Test": "TestRelativeV3ReleaseProfileNativeCI",
+      "Elapsed": 29.52
+    },
+    {
+      "Time": "2026-10-14T18:37:22.676382139Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "Test": "TestGoooBridgePartialAndLeaf15717",
+      "Elapsed": 29.21
+    },
+    {
+      "Time": "2026-10-14T18:29:43.304859092Z",
+      "Action": "pass",
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/callback-preview",
+      "Test": "TestPreviewCLIFactoryUsesTypedLoweringInput",
+      "Elapsed": 28.96
+    }
+  ],
+  "recorded_at": "2026-10-14T18:47:43.057299+00:00",
+  "limitations": [
+    "nested test counts are not independent feature counts",
+    "no controlled before/after performance experiment",
+    "core/family/proof acceptance must finish independently"
+  ]
+}

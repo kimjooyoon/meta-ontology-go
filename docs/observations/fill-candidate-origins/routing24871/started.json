@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T10:22:17.151464+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-fill-candidate-origins-20261014/routing24871/overlay.json",
+    "./internal/cliobservations",
+    "-run=^TestCandidateOriginRouting24871$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}

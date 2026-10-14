@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-14T19:29:15.898061+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-everyday-registration-20261015/registry67143/overlay.json",
+    "./internal/meta/languagereadiness/languagesyntax",
+    "-run=^TestEverydayRegistry(RetainsAllPriorCases|CoversActualSourceInventory)67143$",
+    "-v"
+  ],
+  "historical_case_executions": 0,
+  "scope": "registry data and actual file inventory only;no old parser/lens/native/model cohort"
+}

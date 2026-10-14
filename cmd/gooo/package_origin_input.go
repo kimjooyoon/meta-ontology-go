@@ -10,12 +10,15 @@ import (
 )
 
 func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuery, error) {
-	query := bodyexecution.NativeOriginQuery{Kind: "elements", Limit: 32}
+	query := bodyexecution.NativeOriginQuery{Kind: "elements", Limit: 32, RootActivityID: flags["--origin-root-activity-id"], ActivityID: flags["--origin-activity-id"], FieldID: flags["--origin-field-id"]}
 	if flags["--origin-receipt"] == "" {
-		if flags["--origin-kind"] != "" || flags["--origin-offset"] != "" || flags["--origin-limit"] != "" || flags["--origin-shape"] != "" {
+		if hasPackageOriginQueryOptions(flags) {
 			return query, fmt.Errorf("origin query options require --origin-receipt")
 		}
 		return query, nil
+	}
+	if query.RootActivityID != "" || query.ActivityID != "" || query.FieldID != "" {
+		query.Kind = "field-input-locations"
 	}
 	if flags["--origin-kind"] != "" {
 		query.Kind = flags["--origin-kind"]
@@ -124,6 +127,9 @@ func writePackageOriginInput(output io.Writer, origin *bodyexecution.NativeOrigi
 		return
 	}
 	fmt.Fprintf(output, "recorded origins: kind=%s offset=%d returned=%d total=%d receipt=%s\n", origin.Query.Kind, origin.Query.Offset, origin.ReturnedRows, origin.TotalRows, origin.ReceiptSHA256)
+	if origin.SourceRows != nil {
+		fmt.Fprintf(output, "origin subjects: retained_rows=%d selected_rows=%d; paging uses the same subject IDs\n", *origin.SourceRows, origin.TotalRows)
+	}
 	if origin.InputShape != "" {
 		fmt.Fprintf(output, "consumer inputs: shape=%s rows=%d\n", origin.InputShape, origin.ConsumerRows)
 	}

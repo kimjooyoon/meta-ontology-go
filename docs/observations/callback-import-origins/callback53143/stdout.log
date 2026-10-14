@@ -1,0 +1,8 @@
+=== RUN   TestCallbackImportOrigins53143
+    callback_import_origins_fresh53143_test.go:83: new73/75 callback:original/candidate/preservation share operation import origin;fresh source reload rejects83;models0
+--- PASS: TestCallbackImportOrigins53143 (0.27s)
+=== RUN   TestCallbackImportScopeChange53143
+    callback_import_origins_fresh53143_test.go:116: new module change resets standard origin reader;no global or project AST reuse
+--- PASS: TestCallbackImportScopeChange53143 (0.21s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.882s

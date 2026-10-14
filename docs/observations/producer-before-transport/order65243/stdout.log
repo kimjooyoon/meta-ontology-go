@@ -1,0 +1,6 @@
+=== RUN   TestPublicContinuityCompletesProducersBeforeTransport65243
+--- PASS: TestPublicContinuityCompletesProducersBeforeTransport65243 (0.00s)
+=== RUN   TestPublicContinuityOrderRejectsSkippedOrLateProducers65243
+--- PASS: TestPublicContinuityOrderRejectsSkippedOrLateProducers65243 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/verify	0.458s
