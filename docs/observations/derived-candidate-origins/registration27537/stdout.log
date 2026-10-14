@@ -1,0 +1,5 @@
+=== RUN   TestOriginSourceRegistration27537
+    source_origin_registration_fresh_test.go:56: registration27537:all4 real source/reader programs registered as language capability;4 syntax/AST/byte/semantic/BX replays pass;corpus110 valid107 invalid3 language108 governance2;no producer/model calls
+--- PASS: TestOriginSourceRegistration27537 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax	0.440s

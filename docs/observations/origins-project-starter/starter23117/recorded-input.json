@@ -1,0 +1,7 @@
+{
+  "path": "internal/bodyexecution/testdata/choice22133-runtime.json.gz",
+  "source_commit": "792848f600e9229e70a9954262e1fa40ce130371",
+  "compressed_sha256": "8389bbc5ef2c784310894161891e4376a2fd8e40583aa12cf45bea27a5e46441",
+  "producer_executions": 0,
+  "producer_model_calls": 0
+}

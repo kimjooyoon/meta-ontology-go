@@ -1,0 +1,8 @@
+{
+  "status": "GO1.27_FIX_EMBEDDED_STRUCT_LITERAL_PROMOTION",
+  "diff_bytes": 1238,
+  "source": "internal/bodycodegen/source_fill_derived_inputs.go",
+  "repair": "same19 input fields use promoted literal syntax;no field/tag/values/limit/logic changed",
+  "historical_local_reruns": 0,
+  "next_static": "27803"
+}

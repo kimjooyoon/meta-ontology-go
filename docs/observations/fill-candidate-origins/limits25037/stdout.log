@@ -1,0 +1,5 @@
+=== RUN   TestSourceCandidateBoundaries25037
+    source_fill_candidate_limits_fresh_test.go:68: boundary25037:8 rows retained with7 explicit unresolved uses;9 holes/derived grammar/oversized source refused;escaped candidate and quoted Unicode expression ranges exact;model0
+--- PASS: TestSourceCandidateBoundaries25037 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.520s
