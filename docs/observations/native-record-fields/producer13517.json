@@ -1,0 +1,29 @@
+{
+  "base": "2c77253bccd65f54fdbbbaceca3ecb1f275a1c9f",
+  "files": {
+    "cmd/gooo/package_execute.go": "4e163dbc408cb4e42b8e60051cbebaa23681aa77e08f6fa34875d306f7e9066b",
+    "cmd/gooo/package_field_native_fresh_test.go": "47a203b76977676b4193df36b49472ebf74b37365ab91e19c216a91f4e727fe9",
+    "internal/bodyexecution/composition_read_evidence.go": "4404ce5a8a40e5f39d63faa02727d2e87b276011b2545a6c024edfc188652af9",
+    "internal/bodyexecution/composition_native_observation.go": "5dc29873406c727cafbb6068aaaeb8e072624e6da2f798c603c3163b4f9aed4b",
+    "internal/bodyexecution/composition_field_native_fresh_test.go": "a1f8cd1b598503eb214680d11c4b591be9984c783f631b3dcbde18ebafe227b8",
+    "internal/bodyexecution/native_origin_validate.go": "e80c744ee05f42e3fd608b9c5c88e8fba2aa61964444e91ccf1d7e5792d46cc1",
+    "internal/bodyexecution/native_field_facts.go": "a504c127f6259ab655884eb61bf1b54626952a12dbe5a84db748746c19b5afe9",
+    "internal/bodyexecution/native_origin_input.go": "0fcac87d57e047b4f4bbd7faa13ae965e898775133703a034e22f38d0ff34c86",
+    "internal/bodyexecution/composition_field_render.go": "185a3fffaf5f56826ad78a3d48f1cc9d04336524d58b848cfeb441ac98d3fdbf",
+    "internal/bodyexecution/composition_field_observer.go": "8cd419110112178561689b2fc0b58327478fb57efb337401b1125192b82318f7",
+    "internal/bodyexecution/composition_executor.go": "27762505ad53de55a8cd77915880658d9d4a80bf1945056be5d0a171edb41951",
+    "internal/bodyexecution/composition_field_contract.go": "4f1697fb3a4cbebe18228bcb8e36801f072cca72caeffa76e6bee75351be1b59",
+    "internal/bodyexecution/composition_field_inventory.go": "105a92a4743f1d6f9de167a5774294da2489652cf8afc9ea5eaec5faf691498a",
+    "internal/bodyexecution/composition_runtime.go": "fea7995c2cfad9341b8e51f844b7be9922580844c80596e6cb83e62b2abf1789",
+    "internal/bodyexecution/composition_field_projection.go": "7b3eabc791821f1d4b81d864b520eaab3c7be59f25ca892b33799759c4c24307",
+    "internal/bodyexecution/joint_replay.go": "8b53692d0d6c7b957f70e3ffb2c2dbc7a2a7e303281f55851359a5873cc80e98",
+    "internal/bodyexecution/composition_field_runtime.go": "247a35ede431a6775c1b099fb0bfa6b53bfdba17a801e0ebefba047a4245a747",
+    "internal/bodyexecution/composition_read_run.go": "4f843e4fa1d44d4f87ed53622b03ccb1d26bef46e73f9b3647ec963e31149de0",
+    "internal/bodyexecution/composition_field_native_validate.go": "c21cf3c4e6ac7be2a4b116b8ceaaf0ffa96f6653380304e79ddc870c34dd4583",
+    "examples/native-record-fields/reader.gooo": "4d6398e81460d6b299e4982915648041a75f89b7baa4e32819b45db13d2ebf79",
+    "examples/native-record-fields/cases.json": "713d9be5a31d955312b92744c11031abc533174a369d42ec978c6c98e7b8181c",
+    "examples/native-record-fields/reader.workspace.json": "0e6a244555018456624b18cd1f78afb196cf0fb2237ae7058df168f1f2031ad3",
+    "examples/native-record-fields/main.gooo": "2e7fce47bab3b6135ee00355b713eb7db5b5263d26b05a472ba54fccb7898f94",
+    "examples/native-record-fields/gooo.workspace.json": "949b776f5459c6b4262f3ddcf461866e623fb077455717abf6b422d08a2bb67c"
+  }
+}

@@ -143,6 +143,10 @@ func expectedRegistry() Registry {
 		{ID: "typed-field-origin-copy-example", Path: "examples/typed-value-origins/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
 
 		{ID: "typed-field-origin-gooo-ancestry", Path: "examples/typed-value-origins/ancestry.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
+
+		{ID: "native-record-field-history-example", Path: "examples/native-record-fields/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
+
+		{ID: "native-record-field-history-reader", Path: "examples/native-record-fields/reader.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
 	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit, selfImprovementObservationUnit, partialReuseUnit}, MetaSources: []string{"internal/meta/syntaxregistration/contract.gooo", "internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo", "internal/meta/generation/operation-input-contract.gooo", "internal/meta/generation/callback-preview-contract.gooo", "internal/meta/generation/callback-extraction-contract.gooo", "internal/meta/generation/self_improvement_outcome_contract.gooo", "internal/meta/policycompilation/revision-operation.gooo", "examples/relay-game-contract/main.gooo", "internal/meta/generation/experience_memory_receipt_contract.gooo"}}
 }
 

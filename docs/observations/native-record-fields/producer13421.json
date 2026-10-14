@@ -1,0 +1,11 @@
+{
+  "base": "2c77253bccd65f54fdbbbaceca3ecb1f275a1c9f",
+  "files": {
+    "internal/bodyexecution/composition_field_native_fresh_test.go": "a1f8cd1b598503eb214680d11c4b591be9984c783f631b3dcbde18ebafe227b8",
+    "internal/bodyexecution/composition_field_render.go": "fe8e72ad28b1684856369d5ed6c74592b616f22363d8924ffe7adf899afacbfd",
+    "internal/bodyexecution/composition_field_observer.go": "8cd419110112178561689b2fc0b58327478fb57efb337401b1125192b82318f7",
+    "internal/bodyexecution/composition_field_inventory.go": "6df75cc226c2ae20cf17df1885e64977a456592a01657e371d852e641d018e7e",
+    "internal/bodyexecution/composition_field_projection.go": "11366caeff3b0f04dd61da43d67021c49345df6d25d302980b8f91d305014b1a",
+    "internal/bodyexecution/composition_field_native_validate.go": "1dc4d86bf957c916341768ef8a226d612416b277de6f6f8ab34029ca39fed433"
+  }
+}

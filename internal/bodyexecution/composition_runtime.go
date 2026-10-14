@@ -37,6 +37,12 @@ type CompositionPortDelivery struct {
 }
 
 type CompositionTrace struct {
+	FieldWrites             []CompositionFieldWrite           `json:"field_writes,omitempty"`
+	FieldUses               []CompositionFieldUse             `json:"field_uses,omitempty"`
+	FieldFrames             int                               `json:"field_frames,omitempty"`
+	FieldFrameDropped       int                               `json:"field_frame_dropped,omitempty"`
+	FieldWriteDropped       int                               `json:"field_write_dropped,omitempty"`
+	FieldUseDropped         int                               `json:"field_use_dropped,omitempty"`
 	CaseIndex               int                               `json:"case_index"`
 	Deliveries              []CompositionDelivery             `json:"deliveries"`
 	CalledInputsObserved    bool                              `json:"called_inputs_observed,omitempty"`
@@ -92,6 +98,11 @@ type CompositionRuntime struct {
 	ConditionSites                 []CompositionConditionSite    `json:"condition_sites,omitempty"`
 	ConditionObservation           *CompositionConditionSummary  `json:"condition_observation,omitempty"`
 	ConstructionSites              []CompositionConstructionSite `json:"construction_sites,omitempty"`
+	FieldBindings                  []CompositionFieldBinding     `json:"field_bindings,omitempty"`
+	FieldSites                     []CompositionFieldSite        `json:"field_sites,omitempty"`
+	FieldUseSites                  []CompositionFieldSite        `json:"field_use_sites,omitempty"`
+	FieldProjectionSHA256          string                        `json:"field_projection_sha256,omitempty"`
+	FieldObservation               *CompositionFieldSummary      `json:"field_observation,omitempty"`
 	LocalSites                     []CompositionLocalSite        `json:"local_sites,omitempty"`
 	LocalUseSites                  []CompositionLocalUseSite     `json:"local_use_sites,omitempty"`
 	LocalObservation               *CompositionLocalSummary      `json:"local_observation,omitempty"`

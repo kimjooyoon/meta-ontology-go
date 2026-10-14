@@ -45,6 +45,9 @@ func validateRecordedNativeOrigins(runtime CompositionRuntime) error {
 	if err := validateLocalFileSources(runtime); err != nil {
 		return err
 	}
+	if err := validateRecordedFieldObservations(runtime); err != nil {
+		return err
+	}
 	return compareRecordedOriginCounts(*summary, counts)
 }
 
