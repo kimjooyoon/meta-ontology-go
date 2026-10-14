@@ -1,0 +1,9 @@
+{
+  "result": "typecheck failed before consumer native execution",
+  "cause": "Gooo Integer counter is int64;native len returns int;use existing explicit int64(len(...)) convention",
+  "original_producer_executions": 0,
+  "consumer_program_executions": 0,
+  "models": 0,
+  "next": "19337 source adds explicit length conversion and selects a different offset2 page;never rerun completed inputs",
+  "previous_hypothesis": "anonymous fact JSON names were also incorrect in19121;19203 already uses exported LocalFillFragmentFact type"
+}

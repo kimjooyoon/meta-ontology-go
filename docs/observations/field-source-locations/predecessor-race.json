@@ -1,0 +1,11 @@
+{
+  "pr": 1556,
+  "head": "da9055ed4014106cdb63d59a971bbcc393b24f0a",
+  "run": 38514962024,
+  "job": 115691577842,
+  "failure": "cmd/gooo package global10m test alarm",
+  "active_test_elapsed_seconds": 1,
+  "native_reruns": 0,
+  "workflow_reruns": 0,
+  "source_failure_log_sha256": "97c2c2bd5de54d9dab28c184137a60b7271fe8326b1d977d027f3f2cac64d824"
+}

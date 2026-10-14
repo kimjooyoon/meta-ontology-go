@@ -1,0 +1,7 @@
+=== RUN   TestCountedReplayCapacity18829
+    counted_replay_capacity_fresh_test.go:37: compareSourceFillReplay rendered helper lines 55
+    counted_replay_capacity_fresh_test.go:37: compareSourceFillCompleteness rendered helper lines 30
+    counted_replay_capacity_fresh_test.go:42: two new source functions retain rendered capacity under unchanged75-line bound;source inspection only;producer/model0
+--- PASS: TestCountedReplayCapacity18829 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.484s

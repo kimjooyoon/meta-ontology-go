@@ -11,16 +11,13 @@ const countedLoopLimit = 1024
 
 func countedLoopShape(loop *ast.ForStmt) (string, int, error) {
 	initial, initialOK := loop.Init.(*ast.AssignStmt)
-	post, postOK := loop.Post.(*ast.AssignStmt)
 	condition, conditionOK := loop.Cond.(*ast.BinaryExpr)
-	if !initialOK || !postOK || !conditionOK || initial.Tok != token.ASSIGN ||
-		post.Tok != token.ASSIGN || len(initial.Lhs) != 1 || len(initial.Rhs) != 1 ||
-		len(post.Lhs) != 1 || len(post.Rhs) != 1 || condition.Op != token.LSS {
-		return "", 0, fmt.Errorf("for requires an existing counter initialized to 0, counter < literal bound, and counter = counter + 1")
+	if !initialOK || !conditionOK || (initial.Tok != token.ASSIGN && initial.Tok != token.DEFINE) || len(initial.Lhs) != 1 || len(initial.Rhs) != 1 || condition.Op != token.LSS {
+		return "", 0, fmt.Errorf("for requires a counter initialized to 0, counter < literal bound, and a unit forward step;declare it with for let or use an existing local")
 	}
 	counter, ok := initial.Lhs[0].(*ast.Ident)
 	if !ok || counter.Name == "_" || !loopIntegerLiteral(initial.Rhs[0], 0) ||
-		!loopCounter(condition.X, counter.Name) || !loopCounter(post.Lhs[0], counter.Name) {
+		!loopCounter(condition.X, counter.Name) {
 		return "", 0, fmt.Errorf("for must use the same named counter from zero")
 	}
 	bound, ok := condition.Y.(*ast.BasicLit)
@@ -28,9 +25,7 @@ func countedLoopShape(loop *ast.ForStmt) (string, int, error) {
 		return "", 0, fmt.Errorf("for bound must be an integer literal from 1 to %d", countedLoopLimit)
 	}
 	limit, err := strconv.ParseInt(bound.Value, 0, 64)
-	step, stepOK := post.Rhs[0].(*ast.BinaryExpr)
-	if err != nil || limit < 1 || limit > countedLoopLimit || !stepOK || step.Op != token.ADD ||
-		!loopCounter(step.X, counter.Name) || !loopIntegerLiteral(step.Y, 1) {
+	if err != nil || limit < 1 || limit > countedLoopLimit || !loopUnitForwardStep(loop.Post, counter.Name) {
 		return "", 0, fmt.Errorf("for requires a 1..%d bound and a unit forward step", countedLoopLimit)
 	}
 	if err := validateLoopCounterBody(loop.Body, counter.Name); err != nil {
@@ -45,6 +40,11 @@ func loopCounter(expression ast.Expr, name string) bool {
 }
 
 func loopIntegerLiteral(expression ast.Expr, want int64) bool {
+	if call, ok := expression.(*ast.CallExpr); ok && len(call.Args) == 1 {
+		if name, ok := call.Fun.(*ast.Ident); ok && name.Name == "int64" {
+			expression = call.Args[0]
+		}
+	}
 	literal, ok := expression.(*ast.BasicLit)
 	if !ok || literal.Kind != token.INT {
 		return false
@@ -87,11 +87,31 @@ func validateCountedLoop(loop *ast.ForStmt, readonly, locals map[string]bool,
 	if err != nil {
 		return 0, err
 	}
-	if readonly[counter] || !locals[counter] {
+	nested := locals
+	if loop.Init.(*ast.AssignStmt).Tok == token.DEFINE {
+		if readonly[counter] || locals[counter] {
+			return 0, fmt.Errorf("for let counter %q is already bound", counter)
+		}
+		nested = cloneNames(locals)
+		nested[counter] = true
+	} else if readonly[counter] || !locals[counter] {
 		return 0, fmt.Errorf("for counter must be an existing mutable local")
 	}
+
 	protected := cloneNames(readonly)
 	protected[counter] = true
-	count, err := validateBlockInputs(loop.Body, protected, locals, allowGuardReturn, records...)
+	count, err := validateBlockInputs(loop.Body, protected, nested, allowGuardReturn, records...)
 	return count + 2, err
+}
+
+func loopUnitForwardStep(statement ast.Stmt, counter string) bool {
+	if update, ok := statement.(*ast.IncDecStmt); ok {
+		return update.Tok == token.INC && loopCounter(update.X, counter)
+	}
+	post, ok := statement.(*ast.AssignStmt)
+	if !ok || post.Tok != token.ASSIGN || len(post.Lhs) != 1 || len(post.Rhs) != 1 || !loopCounter(post.Lhs[0], counter) {
+		return false
+	}
+	step, ok := post.Rhs[0].(*ast.BinaryExpr)
+	return ok && step.Op == token.ADD && loopCounter(step.X, counter) && loopIntegerLiteral(step.Y, 1)
 }

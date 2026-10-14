@@ -1,0 +1,5 @@
+=== RUN   TestScopedCounterNative18217
+    counted_surface_fresh_test.go:87: new native scoped-counter cases3/3;two loop counters and later same-name variable distinct;21 completed ++ updates each read own previous assignment once;original Korean file coordinates;two-run replay;model0
+--- PASS: TestScopedCounterNative18217 (0.66s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.183s

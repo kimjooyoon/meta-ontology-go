@@ -1,0 +1,28 @@
+{
+  "source_head": "3aac47d7134b352669e6b114e636a0e9b7a8127a",
+  "reason": "own1557 race CLI600.930s,wholejob cancelled20m;all source checks remain",
+  "files": [
+    {
+      "from": "cmd/gooo/package_field_lineage_fresh_test.go",
+      "to": "internal/cliobservations/package_field_lineage_fresh_test.go",
+      "original_sha256": "233d61b90d5db240945233422d528adb7ee397f05d1d4759445310d4a8b0f612"
+    },
+    {
+      "from": "cmd/gooo/package_field_lineage_boundary_fresh_test.go",
+      "to": "internal/cliobservations/package_field_lineage_boundary_fresh_test.go",
+      "original_sha256": "8bb0f535f1d73835ee9805fd46b4b517476f5083c8a887e3ee370d3d5813af94"
+    },
+    {
+      "from": "cmd/gooo/package_field_lineage_capacity_fresh_test.go",
+      "to": "internal/cliobservations/package_field_lineage_capacity_fresh_test.go",
+      "original_sha256": "aee9cc4f5b5607a8207017b4262191be0fa1d342167c932e3bd90b433a27dc27"
+    },
+    {
+      "from": "cmd/gooo/package_field_renderer_fresh_test.go",
+      "to": "internal/cliobservations/package_field_renderer_fresh_test.go",
+      "original_sha256": "8c11234e046426854580555d8597a86b118209a10a9156db5a84de536d921b6b"
+    }
+  ],
+  "changes": "package declaration only;real command executable/race instrumentation;all four recorded queries,ten boundary inputs andsix capacity cases preserved;dependent renderer end-to-end test moves with its shared answer type",
+  "historical_local_executions": 0
+}

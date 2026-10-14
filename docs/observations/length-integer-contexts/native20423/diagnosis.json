@@ -1,0 +1,11 @@
+{
+  "status": "FAILED_ORIGIN_COVERAGE_ASSERTION_AFTER_NATIVE3_OF3",
+  "saved_runtime": "length-native20423.json.gz",
+  "native_case_checks": "3/3,exact two-run,model0",
+  "field_file_mapped": 6,
+  "authored_length_local_sites": 1,
+  "root_cause": "inferred count remains Go int under old length-compatibility rules;native local-origin journal tracks Integer(int64),Boolean,Text;count declaration omitted",
+  "repair": "when a genuine length/Integer mismatch needs new lowering,promote inferred runtime-length locals to Integer;already well-typed source stays unchanged",
+  "historical_reruns": 0,
+  "next_fresh_source_input": "20809"
+}

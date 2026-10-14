@@ -1,0 +1,17 @@
+{
+  "run": 38518985826,
+  "job": 115704095085,
+  "conclusion": "cancelled",
+  "started_at": "2026-10-14T05:56:35Z",
+  "completed_at": "2026-10-14T06:16:53Z",
+  "workflow_job_timeout_minutes": 20,
+  "completed_package_seconds": {
+    "cmd/gooo": 600.93,
+    "internal/bodyexecution": 569.524,
+    "internal/cliobservations": 106.75,
+    "internal/meta/repositoryprojection/extractor": 489.099
+  },
+  "usage": "diagnostic only;not whole-job success or successor authorization",
+  "manual_cancellation": false,
+  "workflow_reruns": 0
+}

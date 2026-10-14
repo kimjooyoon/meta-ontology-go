@@ -10,9 +10,11 @@ func (e *integerBodyEvaluator) evaluateCountedLoop(loop *ast.ForStmt) (any, bool
 	if err != nil {
 		return nil, false, err
 	}
-	if err := e.evaluateAssignment(loop.Init.(*ast.AssignStmt)); err != nil {
+	cleanup, err := e.initializeCountedLoop(loop.Init.(*ast.AssignStmt))
+	if err != nil {
 		return nil, false, err
 	}
+	defer cleanup()
 	for range bound {
 		value, err := e.evaluateExpression(loop.Cond)
 		if err != nil {
@@ -26,7 +28,7 @@ func (e *integerBodyEvaluator) evaluateCountedLoop(loop *ast.ForStmt) (any, bool
 		if err != nil || returned {
 			return result, returned, err
 		}
-		if err := e.evaluateAssignment(loop.Post.(*ast.AssignStmt)); err != nil {
+		if err := e.evaluateCountedPost(loop.Post); err != nil {
 			return nil, false, err
 		}
 	}

@@ -29,6 +29,10 @@ func (p readProjection) renderLocal(item readProjectionNode) string {
 		out.WriteString("}")
 		return out.String()
 	case "write":
+		if update, ok := item.node.(*ast.IncDecStmt); ok {
+			value := p.render(p.offset(update.X.Pos()), p.offset(update.X.End()))
+			return p.localSites[item.localWrite].Name + " = " + p.localAssignment(item.localWrite, value+" + 1")
+		}
 		return p.localAssignment(item.localWrite, p.renderExcept(item.start, item.end, item.node))
 	case "use":
 		site := p.localUseSites[item.site]
