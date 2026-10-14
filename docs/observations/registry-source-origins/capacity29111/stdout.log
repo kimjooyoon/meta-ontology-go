@@ -1,0 +1,13 @@
+=== RUN   TestRegistryOriginCapacity29111
+    registry_origin_capacity_fresh_test.go:23: internal/meta/syntaxregistration#generateRegistry rendered 30
+    registry_origin_capacity_fresh_test.go:23: internal/meta/syntaxregistration#goSource.registryCaseTail rendered 41
+    registry_origin_capacity_fresh_test.go:23: internal/meta/syntaxregistration#namedRegistryType rendered 8
+    registry_origin_capacity_fresh_test.go:23: internal/meta/syntaxregistration#caseRegistrySlice rendered 8
+    registry_origin_capacity_fresh_test.go:23: internal/meta/syntaxregistration#registryOriginWalk.expression rendered 23
+    registry_origin_capacity_fresh_test.go:23: internal/meta/syntaxregistration#registryOriginWalk.helper rendered 57
+    registry_origin_capacity_fresh_test.go:23: internal/meta/syntaxregistration#registryOriginWalk.appended rendered 40
+    registry_origin_capacity_fresh_test.go:23: internal/meta/syntaxregistration#goSource.registryTailNeedsComma rendered 18
+    registry_origin_capacity_fresh_test.go:24: all8 changed production declarations for source-owned registry origins;unchanged75-line rendered helper cap;parent38 unchanged and retained;producer/model0
+--- PASS: TestRegistryOriginCapacity29111 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.488s

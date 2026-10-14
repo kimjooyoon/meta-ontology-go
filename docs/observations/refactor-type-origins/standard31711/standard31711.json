@@ -1,0 +1,13 @@
+{
+  "first_elapsed_ns": 94537500,
+  "first_go_list_calls": 1,
+  "fresh_project_types": true,
+  "historical_cohort_reruns": 0,
+  "model_calls": 0,
+  "project_source_after": "float64",
+  "project_source_before": "int",
+  "scope": "one synthetic source-owned session",
+  "second_elapsed_ns": 389041,
+  "second_go_list_calls": 0,
+  "standard_type_identity_preserved": true
+}

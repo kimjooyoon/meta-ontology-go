@@ -1,0 +1,6 @@
+=== RUN   TestSourceCandidateBoundaries24919
+    source_fill_candidate_limits_fresh_test.go:29: eight-hole boundary {gooo/source-fill-candidate-origins/v1 경계24919.gooo sha256:7a08cbae2b731aa058598a8e1baf5fa099fa613b3cf8f1c0397827f27d61befa Choose  bad24919 {0 0}  {0 0} RESOLVED 0 [] declared source assignment and original template token locations only; no selection, type checking, case evaluation or model call} 경계24919.gooo:4:75-26:2: error parse.unexpected-token: source fill plan requires 2..16 complete candidates or a bounded derive clause
+--- FAIL: TestSourceCandidateBoundaries24919 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.523s
+FAIL

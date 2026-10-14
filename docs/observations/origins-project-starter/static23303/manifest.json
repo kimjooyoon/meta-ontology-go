@@ -1,0 +1,65 @@
+{
+  "base": "792848f600e9229e70a9954262e1fa40ce130371",
+  "files": [
+    {
+      "path": "cmd/gooo/library_starter.go",
+      "bytes": 1026,
+      "sha256": "89035f475dee79b3edb209f1fc27ee224ac48ff8cf67105d61b6d7fe64605105"
+    },
+    {
+      "path": "cmd/gooo/main_part01.go",
+      "bytes": 9673,
+      "sha256": "13a51cba74384991141aee15fc1be86a8fbec77cc94dd3444873514867f3aa9a"
+    },
+    {
+      "path": "cmd/gooo/starter_selection.go",
+      "bytes": 1008,
+      "sha256": "4d2c426f5694e0f27b088e014cbfb612d495d6b102185b3eed474450164940f0"
+    },
+    {
+      "path": "cmd/gooo/templates/origins/README.md",
+      "bytes": 2293,
+      "sha256": "1cad24362248e2a1a3885902b4d8edfe61257bfb000f6cc1ce9339843244a2be"
+    },
+    {
+      "path": "cmd/gooo/templates/origins/cases.json",
+      "bytes": 5817,
+      "sha256": "94c0a3f2b88a8f00a241f084806294ef411410d5c0bd62f79ffcc7c134aef2f7"
+    },
+    {
+      "path": "cmd/gooo/templates/origins/gooo.workspace.json",
+      "bytes": 289,
+      "sha256": "de18814c2388b70c4cd1d6f18aeea83611ebb376dd2c1881c055fe3681b9f601"
+    },
+    {
+      "path": "cmd/gooo/templates/origins/inputs.json",
+      "bytes": 909,
+      "sha256": "a70e027672368d02eb79f7e0d5e452e37939dd57ce95ccf3abccd02eb9fff944"
+    },
+    {
+      "path": "cmd/gooo/templates/origins/inspect.gooo.template",
+      "bytes": 4517,
+      "sha256": "048c41f2f178cec8c2e50055df69ab12c41cd6e981e2d0b5156cd5c704ba5979"
+    },
+    {
+      "path": "cmd/gooo/usage.go",
+      "bytes": 3346,
+      "sha256": "95f8883b6641075fa6ef33211d021d9c3d939bd877a549ad9f2d0c093a0270cb"
+    },
+    {
+      "path": "cmd/gooo/usage_topics_2.go",
+      "bytes": 3037,
+      "sha256": "324def92f8f72f74d5fca0c42bb84b870dc963ae7290ec57683742d775d4e916"
+    },
+    {
+      "path": "docs/language/project-starters.md",
+      "bytes": 9373,
+      "sha256": "bd66a61212bb4c32f12ae317fa3e066bc92cbd6e265b64bc6a0787e919d4bf01"
+    },
+    {
+      "path": "internal/cliobservations/origins_starter_fresh_test.go",
+      "bytes": 7429,
+      "sha256": "8bffeab8f00b03964d55c3aff583cfdb8df00a7a8d9340f816b9bb88382498f8"
+    }
+  ]
+}

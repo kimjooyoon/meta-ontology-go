@@ -1,0 +1,7 @@
+{
+  "status": "WHOLE_REGISTRY_FUNCTION_OVER_CAP",
+  "observed": "all other29 production declarations fit;expectedRegistry source function162lines exceeds unchanged75",
+  "repair": "all110 same cases/IDs/flags/order partitioned into6 ordinary literal groups;package definitions moved intact;complete required set expanded30to38;no source removed/caps relaxed",
+  "fresh_verification": "27537 registry/four-source replay;27593 all38 production capacities",
+  "historical_reruns": 0
+}

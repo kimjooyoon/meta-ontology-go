@@ -13,6 +13,13 @@ import (
 )
 
 func checkTypes(root, logical string, fset *token.FileSet, file *ast.File, function *ast.FuncDecl) (typeEvidence, error) {
+	return checkTypesWithStandard(root, logical, fset, file, function, newStandardImportSession())
+}
+
+func checkTypesWithStandard(root, logical string, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, standard *standardImportSession) (typeEvidence, error) {
+	if standard == nil {
+		standard = newStandardImportSession()
+	}
 	files, err := packageTypeFiles(root, logical, fset, file)
 	if err != nil {
 		return typeEvidence{}, err
@@ -25,7 +32,7 @@ func checkTypes(root, logical string, fset *token.FileSet, file *ast.File, funct
 		Selections: map[*ast.SelectorExpr]*types.Selection{},
 	}
 	typeErrors := make([]error, 0)
-	configuration := types.Config{Importer: newModuleImporter(root), Error: func(err error) {
+	configuration := types.Config{Importer: newModuleImporterWithStandard(root, standard), Error: func(err error) {
 		if err != nil {
 			typeErrors = append(typeErrors, err)
 		}
@@ -62,7 +69,7 @@ func checkTypes(root, logical string, fset *token.FileSet, file *ast.File, funct
 			}
 		}
 	}
-	return typeEvidence{info: info, pkg: checked, files: files, funcs: functions, fset: fset, root: root}, nil
+	return typeEvidence{info: info, pkg: checked, files: files, funcs: functions, fset: fset, root: root, standard: standard}, nil
 }
 
 func sufficientFunctionTypeEvidence(function *ast.FuncDecl, info *types.Info) bool {
