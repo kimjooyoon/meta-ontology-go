@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T10:26:51.548881+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-fill-candidate-origins-20261014/capacity25363/overlay.json",
+    "./internal/meta/repositoryprojection/extractor",
+    "-run=^TestFillCandidateOriginCapacity25363$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}

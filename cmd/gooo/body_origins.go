@@ -9,10 +9,10 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyOriginsUsage = "usage: gooo body-origins --activity <name> [--inputs-for <package/path:Activity> [--field <stable-field-id>] [--include-control]] <file.gooo>"
+const bodyOriginsUsage = "usage: gooo body-origins --activity <name> [--fill-candidate <declared-id>] [--inputs-for <package/path:Activity> [--field <stable-field-id>] [--include-control]] <file.gooo>"
 
 func runBodyOrigins(args []string, reader SourceReader, stdout, stderr io.Writer) int {
-	flags := map[string]string{"--activity": "", "--inputs-for": "", "--field": ""}
+	flags := map[string]string{"--activity": "", "--inputs-for": "", "--field": "", "--fill-candidate": ""}
 	file, control := "", false
 	for i := 0; i < len(args); i++ {
 		if args[i] == "--include-control" && !control {
@@ -31,10 +31,17 @@ func runBodyOrigins(args []string, reader SourceReader, stdout, stderr io.Writer
 		fmt.Fprintln(stderr, bodyOriginsUsage)
 		return exitUsage
 	}
+	if flags["--fill-candidate"] != "" && (control || flags["--field"] != "") {
+		fmt.Fprintln(stderr, "--fill-candidate describes declaration/use locations; --field and --include-control require typed value origins")
+		return exitUsage
+	}
 	source, err := reader.ReadFile(file)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return exitFailure
+	}
+	if flags["--fill-candidate"] != "" {
+		return writeBodyFillCandidateOrigins(file, source, flags, stdout, stderr)
 	}
 	r, err := bodycodegen.InspectTypedValueOrigins(file, source, flags["--activity"])
 	if err == nil && flags["--inputs-for"] != "" {

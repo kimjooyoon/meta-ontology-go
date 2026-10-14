@@ -1,0 +1,55 @@
+package choiceorigins
+namespace {{namespace}}_origins
+entity Anchor id "gooo://{{module}}/origins/anchor" fields {
+ field case_index id "gooo://{{module}}/origins/anchor:case_index" type integer required one
+ field event_kind id "gooo://{{module}}/origins/anchor:event_kind" type string required one
+ field event_index id "gooo://{{module}}/origins/anchor:event_index" type integer required one
+ field assignment_index id "gooo://{{module}}/origins/anchor:assignment_index" type integer required one
+ field frame id "gooo://{{module}}/origins/anchor:frame" type integer required one
+ field root_activity_id id "gooo://{{module}}/origins/anchor:root_activity_id" type string required one
+ field activity_id id "gooo://{{module}}/origins/anchor:activity_id" type string required one
+ field variable_ordinal id "gooo://{{module}}/origins/anchor:variable_ordinal" type integer required one
+ field variable_name id "gooo://{{module}}/origins/anchor:variable_name" type string required one
+ field record_id id "gooo://{{module}}/origins/anchor:record_id" type string required one
+ field field_id id "gooo://{{module}}/origins/anchor:field_id" type string required one
+ field site_kind id "gooo://{{module}}/origins/anchor:site_kind" type string required one
+ field category id "gooo://{{module}}/origins/anchor:category" type string required one
+ field mapping id "gooo://{{module}}/origins/anchor:mapping" type string required one
+ field reason id "gooo://{{module}}/origins/anchor:reason" type string required one
+ field package_path id "gooo://{{module}}/origins/anchor:package_path" type string required one
+ field filename id "gooo://{{module}}/origins/anchor:filename" type string required one
+ field original_activity_id id "gooo://{{module}}/origins/anchor:original_activity_id" type string required one
+ field source_sha256 id "gooo://{{module}}/origins/anchor:source_sha256" type string required one
+ field source_start id "gooo://{{module}}/origins/anchor:source_start" type integer required one
+ field source_end id "gooo://{{module}}/origins/anchor:source_end" type integer required one
+ field expression id "gooo://{{module}}/origins/anchor:expression" type string required one
+ field candidate_id id "gooo://{{module}}/origins/anchor:candidate_id" type string required one
+ field hole_id id "gooo://{{module}}/origins/anchor:hole_id" type string required one
+ field grammar id "gooo://{{module}}/origins/anchor:grammar" type string required one
+}
+entity Location id "gooo://{{module}}/origins/location" fields {
+ field status id "gooo://{{module}}/origins/location:status" type string required one
+ field selected_alternative id "gooo://{{module}}/origins/location:selected" type boolean required one
+ field mapped id "gooo://{{module}}/origins/location:mapped" type boolean required one
+ field filename id "gooo://{{module}}/origins/location:filename" type string required one
+ field source_start id "gooo://{{module}}/origins/location:start" type integer required one
+ field source_end id "gooo://{{module}}/origins/location:end" type integer required one
+ field expression id "gooo://{{module}}/origins/location:expression" type string required one
+ field record_id id "gooo://{{module}}/origins/location:record" type string required one
+ field field_id id "gooo://{{module}}/origins/location:field" type string required one
+ field assignment_index id "gooo://{{module}}/origins/location:assignment" type integer required one
+ field original_activity_id id "gooo://{{module}}/origins/location:activity" type string required one
+ field reason id "gooo://{{module}}/origins/location:reason" type string required one
+}
+activity Inspect(Anchor)->Location id "gooo://{{module}}/origins/inspect" computes `let selected=input.category=="record_choice"
+let status="UNRESOLVED"
+let mapped=false
+if input.mapping=="MAPPED" {
+ if input.filename!="" && input.source_sha256!="" && input.source_start>=0 && input.source_end>input.source_start && input.field_id!="" && input.record_id!="" {
+  mapped=true
+  status="ORIGINAL_EXPRESSION"
+  if selected {status="DECLARED_ALTERNATIVE"}
+  if input.category=="target" {status="FIELD_TARGET"}
+ } else {status="INVALID_LOCATION"}
+}
+return Location{status:status,selected_alternative:selected,mapped:mapped,filename:input.filename,source_start:input.source_start,source_end:input.source_end,expression:input.expression,record_id:input.record_id,field_id:input.field_id,assignment_index:input.assignment_index,original_activity_id:input.original_activity_id,reason:input.reason}`

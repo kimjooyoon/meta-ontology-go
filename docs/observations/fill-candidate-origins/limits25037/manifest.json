@@ -1,0 +1,70 @@
+{
+  "base": "de700c5a77695fee8842437c26c65fbbe7ce4b1f",
+  "files": [
+    {
+      "path": "cmd/gooo/body_fill_candidate_origins.go",
+      "bytes": 783,
+      "sha256": "478cedcdd2c943703e9787ab8b7b7e7288a69ecd0e2ed8ff3c129586b1ef44ae"
+    },
+    {
+      "path": "cmd/gooo/body_origins.go",
+      "bytes": 2170,
+      "sha256": "d3f69c540f54489667e43c267aa00d62920a1c46e6b372bd3a1bb3f32e5a4318"
+    },
+    {
+      "path": "cmd/gooo/body_origins_help.go",
+      "bytes": 2398,
+      "sha256": "02b583d45a93498d0968c9a75455f517181e043c5b8809ab2608524f05d2f629"
+    },
+    {
+      "path": "examples/fill-candidate-origins/README.md",
+      "bytes": 1943,
+      "sha256": "a996208f0a21d81f6a6d35825815734a8f7c4844a0da7e70363007eacd978a4b"
+    },
+    {
+      "path": "examples/fill-candidate-origins/gooo.workspace.json",
+      "bytes": 244,
+      "sha256": "58a906e4226676e2d2e2211c5c83bbf25e16117e233aefd989cccabe52c79db4"
+    },
+    {
+      "path": "examples/fill-candidate-origins/inspect.gooo",
+      "bytes": 2399,
+      "sha256": "6bfb3fcfc854b4e0cc9349e40e8de3e28ee12e25d151bbcc6f4fc4c9917eff8b"
+    },
+    {
+      "path": "examples/fill-candidate-origins/source.gooo",
+      "bytes": 627,
+      "sha256": "295ecbe5a74eb5c9cda1692810b6c7230f32672681bb8a47ac451fb1d31946da"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_candidate_inputs.go",
+      "bytes": 2418,
+      "sha256": "6df218be2633cf49b2b8b47d0770c147ee3822b085785e6b2e6458ad75bb5c37"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_candidate_limits_fresh_test.go",
+      "bytes": 3043,
+      "sha256": "7a767405110c3efb19edad93f51bc963f4237734219e7987f595876740cb0de2"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_candidate_origins.go",
+      "bytes": 4214,
+      "sha256": "98a84dd6fd13073640297c74c293aba6db865eff16e0aa262e9da7c383940f0f"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_candidate_origins_fresh_test.go",
+      "bytes": 4470,
+      "sha256": "7ea3b4b6f5c1d5b357bd5775506795d117de76ab14d191e2d4db19f3287cb520"
+    },
+    {
+      "path": "internal/cliobservations/fill_candidate_origins_fresh_test.go",
+      "bytes": 5429,
+      "sha256": "277eaf65bcea279ab562777c235deb5c1908888cd229a3a4e8d9ec10be0125e2"
+    },
+    {
+      "path": "internal/cliobservations/fill_candidate_routing_fresh_test.go",
+      "bytes": 1643,
+      "sha256": "0bf0de4c6b368854ff8975ff2382c6e7a8b814461e11d62a77957f0af5aff21b"
+    }
+  ]
+}

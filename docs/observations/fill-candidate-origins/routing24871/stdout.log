@@ -1,0 +1,5 @@
+=== RUN   TestCandidateOriginRouting24871
+    fill_candidate_routing_fresh_test.go:42: routing24871:new ordinary source retains typed-origin route;absent source_fill and duplicate selector rejected;model0
+--- PASS: TestCandidateOriginRouting24871 (0.61s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/cliobservations	2.380s
