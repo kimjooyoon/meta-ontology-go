@@ -60,6 +60,7 @@ func ConstructWorkspace(ctx context.Context, manifest packageruntime.Manifest,
 			EntryActivity: constructionEntry(r.Program), ProgramBudget: options.ProgramBudget,
 			ModelPath: options.ModelPath, FillModelPath: options.FillModelPath, GoBinary: options.GoBinary})
 	bindWorkspaceConditionSources(r.Program, &r.Evaluation.Runtime)
+	bindWorkspaceLocalFileSources(r.Program, &r.Evaluation.Runtime, r.Construction.Selected)
 	return r, err
 }
 
@@ -93,6 +94,7 @@ func ReplayWorkspaceConstruction(ctx context.Context, manifest packageruntime.Ma
 	r.Evaluation, err = bodyexecution.ReplayJointComposition(ctx, "workspace.gooo", []byte(program.Source),
 		prior.Construction, cases, goBinary)
 	bindWorkspaceConditionSources(program, &r.Evaluation.Runtime)
+	bindWorkspaceLocalFileSources(program, &r.Evaluation.Runtime, r.Construction.Selected)
 	return r, err
 }
 

@@ -48,6 +48,8 @@ type CompositionLocalElementFact struct {
 
 func (page *nativeOriginPage) visitLocals(runtime CompositionRuntime, trace CompositionTrace) {
 	switch page.query.Kind {
+	case "local-input-locations":
+		page.visitLocalFileLocations(runtime, trace)
 	case "local-fill-fragments":
 		page.visitLocalFillFragments(runtime, trace)
 	case "local-writes":

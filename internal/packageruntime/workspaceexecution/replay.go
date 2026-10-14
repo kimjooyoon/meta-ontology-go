@@ -45,6 +45,7 @@ func ReplayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prio
 	result.Runtime, err = bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, prior.Composition, translated, goBinary)
 	if err == nil {
 		bindWorkspaceConditionSources(program, &result.Runtime, result.BodyFills)
+		bindWorkspaceLocalFileSources(program, &result.Runtime, prior.Composition, result.BodyFills)
 		result.Runtime.InputSeparation = measureWorkspaceInputs(ctx, current, result, translated)
 	}
 	return result, err

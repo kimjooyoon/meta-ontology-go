@@ -1,0 +1,106 @@
+[
+  {
+    "path": ".github/workflows/integration-progress-evidence.yml",
+    "sha256": "c3b73d68c022fa2ed722d0eb12509d406058e142c0ec07fddca95abf563bf9bd"
+  },
+  {
+    "path": "cmd/gooo/package_execute.go",
+    "sha256": "485827dc7e9d03e6cb8966b88a0d23baaf669f44ae88f004adf8aba8d633c511"
+  },
+  {
+    "path": "cmd/gooo/package_local_assembly_files_fresh_test.go",
+    "sha256": "d6f30bbaa16218177a9cc209d48b39c887c98d64ac70f7cabda36551db31de43"
+  },
+  {
+    "path": "cmd/gooo/package_local_files_fresh_test.go",
+    "sha256": "ab5175afd4c4a734b3d1f2f15fbc0834f808f6fec424220026566b180ff5ca68"
+  },
+  {
+    "path": "cmd/gooo/package_local_grammar_files_fresh_test.go",
+    "sha256": "600a0cf4d347d075b71e7f53d62c58520975260cfdbdfd7df3149bb592826110"
+  },
+  {
+    "path": "cmd/gooo/package_origin_input.go",
+    "sha256": "f276515718fe14613417f2b5e14f3971de8427dad47f54b419565749cd2d8965"
+  },
+  {
+    "path": "examples/native-origin-reader/local-files/reader.gooo",
+    "sha256": "c742e3555eddefd4f63eb0b9008d1d1acf8d2e0cec1964b102e3ab78882ff362"
+  },
+  {
+    "path": "examples/native-origin-reader/local-files/reader.workspace.json",
+    "sha256": "d5ffc52f35038de85e628321b06eaceb79c67111a83c8a42f7199c26a812b38e"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_file_sources.go",
+    "sha256": "43c67d4c92ea21ad9e0bbce0f5853299928c6421b5224b756373b220e99aea54"
+  },
+  {
+    "path": "internal/bodyexecution/composition_runtime.go",
+    "sha256": "6ffe9c8efd8058a5fc18e3c8293f7c336da4acbfd1327c83634a15f6a43c27c2"
+  },
+  {
+    "path": "internal/bodyexecution/native_local_facts.go",
+    "sha256": "2e066901984e73fb40459a43fcb126dce3dfb1a0acf27173fe3c3d42143eea52"
+  },
+  {
+    "path": "internal/bodyexecution/native_local_file_contract_fresh_test.go",
+    "sha256": "84374db233edf0817f8ecb624a8489baec1096d9e978178351e7698c79138334"
+  },
+  {
+    "path": "internal/bodyexecution/native_local_file_facts.go",
+    "sha256": "ca9bfb1e823679a52729b4792ddfcae43c651f47472806b93d7404abd774edaf"
+  },
+  {
+    "path": "internal/bodyexecution/native_local_file_validate.go",
+    "sha256": "e5e40bedb6069cc18ca3da8a9dafe6b5c28d29d546618bd5875d910945d50984"
+  },
+  {
+    "path": "internal/bodyexecution/native_origin_input.go",
+    "sha256": "b4ca7e8a6217341f518d38e0149164c3eafc068e00108f08aba798cab960d850"
+  },
+  {
+    "path": "internal/bodyexecution/native_origin_validate.go",
+    "sha256": "d6311d2af4b1f2094e4c39a49f235c884988797bc8669de5027b109449b537ca"
+  },
+  {
+    "path": "internal/bodyexecution/testdata/local-files12421-runtime.json.gz",
+    "sha256": "56c43ebf00f4d2f144ab362dd66bdb5958637bc4a2e7713d349b86500e755a91"
+  },
+  {
+    "path": "internal/packageruntime/workspaceexecution/construct.go",
+    "sha256": "b31a088f1dfdf3df2d69ff8836aeca2e179b8f275b91fd89b3b41f9167157481"
+  },
+  {
+    "path": "internal/packageruntime/workspaceexecution/execute.go",
+    "sha256": "1cf84c48c9a7fda34cfc5eb1acb450955c9dfa9941a13469b82c00d25f7bcbe6"
+  },
+  {
+    "path": "internal/packageruntime/workspaceexecution/fill_input_prepare.go",
+    "sha256": "efbaf8e4ba0b6c9deaf807cc2e847813c15a105d49193dd65771f93e0f164c96"
+  },
+  {
+    "path": "internal/packageruntime/workspaceexecution/local_file_ranges.go",
+    "sha256": "4917f433ae29f584a74d1ef72ecf3762336e73c3e057c1e4d47fb5e8bc956acf"
+  },
+  {
+    "path": "internal/packageruntime/workspaceexecution/local_file_replay_fresh_test.go",
+    "sha256": "3748bfae45085592acb6da1fd5ff2f8814c10b5b38115da253efecf65c0da3ba"
+  },
+  {
+    "path": "internal/packageruntime/workspaceexecution/local_file_sources.go",
+    "sha256": "a44c72240df6fcd7662ea3689d423a25d1f63d6755eab64133023894650f1d0e"
+  },
+  {
+    "path": "internal/packageruntime/workspaceexecution/replay.go",
+    "sha256": "cc94c8e480b6334ac77b0f04bf3f32e2471050b4db30697965affd703e1c6450"
+  },
+  {
+    "path": "internal/packageruntime/workspaceexecution/resume.go",
+    "sha256": "cf3a601702f6530e363c74435ec1692b0fda5b413a7bfdd0958012a275019a1c"
+  },
+  {
+    "path": "scripts/integration-progress-observation/retry-observer.mjs",
+    "sha256": "9fccbd301e51a35cd25263e6607dc12b69abb21d685b5394cab0feba02c9cdc2"
+  }
+]

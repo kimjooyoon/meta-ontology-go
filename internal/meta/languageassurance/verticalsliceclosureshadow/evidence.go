@@ -103,14 +103,20 @@ func activeDenominator() []byte {
 	if value := activeDenominatorChunk0(languagesyntax.FixedCapabilityTotal); value != nil {
 		return value
 	}
-	return activeDenominatorChunk1(languagesyntax.FixedCapabilityTotal)
+	if value := activeDenominatorChunk1(languagesyntax.FixedCapabilityTotal); value != nil {
+		return value
+	}
+	return activeDenominatorChunk2(languagesyntax.FixedCapabilityTotal)
 }
 
 func activeDenominatorDigest() string {
 	if value := activeDenominatorDigestChunk0(languagesyntax.FixedCapabilityTotal); value != "" {
 		return value
 	}
-	return activeDenominatorDigestChunk1(languagesyntax.FixedCapabilityTotal)
+	if value := activeDenominatorDigestChunk1(languagesyntax.FixedCapabilityTotal); value != "" {
+		return value
+	}
+	return activeDenominatorDigestChunk2(languagesyntax.FixedCapabilityTotal)
 }
 
 type assuranceSummary struct {
@@ -183,6 +189,12 @@ var embeddedDenominatorV56 []byte
 
 //go:embed evidence/denominator-v57.json
 var embeddedDenominatorV57 []byte
+
+//go:embed evidence/denominator-v58.json
+var embeddedDenominatorV58 []byte
+
+//go:embed evidence/denominator-v59.json
+var embeddedDenominatorV59 []byte
 
 func activeDenominatorDigestChunk0(total int) string {
 	switch total {
@@ -260,6 +272,16 @@ func activeDenominatorDigestChunk1(total int) string {
 	return ""
 }
 
+func activeDenominatorDigestChunk2(total int) string {
+	switch total {
+	case 91:
+		return DenominatorMigrationV58Digest
+	case 92:
+		return DenominatorMigrationV59Digest
+	}
+	return ""
+}
+
 func activeDenominatorChunk0(total int) []byte {
 	switch total {
 	case 45:
@@ -332,6 +354,16 @@ func activeDenominatorChunk1(total int) []byte {
 		return embeddedDenominatorV56
 	case 90:
 		return embeddedDenominatorV57
+	}
+	return nil
+}
+
+func activeDenominatorChunk2(total int) []byte {
+	switch total {
+	case 91:
+		return embeddedDenominatorV58
+	case 92:
+		return embeddedDenominatorV59
 	}
 	return nil
 }

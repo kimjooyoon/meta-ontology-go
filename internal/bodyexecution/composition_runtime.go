@@ -95,6 +95,7 @@ type CompositionRuntime struct {
 	LocalSites                     []CompositionLocalSite        `json:"local_sites,omitempty"`
 	LocalUseSites                  []CompositionLocalUseSite     `json:"local_use_sites,omitempty"`
 	LocalObservation               *CompositionLocalSummary      `json:"local_observation,omitempty"`
+	LocalFileSources               *CompositionLocalFileSources  `json:"local_file_sources,omitempty"`
 	ReadSites                      []CompositionReadSite         `json:"read_sites,omitempty"`
 	ReadInputs                     []CompositionReadInput        `json:"read_inputs,omitempty"`
 	ReadObservation                *CompositionReadSummary       `json:"read_observation,omitempty"`

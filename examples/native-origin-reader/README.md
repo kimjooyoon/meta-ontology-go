@@ -20,6 +20,7 @@ go run ./cmd/gooo package execute \
 
 | 종류 | 읽는 내용 | Gooo 예제 |
 | --- | --- | --- |
+| `local-input-locations` | 실제 대입·사용을 원래 패키지·파일 및 후보·문법·템플릿에 연결 | [원래 파일 설명](local-files/README.md) |
 | `local-fill-fragments` | 실행된 대입을 조립한 원래 후보·문법·템플릿 조각 | [조립 출처 설명](local-fill/README.md) |
 | `elements` | 생성한 원소의 계산 범위, 완료 여부, 원본 표현 | [원소 설명](elements/elements.gooo) |
 | `constructions` | 생성한 목록, 빈 목록, 시도한 원소 수 | [목록 설명](constructions/constructions.gooo) |

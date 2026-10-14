@@ -3,6 +3,7 @@ package workspaceexecution
 import (
 	"sort"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
 )
 
@@ -11,6 +12,9 @@ import (
 type workspaceFillInput struct {
 	pkg, filename, source, activity, activityID string
 	loweredBody                                 string
+	originalBody                                string
+	loweredBodySHA, fileSHA                     string
+	bodyLiteral                                 bodycodegen.FillOriginRange
 	callEdits, recordEdits                      []BodySourceEdit
 	reason                                      string
 }
@@ -30,7 +34,7 @@ func prepareWorkspaceFillInputs(manifest packageruntime.Manifest, calls workspac
 	result := map[string]workspaceFillInput{}
 	for _, key := range keys {
 		d := calls[key]
-		if d.activity.Assembly == nil || d.activity.Assembly.Spec.FillPlan == nil {
+		if d.body == "" {
 			continue
 		}
 		id, err := workspaceActivityIdentity("gooo_workspace", d.ref.LoweredName, d.activity.ID)
@@ -38,8 +42,10 @@ func prepareWorkspaceFillInputs(manifest packageruntime.Manifest, calls workspac
 			continue
 		}
 		input := workspaceFillInput{pkg: d.ref.PackagePath, filename: d.source, activity: d.ref.Activity,
-			source: contents[d.ref.PackagePath+"\x00"+d.source]}
+			source: contents[d.ref.PackagePath+"\x00"+d.source], originalBody: d.body,
+			bodyLiteral: bodycodegen.FillOriginRange{Start: d.activity.ValueProgramSpan.Start.Offset, End: d.activity.ValueProgramSpan.End.Offset}}
 		input.activityID, err = workspaceActivityIdentity(d.namespace, d.ref.Activity, d.activity.ID)
+		input.fileSHA = sourceSHA256([]byte(input.source))
 		if err != nil {
 			input.reason = "INPUT_ACTIVITY_ID_UNAVAILABLE"
 		}
@@ -49,6 +55,7 @@ func prepareWorkspaceFillInputs(manifest packageruntime.Manifest, calls workspac
 			body, callErr = records.rewriteConstructorsWithEdits(d.ref.PackagePath, body, true, []recordConstructorScope{scope}, &input.recordEdits)
 		}
 		input.loweredBody = body
+		input.loweredBodySHA, _ = bodycodegen.NormalizedConditionBodySHA256(body)
 		if callErr != nil || body != d.activity.ValueProgram {
 			input.reason = "TEMPLATE_LOWERING_UNAVAILABLE"
 		}

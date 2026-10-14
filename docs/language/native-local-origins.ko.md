@@ -14,6 +14,10 @@ Gooo는 지역 변수의 선언, 실제 대입 순서, 함수가 호출된 회�
 이 기능을 포함한 개발 소스에서 새로 실행한 기록에 적용된다. 과거 실행 기록에
 없던 관계를 다시 계산해 채우지는 않는다.
 
+워크스페이스의 원래 파일까지 이어지는 위치는 별도의 `local-input-locations` 입력으로
+읽는다. [원래 패키지·파일 기원](native-local-file-origins.ko.md)과
+[실행 예제](../../examples/workspace-local-origins/README.md)에 명령과 좌표의 차이를 적었다.
+
 ## Gooo가 기록을 읽는 경로
 
 ```sh

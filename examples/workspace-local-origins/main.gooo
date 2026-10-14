@@ -1,0 +1,14 @@
+package localorigin
+namespace localorigin
+
+entity Integer id "urn:gooo:type:integer"
+entity Result id "urn:gooo:local-origin-example:result" fields {
+    field amount id "urn:gooo:local-origin-example:amount" type integer required one
+}
+
+activity Extract(Result) -> Integer id "urn:gooo:local-origin-example:extract" computes `return input.amount`
+activity Offset(Integer) -> Integer id "urn:gooo:local-origin-example:offset" computes `let shifted=input+941;return shifted`
+activity Build(Integer) -> Result id "urn:gooo:local-origin-example:build" computes `let adjusted=Extract(Result{amount:Offset(input)})
+if adjusted>0 {let result=adjusted+41;return Result{amount:result}}
+let result=adjusted-43
+return Result{amount:result}`
