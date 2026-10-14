@@ -641,33 +641,6 @@ jobs:
           jq -e '.decision == "REFUTED" and .unknown == null and .reason == "CONTRADICTORY_CANDIDATE_BINDING"' "$publish/orchestration-contradictory-candidate-report.json" >/dev/null
           jq -e '.decision == "REFUTED" and .unknown == null and .reason == "MISMATCHED_AUTHORIZATION_BINDING"' "$publish/orchestration-mismatched-authorization-report.json" >/dev/null
 
-      - name: Upload generated project utility dossier
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: public-self-improvement-utility-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/public-continuity/utility-publish
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Upload generated-test reuse dossier
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: public-self-improvement-test-reuse-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/public-continuity/test-reuse/publish
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Upload meta-defined public orchestration dossier
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: public-self-improvement-orchestration-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/public-continuity/orchestration/publish
-          if-no-files-found: error
-          retention-days: 30
-
       - name: Run graph-driven partial test reuse from the v14 boundary
         shell: bash
         run: |
@@ -731,15 +704,6 @@ jobs:
             exit 1
           fi
 
-      - name: Upload graph-driven partial test reuse dossier
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: public-self-improvement-partial-reuse-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/public-continuity/partial-reuse/evidence/publish
-          if-no-files-found: error
-          retention-days: 30
-
       - name: Run counterexample-driven semantic resolution repair
         shell: bash
         run: |
@@ -794,6 +758,42 @@ jobs:
             .safety_improvement and .runtime_comparable == false and .runtime_unknown == "RUNTIME_MODES_NOT_EQUIVALENT" and
             .repository_writes == 0 and .local_test_executions == 0
           ' "$root/evidence/resolution-repair-report.json"
+
+      - name: Upload generated project utility dossier
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: public-self-improvement-utility-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/public-continuity/utility-publish
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload generated-test reuse dossier
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: public-self-improvement-test-reuse-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/public-continuity/test-reuse/publish
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload meta-defined public orchestration dossier
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: public-self-improvement-orchestration-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/public-continuity/orchestration/publish
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload graph-driven partial test reuse dossier
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: public-self-improvement-partial-reuse-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/public-continuity/partial-reuse/evidence/publish
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Upload semantic resolution repair dossier
         if: always()

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"go/ast"
 	"go/build"
-	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -76,7 +75,7 @@ func preserveModuleFailure(err error) error {
 type moduleImporter struct {
 	root                string
 	module              string
-	fallback            types.Importer
+	standard            *standardImportSession
 	packages            map[string]*types.Package
 	loading             map[string]bool
 	exportPaths         map[string]string
@@ -89,11 +88,7 @@ type moduleImporter struct {
 }
 
 func newModuleImporter(root string) *moduleImporter {
-	imports := &moduleImporter{root: root, module: readModulePath(root),
-		packages: map[string]*types.Package{}, loading: map[string]bool{},
-		exportPaths: map[string]string{}, listStarted: time.Now()}
-	imports.fallback = importer.ForCompiler(token.NewFileSet(), runtime.Compiler, imports.exportData)
-	return imports
+	return newModuleImporterWithStandard(root, newStandardImportSession())
 }
 
 func (imports *moduleImporter) Import(path string) (*types.Package, error) {
@@ -107,7 +102,7 @@ func (imports *moduleImporter) Import(path string) (*types.Package, error) {
 	var err error
 	if !imports.local(path) {
 		if imports.standardLibrary(path) {
-			package_, importErr := imports.fallback.Import(path)
+			package_, importErr := imports.standard.Import(imports, path)
 			if importErr != nil || package_ == nil {
 				return nil, preserveModuleFailure(importErr)
 			}

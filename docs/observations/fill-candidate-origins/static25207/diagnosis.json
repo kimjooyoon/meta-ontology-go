@@ -1,0 +1,7 @@
+{
+  "status": "GO_FIX_SUGGESTED_TEST_LOOP_MODERNIZATION",
+  "diff_bytes": 1114,
+  "production_source_differences": 0,
+  "suggestion": "three positive-count fixture loops use integer range",
+  "repair": "private test fixture loops updated;no completed cohort rerun;new full-source static snapshot next"
+}

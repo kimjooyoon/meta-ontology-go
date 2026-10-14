@@ -1,0 +1,188 @@
+{
+  "id": 116026608235,
+  "run_id": 38614678789,
+  "workflow_name": "Public self-observation continuity",
+  "head_branch": "agent/race-package-order-20261015",
+  "run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/runs/38614678789",
+  "run_attempt": 1,
+  "node_id": "CR_kwDOT1omE88AAAAbA7mKaw",
+  "head_sha": "10067b26de6d3fa75040173a610fdc522b5da62a",
+  "url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/jobs/116026608235",
+  "html_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38614678789/job/116026608235",
+  "status": "completed",
+  "conclusion": "failure",
+  "created_at": "2026-10-14T18:23:03Z",
+  "started_at": "2026-10-14T18:27:31Z",
+  "completed_at": "2026-10-14T18:29:07Z",
+  "name": "Public self-observation handoff continuity",
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1,
+      "started_at": "2026-10-14T18:27:33Z",
+      "completed_at": "2026-10-14T18:27:37Z"
+    },
+    {
+      "name": "Check out the exact subject",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2,
+      "started_at": "2026-10-14T18:27:37Z",
+      "completed_at": "2026-10-14T18:27:41Z"
+    },
+    {
+      "name": "Install the exact toolchain",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3,
+      "started_at": "2026-10-14T18:27:41Z",
+      "completed_at": "2026-10-14T18:27:51Z"
+    },
+    {
+      "name": "Materialize exact logical workspace",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 4,
+      "started_at": "2026-10-14T18:27:51Z",
+      "completed_at": "2026-10-14T18:28:05Z"
+    },
+    {
+      "name": "Run the public candidate to decision to certificate to consumption path",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 5,
+      "started_at": "2026-10-14T18:28:05Z",
+      "completed_at": "2026-10-14T18:28:36Z"
+    },
+    {
+      "name": "Verify the six lowered-policy continuity cases and exact artifacts",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 6,
+      "started_at": "2026-10-14T18:28:36Z",
+      "completed_at": "2026-10-14T18:28:36Z"
+    },
+    {
+      "name": "Accept and measure the generated project utility",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 7,
+      "started_at": "2026-10-14T18:28:36Z",
+      "completed_at": "2026-10-14T18:28:42Z"
+    },
+    {
+      "name": "Reuse an authorized generated-test receipt across public commands",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 8,
+      "started_at": "2026-10-14T18:28:42Z",
+      "completed_at": "2026-10-14T18:28:44Z"
+    },
+    {
+      "name": "Run the meta-defined public orchestration protocol",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 9,
+      "started_at": "2026-10-14T18:28:44Z",
+      "completed_at": "2026-10-14T18:28:49Z"
+    },
+    {
+      "name": "Upload generated project utility dossier",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 10,
+      "started_at": "2026-10-14T18:28:49Z",
+      "completed_at": "2026-10-14T18:28:51Z"
+    },
+    {
+      "name": "Upload generated-test reuse dossier",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 11,
+      "started_at": "2026-10-14T18:28:51Z",
+      "completed_at": "2026-10-14T18:28:52Z"
+    },
+    {
+      "name": "Upload meta-defined public orchestration dossier",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 12,
+      "started_at": "2026-10-14T18:28:52Z",
+      "completed_at": "2026-10-14T18:28:54Z"
+    },
+    {
+      "name": "Run graph-driven partial test reuse from the v14 boundary",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 13,
+      "started_at": "2026-10-14T18:28:54Z",
+      "completed_at": "2026-10-14T18:28:58Z"
+    },
+    {
+      "name": "Reject labels-only and contradictory orchestration admission",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 14,
+      "started_at": "2026-10-14T18:28:58Z",
+      "completed_at": "2026-10-14T18:28:58Z"
+    },
+    {
+      "name": "Upload graph-driven partial test reuse dossier",
+      "status": "completed",
+      "conclusion": "failure",
+      "number": 15,
+      "started_at": "2026-10-14T18:28:58Z",
+      "completed_at": "2026-10-14T18:29:01Z"
+    },
+    {
+      "name": "Run counterexample-driven semantic resolution repair",
+      "status": "completed",
+      "conclusion": "skipped",
+      "number": 16,
+      "started_at": "2026-10-14T18:29:01Z",
+      "completed_at": "2026-10-14T18:29:01Z"
+    },
+    {
+      "name": "Upload semantic resolution repair dossier",
+      "status": "completed",
+      "conclusion": "failure",
+      "number": 17,
+      "started_at": "2026-10-14T18:29:01Z",
+      "completed_at": "2026-10-14T18:29:01Z"
+    },
+    {
+      "name": "Post Install the exact toolchain",
+      "status": "completed",
+      "conclusion": "skipped",
+      "number": 33,
+      "started_at": "2026-10-14T18:29:01Z",
+      "completed_at": "2026-10-14T18:29:01Z"
+    },
+    {
+      "name": "Post Check out the exact subject",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 34,
+      "started_at": "2026-10-14T18:29:01Z",
+      "completed_at": "2026-10-14T18:29:01Z"
+    },
+    {
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 35,
+      "started_at": "2026-10-14T18:29:01Z",
+      "completed_at": "2026-10-14T18:29:01Z"
+    }
+  ],
+  "check_run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/check-runs/116026608235",
+  "labels": [
+    "ubuntu-latest"
+  ],
+  "runner_id": 1000370016,
+  "runner_name": "GitHub Actions 1000370016",
+  "runner_group_id": 0,
+  "runner_group_name": "GitHub Actions"
+}

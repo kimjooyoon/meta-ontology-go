@@ -1,0 +1,43 @@
+=== RUN   TestDerivedCandidateCapacity27593
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#hasPackageOriginQueryOptions rendered 11
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#packageOriginQuery rendered 58
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#parsePackageExecuteArgs rendered 35
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#runBodyOrigins rendered 68
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#selectStarterFiles rendered 29
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writeBodyDerivedCandidateOrigins rendered 28
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writeBodyFillCandidateOrigins rendered 32
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writeBodyFillOriginCandidates rendered 19
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writePackageOriginInput rendered 34
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#InspectSourceFillCandidateOrigins rendered 32
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#InspectSourceFillDerivedOrigins rendered 42
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#InspectSourceFillOriginCandidates rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#IsSourceFillDerivation rendered 8
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#SourceFillCandidateOriginInputs rendered 35
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#SourceFillDerivedOriginInputs rendered 35
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#sourceFillCandidateOriginRow rendered 25
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#sourceFillDerivedOriginRow rendered 25
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#NativeOriginQuery.hasSubjectSelection rendered 5
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#ValidateNativeOriginQuery rendered 19
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.addField rendered 12
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.fieldFileLocation rendered 34
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.visitFields rendered 22
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#selectRecordedNativeOrigins rendered 64
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#validateOriginSubjectSelection rendered 10
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#activeDenominatorChunk2 rendered 37
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#activeDenominatorDigestChunk2 rendered 37
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#decodeDenominator rendered 28
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#expectedBoundarySpecsForVersion rendered 34
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#validateDenominator rendered 55
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedRegistry rendered 5
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup0 rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup1 rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup2 rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup3 rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup4 rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup5 rendered 16
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCases rendered 11
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxPackageUnits rendered 11
+    derived_candidate_capacity_fresh_test.go:15: derived27593:all38 changed production declarations;prior17 retained plus grammar/list/registry/denominator changes;unchanged75-line rendered helper cap;producer/model0
+--- PASS: TestDerivedCandidateCapacity27593 (0.02s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.413s

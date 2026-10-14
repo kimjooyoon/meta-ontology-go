@@ -1,0 +1,36 @@
+package derivedcandidateorigins
+namespace derivedcandidateorigins
+
+entity Origin id "urn:derivedcandidateorigins:origin" fields {
+ field filename id "urn:derivedcandidateorigins:filename" type string required one
+ field source_sha256 id "urn:derivedcandidateorigins:source" type string required one
+ field activity_id id "urn:derivedcandidateorigins:activity" type string required one
+ field candidate_id id "urn:derivedcandidateorigins:candidate" type string required one
+ field hole_id id "urn:derivedcandidateorigins:hole" type string required one
+ field expression id "urn:derivedcandidateorigins:expression" type string required one
+ field status id "urn:derivedcandidateorigins:status" type string required one
+ field reason id "urn:derivedcandidateorigins:reason" type string required one
+ field has_use id "urn:derivedcandidateorigins:has-use" type boolean required one
+ field hole_start id "urn:derivedcandidateorigins:hole-start" type integer required one
+ field hole_end id "urn:derivedcandidateorigins:hole-end" type integer required one
+ field use_start id "urn:derivedcandidateorigins:use-start" type integer required one
+ field use_end id "urn:derivedcandidateorigins:use-end" type integer required one
+ field expression_start id "urn:derivedcandidateorigins:expression-start" type integer required one
+ field expression_end id "urn:derivedcandidateorigins:expression-end" type integer required one
+ field origin_kind id "urn:derivedcandidateorigins:origin-kind" type string required one
+ field grammar id "urn:derivedcandidateorigins:grammar" type string required one
+ field grammar_start id "urn:derivedcandidateorigins:grammar-start" type integer required one
+ field grammar_end id "urn:derivedcandidateorigins:grammar-end" type integer required one
+}
+
+entity Summary id "urn:derivedcandidateorigins:summary" fields {
+ field grammar id "urn:derivedcandidateorigins:summary-grammar" type string required one
+ field category id "urn:derivedcandidateorigins:category" type string required one
+ field candidate_id id "urn:derivedcandidateorigins:summary-candidate" type string required one
+ field hole_id id "urn:derivedcandidateorigins:summary-hole" type string required one
+ field expression id "urn:derivedcandidateorigins:summary-expression" type string required one
+ field filename id "urn:derivedcandidateorigins:summary-file" type string required one
+ field reason id "urn:derivedcandidateorigins:summary-reason" type string required one
+}
+
+activity Inspect(Origin) -> Summary computes "let category = \"UNRESOLVED_USE\"; if input.origin_kind != \"derived_grammar\" { category = \"UNRESOLVED_SOURCE\" }; if input.origin_kind == \"derived_grammar\" && input.status == \"MAPPED\" && input.has_use && input.hole_end > input.hole_start && input.use_end > input.use_start && input.grammar_end > input.grammar_start && input.expression_start == 0 && input.expression_end == 0 { category = \"DERIVED_ASSIGNMENT\" }; return Summary{category:category, candidate_id:input.candidate_id, hole_id:input.hole_id, expression:input.expression, filename:input.filename, grammar:input.grammar, reason:input.reason}"

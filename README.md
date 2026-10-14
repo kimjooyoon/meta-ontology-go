@@ -4,61 +4,61 @@
 assembling programs, and preserving where their concepts and choices come from.
 This repository contains its Go compiler. Source files use the `.gooo` extension.
 
-Development source now connects native conditions to the selected Gooo body,
-authored activity and field declarations, and original package files through
-name lowering. The [source and origin guide](docs/language/source-origins.ko.md)
-explains these links and remaining gaps. Filled condition fragments also retain their
-[original package files](examples/workspace-fill-origins/README.md), selected candidates and grammar declarations. A [Gooo metaprogram](examples/condition-origins/README.md)
-uses the resulting typed records to describe available origins. Runtime cases
-remain observations attached to that history.
+## What you can build
 
-Development source also connects scalar local declarations, writes and uses to
-their [original workspace files](examples/workspace-local-origins/README.md).
-A Gooo reader describes those locations, including assembly candidates and
-grammar declarations. Selected-source and original-file coordinates remain
-separate; absent historical annotations stay unspecified.
+Gooo source declares calculations, stable concept identities and permitted
+construction choices. The compiler projects these declarations into Go and can
+run the result locally. Without a model, construction uses the declared
+candidate order. A compatible small local decision model can propose an order
+within those choices.
 
-A [typed source inspection](examples/typed-value-origins/README.md) keeps each record
-field's ancestry through copies, field updates and fixed helpers in ordinary
-computations. It can pass graph arrays to a Gooo program that follows dependencies
-and returns input ports and stable field IDs. The report distinguishes possible
-source dependencies from observed execution paths.
+Start with the [first program guide](docs/getting-started.md) and the [variables/conditions example](examples/everyday-program/README.md) or create an
+[app, library, diagnostic or origin-reader project](docs/language/project-starters.md).
+The development compiler also creates an origin reader:
 
-[Native record-field histories](examples/native-record-fields/README.md) now distinguish
-actual field writes and reads through copies and fixed helper calls. Even equal
-values retain separate field identities. A Gooo reader describes saved field
-records without running their producer again. Recording limits leave explicit
-drops while the computation continues.
-The [Gooo ancestry reader](examples/native-field-lineage/README.md) follows saved
-field links through copies and helpers, and reports recording gaps separately.
-Its traversal lives in `.gooo`; Go transports recorded columns. Two bounded
-sequence loops now express this kind of small graph walk.
-The [field/local bridge](examples/local-field-bridge/README.md) also follows values
-saved in scalar locals before a field is overwritten. A Gooo program walks the
-joined journals and keeps known origins visible when other links are unresolved.
-The [original field-location reader](examples/field-source-map/README.md) connects
-explicit field writes, constructor values and selector reads to original Gooo
-files. Template and candidate fragments retain separate anchors. Saved bridge
-queries can also carry several independent Gooo inputs within one 32KiB page.
-The [scoped-counter metaprogram](examples/scoped-origin-coverage/README.md) uses
-`for let` and a unit `++` post clause to count recorded template and candidate
-fragments in Gooo. Its page status and row-mapping ratio retain separate scope.
-The [length-aware collection example](examples/length-aware-summary/README.md)
-connects lengths to Integer counters, fields and helper inputs. Its native
-observation retains authored length expressions and marks its eight-row limit.
-The [assembled summary](examples/assembled-length-summary/README.md) declares
-three field alternatives and retains the selected expressions' original file
-locations. Direct record returns now participate in field histories without an
-extra named local. A [Gooo reader](examples/record-choice-origins/README.md)
-distinguishes declared alternatives, field targets and unresolved template
-locations in saved records; [the language note](docs/language/return-choice-origins.ko.md)
-describes the coordinates and current observation scope.
+```sh
+gooo init --template origins my-origins
+cd my-origins
+gooo package execute --json --cases cases.json gooo.workspace.json
+```
 
-A [Gooo metaprogram](examples/derived-origin/README.md) reads saved assembly
-origins and counts which recorded assignments connect to candidates, grammar
-declarations or retained templates. The CLI can pass a page as aligned arrays;
-Gooo owns the grouping and ratio rules. Partial pages or recordings leave the overall ratio
-unspecified. This works locally without a model or rerunning the producer.
+Its conditions and output live in `inspect.gooo`. The practice cases use
+explicitly fictional file coordinates. To inspect real programs, pass a saved
+execution through `--origin-receipt`; the original producer and model are not
+run again. The project README explains the page and observation scope.
+
+## Keep the origin with the calculation
+
+A field can retain its authored activity, stable record/field IDs, selected
+expression and original package-file location through name lowering. Record
+assembly also retains where its selected alternatives were declared. Direct
+record returns participate in field histories without an extra source local.
+
+Static source dependencies describe possible relationships. Native histories
+record observed writes, reads and explicit copy/helper parents. Saved fragments,
+missing locations, recording drops and page truncation remain visible in their
+own scope. [The source and origin guide](docs/language/source-origins.ko.md)
+introduces these views and their current gaps.
+
+Gooo metaprograms can consume primitive recorded rows or aligned arrays. They
+own the classification, grouping and bounded ancestry walks; Go transports the
+observations. This lets a program inspect how another Gooo program was assembled
+and where retained values came from.
+
+| Task | Development examples |
+| --- | --- |
+| Trace authored conditions and selected fragments | [Condition origins](examples/condition-origins/README.md), [original fill files](examples/workspace-fill-origins/README.md) |
+| Inspect source dependencies and local declarations | [Typed value origins](examples/typed-value-origins/README.md), [workspace local origins](examples/workspace-local-origins/README.md) |
+| Follow observed field/local relationships | [Field histories](examples/native-record-fields/README.md), [field ancestry](examples/native-field-lineage/README.md), [field/local bridge](examples/local-field-bridge/README.md) |
+| Read original field and choice locations | [Field locations](examples/field-source-map/README.md), [record-choice reader](examples/record-choice-origins/README.md), [return/choice contract](docs/language/return-choice-origins.ko.md) |
+| Read a declared construction choice | [Declared fill origins](examples/fill-candidate-origins/README.md) |
+| Read the finite palette of a source grammar | [Derived candidate origins](examples/derived-candidate-origins/README.md) |
+| Group recorded origins in Gooo | [Derived-origin reader](examples/derived-origin/README.md), [scoped-counter coverage](examples/scoped-origin-coverage/README.md) |
+| Assemble a bounded collection summary | [Length-aware summary](examples/length-aware-summary/README.md), [three-field assembly](examples/assembled-length-summary/README.md) |
+
+These links describe development source. Each example reports its finite cases
+and remaining scope separately; source-mapping coverage and functional case
+results answer different questions.
 
 [Try a small Gooo program in your browser](https://kimjooyoon.github.io/gooo-go-ports/tutorial.html)
 without installing anything or using a model. Change a score and a label, inspect
@@ -66,6 +66,25 @@ four returned fields, then download the source and inputs to edit and run locall
 The tutorial runs a fixed, precompiled Gooo → Go → WebAssembly program; it does
 not compile arbitrary source. The separate [library explorer](https://kimjooyoon.github.io/gooo-go-ports/)
 lets you try selected Go function ports.
+
+## Inspect the construction space in development source
+
+The development compiler can list candidates before selecting or executing one:
+
+```sh
+gooo body-origins --activity Choose --fill-candidates \
+  examples/derived-candidate-origins/source.gooo
+```
+
+That source declares two predicate expressions and three value expressions.
+It retains four of their six combinations. Query a returned ID with
+`--fill-candidate <id>` to inspect its grammar, hole and template-use origins.
+The [Gooo reader](examples/derived-candidate-origins/README.md) classifies those
+locations with its own conditions. Listing makes zero model calls and executes
+no candidate. Four of six describes the retained construction space; functional
+case matches have a separate denominator. The
+[0.6.35 development guide](docs/releases/0.6.35-dev.md) records the pending release
+of these source features. The published walkthrough below stays on0.6.34.
 
 ## Try a working Gooo program
 
@@ -75,7 +94,7 @@ directory on macOS or Linux:
 
 ```sh
 GOBIN="$PWD/.gooo-bin" GOWORK=off GOTOOLCHAIN=go1.27.2 \
-  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.33-dev
+  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.34-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -83,9 +102,11 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 ```
 
-This walkthrough pins the published 0.6.33 compiler. The
-[0.6.33 guide](docs/releases/0.6.33-dev.md) connects the explicit V2 return-layout
-model to source inspection, body construction and saved replay. Source-owned
+This walkthrough pins the published 0.6.34 compiler. The
+[0.6.34 guide](docs/releases/0.6.34-dev.md) records its accepted source, platform
+archives and explicit V2/V3 model routes. The earlier
+[0.6.33 guide](docs/releases/0.6.33-dev.md) connects the V2 return layout
+to source inspection, body construction and saved replay. Source-owned
 assignments, comparison order and Integer division remain visible to the model;
 omitting it keeps deterministic construction. The earlier
 [0.6.32 guide](docs/releases/0.6.32-dev.md) covers Gooo string functions and assembly
@@ -538,7 +559,7 @@ The latest model study and the deployed integration have separate evidence:
   and broader task coverage are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
-This compiler revision uses **Go SDK v0.2.46-experimental**, including the optional
+The development source pins **Go SDK v0.2.51-experimental**, including the optional
 [branch-owned V4 decision input](docs/source-branch-output-v4.md), versioned
 arithmetic, bounded probe sessions and prepared candidate reuse. The
 [observation loop](docs/path-observation-loop.md) can choose a distinguishing
@@ -561,7 +582,7 @@ representation and training wording.
 | Component | Available now | Current development step |
 | --- | --- | --- |
 | [Compiler 0.6.34](docs/releases/0.6.34-dev.md) | SDK0.2.44; explicit V2/V3 source/requirement inspection, finite construction and source-bound replay | Neutral/V4 model integration and bounded semantic context |
-| [SDK0.2.46 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.46-experimental) | Separate return-branch output relations, explicit neutral input policy and numerical compatibility checks | [First V4 study regressed](docs/source-branch-output-v4.md#the-first-fitted-comparison-regressed); decision-head learning and broader behavior coverage need work |
+| [SDK0.2.51 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.51-experimental) | Separate return-branch output relations, explicit neutral input policy and numerical compatibility checks | [First V4 study regressed](docs/source-branch-output-v4.md#the-first-fitted-comparison-regressed); decision-head learning and broader behavior coverage need work |
 | [Canonical and relation models](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1) | Freshly initialized small models, complete authored study records and failed candidates | Expected-output relations and new-task evaluation |
 | [Earlier shared judgment models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Historical wording and operation-order results |
 

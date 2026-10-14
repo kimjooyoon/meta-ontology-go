@@ -1,0 +1,1322 @@
+{
+  "at": "2026-10-14T17:10:13.738505+00:00",
+  "job": {
+    "id": 115983185630,
+    "run_id": 38601965529,
+    "workflow_name": "CI [PR authoritative]",
+    "head_branch": "agent/race-operation-origins-20261015",
+    "run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/runs/38601965529",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOT1omE88AAAAbASL23g",
+    "head_sha": "b3eb244587cfab6797ece74da9e25fd9bc6e00e7",
+    "url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/jobs/115983185630",
+    "html_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38601965529/job/115983185630",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-14T16:53:48Z",
+    "started_at": "2026-10-14T16:57:09Z",
+    "completed_at": "2026-10-14T17:09:02Z",
+    "name": "go test",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-14T16:57:10Z",
+        "completed_at": "2026-10-14T16:57:10Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-14T16:57:10Z",
+        "completed_at": "2026-10-14T16:57:16Z"
+      },
+      {
+        "name": "Run actions/setup-go@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-14T16:57:16Z",
+        "completed_at": "2026-10-14T16:57:25Z"
+      },
+      {
+        "name": "Materialize exact logical workspace",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-14T16:57:25Z",
+        "completed_at": "2026-10-14T16:57:36Z"
+      },
+      {
+        "name": "Run go test ./...",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-14T16:57:36Z",
+        "completed_at": "2026-10-14T17:08:55Z"
+      },
+      {
+        "name": "Post Run actions/setup-go@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9,
+        "started_at": "2026-10-14T17:08:55Z",
+        "completed_at": "2026-10-14T17:08:55Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10,
+        "started_at": "2026-10-14T17:08:55Z",
+        "completed_at": "2026-10-14T17:08:56Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11,
+        "started_at": "2026-10-14T17:08:56Z",
+        "completed_at": "2026-10-14T17:08:56Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/check-runs/115983185630",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000369794,
+    "runner_name": "GitHub Actions 1000369794",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  },
+  "bytes": 236793,
+  "sha256": "14a84a9d3ccf68899fd2c809c8e867bb672c998bf943d8fd4fe65664db9e01bc",
+  "downloaded_once": true,
+  "completed_ok_packages": 244,
+  "packages": [
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor",
+      "elapsed_token": "0.300",
+      "elapsed_seconds": 0.3
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/line-density-rewriter",
+      "elapsed_token": "0.009",
+      "elapsed_seconds": 0.009
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence",
+      "elapsed_token": "0.007",
+      "elapsed_seconds": 0.007
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/artifact-feedback-resolution-witness",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/callback-extraction-observe",
+      "elapsed_token": "0.009",
+      "elapsed_seconds": 0.009
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/callback-preview",
+      "elapsed_token": "38.811",
+      "elapsed_seconds": 38.811
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/feedback-predecessor-witness",
+      "elapsed_token": "0.011",
+      "elapsed_seconds": 0.011
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/feedback-semantic-state-witness",
+      "elapsed_token": "0.013",
+      "elapsed_seconds": 0.013
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "elapsed_token": "251.631",
+      "elapsed_seconds": 251.631
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-concept-artifact-witness",
+      "elapsed_token": "1.026",
+      "elapsed_seconds": 1.026
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness",
+      "elapsed_token": "0.569",
+      "elapsed_seconds": 0.569
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-binding",
+      "elapsed_token": "0.014",
+      "elapsed_seconds": 0.014
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-selection",
+      "elapsed_token": "0.097",
+      "elapsed_seconds": 0.097
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/rollback-fixed-point",
+      "elapsed_token": "0.016",
+      "elapsed_seconds": 0.016
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/language-syntax-witness",
+      "elapsed_token": "15.828",
+      "elapsed_seconds": 15.828
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-consumer",
+      "elapsed_token": "22.758",
+      "elapsed_seconds": 22.758
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-witness",
+      "elapsed_token": "4.648",
+      "elapsed_seconds": 4.648
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/promotion-authorized-continuity",
+      "elapsed_token": "0.009",
+      "elapsed_seconds": 0.009
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-shadow-witness",
+      "elapsed_token": "0.004",
+      "elapsed_seconds": 0.004
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-upstream-witness",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-registration-candidate",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/docs/assets/metric-pressure-loop",
+      "elapsed_token": "7.014",
+      "elapsed_seconds": 7.014
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/docs/assets/ontology-visuals",
+      "elapsed_token": "3.672",
+      "elapsed_seconds": 3.672
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/docs/research/choice-contract-cli-20261010/audit",
+      "elapsed_token": "0.020",
+      "elapsed_seconds": 0.02
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/docs/research/contract-model-cli-20261010/audit",
+      "elapsed_token": "0.015",
+      "elapsed_seconds": 0.015
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/docs/research/execution-model-cli-20261010/audit",
+      "elapsed_token": "0.035",
+      "elapsed_seconds": 0.035
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/docs/research/flow-model-cli-20261010/audit",
+      "elapsed_token": "0.020",
+      "elapsed_seconds": 0.02
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/docs/research/leaky-flow-cli-20261010/audit",
+      "elapsed_token": "0.179",
+      "elapsed_seconds": 0.179
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/docs/research/semantic-flow-cli-20261010/audit",
+      "elapsed_token": "0.091",
+      "elapsed_seconds": 0.091
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/examples/meta-policy-compilation/go-error-guard",
+      "elapsed_token": "0.015",
+      "elapsed_seconds": 0.015
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/examples/workflow-outcome-delta/referencego",
+      "elapsed_token": "0.007",
+      "elapsed_seconds": 0.007
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/analyzer",
+      "elapsed_token": "20.394",
+      "elapsed_seconds": 20.394
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/analyzer/couplingmanifest",
+      "elapsed_token": "0.007",
+      "elapsed_seconds": 0.007
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci/impactcoverage",
+      "elapsed_token": "0.019",
+      "elapsed_seconds": 0.019
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/analyzer/semanticbinding",
+      "elapsed_token": "0.010",
+      "elapsed_seconds": 0.01
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec",
+      "elapsed_token": "0.021",
+      "elapsed_seconds": 0.021
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bidir",
+      "elapsed_token": "0.343",
+      "elapsed_seconds": 0.343
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen",
+      "elapsed_token": "42.284",
+      "elapsed_seconds": 42.284
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "elapsed_token": "390.143",
+      "elapsed_seconds": 390.143
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodypathstream",
+      "elapsed_token": "5.546",
+      "elapsed_seconds": 5.546
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyrefinement",
+      "elapsed_token": "43.858",
+      "elapsed_seconds": 43.858
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodytiming",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/buildidentity",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/cache",
+      "elapsed_token": "0.321",
+      "elapsed_seconds": 0.321
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/cliobservations",
+      "elapsed_token": "74.258",
+      "elapsed_seconds": 74.258
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/completeness",
+      "elapsed_token": "0.082",
+      "elapsed_seconds": 0.082
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/completenessdelta",
+      "elapsed_token": "0.843",
+      "elapsed_seconds": 0.843
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/adapter",
+      "elapsed_token": "0.103",
+      "elapsed_seconds": 0.103
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/coupling",
+      "elapsed_token": "0.042",
+      "elapsed_seconds": 0.042
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/bindingcoverage",
+      "elapsed_token": "0.013",
+      "elapsed_seconds": 0.013
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/eligibilityregistry",
+      "elapsed_token": "0.004",
+      "elapsed_seconds": 0.004
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/lanefrontier",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/metarecognition",
+      "elapsed_token": "0.010",
+      "elapsed_seconds": 0.01
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/pressure_independence",
+      "elapsed_token": "0.030",
+      "elapsed_seconds": 0.03
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/r4safe_workid",
+      "elapsed_token": "0.003",
+      "elapsed_seconds": 0.003
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/resource_vector",
+      "elapsed_token": "0.016",
+      "elapsed_seconds": 0.016
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/safeworkbinding",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/conformance/selectiveci/shadow",
+      "elapsed_token": "3.017",
+      "elapsed_seconds": 3.017
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/decisionroute",
+      "elapsed_token": "0.033",
+      "elapsed_seconds": 0.033
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling",
+      "elapsed_token": "0.033",
+      "elapsed_seconds": 0.033
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/cycles",
+      "elapsed_token": "0.004",
+      "elapsed_seconds": 0.004
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/freshness",
+      "elapsed_token": "0.014",
+      "elapsed_seconds": 0.014
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/impactgraph",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps",
+      "elapsed_token": "0.029",
+      "elapsed_seconds": 0.029
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/performance",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/protectedregions",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/resourceenvelope",
+      "elapsed_token": "0.013",
+      "elapsed_seconds": 0.013
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/roundtrip",
+      "elapsed_token": "0.021",
+      "elapsed_seconds": 0.021
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci",
+      "elapsed_token": "0.010",
+      "elapsed_seconds": 0.01
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/bindingcoverage",
+      "elapsed_token": "0.026",
+      "elapsed_seconds": 0.026
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/fullsoundness",
+      "elapsed_token": "0.009",
+      "elapsed_seconds": 0.009
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/lanefrontier",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/semanticdelta",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier",
+      "elapsed_token": "0.149",
+      "elapsed_seconds": 0.149
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressurecoverage",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressureshadow",
+      "elapsed_token": "0.070",
+      "elapsed_seconds": 0.07
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/entityfieldsv1",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/formatfix",
+      "elapsed_token": "0.007",
+      "elapsed_seconds": 0.007
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/formatter",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/generator",
+      "elapsed_token": "0.469",
+      "elapsed_seconds": 0.469
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/languagedebug",
+      "elapsed_token": "0.003",
+      "elapsed_seconds": 0.003
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/languageprofile",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/languagetest",
+      "elapsed_token": "0.007",
+      "elapsed_seconds": 0.007
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/lsp",
+      "elapsed_token": "0.045",
+      "elapsed_seconds": 0.045
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/lsp/coupling",
+      "elapsed_token": "0.014",
+      "elapsed_seconds": 0.014
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/actionability",
+      "elapsed_token": "0.028",
+      "elapsed_seconds": 0.028
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactcoverage",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactfeedback",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactresolutionexperiment",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/ciplanusecase",
+      "elapsed_token": "0.009",
+      "elapsed_seconds": 0.009
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/compatibilitypolicy",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/directorykind",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/directorypartition",
+      "elapsed_token": "0.004",
+      "elapsed_seconds": 0.004
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/duplicates",
+      "elapsed_token": "0.007",
+      "elapsed_seconds": 0.007
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/entityfields",
+      "elapsed_token": "0.019",
+      "elapsed_seconds": 0.019
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution/authorization",
+      "elapsed_token": "0.018",
+      "elapsed_seconds": 0.018
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemconformance",
+      "elapsed_token": "0.003",
+      "elapsed_seconds": 0.003
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemexecution",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackpredecessor",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackstate",
+      "elapsed_token": "0.010",
+      "elapsed_seconds": 0.01
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe",
+      "elapsed_token": "0.022",
+      "elapsed_seconds": 0.022
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/generation",
+      "elapsed_token": "0.743",
+      "elapsed_seconds": 0.743
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/integrationprogress",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageartifactoracle",
+      "elapsed_token": "0.007",
+      "elapsed_seconds": 0.007
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance",
+      "elapsed_token": "0.067",
+      "elapsed_seconds": 0.067
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakage",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageactivation",
+      "elapsed_token": "0.013",
+      "elapsed_seconds": 0.013
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageeligibility",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipt",
+      "elapsed_token": "0.009",
+      "elapsed_seconds": 0.009
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceiptactivation",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipteligibility",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/externalconformanceactivation",
+      "elapsed_token": "0.016",
+      "elapsed_seconds": 0.016
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityactivation",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityeligibility",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityshadow",
+      "elapsed_token": "0.015",
+      "elapsed_seconds": 0.015
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthority",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityactivation",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityeval",
+      "elapsed_token": "0.009",
+      "elapsed_seconds": 0.009
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthoritypromotion",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityshadow",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityupstream",
+      "elapsed_token": "0.003",
+      "elapsed_seconds": 0.003
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureactivation",
+      "elapsed_token": "0.021",
+      "elapsed_seconds": 0.021
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureeligibility",
+      "elapsed_token": "0.030",
+      "elapsed_seconds": 0.03
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow",
+      "elapsed_token": "0.011",
+      "elapsed_seconds": 0.011
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/writeset",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept",
+      "elapsed_token": "0.618",
+      "elapsed_seconds": 0.618
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedebugexperiment",
+      "elapsed_token": "0.009",
+      "elapsed_seconds": 0.009
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedelivery",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageexampleexperiment",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagepackageexecution",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageprofileexperiment",
+      "elapsed_token": "0.007",
+      "elapsed_seconds": 0.007
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness",
+      "elapsed_token": "0.024",
+      "elapsed_seconds": 0.024
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact",
+      "elapsed_token": "0.009",
+      "elapsed_seconds": 0.009
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/foundationseed",
+      "elapsed_token": "0.023",
+      "elapsed_seconds": 0.023
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorbinding",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorresolution",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorselection",
+      "elapsed_token": "0.004",
+      "elapsed_seconds": 0.004
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedpromotion",
+      "elapsed_token": "0.009",
+      "elapsed_seconds": 0.009
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/improvement",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance",
+      "elapsed_token": "0.018",
+      "elapsed_seconds": 0.018
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime",
+      "elapsed_token": "0.301",
+      "elapsed_seconds": 0.301
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic",
+      "elapsed_token": "5.624",
+      "elapsed_seconds": 5.624
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemanticbinding",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "elapsed_token": "0.065",
+      "elapsed_seconds": 0.065
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance",
+      "elapsed_token": "40.171",
+      "elapsed_seconds": 40.171
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay",
+      "elapsed_token": "0.015",
+      "elapsed_seconds": 0.015
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/promotioncontinuity",
+      "elapsed_token": "0.015",
+      "elapsed_seconds": 0.015
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalcompat",
+      "elapsed_token": "0.007",
+      "elapsed_seconds": 0.007
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion",
+      "elapsed_token": "0.013",
+      "elapsed_seconds": 0.013
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/rollbackfixedpoint",
+      "elapsed_token": "0.016",
+      "elapsed_seconds": 0.016
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli",
+      "elapsed_token": "0.571",
+      "elapsed_seconds": 0.571
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainconformance",
+      "elapsed_token": "0.035",
+      "elapsed_seconds": 0.035
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix",
+      "elapsed_token": "0.447",
+      "elapsed_seconds": 0.447
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainlsp",
+      "elapsed_token": "0.015",
+      "elapsed_seconds": 0.015
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "elapsed_token": "48.442",
+      "elapsed_seconds": 48.442
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases",
+      "elapsed_token": "0.782",
+      "elapsed_seconds": 0.782
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourcebindingpromotion",
+      "elapsed_token": "0.007",
+      "elapsed_seconds": 0.007
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourceexecution",
+      "elapsed_token": "0.010",
+      "elapsed_seconds": 0.01
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagetestexperiment",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageutility",
+      "elapsed_token": "0.014",
+      "elapsed_seconds": 0.014
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence",
+      "elapsed_token": "0.010",
+      "elapsed_seconds": 0.01
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram",
+      "elapsed_token": "0.041",
+      "elapsed_seconds": 0.041
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/closure",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation",
+      "elapsed_token": "17.982",
+      "elapsed_seconds": 17.982
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy",
+      "elapsed_token": "0.268",
+      "elapsed_seconds": 0.268
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposal",
+      "elapsed_token": "0.054",
+      "elapsed_seconds": 0.054
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor",
+      "elapsed_token": "0.022",
+      "elapsed_seconds": 0.022
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/verify",
+      "elapsed_token": "0.024",
+      "elapsed_seconds": 0.024
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metrictransition",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/opentofuobservation",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/operationconformance",
+      "elapsed_token": "0.010",
+      "elapsed_seconds": 0.01
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation",
+      "elapsed_token": "139.108",
+      "elapsed_seconds": 139.108
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse",
+      "elapsed_token": "0.043",
+      "elapsed_seconds": 0.043
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/publictrust",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "elapsed_token": "361.809",
+      "elapsed_seconds": 361.809
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemantics",
+      "elapsed_token": "0.051",
+      "elapsed_seconds": 0.051
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementattestation",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate",
+      "elapsed_token": "0.107",
+      "elapsed_seconds": 0.107
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcontinuation",
+      "elapsed_token": "3.686",
+      "elapsed_seconds": 3.686
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutioncontract",
+      "elapsed_token": "2.448",
+      "elapsed_seconds": 2.448
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutiongrant",
+      "elapsed_token": "5.315",
+      "elapsed_seconds": 5.315
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementloop",
+      "elapsed_token": "0.003",
+      "elapsed_seconds": 0.003
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementobservation",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport",
+      "elapsed_token": "0.242",
+      "elapsed_seconds": 0.242
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/semanticresolution",
+      "elapsed_token": "0.033",
+      "elapsed_seconds": 0.033
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase",
+      "elapsed_token": "0.004",
+      "elapsed_seconds": 0.004
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase/claimledger",
+      "elapsed_token": "0.004",
+      "elapsed_seconds": 0.004
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "elapsed_token": "25.908",
+      "elapsed_seconds": 25.908
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect",
+      "elapsed_token": "0.028",
+      "elapsed_seconds": 0.028
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffectverification",
+      "elapsed_token": "0.020",
+      "elapsed_seconds": 0.02
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/metainvocation",
+      "elapsed_token": "0.018",
+      "elapsed_seconds": 0.018
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/outcomedelta",
+      "elapsed_token": "0.076",
+      "elapsed_seconds": 0.076
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime",
+      "elapsed_token": "0.122",
+      "elapsed_seconds": 0.122
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/artifactemit",
+      "elapsed_token": "0.045",
+      "elapsed_seconds": 0.045
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution",
+      "elapsed_token": "0.099",
+      "elapsed_seconds": 0.099
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution",
+      "elapsed_token": "113.661",
+      "elapsed_seconds": 113.661
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/provenance",
+      "elapsed_token": "0.899",
+      "elapsed_seconds": 0.899
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/provenance/pathclosure",
+      "elapsed_token": "0.032",
+      "elapsed_seconds": 0.032
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/provenance/selectiveci",
+      "elapsed_token": "0.075",
+      "elapsed_seconds": 0.075
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/query",
+      "elapsed_token": "0.196",
+      "elapsed_seconds": 0.196
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/query/couplingexplain",
+      "elapsed_token": "0.029",
+      "elapsed_seconds": 0.029
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/receiptprojection",
+      "elapsed_token": "0.040",
+      "elapsed_seconds": 0.04
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/semantic",
+      "elapsed_token": "0.044",
+      "elapsed_seconds": 0.044
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution",
+      "elapsed_token": "0.006",
+      "elapsed_seconds": 0.006
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/sourceimpact",
+      "elapsed_token": "0.120",
+      "elapsed_seconds": 0.12
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/syntax",
+      "elapsed_token": "0.089",
+      "elapsed_seconds": 0.089
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog/causality",
+      "elapsed_token": "0.014",
+      "elapsed_seconds": 0.014
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/valueexecution",
+      "elapsed_token": "0.101",
+      "elapsed_seconds": 0.101
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/verify",
+      "elapsed_token": "0.134",
+      "elapsed_seconds": 0.134
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/action-runtime",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/artifact-feedback-resolution-ci",
+      "elapsed_token": "0.021",
+      "elapsed_seconds": 0.021
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/authorized-write-set",
+      "elapsed_token": "0.004",
+      "elapsed_seconds": 0.004
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/causal-ci-selection",
+      "elapsed_token": "0.002",
+      "elapsed_seconds": 0.002
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation",
+      "elapsed_token": "0.026",
+      "elapsed_seconds": 0.026
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation-lineage",
+      "elapsed_token": "0.036",
+      "elapsed_seconds": 0.036
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-evidence",
+      "elapsed_token": "0.041",
+      "elapsed_seconds": 0.041
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof",
+      "elapsed_token": "0.819",
+      "elapsed_seconds": 0.819
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof/manifest",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/domain-completeness",
+      "elapsed_token": "0.570",
+      "elapsed_seconds": 0.57
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/feedback-predecessor-ci",
+      "elapsed_token": "0.509",
+      "elapsed_seconds": 0.509
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/maintenance",
+      "elapsed_token": "0.023",
+      "elapsed_seconds": 0.023
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-cost-report",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution",
+      "elapsed_token": "42.073",
+      "elapsed_seconds": 42.073
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution/collapsefixture",
+      "elapsed_token": "0.014",
+      "elapsed_seconds": 0.014
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-receipts",
+      "elapsed_token": "0.005",
+      "elapsed_seconds": 0.005
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/meta-summary",
+      "elapsed_token": "0.019",
+      "elapsed_seconds": 0.019
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-strategy",
+      "elapsed_token": "0.012",
+      "elapsed_seconds": 0.012
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/refactor-metrics",
+      "elapsed_token": "0.042",
+      "elapsed_seconds": 0.042
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-contract",
+      "elapsed_token": "0.081",
+      "elapsed_seconds": 0.081
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-cycle",
+      "elapsed_token": "0.033",
+      "elapsed_seconds": 0.033
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-partial-reuse",
+      "elapsed_token": "0.023",
+      "elapsed_seconds": 0.023
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter",
+      "elapsed_token": "0.155",
+      "elapsed_seconds": 0.155
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/source-subject-witness",
+      "elapsed_token": "0.008",
+      "elapsed_seconds": 0.008
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/transformation-effect",
+      "elapsed_token": "0.013",
+      "elapsed_seconds": 0.013
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/verify",
+      "elapsed_token": "0.044",
+      "elapsed_seconds": 0.044
+    }
+  ],
+  "scope": "original job package-reported durations only;not per-test data or controlled performance comparison"
+}

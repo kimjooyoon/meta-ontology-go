@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-14T18:35:45.973733+00:00",
+  "command": [
+    "/private/tmp/gooo-everyday-source-20261015/native64129/gooo",
+    "package",
+    "execute",
+    "--json",
+    "--go",
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "--cases",
+    "/private/tmp/gooo-everyday-source-20261015/native64129/source/cases.json",
+    "/private/tmp/gooo-everyday-source-20261015/native64129/source/gooo.workspace.json"
+  ],
+  "new_source_cohort": "native64129",
+  "historical_reruns": 0,
+  "scope": "three fresh finite native rows;no model request"
+}

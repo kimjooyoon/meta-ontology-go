@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "everyday/adjust",
+    "activity": "Adjust"
+  },
+  "packages": [
+    {
+      "path": "everyday/adjust",
+      "name": "everyday",
+      "imports": [],
+      "sources": [
+        "main.gooo"
+      ]
+    }
+  ]
+}

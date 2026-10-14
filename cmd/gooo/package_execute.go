@@ -17,7 +17,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageExecuteUsage = "usage: gooo package execute [--json] (--cases <cases.json> | --inputs <inputs.json> | --construction-receipt <execution.json> | --origin-receipt <execution.json>) [--origin-kind reads|constructions|elements|links|local-writes|local-uses|local-elements|local-fill-fragments|local-input-locations|field-writes|field-uses|field-input-locations] [--origin-shape rows|local-fill-columns|field-lineage-columns|field-local-columns] [--origin-offset <row-index>] [--origin-limit <1..128>] [--body-plans <plans.json>] [--assembly-model <model.json>] [--assembly-policy-workspace <policy.workspace.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
+const packageExecuteUsage = "usage: gooo package execute [--json] (--cases <cases.json> | --inputs <inputs.json> | --construction-receipt <execution.json> | --origin-receipt <execution.json>) [--origin-kind reads|constructions|elements|links|local-writes|local-uses|local-elements|local-fill-fragments|local-input-locations|field-writes|field-uses|field-input-locations] [--origin-shape rows|local-fill-columns|field-lineage-columns|field-local-columns] [--origin-field-id <id>] [--origin-activity-id <id>] [--origin-root-activity-id <id>] [--origin-offset <row-index>] [--origin-limit <1..128>] [--body-plans <plans.json>] [--assembly-model <model.json>] [--assembly-policy-workspace <policy.workspace.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
 
 type packageBodyFillPlanSet struct {
 	Schema     string                     `json:"schema"`
@@ -62,6 +62,7 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 
 func parsePackageExecuteArgs(args []string) (map[string]string, string, error) {
 	flags := map[string]string{"--cases": "", "--inputs": "", "--construction-receipt": "", "--origin-receipt": "",
+		"--origin-field-id": "", "--origin-activity-id": "", "--origin-root-activity-id": "",
 		"--origin-kind": "", "--origin-offset": "", "--origin-limit": "", "--origin-shape": "",
 		"--body-plans": "", "--assembly-model": "", "--assembly-policy-workspace": "", "--tiny-model": "", "--go": ""}
 	manifest, inputModes := "", 0

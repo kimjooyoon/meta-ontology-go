@@ -1,0 +1,5 @@
+=== RUN   TestGoooHelperSubject24131
+    origin_subject_helper_fresh_test.go:105: real CLI root/actual-helper/field IDs conjoined;20 retained/2 selected/2 returned;original helper write3 retained;Gooo target/value classification and escaped-source expression;embedded/help guides;producer/model0;finite0
+--- PASS: TestGoooHelperSubject24131 (1.67s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/cliobservations	3.812s

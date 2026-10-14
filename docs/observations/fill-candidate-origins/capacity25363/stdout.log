@@ -1,0 +1,22 @@
+=== RUN   TestFillCandidateOriginCapacity25363
+    fill_candidate_origin_capacity_fresh_test.go:14: cmd/gooo#hasPackageOriginQueryOptions rendered 11
+    fill_candidate_origin_capacity_fresh_test.go:14: cmd/gooo#packageOriginQuery rendered 58
+    fill_candidate_origin_capacity_fresh_test.go:14: cmd/gooo#parsePackageExecuteArgs rendered 35
+    fill_candidate_origin_capacity_fresh_test.go:14: cmd/gooo#runBodyOrigins rendered 59
+    fill_candidate_origin_capacity_fresh_test.go:14: cmd/gooo#selectStarterFiles rendered 29
+    fill_candidate_origin_capacity_fresh_test.go:14: cmd/gooo#writeBodyFillCandidateOrigins rendered 27
+    fill_candidate_origin_capacity_fresh_test.go:14: cmd/gooo#writePackageOriginInput rendered 34
+    fill_candidate_origin_capacity_fresh_test.go:14: internal/bodycodegen#InspectSourceFillCandidateOrigins rendered 32
+    fill_candidate_origin_capacity_fresh_test.go:14: internal/bodycodegen#SourceFillCandidateOriginInputs rendered 35
+    fill_candidate_origin_capacity_fresh_test.go:14: internal/bodycodegen#sourceFillCandidateOriginRow rendered 25
+    fill_candidate_origin_capacity_fresh_test.go:14: internal/bodyexecution#NativeOriginQuery.hasSubjectSelection rendered 5
+    fill_candidate_origin_capacity_fresh_test.go:14: internal/bodyexecution#ValidateNativeOriginQuery rendered 19
+    fill_candidate_origin_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.addField rendered 12
+    fill_candidate_origin_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.fieldFileLocation rendered 34
+    fill_candidate_origin_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.visitFields rendered 22
+    fill_candidate_origin_capacity_fresh_test.go:14: internal/bodyexecution#selectRecordedNativeOrigins rendered 64
+    fill_candidate_origin_capacity_fresh_test.go:14: internal/bodyexecution#validateOriginSubjectSelection rendered 10
+    fill_candidate_origin_capacity_fresh_test.go:15: candidate25363:all17 accepted-base changed production declarations;unchanged75-line rendered helper cap;no producer/model execution
+--- PASS: TestFillCandidateOriginCapacity25363 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.504s

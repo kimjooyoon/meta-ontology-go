@@ -1,0 +1,16 @@
+{
+  "before_sha256": "00d669a569452cd11302668c472a9c21cae9c4d1c593ff35b7a3264248aca1a1",
+  "after_sha256": "b4d66e98158d71a92e22bd543fac1a2e4f098057ef6e70c146e1ae71d8ef037c",
+  "steps": 16,
+  "unchanged_step_blocks": 16,
+  "producer_and_setup_steps": 11,
+  "upload_steps": 5,
+  "upload_step_occurrences": {
+    "- name: Upload generated project utility dossier": 1,
+    "- name: Upload generated-test reuse dossier": 1,
+    "- name: Upload meta-defined public orchestration dossier": 1,
+    "- name: Upload graph-driven partial test reuse dossier": 1,
+    "- name: Upload semantic resolution repair dossier": 1
+  },
+  "schema": "gooo/source-producer-before-transport/v1"
+}

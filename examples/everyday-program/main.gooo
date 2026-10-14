@@ -1,0 +1,7 @@
+package everyday
+namespace everyday
+entity Integer id "urn:gooo:type:integer"
+entity Boolean id "urn:gooo:type:boolean"
+activity Adjust(Integer, Boolean) -> Integer id "urn:gooo:everyday:adjust" computes `let value=input0+11
+if input1 {value=value*2}
+return value`

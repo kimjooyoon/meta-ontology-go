@@ -67,7 +67,7 @@ func callbackPreviewFactoryCandidate(root string, source []byte, logical string,
 	if candidateTarget == nil {
 		return CallbackPreviewCandidate{}, fmt.Errorf("callback factory lost its source target")
 	}
-	if _, err := checkTypes(root, logical, candidateSet, candidateFile, candidateTarget); err != nil {
+	if _, err := checkTypesWithStandard(root, logical, candidateSet, candidateFile, candidateTarget, evidence.standard); err != nil {
 		return CallbackPreviewCandidate{}, err
 	}
 	return CallbackPreviewCandidate{
