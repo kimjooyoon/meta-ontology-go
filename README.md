@@ -12,6 +12,12 @@ explains these links and remaining gaps. Filled condition fragments also retain 
 uses the resulting typed records to describe available origins. Runtime cases
 remain observations attached to that history.
 
+A second [Gooo metaprogram](examples/derived-origin/README.md) reads saved assembly
+origins and counts which recorded assignments connect to candidates, grammar
+declarations or retained templates. The CLI can pass a page as aligned arrays;
+Gooo owns the grouping and ratio rules. Partial pages or recordings leave the overall ratio
+unspecified. This works locally without a model or rerunning the producer.
+
 [Try a small Gooo program in your browser](https://kimjooyoon.github.io/gooo-go-ports/tutorial.html)
 without installing anything or using a model. Change a score and a label, inspect
 four returned fields, then download the source and inputs to edit and run locally.

@@ -1,0 +1,421 @@
+[
+  {
+    "cohort": 12161,
+    "raw_cli_name": "columns12161-full.json",
+    "raw_cli_sha256": "sha256:5038c96541c12913b254ababd5eabe41a58d24535c4211a9625220a200680188",
+    "public_runtime": "columns12161-full-runtime.json.gz",
+    "runtime_json_sha256": "sha256:b082cb4b9a1cf24e4353a79156844ab451b3c1054ea2806fdb43188c8adef587",
+    "runtime_extraction": "$.result.runtime values re-encoded as indented UTF-8 JSON",
+    "selected_source_sha256": "sha256:91211f048016c92511e98a597f04e5a888bddb5ab116b619adb6ca4146fc22ed",
+    "runtime_suite_sha256": "sha256:31a3148b2657ff4170fce26bff18c2999d07623135c7b58c7f1ca3a6d9e93fc0",
+    "finite_passed": 0,
+    "finite_total": 0,
+    "model_calls": 0,
+    "delivery_values": [
+      {
+        "candidate_fragments": 2,
+        "coverage_basis_points": 10000,
+        "fragment_rows": 4,
+        "grammar_fragments": 0,
+        "mapped_writes": 4,
+        "missing_writes": 0,
+        "recorded_writes": 4,
+        "selected_source_sha": "sha256:964679787c8db0be74b327a830caa6aa8043abfcd3e4c56886ac51d6cba097ed",
+        "status": "complete-recorded",
+        "template_fragments": 2
+      }
+    ],
+    "origin_input": {
+      "schema": "gooo/native-origin-input/v1",
+      "receipt_sha256": "sha256:4cd1fbc579e082b222877288528c8bf6023098620a7c5b4cc3c39f68256b661f",
+      "selected_source_sha256": "sha256:964679787c8db0be74b327a830caa6aa8043abfcd3e4c56886ac51d6cba097ed",
+      "runtime_suite_sha256": "sha256:09f6307eb7c5374f95b40de95ac3e91143ce713e453d60b252120913536c0712",
+      "query": {
+        "kind": "local-fill-fragments",
+        "offset": 0,
+        "limit": 4
+      },
+      "total_rows": 4,
+      "returned_rows": 4,
+      "truncated": false,
+      "recorded_observation": {
+        "schema": "gooo/native-read-summary/v2",
+        "status": "COMPLETE",
+        "recorded_reads": 0,
+        "resolved_reads": 0,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:e25759d24c4900b88ede1e75389aa637775ccc11748d490b3fb0ee6408cdc170",
+        "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+      },
+      "recorded_local_observation": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "COMPLETE",
+        "sha256": "sha256:346c8b11d06233fac0a43213b33b75bf66e6f21f88099c7ebd639b15455b1249",
+        "recorded_writes": 4,
+        "recorded_uses": 4,
+        "element_windows": 0,
+        "interrupted_writes": 0,
+        "unresolved_uses": 0,
+        "frames": 2,
+        "frames_dropped": 0,
+        "writes_dropped": 0,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "producer_program_executions": 0,
+      "producer_model_calls": 0,
+      "scope": "recorded claims read without re-execution; the new consumer evaluates these rows only; construction read windows describe reads during evaluation, not complete scalar dependencies; inspect original observation drops and the selected page",
+      "input_shape": "gooo/local-fill-columns/v1",
+      "consumer_rows": 1
+    }
+  },
+  {
+    "cohort": 12161,
+    "raw_cli_name": "columns12161-middle.json",
+    "raw_cli_sha256": "sha256:dad079d5cb46798782d6b10e71c6a00f2a3f199f181e55a0bd3ecf2b4c52bb23",
+    "public_runtime": "columns12161-middle-runtime.json.gz",
+    "runtime_json_sha256": "sha256:2b7ab9aff08492e958a6533f43db5ab03494d5e9a08c26140ab788704363424c",
+    "runtime_extraction": "$.result.runtime values re-encoded as indented UTF-8 JSON",
+    "selected_source_sha256": "sha256:91211f048016c92511e98a597f04e5a888bddb5ab116b619adb6ca4146fc22ed",
+    "runtime_suite_sha256": "sha256:1501891f0c19c6ecb9c0f7bbfe61e0dd3a8aadf957bc032c1d798735de34a315",
+    "finite_passed": 0,
+    "finite_total": 0,
+    "model_calls": 0,
+    "delivery_values": [
+      {
+        "candidate_fragments": 1,
+        "coverage_basis_points": -1,
+        "fragment_rows": 2,
+        "grammar_fragments": 0,
+        "mapped_writes": 2,
+        "missing_writes": -1,
+        "recorded_writes": 4,
+        "selected_source_sha": "sha256:964679787c8db0be74b327a830caa6aa8043abfcd3e4c56886ac51d6cba097ed",
+        "status": "partial-page",
+        "template_fragments": 1
+      }
+    ],
+    "origin_input": {
+      "schema": "gooo/native-origin-input/v1",
+      "receipt_sha256": "sha256:4cd1fbc579e082b222877288528c8bf6023098620a7c5b4cc3c39f68256b661f",
+      "selected_source_sha256": "sha256:964679787c8db0be74b327a830caa6aa8043abfcd3e4c56886ac51d6cba097ed",
+      "runtime_suite_sha256": "sha256:09f6307eb7c5374f95b40de95ac3e91143ce713e453d60b252120913536c0712",
+      "query": {
+        "kind": "local-fill-fragments",
+        "offset": 1,
+        "limit": 2
+      },
+      "total_rows": 4,
+      "returned_rows": 2,
+      "next_offset": 3,
+      "truncated": true,
+      "recorded_observation": {
+        "schema": "gooo/native-read-summary/v2",
+        "status": "COMPLETE",
+        "recorded_reads": 0,
+        "resolved_reads": 0,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:e25759d24c4900b88ede1e75389aa637775ccc11748d490b3fb0ee6408cdc170",
+        "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+      },
+      "recorded_local_observation": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "COMPLETE",
+        "sha256": "sha256:346c8b11d06233fac0a43213b33b75bf66e6f21f88099c7ebd639b15455b1249",
+        "recorded_writes": 4,
+        "recorded_uses": 4,
+        "element_windows": 0,
+        "interrupted_writes": 0,
+        "unresolved_uses": 0,
+        "frames": 2,
+        "frames_dropped": 0,
+        "writes_dropped": 0,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "producer_program_executions": 0,
+      "producer_model_calls": 0,
+      "scope": "recorded claims read without re-execution; the new consumer evaluates these rows only; construction read windows describe reads during evaluation, not complete scalar dependencies; inspect original observation drops and the selected page",
+      "input_shape": "gooo/local-fill-columns/v1",
+      "consumer_rows": 1
+    }
+  },
+  {
+    "cohort": 12161,
+    "raw_cli_name": "columns12161-producer.json",
+    "raw_cli_sha256": "sha256:4cd1fbc579e082b222877288528c8bf6023098620a7c5b4cc3c39f68256b661f",
+    "public_runtime": "columns12161-producer-runtime.json.gz",
+    "runtime_json_sha256": "sha256:1770678981ebb24d52c07eb413b6d04083ba7754268b8c120f44ab4e7738f37c",
+    "runtime_extraction": "$.result.runtime values re-encoded as indented UTF-8 JSON",
+    "selected_source_sha256": "sha256:964679787c8db0be74b327a830caa6aa8043abfcd3e4c56886ac51d6cba097ed",
+    "runtime_suite_sha256": "sha256:09f6307eb7c5374f95b40de95ac3e91143ce713e453d60b252120913536c0712",
+    "finite_passed": 2,
+    "finite_total": 2,
+    "model_calls": 0,
+    "delivery_values": [
+      1287,
+      -25
+    ],
+    "origin_input": null
+  },
+  {
+    "cohort": 12161,
+    "raw_cli_name": "columns12161-tail.json",
+    "raw_cli_sha256": "sha256:3f053691d217029968a44109a9d21e1a35857b655fdc795a42795e84317369c0",
+    "public_runtime": "columns12161-tail-runtime.json.gz",
+    "runtime_json_sha256": "sha256:de928b3e1fca16479728f41bc53a02b2e5f7c091810e67d16c3b35c71c7857a2",
+    "runtime_extraction": "$.result.runtime values re-encoded as indented UTF-8 JSON",
+    "selected_source_sha256": "sha256:91211f048016c92511e98a597f04e5a888bddb5ab116b619adb6ca4146fc22ed",
+    "runtime_suite_sha256": "sha256:d99e7473633c717aa811698bcef4b2e98100d395fedacef9717671ea6eb4a796",
+    "finite_passed": 0,
+    "finite_total": 0,
+    "model_calls": 0,
+    "delivery_values": [
+      {
+        "candidate_fragments": 0,
+        "coverage_basis_points": -1,
+        "fragment_rows": 1,
+        "grammar_fragments": 0,
+        "mapped_writes": 1,
+        "missing_writes": -1,
+        "recorded_writes": 4,
+        "selected_source_sha": "sha256:964679787c8db0be74b327a830caa6aa8043abfcd3e4c56886ac51d6cba097ed",
+        "status": "partial-page",
+        "template_fragments": 1
+      }
+    ],
+    "origin_input": {
+      "schema": "gooo/native-origin-input/v1",
+      "receipt_sha256": "sha256:4cd1fbc579e082b222877288528c8bf6023098620a7c5b4cc3c39f68256b661f",
+      "selected_source_sha256": "sha256:964679787c8db0be74b327a830caa6aa8043abfcd3e4c56886ac51d6cba097ed",
+      "runtime_suite_sha256": "sha256:09f6307eb7c5374f95b40de95ac3e91143ce713e453d60b252120913536c0712",
+      "query": {
+        "kind": "local-fill-fragments",
+        "offset": 3,
+        "limit": 1
+      },
+      "total_rows": 4,
+      "returned_rows": 1,
+      "truncated": false,
+      "recorded_observation": {
+        "schema": "gooo/native-read-summary/v2",
+        "status": "COMPLETE",
+        "recorded_reads": 0,
+        "resolved_reads": 0,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:e25759d24c4900b88ede1e75389aa637775ccc11748d490b3fb0ee6408cdc170",
+        "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+      },
+      "recorded_local_observation": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "COMPLETE",
+        "sha256": "sha256:346c8b11d06233fac0a43213b33b75bf66e6f21f88099c7ebd639b15455b1249",
+        "recorded_writes": 4,
+        "recorded_uses": 4,
+        "element_windows": 0,
+        "interrupted_writes": 0,
+        "unresolved_uses": 0,
+        "frames": 2,
+        "frames_dropped": 0,
+        "writes_dropped": 0,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "producer_program_executions": 0,
+      "producer_model_calls": 0,
+      "scope": "recorded claims read without re-execution; the new consumer evaluates these rows only; construction read windows describe reads during evaluation, not complete scalar dependencies; inspect original observation drops and the selected page",
+      "input_shape": "gooo/local-fill-columns/v1",
+      "consumer_rows": 1
+    }
+  },
+  {
+    "cohort": 12229,
+    "raw_cli_name": "empty12229-consumer.json",
+    "raw_cli_sha256": "sha256:fbb97b505d32c061e1db6b3f5d2d5471fa3c3204be11872014c2e2e04728de5c",
+    "public_runtime": "empty12229-consumer-runtime.json.gz",
+    "runtime_json_sha256": "sha256:d0c3a40709f7a35c5a03a474243451356086da36f68098edfb8d7e65e850de78",
+    "runtime_extraction": "$.result.runtime values re-encoded as indented UTF-8 JSON",
+    "selected_source_sha256": "sha256:91211f048016c92511e98a597f04e5a888bddb5ab116b619adb6ca4146fc22ed",
+    "runtime_suite_sha256": "sha256:b5a09b5f131e62ffed61e8896da7de3e52067ad83c4817d2ee01136efaa1d74d",
+    "finite_passed": 0,
+    "finite_total": 0,
+    "model_calls": 0,
+    "delivery_values": [
+      {
+        "candidate_fragments": 0,
+        "coverage_basis_points": 0,
+        "fragment_rows": 0,
+        "grammar_fragments": 0,
+        "mapped_writes": 0,
+        "missing_writes": 2,
+        "recorded_writes": 2,
+        "selected_source_sha": "sha256:73db7b20704b5c3ca77dcf26ad7baf13a230c8f6e42e1f2fa2febc8ac0d5a733",
+        "status": "complete-recorded",
+        "template_fragments": 0
+      }
+    ],
+    "origin_input": {
+      "schema": "gooo/native-origin-input/v1",
+      "receipt_sha256": "sha256:4c36d43ec6406e32fde56d7ac8a6de2fb352d7b5403ae67212c961e0a29bb233",
+      "selected_source_sha256": "sha256:73db7b20704b5c3ca77dcf26ad7baf13a230c8f6e42e1f2fa2febc8ac0d5a733",
+      "runtime_suite_sha256": "sha256:4a08db5a2ccd5f02283cbdfd37dcffa71e3036f5200ed5b8b64da2f579a933cc",
+      "query": {
+        "kind": "local-fill-fragments",
+        "offset": 0,
+        "limit": 32
+      },
+      "total_rows": 0,
+      "returned_rows": 0,
+      "truncated": false,
+      "recorded_observation": {
+        "schema": "gooo/native-read-summary/v2",
+        "status": "COMPLETE",
+        "recorded_reads": 0,
+        "resolved_reads": 0,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:e25759d24c4900b88ede1e75389aa637775ccc11748d490b3fb0ee6408cdc170",
+        "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+      },
+      "recorded_local_observation": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "COMPLETE",
+        "sha256": "sha256:3edb178b086f3a5c41e7e9036f5b95e17429aed9bcc2e9d24511d34101518fa0",
+        "recorded_writes": 2,
+        "recorded_uses": 2,
+        "element_windows": 0,
+        "interrupted_writes": 0,
+        "unresolved_uses": 0,
+        "frames": 2,
+        "frames_dropped": 0,
+        "writes_dropped": 0,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "producer_program_executions": 0,
+      "producer_model_calls": 0,
+      "scope": "recorded claims read without re-execution; the new consumer evaluates these rows only; construction read windows describe reads during evaluation, not complete scalar dependencies; inspect original observation drops and the selected page",
+      "input_shape": "gooo/local-fill-columns/v1",
+      "consumer_rows": 1
+    }
+  },
+  {
+    "cohort": 12229,
+    "raw_cli_name": "empty12229-producer.json",
+    "raw_cli_sha256": "sha256:4c36d43ec6406e32fde56d7ac8a6de2fb352d7b5403ae67212c961e0a29bb233",
+    "public_runtime": "empty12229-producer-runtime.json.gz",
+    "runtime_json_sha256": "sha256:4a02e36b8c61664b3f440b2798f1e1ce7fa020a5061ee7703382e941b79c7c01",
+    "runtime_extraction": "$.result.runtime values re-encoded as indented UTF-8 JSON",
+    "selected_source_sha256": "sha256:73db7b20704b5c3ca77dcf26ad7baf13a230c8f6e42e1f2fa2febc8ac0d5a733",
+    "runtime_suite_sha256": "sha256:4a08db5a2ccd5f02283cbdfd37dcffa71e3036f5200ed5b8b64da2f579a933cc",
+    "finite_passed": 2,
+    "finite_total": 2,
+    "model_calls": 0,
+    "delivery_values": [
+      1334,
+      -16
+    ],
+    "origin_input": null
+  },
+  {
+    "cohort": 12317,
+    "raw_cli_name": "partial12317-consumer.json",
+    "raw_cli_sha256": "sha256:df3c416d7ed008fcb5f4c7d893cd143e49f0423b4c6d8adb1dd5a996cd131162",
+    "public_runtime": "partial12317-consumer-runtime.json.gz",
+    "runtime_json_sha256": "sha256:4859c20dead3f6516662796ef67d8ab07929801411011d267b32e413b9ce1ed6",
+    "runtime_extraction": "$.result.runtime values re-encoded as indented UTF-8 JSON",
+    "selected_source_sha256": "sha256:91211f048016c92511e98a597f04e5a888bddb5ab116b619adb6ca4146fc22ed",
+    "runtime_suite_sha256": "sha256:44a58727740c2aeb3a75ae4c231f3e0f5fc1283eeb7a0fd47b552cb8d776ec9a",
+    "finite_passed": 0,
+    "finite_total": 0,
+    "model_calls": 0,
+    "delivery_values": [
+      {
+        "candidate_fragments": 0,
+        "coverage_basis_points": -1,
+        "fragment_rows": 0,
+        "grammar_fragments": 0,
+        "mapped_writes": 0,
+        "missing_writes": -1,
+        "recorded_writes": 4096,
+        "selected_source_sha": "sha256:794ced5fa2a93f8503c9ce05441860c52c0550c72ea3387dc67505f6432af6e7",
+        "status": "partial-recording",
+        "template_fragments": 0
+      }
+    ],
+    "origin_input": {
+      "schema": "gooo/native-origin-input/v1",
+      "receipt_sha256": "sha256:89584c1a6f22a6b7882b73806a507937e029f7e8d3215d3effac1586c885fd93",
+      "selected_source_sha256": "sha256:794ced5fa2a93f8503c9ce05441860c52c0550c72ea3387dc67505f6432af6e7",
+      "runtime_suite_sha256": "sha256:0a9657c882a153fe9c9f9b74a42c641b83a1c68aff198711b695898a5a278855",
+      "query": {
+        "kind": "local-fill-fragments",
+        "offset": 0,
+        "limit": 32
+      },
+      "total_rows": 0,
+      "returned_rows": 0,
+      "truncated": false,
+      "recorded_observation": {
+        "schema": "gooo/native-read-summary/v2",
+        "status": "COMPLETE",
+        "recorded_reads": 0,
+        "resolved_reads": 0,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:477d5c35c33f841a276921fc4755e27ea38e24eb8a2bc0346327520230756f23",
+        "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+      },
+      "recorded_local_observation": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "PARTIAL",
+        "sha256": "sha256:718ffbe896b87713af89c5ff098240a01bcc7c32145147a590edefd762e0381f",
+        "recorded_writes": 4096,
+        "recorded_uses": 8194,
+        "element_windows": 0,
+        "interrupted_writes": 0,
+        "unresolved_uses": 1642,
+        "frames": 1025,
+        "frames_dropped": 0,
+        "writes_dropped": 1027,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "producer_program_executions": 0,
+      "producer_model_calls": 0,
+      "scope": "recorded claims read without re-execution; the new consumer evaluates these rows only; construction read windows describe reads during evaluation, not complete scalar dependencies; inspect original observation drops and the selected page",
+      "input_shape": "gooo/local-fill-columns/v1",
+      "consumer_rows": 1
+    }
+  },
+  {
+    "cohort": 12317,
+    "raw_cli_name": "partial12317-producer.json",
+    "raw_cli_sha256": "sha256:89584c1a6f22a6b7882b73806a507937e029f7e8d3215d3effac1586c885fd93",
+    "public_runtime": "partial12317-producer-runtime.json.gz",
+    "runtime_json_sha256": "sha256:65efb15ba2b6aaaad26d76096e0fc00e20887af16b2ad5912424600c2737a0cc",
+    "runtime_extraction": "$.result.runtime values re-encoded as indented UTF-8 JSON",
+    "selected_source_sha256": "sha256:794ced5fa2a93f8503c9ce05441860c52c0550c72ea3387dc67505f6432af6e7",
+    "runtime_suite_sha256": "sha256:0a9657c882a153fe9c9f9b74a42c641b83a1c68aff198711b695898a5a278855",
+    "finite_passed": 1,
+    "finite_total": 1,
+    "model_calls": 0,
+    "delivery_values": [
+      2447027
+    ],
+    "origin_input": null
+  }
+]

@@ -12,13 +12,25 @@ import (
 func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuery, error) {
 	query := bodyexecution.NativeOriginQuery{Kind: "elements", Limit: 32}
 	if flags["--origin-receipt"] == "" {
-		if flags["--origin-kind"] != "" || flags["--origin-offset"] != "" || flags["--origin-limit"] != "" {
+		if flags["--origin-kind"] != "" || flags["--origin-offset"] != "" || flags["--origin-limit"] != "" || flags["--origin-shape"] != "" {
 			return query, fmt.Errorf("origin query options require --origin-receipt")
 		}
 		return query, nil
 	}
 	if flags["--origin-kind"] != "" {
 		query.Kind = flags["--origin-kind"]
+	}
+	shape := flags["--origin-shape"]
+	if shape != "" && shape != "rows" && shape != "local-fill-columns" {
+		return query, fmt.Errorf("origin shape must be rows or local-fill-columns")
+	}
+	if shape == "local-fill-columns" {
+		if flags["--origin-kind"] == "" {
+			query.Kind = "local-fill-fragments"
+		}
+		if query.Kind != "local-fill-fragments" {
+			return query, fmt.Errorf("local-fill-columns requires local-fill-fragments")
+		}
 	}
 	for _, option := range []struct {
 		key    string
@@ -36,15 +48,27 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 }
 
 func packageOriginInputs(raw []byte, target packageruntime.EntrySpec, query bodyexecution.NativeOriginQuery) ([]byte, *bodyexecution.NativeOriginInput, error) {
+	return packageOriginInputsWithShape(raw, target, query, "rows")
+}
+
+func packageOriginInputsWithShape(raw []byte, target packageruntime.EntrySpec, query bodyexecution.NativeOriginQuery, shape string) ([]byte, *bodyexecution.NativeOriginInput, error) {
 	runtime, err := decodePackageOriginRuntime(raw)
 	if err != nil {
 		return nil, nil, fmt.Errorf("decode origin receipt: %w", err)
 	}
-	rows, origin, err := bodyexecution.SelectRecordedNativeOrigins(runtime, query)
+	selectPage := bodyexecution.SelectRecordedNativeOrigins
+	if shape == "local-fill-columns" {
+		selectPage = bodyexecution.SelectRecordedNativeOriginPage
+	}
+	rows, origin, err := selectPage(runtime, query)
 	if err != nil {
 		return nil, nil, err
 	}
 	origin.ReceiptSHA256 = workspaceDigest(raw)
+	rows, err = shapePackageOriginRows(rows, origin, shape)
+	if err != nil {
+		return nil, origin, err
+	}
 	input := struct {
 		Schema string                       `json:"schema"`
 		Inputs []map[string]json.RawMessage `json:"inputs"`
@@ -64,6 +88,9 @@ func writePackageOriginInput(output io.Writer, origin *bodyexecution.NativeOrigi
 		return
 	}
 	fmt.Fprintf(output, "recorded origins: kind=%s offset=%d returned=%d total=%d receipt=%s\n", origin.Query.Kind, origin.Query.Offset, origin.ReturnedRows, origin.TotalRows, origin.ReceiptSHA256)
+	if origin.InputShape != "" {
+		fmt.Fprintf(output, "consumer inputs: shape=%s rows=%d\n", origin.InputShape, origin.ConsumerRows)
+	}
 	if origin.NextOffset != nil {
 		fmt.Fprintf(output, "next page: --origin-offset %d --origin-limit %d\n", *origin.NextOffset, origin.Query.Limit)
 	}

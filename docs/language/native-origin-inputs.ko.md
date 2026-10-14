@@ -5,7 +5,7 @@
 작성하는 진입점이다. 예를 들어 원소 계산의 중단을 분류하거나, 원래 입력과 새로
 생성한 목록 사이의 연결을 설명할 수 있다.
 
-[실행 가능한 네 가지 예제](../../examples/native-origin-reader/README.md)에서 시작한다.
+[실행 가능한 입력 예제](../../examples/native-origin-reader/README.md)에서 시작한다.
 
 ## 입력과 순서
 
@@ -25,8 +25,9 @@
 
 ## 페이지와 부분 기록
 
-`--origin-kind` 기본값은 `elements`, offset은 0, limit는 32다. offset은 0..65536,
-limit는 1..128이다. 선택한 페이지의 JSON 입력 한도는 32KiB다. 넘으면 limit를
+`--origin-kind` 기본값은 `elements`, offset은 0, limit는 32다. offset은 일반 종류에서
+0..65536, `local-fill-fragments`에서는 0..2147483647이다. limit는 1..128이다.
+선택한 페이지의 JSON 입력 한도는 32KiB다. 넘으면 limit를
 줄여야 한다. 내용이나 표현식을 임의로 자르지 않는다. 빈 페이지에는 kind, offset,
 전체 행 수를 포함한 오류를 반환한다.
 
@@ -34,6 +35,33 @@ limit는 1..128이다. 선택한 페이지의 JSON 입력 한도는 32KiB다. �
 해시, 전체·반환 행 수, 다음 offset과 원래 관찰 요약이 들어간다. `truncated`는
 현재 페이지 뒤에 남은 행이 있다는 뜻이다. 앞에서 건너뛴 행 수는 `query.offset`이다.
 누락된 읽기·등록·생성 수와 중단 수는 원래 요약의 수치를 유지한다.
+
+## 조립 기원을 배열 입력으로 전달하기
+
+기본 `--origin-shape rows`는 행마다 새 입력을 만든다. `local-fill-columns`는
+`local-fill-fragments` 페이지를 같은 길이의 배열로 묶어 입력 하나를 만든다.
+kind를 생략하면 이 조각 종류를 선택하며, 다른 kind와 함께 요청하면 오류를 반환한다.
+
+```sh
+go run ./cmd/gooo package execute --json \
+  --origin-receipt saved-execution.json --origin-shape local-fill-columns \
+  examples/derived-origin/coverage.workspace.json
+```
+
+입력에는 원래 선택 소스 해시, 기록된 대입 수, 페이지·기록 완료 여부와 여섯 배열
+`case_indexes`, `assignments`, `kinds`, `source_shas`, `starts`, `ends`가 들어간다.
+Go는 행을 배열로 옮긴다. [Gooo 프로그램](../../examples/derived-origin/coverage.gooo)이
+같은 대입을 묶고 조립 기원 연결 비율을 계산한다.
+
+`origin_input.total_rows`와 `returned_rows`는 원래 조각 행의 수를 유지한다.
+이 형태는 `input_shape=gooo/local-fill-columns/v1`, `consumer_rows=1`을 덧붙인다.
+중간·마지막 페이지는 전체 비율을 미확정으로 남긴다. offset 0에서 조각이 하나도
+없으면 빈 배열 입력 하나를 전달한다. 범위를 벗어난 offset은 오류다.
+기본 행 형태의 빈 페이지 오류 동작은 유지한다.
+
+분모는 기록된 스칼라 대입, 분자는 조립 기원 조각에 연결된 대입이다. 직접 작성한
+대입은 일반 소스 위치를 가지면서도 조립 기원 조각은 없을 수 있다. 입력 예제와
+[실제 관찰](../observations/origin-column-input/README.md)에 이 범위를 구분해 적었다.
 
 ## 받아들이는 저장 형식
 

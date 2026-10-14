@@ -28,6 +28,8 @@ type NativeOriginInput struct {
 	ProducerExecutions   int                      `json:"producer_program_executions"`
 	ProducerModelCalls   int                      `json:"producer_model_calls"`
 	Scope                string                   `json:"scope"`
+	InputShape           string                   `json:"input_shape,omitempty"`
+	ConsumerRows         int                      `json:"consumer_rows,omitempty"`
 }
 
 func ValidateNativeOriginQuery(query NativeOriginQuery) error {
@@ -70,6 +72,17 @@ func (page *nativeOriginPage) add(row any) {
 // SelectRecordedNativeOrigins walks retained observations without materializing
 // every fact or running a body, candidate, native artifact or model.
 func SelectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQuery) ([]json.RawMessage, *NativeOriginInput, error) {
+	return selectRecordedNativeOrigins(runtime, query, false)
+}
+
+// SelectRecordedNativeOriginPage also represents an empty table at offset zero.
+// A column consumer can distinguish zero retained fragments from an invalid
+// page offset while the existing row-input API retains its nonempty contract.
+func SelectRecordedNativeOriginPage(runtime CompositionRuntime, query NativeOriginQuery) ([]json.RawMessage, *NativeOriginInput, error) {
+	return selectRecordedNativeOrigins(runtime, query, true)
+}
+
+func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQuery, emptyTable bool) ([]json.RawMessage, *NativeOriginInput, error) {
 	if err := ValidateNativeOriginQuery(query); err != nil {
 		return nil, nil, err
 	}
@@ -89,7 +102,7 @@ func SelectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	if page.err != nil {
 		return nil, nil, page.err
 	}
-	if len(page.rows) == 0 {
+	if len(page.rows) == 0 && !(emptyTable && query.Offset == 0 && page.total == 0) {
 		return nil, nil, fmt.Errorf("origin selection contains no rows: kind=%s offset=%d total=%d", query.Kind, query.Offset, page.total)
 	}
 	observed := *runtime.ReadObservation
