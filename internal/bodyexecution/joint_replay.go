@@ -181,7 +181,7 @@ func sameJointRuntime(a, b CompositionRuntime) bool {
 		r.InputSeparation.Scope = ""
 		return []any{r.Stage, r.Failure, r.OriginalSourceSHA256, r.SelectedSourceSHA256,
 			r.TypedPlanSHA256, r.GeneratedSHA256, r.DriverSHA256, r.RuntimeSuiteSHA256,
-			r.FieldBindings, r.FieldSites, r.FieldUseSites, r.FieldProjectionSHA256, r.FieldObservation,
+			r.FieldBindings, r.FieldSites, r.FieldUseSites, r.FieldProjectionSHA256, r.FieldObservation, r.BridgeObservation,
 			comparableConditionSites(r), r.ConditionObservation, r.ReadSites, r.ReadInputs, r.ReadObservation, r.ConstructionSites, r.LocalUseSites, r.LocalObservation, r.Traces, r.FinitePassed, r.FiniteTotal, r.ModelCalls, r.ProjectionReplayed, r.RuntimeReplayed,
 			r.InputSeparation}
 	}

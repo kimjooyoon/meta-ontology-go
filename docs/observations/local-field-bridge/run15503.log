@@ -1,0 +1,13 @@
+=== RUN   TestRecordedBridgeContract15503
+    package_local_field_bridge_recorded_fresh_test.go:111: saved native bridge maps32 columns with true scalar identities and literal facts;nine fresh structural contradictions rejected;old field-only rows remain readable without invented bridge;native/model executions0
+--- PASS: TestRecordedBridgeContract15503 (0.02s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	0.570s
+=== RUN   TestFieldLocalBridgeFault15617
+    composition_bridge_fault_limits_fresh_test.go:53: fresh3 cases:one actual11 andtwo intended division faults;one scalar write andone field write remain unfinished;shared clock replay equal;per-case complete/partial input labels;models0
+--- PASS: TestFieldLocalBridgeFault15617 (0.76s)
+=== RUN   TestFieldLocalBridgeLimits15641
+    composition_bridge_fault_limits_fresh_test.go:84: fresh2 cases and32768 field/local handoffs;actual values2/2;field/local4096+4096 writes and8192 shared completions retained,local65536 uses;loss stays partial;business computation continues;2-run equality;models0
+--- PASS: TestFieldLocalBridgeLimits15641 (0.79s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	2.002s

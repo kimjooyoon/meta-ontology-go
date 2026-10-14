@@ -1,0 +1,24 @@
+{
+  "case": {
+    "id": "local-field-bridge-reader",
+    "path": "examples/local-field-bridge/trace.gooo",
+    "kind": "VALID",
+    "expected_decision": "PASS",
+    "proof_choice": "COHERENCE",
+    "meta_operation": "replay-language-syntax",
+    "scope": "LANGUAGE_CAPABILITY",
+    "ordered_collections": true
+  },
+  "base_version": 65,
+  "snapshot_digest": "sha256:a30f347bc56428a137effa13e6f903081c9c72657f27948af7fbb6850320c732",
+  "source_digest": "sha256:daa4d50ab6ed609d0721b106981f54806f2dcd8afbe15c1375307ea25e957dba",
+  "toolchain": "go1.27.2",
+  "execution_identity": {
+    "go_version": "go1.27.2",
+    "goos": "darwin",
+    "goarch": "arm64",
+    "executable_sha256": "sha256:8ca05b84051ea8c38135856dba8e1a6f200791be81fda6dbd9a0866f22756864",
+    "go_command_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "compiler_sha256": "sha256:8a3add4030b0f724c535afe946a4fcd27ca235ba869d4d4b91091e0ef8a611e2"
+  }
+}

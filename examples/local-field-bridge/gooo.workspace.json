@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "origin/localbridge",
+    "activity": "Build"
+  },
+  "packages": [
+    {
+      "path": "origin/localbridge",
+      "name": "localbridge",
+      "imports": [],
+      "sources": [
+        "main.gooo"
+      ]
+    }
+  ]
+}

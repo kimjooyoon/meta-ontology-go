@@ -1,0 +1,77 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "origin/localbridge:Build": {
+          "left": 43,
+          "right": 61,
+          "flip": false,
+          "enabled": true,
+          "tag": "bridge-first"
+        }
+      },
+      "expected": {
+        "origin/localbridge:Build": {
+          "score": 50,
+          "live": true,
+          "tag": "bridge-first:kept"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/localbridge:Build": {
+          "left": 43,
+          "right": 61,
+          "flip": true,
+          "enabled": false,
+          "tag": "bridge-second"
+        }
+      },
+      "expected": {
+        "origin/localbridge:Build": {
+          "score": 68,
+          "live": false,
+          "tag": "bridge-second:kept"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/localbridge:Build": {
+          "left": -7,
+          "right": -7,
+          "flip": false,
+          "enabled": true,
+          "tag": "bridge-zero-left"
+        }
+      },
+      "expected": {
+        "origin/localbridge:Build": {
+          "score": 0,
+          "live": true,
+          "tag": "bridge-zero-left:kept"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/localbridge:Build": {
+          "left": -7,
+          "right": -7,
+          "flip": true,
+          "enabled": false,
+          "tag": "bridge-zero-right"
+        }
+      },
+      "expected": {
+        "origin/localbridge:Build": {
+          "score": 0,
+          "live": false,
+          "tag": "bridge-zero-right:kept"
+        }
+      }
+    }
+  ]
+}

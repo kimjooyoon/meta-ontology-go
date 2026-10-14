@@ -10,10 +10,10 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v2` registry declares 99 cases: 96 valid sources and three invalid
-fixtures. Of these, 97 are `LANGUAGE_CAPABILITY` and two
+The `v2` registry declares 101 cases: 98 valid sources and three invalid
+fixtures. Of these, 99 are `LANGUAGE_CAPABILITY` and two
 (`self-improvement-ci-continuation` and `domain-completeness-profile`) are
-`GOVERNANCE_OBSERVATION` cases. The nine native origin readers are registered
+`GOVERNANCE_OBSERVATION` cases. The ten native origin readers are registered
 as language capability cases under the exact V5 field profile.
 
 Case totals come from the [corpus](../../examples/language-syntax-roundtrip/corpus.json)
@@ -45,6 +45,10 @@ The [Gooo field ancestry reader](../../examples/native-field-lineage/README.md)
 is registered at version 64 through the same nine-role operation. Its corpus
 entry uses ordered collections; the [new observation](../observations/native-field-lineage/README.md)
 retains the request, exact generated members and bounded execution results.
+The [field/local bridge source and Gooo reader](../../examples/local-field-bridge/README.md)
+are registered at versions 65 and 66. The [bridge observation](../observations/local-field-bridge/README.md)
+retains the exact source-bound proposals, including the replaced unpublished reader
+proposal and the new source operation that preserves known roots under partial data.
 These counts identify what a submitted revision must check; CI supplies its
 actual results.
 
@@ -66,7 +70,7 @@ does not become a fixed point; it produces `FAIL_CLOSED` at `LOWER_RESOLUTION`.
 | Choice | Meta-operation | Passing condition |
 | --- | --- | --- |
 | FOUNDATION | bind-versioned-complete-gooo-corpus | exact registry, exact commit, complete path set, bound concept artifact |
-| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 96 valid cases satisfy all five preservation laws |
+| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 98 valid cases satisfy all five preservation laws |
 | REGRESSION | reject-invalid-syntax-with-zero-effects | all three diagnostics reject and writes and authority remain zero |
 
 ## CI authority

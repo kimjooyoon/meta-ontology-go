@@ -1,0 +1,87 @@
+{
+  "base": "0898d5c051739a389d23931e1de78e98f71740de",
+  "cohort": "corrected non-platform filename, new +7 Gooo source and fresh43/61/-7 inputs; overwrite-after-save paths",
+  "historical_local_reruns": 0,
+  "files": [
+    {
+      "path": "cmd/gooo/package_local_field_bridge_native_fresh_test.go",
+      "sha256": "79aedff7470770486e01854fff6fe36dd674976e3803dd703013b1eb644e3e37",
+      "bytes": 4187
+    },
+    {
+      "path": "examples/local-field-bridge/cases.json",
+      "sha256": "e02a154fc1c30cc7ba43d5d501a6b0ea5d22dcdb4912a8e5dcb7d3ece04c1496",
+      "bytes": 1594
+    },
+    {
+      "path": "examples/local-field-bridge/gooo.workspace.json",
+      "sha256": "a0363275582485efa140a60ef7280200a673d5222381adc44f2d6d4327d7a7e3",
+      "bytes": 303
+    },
+    {
+      "path": "examples/local-field-bridge/main.gooo",
+      "sha256": "a0a6ba0eccde889f57dacc966888aead6108ffce58cd69a7f33a3ba84e08f36d",
+      "bytes": 1390
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_bind.go",
+      "sha256": "b51ac5744b683f77dcd6c6c84cac0de665500d7092f20b63568dc8240c366cd2",
+      "bytes": 3049
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_intervals.go",
+      "sha256": "3d676909bb48dc6b4a9aedc6b9b556bb24314a6ed4ef51ba01d13228027f3ed4",
+      "bytes": 3218
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_local_uses.go",
+      "sha256": "707850d117a5336eeff3dacaa3f37b9f8263832d2f95d07705f845d2b2238cf2",
+      "bytes": 1524
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_observer.go",
+      "sha256": "b0731f92ae1b6b309836c7d9226d44eb362a12f1af0d17a98e914afef48f4694",
+      "bytes": 6810
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_runtime.go",
+      "sha256": "e809360acc5c57b1c1d8133fedca1215829959ec2c408703105157224c5f6e5f",
+      "bytes": 2541
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_summary.go",
+      "sha256": "394146204bbe9b06ce47167420ff70371ec7984bf81587cd61559619525b461b",
+      "bytes": 1938
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_validate.go",
+      "sha256": "16022399e9fd5decd13f41cde379cadc88c09acfb696e30817c388c58dce3119",
+      "bytes": 3626
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_observer.go",
+      "sha256": "d1381f9fd012241728143a6b325fd1052c4b2515d2c043974741d6e09cf47f61",
+      "bytes": 6318
+    },
+    {
+      "path": "internal/bodyexecution/composition_native_observation.go",
+      "sha256": "690d3462717ffd652a4b49759af813f9e04faa0323451ad59fc59958d05166af",
+      "bytes": 3000
+    },
+    {
+      "path": "internal/bodyexecution/composition_runtime.go",
+      "sha256": "b9ce2f21355b65f3b9ba92b7e7ea9993c728e524641a21d6a4bb605eb946c24f",
+      "bytes": 17420
+    },
+    {
+      "path": "internal/bodyexecution/joint_replay.go",
+      "sha256": "ddba25180452d4731e8ec5edf7a827913ed5fab1a32a80f858909d87dc734a36",
+      "bytes": 10515
+    },
+    {
+      "path": "internal/bodyexecution/native_origin_validate.go",
+      "sha256": "7dfbfcaab1be230d0b11966a0a0a518776816d544d7bf302b19d90a0b848209a",
+      "bytes": 3542
+    }
+  ]
+}

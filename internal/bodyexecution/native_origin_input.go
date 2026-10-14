@@ -14,23 +14,24 @@ type NativeOriginQuery struct {
 // NativeOriginInput names recorded claims used by a new Gooo invocation.
 // Reading a saved record does not re-attest the producer's execution.
 type NativeOriginInput struct {
-	Schema               string                   `json:"schema"`
-	ReceiptSHA256        string                   `json:"receipt_sha256"`
-	SelectedSourceSHA256 string                   `json:"selected_source_sha256"`
-	RuntimeSuiteSHA256   string                   `json:"runtime_suite_sha256"`
-	Query                NativeOriginQuery        `json:"query"`
-	TotalRows            int                      `json:"total_rows"`
-	ReturnedRows         int                      `json:"returned_rows"`
-	NextOffset           *int                     `json:"next_offset,omitempty"`
-	Truncated            bool                     `json:"truncated"`
-	Observation          *CompositionReadSummary  `json:"recorded_observation"`
-	FieldObservation     *CompositionFieldSummary `json:"recorded_field_observation,omitempty"`
-	LocalObservation     *CompositionLocalSummary `json:"recorded_local_observation,omitempty"`
-	ProducerExecutions   int                      `json:"producer_program_executions"`
-	ProducerModelCalls   int                      `json:"producer_model_calls"`
-	Scope                string                   `json:"scope"`
-	InputShape           string                   `json:"input_shape,omitempty"`
-	ConsumerRows         int                      `json:"consumer_rows,omitempty"`
+	Schema               string                    `json:"schema"`
+	ReceiptSHA256        string                    `json:"receipt_sha256"`
+	SelectedSourceSHA256 string                    `json:"selected_source_sha256"`
+	RuntimeSuiteSHA256   string                    `json:"runtime_suite_sha256"`
+	Query                NativeOriginQuery         `json:"query"`
+	TotalRows            int                       `json:"total_rows"`
+	ReturnedRows         int                       `json:"returned_rows"`
+	NextOffset           *int                      `json:"next_offset,omitempty"`
+	Truncated            bool                      `json:"truncated"`
+	Observation          *CompositionReadSummary   `json:"recorded_observation"`
+	FieldObservation     *CompositionFieldSummary  `json:"recorded_field_observation,omitempty"`
+	BridgeObservation    *CompositionBridgeSummary `json:"recorded_field_local_bridge,omitempty"`
+	LocalObservation     *CompositionLocalSummary  `json:"recorded_local_observation,omitempty"`
+	ProducerExecutions   int                       `json:"producer_program_executions"`
+	ProducerModelCalls   int                       `json:"producer_model_calls"`
+	Scope                string                    `json:"scope"`
+	InputShape           string                    `json:"input_shape,omitempty"`
+	ConsumerRows         int                       `json:"consumer_rows,omitempty"`
 }
 
 func ValidateNativeOriginQuery(query NativeOriginQuery) error {
@@ -120,6 +121,10 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	if runtime.FieldObservation != nil {
 		copy := *runtime.FieldObservation
 		report.FieldObservation = &copy
+	}
+	if runtime.BridgeObservation != nil {
+		copy := *runtime.BridgeObservation
+		report.BridgeObservation = &copy
 	}
 	if report.Truncated {
 		next := query.Offset + len(page.rows)
