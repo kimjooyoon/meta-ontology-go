@@ -1,0 +1,31 @@
+{
+  "head": "623a2a305907bd2716a7212faa5d0b03426053df",
+  "projection_run": 38523379684,
+  "job": 115718004058,
+  "artifact": 11875695687,
+  "artifact_digest": "sha256:cca9a8d392c045c9c3db7b211902884c02334acc9cb820e5057eb79515af7a5d",
+  "extractor": {
+    "observed": 1019,
+    "applied": 1019,
+    "created": 2880,
+    "unhandled": 0
+  },
+  "original_failures": [
+    {
+      "test": "TestCountedReplayCapacity18829",
+      "observed": 0,
+      "required": 2
+    },
+    {
+      "test": "TestCounterSurfaceCapacity19823",
+      "observed_after_split": 7,
+      "original_minimum_required": 20,
+      "original_fresh_subject_population": 25
+    }
+  ],
+  "root_cause": "tests bind physical original filenames;authorized logical splits relocate required declarations within same package",
+  "repair": "package/receiver/declaration identities;exactly2 replay subjects and all25 originally observed counter subjects (original count guard minimum20);unchanged75-line cap;missing/duplicates rejected",
+  "new_fresh_regression": 21107,
+  "historical_local_reruns": 0,
+  "workflow_changes": 0
+}

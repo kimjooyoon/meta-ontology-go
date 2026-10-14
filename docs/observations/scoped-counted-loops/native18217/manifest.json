@@ -1,0 +1,55 @@
+{
+  "base": "3aac47d7134b352669e6b114e636a0e9b7a8127a",
+  "files": [
+    {
+      "path": "internal/bodycodegen/body_local_use_capture.go",
+      "bytes": 2896,
+      "sha256": "e57e458cf619cec53eef45e70dde7d7aa3310e10a586b627e1fc5b323f129dca"
+    },
+    {
+      "path": "internal/bodycodegen/body_surface.go",
+      "bytes": 3568,
+      "sha256": "4ae146182b3b10fe25174852bc75ec010205172203cef22649494d93b45c5aa2"
+    },
+    {
+      "path": "internal/bodycodegen/bodycodegen.go",
+      "bytes": 20848,
+      "sha256": "ec38eb80f783b2f3830da9e013e944df53a91610e860790d980a0e370d5808a0"
+    },
+    {
+      "path": "internal/bodycodegen/counted_loop.go",
+      "bytes": 4124,
+      "sha256": "4fc16960c87627ef7e6e784286541575ed14dd7f78167272c2c96228180c9bf1"
+    },
+    {
+      "path": "internal/bodycodegen/counted_loop_bindings.go",
+      "bytes": 1415,
+      "sha256": "4ac38ef8ed1359a3e0e95cecb0ffb6a0cc8dba699044aca5cd57272fdfa36be8"
+    },
+    {
+      "path": "internal/bodycodegen/counted_loop_eval.go",
+      "bytes": 1085,
+      "sha256": "58922ce31544071b0ebe8c5d92bd205290ab72053232ab6d065ab9251e98de04"
+    },
+    {
+      "path": "internal/bodycodegen/counted_loop_inference.go",
+      "bytes": 681,
+      "sha256": "1c7e08bd61434cf006661c05c8541a3d4c2911fef3bc059a9c69202c8cf16ffb"
+    },
+    {
+      "path": "internal/bodycodegen/counted_surface_fresh_test.go",
+      "bytes": 2226,
+      "sha256": "117606778203a7a272d701fd89880ed86bb780ccb8833b0695fccc0eba3f9e1c"
+    },
+    {
+      "path": "internal/bodyexecution/composition_local_projection_render.go",
+      "bytes": 1554,
+      "sha256": "3b308972bd4e5887ee3530c951a522b3e43f047b98ee04c0ca4e07937272cb6f"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/counted_surface_fresh_test.go",
+      "bytes": 3554,
+      "sha256": "7e9dcb427aab6201b91393a279a8e3eb79f3dd646d16c97ebff2dc962df16289"
+    }
+  ]
+}

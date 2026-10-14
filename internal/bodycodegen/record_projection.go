@@ -136,7 +136,7 @@ func restoreRecordNames(file *ast.File, records []RecordType) {
 	})
 }
 
-func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.FileSet, records []RecordType, origins ...map[ast.Expr]BodyConditionOrigin) error {
+func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.FileSet, records []RecordType, fieldOrigins map[ast.Node]BodyFieldOrigin, returnOrigins *bodyReturnCapture, origins ...map[ast.Expr]BodyConditionOrigin) error {
 	if len(records) == 0 {
 		return nil
 	}
@@ -147,6 +147,8 @@ func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.Fi
 	for _, conditions := range origins {
 		captureConditionFields(file, information, records, conditions)
 	}
+	captureTypedFieldOrigins(file, information, records, fieldOrigins)
+	returnOrigins.captureTyped(file, information, records)
 	if err := lowerRecordNames(file, information, records); err != nil {
 		return err
 	}

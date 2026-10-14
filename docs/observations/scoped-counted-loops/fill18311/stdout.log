@@ -1,0 +1,6 @@
+=== RUN   TestScopedCounterAssembly18311
+    counted_fill_fresh_test.go:45: bounded selection/native scope 0 0
+--- FAIL: TestScopedCounterAssembly18311 (0.72s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.235s
+FAIL

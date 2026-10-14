@@ -17,34 +17,18 @@ type bodySurfaceMap []bodySurfaceEdit
 // The map stores token edits, not a second byte-sized copy of the source.
 // Expressions and names retain their original byte ranges after lowering.
 func rewriteBodySurface(body string) (string, bodySurfaceMap, error) {
-	type lexeme struct {
-		kind       token.Token
-		text       string
-		start, end int
-	}
-	set := token.NewFileSet()
-	file := set.AddFile("computes", -1, len(body))
-	var scan scanner.Scanner
-	scan.Init(file, []byte(body), nil, scanner.ScanComments)
-	var tokens []lexeme
-	for {
-		position, kind, text := scan.Scan()
-		if kind == token.EOF {
-			break
-		}
-		if kind == token.COMMENT {
-			continue
-		}
-		if text == "" {
-			text = kind.String()
-		}
-		start := file.Offset(position)
-		tokens = append(tokens, lexeme{kind, text, start, start + len(text)})
-	}
+	tokens := scanBodySurface(body)
 	var edits bodySurfaceMap
 	for i, current := range tokens {
 		if current.kind == token.IDENT && current.text == "let" {
-			edits = append(edits, bodySurfaceEdit{current.start, current.end, "var"})
+			replacement := "var"
+			if i > 0 && tokens[i-1].kind == token.FOR {
+				replacement = ""
+			}
+			edits = append(edits, bodySurfaceEdit{current.start, current.end, replacement})
+		}
+		if current.kind == token.ASSIGN && i >= 3 && tokens[i-3].kind == token.FOR && tokens[i-2].text == "let" && tokens[i-1].kind == token.IDENT {
+			edits = append(edits, bodySurfaceEdit{current.start, current.end, ":="})
 		}
 		if current.kind == token.FOR && i+2 < len(tokens) && tokens[i+1].kind == token.IDENT &&
 			tokens[i+2].kind == token.IDENT && tokens[i+2].text == "in" {
@@ -106,4 +90,56 @@ func NormalizeBodySource(body string) (string, BodySourceMap, error) {
 
 func (m BodySourceMap) OriginalRange(start, end int) FillOriginRange {
 	return m.edits.originalRange(FillOriginRange{start, end})
+}
+
+type bodySurfaceToken struct {
+	kind       token.Token
+	text       string
+	start, end int
+}
+
+func scanBodySurface(body string) []bodySurfaceToken {
+	set := token.NewFileSet()
+	file := set.AddFile("computes", -1, len(body))
+	var scan scanner.Scanner
+	scan.Init(file, []byte(body), nil, scanner.ScanComments)
+	var tokens []bodySurfaceToken
+	for {
+		position, kind, text := scan.Scan()
+		if kind == token.EOF {
+			break
+		}
+		if kind == token.COMMENT {
+			continue
+		}
+		if text == "" {
+			text = kind.String()
+		}
+		start := file.Offset(position)
+		tokens = append(tokens, bodySurfaceToken{kind, text, start, start + len(text)})
+	}
+	return tokens
+}
+
+// NormalizedRange is used only to align a retained template fragment with its
+// normalized counterpart. Expression coordinates are mapped back with OriginalRange.
+func (m BodySourceMap) NormalizedRange(start, end int) FillOriginRange {
+	return FillOriginRange{m.edits.normalizedOffset(start), m.edits.normalizedOffset(end)}
+}
+
+func (m bodySurfaceMap) normalizedOffset(original int) int {
+	delta := 0
+	for _, edit := range m {
+		if original < edit.start {
+			break
+		}
+		if original <= edit.end {
+			if original == edit.end {
+				return edit.start + delta + len(edit.text)
+			}
+			return edit.start + delta + min(original-edit.start, len(edit.text))
+		}
+		delta += len(edit.text) - (edit.end - edit.start)
+	}
+	return original + delta
 }

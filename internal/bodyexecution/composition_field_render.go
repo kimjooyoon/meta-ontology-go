@@ -37,7 +37,7 @@ func observedCompositionFieldProjection(source, prefix string, prior Composition
 			switch s {
 			case "scope":
 				return 0
-			case "write", "part", "record_write", "return":
+			case "write", "part", "record_write", "return", "return_write":
 				return 1
 			case "call":
 				return 2
@@ -88,6 +88,8 @@ func (r compositionFieldRenderer) node(n compositionFieldNode) string {
 		return "," + r.prefix + "FieldParents ...[32]int32"
 	case "scope":
 		return r.scope(n)
+	case "return_write":
+		return r.returnWrite(n)
 	case "record_write":
 		return r.recordWrite(n)
 	case "write", "part":

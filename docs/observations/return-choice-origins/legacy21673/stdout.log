@@ -1,0 +1,6 @@
+=== RUN   TestReturnProfileLegacy21673
+    field_return_legacy_fresh_test.go:13: open testdata/legacy-return21511.json.gz: no such file or directory
+--- FAIL: TestReturnProfileLegacy21673 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.516s
+FAIL

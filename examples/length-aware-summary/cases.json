@@ -1,0 +1,70 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "origin/lengthsummary20809:Measure": {
+          "labels": [
+            "출처",
+            "Gooo!",
+            "🦉"
+          ],
+          "offset": 73
+        }
+      },
+      "expected": {
+        "origin/lengthsummary20809:Measure": {
+          "rows": 3,
+          "total": 20885,
+          "bytes": 15,
+          "complete": true,
+          "first": "출처"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/lengthsummary20809:Measure": {
+          "labels": [],
+          "offset": -103
+        }
+      },
+      "expected": {
+        "origin/lengthsummary20809:Measure": {
+          "rows": 0,
+          "total": 20706,
+          "bytes": 0,
+          "complete": true,
+          "first": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/lengthsummary20809:Measure": {
+          "labels": [
+            "s",
+            "t",
+            "u",
+            "v",
+            "w",
+            "x",
+            "y",
+            "z",
+            "!"
+          ],
+          "offset": 11
+        }
+      },
+      "expected": {
+        "origin/lengthsummary20809:Measure": {
+          "rows": 9,
+          "total": 20829,
+          "bytes": 8,
+          "complete": false,
+          "first": "s"
+        }
+      }
+    }
+  ]
+}

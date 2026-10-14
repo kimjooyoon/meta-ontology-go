@@ -1,0 +1,16 @@
+=== RUN   TestScopedCounterBoundaries18417
+    counted_surface_bounds_fresh_test.go:29: escaped_read typecheck generated activity: body.goo:3:58: undefined: i
+    counted_surface_bounds_fresh_test.go:29: escaped_write assignment target must be an existing local
+    counted_surface_bounds_fresh_test.go:29: body_mutation for body cannot assign its counter "i"
+    counted_surface_bounds_fresh_test.go:29: body_shadow for body cannot shadow its counter "i"
+    counted_surface_bounds_fresh_test.go:29: outer_bound for let counter "i" is already bound
+    counted_surface_bounds_fresh_test.go:29: parameter_bound for let counter "input" is already bound
+    counted_surface_bounds_fresh_test.go:29: decrement for requires a 1..1024 bound and a unit forward step
+    counted_surface_bounds_fresh_test.go:29: large_bound for requires a 1..1024 bound and a unit forward step
+    counted_surface_bounds_fresh_test.go:29: dynamic_bound for bound must be an integer literal from 1 to 1024
+    counted_surface_bounds_fresh_test.go:29: nested nested loops are outside the counted-loop profile
+    counted_surface_bounds_fresh_test.go:29: nonzero for must use the same named counter from zero
+    counted_surface_bounds_fresh_test.go:37: 11 new invalid source programs rejected;finite1024 bound,nesting,scope,readonly and step restrictions retained;literal text untouched;native/model0
+--- PASS: TestScopedCounterBoundaries18417 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.519s

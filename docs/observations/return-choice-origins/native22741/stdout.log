@@ -1,0 +1,5 @@
+=== RUN   TestDirectRecordReturns22741
+    direct_record_return_after_split_fresh_test.go:91: new native3/3;helper/inline/named-local returns;three expression subjects,eight writes,two actual helper-return parent links;six constructor field anchors;two-run replay;model0
+--- PASS: TestDirectRecordReturns22741 (0.74s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.227s

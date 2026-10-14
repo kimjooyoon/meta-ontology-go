@@ -1,0 +1,5 @@
+=== RUN   TestGoooScopedOriginCoverage19511
+    package_scoped_coverage_full_fresh_test.go:119: new Gooo for-let metaprogram:actual saved fragment rows40,mapped40,candidates12,templates28,grammars0;row-only ratio and whole-recording scope;original producer executions0;model0;input-only finite0
+--- PASS: TestGoooScopedOriginCoverage19511 (0.55s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.104s

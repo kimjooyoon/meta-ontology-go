@@ -1,0 +1,30 @@
+=== RUN   TestCounterSurfaceCapacity19823
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/body_surface.go rewriteBodySurface rendered 45
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/body_surface.go originalOffset rendered 20
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/body_surface.go originalRange rendered 5
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/body_surface.go NormalizeBodySource rendered 6
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/body_surface.go OriginalRange rendered 5
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/body_surface.go scanBodySurface rendered 27
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/body_surface.go NormalizedRange rendered 5
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/body_surface.go normalizedOffset rendered 18
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/counted_loop.go countedLoopShape rendered 31
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/counted_loop.go loopCounter rendered 8
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/counted_loop.go loopIntegerLiteral rendered 19
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/counted_loop.go validateLoopCounterBody rendered 32
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/counted_loop.go validateCountedLoop rendered 28
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/counted_loop.go loopUnitForwardStep rendered 16
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/counted_loop_eval.go evaluateCountedLoop rendered 41
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/counted_loop_bindings.go initializeCountedLoop rendered 27
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/counted_loop_bindings.go evaluateCountedPost rendered 26
+    counted_surface_capacity_fresh_test.go:39: internal/bodycodegen/counted_loop_inference.go normalizeCountedInitializers rendered 26
+    counted_surface_capacity_fresh_test.go:39: internal/bodyexecution/composition_local_projection_render.go localSlot rendered 7
+    counted_surface_capacity_fresh_test.go:39: internal/bodyexecution/composition_local_projection_render.go localAssignment rendered 9
+    counted_surface_capacity_fresh_test.go:39: internal/bodyexecution/composition_local_projection_render.go renderLocal rendered 31
+    counted_surface_capacity_fresh_test.go:39: internal/packageruntime/workspaceexecution/local_file_ranges.go localFileLocation rendered 67
+    counted_surface_capacity_fresh_test.go:39: internal/packageruntime/workspaceexecution/local_file_ranges.go retainedLocalTemplateRange rendered 27
+    counted_surface_capacity_fresh_test.go:39: internal/packageruntime/workspaceexecution/local_file_ranges.go localFileConstruction rendered 7
+    counted_surface_capacity_fresh_test.go:39: internal/packageruntime/workspaceexecution/local_file_ranges.go fileExpressionConstruction rendered 20
+    counted_surface_capacity_fresh_test.go:45: new scoped-counter source functions inspected;unchanged75-line rendered bound;no native source or model execution
+--- PASS: TestCounterSurfaceCapacity19823 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.490s

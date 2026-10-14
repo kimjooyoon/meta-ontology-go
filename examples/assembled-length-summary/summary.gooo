@@ -1,0 +1,24 @@
+package assembledlength
+namespace assembledlength22133
+entity Input id "urn:assembledlength22133:input" fields {
+ field labels id "urn:assembledlength22133:labels" type string required many
+ field offset id "urn:assembledlength22133:offset" type integer required one
+}
+entity Summary id "urn:assembledlength22133:summary" fields {
+ field total id "urn:assembledlength22133:total" type integer required one
+ field bytes id "urn:assembledlength22133:bytes" type integer required one
+ field complete id "urn:assembledlength22133:complete" type boolean required one
+}
+activity Summarize(Input)->Summary id "urn:assembledlength22133:summarize" computes `let count=len(input.labels)
+let bytes=0
+for let row=0;row<8;row++ {
+ if row<count {bytes=bytes+len(input.labels[row])}
+}
+return Summary{total:input.offset-count,bytes:0,complete:false}` assembling {
+ choice "row-adjustment" field_value at "0" alternative "input.offset+count" intent "Add the number of labels to the declared offset."
+ choice "byte-observation" field_value at "1" alternative "bytes" intent "Retain the UTF-8 byte count observed by the bounded loop."
+ choice "processing-scope" field_value at "2" alternative "count<=8" intent "Report whether every declared row was processed."
+ value_case "[{\"labels\":[\"근원\",\"DSL\"],\"offset\":43}]" -> "{\"total\":45,\"bytes\":9,\"complete\":true}"
+ holdout_value_case "[{\"labels\":[\"a\",\"b\",\"c\",\"d\",\"e\",\"f\",\"g\",\"h\",\"i\"],\"offset\":-47}]" -> "{\"total\":-38,\"bytes\":8,\"complete\":false}"
+ attempts "8"
+}

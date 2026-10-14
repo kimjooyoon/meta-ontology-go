@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T07:39:55.202983+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-length-assembly-origin-20261014/legacy21737/overlay.json",
+    "./internal/bodyexecution",
+    "-run=^TestReturnProfileLegacy21737$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}

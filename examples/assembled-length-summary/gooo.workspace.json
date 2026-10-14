@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "origin/assembledlength22133", "activity": "Summarize"},
+  "packages": [
+    {"path": "origin/assembledlength22133", "name": "assembledlength", "sources": ["summary.gooo"]}
+  ]
+}

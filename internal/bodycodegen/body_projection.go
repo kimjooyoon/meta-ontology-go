@@ -21,6 +21,8 @@ type bodyProjection struct {
 	constructions     map[*ast.CompositeLit]BodyConstructionOrigin
 	locals            map[ast.Node]BodyLocalOrigin
 	localUses         map[*ast.Ident]BodyElementOrigin
+	fields            map[ast.Node]BodyFieldOrigin
+	returns           *bodyReturnCapture
 }
 
 func renderParameters(packageName, activityName, activityID string, parameters []InputParameter,
@@ -48,21 +50,41 @@ func renderParametersWithSourceOrigins(packageName, activityName, activityID str
 
 func renderParametersWithLocalOrigins(packageName, activityName, activityID string, parameters []InputParameter,
 	outputType, body, route string, calls []pureCallFunction, records []RecordType) ([]byte, int, int, int, int, []BodyConditionOrigin, []BodyReadOrigin, []BodyConstructionOrigin, []BodyLocalOrigin, error) {
+	r, err := projectBodyOrigins(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
+	return r.source, r.constructs, r.lowered, r.units, r.loweredUnits, r.conditions, r.reads, r.constructions, r.locals, err
+}
+
+type projectedBodyOrigins struct {
+	source                                   []byte
+	constructs, lowered, units, loweredUnits int
+	conditions                               []BodyConditionOrigin
+	reads                                    []BodyReadOrigin
+	constructions                            []BodyConstructionOrigin
+	locals                                   []BodyLocalOrigin
+	fields                                   []BodyFieldOrigin
+	returns                                  []BodyReturnOrigin
+}
+
+func projectBodyOrigins(packageName, activityName, activityID string, parameters []InputParameter,
+	outputType, body, route string, calls []pureCallFunction, records []RecordType) (projectedBodyOrigins, error) {
+	var result projectedBodyOrigins
 	p, err := prepareBodyProjectionWithCalls(packageName, activityName, parameters, outputType, body, calls, records)
 	if err != nil {
-		return nil, 0, 0, 0, 0, nil, nil, nil, nil, err
+		return result, err
 	}
 	p.conditions = p.captureConditionOrigins(activityID, body)
 	p.reads = p.captureReadOrigins(activityID, body)
 	p.constructions = p.captureConstructionOrigins(activityID, body)
 	p.locals = p.captureLocalOrigins(activityID, body)
 	p.localUses = p.captureLocalUses(body)
+	p.fields = p.captureFieldOrigins(activityID, body)
+	p.returns = p.captureReturnOrigins(activityID, body)
 	lowered, units, err := p.lower(packageName, activityName, outputType, route, parameterNames(parameters), records)
 	if err != nil {
-		return nil, 0, 0, 0, 0, nil, nil, nil, nil, err
+		return result, err
 	}
 	raw, err := p.emit(packageName, activityID, records)
-	return raw, p.constructs, lowered, p.units, units, p.emittedConditionOrigins(), p.emittedReadOrigins(), p.emittedConstructionOrigins(), p.emittedLocalOrigins(), err
+	return projectedBodyOrigins{raw, p.constructs, lowered, p.units, units, p.emittedConditionOrigins(), p.emittedReadOrigins(), p.emittedConstructionOrigins(), p.emittedLocalOrigins(), p.emittedFieldOrigins(), p.returns.emitted(p.file)}, err
 }
 
 func prepareBodyProjection(packageName, activityName string, parameters []InputParameter,
@@ -140,7 +162,7 @@ func (p bodyProjection) lower(packageName, activityName, outputType, route strin
 	if err := typecheck(packageName, p.file, p.fset); err != nil {
 		return 0, 0, fmt.Errorf("typecheck generated activity: %w", err)
 	}
-	return constructs, units, typecheckAndLowerRecords(packageName, p.file, p.fset, records, p.conditions)
+	return constructs, units, typecheckAndLowerRecords(packageName, p.file, p.fset, records, p.fields, p.returns, p.conditions)
 }
 
 func (p bodyProjection) emit(packageName, activityID string, records []RecordType) ([]byte, error) {

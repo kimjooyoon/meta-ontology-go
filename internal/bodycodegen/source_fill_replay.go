@@ -68,6 +68,14 @@ func compareSourceFillReplay(prior, expected Result) error {
 	if !EqualRetainedLocalOrigins(a.BodyLocals, b.BodyLocals) {
 		return fmt.Errorf("body-fill retained local origins differ")
 	}
+	if !EqualRetainedFieldOrigins(a.BodyFields, b.BodyFields) {
+		return fmt.Errorf("body-fill retained field origins differ")
+	}
+	if !EqualRetainedReturnOrigins(a.BodyReturns, b.BodyReturns) {
+		return fmt.Errorf("body-fill retained return origins differ")
+	}
+	a.BodyReturns, b.BodyReturns = nil, nil
+	a.BodyFields, b.BodyFields = nil, nil
 	a.BodyLocals, b.BodyLocals = nil, nil
 	if a.BodyConstructions == nil {
 		b.BodyConstructions = nil
@@ -104,14 +112,18 @@ func compareSourceFillReplay(prior, expected Result) error {
 	if !reflect.DeepEqual(a, b) {
 		return fmt.Errorf("body-fill candidate, selected case, holdout or projection evidence does not replay")
 	}
-	if err := completeness.Validate(prior.Report.CompletenessReceipt); err != nil {
+	return compareSourceFillCompleteness(prior.Report)
+}
+
+func compareSourceFillCompleteness(report Report) error {
+	if err := completeness.Validate(report.CompletenessReceipt); err != nil {
 		return err
 	}
-	actualCommon, _ := json.Marshal(prior.Report.CompletenessReceipt)
-	expectedReceipt := buildCompletenessReceipt(prior.Report, "")
+	actualCommon, _ := json.Marshal(report.CompletenessReceipt)
+	expectedReceipt := buildCompletenessReceipt(report, "")
 	// These are historical environment observations, not replay host requirements.
 	for _, key := range []string{"toolchain", "execution_environment"} {
-		expectedReceipt.Scope[key] = prior.Report.CompletenessReceipt.Scope[key]
+		expectedReceipt.Scope[key] = report.CompletenessReceipt.Scope[key]
 	}
 	expectedCommon, _ := json.Marshal(expectedReceipt)
 	var actualValue, expectedValue any

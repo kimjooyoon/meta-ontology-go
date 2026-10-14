@@ -1,0 +1,6 @@
+=== RUN   TestFieldInputLocations16167
+    field_file_source_fresh_test.go:47: new field source producer activity origin/fieldfiles16167:Build: parse call surface computes: computes:4:5: expected operand, found 'var' (and 1 more errors) {                   <nil> {false false false false 0 false <nil> 0 0 0 <nil>    [] <nil> } {false false false false 0 false <nil> 0 0 0 <nil>    [] <nil> } [] [] false false 0 0 [] [] <nil> [] [] [] []  <nil> <nil> <nil> <nil> [] [] <nil> <nil> [] [] <nil> <nil> {  0 0 0 0 0 0  []} 0 0  <nil> <nil>}
+--- FAIL: TestFieldInputLocations16167 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	0.535s
+FAIL

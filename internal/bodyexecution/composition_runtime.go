@@ -37,6 +37,7 @@ type CompositionPortDelivery struct {
 }
 
 type CompositionTrace struct {
+	Bridge                  *CompositionBridgeTrace           `json:"field_local_bridge,omitempty"`
 	FieldWrites             []CompositionFieldWrite           `json:"field_writes,omitempty"`
 	FieldUses               []CompositionFieldUse             `json:"field_uses,omitempty"`
 	FieldFrames             int                               `json:"field_frames,omitempty"`
@@ -103,6 +104,9 @@ type CompositionRuntime struct {
 	FieldUseSites                  []CompositionFieldSite        `json:"field_use_sites,omitempty"`
 	FieldProjectionSHA256          string                        `json:"field_projection_sha256,omitempty"`
 	FieldObservation               *CompositionFieldSummary      `json:"field_observation,omitempty"`
+	FieldSources                   *CompositionFieldSources      `json:"field_sources,omitempty"`
+	FieldFileSources               *CompositionFieldFileSources  `json:"field_file_sources,omitempty"`
+	BridgeObservation              *CompositionBridgeSummary     `json:"field_local_bridge_observation,omitempty"`
 	LocalSites                     []CompositionLocalSite        `json:"local_sites,omitempty"`
 	LocalUseSites                  []CompositionLocalUseSite     `json:"local_use_sites,omitempty"`
 	LocalObservation               *CompositionLocalSummary      `json:"local_observation,omitempty"`

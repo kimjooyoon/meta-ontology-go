@@ -1,0 +1,62 @@
+=== RUN   TestReturnChoiceRecordedConsistency22217
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/schema
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/missing-choice
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/option
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/kind
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/record
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/field
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/selected-body
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/selected-start
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/declaration-view
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/declaration-range
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/value-range
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/empty-expression
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/original-source
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/original-package
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/original-file
+=== RUN   TestReturnChoiceRecordedConsistency22217/choice/original-activity
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/kind
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/ordinal
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/name
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/input
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/missing-declaration
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/selected-source
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/view
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/range
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/decoded-range
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/empty-expression
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/mapping
+=== RUN   TestReturnChoiceRecordedConsistency22217/return/unmapped-range
+=== NAME  TestReturnChoiceRecordedConsistency22217
+    return_choice_consistency_fresh_test.go:134: two saved original records accepted;16 choice,12 return and2 helper-parent contradictions rejected with refreshed self-digests;producer executions0;model0
+--- PASS: TestReturnChoiceRecordedConsistency22217 (0.02s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/schema (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/missing-choice (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/option (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/kind (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/record (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/field (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/selected-body (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/selected-start (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/declaration-view (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/declaration-range (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/value-range (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/empty-expression (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/original-source (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/original-package (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/original-file (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/choice/original-activity (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/kind (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/ordinal (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/name (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/input (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/missing-declaration (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/selected-source (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/view (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/range (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/decoded-range (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/empty-expression (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/mapping (0.00s)
+    --- PASS: TestReturnChoiceRecordedConsistency22217/return/unmapped-range (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.547s

@@ -1,0 +1,20 @@
+{
+  "status": "FAILED_ORIGIN_QUERY_AFTER_SELECTION_AND_NATIVE_SUCCESS",
+  "selected_mask": 7,
+  "selection": [
+    1,
+    1
+  ],
+  "held_out": [
+    1,
+    1
+  ],
+  "native": [
+    3,
+    3
+  ],
+  "root_cause": "record return constructor had no source local/input binding;field inventory empty;field declaration choice locations also not represented",
+  "repair": "typed return-origin profile and expression-owned native bindings;separate record-choice source sidecar with original declaration/selected value locations",
+  "next_new_cohort": 22049,
+  "historical_reruns": 0
+}

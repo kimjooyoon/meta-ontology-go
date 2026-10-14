@@ -1,0 +1,16 @@
+{
+  "head": "3aac47d7134b352669e6b114e636a0e9b7a8127a",
+  "run": 38518985867,
+  "job": 115704094128,
+  "original_artifact": 11873281895,
+  "artifact_digest": "sha256:1ebb3975c25c7b0a99c6467a51f353cdd619837d5ec5ec862072961c544f66a5",
+  "source": "internal/bodycodegen/source_fill_replay.go",
+  "function": "compareSourceFillReplay",
+  "source_lines": 70,
+  "rendered_helper_lines": 77,
+  "limit": 75,
+  "callee": "encoding/json.Unmarshal",
+  "root_reason": "rendered helper overage2 triggers attempted extraction;callee output effects unproven",
+  "repair": "separate completeness receipt comparison into a named function;preserve all source/projection/origin/common receipt comparisons;no cap/policy change",
+  "local_historical_reruns": 0
+}

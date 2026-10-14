@@ -1,0 +1,5 @@
+=== RUN   TestLengthIntegerNative20809
+    length_integer_native_fresh_test.go:84: new length-aware Gooo collection metaprogram3/3;empty/Korean+emoji/partial9-row inputs;Integer guard/helper/field assignment without authored casts;exact two-run observation;model0
+--- PASS: TestLengthIntegerNative20809 (0.76s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.236s

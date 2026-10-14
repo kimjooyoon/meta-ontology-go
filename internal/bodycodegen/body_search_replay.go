@@ -48,7 +48,9 @@ func VerifyIRBodySearchProjection(ctx context.Context, filename string, source [
 		!EqualRetainedConditionOrigins(prior.Report.BodyConditions, replayed.Report.BodyConditions) ||
 		!EqualRetainedReadOrigins(prior.Report.BodyReads, replayed.Report.BodyReads) ||
 		!EqualRetainedConstructionOrigins(prior.Report.BodyConstructions, replayed.Report.BodyConstructions) ||
-		!EqualRetainedLocalOrigins(prior.Report.BodyLocals, replayed.Report.BodyLocals) {
+		!EqualRetainedLocalOrigins(prior.Report.BodyLocals, replayed.Report.BodyLocals) ||
+		!EqualRetainedFieldOrigins(prior.Report.BodyFields, replayed.Report.BodyFields) ||
+		!EqualRetainedReturnOrigins(prior.Report.BodyReturns, replayed.Report.BodyReturns) {
 		return fmt.Errorf("IR body-search Go projection does not replay")
 	}
 	if err := replayIRSearchFiniteEvidence(ctx, prior, plan); err != nil {

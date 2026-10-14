@@ -1,0 +1,6 @@
+=== RUN   TestLengthIntegerNative20423
+    length_integer_native_fresh_test.go:81: original length and field coordinates absent 6 1
+--- FAIL: TestLengthIntegerNative20423 (0.73s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.230s
+FAIL

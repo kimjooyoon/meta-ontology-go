@@ -1,0 +1,8 @@
+{
+  "status": "FAILED_METADATA_ASSERTION_AFTER_NATIVE_CASE_CHECK",
+  "native_case_check_reached": "3/3;exact two-run;model0",
+  "mapped_field_locations": 6,
+  "root_cause": "test searched generated native LocalSite.Expression using authored lower-case Gooo field spelling;retained authored expression is LocalSite.Source.Value.Expression",
+  "historical_reruns": 0,
+  "next": "new source identity,helper constant,labels and offsets20423;save runtime before metadata assertions"
+}

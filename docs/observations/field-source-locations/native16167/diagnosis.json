@@ -1,0 +1,7 @@
+{
+  "result": "parse_failed_before_native_execution",
+  "cause": "for let initializer is outside accepted surface; normalize produces for var, invalid Go",
+  "native_producer_executions": 0,
+  "models": 0,
+  "next": "distinct16223 source uses declared counter before counted loop and different cases;never rerun16167"
+}

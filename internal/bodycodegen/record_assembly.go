@@ -276,6 +276,10 @@ func emitRecordAssembly(ctx context.Context, filename string, source []byte, p r
 	if err != nil {
 		return Result{}, err
 	}
+	r.ChoiceOrigins, err = p.choiceOrigins(r.SelectedMask, body)
+	if err != nil {
+		return Result{}, err
+	}
 	r.SelectedSourceSHA256 = digest(completed)
 	result.GoooSource, result.Report.RecordAssembly = string(completed), r
 	return result, nil

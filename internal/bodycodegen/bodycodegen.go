@@ -65,6 +65,8 @@ type Report struct {
 	BodyReads              []BodyReadOrigin         `json:"body_reads,omitempty"`
 	BodyConstructions      []BodyConstructionOrigin `json:"body_constructions,omitempty"`
 	BodyLocals             []BodyLocalOrigin        `json:"body_locals,omitempty"`
+	BodyFields             []BodyFieldOrigin        `json:"body_fields,omitempty"`
+	BodyReturns            []BodyReturnOrigin       `json:"body_returns,omitempty"`
 	CallClosure            *PureCallClosure         `json:"call_closure,omitempty"`
 	CandidateRoutes        []string                 `json:"candidate_routes"`
 	EquivalenceRule        string                   `json:"equivalence_rule"`
@@ -154,10 +156,11 @@ func generateRouteParameters(packageName, activityName, activityID string, param
 
 func generateRouteWithCalls(packageName, activityName, activityID string, parameters []InputParameter,
 	outputType, body, route string, calls []pureCallFunction, records []RecordType) (generatedRoute, error) {
-	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, conditionOrigins, readOrigins, constructionOrigins, localOrigins, err := renderParametersWithLocalOrigins(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
+	projected, err := projectBodyOrigins(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
 	if err != nil {
 		return generatedRoute{}, err
 	}
+	generated := projected.source
 	equivalenceRule := routeEquivalenceRule(route)
 	equivalence, err := routeEquivalenceWithCalls(packageName, activityName, parameters, outputType, body, generated, equivalenceRule, calls, records)
 	if err != nil {
@@ -167,9 +170,9 @@ func generateRouteWithCalls(packageName, activityName, activityID string, parame
 		return generatedRoute{}, fmt.Errorf("route %q failed its canonical semantic equivalence receipt", route)
 	}
 	completeness := 0.0
-	if sourceUnits > 0 {
-		covered := min(loweredUnits, sourceUnits)
-		completeness = float64(covered) * 100 / float64(sourceUnits)
+	if projected.units > 0 {
+		covered := min(projected.loweredUnits, projected.units)
+		completeness = float64(covered) * 100 / float64(projected.units)
 	}
 	var inputParameters []InputParameter
 	if len(parameters) > 1 {
@@ -179,9 +182,9 @@ func generateRouteWithCalls(packageName, activityName, activityID string, parame
 		Schema: schema, Decision: "PASS", Activity: activityName, ActivityID: activityID,
 		InputType: parameterTypeLabel(parameters), InputParameters: inputParameters, OutputType: outputType, RecordTypes: records,
 		Route: route, EquivalenceRule: equivalenceRule,
-		SourceConstructs: sourceConstructs, LoweredConstructs: loweredConstructs,
-		SourceSemanticUnits: sourceUnits, LoweredSemanticUnits: loweredUnits,
-		CompletenessPercent: completeness, RouteEquivalence: equivalence, BodyConditions: conditionOrigins, BodyReads: readOrigins, BodyConstructions: constructionOrigins, BodyLocals: localOrigins,
+		SourceConstructs: projected.constructs, LoweredConstructs: projected.lowered,
+		SourceSemanticUnits: projected.units, LoweredSemanticUnits: projected.loweredUnits,
+		CompletenessPercent: completeness, RouteEquivalence: equivalence, BodyConditions: projected.conditions, BodyReads: projected.reads, BodyConstructions: projected.constructions, BodyLocals: projected.locals, BodyFields: projected.fields, BodyReturns: projected.returns,
 		TypecheckPassed: true,
 	}}, nil
 }
@@ -521,7 +524,8 @@ func normalizeIntegerLocalInitializers(packageName string, file *ast.File, fset 
 		inferred++
 		return true
 	})
-	return inferred
+	inferred += normalizeCountedInitializers(file)
+	return inferred + normalizeLengthIntegerContexts(packageName, file, fset)
 }
 
 func rewriteLetDeclarations(body string) (string, error) {

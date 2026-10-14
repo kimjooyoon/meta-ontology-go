@@ -1,0 +1,35 @@
+{
+  "source_head": "a6baec86ca7c29e9ea573ad72d9479d3bbf6df66",
+  "predecessor_write_paths": 538,
+  "copied": 516,
+  "existing_private_overrides": [
+    "examples/language-syntax-roundtrip/corpus.json",
+    "internal/bodycodegen/body_paths_replay.go",
+    "internal/bodycodegen/body_projection.go",
+    "internal/bodycodegen/body_search_replay.go",
+    "internal/bodycodegen/bodycodegen.go",
+    "internal/bodycodegen/length_integer_context.go",
+    "internal/bodycodegen/record_assembly_replay.go",
+    "internal/bodycodegen/record_projection.go",
+    "internal/bodycodegen/source_fill_replay.go",
+    "internal/bodyexecution/composition_field_file_sources.go",
+    "internal/bodyexecution/composition_field_projection.go",
+    "internal/bodyexecution/native_field_file_facts.go",
+    "internal/bodyexecution/native_field_file_validate.go",
+    "internal/bodyexecution/native_field_source_validate.go",
+    "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+    "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+    "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+    "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+    "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+    "internal/meta/languagereadiness/languagesyntax/model.go",
+    "internal/meta/languagereadiness/languagesyntax/registry.go",
+    "internal/packageruntime/workspaceexecution/field_file_sources.go"
+  ],
+  "accepted_base_deletions": [
+    "cmd/gooo/package_field_lineage_fresh_test.go",
+    "cmd/gooo/package_field_lineage_boundary_fresh_test.go",
+    "cmd/gooo/package_field_lineage_capacity_fresh_test.go",
+    "cmd/gooo/package_field_renderer_fresh_test.go"
+  ]
+}

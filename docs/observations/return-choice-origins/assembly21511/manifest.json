@@ -1,0 +1,25 @@
+{
+  "base": "a6baec86ca7c29e9ea573ad72d9479d3bbf6df66",
+  "files": [
+    {
+      "path": "examples/assembled-length-summary/cases.json",
+      "bytes": 761,
+      "sha256": "c08fb7d52d3ae7a0ad1fc892f6d52db748d0e15754797f2afdf44b65deed4bf6"
+    },
+    {
+      "path": "examples/assembled-length-summary/gooo.workspace.json",
+      "bytes": 259,
+      "sha256": "8c629f02fb26e57277a5bb5d67083349619ebc54c2f2ff69f3dc184e774d3f37"
+    },
+    {
+      "path": "examples/assembled-length-summary/summary.gooo",
+      "bytes": 1531,
+      "sha256": "3f6807a8d59ff927f3e53fa2beb62f40376f577ac102b88eaff129b688efa645"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/length_assembly_origin_fresh_test.go",
+      "bytes": 3214,
+      "sha256": "525c1b81d00d7e06c3bd0977b01e3ce9f41e8bac055e81694c10a8f85d2d69ba"
+    }
+  ]
+}

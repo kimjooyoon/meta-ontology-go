@@ -1,0 +1,5 @@
+=== RUN   TestTypedReturnSources21641
+    body_return_source_fresh_test.go:43: two new raw/escaped sources retain root/helper record return identities and original ranges;legacy absence supported;source-only/model0
+--- PASS: TestTypedReturnSources21641 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.524s
