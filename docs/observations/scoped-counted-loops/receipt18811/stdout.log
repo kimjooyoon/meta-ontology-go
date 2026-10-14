@@ -1,0 +1,5 @@
+=== RUN   TestCountedCompletenessRecord18811
+    counted_receipt_fresh_test.go:53: saved new counted assembly receipt accepted;three bound receipt contradictions rejected;JSON comparison separated without dropping checks;producer/model0
+--- PASS: TestCountedCompletenessRecord18811 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.517s

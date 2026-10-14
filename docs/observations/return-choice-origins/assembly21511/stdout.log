@@ -1,0 +1,6 @@
+=== RUN   TestLengthAssemblyOrigins21511
+    length_assembly_origin_fresh_test.go:75: saved field source query saved record has no per-field execution history <nil>
+--- FAIL: TestLengthAssemblyOrigins21511 (0.78s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.301s
+FAIL

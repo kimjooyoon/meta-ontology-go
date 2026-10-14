@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T06:56:48.566774+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-length-integer-context-20261014/promotion20537/overlay.json",
+    "./internal/bodycodegen",
+    "-run=^TestLengthInteger.*20537$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}

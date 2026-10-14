@@ -1,0 +1,27 @@
+{
+  "source_of_failure": "capacity22373/source",
+  "cap_unchanged": 75,
+  "splits": [
+    {
+      "path": "internal/bodycodegen/body_paths_replay.go",
+      "before_sha256": "5fda1dfac2acdcda3b3165853190bdf76e2542e7d4a69c6800a75a7ecefe0461",
+      "after_sha256": "43815a6d3b7edb3a331d9643cd3de6b01232fc573613ca374e723cb7ad1ebe56"
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_inventory.go",
+      "before_sha256": "d24968fdde22b1fb4e0aa8eb0dfe3f2c16deadb0aad60c7795b59d54e099be69",
+      "after_sha256": "0e9d58bfe68845b28c7821ea9e3fbdc197e0afa8e7d10ed499d7d3ecb6924934"
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_contract.go",
+      "before_sha256": "25fcd5c99836fa381748459188a9fde83c4a01918906014d65dcb2c168de5ac3",
+      "after_sha256": "905baeabc2ab802ee1397802d22fd7a0dd104e531128a539aba94c5912a92561"
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_projection.go",
+      "before_sha256": "89004918a7524cea07687ee09027fdcbf92048a8895023029c5941532793d748",
+      "after_sha256": "1fc14b733aab24b8b488ed69687cb92ca6807b0635c7e1d34d6d377a44656e0f"
+    }
+  ],
+  "preserved": "typed-path source/projection/finite checks;field binding contracts;parameter/local/return inventory;two AST traversal orders;all underscore pruning"
+}

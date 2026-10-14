@@ -1,0 +1,5 @@
+=== RUN   TestNativeLocalFieldBridge15217
+    package_local_field_bridge_native_fresh_test.go:78: new Gooo source4/4 actual mixed tuples and exact2-run bridge replay;12 final field roots through scalar local writes;overwritten fields retain earlier saved origins;equal-zero branch paths differ;models0;external oracle only, Gooo mixed-journal traversal still pending
+--- PASS: TestNativeLocalFieldBridge15217 (0.74s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.294s

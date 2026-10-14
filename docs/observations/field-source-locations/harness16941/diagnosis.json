@@ -1,0 +1,7 @@
+{
+  "result": "build_failed_before_command_or_program_execution",
+  "cause": "Go overlay adds a new package directory, but vet requires its physical cwd to exist",
+  "repair": "created an empty package directory only; source HEAD remains clean and frozen;vet stays enabled",
+  "native_program_executions": 0,
+  "next": "distinct17011 source uses subtraction and different identity;never rerun16941"
+}

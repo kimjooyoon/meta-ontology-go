@@ -81,3 +81,13 @@ Go는 행을 배열로 옮긴다. [Gooo 프로그램](../../examples/derived-ori
 후속 분석 범위로 남아 있다.
 
 [이번 관찰과 초기 실패](../observations/native-origin-inputs/README.md)도 함께 공개한다.
+
+## 필드 원본 위치와 여러 기원 입력
+
+`--origin-kind field-input-locations`는 관측된 필드의 대상·값 위치와 조립
+조각을 원래 파일 기준으로 전달합니다. [필드 원본 위치](field-source-locations.ko.md)와
+[Gooo 소비자](../../examples/field-source-map/README.md)에 사용 예가 있습니다.
+
+`--origin-shape field-local-columns --origin-limit 3`은 독립적인 세 입력으로
+기원 탐색을 묶습니다. 각 입력의 케이스 번호와 시계 체계는 유지합니다.
+기본 limit는 1이고, 페이지 전체 32KiB 상한을 넘으면 limit를 낮추도록 알립니다.

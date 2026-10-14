@@ -1,0 +1,5 @@
+=== RUN   TestScopedCounterFieldBridge19711
+    counted_field_bridge_fresh_test.go:81: new record cases2/2;true/false field branch;10 scoped ++ updates;cross-journal counter reads5;field RHS original location;complete shared observations;two-run replay;model0
+--- PASS: TestScopedCounterFieldBridge19711 (0.75s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.261s

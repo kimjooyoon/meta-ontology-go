@@ -1,0 +1,9 @@
+=== RUN   TestNamedCapacityRelocation21107
+    named_capacity_relocation_fresh_test.go:27: sample/one#Alpha21107 rendered 3
+    named_capacity_relocation_fresh_test.go:27: sample/one#Reader21107.Measure21107 rendered 3
+    named_capacity_relocation_fresh_test.go:27: sample/one#Alpha21107 rendered 3
+    named_capacity_relocation_fresh_test.go:27: sample/one#Reader21107.Measure21107 rendered 3
+    named_capacity_relocation_fresh_test.go:38: new two-declaration source layouts preserve package/receiver identities across file splits;missing/duplicate rejected;producer/model0;historical source cohorts not executed
+--- PASS: TestNamedCapacityRelocation21107 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.474s

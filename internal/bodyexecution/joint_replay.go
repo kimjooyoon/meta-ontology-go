@@ -156,6 +156,14 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 }
 
 func sameJointRuntime(a, b CompositionRuntime) bool {
+	// The second argument is the retained claim. Historical absence cannot
+	// acquire an authored source annotation during comparison.
+	if b.FieldSources == nil {
+		a.FieldSources = nil
+	}
+	if b.FieldFileSources == nil {
+		a.FieldFileSources = nil
+	}
 	if !equalRetainedLocalSites(a.LocalSites, b.LocalSites) {
 		return false
 	}
@@ -181,7 +189,7 @@ func sameJointRuntime(a, b CompositionRuntime) bool {
 		r.InputSeparation.Scope = ""
 		return []any{r.Stage, r.Failure, r.OriginalSourceSHA256, r.SelectedSourceSHA256,
 			r.TypedPlanSHA256, r.GeneratedSHA256, r.DriverSHA256, r.RuntimeSuiteSHA256,
-			r.FieldBindings, r.FieldSites, r.FieldUseSites, r.FieldProjectionSHA256, r.FieldObservation,
+			r.FieldBindings, r.FieldSites, r.FieldUseSites, r.FieldProjectionSHA256, r.FieldObservation, r.BridgeObservation, r.FieldSources, r.FieldFileSources,
 			comparableConditionSites(r), r.ConditionObservation, r.ReadSites, r.ReadInputs, r.ReadObservation, r.ConstructionSites, r.LocalUseSites, r.LocalObservation, r.Traces, r.FinitePassed, r.FiniteTotal, r.ModelCalls, r.ProjectionReplayed, r.RuntimeReplayed,
 			r.InputSeparation}
 	}

@@ -1,0 +1,14 @@
+{
+  "cohort": 15121,
+  "stage": "Go build before native execution",
+  "cause": "composition_bridge_windows.go was treated as a GOOS=windows file and excluded on darwin; validation symbol unavailable",
+  "native_program_executions": 0,
+  "correction": "rename pending file to composition_bridge_intervals.go; keep original source snapshot and failed log",
+  "next_cohort": 15217,
+  "fresh_inputs": [
+    43,
+    61,
+    -7
+  ],
+  "historical_local_reruns": 0
+}

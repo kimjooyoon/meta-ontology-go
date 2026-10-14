@@ -1,0 +1,8 @@
+{
+  "status": "FAILED_BEFORE_FIXTURE_READ",
+  "reason": "Go compiler overlay does not redirect runtime os.Open of absent testdata;no saved-record validation reached",
+  "repair": "use frozen-source-root for new lookup21737",
+  "producer_runs": 0,
+  "model_calls": 0,
+  "historical_reruns": 0
+}

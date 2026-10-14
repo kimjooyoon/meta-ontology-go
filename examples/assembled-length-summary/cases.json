@@ -1,0 +1,64 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "origin/assembledlength22133:Summarize": {
+          "labels": [],
+          "offset": 181
+        }
+      },
+      "expected": {
+        "origin/assembledlength22133:Summarize": {
+          "total": 181,
+          "bytes": 0,
+          "complete": true
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/assembledlength22133:Summarize": {
+          "labels": [
+            "의도",
+            "💡"
+          ],
+          "offset": -191
+        }
+      },
+      "expected": {
+        "origin/assembledlength22133:Summarize": {
+          "total": -189,
+          "bytes": 10,
+          "complete": true
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/assembledlength22133:Summarize": {
+          "labels": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
+          "offset": 199
+        }
+      },
+      "expected": {
+        "origin/assembledlength22133:Summarize": {
+          "total": 209,
+          "bytes": 8,
+          "complete": false
+        }
+      }
+    }
+  ]
+}

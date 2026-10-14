@@ -138,6 +138,9 @@ func realizeRecordAssemblyProjection(ctx context.Context, filename string, sourc
 	if !equalLocalCallEvidence(expected.CriteriaHoldout, r.CriteriaHoldout) {
 		return Realization{}, fmt.Errorf("record criteria holdout does not replay")
 	}
+	if r.ChoiceOrigins != nil && !reflect.DeepEqual(r.ChoiceOrigins, expected.ChoiceOrigins) {
+		return Realization{}, fmt.Errorf("record selected choice origins differ")
+	}
 	a, b := prior.Report, generated.Report
 	if generated.Source != prior.Source || generated.GoooSource != prior.GoooSource || expected.SelectedSourceSHA256 != r.SelectedSourceSHA256 ||
 		a.ActivityID != b.ActivityID || a.SourceDigest != b.SourceDigest || a.ProgramDigest != b.ProgramDigest ||
@@ -147,7 +150,9 @@ func realizeRecordAssemblyProjection(ctx context.Context, filename string, sourc
 		(a.BodyConditions != nil && !reflect.DeepEqual(a.BodyConditions, b.BodyConditions)) ||
 		!EqualRetainedReadOrigins(a.BodyReads, b.BodyReads) ||
 		!EqualRetainedConstructionOrigins(a.BodyConstructions, b.BodyConstructions) ||
-		!EqualRetainedLocalOrigins(a.BodyLocals, b.BodyLocals) {
+		!EqualRetainedLocalOrigins(a.BodyLocals, b.BodyLocals) ||
+		!EqualRetainedFieldOrigins(a.BodyFields, b.BodyFields) ||
+		!EqualRetainedReturnOrigins(a.BodyReturns, b.BodyReturns) {
 		return Realization{}, fmt.Errorf("record selected source, typed signature or projection differs")
 	}
 	if err = verifyRecordCommonReceipt(prior.Report); err != nil {

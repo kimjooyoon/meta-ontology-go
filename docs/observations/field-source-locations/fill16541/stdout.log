@@ -1,0 +1,5 @@
+=== RUN   TestFieldCandidateLocations16541
+    field_fill_source_fresh_test.go:95: fresh native2/2;candidate anchors2;cross-fragment RHS explicitly unmapped1;field-expression relations5;selection and native denominators separate;model0;saved-read producer0
+--- PASS: TestFieldCandidateLocations16541 (0.70s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.145s

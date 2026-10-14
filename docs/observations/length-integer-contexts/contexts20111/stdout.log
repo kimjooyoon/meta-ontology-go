@@ -1,0 +1,36 @@
+=== RUN   TestLengthIntegerContexts20111
+=== RUN   TestLengthIntegerContexts20111/return
+=== RUN   TestLengthIntegerContexts20111/mixed_sum
+=== RUN   TestLengthIntegerContexts20111/derived_local
+=== RUN   TestLengthIntegerContexts20111/comparison
+=== RUN   TestLengthIntegerContexts20111/reverse_comparison
+=== RUN   TestLengthIntegerContexts20111/record_constructor
+=== RUN   TestLengthIntegerContexts20111/record_assignment
+=== RUN   TestLengthIntegerContexts20111/local_assignment
+=== RUN   TestLengthIntegerContexts20111/pure_helper
+=== RUN   TestLengthIntegerContexts20111/loop_guard
+=== NAME  TestLengthIntegerContexts20111
+    length_integer_context_fresh_test.go:50: ten new Gooo length contexts;Integer compare/return/assignment/constructor/helper and scoped-loop guard;canonical units100%;model/native0
+--- PASS: TestLengthIntegerContexts20111 (0.01s)
+    --- PASS: TestLengthIntegerContexts20111/return (0.00s)
+    --- PASS: TestLengthIntegerContexts20111/mixed_sum (0.00s)
+    --- PASS: TestLengthIntegerContexts20111/derived_local (0.00s)
+    --- PASS: TestLengthIntegerContexts20111/comparison (0.00s)
+    --- PASS: TestLengthIntegerContexts20111/reverse_comparison (0.00s)
+    --- PASS: TestLengthIntegerContexts20111/record_constructor (0.00s)
+    --- PASS: TestLengthIntegerContexts20111/record_assignment (0.00s)
+    --- PASS: TestLengthIntegerContexts20111/local_assignment (0.00s)
+    --- PASS: TestLengthIntegerContexts20111/pure_helper (0.00s)
+    --- PASS: TestLengthIntegerContexts20111/loop_guard (0.00s)
+=== RUN   TestLengthIntegerRejectsUnrelatedTypes20111
+--- PASS: TestLengthIntegerRejectsUnrelatedTypes20111 (0.00s)
+=== RUN   TestLengthIntegerAuthoredFlow20111
+    length_integer_flow_fresh_test.go:45: new source choice retains authored len and arithmetic;implicit widening absent from intent graph;candidate/model/native0
+--- PASS: TestLengthIntegerAuthoredFlow20111 (0.00s)
+=== RUN   TestLengthIntegerPreservesFreshValidShapes20111
+    length_integer_legacy_fresh_test.go:41: three fresh well-typed ASTs byte-form unchanged;source len helper retained;unrelated int rejected;historical cohort executions0
+--- PASS: TestLengthIntegerPreservesFreshValidShapes20111 (0.00s)
+=== RUN   TestLengthIntegerExplicitProjectionRemains20111
+--- PASS: TestLengthIntegerExplicitProjectionRemains20111 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.533s

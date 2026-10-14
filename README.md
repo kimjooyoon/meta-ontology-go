@@ -33,6 +33,26 @@ The [Gooo ancestry reader](examples/native-field-lineage/README.md) follows save
 field links through copies and helpers, and reports recording gaps separately.
 Its traversal lives in `.gooo`; Go transports recorded columns. Two bounded
 sequence loops now express this kind of small graph walk.
+The [field/local bridge](examples/local-field-bridge/README.md) also follows values
+saved in scalar locals before a field is overwritten. A Gooo program walks the
+joined journals and keeps known origins visible when other links are unresolved.
+The [original field-location reader](examples/field-source-map/README.md) connects
+explicit field writes, constructor values and selector reads to original Gooo
+files. Template and candidate fragments retain separate anchors. Saved bridge
+queries can also carry several independent Gooo inputs within one 32KiB page.
+The [scoped-counter metaprogram](examples/scoped-origin-coverage/README.md) uses
+`for let` and a unit `++` post clause to count recorded template and candidate
+fragments in Gooo. Its page status and row-mapping ratio retain separate scope.
+The [length-aware collection example](examples/length-aware-summary/README.md)
+connects lengths to Integer counters, fields and helper inputs. Its native
+observation retains authored length expressions and marks its eight-row limit.
+The [assembled summary](examples/assembled-length-summary/README.md) declares
+three field alternatives and retains the selected expressions' original file
+locations. Direct record returns now participate in field histories without an
+extra named local. A [Gooo reader](examples/record-choice-origins/README.md)
+distinguishes declared alternatives, field targets and unresolved template
+locations in saved records; [the language note](docs/language/return-choice-origins.ko.md)
+describes the coordinates and current observation scope.
 
 A [Gooo metaprogram](examples/derived-origin/README.md) reads saved assembly
 origins and counts which recorded assignments connect to candidates, grammar

@@ -1,0 +1,6 @@
+{
+  "result": "Gooo query executed;comparison fixture used nonexistent fragment_kind/source_sha256 field names",
+  "cause": "actual exported LocalFillFragmentFact has category/source_sha;use the declared type directly",
+  "historical_local_reruns": 0,
+  "next": "19203 selects different input page offset1 and verifies partial-page scope with actual fact type"
+}

@@ -31,7 +31,7 @@ func localFileLocation(input workspaceFillInput, found bool, selected *bodycodeg
 			return out
 		}
 		var ok bool
-		span, ok = retainedLocalTemplateRange(span, fill.origin)
+		span, ok = retainedLocalTemplateRange(span, fill.origin, input.loweredBody)
 		if !ok {
 			out.Reason = "ASSEMBLED_RANGE_HAS_NO_TEMPLATE_LOCATION"
 			return out
@@ -68,27 +68,42 @@ func localFileLocation(input workspaceFillInput, found bool, selected *bodycodeg
 	return out
 }
 
-func retainedLocalTemplateRange(span bodycodegen.FillOriginRange, fill *bodycodegen.SourceFillOrigin) (bodycodegen.FillOriginRange, bool) {
+func retainedLocalTemplateRange(span bodycodegen.FillOriginRange, fill *bodycodegen.SourceFillOrigin, template string) (bodycodegen.FillOriginRange, bool) {
 	if fill == nil {
 		return span, false
 	}
+	_, mapping, err := bodycodegen.NormalizeBodySource(template)
 	for _, fragment := range fill.Fragments {
-		s, t := fragment.SelectedDecoded, fragment.TemplateDecoded
-		if fragment.Kind == "retained_template" && span.Start >= s.Start && span.End <= s.End && s.End-s.Start == t.End-t.Start {
-			return bodycodegen.FillOriginRange{Start: t.Start + span.Start - s.Start, End: t.Start + span.End - s.Start}, true
+		selected, original := fragment.SelectedDecoded, fragment.TemplateDecoded
+		if fragment.Kind != "retained_template" || span.Start < selected.Start || span.End > selected.End {
+			continue
+		}
+		if selected.End-selected.Start == original.End-original.Start {
+			return bodycodegen.FillOriginRange{Start: original.Start + span.Start - selected.Start, End: original.Start + span.End - selected.Start}, true
+		}
+		if err != nil {
+			continue
+		}
+		normalized := mapping.NormalizedRange(original.Start, original.End)
+		if normalized.End-normalized.Start == selected.End-selected.Start {
+			return mapping.OriginalRange(normalized.Start+span.Start-selected.Start, normalized.Start+span.End-selected.Start), true
 		}
 	}
 	return span, false
 }
 
 func localFileConstruction(input workspaceFillInput, found bool, selected *bodycodegen.BodyExpressionSource, fill localFillSelection) *bodycodegen.SourceFillInputOrigin {
+	return fileExpressionConstruction(input, found, selected, fill, "local_expression")
+}
+
+func fileExpressionConstruction(input workspaceFillInput, found bool, selected *bodycodegen.BodyExpressionSource, fill localFillSelection, relation string) *bodycodegen.SourceFillInputOrigin {
 	if !found || selected == nil || selected.Status != "MAPPED" || fill.origin == nil || fill.ambiguous {
 		return nil
 	}
 	link := &bodycodegen.SourceFillConditionOrigin{CandidateID: fill.origin.CandidateID}
 	for _, fragment := range fill.origin.Fragments {
 		if fragment.SelectedDecoded.Start < selected.DecodedEnd && fragment.SelectedDecoded.End > selected.DecodedStart {
-			fragment.Relation = "local_expression"
+			fragment.Relation = relation
 			link.Fragments = append(link.Fragments, fragment)
 		}
 	}

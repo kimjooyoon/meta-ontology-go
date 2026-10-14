@@ -1,0 +1,211 @@
+{
+  "schema": "gooo/record-assembly-input-export/v1",
+  "original_source_sha256": "sha256:5b41fdab748dce94e75b7fe49b3b97464297274a193c056e79b9d851d50cd588",
+  "contract_sha256": "sha256:3a287a4ec36b2d68549ebc8cfdb1fb2a4f3c59c6c13cecc53a7423f724b1c88d",
+  "activity_id": "lengthcontext20537://activity/choose",
+  "choices": [
+    {
+      "id": "size",
+      "record_id": "urn:lengthcontext20537:summary",
+      "field_id": "urn:lengthcontext20537:summary/size",
+      "field": "size",
+      "occurrence": 0,
+      "intent": "Retain input byte length plus the offset.",
+      "first": "len(input0)+input1",
+      "second": "20537",
+      "picked": ""
+    }
+  ],
+  "context": {
+    "schema": "gooo/record-field-expression-context/v1",
+    "status": "DECLINED_TO_DETERMINISTIC",
+    "reason": "THREE_FIELD_CHOICES_REQUIRED",
+    "parts": [
+      "{\"field\":\"size\",\"first\":\"len(input0)+input1\",\"second\":\"20537\",\"intent\":\"Retain input byte length plus the offset.\"}"
+    ],
+    "feature_version": "triple_record_field_context_v1_shared_v1",
+    "scope": "complete source-bound field names, ordered expressions and intent; actual string-field structural features; cases and expected outputs excluded"
+  },
+  "value_flow": {
+    "schema": "gooo/record-value-flow/v1",
+    "status": "RESOLVED",
+    "activity_id": "lengthcontext20537://activity/choose",
+    "body_sha256": "sha256:b5d74f2b8a2abcf0384e3bf4038d65752df7f9ba27a2163277191cf3ab330a54",
+    "body_view": "computes",
+    "nodes": [
+      {
+        "id": 1,
+        "kind": "input",
+        "local": 1,
+        "parents": [
+          0,
+          0
+        ],
+        "span": {
+          "view": "input-port",
+          "start": 0,
+          "end": 0
+        }
+      },
+      {
+        "id": 2,
+        "kind": "input",
+        "local": 2,
+        "parents": [
+          0,
+          0
+        ],
+        "span": {
+          "view": "input-port",
+          "start": 0,
+          "end": 0
+        }
+      },
+      {
+        "id": 3,
+        "kind": "read",
+        "local": 1,
+        "parents": [
+          1,
+          0
+        ],
+        "span": {
+          "view": "computes",
+          "start": 24,
+          "end": 30
+        }
+      },
+      {
+        "id": 4,
+        "kind": "expression",
+        "operator": "len",
+        "parents": [
+          3,
+          0
+        ],
+        "span": {
+          "view": "computes",
+          "start": 20,
+          "end": 31
+        }
+      },
+      {
+        "id": 5,
+        "kind": "read",
+        "local": 2,
+        "parents": [
+          2,
+          0
+        ],
+        "span": {
+          "view": "computes",
+          "start": 32,
+          "end": 38
+        }
+      },
+      {
+        "id": 6,
+        "kind": "expression",
+        "operator": "+",
+        "parents": [
+          4,
+          5
+        ],
+        "span": {
+          "view": "computes",
+          "start": 20,
+          "end": 38
+        }
+      },
+      {
+        "id": 7,
+        "kind": "literal",
+        "operator": "INT",
+        "parents": [
+          0,
+          0
+        ],
+        "span": {
+          "view": "alternative:size",
+          "start": 0,
+          "end": 5
+        }
+      },
+      {
+        "id": 8,
+        "kind": "choice",
+        "field_id": "urn:lengthcontext20537:summary/size",
+        "operator": "size",
+        "parents": [
+          6,
+          7
+        ],
+        "span": {
+          "view": "computes",
+          "start": 20,
+          "end": 38
+        }
+      },
+      {
+        "id": 9,
+        "kind": "literal",
+        "operator": "true",
+        "parents": [
+          0,
+          0
+        ],
+        "span": {
+          "view": "computes",
+          "start": 47,
+          "end": 51
+        }
+      },
+      {
+        "id": 10,
+        "kind": "return",
+        "field_id": "urn:lengthcontext20537:summary/size",
+        "parents": [
+          8,
+          0
+        ],
+        "span": {
+          "view": "computes",
+          "start": 0,
+          "end": 52
+        }
+      },
+      {
+        "id": 11,
+        "kind": "return",
+        "field_id": "urn:lengthcontext20537:summary/present",
+        "parents": [
+          9,
+          0
+        ],
+        "span": {
+          "view": "computes",
+          "start": 0,
+          "end": 52
+        }
+      }
+    ],
+    "choices": [
+      {
+        "id": "size",
+        "field_id": "urn:lengthcontext20537:summary/size",
+        "first": 6,
+        "second": 7,
+        "result": 8,
+        "span": {
+          "view": "computes",
+          "start": 20,
+          "end": 38
+        }
+      }
+    ],
+    "scope": "typed symbolic value definitions, copies, choice alternatives and conditional joins; body-relative byte offsets retain same-length let/var spelling; no input values, cases, predictions or candidate execution"
+  },
+  "model_predictions": 0,
+  "candidate_tests": 0,
+  "scope": "explicit source-bound model context; shape and type preflight; zero predictions or candidate outcomes; optional expanded plan carries the separate finite cases"
+}

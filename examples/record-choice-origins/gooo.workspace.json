@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"activity": "Inspect", "package_path": "origin/record-choice-origins"},
+  "packages": [
+    {"path": "origin/record-choice-origins", "name": "choiceorigins", "sources": ["inspect.gooo"]}
+  ]
+}

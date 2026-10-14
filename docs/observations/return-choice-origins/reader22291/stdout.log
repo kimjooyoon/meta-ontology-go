@@ -1,0 +1,5 @@
+=== RUN   TestGoooRecordChoiceOrigins22291
+    record_choice_origins_fresh_test.go:119: real CLI/Gooo9/9;three declared alternatives,three field targets,three unresolved template values;page9/27;producer executions0;model0;input-only finite0
+--- PASS: TestGoooRecordChoiceOrigins22291 (1.23s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/cliobservations	4.179s

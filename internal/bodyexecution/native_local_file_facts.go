@@ -79,6 +79,10 @@ func (page *nativeOriginPage) visitLocalFileLocations(runtime CompositionRuntime
 }
 
 func (page *nativeOriginPage) addLocalFileBinding(base CompositionLocalFileFact, binding CompositionLocalFileBinding, category string) {
+	walkLocalFileAnchors(base, binding, category, func(fact CompositionLocalFileFact) { page.add(fact) })
+}
+
+func walkLocalFileAnchors(base CompositionLocalFileFact, binding CompositionLocalFileBinding, category string, visit func(CompositionLocalFileFact)) {
 	for index, source := range []CompositionLocalFileLocation{binding.Declaration, binding.Value} {
 		fact := base
 		fact.Category = "declaration"
@@ -91,7 +95,7 @@ func (page *nativeOriginPage) addLocalFileBinding(base CompositionLocalFileFact,
 		}
 		fact.PackagePath, fact.Filename, fact.OriginalActivityID, fact.SourceSHA256 = source.PackagePath, source.Filename, source.ActivityID, source.SourceSHA256
 		fact.SourceStart, fact.SourceEnd, fact.Expression = source.Start, source.End, source.Expression
-		page.add(fact)
+		visit(fact)
 	}
 	c := binding.Construction
 	if c == nil {
@@ -112,6 +116,6 @@ func (page *nativeOriginPage) addLocalFileBinding(base CompositionLocalFileFact,
 		if fact.Mapping == "MAPPED" && at != nil {
 			fact.SourceStart, fact.SourceEnd = at.Start, at.End
 		}
-		page.add(fact)
+		visit(fact)
 	}
 }

@@ -1,0 +1,5 @@
+=== RUN   TestBatchedBridgeOrigins16841
+    package_bridge_page_fresh_test.go:101: three new saved initial-field queries ->one Gooo invocation3/3;cross-case namespace2/2;32KiB page enforced;old single-use API retained;producer/model0;input-only finite0
+--- PASS: TestBatchedBridgeOrigins16841 (0.93s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.485s

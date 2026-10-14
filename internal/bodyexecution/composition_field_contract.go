@@ -17,41 +17,10 @@ func validateFieldInventory(p *compositionFieldProjection) error {
 			return fmt.Errorf("field lexical binding or record identity differs")
 		}
 		seen[key] = true
-		if binding.VariableOrdinal < 0 {
-			if binding.InputPort == "" {
-				return fmt.Errorf("field input binding has no port")
-			}
-			switch binding.InputKind {
-			case "root_input":
-				if binding.ActivityID != binding.RootActivityID || binding.InputFrom != "" {
-					return fmt.Errorf("field root input identity differs")
-				}
-			case "activity_input":
-				if binding.ActivityID != binding.RootActivityID || binding.InputFrom == "" {
-					return fmt.Errorf("field activity input identity differs")
-				}
-			case "helper_parameter":
-				if binding.InputFrom != "" {
-					return fmt.Errorf("field helper parameter has a graph producer")
-				}
-			default:
-				return fmt.Errorf("field input kind differs")
-			}
-		} else if binding.InputKind != "" || binding.InputPort != "" || binding.InputFrom != "" {
-			return fmt.Errorf("field local binding claims an input port")
+		if err := validateFieldBinding(binding); err != nil {
+			return err
 		}
-		fields := map[string]bool{}
-		for _, field := range binding.Record.Fields {
-			if field.ID == "" || field.GoName == "" || fields[field.ID] || field.Presence != "" || field.Cardinality != "" {
-				return fmt.Errorf("field record shape or scalar profile differs")
-			}
-			fields[field.ID] = true
-			switch field.TypeID {
-			case "urn:gooo:type:integer", "urn:gooo:type:boolean", "urn:gooo:type:string":
-			default:
-				return fmt.Errorf("field record type is outside required scalar profile")
-			}
-		}
+
 	}
 	for group, sites := range [2][]CompositionFieldSite{p.sites, p.uses} {
 		for _, site := range sites {

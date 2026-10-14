@@ -11,6 +11,7 @@ const recordAssemblySchema = "gooo/record-field-assembly/v1"
 const scalarCriteriaAssemblySchema = "gooo/scalar-criteria-assembly/v1"
 
 type RecordAssemblyReceipt struct {
+	ChoiceOrigins        []RecordChoiceOrigin           `json:"choice_origins,omitempty"`
 	CriteriaQuestions    *CriteriaQuestionReceipt       `json:"criteria_questions,omitempty"`
 	Criteria             *RecordCriteriaEvidence        `json:"criteria,omitempty"`
 	CriteriaHoldout      *RecordCriteriaEvidence        `json:"criteria_holdout,omitempty"`

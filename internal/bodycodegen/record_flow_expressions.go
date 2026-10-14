@@ -38,6 +38,9 @@ func (c *recordFlowBuilder) expression(node ast.Expr, state *flowState, selected
 	case *ast.CompositeLit:
 		return c.constructor(e, state)
 	case *ast.CallExpr:
+		if isImplicitLengthConversion(e) {
+			return c.expression(e.Args[0], state, selected)
+		}
 		if name, ok := e.Fun.(*ast.Ident); ok && c.helpers[name.Name].body != nil {
 			return c.call(e, state, selected)
 		}

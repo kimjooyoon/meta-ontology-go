@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T08:15:43.674601+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-length-assembly-origin-20261014/native22613/overlay.json",
+    "./internal/packageruntime/workspaceexecution",
+    "-run=^TestDirectRecordReturns22613$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}
