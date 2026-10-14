@@ -1,0 +1,147 @@
+{
+  "predecessor_pr": 1565,
+  "predecessor_head": "238806c60a177d802a095b2be6941841d3c0b8ef",
+  "terminal_originals": {
+    "success": 34,
+    "failure": 4
+  },
+  "predecessor_race": "success;no attribution to unpublished standard reuse",
+  "cohorts": [
+    {
+      "cohort": "standard31711",
+      "result": {
+        "ended": "2026-10-14T13:10:29.829793+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "4bfac8aa7b330f4f81eb771ecd2094ea446c89fd97268ae5066811cbbc631362"
+    },
+    {
+      "cohort": "history32031",
+      "result": {
+        "ended": "2026-10-14T13:16:50.466331+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "2c18864205c6e26a48cb75e5ba9c3a535e58820f32b5c124ed85ea7bc6309142"
+    },
+    {
+      "cohort": "history32403",
+      "result": {
+        "ended": "2026-10-14T13:20:59.452432+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "306e317c67fe1829e376052e85bae122531140f5bab41c8ee6aa2e430adeded0"
+    },
+    {
+      "cohort": "generated32591",
+      "result": {
+        "ended": "2026-10-14T13:23:02.077036+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "d65ef02c057c24c46ad016fca9bbc08b487c7971e4efb9088dddc49c1a95c998"
+    },
+    {
+      "cohort": "generated32603",
+      "result": {
+        "ended": "2026-10-14T13:23:02.433804+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "f834bcab5bf63c1588fdd086558dc4912ac5a952ea74371459595c1d21374ccb"
+    },
+    {
+      "cohort": "static32677",
+      "result": {
+        "at": "2026-10-14T13:24:18.995378+00:00",
+        "exit": 0,
+        "diff_bytes": 0,
+        "stderr_bytes": 0,
+        "tests_executed": 0,
+        "go_files": 69
+      },
+      "archive_sha256": "c8af36d1e7d30ebccb0794b740ecdca2c6bef44374df34970185fe3f12823585"
+    },
+    {
+      "cohort": "decomposition32751",
+      "result": {
+        "ended": "2026-10-14T13:26:22.045840+00:00",
+        "exit_code": 1
+      },
+      "archive_sha256": "e901958e1763259fdf04fe1a980b068a73fbeda74138d7a450e783d633779957"
+    },
+    {
+      "cohort": "decomposition32893",
+      "result": {
+        "ended": "2026-10-14T13:30:36.450496+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "cacf4ec962b786ea0be60545c82f1bd80bc4c548faaa5f18c803bc8f6769d2ae"
+    },
+    {
+      "cohort": "static33007",
+      "result": {
+        "at": "2026-10-14T13:34:09.324132+00:00",
+        "exit": 0,
+        "diff_bytes": 0,
+        "stderr_bytes": 0,
+        "tests_executed": 0,
+        "go_files": 70
+      },
+      "archive_sha256": "6a8cf31c512b4a1062a1f3d2a97addc9444cd7ae45748e199d15cc6cf2444cbc"
+    },
+    {
+      "cohort": "physical33503",
+      "result": {
+        "ended": "2026-10-14T13:40:14.367356+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "a37706ada6bd01a6d08df0bade079eb5c1731f012d2f684043e6e345c9217fdb"
+    },
+    {
+      "cohort": "static33707",
+      "result": {
+        "at": "2026-10-14T13:40:12.903858+00:00",
+        "exit": 0,
+        "diff_bytes": 0,
+        "stderr_bytes": 0,
+        "tests_executed": 0,
+        "go_files": 71
+      },
+      "archive_sha256": "7da43d606036caecf401b9387ce16b9c2e7d9ed7f6e24a9760e064bded5c8fb0"
+    }
+  ],
+  "original_logs": [
+    {
+      "job": 115864223530,
+      "path": "original-job115864223530.log.gz",
+      "bytes": 197264,
+      "sha256": "81790ee3d7b8c5eff51dade261732d1381b70c20bbc5de8f6d889789f4b5ae77"
+    },
+    {
+      "job": 115864225437,
+      "path": "original-job115864225437.log.gz",
+      "bytes": 217770,
+      "sha256": "7b8bad061b7f61d2b6853b715a0c4f0eca293bb43d78baba8deea12cf072e85d"
+    },
+    {
+      "job": 115864222902,
+      "path": "original-job115864222902.log.gz",
+      "bytes": 253947,
+      "sha256": "5335700cfcf7a0a3fbb4d1985e1529a573382d680ca5b0af763d452aa3f01d81"
+    },
+    {
+      "job": 115864229498,
+      "path": "original-job115864229498.log.gz",
+      "bytes": 184420,
+      "sha256": "8a9b487674d745d67d225de4bc9eed8dca3b16f966268f90ba30e4fa3304ce95"
+    },
+    {
+      "job": 115864229514,
+      "path": "original-job115864229514.log.gz",
+      "bytes": 236143,
+      "sha256": "5d7e06d693c2dc8c4f383dc326b7b9424e7d0961d82a0f8dcf3b4986e483bd8e"
+    }
+  ],
+  "historical_reruns": 0,
+  "models_or_training": 0,
+  "source_intent": "complete356-path feature retained;historic scope fixed;one transformation owns standard type reuse;project types remain fresh",
+  "projection_failure": "fresh28903 assumed ten physical files in a transformed source layout;33503 proves co-owned promotion exact9 files/9 roles"
+}

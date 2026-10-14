@@ -1,0 +1,5 @@
+=== RUN   TestOriginDenominatorMigration27307
+    denominator_v72_fresh_test.go:44: denominator27307:v72 adds exactly4 syntax capabilities;old65..71 bytes/digests and exact targets retained;other5 boundaries and13 links unchanged;no producer/model calls
+--- PASS: TestOriginDenominatorMigration27307 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow	0.761s

@@ -1,0 +1,5 @@
+=== RUN   TestSameFileRegistryOrigins33503
+    physical_origins_fresh33503_test.go:108: new fused physical layout:9 exact members/9 source-owned activities;both promoted memberships removed;no guessed filename;model0
+--- PASS: TestSameFileRegistryOrigins33503 (0.20s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.674s

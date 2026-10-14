@@ -73,7 +73,7 @@ func proveClosurePreservation(root, logical string, source []byte, fset *token.F
 	if candidate.SourceDigest != callbackPreviewDigest(source) || candidate.CandidateDigest != callbackPreviewDigest([]byte(candidate.CandidateSource)) {
 		return ClosurePreservationProof{}, closureProofFailure("source or candidate snapshot digest differs")
 	}
-	output, err := closureProofOutput(root, logical, file, target, candidate)
+	output, err := closureProofOutput(root, logical, file, target, candidate, evidence.standard)
 	if err != nil {
 		return ClosurePreservationProof{}, err
 	}

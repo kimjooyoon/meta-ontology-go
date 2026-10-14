@@ -1,0 +1,10 @@
+{
+  "status": "FAILED_TEST_EXPECTATION_AND_OVERBROAD_NEW_ADAPTER_LIMIT",
+  "observed": "parser rejects a ninth source_fill hole;new inspection/export docs had incorrectly used external IR limit16",
+  "source_authority": [
+    "internal/syntax/assembly.go:193",
+    "internal/assemblyspec/spec.go:222"
+  ],
+  "repair": "new source inspection/export limit8;parser/semantic limits unchanged;fresh source IDs/namespace/cases24919 exercise8 accepted/9 rejected",
+  "historical_reruns": 0
+}

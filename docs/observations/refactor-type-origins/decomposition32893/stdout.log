@@ -1,0 +1,5 @@
+=== RUN   TestSourceOwnedStandardDecomposition32893
+    standard_decompose_fresh32893_test.go:48: one new source:compound101updates remain unproven/no rewrite;distinct context-typed101reads+addition source creates Gooo-owned helpers;3 runtime inputs preserve exact results;model0
+--- PASS: TestSourceOwnedStandardDecomposition32893 (1.48s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	2.997s

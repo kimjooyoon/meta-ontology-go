@@ -1,0 +1,4 @@
+=== RUN   TestSourceOwnedHistoryGrowth32031
+--- PASS: TestSourceOwnedHistoryGrowth32031 (0.28s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.769s

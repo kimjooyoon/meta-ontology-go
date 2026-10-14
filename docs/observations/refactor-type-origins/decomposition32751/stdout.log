@@ -1,0 +1,6 @@
+=== RUN   TestSourceOwnedStandardDecomposition32751
+    standard_decompose_fresh32751_test.go:25: derive-recipe/select-safe-suffix/NO_SAFE_DECLARATION_CAPACITY unknown_class=KNOWN_CONTRADICTION next=report-counterexample blocked_by=[]
+--- FAIL: TestSourceOwnedStandardDecomposition32751 (0.61s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	1.119s
+FAIL
