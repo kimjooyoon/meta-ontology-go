@@ -14,6 +14,16 @@ only the new workspace consumes recorded claims. Original partial observations
 and the source receipt digest stay visible in the new result.
 See examples/native-origin-reader/README.md.
 
+Select original field locations by exact stable IDs before paging:
+  gooo package execute --origin-receipt execution.json --origin-field-id urn:your:field --origin-limit 9 gooo.workspace.json
+
+Optional --origin-activity-id and --origin-root-activity-id narrow the same
+selection. Subject IDs default to field-input-locations; field-writes and
+field-uses are also supported. source_rows counts retained rows before selection;
+total_rows counts matches. Reuse the same IDs with the next page offset.
+Lineage column inputs keep the full original case journal.
+See docs/language/origin-subject-queries.ko.md.
+
 Start from a library template:
   gooo init --template library --module example.org/team/my-library my-library
 

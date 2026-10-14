@@ -8,8 +8,8 @@ import (
 
 func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 	raw := activeDenominator()
-	if digestBytes(raw) != DenominatorMigrationV71Digest || activeDenominatorDigest() != DenominatorMigrationV71Digest {
-		t.Fatal("active denominator is not the pinned v71 migration")
+	if digestBytes(raw) != DenominatorMigrationV72Digest || activeDenominatorDigest() != DenominatorMigrationV72Digest {
+		t.Fatal("active denominator is not the pinned v72 migration")
 	}
 	var observed struct {
 		Version    int `json:"version"`
@@ -22,8 +22,8 @@ func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 	if err := json.Unmarshal(raw, &observed); err != nil {
 		t.Fatal(err)
 	}
-	if observed.Version != 71 || len(observed.Boundaries) != 6 ||
-		observed.Boundaries[0].ID != "syntax" || observed.Boundaries[0].Target != 104 ||
+	if observed.Version != 72 || len(observed.Boundaries) != 6 ||
+		observed.Boundaries[0].ID != "syntax" || observed.Boundaries[0].Target != 108 ||
 		observed.Boundaries[1].ID != "semantics" || observed.Boundaries[1].Target != 46 ||
 		observed.Boundaries[5].ID != "release" || observed.Boundaries[5].Target != 26 || observed.Boundaries[5].LinkTarget != 4 {
 		t.Fatalf("migration changed the declared capability boundary: %#v", observed)
@@ -42,7 +42,7 @@ func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 
 func TestCurrentDenominatorRejectsLoweredTarget(t *testing.T) {
 	raw := activeDenominator()
-	lowered := bytes.Replace(raw, []byte("\"target\": 104"), []byte("\"target\": 103"), 1)
+	lowered := bytes.Replace(raw, []byte("\"target\": 108"), []byte("\"target\": 107"), 1)
 	if bytes.Equal(raw, lowered) {
 		t.Fatal("counterexample did not change the syntax target")
 	}

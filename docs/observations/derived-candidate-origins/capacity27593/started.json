@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T11:54:46.589058+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-derived-candidate-origins-20261014/capacity27593/overlay.json",
+    "./internal/meta/repositoryprojection/extractor",
+    "-run=^TestDerivedCandidateCapacity27593$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}
