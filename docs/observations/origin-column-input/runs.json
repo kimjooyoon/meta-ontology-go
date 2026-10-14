@@ -1,0 +1,32 @@
+[
+  {
+    "cohort": 12161,
+    "base": "66fb86cc037a2d318108af56207af515e16b25cd",
+    "source_manifest": "producer12161.json",
+    "source_archive": "producer12161.tar.gz",
+    "exit": 0,
+    "fresh_source_and_inputs": true,
+    "historical_local_cohorts_reexecuted": 0,
+    "original_producer_executions_during_reads": 0
+  },
+  {
+    "cohort": 12229,
+    "base": "66fb86cc037a2d318108af56207af515e16b25cd",
+    "source_manifest": "producer12229.json",
+    "source_archive": "producer12229.tar.gz",
+    "exit": 0,
+    "fresh_source_and_inputs": true,
+    "historical_local_cohorts_reexecuted": 0,
+    "original_producer_executions_during_reads": 0
+  },
+  {
+    "cohort": 12317,
+    "base": "66fb86cc037a2d318108af56207af515e16b25cd",
+    "source_manifest": "producer12317.json",
+    "source_archive": "producer12317.tar.gz",
+    "exit": 0,
+    "fresh_source_and_inputs": true,
+    "historical_local_cohorts_reexecuted": 0,
+    "original_producer_executions_during_reads": 0
+  }
+]

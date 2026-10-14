@@ -31,7 +31,7 @@ func readPackageExecuteInput(ctx context.Context, reader SourceReader, flags map
 		if queryErr != nil {
 			return nil, origins, queryErr
 		}
-		raw, origins.Native, err = packageOriginInputs(raw, entry, query)
+		raw, origins.Native, err = packageOriginInputsWithShape(raw, entry, query, flags["--origin-shape"])
 	}
 	return raw, origins, err
 }

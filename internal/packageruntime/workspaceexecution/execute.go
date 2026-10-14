@@ -82,6 +82,7 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 	}
 	runtime, err := bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, composition, translated, options.GoBinary)
 	bindWorkspaceConditionSources(program, &runtime, fills)
+	bindWorkspaceLocalFileSources(program, &runtime, composition, fills)
 	result := Result{Schema: "gooo/workspace-body-execution/v1", Program: program, BodyFills: fills,
 		SourceSHA256: sourceSHA256(current), Composition: composition, AssemblyPolicy: policySnapshot,
 		Runtime: runtime, Scope: "typed imported activity bindings; generated Go compiled and run twice; finite named expectations only"}

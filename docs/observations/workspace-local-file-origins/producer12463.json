@@ -1,0 +1,10 @@
+[
+  {
+    "path": ".github/workflows/integration-progress-evidence.yml",
+    "sha256": "c3b73d68c022fa2ed722d0eb12509d406058e142c0ec07fddca95abf563bf9bd"
+  },
+  {
+    "path": "scripts/integration-progress-observation/retry-observer.mjs",
+    "sha256": "9fccbd301e51a35cd25263e6607dc12b69abb21d685b5394cab0feba02c9cdc2"
+  }
+]

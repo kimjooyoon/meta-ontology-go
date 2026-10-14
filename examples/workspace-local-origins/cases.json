@@ -1,0 +1,25 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "origins/app:Build": 953
+      },
+      "expected": {
+        "origins/app:Build": {
+          "amount": 1935
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origins/app:Build": -967
+      },
+      "expected": {
+        "origins/app:Build": {
+          "amount": -69
+        }
+      }
+    }
+  ]
+}

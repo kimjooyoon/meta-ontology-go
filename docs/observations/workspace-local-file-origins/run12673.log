@@ -1,0 +1,5 @@
+=== RUN   TestFreshLocalFileReplay12673
+    local_file_replay_fresh_test.go:54: new branch/helper source first2/2 and replay2/2 on different inputs;shadowed same-name declarations stay distinct;fresh executions acquire file origins while old absent metadata remains nil;model0
+--- PASS: TestFreshLocalFileReplay12673 (1.02s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.540s

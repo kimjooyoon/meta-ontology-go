@@ -26,6 +26,8 @@ jobs:
         with:
           go-version: 1.27.2
           cache: true
+      - name: Check transient read retry contract
+        run: node scripts/integration-progress-observation/retry-observer.mjs .github/workflows/integration-progress-evidence.yml
       - name: Collect exact GitHub observation
         uses: actions/github-script@v9.0.0
         env:
@@ -42,6 +44,22 @@ jobs:
               if (status === 404) return 'GITHUB_RESOURCE_NOT_FOUND';
               return status > 0 ? `GITHUB_API_STATUS_${status}` : 'GITHUB_API_UNAVAILABLE';
             };
+            // BEGIN GOOO_OBSERVATION_RETRY
+            // A current observation may retry transient server failures. The
+            // resulting unknown/refuted cells and report gate stay unchanged.
+            const observe = async (operation, label) => {
+              for (let attempt = 0; ; attempt++) {
+                try {
+                  return await operation();
+                } catch (error) {
+                  const status = Number(error && error.status || 0);
+                  if (attempt >= 2 || ![500, 502, 503, 504].includes(status)) throw error;
+                  core.info(`Retrying read ${label}: status=${status}, attempt=${attempt + 2}/3`);
+                  await new Promise(resolve => setTimeout(resolve, 250 * (attempt + 1)));
+                }
+              }
+            };
+            // END GOOO_OBSERVATION_RETRY
             const observation = {
               schema: 'gooo/integration-progress-observation/v1',
               repository,
@@ -53,8 +71,8 @@ jobs:
             };
             try {
               const [queued, inProgress] = await Promise.all([
-                github.rest.actions.listWorkflowRunsForRepo({...context.repo, status: 'queued', per_page: 1}),
-                github.rest.actions.listWorkflowRunsForRepo({...context.repo, status: 'in_progress', per_page: 1}),
+                observe(() => github.rest.actions.listWorkflowRunsForRepo({...context.repo, status: 'queued', per_page: 1}), 'queued-runs'),
+                observe(() => github.rest.actions.listWorkflowRunsForRepo({...context.repo, status: 'in_progress', per_page: 1}), 'in-progress-runs'),
               ]);
               Object.assign(observation.queue_snapshot, {observation_status: 'OBSERVED',
                 queued_runs: queued.data.total_count, in_progress_runs: inProgress.data.total_count});
@@ -65,13 +83,13 @@ jobs:
               const item = {number, observation_status: 'UNAVAILABLE', draft: false, runs_total: 0,
                 runs_consumed: 0, eligible_runs: 0};
               try {
-                const {data: pull} = await github.rest.pulls.get({...context.repo, pull_number: number});
+                const {data: pull} = await observe(() => github.rest.pulls.get({...context.repo, pull_number: number}), `pull/${number}`);
                 Object.assign(item, {observation_status: 'OBSERVED', state: pull.state, draft: Boolean(pull.draft),
                   head_sha: pull.head.sha, created_at: pull.created_at, closed_at: pull.closed_at || '', merged_at: pull.merged_at || ''});
                 item.run_selection = pull.merged_at ? 'LATEST_TERMINAL_BEFORE_MERGE' : 'LATEST_OBSERVED';
                 try {
-                  const {data: runs} = await github.rest.actions.listWorkflowRunsForRepo({...context.repo,
-                    head_sha: pull.head.sha, event: 'pull_request', per_page: 100});
+                  const {data: runs} = await observe(() => github.rest.actions.listWorkflowRunsForRepo({...context.repo,
+                    head_sha: pull.head.sha, event: 'pull_request', per_page: 100}), `pull/${number}/runs`);
                   item.runs_total = runs.total_count;
                   item.runs_consumed = runs.workflow_runs.length;
                   const candidates = runs.workflow_runs.filter(run => run.name === 'CI [PR authoritative]' && run.head_sha === pull.head.sha);
@@ -88,8 +106,8 @@ jobs:
                       run_started_at: selected.run_started_at || '', updated_at: selected.updated_at,
                       artifacts_total: 0, artifacts_consumed: 0, artifact_matches: 0};
                     try {
-                      const {data: artifacts} = await github.rest.actions.listWorkflowRunArtifacts({...context.repo,
-                        run_id: selected.id, per_page: 100});
+                      const {data: artifacts} = await observe(() => github.rest.actions.listWorkflowRunArtifacts({...context.repo,
+                        run_id: selected.id, per_page: 100}), `run/${selected.id}/artifacts`);
                       const expectedName = `source-line-metrics-${pull.head.sha}`;
                       const matches = artifacts.artifacts.filter(artifact => artifact.name === expectedName);
                       Object.assign(item.authoritative_run, {artifacts_total: artifacts.total_count,
