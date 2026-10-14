@@ -1,0 +1,34 @@
+{
+  "schema": "gooo/private-starter-observation/v1",
+  "base": "792848f600e9229e70a9954262e1fa40ce130371",
+  "practice_cases": {
+    "matched": 4,
+    "total": 4,
+    "source": "explicit fictional practice inputs"
+  },
+  "moved_input_only_rows": 1,
+  "recorded_origin_page": {
+    "returned": 9,
+    "total": 27,
+    "truncated": true,
+    "declared_alternatives": 3,
+    "field_targets": 3,
+    "unresolved": 3,
+    "original_producer_executions": 0
+  },
+  "model_calls": 0,
+  "new_worktrees": 0,
+  "historical_local_reruns": 0,
+  "static": {
+    "at": "2026-10-14T08:33:09.817502+00:00",
+    "exit": 0,
+    "diff_bytes": 0,
+    "stderr_bytes": 0,
+    "tests_executed": 0,
+    "go_files": 6
+  },
+  "observed_source_unchanged": true,
+  "archive_sources_verified": 2,
+  "source_files": 29,
+  "source_bytes": 171716
+}
