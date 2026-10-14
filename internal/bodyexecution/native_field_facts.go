@@ -63,7 +63,7 @@ func (page *nativeOriginPage) visitFields(runtime CompositionRuntime, trace Comp
 			fact := fieldFact(runtime, runtime.FieldSites[write.SiteIndex], trace.CaseIndex, i, write.Frame)
 			fact.EventKind, fact.AssignmentIndex, fact.HasAssignment = "write", i, write.Completed
 			fillFieldFactWrite(&fact, write, runtime.FieldSites[write.SiteIndex])
-			page.add(fact)
+			page.addField(fact, fact.RootActivityID, fact.ActivityID, fact.FieldID)
 		}
 		return
 	}
@@ -74,7 +74,7 @@ func (page *nativeOriginPage) visitFields(runtime CompositionRuntime, trace Comp
 			write := trace.FieldWrites[use.Assignment]
 			fillFieldFactWrite(&fact, write, runtime.FieldSites[write.SiteIndex])
 		}
-		page.add(fact)
+		page.addField(fact, fact.RootActivityID, fact.ActivityID, fact.FieldID)
 	}
 }
 

@@ -5,6 +5,13 @@ const bodyOriginsHelp = `Inspect the typed source origins of an ordinary compute
 ` + bodyOriginsUsage + `
 
   gooo body-origins --activity Compute examples/typed-value-origins/main.gooo
+  gooo body-origins --activity Choose --fill-candidate wrong_type \
+    examples/fill-candidate-origins/source.gooo
+  gooo body-origins --activity Choose --fill-candidate wrong_type \
+    --inputs-for origin/fill-candidates:Inspect \
+    examples/fill-candidate-origins/source.gooo > candidate-origins.json
+  gooo package execute --json --inputs candidate-origins.json \
+    examples/fill-candidate-origins/gooo.workspace.json
   gooo body-origins --activity Select --include-control \
     --inputs-for typed/ancestry:Inputs examples/typed-value-origins/main.gooo > origins.json
   gooo package execute --json --inputs origins.json \
@@ -22,4 +29,17 @@ accepts 1..60 nodes and follows parent edges; --include-control adds guard and
 condition edges. Larger graphs and inputs above 32 KiB are refused during export.
 
 See examples/typed-value-origins/README.md and docs/language/typed-value-origins.ko.md.
+
+Use --fill-candidates to list source-owned finite assignments and their IDs.
+With --fill-candidate, inspect one retained source_fill assignment before selection.
+Each row connects the hole declaration and candidate expression to the original
+template token. An absent or repeated token is UNRESOLVED with no invented use
+range. Comments and string contents are not token uses. A declaration can map even
+when its candidate would fail type checking; no type result or score is claimed.
+The export contains up to 8 primitive rows for a Gooo consumer. For derived grammar assignments, a distinct report and 19-field input row retain
+the grammar location. No direct candidate or expression literal location is invented.
+Grammar coverage measures enumeration; type and functional outcomes are separate.
+The --field and --include-control options apply to typed value origins only.
+See examples/fill-candidate-origins/README.md and
+examples/derived-candidate-origins/README.md.
 `

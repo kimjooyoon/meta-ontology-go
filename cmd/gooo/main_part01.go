@@ -22,7 +22,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	return runWithInput(args, os.Stdin, stdout, stderr)
 }
 
-const initUsage = "usage: gooo init [--template app|library|diagnostic] [--module <path>] <new-directory>"
+const initUsage = "usage: gooo init [--template app|library|diagnostic|origins] [--module <path>] <new-directory>"
 
 var libraryModulePathPattern = regexp.MustCompile(`^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*(?:/[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*)*$`)
 

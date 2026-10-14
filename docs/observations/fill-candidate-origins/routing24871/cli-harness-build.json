@@ -1,0 +1,1 @@
+{"binary_removed_after_tests":true,"command":["build","-p=1","-overlay","/private/tmp/gooo-fill-candidate-origins-20261014/routing24871/overlay.json","-o","/var/folders/t4/mkd0zjsn2hj2mqwsjftxcfmc0000gn/T/gooo-cli-observations-2031923752/gooo","./cmd/gooo"],"race":false}
