@@ -1,0 +1,1 @@
+{"binary_removed_after_tests":true,"command":["build","-p=1","-overlay","/private/tmp/gooo-origin-reader-starter-20261014/starter23117/overlay.json","-o","/var/folders/t4/mkd0zjsn2hj2mqwsjftxcfmc0000gn/T/gooo-cli-observations-3625778671/gooo","./cmd/gooo"],"race":false}

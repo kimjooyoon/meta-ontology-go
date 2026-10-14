@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "origin/derived-candidates", "activity": "Inspect"},
+  "packages": [{"path": "origin/derived-candidates", "name": "derivedcandidateorigins", "sources": ["inspect.gooo"]}]
+}

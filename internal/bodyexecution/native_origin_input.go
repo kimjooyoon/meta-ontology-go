@@ -6,9 +6,12 @@ import (
 )
 
 type NativeOriginQuery struct {
-	Kind   string `json:"kind"`
-	Offset int    `json:"offset"`
-	Limit  int    `json:"limit"`
+	RootActivityID string `json:"root_activity_id,omitempty"`
+	ActivityID     string `json:"activity_id,omitempty"`
+	FieldID        string `json:"field_id,omitempty"`
+	Kind           string `json:"kind"`
+	Offset         int    `json:"offset"`
+	Limit          int    `json:"limit"`
 }
 
 // NativeOriginInput names recorded claims used by a new Gooo invocation.
@@ -21,6 +24,7 @@ type NativeOriginInput struct {
 	SelectedSourceSHA256   string                    `json:"selected_source_sha256"`
 	RuntimeSuiteSHA256     string                    `json:"runtime_suite_sha256"`
 	Query                  NativeOriginQuery         `json:"query"`
+	SourceRows             *int                      `json:"source_rows,omitempty"`
 	TotalRows              int                       `json:"total_rows"`
 	ReturnedRows           int                       `json:"returned_rows"`
 	NextOffset             *int                      `json:"next_offset,omitempty"`
@@ -49,13 +53,14 @@ func ValidateNativeOriginQuery(query NativeOriginQuery) error {
 	if query.Offset < 0 || query.Offset > maximum || query.Limit < 1 || query.Limit > 128 {
 		return fmt.Errorf("origin offset must be 0..%d and limit 1..128", maximum)
 	}
-	return nil
+	return validateOriginSubjectSelection(query)
 }
 
 type nativeOriginPage struct {
 	query             NativeOriginQuery
 	fileBindings      *localFileBindingIndices
 	fieldFileBindings *localFileBindingIndices
+	sourceRows        int
 	total             int
 	rows              []json.RawMessage
 	err               error
@@ -117,6 +122,9 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	observed := *runtime.ReadObservation
 	report := &NativeOriginInput{Schema: "gooo/native-origin-input/v1", SelectedSourceSHA256: runtime.SelectedSourceSHA256, RuntimeSuiteSHA256: runtime.RuntimeSuiteSHA256, Query: query, TotalRows: page.total, ReturnedRows: len(page.rows), Truncated: query.Offset+len(page.rows) < page.total, Observation: &observed,
 		Scope: "recorded claims read without re-execution; the new consumer evaluates these rows only; construction read windows describe reads during evaluation, not complete scalar dependencies; inspect original observation drops and the selected page"}
+	if query.hasSubjectSelection() {
+		report.SourceRows = &page.sourceRows
+	}
 	if runtime.FieldSources != nil {
 		report.FieldSourcesSHA256 = runtime.FieldSources.SHA256
 	}

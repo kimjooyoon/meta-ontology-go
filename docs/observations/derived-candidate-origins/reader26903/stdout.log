@@ -1,0 +1,8 @@
+=== RUN   TestGoooDerivedOrigins26903
+    derived_candidate_origins_fresh_test.go:88: derived26903:actual CLI lists4 of6 assignments;2 derived grammar/hole/use rows reach Gooo and retain expressions;finite0/model0;candidate producer not executed
+--- PASS: TestGoooDerivedOrigins26903 (1.25s)
+=== RUN   TestDeclaredOriginWire26903
+    derived_candidate_origins_fresh_test.go:120: legacy26903:distinct explicit source keeps exact v1 JSON bytes through the new CLI dispatcher;model0
+--- PASS: TestDeclaredOriginWire26903 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/cliobservations	4.712s

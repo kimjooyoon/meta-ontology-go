@@ -7,11 +7,12 @@ import (
 	"strings"
 )
 
-//go:embed templates/library/* templates/diagnostic/*
+//go:embed templates/library/* templates/diagnostic/* templates/origins/*
 var libraryStarterTemplateFS embed.FS
 
 var libraryStarterFiles = readStarterFiles("library")
 var diagnosticStarterFiles = readStarterFiles("diagnostic")
+var originsStarterFiles = readStarterFiles("origins")
 
 func readStarterFiles(template string) map[string]string {
 	directory := "templates/" + template

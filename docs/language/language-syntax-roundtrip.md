@@ -10,8 +10,8 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v2` registry declares 104 cases: 101 valid sources and three invalid
-fixtures. Of these, 102 are `LANGUAGE_CAPABILITY` and two
+The `v2` registry declares 110 cases: 107 valid sources and three invalid
+fixtures. Of these, 108 are `LANGUAGE_CAPABILITY` and two
 (`self-improvement-ci-continuation` and `domain-completeness-profile`) are
 `GOVERNANCE_OBSERVATION` cases. The twelve native origin readers are registered
 as language capability cases under the exact V5 field profile.
@@ -80,7 +80,7 @@ does not become a fixed point; it produces `FAIL_CLOSED` at `LOWER_RESOLUTION`.
 | Choice | Meta-operation | Passing condition |
 | --- | --- | --- |
 | FOUNDATION | bind-versioned-complete-gooo-corpus | exact registry, exact commit, complete path set, bound concept artifact |
-| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 98 valid cases satisfy all five preservation laws |
+| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 107 valid cases satisfy all five preservation laws |
 | REGRESSION | reject-invalid-syntax-with-zero-effects | all three diagnostics reject and writes and authority remain zero |
 
 ## CI authority
@@ -89,3 +89,7 @@ GitHub Actions runs the syntax producer for the submitted revision, retains its
 first and replay artifacts, and checks source registration, preservation laws
 and the downstream scope partition. An unregistered example makes that
 revision incomplete. Its own CI results must satisfy the declared checks.
+
+Version72 registers the two explicit-candidate and two derived-candidate source/reader
+programs. The syntax capability target is108; governance cases remain2 and invalid
+fixtures remain3. Earlier version65..71 denominator bytes and digests are preserved.
