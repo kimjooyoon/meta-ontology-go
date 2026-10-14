@@ -102,7 +102,8 @@ func replayTypedPathProjection(ctx context.Context, filename string, source []by
 		r.ActivityID != bound.base.Report.ActivityID || replayed.Report.ProgramDigest != r.ProgramDigest ||
 		!EqualRetainedConditionOrigins(r.BodyConditions, replayed.Report.BodyConditions) ||
 		!EqualRetainedReadOrigins(r.BodyReads, replayed.Report.BodyReads) ||
-		!EqualRetainedConstructionOrigins(r.BodyConstructions, replayed.Report.BodyConstructions) {
+		!EqualRetainedConstructionOrigins(r.BodyConstructions, replayed.Report.BodyConstructions) ||
+		!EqualRetainedLocalOrigins(r.BodyLocals, replayed.Report.BodyLocals) {
 		return fmt.Errorf("selected Gooo and generated projection do not replay exactly")
 	}
 	conditions, err := selectedPathConditions(ctx, prepared, bodyPathSelection(p).Choices,

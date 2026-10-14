@@ -75,14 +75,16 @@ func compositionArtifactKey(prior Composition, r *CompositionRuntime, goBinary s
 func compositionExecutableFor(ctx context.Context, prior Composition, goBinary string,
 	r *CompositionRuntime, owner *Executor) (root, executable string, release func(), err error) {
 	release = func() {}
-	projection, driver, sites, conditions, reads, inputs, constructions, err := observedCompositionReadEvidence(prior)
+	observed, err := observedCompositionLocalEvidence(prior)
+	projection, driver := observed.projection, observed.driver
 	if err != nil {
 		return "", "", release, err
 	}
-	r.FaultSites = sites
-	r.ConditionSites = conditions
-	r.ReadSites, r.ReadInputs = reads, inputs
-	r.ConstructionSites = constructions
+	r.FaultSites = observed.faults
+	r.ConditionSites = observed.conditions
+	r.ReadSites, r.ReadInputs = observed.reads, observed.inputs
+	r.ConstructionSites = observed.constructions
+	r.LocalSites, r.LocalUseSites = observed.locals, observed.uses
 	if projection != prior.Source || driver != prior.Driver {
 		r.ObservedProjectionSHA256, r.ObservedDriverSHA256 = digest([]byte(projection)), digest([]byte(driver))
 	}

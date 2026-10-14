@@ -13,10 +13,14 @@ type compositionNativeObservation struct {
 	conditionRows  [][]CompositionConditionObservation
 	conditionDrops []int
 	reads          compositionReadRun
+	locals         compositionLocalRun
 }
 
 func (run *compositionNativeObservation) reset(root string, r *CompositionRuntime) error {
 	if err := run.reads.reset(root, r); err != nil {
+		return err
+	}
+	if err := run.locals.reset(root, r); err != nil {
 		return err
 	}
 	if len(r.ConditionSites) == 0 {
@@ -52,6 +56,9 @@ func (run *compositionNativeObservation) observe(attempt int, root string, outpu
 	if err := run.reads.observe(attempt, root, graph, suite, r); err != nil {
 		return err
 	}
+	if err := run.locals.observe(attempt, root, r); err != nil {
+		return err
+	}
 	if err := run.observeConditions(attempt, root, graph, suite, r); err != nil {
 		return err
 	}
@@ -73,6 +80,9 @@ func (run *compositionNativeObservation) observe(attempt int, root string, outpu
 		traces[c].ConditionsDropped = lost
 	}
 	if err := run.reads.bind(graph, traces, r); err != nil {
+		return err
+	}
+	if err := run.locals.bind(graph, traces, r); err != nil {
 		return err
 	}
 	r.Traces, r.FinitePassed, r.Outcomes = traces, passed, outcomes

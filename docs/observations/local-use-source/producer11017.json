@@ -1,0 +1,118 @@
+[
+  {
+    "path": "cmd/gooo/package_local_source_roundtrip_fresh_test.go",
+    "sha256": "f048fdf231db41303e31ab0ccae9a8fa0a320325e7f175ea7b8c5d188b30f556"
+  },
+  {
+    "path": "docs/language/native-local-origins.ko.md",
+    "sha256": "539541e21b5c5184bb3daf730653212daed9f1058f2af0bb8ce7a25a568fae90"
+  },
+  {
+    "path": "examples/native-origin-reader/README.md",
+    "sha256": "cba3d1c89885287cc97caa52266055063dfae8c3b9da352b494b9585cb59f4a4"
+  },
+  {
+    "path": "examples/native-origin-reader/local10773-runtime.json",
+    "sha256": "bf0509ec795207bb123105c1fb9037995f048125f88590251420855fcf5a35b6"
+  },
+  {
+    "path": "examples/native-origin-reader/locals/locals.gooo",
+    "sha256": "53824d18dfcf985b7035ff22a047d112e92a67ea21de348fe09388cee9735f89"
+  },
+  {
+    "path": "internal/bodycodegen/body_local_origin.go",
+    "sha256": "5d484437fe62e33fd712627690868aabf4dee344a46a607e2e8ca0930ae5a70f"
+  },
+  {
+    "path": "internal/bodycodegen/body_local_origin_capture.go",
+    "sha256": "1da732deb02ccbe6d6f422ddf378434b77db80681a984f87896433c60a55e227"
+  },
+  {
+    "path": "internal/bodycodegen/body_local_source.go",
+    "sha256": "d333c9dddef81a90799b35ce1b7e2eb1c9b29d921c2a8874c68d01a09daccfe2"
+  },
+  {
+    "path": "internal/bodycodegen/body_local_use_capture.go",
+    "sha256": "da9b119671fb99924946cf349db760395a1318cab120804e75a9b1de68c40414"
+  },
+  {
+    "path": "internal/bodycodegen/body_local_use_compatibility_fresh_test.go",
+    "sha256": "f99614517d8a7e269053d79b7dd722e699c509c1c34490ffcf7303057f08cdb2"
+  },
+  {
+    "path": "internal/bodycodegen/body_projection.go",
+    "sha256": "2139ffc1574a80d8bfe6996ce1bc0e1c465cf9a617c82676a531d3b2c1f9f79a"
+  },
+  {
+    "path": "internal/bodycodegen/source_fill_replay.go",
+    "sha256": "de7381c202ec8de56dfc12da0c6693acf118c02a8b477fb7674d5b2b29b425b1"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_projection_bindings.go",
+    "sha256": "86d33ef2d4806e8cc5c0914408ba66801932ead48178188724c028c8f87e0811"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_projection_uses.go",
+    "sha256": "441b44bd2043b52590c4df7ab75620d58712622945e11706d0c7d0b0927a984c"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_projection_writes.go",
+    "sha256": "d7bd408ac99686d5ef94c34a3d874fba3ce3945da3936ff18dd909691275f6bd"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_refactor_fresh_test.go",
+    "sha256": "0dc5e4d768246aa11c6af6775e84dd468d553c9ee508b3eb48cc763777275b6d"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_site_builder.go",
+    "sha256": "36844e38b9b8c0ca86cdef706b54ee75a2d66b20bc30e649c31cd6c8387b9b91"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_site_contract.go",
+    "sha256": "ae383005261c714d416dc67558e93d9f6d8877566b1f91827625000e3c1f4395"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_sites.go",
+    "sha256": "c968752fad8b5d47d19564b412b085ec045b699fb7f59d45fca67ccdb2719c6e"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_use_source_fresh_test.go",
+    "sha256": "f2ddb18d6f62f303bb9b6d740766b9311de9313d5e4935399ee21de2aba1326e"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_use_validation.go",
+    "sha256": "2dbfe64bf26c0ab63a7ebf5fd76481230e98a906bab2b33f1aa7647c7b106152"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_validate.go",
+    "sha256": "f5239a5baad74377c53965da988141a18fb3a231affe4fd7ab044487c241fb76"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_write_validation.go",
+    "sha256": "2ecdad691fbfe2b24b2fdf04b679f1439a479cefa359199855bf8395a0e496de"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_projection.go",
+    "sha256": "e704afed4c7c7c5360ef3b33765adb94d1ddfc2fd8f17a570b5b046a32b826bc"
+  },
+  {
+    "path": "internal/bodyexecution/composition_read_projection_nodes.go",
+    "sha256": "361c68b7eab675d3514a968e241284497aa0c0a065802d12724c7705f473bebd"
+  },
+  {
+    "path": "internal/bodyexecution/composition_source_use_consumer_fresh_test.go",
+    "sha256": "e698d84722e10e1c9708158934066d51309481186b46c02340d0e58ddb983dba"
+  },
+  {
+    "path": "internal/bodyexecution/composition_test.go",
+    "sha256": "c569df82cf8fbc0f3f4334b3c393b6b66bc8b5ac6a3843b5af709018011ef93e"
+  },
+  {
+    "path": "internal/bodyexecution/native_local_facts.go",
+    "sha256": "3285c8eff91422585d8f3304528a251cc3d1570f22e38bb0b3daa2a9872578cc"
+  },
+  {
+    "path": "internal/meta/repositoryprojection/extractor/local_origin_capacity_fresh_test.go",
+    "sha256": "5451d10c93683a76cc60e2f3ccf708f728fcf71b89367ce996cb86d6ff31383b"
+  }
+]

@@ -10,6 +10,9 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
+// RecordFieldLimit bounds both interpreted value slots and native record inputs.
+const RecordFieldLimit = 32
+
 // RecordType retains source names, stable identities and the typed value layout.
 type RecordType struct {
 	Name   string        `json:"name"`
@@ -38,8 +41,8 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 		if ScalarEntityKind(node.Name, string(node.ID)) != "" {
 			return nil, fmt.Errorf("scalar entity %q cannot also declare record fields", node.Name)
 		}
-		if !recordIdentifier(node.Name) || len(node.Fields) > 16 || len(result) >= 16 {
-			return nil, fmt.Errorf("record bodies require 1..16 records, 1..16 fields and identifier names")
+		if !recordIdentifier(node.Name) || len(node.Fields) > RecordFieldLimit || len(result) >= 16 {
+			return nil, fmt.Errorf("record bodies require 1..16 records, 1..%d fields and identifier names", RecordFieldLimit)
 		}
 		record := RecordType{Name: node.Name, ID: string(node.ID), GoName: recordGoName("Record", string(node.ID))}
 		for _, field := range node.Fields {

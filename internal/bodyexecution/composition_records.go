@@ -101,8 +101,8 @@ func recordObject(raw []byte) (map[string]json.RawMessage, error) {
 			return nil, err
 		}
 		name, ok := key.(string)
-		if !ok || values[name] != nil || len(values) >= 16 {
-			return nil, fmt.Errorf("record fields must be distinct names, at most16")
+		if !ok || values[name] != nil || len(values) >= bodycodegen.RecordFieldLimit {
+			return nil, fmt.Errorf("record fields must be distinct names, at most %d", bodycodegen.RecordFieldLimit)
 		}
 		var value json.RawMessage
 		if err := decoder.Decode(&value); err != nil {

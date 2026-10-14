@@ -1,0 +1,5 @@
+=== RUN   TestGoooLocalUseSource10709
+    composition_local_use_source_fresh_test.go:90: new Gooo native3/3;6 distinct source use sites;escaped Korean uses3;helper sibling sites2;repeated helper invocation frames;synthetic unused read omitted
+--- PASS: TestGoooLocalUseSource10709 (0.73s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.238s

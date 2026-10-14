@@ -52,6 +52,14 @@ func readDriverStatements(source string) ([]ast.Stmt, error) {
 }
 
 func observedReadDriver(source, prefix string, prior Composition, constructions ...bool) (string, error) {
+	observer := readObserver
+	if len(constructions) > 0 && constructions[0] {
+		observer = constructionReadObserver
+	}
+	return observedReadDriverWithObserver(source, prefix, prior, observer)
+}
+
+func observedReadDriverWithObserver(source, prefix string, prior Composition, observer string) (string, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "driver.go", source, 0)
 	if err != nil {
@@ -107,10 +115,6 @@ func observedReadDriver(source, prefix string, prior Composition, constructions 
 	var out bytes.Buffer
 	if err := format.Node(&out, fset, file); err != nil {
 		return "", err
-	}
-	observer := readObserver
-	if len(constructions) > 0 && constructions[0] {
-		observer = constructionReadObserver
 	}
 	out.WriteString(strings.ReplaceAll(observer, "GoooRead", prefix))
 	raw, err := format.Source(out.Bytes())
