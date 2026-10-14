@@ -1,0 +1,33 @@
+{
+  "id": 11859670876,
+  "digest": "sha256:a50e08ff180473bd1a19ed9dec92f9d87564b90f8c17b91e4768c57193a03d6c",
+  "selected": [
+    {
+      "path": "build.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "build.stdout",
+      "bytes": 172,
+      "sha256": "a2df2bcfaaa1045f9687732dc1f2da86309960662128465356a80145f9ea4ca1"
+    },
+    {
+      "path": "observation/compiler-observation.json",
+      "bytes": 4262,
+      "sha256": "f5189d77462103fae3d311f2fbe328f24fcd75714ed5d678d27748ce9529b956"
+    },
+    {
+      "path": "observe.stdout",
+      "bytes": 101,
+      "sha256": "59b99ef54fd69d18600eba192f0f612e19fa029424766d17c2ba449f73f198b8"
+    },
+    {
+      "path": "test.json",
+      "bytes": 2456822,
+      "sha256": "a45ffd6d235631293e29775d15a00433d58f42fd7413dc49530ea9b772aaf05e"
+    }
+  ],
+  "archive_bytes": 195868670,
+  "discarded_cache_archive": true
+}

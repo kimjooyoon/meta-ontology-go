@@ -59,7 +59,7 @@ type RecordFlowChoice struct {
 type flowValue struct {
 	record int
 	scalar uint16
-	fields [16]uint16
+	fields [RecordFieldLimit]uint16
 }
 
 type flowBinding struct {

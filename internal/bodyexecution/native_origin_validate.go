@@ -39,6 +39,9 @@ func validateRecordedNativeOrigins(runtime CompositionRuntime) error {
 	if summary.Schema == "gooo/native-read-summary/v1" && (len(runtime.ConstructionSites) > 0 || counts.RecordedConstructions > 0 || counts.ConstructionDropped > 0 || counts.ConstructedReads > 0) {
 		return fmt.Errorf("v1 observation cannot contain construction origins")
 	}
+	if err := validateRecordedLocalOrigins(runtime); err != nil {
+		return err
+	}
 	return compareRecordedOriginCounts(*summary, counts)
 }
 

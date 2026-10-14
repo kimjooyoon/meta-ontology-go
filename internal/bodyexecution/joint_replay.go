@@ -156,6 +156,9 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 }
 
 func sameJointRuntime(a, b CompositionRuntime) bool {
+	if !equalRetainedLocalSites(a.LocalSites, b.LocalSites) {
+		return false
+	}
 	if a.CallContextSHA256 != b.CallContextSHA256 || a.ConstructionInputHistorySHA256 != b.ConstructionInputHistorySHA256 ||
 		a.ObservedProjectionSHA256 != b.ObservedProjectionSHA256 || a.ObservedDriverSHA256 != b.ObservedDriverSHA256 {
 		return false
@@ -178,7 +181,7 @@ func sameJointRuntime(a, b CompositionRuntime) bool {
 		r.InputSeparation.Scope = ""
 		return []any{r.Stage, r.Failure, r.OriginalSourceSHA256, r.SelectedSourceSHA256,
 			r.TypedPlanSHA256, r.GeneratedSHA256, r.DriverSHA256, r.RuntimeSuiteSHA256,
-			comparableConditionSites(r), r.ConditionObservation, r.ReadSites, r.ReadInputs, r.ReadObservation, r.ConstructionSites, r.Traces, r.FinitePassed, r.FiniteTotal, r.ModelCalls, r.ProjectionReplayed, r.RuntimeReplayed,
+			comparableConditionSites(r), r.ConditionObservation, r.ReadSites, r.ReadInputs, r.ReadObservation, r.ConstructionSites, r.LocalUseSites, r.LocalObservation, r.Traces, r.FinitePassed, r.FiniteTotal, r.ModelCalls, r.ProjectionReplayed, r.RuntimeReplayed,
 			r.InputSeparation}
 	}
 	return compositionDigest(semantic(a)) == compositionDigest(semantic(b))

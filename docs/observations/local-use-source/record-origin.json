@@ -1,0 +1,9 @@
+{
+  "schema": "gooo/example-record-origin/v1",
+  "source": "first10773 CLI output",
+  "original_output_sha256": "5c8ff8e8bfa8cbe641aec13ebc141e866823f1f80968692c81c0da7196a77408",
+  "selected_field": "result.runtime",
+  "output": "../../../examples/native-origin-reader/local10773-runtime.json",
+  "output_sha256": "bf0509ec795207bb123105c1fb9037995f048125f88590251420855fcf5a35b6",
+  "operation": "parse JSON, select runtime, serialize; no original producer execution"
+}

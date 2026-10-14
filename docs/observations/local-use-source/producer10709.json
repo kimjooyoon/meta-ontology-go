@@ -1,0 +1,30 @@
+[
+  {
+    "path": "internal/bodycodegen/body_local_origin.go",
+    "sha256": "708e32f69e77e2b14d49c2088e9b7d9010d0985bdc026c2ab96042f86d84f4a0"
+  },
+  {
+    "path": "internal/bodycodegen/body_local_origin_capture.go",
+    "sha256": "1000a711f4eb43c1a56dc298dd228c419f1f0ac6eb1d3a018837ea23e3cafeb6"
+  },
+  {
+    "path": "internal/bodycodegen/body_local_source.go",
+    "sha256": "2c61e4c97dbdca6f2384a29b7ae7520dc72d503431761b95bfd0b6bfe256f27e"
+  },
+  {
+    "path": "internal/bodycodegen/body_local_use_capture.go",
+    "sha256": "2b4a1540c1d98ccff816764d3bfcb3f74edccf3a63f11a4076b416ed1933e769"
+  },
+  {
+    "path": "internal/bodycodegen/body_projection.go",
+    "sha256": "5b8e476e5b580ef9ce98c662146f3b609f9b330465ebb3726e7495d29ab6dbd8"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_projection_bindings.go",
+    "sha256": "d0f18ec265d587b3e225dddd31a8c140235522ba37123771dd39f912b43a9885"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_use_source_fresh_test.go",
+    "sha256": "f2ddb18d6f62f303bb9b6d740766b9311de9313d5e4935399ee21de2aba1326e"
+  }
+]

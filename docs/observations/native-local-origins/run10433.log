@@ -1,0 +1,13 @@
+=== RUN   TestRecordValueSlots10471
+    record_field_capacity_fresh_test.go:37: 32 typed interpreter and symbolic slots;33 rejected;bounded arrays
+--- PASS: TestRecordValueSlots10471 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.518s
+=== RUN   TestGoooLocalConsumer10433
+    composition_local_consumer_fresh_test.go:28: new producer2/2; original executions during paging0; Gooo reader3/3; local writes6/uses8/elements4; paged source and projection coordinates remain distinct
+--- PASS: TestGoooLocalConsumer10433 (1.32s)
+=== RUN   TestWideRecord10459
+    composition_wide_record_fresh_test.go:47: 32-field native2/2;field31 preserved through record copy;33-field source rejected before execution
+--- PASS: TestWideRecord10459 (0.54s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	2.288s

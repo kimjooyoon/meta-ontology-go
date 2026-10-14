@@ -1,0 +1,1465 @@
+{
+  "schema": "gooo/body-composition-runtime/v1",
+  "stage": "COMPLETE",
+  "composition_sha256": "sha256:6a998bb617394357f0e61d2d69672deb9ce6f9c0ce25479bd479e85a82d91ff7",
+  "original_source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+  "selected_source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+  "typed_plan_sha256": "sha256:eb93371e1a3e33c17cb1ed4e5dfc9f7827e58beef8bd4866989e36cad6823e5d",
+  "generated_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+  "driver_sha256": "sha256:25572cb7c965db52d3069fe66832e431f78b5e87b9a300ffc1d60215f139fcb5",
+  "observed_projection_sha256": "sha256:15d1da278a18f013753123e54e3af2d05937aa558f19bd728ae930291c8d464c",
+  "observed_driver_sha256": "sha256:7a8909309af3b74355d0369958b82264bf57f69ee9988d058b112d55a7cbd610",
+  "runtime_suite_sha256": "sha256:3785c3620387f628e05660ff43e8a6384f7d144af2b8d0db4545f444c05b4dcc",
+  "executable_sha256": "sha256:36582444b687080b1a6badff6813a4101ea3fc34170b2094135ca87cea7ad26b",
+  "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+  "go_tool_selection": "path",
+  "go_version": "go version go1.27.2 darwin/arm64",
+  "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+  "producer_module": {
+    "path": "github.com/kimjooyoon/meta-ontology-go",
+    "version": "(devel)"
+  },
+  "toolchain": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 7709833,
+    "user_ns": 3557000,
+    "system_ns": 2493000,
+    "peak_rss_bytes": 14450688,
+    "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 1017708,
+      "wait_ns": 6692125,
+      "deadline_remaining_ns": 59984085375,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "build": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 286602125,
+    "user_ns": 146353000,
+    "system_ns": 88201000,
+    "peak_rss_bytes": 88440832,
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 931625,
+      "wait_ns": 285670500,
+      "deadline_remaining_ns": 59972894417,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "runs": [
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 352090583,
+      "user_ns": 3337000,
+      "system_ns": 7500000,
+      "peak_rss_bytes": 5079040,
+      "stdout_sha256": "sha256:c63d1caacc2a78001a207e052ac5b0a9f03eede39bace97a0ed011940a232285",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 915125,
+        "wait_ns": 351175458,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59684774000,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 7364459,
+      "user_ns": 2720000,
+      "system_ns": 3133000,
+      "peak_rss_bytes": 5128192,
+      "stdout_sha256": "sha256:c63d1caacc2a78001a207e052ac5b0a9f03eede39bace97a0ed011940a232285",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 2347792,
+        "wait_ns": 5016667,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59331058542,
+        "context_at_start_return": "ACTIVE"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "urn:origin10773:main",
+          "input": {
+            "flag": true,
+            "values": []
+          },
+          "input_fields": [
+            {
+              "id": "urn:origin10773:values",
+              "name": "values",
+              "value": []
+            },
+            {
+              "id": "urn:origin10773:flag",
+              "name": "flag",
+              "value": true
+            }
+          ],
+          "actual": {
+            "ok": true,
+            "text": "changed",
+            "total": 277
+          },
+          "actual_fields": [
+            {
+              "id": "urn:origin10773:text",
+              "name": "text",
+              "value": "changed"
+            },
+            {
+              "id": "urn:origin10773:total",
+              "name": "total",
+              "value": 277
+            },
+            {
+              "id": "urn:origin10773:ok",
+              "name": "ok",
+              "value": true
+            }
+          ],
+          "expected": {
+            "ok": true,
+            "text": "changed",
+            "total": 277
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ],
+      "local_writes": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 4,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 5,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 6,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 1,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        }
+      ],
+      "local_uses": [
+        {
+          "site_index": 3,
+          "frame": 0,
+          "assignment": 0
+        },
+        {
+          "site_index": 4,
+          "frame": 0,
+          "assignment": 2
+        },
+        {
+          "site_index": 5,
+          "frame": 0,
+          "assignment": 0
+        },
+        {
+          "site_index": 6,
+          "frame": 0,
+          "assignment": 3
+        }
+      ],
+      "local_frames": 1,
+      "reads_observed": true
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "urn:origin10773:main",
+          "input": {
+            "flag": false,
+            "values": [
+              7,
+              11
+            ]
+          },
+          "input_fields": [
+            {
+              "id": "urn:origin10773:values",
+              "name": "values",
+              "value": [
+                7,
+                11
+              ]
+            },
+            {
+              "id": "urn:origin10773:flag",
+              "name": "flag",
+              "value": false
+            }
+          ],
+          "actual": {
+            "ok": false,
+            "text": "steady",
+            "total": 857
+          },
+          "actual_fields": [
+            {
+              "id": "urn:origin10773:text",
+              "name": "text",
+              "value": "steady"
+            },
+            {
+              "id": "urn:origin10773:total",
+              "name": "total",
+              "value": 857
+            },
+            {
+              "id": "urn:origin10773:ok",
+              "name": "ok",
+              "value": false
+            }
+          ],
+          "expected": {
+            "ok": false,
+            "text": "steady",
+            "total": 857
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        }
+      ],
+      "local_writes": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 1,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 2,
+          "frame": 0,
+          "read_start": 1,
+          "read_end": 1,
+          "use_start": 0,
+          "use_end": 1,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 3,
+          "frame": 0,
+          "read_start": 1,
+          "read_end": 1,
+          "use_start": 1,
+          "use_end": 3,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "read_start": 1,
+          "read_end": 2,
+          "use_start": 3,
+          "use_end": 3,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 2,
+          "frame": 0,
+          "read_start": 2,
+          "read_end": 2,
+          "use_start": 3,
+          "use_end": 4,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 3,
+          "frame": 0,
+          "read_start": 2,
+          "read_end": 2,
+          "use_start": 4,
+          "use_end": 6,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 4,
+          "frame": 0,
+          "read_start": 2,
+          "read_end": 2,
+          "use_start": 6,
+          "use_end": 6,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 6,
+          "frame": 0,
+          "read_start": 2,
+          "read_end": 2,
+          "use_start": 6,
+          "use_end": 6,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        }
+      ],
+      "local_uses": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "assignment": 1
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "assignment": 0
+        },
+        {
+          "site_index": 2,
+          "frame": 0,
+          "assignment": 2
+        },
+        {
+          "site_index": 0,
+          "frame": 0,
+          "assignment": 4
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "assignment": 3
+        },
+        {
+          "site_index": 2,
+          "frame": 0,
+          "assignment": 5
+        },
+        {
+          "site_index": 4,
+          "frame": 0,
+          "assignment": 7
+        },
+        {
+          "site_index": 5,
+          "frame": 0,
+          "assignment": 6
+        },
+        {
+          "site_index": 6,
+          "frame": 0,
+          "assignment": 8
+        }
+      ],
+      "local_frames": 1,
+      "reads_observed": true,
+      "reads": [
+        {
+          "site_index": 0,
+          "index": 0,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 0
+          }
+        },
+        {
+          "site_index": 0,
+          "index": 1,
+          "length": 2,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 1
+          }
+        }
+      ]
+    },
+    {
+      "case_index": 2,
+      "deliveries": [
+        {
+          "activity_id": "urn:origin10773:main",
+          "input": {
+            "flag": true,
+            "values": [
+              -900
+            ]
+          },
+          "input_fields": [
+            {
+              "id": "urn:origin10773:values",
+              "name": "values",
+              "value": [
+                -900
+              ]
+            },
+            {
+              "id": "urn:origin10773:flag",
+              "name": "flag",
+              "value": true
+            }
+          ],
+          "actual": {
+            "ok": false,
+            "text": "changed",
+            "total": -342
+          },
+          "actual_fields": [
+            {
+              "id": "urn:origin10773:text",
+              "name": "text",
+              "value": "changed"
+            },
+            {
+              "id": "urn:origin10773:total",
+              "name": "total",
+              "value": -342
+            },
+            {
+              "id": "urn:origin10773:ok",
+              "name": "ok",
+              "value": false
+            }
+          ],
+          "expected": {
+            "ok": false,
+            "text": "changed",
+            "total": -342
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ],
+      "local_writes": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 1,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 2,
+          "frame": 0,
+          "read_start": 1,
+          "read_end": 1,
+          "use_start": 0,
+          "use_end": 1,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 3,
+          "frame": 0,
+          "read_start": 1,
+          "read_end": 1,
+          "use_start": 1,
+          "use_end": 3,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 4,
+          "frame": 0,
+          "read_start": 1,
+          "read_end": 1,
+          "use_start": 3,
+          "use_end": 3,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 5,
+          "frame": 0,
+          "read_start": 1,
+          "read_end": 1,
+          "use_start": 3,
+          "use_end": 3,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 6,
+          "frame": 0,
+          "read_start": 1,
+          "read_end": 1,
+          "use_start": 3,
+          "use_end": 4,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        }
+      ],
+      "local_uses": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "assignment": 1
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "assignment": 0
+        },
+        {
+          "site_index": 2,
+          "frame": 0,
+          "assignment": 2
+        },
+        {
+          "site_index": 3,
+          "frame": 0,
+          "assignment": 3
+        },
+        {
+          "site_index": 4,
+          "frame": 0,
+          "assignment": 5
+        },
+        {
+          "site_index": 5,
+          "frame": 0,
+          "assignment": 3
+        },
+        {
+          "site_index": 6,
+          "frame": 0,
+          "assignment": 6
+        }
+      ],
+      "local_frames": 1,
+      "reads_observed": true,
+      "reads": [
+        {
+          "site_index": 0,
+          "index": 0,
+          "length": 1,
+          "origin": {
+            "input_collection": 0,
+            "element_index": 0
+          }
+        }
+      ]
+    }
+  ],
+  "projection_replayed": true,
+  "runtime_replayed": true,
+  "finite_passed": 3,
+  "finite_total": 3,
+  "condition_sites": [
+    {
+      "expression_id": "sha256:bbc8d4c21f346511ce48b17343a0df5368ea22c439467644b63424670d257bde",
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "expression": "input.GoooFieldaaffcf0150f8dd204180b85d0c3430344bc2a569b3a790d6b0c172d06a6642cb",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start": 1396,
+      "end": 1475,
+      "source": {
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "urn:origin10773:main",
+          "name": "GoooPackage0ActivityMain",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "start_byte": 490,
+          "end_byte": 799
+        },
+        "input_source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "kind": "activity",
+            "stable_id": "urn:origin10773:main",
+            "name": "Main",
+            "source_sha256": "sha256:a3bac981ac479515658419911bbff51193b500d792ec3319d0454c9018a3a640",
+            "start_byte": 463,
+            "end_byte": 752
+          },
+          "status": "MAPPED",
+          "view": "workspace_input_file",
+          "package_path": "origin/10773",
+          "filename": "main.gooo",
+          "activity_id": "urn:origin10773:main",
+          "source_sha256": "sha256:a3bac981ac479515658419911bbff51193b500d792ec3319d0454c9018a3a640",
+          "start_byte": 636,
+          "end_byte": 646,
+          "expression": "input.flag"
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 683,
+        "end_byte": 693,
+        "decoded_start": 104,
+        "decoded_end": 114,
+        "source_ordinal": 0,
+        "expression": "input.flag",
+        "relation": "retained_condition_node",
+        "fields": [
+          {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "kind": "field",
+              "stable_id": "urn:origin10773:flag",
+              "name": "flag",
+              "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+              "start_byte": 174,
+              "end_byte": 236
+            },
+            "entity_id": "urn:origin10773:input",
+            "field_id": "urn:origin10773:flag",
+            "name": "flag"
+          }
+        ]
+      }
+    }
+  ],
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "COMPLETE",
+    "recorded_events": 3,
+    "dropped_events": 0,
+    "sha256": "sha256:7d456c6750376e1b122cde7fa28cc33b2b2563c6fd1202927216661781b48e9c"
+  },
+  "local_sites": [
+    {
+      "expression_id": "sha256:e671e3609d2315dd1f86cc3e52a60e80dde6aa7ee5b154474571755a9e2bebf7",
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "native_ordinal": 0,
+      "variable_ordinal": 0,
+      "name": "total",
+      "kind": "declaration",
+      "operation": "var",
+      "scalar_type": "int64",
+      "expression": "277",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1206,
+      "end_byte": 1209,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 587,
+          "end_byte": 590,
+          "decoded_start": 10,
+          "decoded_end": 13,
+          "expression": "277"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 581,
+          "end_byte": 586,
+          "decoded_start": 4,
+          "decoded_end": 9,
+          "expression": "total"
+        },
+        "uses": [
+          {
+            "native_ordinal": 0,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+              "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+              "start_byte": 644,
+              "end_byte": 649,
+              "decoded_start": 67,
+              "decoded_end": 72,
+              "expression": "total"
+            }
+          },
+          {
+            "native_ordinal": 1,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+              "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+              "start_byte": 741,
+              "end_byte": 746,
+              "decoded_start": 160,
+              "decoded_end": 165,
+              "expression": "total"
+            }
+          },
+          {
+            "native_ordinal": 2,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+              "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+              "start_byte": 774,
+              "end_byte": 779,
+              "decoded_start": 193,
+              "decoded_end": 198,
+              "expression": "total"
+            }
+          },
+          {
+            "native_ordinal": 3,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+              "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+              "start_byte": 780,
+              "end_byte": 785,
+              "decoded_start": 199,
+              "decoded_end": 204,
+              "expression": "total"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "expression_id": "sha256:6df8930278b79ae3099eab025ee882ca5978e1484891569bef333fb86e1bdb3e",
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "native_ordinal": 1,
+      "variable_ordinal": 1,
+      "name": "item",
+      "kind": "iteration",
+      "operation": ":=",
+      "scalar_type": "int64",
+      "expression": "input.GoooField7b243129dcf289c44d3d64e2870fe75646d06b91c841cdfdde22a87e0938f015",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1232,
+      "end_byte": 1311,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 603,
+          "end_byte": 615,
+          "decoded_start": 26,
+          "decoded_end": 38,
+          "expression": "input.values"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 595,
+          "end_byte": 599,
+          "decoded_start": 18,
+          "decoded_end": 22,
+          "expression": "item"
+        },
+        "uses": [
+          {
+            "native_ordinal": 0,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+              "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+              "start_byte": 629,
+              "end_byte": 633,
+              "decoded_start": 52,
+              "decoded_end": 56,
+              "expression": "item"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "expression_id": "sha256:7870a4d304b3609952460aaa278e67d755082221e772c642ba9bb22cc8f0040d",
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "native_ordinal": 2,
+      "variable_ordinal": 2,
+      "name": "shifted",
+      "kind": "declaration",
+      "operation": "var",
+      "scalar_type": "int64",
+      "expression": "item + 281",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1330,
+      "end_byte": 1340,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 629,
+          "end_byte": 637,
+          "decoded_start": 52,
+          "decoded_end": 60,
+          "expression": "item+281"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 621,
+          "end_byte": 628,
+          "decoded_start": 44,
+          "decoded_end": 51,
+          "expression": "shifted"
+        },
+        "uses": [
+          {
+            "native_ordinal": 0,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+              "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+              "start_byte": 650,
+              "end_byte": 657,
+              "decoded_start": 73,
+              "decoded_end": 80,
+              "expression": "shifted"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "expression_id": "sha256:74313361e113ae23f8703482a18adb26422d701fd03f610c6020484972b584bf",
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "native_ordinal": 3,
+      "variable_ordinal": 0,
+      "name": "total",
+      "kind": "assignment",
+      "operation": "=",
+      "scalar_type": "int64",
+      "expression": "total + shifted",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1351,
+      "end_byte": 1366,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 644,
+          "end_byte": 657,
+          "decoded_start": 67,
+          "decoded_end": 80,
+          "expression": "total+shifted"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 581,
+          "end_byte": 586,
+          "decoded_start": 4,
+          "decoded_end": 9,
+          "expression": "total"
+        }
+      }
+    },
+    {
+      "expression_id": "sha256:d34c6c58e2fd40e07adce17a3e035ad6b0b5ca81b6a786c63c0941f6d895f9ba",
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "native_ordinal": 4,
+      "variable_ordinal": 3,
+      "name": "label",
+      "kind": "declaration",
+      "operation": "var",
+      "scalar_type": "string",
+      "expression": "\"steady\"",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1383,
+      "end_byte": 1391,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 669,
+          "end_byte": 679,
+          "decoded_start": 92,
+          "decoded_end": 100,
+          "expression": "\"steady\""
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 663,
+          "end_byte": 668,
+          "decoded_start": 86,
+          "decoded_end": 91,
+          "expression": "label"
+        },
+        "uses": [
+          {
+            "native_ordinal": 0,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+              "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+              "start_byte": 768,
+              "end_byte": 773,
+              "decoded_start": 187,
+              "decoded_end": 192,
+              "expression": "label"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "expression_id": "sha256:ba45fd613bcf67bb6fb990ed405b2de8eb49c4f38421dead867153efae6efc29",
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "native_ordinal": 5,
+      "variable_ordinal": 3,
+      "name": "label",
+      "kind": "assignment",
+      "operation": "=",
+      "scalar_type": "string",
+      "expression": "\"changed\"",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1488,
+      "end_byte": 1497,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 701,
+          "end_byte": 712,
+          "decoded_start": 122,
+          "decoded_end": 131,
+          "expression": "\"changed\""
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 663,
+          "end_byte": 668,
+          "decoded_start": 86,
+          "decoded_end": 91,
+          "expression": "label"
+        }
+      }
+    },
+    {
+      "expression_id": "sha256:bb45ec750ceaab6a50ab45f31de4c1c95afc48f782211b8097ac444e1d4c7db8",
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "native_ordinal": 6,
+      "variable_ordinal": 4,
+      "name": "accepted",
+      "kind": "declaration",
+      "operation": "var",
+      "scalar_type": "bool",
+      "expression": "input.GoooFieldaaffcf0150f8dd204180b85d0c3430344bc2a569b3a790d6b0c172d06a6642cb && total > 0",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1517,
+      "end_byte": 1609,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 727,
+          "end_byte": 748,
+          "decoded_start": 146,
+          "decoded_end": 167,
+          "expression": "input.flag && total>0"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+          "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+          "start_byte": 718,
+          "end_byte": 726,
+          "decoded_start": 137,
+          "decoded_end": 145,
+          "expression": "accepted"
+        },
+        "uses": [
+          {
+            "native_ordinal": 0,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+              "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+              "start_byte": 789,
+              "end_byte": 797,
+              "decoded_start": 208,
+              "decoded_end": 216,
+              "expression": "accepted"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "local_use_sites": [
+    {
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "variable_ordinal": 1,
+      "native_ordinal": 0,
+      "name": "item",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1330,
+      "end_byte": 1334,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 595,
+        "end_byte": 599,
+        "decoded_start": 18,
+        "decoded_end": 22,
+        "expression": "item"
+      },
+      "variable_use_ordinal": 0,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 629,
+        "end_byte": 633,
+        "decoded_start": 52,
+        "decoded_end": 56,
+        "expression": "item"
+      }
+    },
+    {
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "variable_ordinal": 0,
+      "native_ordinal": 1,
+      "name": "total",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1351,
+      "end_byte": 1356,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 581,
+        "end_byte": 586,
+        "decoded_start": 4,
+        "decoded_end": 9,
+        "expression": "total"
+      },
+      "variable_use_ordinal": 0,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 644,
+        "end_byte": 649,
+        "decoded_start": 67,
+        "decoded_end": 72,
+        "expression": "total"
+      }
+    },
+    {
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "variable_ordinal": 2,
+      "native_ordinal": 2,
+      "name": "shifted",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1359,
+      "end_byte": 1366,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 621,
+        "end_byte": 628,
+        "decoded_start": 44,
+        "decoded_end": 51,
+        "expression": "shifted"
+      },
+      "variable_use_ordinal": 0,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 650,
+        "end_byte": 657,
+        "decoded_start": 73,
+        "decoded_end": 80,
+        "expression": "shifted"
+      }
+    },
+    {
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "variable_ordinal": 0,
+      "native_ordinal": 3,
+      "name": "total",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1600,
+      "end_byte": 1605,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 581,
+        "end_byte": 586,
+        "decoded_start": 4,
+        "decoded_end": 9,
+        "expression": "total"
+      },
+      "variable_use_ordinal": 1,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 741,
+        "end_byte": 746,
+        "decoded_start": 160,
+        "decoded_end": 165,
+        "expression": "total"
+      }
+    },
+    {
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "variable_ordinal": 3,
+      "native_ordinal": 4,
+      "name": "label",
+      "scalar_type": "string",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1768,
+      "end_byte": 1773,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 663,
+        "end_byte": 668,
+        "decoded_start": 86,
+        "decoded_end": 91,
+        "expression": "label"
+      },
+      "variable_use_ordinal": 0,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 768,
+        "end_byte": 773,
+        "decoded_start": 187,
+        "decoded_end": 192,
+        "expression": "label"
+      }
+    },
+    {
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "variable_ordinal": 0,
+      "native_ordinal": 5,
+      "name": "total",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1850,
+      "end_byte": 1855,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 581,
+        "end_byte": 586,
+        "decoded_start": 4,
+        "decoded_end": 9,
+        "expression": "total"
+      },
+      "variable_use_ordinal": 2,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 774,
+        "end_byte": 779,
+        "decoded_start": 193,
+        "decoded_end": 198,
+        "expression": "total"
+      }
+    },
+    {
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "variable_ordinal": 4,
+      "native_ordinal": 6,
+      "name": "accepted",
+      "scalar_type": "bool",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1932,
+      "end_byte": 1940,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 718,
+        "end_byte": 726,
+        "decoded_start": 137,
+        "decoded_end": 145,
+        "expression": "accepted"
+      },
+      "variable_use_ordinal": 0,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 789,
+        "end_byte": 797,
+        "decoded_start": 208,
+        "decoded_end": 216,
+        "expression": "accepted"
+      }
+    }
+  ],
+  "local_observation": {
+    "schema": "gooo/native-local-summary/v1",
+    "status": "COMPLETE",
+    "sha256": "sha256:308ee104d70f6646cb4d392d69b492ae29a0bb9dfb228b114b1e76e06884f60b",
+    "recorded_writes": 20,
+    "recorded_uses": 20,
+    "element_windows": 0,
+    "interrupted_writes": 0,
+    "unresolved_uses": 0,
+    "frames": 3,
+    "frames_dropped": 0,
+    "writes_dropped": 0,
+    "uses_dropped": 0,
+    "reads_dropped": 0,
+    "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+  },
+  "read_sites": [
+    {
+      "expression_id": "sha256:3742eceb8add508cc900cae3a39f96633dec6becac9ef3dd35d9abbdbce5a588",
+      "root_activity_id": "urn:origin10773:main",
+      "activity_id": "urn:origin10773:main",
+      "kind": "range_value",
+      "element_type": "int64",
+      "native_ordinal": 0,
+      "expression": "input.GoooField7b243129dcf289c44d3d64e2870fe75646d06b91c841cdfdde22a87e0938f015",
+      "projection_sha256": "sha256:0d2931336c8838a5f1e8c9816b04acbc45133c24815ffdcd2bf7bdd1bc9065b6",
+      "start_byte": 1232,
+      "end_byte": 1311,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:b3b7ae97524d91b332ab1816067cd69f09fcf8bf6a6da4b050c7a06fd58a1fab",
+        "body_sha256": "sha256:afc9e36f1f97c81a8eced1e1ee8dbf092dd022c40a34870d3d183254a49e0f56",
+        "start_byte": 603,
+        "end_byte": 615,
+        "decoded_start": 26,
+        "decoded_end": 38,
+        "expression": "input.values"
+      }
+    }
+  ],
+  "read_inputs": [
+    {
+      "activity_id": "urn:origin10773:main",
+      "input_key": "GoooPackage0ActivityMain",
+      "port": "input",
+      "entity_id": "urn:origin10773:input",
+      "field_id": "urn:origin10773:values",
+      "field_name": "values",
+      "element_type": "int64"
+    }
+  ],
+  "read_observation": {
+    "schema": "gooo/native-read-summary/v2",
+    "status": "COMPLETE",
+    "recorded_reads": 3,
+    "resolved_reads": 3,
+    "unresolved_reads": 0,
+    "dropped_reads": 0,
+    "registration_dropped": 0,
+    "sha256": "sha256:b99e55b98409f571c163fb34db9c35477f04d98aac5493854afa812e72533fe3",
+    "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+  },
+  "input_separation": {
+    "status": "UNKNOWN",
+    "reason": "UNCLASSIFIED_INPUTS",
+    "unique_inputs": 3,
+    "duplicate_rows": 0,
+    "overlapping_inputs": 0,
+    "disjoint_inputs": 0,
+    "disjoint_cases_passed": 0,
+    "unknown_inputs": 3,
+    "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+  },
+  "model_calls": 0,
+  "elapsed_ns": 677737375,
+  "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+}

@@ -46,6 +46,13 @@ type CompositionTrace struct {
 	ConditionsDropped       int                               `json:"conditions_dropped,omitempty"`
 	Constructions           []CompositionConstruction         `json:"constructions,omitempty"`
 	ConstructionsDropped    int                               `json:"constructions_dropped,omitempty"`
+	LocalWrites             []CompositionLocalWrite           `json:"local_writes,omitempty"`
+	LocalUses               []CompositionLocalUse             `json:"local_uses,omitempty"`
+	LocalElements           []CompositionLocalElementWindow   `json:"local_elements,omitempty"`
+	LocalFrames             int                               `json:"local_frames,omitempty"`
+	LocalFrameDropped       int                               `json:"local_frame_dropped,omitempty"`
+	LocalWriteDropped       int                               `json:"local_write_dropped,omitempty"`
+	LocalUseDropped         int                               `json:"local_use_dropped,omitempty"`
 	ReadsObserved           bool                              `json:"reads_observed,omitempty"`
 	Reads                   []CompositionReadObservation      `json:"reads,omitempty"`
 	ReadsDropped            int                               `json:"reads_dropped,omitempty"`
@@ -85,6 +92,9 @@ type CompositionRuntime struct {
 	ConditionSites                 []CompositionConditionSite    `json:"condition_sites,omitempty"`
 	ConditionObservation           *CompositionConditionSummary  `json:"condition_observation,omitempty"`
 	ConstructionSites              []CompositionConstructionSite `json:"construction_sites,omitempty"`
+	LocalSites                     []CompositionLocalSite        `json:"local_sites,omitempty"`
+	LocalUseSites                  []CompositionLocalUseSite     `json:"local_use_sites,omitempty"`
+	LocalObservation               *CompositionLocalSummary      `json:"local_observation,omitempty"`
 	ReadSites                      []CompositionReadSite         `json:"read_sites,omitempty"`
 	ReadInputs                     []CompositionReadInput        `json:"read_inputs,omitempty"`
 	ReadObservation                *CompositionReadSummary       `json:"read_observation,omitempty"`

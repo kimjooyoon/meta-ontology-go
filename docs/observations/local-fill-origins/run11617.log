@@ -1,0 +1,5 @@
+=== RUN   TestSelectionChunkGrowth11617
+    selection_growth_fresh_test.go:63: fresh selection-only continuation from v55 to v56; exact new capability target preserved; language executions0
+--- PASS: TestSelectionChunkGrowth11617 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.459s

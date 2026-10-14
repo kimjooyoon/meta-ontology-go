@@ -1,0 +1,5 @@
+=== RUN   TestLocalFillIntervalContract11271
+    source_fill_local_fresh_test.go:94: synthetic interval coverage1/1; interior/start/end gaps3/3 rejected; program executions0/models0
+--- PASS: TestLocalFillIntervalContract11271 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.510s

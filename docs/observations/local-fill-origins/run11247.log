@@ -1,0 +1,6 @@
+=== RUN   TestCompoundLocalFillOrigins11247
+    source_fill_local_fresh_test.go:57: contradictory local construction origin accepted gap
+--- FAIL: TestCompoundLocalFillOrigins11247 (0.01s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.515s
+FAIL

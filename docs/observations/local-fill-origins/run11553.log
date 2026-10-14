@@ -1,0 +1,12 @@
+=== RUN   TestLocalFillIdentity11503
+    composition_local_fill_identity_fresh_test.go:50: synthetic identical origin merged; conflicting origin unresolved; stable site identity; optional absence preserved; present contradiction rejected; programs0/models0
+--- PASS: TestLocalFillIdentity11503 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.519s
+=== RUN   TestPackageLocalFillReader11553
+    package_local_fill_fresh_test.go:37: saved fragment reader 1  {"schema":"gooo/workspace-body-execution-receipt/v1","decision":"FAIL_CLOSED","manifest":"<private-observation-root>/producer11553/examples/native-origin-reader/local-fill/reader.workspace.json","manifest_digest":"sha256:a5d3fb742d18efca10a32a75d8893fb9cfe502525212d6cd61c4f464356f900f","error":"origin selection contains no rows: kind=local-fill-fragments offset=0 total=0"}
+        
+--- FAIL: TestPackageLocalFillReader11553 (0.73s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.208s
+FAIL
