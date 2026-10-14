@@ -1,0 +1,60 @@
+package fieldmap
+namespace fieldmap
+entity Anchor id "urn:gooo:field-source-map:anchor" fields {
+ field case_index id "urn:gooo:field-source-map:anchor:case_index" type integer required one
+ field event_kind id "urn:gooo:field-source-map:anchor:event_kind" type string required one
+ field event_index id "urn:gooo:field-source-map:anchor:event_index" type integer required one
+ field assignment_index id "urn:gooo:field-source-map:anchor:assignment_index" type integer required one
+ field frame id "urn:gooo:field-source-map:anchor:frame" type integer required one
+ field root_activity_id id "urn:gooo:field-source-map:anchor:root_activity_id" type string required one
+ field activity_id id "urn:gooo:field-source-map:anchor:activity_id" type string required one
+ field variable_ordinal id "urn:gooo:field-source-map:anchor:variable_ordinal" type integer required one
+ field variable_name id "urn:gooo:field-source-map:anchor:variable_name" type string required one
+ field record_id id "urn:gooo:field-source-map:anchor:record_id" type string required one
+ field field_id id "urn:gooo:field-source-map:anchor:field_id" type string required one
+ field site_kind id "urn:gooo:field-source-map:anchor:site_kind" type string required one
+ field category id "urn:gooo:field-source-map:anchor:category" type string required one
+ field mapping id "urn:gooo:field-source-map:anchor:mapping" type string required one
+ field reason id "urn:gooo:field-source-map:anchor:reason" type string required one
+ field package_path id "urn:gooo:field-source-map:anchor:package_path" type string required one
+ field filename id "urn:gooo:field-source-map:anchor:filename" type string required one
+ field original_activity_id id "urn:gooo:field-source-map:anchor:original_activity_id" type string required one
+ field source_sha256 id "urn:gooo:field-source-map:anchor:source_sha256" type string required one
+ field source_start id "urn:gooo:field-source-map:anchor:source_start" type integer required one
+ field source_end id "urn:gooo:field-source-map:anchor:source_end" type integer required one
+ field expression id "urn:gooo:field-source-map:anchor:expression" type string required one
+ field candidate_id id "urn:gooo:field-source-map:anchor:candidate_id" type string required one
+ field hole_id id "urn:gooo:field-source-map:anchor:hole_id" type string required one
+ field grammar id "urn:gooo:field-source-map:anchor:grammar" type string required one
+}
+entity Location id "urn:gooo:field-source-map:location" fields {
+ field status id "urn:gooo:field-source-map:location:status" type string required one
+ field anchor_kind id "urn:gooo:field-source-map:location:anchor_kind" type string required one
+ field mapped id "urn:gooo:field-source-map:location:mapped" type boolean required one
+ field assembly_origin id "urn:gooo:field-source-map:location:assembly_origin" type boolean required one
+ field filename id "urn:gooo:field-source-map:location:filename" type string required one
+ field source_start id "urn:gooo:field-source-map:location:source_start" type integer required one
+ field source_end id "urn:gooo:field-source-map:location:source_end" type integer required one
+ field expression id "urn:gooo:field-source-map:location:expression" type string required one
+ field record_id id "urn:gooo:field-source-map:location:record_id" type string required one
+ field field_id id "urn:gooo:field-source-map:location:field_id" type string required one
+ field assignment_index id "urn:gooo:field-source-map:location:assignment_index" type integer required one
+ field candidate_id id "urn:gooo:field-source-map:location:candidate_id" type string required one
+ field reason id "urn:gooo:field-source-map:location:reason" type string required one
+}
+activity Inspect(Anchor)->Location id "urn:gooo:field-source-map:inspect" computes `let status="UNRESOLVED"
+let anchor_kind="UNKNOWN"
+let mapped=false
+let assembly_origin=false
+if input.category=="target" {anchor_kind="FIELD_TARGET"}
+if input.category=="value" {anchor_kind="FIELD_VALUE"}
+if input.category=="retained_template" {anchor_kind="ASSEMBLY_TEMPLATE";assembly_origin=true}
+if input.category=="declared_candidate" {anchor_kind="ASSEMBLY_CANDIDATE";assembly_origin=true}
+if input.category=="derived_grammar" {anchor_kind="ASSEMBLY_GRAMMAR";assembly_origin=true}
+if input.mapping=="MAPPED" {
+ if input.filename!="" && input.source_sha256!="" && input.source_start>=0 && input.source_end>input.source_start && input.field_id!="" && input.record_id!="" {
+  status="ORIGINAL_FILE"
+  mapped=true
+ } else {status="INVALID_LOCATION"}
+}
+return Location{status:status,anchor_kind:anchor_kind,mapped:mapped,assembly_origin:assembly_origin,filename:input.filename,source_start:input.source_start,source_end:input.source_end,expression:input.expression,record_id:input.record_id,field_id:input.field_id,assignment_index:input.assignment_index,candidate_id:input.candidate_id,reason:input.reason}`

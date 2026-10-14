@@ -1,0 +1,6 @@
+{
+  "result": "native2/2 reached;receipt assertion used incorrect evaluator label",
+  "cause": "scalar Integer source-fill uses int64 AST interpreter/v2 rather than typed-value interpreter/v1",
+  "historical_reexecution": 0,
+  "next": "new18503 source has5 iterations,7/13 choices,new cases;check actual evaluator label"
+}

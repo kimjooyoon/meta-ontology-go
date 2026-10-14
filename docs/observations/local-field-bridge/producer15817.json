@@ -1,0 +1,202 @@
+{
+  "base": "0898d5c051739a389d23931e1de78e98f71740de",
+  "cohort": "new Gooo known-root retention under partial collection/recording inputs;three new synthetic mixed-window cases",
+  "historical_local_reruns": 0,
+  "files": [
+    {
+      "path": "cmd/gooo/package_execute.go",
+      "sha256": "4d492472f2e6a412e199946f5acf6f5c849a2436b4f5114d9f73c449972a3f0d",
+      "bytes": 10165
+    },
+    {
+      "path": "cmd/gooo/package_local_field_bridge_consumer_fresh_test.go",
+      "sha256": "210f46a5f2eeed566e1e431ef0013cf438d5e63ef54b2b12ba1ab299e3858ce7",
+      "bytes": 4439
+    },
+    {
+      "path": "cmd/gooo/package_local_field_bridge_known_partial_fresh_test.go",
+      "sha256": "565284e2947f7c1fa7b06bca6d460e0c655f55f7f2759aac422df0899a630980",
+      "bytes": 3223
+    },
+    {
+      "path": "cmd/gooo/package_local_field_bridge_native_fresh_test.go",
+      "sha256": "79aedff7470770486e01854fff6fe36dd674976e3803dd703013b1eb644e3e37",
+      "bytes": 4187
+    },
+    {
+      "path": "cmd/gooo/package_local_field_bridge_partial_fresh_test.go",
+      "sha256": "6c47b5aa157e1ea2f32087974c308aa825bc1f347d4fc47fd947fc69479bd1b1",
+      "bytes": 6645
+    },
+    {
+      "path": "cmd/gooo/package_local_field_bridge_recorded_fresh_test.go",
+      "sha256": "462368698bba891c48c76072a9f13fbd68cd7a7ba6c46dabcbbfb38fa3b7efd8",
+      "bytes": 4172
+    },
+    {
+      "path": "cmd/gooo/package_origin_input.go",
+      "sha256": "20536924293c2da16cafeba402dc73cda11d30c1fde655973cc37ea9b8c18b69",
+      "bytes": 6237
+    },
+    {
+      "path": "examples/language-syntax-roundtrip/corpus.json",
+      "sha256": "8d46c2a89e33a8fc68c54e9939245c85cf65f341ff49e3317392b45f4415c409",
+      "bytes": 34427
+    },
+    {
+      "path": "examples/local-field-bridge/cases.json",
+      "sha256": "e02a154fc1c30cc7ba43d5d501a6b0ea5d22dcdb4912a8e5dcb7d3ece04c1496",
+      "bytes": 1594
+    },
+    {
+      "path": "examples/local-field-bridge/gooo.workspace.json",
+      "sha256": "a0363275582485efa140a60ef7280200a673d5222381adc44f2d6d4327d7a7e3",
+      "bytes": 303
+    },
+    {
+      "path": "examples/local-field-bridge/main.gooo",
+      "sha256": "a0a6ba0eccde889f57dacc966888aead6108ffce58cd69a7f33a3ba84e08f36d",
+      "bytes": 1390
+    },
+    {
+      "path": "examples/local-field-bridge/recorded-runtime.json.gz",
+      "sha256": "a8ddfc6061cb18c39c84dc3872769bf6c13e2feb307f59e8e8b4ee77dd3b20a0",
+      "bytes": 8006
+    },
+    {
+      "path": "examples/local-field-bridge/trace.gooo",
+      "sha256": "edfcb4fed1665214cff8c157e59e2570fcbb1e61906f57e3ea0693cbbe064713",
+      "bytes": 12829
+    },
+    {
+      "path": "examples/local-field-bridge/trace.workspace.json",
+      "sha256": "7b31f1af308a845631d8b71092ba5f10cb59f927e3f2d6ac8c946dac60bb5faf",
+      "bytes": 304
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_bind.go",
+      "sha256": "49c13e2a88e6995c54fe3d3115c9e9c64ba89c880fdbadcd15e95a0bf4352be0",
+      "bytes": 3162
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_fault_limits_fresh_test.go",
+      "sha256": "396b389e0f269118c86ec6e5706286f4c3215c094a6660dc764186a18ed299dc",
+      "bytes": 5824
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_intervals.go",
+      "sha256": "3d676909bb48dc6b4a9aedc6b9b556bb24314a6ed4ef51ba01d13228027f3ed4",
+      "bytes": 3218
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_local_uses.go",
+      "sha256": "707850d117a5336eeff3dacaa3f37b9f8263832d2f95d07705f845d2b2238cf2",
+      "bytes": 1524
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_observer.go",
+      "sha256": "b0731f92ae1b6b309836c7d9226d44eb362a12f1af0d17a98e914afef48f4694",
+      "bytes": 6810
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_runtime.go",
+      "sha256": "e809360acc5c57b1c1d8133fedca1215829959ec2c408703105157224c5f6e5f",
+      "bytes": 2541
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_summary.go",
+      "sha256": "394146204bbe9b06ce47167420ff70371ec7984bf81587cd61559619525b461b",
+      "bytes": 1938
+    },
+    {
+      "path": "internal/bodyexecution/composition_bridge_validate.go",
+      "sha256": "16022399e9fd5decd13f41cde379cadc88c09acfb696e30817c388c58dce3119",
+      "bytes": 3626
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_observer.go",
+      "sha256": "d1381f9fd012241728143a6b325fd1052c4b2515d2c043974741d6e09cf47f61",
+      "bytes": 6318
+    },
+    {
+      "path": "internal/bodyexecution/composition_native_observation.go",
+      "sha256": "690d3462717ffd652a4b49759af813f9e04faa0323451ad59fc59958d05166af",
+      "bytes": 3000
+    },
+    {
+      "path": "internal/bodyexecution/composition_runtime.go",
+      "sha256": "b9ce2f21355b65f3b9ba92b7e7ea9993c728e524641a21d6a4bb605eb946c24f",
+      "bytes": 17420
+    },
+    {
+      "path": "internal/bodyexecution/joint_replay.go",
+      "sha256": "ddba25180452d4731e8ec5edf7a827913ed5fab1a32a80f858909d87dc734a36",
+      "bytes": 10515
+    },
+    {
+      "path": "internal/bodyexecution/native_bridge_columns.go",
+      "sha256": "87dedebb48f0a1a753b0fb0c4b2ca5f24c9651842f5191302895dde86e742cf4",
+      "bytes": 6417
+    },
+    {
+      "path": "internal/bodyexecution/native_bridge_literal.go",
+      "sha256": "09103d3fb5134d8ff2df9c27695c28462aa4b73448d38387d0c1e794a0c8a05d",
+      "bytes": 1221
+    },
+    {
+      "path": "internal/bodyexecution/native_origin_input.go",
+      "sha256": "122e0632af532540f1f5c4b7c0fae38259affb7190600b3ec619d7c1c51e0753",
+      "bytes": 7386
+    },
+    {
+      "path": "internal/bodyexecution/native_origin_validate.go",
+      "sha256": "7dfbfcaab1be230d0b11966a0a0a518776816d544d7bf302b19d90a0b848209a",
+      "bytes": 3542
+    },
+    {
+      "path": "internal/bodyexecution/testdata/bridge-fault15617-runtime.json.gz",
+      "sha256": "e1ed854f8406072c00c6eb1e0883f99cf1141f0b76f5cb3506609e57d37658fd",
+      "bytes": 5096
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+      "sha256": "9cd89f4f32c59559b15795ca57dcdf9fd4cb4ad9978e2b61d372df6dd85e0bf3",
+      "bytes": 9157
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+      "sha256": "06e6861558642cd0d3436b4f4fcb1c21025b168bcdf1d7a2b13c64c5ad74c30a",
+      "bytes": 10047
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+      "sha256": "b3ff644400abd6d65012b3915d2515b4061c2a4549288f2458651f7229613eab",
+      "bytes": 17382
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v65.json",
+      "sha256": "992845cfa77e3d927b97f047ad9879127f36b972636b4776cedcc991984b3e38",
+      "bytes": 1362
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+      "sha256": "8577c284765af7977e7112895d051ca20bb50f09853c9e6ff4337be91262f2f4",
+      "bytes": 10161
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+      "sha256": "2ab872797dd961243bfa91c93ce3a64c8fda7890d498f0684ffce92f55d5a218",
+      "bytes": 12648
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/model.go",
+      "sha256": "1ff4aea247938dfecfb9b74e94d613191249e391cee824f8c142b2a3559c5040",
+      "bytes": 3527
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry.go",
+      "sha256": "4be9ba8800b1ce297165e605dad73f40c4cccf609ee9fc8c01f450c1fdba3cd0",
+      "bytes": 20271
+    }
+  ]
+}

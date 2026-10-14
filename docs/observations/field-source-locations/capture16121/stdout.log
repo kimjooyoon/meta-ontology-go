@@ -1,0 +1,5 @@
+=== RUN   TestFieldSourceCapture16121
+    body_field_source_fresh_test.go:76: raw/escaped Korean source;16 typed field slots mapped;no producer execution/model;original literal byte spans retained
+--- PASS: TestFieldSourceCapture16121 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.524s

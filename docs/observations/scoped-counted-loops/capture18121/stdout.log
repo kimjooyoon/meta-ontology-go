@@ -1,0 +1,5 @@
+=== RUN   TestScopedCounterSurface18121
+    counted_surface_fresh_test.go:72: raw/escaped new source;two scoped counters plus later same-name local remain three identities;four authored increment slots retain ++ and implicit reads;canonical lowering100%;producer/model0
+--- PASS: TestScopedCounterSurface18121 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.517s

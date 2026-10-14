@@ -14,33 +14,36 @@ type NativeOriginQuery struct {
 // NativeOriginInput names recorded claims used by a new Gooo invocation.
 // Reading a saved record does not re-attest the producer's execution.
 type NativeOriginInput struct {
-	Schema               string                   `json:"schema"`
-	ReceiptSHA256        string                   `json:"receipt_sha256"`
-	SelectedSourceSHA256 string                   `json:"selected_source_sha256"`
-	RuntimeSuiteSHA256   string                   `json:"runtime_suite_sha256"`
-	Query                NativeOriginQuery        `json:"query"`
-	TotalRows            int                      `json:"total_rows"`
-	ReturnedRows         int                      `json:"returned_rows"`
-	NextOffset           *int                     `json:"next_offset,omitempty"`
-	Truncated            bool                     `json:"truncated"`
-	Observation          *CompositionReadSummary  `json:"recorded_observation"`
-	FieldObservation     *CompositionFieldSummary `json:"recorded_field_observation,omitempty"`
-	LocalObservation     *CompositionLocalSummary `json:"recorded_local_observation,omitempty"`
-	ProducerExecutions   int                      `json:"producer_program_executions"`
-	ProducerModelCalls   int                      `json:"producer_model_calls"`
-	Scope                string                   `json:"scope"`
-	InputShape           string                   `json:"input_shape,omitempty"`
-	ConsumerRows         int                      `json:"consumer_rows,omitempty"`
+	Schema                 string                    `json:"schema"`
+	FieldSourcesSHA256     string                    `json:"field_sources_sha256,omitempty"`
+	FieldFileSourcesSHA256 string                    `json:"field_file_sources_sha256,omitempty"`
+	ReceiptSHA256          string                    `json:"receipt_sha256"`
+	SelectedSourceSHA256   string                    `json:"selected_source_sha256"`
+	RuntimeSuiteSHA256     string                    `json:"runtime_suite_sha256"`
+	Query                  NativeOriginQuery         `json:"query"`
+	TotalRows              int                       `json:"total_rows"`
+	ReturnedRows           int                       `json:"returned_rows"`
+	NextOffset             *int                      `json:"next_offset,omitempty"`
+	Truncated              bool                      `json:"truncated"`
+	Observation            *CompositionReadSummary   `json:"recorded_observation"`
+	FieldObservation       *CompositionFieldSummary  `json:"recorded_field_observation,omitempty"`
+	BridgeObservation      *CompositionBridgeSummary `json:"recorded_field_local_bridge,omitempty"`
+	LocalObservation       *CompositionLocalSummary  `json:"recorded_local_observation,omitempty"`
+	ProducerExecutions     int                       `json:"producer_program_executions"`
+	ProducerModelCalls     int                       `json:"producer_model_calls"`
+	Scope                  string                    `json:"scope"`
+	InputShape             string                    `json:"input_shape,omitempty"`
+	ConsumerRows           int                       `json:"consumer_rows,omitempty"`
 }
 
 func ValidateNativeOriginQuery(query NativeOriginQuery) error {
 	switch query.Kind {
-	case "reads", "constructions", "elements", "links", "local-writes", "local-uses", "local-elements", "local-fill-fragments", "local-input-locations", "field-writes", "field-uses":
+	case "reads", "constructions", "elements", "links", "local-writes", "local-uses", "local-elements", "local-fill-fragments", "local-input-locations", "field-writes", "field-uses", "field-input-locations":
 	default:
-		return fmt.Errorf("origin kind must be reads, constructions, elements, links, local-writes, local-uses, local-elements, local-fill-fragments local-input-locations, field-writes or field-uses")
+		return fmt.Errorf("origin kind must be reads, constructions, elements, links, local-writes, local-uses, local-elements, local-fill-fragments local-input-locations, field-writes, field-uses or field-input-locations")
 	}
 	maximum := 65536
-	if query.Kind == "local-fill-fragments" || query.Kind == "local-input-locations" {
+	if query.Kind == "local-fill-fragments" || query.Kind == "local-input-locations" || query.Kind == "field-input-locations" {
 		maximum = 1<<31 - 1
 	}
 	if query.Offset < 0 || query.Offset > maximum || query.Limit < 1 || query.Limit > 128 {
@@ -50,11 +53,12 @@ func ValidateNativeOriginQuery(query NativeOriginQuery) error {
 }
 
 type nativeOriginPage struct {
-	query        NativeOriginQuery
-	fileBindings *localFileBindingIndices
-	total        int
-	rows         []json.RawMessage
-	err          error
+	query             NativeOriginQuery
+	fileBindings      *localFileBindingIndices
+	fieldFileBindings *localFileBindingIndices
+	total             int
+	rows              []json.RawMessage
+	err               error
 }
 
 func (page *nativeOriginPage) add(row any) {
@@ -113,6 +117,15 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	observed := *runtime.ReadObservation
 	report := &NativeOriginInput{Schema: "gooo/native-origin-input/v1", SelectedSourceSHA256: runtime.SelectedSourceSHA256, RuntimeSuiteSHA256: runtime.RuntimeSuiteSHA256, Query: query, TotalRows: page.total, ReturnedRows: len(page.rows), Truncated: query.Offset+len(page.rows) < page.total, Observation: &observed,
 		Scope: "recorded claims read without re-execution; the new consumer evaluates these rows only; construction read windows describe reads during evaluation, not complete scalar dependencies; inspect original observation drops and the selected page"}
+	if runtime.FieldSources != nil {
+		report.FieldSourcesSHA256 = runtime.FieldSources.SHA256
+	}
+	if runtime.FieldFileSources != nil {
+		report.FieldFileSourcesSHA256 = runtime.FieldFileSources.SHA256
+	}
+	if query.Kind == "field-input-locations" {
+		report.Scope = "recorded original-file field anchors; authored field targets and values are separate static annotations referenced by dynamic events; construction fragments identify template/candidate/grammar origins; missing history stays UNMAPPED; mapping coverage does not establish causal completeness or producer correctness"
+	}
 	if runtime.LocalObservation != nil {
 		local := *runtime.LocalObservation
 		report.LocalObservation = &local
@@ -120,6 +133,10 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	if runtime.FieldObservation != nil {
 		copy := *runtime.FieldObservation
 		report.FieldObservation = &copy
+	}
+	if runtime.BridgeObservation != nil {
+		copy := *runtime.BridgeObservation
+		report.BridgeObservation = &copy
 	}
 	if report.Truncated {
 		next := query.Offset + len(page.rows)
@@ -133,6 +150,10 @@ func isLocalOriginKind(kind string) bool {
 }
 
 func (page *nativeOriginPage) visit(runtime CompositionRuntime, trace CompositionTrace) {
+	if page.query.Kind == "field-input-locations" {
+		page.visitFieldFileLocations(runtime, trace)
+		return
+	}
 	if isFieldOriginKind(page.query.Kind) {
 		page.visitFields(runtime, trace)
 		return

@@ -1,0 +1,1 @@
+{"at": 1791951918.419828, "command": ["/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go", "test", "-overlay", "/private/tmp/gooo-local-field-bridge-20261014/overlay15217.json", "-p=1", "./cmd/gooo", "-run", "^TestNativeLocalFieldBridge15217$", "-count=1", "-v"], "historical_cohorts_executed": 0}

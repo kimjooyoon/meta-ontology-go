@@ -1,0 +1,5 @@
+=== RUN   TestGoooBridgePartialAndLeaf15717
+    package_local_field_bridge_partial_fresh_test.go:114: 3 new saved native fault-context queries->Gooo case-scoped complete/partial3/3;6 new synthetic literal/unknown/collection/partial/invalid inputs->Gooo6/6;original producer executions0;models0;input-only finite0
+--- PASS: TestGoooBridgePartialAndLeaf15717 (2.52s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	3.083s

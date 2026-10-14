@@ -11,7 +11,8 @@ func WalkLocalValueUses(body *ast.BlockStmt, visit func(*ast.Ident)) {
 	skipped := map[*ast.Ident]bool{}
 	ast.Inspect(body, func(node ast.Node) bool {
 		name, _, _, _ := LocalWriteExpression(node)
-		if name != nil {
+		_, update := node.(*ast.IncDecStmt)
+		if name != nil && !update {
 			skipped[name] = true
 		}
 		return true

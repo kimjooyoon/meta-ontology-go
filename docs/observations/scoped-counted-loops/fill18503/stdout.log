@@ -1,0 +1,6 @@
+=== RUN   TestScopedCounterAssembly18503
+    counted_fill_fresh_test.go:57: authored update sites 0
+--- FAIL: TestScopedCounterAssembly18503 (0.70s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.217s
+FAIL

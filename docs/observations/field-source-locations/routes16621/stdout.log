@@ -1,0 +1,5 @@
+=== RUN   TestFieldSourceRoutes16621
+    body_field_routes_fresh_test.go:55: new source:preserve/guard-return/merge-result routes;15 retained field slots mapped;30 value/target locations;canonical equivalence holds;native/model0
+--- PASS: TestFieldSourceRoutes16621 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.513s
