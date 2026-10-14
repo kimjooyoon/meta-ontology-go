@@ -1,0 +1,12 @@
+=== RUN   TestCompoundGenerationAndEvaluation78611
+    compound_assignment_fresh78611_test.go:35: new source78611:four authored operators,three evaluator rows,five local reads;model/native0
+--- PASS: TestCompoundGenerationAndEvaluation78611 (0.01s)
+=== RUN   TestCompoundTypedOrigins78611
+--- PASS: TestCompoundTypedOrigins78611 (0.00s)
+=== RUN   TestCompoundRecipeDecision78611
+    compound_assignment_fresh78611_test.go:90: new recipe78611:three finite rows;source-owned update expands to prior-local binary expression;model0
+--- PASS: TestCompoundRecipeDecision78611 (0.02s)
+=== RUN   TestCompoundSourceBoundaries78611
+--- PASS: TestCompoundSourceBoundaries78611 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	1.624s

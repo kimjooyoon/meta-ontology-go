@@ -4,6 +4,8 @@ import (
 	"go/ast"
 	"strconv"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 func (p readProjection) localSlot(variable int) string {
@@ -38,6 +40,13 @@ func (p readProjection) renderLocal(item readProjectionNode) string {
 		site := p.localUseSites[item.site]
 		return p.prefix + "LocalUse(" + strconv.Itoa(item.site) + "," + p.prefix + "LocalScope," +
 			p.localSlot(site.VariableOrdinal) + "," + site.Name + ")"
+	case "compound_write":
+		assignment := item.node.(*ast.AssignStmt)
+		operation, _ := bodycodegen.CompoundAssignmentOperator(assignment.Tok)
+		previous := p.render(p.offset(assignment.Lhs[0].Pos()), p.offset(assignment.Lhs[0].End()))
+		operand := p.render(p.offset(assignment.Rhs[0].Pos()), p.offset(assignment.Rhs[0].End()))
+		return p.localSites[item.localWrite].Name + " = " +
+			p.localAssignment(item.localWrite, previous+" "+operation.String()+" ("+operand+")")
 	}
 	return p.source[item.start:item.end]
 }

@@ -5,10 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"go/ast"
 	"go/build"
-	"go/parser"
-	"go/token"
 	"go/types"
 	"io"
 	"maps"
@@ -73,18 +70,21 @@ func preserveModuleFailure(err error) error {
 }
 
 type moduleImporter struct {
-	root                string
-	module              string
-	standard            *standardImportSession
-	packages            map[string]*types.Package
-	loading             map[string]bool
-	exportPaths         map[string]string
-	listStarted         time.Time
-	listCalls           int
-	listBytes           int64
-	externalPackages    int
-	externalSourceBytes int64
-	exportPackages      int
+	root                   string
+	module                 string
+	standard               *standardImportSession
+	packages               map[string]*types.Package
+	loading                map[string]bool
+	exportPaths            map[string]string
+	listStarted            time.Time
+	listCalls              int
+	listBytes              int64
+	externalPackages       int
+	externalSourceBytes    int64
+	exportPackages         int
+	compilationInputs      map[string]moduleCompiledInput
+	compilationOrigins     map[string]moduleCompilationOrigin
+	compilationSourceBytes int64
 }
 
 func newModuleImporter(root string) *moduleImporter {
@@ -98,76 +98,7 @@ func (imports *moduleImporter) Import(path string) (*types.Package, error) {
 	if package_, ok := imports.packages[path]; ok {
 		return package_, nil
 	}
-	var files []string
-	var err error
-	if !imports.local(path) {
-		if imports.standardLibrary(path) {
-			package_, importErr := imports.standard.Import(imports, path)
-			if importErr != nil || package_ == nil {
-				return nil, preserveModuleFailure(importErr)
-			}
-			imports.packages[path] = package_
-			return package_, nil
-		}
-		if !imports.allowExternalPackage() {
-			return nil, moduleFailure(moduleCausePackageLimit)
-		}
-		files, err = imports.moduleFiles(path)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		files, err = imports.files(path)
-	}
-	if err != nil {
-		return nil, err
-	}
-	if imports.loading[path] {
-		return nil, os.ErrInvalid
-	}
-	imports.loading[path] = true
-	defer delete(imports.loading, path)
-	fset := token.NewFileSet()
-	parsed := make([]*ast.File, 0, len(files))
-	for _, name := range files {
-		var data []byte
-		var readErr error
-		if imports.local(path) {
-			data, readErr = os.ReadFile(name)
-		} else {
-			data, readErr = readBoundedModuleSource(name)
-			if int64(len(data)) > moduleSourceMax-imports.externalSourceBytes {
-				return nil, moduleFailure(moduleCauseSourceLimit)
-			}
-			imports.externalSourceBytes += int64(len(data))
-		}
-		if readErr != nil {
-			if !imports.local(path) {
-				return nil, preserveModuleFailure(readErr)
-			}
-			return nil, readErr
-		}
-		file, parseErr := parser.ParseFile(fset, name, data, parser.ParseComments)
-		if parseErr != nil {
-			if !imports.local(path) {
-				return nil, errModuleDependency
-			}
-			return nil, parseErr
-		}
-		parsed = append(parsed, file)
-	}
-	checked, checkErr := (&types.Config{Importer: imports, Error: func(error) {}}).Check(path, fset, parsed, nil)
-	if checkErr != nil {
-		if !imports.local(path) {
-			return nil, errModuleDependency
-		}
-		return nil, checkErr
-	}
-	if checked == nil {
-		return nil, os.ErrInvalid
-	}
-	imports.packages[path] = checked
-	return checked, nil
+	return imports.importCompiledDeclarations(path)
 }
 
 func (imports *moduleImporter) allowExternalPackage() bool {

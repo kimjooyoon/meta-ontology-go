@@ -173,6 +173,7 @@ type recipeArena struct {
 	inputSeen                       bool
 	normalizedCondition             bool
 	normalizedArithmetic            bool
+	normalizedCompound              bool
 }
 
 // The source signature declares input even when a constant body never reads it.

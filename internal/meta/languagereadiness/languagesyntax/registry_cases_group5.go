@@ -14,5 +14,7 @@ func expectedSyntaxCaseGroup5() []CaseDefinition {
 		{ID: "derived-candidate-origin-reader", Path: "examples/derived-candidate-origins/inspect.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, OrderedCollections: true},
 
 		{ID: "everyday-local-condition-origins", Path: "examples/everyday-program/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false},
+
+		{ID: "compound-local-update-origins", Path: "examples/compound-updates/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false},
 	}
 }

@@ -32,8 +32,12 @@ func validateBodyStatement(statement ast.Stmt, readonly, locals map[string]bool,
 		}
 		return 0, err
 	case *ast.AssignStmt:
-		if value.Tok != token.ASSIGN || len(value.Lhs) != 1 || len(value.Rhs) != 1 {
+		_, compound := CompoundAssignmentOperator(value.Tok)
+		if value.Tok != token.ASSIGN && !compound || len(value.Lhs) != 1 || len(value.Rhs) != 1 {
 			return 0, fmt.Errorf("assignment requires one existing local and one value")
+		}
+		if _, direct := value.Lhs[0].(*ast.Ident); compound && !direct {
+			return 0, fmt.Errorf("compound assignment requires a direct existing local")
 		}
 		name, ok := assignmentLocalName(value.Lhs[0])
 		if !ok || readonly[name] || !locals[name] {
