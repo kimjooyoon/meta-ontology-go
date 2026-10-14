@@ -54,6 +54,11 @@ func (c *recordFlowBuilder) parse() (*ast.FuncDecl, error) {
 	if err != nil {
 		return nil, err
 	}
+	if c.sourceValidation != nil {
+		if err := c.sourceValidation(file); err != nil {
+			return nil, err
+		}
+	}
 	normalizeIntegerLocalInitializers("selection", file, c.fset)
 	if _, err = checkBodyTypes("selection", file, c.fset, c.info); err != nil {
 		return nil, err

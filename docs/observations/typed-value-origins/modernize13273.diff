@@ -1,0 +1,13 @@
+--- <study-root>/producer13273/internal/bodycodegen/typed_value_origins_fresh_test.go (old)
++++ <study-root>/producer13273/internal/bodycodegen/typed_value_origins_fresh_test.go (new)
+@@ -94,8 +94,8 @@
+ func typedAncestors12973(r TypedValueOrigins, root uint16, control bool) []string {
+ 	seen := make([]bool, len(r.Flow.Nodes)+1)
+ 	seen[root] = true
+-	for i := len(r.Flow.Nodes) - 1; i >= 0; i-- {
+-		n := r.Flow.Nodes[i]
++	for _, n := range slices.Backward(r.Flow.Nodes) {
++
+ 		if !seen[n.ID] {
+ 			continue
+ 		}

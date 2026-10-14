@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "typed/example", "activity": "Compute"},
+  "packages": [{"path": "typed/example", "name": "typedorigins", "imports": [], "sources": ["main.gooo"]}]
+}

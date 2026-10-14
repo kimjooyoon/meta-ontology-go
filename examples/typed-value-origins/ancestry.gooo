@@ -1,0 +1,56 @@
+package typedancestry
+namespace typedancestry
+
+entity Integer id "urn:gooo:type:integer"
+entity Boolean id "urn:gooo:type:boolean"
+entity Text id "urn:gooo:type:string"
+entity Columns id "urn:gooo:typed-ancestry:columns" fields {
+    field source_sha256 id "urn:gooo:typed-ancestry:source" type string required one
+    field root id "urn:gooo:typed-ancestry:root" type integer required one
+    field count id "urn:gooo:typed-ancestry:count" type integer required one
+    field include_control id "urn:gooo:typed-ancestry:control" type boolean required one
+    field bits id "urn:gooo:typed-ancestry:bits" type integer required many
+    field ids id "urn:gooo:typed-ancestry:ids" type integer required many
+    field parent_a id "urn:gooo:typed-ancestry:parent-a" type integer required many
+    field parent_b id "urn:gooo:typed-ancestry:parent-b" type integer required many
+    field guards id "urn:gooo:typed-ancestry:guards" type integer required many
+    field conditions id "urn:gooo:typed-ancestry:conditions" type integer required many
+    field kinds id "urn:gooo:typed-ancestry:kinds" type string required many
+    field field_ids id "urn:gooo:typed-ancestry:fields" type string required many
+    field input_ports id "urn:gooo:typed-ancestry:ports" type string required many
+}
+
+activity Has(Integer, Integer) -> Boolean id "urn:gooo:typed-ancestry:has" computes `if input1<1 {return false};return (input0/input1)%2==1`
+activity Mark(Integer, Integer) -> Integer id "urn:gooo:typed-ancestry:mark" computes `if input1<1 || Has(input0,input1) {return input0};return input0+input1`
+
+activity Inputs(Columns) -> Text id "urn:gooo:typed-ancestry:inputs" computes `if input.count<1 || input.count>60 || input.root<1 || input.root>input.count || int64(len(input.ids))!=input.count || len(input.bits)!=len(input.ids) || len(input.parent_a)!=len(input.ids) || len(input.parent_b)!=len(input.ids) || len(input.guards)!=len(input.ids) || len(input.conditions)!=len(input.ids) || len(input.kinds)!=len(input.ids) || len(input.field_ids)!=len(input.ids) || len(input.input_ports)!=len(input.ids) {return "unusable-input"}
+let bit=1
+let position=0
+for id in input.ids {
+    if id!=position+1 || input.bits[position]!=bit {return "unusable-input"}
+    bit=bit*2
+    position=position+1
+}
+let mask=input.bits[input.root-1]
+position=0
+for ignored in input.ids {
+    let index=input.count-1-position
+    let id=input.ids[index]
+    if id!=index+1 || input.parent_a[index]<0 || input.parent_a[index]>=id || input.parent_b[index]<0 || input.parent_b[index]>=id || input.guards[index]<0 || input.guards[index]>=id || input.conditions[index]<0 || input.conditions[index]>=id {return "unusable-input"}
+    if Has(mask,input.bits[index]) {
+        if input.parent_a[index]>0 {mask=Mark(mask,input.bits[input.parent_a[index]-1])}
+        if input.parent_b[index]>0 {mask=Mark(mask,input.bits[input.parent_b[index]-1])}
+        if input.include_control {
+            if input.guards[index]>0 {mask=Mark(mask,input.bits[input.guards[index]-1])}
+            if input.conditions[index]>0 {mask=Mark(mask,input.bits[input.conditions[index]-1])}
+        }
+    }
+    position=position+1
+}
+let result=""
+let row=0
+for id in input.ids {
+    if input.kinds[row]=="input" && Has(mask,input.bits[row]) {result=result+input.input_ports[row]+":"+input.field_ids[row]+";"}
+    row=row+1
+}
+return result`

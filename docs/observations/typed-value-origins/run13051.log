@@ -1,0 +1,10 @@
+=== RUN   TestTypedHelperOrigins13051
+    typed_value_origins_helpers_fresh_test.go:57: 5 new field/helper/conditional-root assertions; literal local accepted before integer normalization; loop explicitly unresolved; native/model executions0
+--- PASS: TestTypedHelperOrigins13051 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.517s
+=== RUN   TestTypedAncestryConsumer13057
+    body_origins_consumer_fresh_test.go:103: fresh record-returning-helper producer2/2; real Gooo bitset traversal3/3 external comparisons, input-only finite0, models0
+--- PASS: TestTypedAncestryConsumer13057 (1.37s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.852s
