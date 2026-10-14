@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "field/reader", "activity": "Describe"},
+  "packages": [{"path": "field/reader", "name": "fieldreader", "imports": [], "sources": ["reader.gooo"]}]
+}

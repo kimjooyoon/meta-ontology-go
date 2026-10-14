@@ -1,0 +1,6 @@
+go: downloading github.com/kimjooyoon/gooo-jev v0.0.0-20260928032625-e146e6dbb34a
+=== RUN   TestGoooRecordedFieldLineage14111
+    package_field_lineage_fresh_test.go:109: 4 distinct recorded reads->real Gooo ancestry traversal4/4;copy/helper/record-return/atomic-swap paths and equal-zero cases;original producer executions0;input-only finite0;models0
+--- PASS: TestGoooRecordedFieldLineage14111 (2.23s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	2.775s

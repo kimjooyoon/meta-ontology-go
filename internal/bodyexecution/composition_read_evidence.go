@@ -14,6 +14,7 @@ type compositionObservedSource struct {
 	constructions      []CompositionConstructionSite
 	locals             []CompositionLocalSite
 	uses               []CompositionLocalUseSite
+	fields             *compositionFieldProjection
 }
 
 func observedCompositionLocalEvidence(prior Composition) (o compositionObservedSource, err error) {
@@ -37,7 +38,11 @@ func observedCompositionLocalEvidence(prior Composition) (o compositionObservedS
 	if err != nil {
 		return o, err
 	}
-	if len(o.reads)+len(o.constructions)+len(o.locals) == 0 {
+	fieldBindings, err := compositionFieldBindings(prior)
+	if err != nil {
+		return o, err
+	}
+	if len(o.reads)+len(o.constructions)+len(o.locals)+len(fieldBindings.bindings) == 0 {
 		return o, nil
 	}
 	o.inputs = compositionReadInputs(prior)
@@ -46,12 +51,24 @@ func observedCompositionLocalEvidence(prior Composition) (o compositionObservedS
 	if err != nil {
 		return o, err
 	}
+	if len(fieldBindings.bindings) > 0 {
+		o.projection, o.fields, err = observedCompositionFieldProjection(o.projection, prefix, prior)
+		if err != nil {
+			return o, err
+		}
+	}
 	observer := readObserver
 	if len(o.constructions) > 0 {
 		observer = constructionReadObserver
 	}
 	if len(o.locals) > 0 {
 		observer, err = localReadObserver()
+		if err != nil {
+			return o, err
+		}
+	}
+	if o.fields != nil && len(o.fields.sites) > 0 {
+		observer, err = fieldReadObserver()
 		if err != nil {
 			return o, err
 		}

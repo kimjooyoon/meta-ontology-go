@@ -24,6 +24,7 @@ type NativeOriginInput struct {
 	NextOffset           *int                     `json:"next_offset,omitempty"`
 	Truncated            bool                     `json:"truncated"`
 	Observation          *CompositionReadSummary  `json:"recorded_observation"`
+	FieldObservation     *CompositionFieldSummary `json:"recorded_field_observation,omitempty"`
 	LocalObservation     *CompositionLocalSummary `json:"recorded_local_observation,omitempty"`
 	ProducerExecutions   int                      `json:"producer_program_executions"`
 	ProducerModelCalls   int                      `json:"producer_model_calls"`
@@ -34,9 +35,9 @@ type NativeOriginInput struct {
 
 func ValidateNativeOriginQuery(query NativeOriginQuery) error {
 	switch query.Kind {
-	case "reads", "constructions", "elements", "links", "local-writes", "local-uses", "local-elements", "local-fill-fragments", "local-input-locations":
+	case "reads", "constructions", "elements", "links", "local-writes", "local-uses", "local-elements", "local-fill-fragments", "local-input-locations", "field-writes", "field-uses":
 	default:
-		return fmt.Errorf("origin kind must be reads, constructions, elements, links, local-writes, local-uses, local-elements, local-fill-fragments or local-input-locations")
+		return fmt.Errorf("origin kind must be reads, constructions, elements, links, local-writes, local-uses, local-elements, local-fill-fragments local-input-locations, field-writes or field-uses")
 	}
 	maximum := 65536
 	if query.Kind == "local-fill-fragments" || query.Kind == "local-input-locations" {
@@ -96,6 +97,9 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	if isLocalOriginKind(query.Kind) && runtime.LocalObservation == nil {
 		return nil, nil, fmt.Errorf("saved record has no scalar local observations")
 	}
+	if isFieldOriginKind(query.Kind) && runtime.FieldObservation == nil {
+		return nil, nil, fmt.Errorf("saved record has no per-field execution history")
+	}
 	page := nativeOriginPage{query: query, rows: []json.RawMessage{}}
 	for _, trace := range runtime.Traces {
 		page.visit(runtime, trace)
@@ -113,6 +117,10 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 		local := *runtime.LocalObservation
 		report.LocalObservation = &local
 	}
+	if runtime.FieldObservation != nil {
+		copy := *runtime.FieldObservation
+		report.FieldObservation = &copy
+	}
 	if report.Truncated {
 		next := query.Offset + len(page.rows)
 		report.NextOffset = &next
@@ -125,6 +133,10 @@ func isLocalOriginKind(kind string) bool {
 }
 
 func (page *nativeOriginPage) visit(runtime CompositionRuntime, trace CompositionTrace) {
+	if isFieldOriginKind(page.query.Kind) {
+		page.visitFields(runtime, trace)
+		return
+	}
 	if isLocalOriginKind(page.query.Kind) {
 		page.visitLocals(runtime, trace)
 		return

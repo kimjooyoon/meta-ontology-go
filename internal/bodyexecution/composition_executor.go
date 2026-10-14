@@ -85,6 +85,11 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 	r.ReadSites, r.ReadInputs = observed.reads, observed.inputs
 	r.ConstructionSites = observed.constructions
 	r.LocalSites, r.LocalUseSites = observed.locals, observed.uses
+	if observed.fields != nil {
+		r.FieldBindings = observed.fields.inventory.bindings
+		r.FieldSites, r.FieldUseSites = observed.fields.sites, observed.fields.uses
+		r.FieldProjectionSHA256 = observed.fields.sourceSHA256
+	}
 	if projection != prior.Source || driver != prior.Driver {
 		r.ObservedProjectionSHA256, r.ObservedDriverSHA256 = digest([]byte(projection)), digest([]byte(driver))
 	}

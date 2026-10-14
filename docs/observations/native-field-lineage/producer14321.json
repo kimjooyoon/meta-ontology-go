@@ -1,0 +1,82 @@
+{
+  "base": "55d0a72668e4b5dcde239cef36c3d4a10b649e07",
+  "cohort": "new integer/bool/string Gooo source and four new finite cases, followed by Gooo ancestry on those new field journals",
+  "historical_local_reruns": 0,
+  "files": [
+    {
+      "path": "cmd/gooo/package_execute.go",
+      "sha256": "fc2cc992570d24d027c959d8dcef6222d491dfd420ab47d209660d51ac1fdd93",
+      "bytes": 10145
+    },
+    {
+      "path": "cmd/gooo/package_field_lineage_boundary_fresh_test.go",
+      "sha256": "8bb0f535f1d73835ee9805fd46b4b517476f5083c8a887e3ee370d3d5813af94",
+      "bytes": 5672
+    },
+    {
+      "path": "cmd/gooo/package_field_lineage_fresh_test.go",
+      "sha256": "233d61b90d5db240945233422d528adb7ee397f05d1d4759445310d4a8b0f612",
+      "bytes": 4221
+    },
+    {
+      "path": "cmd/gooo/package_field_renderer_fresh_test.go",
+      "sha256": "8c11234e046426854580555d8597a86b118209a10a9156db5a84de536d921b6b",
+      "bytes": 6682
+    },
+    {
+      "path": "cmd/gooo/package_origin_input.go",
+      "sha256": "5de1cd9cbeaf6ffe8088566cb2cb49fed607fcc65b78b63d4f85f2ffb56d6b34",
+      "bytes": 5521
+    },
+    {
+      "path": "examples/native-field-lineage/gooo.workspace.json",
+      "sha256": "402bb28de445d04aec29032d4d6fef0c590363e9bb04617570a6af01d6489948",
+      "bytes": 231
+    },
+    {
+      "path": "examples/native-field-lineage/lineage.gooo",
+      "sha256": "570cfe28271cf3e0edb1d71cb0d9cafbacd7852d04a93e957f418462d877801f",
+      "bytes": 10012
+    },
+    {
+      "path": "examples/native-field-lineage/recorded-runtime.json.gz",
+      "sha256": "019d47631466d39e9dacb4c94e36e6520f916dd19299bad5a9d1dee2385324b4",
+      "bytes": 4724
+    },
+    {
+      "path": "internal/bodycodegen/collection_bounds_test.go",
+      "sha256": "a5d380ca2df38a052bc24dbcc55b98fbc11d123dce5d603febd3704c0e6767c6",
+      "bytes": 1899
+    },
+    {
+      "path": "internal/bodycodegen/collection_loop.go",
+      "sha256": "75b24fb9876e7b4de1a360962458886856ec0c3e747b676ae77fcbfa1506b4af",
+      "bytes": 2799
+    },
+    {
+      "path": "internal/bodycodegen/collection_nested_work.go",
+      "sha256": "aa57744edbcd28ea11279dd2c353056575a44c1be5d25a794054c4de1b328f1b",
+      "bytes": 1109
+    },
+    {
+      "path": "internal/bodycodegen/collection_return_budget_fresh_test.go",
+      "sha256": "873276d757744774aceae4a0071d0d43d259b9651aed2766bdd140db92f2b451",
+      "bytes": 2126
+    },
+    {
+      "path": "internal/bodycodegen/counted_loop_calls.go",
+      "sha256": "6b4f183ab6c584622f7fe887a3ed0572db8947f0a56bdb16514d7223a59336e3",
+      "bytes": 1992
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_render.go",
+      "sha256": "995fee3021c04673baab8eafc22b10a926aa78b99ecefaaee30dfad7940cb2d6",
+      "bytes": 5454
+    },
+    {
+      "path": "internal/bodyexecution/native_field_lineage_columns.go",
+      "sha256": "e274fe4569958e944388917ceb0464e278a3ca44e5db772e20a2f9257bbe4012",
+      "bytes": 4950
+    }
+  ]
+}

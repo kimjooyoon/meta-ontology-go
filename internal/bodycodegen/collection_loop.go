@@ -17,16 +17,8 @@ func collectionLoopShape(loop *ast.RangeStmt) (string, error) {
 	if loop.Tok != token.DEFINE || !keyOK || key.Name != "_" || !valueOK || value.Name == "_" {
 		return "", fmt.Errorf("collection iteration requires a new named value and an omitted index")
 	}
-	var nested bool
-	ast.Inspect(loop.Body, func(node ast.Node) bool {
-		switch node.(type) {
-		case *ast.ForStmt, *ast.RangeStmt:
-			nested = true
-		}
-		return !nested
-	})
-	if nested {
-		return "", fmt.Errorf("nested iteration needs a separate source work bound")
+	if err := validateCollectionNesting(loop); err != nil {
+		return "", err
 	}
 	return value.Name, validateExpression(loop.X)
 }

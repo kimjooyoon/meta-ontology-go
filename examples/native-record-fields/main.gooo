@@ -1,0 +1,20 @@
+package nativefields
+namespace nativefields
+entity Integer id "urn:gooo:type:integer"
+entity Input id "urn:gooo:native-fields:input" fields {
+    field left id "urn:gooo:native-fields:input-left" type integer required one
+    field right id "urn:gooo:native-fields:input-right" type integer required one
+    field flip id "urn:gooo:native-fields:input-flip" type boolean required one
+}
+entity Pair id "urn:gooo:native-fields:pair" fields {
+    field left id "urn:gooo:native-fields:left" type integer required one
+    field right id "urn:gooo:native-fields:right" type integer required one
+}
+activity Advance(Pair) -> Pair id "urn:gooo:native-fields:advance" computes `let saved=input
+saved.left=saved.left+2017
+return saved`
+activity Read(Pair) -> Integer id "urn:gooo:native-fields:read" computes `return input.right`
+activity Build(Input) -> Integer id "urn:gooo:native-fields:build" computes `let original=Pair{left:input.left,right:input.right}
+let copied=Advance(original)
+if input.flip {copied=Pair{left:copied.right,right:copied.left}}
+return Read(copied)`

@@ -16,7 +16,7 @@ type compositionReadRun struct {
 }
 
 func (run *compositionReadRun) reset(root string, r *CompositionRuntime) error {
-	if len(r.ReadSites)+len(r.ConstructionSites)+len(r.LocalSites) == 0 {
+	if len(r.ReadSites)+len(r.ConstructionSites)+len(r.LocalSites)+len(r.FieldSites) == 0 {
 		return nil
 	}
 	err := os.Remove(filepath.Join(root, readObservationFile))
@@ -27,7 +27,7 @@ func (run *compositionReadRun) reset(root string, r *CompositionRuntime) error {
 }
 
 func (run *compositionReadRun) observe(attempt int, root string, graph compositionGraph, suite CompositionCases, r *CompositionRuntime) error {
-	if len(r.ReadSites)+len(r.ConstructionSites)+len(r.LocalSites) == 0 {
+	if len(r.ReadSites)+len(r.ConstructionSites)+len(r.LocalSites)+len(r.FieldSites) == 0 {
 		return nil
 	}
 	file, err := os.Open(filepath.Join(root, readObservationFile))
@@ -49,7 +49,7 @@ func (run *compositionReadRun) observe(attempt int, root string, graph compositi
 		return nil
 	}
 	run.first = raw
-	if len(r.ConstructionSites)+len(r.LocalSites) > 0 {
+	if len(r.ConstructionSites)+len(r.LocalSites)+len(r.FieldSites) > 0 {
 		run.construction = &compositionConstructionContext{sites: r.ConstructionSites}
 	}
 	run.rows, run.dropped, run.registration, r.ReadObservation, err = graph.nativeReadFile(raw, suite, r.ReadSites, r.ReadInputs, run.construction)

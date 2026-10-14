@@ -36,7 +36,7 @@ activity Sum(Batch) -> Integer id "urn:bounds7781:sum" computes `
 	}
 	for _, rejected := range []string{
 		`for item in input.items { item = 7 }; return 0`,
-		`for item in input.items { for second in input.items { return item + second } }; return 0`,
+		`for item in input.items { for second in input.items { for third in input.items { return item + second + third } } }; return 0`,
 		`let item = 0; for item in input.items { return item }; return 0`,
 		`for letter in "abc" { return 0 }; return 0`,
 	} {

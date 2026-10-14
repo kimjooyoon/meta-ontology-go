@@ -21,8 +21,8 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 		query.Kind = flags["--origin-kind"]
 	}
 	shape := flags["--origin-shape"]
-	if shape != "" && shape != "rows" && shape != "local-fill-columns" {
-		return query, fmt.Errorf("origin shape must be rows or local-fill-columns")
+	if shape != "" && shape != "rows" && shape != "local-fill-columns" && shape != "field-lineage-columns" {
+		return query, fmt.Errorf("origin shape must be rows, local-fill-columns or field-lineage-columns")
 	}
 	if shape == "local-fill-columns" {
 		if flags["--origin-kind"] == "" {
@@ -31,6 +31,12 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 		if query.Kind != "local-fill-fragments" {
 			return query, fmt.Errorf("local-fill-columns requires local-fill-fragments")
 		}
+	}
+	if shape == "field-lineage-columns" {
+		if flags["--origin-kind"] == "" {
+			query.Kind = "field-uses"
+		}
+		query.Limit = 1
 	}
 	for _, option := range []struct {
 		key    string
@@ -44,6 +50,9 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 			*option.target = n
 		}
 	}
+	if shape == "field-lineage-columns" && (query.Kind != "field-uses" || query.Limit != 1) {
+		return query, fmt.Errorf("field-lineage-columns requires field-uses and limit1")
+	}
 	return query, bodyexecution.ValidateNativeOriginQuery(query)
 }
 
@@ -56,19 +65,30 @@ func packageOriginInputsWithShape(raw []byte, target packageruntime.EntrySpec, q
 	if err != nil {
 		return nil, nil, fmt.Errorf("decode origin receipt: %w", err)
 	}
-	selectPage := bodyexecution.SelectRecordedNativeOrigins
-	if shape == "local-fill-columns" {
-		selectPage = bodyexecution.SelectRecordedNativeOriginPage
+	var rows []json.RawMessage
+	var origin *bodyexecution.NativeOriginInput
+	if shape == "field-lineage-columns" {
+		var columns bodyexecution.FieldLineageColumns
+		columns, origin, err = bodyexecution.SelectRecordedFieldLineage(runtime, query)
+		if err == nil {
+			var row []byte
+			row, err = json.Marshal(columns)
+			rows = []json.RawMessage{row}
+		}
+	} else {
+		selectPage := bodyexecution.SelectRecordedNativeOrigins
+		if shape == "local-fill-columns" {
+			selectPage = bodyexecution.SelectRecordedNativeOriginPage
+		}
+		rows, origin, err = selectPage(runtime, query)
+		if err == nil {
+			rows, err = shapePackageOriginRows(rows, origin, shape)
+		}
 	}
-	rows, origin, err := selectPage(runtime, query)
-	if err != nil {
-		return nil, nil, err
-	}
-	origin.ReceiptSHA256 = workspaceDigest(raw)
-	rows, err = shapePackageOriginRows(rows, origin, shape)
 	if err != nil {
 		return nil, origin, err
 	}
+	origin.ReceiptSHA256 = workspaceDigest(raw)
 	input := struct {
 		Schema string                       `json:"schema"`
 		Inputs []map[string]json.RawMessage `json:"inputs"`
@@ -99,6 +119,10 @@ func writePackageOriginInput(output io.Writer, origin *bodyexecution.NativeOrigi
 	}
 	if summary := origin.LocalObservation; summary != nil {
 		fmt.Fprintf(output, "original local observation: %s writes=%d uses=%d unresolved=%d write_drops=%d use_drops=%d frame_drops=%d interrupted=%d\n", summary.Status, summary.RecordedWrites, summary.RecordedUses, summary.Unresolved, summary.WritesDropped, summary.UsesDropped, summary.FramesDropped, summary.Interrupted)
+	}
+
+	if summary := origin.FieldObservation; summary != nil {
+		fmt.Fprintf(output, "original field history: %s writes=%d uses=%d parents=%d unknown_parents=%d shared_rhs=%d write_drops=%d use_drops=%d frame_drops=%d\n", summary.Status, summary.RecordedWrites, summary.RecordedUses, summary.ParentLinks, summary.UnknownParents, summary.SharedRHSWrites, summary.WritesDropped, summary.UsesDropped, summary.FramesDropped)
 	}
 
 }

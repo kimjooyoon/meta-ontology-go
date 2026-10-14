@@ -1,7 +1,6 @@
 package bodycodegen
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -32,12 +31,10 @@ func collectPureCallSites(root ast.Node, maximum int, sites *[]pureCallSite) err
 		case *ast.RangeStmt:
 			if _, shapeErr := collectionLoopShape(value); shapeErr != nil {
 				err = shapeErr
-			} else if maximum > 1024/RepeatedFieldLimit {
-				err = fmt.Errorf("collection call expansion exceeds 1024")
 			} else {
 				err = collectPureCallSites(value.X, maximum, sites)
 				if err == nil {
-					err = collectPureCallSites(value.Body, maximum*RepeatedFieldLimit, sites)
+					err = collectPureCallSites(value.Body, pureCallMultiplicity(maximum, RepeatedFieldLimit), sites)
 				}
 			}
 			return false
@@ -46,7 +43,14 @@ func collectPureCallSites(root ast.Node, maximum int, sites *[]pureCallSite) err
 			if shapeErr != nil {
 				err = shapeErr
 			} else {
-				err = collectPureCallSites(value.Body, maximum*bound, sites)
+				err = collectPureCallSites(value.Body, pureCallMultiplicity(maximum, bound), sites)
+			}
+			return false
+		case *ast.ReturnStmt:
+			for _, expression := range value.Results {
+				if err = collectPureCallSites(expression, 1, sites); err != nil {
+					break
+				}
 			}
 			return false
 		case *ast.CallExpr:
@@ -57,4 +61,14 @@ func collectPureCallSites(root ast.Node, maximum int, sites *[]pureCallSite) err
 		return err == nil
 	})
 	return err
+}
+
+// Saturate loop multiplicity above the existing invocation budget. A return
+// expression executes at most once in this activity, even inside nested loops.
+// Primitive-only loops do not acquire a named-activity call budget.
+func pureCallMultiplicity(maximum, bound int) int {
+	if maximum > pureCallLimit/bound {
+		return pureCallLimit + 1
+	}
+	return maximum * bound
 }

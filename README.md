@@ -24,6 +24,16 @@ computations. It can pass graph arrays to a Gooo program that follows dependenci
 and returns input ports and stable field IDs. The report distinguishes possible
 source dependencies from observed execution paths.
 
+[Native record-field histories](examples/native-record-fields/README.md) now distinguish
+actual field writes and reads through copies and fixed helper calls. Even equal
+values retain separate field identities. A Gooo reader describes saved field
+records without running their producer again. Recording limits leave explicit
+drops while the computation continues.
+The [Gooo ancestry reader](examples/native-field-lineage/README.md) follows saved
+field links through copies and helpers, and reports recording gaps separately.
+Its traversal lives in `.gooo`; Go transports recorded columns. Two bounded
+sequence loops now express this kind of small graph walk.
+
 A [Gooo metaprogram](examples/derived-origin/README.md) reads saved assembly
 origins and counts which recorded assignments connect to candidates, grammar
 declarations or retained templates. The CLI can pass a page as aligned arrays;

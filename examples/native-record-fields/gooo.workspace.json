@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "field/example", "activity": "Build"},
+  "packages": [{"path": "field/example", "name": "nativefields", "imports": [], "sources": ["main.gooo"]}]
+}

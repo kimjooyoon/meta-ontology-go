@@ -1,0 +1,5 @@
+=== RUN   TestGoooFieldLimits13811
+    composition_field_large_fresh_test.go:46: 24 fresh Gooo inputs,73728 fixed helper calls;actual integer/boolean/string outputs24/24;4096writes/65536uses/65536frames bounded with explicit drops;2-run replay;models0
+--- PASS: TestGoooFieldLimits13811 (0.89s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.401s

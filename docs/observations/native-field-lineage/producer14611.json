@@ -1,0 +1,227 @@
+{
+  "base": "55d0a72668e4b5dcde239cef36c3d4a10b649e07",
+  "cohort": "six new synthetic capacity and reverse-completion inputs, three disjoint two-case batches",
+  "historical_local_reruns": 0,
+  "files": [
+    {
+      "path": "cmd/gooo/package_execute.go",
+      "sha256": "fc2cc992570d24d027c959d8dcef6222d491dfd420ab47d209660d51ac1fdd93",
+      "bytes": 10145
+    },
+    {
+      "path": "cmd/gooo/package_field_lineage_boundary_fresh_test.go",
+      "sha256": "8bb0f535f1d73835ee9805fd46b4b517476f5083c8a887e3ee370d3d5813af94",
+      "bytes": 5672
+    },
+    {
+      "path": "cmd/gooo/package_field_lineage_capacity_fresh_test.go",
+      "sha256": "aee9cc4f5b5607a8207017b4262191be0fa1d342167c932e3bd90b433a27dc27",
+      "bytes": 5211
+    },
+    {
+      "path": "cmd/gooo/package_field_lineage_fresh_test.go",
+      "sha256": "233d61b90d5db240945233422d528adb7ee397f05d1d4759445310d4a8b0f612",
+      "bytes": 4221
+    },
+    {
+      "path": "cmd/gooo/package_field_native_fresh_test.go",
+      "sha256": "47a203b76977676b4193df36b49472ebf74b37365ab91e19c216a91f4e727fe9",
+      "bytes": 4069
+    },
+    {
+      "path": "cmd/gooo/package_field_renderer_fresh_test.go",
+      "sha256": "8c11234e046426854580555d8597a86b118209a10a9156db5a84de536d921b6b",
+      "bytes": 6682
+    },
+    {
+      "path": "cmd/gooo/package_origin_input.go",
+      "sha256": "5de1cd9cbeaf6ffe8088566cb2cb49fed607fcc65b78b63d4f85f2ffb56d6b34",
+      "bytes": 5521
+    },
+    {
+      "path": "examples/native-field-lineage/README.md",
+      "sha256": "2ec53bca0fbd1f5ff2fe65b6218293fe65026dbf1c7a07496cdfa96cdd448dcc",
+      "bytes": 3568
+    },
+    {
+      "path": "examples/native-field-lineage/gooo.workspace.json",
+      "sha256": "402bb28de445d04aec29032d4d6fef0c590363e9bb04617570a6af01d6489948",
+      "bytes": 231
+    },
+    {
+      "path": "examples/native-field-lineage/lineage.gooo",
+      "sha256": "570cfe28271cf3e0edb1d71cb0d9cafbacd7852d04a93e957f418462d877801f",
+      "bytes": 10012
+    },
+    {
+      "path": "examples/native-field-lineage/recorded-runtime.json.gz",
+      "sha256": "019d47631466d39e9dacb4c94e36e6520f916dd19299bad5a9d1dee2385324b4",
+      "bytes": 4724
+    },
+    {
+      "path": "internal/bodycodegen/collection_bounds_test.go",
+      "sha256": "a5d380ca2df38a052bc24dbcc55b98fbc11d123dce5d603febd3704c0e6767c6",
+      "bytes": 1899
+    },
+    {
+      "path": "internal/bodycodegen/collection_loop.go",
+      "sha256": "75b24fb9876e7b4de1a360962458886856ec0c3e747b676ae77fcbfa1506b4af",
+      "bytes": 2799
+    },
+    {
+      "path": "internal/bodycodegen/collection_nested_work.go",
+      "sha256": "aa57744edbcd28ea11279dd2c353056575a44c1be5d25a794054c4de1b328f1b",
+      "bytes": 1109
+    },
+    {
+      "path": "internal/bodycodegen/collection_return_budget_fresh_test.go",
+      "sha256": "873276d757744774aceae4a0071d0d43d259b9651aed2766bdd140db92f2b451",
+      "bytes": 2126
+    },
+    {
+      "path": "internal/bodycodegen/counted_loop_calls.go",
+      "sha256": "6b4f183ab6c584622f7fe887a3ed0572db8947f0a56bdb16514d7223a59336e3",
+      "bytes": 1992
+    },
+    {
+      "path": "internal/bodyexecution/composition_executor.go",
+      "sha256": "27762505ad53de55a8cd77915880658d9d4a80bf1945056be5d0a171edb41951",
+      "bytes": 5196
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_contract.go",
+      "sha256": "40696166dd04966845c2ca6049c66d439860d966cfae6d238fd269b74420e2f1",
+      "bytes": 4369
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_inventory.go",
+      "sha256": "105a92a4743f1d6f9de167a5774294da2489652cf8afc9ea5eaec5faf691498a",
+      "bytes": 5103
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_large_fresh_test.go",
+      "sha256": "ebe06e006a231445c4e1968678cf67493bbe8d22f883740bd0a829575a024676",
+      "bytes": 2585
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_limits_fresh_test.go",
+      "sha256": "8425686817bc7c6382ae9f4af02024e34368a8fa83d3e507e24f34e102a918eb",
+      "bytes": 4676
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_native_fresh_test.go",
+      "sha256": "a1f8cd1b598503eb214680d11c4b591be9984c783f631b3dcbde18ebafe227b8",
+      "bytes": 6703
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_native_validate.go",
+      "sha256": "534669ed70492649fdba719d63800ca294e939b9c91cb2d44e48cfc8fd795788",
+      "bytes": 4323
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_observer.go",
+      "sha256": "8cd419110112178561689b2fc0b58327478fb57efb337401b1125192b82318f7",
+      "bytes": 6303
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_projection.go",
+      "sha256": "0b341a915e1baa2644e87c826fe0ea1ff8fd67d692d014006c9ad99587f485dc",
+      "bytes": 11041
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_render.go",
+      "sha256": "995fee3021c04673baab8eafc22b10a926aa78b99ecefaaee30dfad7940cb2d6",
+      "bytes": 5454
+    },
+    {
+      "path": "internal/bodyexecution/composition_field_runtime.go",
+      "sha256": "247a35ede431a6775c1b099fb0bfa6b53bfdba17a801e0ebefba047a4245a747",
+      "bytes": 6695
+    },
+    {
+      "path": "internal/bodyexecution/composition_native_observation.go",
+      "sha256": "5dc29873406c727cafbb6068aaaeb8e072624e6da2f798c603c3163b4f9aed4b",
+      "bytes": 2750
+    },
+    {
+      "path": "internal/bodyexecution/composition_read_evidence.go",
+      "sha256": "4404ce5a8a40e5f39d63faa02727d2e87b276011b2545a6c024edfc188652af9",
+      "bytes": 2449
+    },
+    {
+      "path": "internal/bodyexecution/composition_read_run.go",
+      "sha256": "4f843e4fa1d44d4f87ed53622b03ccb1d26bef46e73f9b3647ec963e31149de0",
+      "bytes": 2430
+    },
+    {
+      "path": "internal/bodyexecution/composition_runtime.go",
+      "sha256": "fea7995c2cfad9341b8e51f844b7be9922580844c80596e6cb83e62b2abf1789",
+      "bytes": 17211
+    },
+    {
+      "path": "internal/bodyexecution/joint_replay.go",
+      "sha256": "8b53692d0d6c7b957f70e3ffb2c2dbc7a2a7e303281f55851359a5873cc80e98",
+      "bytes": 10494
+    },
+    {
+      "path": "internal/bodyexecution/native_field_facts.go",
+      "sha256": "a504c127f6259ab655884eb61bf1b54626952a12dbe5a84db748746c19b5afe9",
+      "bytes": 4325
+    },
+    {
+      "path": "internal/bodyexecution/native_field_lineage_columns.go",
+      "sha256": "99759a76e557a3af47b12ddfc72108cbc8a504f7563e4bb2306ed3c01898f00b",
+      "bytes": 5260
+    },
+    {
+      "path": "internal/bodyexecution/native_field_recorded_fresh_test.go",
+      "sha256": "08484636ca85d8199b81ea4ff50d308d7606defd576ff6e4efef2d23b8e4313b",
+      "bytes": 3005
+    },
+    {
+      "path": "internal/bodyexecution/native_origin_input.go",
+      "sha256": "0fcac87d57e047b4f4bbd7faa13ae965e898775133703a034e22f38d0ff34c86",
+      "bytes": 7160
+    },
+    {
+      "path": "internal/bodyexecution/native_origin_validate.go",
+      "sha256": "e80c744ee05f42e3fd608b9c5c88e8fba2aa61964444e91ccf1d7e5792d46cc1",
+      "bytes": 3457
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+      "sha256": "8f94fcefd7fc29195b636d4376ae61c47ec82bc52fdeafd22d2d68aa017c9b3e",
+      "bytes": 9044
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+      "sha256": "0dde62072f4e605ff23e614383d358e3ccc15de5838349adc469af670295d6be",
+      "bytes": 9892
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+      "sha256": "b95097acd1051541876d7a6665f5d6d93e925fe1dc77d4fab1ab3712dda4cde6",
+      "bytes": 16597
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+      "sha256": "db374b16829f8091520917f7c7a48610f5a6c8bdbce0f28fcdb55a3dc0bb9318",
+      "bytes": 9994
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+      "sha256": "9458a258b736ac828da21cb95ad426d2d62bc0a16f5e3c535f9614056638455d",
+      "bytes": 12641
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/model.go",
+      "sha256": "0af1f6f712acc7663ca22b5046c0dae386822ec0241567d08e92f581189bbdcf",
+      "bytes": 3526
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry.go",
+      "sha256": "dc4755ef79fdcd99fa1eefbc6256dfafac6fc513fe11ffeb676fb3cc97548b4c",
+      "bytes": 19960
+    }
+  ]
+}

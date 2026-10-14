@@ -1,0 +1,5 @@
+=== RUN   TestWorkspaceNativeFields13517
+    package_field_native_fresh_test.go:86: actual new workspace4/4,field-sidecar2-run equality,complete journal/known parents;8 saved facts->real32-fieldGooo reader8/8 external comparisons;producer executions during reads0,models0
+--- PASS: TestWorkspaceNativeFields13517 (1.23s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.789s

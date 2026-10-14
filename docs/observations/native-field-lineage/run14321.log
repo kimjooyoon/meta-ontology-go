@@ -1,0 +1,5 @@
+=== RUN   TestGoooFreshFieldRenderer14321
+    package_field_renderer_fresh_test.go:129: new mixed integer/bool/string producer4/4 and exact native replay;decomposed renderer preserves constructor/copy/parameter/return semantics;Gooo resolves4 native origins including equal-zero branch alternatives;models0;producer replay during ancestry reads0
+--- PASS: TestGoooFreshFieldRenderer14321 (1.19s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.742s
