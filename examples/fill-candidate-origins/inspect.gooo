@@ -1,0 +1,31 @@
+package fillcandidateorigins
+namespace fillcandidateorigins
+
+entity Origin id "urn:fillcandidateorigins:origin" fields {
+ field filename id "urn:fillcandidateorigins:filename" type string required one
+ field source_sha256 id "urn:fillcandidateorigins:source" type string required one
+ field activity_id id "urn:fillcandidateorigins:activity" type string required one
+ field candidate_id id "urn:fillcandidateorigins:candidate" type string required one
+ field hole_id id "urn:fillcandidateorigins:hole" type string required one
+ field expression id "urn:fillcandidateorigins:expression" type string required one
+ field status id "urn:fillcandidateorigins:status" type string required one
+ field reason id "urn:fillcandidateorigins:reason" type string required one
+ field has_use id "urn:fillcandidateorigins:has-use" type boolean required one
+ field hole_start id "urn:fillcandidateorigins:hole-start" type integer required one
+ field hole_end id "urn:fillcandidateorigins:hole-end" type integer required one
+ field use_start id "urn:fillcandidateorigins:use-start" type integer required one
+ field use_end id "urn:fillcandidateorigins:use-end" type integer required one
+ field expression_start id "urn:fillcandidateorigins:expression-start" type integer required one
+ field expression_end id "urn:fillcandidateorigins:expression-end" type integer required one
+}
+
+entity Summary id "urn:fillcandidateorigins:summary" fields {
+ field category id "urn:fillcandidateorigins:category" type string required one
+ field candidate_id id "urn:fillcandidateorigins:summary-candidate" type string required one
+ field hole_id id "urn:fillcandidateorigins:summary-hole" type string required one
+ field expression id "urn:fillcandidateorigins:summary-expression" type string required one
+ field filename id "urn:fillcandidateorigins:summary-file" type string required one
+ field reason id "urn:fillcandidateorigins:summary-reason" type string required one
+}
+
+activity Inspect(Origin) -> Summary computes "let category = \"UNRESOLVED_USE\"; if input.status == \"MAPPED\" && input.has_use && input.hole_end > input.hole_start && input.use_end > input.use_start && input.expression_end > input.expression_start { category = \"DECLARED_ASSIGNMENT\" }; return Summary{category:category, candidate_id:input.candidate_id, hole_id:input.hole_id, expression:input.expression, filename:input.filename, reason:input.reason}"

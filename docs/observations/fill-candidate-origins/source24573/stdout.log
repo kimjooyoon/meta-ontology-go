@@ -1,0 +1,8 @@
+=== RUN   TestSourceCandidateOrigins24573
+    source_fill_candidate_origins_fresh_test.go:63: source24573:2 explicit hole mappings, escaped/Unicode raw byte locations, invalid-for-Integer expression retained; no candidate/model execution
+--- PASS: TestSourceCandidateOrigins24573 (0.00s)
+=== RUN   TestSourceCandidateUnresolved24573
+    source_fill_candidate_origins_fresh_test.go:89: source24573:absent and repeated uses remain explicit unresolved observations; no candidate/model execution
+--- PASS: TestSourceCandidateUnresolved24573 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.521s

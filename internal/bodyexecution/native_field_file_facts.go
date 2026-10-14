@@ -80,7 +80,7 @@ func (page *nativeOriginPage) fieldFileLocation(r CompositionRuntime, c, event, 
 		fact.Mapping, fact.Reason, fact.PackagePath, fact.Filename, fact.OriginalActivityID = loc.Mapping, loc.Reason, loc.PackagePath, loc.Filename, loc.OriginalActivityID
 		fact.SourceSHA256, fact.SourceStart, fact.SourceEnd, fact.Expression = loc.SourceSHA256, loc.SourceStart, loc.SourceEnd, loc.Expression
 		fact.CandidateID, fact.HoleID, fact.Grammar = loc.CandidateID, loc.HoleID, loc.Grammar
-		page.add(fact)
+		page.addField(fact, fact.RootActivityID, fact.ActivityID, fact.FieldID)
 	})
 	if binding.Choice != nil {
 		fact := base
@@ -88,6 +88,6 @@ func (page *nativeOriginPage) fieldFileLocation(r CompositionRuntime, c, event, 
 		fact.Category = "record_choice"
 		fact.Mapping, fact.Reason, fact.PackagePath, fact.Filename, fact.OriginalActivityID = location.Status, location.Reason, location.PackagePath, location.Filename, location.ActivityID
 		fact.SourceSHA256, fact.SourceStart, fact.SourceEnd, fact.Expression = location.SourceSHA256, location.Start, location.End, location.Expression
-		page.add(fact)
+		page.addField(fact, fact.RootActivityID, fact.ActivityID, fact.FieldID)
 	}
 }

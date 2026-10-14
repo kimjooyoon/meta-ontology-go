@@ -1,0 +1,89 @@
+{
+  "predecessor_pr": 1564,
+  "predecessor_head": "cd6a02ba6b7062bf0c9bb24056e421a21a5a21df",
+  "original_family": 38,
+  "terminal_originals": {
+    "success": 34,
+    "failure": 4
+  },
+  "cohorts": [
+    {
+      "cohort": "registry28817",
+      "result": {
+        "ended": "2026-10-14T12:45:58.704518+00:00",
+        "exit_code": 1
+      },
+      "archive_sha256": "59473876c59bc4b091e0287a7b9bff48baa7d610f04a5618b60c7b1a5aa70be5"
+    },
+    {
+      "cohort": "registry28903",
+      "result": {
+        "ended": "2026-10-14T12:48:14.522658+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "cd528d79b50d978cc04286d0d54f60481e1d5601d546ad33393eeff996107058"
+    },
+    {
+      "cohort": "capacity29111",
+      "result": {
+        "ended": "2026-10-14T12:51:20.202099+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "94f38bed21ada1603afa5ecafa6f14db13a512b33bc9a3c7179d3043c5172da6"
+    },
+    {
+      "cohort": "static29173",
+      "result": {
+        "at": "2026-10-14T12:51:18.867914+00:00",
+        "exit": 0,
+        "diff_bytes": 0,
+        "stderr_bytes": 0,
+        "tests_executed": 0,
+        "go_files": 59
+      },
+      "archive_sha256": "ca08c4aa100e2a1f5bd58ceef19dbab3a621ad485eff9aff0a11d6f598fdbed2"
+    }
+  ],
+  "original_logs": [
+    {
+      "job": 115843523339,
+      "log": "original-job115843523339.log.gz",
+      "bytes": 284343,
+      "sha256": "b0d362704261518de1387842c4a3270d9f8ab59116d00f6676172ae7ac23bdfd"
+    },
+    {
+      "job": 115843523914,
+      "log": "original-job115843523914.log.gz",
+      "bytes": 406093,
+      "sha256": "dad8bba3882e4aa4f63021fc24492b20646cdc55948e8aee2186c96385d16998"
+    },
+    {
+      "job": 115843529232,
+      "log": "original-job115843529232.log.gz",
+      "bytes": 256914,
+      "sha256": "55c5b25ab039e84eb033a9a9b93dd79e102353d5bfa41ec53f8bc965b392370f"
+    },
+    {
+      "job": 115843524810,
+      "log": "original-job115843524810.log.gz",
+      "bytes": 295932,
+      "sha256": "1065041f3ae12032b9662251837c8005a633feff741fdb7c63c36033b0f4f6a1"
+    },
+    {
+      "job": 115843524900,
+      "log": "original-job115843524900.log.gz",
+      "bytes": 248146,
+      "sha256": "185d578b7959d8d5b13cce88b75c8784796a925246b147e3187fba18a8f3cd68"
+    },
+    {
+      "job": 115843524934,
+      "log": "original-job115843524934.log.gz",
+      "bytes": 222069,
+      "sha256": "3f3349b46a0420f023628c0319298262c7cd5299be2df7e01f9cebb809260a81"
+    }
+  ],
+  "historical_local_reruns": 0,
+  "model_calls": 0,
+  "source_coverage": "8 newly changed production declarations;38 predecessor declarations and309-path feature retained",
+  "scope": "source-bound native registry generation;no whole-language acceptance or race timing improvement claimed"
+}

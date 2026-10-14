@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T12:51:16.647606+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-registry-origin-resolution-20261014/capacity29111/overlay.json",
+    "./internal/meta/repositoryprojection/extractor",
+    "-run=^TestRegistryOriginCapacity29111$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}

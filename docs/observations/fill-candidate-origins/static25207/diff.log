@@ -1,0 +1,21 @@
+--- /private/tmp/gooo-fill-candidate-origins-20261014/static25207/source/internal/bodycodegen/source_fill_candidate_limits_fresh_test.go (old)
++++ /private/tmp/gooo-fill-candidate-origins-20261014/static25207/source/internal/bodycodegen/source_fill_candidate_limits_fresh_test.go (new)
+@@ -11,15 +11,15 @@
+ 	var b strings.Builder
+ 	b.WriteString("package candidate25037\nnamespace candidate25037\nentity Integer id \"urn:candidate25037:integer\"\n")
+ 	b.WriteString("activity Choose(Integer)->Integer computes \"return __GOOO_BODY_HOLE_h0__\" assembling {\n source_fill intent \"Inspect source boundaries.\" {\n")
+-	for i := 0; i < count; i++ {
++	for i := range count {
+ 		fmt.Fprintf(&b, "hole \"h%d\"\n", i)
+ 	}
+ 	b.WriteString(`candidate "\u0062ad25037" {` + "\n")
+-	for i := 0; i < count; i++ {
++	for i := range count {
+ 		fmt.Fprintf(&b, "fill \"h%d\" %s\n", i, strconv.Quote(`"메모\\t25037"`))
+ 	}
+ 	b.WriteString("}\ncandidate \"next25037\" {\n")
+-	for i := 0; i < count; i++ {
++	for i := range count {
+ 		fmt.Fprintf(&b, "fill \"h%d\" \"0\"\n", i)
+ 	}
+ 	b.WriteString("}\n}\ncase \"41\" -> \"51\"\n}\n")

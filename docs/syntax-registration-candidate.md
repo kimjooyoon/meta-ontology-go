@@ -24,7 +24,9 @@ blocked_by. Duplicate case IDs or paths are REFUTED.
 Generation coordinates exactly nine semantic artifact roles: corpus JSON, native registry,
 syntax counters, syntax conformance expectations, denominator admission,
 denominator selection, digest pin, one new denominator JSON, and migration tests.
-The canonical acceptance case still requires exactly nine physical member files.
+The canonical ordinary registration writes exactly nine physical member files.
+A canonical meta-source promotion writes ten: its case literal and MetaSources
+list have distinct source owners. The nine semantic artifact roles are unchanged.
 After repository projection, one role can own several physical files and a file
 can participate in several roles. All nine activity/output bindings remain
 mandatory; emitted/required physical members are the complete distinct write set,
@@ -149,7 +151,8 @@ separate. These are synthetic compiler regressions, not external utility.
 
 ## Native evidence and remaining integration
 
-The dedicated Actions job retains the canonical nine-file end-to-end case.
+The dedicated Actions job retains the canonical nine-file ordinary registration
+and ten-file meta-source promotion end-to-end cases.
 The repository-projection job additionally uses its actual authorized transformed
 workspace, copies it with source links dereferenced, generates the complete
 candidate twice, applies every member only to that CI temporary copy, and runs
@@ -177,8 +180,29 @@ This pins three executable identities, not the entire environment, toolchain
 publisher authenticity or semantic correctness. The new identity requirement is
 an explicit experimental request-ABI change: version-only requests are no longer
 accepted. Native reports carry the actual binding; existing nine-role and
-canonical/projected conformance obligations are unchanged.
+canonical/projected conformance obligations remain bound to the complete write set.
 Issue #742 remains open until those input/identity/executor integrations and all
 six original acceptance obligations are supported by exact-head native evidence.
 Neither candidate byte equality nor the backend tests close product utility or
 the entire language's self-improvement goal.
+
+## Registry helpers and declaration origins
+
+The native `Cases` field may hold a direct case-slice literal or a local
+zero-argument helper. A helper may return another such helper or assemble a
+sequence using one local declaration, ordered `append(sequence, helper()...)`
+assignments, and a final return. Each reachable helper and literal has one use.
+The final literal owns the insertion; earlier groups and unrelated literals
+retain their bytes. Inline literal punctuation and real token-file paths are
+preserved, including source units carrying line directives.
+
+Branches, cycles, repeated helper paths, external calls, arguments, named return
+bindings and shadowed append/helper bindings remain unresolved. Generation
+returns no candidate for those shapes. This is a finite source observation used
+by the Gooo `GenerateNativeRegistry` activity. It does not evaluate arbitrary
+Go or use a model to invent registry members.
+
+The [recorded source cohorts](observations/registry-source-origins/README.md)
+include the failed inline punctuation case and its changed-source successor.
+Full native canonical/projected acceptance belongs to the submitted head's own
+original Actions runs.

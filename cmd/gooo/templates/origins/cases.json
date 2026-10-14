@@ -1,0 +1,193 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "{{module}}/origins:Inspect": {
+          "case_index": 0,
+          "event_kind": "",
+          "event_index": 0,
+          "assignment_index": 0,
+          "frame": 0,
+          "root_activity_id": "",
+          "activity_id": "demo://summarize",
+          "variable_ordinal": 0,
+          "variable_name": "",
+          "record_id": "demo://summary",
+          "field_id": "demo://summary/total",
+          "site_kind": "",
+          "category": "record_choice",
+          "mapping": "MAPPED",
+          "reason": "",
+          "package_path": "demo",
+          "filename": "demo.gooo",
+          "original_activity_id": "demo://summarize",
+          "source_sha256": "SAMPLE_SOURCE_ID",
+          "source_start": 91,
+          "source_end": 104,
+          "expression": "input.score+3",
+          "candidate_id": "",
+          "hole_id": "",
+          "grammar": ""
+        }
+      },
+      "expected": {
+        "{{module}}/origins:Inspect": {
+          "status": "DECLARED_ALTERNATIVE",
+          "selected_alternative": true,
+          "mapped": true,
+          "filename": "demo.gooo",
+          "source_start": 91,
+          "source_end": 104,
+          "expression": "input.score+3",
+          "record_id": "demo://summary",
+          "field_id": "demo://summary/total",
+          "assignment_index": 0,
+          "original_activity_id": "demo://summarize",
+          "reason": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "{{module}}/origins:Inspect": {
+          "case_index": 0,
+          "event_kind": "",
+          "event_index": 0,
+          "assignment_index": 0,
+          "frame": 0,
+          "root_activity_id": "",
+          "activity_id": "demo://summarize",
+          "variable_ordinal": 0,
+          "variable_name": "",
+          "record_id": "demo://summary",
+          "field_id": "demo://summary/total",
+          "site_kind": "",
+          "category": "target",
+          "mapping": "MAPPED",
+          "reason": "",
+          "package_path": "demo",
+          "filename": "demo.gooo",
+          "original_activity_id": "demo://summarize",
+          "source_sha256": "SAMPLE_SOURCE_ID",
+          "source_start": 63,
+          "source_end": 68,
+          "expression": "total",
+          "candidate_id": "",
+          "hole_id": "",
+          "grammar": ""
+        }
+      },
+      "expected": {
+        "{{module}}/origins:Inspect": {
+          "status": "FIELD_TARGET",
+          "selected_alternative": false,
+          "mapped": true,
+          "filename": "demo.gooo",
+          "source_start": 63,
+          "source_end": 68,
+          "expression": "total",
+          "record_id": "demo://summary",
+          "field_id": "demo://summary/total",
+          "assignment_index": 0,
+          "original_activity_id": "demo://summarize",
+          "reason": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "{{module}}/origins:Inspect": {
+          "case_index": 0,
+          "event_kind": "",
+          "event_index": 0,
+          "assignment_index": 0,
+          "frame": 0,
+          "root_activity_id": "",
+          "activity_id": "demo://summarize",
+          "variable_ordinal": 0,
+          "variable_name": "",
+          "record_id": "demo://summary",
+          "field_id": "demo://summary/total",
+          "site_kind": "",
+          "category": "value",
+          "mapping": "UNMAPPED",
+          "reason": "SAMPLE_MISSING_TEMPLATE",
+          "package_path": "demo",
+          "filename": "demo.gooo",
+          "original_activity_id": "demo://summarize",
+          "source_sha256": "SAMPLE_SOURCE_ID",
+          "source_start": 0,
+          "source_end": 0,
+          "expression": "",
+          "candidate_id": "",
+          "hole_id": "",
+          "grammar": ""
+        }
+      },
+      "expected": {
+        "{{module}}/origins:Inspect": {
+          "status": "UNRESOLVED",
+          "selected_alternative": false,
+          "mapped": false,
+          "filename": "demo.gooo",
+          "source_start": 0,
+          "source_end": 0,
+          "expression": "",
+          "record_id": "demo://summary",
+          "field_id": "demo://summary/total",
+          "assignment_index": 0,
+          "original_activity_id": "demo://summarize",
+          "reason": "SAMPLE_MISSING_TEMPLATE"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "{{module}}/origins:Inspect": {
+          "case_index": 0,
+          "event_kind": "",
+          "event_index": 0,
+          "assignment_index": 0,
+          "frame": 0,
+          "root_activity_id": "",
+          "activity_id": "demo://summarize",
+          "variable_ordinal": 0,
+          "variable_name": "",
+          "record_id": "demo://summary",
+          "field_id": "demo://summary/total",
+          "site_kind": "",
+          "category": "record_choice",
+          "mapping": "MAPPED",
+          "reason": "",
+          "package_path": "demo",
+          "filename": "demo.gooo",
+          "original_activity_id": "demo://summarize",
+          "source_sha256": "SAMPLE_SOURCE_ID",
+          "source_start": 81,
+          "source_end": 81,
+          "expression": "input.score",
+          "candidate_id": "",
+          "hole_id": "",
+          "grammar": ""
+        }
+      },
+      "expected": {
+        "{{module}}/origins:Inspect": {
+          "status": "INVALID_LOCATION",
+          "selected_alternative": true,
+          "mapped": false,
+          "filename": "demo.gooo",
+          "source_start": 81,
+          "source_end": 81,
+          "expression": "input.score",
+          "record_id": "demo://summary",
+          "field_id": "demo://summary/total",
+          "assignment_index": 0,
+          "original_activity_id": "demo://summarize",
+          "reason": ""
+        }
+      }
+    }
+  ]
+}

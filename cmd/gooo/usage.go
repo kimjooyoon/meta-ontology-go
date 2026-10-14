@@ -23,7 +23,7 @@ Gooo declares the permitted choices and checks their results. An optional local 
 can propose their order. Omitting the model selects deterministic candidate order.
 
 Commands:
-  init             Create an app, library or diagnostic starter
+  init             Create an app, library, diagnostic or origins starter
   check            Parse and validate a Gooo source file
   test             Check declared activity-output test markers
   run              Resolve an activity or execute a supported value plan

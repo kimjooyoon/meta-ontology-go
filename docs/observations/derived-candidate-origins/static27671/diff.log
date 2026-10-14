@@ -1,0 +1,15 @@
+--- /private/tmp/gooo-derived-candidate-origins-20261014/static27671/source/internal/bodycodegen/source_fill_derived_inputs.go (old)
++++ /private/tmp/gooo-derived-candidate-origins-20261014/static27671/source/internal/bodycodegen/source_fill_derived_inputs.go (new)
+@@ -29,10 +29,10 @@
+ 		Inputs []map[string]SourceFillDerivedInput `json:"inputs"`
+ 	}{Schema: "gooo/body-composition-inputs/v1"}
+ 	for _, row := range report.Rows {
+-		input := SourceFillDerivedInput{SourceFillCandidateInput: SourceFillCandidateInput{
++		input := SourceFillDerivedInput{
+ 			Filename: report.Filename, SourceSHA256: report.SourceSHA256, ActivityID: report.ActivityID,
+ 			CandidateID: report.CandidateID, HoleID: row.HoleID, Expression: row.Expression,
+-			Status: row.Status, Reason: row.Reason, HoleStart: row.HoleDeclaration.Start, HoleEnd: row.HoleDeclaration.End},
++			Status: row.Status, Reason: row.Reason, HoleStart: row.HoleDeclaration.Start, HoleEnd: row.HoleDeclaration.End,
+ 			OriginKind: "derived_grammar", Grammar: row.Grammar, GrammarStart: row.GrammarSource.Start, GrammarEnd: row.GrammarSource.End}
+ 		if row.TemplateSource != nil {
+ 			input.HasUse, input.UseStart, input.UseEnd = true, row.TemplateSource.Start, row.TemplateSource.End
