@@ -1,0 +1,251 @@
+{
+  "observations": {
+    "local-native10267.json:runtime": {
+      "producer": "10301",
+      "finite_passed": 4,
+      "finite_total": 4,
+      "runtime_replayed": true,
+      "model_calls": 0,
+      "locals": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "COMPLETE",
+        "sha256": "sha256:6e7781f155c39a8870ecf29b4f418aa7ed5eadb97af22a5ba7ea4e863a68b85a",
+        "recorded_writes": 46,
+        "recorded_uses": 42,
+        "element_windows": 8,
+        "interrupted_writes": 0,
+        "unresolved_uses": 0,
+        "frames": 12,
+        "frames_dropped": 0,
+        "writes_dropped": 0,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "source_sha256": "sha256:99aa8c1ff6b6b55d8ac7afb8c8a85836ac51ea29b62ed07deacec20660aa7783"
+    },
+    "local-native10289.json:runtime": {
+      "producer": "10301",
+      "finite_passed": 2,
+      "finite_total": 2,
+      "runtime_replayed": true,
+      "model_calls": 0,
+      "locals": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "COMPLETE",
+        "sha256": "sha256:2389e314c7282773566d9e9767fd444466533b26a87b68fe91ea9d8d02c31fec",
+        "recorded_writes": 6,
+        "recorded_uses": 8,
+        "element_windows": 0,
+        "interrupted_writes": 0,
+        "unresolved_uses": 0,
+        "frames": 2,
+        "frames_dropped": 0,
+        "writes_dropped": 0,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "source_sha256": "sha256:7321048ed1448e8046308db7051cc71d711d56c8b0683274a5e3b47446bfddf6"
+    },
+    "local-interrupted10337.json:runtime": {
+      "producer": "10337",
+      "finite_passed": 3,
+      "finite_total": 4,
+      "runtime_replayed": true,
+      "model_calls": 0,
+      "locals": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "PARTIAL",
+        "sha256": "sha256:5c50668038ff9182531d24640c35ad70fb0d1398e1972b061e79b114a5a13cf0",
+        "recorded_writes": 14,
+        "recorded_uses": 21,
+        "element_windows": 7,
+        "interrupted_writes": 1,
+        "unresolved_uses": 0,
+        "frames": 7,
+        "frames_dropped": 0,
+        "writes_dropped": 0,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "source_sha256": "sha256:b91df6299eeea53d1039cf2dc611d7fd0db29590b258336c4fd11b44290a4607"
+    },
+    "local-limit10357.json:runtime": {
+      "producer": "10337",
+      "finite_passed": 2,
+      "finite_total": 2,
+      "runtime_replayed": true,
+      "model_calls": 0,
+      "locals": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "PARTIAL",
+        "sha256": "sha256:d8a50d99f1bdeb618521031d9a2ceb2674c128d459c7ef9318f255375c1e3afc",
+        "recorded_writes": 4096,
+        "recorded_uses": 12292,
+        "element_windows": 0,
+        "interrupted_writes": 0,
+        "unresolved_uses": 6149,
+        "frames": 2,
+        "frames_dropped": 0,
+        "writes_dropped": 4102,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "source_sha256": "sha256:bac359d7693c252a3521f026b04017515e6fde7440f98552723d5e7a46dbf19c"
+    },
+    "local-consumer10433.json:producer_runtime": {
+      "producer": "10433",
+      "finite_passed": 2,
+      "finite_total": 2,
+      "runtime_replayed": true,
+      "model_calls": 0,
+      "locals": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "COMPLETE",
+        "sha256": "sha256:b6f37088ca10fc0898855f9833c732742ae48307ed21c4c4e0fdf7852b943d99",
+        "recorded_writes": 6,
+        "recorded_uses": 8,
+        "element_windows": 4,
+        "interrupted_writes": 0,
+        "unresolved_uses": 0,
+        "frames": 2,
+        "frames_dropped": 0,
+        "writes_dropped": 0,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534"
+    },
+    "local-consumer10433.json:consumer_runtime": {
+      "producer": "10433",
+      "finite_passed": 3,
+      "finite_total": 3,
+      "runtime_replayed": true,
+      "model_calls": 0,
+      "locals": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "COMPLETE",
+        "sha256": "sha256:34b96a2cd3ef948f0e7c0b495656f460d2f94414c9bd01ea8fadc21a0404ca3a",
+        "recorded_writes": 6,
+        "recorded_uses": 3,
+        "element_windows": 0,
+        "interrupted_writes": 0,
+        "unresolved_uses": 0,
+        "frames": 3,
+        "frames_dropped": 0,
+        "writes_dropped": 0,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "source_sha256": "sha256:0571ad5c3907eb0c4952459ba71ddd38bfbf1225b6ce9335fd21477b6bff67fb"
+    },
+    "wide10459.json:runtime": {
+      "producer": "10433",
+      "finite_passed": 2,
+      "finite_total": 2,
+      "runtime_replayed": true,
+      "model_calls": 0,
+      "locals": {
+        "schema": "gooo/native-local-summary/v1",
+        "status": "COMPLETE",
+        "sha256": "sha256:3edb178b086f3a5c41e7e9036f5b95e17429aed9bcc2e9d24511d34101518fa0",
+        "recorded_writes": 2,
+        "recorded_uses": 2,
+        "element_windows": 0,
+        "interrupted_writes": 0,
+        "unresolved_uses": 0,
+        "frames": 2,
+        "frames_dropped": 0,
+        "writes_dropped": 0,
+        "uses_dropped": 0,
+        "reads_dropped": 0,
+        "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+      },
+      "source_sha256": "sha256:893fa49df96bab10dbe6363f20320f7ca27b2cd532954f280320a82252e0294a"
+    }
+  },
+  "failures_retained": {
+    "10267": "compile failed before test execution because _windows.go was platform-filtered",
+    "10399": "new producer executed 2/2; consumer generation rejected 18 fields under old 16-field bound"
+  },
+  "cli": {
+    "checked_at": 1791933569.962028,
+    "matches": 2,
+    "decision": "OBSERVED",
+    "native_expectations": 0,
+    "original_program_executions": 0,
+    "models": 0,
+    "result_sha256": "452a0807dc938df086b40602503c3fab6ed2722d1067f257365140a8860fe3f0"
+  },
+  "cli_resource_observation": {
+    "ended_at": 1791933488.983371,
+    "exit_code": 0,
+    "elapsed_s": 1.194625334,
+    "child_user_cpu_s": 0.14982299999999998,
+    "child_system_cpu_s": 0.137763,
+    "child_max_rss_bytes_darwin": 88276992,
+    "scope": "single native CLI consumer invocation; includes build and two native executions; not a model benchmark"
+  },
+  "registration10511": {
+    "operation_exit": 0,
+    "version": [
+      53,
+      54
+    ],
+    "roles": 9,
+    "members": 9,
+    "generated_bytes_unchanged": true,
+    "binary_removed": true,
+    "native_executions": 0,
+    "models": 0,
+    "reporting_error": "post-completion printing assumed stdout JSON; candidate and execution files are authoritative; operation was not rerun"
+  },
+  "bounds10543": {
+    "producer": "10543",
+    "run_log_sha256": "e0431a1ea0c476d60d76f13172db9a99d61e48874dc54cab92e0e83fb909508d",
+    "native_cases": {
+      "passed": 14,
+      "total": 14
+    },
+    "local_use_summary": {
+      "schema": "gooo/native-local-summary/v1",
+      "status": "PARTIAL",
+      "sha256": "sha256:2b342ab45cb66340d0de0c4274f2f469c0d0676be521d06b4b0e7abb497ad495",
+      "recorded_writes": 4096,
+      "recorded_uses": 65536,
+      "element_windows": 0,
+      "interrupted_writes": 0,
+      "unresolved_uses": 55306,
+      "frames": 14,
+      "frames_dropped": 0,
+      "writes_dropped": 24632,
+      "uses_dropped": 6172,
+      "reads_dropped": 0,
+      "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+    },
+    "frame_backend_scope": "generated native observer backend; no Gooo program executed",
+    "frame_backend_summary": {
+      "schema": "gooo/native-local-summary/v1",
+      "status": "PARTIAL",
+      "sha256": "sha256:a3ca2886c6d6bc992856d395f5e9ab1b0cf66c6f7dde58d783f58a53e15cb50e",
+      "recorded_writes": 4096,
+      "recorded_uses": 65536,
+      "element_windows": 0,
+      "interrupted_writes": 0,
+      "unresolved_uses": 61440,
+      "frames": 65536,
+      "frames_dropped": 1,
+      "writes_dropped": 61441,
+      "uses_dropped": 1,
+      "reads_dropped": 0,
+      "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+    },
+    "record_contradictions_rejected": 18,
+    "local_reruns": 0
+  }
+}

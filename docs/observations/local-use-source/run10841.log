@@ -1,0 +1,5 @@
+=== RUN   TestGoooSourceUseConsumer10841
+    composition_source_use_consumer_fresh_test.go:77: Gooo reader2/2 new-source uses,2/2 legacy declaration-only uses;four source-claim contradictions rejected;original producer executions0;models0
+--- PASS: TestGoooSourceUseConsumer10841 (1.05s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.562s

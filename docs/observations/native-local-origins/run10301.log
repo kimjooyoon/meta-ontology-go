@@ -1,0 +1,8 @@
+=== RUN   TestLocalNative10267
+    composition_local_native_fresh_test.go:88: native 4/4;46 writes;42 uses;12 invocation frames;8 constructor windows;stale assignment rejected;model0
+--- PASS: TestLocalNative10267 (0.72s)
+=== RUN   TestScalarOnlyNative10289
+    composition_local_native_fresh_test.go:116: native2/2;6 writes;8 uses;zero collection reads;model0
+--- PASS: TestScalarOnlyNative10289 (0.52s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.746s

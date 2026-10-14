@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/example-record-origin/v1",
+  "observation": "../../docs/observations/native-local-origins/local-consumer10433.json.gz",
+  "observation_uncompressed_sha256": "b946be1d26a3d392f3356ac8daf1c5b145872f102318d15bd80857771955bcfe",
+  "selected_field": "producer_runtime",
+  "output": "local10433-runtime.json",
+  "output_sha256": "00d831c69b09b465793d642cb75e09914cfae263e4deea6d3976078d1a695443",
+  "operation": "parse JSON, select producer_runtime, serialize with indentation; no producer execution",
+  "producer_overlay": "../../docs/observations/native-local-origins/producer10433.tar.gz"
+}

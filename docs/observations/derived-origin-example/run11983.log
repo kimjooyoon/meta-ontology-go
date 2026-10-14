@@ -1,0 +1,5 @@
+=== RUN   TestGoooOriginCoverage11983
+    package_origin_coverage_fresh_test.go:35: Gooo source owns coverage math8/8:actual whole/prefix pages,missing origin,repeated write fragments,partial recording,unaligned/order contradictions,empty population; no original-producer rerun; models0
+--- PASS: TestGoooOriginCoverage11983 (0.81s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.373s

@@ -1,0 +1,16 @@
+{
+  "producer_finite": [
+    2,
+    2
+  ],
+  "reader_returned": 2,
+  "reader_total": 6,
+  "reader_classifications_checked": [
+    "candidate",
+    "template"
+  ],
+  "reader_runtime_finite_total": 0,
+  "original_producer_executions_during_read": 0,
+  "producer_model_calls": 0,
+  "reader_model_calls": 0
+}

@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"gooo/examples/derived-origin:Prepare": 571}, "expected": {"gooo/examples/derived-origin:Prepare": 1128}},
+    {"inputs": {"gooo/examples/derived-origin:Prepare": -577}, "expected": {"gooo/examples/derived-origin:Prepare": -20}},
+    {"inputs": {"gooo/examples/derived-origin:Prepare": 0}, "expected": {"gooo/examples/derived-origin:Prepare": 557}}
+  ]
+}

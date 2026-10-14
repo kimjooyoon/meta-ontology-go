@@ -1,0 +1,6 @@
+=== RUN   TestRetainedLocalUseContract11017
+    body_local_use_compatibility_fresh_test.go:22: assembly source: [use11017.gooo:4:165-11:2: error parse.unexpected-token: source fill plan requires 2..16 complete candidates or a bounded derive clause]
+--- FAIL: TestRetainedLocalUseContract11017 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.517s
+FAIL

@@ -1,26 +1,61 @@
 package bodyexecution
 
 func observedCompositionReadEvidence(prior Composition) (string, string, []CompositionFaultSite, []CompositionConditionSite, []CompositionReadSite, []CompositionReadInput, []CompositionConstructionSite, error) {
-	projection, driver, faults, conditions, err := observedCompositionEvidence(prior)
+	o, err := observedCompositionLocalEvidence(prior)
+	return o.projection, o.driver, o.faults, o.conditions, o.reads, o.inputs, o.constructions, err
+}
+
+type compositionObservedSource struct {
+	projection, driver string
+	faults             []CompositionFaultSite
+	conditions         []CompositionConditionSite
+	reads              []CompositionReadSite
+	inputs             []CompositionReadInput
+	constructions      []CompositionConstructionSite
+	locals             []CompositionLocalSite
+	uses               []CompositionLocalUseSite
+}
+
+func observedCompositionLocalEvidence(prior Composition) (o compositionObservedSource, err error) {
+	o.projection, o.driver, o.faults, o.conditions, err = observedCompositionEvidence(prior)
 	if err != nil {
-		return "", "", nil, nil, nil, nil, nil, err
+		return o, err
 	}
-	reads, err := compositionReadSites(prior)
+	o.reads, err = compositionReadSites(prior)
 	if err != nil {
-		return "", "", nil, nil, nil, nil, nil, err
+		return o, err
 	}
-	constructions, err := compositionConstructionSites(prior)
+	o.constructions, err = compositionConstructionSites(prior)
 	if err != nil {
-		return "", "", nil, nil, nil, nil, nil, err
+		return o, err
 	}
-	var inputs []CompositionReadInput
-	if len(reads)+len(constructions) > 0 {
-		inputs = compositionReadInputs(prior)
-		prefix := readObservationPrefix(prior.Source)
-		projection, err = observedReadProjection(projection, prefix, prior, reads, constructions)
-		if err == nil {
-			driver, err = observedReadDriver(driver, prefix, prior, len(constructions) > 0)
+	o.locals, err = compositionLocalSites(prior)
+	if err != nil {
+		return o, err
+	}
+	o.uses, err = compositionLocalUseSites(prior, o.locals)
+	if err != nil {
+		return o, err
+	}
+	if len(o.reads)+len(o.constructions)+len(o.locals) == 0 {
+		return o, nil
+	}
+	o.inputs = compositionReadInputs(prior)
+	prefix := readObservationPrefix(prior.Source)
+	o.projection, err = observedReadProjectionWithLocals(o.projection, prefix, prior, o.reads, o.constructions, o.locals, o.uses)
+	if err != nil {
+		return o, err
+	}
+	observer := readObserver
+	if len(o.constructions) > 0 {
+		observer = constructionReadObserver
+	}
+	if len(o.locals) > 0 {
+		observer, err = localReadObserver()
+		if err != nil {
+			return o, err
 		}
 	}
-	return projection, driver, faults, conditions, reads, inputs, constructions, err
+	o.driver, err = observedReadDriverWithObserver(o.driver, prefix, prior, observer)
+	return o, err
 }

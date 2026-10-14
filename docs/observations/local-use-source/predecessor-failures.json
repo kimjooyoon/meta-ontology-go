@@ -1,0 +1,36 @@
+[
+  {
+    "job_id": 115597423540,
+    "log_sha256": "989ede5c721100f143910a647c49bb31456e40cfb9de707b861a70ac9edd1270",
+    "head": "246772c25a6b78a6b58d8f81689df8c275729816",
+    "excerpt_lines": [
+      "2026-10-13T23:39:05.5266284Z          gooo body-construct: unknown or aliased JSON field \"decoded_start\"",
+      "2026-10-13T23:39:05.5267504Z     body_compose_calls_test.go:30: 1 gooo body-compose: unknown or aliased JSON field \"decoded_start\""
+    ],
+    "excerpt_ansi_removed": true,
+    "excerpt_line_max_characters": 1000,
+    "interpretation": "explicit local-origin JSON fields omitted by exact field contract"
+  },
+  {
+    "job_id": 115597424358,
+    "log_sha256": "7ea5761c2e4b57061c58d515da19721e4b929ed6ea509e86897baa67447523d4",
+    "head": "246772c25a6b78a6b58d8f81689df8c275729816",
+    "excerpt_lines": [
+      "2026-10-13T23:43:34.2899864Z function-extractor: unhandled=internal/bodyexecution/composition_local_projection_bindings.go derive-recipe/select-safe-suffix/NO_SAFE_DECLARATION_CAPACITY unknown_class=KNOWN_CONTRADICTION next=report-counterexample blocked_by=[]",
+      "2026-10-13T23:44:03.3219496Z ##[error]2026/10/13 23:44:03 refuted extraction internal/bodyexecution/composition_local_projection_bindings.go: NO_SAFE_DECLARATION_CAPACITY"
+    ],
+    "excerpt_ansi_removed": true,
+    "excerpt_line_max_characters": 1000,
+    "interpretation": "local binding function exceeds rendered helper capacity"
+  },
+  {
+    "job_id": 115597423342,
+    "log_sha256": "fd63cf3618091ada09136c04db3d7638db2c32e753e52e6bf57de6fbf9454556",
+    "head": "246772c25a6b78a6b58d8f81689df8c275729816",
+    "excerpt_lines": [],
+    "excerpt_ansi_removed": true,
+    "excerpt_line_max_characters": 1000,
+    "interpretation": "Original redirected test.json in artifact11859670876 contains52 leaf failures, all unknown or aliased JSON fields; source remains frozen",
+    "artifact_selection": "original-artifact-selection.json"
+  }
+]

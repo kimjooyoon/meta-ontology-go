@@ -1,0 +1,6 @@
+=== RUN   TestGoooLocalConsumer10399
+    composition_local_consumer_fresh_test.go:70: Gooo consumer generation record bodies require 1..16 records, 1..16 fields and identifier names
+--- FAIL: TestGoooLocalConsumer10399 (0.71s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.229s
+FAIL

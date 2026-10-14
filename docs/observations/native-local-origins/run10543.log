@@ -1,0 +1,48 @@
+=== RUN   TestLocalRecordedContract10589
+=== RUN   TestLocalRecordedContract10589/invalid_scalar_type
+=== RUN   TestLocalRecordedContract10589/future_assignment
+=== RUN   TestLocalRecordedContract10589/noncontiguous_element
+=== RUN   TestLocalRecordedContract10589/different_declared_name
+=== RUN   TestLocalRecordedContract10589/stale_assignment
+=== RUN   TestLocalRecordedContract10589/different_invocation
+=== RUN   TestLocalRecordedContract10589/duplicate_element
+=== RUN   TestLocalRecordedContract10589/unknown_constructor
+=== RUN   TestLocalRecordedContract10589/negative_drop
+=== RUN   TestLocalRecordedContract10589/impossible_use_drop
+=== RUN   TestLocalRecordedContract10589/unresolved_without_reason
+=== RUN   TestLocalRecordedContract10589/unfinished_without_fault
+=== RUN   TestLocalRecordedContract10589/missing_element
+=== RUN   TestLocalRecordedContract10589/different_constructor_root
+=== RUN   TestLocalRecordedContract10589/negative_lexical_identity
+=== RUN   TestLocalRecordedContract10589/empty_projection_range
+=== RUN   TestLocalRecordedContract10589/duplicate_static_write
+=== RUN   TestLocalRecordedContract10589/read_outside_window
+=== NAME  TestLocalRecordedContract10589
+    composition_local_contract_fresh_test.go:64: one coherent local-origin fixture;18 contradictory binding, temporal, window and population variants rejected;no native execution
+--- PASS: TestLocalRecordedContract10589 (0.00s)
+    --- PASS: TestLocalRecordedContract10589/invalid_scalar_type (0.00s)
+    --- PASS: TestLocalRecordedContract10589/future_assignment (0.00s)
+    --- PASS: TestLocalRecordedContract10589/noncontiguous_element (0.00s)
+    --- PASS: TestLocalRecordedContract10589/different_declared_name (0.00s)
+    --- PASS: TestLocalRecordedContract10589/stale_assignment (0.00s)
+    --- PASS: TestLocalRecordedContract10589/different_invocation (0.00s)
+    --- PASS: TestLocalRecordedContract10589/duplicate_element (0.00s)
+    --- PASS: TestLocalRecordedContract10589/unknown_constructor (0.00s)
+    --- PASS: TestLocalRecordedContract10589/negative_drop (0.00s)
+    --- PASS: TestLocalRecordedContract10589/impossible_use_drop (0.00s)
+    --- PASS: TestLocalRecordedContract10589/unresolved_without_reason (0.00s)
+    --- PASS: TestLocalRecordedContract10589/unfinished_without_fault (0.00s)
+    --- PASS: TestLocalRecordedContract10589/missing_element (0.00s)
+    --- PASS: TestLocalRecordedContract10589/different_constructor_root (0.00s)
+    --- PASS: TestLocalRecordedContract10589/negative_lexical_identity (0.00s)
+    --- PASS: TestLocalRecordedContract10589/empty_projection_range (0.00s)
+    --- PASS: TestLocalRecordedContract10589/duplicate_static_write (0.00s)
+    --- PASS: TestLocalRecordedContract10589/read_outside_window (0.00s)
+=== RUN   TestLocalUseCapacity10543
+    composition_local_limits_fresh_test.go:49: Gooo native14/14;65536 uses retained,6172 dropped;4096 writes retained,24632 dropped;final page keeps PARTIAL
+--- PASS: TestLocalUseCapacity10543 (0.82s)
+=== RUN   TestNativeLocalFrameCapacity10567
+    composition_local_limits_fresh_test.go:92: backend observer:65536 frames,1 dropped;65537 arithmetic evaluations preserved;bounded arrays;no Gooo language execution claim
+--- PASS: TestNativeLocalFrameCapacity10567 (0.55s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.916s

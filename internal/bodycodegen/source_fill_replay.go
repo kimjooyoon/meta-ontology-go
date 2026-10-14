@@ -65,6 +65,10 @@ func compareSourceFillReplay(prior, expected Result) error {
 		return fmt.Errorf("body-fill selected source or projection differs")
 	}
 	a, b := prior.Report, expected.Report
+	if !EqualRetainedLocalOrigins(a.BodyLocals, b.BodyLocals) {
+		return fmt.Errorf("body-fill retained local origins differ")
+	}
+	a.BodyLocals, b.BodyLocals = nil, nil
 	if a.BodyConstructions == nil {
 		b.BodyConstructions = nil
 	}

@@ -1,0 +1,18 @@
+[
+  {
+    "path": "cmd/gooo/package_derived_origin_fresh_test.go",
+    "sha256": "e2523f8e570ee5f689e510ce6689425e4a4cb6b7d3096da3576b16008a69bbea"
+  },
+  {
+    "path": "examples/derived-origin/cases.json",
+    "sha256": "720e29e1119340a1287c5955d87d6adad7b192a546ddc0bf5339ffc40a6bd9b7"
+  },
+  {
+    "path": "examples/derived-origin/gooo.workspace.json",
+    "sha256": "d48ce95b4f7888e2b9901e2b6c8e910b2fe3bc00e876d008b3f419decf534c63"
+  },
+  {
+    "path": "examples/derived-origin/main.gooo",
+    "sha256": "2cb6491ac1960c382fd2fe03334138818f18239955406ad225ecaedefe944263"
+  }
+]

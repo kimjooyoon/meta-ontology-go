@@ -139,7 +139,10 @@ func TestCompositionReplayRejectsSourceStepAndProjectionChanges(t *testing.T) {
 	encoded, _ := json.Marshal(prior)
 	for _, change := range []string{"source", "plan", "order", "input", "generated", "driver", "selected", "body", "cases", "plain"} {
 		t.Run(change, func(t *testing.T) {
-			candidate, _ := DecodeComposition(encoded)
+			candidate, err := DecodeComposition(encoded)
+			if err != nil {
+				t.Fatal("decode fresh composition before applying contradiction", err)
+			}
 			original := append([]byte(nil), source...)
 			switch change {
 			case "source":

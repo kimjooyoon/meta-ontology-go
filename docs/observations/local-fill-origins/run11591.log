@@ -1,0 +1,5 @@
+=== RUN   TestPackageLocalFillReader11591
+    package_local_fill_branch_fresh_test.go:51: fresh CLI producer2/2; saved-origin CLI two classifications match candidate/template; producer executions during read0; models0
+--- PASS: TestPackageLocalFillReader11591 (1.23s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.766s

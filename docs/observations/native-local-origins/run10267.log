@@ -1,0 +1,4 @@
+# github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution [github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution.test]
+<private-overlay>/producer10267/internal/bodyexecution/composition_local_validate.go:132:9: undefined: validateLocalWindows
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution [build failed]
+FAIL

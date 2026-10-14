@@ -1,0 +1,29 @@
+[
+  {
+    "producer": "11903",
+    "base": "c5ec87a7221918e62ffd2bc2c2359b550c2ba21d",
+    "source_manifest_sha256": "f4b15b8781b86ea287996c3fa7a22e4e743b2f945efcf107ca3e5a237a848b11",
+    "archive_sha256": "34953ab3469f63fcecf7c3ec9a93ddef645994c372a7084cebba9859ea8329eb",
+    "log_sha256": "174eac8b2925277679d338fe1f8c0dd5194773a01a65832d96255835219e3e8d",
+    "exit_code": 0,
+    "historical_cohorts_executed": 0
+  },
+  {
+    "producer": "11983",
+    "base": "c5ec87a7221918e62ffd2bc2c2359b550c2ba21d",
+    "source_manifest_sha256": "e3eba8e9b6545ada80e0cd6766829312284d23782ea5cce097f41c8b94954da0",
+    "archive_sha256": "d80b72b701a59a69bcbbbf1588d82b018b8b289dc590e7095f3562f591b79653",
+    "log_sha256": "0568c0ed1ed1aec62be3ec77344f6ac4690b5678bbc25919bc73bc6ef6a875a1",
+    "exit_code": 0,
+    "historical_cohorts_executed": 0
+  },
+  {
+    "producer": "12063",
+    "base": "c5ec87a7221918e62ffd2bc2c2359b550c2ba21d",
+    "source_manifest_sha256": "e34cb9c4cc1f68c4f68aec66b80cee57ac706d5d29e1390a9ebe3d51999dc1fd",
+    "archive_sha256": "ec4c37e687039e397db7d98b98e13b33d58613f2d86633d4763cc6bb62c8f03c",
+    "log_sha256": "1a0a75ac276e6fc556dff994e1328b8868b6dd2e281f4d7fb6b7c7cb926d2f29",
+    "exit_code": 0,
+    "historical_cohorts_executed": 0
+  }
+]

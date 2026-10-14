@@ -34,8 +34,9 @@ bind Propose.result -> Echo.input
 Use named keys for declared fields. Field names are case sensitive and may be
 lowercase or uppercase identifiers. Required scalar fields must be supplied;
 optional single scalar fields may be omitted. The profile supports up to 16
-records and 16 fields per record. Repeated fields and nested record fields
-remain unsupported. Under EntityFields V2, `boolean required one` takes a
+records and 32 fields per record. EntityFields V5 also supports ordered scalar
+collections with up to 256 elements per field. Nested record fields remain outside
+this profile. Under EntityFields V2, `boolean required one` takes a
 Boolean value. EntityFields V3 adds `integer required one`, represented as Go
 `int64`. EntityFields V4 adds optional string, Boolean and integer fields,
 represented as `*string`, `*bool` and `*int64` with `omitempty` JSON tags.
