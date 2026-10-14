@@ -883,6 +883,36 @@
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY",
       "ordered_collections": true
+    },
+    {
+      "id": "native-record-field-history-example",
+      "path": "examples/native-record-fields/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-record-field-history-reader",
+      "path": "examples/native-record-fields/reader.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-field-lineage-reader",
+      "path": "examples/native-field-lineage/lineage.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
     }
   ],
   "package_units": [

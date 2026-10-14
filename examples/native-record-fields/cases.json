@@ -1,0 +1,9 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs":{"field/example:Build":{"left":1999,"right":2003,"flip":false}},"expected":{"field/example:Build":2003}},
+    {"inputs":{"field/example:Build":{"left":1999,"right":2003,"flip":true}},"expected":{"field/example:Build":4016}},
+    {"inputs":{"field/example:Build":{"left":-2017,"right":0,"flip":false}},"expected":{"field/example:Build":0}},
+    {"inputs":{"field/example:Build":{"left":-2017,"right":0,"flip":true}},"expected":{"field/example:Build":0}}
+  ]
+}

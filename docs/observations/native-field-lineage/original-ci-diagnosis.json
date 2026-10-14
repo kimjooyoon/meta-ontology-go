@@ -1,0 +1,30 @@
+{
+  "submitted_head": "55d0a72668e4b5dcde239cef36c3d4a10b649e07",
+  "pr": 1554,
+  "original_projection_job": 115666250616,
+  "original_semantic_job": 115666251398,
+  "cause": "METHOD_SUFFIX_DECOMPOSITION_UNSAFE",
+  "declaration": "internal/bodyexecution/composition_field_render.go:compositionFieldRenderer.node",
+  "function_lines_after_density": 70,
+  "rendered_helper_lines": 76,
+  "rendered_helper_limit": 75,
+  "source_sha256": "185a3fffaf5f56826ad78a3d48f1cc9d04336524d58b848cfeb441ac98d3fdbf",
+  "correction": "decompose dispatch/scope/scalar/record/call rendering directly; preserve original feature and workflows",
+  "original_logs": [
+    {
+      "file": "pr1554-projection-original-job115666250616.log",
+      "sha256": "2727201d93c0381130666bb2a5fbf7936471bfc0b50278a391cdb29f92e77659",
+      "bytes": 193401
+    },
+    {
+      "file": "pr1554-semantic-original-job115666251398.log",
+      "sha256": "8f07c6beede68d8e0d4032339de259f1eca62443436699384a53efedf5acbfcf",
+      "bytes": 4720190
+    }
+  ],
+  "artifact": {
+    "id": 11868460789,
+    "sha256": "2bc542148e90aed4d43a9890ae79b5e02d2e8634d123457792f60147809cbc26"
+  },
+  "historical_local_reruns": 0
+}

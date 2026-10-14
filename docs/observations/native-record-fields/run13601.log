@@ -1,0 +1,12 @@
+=== RUN   TestGoooFieldLimits13601
+    composition_field_limits_fresh_test.go:37: bounded child failed: exit status 1
+--- FAIL: TestGoooFieldLimits13601 (0.08s)
+=== RUN   TestGoooFieldFault13627
+    composition_field_limits_fresh_test.go:81: fresh2 inputs:one actual result andone intended arithmetic fault;interrupted field write retains prior completed assignment;2-run equality;models0
+--- PASS: TestGoooFieldFault13627 (0.52s)
+=== RUN   TestSavedFieldClaims13649
+    native_field_recorded_fresh_test.go:86: saved13517 record only;7 contradictory identity/order/population claims rejected,including changed field ID with resealed metadata;absent field history remains absent;native/model executions0
+--- PASS: TestSavedFieldClaims13649 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.109s
+FAIL

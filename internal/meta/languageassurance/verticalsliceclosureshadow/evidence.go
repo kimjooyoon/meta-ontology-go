@@ -202,6 +202,15 @@ var embeddedDenominatorV60 []byte
 //go:embed evidence/denominator-v61.json
 var embeddedDenominatorV61 []byte
 
+//go:embed evidence/denominator-v62.json
+var embeddedDenominatorV62 []byte
+
+//go:embed evidence/denominator-v63.json
+var embeddedDenominatorV63 []byte
+
+//go:embed evidence/denominator-v64.json
+var embeddedDenominatorV64 []byte
+
 func activeDenominatorDigestChunk0(total int) string {
 	switch total {
 	case 45:
@@ -288,6 +297,12 @@ func activeDenominatorDigestChunk2(total int) string {
 		return DenominatorMigrationV60Digest
 	case 94:
 		return DenominatorMigrationV61Digest
+	case 95:
+		return DenominatorMigrationV62Digest
+	case 96:
+		return DenominatorMigrationV63Digest
+	case 97:
+		return DenominatorMigrationV64Digest
 	}
 	return ""
 }
@@ -378,6 +393,12 @@ func activeDenominatorChunk2(total int) []byte {
 		return embeddedDenominatorV60
 	case 94:
 		return embeddedDenominatorV61
+	case 95:
+		return embeddedDenominatorV62
+	case 96:
+		return embeddedDenominatorV63
+	case 97:
+		return embeddedDenominatorV64
 	}
 	return nil
 }

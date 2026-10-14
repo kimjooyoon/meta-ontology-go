@@ -1,0 +1,38 @@
+package fieldreader
+namespace fieldreader
+entity Text id "urn:gooo:type:string"
+entity Fact id "urn:gooo:field-reader:fact" fields {
+    field case_index id "urn:gooo:field-reader:case_index" type integer required one
+    field event_index id "urn:gooo:field-reader:event_index" type integer required one
+    field assignment_index id "urn:gooo:field-reader:assignment_index" type integer required one
+    field frame id "urn:gooo:field-reader:frame" type integer required one
+    field variable_ordinal id "urn:gooo:field-reader:variable_ordinal" type integer required one
+    field binding_index id "urn:gooo:field-reader:binding_index" type integer required one
+    field use_start id "urn:gooo:field-reader:use_start" type integer required one
+    field use_end id "urn:gooo:field-reader:use_end" type integer required one
+    field uses_dropped id "urn:gooo:field-reader:uses_dropped" type integer required one
+    field completion id "urn:gooo:field-reader:completion" type integer required one
+    field parent_assignment id "urn:gooo:field-reader:parent_assignment" type integer required one
+    field completed id "urn:gooo:field-reader:completed" type boolean required one
+    field has_assignment id "urn:gooo:field-reader:has_assignment" type boolean required one
+    field event_kind id "urn:gooo:field-reader:event_kind" type string required one
+    field root_activity_id id "urn:gooo:field-reader:root_activity_id" type string required one
+    field activity_id id "urn:gooo:field-reader:activity_id" type string required one
+    field variable_name id "urn:gooo:field-reader:variable_name" type string required one
+    field record_id id "urn:gooo:field-reader:record_id" type string required one
+    field field_id id "urn:gooo:field-reader:field_id" type string required one
+    field field_name id "urn:gooo:field-reader:field_name" type string required one
+    field scalar_type_id id "urn:gooo:field-reader:scalar_type_id" type string required one
+    field binding_kind id "urn:gooo:field-reader:binding_kind" type string required one
+    field input_port id "urn:gooo:field-reader:input_port" type string required one
+    field input_from_activity_id id "urn:gooo:field-reader:input_from_activity_id" type string required one
+    field site_kind id "urn:gooo:field-reader:site_kind" type string required one
+    field dependency_mode id "urn:gooo:field-reader:dependency_mode" type string required one
+    field assignment_kind id "urn:gooo:field-reader:assignment_kind" type string required one
+    field reason id "urn:gooo:field-reader:reason" type string required one
+    field projection_sha256 id "urn:gooo:field-reader:projection_sha256" type string required one
+    field projection_start id "urn:gooo:field-reader:projection_start" type integer required one
+    field projection_end id "urn:gooo:field-reader:projection_end" type integer required one
+    field projection_expression id "urn:gooo:field-reader:projection_expression" type string required one
+}
+activity Describe(Fact) -> Text id "urn:gooo:field-reader:describe" computes `if !input.has_assignment {return "missing:"+input.reason};if !input.completed {return "unfinished:"+input.field_id};if input.binding_kind=="root_input" {return "input:"+input.field_id};if input.parent_assignment>=0 {return "linked:"+input.field_id};return "observed:"+input.field_id`
