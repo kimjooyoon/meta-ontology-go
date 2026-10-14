@@ -21,8 +21,8 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 		query.Kind = flags["--origin-kind"]
 	}
 	shape := flags["--origin-shape"]
-	if shape != "" && shape != "rows" && shape != "local-fill-columns" && shape != "field-lineage-columns" {
-		return query, fmt.Errorf("origin shape must be rows, local-fill-columns or field-lineage-columns")
+	if shape != "" && shape != "rows" && shape != "local-fill-columns" && shape != "field-lineage-columns" && shape != "field-local-columns" {
+		return query, fmt.Errorf("origin shape must be rows, local-fill-columns, field-lineage-columns or field-local-columns")
 	}
 	if shape == "local-fill-columns" {
 		if flags["--origin-kind"] == "" {
@@ -32,7 +32,7 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 			return query, fmt.Errorf("local-fill-columns requires local-fill-fragments")
 		}
 	}
-	if shape == "field-lineage-columns" {
+	if shape == "field-lineage-columns" || shape == "field-local-columns" {
 		if flags["--origin-kind"] == "" {
 			query.Kind = "field-uses"
 		}
@@ -50,8 +50,11 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 			*option.target = n
 		}
 	}
+	if shape == "field-local-columns" && query.Kind != "field-uses" {
+		return query, fmt.Errorf("field-local-columns requires field-uses")
+	}
 	if shape == "field-lineage-columns" && (query.Kind != "field-uses" || query.Limit != 1) {
-		return query, fmt.Errorf("field-lineage-columns requires field-uses and limit1")
+		return query, fmt.Errorf("%s requires field-uses and limit1", shape)
 	}
 	return query, bodyexecution.ValidateNativeOriginQuery(query)
 }
@@ -67,7 +70,20 @@ func packageOriginInputsWithShape(raw []byte, target packageruntime.EntrySpec, q
 	}
 	var rows []json.RawMessage
 	var origin *bodyexecution.NativeOriginInput
-	if shape == "field-lineage-columns" {
+	if shape == "field-local-columns" {
+		var columns []bodyexecution.BridgeLineageColumns
+		columns, origin, err = bodyexecution.SelectRecordedBridgeLineagePage(runtime, query)
+		if err == nil {
+			for _, column := range columns {
+				var row []byte
+				row, err = json.Marshal(column)
+				if err != nil {
+					break
+				}
+				rows = append(rows, row)
+			}
+		}
+	} else if shape == "field-lineage-columns" {
 		var columns bodyexecution.FieldLineageColumns
 		columns, origin, err = bodyexecution.SelectRecordedFieldLineage(runtime, query)
 		if err == nil {
@@ -124,5 +140,7 @@ func writePackageOriginInput(output io.Writer, origin *bodyexecution.NativeOrigi
 	if summary := origin.FieldObservation; summary != nil {
 		fmt.Fprintf(output, "original field history: %s writes=%d uses=%d parents=%d unknown_parents=%d shared_rhs=%d write_drops=%d use_drops=%d frame_drops=%d\n", summary.Status, summary.RecordedWrites, summary.RecordedUses, summary.ParentLinks, summary.UnknownParents, summary.SharedRHSWrites, summary.WritesDropped, summary.UsesDropped, summary.FramesDropped)
 	}
-
+	if summary := origin.BridgeObservation; summary != nil {
+		fmt.Fprintf(output, "original field/local bridge: %s field_windows=%d local_windows=%d cross_reads=%d completed=%d interrupted=%d\n", summary.Status, summary.FieldWindows, summary.LocalWindows, summary.CrossReads, summary.Completions, summary.Interrupted)
+	}
 }

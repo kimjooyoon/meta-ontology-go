@@ -1,0 +1,29 @@
+package localbridge
+namespace localbridge
+entity Input id "urn:gooo:local-bridge:input" fields {
+ field left id "urn:gooo:local-bridge:input-left" type integer required one
+ field right id "urn:gooo:local-bridge:input-right" type integer required one
+ field flip id "urn:gooo:local-bridge:input-flip" type boolean required one
+ field enabled id "urn:gooo:local-bridge:input-enabled" type boolean required one
+ field tag id "urn:gooo:local-bridge:input-tag" type string required one
+}
+entity State id "urn:gooo:local-bridge:state" fields {
+ field score id "urn:gooo:local-bridge:score" type integer required one
+ field live id "urn:gooo:local-bridge:live" type boolean required one
+ field tag id "urn:gooo:local-bridge:tag" type string required one
+}
+activity Echo(State)->State id "urn:gooo:local-bridge:echo" computes `return input`
+activity Build(Input)->State id "urn:gooo:local-bridge:build" computes `let original=State{score:input.left,live:input.enabled,tag:input.tag}
+let kept_score=original.score
+let kept_live=original.live
+let kept_tag=original.tag
+original.score=input.right
+original.live=!original.live
+original.tag="overwritten"
+let moved_score=kept_score+7
+if input.flip {moved_score=original.score+7}
+let moved_live=kept_live
+let moved_tag=kept_tag+":kept"
+let assembled=State{score:moved_score,live:moved_live,tag:moved_tag}
+let forwarded=Echo(assembled)
+return forwarded`

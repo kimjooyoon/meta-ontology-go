@@ -1,0 +1,599 @@
+[
+  {
+    "schema": "gooo/body-codegen-report/v3",
+    "decision": "PASS",
+    "activity": "Choose",
+    "activity_id": "urn:fieldroutes16621:choose",
+    "input_type": "Input",
+    "record_types": [
+      {
+        "name": "Input",
+        "id": "urn:fieldroutes16621:input",
+        "go_name": "GoooRecordfd63b4b8a52a6c8d10af7f9b4652081234ead48f2bd39922c6185c3779c0d485",
+        "fields": [
+          {
+            "name": "amount",
+            "id": "urn:fieldroutes16621:amount",
+            "type_id": "urn:gooo:type:integer",
+            "go_name": "GoooFieldcfd1e4b652f844ad08a708ce5542a948b0daa390dd191ad61f09be2f73fb0413"
+          },
+          {
+            "name": "flip",
+            "id": "urn:fieldroutes16621:flip",
+            "type_id": "urn:gooo:type:boolean",
+            "go_name": "GoooField1fc854d3ea47e26e66aa954500de5ca356affa45d39f4cdfe9a699374ee55fd2"
+          }
+        ]
+      },
+      {
+        "name": "State",
+        "id": "urn:fieldroutes16621:state",
+        "go_name": "GoooRecord50c68ae53f9435a70926be748f8771ac2f182b9937070db8c4a6a9f9365976ea",
+        "fields": [
+          {
+            "name": "count",
+            "id": "urn:fieldroutes16621:count",
+            "type_id": "urn:gooo:type:integer",
+            "go_name": "GoooField80cabc204d617d23d68f29df97fd3d21cd1472472b5caf665cffc8efa07ffe54"
+          }
+        ]
+      }
+    ],
+    "output_type": "State",
+    "plan_sha256": "",
+    "compiler_source_sha": "",
+    "source_digest": "",
+    "program_digest": "",
+    "generated_digest": "",
+    "replay_digest": "",
+    "route": "preserve",
+    "route_decision": {
+      "schema": "",
+      "mode": "",
+      "selected": "",
+      "provider": "",
+      "request_sha256": ""
+    },
+    "route_selection": {
+      "method": "",
+      "proposed_route": "",
+      "final_route": ""
+    },
+    "route_decision_latency_ms": 0,
+    "body_conditions": [
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "native_ordinal": 0,
+        "source_ordinal": 0,
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "decoded_start": 3,
+        "decoded_end": 13,
+        "expression": "input.flip",
+        "relation": "retained_condition_node",
+        "fields": [
+          {
+            "entity_id": "urn:fieldroutes16621:input",
+            "field_id": "urn:fieldroutes16621:flip",
+            "name": "flip"
+          }
+        ]
+      }
+    ],
+    "body_fields": [
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "field_read",
+        "native_ordinal": 0,
+        "native_population": 3,
+        "record_id": "urn:fieldroutes16621:input",
+        "field_id": "urn:fieldroutes16621:flip",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 3,
+          "decoded_end": 13,
+          "expression": "input.flip"
+        },
+        "target": {
+          "decoded_start": 3,
+          "decoded_end": 13,
+          "expression": "input.flip"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "record_constructor",
+        "native_ordinal": 0,
+        "native_population": 2,
+        "record_id": "urn:fieldroutes16621:state",
+        "field_id": "urn:fieldroutes16621:count",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 34,
+          "decoded_end": 52,
+          "expression": "input.amount+16621"
+        },
+        "target": {
+          "decoded_start": 28,
+          "decoded_end": 33,
+          "expression": "count"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "field_read",
+        "native_ordinal": 1,
+        "native_population": 3,
+        "record_id": "urn:fieldroutes16621:input",
+        "field_id": "urn:fieldroutes16621:amount",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 34,
+          "decoded_end": 46,
+          "expression": "input.amount"
+        },
+        "target": {
+          "decoded_start": 34,
+          "decoded_end": 46,
+          "expression": "input.amount"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "record_constructor",
+        "native_ordinal": 1,
+        "native_population": 2,
+        "record_id": "urn:fieldroutes16621:state",
+        "field_id": "urn:fieldroutes16621:count",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 80,
+          "decoded_end": 95,
+          "expression": "input.amount-43"
+        },
+        "target": {
+          "decoded_start": 74,
+          "decoded_end": 79,
+          "expression": "count"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "field_read",
+        "native_ordinal": 2,
+        "native_population": 3,
+        "record_id": "urn:fieldroutes16621:input",
+        "field_id": "urn:fieldroutes16621:amount",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 80,
+          "decoded_end": 92,
+          "expression": "input.amount"
+        },
+        "target": {
+          "decoded_start": 80,
+          "decoded_end": 92,
+          "expression": "input.amount"
+        }
+      }
+    ],
+    "candidate_routes": null,
+    "equivalence_rule": "source-shape-preserving-v1",
+    "source_constructs": 3,
+    "lowered_constructs": 3,
+    "source_semantic_units": 24,
+    "lowered_semantic_units": 24,
+    "completeness_percent": 100,
+    "route_equivalence": {
+      "schema": "gooo/body-codegen-route-equivalence/v1",
+      "decision": "PASS",
+      "method": "canonical_control_flow_form/v2",
+      "rule": "source-shape-preserving-v1",
+      "source_semantic_digest": "sha256:f1e29f71e7c86866812ed204ba996f68f7ddae4b27cfde11ee9d3316a8c57dce",
+      "generated_semantic_digest": "sha256:f1e29f71e7c86866812ed204ba996f68f7ddae4b27cfde11ee9d3316a8c57dce",
+      "equivalent": true,
+      "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+    },
+    "typecheck_passed": true,
+    "deterministic_replay": false,
+    "repository_writes": 0,
+    "unsupported_constructs": ""
+  },
+  {
+    "schema": "gooo/body-codegen-report/v3",
+    "decision": "PASS",
+    "activity": "Choose",
+    "activity_id": "urn:fieldroutes16621:choose",
+    "input_type": "Input",
+    "record_types": [
+      {
+        "name": "Input",
+        "id": "urn:fieldroutes16621:input",
+        "go_name": "GoooRecordfd63b4b8a52a6c8d10af7f9b4652081234ead48f2bd39922c6185c3779c0d485",
+        "fields": [
+          {
+            "name": "amount",
+            "id": "urn:fieldroutes16621:amount",
+            "type_id": "urn:gooo:type:integer",
+            "go_name": "GoooFieldcfd1e4b652f844ad08a708ce5542a948b0daa390dd191ad61f09be2f73fb0413"
+          },
+          {
+            "name": "flip",
+            "id": "urn:fieldroutes16621:flip",
+            "type_id": "urn:gooo:type:boolean",
+            "go_name": "GoooField1fc854d3ea47e26e66aa954500de5ca356affa45d39f4cdfe9a699374ee55fd2"
+          }
+        ]
+      },
+      {
+        "name": "State",
+        "id": "urn:fieldroutes16621:state",
+        "go_name": "GoooRecord50c68ae53f9435a70926be748f8771ac2f182b9937070db8c4a6a9f9365976ea",
+        "fields": [
+          {
+            "name": "count",
+            "id": "urn:fieldroutes16621:count",
+            "type_id": "urn:gooo:type:integer",
+            "go_name": "GoooField80cabc204d617d23d68f29df97fd3d21cd1472472b5caf665cffc8efa07ffe54"
+          }
+        ]
+      }
+    ],
+    "output_type": "State",
+    "plan_sha256": "",
+    "compiler_source_sha": "",
+    "source_digest": "",
+    "program_digest": "",
+    "generated_digest": "",
+    "replay_digest": "",
+    "route": "guard-return",
+    "route_decision": {
+      "schema": "",
+      "mode": "",
+      "selected": "",
+      "provider": "",
+      "request_sha256": ""
+    },
+    "route_selection": {
+      "method": "",
+      "proposed_route": "",
+      "final_route": ""
+    },
+    "route_decision_latency_ms": 0,
+    "body_conditions": [
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "native_ordinal": 0,
+        "source_ordinal": 0,
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "decoded_start": 3,
+        "decoded_end": 13,
+        "expression": "input.flip",
+        "relation": "retained_condition_node",
+        "fields": [
+          {
+            "entity_id": "urn:fieldroutes16621:input",
+            "field_id": "urn:fieldroutes16621:flip",
+            "name": "flip"
+          }
+        ]
+      }
+    ],
+    "body_fields": [
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "field_read",
+        "native_ordinal": 0,
+        "native_population": 3,
+        "record_id": "urn:fieldroutes16621:input",
+        "field_id": "urn:fieldroutes16621:flip",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 3,
+          "decoded_end": 13,
+          "expression": "input.flip"
+        },
+        "target": {
+          "decoded_start": 3,
+          "decoded_end": 13,
+          "expression": "input.flip"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "record_constructor",
+        "native_ordinal": 0,
+        "native_population": 2,
+        "record_id": "urn:fieldroutes16621:state",
+        "field_id": "urn:fieldroutes16621:count",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 34,
+          "decoded_end": 52,
+          "expression": "input.amount+16621"
+        },
+        "target": {
+          "decoded_start": 28,
+          "decoded_end": 33,
+          "expression": "count"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "field_read",
+        "native_ordinal": 1,
+        "native_population": 3,
+        "record_id": "urn:fieldroutes16621:input",
+        "field_id": "urn:fieldroutes16621:amount",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 34,
+          "decoded_end": 46,
+          "expression": "input.amount"
+        },
+        "target": {
+          "decoded_start": 34,
+          "decoded_end": 46,
+          "expression": "input.amount"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "record_constructor",
+        "native_ordinal": 1,
+        "native_population": 2,
+        "record_id": "urn:fieldroutes16621:state",
+        "field_id": "urn:fieldroutes16621:count",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 80,
+          "decoded_end": 95,
+          "expression": "input.amount-43"
+        },
+        "target": {
+          "decoded_start": 74,
+          "decoded_end": 79,
+          "expression": "count"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "field_read",
+        "native_ordinal": 2,
+        "native_population": 3,
+        "record_id": "urn:fieldroutes16621:input",
+        "field_id": "urn:fieldroutes16621:amount",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 80,
+          "decoded_end": 92,
+          "expression": "input.amount"
+        },
+        "target": {
+          "decoded_start": 80,
+          "decoded_end": 92,
+          "expression": "input.amount"
+        }
+      }
+    ],
+    "candidate_routes": null,
+    "equivalence_rule": "if-return-else-return-to-guard-return-v1",
+    "source_constructs": 3,
+    "lowered_constructs": 3,
+    "source_semantic_units": 24,
+    "lowered_semantic_units": 24,
+    "completeness_percent": 100,
+    "route_equivalence": {
+      "schema": "gooo/body-codegen-route-equivalence/v1",
+      "decision": "PASS",
+      "method": "canonical_control_flow_form/v2",
+      "rule": "if-return-else-return-to-guard-return-v1",
+      "source_semantic_digest": "sha256:f1e29f71e7c86866812ed204ba996f68f7ddae4b27cfde11ee9d3316a8c57dce",
+      "generated_semantic_digest": "sha256:f1e29f71e7c86866812ed204ba996f68f7ddae4b27cfde11ee9d3316a8c57dce",
+      "equivalent": true,
+      "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+    },
+    "typecheck_passed": true,
+    "deterministic_replay": false,
+    "repository_writes": 0,
+    "unsupported_constructs": ""
+  },
+  {
+    "schema": "gooo/body-codegen-report/v3",
+    "decision": "PASS",
+    "activity": "Choose",
+    "activity_id": "urn:fieldroutes16621:choose",
+    "input_type": "Input",
+    "record_types": [
+      {
+        "name": "Input",
+        "id": "urn:fieldroutes16621:input",
+        "go_name": "GoooRecordfd63b4b8a52a6c8d10af7f9b4652081234ead48f2bd39922c6185c3779c0d485",
+        "fields": [
+          {
+            "name": "amount",
+            "id": "urn:fieldroutes16621:amount",
+            "type_id": "urn:gooo:type:integer",
+            "go_name": "GoooFieldcfd1e4b652f844ad08a708ce5542a948b0daa390dd191ad61f09be2f73fb0413"
+          },
+          {
+            "name": "flip",
+            "id": "urn:fieldroutes16621:flip",
+            "type_id": "urn:gooo:type:boolean",
+            "go_name": "GoooField1fc854d3ea47e26e66aa954500de5ca356affa45d39f4cdfe9a699374ee55fd2"
+          }
+        ]
+      },
+      {
+        "name": "State",
+        "id": "urn:fieldroutes16621:state",
+        "go_name": "GoooRecord50c68ae53f9435a70926be748f8771ac2f182b9937070db8c4a6a9f9365976ea",
+        "fields": [
+          {
+            "name": "count",
+            "id": "urn:fieldroutes16621:count",
+            "type_id": "urn:gooo:type:integer",
+            "go_name": "GoooField80cabc204d617d23d68f29df97fd3d21cd1472472b5caf665cffc8efa07ffe54"
+          }
+        ]
+      }
+    ],
+    "output_type": "State",
+    "plan_sha256": "",
+    "compiler_source_sha": "",
+    "source_digest": "",
+    "program_digest": "",
+    "generated_digest": "",
+    "replay_digest": "",
+    "route": "merge-result",
+    "route_decision": {
+      "schema": "",
+      "mode": "",
+      "selected": "",
+      "provider": "",
+      "request_sha256": ""
+    },
+    "route_selection": {
+      "method": "",
+      "proposed_route": "",
+      "final_route": ""
+    },
+    "route_decision_latency_ms": 0,
+    "body_conditions": [
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "native_ordinal": 0,
+        "source_ordinal": 0,
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "decoded_start": 3,
+        "decoded_end": 13,
+        "expression": "input.flip",
+        "relation": "retained_condition_node",
+        "fields": [
+          {
+            "entity_id": "urn:fieldroutes16621:input",
+            "field_id": "urn:fieldroutes16621:flip",
+            "name": "flip"
+          }
+        ]
+      }
+    ],
+    "body_fields": [
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "field_read",
+        "native_ordinal": 0,
+        "native_population": 3,
+        "record_id": "urn:fieldroutes16621:input",
+        "field_id": "urn:fieldroutes16621:flip",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 3,
+          "decoded_end": 13,
+          "expression": "input.flip"
+        },
+        "target": {
+          "decoded_start": 3,
+          "decoded_end": 13,
+          "expression": "input.flip"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "record_constructor",
+        "native_ordinal": 0,
+        "native_population": 2,
+        "record_id": "urn:fieldroutes16621:state",
+        "field_id": "urn:fieldroutes16621:count",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 34,
+          "decoded_end": 52,
+          "expression": "input.amount+16621"
+        },
+        "target": {
+          "decoded_start": 28,
+          "decoded_end": 33,
+          "expression": "count"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "field_read",
+        "native_ordinal": 1,
+        "native_population": 3,
+        "record_id": "urn:fieldroutes16621:input",
+        "field_id": "urn:fieldroutes16621:amount",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 34,
+          "decoded_end": 46,
+          "expression": "input.amount"
+        },
+        "target": {
+          "decoded_start": 34,
+          "decoded_end": 46,
+          "expression": "input.amount"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "record_constructor",
+        "native_ordinal": 1,
+        "native_population": 2,
+        "record_id": "urn:fieldroutes16621:state",
+        "field_id": "urn:fieldroutes16621:count",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 80,
+          "decoded_end": 95,
+          "expression": "input.amount-43"
+        },
+        "target": {
+          "decoded_start": 74,
+          "decoded_end": 79,
+          "expression": "count"
+        }
+      },
+      {
+        "activity_id": "urn:fieldroutes16621:choose",
+        "kind": "field_read",
+        "native_ordinal": 2,
+        "native_population": 3,
+        "record_id": "urn:fieldroutes16621:input",
+        "field_id": "urn:fieldroutes16621:amount",
+        "body_sha256": "sha256:228fb8fc72bd12f1d045515a2306e8644304bb0cfefbeb3e203d9c65b663002d",
+        "value": {
+          "decoded_start": 80,
+          "decoded_end": 92,
+          "expression": "input.amount"
+        },
+        "target": {
+          "decoded_start": 80,
+          "decoded_end": 92,
+          "expression": "input.amount"
+        }
+      }
+    ],
+    "candidate_routes": null,
+    "equivalence_rule": "if-return-else-return-to-explicit-result-join-v1",
+    "source_constructs": 3,
+    "lowered_constructs": 5,
+    "source_semantic_units": 24,
+    "lowered_semantic_units": 31,
+    "completeness_percent": 100,
+    "route_equivalence": {
+      "schema": "gooo/body-codegen-route-equivalence/v1",
+      "decision": "PASS",
+      "method": "canonical_control_flow_form/v2",
+      "rule": "if-return-else-return-to-explicit-result-join-v1",
+      "source_semantic_digest": "sha256:f1e29f71e7c86866812ed204ba996f68f7ddae4b27cfde11ee9d3316a8c57dce",
+      "generated_semantic_digest": "sha256:f1e29f71e7c86866812ed204ba996f68f7ddae4b27cfde11ee9d3316a8c57dce",
+      "equivalent": true,
+      "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+    },
+    "typecheck_passed": true,
+    "deterministic_replay": false,
+    "repository_writes": 0,
+    "unsupported_constructs": ""
+  }
+]

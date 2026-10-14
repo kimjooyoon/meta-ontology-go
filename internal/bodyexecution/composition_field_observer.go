@@ -19,7 +19,7 @@ func fieldReadObserver() (string, error) {
 		}
 		source = strings.Replace(source, edit[0], edit[1], 1)
 	}
-	return source + fieldObserver, nil
+	return bridgeReadObserver(source + fieldObserver)
 }
 
 // Native rows contain identities and evaluated read windows, never field values.

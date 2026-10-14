@@ -1,0 +1,48 @@
+--- /private/tmp/gooo-local-field-bridge-20261014/pending/internal/bodyexecution/native_bridge_columns.go (old)
++++ /private/tmp/gooo-local-field-bridge-20261014/pending/internal/bodyexecution/native_bridge_columns.go (new)
+@@ -45,12 +45,12 @@
+ }
+ 
+ func newBridgeColumnArrays(n, u int) BridgeLineageColumns {
+-	c := BridgeLineageColumns{FieldLineageColumns: FieldLineageColumns{
++	c := BridgeLineageColumns{
+ 		WriteCount: n, UseCount: u, Bits: make([]int64, n), CompletionOrder: make([]int, n),
+ 		Completions: make([]int, n), Parents: make([]int, n), UseStarts: make([]int, n), UseEnds: make([]int, n),
+ 		WriteCompleted: make([]bool, n), WriteDrops: make([]int, n), Modes: make([]string, n), Kinds: make([]string, n),
+ 		InputKinds: make([]string, n), Activities: make([]string, n), Ports: make([]string, n), Records: make([]string, n),
+-		Fields: make([]string, n), UseAssignments: make([]int, u), UseClocks: make([]int, u)},
++		Fields: make([]string, n), UseAssignments: make([]int, u), UseClocks: make([]int, u),
+ 		OtherStarts: make([]int, n), OtherEnds: make([]int, n), NodeNames: make([]string, n), SourceOrdinals: make([]int, n), TypeIDs: make([]string, n)}
+ 	return c
+ }
+--- /private/tmp/gooo-local-field-bridge-20261014/pending/cmd/gooo/package_local_field_bridge_known_partial_fresh_test.go (old)
++++ /private/tmp/gooo-local-field-bridge-20261014/pending/cmd/gooo/package_local_field_bridge_known_partial_fresh_test.go (new)
+@@ -55,10 +55,10 @@
+ }
+ 
+ func knownPartialColumns15817() bodyexecution.BridgeLineageColumns {
+-	return bodyexecution.BridgeLineageColumns{FieldLineageColumns: bodyexecution.FieldLineageColumns{
++	return bodyexecution.BridgeLineageColumns{
+ 		SourceSHA256: "synthetic-mixed-window15817", JournalSHA256: "synthetic-no-native-producer", SelectedUse: 1, RootAssignment: 2, RootClock: 3, WriteCount: 3, UseCount: 3, RecordingComplete: true,
+ 		Bits: []int64{1, 2, 4}, CompletionOrder: []int{0, 1, 2}, Completions: []int{0, 1, 2}, Parents: []int{-1, -1, -1}, UseStarts: []int{0, 2, 1}, UseEnds: []int{0, 2, 1},
+ 		WriteCompleted: []bool{true, true, true}, WriteDrops: []int{0, 0, 0}, Modes: []string{"call_parameter_or_input", "collection_rhs", "scalar_rhs"}, Kinds: []string{"parameter", "scalar_local", "field_assignment"},
+-		InputKinds: []string{"root_input", "", ""}, Activities: []string{"mixed", "mixed", "mixed"}, Ports: []string{"input", "", ""}, Records: []string{"input-record", "", "output-record"}, Fields: []string{"input-value", "", "value"}, UseAssignments: []int{0, 2, 1}, UseClocks: []int{1, 3, 2}},
++		InputKinds: []string{"root_input", "", ""}, Activities: []string{"mixed", "mixed", "mixed"}, Ports: []string{"input", "", ""}, Records: []string{"input-record", "", "output-record"}, Fields: []string{"input-value", "", "value"}, UseAssignments: []int{0, 2, 1}, UseClocks: []int{1, 3, 2},
+ 		OtherStarts: []int{2, 0, 2}, OtherEnds: []int{2, 1, 3}, NodeNames: []string{"input", "cached", "output"}, SourceOrdinals: []int{-1, 0, 1}, TypeIDs: []string{"urn:gooo:type:integer", "urn:gooo:type:integer", "urn:gooo:type:integer"}, FieldUseCount: 2}
+ }
+--- /private/tmp/gooo-local-field-bridge-20261014/pending/cmd/gooo/package_local_field_bridge_partial_fresh_test.go (old)
++++ /private/tmp/gooo-local-field-bridge-20261014/pending/cmd/gooo/package_local_field_bridge_partial_fresh_test.go (new)
+@@ -117,11 +117,11 @@
+ }
+ 
+ func syntheticBridgeLeaf15717() bodyexecution.BridgeLineageColumns {
+-	return bodyexecution.BridgeLineageColumns{FieldLineageColumns: bodyexecution.FieldLineageColumns{
++	return bodyexecution.BridgeLineageColumns{
+ 		SourceSHA256: "synthetic-no-native-producer15717", JournalSHA256: "synthetic-leaf-only", RootAssignment: 1, RootClock: 2, WriteCount: 2, UseCount: 2, RecordingComplete: true,
+ 		Bits: []int64{1, 2}, CompletionOrder: []int{0, 1}, Completions: []int{0, 1}, Parents: []int{-1, -1}, UseStarts: []int{1, 0}, UseEnds: []int{1, 0},
+ 		WriteCompleted: []bool{true, true}, WriteDrops: []int{0, 0}, Modes: []string{"literal", "scalar_rhs"}, Kinds: []string{"scalar_local", "field_assignment"},
+-		InputKinds: []string{"", ""}, Activities: []string{"synthetic", "synthetic"}, Ports: []string{"", ""}, Records: []string{"", "record"}, Fields: []string{"", "value"}, UseAssignments: []int{1, 0}, UseClocks: []int{2, 1}},
++		InputKinds: []string{"", ""}, Activities: []string{"synthetic", "synthetic"}, Ports: []string{"", ""}, Records: []string{"", "record"}, Fields: []string{"", "value"}, UseAssignments: []int{1, 0}, UseClocks: []int{2, 1},
+ 		OtherStarts: []int{0, 1}, OtherEnds: []int{0, 2}, NodeNames: []string{"seed", "result"}, SourceOrdinals: []int{0, 1}, TypeIDs: []string{"urn:gooo:type:integer", "urn:gooo:type:integer"}, FieldUseCount: 1}
+ }
+ 

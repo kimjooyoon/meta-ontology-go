@@ -38,7 +38,9 @@ type CompositionFieldFact struct {
 	ProjectionExpression string `json:"projection_expression"`
 }
 
-func isFieldOriginKind(kind string) bool { return kind == "field-writes" || kind == "field-uses" }
+func isFieldOriginKind(kind string) bool {
+	return kind == "field-writes" || kind == "field-uses" || kind == "field-input-locations"
+}
 
 func fieldFact(runtime CompositionRuntime, site CompositionFieldSite, c, event, frame int) CompositionFieldFact {
 	binding := runtime.FieldBindings[site.Binding]

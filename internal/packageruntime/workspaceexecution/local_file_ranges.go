@@ -82,13 +82,17 @@ func retainedLocalTemplateRange(span bodycodegen.FillOriginRange, fill *bodycode
 }
 
 func localFileConstruction(input workspaceFillInput, found bool, selected *bodycodegen.BodyExpressionSource, fill localFillSelection) *bodycodegen.SourceFillInputOrigin {
+	return fileExpressionConstruction(input, found, selected, fill, "local_expression")
+}
+
+func fileExpressionConstruction(input workspaceFillInput, found bool, selected *bodycodegen.BodyExpressionSource, fill localFillSelection, relation string) *bodycodegen.SourceFillInputOrigin {
 	if !found || selected == nil || selected.Status != "MAPPED" || fill.origin == nil || fill.ambiguous {
 		return nil
 	}
 	link := &bodycodegen.SourceFillConditionOrigin{CandidateID: fill.origin.CandidateID}
 	for _, fragment := range fill.origin.Fragments {
 		if fragment.SelectedDecoded.Start < selected.DecodedEnd && fragment.SelectedDecoded.End > selected.DecodedStart {
-			fragment.Relation = "local_expression"
+			fragment.Relation = relation
 			link.Fragments = append(link.Fragments, fragment)
 		}
 	}

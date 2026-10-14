@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T05:36:13.300900+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-field-source-locations-20261014/batch16841/overlay.json",
+    "./cmd/gooo",
+    "-run=^TestBatchedBridgeOrigins16841$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}

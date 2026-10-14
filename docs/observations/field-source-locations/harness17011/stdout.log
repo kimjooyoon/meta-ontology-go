@@ -1,0 +1,5 @@
+=== RUN   TestCommandHarness17011
+    harness_fresh_test.go:24: actual command binary built;race=true;new source check passes;historical program executions0;binary removed when harness ends
+--- PASS: TestCommandHarness17011 (1.57s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/cliobservations	12.854s

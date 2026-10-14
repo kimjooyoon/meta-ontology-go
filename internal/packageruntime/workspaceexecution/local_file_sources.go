@@ -67,6 +67,7 @@ func bindWorkspaceLocalFileSources(program Program, runtime *bodyexecution.Compo
 			Construction: localFileConstruction(input, found, site.Source, selection)})
 	}
 	bodyexecution.RecordLocalFileSources(runtime, bindings)
+	bindWorkspaceFieldFileSources(program, runtime, composition, steps)
 }
 
 func localSelectionForSource(selections map[localFillKey]localFillSelection, activity string, source *bodycodegen.BodyExpressionSource) localFillSelection {

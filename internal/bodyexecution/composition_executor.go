@@ -87,6 +87,7 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 	r.LocalSites, r.LocalUseSites = observed.locals, observed.uses
 	if observed.fields != nil {
 		r.FieldBindings = observed.fields.inventory.bindings
+		r.FieldSources = observed.fields.sources
 		r.FieldSites, r.FieldUseSites = observed.fields.sites, observed.fields.uses
 		r.FieldProjectionSHA256 = observed.fields.sourceSHA256
 	}

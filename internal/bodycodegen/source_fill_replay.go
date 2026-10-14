@@ -68,6 +68,10 @@ func compareSourceFillReplay(prior, expected Result) error {
 	if !EqualRetainedLocalOrigins(a.BodyLocals, b.BodyLocals) {
 		return fmt.Errorf("body-fill retained local origins differ")
 	}
+	if !EqualRetainedFieldOrigins(a.BodyFields, b.BodyFields) {
+		return fmt.Errorf("body-fill retained field origins differ")
+	}
+	a.BodyFields, b.BodyFields = nil, nil
 	a.BodyLocals, b.BodyLocals = nil, nil
 	if a.BodyConstructions == nil {
 		b.BodyConstructions = nil

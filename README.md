@@ -33,6 +33,13 @@ The [Gooo ancestry reader](examples/native-field-lineage/README.md) follows save
 field links through copies and helpers, and reports recording gaps separately.
 Its traversal lives in `.gooo`; Go transports recorded columns. Two bounded
 sequence loops now express this kind of small graph walk.
+The [field/local bridge](examples/local-field-bridge/README.md) also follows values
+saved in scalar locals before a field is overwritten. A Gooo program walks the
+joined journals and keeps known origins visible when other links are unresolved.
+The [original field-location reader](examples/field-source-map/README.md) connects
+explicit field writes, constructor values and selector reads to original Gooo
+files. Template and candidate fragments retain separate anchors. Saved bridge
+queries can also carry several independent Gooo inputs within one 32KiB page.
 
 A [Gooo metaprogram](examples/derived-origin/README.md) reads saved assembly
 origins and counts which recorded assignments connect to candidates, grammar

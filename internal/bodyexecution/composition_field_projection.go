@@ -42,6 +42,7 @@ type compositionFieldFunction struct {
 
 type compositionFieldProjection struct {
 	sourceSHA256 string
+	sources      *CompositionFieldSources
 	inventory    compositionFieldInventory
 	sites        []CompositionFieldSite
 	uses         []CompositionFieldSite
@@ -131,6 +132,9 @@ func buildCompositionFieldProjection(file *ast.File, fset *token.FileSet, source
 	}
 	if len(p.sites) > 4096 || len(p.uses) > 65536 || len(p.nodes) > 131072 {
 		return nil, fmt.Errorf("record field projection bound exceeded")
+	}
+	if err := p.bindSources(file, prior); err != nil {
+		return nil, err
 	}
 	return p, nil
 }
