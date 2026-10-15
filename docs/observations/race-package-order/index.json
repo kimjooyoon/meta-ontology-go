@@ -1,0 +1,19 @@
+{
+  "schema": "gooo/race-package-order/v1",
+  "predecessor_pr": 1571,
+  "predecessor_head": "4dbdbc664418c35869f23501a2677df47bf370c2",
+  "original_run": 38608271678,
+  "original_job": 116004690167,
+  "original_attempt": 1,
+  "original_conclusion": "cancelled",
+  "full_scope_preserved": "919/919 enumerated package and test variants",
+  "fresh_tests": "scope57213",
+  "enumeration": "selection57517",
+  "static_source": "static58331",
+  "historical_local_reruns": 0,
+  "model_calls": 0,
+  "performance_improvement": "UNOBSERVED",
+  "acceptance": "REQUIRES_OWN_ORIGINAL_CI",
+  "initial_static_source": "static57791",
+  "final_tests": "scope58201"
+}

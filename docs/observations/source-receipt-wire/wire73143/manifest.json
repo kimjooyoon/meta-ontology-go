@@ -1,0 +1,20 @@
+{
+  "base_head": "cd5ed4381e1800952632ddf72c4ce55ecfe63a25",
+  "files": [
+    {
+      "path": "internal/bodyexecution/decode.go",
+      "sha256": "1bbe81841a4a8e7e192fcba6b5e57a99485fe78f429902ece33aa5eb6e0c2743",
+      "bytes": 3732
+    },
+    {
+      "path": "internal/bodyexecution/wire_schema.go",
+      "sha256": "2b3ee25a2bfac3ef8901b8826e46c8d06fc5e1fd931eaa49e239ec006c46bf28",
+      "bytes": 2391
+    },
+    {
+      "path": "internal/bodyexecution/wire_schema_fresh73143_test.go",
+      "sha256": "31e3674b9ad00b88c4698ae14a5a2814d9cfa96b410f6e9a2f46e2fcfe4bbe69",
+      "bytes": 4069
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "predecessor_pr": 1567,
+  "source_cohorts": [
+    {
+      "name": "render36013",
+      "result": {
+        "ended": "2026-10-14T14:27:35.326072+00:00",
+        "exit_code": 0
+      },
+      "archive_sha256": "346714cf172f16fd54088b9c5d492f413e0235cd8788e546c3e32fee6faa319b"
+    },
+    {
+      "name": "static36079",
+      "result": {
+        "at": "2026-10-14T14:27:34.324275+00:00",
+        "exit": 0,
+        "diff_bytes": 0,
+        "stderr_bytes": 0,
+        "tests_executed": 0,
+        "go_files": 73
+      },
+      "archive_sha256": "9fe83d39e067c597414597d1c496832cfc5bd86faabedb86b0e2f4d96938342f"
+    }
+  ],
+  "scope": "all4 split verification declarations and actual Gooo extraction preserve75-line cap;roles and ownership invariants retained",
+  "models_or_historical_reruns": 0
+}

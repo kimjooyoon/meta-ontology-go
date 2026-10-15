@@ -47,6 +47,10 @@ func (c *recordFlowBuilder) assignment(s *ast.AssignStmt, state *flowState) {
 		return
 	}
 	value := c.expression(s.Rhs[0], state, true)
+	if operation, compound := CompoundAssignmentOperator(s.Tok); compound {
+		previous := c.expression(s.Lhs[0], state, true)
+		value = flowScalar(c.add("expression", [2]uint16{previous.scalar, value.scalar}, c.span(s), "", 0, operation.String()))
+	}
 	if selector, ok := s.Lhs[0].(*ast.SelectorExpr); ok && binding.value.record >= 0 {
 		for i, field := range c.body.records[binding.value.record].Fields {
 			if field.Name == selector.Sel.Name || field.GoName == selector.Sel.Name {

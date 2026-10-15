@@ -1,0 +1,9 @@
+=== RUN   TestAuthoredCompoundExampleNative107513
+    compound_example_native_fresh107513_test.go:44: published source:new four inputs pass; sixteen writes and reads retain source; no model calls
+--- PASS: TestAuthoredCompoundExampleNative107513 (0.79s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	2.377s
+=== RUN   TestCompoundSourceRegistration105341
+--- PASS: TestCompoundSourceRegistration105341 (0.16s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax	1.586s

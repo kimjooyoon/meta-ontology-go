@@ -1,0 +1,30 @@
+{
+  "producer_head": "10067b26de6d3fa75040173a610fdc522b5da62a",
+  "language_source_sha256": "1114fceac6b56e38791cc87b91bed9e4ad2fae033665e5527dc21774201a1a6b",
+  "finite_passed": 3,
+  "finite_total": 3,
+  "model_calls": 0,
+  "native_wall_seconds": 0.6577,
+  "source_origin_status": "RESOLVED",
+  "source_graph_nodes": 16,
+  "output_roots": [
+    {
+      "root": 16
+    }
+  ],
+  "input_ports": [
+    {
+      "node": 1,
+      "port": "input0"
+    },
+    {
+      "node": 2,
+      "port": "input1"
+    }
+  ],
+  "limits": [
+    "three finite rows;no all-input correctness claim",
+    "one invocation;no throughput or speedup comparison",
+    "development source head;not a measurement of the public0.6.34 archive"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-14T18:58:48.050136+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-continuity-producer-order-20261015/order65243/overlay.json",
+    "./internal/verify",
+    "-run=^TestPublicContinuity(CompletesProducersBeforeTransport|OrderRejectsSkippedOrLateProducers)65243$",
+    "-v"
+  ],
+  "historical_reruns": 0,
+  "native_or_model_or_original_protocol_executions": 0
+}

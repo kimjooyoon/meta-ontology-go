@@ -1,0 +1,8 @@
+{
+  "compiled_dependencies": 60,
+  "error": "",
+  "list_calls": 2,
+  "new_consumer_source": "package fresh108271\nimport \"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation\"\nfunc NewSourceProbe108271() any { return generation.ObserveRegistrationInput }\n",
+  "old_test_executions": 0,
+  "wall_ns": 2489308917
+}

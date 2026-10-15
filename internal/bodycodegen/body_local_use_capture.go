@@ -5,13 +5,16 @@ import (
 	"go/token"
 )
 
-// WalkLocalValueUses shares the source and native traversal. Assignment targets,
-// direct address-taking and compiler unused-local markers are not value reads.
+// WalkLocalValueUses shares the source and native traversal. Compound updates
+// read their existing target; plain targets and direct address-taking do not.
 func WalkLocalValueUses(body *ast.BlockStmt, visit func(*ast.Ident)) {
 	skipped := map[*ast.Ident]bool{}
 	ast.Inspect(body, func(node ast.Node) bool {
 		name, _, _, _ := LocalWriteExpression(node)
 		_, update := node.(*ast.IncDecStmt)
+		if assignment, ok := node.(*ast.AssignStmt); ok {
+			_, update = CompoundAssignmentOperator(assignment.Tok)
+		}
 		if name != nil && !update {
 			skipped[name] = true
 		}

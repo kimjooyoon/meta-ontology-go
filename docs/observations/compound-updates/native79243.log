@@ -1,0 +1,5 @@
+=== RUN   TestCompoundLocalNative79243
+    compound_local_native_fresh79243_test.go:54: native79243:new four cases pass;16 writes/16 reads;each compound read resolves preceding write;model0
+--- PASS: TestCompoundLocalNative79243 (0.72s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	2.293s

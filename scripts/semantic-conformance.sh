@@ -211,10 +211,12 @@ write_extraction_result() {
 run_projected_compile() {
   local stdout="$projection_work/projected-compile.stdout"
   local stderr="$projection_work/projected-compile.stderr"
-  set +e
-  go test ./... > "$stdout" 2> "$stderr"
-  local status=$?
-  set -e
+  local status=0
+  if go test ./... > "$stdout" 2> "$stderr"; then
+    status=0
+  else
+    status=$?
+  fi
   local stdout_bytes
   local stderr_bytes
   local stdout_digest
@@ -234,6 +236,11 @@ run_projected_compile() {
       exit_code:$exit_code, stdout_bytes:$stdout_bytes, stdout_digest:$stdout_digest,
       stderr_bytes:$stderr_bytes, stderr_digest:$stderr_digest, observed:($exit_code == 0)}' \
     > "$projection_work/projected-compile.json"
+  if [[ "$status" -ne 0 ]]; then
+    cat "$projection_work/projected-compile.json" >&2
+    cat "$stdout"
+    cat "$stderr" >&2
+  fi
   return "$status"
 }
 

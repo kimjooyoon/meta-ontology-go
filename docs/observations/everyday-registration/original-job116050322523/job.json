@@ -1,0 +1,108 @@
+{
+  "id": 116050322523,
+  "run_id": 38621624579,
+  "workflow_name": "Core conformance registry",
+  "head_branch": "agent/continuity-producer-order-20261015",
+  "run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/runs/38621624579",
+  "run_attempt": 1,
+  "node_id": "CR_kwDOT1omE88AAAAbBSNkWw",
+  "head_sha": "8d057a805d284653cf68c5dcf4efc8cc415d1d5a",
+  "url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/jobs/116050322523",
+  "html_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38621624579/job/116050322523",
+  "status": "completed",
+  "conclusion": "failure",
+  "created_at": "2026-10-14T19:11:56Z",
+  "started_at": "2026-10-14T19:15:24Z",
+  "completed_at": "2026-10-14T19:18:56Z",
+  "name": "registry-conformance",
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1,
+      "started_at": "2026-10-14T19:15:25Z",
+      "completed_at": "2026-10-14T19:15:27Z"
+    },
+    {
+      "name": "Run actions/checkout@v7",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2,
+      "started_at": "2026-10-14T19:15:27Z",
+      "completed_at": "2026-10-14T19:15:31Z"
+    },
+    {
+      "name": "Run actions/setup-go@v7",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3,
+      "started_at": "2026-10-14T19:15:31Z",
+      "completed_at": "2026-10-14T19:15:51Z"
+    },
+    {
+      "name": "Check changed Go formatting",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 4,
+      "started_at": "2026-10-14T19:15:51Z",
+      "completed_at": "2026-10-14T19:15:52Z"
+    },
+    {
+      "name": "Test registry, inventory and pinned denominator",
+      "status": "completed",
+      "conclusion": "failure",
+      "number": 5,
+      "started_at": "2026-10-14T19:15:52Z",
+      "completed_at": "2026-10-14T19:18:50Z"
+    },
+    {
+      "name": "Check source observation verifier shell syntax",
+      "status": "completed",
+      "conclusion": "skipped",
+      "number": 6,
+      "started_at": "2026-10-14T19:18:50Z",
+      "completed_at": "2026-10-14T19:18:50Z"
+    },
+    {
+      "name": "Preserve conformance diagnostics",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 7,
+      "started_at": "2026-10-14T19:18:50Z",
+      "completed_at": "2026-10-14T19:18:52Z"
+    },
+    {
+      "name": "Post Run actions/setup-go@v7",
+      "status": "completed",
+      "conclusion": "skipped",
+      "number": 13,
+      "started_at": "2026-10-14T19:18:52Z",
+      "completed_at": "2026-10-14T19:18:52Z"
+    },
+    {
+      "name": "Post Run actions/checkout@v7",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 14,
+      "started_at": "2026-10-14T19:18:52Z",
+      "completed_at": "2026-10-14T19:18:52Z"
+    },
+    {
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 15,
+      "started_at": "2026-10-14T19:18:52Z",
+      "completed_at": "2026-10-14T19:18:52Z"
+    }
+  ],
+  "check_run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/check-runs/116050322523",
+  "labels": [
+    "ubuntu-24.04"
+  ],
+  "runner_id": 1000370113,
+  "runner_name": "GitHub Actions 1000370113",
+  "runner_group_id": 0,
+  "runner_group_name": "GitHub Actions"
+}

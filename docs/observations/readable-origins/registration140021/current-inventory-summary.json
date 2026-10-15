@@ -1,0 +1,11 @@
+{
+  "schema": "gooo/syntax-source-inventory/v1",
+  "registry_digest": "sha256:76cfed871d2de6d900f4640785ee358852cd95c1bf75572e93a17d0b6f09e559",
+  "observation_digest": "sha256:f0f5ed1d76af3c08bf93714a92746b84a60ee36eca01c5507e3e5c70088a4573",
+  "source_count": 131,
+  "unregistered": [],
+  "missing": [],
+  "semantic_admission": "UNASSESSED",
+  "native_executions": 0,
+  "repository_writes": 0
+}

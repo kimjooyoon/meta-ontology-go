@@ -1,0 +1,16 @@
+{
+  "schema": "gooo.projected-compile-observation/v1",
+  "command": [
+    "go",
+    "test",
+    "./..."
+  ],
+  "cwd": "/private/tmp/gooo-projected-source-origins-20261015/compile40117/37",
+  "exit_code": 37,
+  "stdout_bytes": 45,
+  "stdout_digest": "sha256:a3402d57c60b5e7cbc45acc15994bbe5c55969d3371921ddbc9027640f37dab9",
+  "stderr_bytes": 34,
+  "stderr_digest": "sha256:641da6ff303b8e1639bd5bf02529c409b97c33433d6e49c924bc2616a3f5db23",
+  "observed": false
+}
+native fixture source40117 stderr

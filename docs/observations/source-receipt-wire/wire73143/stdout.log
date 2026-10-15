@@ -1,0 +1,9 @@
+=== RUN   TestReceiptWireShapes73143
+--- PASS: TestReceiptWireShapes73143 (0.00s)
+=== RUN   TestReceiptWireCounterexamples73143
+--- PASS: TestReceiptWireCounterexamples73143 (0.03s)
+=== RUN   TestReceiptWireSourceTraversal73143
+    wire_schema_fresh73143_test.go:100: new synthetic receipt bytes=6643722 rows=4096 shape_types=2 decode_wall=479.635458ms;one invocation,no runtime/model calls
+--- PASS: TestReceiptWireSourceTraversal73143 (0.68s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	2.308s

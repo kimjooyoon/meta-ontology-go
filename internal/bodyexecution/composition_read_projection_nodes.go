@@ -22,6 +22,13 @@ func (p *readProjection) collectLocalReadNodes(file *ast.File, bindings map[stri
 				if _, iteration := node.(*ast.RangeStmt); !iteration {
 					_, value, _, _ := bodycodegen.LocalWriteExpression(node)
 					p.nodes = append(p.nodes, readProjectionNode{node: node, start: p.offset(value.Pos()), end: p.offset(value.End()), localKind: "write", localWrite: index})
+					if assignment, ok := node.(*ast.AssignStmt); ok {
+						if _, compound := bodycodegen.CompoundAssignmentOperator(assignment.Tok); compound {
+							p.nodes[len(p.nodes)-1].start = p.offset(node.Pos())
+							p.nodes[len(p.nodes)-1].end = p.offset(node.End())
+							p.nodes[len(p.nodes)-1].localKind = "compound_write"
+						}
+					}
 				} else {
 					localRanges++
 				}

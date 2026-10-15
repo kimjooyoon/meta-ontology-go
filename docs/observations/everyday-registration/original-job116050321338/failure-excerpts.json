@@ -1,0 +1,13 @@
+[
+  "2026-10-14T19:24:11.3812938Z --- FAIL: TestNativeSyntaxNegativeReportCannotBecomeAcceptance (4.68s)",
+  "2026-10-14T19:24:11.3814393Z     --- FAIL: TestNativeSyntaxNegativeReportCannotBecomeAcceptance/source-bound-counterexample (2.34s)",
+  "2026-10-14T19:24:11.9184669Z FAIL\tgithub.com/kimjooyoon/meta-ontology-go/cmd/language-syntax-witness\t4.695s",
+  "2026-10-14T19:26:36.9291728Z --- FAIL: TestSemanticConsumerAcceptsActualSyntaxProducerReceipt (1.38s)",
+  "2026-10-14T19:26:36.9379620Z --- FAIL: TestSemanticConsumerRejectsProducerValidModifiedSource (1.48s)",
+  "2026-10-14T19:26:36.9384299Z FAIL\tgithub.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic\t4.889s",
+  "2026-10-14T19:26:36.9391212Z --- FAIL: TestCompleteCorpusProvesSyntaxRoundTrip (1.42s)",
+  "2026-10-14T19:26:36.9396838Z     evaluate_extracted_1_test.go:50: report summary: decision=\"FAIL_CLOSED\" resolution=\"EXACT\" reason=\"SYNTAX_ROUNDTRIP_MISMATCH\" gooo_lines=3507 gooo_files=129 unregistered=[examples/everyday-program/main.gooo] missing=[] satisfied=110 valid=107 invalid=3 invalid_ids=\"unknown-keyword,unterminated-string,source-execution-invalid\" expected_invalid_ids=\"unknown-keyword,unterminated-string,source-execution-invalid\" unresolved=0 package_units=4",
+  "2026-10-14T19:26:36.9400767Z --- FAIL: TestProjectionCorpusBindsActualSourceAndBothArtifacts (1.54s)",
+  "2026-10-14T19:26:36.9486886Z FAIL\tgithub.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance\t5.788s",
+  "2026-10-14T19:28:56.2020864Z ##[error]Process completed with exit code 1."
+]

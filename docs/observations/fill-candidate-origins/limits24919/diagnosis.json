@@ -1,0 +1,7 @@
+{
+  "status": "FAILED_FIXTURE_CANDIDATE_COUNT",
+  "observed": "source_fill contract requires2..16 explicit complete candidates;boundary fixture had1",
+  "repair": "fresh25037 source names/IDs/cases adds second complete candidate;source constraints unchanged",
+  "production_changes": 0,
+  "historical_reruns": 0
+}

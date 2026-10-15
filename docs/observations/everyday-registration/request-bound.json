@@ -1,0 +1,23 @@
+{
+  "base_version": 72,
+  "toolchain": "go1.27.2",
+  "case": {
+    "id": "everyday-local-condition-origins",
+    "path": "examples/everyday-program/main.gooo",
+    "kind": "VALID",
+    "expected_decision": "PASS",
+    "proof_choice": "COHERENCE",
+    "meta_operation": "replay-language-syntax",
+    "scope": "LANGUAGE_CAPABILITY"
+  },
+  "snapshot_digest": "sha256:e082a299a384116656200d779a4fd240159588598fe191189f3a66bb92477588",
+  "source_digest": "sha256:1114fceac6b56e38791cc87b91bed9e4ad2fae033665e5527dc21774201a1a6b",
+  "execution_identity": {
+    "go_version": "go1.27.2",
+    "goos": "darwin",
+    "goarch": "arm64",
+    "executable_sha256": "sha256:b52cebbbf79ffd8c67108a55e29f0a3238f2584106ed53a0a7a5759c90073e56",
+    "go_command_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "compiler_sha256": "sha256:8a3add4030b0f724c535afe946a4fcd27ca235ba869d4d4b91091e0ef8a611e2"
+  }
+}

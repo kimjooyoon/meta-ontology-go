@@ -131,8 +131,15 @@ func runNativeRegistrationConformance(t *testing.T, mode string) {
 		candidate.ExecutionBinding.ActivityID == "" || candidate.ExecutionBinding.OutputID == "" {
 		t.Fatal("native candidate lost its observed execution identity binding")
 	}
-	if view == "canonical" && candidate.Required != RequiredMembers {
-		t.Fatalf("canonical acceptance requires exactly nine files, got %d", candidate.Required)
+	if view == "canonical" {
+		expected := RequiredMembers
+		if request.PromoteMetaSource {
+			// Cases and MetaSources have distinct canonical source owners.
+			expected++
+		}
+		if candidate.Required != expected {
+			t.Fatalf("canonical acceptance requires exactly %d source files, got %d", expected, candidate.Required)
+		}
 	}
 	replayed, err := plan.Generate(repository)
 	if err != nil {

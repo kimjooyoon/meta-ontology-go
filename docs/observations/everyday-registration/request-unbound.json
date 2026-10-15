@@ -1,0 +1,13 @@
+{
+  "base_version": 72,
+  "toolchain": "go1.27.2",
+  "case": {
+    "id": "everyday-local-condition-origins",
+    "path": "examples/everyday-program/main.gooo",
+    "kind": "VALID",
+    "expected_decision": "PASS",
+    "proof_choice": "COHERENCE",
+    "meta_operation": "replay-language-syntax",
+    "scope": "LANGUAGE_CAPABILITY"
+  }
+}

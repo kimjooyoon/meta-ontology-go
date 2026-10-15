@@ -1,0 +1,10 @@
+=== RUN   TestFillCandidateOriginCapacity25111
+    fill_candidate_origin_capacity_fresh_test.go:16: cmd/gooo#runBodyOrigins rendered 59
+    fill_candidate_origin_capacity_fresh_test.go:16: cmd/gooo#writeBodyFillCandidateOrigins rendered 27
+    fill_candidate_origin_capacity_fresh_test.go:16: internal/bodycodegen#InspectSourceFillCandidateOrigins rendered 32
+    fill_candidate_origin_capacity_fresh_test.go:16: internal/bodycodegen#sourceFillCandidateOriginRow rendered 25
+    fill_candidate_origin_capacity_fresh_test.go:16: internal/bodycodegen#SourceFillCandidateOriginInputs rendered 35
+    fill_candidate_origin_capacity_fresh_test.go:17: candidate25111:all5 changed production declarations;unchanged75-line rendered helper cap;no producer/model execution
+--- PASS: TestFillCandidateOriginCapacity25111 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.497s

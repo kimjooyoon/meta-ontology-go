@@ -1,0 +1,50 @@
+{
+  "base": "0dc9c3747db2f0e24eb1515cc44789faa88bdc02",
+  "files": [
+    {
+      "path": "cmd/gooo/package_execute.go",
+      "bytes": 10361,
+      "sha256": "06b330075ec9b0c68090c4bfd4ca98d6b93bbe1fd4a5f3ecd22dcfafd1d9c3b0"
+    },
+    {
+      "path": "cmd/gooo/package_origin_input.go",
+      "bytes": 6769,
+      "sha256": "64a8682640d1134debbf8d936c9e32f697fe3faf757d90ba276b7163f05f8a73"
+    },
+    {
+      "path": "cmd/gooo/package_origin_subject.go",
+      "bytes": 324,
+      "sha256": "bd458e1daab0f927cd620a4d935e3c1a0f45be46afec4389f2d37ee140b8925c"
+    },
+    {
+      "path": "internal/bodyexecution/native_field_facts.go",
+      "bytes": 4475,
+      "sha256": "e0fac32fd11da8e6823d30ee39dcfe565c0117baab97eab56f226379aff549e2"
+    },
+    {
+      "path": "internal/bodyexecution/native_field_file_facts.go",
+      "bytes": 4504,
+      "sha256": "1f5e948f1cecb4fe12f548a52eefe07c541ee67d08292b08a68be5c1454ea949"
+    },
+    {
+      "path": "internal/bodyexecution/native_origin_input.go",
+      "bytes": 8857,
+      "sha256": "5f28568ae8485a89161902ee5c66033b9beb5086836f94bd662c373eb27422b2"
+    },
+    {
+      "path": "internal/bodyexecution/native_origin_subject.go",
+      "bytes": 916,
+      "sha256": "f564670aa14f6695533fe742b4f19eae703decfb10093813a0c87c30dcf9ba08"
+    },
+    {
+      "path": "internal/bodyexecution/native_origin_subject_fresh_test.go",
+      "bytes": 5709,
+      "sha256": "14681249057a766e6f1fb628d6303f684ac1e9e5004375505d7c0a66f77c9d03"
+    },
+    {
+      "path": "internal/cliobservations/origin_subject_query_fresh_test.go",
+      "bytes": 4789,
+      "sha256": "81cd153dc41e2c27039d15bfafca4c9ac3de07b62ddf4b0e83676db8281234ae"
+    }
+  ]
+}

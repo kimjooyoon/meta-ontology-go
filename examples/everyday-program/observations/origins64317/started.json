@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-14T18:37:06.323209+00:00",
+  "command": [
+    "/private/tmp/gooo-everyday-source-20261015/native64129/gooo",
+    "body-origins",
+    "--activity",
+    "Adjust",
+    "/private/tmp/gooo-everyday-source-20261015/native64129/source/main.gooo"
+  ],
+  "producer_head": "10067b26de6d3fa75040173a610fdc522b5da62a",
+  "source_sha256": "1114fceac6b56e38791cc87b91bed9e4ad2fae033665e5527dc21774201a1a6b",
+  "source_archive": "../native64129/source.tar.gz",
+  "scope": "source origin inspection only;no cases/model/native execution"
+}

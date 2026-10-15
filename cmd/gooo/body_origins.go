@@ -4,53 +4,51 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyOriginsUsage = "usage: gooo body-origins --activity <name> [--inputs-for <package/path:Activity> [--field <stable-field-id>] [--include-control]] <file.gooo>"
+const bodyOriginsUsage = "usage: gooo body-origins --activity <name> [--format json|text] [--fill-candidates | --fill-candidate <id>] [--inputs-for <package/path:Activity> [--field <stable-field-id>] [--include-control]] <file.gooo>"
 
 func runBodyOrigins(args []string, reader SourceReader, stdout, stderr io.Writer) int {
-	flags := map[string]string{"--activity": "", "--inputs-for": "", "--field": ""}
-	file, control := "", false
-	for i := 0; i < len(args); i++ {
-		if args[i] == "--include-control" && !control {
-			control = true
-		} else if old, ok := flags[args[i]]; ok && old == "" && i+1 < len(args) && strings.TrimSpace(args[i+1]) != "" && !strings.HasPrefix(args[i+1], "-") {
-			flags[args[i]] = args[i+1]
-			i++
-		} else if file == "" && !strings.HasPrefix(args[i], "-") {
-			file = args[i]
-		} else {
-			fmt.Fprintln(stderr, bodyOriginsUsage)
-			return exitUsage
-		}
-	}
-	if file == "" || flags["--activity"] == "" || (control || flags["--field"] != "") && flags["--inputs-for"] == "" {
-		fmt.Fprintln(stderr, bodyOriginsUsage)
+	options, err := parseBodyOriginOptions(args)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
 		return exitUsage
 	}
-	source, err := reader.ReadFile(file)
+	source, err := reader.ReadFile(options.file)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return exitFailure
 	}
-	r, err := bodycodegen.InspectTypedValueOrigins(file, source, flags["--activity"])
+	if options.list {
+		return writeBodyFillOriginCandidates(options.file, source, options.flags["--activity"], stdout, stderr)
+	}
+	if options.flags["--fill-candidate"] != "" {
+		return writeBodyFillCandidateOrigins(options.file, source, options.flags, stdout, stderr)
+	}
+	return writeTypedBodyOrigins(options, source, stdout, stderr)
+}
+
+func writeTypedBodyOrigins(options bodyOriginOptions, source []byte, stdout, stderr io.Writer) int {
+	flags := options.flags
+	report, err := bodycodegen.InspectTypedValueOrigins(options.file, source, flags["--activity"])
 	if err == nil && flags["--inputs-for"] != "" {
 		var raw []byte
-		raw, err = bodycodegen.TypedValueOriginInputs(r, flags["--inputs-for"], flags["--field"], control)
+		raw, err = bodycodegen.TypedValueOriginInputs(report, flags["--inputs-for"], flags["--field"], options.control)
 		if err == nil {
 			_, err = fmt.Fprintln(stdout, string(raw))
 		}
+	} else if err == nil && options.format == "text" {
+		err = bodycodegen.WriteTypedOriginText(stdout, report, source)
 	} else if err == nil {
-		err = json.NewEncoder(stdout).Encode(r)
+		err = json.NewEncoder(stdout).Encode(report)
 	}
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return exitFailure
 	}
-	if r.Status != "RESOLVED" {
+	if report.Status != "RESOLVED" {
 		return exitFailure
 	}
 	return exitOK

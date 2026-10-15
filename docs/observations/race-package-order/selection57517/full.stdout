@@ -1,0 +1,919 @@
+github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor
+github.com/kimjooyoon/meta-ontology-go/bootstrap/line-density-rewriter
+github.com/kimjooyoon/meta-ontology-go/bootstrap/logical-split-planner
+github.com/kimjooyoon/meta-ontology-go/bootstrap/meta-actionability-witness
+github.com/kimjooyoon/meta-ontology-go/bootstrap/meta-binding-witness
+github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-cutover
+github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-materializer
+github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/command
+github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence
+github.com/kimjooyoon/meta-ontology-go/bootstrap/source-repacker
+github.com/kimjooyoon/meta-ontology-go/bootstrap/workspace-activator
+github.com/kimjooyoon/meta-ontology-go/cmd/artifact-feedback-resolution-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/artifact-resolution-experiment
+github.com/kimjooyoon/meta-ontology-go/cmd/callback-extraction-observe
+github.com/kimjooyoon/meta-ontology-go/cmd/callback-preview
+github.com/kimjooyoon/meta-ontology-go/cmd/candidate-leakage-activation-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/candidate-leakage-eligibility-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/candidate-leakage-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/causal-ci-selection-consumer
+github.com/kimjooyoon/meta-ontology-go/cmd/changed-surface-receipt-activation-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/changed-surface-receipt-eligibility-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/changed-surface-receipt-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/ci-plan-scorecard
+github.com/kimjooyoon/meta-ontology-go/cmd/directory-kind-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/directory-partition-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/entity-fields-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/external-capability-execution-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/external-capability-execution-witness/authorization
+github.com/kimjooyoon/meta-ontology-go/cmd/external-capability-execution-witness/authorization-foundation
+github.com/kimjooyoon/meta-ontology-go/cmd/external-capability-execution-witness/eligibility
+github.com/kimjooyoon/meta-ontology-go/cmd/external-conformance-activation-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/external-ecosystem-conformance-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/external-ecosystem-execution-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/feedback-predecessor-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/feedback-semantic-state-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/gooo
+github.com/kimjooyoon/meta-ontology-go/cmd/gooo-body-worker
+github.com/kimjooyoon/meta-ontology-go/cmd/guarded-promotion-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/integration-progress-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-artifact-oracle
+github.com/kimjooyoon/meta-ontology-go/cmd/language-assurance-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-assurance-witness/assurance-generator
+github.com/kimjooyoon/meta-ontology-go/cmd/language-assurance-witness/reconstructor
+github.com/kimjooyoon/meta-ontology-go/cmd/language-assurance-witness/write-set-observer
+github.com/kimjooyoon/meta-ontology-go/cmd/language-comparison
+github.com/kimjooyoon/meta-ontology-go/cmd/language-concept-artifact-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-debug-experiment
+github.com/kimjooyoon/meta-ontology-go/cmd/language-delivery-scorecard
+github.com/kimjooyoon/meta-ontology-go/cmd/language-deterministic-query-readiness-binding
+github.com/kimjooyoon/meta-ontology-go/cmd/language-deterministic-query-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-diagnostic-provenance-readiness-binding
+github.com/kimjooyoon/meta-ontology-go/cmd/language-diagnostic-provenance-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-example-experiment
+github.com/kimjooyoon/meta-ontology-go/cmd/language-go-interoperation-readiness-binding
+github.com/kimjooyoon/meta-ontology-go/cmd/language-go-interoperation-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-package-execution-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-package-runtime-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-profile-experiment
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/foundation-seed
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/guarded-capability
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-binding
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-binding/transition
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-selection
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/proposal-compat
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/proposal-promotion
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/rollback-fixed-point
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/transition
+github.com/kimjooyoon/meta-ontology-go/cmd/language-semantic-readiness-binding
+github.com/kimjooyoon/meta-ontology-go/cmd/language-semantic-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-source-binding-promotion
+github.com/kimjooyoon/meta-ontology-go/cmd/language-source-execution-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-syntax-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/language-test-experiment
+github.com/kimjooyoon/meta-ontology-go/cmd/language-utility-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-consumer
+github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-witness/next-execution
+github.com/kimjooyoon/meta-ontology-go/cmd/opentofu-observation-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/operation-artifact-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/promotion-authorized-continuity
+github.com/kimjooyoon/meta-ontology-go/cmd/repository-topology-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/rollback-integrity-activation-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/rollback-integrity-eligibility-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/rollback-integrity-shadow-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-activation-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-promotion-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-shadow-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-upstream-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/symbolic-invocation-usecase
+github.com/kimjooyoon/meta-ontology-go/cmd/syntax-registration-candidate
+github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-cli-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-conformance-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-format-fix-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-lsp-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-release-platform-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-release-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/toolchain-usecase-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/user-journey-scorecard
+github.com/kimjooyoon/meta-ontology-go/cmd/vertical-slice-closure-activation-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/vertical-slice-closure-eligibility-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/vertical-slice-closure-shadow-witness
+github.com/kimjooyoon/meta-ontology-go/cmd/workgraph-witness
+github.com/kimjooyoon/meta-ontology-go/docs/assets/metric-pressure-loop
+github.com/kimjooyoon/meta-ontology-go/docs/assets/ontology-visuals
+github.com/kimjooyoon/meta-ontology-go/docs/research/caller-guided-construction-20261008
+github.com/kimjooyoon/meta-ontology-go/docs/research/caller-search-rejection-20261009
+github.com/kimjooyoon/meta-ontology-go/docs/research/choice-contract-cli-20261010/audit
+github.com/kimjooyoon/meta-ontology-go/docs/research/choice-contract-cli-20261010/producer
+github.com/kimjooyoon/meta-ontology-go/docs/research/condition-feedback-20261010
+github.com/kimjooyoon/meta-ontology-go/docs/research/condition-model-cli-20261010/audit
+github.com/kimjooyoon/meta-ontology-go/docs/research/contract-model-cli-20261010/audit
+github.com/kimjooyoon/meta-ontology-go/docs/research/contract-model-cli-20261010/producer
+github.com/kimjooyoon/meta-ontology-go/docs/research/execution-model-cli-20261010/audit
+github.com/kimjooyoon/meta-ontology-go/docs/research/flow-model-cli-20261010/audit
+github.com/kimjooyoon/meta-ontology-go/docs/research/leaky-flow-cli-20261010/audit
+github.com/kimjooyoon/meta-ontology-go/docs/research/release-0612-20261008
+github.com/kimjooyoon/meta-ontology-go/docs/research/release-0613-20261009
+github.com/kimjooyoon/meta-ontology-go/docs/research/release-0614-20261009
+github.com/kimjooyoon/meta-ontology-go/docs/research/semantic-flow-cli-20261010/audit
+github.com/kimjooyoon/meta-ontology-go/docs/research/source-conditions-20261010
+github.com/kimjooyoon/meta-ontology-go/examples/billing
+github.com/kimjooyoon/meta-ontology-go/examples/language-profile
+github.com/kimjooyoon/meta-ontology-go/examples/meta-policy-compilation/counterexample-execution
+github.com/kimjooyoon/meta-ontology-go/examples/meta-policy-compilation/counterexample-proposal
+github.com/kimjooyoon/meta-ontology-go/examples/meta-policy-compilation/go-error-guard
+github.com/kimjooyoon/meta-ontology-go/examples/order-prepared-native
+github.com/kimjooyoon/meta-ontology-go/examples/retained-native-runtime
+github.com/kimjooyoon/meta-ontology-go/examples/scalar-source-model/make-model
+github.com/kimjooyoon/meta-ontology-go/examples/source-recipe-cost
+github.com/kimjooyoon/meta-ontology-go/examples/workflow-outcome-delta/referencego
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/couplingmanifest
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci/impactcoverage
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/semanticbinding
+github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec
+github.com/kimjooyoon/meta-ontology-go/internal/bidir
+github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen
+github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution
+github.com/kimjooyoon/meta-ontology-go/internal/bodypathstream
+github.com/kimjooyoon/meta-ontology-go/internal/bodyrefinement
+github.com/kimjooyoon/meta-ontology-go/internal/bodytiming
+github.com/kimjooyoon/meta-ontology-go/internal/buildidentity
+github.com/kimjooyoon/meta-ontology-go/internal/cache
+github.com/kimjooyoon/meta-ontology-go/internal/cliobservations
+github.com/kimjooyoon/meta-ontology-go/internal/completeness
+github.com/kimjooyoon/meta-ontology-go/internal/completenessdelta
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/adapter
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/coupling
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/bindingcoverage
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/eligibilityregistry
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/lanefrontier
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/metarecognition
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/pressure_independence
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/r4safe_workid
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/resource_vector
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/safeworkbinding
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/selectiveci/shadow
+github.com/kimjooyoon/meta-ontology-go/internal/decisionroute
+github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling
+github.com/kimjooyoon/meta-ontology-go/internal/detection/cycles
+github.com/kimjooyoon/meta-ontology-go/internal/detection/freshness
+github.com/kimjooyoon/meta-ontology-go/internal/detection/impactgraph
+github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps
+github.com/kimjooyoon/meta-ontology-go/internal/detection/performance
+github.com/kimjooyoon/meta-ontology-go/internal/detection/protectedregions
+github.com/kimjooyoon/meta-ontology-go/internal/detection/resourceenvelope
+github.com/kimjooyoon/meta-ontology-go/internal/detection/roundtrip
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/bindingcoverage
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/fullsoundness
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/lanefrontier
+github.com/kimjooyoon/meta-ontology-go/internal/detection/semanticdelta
+github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier
+github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressurecoverage
+github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressureshadow
+github.com/kimjooyoon/meta-ontology-go/internal/domaincompleteness
+github.com/kimjooyoon/meta-ontology-go/internal/entityfieldsv1
+github.com/kimjooyoon/meta-ontology-go/internal/fileopen
+github.com/kimjooyoon/meta-ontology-go/internal/formatfix
+github.com/kimjooyoon/meta-ontology-go/internal/formatter
+github.com/kimjooyoon/meta-ontology-go/internal/generator
+github.com/kimjooyoon/meta-ontology-go/internal/languagecomparison
+github.com/kimjooyoon/meta-ontology-go/internal/languagedebug
+github.com/kimjooyoon/meta-ontology-go/internal/languageprofile
+github.com/kimjooyoon/meta-ontology-go/internal/languagetest
+github.com/kimjooyoon/meta-ontology-go/internal/lsp
+github.com/kimjooyoon/meta-ontology-go/internal/lsp/coupling
+github.com/kimjooyoon/meta-ontology-go/internal/meta/actionability
+github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance
+github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactcoverage
+github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactfeedback
+github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactresolutionexperiment
+github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci
+github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci/consumer
+github.com/kimjooyoon/meta-ontology-go/internal/meta/ciplanusecase
+github.com/kimjooyoon/meta-ontology-go/internal/meta/compatibilitypolicy
+github.com/kimjooyoon/meta-ontology-go/internal/meta/compatibilitypolicy/generated
+github.com/kimjooyoon/meta-ontology-go/internal/meta/compilercompatibility
+github.com/kimjooyoon/meta-ontology-go/internal/meta/directorykind
+github.com/kimjooyoon/meta-ontology-go/internal/meta/directorypartition
+github.com/kimjooyoon/meta-ontology-go/internal/meta/discoverypolicy
+github.com/kimjooyoon/meta-ontology-go/internal/meta/discoverypolicy/generated
+github.com/kimjooyoon/meta-ontology-go/internal/meta/duplicates
+github.com/kimjooyoon/meta-ontology-go/internal/meta/entityfields
+github.com/kimjooyoon/meta-ontology-go/internal/meta/exactsha
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution/assuranceeligibility
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution/authorization
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution/authorizationfoundation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemconformance
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemexecution
+github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackpredecessor
+github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackstate
+github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe
+github.com/kimjooyoon/meta-ontology-go/internal/meta/generation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/integrationprogress
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageartifactoracle
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakage
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageactivation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageeligibility
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipt
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceiptactivation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipteligibility
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/externalconformanceactivation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityactivation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityeligibility
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityshadow
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthority
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityactivation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityeval
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthoritypromotion
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityshadow
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityupstream
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureactivation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureeligibility
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/writeset
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedebugexperiment
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedelivery
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageexampleexperiment
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagepackageexecution
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageprofileexperiment
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/foundationseed
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorbinding
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorresolution
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorselection
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedpromotion
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/improvement
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagedeterministicquery
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagedeterministicquerybinding
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenancebinding
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagegointeroperation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagegointeroperationbinding
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic/replay
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemanticbinding
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/promotioncontinuity
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalcompat
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/rollbackfixedpoint
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainconformance
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainlsp
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourcebindingpromotion
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourceexecution
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagetestexperiment
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageutility
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metabinding
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactual
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention/verify
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/closure
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/closure/verify
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/verify
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposal
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/verify
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metrictransition
+github.com/kimjooyoon/meta-ontology-go/internal/meta/opentofuobservation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/operationconformance
+github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publiccontinuity
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publicdiscovery
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publicorchestration
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publicresolutionrepair
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publictrust
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publictrust/generated
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publicworkflowlineage
+github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor
+github.com/kimjooyoon/meta-ontology-go/internal/meta/repositorytopology
+github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemantics
+github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemanticsconsumer
+github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemanticsschema
+github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy
+github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy/generated
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementattestation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcontinuation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutioncontract
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutiongrant
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementloop
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementobservation
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput
+github.com/kimjooyoon/meta-ontology-go/internal/meta/semanticresolution
+github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy
+github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase
+github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase/claimledger
+github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration
+github.com/kimjooyoon/meta-ontology-go/internal/meta/toolchain
+github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect
+github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect/workspace
+github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffectverification
+github.com/kimjooyoon/meta-ontology-go/internal/meta/userjourneyscorecard
+github.com/kimjooyoon/meta-ontology-go/internal/meta/workgraph
+github.com/kimjooyoon/meta-ontology-go/internal/metainvocation
+github.com/kimjooyoon/meta-ontology-go/internal/outcomedelta
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/artifactemit
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution
+github.com/kimjooyoon/meta-ontology-go/internal/provenance
+github.com/kimjooyoon/meta-ontology-go/internal/provenance/pathclosure
+github.com/kimjooyoon/meta-ontology-go/internal/provenance/selectiveci
+github.com/kimjooyoon/meta-ontology-go/internal/query
+github.com/kimjooyoon/meta-ontology-go/internal/query/couplingexplain
+github.com/kimjooyoon/meta-ontology-go/internal/receiptprojection
+github.com/kimjooyoon/meta-ontology-go/internal/semantic
+github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution
+github.com/kimjooyoon/meta-ontology-go/internal/sourceimpact
+github.com/kimjooyoon/meta-ontology-go/internal/syntax
+github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli
+github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog
+github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog/causality
+github.com/kimjooyoon/meta-ontology-go/internal/valueexecution
+github.com/kimjooyoon/meta-ontology-go/internal/verify
+github.com/kimjooyoon/meta-ontology-go/scripts/action-runtime
+github.com/kimjooyoon/meta-ontology-go/scripts/artifact-feedback-resolution-ci
+github.com/kimjooyoon/meta-ontology-go/scripts/authorized-write-set
+github.com/kimjooyoon/meta-ontology-go/scripts/causal-ci-selection
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation/baseline
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation-lineage
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-evidence
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof/manifest
+github.com/kimjooyoon/meta-ontology-go/scripts/compiler-self-improvement
+github.com/kimjooyoon/meta-ontology-go/scripts/domain-completeness
+github.com/kimjooyoon/meta-ontology-go/scripts/feedback-predecessor-ci
+github.com/kimjooyoon/meta-ontology-go/scripts/language-operation-catalog
+github.com/kimjooyoon/meta-ontology-go/scripts/language-operation-claim-causality
+github.com/kimjooyoon/meta-ontology-go/scripts/language-value-witness
+github.com/kimjooyoon/meta-ontology-go/scripts/line-metrics
+github.com/kimjooyoon/meta-ontology-go/scripts/maintenance
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-cost-report
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution/collapsefixture
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-provenance
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-receipts
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-summary
+github.com/kimjooyoon/meta-ontology-go/scripts/metric-counterfactual
+github.com/kimjooyoon/meta-ontology-go/scripts/metric-intervention
+github.com/kimjooyoon/meta-ontology-go/scripts/metric-meta-program
+github.com/kimjooyoon/meta-ontology-go/scripts/metric-meta-program-closure
+github.com/kimjooyoon/meta-ontology-go/scripts/metric-strategy
+github.com/kimjooyoon/meta-ontology-go/scripts/metric-transition
+github.com/kimjooyoon/meta-ontology-go/scripts/public-trust-surface
+github.com/kimjooyoon/meta-ontology-go/scripts/receipt-schema
+github.com/kimjooyoon/meta-ontology-go/scripts/refactor-metrics
+github.com/kimjooyoon/meta-ontology-go/scripts/reproducibility-semantics
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-adoption
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-attestation
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-candidate
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-candidate-authorization
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-ci-continuation
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-compiler-compatibility
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-contract
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-cycle
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-discovery-policy
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-execution-contract
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-execution-grant
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-minimal-loop
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-observation
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-continuity
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-discovery
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-generation
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-orchestration
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-partial-reuse
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-resolution-repair
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-test-reuse
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-utility
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-retained-knowledge
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-retention-policy
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-transport
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-transport-selector
+github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter
+github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter-conformance-ci
+github.com/kimjooyoon/meta-ontology-go/scripts/source-subject-witness
+github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-schema/readerrequest
+github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-schema/valuecontract
+github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-schema/valuereachability
+github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-schema/valueresolution
+github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-usecase/claim-ledger
+github.com/kimjooyoon/meta-ontology-go/scripts/symbolic-invocation-usecase/reader-observation
+github.com/kimjooyoon/meta-ontology-go/scripts/transformation-effect
+github.com/kimjooyoon/meta-ontology-go/scripts/transformation-effect-verify
+github.com/kimjooyoon/meta-ontology-go/scripts/verify
+github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor.test
+github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor [github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor.test]
+github.com/kimjooyoon/meta-ontology-go/bootstrap/line-density-rewriter.test
+github.com/kimjooyoon/meta-ontology-go/bootstrap/line-density-rewriter [github.com/kimjooyoon/meta-ontology-go/bootstrap/line-density-rewriter.test]
+github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence.test
+github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence [github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/artifact-feedback-resolution-witness.test
+github.com/kimjooyoon/meta-ontology-go/cmd/artifact-feedback-resolution-witness [github.com/kimjooyoon/meta-ontology-go/cmd/artifact-feedback-resolution-witness.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/callback-extraction-observe.test
+github.com/kimjooyoon/meta-ontology-go/cmd/callback-extraction-observe [github.com/kimjooyoon/meta-ontology-go/cmd/callback-extraction-observe.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/callback-preview.test
+github.com/kimjooyoon/meta-ontology-go/cmd/callback-preview [github.com/kimjooyoon/meta-ontology-go/cmd/callback-preview.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/feedback-predecessor-witness.test
+github.com/kimjooyoon/meta-ontology-go/cmd/feedback-predecessor-witness [github.com/kimjooyoon/meta-ontology-go/cmd/feedback-predecessor-witness.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/feedback-semantic-state-witness.test
+github.com/kimjooyoon/meta-ontology-go/cmd/feedback-semantic-state-witness [github.com/kimjooyoon/meta-ontology-go/cmd/feedback-semantic-state-witness.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/gooo.test
+github.com/kimjooyoon/meta-ontology-go/cmd/gooo [github.com/kimjooyoon/meta-ontology-go/cmd/gooo.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/language-concept-artifact-witness.test
+github.com/kimjooyoon/meta-ontology-go/cmd/language-concept-artifact-witness [github.com/kimjooyoon/meta-ontology-go/cmd/language-concept-artifact-witness.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness.test
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness [github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-binding.test
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-binding [github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-binding.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-selection.test
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-selection [github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/predecessor-selection.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/rollback-fixed-point.test
+github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/rollback-fixed-point [github.com/kimjooyoon/meta-ontology-go/cmd/language-readiness-witness/rollback-fixed-point.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/language-syntax-witness.test
+github.com/kimjooyoon/meta-ontology-go/cmd/language-syntax-witness [github.com/kimjooyoon/meta-ontology-go/cmd/language-syntax-witness.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-consumer.test
+github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-consumer [github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-consumer.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-witness.test
+github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-witness [github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-witness.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/promotion-authorized-continuity.test
+github.com/kimjooyoon/meta-ontology-go/cmd/promotion-authorized-continuity [github.com/kimjooyoon/meta-ontology-go/cmd/promotion-authorized-continuity.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-shadow-witness.test
+github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-shadow-witness [github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-shadow-witness.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-upstream-witness.test
+github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-upstream-witness [github.com/kimjooyoon/meta-ontology-go/cmd/source-authority-upstream-witness.test]
+github.com/kimjooyoon/meta-ontology-go/cmd/syntax-registration-candidate.test
+github.com/kimjooyoon/meta-ontology-go/cmd/syntax-registration-candidate [github.com/kimjooyoon/meta-ontology-go/cmd/syntax-registration-candidate.test]
+github.com/kimjooyoon/meta-ontology-go/docs/assets/metric-pressure-loop.test
+github.com/kimjooyoon/meta-ontology-go/docs/assets/metric-pressure-loop [github.com/kimjooyoon/meta-ontology-go/docs/assets/metric-pressure-loop.test]
+github.com/kimjooyoon/meta-ontology-go/docs/assets/ontology-visuals.test
+github.com/kimjooyoon/meta-ontology-go/docs/assets/ontology-visuals [github.com/kimjooyoon/meta-ontology-go/docs/assets/ontology-visuals.test]
+github.com/kimjooyoon/meta-ontology-go/docs/research/choice-contract-cli-20261010/audit.test
+github.com/kimjooyoon/meta-ontology-go/docs/research/choice-contract-cli-20261010/audit [github.com/kimjooyoon/meta-ontology-go/docs/research/choice-contract-cli-20261010/audit.test]
+github.com/kimjooyoon/meta-ontology-go/docs/research/contract-model-cli-20261010/audit.test
+github.com/kimjooyoon/meta-ontology-go/docs/research/contract-model-cli-20261010/audit [github.com/kimjooyoon/meta-ontology-go/docs/research/contract-model-cli-20261010/audit.test]
+github.com/kimjooyoon/meta-ontology-go/docs/research/execution-model-cli-20261010/audit.test
+github.com/kimjooyoon/meta-ontology-go/docs/research/execution-model-cli-20261010/audit [github.com/kimjooyoon/meta-ontology-go/docs/research/execution-model-cli-20261010/audit.test]
+github.com/kimjooyoon/meta-ontology-go/docs/research/flow-model-cli-20261010/audit.test
+github.com/kimjooyoon/meta-ontology-go/docs/research/flow-model-cli-20261010/audit [github.com/kimjooyoon/meta-ontology-go/docs/research/flow-model-cli-20261010/audit.test]
+github.com/kimjooyoon/meta-ontology-go/docs/research/leaky-flow-cli-20261010/audit.test
+github.com/kimjooyoon/meta-ontology-go/docs/research/leaky-flow-cli-20261010/audit [github.com/kimjooyoon/meta-ontology-go/docs/research/leaky-flow-cli-20261010/audit.test]
+github.com/kimjooyoon/meta-ontology-go/docs/research/semantic-flow-cli-20261010/audit.test
+github.com/kimjooyoon/meta-ontology-go/docs/research/semantic-flow-cli-20261010/audit [github.com/kimjooyoon/meta-ontology-go/docs/research/semantic-flow-cli-20261010/audit.test]
+github.com/kimjooyoon/meta-ontology-go/examples/meta-policy-compilation/go-error-guard.test
+github.com/kimjooyoon/meta-ontology-go/examples/meta-policy-compilation/go-error-guard [github.com/kimjooyoon/meta-ontology-go/examples/meta-policy-compilation/go-error-guard.test]
+github.com/kimjooyoon/meta-ontology-go/examples/workflow-outcome-delta/referencego.test
+github.com/kimjooyoon/meta-ontology-go/examples/workflow-outcome-delta/referencego [github.com/kimjooyoon/meta-ontology-go/examples/workflow-outcome-delta/referencego.test]
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer.test
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer [github.com/kimjooyoon/meta-ontology-go/internal/analyzer.test]
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/couplingmanifest.test
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/couplingmanifest [github.com/kimjooyoon/meta-ontology-go/internal/analyzer/couplingmanifest.test]
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci.test
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci [github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci.test]
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci/impactcoverage.test
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci/impactcoverage [github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci/impactcoverage.test]
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/semanticbinding.test
+github.com/kimjooyoon/meta-ontology-go/internal/analyzer/semanticbinding [github.com/kimjooyoon/meta-ontology-go/internal/analyzer/semanticbinding.test]
+github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec.test
+github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec [github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec.test]
+github.com/kimjooyoon/meta-ontology-go/internal/bidir.test
+github.com/kimjooyoon/meta-ontology-go/internal/bidir [github.com/kimjooyoon/meta-ontology-go/internal/bidir.test]
+github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen.test
+github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen [github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen.test]
+github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution.test
+github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution [github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/bodypathstream.test
+github.com/kimjooyoon/meta-ontology-go/internal/bodypathstream [github.com/kimjooyoon/meta-ontology-go/internal/bodypathstream.test]
+github.com/kimjooyoon/meta-ontology-go/internal/bodyrefinement.test
+github.com/kimjooyoon/meta-ontology-go/internal/bodyrefinement [github.com/kimjooyoon/meta-ontology-go/internal/bodyrefinement.test]
+github.com/kimjooyoon/meta-ontology-go/internal/bodytiming.test
+github.com/kimjooyoon/meta-ontology-go/internal/bodytiming [github.com/kimjooyoon/meta-ontology-go/internal/bodytiming.test]
+github.com/kimjooyoon/meta-ontology-go/internal/buildidentity.test
+github.com/kimjooyoon/meta-ontology-go/internal/buildidentity [github.com/kimjooyoon/meta-ontology-go/internal/buildidentity.test]
+github.com/kimjooyoon/meta-ontology-go/internal/cache.test
+github.com/kimjooyoon/meta-ontology-go/internal/cache [github.com/kimjooyoon/meta-ontology-go/internal/cache.test]
+github.com/kimjooyoon/meta-ontology-go/internal/cliobservations.test
+github.com/kimjooyoon/meta-ontology-go/internal/cliobservations [github.com/kimjooyoon/meta-ontology-go/internal/cliobservations.test]
+github.com/kimjooyoon/meta-ontology-go/internal/completeness.test
+github.com/kimjooyoon/meta-ontology-go/internal/completeness [github.com/kimjooyoon/meta-ontology-go/internal/completeness.test]
+github.com/kimjooyoon/meta-ontology-go/internal/completenessdelta.test
+github.com/kimjooyoon/meta-ontology-go/internal/completenessdelta [github.com/kimjooyoon/meta-ontology-go/internal/completenessdelta.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/adapter.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/adapter [github.com/kimjooyoon/meta-ontology-go/internal/conformance/adapter.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/coupling.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/coupling [github.com/kimjooyoon/meta-ontology-go/internal/conformance/coupling.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci [github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/bindingcoverage.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/bindingcoverage [github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/bindingcoverage.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/eligibilityregistry.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/eligibilityregistry [github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/eligibilityregistry.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/lanefrontier.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/lanefrontier [github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/lanefrontier.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/metarecognition.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/metarecognition [github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/metarecognition.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/pressure_independence.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/pressure_independence [github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/pressure_independence.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/r4safe_workid.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/r4safe_workid [github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/r4safe_workid.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/resource_vector.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/resource_vector [github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/resource_vector.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/safeworkbinding.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/safeworkbinding [github.com/kimjooyoon/meta-ontology-go/internal/conformance/fuzz/selectiveci/safeworkbinding.test]
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/selectiveci/shadow.test
+github.com/kimjooyoon/meta-ontology-go/internal/conformance/selectiveci/shadow [github.com/kimjooyoon/meta-ontology-go/internal/conformance/selectiveci/shadow.test]
+github.com/kimjooyoon/meta-ontology-go/internal/decisionroute.test
+github.com/kimjooyoon/meta-ontology-go/internal/decisionroute [github.com/kimjooyoon/meta-ontology-go/internal/decisionroute.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling [github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/cycles.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/cycles [github.com/kimjooyoon/meta-ontology-go/internal/detection/cycles.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/freshness.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/freshness [github.com/kimjooyoon/meta-ontology-go/internal/detection/freshness.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/impactgraph.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/impactgraph_test [github.com/kimjooyoon/meta-ontology-go/internal/detection/impactgraph.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps [github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/performance.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/performance [github.com/kimjooyoon/meta-ontology-go/internal/detection/performance.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/protectedregions.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/protectedregions [github.com/kimjooyoon/meta-ontology-go/internal/detection/protectedregions.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/resourceenvelope.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/resourceenvelope [github.com/kimjooyoon/meta-ontology-go/internal/detection/resourceenvelope.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/roundtrip.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/roundtrip [github.com/kimjooyoon/meta-ontology-go/internal/detection/roundtrip.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci [github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/bindingcoverage.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/bindingcoverage [github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/bindingcoverage.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/fullsoundness.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/fullsoundness [github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/fullsoundness.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/lanefrontier.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/lanefrontier [github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci/lanefrontier.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/semanticdelta.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/semanticdelta [github.com/kimjooyoon/meta-ontology-go/internal/detection/semanticdelta.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier [github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressurecoverage.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressurecoverage [github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressurecoverage.test]
+github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressureshadow.test
+github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressureshadow [github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier/pressureshadow.test]
+github.com/kimjooyoon/meta-ontology-go/internal/entityfieldsv1.test
+github.com/kimjooyoon/meta-ontology-go/internal/entityfieldsv1 [github.com/kimjooyoon/meta-ontology-go/internal/entityfieldsv1.test]
+github.com/kimjooyoon/meta-ontology-go/internal/formatfix.test
+github.com/kimjooyoon/meta-ontology-go/internal/formatfix [github.com/kimjooyoon/meta-ontology-go/internal/formatfix.test]
+github.com/kimjooyoon/meta-ontology-go/internal/formatter.test
+github.com/kimjooyoon/meta-ontology-go/internal/formatter [github.com/kimjooyoon/meta-ontology-go/internal/formatter.test]
+github.com/kimjooyoon/meta-ontology-go/internal/generator.test
+github.com/kimjooyoon/meta-ontology-go/internal/generator [github.com/kimjooyoon/meta-ontology-go/internal/generator.test]
+github.com/kimjooyoon/meta-ontology-go/internal/languagedebug.test
+github.com/kimjooyoon/meta-ontology-go/internal/languagedebug [github.com/kimjooyoon/meta-ontology-go/internal/languagedebug.test]
+github.com/kimjooyoon/meta-ontology-go/internal/languageprofile.test
+github.com/kimjooyoon/meta-ontology-go/internal/languageprofile [github.com/kimjooyoon/meta-ontology-go/internal/languageprofile.test]
+github.com/kimjooyoon/meta-ontology-go/internal/languagetest.test
+github.com/kimjooyoon/meta-ontology-go/internal/languagetest [github.com/kimjooyoon/meta-ontology-go/internal/languagetest.test]
+github.com/kimjooyoon/meta-ontology-go/internal/lsp.test
+github.com/kimjooyoon/meta-ontology-go/internal/lsp [github.com/kimjooyoon/meta-ontology-go/internal/lsp.test]
+github.com/kimjooyoon/meta-ontology-go/internal/lsp/coupling.test
+github.com/kimjooyoon/meta-ontology-go/internal/lsp/coupling [github.com/kimjooyoon/meta-ontology-go/internal/lsp/coupling.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/actionability.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/actionability [github.com/kimjooyoon/meta-ontology-go/internal/meta/actionability.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance [github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactcoverage.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactcoverage [github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactcoverage.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactfeedback.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactfeedback [github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactfeedback.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactresolutionexperiment.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactresolutionexperiment [github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactresolutionexperiment.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci [github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/ciplanusecase.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/ciplanusecase [github.com/kimjooyoon/meta-ontology-go/internal/meta/ciplanusecase.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/compatibilitypolicy.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/compatibilitypolicy [github.com/kimjooyoon/meta-ontology-go/internal/meta/compatibilitypolicy.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/directorykind.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/directorykind [github.com/kimjooyoon/meta-ontology-go/internal/meta/directorykind.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/directorypartition.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/directorypartition [github.com/kimjooyoon/meta-ontology-go/internal/meta/directorypartition.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/duplicates.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/duplicates [github.com/kimjooyoon/meta-ontology-go/internal/meta/duplicates.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/entityfields.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/entityfields [github.com/kimjooyoon/meta-ontology-go/internal/meta/entityfields.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution [github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution/authorization.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution/authorization [github.com/kimjooyoon/meta-ontology-go/internal/meta/externalcapabilityexecution/authorization.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemconformance.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemconformance [github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemconformance.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemexecution.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemexecution [github.com/kimjooyoon/meta-ontology-go/internal/meta/externalecosystemexecution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackpredecessor.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackpredecessor [github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackpredecessor.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackstate.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackstate [github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackstate.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe [github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/generation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/generation [github.com/kimjooyoon/meta-ontology-go/internal/meta/generation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/integrationprogress.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/integrationprogress [github.com/kimjooyoon/meta-ontology-go/internal/meta/integrationprogress.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageartifactoracle.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageartifactoracle [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageartifactoracle.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakage.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakage [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakage.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageactivation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageactivation [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageactivation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageeligibility.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageeligibility [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageeligibility.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipt.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipt [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipt.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceiptactivation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceiptactivation [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceiptactivation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipteligibility.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipteligibility [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceipteligibility.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/externalconformanceactivation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/externalconformanceactivation [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/externalconformanceactivation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityactivation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityactivation [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityactivation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityeligibility.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityeligibility [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityeligibility.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityshadow.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityshadow [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityshadow.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthority.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthority [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthority.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityactivation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityactivation [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityactivation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityeval.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityeval [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityeval.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthoritypromotion.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthoritypromotion [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthoritypromotion.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityshadow.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityshadow [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityshadow.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityupstream.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityupstream [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityupstream.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureactivation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureactivation [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureactivation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureeligibility.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureeligibility [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureeligibility.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/writeset.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/writeset [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/writeset.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedebugexperiment.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedebugexperiment [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedebugexperiment.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedelivery.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedelivery [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedelivery.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageexampleexperiment.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageexampleexperiment [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageexampleexperiment.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagepackageexecution.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagepackageexecution [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagepackageexecution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageprofileexperiment.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageprofileexperiment [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageprofileexperiment.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/foundationseed.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/foundationseed [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/foundationseed.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorbinding.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorbinding [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorbinding.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorresolution.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorresolution [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorresolution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorselection.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorselection [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorselection.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedpromotion.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedpromotion [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedpromotion.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/improvement.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/improvement [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/improvement.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemanticbinding.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemanticbinding [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemanticbinding.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance_test [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/conformance.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/promotioncontinuity.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/promotioncontinuity [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/promotioncontinuity.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalcompat.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalcompat [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalcompat.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/rollbackfixedpoint.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/rollbackfixedpoint [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/rollbackfixedpoint.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainconformance.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainconformance [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainconformance.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainlsp.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainlsp [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainlsp.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourcebindingpromotion.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourcebindingpromotion [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourcebindingpromotion.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourceexecution.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourceexecution [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagesourceexecution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagetestexperiment.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languagetestexperiment [github.com/kimjooyoon/meta-ontology-go/internal/meta/languagetestexperiment.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageutility.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/languageutility [github.com/kimjooyoon/meta-ontology-go/internal/meta/languageutility.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence [github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram_test [github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/closure.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/closure_test [github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/closure.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation [github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy [github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposal.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposal [github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposal.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor [github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/verify.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/verify [github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/verify.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metrictransition.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/metrictransition [github.com/kimjooyoon/meta-ontology-go/internal/meta/metrictransition.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/opentofuobservation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/opentofuobservation [github.com/kimjooyoon/meta-ontology-go/internal/meta/opentofuobservation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/operationconformance.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/operationconformance [github.com/kimjooyoon/meta-ontology-go/internal/meta/operationconformance.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation [github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse [github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publictrust.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/publictrust [github.com/kimjooyoon/meta-ontology-go/internal/meta/publictrust.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor [github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemantics.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemantics_test [github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemantics.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementattestation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementattestation [github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementattestation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate [github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcontinuation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcontinuation [github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcontinuation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutioncontract.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutioncontract [github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutioncontract.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutiongrant.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutiongrant [github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutiongrant.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementloop.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementloop [github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementloop.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementobservation.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementobservation [github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementobservation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport [github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput [github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/semanticresolution.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/semanticresolution [github.com/kimjooyoon/meta-ontology-go/internal/meta/semanticresolution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy [github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase [github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase/claimledger.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase/claimledger [github.com/kimjooyoon/meta-ontology-go/internal/meta/symbolicinvocationusecase/claimledger.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration [github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect [github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect.test]
+github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffectverification.test
+github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffectverification [github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffectverification.test]
+github.com/kimjooyoon/meta-ontology-go/internal/metainvocation.test
+github.com/kimjooyoon/meta-ontology-go/internal/metainvocation [github.com/kimjooyoon/meta-ontology-go/internal/metainvocation.test]
+github.com/kimjooyoon/meta-ontology-go/internal/outcomedelta.test
+github.com/kimjooyoon/meta-ontology-go/internal/outcomedelta [github.com/kimjooyoon/meta-ontology-go/internal/outcomedelta.test]
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime.test
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime [github.com/kimjooyoon/meta-ontology-go/internal/packageruntime.test]
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/artifactemit.test
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/artifactemit [github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/artifactemit.test]
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution.test
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution [github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution.test
+github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution [github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/provenance.test
+github.com/kimjooyoon/meta-ontology-go/internal/provenance [github.com/kimjooyoon/meta-ontology-go/internal/provenance.test]
+github.com/kimjooyoon/meta-ontology-go/internal/provenance/pathclosure.test
+github.com/kimjooyoon/meta-ontology-go/internal/provenance/pathclosure_test [github.com/kimjooyoon/meta-ontology-go/internal/provenance/pathclosure.test]
+github.com/kimjooyoon/meta-ontology-go/internal/provenance/selectiveci.test
+github.com/kimjooyoon/meta-ontology-go/internal/provenance/selectiveci [github.com/kimjooyoon/meta-ontology-go/internal/provenance/selectiveci.test]
+github.com/kimjooyoon/meta-ontology-go/internal/query.test
+github.com/kimjooyoon/meta-ontology-go/internal/query [github.com/kimjooyoon/meta-ontology-go/internal/query.test]
+github.com/kimjooyoon/meta-ontology-go/internal/query/couplingexplain.test
+github.com/kimjooyoon/meta-ontology-go/internal/query/couplingexplain [github.com/kimjooyoon/meta-ontology-go/internal/query/couplingexplain.test]
+github.com/kimjooyoon/meta-ontology-go/internal/receiptprojection.test
+github.com/kimjooyoon/meta-ontology-go/internal/receiptprojection [github.com/kimjooyoon/meta-ontology-go/internal/receiptprojection.test]
+github.com/kimjooyoon/meta-ontology-go/internal/semantic.test
+github.com/kimjooyoon/meta-ontology-go/internal/semantic [github.com/kimjooyoon/meta-ontology-go/internal/semantic.test]
+github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution.test
+github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution [github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/sourceimpact.test
+github.com/kimjooyoon/meta-ontology-go/internal/sourceimpact [github.com/kimjooyoon/meta-ontology-go/internal/sourceimpact.test]
+github.com/kimjooyoon/meta-ontology-go/internal/syntax.test
+github.com/kimjooyoon/meta-ontology-go/internal/syntax [github.com/kimjooyoon/meta-ontology-go/internal/syntax.test]
+github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog.test
+github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog [github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog.test]
+github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog/causality.test
+github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog/causality [github.com/kimjooyoon/meta-ontology-go/internal/valuecatalog/causality.test]
+github.com/kimjooyoon/meta-ontology-go/internal/valueexecution.test
+github.com/kimjooyoon/meta-ontology-go/internal/valueexecution [github.com/kimjooyoon/meta-ontology-go/internal/valueexecution.test]
+github.com/kimjooyoon/meta-ontology-go/internal/verify.test
+github.com/kimjooyoon/meta-ontology-go/internal/verify [github.com/kimjooyoon/meta-ontology-go/internal/verify.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/action-runtime.test
+github.com/kimjooyoon/meta-ontology-go/scripts/action-runtime [github.com/kimjooyoon/meta-ontology-go/scripts/action-runtime.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/artifact-feedback-resolution-ci.test
+github.com/kimjooyoon/meta-ontology-go/scripts/artifact-feedback-resolution-ci [github.com/kimjooyoon/meta-ontology-go/scripts/artifact-feedback-resolution-ci.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/authorized-write-set.test
+github.com/kimjooyoon/meta-ontology-go/scripts/authorized-write-set [github.com/kimjooyoon/meta-ontology-go/scripts/authorized-write-set.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/causal-ci-selection.test
+github.com/kimjooyoon/meta-ontology-go/scripts/causal-ci-selection [github.com/kimjooyoon/meta-ontology-go/scripts/causal-ci-selection.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation.test
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation [github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation-lineage.test
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation-lineage [github.com/kimjooyoon/meta-ontology-go/scripts/ci-effort-observation-lineage.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-evidence.test
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-evidence [github.com/kimjooyoon/meta-ontology-go/scripts/ci-evidence.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof.test
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof [github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof/manifest.test
+github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof/manifest [github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof/manifest.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/domain-completeness.test
+github.com/kimjooyoon/meta-ontology-go/scripts/domain-completeness [github.com/kimjooyoon/meta-ontology-go/scripts/domain-completeness.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/feedback-predecessor-ci.test
+github.com/kimjooyoon/meta-ontology-go/scripts/feedback-predecessor-ci [github.com/kimjooyoon/meta-ontology-go/scripts/feedback-predecessor-ci.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/maintenance.test
+github.com/kimjooyoon/meta-ontology-go/scripts/maintenance [github.com/kimjooyoon/meta-ontology-go/scripts/maintenance.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-cost-report.test
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-cost-report [github.com/kimjooyoon/meta-ontology-go/scripts/meta-cost-report.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution.test
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution [github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution/collapsefixture.test
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution/collapsefixture [github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution/collapsefixture.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-receipts.test
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-receipts [github.com/kimjooyoon/meta-ontology-go/scripts/meta-receipts.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-summary.test
+github.com/kimjooyoon/meta-ontology-go/scripts/meta-summary [github.com/kimjooyoon/meta-ontology-go/scripts/meta-summary.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/metric-strategy.test
+github.com/kimjooyoon/meta-ontology-go/scripts/metric-strategy [github.com/kimjooyoon/meta-ontology-go/scripts/metric-strategy.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/refactor-metrics.test
+github.com/kimjooyoon/meta-ontology-go/scripts/refactor-metrics [github.com/kimjooyoon/meta-ontology-go/scripts/refactor-metrics.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-contract.test
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-contract [github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-contract.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-cycle.test
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-cycle [github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-cycle.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-partial-reuse.test
+github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-partial-reuse [github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-partial-reuse.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter.test
+github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter [github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/source-subject-witness.test
+github.com/kimjooyoon/meta-ontology-go/scripts/source-subject-witness [github.com/kimjooyoon/meta-ontology-go/scripts/source-subject-witness.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/transformation-effect.test
+github.com/kimjooyoon/meta-ontology-go/scripts/transformation-effect [github.com/kimjooyoon/meta-ontology-go/scripts/transformation-effect.test]
+github.com/kimjooyoon/meta-ontology-go/scripts/verify.test
+github.com/kimjooyoon/meta-ontology-go/scripts/verify [github.com/kimjooyoon/meta-ontology-go/scripts/verify.test]

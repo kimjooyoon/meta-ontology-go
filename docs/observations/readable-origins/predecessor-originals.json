@@ -1,0 +1,25 @@
+{
+  "source_head": "f6fc6b3a0734cf258332c1cb04e8777f67092564",
+  "core_run": 38658645672,
+  "projection_run": 38658645523,
+  "original_family_workflows": 39,
+  "successes": 37,
+  "failures": 2,
+  "original_reruns": 0,
+  "dev_merge": false,
+  "queue_before_preparation_ms": 270000,
+  "race_events": {
+    "passed": 389,
+    "skipped": 27,
+    "failed_before_interruption": 0
+  },
+  "interrupted_work_ms": {
+    "test": 227776,
+    "race": 226104,
+    "semantic": 231046
+  },
+  "projection_artifact_id": 11938328853,
+  "projection_artifact_sha256": "530e8708559da493dda0f78df2ce8f5c1e0f58cdb4351b0fde92bbe248f24023",
+  "projection_non_test_bodycodegen_paths": 556,
+  "prior_package_file_bound": 256
+}
