@@ -20,6 +20,9 @@ func rewriteBodySurface(body string) (string, bodySurfaceMap, error) {
 	tokens := scanBodySurface(body)
 	var edits bodySurfaceMap
 	for i, current := range tokens {
+		if edit, joined := elseSurfaceEdit(body, tokens, i); joined {
+			edits = append(edits, edit)
+		}
 		if current.kind == token.IDENT && current.text == "let" {
 			replacement := "var"
 			if i > 0 && tokens[i-1].kind == token.FOR {

@@ -1,0 +1,482 @@
+{
+  "date": "2026-10-15",
+  "compiler_parent": "fe20d126ab31758fea27aabc07e3c968bfd2ba32",
+  "adoption_source_state": "UNBOUND_LOCAL_SOURCE; original exact-head CI acceptance belongs to the future submitted revision",
+  "archive": {
+    "file": "first-cohorts.tar.gz",
+    "bytes": 127953,
+    "sha256": "874bf5bf5a2306ff6910e77b4e458c4b5da52c9d872059366ca56cd71b6fd99f",
+    "members": 69
+  },
+  "metadata": [
+    {
+      "path": "preparation/layout-first.json",
+      "exit_code": 0,
+      "wall_seconds": 0.9397285,
+      "source_sha256": "a4c9d64d823c720d6ba368423f9f2be413b03f01293a3e64c8453df9739f4e5d",
+      "scope": "first fresh stdlib scanner/parser prototype on nine newly authored layouts; no repository source change, Gooo program/model or historical cohort replay",
+      "execution_clarification": "The standalone Go probe is built and executed. No Gooo-generated/native program, original producer, model or completed historical cohort is executed.",
+      "original_record_sha256": "bc24abd119b5b6c4d057a7b173c2e44f478a69da7d9268abf0ac40b4ccf695ff",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "preparation/policy-codegen-first/command.json",
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "body-codegen",
+        "--json",
+        "--activity",
+        "JoinElse",
+        "/private/tmp/gooo-readable-branches-20261015/else.gooo"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.0350315,
+      "source_sha256": "7f23e4ea53c6b2761439c43d6956b8ae7a40e3dd4f1c15483b5df5f204906859",
+      "compiler_parent": "fe20d126ab31758fea27aabc07e3c968bfd2ba32",
+      "scope": "first newly authored Boolean Gooo layout policy generation; repository compiler integration is pending; no original producer/model/old cohort execution",
+      "original_record_sha256": "a0fb602951487fbbc16d431c971225ac02b8f7e952f9218d744629eb32de4e08",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "preparation/policy-execution-first/command.json",
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-readable-branches-20261015/policy-cases.json",
+        "/private/tmp/gooo-readable-branches-20261015/gooo.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.9927669579999998,
+      "source_sha256": {
+        "else.gooo": "7f23e4ea53c6b2761439c43d6956b8ae7a40e3dd4f1c15483b5df5f204906859",
+        "policy-cases.json": "1b52d1152697ad5d98212026dac9ca653561d0c76f5144ec251143d5a73c63d9",
+        "gooo.workspace.json": "868ecc3116ec73f3566397141776a6ecabca4a1b1fe20c88311a6c7a731a3c17"
+      },
+      "compiler_parent": "fe20d126ab31758fea27aabc07e3c968bfd2ba32",
+      "scope": "first native execution of newly authored Gooo policy, all16 four-Boolean fact combinations; no historical cohort, original producer or model execution; repository compiler integration pending",
+      "original_record_sha256": "e090f88a07f4d1d93c98be6a72376b8e72080ba6ab26d1c815247baaade870f0",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "preparation/generated-integration-first/command.json",
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "test",
+        "-p=1",
+        "-count=1",
+        "-v",
+        "/private/tmp/gooo-readable-branches-20261015/generated-integration/policy_generated.go",
+        "/private/tmp/gooo-readable-branches-20261015/generated-integration/layout_policy_test.go"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.3507397079999999,
+      "sources": {
+        "policy_generated.go": "16a7d026d9c80e60378b4911ad7e90c8db28c3819695b9f9e692b32c85aea56b",
+        "layout_policy_test.go": "ec689bbf6b58ab5e48ae1e37036f5b1557860091d5484b41d2d89cc6070fd619"
+      },
+      "scope": "first standalone lexer -> byte-exact Gooo-generated policy -> layout edit -> parser integration on11 newly authored fragments; no repository compiler integration, model, producer or historical cohort replay",
+      "original_record_sha256": "920036391cc0caeffe581b29c917f9fd5a72a8ace8bafbf386b614b15cebf656",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "preparation/record-policy/execution-first/command.json",
+      "exit_code": 0,
+      "wall_seconds": 1.522857208,
+      "source_sha256": "f1fd8f3a8b8a8b65b269f82925877bed1bd70dd8054bb48cd759a4d1637c4bef",
+      "scope": "first named-record ClassifyElse source and input cohort, complete16 four-Boolean field combinations; prior positional policy cohort is retained and not replayed; no model/original producer execution",
+      "original_record_sha256": "d542e8c6f67e7d3b9f7170087bf86af30677ae6f076444d3551e885ba77d4d9b",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "preparation/record-policy/generated-integration-first/command.json",
+      "exit_code": 0,
+      "wall_seconds": 1.359956084,
+      "source_sha256": {
+        "policy_generated.go": "e1d8c3e9bb7cfb1133114b8cd8bfb31199781c2f6722def1a31384e3de359a9e",
+        "layout_policy_test.go": "77ab91d8f74912e32a4fd9bcd09a92a944d7d328f85b785dbe01ecd11a049c5b"
+      },
+      "scope": "first named-record Gooo classifier plus its Gooo-authored primitive bridge consumed by a standalone lexer/parser; 13 newly authored layout fragments, no repository compiler integration/model/historical cohort replay",
+      "original_record_sha256": "e53c467c3663900c1fc2bc06577f5362306434d37d5a4bac526abc0389972295",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "preparation/record-policy/source-origins-first/command.json",
+      "exit_code": 0,
+      "wall_seconds": 0.7024044580000001,
+      "source_sha256": "f1fd8f3a8b8a8b65b269f82925877bed1bd70dd8054bb48cd759a4d1637c4bef",
+      "scope": "first readonly source graph inspection of the named-record decision; no native program, model or original producer execution",
+      "original_record_sha256": "c72339ca535e478ac4676b22d6c8473f88ca6880d3233016f22aea5cd603a9b2",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "preparation/record-policy/codegen-first/command.json",
+      "exit_code": 0,
+      "wall_seconds": 0.568755125,
+      "source_sha256": "f1fd8f3a8b8a8b65b269f82925877bed1bd70dd8054bb48cd759a4d1637c4bef",
+      "scope": "first named-record Gooo layout policy and primitive host-bridge generation; retains the earlier four-slot prototype unchanged; no old cohort/native/model replay",
+      "original_record_sha256": "23af29e777f3e39b1406ca090758877a03adbaa2bc683c628920c8a6418d52db",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "adoption/surface-integration-first/command.json",
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodycodegen",
+        "-run",
+        "^(TestElseSurfaceRetainsOriginalExpressionAndLiteralRanges|TestElseSurfaceKeepsCommentsAndAuthoredSeparators)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.497587167,
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "parent": "fe20d126ab31758fea27aabc07e3c968bfd2ba32",
+      "scope": "first actual compiler surface-map integration on newly authored source including counted let, UTF-8/raw literal, new else layout and authored separators; no Gooo program/model/original producer/historical cohort execution",
+      "original_record_sha256": "19b9d0a5b5342cf0b91da6fc995c1f4a6b1777b1ee213cc4ecbb225301ae4536",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "adoption/native-example-first/command.json",
+      "exit_code": 0,
+      "wall_seconds": 6.257749959,
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-else-compiler-20261015/program/cases.json",
+        "/private/tmp/gooo-else-compiler-20261015/program/gooo.workspace.json"
+      ],
+      "parent": "fe20d126ab31758fea27aabc07e3c968bfd2ba32",
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "sha256": {
+        "internal/bodycodegen/body_surface.go": "1de189a69be8521fd9b7f4d0cfcb7bdc26460488fe1bf07f3df15bf57cff5921",
+        "internal/bodycodegen/body_else_surface.go": "4bf3e291b482ee2b2a03ed7dd518b2ec192f9020133cea97a931fc6f52195fa8",
+        "internal/bodycodegen/else_policy_generated.go": "e1d8c3e9bb7cfb1133114b8cd8bfb31199781c2f6722def1a31384e3de359a9e",
+        "internal/meta/bodysurface/else.gooo": "f1fd8f3a8b8a8b65b269f82925877bed1bd70dd8054bb48cd759a4d1637c4bef"
+      },
+      "example_sha256": {
+        "cases.json": "33bdb0ce1e2cf534c6472df409002f9dc1f9780c718792a01e18b921c3e95edf",
+        "main.gooo": "80b34e8a427c2262d6e584157f54873c497e1fba9dcaf24c4e7c940151ca5b15",
+        "gooo.workspace.json": "4ecae0b1737e8f2b26c8ef8c5fc06081fe0eaa9ea39b92c555428ffe1030edbf"
+      },
+      "scope": "first new real Gooo multiline-else program on8 new functional cases, including Unicode local and strict boundary41; no historical cohort/model/original producer replay",
+      "original_record_sha256": "1184bcaba79f1eea45de538aab28bc59f035fe4e782075c71e906e15be97c261",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "adoption/source-origins-first/command.json",
+      "exit_code": 0,
+      "wall_seconds": 5.796876333,
+      "parent": "fe20d126ab31758fea27aabc07e3c968bfd2ba32",
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "source_sha256": "80b34e8a427c2262d6e584157f54873c497e1fba9dcaf24c4e7c940151ca5b15",
+      "scope": "first readonly original-source inspection after multiline-else normalization; no native/model/original producer execution",
+      "original_record_sha256": "1e854afdd3a1a44472b88a4521d7459d7415ed8f4f326d4bd483c91b63f5fea0",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "adoption/control-export-first/command.json",
+      "exit_code": 0,
+      "wall_seconds": 1.277529583,
+      "scope": "first source-control typed export for this new multiline-else program; readonly, no producer/model execution",
+      "original_record_sha256": "6306fc215262cd56a561226b51eaada4a2102dc853ec57c8e5f20417b6d8f6ea",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "adoption/gooo-control-reader-first/command.json",
+      "exit_code": 0,
+      "wall_seconds": 1.6123213749999998,
+      "scope": "first existing Gooo control reader applied to this new program/source graph, one new input cohort; producer8case cohort and prior reader15case cohort not replayed; no model calls expected",
+      "original_record_sha256": "d34227c865d9d0df840bd09801dcbbfd0d7ebe82f39f0f419f4ec1a204c72dd1",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "adoption/source-binding-first/command.json",
+      "exit_code": 0,
+      "wall_seconds": 4.512754208,
+      "scope": "first readonly adopted policy hash/current published program graph fixture binding; no Gooo native program, producer, model or historical cohort execution",
+      "original_record_sha256": "98857828188220327c56fd9d12ff9dba7354675ed30e4b55bc1363248328d2c4",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    },
+    {
+      "path": "adoption/final-source-analysis-first/command.json",
+      "exit_code": 0,
+      "wall_seconds": 1.922263,
+      "scope": "readonly modernization/type analysis of new else integration, CI regressions and freshly generated v83/v84 members; no test/program/model execution",
+      "original_record_sha256": "89e1a0284352a41b6c59b906aab63d015bf71a65c0d7937e6781e3d67ee2e433",
+      "metadata_publication": "Go executable location shortened in argv only; source and workload payloads retain their exact bytes"
+    }
+  ],
+  "omitted_raw_payloads": [],
+  "preferred_named_policy": {
+    "source": "internal/meta/bodysurface/else.gooo",
+    "source_sha256": "f1fd8f3a8b8a8b65b269f82925877bed1bd70dd8054bb48cd759a4d1637c4bef",
+    "generated_source_sha256": "e1d8c3e9bb7cfb1133114b8cd8bfb31199781c2f6722def1a31384e3de359a9e",
+    "named_boolean_domain_cases": 16,
+    "passed": 16,
+    "model_calls": 0,
+    "wall_seconds_including_build": 1.522857208,
+    "standalone_generated_integration": {
+      "new_fragments": 13,
+      "passed": 13,
+      "wall_seconds": 1.359956084
+    }
+  },
+  "new_program": {
+    "source": "examples/else-layout/main.gooo",
+    "source_sha256": "80b34e8a427c2262d6e584157f54873c497e1fba9dcaf24c4e7c940151ca5b15",
+    "finite_cases": 8,
+    "finite_passed": 8,
+    "model_calls": 0,
+    "wall_seconds_including_parallel_local_build": 6.257749959
+  },
+  "origin_mapping": {
+    "decision": "MATCHED_ORIGINAL_BYTES",
+    "source_sha256": "sha256:80b34e8a427c2262d6e584157f54873c497e1fba9dcaf24c4e7c940151ca5b15",
+    "graph_nodes": 30,
+    "mapped_source_rows": 28,
+    "unmapped_source_rows": 2,
+    "guards": [
+      {
+        "id": 6,
+        "status": "MAPPED",
+        "expression": "input.enabled",
+        "start_byte": 453,
+        "end_byte": 466
+      },
+      {
+        "id": 7,
+        "status": "MAPPED",
+        "expression": "input.enabled",
+        "start_byte": 453,
+        "end_byte": 466
+      },
+      {
+        "id": 20,
+        "status": "MAPPED",
+        "expression": "조정값 > 41",
+        "start_byte": 543,
+        "end_byte": 557
+      },
+      {
+        "id": 21,
+        "status": "MAPPED",
+        "expression": "조정값 > 41",
+        "start_byte": 543,
+        "end_byte": 557
+      }
+    ],
+    "scope": "readonly validation of the already saved first source report against its original source bytes; no source inspection/program/model rerun"
+  },
+  "new_input_meta_reader": {
+    "new_cases": 1,
+    "passed": 1,
+    "source_graph_nodes": 30,
+    "known_guards": 0,
+    "unknown_guards": 4,
+    "guard_denominator": 4,
+    "model_calls": 0,
+    "producer_executions": 0,
+    "wall_seconds": 1.6123213749999998
+  },
+  "scope_rule": "These denominators answer distinct questions. Earlier positional/standalone prototypes are preserved, not added into a total or replayed. No completed historical local native/model/program cohort replay.",
+  "registrations": [
+    {
+      "name": "register-policy",
+      "members": [
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v83.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go"
+      ],
+      "prior_cases": 120,
+      "current_cases": 121,
+      "historical_sha256": {
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v77.json": "sha256:f61eca0e1226482e5c43d99de91adef42dc1c03f8626223cd7e6e56f9c566b6c",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v36.json": "sha256:07ef17811672785448a4ef38baec9b970d116024ce6fac5afae8d5b187a82b1c",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v61.json": "sha256:7ab8dba830e9f909f9607f6f0f52afe84e7b03af78e82cb9ceac4971cb264351",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v41.json": "sha256:f16924dbb2385fb88a64d497de5d193266a09d3df4c2bbcc14d7b1c2c226f425",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v57.json": "sha256:d5fd5b6bf8203b4d1466c03d2d6f4112881002e6a281791564bf689bbe93f6c2",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v82.json": "sha256:d77385641c6816491b8684fa7e5d8d6ea965a872ef9f423b6a65b3aed33cd8d0",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v56.json": "sha256:7d943a9f8f804b2fb765dc462cba20e320a382f54dccaaf6432a9acd88681262",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v40.json": "sha256:cd8913a5b59c3ef5854722f2049ed94e1b9b153b8b26ff2764ae385c5be40a6d",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v60.json": "sha256:b9036337d010ab4bbbd7fcc68a401e94a498c5fd3f929e7395c3ab671b47c349",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v37.json": "sha256:e014188ea0aac72592d17a30fbb6210d50553995bb9628d19eb57291c97abbe2",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v76.json": "sha256:e90d02bd6a93f618174dcd05b1edb767f375fe06f3fe857b249a322c2fc5f937",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v47.json": "sha256:f2e749bb032eb8e83d3e467f049091ec18ecb4562517788b16697bd095597dd4",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v51.json": "sha256:a686959b74edb42d15e8614d5c55dca1c10a587b8f8a9c8fac52d71a971e83c3",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v71.json": "sha256:8aab49767149c43a77b57f0d67773b6c4b724bd5f5e2890e30fefb0e64c8aa8c",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v26.json": "sha256:18cf03b8b7bef829bebde8fefddf59c6a231dbd46760347c17452b867c722009",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v30.json": "sha256:9c19b37f8f28fb534f82b82570ddccc5ca31dbd36e50df5a810b8cb920a201ed",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v67.json": "sha256:3917b9bd0ba18fe1d54fcbae8a1b7730d97ed7ea0597ac8c86f75c9c4af71d96",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v66.json": "sha256:6f275e2485b3a741ec3f0a7301fdd50b76a9db0dffeb82837a728c4d217fbba9",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v31.json": "sha256:dc340f0762355614683760a0c3ac0152cbad73c847ccaae2f1e720c87e3d1f50",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v27.json": "sha256:be246116defd88b0150cbe221b17b2d30286482c68d6cfbe95b8629fdf264fe0",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v70.json": "sha256:da53a55cd60bedc139226e9aa44b0392a981b8cab6b7b84c2b30b60922ca8dda",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v50.json": "sha256:23dc86403c183f670592830888982d6f0d5400f9b3872802f1bed4966c475a1f",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v46.json": "sha256:e4e6a4a603c035a1fded313beed3b0ed121a0fe93a80541f691845f44135e2a0",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v69.json": "sha256:b0529a6277c7278a6c88618b3691d7d0e035aa00186f068c535edc06c59c1cad",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v28.json": "sha256:65fcb1dae77aacfd2e092fc4ab036099f89fae4504171874a154d656c2cf397d",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v53.json": "sha256:c37c31268a9e1be706d4fd6ef50dca4d495db9c8311b824df9dc6b8331b229ba",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v45.json": "sha256:676ca467e080dad459a9a7f5c5b0d82f6ba2eb136ba73a8ec13d9165db4ad624",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v65.json": "sha256:992845cfa77e3d927b97f047ad9879127f36b972636b4776cedcc991984b3e38",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v32.json": "sha256:9f06d115bc42f534e17fb34d276ad729e00e905eb547a6776be83befe9c92989",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v24.json": "sha256:e22d8c3ba0ba2440f42d4d2028cf9f61d833ae4db0e0d9f10ddf42a0af4973ce",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v73.json": "sha256:08c612ba137581d648e49339dcd2e6b95b391b97ce0c28e8204c83091e8d9616",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v49.json": "sha256:aafb7676a5c22606f120f179a23af86ab760ea545ed8cfd31ece275221fd5669",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v48.json": "sha256:2b9ac5c2293e7c61f23de5e0fbb1ca59d843e43ed9b78cba21054173fdaabfab",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v72.json": "sha256:a2c5f1b122d393aff2fc4f4b5ab21889f9548a4f3eb86559a9ece4a755738351",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v25.json": "sha256:5ef82bd6ca0a861a054d67d37176dd44fd3fd67b25290647fde290c42b916795",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v33.json": "sha256:99bf0a1c500684969a3fbe208bb18583e985ef3c37a38f535072ab25158cbfcd",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v64.json": "sha256:ba8110fd264fb7d8f9c2c1e65b504d7b9465911488eb32681b484bba03bb4169",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v44.json": "sha256:3af46b88345fb50ba3b032a9112cab9781ac1cb9deefff40adabbd4cd4c13b08",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v52.json": "sha256:14d07aa72214a1487878fef1d0bdfd28ca745ba8f9bfdb63e5341a881454e1af",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v29.json": "sha256:554dde79ad5108152351782ce36fd5e60b024b2d5ccb88ba9a8ac192db3af6d3",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v68.json": "sha256:bb19d506c2a50758aa02dfcc6231f4d521ac7326281982a15f60e6212554e145",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v63.json": "sha256:b30ea616a631e1f12b519794ceff0a982dceaa82b89d5f0b2c4d85717b4ee95e",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v34.json": "sha256:15015d1f028d254513ee97ab36fed60ddf9cbcf97f61e19957a4e7bb974795e5",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v22.json": "sha256:ea4821d2b632319b29ffe43276c0b36f1b825fe29c8617c16680cd41b3d5f822",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v75.json": "sha256:0ae7b66bcbd26ae26c42873ebf57976fbc418524791d6a5753aa0b618ab168e7",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v59.json": "sha256:05a004c06f8a91a8dfaef944d107290bca1d43f08b120f4636fa12c081639cea",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v80.json": "sha256:d3c410815e67e063e3ac504ba601c24fec05a127349432f6255dd5b2bdb342e4",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v38.json": "sha256:f2db6d69f4bb0ba9fb50a2e8e8b4054bdacbe048470ce21a16e0b8cf72575952",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v79.json": "sha256:f36ee4a7435d5bf180751fc149855beb949e935a4af6bacd3673d8244f3753bd",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v55.json": "sha256:9dc1c5e506a4ea33ba64b62d1f65d6c1f2c16a6c26ef1aedeb51fafee876b787",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v43.json": "sha256:cc71098af93f003e6e5c01e845ac5dba204acfdb866bf2a46ada1fc29ff2142c",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v42.json": "sha256:1538f5a331e6e436aee9ac1e0b29d5940b56dbf416645f9acab8afe30bf8d68f",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v54.json": "sha256:ae130583ec041538e455cf6377312bf5af1a9398a217af785205a1e0019edfbf",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v78.json": "sha256:20eaf87a2ab8a20eb15d217a12b00258949728755f12fb6252735baf1b05e7f5",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v39.json": "sha256:aa81b4ccb99a2a23179f59f0706a534f4fef0a69ad9336fb3f94207e4d787b33",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v81.json": "sha256:a556742a019b1787035f3a5ee8ca8f73e0ac17bf376c1260804554f7f2dcce70",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v58.json": "sha256:55f249dc9d663931fd5373322890cee91a2f721f30634db993d208a614ac1ec6",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v74.json": "sha256:c3ec2da26aa7dc284a32b3d41301063109ed0439c4dfbdaa6722a36bcbe5b6ff",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v23.json": "sha256:122db17eb5ff8236e6d7fdd6ba175429c70543def3af420240344aa65fe8ca0d",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v35.json": "sha256:ccbe1f2aec8512d535446b1626ab752b2b442c7f26fbafe125c2f93a44f969a7",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v62.json": "sha256:1f8860e090a1655306c24b4843ad6d35e2e3491c86b0be9545ebecd2b61d7e16"
+      },
+      "preserved_denominator_files": 61,
+      "semantic_admission": "UNASSESSED",
+      "candidate_apply_authorized": false,
+      "application_authority": "existing user-authorized compiler development; proposal grants no apply or promotion authority",
+      "candidate_sha256": "a85966a9a5a07d885132e0afe78ff422ee3b38ff3f6f18fe4b97334807454848",
+      "request_sha256": "ab8b9f3ef7667c039b737d33b2066f1403e2f7f0167405705e9d770ba59162dd",
+      "scope": "native proposal and authorized nine-member source registration; no generated program/model run; admission UNASSESSED"
+    },
+    {
+      "name": "register-example",
+      "members": [
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v84.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go"
+      ],
+      "prior_cases": 121,
+      "current_cases": 122,
+      "historical_sha256": {
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v77.json": "sha256:f61eca0e1226482e5c43d99de91adef42dc1c03f8626223cd7e6e56f9c566b6c",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v36.json": "sha256:07ef17811672785448a4ef38baec9b970d116024ce6fac5afae8d5b187a82b1c",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v61.json": "sha256:7ab8dba830e9f909f9607f6f0f52afe84e7b03af78e82cb9ceac4971cb264351",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v41.json": "sha256:f16924dbb2385fb88a64d497de5d193266a09d3df4c2bbcc14d7b1c2c226f425",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v57.json": "sha256:d5fd5b6bf8203b4d1466c03d2d6f4112881002e6a281791564bf689bbe93f6c2",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v82.json": "sha256:d77385641c6816491b8684fa7e5d8d6ea965a872ef9f423b6a65b3aed33cd8d0",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v83.json": "sha256:81a14c7762b47d902ee5b9aa3158b9c6920625a8d66fb5254cdadedbbacedd1c",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v56.json": "sha256:7d943a9f8f804b2fb765dc462cba20e320a382f54dccaaf6432a9acd88681262",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v40.json": "sha256:cd8913a5b59c3ef5854722f2049ed94e1b9b153b8b26ff2764ae385c5be40a6d",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v60.json": "sha256:b9036337d010ab4bbbd7fcc68a401e94a498c5fd3f929e7395c3ab671b47c349",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v37.json": "sha256:e014188ea0aac72592d17a30fbb6210d50553995bb9628d19eb57291c97abbe2",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v76.json": "sha256:e90d02bd6a93f618174dcd05b1edb767f375fe06f3fe857b249a322c2fc5f937",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v47.json": "sha256:f2e749bb032eb8e83d3e467f049091ec18ecb4562517788b16697bd095597dd4",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v51.json": "sha256:a686959b74edb42d15e8614d5c55dca1c10a587b8f8a9c8fac52d71a971e83c3",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v71.json": "sha256:8aab49767149c43a77b57f0d67773b6c4b724bd5f5e2890e30fefb0e64c8aa8c",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v26.json": "sha256:18cf03b8b7bef829bebde8fefddf59c6a231dbd46760347c17452b867c722009",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v30.json": "sha256:9c19b37f8f28fb534f82b82570ddccc5ca31dbd36e50df5a810b8cb920a201ed",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v67.json": "sha256:3917b9bd0ba18fe1d54fcbae8a1b7730d97ed7ea0597ac8c86f75c9c4af71d96",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v66.json": "sha256:6f275e2485b3a741ec3f0a7301fdd50b76a9db0dffeb82837a728c4d217fbba9",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v31.json": "sha256:dc340f0762355614683760a0c3ac0152cbad73c847ccaae2f1e720c87e3d1f50",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v27.json": "sha256:be246116defd88b0150cbe221b17b2d30286482c68d6cfbe95b8629fdf264fe0",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v70.json": "sha256:da53a55cd60bedc139226e9aa44b0392a981b8cab6b7b84c2b30b60922ca8dda",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v50.json": "sha256:23dc86403c183f670592830888982d6f0d5400f9b3872802f1bed4966c475a1f",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v46.json": "sha256:e4e6a4a603c035a1fded313beed3b0ed121a0fe93a80541f691845f44135e2a0",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v69.json": "sha256:b0529a6277c7278a6c88618b3691d7d0e035aa00186f068c535edc06c59c1cad",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v28.json": "sha256:65fcb1dae77aacfd2e092fc4ab036099f89fae4504171874a154d656c2cf397d",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v53.json": "sha256:c37c31268a9e1be706d4fd6ef50dca4d495db9c8311b824df9dc6b8331b229ba",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v45.json": "sha256:676ca467e080dad459a9a7f5c5b0d82f6ba2eb136ba73a8ec13d9165db4ad624",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v65.json": "sha256:992845cfa77e3d927b97f047ad9879127f36b972636b4776cedcc991984b3e38",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v32.json": "sha256:9f06d115bc42f534e17fb34d276ad729e00e905eb547a6776be83befe9c92989",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v24.json": "sha256:e22d8c3ba0ba2440f42d4d2028cf9f61d833ae4db0e0d9f10ddf42a0af4973ce",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v73.json": "sha256:08c612ba137581d648e49339dcd2e6b95b391b97ce0c28e8204c83091e8d9616",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v49.json": "sha256:aafb7676a5c22606f120f179a23af86ab760ea545ed8cfd31ece275221fd5669",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v48.json": "sha256:2b9ac5c2293e7c61f23de5e0fbb1ca59d843e43ed9b78cba21054173fdaabfab",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v72.json": "sha256:a2c5f1b122d393aff2fc4f4b5ab21889f9548a4f3eb86559a9ece4a755738351",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v25.json": "sha256:5ef82bd6ca0a861a054d67d37176dd44fd3fd67b25290647fde290c42b916795",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v33.json": "sha256:99bf0a1c500684969a3fbe208bb18583e985ef3c37a38f535072ab25158cbfcd",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v64.json": "sha256:ba8110fd264fb7d8f9c2c1e65b504d7b9465911488eb32681b484bba03bb4169",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v44.json": "sha256:3af46b88345fb50ba3b032a9112cab9781ac1cb9deefff40adabbd4cd4c13b08",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v52.json": "sha256:14d07aa72214a1487878fef1d0bdfd28ca745ba8f9bfdb63e5341a881454e1af",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v29.json": "sha256:554dde79ad5108152351782ce36fd5e60b024b2d5ccb88ba9a8ac192db3af6d3",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v68.json": "sha256:bb19d506c2a50758aa02dfcc6231f4d521ac7326281982a15f60e6212554e145",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v63.json": "sha256:b30ea616a631e1f12b519794ceff0a982dceaa82b89d5f0b2c4d85717b4ee95e",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v34.json": "sha256:15015d1f028d254513ee97ab36fed60ddf9cbcf97f61e19957a4e7bb974795e5",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v22.json": "sha256:ea4821d2b632319b29ffe43276c0b36f1b825fe29c8617c16680cd41b3d5f822",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v75.json": "sha256:0ae7b66bcbd26ae26c42873ebf57976fbc418524791d6a5753aa0b618ab168e7",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v59.json": "sha256:05a004c06f8a91a8dfaef944d107290bca1d43f08b120f4636fa12c081639cea",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v80.json": "sha256:d3c410815e67e063e3ac504ba601c24fec05a127349432f6255dd5b2bdb342e4",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v38.json": "sha256:f2db6d69f4bb0ba9fb50a2e8e8b4054bdacbe048470ce21a16e0b8cf72575952",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v79.json": "sha256:f36ee4a7435d5bf180751fc149855beb949e935a4af6bacd3673d8244f3753bd",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v55.json": "sha256:9dc1c5e506a4ea33ba64b62d1f65d6c1f2c16a6c26ef1aedeb51fafee876b787",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v43.json": "sha256:cc71098af93f003e6e5c01e845ac5dba204acfdb866bf2a46ada1fc29ff2142c",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v42.json": "sha256:1538f5a331e6e436aee9ac1e0b29d5940b56dbf416645f9acab8afe30bf8d68f",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v54.json": "sha256:ae130583ec041538e455cf6377312bf5af1a9398a217af785205a1e0019edfbf",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v78.json": "sha256:20eaf87a2ab8a20eb15d217a12b00258949728755f12fb6252735baf1b05e7f5",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v39.json": "sha256:aa81b4ccb99a2a23179f59f0706a534f4fef0a69ad9336fb3f94207e4d787b33",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v81.json": "sha256:a556742a019b1787035f3a5ee8ca8f73e0ac17bf376c1260804554f7f2dcce70",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v58.json": "sha256:55f249dc9d663931fd5373322890cee91a2f721f30634db993d208a614ac1ec6",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v74.json": "sha256:c3ec2da26aa7dc284a32b3d41301063109ed0439c4dfbdaa6722a36bcbe5b6ff",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v23.json": "sha256:122db17eb5ff8236e6d7fdd6ba175429c70543def3af420240344aa65fe8ca0d",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v35.json": "sha256:ccbe1f2aec8512d535446b1626ab752b2b442c7f26fbafe125c2f93a44f969a7",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v62.json": "sha256:1f8860e090a1655306c24b4843ad6d35e2e3491c86b0be9545ebecd2b61d7e16"
+      },
+      "preserved_denominator_files": 62,
+      "semantic_admission": "UNASSESSED",
+      "candidate_apply_authorized": false,
+      "application_authority": "existing user-authorized compiler development; proposal grants no apply or promotion authority",
+      "candidate_sha256": "05da1fe560e8ae6c4116c77b290bd063b56369176e581afd81e557f64eecf103",
+      "request_sha256": "a450fe6c035fecc2f3b55ce5c3e4f48ac8f4e0699ae87fc22272b09b603f8a53",
+      "scope": "native proposal and authorized nine-member source registration; no generated program/model run; admission UNASSESSED"
+    }
+  ],
+  "registry": {
+    "cases": 122,
+    "source_paths": 140,
+    "new_versions": [
+      83,
+      84
+    ],
+    "prior_cases": 120,
+    "historical_denominator_files_preserved": 61
+  },
+  "future_ci": "Native program8, named policy16, source reader1 and original guard/query freshness regressions are written for original CI; completed local native cohorts were not rerun."
+}
