@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "gooo/tools/fault-origins", "activity": "Describe"},
+  "packages": [{"path": "gooo/tools/fault-origins", "name": "faultorigins", "imports": [], "sources": ["describe.gooo"]}]
+}

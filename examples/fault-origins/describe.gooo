@@ -1,0 +1,72 @@
+package faultorigins
+namespace faultorigins
+
+entity Fault id "urn:gooo:fault-origins:input" fields {
+    field case_index id "urn:gooo:fault-origins:case" type integer required one
+    field delivery_index id "urn:gooo:fault-origins:delivery" type integer required one
+    field root_activity_id id "urn:gooo:fault-origins:root" type string required one
+    field activity_id id "urn:gooo:fault-origins:activity" type string required one
+    field expression_id id "urn:gooo:fault-origins:expression-id" type string required one
+    field kind id "urn:gooo:fault-origins:kind" type string required one
+    field operator id "urn:gooo:fault-origins:operator" type string required one
+    field assignment id "urn:gooo:fault-origins:assignment" type string required one
+    field variable id "urn:gooo:fault-origins:variable" type string required one
+    field left id "urn:gooo:fault-origins:left" type integer required one
+    field right id "urn:gooo:fault-origins:right" type integer required one
+    field projection_sha256 id "urn:gooo:fault-origins:projection" type string required one
+    field projection_start id "urn:gooo:fault-origins:projection-start" type integer required one
+    field projection_end id "urn:gooo:fault-origins:projection-end" type integer required one
+    field expression id "urn:gooo:fault-origins:expression" type string required one
+    field source_mapping id "urn:gooo:fault-origins:mapping" type string required one
+    field source_relation id "urn:gooo:fault-origins:relation" type string required one
+    field source_sha256 id "urn:gooo:fault-origins:source" type string required one
+    field source_start id "urn:gooo:fault-origins:source-start" type integer required one
+    field source_end id "urn:gooo:fault-origins:source-end" type integer required one
+    field source_expression id "urn:gooo:fault-origins:source-expression" type string required one
+}
+
+entity Description id "urn:gooo:fault-origins:description" fields {
+    field case_index id "urn:gooo:fault-origins:result-case" type integer required one
+    field root_activity_id id "urn:gooo:fault-origins:result-root" type string required one
+    field activity_id id "urn:gooo:fault-origins:result-activity" type string required one
+    field form id "urn:gooo:fault-origins:form" type string required one
+    field kind id "urn:gooo:fault-origins:result-kind" type string required one
+    field operation id "urn:gooo:fault-origins:result-operation" type string required one
+    field source_view id "urn:gooo:fault-origins:view" type string required one
+    field source_expression id "urn:gooo:fault-origins:result-expression" type string required one
+    field source_sha256 id "urn:gooo:fault-origins:result-source" type string required one
+    field source_start id "urn:gooo:fault-origins:result-start" type integer required one
+    field source_end id "urn:gooo:fault-origins:result-end" type integer required one
+}
+
+activity Describe(기록 Fault) -> Description id "urn:gooo:fault-origins:describe" computes `
+let form = "EXPRESSION"
+if 기록.assignment != "" {
+    form = "FIELD_UPDATE"
+    if 기록.variable != "" {
+        form = "LOCAL_UPDATE"
+    }
+}
+
+let description = Description{
+    case_index: 기록.case_index,
+    root_activity_id: 기록.root_activity_id,
+    activity_id: 기록.activity_id,
+    form: form,
+    kind: 기록.kind,
+    operation: 기록.expression,
+    source_view: "GO_PROJECTION",
+    source_expression: 기록.expression,
+    source_sha256: 기록.projection_sha256,
+    source_start: 기록.projection_start,
+    source_end: 기록.projection_end,
+}
+if 기록.source_mapping == "MAPPED" && 기록.source_relation == "selected_local_rhs" {
+    description.source_view = "SELECTED_GOOO_RHS"
+    description.source_expression = 기록.source_expression
+    description.source_sha256 = 기록.source_sha256
+    description.source_start = 기록.source_start
+    description.source_end = 기록.source_end
+}
+return description
+`

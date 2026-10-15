@@ -24,26 +24,5 @@ func writePackageFaultContext(out io.Writer, runtime bodyexecution.CompositionRu
 // A local compound assignment spans the target and RHS in the pure projection.
 // Match its retained RHS by activity, variable, operation, digest and byte range.
 func packageFaultLocalRHS(runtime bodyexecution.CompositionRuntime, fault bodyexecution.CompositionFaultSite) *bodycodegen.BodyExpressionSource {
-	if fault.Variable == "" || fault.Assignment != "/=" || fault.ProjectionSHA256 == "" {
-		return nil
-	}
-	var selected *bodycodegen.BodyExpressionSource
-	matches := 0
-	for _, local := range runtime.LocalSites {
-		if local.RootActivityID != fault.RootActivityID || local.ActivityID != fault.ActivityID || local.Name != fault.Variable ||
-			local.Operation != fault.Assignment || local.ProjectionSHA256 != fault.ProjectionSHA256 ||
-			local.Start <= fault.Start || local.End != fault.End {
-			continue
-		}
-		matches++
-		source := local.Source.Value
-		if source != nil && source.Status == "MAPPED" && source.View == "selected_gooo_source" &&
-			source.SourceSHA256 != "" && source.SourceSHA256 == runtime.SelectedSourceSHA256 && source.Start >= 0 && source.End > source.Start {
-			selected = source
-		}
-	}
-	if matches != 1 {
-		return nil
-	}
-	return selected
+	return bodyexecution.RecordedFaultLocalRHS(runtime, fault)
 }

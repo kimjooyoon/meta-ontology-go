@@ -7,6 +7,12 @@ func (query NativeOriginQuery) hasSubjectSelection() bool {
 }
 
 func validateOriginSubjectSelection(query NativeOriginQuery) error {
+	if query.Kind == "faults" {
+		if query.FieldID != "" {
+			return fmt.Errorf("fault origins select root/activity IDs; retained faults have no field ID")
+		}
+		return nil
+	}
 	if query.hasSubjectSelection() && !isFieldOriginKind(query.Kind) {
 		return fmt.Errorf("origin subject IDs require field-writes, field-uses or field-input-locations")
 	}
