@@ -2,6 +2,7 @@ package originpolicy
 namespace transportorigin
 
 entity Text id "urn:gooo:type:string"
+entity Boolean id "urn:gooo:type:boolean"
 
 # The API run head identifies different roles for source and completion events.
 # A completion observer may inspect a subject from another commit.
@@ -32,4 +33,48 @@ if event == "pull_request" || event == "push" {
     return "SUBJECT_ORIGIN_BOUND"
 }
 return "PRODUCER_EVENT_UNSUPPORTED"
+`
+
+# The name locates a delivery role; its suffix never establishes a subject.
+activity CandidateArtifactRole(name Text) -> Text
+    id "gooo://self-improvement/transport/candidate-artifact-role" computes `
+let prefix = "self-improvement-nonexecuting-candidate-"
+if len(name) == len(prefix) + 40 && name[:len(prefix)] == prefix {
+    return "gooo://self-improvement/non-executing-candidate"
+}
+return ""
+`
+
+activity BindCandidateSubject(candidate Text, transport Text, declared Text) -> Text
+    id "gooo://self-improvement/transport/bind-candidate-subject" computes `
+if candidate == "" || transport == "" || declared == "" {
+    return "CANDIDATE_SUBJECT_UNKNOWN"
+}
+if candidate != transport || candidate != declared {
+    return "CANDIDATE_SUBJECT_MISMATCH"
+}
+return "CANDIDATE_SUBJECT_BOUND"
+`
+
+activity ContinuationEligible(decision Text, outcome Text, verified Boolean) -> Boolean
+    id "gooo://self-improvement/transport/continuation-eligible" computes `
+return decision == "CLOSED" && outcome == "AUTHORIZED" && verified
+`
+
+# Older continuation envelopes carried one origin; explicit subjects keep both.
+activity ContinuationSubject(source Text, subject Text) -> Text
+    id "gooo://self-improvement/transport/continuation-subject" computes `
+if subject == "" { return source }
+return subject
+`
+
+activity ContinuationArtifactName(target Text, source Text, subject Text) -> Text
+    id "gooo://self-improvement/transport/continuation-artifact-name" computes `
+if target == ".github/workflows/self-improvement-execution-contract.yml" {
+    return "self-improvement-candidate-authorization-" + source
+}
+if target == ".github/workflows/self-improvement-execution-grant.yml" {
+    return "self-improvement-execution-contract-" + subject
+}
+return ""
 `

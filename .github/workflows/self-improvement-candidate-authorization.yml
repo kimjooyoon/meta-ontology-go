@@ -12,6 +12,9 @@ permissions:
 
 jobs:
   bridge-candidate-authorization:
+    outputs:
+      subject_sha: ${{ steps.delivery.outputs.subject_sha }}
+      continue: ${{ steps.eligibility.outputs.continue }}
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
@@ -20,7 +23,7 @@ jobs:
     env:
       SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
       SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
-      SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      SOURCE_HEAD_SHA: ${{ github.sha }}
 
     steps:
       - name: Checkout the authorization bridge
@@ -35,73 +38,23 @@ jobs:
           go-version: 1.27.2
           check-latest: true
 
-      - name: Locate and seal candidate artifact
+      - name: Locate and bind candidate delivery
+        id: delivery
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/candidate-authorization"
-          input="$work/input"
-          mkdir -p "$input"
-          artifact_id=0
-          artifact_name="self-improvement-nonexecuting-candidate-$SOURCE_HEAD_SHA"
-          artifact_run_id="$SOURCE_RUN_ID"
-          artifact_run_attempt="$SOURCE_RUN_ATTEMPT"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$work/source-artifacts.json" || true
-          if [ -s "$work/source-artifacts.json" ]; then
-            artifact_id="$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name and .expired == false)] | if length == 1 then .[0].id else 0 end' "$work/source-artifacts.json" || echo 0)"
-          fi
-          archive="$work/candidate.zip"
-          archive_digest=""
-          artifact_size=0
-          expired=true
-          if [ "$artifact_id" -gt 0 ]; then
-            if [ ! -s "$work/artifact.json" ]; then
-              gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id" > "$work/artifact.json" || true
-            fi
-            if [ -s "$work/artifact.json" ]; then
-              expired="$(jq -r '.expired' "$work/artifact.json" || echo true)"
-              artifact_size="$(jq -r '.size_in_bytes // 0' "$work/artifact.json" || echo 0)"
-            fi
-            if [ "$expired" = "false" ]; then
-              download_exit=0
-              curl --fail --location --silent --show-error \
-                -H "Authorization: Bearer $GH_TOKEN" \
-                -H "Accept: application/vnd.github+json" \
-                -H "X-GitHub-Api-Version: 2022-11-28" \
-                "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
-                -o "$archive" || download_exit=$?
-              if [ "$download_exit" -eq 0 ]; then
-                archive_digest="sha256:$(sha256sum "$archive" | awk '{print $1}')"
-              else
-                expired=true
-              fi
-            fi
-          fi
-          unzip -q "$archive" -d "$input" 2>/dev/null || true
-          candidate="$work/missing-candidate.json"
-          while IFS= read -r file; do
-            if jq -e '.schema == "gooo/self-improvement-nonexecuting-candidate/v1"' "$file" >/dev/null; then
-              candidate="$file"
-              break
-            fi
-          done < <(find "$input" -type f -name '*.json' -print | sort)
-          jq -n \
-            --arg repository "$GITHUB_REPOSITORY" \
-            --arg subject_sha "$SOURCE_HEAD_SHA" \
-            --argjson run_id "$artifact_run_id" \
-            --argjson run_attempt "$artifact_run_attempt" \
-            --argjson artifact_id "$artifact_id" \
-            --arg artifact_name "$artifact_name" \
-            --arg archive_digest "$archive_digest" \
-            --argjson size_bytes "$artifact_size" \
-            --argjson expired "$expired" \
-            '{repository:$repository,subject_sha:$subject_sha,run_id:$run_id,run_attempt:$run_attempt,artifact_id:$artifact_id,artifact_name:$artifact_name,archive_digest:$archive_digest,size_bytes:$size_bytes,expired:$expired}' \
-            > "$work/metadata.json"
+          go run ./scripts/candidate-delivery -mode fetch -repository "$GITHUB_REPOSITORY" \
+            -run "$SOURCE_RUN_ID" -attempt "$SOURCE_RUN_ATTEMPT" -output "$work/input"
+          cp "$work/input/metadata.json" "$work/metadata.json"
+          cp "$work/input/delivery.json" "$work/delivery.json"
           echo "WORK=$work" >> "$GITHUB_ENV"
-          echo "CANDIDATE=$candidate" >> "$GITHUB_ENV"
-          jq -r '"candidate artifact: id=\(.artifact_id), name=\(.artifact_name), expired=\(.expired), archive=\(.archive_digest // "UNKNOWN")"' "$work/metadata.json" >> "$GITHUB_STEP_SUMMARY"
+          echo "CANDIDATE=$work/input/candidate.json" >> "$GITHUB_ENV"
+          jq -r '"subject_sha=\(.subject_sha // "")"' "$work/delivery.json" >> "$GITHUB_OUTPUT"
+          jq -r '"delivery: \(.state)/\(.reason), subject \(.subject_sha // "UNKNOWN")"' \
+            "$work/delivery.json" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Emit exact candidate authorization request
         shell: bash
@@ -153,6 +106,27 @@ jobs:
           jq -e '.case_denominator == 9 and .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and .counts == {CLOSED:3,UNKNOWN:3,REFUTED:3} and .replay_equal and .live_authorized == 0 and .live_state == "UNKNOWN" and .metrics.system_derived_decisions == 3 and .metrics.fallback_accepted == 0 and .metrics.repository_writes == 0 and .metrics.local_test_executions == 0 and .roundtrip.authorization_roundtrip_exact_before == 0 and .roundtrip.authorization_roundtrip_exact_after == 1 and .roundtrip.pointer_identity_dependency_before == 1 and .roundtrip.pointer_identity_dependency_after == 0 and .roundtrip.counterexample_run_id == 33926584593' "$WORK/canonical-cases.json" >/dev/null
           jq -r '"canonical cases: \(.case_denominator) (\(.closed_cases) CLOSED / \(.unknown_cases) UNKNOWN / \(.refuted_cases) REFUTED), replay_equal=\(.replay_equal), live_authorized=\(.live_authorized)"' "$WORK/canonical-cases.json" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Observe eligibility for continuation
+        id: eligibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          go run ./scripts/candidate-delivery -mode eligibility -request "$WORK/request.json" \
+            -resolution "$WORK/resolution.json" -verification "$WORK/verification.json" \
+            -output "$WORK/eligibility.json"
+          jq -r '"continue=\(.continue)"' "$WORK/eligibility.json" >> "$GITHUB_OUTPUT"
+          jq -r '"continuation eligibility: \(.state)/\(.reason), continue=\(.continue)"' \
+            "$WORK/eligibility.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Retain delivery diagnostic
+        if: always()
+        shell: bash
+        run: |
+          work="$RUNNER_TEMP/candidate-authorization"
+          if test -f "$work/input/delivery.json"; then
+            cp "$work/input/delivery.json" "$work/delivery.json"
+          fi
+
       - name: Upload candidate authorization bridge artifacts
         if: always()
         uses: actions/upload-artifact@v7
@@ -166,6 +140,7 @@ jobs:
     name: Emit exact v25 continuation proof
     needs: bridge-candidate-authorization
     if: >-
+      needs.bridge-candidate-authorization.outputs.continue == 'true' &&
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
@@ -175,16 +150,17 @@ jobs:
       actions: read
       contents: read
     env:
-      SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      SOURCE_HEAD_SHA: ${{ github.sha }}
+      SUBJECT_SHA: ${{ needs.bridge-candidate-authorization.outputs.subject_sha }}
       SOURCE_REF: refs/heads/${{ github.event.workflow_run.head_branch }}
       AUTH_RUN_ID: ${{ github.run_id }}
       AUTH_RUN_ATTEMPT: ${{ github.run_attempt }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Check out exact source head
+      - name: Check out the authorization workflow authority
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ env.SOURCE_HEAD_SHA }}
           persist-credentials: false
 
       - name: Install Go 1.27
@@ -235,7 +211,7 @@ jobs:
           test -n "$request"
           test -n "$resolution"
           test -n "$verification"
-          jq -e --arg sha "$SOURCE_HEAD_SHA" --arg repository "$GITHUB_REPOSITORY" \
+          jq -e --arg sha "$SUBJECT_SHA" --arg repository "$GITHUB_REPOSITORY" \
             '.schema == "gooo/self-improvement-candidate-authorization-request/v2" and
              .candidate.subject_sha == $sha and .candidate.execution_input_digest != null and
              .live_authorized == 0 and .live_state == "UNKNOWN" and
@@ -254,12 +230,12 @@ jobs:
           jq -n \
             --arg workflow "$auth_workflow_name" --arg path "$auth_workflow_path" \
             --arg repository "$GITHUB_REPOSITORY" --arg event workflow_run --arg ref "$SOURCE_REF" \
-            --arg sha "$SOURCE_HEAD_SHA" --arg artifact "$auth_artifact_name" \
+            --arg sha "$SOURCE_HEAD_SHA" --arg subject "$SUBJECT_SHA" --arg artifact "$auth_artifact_name" \
             --arg archive_digest "$api_digest" --arg observed_digest "$observed_digest" \
             --arg receipt_digest "$receipt_digest" --arg target "Self-improvement candidate execution contract" \
             --arg target_path ".github/workflows/self-improvement-execution-contract.yml" \
             --arg run "$AUTH_RUN_ID" --arg attempt "$AUTH_RUN_ATTEMPT" --arg artifact_id "$artifact_id" \
-            '{source_workflow_name:$workflow,source_workflow_path:$path,source_repository:$repository,source_event:$event,source_ref:$ref,source_head_sha:$sha,source_run_id:$run,source_run_attempt:$attempt,source_artifact_name:$artifact,source_artifact_id:$artifact_id,source_artifact_archive_digest:$archive_digest,source_artifact_observed_digest:$observed_digest,source_receipt_digest:$receipt_digest,target_workflow_name:$target,target_workflow_path:$target_path,dispatch_ref:"dev",dispatch_mode:"workflow_dispatch",replay:false,duplicate_dispatch:false,duplicate_conflict:false,manual_dispatches:0,unauthorized_dispatches:0,execution_authorized:false,execution_grants:0,live_grant_decision:0,live_execution_count:0,grant_consumed_uses:0,repository_writes:0,local_test_executions:0}' \
+            '{source_workflow_name:$workflow,source_workflow_path:$path,source_repository:$repository,source_event:$event,source_ref:$ref,source_head_sha:$sha,subject_sha:$subject,source_run_id:$run,source_run_attempt:$attempt,source_artifact_name:$artifact,source_artifact_id:$artifact_id,source_artifact_archive_digest:$archive_digest,source_artifact_observed_digest:$observed_digest,source_receipt_digest:$receipt_digest,target_workflow_name:$target,target_workflow_path:$target_path,dispatch_ref:"dev",dispatch_mode:"workflow_dispatch",replay:false,duplicate_dispatch:false,duplicate_conflict:false,manual_dispatches:0,unauthorized_dispatches:0,execution_authorized:false,execution_grants:0,live_grant_decision:0,live_execution_count:0,grant_consumed_uses:0,repository_writes:0,local_test_executions:0}' \
             > "$input"
           mkdir -p "$output_dir"
           env -u GH_TOKEN -u GITHUB_TOKEN go run ./scripts/self-improvement-ci-continuation \
@@ -271,9 +247,10 @@ jobs:
           jq '.verification' "$output_dir/continuation.json" > "$output_dir/verification.json"
           cp "$request" "$output_dir/source-authorization-request.json"
           cp "$resolution" "$output_dir/source-authorization-resolution.json"
-          jq -e --arg sha "$SOURCE_HEAD_SHA" --arg archive "$api_digest" \
+          jq -e --arg sha "$SOURCE_HEAD_SHA" --arg subject "$SUBJECT_SHA" --arg archive "$api_digest" \
             '.schema == "gooo/self-improvement-ci-continuation/v1" and
              .request.continuation_input.source_head_sha == $sha and
+             .request.continuation_input.subject_sha == $subject and
              .request.continuation_input.source_artifact_archive_digest == $archive and
              .request.continuation_input.source_artifact_observed_digest == $archive and
              .request.continuation_input.repository_writes == 0 and
@@ -296,8 +273,9 @@ jobs:
 
   dispatch-v25-continuation:
     name: Dispatch exact v25 verifier
-    needs: emit-v25-continuation
+    needs: [bridge-candidate-authorization, emit-v25-continuation]
     if: >-
+      needs.bridge-candidate-authorization.outputs.continue == 'true' &&
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
@@ -307,7 +285,8 @@ jobs:
       actions: write
       contents: read
     env:
-      SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      SOURCE_HEAD_SHA: ${{ github.sha }}
+      SUBJECT_SHA: ${{ needs.bridge-candidate-authorization.outputs.subject_sha }}
       SOURCE_REF: refs/heads/${{ github.event.workflow_run.head_branch }}
       AUTH_RUN_ID: ${{ github.run_id }}
       AUTH_RUN_ATTEMPT: ${{ github.run_attempt }}
@@ -335,10 +314,11 @@ jobs:
           test "$observed_digest" = "$archive_digest"
           unzip -q "$archive" -d "$work/source"
           continuation="$work/source/continuation.json"
-          jq -e --arg sha "$SOURCE_HEAD_SHA" --arg digest "$archive_digest" \
+          jq -e --arg sha "$SOURCE_HEAD_SHA" --arg subject "$SUBJECT_SHA" --arg digest "$archive_digest" \
             '.schema == "gooo/self-improvement-ci-continuation/v1" and
              .digest != null and (.digest | startswith("sha256:")) and
              .request.continuation_input.source_head_sha == $sha and
+             .request.continuation_input.subject_sha == $subject and
              .request.continuation_input.source_run_id == ($ENV.AUTH_RUN_ID|tonumber) and
              .request.continuation_input.source_artifact_name == ("self-improvement-candidate-authorization-"+$sha) and
              .request.continuation_input.source_artifact_archive_digest != null and
@@ -352,12 +332,12 @@ jobs:
           source_workflow_path="$(jq -r '.request.continuation_input.source_workflow_path' "$continuation")"
           source_event="$(jq -r '.request.continuation_input.source_event' "$continuation")"
           jq -n \
-            --arg ref "$SOURCE_REF" --arg sha "$SOURCE_HEAD_SHA" --arg name "$artifact_name" \
+            --arg ref "$SOURCE_REF" --arg sha "$SOURCE_HEAD_SHA" --arg subject "$SUBJECT_SHA" --arg name "$artifact_name" \
             --arg source_workflow "$source_workflow_name" --arg source_path "$source_workflow_path" \
             --arg source_event "$source_event" --arg repository "$GITHUB_REPOSITORY" \
             --arg archive_digest "$archive_digest" --arg receipt_digest "$receipt_digest" \
             --arg run "$AUTH_RUN_ID" --arg attempt "$AUTH_RUN_ATTEMPT" --arg artifact_id "$artifact_id" \
-            '{ref:"dev",inputs:{source_workflow_name:$source_workflow,source_workflow_path:$source_path,source_repository:$repository,source_event:$source_event,source_ref:$ref,source_head_sha:$sha,source_run_id:$run,source_run_attempt:$attempt,source_artifact_name:$name,source_artifact_id:$artifact_id,source_artifact_archive_digest:$archive_digest,source_artifact_observed_digest:$archive_digest,source_receipt_digest:$receipt_digest,target_workflow_name:"Self-improvement candidate execution contract",target_workflow_path:".github/workflows/self-improvement-execution-contract.yml",dispatch_ref:"dev",dispatch_mode:"workflow_dispatch",continuation_request_digest:$receipt_digest}}' \
+            '{ref:"dev",inputs:{source_workflow_name:$source_workflow,source_workflow_path:$source_path,source_repository:$repository,source_event:$source_event,source_ref:$ref,source_head_sha:$sha,subject_sha:$subject,source_run_id:$run,source_run_attempt:$attempt,source_artifact_name:$name,source_artifact_id:$artifact_id,source_artifact_archive_digest:$archive_digest,source_artifact_observed_digest:$archive_digest,source_receipt_digest:$receipt_digest,target_workflow_name:"Self-improvement candidate execution contract",target_workflow_path:".github/workflows/self-improvement-execution-contract.yml",dispatch_ref:"dev",dispatch_mode:"workflow_dispatch",continuation_request_digest:$receipt_digest}}' \
             > "$work/v25-dispatch.json"
           jq -e '(.inputs | type) == "object" and ([.inputs[] | type] | all(. == "string"))' \
             "$work/v25-dispatch.json" >/dev/null
