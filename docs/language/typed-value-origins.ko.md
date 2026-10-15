@@ -36,6 +36,12 @@
 선택/반복 필드 등 지원 범위 밖인 분석은 이유와 함께 `UNRESOLVED`가 됩니다.
 Gooo 탐색기의 입력은 60노드·32KiB까지이며 초과 시 거절합니다.
 
+`--inputs-shape source-control-columns`는 보관된 활동 그래프의 분기 방향,
+상수 진리값, 노드 활동 ID를 함께 전달합니다. 기본 내보내기는 기존
+`ancestry-columns` 형식을 유지합니다. 새 형식에서는 `--field`로 그래프를
+자르지 않습니다. [Gooo 조건 분기 판독기](../../examples/source-control-reader/README.md)는
+이 사실을 받아 참·거짓·알 수 없음과 그 분모를 직접 구성합니다.
+
 기존 `gooo/body-value-origins/v1` 및 조립용
 `gooo/record-value-flow/v1`의 생성 결과와 저장된 기록은 유지합니다.
 새 조회는 기존 형식 기반 분석기를 사용하고 자신의 반환 루트와

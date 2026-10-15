@@ -1,0 +1,48 @@
+{
+  "tool-contract-first": {
+    "argv": [
+      "node",
+      "scripts/ci-proof/tool_origin_test.js"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5208446670000001,
+    "scope": "new tool-origin contract; minimal temporary no-import Go fixture only, no historical compiler/model/native cohort replay",
+    "stdout": "execution tool origin: same-source tools accepted; cross-source/run/attempt and changed bytes rejected\n",
+    "stderr": ""
+  },
+  "canonical-join-first": {
+    "argv": [
+      "node",
+      "scripts/ci-proof/canonical_join_test.js"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.149634375,
+    "scope": "new source workflow join contract with mocked original API records; no local compiler/model/native replay",
+    "stdout": "canonical join: exact original five checks required; source observation work has no cycle with them\n",
+    "stderr": ""
+  },
+  "workflow-shape-first": {
+    "decision": "PASS",
+    "wall_seconds": 0.19139537499999998,
+    "shell_bodies": 40,
+    "workflow_sha256": "b5e2b6350e2cc5cb9e8f1c90dbf57be5e6b7e13db495871fc3dbc33f1b8a07a0",
+    "scope": "parse the changed workflow and syntax-check shell source only; no workload/native/model/test cohort execution"
+  },
+  "predecessor": {
+    "pr": 1585,
+    "source_head": "c3f8d755940558cffae43858086117b35c0bb7ba",
+    "original_run": 38691638175,
+    "original_attempt": 1,
+    "original_source_workflows": 51,
+    "successful_original_source_workflows": 50,
+    "six_canonical_checks": "success",
+    "native_common_execution": "success",
+    "proof": "failed at shared 40-minute deadline during cold CLI compilation",
+    "clock_started_at": "2026-10-15T06:24:59Z",
+    "deadline": "2026-10-15T07:04:59Z",
+    "final_state": "closed unmerged after every original source workflow became terminal",
+    "race_job_seconds": 1331,
+    "policy_job_seconds": 835,
+    "new_execution_time_savings": "not yet observed; requires new source original CI"
+  }
+}

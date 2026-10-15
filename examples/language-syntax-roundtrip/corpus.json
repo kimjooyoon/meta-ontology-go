@@ -1098,6 +1098,26 @@
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY",
       "ordered_collections": true
+    },
+    {
+      "id": "source-control-source",
+      "path": "examples/source-control-reader/source.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "source-control-reader",
+      "path": "examples/source-control-reader/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
     }
   ],
   "package_units": [
