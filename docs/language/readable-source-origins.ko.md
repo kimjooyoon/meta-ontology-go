@@ -62,3 +62,8 @@ jq -e '(.unregistered | length) == 0 and (.missing | length) == 0' /tmp/gooo-sou
 사례 수는 당시 분모 파일에 고정합니다. 과거 기능의 회귀 검사는 그 기능의 ID,
 위치, 앞선 사례를 확인하고 이후 등록을 허용합니다. 새 소스를 추가할 때마다
 이전 기능의 사례 수까지 바꾸는 반복을 줄이기 위한 구분입니다.
+
+[첫 원본 CI 기록](../observations/readable-origins/registered-first-originals.json)은
+39개 워크플로의 종료 상태를 보존합니다. 과거 사례 수를 고정한 회귀 검사 한 곳이
+여러 검사에서 실패했고, 후속 수정은 현재 목록의 정확성과 과거 사례 보존을
+함께 검사합니다. 수정한 소스의 검증은 새 PR의 원본 실행에 속합니다.
