@@ -37,8 +37,8 @@ func TestCIWorkflowUsesImmutableCheckoutForEveryJob(t *testing.T) {
 		t.Fatal(err)
 	}
 	marker := "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
-	if strings.Count(string(workflow), marker) != 9 {
-		t.Fatalf("expected nine immutable checkout refs, got %d", strings.Count(string(workflow), marker))
+	if strings.Count(string(workflow), marker) != 10 {
+		t.Fatalf("expected ten immutable checkout refs, got %d", strings.Count(string(workflow), marker))
 	}
 }
 func TestCISCOPE008WorkflowRunsCanonicalJobsOnDevAndMainPullRequests(t *testing.T) {

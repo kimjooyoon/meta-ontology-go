@@ -1,0 +1,6 @@
+package rules
+namespace review_rules
+entity Integer id "urn:review:integer"
+entity Boolean id "urn:review:boolean"
+activity Review(Integer,Integer) -> Boolean id "urn:review:rule" computes "return input1 == 12-input0"
+activity Local(Integer,Integer) -> Boolean computes "return Review(input0,input1)"

@@ -1,0 +1,47 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "domain438/money:Keep": {
+          "value": 29
+        },
+        "domain438/count:Keep": {
+          "value": 4
+        }
+      },
+      "expected": {
+        "domain438/money:Keep": {
+          "value": 29
+        },
+        "domain438/count:Keep": {
+          "value": 4
+        },
+        "domain438/app:Multiply": {
+          "value": 116
+        }
+      }
+    },
+    {
+      "inputs": {
+        "domain438/money:Keep": {
+          "value": -3
+        },
+        "domain438/count:Keep": {
+          "value": 5
+        }
+      },
+      "expected": {
+        "domain438/money:Keep": {
+          "value": -3
+        },
+        "domain438/count:Keep": {
+          "value": 5
+        },
+        "domain438/app:Multiply": {
+          "value": -15
+        }
+      }
+    }
+  ]
+}

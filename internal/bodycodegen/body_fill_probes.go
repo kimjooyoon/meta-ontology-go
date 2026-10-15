@@ -1,9 +1,11 @@
 package bodycodegen
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"math"
 	"math/big"
 	"slices"
@@ -16,11 +18,17 @@ const irBodyFillBehavioralProbeCap = 128
 // measureIRBodyFillBehavioralProbes compares candidate behavior on a bounded,
 // deterministic set derived only from training inputs. It never treats probe
 // outputs as expected answers and does not consume holdout data.
-func measureIRBodyFillBehavioralProbes(activity string, candidateSources map[string][]byte,
+func measureIRBodyFillBehavioralProbes(ctx context.Context, activity string, candidateSources map[string][]byte,
 	training, holdout []IRBodyFillTestCase,
 ) (*IRBodyFillBehavioralProbeReceipt, error) {
+	if ctx == nil {
+		return nil, fmt.Errorf("body-fill probes require a context")
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if len(training) > 0 && len(training[0].inputValues()) > 1 {
-		return measureIRBodyFillBehavioralProbeVectors(activity, candidateSources, training, holdout)
+		return measureIRBodyFillBehavioralProbeVectors(ctx, activity, candidateSources, training, holdout)
 	}
 	holdoutInputs := make([]int64, len(holdout))
 	for index, testCase := range holdout {
@@ -50,7 +58,10 @@ func measureIRBodyFillBehavioralProbes(activity string, candidateSources map[str
 	slices.Sort(candidateIDs)
 	outputs := make(map[string][]int64, len(candidateIDs))
 	for _, id := range candidateIDs {
-		results, _, evalErr := evaluateIntegerCases(candidateSources[id], activity, probeCases)
+		results, _, evalErr := evaluateIntegerCasesContext(localCallPhase(ctx, "fill-probe", id), candidateSources[id], activity, probeCases)
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		if evalErr != nil || len(results) != len(inputs) {
 			receipt.CandidateRunsFailed++
 			continue
@@ -110,7 +121,7 @@ func measureIRBodyFillBehavioralProbes(activity string, candidateSources map[str
 	return receipt, nil
 }
 
-func measureIRBodyFillBehavioralProbeVectors(activity string, candidateSources map[string][]byte,
+func measureIRBodyFillBehavioralProbeVectors(ctx context.Context, activity string, candidateSources map[string][]byte,
 	training, holdout []IRBodyFillTestCase,
 ) (*IRBodyFillBehavioralProbeReceipt, error) {
 	allVectors := deriveIRBodyFillBehavioralProbeVectors(training, holdout)
@@ -137,7 +148,10 @@ func measureIRBodyFillBehavioralProbeVectors(activity string, candidateSources m
 	slices.Sort(candidateIDs)
 	outputs := make(map[string][]int64, len(candidateIDs))
 	for _, id := range candidateIDs {
-		results, _, evalErr := evaluateIntegerCases(candidateSources[id], activity, probeCases)
+		results, _, evalErr := evaluateIntegerCasesContext(localCallPhase(ctx, "fill-probe", id), candidateSources[id], activity, probeCases)
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		if evalErr != nil || len(results) != len(vectors) {
 			receipt.CandidateRunsFailed++
 			continue

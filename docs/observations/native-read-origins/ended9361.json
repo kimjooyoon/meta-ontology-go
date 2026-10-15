@@ -1,0 +1,16 @@
+{
+  "exit_code": 0,
+  "elapsed_seconds": 3.497045,
+  "args": [
+    "go",
+    "test",
+    "-overlay=/tmp/gooo-native-read-origin-20261014/overlay9361.json",
+    "-p=1",
+    "./internal/bodyexecution",
+    "-run",
+    "^TestReadIndexOrder9361$",
+    "-count=1",
+    "-v"
+  ],
+  "historical_replays": 0
+}

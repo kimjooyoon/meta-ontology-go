@@ -1,0 +1,27 @@
+{
+  "source_head": "eeca65e2c0303f782d1b2e80a749e6e9b2569b74",
+  "pull_request": 1577,
+  "core_run": 38662165105,
+  "original_workflows": 39,
+  "successful_workflows": 33,
+  "failed_workflows": 6,
+  "original_reruns": 0,
+  "dev_merge": false,
+  "race_scope": {
+    "Decision": "DEADLINE_EXCEEDED",
+    "UnitElapsedMS": 911820,
+    "ScopeElapsedMS": 1200016,
+    "DeadlineMS": 1200000,
+    "Completed": false
+  },
+  "race_observed_events": {
+    "pass": 6109,
+    "skip": 132,
+    "fail": 15
+  },
+  "known_source_failures": [
+    "unregistered display-rule source",
+    "body-origin rendered helper exceeds75lines",
+    "unsafe suffix decomposition of compilation capture"
+  ]
+}

@@ -15,7 +15,8 @@ import (
 // Called only after both native projections have typechecked. The typed arena
 // retains every operator, child edge, local binding and ordered statement while
 // omitting redundant parentheses and normalizing int64 literal spelling,
-// supported condition sugar and nonliteral integer negation explicitly.
+// supported condition sugar, nonliteral integer negation and compound local
+// updates explicitly. A compound update retains its prior local read.
 func typedBodyTreeEquivalence(ctx context.Context, name, original string, generated []byte) (RouteEquivalenceReceipt, error) {
 	left, leftNormalized, err := normalizedTypedBodyTree(ctx, name,
 		[]byte("package source\nfunc "+name+"(input int64) int64 {\n"+original+"\n}"))
@@ -44,6 +45,9 @@ func typedBodyTreeEquivalence(ctx context.Context, name, original string, genera
 			scope += "; >, >=, != and boolean ! reduced to <, <= and equality with false"
 		}
 	}
+	if leftNormalized.compound || rightNormalized.compound {
+		scope += "; local +=, -=, *= and /= retain the existing local read and normalize to assignment with the same binary operator"
+	}
 	return RouteEquivalenceReceipt{Schema: routeEquivalenceSchema, Decision: status,
 		Method: method, Rule: "typed_path_fallback_matches_authoritative_source",
 		SourceSemanticDigest: digest(left), GeneratedSemanticDigest: digest(right), Equivalent: equal,
@@ -56,7 +60,7 @@ func typedBodyTree(ctx context.Context, name string, source []byte) ([]byte, err
 }
 
 type typedBodyNormalization struct {
-	condition, arithmetic bool
+	condition, arithmetic, compound bool
 }
 
 func normalizedTypedBodyTree(ctx context.Context, name string, source []byte) ([]byte, typedBodyNormalization, error) {
@@ -85,5 +89,5 @@ func normalizedTypedBodyTree(ctx context.Context, name string, source []byte) ([
 		return nil, typedBodyNormalization{}, err
 	}
 	tree, err := json.Marshal(plan)
-	return tree, typedBodyNormalization{condition: b.normalizedCondition, arithmetic: b.normalizedArithmetic}, err
+	return tree, typedBodyNormalization{condition: b.normalizedCondition, arithmetic: b.normalizedArithmetic, compound: b.normalizedCompound}, err
 }

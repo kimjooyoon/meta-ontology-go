@@ -41,6 +41,12 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 	if err := smokePackageText(binary, input); err != nil {
 		return err
 	}
+	if err := smokeBoundedText(binary, input); err != nil {
+		return err
+	}
+	if err := smokeComputationPackages(binary, input); err != nil {
+		return err
+	}
 	if err := smokePackageSource(binary, input); err != nil {
 		return err
 	}
@@ -60,13 +66,25 @@ func smokeCallerExamples(binary, work string, input BuildInput) error {
 	if err := smokeTypedPaths(binary, work, input); err != nil {
 		return err
 	}
+	if err := smokeRelativeV2(binary, work, input); err != nil {
+		return err
+	}
+	if err := smokeRelativeV3(binary, work, input); err != nil {
+		return err
+	}
 	if err := smokeJointConstruction(binary, work, input); err != nil {
 		return err
 	}
 	if err := smokeJointSearchRejection(binary, work, input); err != nil {
 		return err
 	}
+	if err := smokeSearchCheckpoint(binary, work, input); err != nil {
+		return err
+	}
 	if err := smokeJointSourceFill(binary, work, input); err != nil {
+		return err
+	}
+	if err := smokeHelperFillHistory(binary, work, input); err != nil {
 		return err
 	}
 	if err := smokeJointFillRejection(binary, work, input); err != nil {

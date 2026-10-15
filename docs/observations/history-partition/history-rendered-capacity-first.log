@@ -1,0 +1,63 @@
+=== RUN   TestDerivedCandidateCapacity27593
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#hasPackageOriginQueryOptions rendered 11
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#packageOriginQuery rendered 40
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#parsePackageExecuteArgs rendered 35
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#runBodyOrigins rendered 24
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#selectStarterFiles rendered 29
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writeBodyDerivedCandidateOrigins rendered 28
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writeBodyFillCandidateOrigins rendered 32
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writeBodyFillOriginCandidates rendered 19
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writePackageOriginInput rendered 34
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#InspectSourceFillCandidateOrigins rendered 32
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#InspectSourceFillDerivedOrigins rendered 42
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#InspectSourceFillOriginCandidates rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#IsSourceFillDerivation rendered 8
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#SourceFillCandidateOriginInputs rendered 35
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#SourceFillDerivedOriginInputs rendered 35
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#sourceFillCandidateOriginRow rendered 25
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#sourceFillDerivedOriginRow rendered 25
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#NativeOriginQuery.hasSubjectSelection rendered 5
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#ValidateNativeOriginQuery rendered 19
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.addField rendered 12
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.fieldFileLocation rendered 34
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.visitFields rendered 22
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#selectRecordedNativeOrigins rendered 72
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#validateOriginSubjectSelection rendered 16
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#activeDenominatorChunk2 rendered 39
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#activeDenominatorDigestChunk2 rendered 39
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#decodeDenominator rendered 28
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#expectedBoundarySpecsForVersion rendered 13
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#validateDenominator rendered 55
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedRegistry rendered 5
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup0 rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup1 rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup2 rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup3 rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup4 rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCaseGroup5 rendered 46
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxCases rendered 11
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedSyntaxPackageUnits rendered 11
+    derived_candidate_capacity_fresh_test.go:15: derived27593:all38 changed production declarations;prior17 retained plus grammar/list/registry/denominator changes;unchanged75-line rendered helper cap;producer/model0
+--- PASS: TestDerivedCandidateCapacity27593 (0.10s)
+=== RUN   TestHistorySourceDeclarationCapacity
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#pinPreviousSyntaxTarget rendered 16
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#readHistoryOrigins rendered 41
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#historyOwnsHelper rendered 12
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#historySwitch rendered 7
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#readHistoryCases rendered 28
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#historyCaseTarget rendered 27
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#readHistoryChunks rendered 33
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#writeHistoryOrigins rendered 33
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#freshAssertHistoryTarget32403 rendered 14
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#parseHistoryCapacityFixture rendered 13
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#historyCapacityLegacyFixture rendered 14
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#TestHistoryCapacityGrowthPreservesEveryDeclaredTarget rendered 46
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#TestHistoryCapacityRejectsAmbiguousOwnershipAndCycles rendered 38
+    history_source_capacity_test.go:30: internal/meta/syntaxregistration#TestHistoryCapacityCurrentSourceNormalizationProposal rendered 63
+    history_source_capacity_test.go:30: internal/meta/languageassurance/verticalsliceclosureshadow#expectedBoundarySpecsForVersion rendered 13
+    history_source_capacity_test.go:30: internal/meta/languageassurance/verticalsliceclosureshadow#historicalSyntaxTargetChunk0 rendered 55
+    history_source_capacity_test.go:30: internal/meta/languageassurance/verticalsliceclosureshadow#historicalSyntaxTargetChunk1 rendered 13
+    history_source_capacity_test.go:30: internal/meta/repositoryprojection/extractor#TestHistorySourceDeclarationCapacity rendered 31
+--- PASS: TestHistorySourceDeclarationCapacity (0.02s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.506s

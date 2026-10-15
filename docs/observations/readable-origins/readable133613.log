@@ -1,0 +1,10 @@
+=== RUN   TestReadableSourceOrigins133613
+--- PASS: TestReadableSourceOrigins133613 (0.01s)
+=== RUN   TestGoooRoleProjection133613
+--- PASS: TestGoooRoleProjection133613 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	1.574s
+=== RUN   TestReadableOriginsCLI133613
+--- PASS: TestReadableOriginsCLI133613 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.546s

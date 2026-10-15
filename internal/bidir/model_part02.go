@@ -65,6 +65,7 @@ func (n Node) normalized() Node {
 	sort.Strings(n.Aliases)
 	n.Fields = cloneFields(n.Fields)
 	n.InputSequence = append([]Reference(nil), n.InputSequence...)
+	n.InputNames = append([]Reference(nil), n.InputNames...)
 	n.Attributes = cloneStringMap(n.Attributes)
 	return n
 }

@@ -1,0 +1,59 @@
+{
+  "schema": "gooo/action-source-upgrade/v1",
+  "observed_at": "2026-10-15T12:35:20.849453+00:00",
+  "selected_revision": "b7ad1dad31e06c5925ef5d2fc7ad053ef454303e",
+  "selected_release": "v7.0.0",
+  "node_runtime": "node24",
+  "supersedes": "docs/observations/action-origin/observations.json",
+  "selected_archive": {
+    "url": "https://codeload.github.com/actions/setup-go/tar.gz/b7ad1dad31e06c5925ef5d2fc7ad053ef454303e",
+    "http_status": 200,
+    "bytes": 1622901,
+    "sha256": "c0f9ce2412e45f9ed1115f9950a01403b58b7f2b830cbcf52b186bb7a2d5b120"
+  },
+  "actions": [
+    {
+      "repository": "actions/cache",
+      "ref": "v6",
+      "sha": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+      "url": "https://github.com/actions/cache/commit/55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+      "action_yaml": "actions-cache.yml",
+      "action_yaml_sha256": "5da400e1a7551cee617339fd1a5281483d71e6c56d86dd117fbd354f047308ec",
+      "node_runtime": "node24"
+    },
+    {
+      "repository": "actions/create-github-app-token",
+      "ref": "v3.3.0",
+      "sha": "64ab729a6294000f5aa4a4bc0b73d1f32bc45510",
+      "url": "https://github.com/actions/create-github-app-token/commit/64ab729a6294000f5aa4a4bc0b73d1f32bc45510",
+      "action_yaml": "actions-create-github-app-token.yml",
+      "action_yaml_sha256": "cede7b0aa15c4ac3f5198f7fd37d4d73b159dd876534c641265e00f3cd42fdbd",
+      "node_runtime": "node24"
+    },
+    {
+      "repository": "actions/setup-go",
+      "ref": "v7.0.0",
+      "sha": "b7ad1dad31e06c5925ef5d2fc7ad053ef454303e",
+      "url": "https://github.com/actions/setup-go/commit/b7ad1dad31e06c5925ef5d2fc7ad053ef454303e",
+      "action_yaml": "actions-setup-go.yml",
+      "action_yaml_sha256": "cbfae748992b96b9a1bfa3f1679d17c898c78375aad8a0d0184820683c82c482",
+      "node_runtime": "node24"
+    },
+    {
+      "repository": "github/codeql-action",
+      "ref": "v4.38.3",
+      "sha": "24c54180a607b1449ed407dd24f251e4e9147c8d",
+      "url": "https://github.com/github/codeql-action/commit/24c54180a607b1449ed407dd24f251e4e9147c8d",
+      "action_yaml": "github-codeql-action.yml",
+      "action_yaml_sha256": "6bc5b5a67b053b3bfb3d3c0b2f950e1d1baadf04aab587135ea2b47837dfcb2d",
+      "node_runtime": "node24"
+    }
+  ],
+  "source_prs": [
+    1592,
+    1593,
+    1594,
+    1595
+  ],
+  "scope": "Official action metadata and source availability; CI execution is assessed separately. Previous availability observations remain unchanged."
+}

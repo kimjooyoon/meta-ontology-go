@@ -1,0 +1,45 @@
+{
+  "baseline": "12c4612e72299dc02a25b83a408a8d9e8180471d",
+  "files": [
+    {
+      "path": "examples/batch-handoff/cases.json",
+      "sha256": "878a996c33494388cf167c10264369103c78332615341743a60c9435f633bef5"
+    },
+    {
+      "path": "examples/batch-handoff/main.gooo",
+      "sha256": "506d8868ff5dce7bbfb3000b66d43a2898c0f0d3e188592284acb33d78d3d430"
+    },
+    {
+      "path": "examples/language-syntax-roundtrip/corpus.json",
+      "sha256": "7ae4707376ccc4dde15456b0d5725bb4f0e6ab50fbb29bb090b230022f1563b6"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+      "sha256": "43cd7bf6c54363e7c93d027fe34416137d812aa689bed0728f9d311f8f113c38"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/evaluate.go",
+      "sha256": "200cc25bfc3ec8aac4bff87e89d02bb10f821caeec5888bd45a9120eda1bb616"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/model.go",
+      "sha256": "a170c12adac47687ae8540a3a1a07f4c630cec04256eaa99d44f5fb405861b65"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry.go",
+      "sha256": "4581cce463f9dfbcf8ccf527ff15661e8164421ce6782e00911952e3f0817f65"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/replay/execute.go",
+      "sha256": "ec65e74360e456ae974f6d1b702e0938b7f833235c6c45762606f9f3a39c6f8b"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/replay/ordered_collection_test.go",
+      "sha256": "c526026b0652c5086609cebf10e72a8fcb783625867fac8d4ff21bb4f235e44b"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/collection_handoff_test.go",
+      "sha256": "76a9050ed7e1832f3c8c45cc1428aebdca1cc47eefb0a8a9ac445e8318f76625"
+    }
+  ]
+}

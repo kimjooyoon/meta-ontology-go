@@ -13,6 +13,10 @@ func (e *integerBodyEvaluator) evaluateStatement(statement ast.Stmt) (any, bool,
 		return nil, false, e.evaluateDeclaration(value)
 	case *ast.AssignStmt:
 		return nil, false, e.evaluateAssignment(value)
+	case *ast.RangeStmt:
+		return e.evaluateCollectionLoop(value)
+	case *ast.ForStmt:
+		return e.evaluateCountedLoop(value)
 	case *ast.IfStmt:
 		return e.evaluateConditional(value)
 	case *ast.ReturnStmt:
@@ -70,17 +74,22 @@ func zeroBodyValue(t types.Type) (any, error) {
 }
 
 func (e *integerBodyEvaluator) evaluateAssignment(value *ast.AssignStmt) error {
-	if len(value.Lhs) != 1 || len(value.Rhs) != 1 || value.Tok != token.ASSIGN {
+	_, compound := CompoundAssignmentOperator(value.Tok)
+	if len(value.Lhs) != 1 || len(value.Rhs) != 1 || value.Tok != token.ASSIGN && !compound {
 		return fmt.Errorf("unsupported generated assignment")
 	}
 	if field, ok := value.Lhs[0].(*ast.SelectorExpr); ok {
-		return e.evaluateRecordUpdate(field, value.Rhs[0])
+		assigned, err := e.evaluateAssignmentValue(value)
+		if err != nil {
+			return err
+		}
+		return e.assignRecordField(field, assigned)
 	}
 	name, ok := value.Lhs[0].(*ast.Ident)
 	if !ok {
 		return fmt.Errorf("unsupported generated assignment target")
 	}
-	assigned, err := e.evaluateExpression(value.Rhs[0])
+	assigned, err := e.evaluateAssignmentValue(value)
 	if err != nil || name.Name == "_" {
 		return err
 	}
@@ -93,6 +102,22 @@ func (e *integerBodyEvaluator) evaluateAssignment(value *ast.AssignStmt) error {
 		e.environment[object] = assigned
 	}
 	return err
+}
+
+func (e *integerBodyEvaluator) evaluateAssignmentValue(value *ast.AssignStmt) (any, error) {
+	operation, compound := CompoundAssignmentOperator(value.Tok)
+	if !compound {
+		return e.evaluateExpression(value.Rhs[0])
+	}
+	previous, err := e.evaluateExpression(value.Lhs[0])
+	if err != nil {
+		return nil, err
+	}
+	operand, err := e.evaluateExpression(value.Rhs[0])
+	if err != nil {
+		return nil, err
+	}
+	return evaluateIntegerBinary(operation, previous, operand)
 }
 
 func (e *integerBodyEvaluator) evaluateConditional(value *ast.IfStmt) (any, bool, error) {

@@ -1,0 +1,158 @@
+{
+  "schema": "gooo/text-input-first-observations/v1",
+  "date": "2026-10-15",
+  "parent_revision": "02ecfb6773e5d4aa93d5238e25ecd9c7dcf882ab",
+  "source_state": "UNBOUND_LOCAL_SOURCE",
+  "cohort": {
+    "exit_code": 0,
+    "wall_seconds": 10.609099540999999,
+    "parent_revision": "02ecfb6773e5d4aa93d5238e25ecd9c7dcf882ab",
+    "source_state": "UNBOUND_LOCAL_SOURCE",
+    "cohort": "first new text policy, fresh raw/escaped origin examples and malformed inputs; no historical cohorts rerun",
+    "source_sha256": {
+      "internal/meta/textinput/escapes.gooo": "cda61a1c0c83b0c7fc244c072751049a6054128e86bd86b3fec3cf2d10f00433",
+      "internal/meta/textinput/generation-origin.json": "71a9a20b6a423f5ccddb167c0260c3ecd4c34fe7a2525e944bea1dc6239ac5ea",
+      "examples/text-input-origins/escaped-input.json": "25524385ac8d7c14600352ff5a58926018ee382effeaab22cd42a241511b9350",
+      "examples/text-input-origins/main.gooo": "be6ad46d78555eddd99dfe8af237c670885089bb692c6a075fab5e53ac0213dd",
+      "examples/text-input-origins/gooo.workspace.json": "20a861629ade75bf2bc05a3b9d791fab3fffe4c42b2945b27dbabf263cde1bea",
+      "examples/text-input-origins/raw-input.json": "54ade62dade56600f657e2d0696a800037bea714de5d0cd68e682093fc2ef057",
+      "internal/bodyexecution/text_json.go": "248cbd7d099851a34e8ef6c105ec3b597ee9e30dc124e5aad7102bd3c04aa496",
+      "internal/bodyexecution/text_json_test.go": "23e0c2d111f2bc84d2c90dc51bee060dcb1abb37bb6bf485576b22c5f12e9e37",
+      "internal/bodyexecution/text_escape_policy_generated.go": "35efb503fa90abbdd081d720be604dabbf0cfa120cd2b0b611c264b04bf577fc",
+      "internal/bodyexecution/composition_cases.go": "fdd35f89dd9a27f7d75000b2c44c0d23f5da5da3f635afc5b836c58c2a96a42f",
+      "internal/bodyexecution/composition_observation.go": "20e028af848d12c512f5875cba9868f58bdea1663348a72266e3d47c1e2656b0",
+      "internal/bodyexecution/composition_case_series.go": "bcbf3b89116e97de63f54d5eec91d91ce7285bb7048e0297a7b352aef5a0bc97",
+      "cmd/gooo/package_text_origins_test.go": "d7ace46a1f1e7d4b1fc8c7773b23a313763ad010a541d2a41d18f890c182e9cd",
+      "internal/meta/repositoryprojection/extractor/text_input_capacity_test.go": "b497598e32b9d7486a871d19dc753f224b41ee471d0c2bf0bfb40716b1d88447"
+    }
+  },
+  "observed": {
+    "policy_boundary_cases": 12,
+    "native_input_documents": 2,
+    "native_document_decision": "OBSERVED",
+    "native_model_calls": 0,
+    "rejected_raw_documents": 4,
+    "rejected_documents_retain_inputs_digest": true,
+    "same_decoded_value_distinct_raw_digests": true,
+    "executed_test_functions": 7
+  },
+  "generation": {
+    "structural_generate": "initial structural projection retained; executable policy uses the subsequent body-codegen receipt",
+    "policy_projection": {
+      "source_sha256": "cda61a1c0c83b0c7fc244c072751049a6054128e86bd86b3fec3cf2d10f00433",
+      "generated_sha256": "35efb503fa90abbdd081d720be604dabbf0cfa120cd2b0b611c264b04bf577fc",
+      "projection_source_sha256": "35efb503fa90abbdd081d720be604dabbf0cfa120cd2b0b611c264b04bf577fc",
+      "raw_generation_receipt_sha256": "9537dd292bda879a11a0b9a89a57eacfa03e41e2fd94ba6e8a82733add9ece2e",
+      "compiler_revision": "02ecfb6773e5d4aa93d5238e25ecd9c7dcf882ab",
+      "compiler_source_state": "UNBOUND_LOCAL_SOURCE",
+      "decision": "PASS",
+      "projection_operation": "body-codegen TextEscapePolicy; standard gofmt serialization",
+      "scope": "Unicode escape classification; scalar/pair acceptance and distinct unpaired high/low reasons"
+    }
+  },
+  "registrations": [
+    {
+      "id": "registration-text-policy",
+      "exit_code": 0,
+      "wall_seconds": 0.10286858299999935,
+      "decision": "PROPOSAL_ONLY/UNASSESSED",
+      "case_profile": {
+        "id": "json-text-escape-policy",
+        "path": "internal/meta/textinput/escapes.gooo",
+        "kind": "VALID",
+        "expected_decision": "PASS",
+        "proof_choice": "COHERENCE",
+        "meta_operation": "replay-language-syntax",
+        "scope": "LANGUAGE_CAPABILITY"
+      },
+      "physical_members": 9,
+      "applied": true,
+      "candidate_apply_authorized": false,
+      "candidate_promotion_authorized": false,
+      "application_authority": "existing user-authorized development"
+    },
+    {
+      "id": "registration-text-example",
+      "exit_code": 1,
+      "wall_seconds": 0.03478229200000005,
+      "decision": "REFUTED/REGISTRATION_SOURCE_CONFORMANCE_FAILED",
+      "case_profile": {
+        "id": "json-text-raw-and-decoded-origins",
+        "path": "examples/text-input-origins/main.gooo",
+        "kind": "VALID",
+        "expected_decision": "PASS",
+        "proof_choice": "COHERENCE",
+        "meta_operation": "replay-language-syntax",
+        "scope": "LANGUAGE_CAPABILITY",
+        "entity_fields": true
+      },
+      "physical_members": 0,
+      "applied": false,
+      "candidate_apply_authorized": false,
+      "candidate_promotion_authorized": false,
+      "application_authority": null
+    },
+    {
+      "id": "registration-text-example-v5",
+      "exit_code": 0,
+      "wall_seconds": 0.10528641600000022,
+      "decision": "PROPOSAL_ONLY/UNASSESSED",
+      "case_profile": {
+        "id": "json-text-raw-and-decoded-origins",
+        "path": "examples/text-input-origins/main.gooo",
+        "kind": "VALID",
+        "expected_decision": "PASS",
+        "proof_choice": "COHERENCE",
+        "meta_operation": "replay-language-syntax",
+        "scope": "LANGUAGE_CAPABILITY",
+        "ordered_collections": true
+      },
+      "physical_members": 9,
+      "applied": true,
+      "candidate_apply_authorized": false,
+      "candidate_promotion_authorized": false,
+      "application_authority": "existing user-authorized development"
+    }
+  ],
+  "inventory": {
+    "sources": 135,
+    "unregistered": [],
+    "missing": [],
+    "native_executions": 0,
+    "semantic_admission": "UNASSESSED",
+    "current_cases": 117
+  },
+  "historical_preservation": {
+    "prior_cases_unchanged": 115,
+    "prior_denominator_files_byte_identical": 56
+  },
+  "archive": {
+    "path": "local-firsts.tar.gz",
+    "sha256": "5e1e82c497062afad26dd3687a2420cb90fe84179798518066ce33cf5d51251c",
+    "bytes": 160588,
+    "path_normalization": "Only local paths in command metadata and generated CLI path reports use symbolic roots; original and published member hashes are retained in archive-manifest.json."
+  },
+  "scope": "New input boundary and fresh source/input cohorts. Command time includes build/test overhead. No prior native/model/experiment cohort was rerun; original issue observations were not repeated. Current exact-source CI owns acceptance after publication. The failed V1 request and successful V5 request preserve the same source bytes.",
+  "retired_local_generators": [
+    {
+      "path": "registration-text-example/generator",
+      "sha256": "469ec4a75aaecffbdec4b55fb74157e083d8068aff288284e09a006909eb4d79",
+      "bytes": 10187458
+    },
+    {
+      "path": "registration-text-example-v5/generator",
+      "sha256": "469ec4a75aaecffbdec4b55fb74157e083d8068aff288284e09a006909eb4d79",
+      "bytes": 10187458
+    },
+    {
+      "path": "registration-text-policy/generator",
+      "sha256": "e5c845b8c16e96b8422b9d48a6c37ddd5b1cda08289a29b6b132ec5d12af2d19",
+      "bytes": 10170914
+    }
+  ],
+  "retired_bytes": 30545830,
+  "follow_up_observations": [
+    "early-policy.json"
+  ],
+  "current_acceptance": "First seven-test cohort and the later two-test early-policy cohort retain their own source hashes. Exact final-source acceptance belongs to original PR CI."
+}

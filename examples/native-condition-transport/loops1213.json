@@ -1,0 +1,30 @@
+{
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "PARTIAL",
+    "recorded_events": 65536,
+    "dropped_events": 16108,
+    "sha256": "sha256:084f757af2b58ab67a5da0f9a3ecee7fd3de16b1a778d6ee9eb067177832101c"
+  },
+  "condition_sites": [
+    {
+      "expression_id": "sha256:4aa607de0a63493a66e4d325cda126e4c917f7186cdac81f868a462b08cb5176",
+      "root_activity_id": "loops1213://scan",
+      "activity_id": "loops1213://scan",
+      "expression": "cursor == input",
+      "projection_sha256": "sha256:89db86e1b2fec76bdc614d643f7809de76bd05c1135a2402e745bb857740df5e",
+      "start": 204,
+      "end": 219
+    }
+  ],
+  "finite_passed": 80,
+  "finite_total": 80,
+  "generated_sha256": "sha256:89db86e1b2fec76bdc614d643f7809de76bd05c1135a2402e745bb857740df5e",
+  "model_calls": 0,
+  "observed_driver_sha256": "sha256:e2dd0ed64a92992dc957c850fc14f9bbc440e01bdc0b2f55625c526e0dc16c78",
+  "observed_projection_sha256": "sha256:2d48c4e765c8aaf8e5ac627b7e788d93dfec0b0bb07e78425a016e7152b3014f",
+  "runtime_replayed": true,
+  "source": "package loops1213\nnamespace loops1213\nentity Integer id \"loops1213://integer\"\nactivity Scan(Integer) -> Integer id \"loops1213://scan\" computes \"let cursor = 0; for cursor = 0; cursor < 1024; cursor = cursor + 1 { if cursor == input { return cursor } }; return -1\"\n",
+  "source_sha256": "sha256:0ff9e52bd501b52f827b88b4ca32874ec1a167808e0745d5c027a197e36d8c49",
+  "stage": "COMPLETE"
+}

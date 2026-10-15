@@ -1,9 +1,5 @@
 package valueexecution
 
-import (
-	"bytes"
-)
-
 type measurement struct {
 	baselineReason                                     string
 	passedCases                                        int
@@ -26,8 +22,7 @@ type evidence struct {
 }
 
 func measure(filename string, source []byte, program Program, cases []CaseResult, counters []CounterexampleResult) measurement {
-	baseline := bytes.Replace(source, []byte(` computes "`+program.Text+`"`), nil, 1)
-	changedSource := bytes.Replace(source, []byte(program.Text), []byte("int.add:2"), 1)
+	baseline, changedSource := measurementSources(filename, source, program)
 	changed, changedErr := Compile(filename, changedSource, program.Activity)
 	coreIR := measureCoreIR(program)
 	passed, replayed := caseCounts(cases)

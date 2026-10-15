@@ -1,0 +1,15 @@
+package app
+namespace constructor716_app
+import 대상 "constructor716/money"
+import 수량 "constructor716/count"
+activity Quote(대상.Value, 수량.Value) -> 대상.Value id "urn:constructor716:quote" computes "if input0.value < 0 { return 대상.Value{value: 0, note: input0.note} }; return __GOOO_BODY_HOLE_result__" assembling {
+ source_fill intent "Use the source-declared product of price and adjusted quantity." {
+  hole "result"
+  candidate "product" { fill "result" "대상.Value{value: input0.value * input1.value, note: input0.note}" }
+  candidate "sum" { fill "result" "대상.Value{value: input0.value + input1.value, note: input0.note}" }
+ }
+ value_case "[{\"value\":11,\"note\":\"selection\"},{\"value\":4}]" -> "{\"value\":44,\"note\":\"selection\"}"
+ holdout_value_case "[{\"value\":17,\"note\":\"held\"},{\"value\":5}]" -> "{\"value\":85,\"note\":\"held\"}"
+}
+bind 대상.Keep.result -> Quote.input0
+bind Round.result -> Quote.input1

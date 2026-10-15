@@ -1,0 +1,5 @@
+=== RUN   TestLengthPresence21983
+    length_presence_fresh_test.go:42: five new AST inputs distinguish calls from literals/comments;fresh scalar and mixed-length source paths preserve equivalence;no native/model or historical cohort execution
+--- PASS: TestLengthPresence21983 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.520s

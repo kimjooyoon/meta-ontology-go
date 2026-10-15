@@ -1,0 +1,34 @@
+{
+  "saved_source_and_two_capacity_assertions": {
+    "argv": [
+      "<go-toolchain>/bin/go",
+      "test",
+      "-p=1",
+      "./cmd/gooo",
+      "./internal/meta/repositoryprojection/extractor",
+      "-run",
+      "^(TestFaultOriginSavedSourceAndMembership|TestFaultArchiveDeclarationCapacity)$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 1,
+    "wall_seconds": 6.364732459,
+    "scope": "fault-origin metaprogramming; producer execution zero"
+  },
+  "archive_manifest_key_repair": {
+    "argv": [
+      "<go-toolchain>/bin/go",
+      "test",
+      "-p=1",
+      "./cmd/gooo",
+      "-run",
+      "^TestFaultOriginSavedSourceAndMembership$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.9646475,
+    "scope": "fault-origin metaprogramming; producer execution zero"
+  },
+  "repair_reason": "Archive manifest used sha256 instead of the existing archive_sha256 key. Archive bytes and all source identities are unchanged."
+}

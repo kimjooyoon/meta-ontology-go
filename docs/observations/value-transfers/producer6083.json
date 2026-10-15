@@ -1,0 +1,75 @@
+{
+  "baseline": "836acea0bafc4622ace4b144a224a455858d7c03",
+  "overlays": [
+    {
+      "path": "cmd/gooo/package_origins.go",
+      "sha256": "3f843a198650afc20d516bab863424b07f98f0d2ae11303ccfcf766735efe8b3"
+    },
+    {
+      "path": "cmd/gooo/package_value_origins.go",
+      "sha256": "016bfd965a14d0972b8bf0c8c9bf7a7c6cdfc2d4177fef79c5a796c322ffe9fa"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin.go",
+      "sha256": "f9d68c6e5b679f459d150f4ba6be64218106ec8504b611e3ca4083ed58197ce9"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_bounds_test.go",
+      "sha256": "6753675cfd6cf2ee738401ec2b995e8dffd70877f9131eed706a0d7c3c511451"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_expr.go",
+      "sha256": "5810fd83942bf8d1dcf066bca23f00ca1e32569a9dddc01eb0f0bddf220bf5f1"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_statements.go",
+      "sha256": "663f947f0431dfda85471624e45e0556b6002f4cb3c3094c0c1a25a295e13e44"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_transfer.go",
+      "sha256": "3db815283a99b489dd3354931cf7c557009126b59bbdb49104a4e9d1624ea3c8"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/execute.go",
+      "sha256": "3e3696d6ef8e4a2b893f68973e7698b1201a32f9adafab8e5f38832d6e5646f0"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/origin_query.go",
+      "sha256": "92f0352a088e7f964c9b9076227872c439a03fce14cd62fe891cf42b8e2fd01e"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/origin_query_source.go",
+      "sha256": "6285d7c9f1eff57207f245f076034da454b1ba94136c4fbc733a5661e7e83d1a"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/program.go",
+      "sha256": "a396de4cfcac99b8f0182b983fde94a4f6a053efebfc16013ae9a5d4f9bc0075"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/replay.go",
+      "sha256": "ef370213f14178ed405f525520b08930a1df0dba928a26d7f96e0cb31509e0e3"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_origin_sources.go",
+      "sha256": "ff2dd0d26198a94981655870bfc861195009d490ba6eb9243279ff0a575c8ec9"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_transfer_catalog.go",
+      "sha256": "7db17c7a9905361caa7f32503d2163d912f4f33feca2d1f6637d3ebdadc431ac"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_transfer_native_test.go",
+      "sha256": "7a0fa4b0ba39e41d1a3eedbe78a0275ce3d9c1a47cf1f73f43ca532af326ba1a"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_transfer_query.go",
+      "sha256": "c202d5df9688c0592ddbda13c7bd49d3065d01017a49704569a3b19aaa9cb147"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_transfer_walk.go",
+      "sha256": "3593e0e5c048bc4799d50df5c7d31fedb9c9f3c8ad05c3e5e9a879ad9c9afa9d"
+    }
+  ],
+  "run": "only fresh6083/6113 tests",
+  "model_calls": 0
+}

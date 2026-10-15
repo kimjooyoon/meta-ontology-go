@@ -1,0 +1,7 @@
+{
+  "observed": "build failed before any test/native producer execution",
+  "reason": "LocalWriteExpression returns ast.Node;extracted helper was declared ast.Expr",
+  "repair": "helper preserves the original ast.Node input domain",
+  "historical_reruns": 0,
+  "next_source_cohort": "22741/22789"
+}

@@ -14,6 +14,11 @@ func ExecuteWithEntityFieldsSupport(repository fs.FS, path, kind, expectedDiagno
 	return executeWithSupportAndImplicitActivityPorts(repository, path, kind, expectedDiagnostic, syntax.EntityFieldsV1Support(), false)
 }
 
+// ExecuteWithOrderedCollections checks syntax and BX laws under the exact V5 profile.
+func ExecuteWithOrderedCollections(repository fs.FS, path, kind, expectedDiagnostic string) Result {
+	return executeWithSupport(repository, path, kind, expectedDiagnostic, syntax.EntityFieldsV5Support())
+}
+
 func ExecuteWithImplicitActivityPorts(repository fs.FS, path, kind, expectedDiagnostic string) Result {
 	return executeWithSupportAndImplicitActivityPorts(repository, path, kind, expectedDiagnostic, syntax.CurrentEntityFieldsSupport(), true)
 }

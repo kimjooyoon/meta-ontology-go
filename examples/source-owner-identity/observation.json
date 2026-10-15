@@ -1,0 +1,277 @@
+{
+  "get_put": "PASS",
+  "put_get": "PASS",
+  "runtime": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "composition_sha256": "sha256:f97b55c9f925fa32bdab0949a328ce7cfdf40ff3811e8706d5381c4dd7ce9927",
+    "original_source_sha256": "sha256:c357f428bd9880fe757ca4efd7615dfaac42706d9eb92bd18890bef6f5ae260c",
+    "selected_source_sha256": "sha256:c357f428bd9880fe757ca4efd7615dfaac42706d9eb92bd18890bef6f5ae260c",
+    "typed_plan_sha256": "sha256:9ef9502459fde24c2233b3ea3811807390b309a98929c7010972cc0699bfbf58",
+    "generated_sha256": "sha256:f76c5b77ba1b332338bcb6824c43c03c4606951d6d9ee0a79289d2c3a3fc4729",
+    "driver_sha256": "sha256:ea6bdcce02044c339a2363c703b071436c78a5f8a43c6eda635bc0208691135a",
+    "observed_projection_sha256": "sha256:d64d14cf0bf62365db2bef597ca03279e9687a983ac28c99b36bd14e4bf1554d",
+    "observed_driver_sha256": "sha256:8309529462b0c3ce34f00af6017684877b1a48678ca89e725bf9797baf93cf8d",
+    "runtime_suite_sha256": "sha256:79ff07ff19b7d1bc07e0db5589a69b6514ec1399771a8ddad01a7f23360c214c",
+    "executable_sha256": "sha256:e0ff1e6eff0365360608d0b581f54624b7938190d929fa80f0c3f019fb9e8f47",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_tool_selection": "explicit",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "(devel)"
+    },
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 7593459,
+      "user_ns": 3446000,
+      "system_ns": 2611000,
+      "peak_rss_bytes": 14434304,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1028959,
+        "wait_ns": 6564500,
+        "deadline_remaining_ns": 59990546334,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 124231375,
+      "user_ns": 134573000,
+      "system_ns": 97524000,
+      "peak_rss_bytes": 86425600,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 731666,
+        "wait_ns": 123499709,
+        "deadline_remaining_ns": 59981990000,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 486013500,
+        "user_ns": 2509000,
+        "system_ns": 5463000,
+        "peak_rss_bytes": 4915200,
+        "stdout_sha256": "sha256:4fafca6debee75ac55a3873d2ab75329589ae3fad4cc2fb865763109e1715cb7",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 3252041,
+          "wait_ns": 482761459,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59855845250,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 4807250,
+        "user_ns": 1821000,
+        "system_ns": 1851000,
+        "peak_rss_bytes": 5013504,
+        "stdout_sha256": "sha256:4fafca6debee75ac55a3873d2ab75329589ae3fad4cc2fb865763109e1715cb7",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 1445250,
+          "wait_ns": 3362000,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59369618500,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "traces": [
+      {
+        "case_index": 0,
+        "deliveries": [
+          {
+            "activity_id": "owner3001://activities/Price",
+            "input": {
+              "active": true,
+              "units": 13
+            },
+            "input_fields": [
+              {
+                "id": "owner3001://fields/Units",
+                "name": "units",
+                "value": 13
+              },
+              {
+                "id": "urn:owner3001:active",
+                "name": "active",
+                "value": true
+              }
+            ],
+            "actual": 20,
+            "expected": 20,
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 1,
+        "deliveries": [
+          {
+            "activity_id": "owner3001://activities/Price",
+            "input": {
+              "active": false,
+              "units": 109
+            },
+            "input_fields": [
+              {
+                "id": "owner3001://fields/Units",
+                "name": "units",
+                "value": 109
+              },
+              {
+                "id": "urn:owner3001:active",
+                "name": "active",
+                "value": false
+              }
+            ],
+            "actual": 102,
+            "expected": 102,
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          }
+        ]
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "finite_passed": 2,
+    "finite_total": 2,
+    "condition_sites": [
+      {
+        "expression_id": "sha256:70b4f2d7958159e50246d954d9ea7d4084c4165111bc0677dc20e77375a8aac3",
+        "root_activity_id": "owner3001://activities/Price",
+        "activity_id": "owner3001://activities/Price",
+        "expression": "input.GoooFieldb9d5e07167500140a0ffca2e8f3eed5db9f166aafe067fc4137916a1ee6eb3f3 \u0026\u0026 input.GoooField74b6f7749ca272006609fbe40fee6beb32e053c628ce556b1e3c36cad2c0092c \u003c 101",
+        "projection_sha256": "sha256:f76c5b77ba1b332338bcb6824c43c03c4606951d6d9ee0a79289d2c3a3fc4729",
+        "start": 636,
+        "end": 804,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "owner3001://activities/Price",
+            "name": "Price",
+            "source_sha256": "sha256:c357f428bd9880fe757ca4efd7615dfaac42706d9eb92bd18890bef6f5ae260c",
+            "start_byte": 307,
+            "end_byte": 473
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:c357f428bd9880fe757ca4efd7615dfaac42706d9eb92bd18890bef6f5ae260c",
+          "body_sha256": "sha256:db3c9c5e2461464863e0429a2ccaca4afab4eae2f6b0655335975ca1821c6c2c",
+          "start_byte": 388,
+          "end_byte": 421,
+          "decoded_start": 3,
+          "decoded_end": 36,
+          "source_ordinal": 0,
+          "expression": "input.active \u0026\u0026 input.units \u003c 101",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:owner3001:active",
+                "name": "active",
+                "source_sha256": "sha256:c357f428bd9880fe757ca4efd7615dfaac42706d9eb92bd18890bef6f5ae260c",
+                "start_byte": 182,
+                "end_byte": 262
+              },
+              "entity_id": "OWNER3001://Entities/Quantity",
+              "field_id": "urn:owner3001:active",
+              "name": "active"
+            },
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "owner3001://fields/Units",
+                "name": "units",
+                "source_sha256": "sha256:c357f428bd9880fe757ca4efd7615dfaac42706d9eb92bd18890bef6f5ae260c",
+                "start_byte": 97,
+                "end_byte": 180
+              },
+              "entity_id": "OWNER3001://Entities/Quantity",
+              "field_id": "owner3001://fields/Units",
+              "name": "units"
+            }
+          ]
+        }
+      }
+    ],
+    "condition_observation": {
+      "schema": "gooo/native-condition-summary/v1",
+      "status": "COMPLETE",
+      "recorded_events": 2,
+      "dropped_events": 0,
+      "sha256": "sha256:e7740f8f81fe23193cf9dced45cfa92a0c913bdb466099efaef8091bf3fb0859"
+    },
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "UNCLASSIFIED_INPUTS",
+      "unique_inputs": 2,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 2,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    },
+    "model_calls": 0,
+    "elapsed_ns": 636505417,
+    "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+  },
+  "source": "package owner3001\nnamespace owner3001\nentity Ticket id \"OWNER3001://Entities/Quantity\" fields {\n field units id \"owner3001://fields/Units\" type \"urn:gooo:type:integer\" required one\n field active id \"urn:owner3001:active\" type \"urn:gooo:type:boolean\" required one\n}\nentity Integer id \"urn:gooo:type:integer\"\nactivity Price(Ticket) -\u003e Integer id \"OWNER3001://Activities/Price\" computes \"if input.active \u0026\u0026 input.units \u003c 101 { return input.units + 7 }; return input.units - 7\"\n",
+  "wrong_parent_declined": true
+}

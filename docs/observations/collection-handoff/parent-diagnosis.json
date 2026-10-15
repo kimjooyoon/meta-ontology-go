@@ -1,0 +1,66 @@
+{
+  "pr": 1539,
+  "head": "12c4612e72299dc02a25b83a408a8d9e8180471d",
+  "run": 38427162735,
+  "job": 115399447897,
+  "original_attempt": 1,
+  "reason": "SYNTAX_ROUNDTRIP_MISMATCH",
+  "summary": {
+    "satisfied": 82,
+    "total": 82,
+    "executed": 82,
+    "not_satisfied": 0,
+    "unresolved": 0,
+    "readiness_bps": 10000,
+    "valid_cases": 79,
+    "invalid_cases": 3,
+    "ast_replays": 79,
+    "byte_replays": 79,
+    "semantic_replays": 79,
+    "get_put_laws": 79,
+    "put_get_laws": 79,
+    "diagnostic_rejections": 3,
+    "gooo_lines": 2370,
+    "unregistered_gooo": 1,
+    "missing_registered": 0,
+    "capability_satisfied": 80,
+    "capability_total": 80,
+    "capability_executed": 80,
+    "capability_unresolved": 0,
+    "governance_satisfied": 2,
+    "governance_total": 2,
+    "governance_executed": 2,
+    "governance_unresolved": 0,
+    "projection_total": 3,
+    "projection_satisfied": 3,
+    "projection_unresolved": 0
+  },
+  "unregistered_gooo": [
+    "examples/batch-planner/main.gooo"
+  ],
+  "artifact_id": 11830370372,
+  "artifact_sha256": "58e6d3501bcec0929d0185e5d9d603064528455a66c886ff660bba22e80f246f",
+  "original_logs": [
+    {
+      "name": "failed-syntax-scope-original.log",
+      "sha256": "087504fbc2d24b3d0cca35ea05d4671e97270ec2323cc14d9be5d852078c138b"
+    },
+    {
+      "name": "failed-projection-original.log",
+      "sha256": "83fa77799839933ec37c81ab90a26d4e462f1438f15f62e9bf00d104c955e793"
+    },
+    {
+      "name": "failed-semantic-original.log",
+      "sha256": "fbc8864e94c6ddbdea2ec923ac45f0eed021ec79d67bd27662ab18069fb1f9e7"
+    },
+    {
+      "name": "failed-unit-original.log",
+      "sha256": "00fd47bd447da5cd032dc608bdab7c561c44cc48a07c735ce255cd8aad7d494a"
+    },
+    {
+      "name": "failed-race-original.log",
+      "sha256": "9990dc4d61baf7fd5e604fd0d470db107c9cca4c17c83ff83bbfcf8542594ca3"
+    }
+  ],
+  "change": "Register both executable list examples under explicit V5 syntax/BX; expand denominator from82 to84, capability80 to82; historical observations remain unchanged."
+}

@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-14T06:16:56.269244+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-counted-loop-surface-20261014/reader19121/overlay.json",
+    "./cmd/gooo",
+    "-run=^TestGoooScopedOriginCoverage19121$",
+    "-v"
+  ],
+  "historical_reruns": 0
+}

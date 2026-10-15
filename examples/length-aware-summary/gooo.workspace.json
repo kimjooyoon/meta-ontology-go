@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "origin/lengthsummary20809", "activity": "Measure"},
+  "packages": [
+    {"path": "origin/lengthsummary20809", "name": "lengthsummary", "imports": [], "sources": ["summary.gooo"]}
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "field270/app",
+    "activity": "Decide"
+  },
+  "packages": [
+    {
+      "path": "field270/counts",
+      "name": "counts",
+      "sources": [
+        "counts.gooo.fixture"
+      ]
+    },
+    {
+      "path": "field270/flags",
+      "name": "flags",
+      "sources": [
+        "flags.gooo.fixture"
+      ]
+    },
+    {
+      "path": "field270/app",
+      "name": "app",
+      "imports": [
+        "field270/counts",
+        "field270/flags"
+      ],
+      "sources": [
+        "ledger.gooo.fixture",
+        "claim.gooo.fixture"
+      ]
+    }
+  ]
+}

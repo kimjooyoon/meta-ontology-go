@@ -10,7 +10,7 @@ func TestLoadManifestRetainsRetiredRecipeAsNonExecutableEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if manifest.Schema != manifestSchema || len(manifest.RetiredRecipes) != 1 {
+	if manifest.Schema != manifestSchema || len(manifest.RetiredRecipes) != 2 {
 		t.Fatalf("manifest identity = %q with %d retired recipes", manifest.Schema, len(manifest.RetiredRecipes))
 	}
 	retired := manifest.RetiredRecipes[0]

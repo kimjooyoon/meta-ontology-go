@@ -1,0 +1,13 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"constructor716/money:Keep": {"value": 9, "note": "native"}, "constructor716/count:Keep": {"value": 2}},
+      "expected": {"constructor716/money:Keep": {"value": 9, "note": "native"}, "constructor716/count:Keep": {"value": 2}, "constructor716/app:Round": {"value": 3}, "constructor716/app:Quote": {"value": 27, "note": "native"}}
+    },
+    {
+      "inputs": {"constructor716/money:Keep": {"value": -7, "note": "clamped"}, "constructor716/count:Keep": {"value": 6}},
+      "expected": {"constructor716/money:Keep": {"value": -7, "note": "clamped"}, "constructor716/count:Keep": {"value": 6}, "constructor716/app:Round": {"value": 7}, "constructor716/app:Quote": {"value": 0, "note": "clamped"}}
+    }
+  ]
+}

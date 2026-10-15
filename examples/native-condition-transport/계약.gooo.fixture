@@ -1,0 +1,13 @@
+package contract
+namespace quota1289_contract
+entity Request id "urn:quota1289:request" fields {
+ field quantity id "urn:quota1289:quantity" type "urn:gooo:type:integer" required one
+ field available id "urn:quota1289:available" type "urn:gooo:type:integer" required one
+ field reference id "urn:quota1289:request-reference" type "urn:gooo:type:string" required one
+}
+entity Decision id "urn:quota1289:decision" fields {
+ field approved id "urn:quota1289:approved" type "urn:gooo:type:boolean" required one
+ field reason id "urn:quota1289:reason" type "urn:gooo:type:string" required one
+ field reference id "urn:quota1289:decision-reference" type "urn:gooo:type:string" required one
+}
+activity Receive(Request) -> Request id "urn:quota1289:receive" computes "return input"

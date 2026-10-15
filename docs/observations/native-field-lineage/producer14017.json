@@ -1,0 +1,17 @@
+{
+  "base": "55d0a72668e4b5dcde239cef36c3d4a10b649e07",
+  "files": {
+    "cmd/gooo/package_origin_input.go": "5de1cd9cbeaf6ffe8088566cb2cb49fed607fcc65b78b63d4f85f2ffb56d6b34",
+    "cmd/gooo/package_field_lineage_fresh_test.go": "dd3eb6108ec9fb9002111e1886057bde8d546edde7739e977fb5e9287c6d0c01",
+    "cmd/gooo/package_execute.go": "fc2cc992570d24d027c959d8dcef6222d491dfd420ab47d209660d51ac1fdd93",
+    "internal/bodyexecution/native_field_lineage_columns.go": "58e542a8934746a8c5ec2730a9c813ab1aafa18e98b2a3493f09ada33e1f558b",
+    "internal/bodycodegen/collection_loop.go": "75b24fb9876e7b4de1a360962458886856ec0c3e747b676ae77fcbfa1506b4af",
+    "internal/bodycodegen/collection_nested_work.go": "aa57744edbcd28ea11279dd2c353056575a44c1be5d25a794054c4de1b328f1b",
+    "internal/bodycodegen/counted_loop_calls.go": "6b4f183ab6c584622f7fe887a3ed0572db8947f0a56bdb16514d7223a59336e3",
+    "internal/bodycodegen/collection_return_budget_fresh_test.go": "873276d757744774aceae4a0071d0d43d259b9651aed2766bdd140db92f2b451",
+    "internal/bodycodegen/collection_bounds_test.go": "a5d380ca2df38a052bc24dbcc55b98fbc11d123dce5d603febd3704c0e6767c6",
+    "examples/native-field-lineage/recorded-runtime.json.gz": "019d47631466d39e9dacb4c94e36e6520f916dd19299bad5a9d1dee2385324b4",
+    "examples/native-field-lineage/lineage.gooo": "b9bdf0e0d53e1ce9ed241f27bd783dce5669b095f75044cd9f5c066de450d682",
+    "examples/native-field-lineage/gooo.workspace.json": "402bb28de445d04aec29032d4d6fef0c590363e9bb04617570a6af01d6489948"
+  }
+}

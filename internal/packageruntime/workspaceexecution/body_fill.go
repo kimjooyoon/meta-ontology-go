@@ -25,7 +25,7 @@ func applyBodyFills(ctx context.Context, program Program, current []byte, option
 		}
 		if exists {
 			var err error
-			plan, err = program.recordNames.rewriteFillPlan(activity.PackagePath, plan)
+			plan, err = program.recordNames.rewriteFillPlan(activity.PackagePath, plan, program.recordNames.constructors[key])
 			if err != nil {
 				return nil, nil, err
 			}

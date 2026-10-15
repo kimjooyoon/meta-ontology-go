@@ -1,0 +1,92 @@
+{
+  "predecessor_pr": 1570,
+  "predecessor_head": "b3eb244587cfab6797ece74da9e25fd9bc6e00e7",
+  "original_race": "20m job cancellation;244 packages pass,187 no-test skips;8446 test/subtest pass,17 skip;no known active test or fail event at end",
+  "cohorts": [
+    {
+      "name": "callback53143",
+      "result": {
+        "ended": "2026-10-14T17:27:20.023499+00:00",
+        "exit_code": 0
+      },
+      "files": [
+        {
+          "path": "stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "ended.json",
+          "sha256": "a61507eb9edbb50b415b111ae45d12c2c3b7b37b252c312e455a3daffa75568d",
+          "bytes": 68
+        },
+        {
+          "path": "source.tar.gz",
+          "sha256": "882e8be88f8fbccaf2f891f4e0abd5e3d8921a6eb28b3339c98bec29b91b0eae",
+          "bytes": 171652
+        },
+        {
+          "path": "stdout.log",
+          "sha256": "99ed1afb8d5db8e7c4a5f1ef207203d236b9fd6b4ea8b3478ceb6741bd889607",
+          "bytes": 589
+        },
+        {
+          "path": "started.json",
+          "sha256": "94d19cb08a7b9846b776126c64d95e524dc53ab6b85e737d8359ef63d1779e6b",
+          "bytes": 442
+        },
+        {
+          "path": "manifest.json",
+          "sha256": "c337675fd14145fbc967a27aae8739d5a7827d417f5335698bcef9156776dcd9",
+          "bytes": 19854
+        }
+      ]
+    },
+    {
+      "name": "static53561",
+      "result": {
+        "at": "2026-10-14T17:28:58.996596+00:00",
+        "exit": 0,
+        "diff_bytes": 0,
+        "stderr_bytes": 0,
+        "tests_executed": 0,
+        "go_files": 79
+      },
+      "files": [
+        {
+          "path": "stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "ended.json",
+          "sha256": "7b725ca574814e57bbd0bdcf7149185ee6096eaec730e4739a0ceff70bc4e2d9",
+          "bytes": 141
+        },
+        {
+          "path": "source.tar.gz",
+          "sha256": "98d482606421a01f8bff024872b51e5a640a62c63c9f8e9faac6dc07fcde049d",
+          "bytes": 171678
+        },
+        {
+          "path": "started.json",
+          "sha256": "b0b1cf5be45407b503ab0eeb1e1d5dae3a1dce5781d9bc86830e6a42175af962",
+          "bytes": 702
+        },
+        {
+          "path": "manifest.json",
+          "sha256": "c337675fd14145fbc967a27aae8739d5a7827d417f5335698bcef9156776dcd9",
+          "bytes": 19854
+        },
+        {
+          "path": "diff.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      ]
+    }
+  ],
+  "scope": "new callback source/input only;no original model/test reruns;standard import origin retained within one callback operation",
+  "new_worktrees": 0,
+  "model_calls": 0
+}

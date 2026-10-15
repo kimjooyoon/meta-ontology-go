@@ -1,0 +1,8 @@
+=== RUN   TestSavedOriginColumns12161
+    package_origin_columns_fresh_test.go:39: fresh producer2/2; direct saved receipt->columns->Gooo coverage full/middle/tail3/3; fact rows4/2/1 and consumer rows1 distinguished; original producer executions during reads0/models0
+--- PASS: TestSavedOriginColumns12161 (2.09s)
+=== RUN   TestOriginColumnOptions12187
+    package_origin_columns_fresh_test.go:122: three incompatible shape requests rejected; explicit column profile selects fragment kind
+--- PASS: TestOriginColumnOptions12187 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	2.637s

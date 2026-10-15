@@ -1,0 +1,11 @@
+package multiroute
+namespace multiroute
+entity Integer id "urn:multiroute:integer"
+entity Boolean id "urn:multiroute:boolean"
+activity Double(Integer) -> Integer id "urn:multiroute:double" computes "let first=input; let second=input+3; first=first*2; first=first+5; return second" assembling {
+ choice "z_target" assignment_target at "0" alternative "second" intent "Assign the multiplication result to second."
+ choice "a_schedule" root_order at "2" intent "Keep multiplication before incrementing first."
+ criteria { predicate "double" activity "IsDouble" input "[-6]" input "[7]" holdout_input "[15]" }
+ attempts "2"
+}
+activity IsDouble(Integer,Integer) -> Boolean id "urn:multiroute:predicate" computes "return input1 == input0*2"

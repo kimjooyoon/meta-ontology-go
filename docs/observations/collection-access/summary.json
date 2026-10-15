@@ -1,0 +1,82 @@
+{
+  "schema": "gooo/collection-access-observation/v1",
+  "baseline": "674c5b63ab49e633524e81bc899d91e545518e9d",
+  "historical_local_replays": 0,
+  "model_calls": 0,
+  "native": {
+    "integer_requests": 5,
+    "integer_activity_outputs_passed": 10,
+    "integer_activity_outputs_total": 10,
+    "text_boolean_inputs": 4,
+    "text_boolean_outputs_passed": 4,
+    "text_boolean_outputs_total": 4
+  },
+  "selection": {
+    "integer": [
+      2,
+      2
+    ],
+    "text": [
+      1,
+      1
+    ],
+    "boolean": [
+      1,
+      1
+    ]
+  },
+  "holdout": {
+    "integer": [
+      1,
+      1
+    ],
+    "text": [
+      1,
+      1
+    ],
+    "boolean": [
+      1,
+      1
+    ]
+  },
+  "access_facts": 16,
+  "gooo_explanation_outputs": [
+    16,
+    16
+  ],
+  "analysis": "PARTIAL",
+  "analysis_reasons": [
+    "EARLY_EXIT_CONTROLS_NOT_EXPANDED",
+    "CALLEE_BODY_NOT_EXPANDED"
+  ],
+  "initial_failures": {
+    "8791": "record result guard prevented a scalar-returning source_fill helper",
+    "8837": "native10/10, access assertion failed because shortest paths hid visited index occurrences"
+  },
+  "cli": {
+    "runs": [
+      {
+        "query": "all",
+        "exit_code": 0,
+        "elapsed_ms": 674.3755
+      },
+      {
+        "query": "take",
+        "exit_code": 0,
+        "elapsed_ms": 14.511917000000096
+      },
+      {
+        "query": "candidate",
+        "exit_code": 0,
+        "elapsed_ms": 12.582499999999719
+      }
+    ],
+    "original_program_executions": 0,
+    "model_calls": 0,
+    "receipt_unchanged": true,
+    "binary_sha256": "e14f538076048b36efd1f04402d71f3ae2a56cafbaebc5ea6f3bdca06711de70",
+    "binary_bytes": 26162306,
+    "binary_removed": true
+  },
+  "producer_archive_sha256": "f77a815302a5eed04100da395e4f31a1828e5ce4316cbcb4a837966852b3e4ca"
+}

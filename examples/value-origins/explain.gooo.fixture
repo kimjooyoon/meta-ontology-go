@@ -1,0 +1,17 @@
+package originview
+namespace originview5107
+entity Text id "urn:gooo:type:string"
+entity Origin id "urn:originview5107:origin" fields {
+ field site_id id "urn:originview5107:site" type string required one
+ field activity_id id "urn:originview5107:activity" type string required one
+ field candidate_id id "urn:originview5107:candidate" type string required one
+ field hole_id id "urn:originview5107:hole" type string required one
+ field relation id "urn:originview5107:relation" type string required one
+ field analysis_status id "urn:originview5107:analysis" type string required one
+ field source_status id "urn:originview5107:source" type string required one
+ field filename id "urn:originview5107:file" type string required one
+ field source_sha id "urn:originview5107:sha" type string required one
+ field source_start id "urn:originview5107:start" type integer required one
+ field source_end id "urn:originview5107:end" type integer required one
+}
+activity Explain(Origin) -> Text id "urn:originview5107:explain" computes "if input.analysis_status != \"MAPPED\" { return \"부분 추적\" }; if input.relation == \"static_dependency\" { return input.filename + \"에서 변수를 거쳐 연결됨\" }; return input.filename"

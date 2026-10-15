@@ -126,8 +126,8 @@ func generateWithRecordIRBodyFillOptions(
 		return Result{}, err
 	}
 	outputRecord := recordTypeByName(records, activity.Output)
-	if outputRecord == nil {
-		return Result{}, fmt.Errorf("record IR body fill currently requires a declared record output")
+	if outputRecord == nil && sourceScalarKind(file, activity.Output) == "" {
+		return Result{}, fmt.Errorf("typed IR body fill requires a declared record, Integer, Boolean or Text output")
 	}
 	activityID := ""
 	for _, node := range model.Nodes {
@@ -149,17 +149,16 @@ func generateWithRecordIRBodyFillOptions(
 			return Result{}, fmt.Errorf("activity %q must contain exactly one IR body hole %q", activityName, hole.ID)
 		}
 	}
-	parameters := make([]InputParameter, len(activity.Inputs))
-	for index, input := range activity.Inputs {
-		name := "input"
-		if len(activity.Inputs) > 1 {
-			name = fmt.Sprintf("input%d", index)
-		}
-		typeName, ok := bodyEntityType(input.Name, records, file)
-		if !ok {
-			return Result{}, fmt.Errorf("activity input %q is outside the scalar or declared-record profile", input.Name)
-		}
-		parameters[index] = InputParameter{Name: name, Type: typeName}
+	prepared, err := prepareActivityBodySource(filename, source, activityName)
+	if err != nil {
+		return Result{}, err
+	}
+	// Record assignments may introduce a declared record absent from the
+	// unfilled skeleton. Keep the existing complete record layout for scoring.
+	prepared.records = records
+	ctx, capture := captureFillCalls(ctx)
+	if options.localCalls != nil {
+		*options.localCalls = capture.history
 	}
 
 	started := time.Now()
@@ -178,13 +177,14 @@ func generateWithRecordIRBodyFillOptions(
 				return Result{}, fmt.Errorf("fill candidate %q at hole %q: %w", candidate.ID, hole.ID, err)
 			}
 		}
-		generated, err := generateRouteParameters(file.Package.Name, activityName, activityID, parameters,
-			activity.Output, candidateBody, preserveRoute, records...)
+		generated, err := prepared.generateBody(candidateBody, preserveRoute)
 		if err != nil {
 			rejected = append(rejected, rejectedBodyFillCandidate(plan, candidate, "TYPECHECK", err))
 			continue
 		}
-		observed, err := evaluateRecordAssembly(ctx, []byte(generated.source), activityName, records, plan.ValueCases)
+		capture.bind(generated.source, generated.report)
+		observed, err := evaluateRecordAssembly(localCallPhase(ctx, "fill-training", candidate.ID),
+			generated.source, activityName, records, plan.ValueCases)
 		if err != nil {
 			if ctx.Err() != nil {
 				return Result{}, ctx.Err()
@@ -262,6 +262,9 @@ func generateWithRecordIRBodyFillOptions(
 	decision, err := resolveBodyFillDecision(decisionContext, request, endpoint, apiKey, options, tinyProvider)
 	cancel()
 	decisionMS := float64(time.Since(decisionStarted)) / float64(time.Millisecond)
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
+	}
 	if err != nil {
 		return Result{}, fmt.Errorf("select Gooo record body-fill candidate: %w", err)
 	}
@@ -275,9 +278,6 @@ func generateWithRecordIRBodyFillOptions(
 		}
 		if !validTinyGoDecisionReceipt(decision, expectedRequestSHA256, request) {
 			return Result{}, fmt.Errorf("tiny_go chooser returned incomplete or mismatched model provenance")
-		}
-		if err := ctx.Err(); err != nil {
-			return Result{}, err
 		}
 	}
 	proposedID := decision.Selected
@@ -314,7 +314,9 @@ func generateWithRecordIRBodyFillOptions(
 	if err != nil {
 		return Result{}, fmt.Errorf("emit selected Gooo record body: %w", err)
 	}
-	selectedCases, err := evaluateRecordAssembly(ctx, []byte(result.Source), activityName, records, plan.ValueCases)
+	capture.bind([]byte(result.Source), result.Report)
+	selectedCases, err := evaluateRecordAssembly(localCallPhase(ctx, "fill-selected-training", selected.ID),
+		[]byte(result.Source), activityName, records, plan.ValueCases)
 	if err != nil {
 		return Result{}, fmt.Errorf("evaluate selected generated record body: %w", err)
 	}
@@ -330,7 +332,8 @@ func generateWithRecordIRBodyFillOptions(
 	var holdoutAccuracy *float64
 	var holdoutSuiteSHA256 string
 	if len(plan.ValueHoldoutCases) > 0 {
-		holdoutResults, err = evaluateRecordAssembly(ctx, []byte(result.Source), activityName, records, plan.ValueHoldoutCases)
+		holdoutResults, err = evaluateRecordAssembly(localCallPhase(ctx, "fill-selected-holdout", selected.ID),
+			[]byte(result.Source), activityName, records, plan.ValueHoldoutCases)
 		if err != nil {
 			return Result{}, fmt.Errorf("evaluate selected generated record body on holdout cases: %w", err)
 		}
@@ -363,6 +366,7 @@ func generateWithRecordIRBodyFillOptions(
 	planBytes, _ := json.Marshal(plan)
 	result.Report.BodyFill = &IRBodyFillReceipt{
 		OriginalSourceDigest: digest(source),
+		LocalCalls:           capture.history,
 		Schema:               plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
 		HoleToken: bodyFillHoleToken(holes[0].ID), IRPlanSHA256: digest(planBytes),
 		ProposedCandidateID: proposed.ID, ProposedAccuracyPct: proposedScore.AccuracyPercent,
@@ -385,6 +389,10 @@ func generateWithRecordIRBodyFillOptions(
 			TotalMS:        float64(time.Since(started)) / float64(time.Millisecond),
 			ExecutionModel: "synchronous_sequential_no_background_codegen_goroutines",
 			DecisionStage:  "after_typed_ir_plan_training_scores_before_final_emission"},
+	}
+	if outputRecord == nil {
+		result.Report.BodyFill.Evaluator = "gooo/bodycodegen-typed-value-interpreter/v1"
+		result.Report.BodyFill.AccuracyScope = "exact observed scalar equality over typed training value cases; holdout value cases are measured separately when present; neither is a full-domain proof"
 	}
 	populateCompletenessReceipt(&result.Report, "")
 	return result, nil

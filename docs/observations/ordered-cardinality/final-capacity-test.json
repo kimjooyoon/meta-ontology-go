@@ -1,0 +1,8 @@
+{
+  "path": "internal/meta/repositoryprojection/extractor/origin_reader_capacity_test.go",
+  "observed_test_sha256": "4f9e82e544435e374a9156bfbc304c6ae5330bde3171ea358d468b018764b638",
+  "submitted_test_sha256": "6533de0e7166e8de302825f0be08c513ee114cef09137064c3ac5d731e4aeaa5",
+  "change": "look up origin reader methods by receiver/name across all package source files, including projected helper files",
+  "local_execution": "not rerun; final code awaits original CI",
+  "production_source_change": false
+}

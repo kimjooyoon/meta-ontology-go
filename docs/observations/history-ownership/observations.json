@@ -1,0 +1,58 @@
+{
+  "schema": "gooo/history-source-ownership-observation/v1",
+  "source_parent": "b32d697e6943cf92e79362ede4c44b54c6c9d96f",
+  "predecessor_pr": 1599,
+  "failed_job": 116440872612,
+  "failure": "TestHistoryCapacityCurrentSourceNormalizationProposal assumed exactly one edited physical file; the CI source projection produced two owners.",
+  "repair": "Compare changed units with the exact root/helper declaration owners and overlay them onto all unchanged inputs. Production generation semantics are unchanged.",
+  "fresh_layouts": [
+    1,
+    2,
+    5
+  ],
+  "targets_per_fresh_layout": 73,
+  "current_source_targets_preserved": 27,
+  "maximum_test_declaration_rendered_lines": 64,
+  "cap": 75,
+  "commands": [
+    {
+      "name": "ownership-first",
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/syntaxregistration",
+        "./internal/meta/repositoryprojection/extractor",
+        "-run",
+        "^(TestHistoryCapacityCurrentSourceNormalizationProposal|TestHistoryNormalizationFollowsDeclarationOwners|TestHistoryNormalizationOwnershipDeclarationCapacity)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 4.593872833,
+      "log": "ownership-first.log",
+      "sha256": "70dea1a669b39f50790ec13087aec142bcfdee6371b7f5034a90fe7068217c45"
+    },
+    {
+      "name": "ownership-normalization-first",
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "fix",
+        "-diff",
+        "./internal/meta/syntaxregistration"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2654227500000008,
+      "log": "ownership-normalization-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "source_sha256": {
+    "internal/meta/syntaxregistration/history_capacity_repair_test.go": "cb4cceb004027df90beb26e2960077988ad76c40b4177b1856208e735afa6cc5",
+    "internal/meta/syntaxregistration/history_normalization_units_test.go": "45c174e60a9e05c2b17d16f3bec1e57e148fb36555e5125dd08fe9bd847c26df",
+    "internal/meta/syntaxregistration/history_normalization_layout_test.go": "655df2c83f7272e0ea5dfc0c72ba624af2a7acf833e2dd68ee1b4332ffed643a",
+    "internal/meta/repositoryprojection/extractor/history_normalization_capacity_test.go": "7c46c4ee2ddbaaa054b5bb4ff4372287eef0db550a4e69ce56d6bfc94a92d2fb"
+  },
+  "native_executions": 0,
+  "model_calls": 0
+}

@@ -16,6 +16,11 @@ func formatActivity(output *strings.Builder, activity *ActivityDecl) error {
 	if err != nil {
 		return err
 	}
+	if len(activity.InputNames) > 0 {
+		if _, err := ActivityInputNames(activity); err != nil {
+			return err
+		}
+	}
 	result, err := activityResult(activity)
 	if err != nil {
 		return err
@@ -26,6 +31,10 @@ func formatActivity(output *strings.Builder, activity *ActivityDecl) error {
 	for index, parameter := range parameters {
 		if index > 0 {
 			output.WriteString(", ")
+		}
+		if len(activity.InputNames) > 0 && activity.InputNames[index].Name != "" {
+			output.WriteString(activity.InputNames[index].Name)
+			output.WriteByte(' ')
 		}
 		output.WriteString(parameter.Name)
 	}
@@ -45,7 +54,7 @@ func activityParameters(activity *ActivityDecl) ([]NameRef, error) {
 		parameters = activity.Inputs
 	}
 	for _, parameter := range parameters {
-		if err := validateIdentifier(parameter.Name, "activity parameter"); err != nil {
+		if err := validateActivityTypeReference(parameter.Name, "activity parameter"); err != nil {
 			return nil, err
 		}
 	}
@@ -59,7 +68,7 @@ func activityResult(activity *ActivityDecl) (string, error) {
 	if result == "" {
 		result = activity.Output
 	}
-	if err := validateIdentifier(result, "activity result"); err != nil {
+	if err := validateActivityTypeReference(result, "activity result"); err != nil {
 		return "", err
 	}
 	return result, nil

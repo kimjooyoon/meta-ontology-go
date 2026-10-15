@@ -4,6 +4,17 @@ This repository is a semantic compiler, not only a text generator. Every change
 should make the source view, semantic IR, Go projection, and verification evidence
 more consistent. The detailed policy is in [docs/governance.md](docs/governance.md).
 
+## Language development
+
+- Start language feature proposals with a concrete problem and a small `.gooo`
+  program showing the intended expression or behavior.
+- Keep intent, permitted choices, obligations and unresolved observations visible
+  through source, IR, construction and execution.
+- Report progress as newly expressible source behavior and its observed limits.
+  Record selection evidence and separate evaluation with their own denominators.
+- Design model decisions around the choices owned by Gooo source, with the
+  deterministic execution path available when a model is absent.
+
 ## Authority boundaries
 
 - Business intent is authoritative in `.gooo` DSL declarations.

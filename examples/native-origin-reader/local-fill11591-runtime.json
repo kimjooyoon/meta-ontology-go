@@ -1,0 +1,1052 @@
+{
+  "schema": "gooo/body-composition-runtime/v1",
+  "stage": "COMPLETE",
+  "composition_sha256": "sha256:360a750923c0389a72950374e6652a707e1c19cbf4774018c3bee1e8a2bdde2c",
+  "original_source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+  "selected_source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+  "typed_plan_sha256": "sha256:63daa17c6f5e9574e55c5ece438c9359ddb25d64350fde618b28b9b7f62bfee8",
+  "generated_sha256": "sha256:92280b2d90605b8e1eccb951bf47f9b96ec4999618608086bae3786c2dff2a32",
+  "driver_sha256": "sha256:b60505029d66031b47bc2e849d5fb37f04920d4b8ff01c7dd372ab4dc1395ad2",
+  "observed_projection_sha256": "sha256:81bf735e4f0c757c1234a873e2735b184d1960a4c6a5f6d1aba1b6e1174c004d",
+  "observed_driver_sha256": "sha256:f33f04341fec5c3bfc9182d5d2a7c7727aa0c621c68817646a146472c48de772",
+  "runtime_suite_sha256": "sha256:19bfd2183ae5e8d210ac4155977d6fdb17681c6898225fcf2fa20be0bb6a0b73",
+  "executable_sha256": "sha256:493ff15602555887347dd2c7d88c6f7cdb9b9fbd33e7a613f7009c11c7f5fe7c",
+  "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+  "go_tool_selection": "path",
+  "go_version": "go version go1.27.2 darwin/arm64",
+  "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+  "producer_module": {
+    "path": "github.com/kimjooyoon/meta-ontology-go",
+    "version": "(devel)"
+  },
+  "toolchain": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 8294917,
+    "user_ns": 3783000,
+    "system_ns": 2556000,
+    "peak_rss_bytes": 14565376,
+    "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 1018542,
+      "wait_ns": 7276375,
+      "deadline_remaining_ns": 59987026834,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "build": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 278314292,
+    "user_ns": 133355000,
+    "system_ns": 84440000,
+    "peak_rss_bytes": 87228416,
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 817250,
+      "wait_ns": 277497042,
+      "deadline_remaining_ns": 59976473792,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "runs": [
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 395806125,
+      "user_ns": 2950000,
+      "system_ns": 6077000,
+      "peak_rss_bytes": 5046272,
+      "stdout_sha256": "sha256:5372b87c4da443b8da8d58ae5dfd30d9eb213f3f1fea93ca0caded0400fd0e49",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 900083,
+        "wait_ns": 394906042,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59696633125,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 5556583,
+      "user_ns": 1609000,
+      "system_ns": 2535000,
+      "peak_rss_bytes": 5029888,
+      "stdout_sha256": "sha256:5372b87c4da443b8da8d58ae5dfd30d9eb213f3f1fea93ca0caded0400fd0e49",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 2220458,
+        "wait_ns": 3336125,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59299816417,
+        "context_at_start_return": "ACTIVE"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "urn:receipt11591:sum",
+          "input": 509,
+          "actual": 465,
+          "expected": 465,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ],
+      "local_writes": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 1,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 2,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 1,
+          "use_end": 2,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        }
+      ],
+      "local_uses": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "assignment": 0
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "assignment": 1
+        },
+        {
+          "site_index": 3,
+          "frame": 0,
+          "assignment": 2
+        }
+      ],
+      "local_frames": 1,
+      "reads_observed": true
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "urn:receipt11591:sum",
+          "input": -521,
+          "actual": 453,
+          "expected": 453,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        }
+      ],
+      "local_writes": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 1,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 3,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 1,
+          "use_end": 2,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        }
+      ],
+      "local_uses": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "assignment": 0
+        },
+        {
+          "site_index": 2,
+          "frame": 0,
+          "assignment": 1
+        },
+        {
+          "site_index": 3,
+          "frame": 0,
+          "assignment": 2
+        }
+      ],
+      "local_frames": 1,
+      "reads_observed": true
+    }
+  ],
+  "projection_replayed": true,
+  "runtime_replayed": true,
+  "finite_passed": 2,
+  "finite_total": 2,
+  "condition_sites": [
+    {
+      "expression_id": "sha256:7964ac0c7896be5e378e1489311bf0e48290c20cfc9b5a3d996d7a864a7319ba",
+      "root_activity_id": "urn:receipt11591:sum",
+      "activity_id": "urn:receipt11591:sum",
+      "expression": "input > 0",
+      "projection_sha256": "sha256:92280b2d90605b8e1eccb951bf47f9b96ec4999618608086bae3786c2dff2a32",
+      "start": 180,
+      "end": 189,
+      "source": {
+        "construction": {
+          "schema": "gooo/source-fill-condition-origin/v1",
+          "filename": "workspace.gooo",
+          "view": "assembly_input",
+          "source_sha256": "sha256:262bd7515b8ea694c555baa048a38334e204c2d126391751d33e954cf8fe5b52",
+          "selected_source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "selected_body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "activity_id": "urn:receipt11591:sum",
+          "activity_source": {
+            "start_byte": 91,
+            "end_byte": 634
+          },
+          "assembly_source": {
+            "start_byte": 292,
+            "end_byte": 634
+          },
+          "intent": "저장된 대입에서 실제로 선택한 표현의 원래 출처를 읽는다",
+          "intent_source": {
+            "start_byte": 329,
+            "end_byte": 408
+          },
+          "candidate_id": "fixed11591",
+          "candidate_source": {
+            "start_byte": 451,
+            "end_byte": 461
+          },
+          "plan_sha256": "sha256:50b711a5ec17fa0d7c6d159be1f525d441e7e1bb57396539b08f92f46989f962",
+          "fragments": [
+            {
+              "relation": "direct_and_static_dependency",
+              "kind": "retained_template",
+              "template_decoded": {
+                "start_byte": 32,
+                "end_byte": 110
+              },
+              "selected_decoded": {
+                "start_byte": 12,
+                "end_byte": 90
+              },
+              "template_source": {
+                "start_byte": 212,
+                "end_byte": 290
+              },
+              "selected_source": {
+                "start_byte": 192,
+                "end_byte": 270
+              },
+              "expression_source": {
+                "start_byte": 212,
+                "end_byte": 290
+              }
+            }
+          ],
+          "condition_decoded": {
+            "start_byte": 32,
+            "end_byte": 39
+          },
+          "input_source": {
+            "schema": "gooo/source-fill-input-origin/v1",
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "origin/11591",
+            "filename": "main.gooo",
+            "source_sha256": "sha256:9a4c2f2a16073ad4630b19197ed96200a2403c0cbfd9615470a37944df82d6d3",
+            "activity_id": "urn:receipt11591:sum",
+            "activity_source": {
+              "start_byte": 80,
+              "end_byte": 529
+            },
+            "assembly_source": {
+              "start_byte": 261,
+              "end_byte": 529
+            },
+            "intent": "저장된 대입에서 실제로 선택한 표현의 원래 출처를 읽는다",
+            "intent_source": {
+              "start_byte": 295,
+              "end_byte": 374
+            },
+            "candidate_id": "fixed11591",
+            "candidate_source": {
+              "start_byte": 405,
+              "end_byte": 415
+            },
+            "fragments": [
+              {
+                "relation": "direct_and_static_dependency",
+                "status": "MAPPED",
+                "kind": "retained_template",
+                "selected_decoded": {
+                  "start_byte": 12,
+                  "end_byte": 90
+                },
+                "template_source": {
+                  "start_byte": 181,
+                  "end_byte": 259
+                }
+              }
+            ]
+          },
+          "data_flow": {
+            "schema": "gooo/body-value-origins/v1",
+            "status": "MAPPED",
+            "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+            "nodes": [
+              {
+                "id": "condition:32:39:",
+                "kind": "condition",
+                "decoded": {
+                  "start_byte": 32,
+                  "end_byte": 39
+                },
+                "inputs": [
+                  "input_reference:32:37:input"
+                ]
+              },
+              {
+                "id": "input_reference:32:37:input",
+                "kind": "input_reference",
+                "name": "input",
+                "decoded": {
+                  "start_byte": 32,
+                  "end_byte": 37
+                }
+              }
+            ],
+            "roots": [
+              "condition:32:39:"
+            ]
+          }
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "urn:receipt11591:sum",
+          "name": "GoooPackage0ActivitySum",
+          "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "start_byte": 91,
+          "end_byte": 271
+        },
+        "input_source": {
+          "status": "UNMAPPED",
+          "reason": "SELECTED_BODY_DIFFERS",
+          "view": "workspace_input_file",
+          "start_byte": 0,
+          "end_byte": 0
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+        "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+        "start_byte": 212,
+        "end_byte": 219,
+        "decoded_start": 32,
+        "decoded_end": 39,
+        "source_ordinal": 0,
+        "expression": "input>0",
+        "relation": "retained_condition_node"
+      }
+    }
+  ],
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "COMPLETE",
+    "recorded_events": 2,
+    "dropped_events": 0,
+    "sha256": "sha256:e7740f8f81fe23193cf9dced45cfa92a0c913bdb466099efaef8091bf3fb0859"
+  },
+  "local_sites": [
+    {
+      "expression_id": "sha256:5ffb3709731b0ca907263d6b4d9e4fe0d5ebf46a3a243bd4c6e3437dd4bb03a8",
+      "root_activity_id": "urn:receipt11591:sum",
+      "activity_id": "urn:receipt11591:sum",
+      "native_ordinal": 0,
+      "variable_ordinal": 0,
+      "name": "mark",
+      "kind": "declaration",
+      "operation": "var",
+      "scalar_type": "int64",
+      "expression": "487",
+      "projection_sha256": "sha256:92280b2d90605b8e1eccb951bf47f9b96ec4999618608086bae3786c2dff2a32",
+      "start_byte": 145,
+      "end_byte": 148,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "start_byte": 189,
+          "end_byte": 192,
+          "decoded_start": 9,
+          "decoded_end": 12,
+          "expression": "487"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "start_byte": 184,
+          "end_byte": 188,
+          "decoded_start": 4,
+          "decoded_end": 8,
+          "expression": "mark"
+        },
+        "uses": [
+          {
+            "native_ordinal": 0,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+              "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+              "start_byte": 202,
+              "end_byte": 206,
+              "decoded_start": 22,
+              "decoded_end": 26,
+              "expression": "mark"
+            }
+          },
+          {
+            "native_ordinal": 1,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+              "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+              "start_byte": 266,
+              "end_byte": 270,
+              "decoded_start": 86,
+              "decoded_end": 90,
+              "expression": "mark"
+            }
+          }
+        ],
+        "construction": {
+          "schema": "gooo/source-fill-local-origin/v1",
+          "filename": "workspace.gooo",
+          "view": "assembly_input",
+          "source_sha256": "sha256:262bd7515b8ea694c555baa048a38334e204c2d126391751d33e954cf8fe5b52",
+          "selected_source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "selected_body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "activity_id": "urn:receipt11591:sum",
+          "intent": "저장된 대입에서 실제로 선택한 표현의 원래 출처를 읽는다",
+          "intent_source": {
+            "start_byte": 329,
+            "end_byte": 408
+          },
+          "candidate_id": "fixed11591",
+          "candidate_source": {
+            "start_byte": 451,
+            "end_byte": 461
+          },
+          "plan_sha256": "sha256:50b711a5ec17fa0d7c6d159be1f525d441e7e1bb57396539b08f92f46989f962",
+          "local_decoded": {
+            "start_byte": 9,
+            "end_byte": 12
+          },
+          "fragments": [
+            {
+              "relation": "written_expression",
+              "kind": "declared_candidate",
+              "hole_id": "mark",
+              "expression": "487",
+              "template_decoded": {
+                "start_byte": 9,
+                "end_byte": 32
+              },
+              "selected_decoded": {
+                "start_byte": 9,
+                "end_byte": 12
+              },
+              "template_source": {
+                "start_byte": 189,
+                "end_byte": 212
+              },
+              "selected_source": {
+                "start_byte": 189,
+                "end_byte": 192
+              },
+              "hole_declaration": {
+                "start_byte": 420,
+                "end_byte": 431
+              },
+              "expression_source": {
+                "start_byte": 490,
+                "end_byte": 493
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "expression_id": "sha256:65cfc7cf35c595debee94b9f9330f4ee465a4f36b6f34f5d4c34b6f05f0c83ec",
+      "root_activity_id": "urn:receipt11591:sum",
+      "activity_id": "urn:receipt11591:sum",
+      "native_ordinal": 1,
+      "variable_ordinal": 1,
+      "name": "kept",
+      "kind": "declaration",
+      "operation": "var",
+      "scalar_type": "int64",
+      "expression": "mark * 2",
+      "projection_sha256": "sha256:92280b2d90605b8e1eccb951bf47f9b96ec4999618608086bae3786c2dff2a32",
+      "start_byte": 167,
+      "end_byte": 175,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "start_byte": 202,
+          "end_byte": 208,
+          "decoded_start": 22,
+          "decoded_end": 28,
+          "expression": "mark*2"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "start_byte": 197,
+          "end_byte": 201,
+          "decoded_start": 17,
+          "decoded_end": 21,
+          "expression": "kept"
+        },
+        "uses": [
+          {
+            "native_ordinal": 0,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+              "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+              "start_byte": 226,
+              "end_byte": 230,
+              "decoded_start": 46,
+              "decoded_end": 50,
+              "expression": "kept"
+            }
+          },
+          {
+            "native_ordinal": 1,
+            "source": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+              "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+              "start_byte": 247,
+              "end_byte": 251,
+              "decoded_start": 67,
+              "decoded_end": 71,
+              "expression": "kept"
+            }
+          }
+        ],
+        "construction": {
+          "schema": "gooo/source-fill-local-origin/v1",
+          "filename": "workspace.gooo",
+          "view": "assembly_input",
+          "source_sha256": "sha256:262bd7515b8ea694c555baa048a38334e204c2d126391751d33e954cf8fe5b52",
+          "selected_source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "selected_body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "activity_id": "urn:receipt11591:sum",
+          "intent": "저장된 대입에서 실제로 선택한 표현의 원래 출처를 읽는다",
+          "intent_source": {
+            "start_byte": 329,
+            "end_byte": 408
+          },
+          "candidate_id": "fixed11591",
+          "candidate_source": {
+            "start_byte": 451,
+            "end_byte": 461
+          },
+          "plan_sha256": "sha256:50b711a5ec17fa0d7c6d159be1f525d441e7e1bb57396539b08f92f46989f962",
+          "local_decoded": {
+            "start_byte": 22,
+            "end_byte": 28
+          },
+          "fragments": [
+            {
+              "relation": "written_expression",
+              "kind": "retained_template",
+              "template_decoded": {
+                "start_byte": 32,
+                "end_byte": 110
+              },
+              "selected_decoded": {
+                "start_byte": 12,
+                "end_byte": 90
+              },
+              "template_source": {
+                "start_byte": 212,
+                "end_byte": 290
+              },
+              "selected_source": {
+                "start_byte": 192,
+                "end_byte": 270
+              },
+              "expression_source": {
+                "start_byte": 212,
+                "end_byte": 290
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "expression_id": "sha256:2fd879dfd4333a9f5137c2121859e1e0593420f6d62f654ea2a0a8b7ff7743e4",
+      "root_activity_id": "urn:receipt11591:sum",
+      "activity_id": "urn:receipt11591:sum",
+      "native_ordinal": 2,
+      "variable_ordinal": 0,
+      "name": "mark",
+      "kind": "assignment",
+      "operation": "=",
+      "scalar_type": "int64",
+      "expression": "kept - input",
+      "projection_sha256": "sha256:92280b2d90605b8e1eccb951bf47f9b96ec4999618608086bae3786c2dff2a32",
+      "start_byte": 201,
+      "end_byte": 213,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "start_byte": 226,
+          "end_byte": 236,
+          "decoded_start": 46,
+          "decoded_end": 56,
+          "expression": "kept-input"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "start_byte": 184,
+          "end_byte": 188,
+          "decoded_start": 4,
+          "decoded_end": 8,
+          "expression": "mark"
+        },
+        "construction": {
+          "schema": "gooo/source-fill-local-origin/v1",
+          "filename": "workspace.gooo",
+          "view": "assembly_input",
+          "source_sha256": "sha256:262bd7515b8ea694c555baa048a38334e204c2d126391751d33e954cf8fe5b52",
+          "selected_source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "selected_body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "activity_id": "urn:receipt11591:sum",
+          "intent": "저장된 대입에서 실제로 선택한 표현의 원래 출처를 읽는다",
+          "intent_source": {
+            "start_byte": 329,
+            "end_byte": 408
+          },
+          "candidate_id": "fixed11591",
+          "candidate_source": {
+            "start_byte": 451,
+            "end_byte": 461
+          },
+          "plan_sha256": "sha256:50b711a5ec17fa0d7c6d159be1f525d441e7e1bb57396539b08f92f46989f962",
+          "local_decoded": {
+            "start_byte": 46,
+            "end_byte": 56
+          },
+          "fragments": [
+            {
+              "relation": "written_expression",
+              "kind": "retained_template",
+              "template_decoded": {
+                "start_byte": 32,
+                "end_byte": 110
+              },
+              "selected_decoded": {
+                "start_byte": 12,
+                "end_byte": 90
+              },
+              "template_source": {
+                "start_byte": 212,
+                "end_byte": 290
+              },
+              "selected_source": {
+                "start_byte": 192,
+                "end_byte": 270
+              },
+              "expression_source": {
+                "start_byte": 212,
+                "end_byte": 290
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "expression_id": "sha256:01534c6ebd2b2a854596db09f2cc373fcb630c4581a6475125397ee249f58c73",
+      "root_activity_id": "urn:receipt11591:sum",
+      "activity_id": "urn:receipt11591:sum",
+      "native_ordinal": 3,
+      "variable_ordinal": 0,
+      "name": "mark",
+      "kind": "assignment",
+      "operation": "=",
+      "scalar_type": "int64",
+      "expression": "kept + input",
+      "projection_sha256": "sha256:92280b2d90605b8e1eccb951bf47f9b96ec4999618608086bae3786c2dff2a32",
+      "start_byte": 233,
+      "end_byte": 245,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "start_byte": 247,
+          "end_byte": 257,
+          "decoded_start": 67,
+          "decoded_end": 77,
+          "expression": "kept+input"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "start_byte": 184,
+          "end_byte": 188,
+          "decoded_start": 4,
+          "decoded_end": 8,
+          "expression": "mark"
+        },
+        "construction": {
+          "schema": "gooo/source-fill-local-origin/v1",
+          "filename": "workspace.gooo",
+          "view": "assembly_input",
+          "source_sha256": "sha256:262bd7515b8ea694c555baa048a38334e204c2d126391751d33e954cf8fe5b52",
+          "selected_source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+          "selected_body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+          "activity_id": "urn:receipt11591:sum",
+          "intent": "저장된 대입에서 실제로 선택한 표현의 원래 출처를 읽는다",
+          "intent_source": {
+            "start_byte": 329,
+            "end_byte": 408
+          },
+          "candidate_id": "fixed11591",
+          "candidate_source": {
+            "start_byte": 451,
+            "end_byte": 461
+          },
+          "plan_sha256": "sha256:50b711a5ec17fa0d7c6d159be1f525d441e7e1bb57396539b08f92f46989f962",
+          "local_decoded": {
+            "start_byte": 67,
+            "end_byte": 77
+          },
+          "fragments": [
+            {
+              "relation": "written_expression",
+              "kind": "retained_template",
+              "template_decoded": {
+                "start_byte": 32,
+                "end_byte": 110
+              },
+              "selected_decoded": {
+                "start_byte": 12,
+                "end_byte": 90
+              },
+              "template_source": {
+                "start_byte": 212,
+                "end_byte": 290
+              },
+              "selected_source": {
+                "start_byte": 192,
+                "end_byte": 270
+              },
+              "expression_source": {
+                "start_byte": 212,
+                "end_byte": 290
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "local_use_sites": [
+    {
+      "root_activity_id": "urn:receipt11591:sum",
+      "activity_id": "urn:receipt11591:sum",
+      "variable_ordinal": 0,
+      "native_ordinal": 0,
+      "name": "mark",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:92280b2d90605b8e1eccb951bf47f9b96ec4999618608086bae3786c2dff2a32",
+      "start_byte": 167,
+      "end_byte": 171,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+        "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+        "start_byte": 184,
+        "end_byte": 188,
+        "decoded_start": 4,
+        "decoded_end": 8,
+        "expression": "mark"
+      },
+      "variable_use_ordinal": 0,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+        "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+        "start_byte": 202,
+        "end_byte": 206,
+        "decoded_start": 22,
+        "decoded_end": 26,
+        "expression": "mark"
+      }
+    },
+    {
+      "root_activity_id": "urn:receipt11591:sum",
+      "activity_id": "urn:receipt11591:sum",
+      "variable_ordinal": 1,
+      "native_ordinal": 1,
+      "name": "kept",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:92280b2d90605b8e1eccb951bf47f9b96ec4999618608086bae3786c2dff2a32",
+      "start_byte": 201,
+      "end_byte": 205,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+        "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+        "start_byte": 197,
+        "end_byte": 201,
+        "decoded_start": 17,
+        "decoded_end": 21,
+        "expression": "kept"
+      },
+      "variable_use_ordinal": 0,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+        "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+        "start_byte": 226,
+        "end_byte": 230,
+        "decoded_start": 46,
+        "decoded_end": 50,
+        "expression": "kept"
+      }
+    },
+    {
+      "root_activity_id": "urn:receipt11591:sum",
+      "activity_id": "urn:receipt11591:sum",
+      "variable_ordinal": 1,
+      "native_ordinal": 2,
+      "name": "kept",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:92280b2d90605b8e1eccb951bf47f9b96ec4999618608086bae3786c2dff2a32",
+      "start_byte": 233,
+      "end_byte": 237,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+        "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+        "start_byte": 197,
+        "end_byte": 201,
+        "decoded_start": 17,
+        "decoded_end": 21,
+        "expression": "kept"
+      },
+      "variable_use_ordinal": 1,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+        "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+        "start_byte": 247,
+        "end_byte": 251,
+        "decoded_start": 67,
+        "decoded_end": 71,
+        "expression": "kept"
+      }
+    },
+    {
+      "root_activity_id": "urn:receipt11591:sum",
+      "activity_id": "urn:receipt11591:sum",
+      "variable_ordinal": 0,
+      "native_ordinal": 3,
+      "name": "mark",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:92280b2d90605b8e1eccb951bf47f9b96ec4999618608086bae3786c2dff2a32",
+      "start_byte": 257,
+      "end_byte": 261,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+        "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+        "start_byte": 184,
+        "end_byte": 188,
+        "decoded_start": 4,
+        "decoded_end": 8,
+        "expression": "mark"
+      },
+      "variable_use_ordinal": 1,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:0732ea0e4e04f55f8c314dd8607da43ec06baa4e5573cb6ce53d4fad00bd25cb",
+        "body_sha256": "sha256:9774607370dd9b43d43153e263ba899d7bd5f110653f01163efd0bd35e02da9a",
+        "start_byte": 266,
+        "end_byte": 270,
+        "decoded_start": 86,
+        "decoded_end": 90,
+        "expression": "mark"
+      }
+    }
+  ],
+  "local_observation": {
+    "schema": "gooo/native-local-summary/v1",
+    "status": "COMPLETE",
+    "sha256": "sha256:92a1de87413d5aacf9e3cf6ce4a1247639a64ab635570b2944865d34e5f6b0fa",
+    "recorded_writes": 6,
+    "recorded_uses": 6,
+    "element_windows": 0,
+    "interrupted_writes": 0,
+    "unresolved_uses": 0,
+    "frames": 2,
+    "frames_dropped": 0,
+    "writes_dropped": 0,
+    "uses_dropped": 0,
+    "reads_dropped": 0,
+    "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+  },
+  "read_observation": {
+    "schema": "gooo/native-read-summary/v2",
+    "status": "COMPLETE",
+    "recorded_reads": 0,
+    "resolved_reads": 0,
+    "unresolved_reads": 0,
+    "dropped_reads": 0,
+    "registration_dropped": 0,
+    "sha256": "sha256:e25759d24c4900b88ede1e75389aa637775ccc11748d490b3fb0ee6408cdc170",
+    "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+  },
+  "input_separation": {
+    "status": "PASS",
+    "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+    "unique_inputs": 2,
+    "duplicate_rows": 0,
+    "overlapping_inputs": 0,
+    "disjoint_inputs": 2,
+    "disjoint_cases_passed": 2,
+    "unknown_inputs": 0,
+    "scope": "unique root-input tuples; actual inputs at all composing and earlier body-fill activities compared with their selection/holdout cases and probes; duplicate expectations must all match; model-training exposure is unknown",
+    "earlier_stages": [
+      {
+        "activity_id": "urn:receipt11591:sum",
+        "source_sha256": "sha256:262bd7515b8ea694c555baa048a38334e204c2d126391751d33e954cf8fe5b52",
+        "plan_sha256": "sha256:50b711a5ec17fa0d7c6d159be1f525d441e7e1bb57396539b08f92f46989f962",
+        "input_set_sha256": "sha256:fbbcf9575bb48ad9642ed5e121a6c56c0b27276d9fd0bda86633114b0db13fc2",
+        "unique_inputs": 9
+      }
+    ]
+  },
+  "model_calls": 0,
+  "elapsed_ns": 706749000,
+  "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+}

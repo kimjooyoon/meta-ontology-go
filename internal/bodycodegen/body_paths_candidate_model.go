@@ -15,6 +15,21 @@ import (
 // Shape and version come from the decoded artifact. A v1 artifact never gains
 // branch or output channels just because a newer runtime is available.
 func (m *conditionPathModel) featureVersion() string {
+	if m.sourceRelativeV4Contract() {
+		return contractdecision.SourceRelativeV4FeatureVersion
+	}
+	if m.sourceRelativeV3ProseNeutralContract() {
+		return contractdecision.SourceRelativeV3ProseNeutralFeatureVersion
+	}
+	if m.sourceRelativeV3Contract() {
+		return contractdecision.SourceRelativeV3FeatureVersion
+	}
+	if m.sourceRelativeV2Contract() {
+		return contractdecision.SourceRelativeV2FeatureVersion
+	}
+	if m.sourceRelativeContract() {
+		return contractdecision.SourceRelativeOrderedSourceFeatureVersion
+	}
 	if m.canonicalContract() {
 		return contractdecision.CanonicalOrderedSourceFeatureVersion
 	}
@@ -58,7 +73,9 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 		info.ResidentTensorBytes = contractdecision.ChoiceParameterCount * 4
 	case *contractdecision.OrderedRequirementModel:
 		info.ResidentTensorBytes = contractdecision.OrderedRequirementParameterCount * 4
-	case *contractdecision.InteractionRequirementModel, *contractdecision.CanonicalInteractionRequirementModel:
+	case *contractdecision.InteractionRequirementModel, *contractdecision.CanonicalInteractionRequirementModel,
+		*contractdecision.SourceRelativeRequirementModel, *contractdecision.SourceRelativeV2Model, *contractdecision.SourceRelativeV3Model,
+		*contractdecision.SourceRelativeV3ProseNeutralModel, *contractdecision.SourceRelativeV4Model:
 		info.ResidentTensorBytes = contractdecision.InteractionRequirementParameterCount * 4
 	}
 	if m.execution != nil {
@@ -72,7 +89,17 @@ func (m *conditionPathModel) describe(info *RetainedModelInfo) {
 func decodeCandidateModel(raw []byte, schema string) (typedPathModel, error) {
 	m := &conditionPathModel{artifactSHA: digest(raw)}
 	var err error
-	if schema == contractdecision.CanonicalInteractionRequirementSchema {
+	if schema == contractdecision.SourceRelativeV4Schema {
+		m.contract, err = contractdecision.DecodeSourceRelativeV4(raw)
+	} else if schema == contractdecision.SourceRelativeV3ProseNeutralSchema {
+		m.contract, err = contractdecision.DecodeSourceRelativeV3ProseNeutral(raw)
+	} else if schema == contractdecision.SourceRelativeV3Schema {
+		m.contract, err = contractdecision.DecodeSourceRelativeV3(raw)
+	} else if schema == contractdecision.SourceRelativeV2Schema {
+		m.contract, err = contractdecision.DecodeSourceRelativeV2(raw)
+	} else if schema == contractdecision.SourceRelativeRequirementSchema {
+		m.contract, err = contractdecision.DecodeSourceRelativeRequirementConditioned(raw)
+	} else if schema == contractdecision.CanonicalInteractionRequirementSchema {
 		m.contract, err = contractdecision.DecodeCanonicalInteractionRequirementConditioned(raw)
 	} else if schema == contractdecision.InteractionRequirementSchema {
 		m.contract, err = contractdecision.DecodeInteractionRequirementConditioned(raw)

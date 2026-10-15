@@ -1,0 +1,19 @@
+package bodyexecution
+namespace text_input
+
+entity Integer id "urn:gooo:type:integer"
+entity Text id "urn:gooo:type:string"
+
+# Classify one JSON Unicode escape and its immediately adjacent escape.
+# -1 as the second input means that no adjacent Unicode escape was present.
+activity TextEscapePolicy(Integer, Integer) -> Text id "urn:gooo:text-input:escape-policy" computes `
+let unit = input0
+let next = input1
+if unit < 0 || unit > 65535 { return "INVALID_UNIT" }
+if unit >= 55296 && unit <= 56319 {
+    if next >= 56320 && next <= 57343 { return "SURROGATE_PAIR" }
+    return "UNPAIRED_HIGH"
+}
+if unit >= 56320 && unit <= 57343 { return "UNPAIRED_LOW" }
+return "SCALAR_ESCAPE"
+`

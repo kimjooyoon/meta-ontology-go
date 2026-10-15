@@ -36,20 +36,86 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.run_attempt > 1 && format('replay-{0}', github.run_id) || 'head' }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash ./scripts/ci-work-shell.sh {0}
+
+env:
+  GOTOOLCHAIN: go1.27.2
+  GOWORK: off
+  GOMAXPROCS: 2
+  GOOO_CI_BUDGET_MS: 2400000
+
 jobs:
+  work-domain:
+    name: Work domain preparation
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Bind the original shared work clock
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          started="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at)"
+          {
+            printf 'GOOO_CI_STARTED_AT=%s\n' "$started"
+            printf 'GOOO_CI_PREP_STARTED_AT=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_ENV"
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: 1.27.2
+          cache: false
+      - name: Compile the pinned Gooo work domain once
+        shell: bash
+        env:
+          SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          remaining=$((GOOO_CI_BUDGET_MS / 1000 - ($(date +%s) - $(date -d "$GOOO_CI_PREP_STARTED_AT" +%s))))
+          test "$remaining" -gt 0
+          root="$RUNNER_TEMP/ci-domain-tool"
+          mkdir -p "$root"
+          begin="$(date +%s%3N)"
+          GOBIN="$root" timeout --signal=KILL "${remaining}s" \
+            go install github.com/kimjooyoon/gooo-ci-domain/cmd/gooo-ci-domain@aa0e33f2e5ec36f319232080361e5fc967d6c442
+          elapsed=$(( $(date +%s%3N) - begin ))
+          digest="$(sha256sum "$root/gooo-ci-domain" | cut -d ' ' -f 1)"
+          work_started="$GOOO_CI_PREP_STARTED_AT"
+          jq -n --arg schema gooo/work-domain-tool-origin/v1 --arg head "$SOURCE_HEAD" \
+            --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg created "$GOOO_CI_STARTED_AT" --arg started "$work_started" --arg sha "$digest" \
+            --arg revision aa0e33f2e5ec36f319232080361e5fc967d6c442 --argjson elapsed "$elapsed" \
+            '{schema:$schema,source_head:$head,run_id:$run,run_attempt:$attempt,workflow_created_at:$created,started_at:$started,clock_scope:"admitted_source_work",tool_sha256:$sha,tool_revision:$revision,compile_elapsed_ms:$elapsed}' \
+            > "$root/origin.json"
+      - name: Publish this run's prepared tool
+        uses: actions/upload-artifact@v7
+        with:
+          name: work-domain-tool-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-domain-tool
+          if-no-files-found: error
+          retention-days: 1
+
   format:
     name: gofmt
+    needs: [work-domain]
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Materialize exact logical workspace
         id: materialize
         uses: ./.github/actions/materialize
@@ -235,81 +301,160 @@ jobs:
             echo "gofmt required for $path_count paths"
             exit 1
           fi
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
 
   vet:
     name: go vet
+    needs: [work-domain]
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Materialize exact logical workspace
         id: materialize
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: go vet ./...
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
 
   test:
     name: go test
+    needs: [work-domain]
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Materialize exact logical workspace
         id: materialize
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: go test ./...
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
 
   race:
     name: go test -race
+    needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Materialize exact logical workspace
         id: materialize
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      - run: go test -race ./...
+      - run: go test -race -json ./internal/meta/repositoryprojection/extractor ./...
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
 
   semantic:
     name: Semantic conformance
+    needs: [work-domain]
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Materialize exact logical workspace
         id: materialize
         uses: ./.github/actions/materialize
@@ -322,22 +467,41 @@ jobs:
           GOOO_CONFORMANCE_STAGE: "0"
           GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
         run: ./scripts/semantic-conformance.sh
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
 
   policy:
     name: CI policy
-    needs: [format, vet, test, race, semantic]
+    needs: [work-domain]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Materialize exact logical workspace
         id: materialize
         uses: ./.github/actions/materialize
@@ -637,6 +801,15 @@ jobs:
         env:
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
+      - name: Join original canonical checks before route admission
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const {joinCanonicalChecks} = require('./scripts/ci-proof/canonical_join');
+            const receipt = await joinCanonicalChecks(github, context, process.env);
+            fs.writeFileSync(`${process.env.GOOO_CI_ORIGIN_ROOT}/canonical-join.json`, JSON.stringify(receipt, null, 2) + '\n');
+            core.exportVariable('GOOO_NON_ROUTE_RESULTS', receipt.results);
       - name: Verify exact PR route and protected target
         if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
         env:
@@ -649,28 +822,47 @@ jobs:
           GOOO_REPOSITORY: ${{ github.repository }}
           GOOO_PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.promotion_pr_number || 0 }}
           GOOO_PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
-          GOOO_NON_ROUTE_RESULTS: "format=${{ needs.format.result }},vet=${{ needs.vet.result }},test=${{ needs.test.result }},race=${{ needs.race.result }},semantic=${{ needs.semantic.result }}"
         run: go run ./scripts/verify --skip-caps
       - name: Validate source metric and meta evidence on protected push
         if: github.event_name == 'push'
         env:
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
+
   evidence:
     name: CI evidence
     needs: [format, vet, test, race, semantic, policy]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Materialize exact logical workspace
         id: materialize
         uses: ./.github/actions/materialize
@@ -687,6 +879,9 @@ jobs:
           node scripts/ci-proof/route_test.js
           node scripts/ci-proof/concurrency_test.js
           node scripts/ci-proof/time_causality_v011_test.js
+          node scripts/ci-proof/failure_capture_test.js
+          node scripts/ci-proof/tool_origin_test.js
+          node scripts/ci-proof/canonical_join_test.js
       - name: Collect terminal canonical job evidence
         uses: actions/github-script@v9.0.0
         with:
@@ -770,6 +965,20 @@ jobs:
             const domainPayload = {...domain, digests: {...domain.digests, domain_sha256: ''}};
             domain.digests.domain_sha256 = crypto.createHash('sha256').update(JSON.stringify(domainPayload)).digest('hex');
             fs.writeFileSync('ci-domain-evidence.json', JSON.stringify(domain, null, 2) + '\n');
+      - name: Retain source-bound execution tools from the warm build
+        run: |
+          root="$RUNNER_TEMP/ci-execution-tools"
+          mkdir -p "$root"
+          go build -buildvcs=false -o "$root/gooo" ./cmd/gooo
+          go build -buildvcs=false -o "$root/ci-proof" ./scripts/ci-proof
+          node scripts/ci-proof/tool_origin.js write "$root"
+      - name: Publish current source execution tools
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-execution-tools-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-execution-tools
+          if-no-files-found: error
+          retention-days: 1
       - name: Upload CI evidence bundle
         uses: actions/upload-artifact@v7
         with:
@@ -779,22 +988,41 @@ jobs:
             ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
 
   proof:
     name: CI proof bundle
     needs: [format, vet, test, race, semantic, policy, evidence, feedback-predecessor]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Materialize exact logical workspace
         id: materialize
         uses: ./.github/actions/materialize
@@ -872,6 +1100,30 @@ jobs:
         with:
           name: ${{ steps.evidence-lineage.outputs.artifact-name }}
           path: ci-evidence-input
+      - name: Resolve execution tool lineage
+        id: tool-lineage
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const {listWorkflowArtifacts, selectArtifactLineage} = require('./scripts/ci-proof/artifacts');
+            const rows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
+            const report = selectArtifactLineage(rows, 'ci-execution-tools', context.runId, Number(process.env.GITHUB_RUN_ATTEMPT));
+            if (report.decision !== 'EXACT' || !report.exact_consumption_authorized) {
+              throw new Error(`${report.decision}: ${report.reason}`);
+            }
+            require('fs').writeFileSync('ci-execution-tool-lineage.json', JSON.stringify(report, null, 2) + '\n');
+            core.setOutput('artifact-name', report.selected.name);
+      - name: Download current source execution tools
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ steps.tool-lineage.outputs.artifact-name }}
+          path: ${{ runner.temp }}/ci-execution-tools
+      - name: Bind tool bytes to the original source and attempt
+        run: |
+          root="$RUNNER_TEMP/ci-execution-tools"
+          node scripts/ci-proof/tool_origin.js verify "$root"
+          chmod u+x "$root/gooo" "$root/ci-proof"
+          cp "$root/origin.json" ci-execution-tool-origin.json
       - name: Collect terminal canonical jobs
         uses: actions/github-script@v9.0.0
         env:
@@ -912,7 +1164,7 @@ jobs:
       - name: Reproduce proof fixture
         run: |
           mkdir -p ci-generated/first
-          go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated/first
+          "$RUNNER_TEMP/ci-execution-tools/gooo" generate examples/billing/main.gooo --out ci-generated/first
           test -s ci-generated/first/semantic.gooo.go
           test -z "$(gofmt -l ci-generated/first/semantic.gooo.go)"
           test -z "$(git diff --name-only)"
@@ -1062,12 +1314,12 @@ jobs:
             fs.writeFileSync('ci-proof-context.json', JSON.stringify(contextData));
       - name: Build deterministic proof and append receipt
         run: |
-          go run ./scripts/ci-proof \
+          "$RUNNER_TEMP/ci-execution-tools/ci-proof" \
             --root . --governance .github/ci-governance.json --evidence ci-evidence-input/ci-evidence.json \
             --jobs ci-final-jobs.json --context ci-proof-context.json --generated ci-generated/first \
             --output ci-proof.json --receipt provenance-receipt.jsonl
       - name: Verify promotion proof fail closed
-        run: go run ./scripts/ci-proof --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass
+        run: '"$RUNNER_TEMP/ci-execution-tools/ci-proof" --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass'
       - name: Upload proof and provenance receipt
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -1080,24 +1332,53 @@ jobs:
             ci-proof-route.json
             ci-concurrency-lane.json
             ci-artifact-lineage.json
+            ci-execution-tool-lineage.json
+            ci-execution-tool-origin.json
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
+
   failure-report:
     name: CI failure summary
     needs: [format, vet, test, race, semantic, policy, proof]
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: >-
+      ${{ !cancelled() &&
+          (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' ||
+           github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') &&
+          !(needs.format.result == 'success' && needs.vet.result == 'success' &&
+            needs.test.result == 'success' && needs.race.result == 'success' &&
+            needs.semantic.result == 'success' && needs.policy.result == 'success' &&
+            needs.proof.result == 'success') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Materialize exact logical workspace
         id: materialize
         uses: ./.github/actions/materialize
@@ -1167,7 +1448,7 @@ jobs:
             if (fs.existsSync(proofPath)) {
               try {
                 proof = JSON.parse(fs.readFileSync(proofPath, 'utf8'));
-                const exactProofTuple = proof.schema === 'gooo/ci-proof/v4'
+                const exactProofTuple = proof.schema === 'gooo/ci-proof/v5'
                   && proof.repository === `${context.repo.owner}/${context.repo.repo}`
                   && proof.event === context.eventName
                   && proof.base_ref === normalizedBaseRef
@@ -1255,7 +1536,7 @@ jobs:
             let missingReasons = {};
             let artifacts = [];
             let proofFailureCodes = [];
-            if (failed.name === 'CI proof bundle') {
+            if (terminalFailures.some(job => job.name === 'CI proof bundle')) {
               if (proofState === 'artifact_missing' || proofState === 'artifact_invalid' || proofState === 'artifact_missing_or_invalid') {
                 code = 'CI-ARTIFACT-001';
                 proofFailureCodes = [code];
@@ -1278,8 +1559,6 @@ jobs:
                 artifactReason = 'proof_artifact_current_and_bound';
               }
             } else {
-              code = classifyTerminalJob(failed);
-              proofFailureCodes = [code];
               if (proofState === 'verified') {
                 artifacts = proof.artifacts;
                 artifactStatus = 'verified';
@@ -1393,21 +1672,40 @@ jobs:
           path: ci-closure.json
           if-no-files-found: error
           retention-days: 14
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
 
   feedback-predecessor:
     name: Feedback predecessor
+    needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
         with:
@@ -1508,17 +1806,40 @@ jobs:
             ${{ runner.temp }}/predecessor-semantic-a.json
           if-no-files-found: error
           retention-days: 30
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
 
   language-package-execution:
     name: Language package execution
+    needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: true
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Conform package execution through Go 1.27
         env:
           EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -1529,22 +1850,41 @@ jobs:
           path: ${{ runner.temp }}/language-package-execution
           if-no-files-found: error
           retention-days: 14
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14
+
   coherence-boundary-probe:
     name: COHERENCE boundary probe
     needs: [feedback-predecessor]
     if: ${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && needs.feedback-predecessor.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
+      - name: Bind shared clock, tool and command origins
+        uses: ./.github/actions/work-domain
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Re-consume exact predecessor artifact in caller-owned temp space
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -1871,3 +2211,17 @@ jobs:
           path: coherence-boundary-probe.json
           if-no-files-found: error
           retention-days: 30
+      - name: Retain completed and censored command costs
+        if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Preserve original command work origins
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: command-origins-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GOOO_CI_ORIGIN_ROOT }}
+          if-no-files-found: warn
+          retention-days: 14

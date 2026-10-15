@@ -8,6 +8,7 @@ import (
 
 func declarationFromNode(node Node, model Model, registry semantic.TypeRegistry) (Declaration, error) {
 	declaration := Declaration{Kind: node.Kind, ID: node.ID, Name: node.Name, Fields: cloneFields(node.Fields), Attributes: cloneStringMap(node.Attributes), Span: node.Span}
+	declaration.InputNames = append([]Reference(nil), node.InputNames...)
 	if declaration.Name == "" {
 		declaration.Name = defaultName(node.ID)
 	}

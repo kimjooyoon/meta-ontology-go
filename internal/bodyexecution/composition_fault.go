@@ -9,6 +9,8 @@ type CompositionFaultSite struct {
 	RootActivityID   string `json:"root_activity_id"`
 	ActivityID       string `json:"activity_id"`
 	Operator         string `json:"operator"`
+	Assignment       string `json:"assignment,omitempty"`
+	Variable         string `json:"variable,omitempty"`
 	Expression       string `json:"expression"`
 	ProjectionSHA256 string `json:"projection_sha256"`
 	Start            int    `json:"start"`

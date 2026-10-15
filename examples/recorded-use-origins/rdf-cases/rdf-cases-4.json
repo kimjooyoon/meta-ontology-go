@@ -1,0 +1,173 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "origin/recordeduse:ExportNTriples": {
+          "receipt_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "source_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "journal_sha256": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "offset": 4,
+          "total_rows": 9,
+          "frames_dropped": 0,
+          "writes_dropped": 0,
+          "uses_dropped": 0,
+          "cases": [
+            5
+          ],
+          "use_indices": [
+            13
+          ],
+          "frames": [
+            2
+          ],
+          "assignments": [
+            8
+          ],
+          "roots": [
+            "urn:root"
+          ],
+          "activities": [
+            "urn:helper:한글"
+          ],
+          "resolved": [
+            true
+          ],
+          "reasons": [
+            ""
+          ],
+          "version_frames": [
+            2
+          ],
+          "version_activities": [
+            "urn:helper:한글"
+          ],
+          "version_completed": [
+            true
+          ],
+          "read_sha256": [
+            "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+          ],
+          "read_starts": [
+            0
+          ],
+          "read_ends": [
+            5
+          ],
+          "read_mappings": [
+            "MAPPED"
+          ],
+          "names": [
+            "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          ],
+          "ordinals": [
+            0
+          ],
+          "scalar_types": [
+            "int64"
+          ]
+        }
+      },
+      "expected": {
+        "origin/recordeduse:ExportNTriples": {
+          "schema": "gooo/recorded-use-rdf/v1",
+          "scope": "saved_json_bytes",
+          "status": "EXPORT_TEXT_BOUND",
+          "reason": "METADATA_EXCEEDS_128_BYTES",
+          "receipt_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "source_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "journal_sha256": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "call_iri": "",
+          "value_iri": "",
+          "usage_iri": "",
+          "records_dropped": false,
+          "lines": []
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:ExportNTriples": {
+          "receipt_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "source_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "journal_sha256": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "offset": 4,
+          "total_rows": 9,
+          "frames_dropped": 0,
+          "writes_dropped": 0,
+          "uses_dropped": 0,
+          "cases": [
+            5
+          ],
+          "use_indices": [
+            13
+          ],
+          "frames": [
+            2
+          ],
+          "assignments": [
+            -1
+          ],
+          "roots": [
+            "urn:root"
+          ],
+          "activities": [
+            "urn:helper:한글"
+          ],
+          "resolved": [
+            false
+          ],
+          "reasons": [
+            "NO_RECORDED_ASSIGNMENT"
+          ],
+          "version_frames": [
+            -1
+          ],
+          "version_activities": [
+            ""
+          ],
+          "version_completed": [
+            false
+          ],
+          "read_sha256": [
+            "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+          ],
+          "read_starts": [
+            0
+          ],
+          "read_ends": [
+            5
+          ],
+          "read_mappings": [
+            "MAPPED"
+          ],
+          "names": [
+            "값 \"A\"\\경로\n다음"
+          ],
+          "ordinals": [
+            0
+          ],
+          "scalar_types": [
+            "int64"
+          ]
+        }
+      },
+      "expected": {
+        "origin/recordeduse:ExportNTriples": {
+          "schema": "gooo/recorded-use-rdf/v1",
+          "scope": "saved_json_bytes",
+          "status": "UNRESOLVED_LOCAL_USE",
+          "reason": "NO_RECORDED_ASSIGNMENT",
+          "receipt_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "source_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "journal_sha256": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "call_iri": "",
+          "value_iri": "",
+          "usage_iri": "",
+          "records_dropped": false,
+          "lines": []
+        }
+      }
+    }
+  ]
+}

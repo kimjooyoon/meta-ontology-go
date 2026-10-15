@@ -1,0 +1,35 @@
+--- /Users/alice/meta-go/meta-ontology-go/internal/meta/syntaxregistration/history_capacity_repair_test.go (old)
++++ /Users/alice/meta-go/meta-ontology-go/internal/meta/syntaxregistration/history_capacity_repair_test.go (new)
+@@ -33,7 +33,7 @@
+ 
+ func TestHistoryCapacityGrowthPreservesEveryDeclaredTarget(t *testing.T) {
+ 	raw := historyCapacityLegacyFixture()
+-	for step := 0; step < 53; step++ {
++	for step := range 53 {
+ 		source := parseHistoryCapacityFixture(t, raw)
+ 		if err := pinPreviousSyntaxTarget(source, 174+step, 985+step); err != nil {
+ 			t.Fatal(err)
+--- /Users/alice/meta-go/meta-ontology-go/internal/meta/syntaxregistration/history_origins.go (old)
++++ /Users/alice/meta-go/meta-ontology-go/internal/meta/syntaxregistration/history_origins.go (new)
+@@ -3,6 +3,7 @@
+ import (
+ 	"fmt"
+ 	"go/ast"
++	"slices"
+ 	"strings"
+ )
+ 
+@@ -65,12 +66,7 @@
+ }
+ 
+ func historyOwnsHelper(history historyOrigins, function *ast.FuncDecl) bool {
+-	for _, helper := range history.helpers {
+-		if helper == function {
+-			return true
+-		}
+-	}
+-	return false
++	return slices.Contains(history.helpers, function)
+ }
+ 
+ func historySwitch(source *goSource, selection *ast.SwitchStmt) bool {

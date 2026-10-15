@@ -1,0 +1,5 @@
+=== RUN   TestCollectionObservationUsesOrderedJSON7901
+    collection_display_test.go:27: 7901: readable ordered JSON, exact int64, empty array, independent-storage equality and order-sensitive comparison; source execution0
+--- PASS: TestCollectionObservationUsesOrderedJSON7901 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.485s

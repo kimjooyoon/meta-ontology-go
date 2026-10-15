@@ -11,7 +11,6 @@ import (
 	"go/ast"
 	"go/importer"
 	"go/parser"
-	"go/scanner"
 	"go/token"
 	"go/types"
 	"maps"
@@ -40,42 +39,48 @@ type Result struct {
 
 // Report describes what was lowered and how the output was checked.
 type Report struct {
-	Schema                 string                  `json:"schema"`
-	Decision               string                  `json:"decision"`
-	Activity               string                  `json:"activity"`
-	ActivityID             string                  `json:"activity_id"`
-	InputType              string                  `json:"input_type"`
-	InputParameters        []InputParameter        `json:"input_parameters,omitempty"`
-	RecordTypes            []RecordType            `json:"record_types,omitempty"`
-	OutputType             string                  `json:"output_type"`
-	PlanSHA256             string                  `json:"plan_sha256"`
-	CompilerSourceSHA      string                  `json:"compiler_source_sha"`
-	SourceDigest           string                  `json:"source_digest"`
-	ProgramDigest          string                  `json:"program_digest"`
-	GeneratedDigest        string                  `json:"generated_digest"`
-	ReplayDigest           string                  `json:"replay_digest"`
-	Route                  string                  `json:"route"`
-	RouteDecision          decisionroute.Receipt   `json:"route_decision"`
-	RouteSelection         RouteSelectionReceipt   `json:"route_selection"`
-	RouteDecisionLatencyMS float64                 `json:"route_decision_latency_ms"`
-	BodyFill               *IRBodyFillReceipt      `json:"body_fill,omitempty"`
-	BodySearch             *IRBodySearchReceipt    `json:"body_search,omitempty"`
-	BodyPaths              *BodyPathReceipt        `json:"body_paths,omitempty"`
-	RecordAssembly         *RecordAssemblyReceipt  `json:"record_assembly,omitempty"`
-	CallClosure            *PureCallClosure        `json:"call_closure,omitempty"`
-	CandidateRoutes        []string                `json:"candidate_routes"`
-	EquivalenceRule        string                  `json:"equivalence_rule"`
-	SourceConstructs       int                     `json:"source_constructs"`
-	LoweredConstructs      int                     `json:"lowered_constructs"`
-	SourceSemanticUnits    int                     `json:"source_semantic_units"`
-	LoweredSemanticUnits   int                     `json:"lowered_semantic_units"`
-	CompletenessPercent    float64                 `json:"completeness_percent"`
-	RouteEquivalence       RouteEquivalenceReceipt `json:"route_equivalence"`
-	TypecheckPassed        bool                    `json:"typecheck_passed"`
-	DeterministicReplay    bool                    `json:"deterministic_replay"`
-	RepositoryWrites       int                     `json:"repository_writes"`
-	UnsupportedConstructs  string                  `json:"unsupported_constructs"`
-	CompletenessReceipt    *CompletenessReceipt    `json:"completeness_receipt,omitempty"`
+	Schema                 string                   `json:"schema"`
+	Decision               string                   `json:"decision"`
+	Activity               string                   `json:"activity"`
+	ActivityID             string                   `json:"activity_id"`
+	InputType              string                   `json:"input_type"`
+	InputParameters        []InputParameter         `json:"input_parameters,omitempty"`
+	RecordTypes            []RecordType             `json:"record_types,omitempty"`
+	OutputType             string                   `json:"output_type"`
+	PlanSHA256             string                   `json:"plan_sha256"`
+	CompilerSourceSHA      string                   `json:"compiler_source_sha"`
+	SourceDigest           string                   `json:"source_digest"`
+	ProgramDigest          string                   `json:"program_digest"`
+	GeneratedDigest        string                   `json:"generated_digest"`
+	ReplayDigest           string                   `json:"replay_digest"`
+	Route                  string                   `json:"route"`
+	RouteDecision          decisionroute.Receipt    `json:"route_decision"`
+	RouteSelection         RouteSelectionReceipt    `json:"route_selection"`
+	RouteDecisionLatencyMS float64                  `json:"route_decision_latency_ms"`
+	BodyFill               *IRBodyFillReceipt       `json:"body_fill,omitempty"`
+	BodySearch             *IRBodySearchReceipt     `json:"body_search,omitempty"`
+	BodyPaths              *BodyPathReceipt         `json:"body_paths,omitempty"`
+	RecordAssembly         *RecordAssemblyReceipt   `json:"record_assembly,omitempty"`
+	BodyConditions         []BodyConditionOrigin    `json:"body_conditions,omitempty"`
+	BodyReads              []BodyReadOrigin         `json:"body_reads,omitempty"`
+	BodyConstructions      []BodyConstructionOrigin `json:"body_constructions,omitempty"`
+	BodyLocals             []BodyLocalOrigin        `json:"body_locals,omitempty"`
+	BodyFields             []BodyFieldOrigin        `json:"body_fields,omitempty"`
+	BodyReturns            []BodyReturnOrigin       `json:"body_returns,omitempty"`
+	CallClosure            *PureCallClosure         `json:"call_closure,omitempty"`
+	CandidateRoutes        []string                 `json:"candidate_routes"`
+	EquivalenceRule        string                   `json:"equivalence_rule"`
+	SourceConstructs       int                      `json:"source_constructs"`
+	LoweredConstructs      int                      `json:"lowered_constructs"`
+	SourceSemanticUnits    int                      `json:"source_semantic_units"`
+	LoweredSemanticUnits   int                      `json:"lowered_semantic_units"`
+	CompletenessPercent    float64                  `json:"completeness_percent"`
+	RouteEquivalence       RouteEquivalenceReceipt  `json:"route_equivalence"`
+	TypecheckPassed        bool                     `json:"typecheck_passed"`
+	DeterministicReplay    bool                     `json:"deterministic_replay"`
+	RepositoryWrites       int                      `json:"repository_writes"`
+	UnsupportedConstructs  string                   `json:"unsupported_constructs"`
+	CompletenessReceipt    *CompletenessReceipt     `json:"completeness_receipt,omitempty"`
 }
 
 // RouteSelectionReceipt makes an optional weighted route draw replayable without
@@ -151,10 +156,11 @@ func generateRouteParameters(packageName, activityName, activityID string, param
 
 func generateRouteWithCalls(packageName, activityName, activityID string, parameters []InputParameter,
 	outputType, body, route string, calls []pureCallFunction, records []RecordType) (generatedRoute, error) {
-	generated, sourceConstructs, loweredConstructs, sourceUnits, loweredUnits, err := renderParametersWithCalls(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
+	projected, err := projectBodyOrigins(packageName, activityName, activityID, parameters, outputType, body, route, calls, records)
 	if err != nil {
 		return generatedRoute{}, err
 	}
+	generated := projected.source
 	equivalenceRule := routeEquivalenceRule(route)
 	equivalence, err := routeEquivalenceWithCalls(packageName, activityName, parameters, outputType, body, generated, equivalenceRule, calls, records)
 	if err != nil {
@@ -164,9 +170,9 @@ func generateRouteWithCalls(packageName, activityName, activityID string, parame
 		return generatedRoute{}, fmt.Errorf("route %q failed its canonical semantic equivalence receipt", route)
 	}
 	completeness := 0.0
-	if sourceUnits > 0 {
-		covered := min(loweredUnits, sourceUnits)
-		completeness = float64(covered) * 100 / float64(sourceUnits)
+	if projected.units > 0 {
+		covered := min(projected.loweredUnits, projected.units)
+		completeness = float64(covered) * 100 / float64(projected.units)
 	}
 	var inputParameters []InputParameter
 	if len(parameters) > 1 {
@@ -176,9 +182,9 @@ func generateRouteWithCalls(packageName, activityName, activityID string, parame
 		Schema: schema, Decision: "PASS", Activity: activityName, ActivityID: activityID,
 		InputType: parameterTypeLabel(parameters), InputParameters: inputParameters, OutputType: outputType, RecordTypes: records,
 		Route: route, EquivalenceRule: equivalenceRule,
-		SourceConstructs: sourceConstructs, LoweredConstructs: loweredConstructs,
-		SourceSemanticUnits: sourceUnits, LoweredSemanticUnits: loweredUnits,
-		CompletenessPercent: completeness, RouteEquivalence: equivalence,
+		SourceConstructs: projected.constructs, LoweredConstructs: projected.lowered,
+		SourceSemanticUnits: projected.units, LoweredSemanticUnits: projected.loweredUnits,
+		CompletenessPercent: completeness, RouteEquivalence: equivalence, BodyConditions: projected.conditions, BodyReads: projected.reads, BodyConstructions: projected.constructions, BodyLocals: projected.locals, BodyFields: projected.fields, BodyReturns: projected.returns,
 		TypecheckPassed: true,
 	}}, nil
 }
@@ -411,9 +417,14 @@ func validateExpression(expression ast.Expr) error {
 	switch value := expression.(type) {
 	case *ast.CallExpr:
 		return validatePureCallExpression(value)
+	case *ast.IndexExpr:
+		if err := validateExpression(value.X); err != nil {
+			return err
+		}
+		return validateExpression(value.Index)
 	case *ast.SliceExpr:
 		if value.Slice3 {
-			return fmt.Errorf("Text slices accept only low and high byte offsets")
+			return fmt.Errorf("slices accept only low and high offsets")
 		}
 		for _, part := range []ast.Expr{value.X, value.Low, value.High} {
 			if part != nil {
@@ -513,39 +524,13 @@ func normalizeIntegerLocalInitializers(packageName string, file *ast.File, fset 
 		inferred++
 		return true
 	})
-	return inferred
+	inferred += normalizeCountedInitializers(file)
+	return inferred + normalizeLengthIntegerContexts(packageName, file, fset)
 }
 
 func rewriteLetDeclarations(body string) (string, error) {
-	fset := token.NewFileSet()
-	file := fset.AddFile("computes", fset.Base(), len(body))
-	var sourceScanner scanner.Scanner
-	sourceScanner.Init(file, []byte(body), nil, scanner.ScanComments)
-	var offsets []int
-	for {
-		position, kind, literal := sourceScanner.Scan()
-		if kind == token.EOF {
-			break
-		}
-		if kind == token.IDENT && literal == "let" {
-			offsets = append(offsets, file.Offset(position))
-		}
-	}
-	if len(offsets) == 0 {
-		return body, nil
-	}
-	var output strings.Builder
-	last := 0
-	for _, offset := range offsets {
-		if offset < last || offset+3 > len(body) {
-			return "", fmt.Errorf("invalid let token in computes body")
-		}
-		output.WriteString(body[last:offset])
-		output.WriteString("var")
-		last = offset + 3
-	}
-	output.WriteString(body[last:])
-	return output.String(), nil
+	normalized, _, err := rewriteBodySurface(body)
+	return normalized, err
 }
 
 func digest(value []byte) string { return fmt.Sprintf("sha256:%x", sha256.Sum256(value)) }

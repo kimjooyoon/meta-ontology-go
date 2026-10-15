@@ -1,0 +1,14 @@
+package app
+namespace stock835_app
+import 계약 "stock835/contract"
+activity Reserve(계약.Request) -> 계약.Decision id "urn:stock835:reserve" computes "if input.quantity <= 0 { return 계약.Decision{approved: false, reason: \"invalid_quantity\", reference: input.reference} }; if input.quantity > input.stock { return 계약.Decision{approved: false, reason: \"insufficient_stock\", reference: input.reference} }; return __GOOO_BODY_HOLE_result__" assembling {
+ source_fill intent "Keep the reservation decision, declared reason and request reference together." {
+  hole "result"
+  candidate "allowed" { fill "result" "계약.Decision{approved: true, reason: \"capacity_available\", reference: input.reference}" }
+  candidate "unexplained" { fill "result" "계약.Decision{approved: true, reason: \"unknown\", reference: input.reference}" }
+  candidate "declined" { fill "result" "계약.Decision{approved: false, reason: \"capacity_available\", reference: input.reference}" }
+ }
+ value_case "[{\"quantity\":4,\"stock\":8,\"reference\":\"selection835\"}]" -> "{\"approved\":true,\"reason\":\"capacity_available\",\"reference\":\"selection835\"}"
+ holdout_value_case "[{\"quantity\":8,\"stock\":15,\"reference\":\"held835\"}]" -> "{\"approved\":true,\"reason\":\"capacity_available\",\"reference\":\"held835\"}"
+}
+bind 계약.Receive.result -> Reserve.input

@@ -1,0 +1,6 @@
+=== RUN   TestLiteralDecisions9203
+    sequence_literal_native_test.go:53: typed literal selection typed plan: no explicit binding edges
+--- FAIL: TestLiteralDecisions9203 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.589s
+FAIL

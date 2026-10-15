@@ -1,0 +1,312 @@
+{
+  "schema": "gooo/body-composition-runtime/v1",
+  "stage": "COMPLETE",
+  "composition_sha256": "sha256:2cb2dd110370fd60f722731cf3135837597a72d0523529a44ef70eead5b08bb5",
+  "original_source_sha256": "sha256:60fc503c8d7f4cc08ed3d1d65553603e5c42f12ad9fd012e459486d02d3f9ab6",
+  "selected_source_sha256": "sha256:60fc503c8d7f4cc08ed3d1d65553603e5c42f12ad9fd012e459486d02d3f9ab6",
+  "typed_plan_sha256": "sha256:85e9fb5461fe36c2f910090b4f189a4d241041904d8efe74e14964c38905400e",
+  "generated_sha256": "sha256:22f2eb7f4299b05b0c2101baa2a9da1c242396c07516b9205fa6cef18adc770e",
+  "driver_sha256": "sha256:3b4da11d9514113bdeef52a5e523e3e8ae01681baef1e6a2095b545c614eb647",
+  "observed_projection_sha256": "sha256:7bc05458bb683b0ce005a6e33383eda3c7e39b2db38964e53509e854dbb39a89",
+  "observed_driver_sha256": "sha256:d173dbadb6d654254438ba755160df16e4a4d6fc3c54df115e18e921f040a6e2",
+  "runtime_suite_sha256": "sha256:80ff377a669314c9df7642164c0293e93ce398f7d2993358423419783547844c",
+  "executable_sha256": "sha256:50c3e07091aa13e10f5c7033458e71d763bace80466b2a116b5139122ffca8fa",
+  "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+  "go_tool_selection": "explicit",
+  "go_version": "go version go1.27.2 darwin/arm64",
+  "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+  "producer_module": {
+    "path": "github.com/kimjooyoon/meta-ontology-go",
+    "version": "(devel)"
+  },
+  "toolchain": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 8637541,
+    "user_ns": 3855000,
+    "system_ns": 2826000,
+    "peak_rss_bytes": 14352384,
+    "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 1158041,
+      "wait_ns": 7479500,
+      "deadline_remaining_ns": 59986833000,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "build": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 335783583,
+    "user_ns": 130696000,
+    "system_ns": 95636000,
+    "peak_rss_bytes": 86605824,
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 861916,
+      "wait_ns": 334921667,
+      "deadline_remaining_ns": 59976982625,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "runs": [
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 356231792,
+      "user_ns": 3413000,
+      "system_ns": 6480000,
+      "peak_rss_bytes": 5029888,
+      "stdout_sha256": "sha256:36521488da5a510f793bd8a3ccd3eb621c2309657b471cb632c2db9d7ad76997",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 895375,
+        "wait_ns": 355336417,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59639761542,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 8251791,
+      "user_ns": 2713000,
+      "system_ns": 3877000,
+      "peak_rss_bytes": 5079040,
+      "stdout_sha256": "sha256:36521488da5a510f793bd8a3ccd3eb621c2309657b471cb632c2db9d7ad76997",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 2485583,
+        "wait_ns": 5766208,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59282908000,
+        "context_at_start_return": "ACTIVE"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "unicode1567://decide",
+          "input": {
+            "메모": "x",
+            "수량": 9
+          },
+          "input_fields": [
+            {
+              "id": "unicode1567://quantity",
+              "name": "수량",
+              "value": 9
+            },
+            {
+              "id": "unicode1567://memo",
+              "name": "메모",
+              "value": "x"
+            }
+          ],
+          "actual": 11,
+          "expected": 11,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "unicode1567://decide",
+          "input": {
+            "메모": "a\"b",
+            "수량": 10
+          },
+          "input_fields": [
+            {
+              "id": "unicode1567://quantity",
+              "name": "수량",
+              "value": 10
+            },
+            {
+              "id": "unicode1567://memo",
+              "name": "메모",
+              "value": "a\"b"
+            }
+          ],
+          "actual": 12,
+          "expected": 12,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 2,
+      "deliveries": [
+        {
+          "activity_id": "unicode1567://decide",
+          "input": {
+            "메모": "x",
+            "수량": 50
+          },
+          "input_fields": [
+            {
+              "id": "unicode1567://quantity",
+              "name": "수량",
+              "value": 50
+            },
+            {
+              "id": "unicode1567://memo",
+              "name": "메모",
+              "value": "x"
+            }
+          ],
+          "actual": 13,
+          "expected": 13,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": false
+        }
+      ]
+    }
+  ],
+  "projection_replayed": true,
+  "runtime_replayed": true,
+  "finite_passed": 3,
+  "finite_total": 3,
+  "condition_sites": [
+    {
+      "expression_id": "sha256:b5e4856689bbae5a272a0106dfc0d6afed9fc81cda86ca8317c0822a968ac6fd",
+      "root_activity_id": "unicode1567://decide",
+      "activity_id": "unicode1567://decide",
+      "expression": "input.GoooField2326c054f3565965858519205b8183da2b3bcec5b0ee57c55adb6067c7409974 \u003c 한계 \u0026\u0026 input.GoooField85ef5dc619a303cf2f44173a6eed6429d85e63b17d0cd04fd2d088c526fc91ac != \"a\\\"b\"",
+      "projection_sha256": "sha256:22f2eb7f4299b05b0c2101baa2a9da1c242396c07516b9205fa6cef18adc770e",
+      "start": 675,
+      "end": 856,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:60fc503c8d7f4cc08ed3d1d65553603e5c42f12ad9fd012e459486d02d3f9ab6",
+        "body_sha256": "sha256:890901672d8bd85c656f6efcfef8e0f1cd34fba8354ddd98a6167fa2073a7a1e",
+        "start_byte": 388,
+        "end_byte": 445,
+        "decoded_start": 45,
+        "decoded_end": 92,
+        "source_ordinal": 0,
+        "expression": "input.수량 \u003c 한계 \u0026\u0026 input.메모 != \"a\\\"b\"",
+        "relation": "retained_condition_node",
+        "fields": [
+          {
+            "entity_id": "unicode1567://request",
+            "field_id": "unicode1567://quantity",
+            "name": "수량"
+          },
+          {
+            "entity_id": "unicode1567://request",
+            "field_id": "unicode1567://memo",
+            "name": "메모"
+          }
+        ]
+      }
+    },
+    {
+      "expression_id": "sha256:a34dbc5fe152f846871f2ca68eb1c9438baca5387542a8dd102b0333ac2d4a5a",
+      "root_activity_id": "unicode1567://decide",
+      "activity_id": "unicode1567://decide",
+      "expression": "input.GoooField2326c054f3565965858519205b8183da2b3bcec5b0ee57c55adb6067c7409974 \u003c 한계",
+      "projection_sha256": "sha256:22f2eb7f4299b05b0c2101baa2a9da1c242396c07516b9205fa6cef18adc770e",
+      "start": 878,
+      "end": 966,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:60fc503c8d7f4cc08ed3d1d65553603e5c42f12ad9fd012e459486d02d3f9ab6",
+        "body_sha256": "sha256:890901672d8bd85c656f6efcfef8e0f1cd34fba8354ddd98a6167fa2073a7a1e",
+        "start_byte": 464,
+        "end_byte": 491,
+        "decoded_start": 111,
+        "decoded_end": 132,
+        "source_ordinal": 1,
+        "expression": "input.수량 \u003c 한계",
+        "relation": "retained_condition_node",
+        "fields": [
+          {
+            "entity_id": "unicode1567://request",
+            "field_id": "unicode1567://quantity",
+            "name": "수량"
+          }
+        ]
+      }
+    }
+  ],
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "COMPLETE",
+    "recorded_events": 5,
+    "dropped_events": 0,
+    "sha256": "sha256:d75af85d533d621e3edad60689319baea8a5a8908e16a04f2ae3412afd36f605"
+  },
+  "input_separation": {
+    "status": "UNKNOWN",
+    "reason": "UNCLASSIFIED_INPUTS",
+    "unique_inputs": 3,
+    "duplicate_rows": 0,
+    "overlapping_inputs": 0,
+    "disjoint_inputs": 0,
+    "disjoint_cases_passed": 0,
+    "unknown_inputs": 3,
+    "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+  },
+  "model_calls": 0,
+  "elapsed_ns": 727320666,
+  "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+}

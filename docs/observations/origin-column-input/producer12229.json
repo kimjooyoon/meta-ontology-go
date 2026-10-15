@@ -1,0 +1,30 @@
+[
+  {
+    "path": "cmd/gooo/package_execute.go",
+    "sha256": "61cc9b945461c7359378d48f3f4d52c01f577af57b036f6d1b4175dab26301d5"
+  },
+  {
+    "path": "cmd/gooo/package_execute_input.go",
+    "sha256": "175354047b37f412ba4511ee74b54411f8fb6c11103db03f8cb196e3ea7ab931"
+  },
+  {
+    "path": "cmd/gooo/package_origin_columns.go",
+    "sha256": "fa4b1508831b7c646020e9515dd1c98d018a22befac33e0d3b6687bece2d83ed"
+  },
+  {
+    "path": "cmd/gooo/package_origin_columns_fresh_test.go",
+    "sha256": "3517dfd07aca4720f03f2fd670d3fc04d91818718b394573b3ef79f5fa827d5c"
+  },
+  {
+    "path": "cmd/gooo/package_origin_empty_columns_fresh_test.go",
+    "sha256": "db7943f2e535711364fbdcf4b4b938723e401f0750247cd6cdcea09bd6d975ac"
+  },
+  {
+    "path": "cmd/gooo/package_origin_input.go",
+    "sha256": "f276515718fe14613417f2b5e14f3971de8427dad47f54b419565749cd2d8965"
+  },
+  {
+    "path": "internal/bodyexecution/native_origin_input.go",
+    "sha256": "82359f32346d4a231ed68cb6afda1399fe3a703e9b93576b4f04785d47df9fbb"
+  }
+]

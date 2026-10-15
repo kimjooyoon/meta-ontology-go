@@ -1,0 +1,20 @@
+package sharedanswer
+namespace sharedanswer
+entity Integer id "sharedanswer://integer"
+entity Boolean id "sharedanswer://boolean"
+entity Box id "sharedanswer://box" fields { field value id "sharedanswer://value" type integer required one }
+activity Select(Integer) -> Box computes "return Box{value:input}" assembling {
+ choice "value" field_value at "0" alternative "input+0" intent "반품 금액의 부호를 바꾼다. Negate the refund amount."
+ criteria { predicate "negative" activity "Negative" input "[0]" holdout_input "[19]" }
+ observe {
+  criteria_strategy "distinguish_then_check"
+  criteria_input "[7]"
+  criteria_input "[-5]"
+  max_candidates "2"
+  max_rounds "1"
+  reuse_outputs "true"
+  resolve_unique "true"
+ }
+ attempts "2"
+}
+activity Negative(Integer,Box) -> Boolean computes "return input1.value == 0-input0"

@@ -1,0 +1,9 @@
+{
+  "status": "FAILED_BEFORE_NATIVE_GENERATION",
+  "root_cause": "selected candidate emission wraps declared alternatives in parentheses;new range capture omitted2 bytes per selected prior replacement",
+  "repair": "include actual parenthesized emitted expression and preceding replacement deltas;original declaration value remains decoded unwrapped literal",
+  "next_new_cohort": 22133,
+  "producer_runs": 0,
+  "model_calls": 0,
+  "historical_reruns": 0
+}

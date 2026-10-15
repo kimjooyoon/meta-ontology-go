@@ -19,14 +19,14 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 	subjectExact := headExact && guard.HeadSHA == head && recovery.HeadSHA == head
 	guardAuthorized := authorizedGuard(guard, head)
 	recoveryAuthorized := authorizedRecovery(recovery, head)
-	mixed := knownMixedRecovery(head, guard, recovery)
-	effectsExact := effectBoundary(recovery) || mixed
+	nonPromoting := knownMixedRecovery(head, guard, recovery) || knownAppliedRecovery(head, guard, recovery)
+	effectsExact := effectBoundary(recovery) || nonPromoting
 	authorityExact := authorityBoundary(guard, recovery)
 	guardCoordinateID, recoveryCoordinateID := "guard-authorized", "recovery-authorized"
 	guardCoordinatePassed, recoveryCoordinatePassed := guardAuthorized, recoveryAuthorized
-	if mixed {
+	if nonPromoting {
 		guardCoordinateID, recoveryCoordinateID = "guard-terminal-neutral", "recovery-terminal-neutral"
-		guardCoordinatePassed, recoveryCoordinatePassed = mixed, mixed
+		guardCoordinatePassed, recoveryCoordinatePassed = nonPromoting, nonPromoting
 	}
 	coordinates := []Coordinate{
 		coordinate("expected-subject", "FOUNDATION", headExact),
@@ -45,11 +45,11 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 		}
 	}
 	decision, reason, resolution, mode, operation := DecisionFailClosed, "PROMOTION_CONTINUITY_UNKNOWN", "LOWER_RESOLUTION", "", "prove-authorized-successor"
-	if mixed {
+	if nonPromoting {
 		decision, reason, resolution = DecisionFailClosed, ReasonMixed, "EXACT"
 		mode, operation = ModeMixed, OperationMixed
 	}
-	if !mixed && satisfied == len(coordinates) {
+	if !nonPromoting && satisfied == len(coordinates) {
 		decision, reason, resolution = DecisionPass, "PROMOTION_AUTHORIZED_CONTINUITY_PROVEN", "EXACT"
 		mode, operation = "PROMOTION_AUTHORIZED", "prove-authorized-successor"
 	}
@@ -66,9 +66,9 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 		Coordinates: coordinates, RepositoryWrites: writes,
 		RepositoryMutationAuthorized: guard.MutationAuthorized || recovery.MutationAuthorized,
 	}
-	report.Indicators = buildIndicators(report, guardAuthorized, recoveryAuthorized, effectsExact, authorityExact, mixed)
+	report.Indicators = buildIndicators(report, guardAuthorized, recoveryAuthorized, effectsExact, authorityExact, nonPromoting)
 	report.Proofs = buildProofs(report, headExact && guardExact && recoveryExact,
-		subjectExact && (guardAuthorized && recoveryAuthorized || mixed), effectsExact && authorityExact, mixed)
+		subjectExact && (guardAuthorized && recoveryAuthorized || nonPromoting), effectsExact && authorityExact, nonPromoting)
 	return seal(report)
 }
 

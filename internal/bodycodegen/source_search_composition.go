@@ -28,7 +28,7 @@ func ValidateSourceIRSearch(ctx context.Context, filename string, source []byte,
 	if _, err = generateIRBodySearchCandidatesForSource(ctx, filename, source, activity, &plan); err != nil {
 		return err
 	}
-	file, _, id, body, err := prepareBodySearch(filename, source, activity, plan.HoleID)
+	p, err := prepareSearchBody(filename, source, activity, plan.HoleID)
 	if err != nil {
 		return err
 	}
@@ -37,11 +37,11 @@ func ValidateSourceIRSearch(ctx context.Context, filename string, source []byte,
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		filled, err := replaceIdentifier(body, bodyFillHoleToken(plan.HoleID), candidate.Expression)
+		filled, err := replaceIdentifier(p.body, bodyFillHoleToken(plan.HoleID), candidate.Expression)
 		if err != nil {
 			return err
 		}
-		_, last = generateRoute(file.Package.Name, activity, id, "int64", "int64", filled, preserveRoute)
+		_, last = p.generateBody(filled, preserveRoute)
 		if last == nil {
 			return nil
 		}

@@ -59,7 +59,7 @@ type RecordFlowChoice struct {
 type flowValue struct {
 	record int
 	scalar uint16
-	fields [16]uint16
+	fields [RecordFieldLimit]uint16
 }
 
 type flowBinding struct {
@@ -75,6 +75,7 @@ type flowState struct {
 }
 
 type recordFlowBuilder struct {
+	sourceValidation func(*ast.File) error
 	body             preparedBody
 	sites            []recordValueSite
 	fset             *token.FileSet

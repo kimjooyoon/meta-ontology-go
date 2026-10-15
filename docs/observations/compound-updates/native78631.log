@@ -1,0 +1,6 @@
+=== RUN   TestCompoundLocalNative78631
+    compound_local_native_fresh78631_test.go:38: source compound generation case 0: root input "Adjust.input0" requires an explicit value
+--- FAIL: TestCompoundLocalNative78631 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.579s
+FAIL

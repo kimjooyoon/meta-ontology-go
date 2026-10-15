@@ -1,0 +1,70 @@
+{
+  "base": "623a2a305907bd2716a7212faa5d0b03426053df",
+  "files": [
+    {
+      "path": "examples/length-aware-summary/cases.json",
+      "bytes": 820,
+      "sha256": "17cce0760613671795ad304f31c00c8af5207a62a7ed34a376ea1d9b1ae08abc"
+    },
+    {
+      "path": "examples/length-aware-summary/gooo.workspace.json",
+      "bytes": 266,
+      "sha256": "a7f3708401a6e618e396e5a3a62c7b5d12f6d2c3774ece1c2853cf3aeb34340c"
+    },
+    {
+      "path": "examples/length-aware-summary/summary.gooo",
+      "bytes": 1256,
+      "sha256": "a668b16d4072aae61106c19f7c996470edb506d5feb4dcd60a0278e8962cf425"
+    },
+    {
+      "path": "internal/bodycodegen/bodycodegen.go",
+      "bytes": 20917,
+      "sha256": "cbf198d0ac77cb4ddb9d3eb6665c7dd7cac5579b1529753c7c7226fc7d8a4fec"
+    },
+    {
+      "path": "internal/bodycodegen/length_integer_arguments.go",
+      "bytes": 382,
+      "sha256": "ee4e70fe8a3a459d8c3c0e62be8da1e299a26a09539477aa837f5e30abe3f934"
+    },
+    {
+      "path": "internal/bodycodegen/length_integer_bindings.go",
+      "bytes": 948,
+      "sha256": "c29a57986f90ec4ddc3bc41bd21c758fd81abe9c2f73e2d2837b86d42c904819"
+    },
+    {
+      "path": "internal/bodycodegen/length_integer_context.go",
+      "bytes": 2301,
+      "sha256": "3d23a340777523fcaf2a0846ebb1d3e2639302a2900100270be4bf6d09c7269d"
+    },
+    {
+      "path": "internal/bodycodegen/length_integer_context_fresh_test.go",
+      "bytes": 3379,
+      "sha256": "663885a89b8ef52cace7843b460ee32dbfff1feb2298d10366872e4ea6a5e9ed"
+    },
+    {
+      "path": "internal/bodycodegen/length_integer_flow_fresh_test.go",
+      "bytes": 1851,
+      "sha256": "6b5a5b314d7553e8e751edbc0090cb1dac224fe145b3be48994c63261b2079b2"
+    },
+    {
+      "path": "internal/bodycodegen/length_integer_legacy_fresh_test.go",
+      "bytes": 2087,
+      "sha256": "eb78146ae06d94e60f36eb846f2639798d022b53bf3d871a4472f6406ff15003"
+    },
+    {
+      "path": "internal/bodycodegen/length_integer_visit.go",
+      "bytes": 896,
+      "sha256": "982db30b69047b05244d1cac8bfdff3a14426795293b7da91a2f2f0de7a7783e"
+    },
+    {
+      "path": "internal/bodycodegen/record_flow_expressions.go",
+      "bytes": 5586,
+      "sha256": "8c7dc66326ab7fad1a8832994d452e8a9caa06f4895b0845616c890c3091a421"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/length_integer_native_fresh_test.go",
+      "bytes": 2739,
+      "sha256": "a03669e948b1faf4a53ec361c438927d9e424d6bd4d4c0a212b29f6978a20a85"
+    }
+  ]
+}

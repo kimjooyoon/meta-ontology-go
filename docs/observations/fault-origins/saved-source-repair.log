@@ -1,0 +1,4 @@
+=== RUN   TestFaultOriginSavedSourceAndMembership
+--- PASS: TestFaultOriginSavedSourceAndMembership (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	0.309s

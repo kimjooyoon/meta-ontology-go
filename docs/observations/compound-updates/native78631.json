@@ -1,0 +1,9 @@
+{
+  "at": "2026-10-14T20:51:28.926641+00:00",
+  "exit": 1,
+  "wall_s": 6.022697584,
+  "observed_raw_bytes": 3078,
+  "observed_raw_sha256": "6c1e89efa3b97c4bfa126d0472dcb72e086c8f0954ba9ddc2cbe4b3447996ead",
+  "scope": "native78631",
+  "raw_source_archive_sha256": "39d25a1cb7de7ba6b9bf7149bf32c6cbfac9f017c4a32913c097c5b58ae8ca9b"
+}

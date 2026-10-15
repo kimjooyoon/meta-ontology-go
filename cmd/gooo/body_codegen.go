@@ -339,6 +339,7 @@ func runBodyCodegenContext(ctx context.Context, args []string, reader SourceRead
 		}
 		return exitOK
 	}
+	writeBodyCodegenCriteriaSummary(stderr, result)
 	if _, err := io.WriteString(stdout, result.Source); err != nil {
 		fmt.Fprintf(stderr, "gooo: body-codegen output: %v\n", err)
 		return exitFailure
@@ -351,6 +352,10 @@ func reportBodyCodegenFailure(jsonMode bool, filename, activity string, source [
 		completeness := bodycodegen.FailureCompletenessReceipt(activity, source, cause.Error())
 		var searchReceipt *bodycodegen.IRBodySearchReceipt
 		var pathReceipt *bodycodegen.BodyPathReceipt
+		var recordReceipt *bodycodegen.RecordAssemblyReceipt
+		if recordError, ok := errors.AsType[*bodycodegen.RecordAssemblyError](cause); ok {
+			recordReceipt = recordError.Receipt
+		}
 		if pathError, ok := errors.AsType[*bodycodegen.BodyPathError](cause); ok {
 			pathReceipt = pathError.Receipt
 			completeness = bodycodegen.PathFailureCompletenessReceipt(activity, source, cause.Error(), pathReceipt)
@@ -360,22 +365,23 @@ func reportBodyCodegenFailure(jsonMode bool, filename, activity string, source [
 			completeness = bodycodegen.SearchFailureCompletenessReceipt(activity, source, cause.Error(), searchReceipt)
 		}
 		payload := struct {
-			Schema              string                           `json:"schema"`
-			Decision            string                           `json:"decision"`
-			Source              string                           `json:"source"`
-			PlanSHA256          string                           `json:"plan_sha256"`
-			CompilerSourceSHA   string                           `json:"compiler_source_sha"`
-			RepositoryWrites    int                              `json:"repository_writes"`
-			Error               string                           `json:"error"`
-			CompletenessReceipt *bodycodegen.CompletenessReceipt `json:"completeness_receipt"`
-			BodySearch          *bodycodegen.IRBodySearchReceipt `json:"body_search,omitempty"`
-			BodyPaths           *bodycodegen.BodyPathReceipt     `json:"body_paths,omitempty"`
+			Schema              string                             `json:"schema"`
+			Decision            string                             `json:"decision"`
+			Source              string                             `json:"source"`
+			PlanSHA256          string                             `json:"plan_sha256"`
+			CompilerSourceSHA   string                             `json:"compiler_source_sha"`
+			RepositoryWrites    int                                `json:"repository_writes"`
+			Error               string                             `json:"error"`
+			CompletenessReceipt *bodycodegen.CompletenessReceipt   `json:"completeness_receipt"`
+			BodySearch          *bodycodegen.IRBodySearchReceipt   `json:"body_search,omitempty"`
+			BodyPaths           *bodycodegen.BodyPathReceipt       `json:"body_paths,omitempty"`
+			RecordAssembly      *bodycodegen.RecordAssemblyReceipt `json:"record_assembly,omitempty"`
 		}{
 			Schema: "gooo/body-codegen-report/v3", Decision: "FAIL_CLOSED",
 			PlanSHA256:        stringScopeValue(completeness.Scope, "plan_sha256"),
 			CompilerSourceSHA: stringScopeValue(completeness.Scope, "compiler_source_sha"),
 			RepositoryWrites:  0, Error: cause.Error(), CompletenessReceipt: completeness,
-			BodySearch: searchReceipt, BodyPaths: pathReceipt,
+			BodySearch: searchReceipt, BodyPaths: pathReceipt, RecordAssembly: recordReceipt,
 		}
 		encoder := json.NewEncoder(stdout)
 		encoder.SetEscapeHTML(false)

@@ -2,6 +2,7 @@ package packageruntime
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -64,7 +65,7 @@ func appendEntityTypeEnvironment(file *syntax.File, types map[string]string) *sy
 	}
 	names := make([]string, 0, len(types))
 	for name := range types {
-		if !present[name] {
+		if !present[name] && !strings.Contains(name, ".") {
 			names = append(names, name)
 		}
 	}
@@ -72,6 +73,7 @@ func appendEntityTypeEnvironment(file *syntax.File, types map[string]string) *sy
 	for _, name := range names {
 		declarations = append(declarations, &syntax.EntityDecl{Name: name, ID: types[name]})
 	}
+	declarations = appendQualifiedEntityTypes(clone, declarations, types)
 	clone.Decls = declarations
 	clone.Declarations = declarations
 	return clone

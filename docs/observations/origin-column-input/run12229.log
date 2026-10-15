@@ -1,0 +1,5 @@
+=== RUN   TestEmptyAssemblyColumns12229
+    package_origin_empty_columns_fresh_test.go:59: new direct-authored producer2/2;zero assembly fragments/two recorded writes;Gooo assembly-origin coverage0%;one consumer row;no original producer/model calls
+--- PASS: TestEmptyAssemblyColumns12229 (1.23s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.780s

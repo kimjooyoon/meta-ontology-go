@@ -1,0 +1,526 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "page_complete": true,
+          "recording_complete": true,
+          "case_indexes": [
+            0,
+            0,
+            1,
+            1,
+            2,
+            2
+          ],
+          "assignments": [
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          "kinds": [
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template"
+          ],
+          "source_shas": [
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c"
+          ],
+          "starts": [
+            489,
+            228,
+            489,
+            228,
+            489,
+            228
+          ],
+          "ends": [
+            515,
+            265,
+            515,
+            265,
+            515,
+            265
+          ]
+        }
+      },
+      "expected": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "fragment_rows": 6,
+          "mapped_writes": 6,
+          "missing_writes": 0,
+          "candidate_fragments": 0,
+          "grammar_fragments": 3,
+          "template_fragments": 3,
+          "coverage_basis_points": 10000,
+          "status": "complete-recorded"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "page_complete": false,
+          "recording_complete": true,
+          "case_indexes": [
+            0,
+            0,
+            1
+          ],
+          "assignments": [
+            0,
+            1,
+            0
+          ],
+          "kinds": [
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar"
+          ],
+          "source_shas": [
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c"
+          ],
+          "starts": [
+            489,
+            228,
+            489
+          ],
+          "ends": [
+            515,
+            265,
+            515
+          ]
+        }
+      },
+      "expected": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "fragment_rows": 3,
+          "mapped_writes": 3,
+          "missing_writes": -1,
+          "candidate_fragments": 0,
+          "grammar_fragments": 2,
+          "template_fragments": 1,
+          "coverage_basis_points": -1,
+          "status": "partial-page"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "page_complete": true,
+          "recording_complete": false,
+          "case_indexes": [
+            0,
+            0,
+            1,
+            1,
+            2,
+            2
+          ],
+          "assignments": [
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          "kinds": [
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template"
+          ],
+          "source_shas": [
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c"
+          ],
+          "starts": [
+            489,
+            228,
+            489,
+            228,
+            489,
+            228
+          ],
+          "ends": [
+            515,
+            265,
+            515,
+            265,
+            515,
+            265
+          ]
+        }
+      },
+      "expected": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "fragment_rows": 6,
+          "mapped_writes": 6,
+          "missing_writes": -1,
+          "candidate_fragments": 0,
+          "grammar_fragments": 3,
+          "template_fragments": 3,
+          "coverage_basis_points": -1,
+          "status": "partial-recording"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "page_complete": true,
+          "recording_complete": true,
+          "case_indexes": [
+            0,
+            0,
+            1,
+            1,
+            2,
+            2
+          ],
+          "assignments": [
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kinds": [
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template"
+          ],
+          "source_shas": [
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c"
+          ],
+          "starts": [
+            489,
+            228,
+            489,
+            228,
+            489,
+            228
+          ],
+          "ends": [
+            515,
+            265,
+            515,
+            265,
+            515,
+            265
+          ]
+        }
+      },
+      "expected": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "fragment_rows": 6,
+          "mapped_writes": -1,
+          "missing_writes": -1,
+          "candidate_fragments": 0,
+          "grammar_fragments": 0,
+          "template_fragments": 0,
+          "coverage_basis_points": -1,
+          "status": "unusable-input"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "page_complete": true,
+          "recording_complete": true,
+          "case_indexes": [
+            0,
+            0,
+            0,
+            1,
+            1,
+            2,
+            2
+          ],
+          "assignments": [
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          "kinds": [
+            "derived_grammar",
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template"
+          ],
+          "source_shas": [
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c"
+          ],
+          "starts": [
+            489,
+            489,
+            228,
+            489,
+            228,
+            489,
+            228
+          ],
+          "ends": [
+            515,
+            515,
+            265,
+            515,
+            265,
+            515,
+            265
+          ]
+        }
+      },
+      "expected": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "fragment_rows": 7,
+          "mapped_writes": 6,
+          "missing_writes": 0,
+          "candidate_fragments": 0,
+          "grammar_fragments": 4,
+          "template_fragments": 3,
+          "coverage_basis_points": 10000,
+          "status": "complete-recorded"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "page_complete": true,
+          "recording_complete": true,
+          "case_indexes": [
+            0,
+            0,
+            1,
+            1,
+            2,
+            2
+          ],
+          "assignments": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            1
+          ],
+          "kinds": [
+            "retained_template",
+            "derived_grammar",
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template"
+          ],
+          "source_shas": [
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c"
+          ],
+          "starts": [
+            228,
+            489,
+            489,
+            228,
+            489,
+            228
+          ],
+          "ends": [
+            265,
+            515,
+            515,
+            265,
+            515,
+            265
+          ]
+        }
+      },
+      "expected": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "fragment_rows": 6,
+          "mapped_writes": -1,
+          "missing_writes": -1,
+          "candidate_fragments": 0,
+          "grammar_fragments": 0,
+          "template_fragments": 0,
+          "coverage_basis_points": -1,
+          "status": "unusable-input"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "page_complete": true,
+          "recording_complete": true,
+          "case_indexes": [
+            0,
+            0,
+            1,
+            1,
+            2,
+            2
+          ],
+          "assignments": [
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          "kinds": [
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template",
+            "derived_grammar",
+            "retained_template"
+          ],
+          "source_shas": [
+            "",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c",
+            "sha256:b63fb118da09e831991c3d2e19c1b815526d5ecbb3cedfc8bb7befaf8603096c"
+          ],
+          "starts": [
+            489,
+            228,
+            489,
+            228,
+            489,
+            228
+          ],
+          "ends": [
+            515,
+            265,
+            515,
+            265,
+            515,
+            265
+          ]
+        }
+      },
+      "expected": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 6,
+          "fragment_rows": 6,
+          "mapped_writes": 5,
+          "missing_writes": 1,
+          "candidate_fragments": 0,
+          "grammar_fragments": 2,
+          "template_fragments": 3,
+          "coverage_basis_points": 8333,
+          "status": "complete-recorded"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 0,
+          "page_complete": true,
+          "recording_complete": true,
+          "case_indexes": [],
+          "assignments": [],
+          "kinds": [],
+          "source_shas": [],
+          "starts": [],
+          "ends": []
+        }
+      },
+      "expected": {
+        "gooo/tools/origin-coverage:Summarize": {
+          "selected_source_sha": "sha256:d2a33d68ad4025c426d5865d590979694a9b5b4ad68e8d3d5bfe7acd830d97d8",
+          "recorded_writes": 0,
+          "fragment_rows": 0,
+          "mapped_writes": 0,
+          "missing_writes": 0,
+          "candidate_fragments": 0,
+          "grammar_fragments": 0,
+          "template_fragments": 0,
+          "coverage_basis_points": -1,
+          "status": "empty-recording"
+        }
+      }
+    }
+  ]
+}

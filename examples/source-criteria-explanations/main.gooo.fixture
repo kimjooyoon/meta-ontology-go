@@ -1,0 +1,25 @@
+package quote
+namespace quote
+entity Integer id "quote://integer"
+entity Boolean id "quote://boolean"
+entity Quote id "quote://quote" fields { field price id "quote://price" type integer required one }
+activity Price(Integer) -> Quote computes "return Quote{price:input}" assembling {
+ choice "price" field_value at "0" alternative "input+20" intent "원가 18을 충당하고 예산 25 안에서 가격을 고른다. Cover cost 18 within budget 25."
+ criteria {
+  predicate "within-budget" activity "WithinBudget"
+  predicate "cost-covered" activity "CostCovered"
+  input "[10]"
+  holdout_input "[11]"
+ }
+ observe {
+  criteria_strategy "distinguish_then_check"
+  criteria_input "[12]"
+  max_candidates "2"
+  max_rounds "1"
+  reuse_outputs "true"
+  resolve_unique "true"
+ }
+ attempts "2"
+}
+activity WithinBudget(Integer,Quote) -> Boolean computes "return input1.price <= 25"
+activity CostCovered(Integer,Quote) -> Boolean computes "return input1.price >= 18"

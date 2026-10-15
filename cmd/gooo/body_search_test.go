@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 const bodySearchFixture = `package bodycodegen
@@ -48,25 +50,35 @@ func TestRunBodyCodegenSearchWorksOfflineFromDeclaredOrder(t *testing.T) {
 		[]string{"--json", "--fill-search", "search-plan.json", "--activity", "ClampNegativeToZero", "fixture.gooo"},
 		reader, &stdout, &stderr,
 	)
-	if code != exitOK || stderr.Len() != 0 || !strings.Contains(stdout.String(), `"decision":"PASS"`) ||
-		!strings.Contains(stdout.String(), `"schema":"gooo/body-codegen-report/v3"`) ||
-		!strings.Contains(stdout.String(), `"body_search":{"schema":"gooo/body-codegen-ir-search-plan/v1"`) ||
-		!strings.Contains(stdout.String(), `"selected_candidate_id":"zero"`) ||
-		!strings.Contains(stdout.String(), `"training_passed":5`) ||
-		!strings.Contains(stdout.String(), `"training_total":5`) ||
-		!strings.Contains(stdout.String(), `"training_accuracy_percent":100`) ||
-		!strings.Contains(stdout.String(), `"attempted_candidates":3`) ||
-		!strings.Contains(stdout.String(), `"evaluated_candidates":3`) ||
-		!strings.Contains(stdout.String(), `"training_case_results":[`) ||
-		!strings.Contains(stdout.String(), `"selection_method":"sole_remaining_candidate"`) ||
-		!strings.Contains(stdout.String(), `"holdout_passed":2`) ||
-		!strings.Contains(stdout.String(), `"holdout_total":2`) ||
-		!strings.Contains(stdout.String(), `"holdout_accuracy_percent":100`) ||
-		!strings.Contains(stdout.String(), `"provider_budget_used_ms":0`) ||
-		!strings.Contains(stdout.String(), `"global_best_accuracy_percent":null`) ||
-		!strings.Contains(stdout.String(), `"stop_reason":"TRAINING_SUITE_PASSED"`) ||
-		!strings.Contains(stdout.String(), `"repository_writes":0`) {
+	var result bodycodegen.Result
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatal("offline search did not emit a JSON report", err)
+	}
+	r, search := result.Report, result.Report.BodySearch
+	if code != exitOK || stderr.Len() != 0 || r.Decision != "PASS" || r.Schema != "gooo/body-codegen-report/v3" ||
+		r.RepositoryWrites != 0 || search == nil || search.Schema != "gooo/body-codegen-ir-search-plan/v1" ||
+		search.SelectedCandidateID != "zero" || search.TrainingPassed != 5 || search.TrainingTotal != 5 ||
+		search.TrainingAccuracyPercent == nil || *search.TrainingAccuracyPercent != 100 ||
+		search.AttemptedCandidates != 3 || search.EvaluatedCandidates != 3 || len(search.TrainingCaseResults) != 5 ||
+		len(search.Attempts) != 3 || search.Attempts[2].SelectionMethod != "sole_remaining_candidate" ||
+		search.HoldoutPassed != 2 || search.HoldoutTotal != 2 || search.HoldoutAccuracyPercent == nil ||
+		*search.HoldoutAccuracyPercent != 100 || search.ProviderBudgetUsedMS != 0 || search.ProviderOperations != 0 ||
+		search.GlobalBestAccuracyPercent != nil || search.StopReason != "TRAINING_SUITE_PASSED" {
 		t.Fatalf("offline IR body search = %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
+	}
+	if search.LocalCalls == nil || search.LocalCalls.Status != "RECORDED" || len(search.LocalCalls.Evaluations) != 5 {
+		t.Fatal("CLI omitted the original evaluator history", search.LocalCalls)
+	}
+	for i, phase := range []string{"candidate", "candidate", "candidate", "selected-training", "selected-holdout"} {
+		observed := search.LocalCalls.Evaluations[i]
+		cases := 5
+		if i == 4 {
+			cases = 2
+		}
+		if observed == nil || observed.Phase != phase || observed.ActivityID != r.ActivityID ||
+			observed.Status != "RECORDED" || !observed.EvaluationCompleted || observed.CasesCompleted != cases || len(observed.Calls) != 0 {
+			t.Fatal("CLI evaluator phase or case count differs", observed)
+		}
 	}
 }
 

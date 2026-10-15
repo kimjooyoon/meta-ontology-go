@@ -1,0 +1,13 @@
+package app
+namespace coupons106_app
+import fees "coupons106/helpers"
+activity Quote(Integer) -> Integer id "urn:coupons106:quote" computes "let extra=__GOOO_BODY_HOLE_bias__; return fees.Add(__GOOO_BODY_HOLE_base__)+extra" assembling {
+ source_fill intent "Keep the bias and base alternatives visible during rename." {
+  hole "bias"
+  hole "base"
+  candidate "raw" { fill "bias" "0" fill "base" "input" }
+  candidate "stacked" { fill "bias" "fees.Add(0)" fill "base" "fees.Add(input)" }
+ }
+ case "8" -> "41"
+ holdout_case "2" -> "35"
+}

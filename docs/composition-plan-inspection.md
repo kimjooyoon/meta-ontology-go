@@ -1,14 +1,14 @@
 # Read the inputs before assembling
 
-The development `body-plan` command lists the values a caller must supply, the
+The `body-plan` command lists the values a caller must supply, the
 activities that will run, and any bodies that need assembly first. It uses the
 same structural plan as `body-compose`. Start here when an activity has several
 inputs or calls an assembling helper.
 
-From this compiler checkout, build the development binary and inspect a graph:
+From the `v0.6.29-dev` source checkout, build the binary and inspect a graph:
 
 ```sh
-go build -trimpath -o .gooo ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.2 go build -trimpath -o .gooo ./cmd/gooo
 ./.gooo body-plan --source examples/body-codegen/native-input-joins.gooo.fixture --entry Label
 ```
 
@@ -68,8 +68,8 @@ model compatibility. A structural plan can therefore exist for a body that
 later fails a type check. Tools must retain the source digest and recompute the
 plan after source changes before using it as the basis for generation.
 
-The 0.6.23 development source includes this command. The public 0.6.22 binary
-predates it. The [0.6.23 guide](releases/0.6.23-dev.md) records the native release
+The command is available in [public 0.6.29](releases/0.6.29-dev.md).
+The [0.6.23 guide](releases/0.6.23-dev.md) records its earlier native release
 profile; source `a15b413412ad7b465a0567fb1db4de5706a8c2a8` remains the original
 development revision used by the accepted workbench example.
 
@@ -89,9 +89,11 @@ normal merge and clean installation. An explicit model selects the initial
 record candidate order; omission in the next construction starts deterministically.
 Saved replay uses zero fresh inference. Graph source-fill uses source order.
 
-Typed paths execute and replay, while their whole-program caller-guided
-reconstruction remains a separate native implementation task. The workbench
-reports `expand-joint-profile` for that gap. Input-only caller observations stay
-0/0 and request expectations before starting feedback construction.
+In that saved workbench observation, typed paths executed and replayed, while
+caller-guided reconstruction was outside its supported profile and reported
+`expand-joint-profile`. The current compiler's `body-construct` supports
+[typed-path caller construction](native-body-composition.md#reconsider-typed-conditions-locals-and-branches).
+The linked workbench observation retains its original scope. Input-only caller
+observations stay 0/0 and request expectations before starting feedback construction.
 The [finite experiment](https://github.com/kimjooyoon/gooo-ecosystem-workbench/tree/0d7d30a9e89576b4963e18b0967a71836849c234/publication/full-graph-assembly-20261010)
 retains successful examples, budget16 failure, model calls and unscored input.

@@ -1,0 +1,5 @@
+=== RUN   TestPackageProgramOriginContinuity3179
+    platform_package_program_origin_test.go:43: fresh3179: retained origin and absent origin compatible; recorded claim changes rejected; source unchanged; no native/model calls
+--- PASS: TestPackageProgramOriginContinuity3179 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease	0.400s

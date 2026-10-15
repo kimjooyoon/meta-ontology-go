@@ -1,0 +1,10 @@
+=== RUN   TestConstructionOrigins9533
+    composition_construction_native_test.go:94: three fresh inputs3/3;24 reads12 input+12 constructed;15 instances;24 element facts;scalar prior-local dependency intentionally not inferred
+--- PASS: TestConstructionOrigins9533 (0.72s)
+=== RUN   TestConstructionOnly9547
+--- PASS: TestConstructionOnly9547 (0.50s)
+=== RUN   TestConstructionFault9551
+    composition_construction_native_test.go:158: one successful output;one arithmetic fault with blocked dependent;interrupted constructor keeps only attempted element prefix
+--- PASS: TestConstructionFault9551 (0.54s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	2.266s

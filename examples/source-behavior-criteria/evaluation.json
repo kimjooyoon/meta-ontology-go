@@ -1,0 +1,39 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Decide.input0": {
+          "amount": 113,
+          "approved": false,
+          "label": "기준 이후의 새 반품"
+        },
+        "Decide.input1": true
+      },
+      "expected": {
+        "Decide": {
+          "amount": -113,
+          "approved": true,
+          "label": "기준 이후의 새 반품"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Decide.input0": {
+          "amount": 127,
+          "approved": false,
+          "label": "unchanged"
+        },
+        "Decide.input1": false
+      },
+      "expected": {
+        "Decide": {
+          "amount": 127,
+          "approved": false,
+          "label": "unchanged"
+        }
+      }
+    }
+  ]
+}

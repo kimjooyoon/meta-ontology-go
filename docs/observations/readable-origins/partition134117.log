@@ -1,0 +1,6 @@
+=== RUN   TestCompiledOriginPartitionInvariance134117
+--- PASS: TestCompiledOriginPartitionInvariance134117 (0.17s)
+=== RUN   TestCompilationStageFileBudget134117
+--- PASS: TestCompilationStageFileBudget134117 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	1.633s

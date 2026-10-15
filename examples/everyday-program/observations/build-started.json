@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-14T18:35:42.367563+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "build",
+    "-p=1",
+    "-o",
+    "/private/tmp/gooo-everyday-source-20261015/native64129/gooo",
+    "./cmd/gooo"
+  ],
+  "head": "10067b26de6d3fa75040173a610fdc522b5da62a",
+  "historical_source_test_model_reruns": 0
+}

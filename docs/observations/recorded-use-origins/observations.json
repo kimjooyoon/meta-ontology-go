@@ -1,0 +1,149 @@
+{
+  "schema": "gooo/recorded-usage-first-observations/v1",
+  "date": "2026-10-15",
+  "source_parent": "60fffd17c64fb9fcf4cc065875c12ebfcfddb70c",
+  "source_state": "UNBOUND_LOCAL_SOURCE",
+  "cohorts": [
+    {
+      "exit_code": 0,
+      "wall_seconds": 10.174660375,
+      "parent_revision": "60fffd17c64fb9fcf4cc065875c12ebfcfddb70c",
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "source_sha256": {
+        "examples/recorded-use-origins/policy-cases.json": "d04f3908a45bff64557877c34f400fd36a2597c1080591c4dd6da9f9f72ebc71",
+        "examples/recorded-use-origins/inspect.gooo": "4685165894012ec27834f5a0c0fadb7f578cc2cfb3a49f9e934980bd12f14c34",
+        "examples/recorded-use-origins/gooo.workspace.json": "001aa733bce220ba990891d60a1bcd25416c402e28bb4373efc57997c3bb2b46",
+        "internal/bodyexecution/native_local_use_columns.go": "8e50e9a39b02316e609b71eda3cdcc9d5c88a8884bf8d0a80e751945abf7679a",
+        "internal/bodyexecution/native_local_use_columns_test.go": "201aa3135f32cad5b8ac61c67c0114a085f0e9de13cf0849a27af092294a719d",
+        "cmd/gooo/package_origin_input.go": "e3f83ed8b512efede8cee37ca18e24fbce3bc2466007abe0f640ef027d38918c",
+        "cmd/gooo/package_execute.go": "ac7eed425447ba6accc152ce97a76df0cf957750ca82c67fea8b768c76022d5f",
+        "cmd/gooo/package_origin_use_relations_test.go": "ff0d40fec36370b3b7ed551a1b461b1e9369787c526279a915ea8d76aa060fbf",
+        "internal/meta/repositoryprojection/extractor/recorded_usage_capacity_test.go": "b137ac40ada6fa9beb72971debc95005f321ab04b7c67c2d1a47cd1263e6ea20"
+      },
+      "cohort": "new local-use columns, Gooo relation policy, original saved JSON plus whitespace-distinct document at use15, static adapter capacities; original producer and historical cohorts not rerun"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--origin-receipt",
+        "<producer-first-observations>/producer-first/stdout.json",
+        "--origin-shape",
+        "local-use-columns",
+        "--origin-offset",
+        "14",
+        "examples/recorded-use-origins/gooo.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.554710333,
+      "parent_revision": "60fffd17c64fb9fcf4cc065875c12ebfcfddb70c",
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "source_sha256": {
+        "examples/recorded-use-origins/inspect.gooo": "4685165894012ec27834f5a0c0fadb7f578cc2cfb3a49f9e934980bd12f14c34",
+        "cmd/gooo/package_origin_input.go": "e3f83ed8b512efede8cee37ca18e24fbce3bc2466007abe0f640ef027d38918c",
+        "internal/bodyexecution/native_local_use_columns.go": "8e50e9a39b02316e609b71eda3cdcc9d5c88a8884bf8d0a80e751945abf7679a"
+      },
+      "input_sha256": "a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+      "scope": "new full original producer receipt, read14; previous runtime-only read15 cohorts not rerun; producer not executed"
+    },
+    {
+      "exit_code": 0,
+      "wall_seconds": 5.033155375,
+      "source_sha256": {
+        "cmd/gooo/package_origin_use_envelope_test.go": "519dd47c5c2cca9a7f7afcfd4ffde7003266e20038c4d4c6afeb3eb385bd3b8b",
+        "examples/recorded-use-origins/full-producer-receipt.json.gz": "2d1e1319dbdee870be6e916871a83f394656b2f412b28ad7bb090fcfd01853d6"
+      },
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "parent_revision": "60fffd17c64fb9fcf4cc065875c12ebfcfddb70c",
+      "scope": "new readonly full-envelope regression binding; zero native program executions and zero model calls; prior program cohorts not replayed"
+    }
+  ],
+  "observed": {
+    "controlled_passed": 12,
+    "controlled_total": 12,
+    "runtime_document_reader_invocations": 2,
+    "full_envelope_reader_invocations": 1,
+    "producer_program_executions": 0,
+    "model_calls": 0,
+    "saved_scope": "exact original JSON bytes",
+    "retained_reference_examples": [
+      {
+        "case": 1,
+        "use": 7,
+        "assignment": 7,
+        "frame": 0
+      },
+      {
+        "case": 1,
+        "use": 6,
+        "assignment": 0,
+        "frame": 0
+      }
+    ]
+  },
+  "full_envelope_claim": {
+    "activity_id": "urn:gooo:version-producer:combine",
+    "assignment_index": 0,
+    "case_index": 1,
+    "frame": 0,
+    "generation_relation_iri": "http://www.w3.org/ns/prov#wasGeneratedBy",
+    "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+    "local_records_dropped": false,
+    "read_end": 465,
+    "read_mapping": "MAPPED",
+    "read_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+    "read_start": 460,
+    "reason": "",
+    "receipt_scope": "saved_json_bytes",
+    "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+    "root_activity_id": "urn:gooo:version-producer:combine",
+    "scalar_type": "int64",
+    "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+    "status": "RECORDED_GENERATION_AND_USAGE",
+    "use_index": 6,
+    "use_relation_iri": "http://www.w3.org/ns/prov#used",
+    "variable_name": "value",
+    "variable_ordinal": 0,
+    "version_activity_id": "urn:gooo:version-producer:combine",
+    "version_frame": 0
+  },
+  "registration": {
+    "base_version": 79,
+    "new_version": 80,
+    "required_artifact_roles": 9,
+    "physical_members": 9,
+    "semantic_admission": "UNASSESSED",
+    "candidate_apply_authorized": false,
+    "candidate_promotion_authorized": false,
+    "application_authority": "existing user-authorized compiler development"
+  },
+  "inventory": {
+    "sources": 136,
+    "current_cases": 118,
+    "missing": [],
+    "unregistered": [],
+    "native_executions": 0
+  },
+  "historical_preservation": {
+    "prior_cases_unchanged": 117,
+    "prior_denominator_files_byte_identical": 58
+  },
+  "archive": {
+    "path": "local-firsts.tar.gz",
+    "sha256": "665121365f54f684a5c5ce023eb8e9fbf4519a938515f928c0c4672f84f3ec28",
+    "bytes": 143806,
+    "normalization": "Local command metadata paths use symbolic roots; original/published hashes are retained per member."
+  },
+  "retired_local_generator": {
+    "sha256": "2cb5a4ddb17805a69c83e1cc1124d6d28886fba6ad3389d3d48b96c3a397dcbc",
+    "bytes": 10170978
+  },
+  "scope": "New Gooo reader and adapter cohorts. Original producer, previous native/model/experiment cohorts were not rerun. Readonly binding checks perform no program or model execution. Command timings include build/test overhead; current exact-source acceptance belongs to future original PR CI.",
+  "follow_up_observations": [
+    "command-origin.json"
+  ]
+}

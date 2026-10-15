@@ -18,6 +18,9 @@ func runLanguageSmokeCommand(binary, directory string, input BuildInput, example
 }
 
 func retainLanguageCommandOutput(input BuildInput, name string, raw []byte, runErr error) ([]byte, error) {
+	if input.OutputDir == "" {
+		return raw, errors.Join(runErr, errors.New("retain language command output: output directory is required"))
+	}
 	extension := ".json"
 	if runErr != nil {
 		// Combined command output can include diagnostics or incomplete JSON.

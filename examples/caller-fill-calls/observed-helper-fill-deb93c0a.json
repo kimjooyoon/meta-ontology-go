@@ -1,0 +1,125 @@
+{
+  "schema": "gooo/body-fill-helper-observation/v1",
+  "producer": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.29-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.2",
+    "module_version": "v0.6.14-dev.0.20261011064144-deb93c0a1a62",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.14-dev.0.20261011064144-deb93c0a1a62"
+    },
+    "compiler_source_sha": "deb93c0a1a62b33453e11d8eaed2a1fdd71019a6",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "deb93c0a1a62b33453e11d8eaed2a1fdd71019a6",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.41-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.2"
+  },
+  "scope": "One original construction and one saved replay on a synthetic source-fill fixture. Step is fixed and Build chooses from source-owned assignments. Full recording of local fill helper arguments remains incomplete; this observation does not establish constructed-helper independence or model quality.",
+  "resource_scope": "Single macOS time -lp observation per command including compilation and subprocesses; no instantaneous CPU utilization or controlled speed comparison.",
+  "original": {
+    "decision": "COMPLETE_FINITE",
+    "original_source_sha256": "sha256:cf914bb51f46717d4a022b922ee0a6c321d60bed284ee2ed3168bab816551dd8",
+    "fill": [
+      {
+        "activity_id": "fillcalls://activity/build",
+        "call_closure": {
+          "schema": "gooo/pure-activity-call-closure/v1",
+          "activities": [
+            {
+              "name": "Step",
+              "activity_id": "fillcalls://activity/step",
+              "program_sha256": "sha256:d6992234f912887a96f329cf43c546e2e21fad703cdaaf1f16c28d45f451f0ad"
+            }
+          ],
+          "edges": [
+            {
+              "caller_id": "fillcalls://activity/build",
+              "callee_id": "fillcalls://activity/step",
+              "ordinal": 0
+            }
+          ],
+          "max_calls_per_invocation": 1
+        },
+        "body_fill": {
+          "selected_candidate_id": "shifted",
+          "test_cases_passed": 1,
+          "test_cases_total": 1,
+          "holdout_cases_passed": 1,
+          "holdout_cases_total": 1,
+          "candidate_scores": [
+            {
+              "id": "unchanged",
+              "expression": "offset=0; bias=0",
+              "typecheck_passed": true,
+              "test_cases_passed": 0,
+              "test_cases_total": 1,
+              "accuracy_percent": 0
+            },
+            {
+              "id": "shifted",
+              "expression": "offset=1; bias=0",
+              "typecheck_passed": true,
+              "test_cases_passed": 1,
+              "test_cases_total": 1,
+              "accuracy_percent": 100
+            }
+          ],
+          "rejected_candidates": null
+        }
+      }
+    ],
+    "finite_passed": 3,
+    "finite_total": 3,
+    "input_separation": {
+      "status": "PASS",
+      "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 3,
+      "disjoint_cases_passed": 3,
+      "unknown_inputs": 0,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "new_model_calls": 0,
+    "resources": {
+      "wall_seconds": 0.62,
+      "user_seconds": 0.28,
+      "system_seconds": 0.22,
+      "max_rss_bytes": 86228992
+    }
+  },
+  "replay": {
+    "generated_now": false,
+    "construction_replayed": true,
+    "finite_passed": 3,
+    "finite_total": 3,
+    "input_separation": {
+      "status": "PASS",
+      "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 3,
+      "disjoint_cases_passed": 3,
+      "unknown_inputs": 0,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "new_model_calls": 0,
+    "resources": {
+      "wall_seconds": 0.35,
+      "user_seconds": 0.16,
+      "system_seconds": 0.11,
+      "max_rss_bytes": 86736896
+    }
+  }
+}

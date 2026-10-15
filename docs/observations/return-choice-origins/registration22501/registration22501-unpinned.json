@@ -1,0 +1,13 @@
+{
+  "case": {
+    "id": "assembled-length-summary",
+    "path": "examples/assembled-length-summary/summary.gooo",
+    "kind": "VALID",
+    "expected_decision": "PASS",
+    "proof_choice": "COHERENCE",
+    "meta_operation": "replay-language-syntax",
+    "scope": "LANGUAGE_CAPABILITY",
+    "ordered_collections": true
+  },
+  "base_version": 69
+}

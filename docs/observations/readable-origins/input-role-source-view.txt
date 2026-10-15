@@ -1,0 +1,86 @@
+Activity: urn:adjustment:apply
+Source: /private/tmp/gooo-readable-origins-20261015/input-role-source-first/main.gooo
+Source digest: sha256:32b2d1e7ac85d3e11abe609e24ed7445d4e788942fd0ee6ec02e888d1cb6e097
+Status: RESOLVED
+Scope: possible source dependencies
+return <- #19
+
+#1 input port [input] input field=urn:adjustment:amount
+  source location: INPUT_PORT_IDENTITY
+
+#2 input port [input] input field=urn:adjustment:delta
+  source location: INPUT_PORT_IDENTITY
+
+#3 input port [input] input field=urn:adjustment:doubled
+  source location: INPUT_PORT_IDENTITY
+
+#4 value read [read] field=urn:adjustment:amount
+  at 12:14 "input.amount"
+  data <- #1
+
+#5 local definition [copy]
+  at 12:5 "amount = input.amount"
+  data <- #4
+
+#6 value read [read] field=urn:adjustment:delta
+  at 13:11 "input.adjustment"
+  data <- #2
+
+#7 value read [read]
+  at 13:1 "amount"
+  data <- #5
+
+#8 operation [expression]
+  at 13:1 "amount += input.adjustment"
+  data <- #7
+  data <- #6
+
+#9 local update [write]
+  at 13:1 "amount += input.adjustment"
+  data <- #8
+
+#10 value read [read] field=urn:adjustment:doubled
+  at 14:4 "input.doubled"
+  data <- #3
+
+#11 branch condition [guard]
+  at 14:4 "input.doubled"
+  data <- #10
+
+#12 branch condition [guard]
+  at 14:4 "input.doubled"
+  data <- #10
+
+#13 literal [literal]
+  at 15:15 "2"
+  control <- #11
+
+#14 value read [read]
+  at 15:5 "amount"
+  data <- #9
+  control <- #11
+
+#15 operation [expression]
+  at 15:5 "amount *= 2"
+  data <- #14
+  data <- #13
+  control <- #11
+
+#16 local update [write]
+  at 15:5 "amount *= 2"
+  data <- #15
+  control <- #11
+
+#17 possible value merge [join]
+  at 14:1 "if input.doubled {     amount *= 2 }"
+  data <- #16
+  data <- #9
+  condition <- #10
+
+#18 value read [read]
+  at 17:8 "amount"
+  data <- #17
+
+#19 return value [return]
+  at 17:1 "return amount"
+  data <- #18

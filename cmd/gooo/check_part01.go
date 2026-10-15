@@ -35,9 +35,9 @@ func (SyntaxSourceParser) ParseFile(filename, source string) (*syntax.File, synt
 	return syntax.ParseFile(filename, source)
 }
 
-// EntityFieldsCLIParser is the public, exact V4 activation used by `gooo
-// check` and `gooo generate`. The generic test seam remains deferred so older
-// integrations cannot accidentally claim this capability.
+// EntityFieldsCLIParser accepts record syntax for gooo check and generate.
+// Lowering binds V4 scalar or V5 repeated fields from the parsed declarations.
+// The generic parser seam retains its explicit deferred contract.
 type EntityFieldsCLIParser struct{}
 
 func (EntityFieldsCLIParser) ParseFile(filename, source string) (*syntax.File, syntax.Diagnostics) {

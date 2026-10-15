@@ -12,12 +12,17 @@ import (
 func isContractCandidateSchema(schema string) bool {
 	return schema == contractdecision.Schema || schema == contractdecision.PoolingSchema ||
 		schema == contractdecision.ChoiceSchema || schema == contractdecision.InteractionRequirementSchema ||
-		schema == contractdecision.OrderedRequirementSchema || schema == contractdecision.CanonicalInteractionRequirementSchema
+		schema == contractdecision.OrderedRequirementSchema || schema == contractdecision.CanonicalInteractionRequirementSchema ||
+		schema == contractdecision.SourceRelativeRequirementSchema || schema == contractdecision.SourceRelativeV2Schema ||
+		schema == contractdecision.SourceRelativeV3Schema || schema == contractdecision.SourceRelativeV3ProseNeutralSchema ||
+		schema == contractdecision.SourceRelativeV4Schema
 }
 
 func (m *conditionPathModel) orderedContract() bool {
 	return m.contract != nil && (m.contract.ArtifactSchema() == contractdecision.InteractionRequirementSchema ||
-		m.contract.ArtifactSchema() == contractdecision.OrderedRequirementSchema || m.canonicalContract())
+		m.contract.ArtifactSchema() == contractdecision.OrderedRequirementSchema || m.canonicalContract() ||
+		m.sourceRelativeContract() || m.sourceRelativeV2Contract() || m.sourceRelativeV3Contract() ||
+		m.sourceRelativeV3ProseNeutralContract() || m.sourceRelativeV4Contract())
 }
 
 type declaredContractModel interface {
@@ -28,6 +33,16 @@ type declaredContractModel interface {
 func (m *conditionPathModel) newContractSession(ctx context.Context, prepared *pathplan.PreparedPlan,
 	cases []pathplan.TestCase) (*pathplan.ContractSession, error) {
 	switch model := m.contract.(type) {
+	case *contractdecision.SourceRelativeV4Model:
+		return prepared.NewSourceRelativeV4ContractSession(ctx, model, cases)
+	case *contractdecision.SourceRelativeV3ProseNeutralModel:
+		return prepared.NewSourceRelativeV3ProseNeutralContractSession(ctx, model, cases)
+	case *contractdecision.SourceRelativeV3Model:
+		return prepared.NewSourceRelativeV3ContractSession(ctx, model, cases)
+	case *contractdecision.SourceRelativeV2Model:
+		return prepared.NewSourceRelativeV2ContractSession(ctx, model, cases)
+	case *contractdecision.SourceRelativeRequirementModel:
+		return prepared.NewSourceRelativeRequirementContractSession(ctx, model, cases)
 	case *contractdecision.CanonicalInteractionRequirementModel:
 		return prepared.NewCanonicalInteractionRequirementContractSession(ctx, model, cases)
 	case *contractdecision.InteractionRequirementModel:

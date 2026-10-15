@@ -1,12 +1,101 @@
 # meta-ontology-go
 
 **Gooo — Go Of Ontology** is an experimental language for expressing intent,
-assembling programs, and keeping the evidence of how they behave. This repository
-contains its Go compiler. Source files use the `.gooo` extension.
+assembling programs, and preserving where their concepts and choices come from.
+This repository contains its Go compiler. Source files use the `.gooo` extension.
 
-[Try 13 HTTP, Unicode, and byte functions in your browser](https://kimjooyoon.github.io/gooo-go-ports/)
-without installing anything or using a model. The demo runs fixed, precompiled
-Gooo → Go → WebAssembly programs; it does not compile arbitrary source.
+[한국어: 언어의 방향과 현재 기능](docs/language-direction.ko.md)
+
+## What you can build
+
+Gooo source declares calculations, stable concept identities and permitted
+construction choices. The compiler projects these declarations into Go and can
+run the result locally. Without a model, construction uses the declared
+candidate order. A compatible small local decision model can propose an order
+within those choices.
+
+Start with the [first program guide](docs/getting-started.md) and the [variables/conditions example](examples/everyday-program/README.md) or create an
+[app, library, diagnostic or origin-reader project](docs/language/project-starters.md).
+The development compiler also creates an origin reader:
+
+```sh
+gooo init --template origins my-origins
+cd my-origins
+gooo package execute --json --cases cases.json gooo.workspace.json
+```
+
+Its conditions and output live in `inspect.gooo`. The practice cases use
+explicitly fictional file coordinates. To inspect real programs, pass a saved
+execution through `--origin-receipt`; the original producer and model are not
+run again. The project README explains the page and observation scope.
+
+## Keep the origin with the calculation
+
+A field can retain its authored activity, stable record/field IDs, selected
+expression and original package-file location through name lowering. Record
+assembly also retains where its selected alternatives were declared. Direct
+record returns participate in field histories without an extra source local.
+
+Static source dependencies describe possible relationships. Native histories
+record observed writes, reads and explicit copy/helper parents. Saved fragments,
+missing locations, recording drops and page truncation remain visible in their
+own scope. [The source and origin guide](docs/language/source-origins.ko.md)
+introduces these views and their current gaps.
+
+Gooo metaprograms can consume primitive recorded rows or aligned arrays. They
+own the classification, grouping and bounded ancestry walks; Go transports the
+observations. This lets a program inspect how another Gooo program was assembled
+and where retained values came from.
+
+The development [recorded-use RDF example](examples/recorded-use-origins/README.md#읽기-사건을-rdf로-내보내기)
+constructs PROV-O qualified usage and N-Triples in Gooo. Calls, retained value
+versions and individual reads get identities scoped to the exact saved document.
+This offers a small interoperability path from a Gooo metaprogram to RDF tools.
+
+| Task | Development examples |
+| --- | --- |
+| Trace authored conditions and selected fragments | [Condition origins](examples/condition-origins/README.md), [original fill files](examples/workspace-fill-origins/README.md) |
+| Inspect source dependencies and local declarations | [Typed value origins](examples/typed-value-origins/README.md), [workspace local origins](examples/workspace-local-origins/README.md) |
+| Read constant and input-dependent branch scopes in Gooo | [Source control reader](examples/source-control-reader/README.md) |
+| Distinguish same-type inputs by their original signature positions | [Input declaration reader](examples/source-control-reader/README.md#같은-타입의-입력을-선언-위치로-구분하기) |
+| Put `else` on the next line and retain original condition locations | [Readable branches and a Gooo syntax policy](examples/else-layout/README.md) |
+| Follow observed field/local relationships | [Field histories](examples/native-record-fields/README.md), [field ancestry](examples/native-field-lineage/README.md), [field/local bridge](examples/local-field-bridge/README.md) |
+| Read original field and choice locations | [Field locations](examples/field-source-map/README.md), [record-choice reader](examples/record-choice-origins/README.md), [return/choice contract](docs/language/return-choice-origins.ko.md) |
+| Read a declared construction choice | [Declared fill origins](examples/fill-candidate-origins/README.md) |
+| Read the finite palette of a source grammar | [Derived candidate origins](examples/derived-candidate-origins/README.md) |
+| Group recorded origins in Gooo | [Derived-origin reader](examples/derived-origin/README.md), [scoped-counter coverage](examples/scoped-origin-coverage/README.md) |
+| Distinguish declarations, calls and completed value versions | [Recorded local identities and PROV generation](examples/local-version-origins/README.md) (development source) |
+| Assemble a bounded collection summary | [Length-aware summary](examples/length-aware-summary/README.md), [three-field assembly](examples/assembled-length-summary/README.md) |
+
+These links describe development source. Each example reports its finite cases
+and remaining scope separately; source-mapping coverage and functional case
+results answer different questions.
+
+[Try a small Gooo program in your browser](https://kimjooyoon.github.io/gooo-go-ports/tutorial.html)
+without installing anything or using a model. Change a score and a label, inspect
+four returned fields, then download the source and inputs to edit and run locally.
+The tutorial runs a fixed, precompiled Gooo → Go → WebAssembly program; it does
+not compile arbitrary source. The separate [library explorer](https://kimjooyoon.github.io/gooo-go-ports/)
+lets you try selected Go function ports.
+
+## Inspect the construction space in development source
+
+The development compiler can list candidates before selecting or executing one:
+
+```sh
+gooo body-origins --activity Choose --fill-candidates \
+  examples/derived-candidate-origins/source.gooo
+```
+
+That source declares two predicate expressions and three value expressions.
+It retains four of their six combinations. Query a returned ID with
+`--fill-candidate <id>` to inspect its grammar, hole and template-use origins.
+The [Gooo reader](examples/derived-candidate-origins/README.md) classifies those
+locations with its own conditions. Listing makes zero model calls and executes
+no candidate. Four of six describes the retained construction space; functional
+case matches have a separate denominator. The
+[0.6.35 development guide](docs/releases/0.6.35-dev.md) records the pending release
+of these source features. The published walkthrough below stays on0.6.34.
 
 ## Try a working Gooo program
 
@@ -15,7 +104,8 @@ This example needs **Go 1.27.2** and no model or API key. In a new working
 directory on macOS or Linux:
 
 ```sh
-GOBIN="$PWD/.gooo-bin" go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.27-dev
+GOBIN="$PWD/.gooo-bin" GOWORK=off GOTOOLCHAIN=go1.27.2 \
+  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.34-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -23,11 +113,42 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 ```
 
-This walkthrough pins the published 0.6.27 compiler. The
-[0.6.27 release guide](docs/releases/0.6.27-dev.md) covers comparing saved outcomes
-when a rule changes. The [0.6.28 candidate guide](docs/releases/0.6.28-dev.md)
-covers readable construction reports, reading saved results without execution,
-Markdown outcome comparisons and the latest supported local decision models.
+This walkthrough pins the published 0.6.34 compiler. The
+[0.6.34 guide](docs/releases/0.6.34-dev.md) records its accepted source, platform
+archives and explicit V2/V3 model routes. The earlier
+[0.6.33 guide](docs/releases/0.6.33-dev.md) connects the V2 return layout
+to source inspection, body construction and saved replay. Source-owned
+assignments, comparison order and Integer division remain visible to the model;
+omitting it keeps deterministic construction. The earlier
+[0.6.32 guide](docs/releases/0.6.32-dev.md) covers Gooo string functions and assembly
+of one predicate inside a declared loop. The earlier
+[0.6.31 guide](docs/releases/0.6.31-dev.md) introduces counted loops, byte access
+and formatting around computes bodies.
+The [0.6.30 guide](docs/releases/0.6.30-dev.md) explains failed-candidate recovery,
+helper-aware body fill, retained search pools and actual construction inputs.
+A failed attempt consumes its budget; later declared candidates can still yield
+a usable program.
+
+The [bounded string operations example](examples/bounded-string-operations/README.md)
+implements substring search, non-overlapping counts and UTF-8 rune counts in Gooo.
+Its importing app and saved replay are checked against 20 Go reference cases.
+The published compiler supports [single-condition assembly](docs/source-assembly.md): it
+leaves one predicate open while retaining the declared loop and return structure.
+Its package example and the string package execute and replay their saved programs
+on four platforms with zero model calls.
+
+The existing small decision model can suggest which declared path to try first.
+Gooo checks the supplied cases and saves the selected program for replay. The
+model-to-fill example keeps its original 0/4 first proposal alongside the later
+4/4 result. Those are finite case counts; model-free ordering is also available.
+
+Development source also connects Integer path choices and fixed Boolean criteria
+to the [source-only scalar model adapter](docs/scalar-source-model.ko.md). A model
+ranks permitted paths, and Gooo records actual selection and separate-input
+conditions. The integration examples use synthetic parameters, including a wrong
+first proposal and an explicit source attempt budget. Learned weights and
+evaluation across separate source families are next. Plain body-codegen output
+shows finite condition status alongside the generated Go.
 
 The last command prints:
 
@@ -43,10 +164,14 @@ supplied cases. Replay uses the saved choices with zero new model calls. Edit
 
 [Installation, platform downloads, and next steps](docs/getting-started.md)
 explain what the finite checks establish and how to change the source.
+The [language product priorities](docs/language/language-product-priorities.ko.md)
+connect everyday programs, editor support, package reuse and source origins to
+the next development steps, including preparation for GitHub Linguist.
 For a separate library example, [Gooo Go Ports](https://github.com/kimjooyoon/gooo-go-ports)
-implements thirteen HTTP, Unicode, and byte functions and compares them with Go originals;
-its [recorded native checks](https://github.com/kimjooyoon/gooo-go-ports/blob/a58b55b798c95da04cc51cf779df76399ea59a55/evidence/math-bits-20261010.json)
-cover named inputs, not whole-package compatibility.
+implements selected Go standard-library functions in Gooo and compares them with
+pinned Go originals. Its [verification results and limits](https://github.com/kimjooyoon/gooo-go-ports/blob/75d0655101d1468f9a94eb10571d34378b98293b/README.md)
+separate finite native cases, Unicode enumeration and browser checks; they do not
+establish whole-package compatibility.
 
 Think of Gooo as a workshop: declarations provide the plan, a small local model
 can suggest which permitted parts to assemble, and the compiler checks the fit
@@ -82,8 +207,22 @@ Gooo source + intent + permitted choices + finite expectations
 · [practical adoption plan, 한국어](docs/adoption-plan.ko.md)
 · [body generation](docs/language/body-codegen.md)
 · [Gooo source assembly](docs/source-assembly.md)
+· [source-owned observation](examples/source-owned-observation/README.md)
+· [source path holdouts](examples/source-path-holdouts/README.md)
+· [language problems and direction, 한국어](docs/language-identity-problems.ko.md)
+· [source-owned behavior criteria](docs/source-behavior-criteria.md)
+· [Integer paths judged by Gooo conditions](docs/source-scalar-criteria.md)
+· [typed choices and requirement graphs, 한국어](docs/criteria-source-flow.ko.md)
+· [source choices and small decision models, 한국어](docs/scalar-source-model.ko.md)
+· [source and origin, 한국어](docs/language/source-origins.ko.md)
+· [related ontology languages and gaps, 한국어](docs/ontology-language-comparison.ko.md)
+· [file-local imported types, 한국어](docs/qualified-activity-types.ko.md)
+· [source-preserving formatting, 한국어](docs/source-preserving-format.ko.md)
+· [relationships between executions, 한국어](docs/source-relational-callers.ko.md)
+· [source-owned criteria questions](docs/source-criteria-questions.md)
 · [compose activity bodies](docs/native-body-composition.md)
 · [inspect inputs before assembly](docs/composition-plan-inspection.md)
+· [read a bounded semantic neighborhood (development)](docs/semantic-context.md)
 · [compare workflow outcomes after a rule change](docs/workflow-outcome-delta.md)
 · [small model integration](docs/three-choice-path-model.md)
 · [source-bound condition/output models and CLI](docs/condition-decision-model.md)
@@ -128,6 +267,15 @@ types and presence from the validated workspace, including imported packages.
 Activities may declare an [explicit stable ID](docs/language/activity-identity.md)
 after the result type, so a display rename retains that identity in interfaces,
 generated markers and native delivery traces.
+Development source also supports [named activity inputs](docs/language/named-inputs.ko.md),
+such as `Difference(minuend Integer, subtrahend Integer)`. The body uses those
+names, while input wiring keeps its source positions and the origin view retains
+the original name and type locations. A [runnable example](examples/named-inputs/README.md)
+shows the same-type inputs, Korean names and package input keys.
+The development [activity refactoring command](docs/language/activity-refactoring.md)
+([한국어](docs/language/activity-refactoring.ko.md))
+renames an activity and its file-local calls, conditions and bindings while
+retaining the stable ID. It prints a source proposal and a record of the edits.
 Native scalar declarations can also keep [recognized type identities](docs/language/scalar-identity.md)
 while using English or Korean names. The source example includes a small own graph
 model for three field choices and separate native execution cases.
@@ -272,10 +420,12 @@ reads every authored input/expected-output example before one initial ranking.
 Its SDK 0.2.36 artifact has 9,746 parameters; ordinary finite checks and saved
 model-free execution remain part of the compiler path.
 
-Development source also accepts the [SDK0.2.40 canonical branch model](docs/canonical-contract-model.md).
+The public compiler accepts the [canonical branch model introduced in SDK 0.2.40](docs/canonical-contract-model.md).
+The [SDK0.2.41 source-relative model](docs/source-relative-contract-model.md) adds explicit
+comparison/condition relations and a batch-amount example for construction and saved replay.
 It reads supported direct-return and assignment forms as the same calculation,
 while retaining original source identities and execution. Its research weights
-and low first-choice results are public; the released compiler0.6.27 predates this adapter.
+and low first-choice results are public. Compiler 0.6.29 includes this adapter through SDK 0.2.41.
 
 ## What we are developing
 
@@ -425,8 +575,9 @@ The latest model study and the deployed integration have separate evidence:
   and broader task coverage are next.
   [Paired arithmetic results and retained failure](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/full-input-separate-arithmetic-results-20261003.md).
 
-This compiler revision uses **Go SDK v0.2.24-experimental**, with V3/V4 feature
-contracts, versioned arithmetic, bounded probe sessions and prepared candidate reuse. The
+The development source pins **Go SDK v0.2.51-experimental**, including the optional
+[branch-owned V4 decision input](docs/source-branch-output-v4.md), versioned
+arithmetic, bounded probe sessions and prepared candidate reuse. The
 [observation loop](docs/path-observation-loop.md) can choose a distinguishing
 input, obtain its result from a declared Gooo reference activity, and use that
 additional case during body construction. Verified probe outputs can be reused,
@@ -446,9 +597,10 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| Compiler at this revision | SDK v0.2.24; source recipes, bounded observation/reuse, prepared candidates, file/stream construction and execution | Usability, finite completion and construction cost |
-| [SDK v0.2.24 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.24-experimental) | V3/V4 inference, explicit arithmetic, owned probes, reusable candidates and bounded Unix model-file loading | Broader source and behavior coverage |
-| [Hugging Face model](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Wording, operation order and new-task evaluation |
+| [Compiler 0.6.34](docs/releases/0.6.34-dev.md) | SDK0.2.44; explicit V2/V3 source/requirement inspection, finite construction and source-bound replay | Neutral/V4 model integration and bounded semantic context |
+| [SDK0.2.51 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.51-experimental) | Separate return-branch output relations, explicit neutral input policy and numerical compatibility checks | [First V4 study regressed](docs/source-branch-output-v4.md#the-first-fitted-comparison-regressed); decision-head learning and broader behavior coverage need work |
+| [Canonical and relation models](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1) | Freshly initialized small models, complete authored study records and failed candidates | Expected-output relations and new-task evaluation |
+| [Earlier shared judgment models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Historical wording and operation-order results |
 
 At SDK revision `59c8d34`, local arm64 and
 [Linux CI](https://github.com/kimjooyoon/gooo-decision-runtime/actions/runs/37070241916)

@@ -1,0 +1,8 @@
+=== RUN   TestOriginTextConditionFacts
+=== RUN   TestOriginTextConditionFacts/Adjust
+=== RUN   TestOriginTextConditionFacts/Constant
+--- PASS: TestOriginTextConditionFacts (0.00s)
+    --- PASS: TestOriginTextConditionFacts/Adjust (0.00s)
+    --- PASS: TestOriginTextConditionFacts/Constant (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.552s

@@ -1,0 +1,13 @@
+package origin3607
+namespace origin3607
+entity Integer id "urn:gooo:type:integer"
+activity Quote(Integer) -> Integer id "urn:origin3607:quote" computes "let base = __GOOO_BODY_HOLE_seed__; if __GOOO_BODY_HOLE_open__ { return base }; return input - 17" assembling {
+ source_fill intent "금액 규칙의 선택 경로를 남긴다" {
+  hole "seed"
+  hole "open"
+  candidate "bounded3607" { fill "seed" "input + 29" fill "open" "input < 61" }
+  candidate "other3607" { fill "seed" "input + 3" fill "open" "input < 9" }
+ }
+ case "19" -> "48"
+ case "71" -> "54"
+}

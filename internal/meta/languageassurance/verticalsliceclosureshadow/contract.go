@@ -96,3 +96,84 @@ const (
 	// DenominatorMigrationV47Digest binds the expanded four-platform release denominator.
 	DenominatorMigrationV47Digest = "sha256:f2e749bb032eb8e83d3e467f049091ec18ecb4562517788b16697bd095597dd4"
 )
+
+const DenominatorMigrationV48Digest = "sha256:2b9ac5c2293e7c61f23de5e0fbb1ca59d843e43ed9b78cba21054173fdaabfab"
+
+// V49 registers the ordered batch planner and cross-activity list handoff.
+const DenominatorMigrationV49Digest = "sha256:aafb7676a5c22606f120f179a23af86ab760ea545ed8cfd31ece275221fd5669"
+
+const DenominatorMigrationV50Digest = "sha256:23dc86403c183f670592830888982d6f0d5400f9b3872802f1bed4966c475a1f"
+
+const DenominatorMigrationV51Digest = "sha256:a686959b74edb42d15e8614d5c55dca1c10a587b8f8a9c8fac52d71a971e83c3"
+
+const DenominatorMigrationV52Digest = "sha256:14d07aa72214a1487878fef1d0bdfd28ca745ba8f9bfdb63e5341a881454e1af"
+
+const DenominatorMigrationV53Digest = "sha256:c37c31268a9e1be706d4fd6ef50dca4d495db9c8311b824df9dc6b8331b229ba"
+
+const DenominatorMigrationV54Digest = "sha256:ae130583ec041538e455cf6377312bf5af1a9398a217af785205a1e0019edfbf"
+
+const DenominatorMigrationV55Digest = "sha256:9dc1c5e506a4ea33ba64b62d1f65d6c1f2c16a6c26ef1aedeb51fafee876b787"
+
+const DenominatorMigrationV56Digest = "sha256:7d943a9f8f804b2fb765dc462cba20e320a382f54dccaaf6432a9acd88681262"
+
+const DenominatorMigrationV57Digest = "sha256:d5fd5b6bf8203b4d1466c03d2d6f4112881002e6a281791564bf689bbe93f6c2"
+
+const DenominatorMigrationV58Digest = "sha256:55f249dc9d663931fd5373322890cee91a2f721f30634db993d208a614ac1ec6"
+
+const DenominatorMigrationV59Digest = "sha256:05a004c06f8a91a8dfaef944d107290bca1d43f08b120f4636fa12c081639cea"
+
+const DenominatorMigrationV60Digest = "sha256:b9036337d010ab4bbbd7fcc68a401e94a498c5fd3f929e7395c3ab671b47c349"
+
+const DenominatorMigrationV61Digest = "sha256:7ab8dba830e9f909f9607f6f0f52afe84e7b03af78e82cb9ceac4971cb264351"
+
+const DenominatorMigrationV62Digest = "sha256:1f8860e090a1655306c24b4843ad6d35e2e3491c86b0be9545ebecd2b61d7e16"
+
+const DenominatorMigrationV63Digest = "sha256:b30ea616a631e1f12b519794ceff0a982dceaa82b89d5f0b2c4d85717b4ee95e"
+
+const DenominatorMigrationV64Digest = "sha256:ba8110fd264fb7d8f9c2c1e65b504d7b9465911488eb32681b484bba03bb4169"
+
+const DenominatorMigrationV65Digest = "sha256:992845cfa77e3d927b97f047ad9879127f36b972636b4776cedcc991984b3e38"
+
+const DenominatorMigrationV66Digest = "sha256:6f275e2485b3a741ec3f0a7301fdd50b76a9db0dffeb82837a728c4d217fbba9"
+
+const DenominatorMigrationV67Digest = "sha256:3917b9bd0ba18fe1d54fcbae8a1b7730d97ed7ea0597ac8c86f75c9c4af71d96"
+
+const DenominatorMigrationV68Digest = "sha256:bb19d506c2a50758aa02dfcc6231f4d521ac7326281982a15f60e6212554e145"
+
+const DenominatorMigrationV69Digest = "sha256:b0529a6277c7278a6c88618b3691d7d0e035aa00186f068c535edc06c59c1cad"
+
+const DenominatorMigrationV70Digest = "sha256:da53a55cd60bedc139226e9aa44b0392a981b8cab6b7b84c2b30b60922ca8dda"
+
+const DenominatorMigrationV71Digest = "sha256:8aab49767149c43a77b57f0d67773b6c4b724bd5f5e2890e30fefb0e64c8aa8c"
+
+const DenominatorMigrationV72Digest = "sha256:a2c5f1b122d393aff2fc4f4b5ab21889f9548a4f3eb86559a9ece4a755738351"
+
+const DenominatorMigrationV73Digest = "sha256:08c612ba137581d648e49339dcd2e6b95b391b97ce0c28e8204c83091e8d9616"
+
+const DenominatorMigrationV74Digest = "sha256:c3ec2da26aa7dc284a32b3d41301063109ed0439c4dfbdaa6722a36bcbe5b6ff"
+
+const DenominatorMigrationV75Digest = "sha256:0ae7b66bcbd26ae26c42873ebf57976fbc418524791d6a5753aa0b618ab168e7"
+
+const DenominatorMigrationV76Digest = "sha256:e90d02bd6a93f618174dcd05b1edb767f375fe06f3fe857b249a322c2fc5f937"
+
+const DenominatorMigrationV77Digest = "sha256:f61eca0e1226482e5c43d99de91adef42dc1c03f8626223cd7e6e56f9c566b6c"
+
+const DenominatorMigrationV78Digest = "sha256:20eaf87a2ab8a20eb15d217a12b00258949728755f12fb6252735baf1b05e7f5"
+
+const DenominatorMigrationV79Digest = "sha256:f36ee4a7435d5bf180751fc149855beb949e935a4af6bacd3673d8244f3753bd"
+
+const DenominatorMigrationV80Digest = "sha256:d3c410815e67e063e3ac504ba601c24fec05a127349432f6255dd5b2bdb342e4"
+
+const DenominatorMigrationV81Digest = "sha256:a556742a019b1787035f3a5ee8ca8f73e0ac17bf376c1260804554f7f2dcce70"
+
+const DenominatorMigrationV82Digest = "sha256:d77385641c6816491b8684fa7e5d8d6ea965a872ef9f423b6a65b3aed33cd8d0"
+
+const DenominatorMigrationV83Digest = "sha256:81a14c7762b47d902ee5b9aa3158b9c6920625a8d66fb5254cdadedbbacedd1c"
+
+const DenominatorMigrationV84Digest = "sha256:b334c5bde5b254f2d1495a2d9c06f76dd6692dbc0b524970f3d0956d52550255"
+
+const DenominatorMigrationV85Digest = "sha256:e73d5da14c96f0a27e895262af04df9e2310946ef1e0a0357077b7509524ed0f"
+
+const DenominatorMigrationV86Digest = "sha256:fbd80da3405b52e9d8779616b93e7958c5d3bb763c24144a80b4596e57c2a473"
+
+const DenominatorMigrationV87Digest = "sha256:4014ac4a0b3c1c0251ce4581e762eaeea994483a47cc44200c834658d5ce099c"

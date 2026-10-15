@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
@@ -37,6 +38,9 @@ type CompositionAssemblyInput struct {
 	Phase              string `json:"phase"`
 	Kind               string `json:"kind"`
 	ContractSHA256     string `json:"contract_sha256"`
+	CriteriaPredicates int    `json:"criteria_predicates,omitempty"`
+	CriteriaInputs     int    `json:"criteria_inputs,omitempty"`
+	CriteriaHoldouts   int    `json:"criteria_holdouts,omitempty"`
 	SourceCases        int    `json:"source_cases"`
 	SourceHoldoutCases int    `json:"source_holdout_cases"`
 	DependsOnAssembly  bool   `json:"depends_on_assembly"`
@@ -101,8 +105,12 @@ func (r *CompositionInspection) addAssembly(ctx context.Context, filename string
 		kind = "source_search"
 	case bodycodegen.IsRecordAssembly(spec):
 		kind = "record_choices"
+		if assemblyspec.IsScalarCriteria(spec) {
+			kind = "scalar_criteria_choices"
+		}
 	}
 	r.Assemblies = append(r.Assemblies, CompositionAssemblyInput{Name: name, ID: id, Phase: phase, Kind: kind,
+		CriteriaPredicates: criteriaPredicateCount(spec), CriteriaInputs: criteriaSelectionCount(spec), CriteriaHoldouts: criteriaHoldoutCount(spec),
 		ContractSHA256: digest([]byte(contract)), SourceCases: len(spec.Cases) + len(spec.ValueCases),
 		SourceHoldoutCases: len(spec.HoldoutCases) + len(spec.ValueHoldoutCases), DependsOnAssembly: deferred[name]})
 	return nil
@@ -170,4 +178,23 @@ func scalarInputPlaceholder(kind string) (any, bool) {
 		return "", true
 	}
 	return nil, false
+}
+
+func criteriaPredicateCount(s *assemblyspec.Spec) int {
+	if s.Criteria == nil {
+		return 0
+	}
+	return len(s.Criteria.Predicates)
+}
+func criteriaSelectionCount(s *assemblyspec.Spec) int {
+	if s.Criteria == nil {
+		return 0
+	}
+	return len(s.Criteria.Inputs)
+}
+func criteriaHoldoutCount(s *assemblyspec.Spec) int {
+	if s.Criteria == nil {
+		return 0
+	}
+	return len(s.Criteria.HoldoutInputs)
 }

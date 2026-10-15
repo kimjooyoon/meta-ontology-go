@@ -1,0 +1,8 @@
+package owner3001
+namespace owner3001
+entity Ticket id "OWNER3001://Entities/Quantity" fields {
+ field units id "owner3001://fields/Units" type "urn:gooo:type:integer" required one
+ field active id "urn:owner3001:active" type "urn:gooo:type:boolean" required one
+}
+entity Integer id "urn:gooo:type:integer"
+activity Price(Ticket) -> Integer id "OWNER3001://Activities/Price" computes "if input.active && input.units < 101 { return input.units + 7 }; return input.units - 7"

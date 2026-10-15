@@ -6,6 +6,7 @@ import (
 	"time"
 
 	decision "github.com/kimjooyoon/gooo-decision-runtime"
+	"github.com/kimjooyoon/gooo-decision-runtime/criteriadecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/orderjudge"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
@@ -34,6 +35,7 @@ type typedPathModel struct {
 	three       *jointdecision.ThreeModel
 	order       *retainedOrderModel
 	condition   *conditionPathModel
+	criteria    *criteriadecision.Model
 	retention   *RetainedModelInfo
 	diagnosis   *PathDiagnosisOptions
 	observation *PathObservationOptions
@@ -49,6 +51,7 @@ type TypedPathGenerator struct {
 	three     *jointdecision.ThreeModel
 	order     *retainedOrderModel
 	condition *conditionPathModel
+	criteria  *criteriadecision.Model
 	info      RetainedModelInfo
 }
 
@@ -75,8 +78,11 @@ func NewTypedPathGenerator(modelPath string) (*TypedPathGenerator, error) {
 		g.model, g.joint, g.three = models.model, models.joint, models.three
 		g.order = models.order
 		g.condition = models.condition
+		g.criteria = models.criteria
 		g.info.Loaded = true
-		if g.condition != nil {
+		if g.criteria != nil {
+			describeScalarCriteriaModel(g.criteria, &g.info)
+		} else if g.condition != nil {
 			g.condition.describe(&g.info)
 		} else if g.order != nil {
 			identity := g.order.runtime.Identity()
@@ -111,6 +117,9 @@ func (g *TypedPathGenerator) Generate(ctx context.Context, filename string, sour
 	document pathplan.Document, options TypedPathOptions) (Result, error) {
 	if g == nil || g.info.Schema != "gooo/retained-path-model/v1" {
 		return Result{}, fmt.Errorf("generator required")
+	}
+	if g.criteria != nil {
+		return Result{}, fmt.Errorf("scalar criteria model requires a source-owned assembly with fixed predicates")
 	}
 	feedback, diagnosis, err := resolveTypedPathOptions(options, g.model != nil || g.joint != nil || g.three != nil || g.order != nil || g.condition != nil)
 	if err != nil {

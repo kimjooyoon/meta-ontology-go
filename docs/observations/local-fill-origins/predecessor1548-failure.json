@@ -1,0 +1,10 @@
+{
+  "pr": 1548,
+  "head": "8e9af6f7213d2ecc8ee6c641040c22f753facb5b",
+  "job": 115606014609,
+  "log_sha256": "c9ddd04269b771e8ae7b8adefdb01b071c998eedb894f04f50c30e8d4b98780a",
+  "excerpt": [
+    "2026-10-14T00:11:17.5192895Z ##[error]source-splitter: plan internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go: split blocked: declarations cannot preserve source order within 75 lines"
+  ],
+  "cause": "source-ordered declaration split cannot fit generated denominator selector in75lines; generator now emits bounded chunks"
+}

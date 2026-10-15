@@ -1,0 +1,17 @@
+{
+  "exit_code": 1,
+  "elapsed_seconds": 2.393264542,
+  "args": [
+    "go",
+    "test",
+    "-overlay=/tmp/gooo-construction-origins-20261014/overlay9473.json",
+    "-p=1",
+    "./internal/bodyexecution",
+    "-run",
+    "^TestConstruction(Origins9473|Only9491|Fault9511)$",
+    "-count=1",
+    "-v"
+  ],
+  "historical_local_replays": 0,
+  "model_calls": 0
+}

@@ -1,0 +1,4 @@
+package helpers
+namespace coupons106_helpers
+entity Integer id "urn:coupons106:integer"
+activity Add(Integer) -> Integer id "urn:coupons106:add" computes "return input+11"

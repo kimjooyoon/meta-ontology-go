@@ -1,0 +1,38 @@
+{
+  "head": "0d8a4bfb3afe33c028b9686cc410950a9a832f1f",
+  "pr": 1540,
+  "run_id": 38430625415,
+  "attempt": 1,
+  "whole_pr": "FAILURE",
+  "scope": "workspaceexecution package passed in both original jobs",
+  "handoff_test": {
+    "path": "internal/packageruntime/workspaceexecution/collection_handoff_test.go",
+    "sha256": "0bcc7eaedb55d4bd29b95118b5f684b0dae6d06e3d2210a99e341fb67aa5dea7",
+    "unconditional_test": true,
+    "native_outputs": 14,
+    "native_inputs": 7,
+    "construction_cases": 3,
+    "separate_holdout_cases": 1,
+    "selected_candidate": "inclusive",
+    "original_source_across_bind": true,
+    "static_origins": "PARTIAL",
+    "model_calls": 0
+  },
+  "jobs": [
+    {
+      "job_id": 115411546394,
+      "command": "go test ./...",
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38430625415/job/115411546394",
+      "log_sha256": "b1acd3e861bc2fcee29af147db3eeb54dbfa6cdde8dbe2329a8b58ce041692fb",
+      "package_result": "2026-10-13T16:38:09.2180579Z ok  \tgithub.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution\t63.698s"
+    },
+    {
+      "job_id": 115411546148,
+      "command": "go test -race ./...",
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38430625415/job/115411546148",
+      "log_sha256": "bfe1dc89d38ce7e77f7350d1d199dd7c1e2b3043e0fd027751e975068a07039c",
+      "package_result": "2026-10-13T16:42:19.5397350Z ok  \tgithub.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution\t61.868s"
+    }
+  ],
+  "interpretation": "The passing package executes the unconditional handoff test at this source revision. Its assertions enforce these finite counts and origin properties; the whole PR failed on registration/denominator and stale extraction recipe issues."
+}

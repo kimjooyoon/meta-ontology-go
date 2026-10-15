@@ -1,0 +1,11 @@
+package interrupted
+namespace interrupted9551
+entity Integer id "urn:gooo:type:integer"
+entity Input id "urn:fault9551:input" fields {
+ field values id "urn:fault9551:values" type integer required many
+ field divisor id "urn:fault9551:divisor" type integer required one
+}
+entity Batch id "urn:fault9551:batch" fields {field values id "urn:fault9551:output" type integer required many}
+activity Build(Input) -> Batch id "urn:fault9551:build" computes "return Batch{values:[]int64{input.values[0],input.values[1]/input.divisor,23}}"
+activity Read(Batch) -> Integer id "urn:fault9551:read" computes "return input.values[1]"
+bind Build.result -> Read.input

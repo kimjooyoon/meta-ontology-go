@@ -1,0 +1,17 @@
+{
+  "source": "GitHub original run38632674920",
+  "source_head": "9b9c522f354a02c20ee7b6c34f6a8c8104ef7f04",
+  "run_attempt": 1,
+  "overall_conclusion": "failure",
+  "observed_job_seconds": {
+    "Semantic conformance": 950,
+    "CI policy": 794,
+    "go test": 388,
+    "go test -race": 1011
+  },
+  "semantic_and_policy_dependency_path_seconds": 1744,
+  "use": "operational discovery budget reference; not current verification or compatible command-cost prediction",
+  "current_context_prediction": "UNAVAILABLE",
+  "current_explicit_work_budget_ms": 2400000,
+  "default_improvement_target_ms": 180000
+}

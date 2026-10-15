@@ -1,0 +1,59 @@
+{
+  "actual_compiler_head": "f55e51ef3bd50834a8b40ceaf7a84b7edcf8ef3d",
+  "files": [
+    {
+      "path": "internal/bodycodegen/source_fill_input_declaration_test.go",
+      "sha256": "e5e0bbe6ead12f096d40de7fba548bf9556b55bc00c63d8a138561d7d40863c1"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_input_origin.go",
+      "sha256": "f7beaeefb67521353e09c5ed41cb300902c36fbe58621efff2ffea7910ea26c7"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin.go",
+      "sha256": "97128835212a6c1b1b52b98e38379a49154f479689a93e6b54dbc4c0d6063109"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_relocated_origin_test.go",
+      "sha256": "e03794693a30423ad81c1fc825a902d36a3fb58f109d82e6f4a99215501f7bec"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_replay.go",
+      "sha256": "af4d454165e9be7e7b91f20852efb864be0dc4beede6c44cd89dcb362a45cbdd"
+    },
+    {
+      "path": "internal/bodyexecution/condition_fill_input_facts.go",
+      "sha256": "fe7d5e2f6e4f5071f7b038ee24b4caf676cfc7b2829b31918a875f8d36a1caed"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/condition_source.go",
+      "sha256": "aa98b635b50efb37e40bfa9fdc4a8ac63a04c125f53336f5d6012c2752b46955"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/fill_input_bind.go",
+      "sha256": "697eadfa8cd9f3c4f5260d0598ec00f5eb28b74bc04e727366583290d1889f38"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/fill_input_chain_test.go",
+      "sha256": "97b09944b3a742b362cd254820e775879cd6648bd4f8f47293c25255541562ba"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/fill_input_origin_test.go",
+      "sha256": "a8affca6cb8ac60f32c90382eb2d1b80a4727b9200ecbccfb7735283e2c7ebc5"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/fill_input_prepare.go",
+      "sha256": "77512ef40e09a4d181ccfc7336e81e35a4197f797b4c7addf93178b0b41228b7"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/fill_input_ranges.go",
+      "sha256": "e7ff645065d6ef915b32747b9a0cde50ea276a4d7578f4bcf394f96edbdf5a90"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/program.go",
+      "sha256": "9d23096d5ed43672fa113257deaba7ed66a76f4672f967d64f2c83c1258ed77e"
+    }
+  ],
+  "source": "fresh declaration4571 static syntax only",
+  "historical_replays": 0
+}

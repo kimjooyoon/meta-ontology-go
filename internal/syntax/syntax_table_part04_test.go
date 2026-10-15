@@ -23,7 +23,7 @@ func TestParseDiagnosticsTable(t *testing.T) {
 		},
 		{
 			name:   "missing parameter comma",
-			source: "package p namespace n activity A(One Two) -> Result",
+			source: "package p namespace n activity A(first One Two) -> Result",
 			codes:  []DiagnosticCode{DiagExpectedComma},
 		},
 	}

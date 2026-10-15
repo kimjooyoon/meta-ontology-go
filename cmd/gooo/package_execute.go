@@ -17,7 +17,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageExecuteUsage = "usage: gooo package execute [--json] (--cases <cases.json> | --inputs <inputs.json> | --construction-receipt <execution.json>) [--body-plans <plans.json>] [--assembly-model <model.json>] [--assembly-policy-workspace <policy.workspace.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
+const packageExecuteUsage = "usage: gooo package execute [--json] (--cases <cases.json> | --inputs <inputs.json> | --construction-receipt <execution.json> | --origin-receipt <execution.json>) [--origin-kind reads|constructions|elements|links|faults|local-writes|local-uses|local-elements|local-fill-fragments|local-input-locations|field-writes|field-uses|field-input-locations] [--origin-shape rows|local-fill-columns|field-lineage-columns|field-local-columns|local-version-columns|local-use-columns] [--origin-field-id <id>] [--origin-activity-id <id>] [--origin-root-activity-id <id>] [--origin-offset <row-index>] [--origin-limit <1..128>] [--body-plans <plans.json>] [--assembly-model <model.json>] [--assembly-policy-workspace <policy.workspace.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
 
 type packageBodyFillPlanSet struct {
 	Schema     string                     `json:"schema"`
@@ -31,23 +31,25 @@ type packageBodyFillPlanEntry struct {
 }
 
 type packageExecutionReceipt struct {
-	Schema            string                     `json:"schema"`
-	Decision          string                     `json:"decision"`
-	Manifest          string                     `json:"manifest"`
-	ManifestDigest    string                     `json:"manifest_digest,omitempty"`
-	CasesDigest       string                     `json:"cases_digest,omitempty"`
-	InputsDigest      string                     `json:"inputs_digest,omitempty"`
-	Result            *workspaceexecution.Result `json:"result,omitempty"`
-	Error             string                     `json:"error,omitempty"`
-	ReplayedFrom      string                     `json:"replayed_from_sha256,omitempty"`
-	ContinuedFrom     string                     `json:"continued_from_sha256,omitempty"`
-	ConstructionInput *constructionInputEvidence `json:"construction_input,omitempty"`
+	Schema            string                           `json:"schema"`
+	Decision          string                           `json:"decision"`
+	Manifest          string                           `json:"manifest"`
+	ManifestDigest    string                           `json:"manifest_digest,omitempty"`
+	CasesDigest       string                           `json:"cases_digest,omitempty"`
+	InputsDigest      string                           `json:"inputs_digest,omitempty"`
+	Result            *workspaceexecution.Result       `json:"result,omitempty"`
+	Error             string                           `json:"error,omitempty"`
+	ReplayedFrom      string                           `json:"replayed_from_sha256,omitempty"`
+	ContinuedFrom     string                           `json:"continued_from_sha256,omitempty"`
+	ConstructionInput *constructionInputEvidence       `json:"construction_input,omitempty"`
+	OriginInput       *bodyexecution.NativeOriginInput `json:"origin_input,omitempty"`
 }
 
 func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	args, jsonMode := parseJSONFlag(args)
 	flags, manifestPath, err := parsePackageExecuteArgs(args)
 	if err != nil {
+		fmt.Fprintln(stderr, err)
 		fmt.Fprintln(stderr, packageExecuteUsage)
 		return exitUsage
 	}
@@ -59,7 +61,9 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 }
 
 func parsePackageExecuteArgs(args []string) (map[string]string, string, error) {
-	flags := map[string]string{"--cases": "", "--inputs": "", "--construction-receipt": "",
+	flags := map[string]string{"--cases": "", "--inputs": "", "--construction-receipt": "", "--origin-receipt": "",
+		"--origin-field-id": "", "--origin-activity-id": "", "--origin-root-activity-id": "",
+		"--origin-kind": "", "--origin-offset": "", "--origin-limit": "", "--origin-shape": "",
 		"--body-plans": "", "--assembly-model": "", "--assembly-policy-workspace": "", "--tiny-model": "", "--go": ""}
 	manifest, inputModes := "", 0
 	for i := 0; i < len(args); i++ {
@@ -67,7 +71,7 @@ func parsePackageExecuteArgs(args []string) (map[string]string, string, error) {
 			if previous != "" || i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" || strings.HasPrefix(args[i+1], "-") {
 				return nil, "", fmt.Errorf("missing or repeated execute option")
 			}
-			if args[i] == "--cases" || args[i] == "--inputs" || args[i] == "--construction-receipt" {
+			if args[i] == "--cases" || args[i] == "--inputs" || args[i] == "--construction-receipt" || args[i] == "--origin-receipt" {
 				inputModes++
 			}
 			flags[args[i]] = args[i+1]
@@ -80,6 +84,9 @@ func parsePackageExecuteArgs(args []string) (map[string]string, string, error) {
 	}
 	if manifest == "" || inputModes != 1 {
 		return nil, "", fmt.Errorf("execute needs a workspace and one input mode")
+	}
+	if _, err := packageOriginQuery(flags); err != nil {
+		return nil, "", err
 	}
 	return flags, manifest, nil
 }
@@ -99,7 +106,7 @@ func executePackage(ctx context.Context, reader SourceReader, manifestPath strin
 		return receipt, err
 	}
 	suite, digest, observed, err := packageExecuteInputs(ctx, reader, flags, manifest.Entry)
-	receipt.ConstructionInput = observed
+	receipt.ConstructionInput, receipt.OriginInput = observed.Construction, observed.Native
 	inputOnly := flags["--cases"] == ""
 	if inputOnly {
 		receipt.InputsDigest = digest
@@ -134,32 +141,17 @@ func executePackage(ctx context.Context, reader SourceReader, manifestPath strin
 	return receipt, nil
 }
 
-func packageExecuteInputs(ctx context.Context, reader SourceReader, flags map[string]string, entry packageruntime.EntrySpec) (bodyexecution.CompositionCases, string, *constructionInputEvidence, error) {
-	path := flags["--cases"]
-	if path == "" {
-		path = flags["--inputs"]
-	}
-	construction := flags["--construction-receipt"] != ""
-	if construction {
-		path = flags["--construction-receipt"]
-	}
-	raw, err := readPackageInputBytes(reader, path, construction)
+func packageExecuteInputs(ctx context.Context, reader SourceReader, flags map[string]string, entry packageruntime.EntrySpec) (bodyexecution.CompositionCases, string, packageInputOrigins, error) {
+	raw, origins, err := readPackageExecuteInput(ctx, reader, flags, entry)
 	if err != nil {
-		return bodyexecution.CompositionCases{}, "", nil, err
-	}
-	var observed *constructionInputEvidence
-	if construction {
-		raw, observed, err = packageConstructionInputs(ctx, raw, entry)
-		if err != nil {
-			return bodyexecution.CompositionCases{}, "", nil, err
-		}
+		return bodyexecution.CompositionCases{}, "", origins, err
 	}
 	decode := bodyexecution.DecodeCompositionCases
 	if flags["--cases"] == "" {
 		decode = bodyexecution.DecodeCompositionInputs
 	}
 	suite, err := decode(raw)
-	return suite, workspaceDigest(raw), observed, err
+	return suite, workspaceDigest(raw), origins, err
 }
 
 func packageExecuteOptions(reader SourceReader, flags map[string]string) (workspaceexecution.ExecuteOptions, error) {
@@ -237,6 +229,7 @@ func writePackageExecution(receipt packageExecutionReceipt, cause error, jsonMod
 	} else if cause != nil {
 		fmt.Fprintf(stderr, "gooo package execute: %v\n", cause)
 	} else if receipt.Decision == "OBSERVED" {
+		writePackageOriginInput(stdout, receipt.OriginInput)
 		return writePackageActualValues(stdout, stderr, *receipt.Result)
 	} else {
 		result := receipt.Result

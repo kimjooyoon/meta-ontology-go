@@ -1,0 +1,5 @@
+=== RUN   TestCurrentProjectDeclarationOrigins108271
+    project_compilation_fresh108271_test.go:50: current project: new source consumer; compiled dependencies=60; metadata calls=2; elapsed=2.489588833s
+--- PASS: TestCurrentProjectDeclarationOrigins108271 (2.49s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	4.033s

@@ -1,0 +1,7 @@
+{
+  "status": "FAILED_ENCODED_LITERAL_ASSERTION_AFTER_NATIVE3_OF3",
+  "native": "3/3,exact two-run,three return-expression bindings,eight field writes,two helper-return parent links",
+  "mapped_range": "escaped helper literal correctly maps encoded raw span;test incorrectly equated encoded bytes with decoded expression",
+  "repair": "check direct or decoded escaped range with new source/input21917",
+  "historical_reruns": 0
+}

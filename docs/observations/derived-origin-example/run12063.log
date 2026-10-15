@@ -1,0 +1,5 @@
+=== RUN   TestSelectionAlreadySplit12063
+    selection_small_unit_fresh_test.go:16: new already-split source inspected intact;one selector/one unit;no split demanded;program executions0
+--- PASS: TestSelectionAlreadySplit12063 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter	0.468s

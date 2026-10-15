@@ -1,0 +1,131 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "units1067/contract:Receive": {
+          "units": 10,
+          "capacity": 24,
+          "reference": "ordinary1067"
+        }
+      },
+      "expected": {
+        "units1067/contract:Receive": {
+          "units": 10,
+          "capacity": 24,
+          "reference": "ordinary1067"
+        },
+        "units1067/app:Authorize": {
+          "approved": true,
+          "reason": "capacity_available",
+          "reference": "ordinary1067"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "units1067/contract:Receive": {
+          "units": 24,
+          "capacity": 24,
+          "reference": "boundary1067"
+        }
+      },
+      "expected": {
+        "units1067/contract:Receive": {
+          "units": 24,
+          "capacity": 24,
+          "reference": "boundary1067"
+        },
+        "units1067/app:Authorize": {
+          "approved": true,
+          "reason": "capacity_available",
+          "reference": "boundary1067"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "units1067/contract:Receive": {
+          "units": 1,
+          "capacity": 9,
+          "reference": "invalid1067"
+        }
+      },
+      "expected": {
+        "units1067/contract:Receive": {
+          "units": 1,
+          "capacity": 9,
+          "reference": "invalid1067"
+        },
+        "units1067/app:Authorize": {
+          "approved": false,
+          "reason": "invalid_units",
+          "reference": "invalid1067"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "units1067/contract:Receive": {
+          "units": 28,
+          "capacity": 26,
+          "reference": "exceeds1067"
+        }
+      },
+      "expected": {
+        "units1067/contract:Receive": {
+          "units": 28,
+          "capacity": 26,
+          "reference": "exceeds1067"
+        },
+        "units1067/app:Authorize": {
+          "approved": false,
+          "reason": "capacity_exceeded",
+          "reference": "exceeds1067"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "units1067/contract:Receive": {
+          "units": 5,
+          "capacity": -3,
+          "reference": "inconsistent1067"
+        }
+      },
+      "expected": {
+        "units1067/contract:Receive": {
+          "units": 5,
+          "capacity": -3,
+          "reference": "inconsistent1067"
+        },
+        "units1067/app:Authorize": {
+          "approved": false,
+          "reason": "capacity_exceeded",
+          "reference": "inconsistent1067"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "units1067/contract:Receive": {
+          "units": -8,
+          "capacity": 2,
+          "reference": "negative1067"
+        }
+      },
+      "expected": {
+        "units1067/contract:Receive": {
+          "units": -8,
+          "capacity": 2,
+          "reference": "negative1067"
+        },
+        "units1067/app:Authorize": {
+          "approved": false,
+          "reason": "invalid_units",
+          "reference": "negative1067"
+        }
+      }
+    }
+  ]
+}

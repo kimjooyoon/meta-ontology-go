@@ -1,0 +1,355 @@
+{
+  "schema": "gooo/qualified-usage-first/v1",
+  "source_state": "UNBOUND_PRIVATE_DRAFT_BYTE_IDENTICAL_TO_PUBLISHED_EXAMPLE",
+  "compiler_parent_revision": "67e0474a5117e5e38109a0df577b0d510d00545a",
+  "source_sha256": "468a39dd86d842e4f6485ded21eae3ee8a93e4aea58f78a92c432d4c2aa879b0",
+  "public_files": {
+    "examples/recorded-use-origins/inspect.gooo": "468a39dd86d842e4f6485ded21eae3ee8a93e4aea58f78a92c432d4c2aa879b0",
+    "examples/recorded-use-origins/Decimal.workspace.json": "af99d4713d99bb9c980c05f89ddb7ce498bba18db51084f2619a243cd1de6666",
+    "examples/recorded-use-origins/IsSHA256.workspace.json": "ac062893490233a5a5c609d9ac3c77a00a789da3e6d44ba03d90654e8fb22640",
+    "examples/recorded-use-origins/RDFLiteral.workspace.json": "335519865ecb5e981f97e1699f37a1839700b63c0c275829d9ef56531a0d3058",
+    "examples/recorded-use-origins/explanation.workspace.json": "8e724f9f64e20e09fb24b7148a4429fa4ed91598c31d88c717c7c3c6ff700180",
+    "examples/recorded-use-origins/gooo.workspace.json": "001aa733bce220ba990891d60a1bcd25416c402e28bb4373efc57997c3bb2b46",
+    "examples/recorded-use-origins/rdf.workspace.json": "1a904cc68bd3e3c7000f02d1ff537ca7570b2133e02d0b12e8b9ad4ba7282aad",
+    "examples/recorded-use-origins/rdf-cases/Decimal-cases.json": "7c280cb1bcfc91186e7939664d8d36777f56801e00fe25a84ccdc3bc4e76fda4",
+    "examples/recorded-use-origins/rdf-cases/IsSHA256-cases.json": "b5f160a14097219e537fec2c3583b1b6a2007a2796ad7344be7d8f5558b08275",
+    "examples/recorded-use-origins/rdf-cases/RDFLiteral-cases.json": "16ee439c468d3242471715fa0b45600ddafce03233a35edb5ee87bd2ff7b2065",
+    "examples/recorded-use-origins/rdf-cases/rdf-cases-1.json": "d48ee13b8bacb32e3bb5a5bbba4da970a95f5c7dabaae49c252d8e9826ccc0cf",
+    "examples/recorded-use-origins/rdf-cases/rdf-cases-2.json": "6027739311a021e3b6aaac9a906df68007df3f4ad7a43e64819ca0a353dd1893",
+    "examples/recorded-use-origins/rdf-cases/rdf-cases-3.json": "55de53f04d39a449f5b8f4f41c74e810c805f0a6a49a681e62d289fced869948",
+    "examples/recorded-use-origins/rdf-cases/rdf-cases-4.json": "a660be2acc472635c650c19cbe32eb757bb0abdc14beb2b0e9da211cbe1d92b6",
+    "examples/recorded-use-origins/rdf-cases/rdf-cases-5.json": "25cc245324aae245742c1561d1f6ea85fdc6ebd5115e86452b2daa9b7c7b299f",
+    "examples/recorded-use-origins/rdf-cases/rdf-cases-6.json": "4db2ddf2843d588aa70d8b61b6a6552f12b4bcffcd30305b737717b7b9ef5c51"
+  },
+  "archive": {
+    "path": "first-observations.tar.gz",
+    "sha256": "bde47af10f2ee3bb81714b26da472ac8530ff33705ecd6287c3a960d55699a25",
+    "bytes": 1407427,
+    "members": 73
+  },
+  "export_cases": {
+    "passed": 12,
+    "total": 12,
+    "batches": 6,
+    "source_mode": "deterministic",
+    "model_calls": 0
+  },
+  "formatting_cases": {
+    "passed": 32,
+    "total": 32,
+    "Decimal": 12,
+    "IsSHA256": 10,
+    "RDFLiteral": 10
+  },
+  "saved_record_queries": {
+    "commands": 2,
+    "source_receipt_bytes": 62121,
+    "original_sha256": "a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+    "byte_variant_sha256": "689dd8aedd65874e5a70df48c0b497c840e1fe07b43afdf4a3127d7ae0412cc3",
+    "original_coordinates": {
+      "case": 0,
+      "frame": 1,
+      "assignment": 1,
+      "use": 0
+    },
+    "producer_program_executions": 0,
+    "producer_model_calls": 0
+  },
+  "independent_parser": {
+    "module": {
+      "Path": "github.com/knakk/rdf",
+      "Version": "v0.0.0-20260907062454-42e760e83a4d",
+      "Query": "latest",
+      "Time": "2026-09-07T06:24:54Z",
+      "GoVersion": "1.25.0"
+    },
+    "download": "h1:j7JAEMa8LCpr9B6aAiVLAZg2OoGVBjv0XZKeGiLChMw=",
+    "first": {
+      "decision": "PASS",
+      "parsed_graphs": 7,
+      "parser": "github.com/knakk/rdf@v0.0.0-20260907062454-42e760e83a4d",
+      "records": 13,
+      "scope": "readonly independent RDF syntax/direction/type validation of saved first outputs; no native program replay",
+      "triples_per_graph": 26
+    },
+    "new_byte_variant": {
+      "decision": "PASS",
+      "parsed_graphs": 1,
+      "parser": "github.com/knakk/rdf@v0.0.0-20260907062454-42e760e83a4d",
+      "records": 1,
+      "scope": "readonly independent RDF syntax/direction/type validation of saved first outputs; no native program replay",
+      "triples_per_graph": 26
+    },
+    "production_dependency_added": false
+  },
+  "v5_source_coherence": "AST, bytes, semantics, GetPut, PutGet PASS; new source only",
+  "local_native_ci_tests": "written for exact-source original CI; completed local cohorts were not repeated",
+  "initial_failure": {
+    "error": "for must use the same named counter from zero",
+    "exit_code": 1,
+    "source_sha256": "d11c27a4cf983523f44a8cc3c1e4cc9f7d022e623a67697ba1b82f6bbc476c3f",
+    "correction": "SHA256 loop uses zero-based 64 iterations with index+7"
+  },
+  "static_analysis": {
+    "go_vet": "PASS for cmd/gooo and languagesyntax/replay; no program execution",
+    "elapsed_seconds": null
+  },
+  "registry": {
+    "version": 84,
+    "cases": 122,
+    "source_paths": 140,
+    "new_case_denominator": false
+  },
+  "scope": "First new source/input cohorts; timings include preparation/build. Saved outputs parsed readonly; no completed historical local native/model/program/test cohorts replayed. No claim of complete causality, role/time, global execution UUID or full PROV constraint validation. Current-source CI acceptance pending.",
+  "commands": [
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--origin-receipt",
+        "/private/tmp/gooo-qualified-usage-20261015/saved-full-newline.json",
+        "--origin-shape",
+        "local-use-columns",
+        "--origin-offset",
+        "0",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.6835403340000001,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "actual-byte-variant-first/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--origin-receipt",
+        "/private/tmp/gooo-qualified-usage-20261015/saved-full.json",
+        "--origin-shape",
+        "local-use-columns",
+        "--origin-offset",
+        "0",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.671397833,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "actual-saved-first/command.json"
+    },
+    {
+      "exit_code": 1,
+      "wall_seconds": 2.392206458,
+      "scope": "first new Gooo qualified-usage NTriples source generation; no old program/model/cohort replay",
+      "path": "codegen-first/command.json",
+      "argv": []
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "body-codegen",
+        "--json",
+        "--activity",
+        "ExportNTriples",
+        "/private/tmp/gooo-qualified-usage-20261015/inspect.gooo"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.9819207500000001,
+      "source_sha256": "468a39dd86d842e4f6485ded21eae3ee8a93e4aea58f78a92c432d4c2aa879b0",
+      "scope": "new source correction, failed original loop assertion retained",
+      "path": "codegen-zero-based/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-qualified-usage-20261015/Decimal-cases.json",
+        "/private/tmp/gooo-qualified-usage-20261015/Decimal.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 2.4057098330000004,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "helper-Decimal-first/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-qualified-usage-20261015/IsSHA256-cases.json",
+        "/private/tmp/gooo-qualified-usage-20261015/IsSHA256.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.71762825,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "helper-IsSHA256-first/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-qualified-usage-20261015/RDFLiteral-cases.json",
+        "/private/tmp/gooo-qualified-usage-20261015/RDFLiteral.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 2.085914791,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "helper-RDFLiteral-first/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf-cases-1.json",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.659487709,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "rdf-batch-1-first/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf-cases-2.json",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.7311492080000002,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "rdf-batch-2-first/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf-cases-3.json",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 2.105283208,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "rdf-batch-3-first/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf-cases-4.json",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.9677617090000001,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "rdf-batch-4-first/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf-cases-5.json",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 2.2352183329999997,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "rdf-batch-5-first/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf-cases-6.json",
+        "/private/tmp/gooo-qualified-usage-20261015/rdf.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.865675167,
+      "scope": "first new qualified-usage source/input cohort; no producer/model or previous native cohort replay",
+      "path": "rdf-batch-6-first/command.json"
+    },
+    {
+      "argv": [
+        "<go1.27.2>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/languagereadiness/languagesyntax/replay",
+        "-run",
+        "^TestRecordedRDFSourceCoherence$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.1033659999999998,
+      "scope": "new extended-source V5 readonly analysis; no native program/model/historical local cohort replay",
+      "path": "source-coherence-first/command.json"
+    }
+  ],
+  "standards": [
+    "https://www.w3.org/TR/prov-o/#qualifiedUsage",
+    "https://www.w3.org/TR/n-triples/"
+  ],
+  "followup_readonly_checks": {
+    "fixture_binding": {
+      "exit_code": 0,
+      "wall_seconds": 5.3098307920000005,
+      "path": "fixture-binding-first.json.gz",
+      "sha256": "552159b8ae4cd248f3f9259b90dd7a1c8370714d6448cd695fae69ee50a70f81",
+      "archive_checked": "bde47af10f2ee3bb81714b26da472ac8530ff33705ecd6287c3a960d55699a25",
+      "scope": "current source/input/archive byte checks only; native CI tests compiled without executing"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "reward/core",
+    "activity": "Credit"
+  },
+  "packages": [
+    {
+      "path": "reward/core",
+      "name": "core",
+      "sources": [
+        "credit.gooo.fixture",
+        "display.gooo.fixture"
+      ]
+    }
+  ]
+}

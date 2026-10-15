@@ -1,0 +1,5 @@
+=== RUN   TestConditionOriginMetaprogramBuiltinText2513
+    condition_origin_static_consumer_test.go:70: origin2513: static source fact1 with2 field declaration origins; Gooo interprets1 source fact and4 explicit fixtures; native consumer5/5; model0
+--- PASS: TestConditionOriginMetaprogramBuiltinText2513 (0.71s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.212s

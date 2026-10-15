@@ -20,6 +20,7 @@ type IRBodyFillFailure struct {
 	Activity   string                         `json:"activity"`
 	PlanSHA256 string                         `json:"plan_sha256"`
 	Rejected   []IRBodyFillCandidateRejection `json:"rejected_candidates"`
+	LocalCalls *LocalCallHistory              `json:"local_calls,omitempty"`
 }
 
 // NoValidBodyFillCandidates is terminal and preserves every rejected assignment.
@@ -46,7 +47,11 @@ func noValidBodyFill(ctx context.Context, activity string, plan IRBodyFillPlan, 
 	if err != nil {
 		return err
 	}
-	return &NoValidBodyFillCandidates{Observation: IRBodyFillFailure{Activity: activity, PlanSHA256: digest(raw), Rejected: rejected}}
+	observation := IRBodyFillFailure{Activity: activity, PlanSHA256: digest(raw), Rejected: rejected}
+	if capture, ok := ctx.Value(fillCaptureKey{}).(*fillCallCapture); ok {
+		observation.LocalCalls = capture.history
+	}
+	return &NoValidBodyFillCandidates{Observation: observation}
 }
 
 // SourceFillCandidateRejection is limited to deterministic type/training errors.

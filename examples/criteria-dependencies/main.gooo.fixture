@@ -1,0 +1,16 @@
+package dependencies
+namespace dependencies
+entity Integer id "dependency://integer"
+entity Boolean id "dependency://boolean"
+activity Fee(Integer) -> Integer id "dependency://fee" computes "return input - 5" assembling {
+ choice "direction" operand_order at "0" intent "입력에서 5를 뺀다. Subtract five from the input."
+ criteria {
+  predicate "ceiling" activity "Allowed"
+  input "[10]"
+  holdout_input "[30]"
+ }
+ attempts "2"
+}
+activity Allowed(Integer,Integer) -> Boolean id "dependency://allowed" computes "return Within(input1)"
+activity Within(Integer) -> Boolean id "dependency://within" computes "return input <= Ceiling(input)"
+activity Ceiling(Integer) -> Integer id "dependency://ceiling" computes "return 20"

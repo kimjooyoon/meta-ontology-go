@@ -1,0 +1,178 @@
+{
+  "schema": "gooo/native-read-study/v1",
+  "baseline": "70e762187cb6a52c36ae39e9d80c374f3f3f40dd",
+  "model_calls": 0,
+  "historical_local_replays": 0,
+  "native_expected_outputs": {
+    "window9059": {
+      "passed": 7,
+      "total": 7
+    },
+    "gooo_consumer9127": {
+      "passed": 20,
+      "total": 20,
+      "original_program_executions": 0
+    },
+    "literals9281": {
+      "passed": 9,
+      "total": 9
+    },
+    "optional9311": {
+      "passed": 3,
+      "total": 3
+    },
+    "index_order9361": {
+      "passed": 4,
+      "total": 4
+    }
+  },
+  "reads": {
+    "native9059.json": {
+      "summary": {
+        "schema": "gooo/native-read-summary/v1",
+        "status": "PARTIAL",
+        "recorded_reads": 20,
+        "resolved_reads": 19,
+        "unresolved_reads": 1,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:60ed9678431b32d0b0b6b519621a9b26a2c2f7798fb02849b37ee003c7c5b19c",
+        "scope": "successful scalar collection index and range reads; input element identity is preserved through slice views, record copies, binds and helper calls; constructed collections remain unresolved; scalar arithmetic is not tracked as element identity"
+      },
+      "site_count": 6,
+      "mapped_sites": 6,
+      "runtime_elapsed_ns": 714349792,
+      "process_runs": [
+        {
+          "wall_ns": 400790083,
+          "cpu_ns": 10251000,
+          "peak_rss_bytes": 5259264
+        },
+        {
+          "wall_ns": 7373708,
+          "cpu_ns": 5689000,
+          "peak_rss_bytes": 5242880
+        }
+      ]
+    },
+    "literal9281.json": {
+      "summary": {
+        "schema": "gooo/native-read-summary/v1",
+        "status": "PARTIAL",
+        "recorded_reads": 6,
+        "resolved_reads": 0,
+        "unresolved_reads": 6,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:eea14bae60217866b379ce4b2c6301244d7429e7bfee9f4984c12e099d986f42",
+        "scope": "successful scalar collection index and range reads; input element identity is preserved through slice views, record copies, binds and helper calls; constructed collections remain unresolved; scalar arithmetic is not tracked as element identity"
+      },
+      "site_count": 2,
+      "mapped_sites": 2,
+      "runtime_elapsed_ns": 584171292,
+      "process_runs": [
+        {
+          "wall_ns": 412228917,
+          "cpu_ns": 10682000,
+          "peak_rss_bytes": 5013504
+        },
+        {
+          "wall_ns": 7724458,
+          "cpu_ns": 5949000,
+          "peak_rss_bytes": 5079040
+        }
+      ]
+    },
+    "optional9311.json": {
+      "summary": {
+        "schema": "gooo/native-read-summary/v1",
+        "status": "COMPLETE",
+        "recorded_reads": 3,
+        "resolved_reads": 3,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:3e1bc5ddb817edda84f7ad40dcfed49e3f0635b4a26d287efca5c3a71591587f",
+        "scope": "successful scalar collection index and range reads; input element identity is preserved through slice views, record copies, binds and helper calls; constructed collections remain unresolved; scalar arithmetic is not tracked as element identity"
+      },
+      "site_count": 1,
+      "mapped_sites": 1,
+      "runtime_elapsed_ns": 752676083,
+      "process_runs": [
+        {
+          "wall_ns": 413970375,
+          "cpu_ns": 10532000,
+          "peak_rss_bytes": 5160960
+        },
+        {
+          "wall_ns": 7987708,
+          "cpu_ns": 6659000,
+          "peak_rss_bytes": 5079040
+        }
+      ]
+    },
+    "order9361.json": {
+      "summary": {
+        "schema": "gooo/native-read-summary/v1",
+        "status": "COMPLETE",
+        "recorded_reads": 6,
+        "resolved_reads": 6,
+        "unresolved_reads": 0,
+        "dropped_reads": 0,
+        "registration_dropped": 0,
+        "sha256": "sha256:bfe78f57f4e517fda00ab7f770c64a6bbdbbd7101e6abfc70eed79be1bfe510d",
+        "scope": "successful scalar collection index and range reads; input element identity is preserved through slice views, record copies, binds and helper calls; constructed collections remain unresolved; scalar arithmetic is not tracked as element identity"
+      },
+      "site_count": 3,
+      "mapped_sites": 3,
+      "runtime_elapsed_ns": 703775792,
+      "process_runs": [
+        {
+          "wall_ns": 404295500,
+          "cpu_ns": 10355000,
+          "peak_rss_bytes": 4882432
+        },
+        {
+          "wall_ns": 7459375,
+          "cpu_ns": 5971000,
+          "peak_rss_bytes": 5013504
+        }
+      ]
+    }
+  },
+  "exports": [
+    {
+      "file": "native9059.json",
+      "original_sha256": "cda96733c7b84abd19cad294b8e1f478056aad1bfbcdb322dfb12bacb33e3e6a",
+      "runtime_unchanged": true,
+      "removed_fields": [
+        "facts"
+      ]
+    },
+    {
+      "file": "consumer9127.json",
+      "original_sha256": "877102ff027e3e5f8854cb63c2e7e166e3209fbbaba4446b1e40e00846697dd5",
+      "runtime_unchanged": true,
+      "removed_fields": []
+    },
+    {
+      "file": "literal9281.json",
+      "original_sha256": "e2ba5052b2d05ad3ba903cb5252fdb5ce28af5d8cc5cd8fbbd27cb719ac47afe",
+      "runtime_unchanged": true,
+      "removed_fields": []
+    },
+    {
+      "file": "optional9311.json",
+      "original_sha256": "fce6dcea51bc4cfb9249014ca1a38349ec82a7b6101a3a882a75b366cc615e02",
+      "runtime_unchanged": true,
+      "removed_fields": []
+    },
+    {
+      "file": "order9361.json",
+      "original_sha256": "264fd2cf724832a39c164a07abf88c6c1bb2464285479284183833d327e24b9f",
+      "runtime_unchanged": true,
+      "removed_fields": []
+    }
+  ],
+  "ci": "not yet published; no CI or dev acceptance claim for this change"
+}

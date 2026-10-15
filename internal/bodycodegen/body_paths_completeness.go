@@ -63,6 +63,10 @@ func bodyPathCompletenessDimensions(report Report) ([]CompletenessDimension, []s
 		d := pathConditionDimension(path)
 		dimensions, required = append(dimensions, d), append(required, d.ID)
 	}
+	if path.Holdout != nil {
+		d := pathHoldoutDimension(path.Holdout)
+		dimensions, required = append(dimensions, d), append(required, d.ID)
+	}
 	if path.Observation != nil {
 		d := pathObservationDimension(path)
 		dimensions, required = append(dimensions, d), append(required, d.ID)

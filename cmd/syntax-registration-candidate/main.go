@@ -17,7 +17,19 @@ func main() {
 	requestPath := flag.String("request", "", "explicit typed registration request JSON")
 	output := flag.String("output", "", "new caller-owned directory outside the project")
 	inspect := flag.Bool("inspect", false, "observe input digests without generating a candidate")
+	inventory := flag.Bool("inventory", false, "read source membership without generating or replaying cases")
 	flag.Parse()
+	if *inventory {
+		if *requestPath != "" || *output != "" || *inspect {
+			fmt.Fprintln(os.Stderr, "--inventory uses only --root")
+			os.Exit(1)
+		}
+		if err := writeRegistrationInventory(*root, os.Stdout); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	started := time.Now()
 	if err := run(*root, *requestPath, *output, *inspect, started); err != nil {
 		if failure, ok := errors.AsType[*syntaxregistration.Failure](err); ok {

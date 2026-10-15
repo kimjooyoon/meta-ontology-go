@@ -17,15 +17,18 @@ type EntityAlias struct {
 }
 
 type workspaceRecordNames struct {
-	canonical map[string]string
-	known     map[string]bool
-	visible   map[string]map[string]string
-	aliases   []EntityAlias
+	canonical    map[string]string
+	known        map[string]bool
+	visible      map[string]map[string]string
+	aliases      []EntityAlias
+	recordIDs    map[string]bool
+	constructors map[string]recordConstructorScope
 }
 
 func scopeWorkspaceRecords(ordered []packageruntime.PackageSpec, files map[string][]*syntax.File,
 	image packageruntime.Image, active map[string]ActivityRef) (workspaceRecordNames, error) {
-	n := workspaceRecordNames{canonical: map[string]string{}, known: map[string]bool{}, visible: map[string]map[string]string{}}
+	n := workspaceRecordNames{canonical: map[string]string{}, known: map[string]bool{}, visible: map[string]map[string]string{},
+		recordIDs: map[string]bool{}, constructors: map[string]recordConstructorScope{}}
 	byName := map[string]map[string]bool{}
 	byID := map[string]*syntax.EntityDecl{}
 	for _, pkg := range ordered {
@@ -40,6 +43,12 @@ func scopeWorkspaceRecords(ordered []packageruntime.PackageSpec, files map[strin
 				}
 				byName[entity.Name][entity.ID] = true
 				if !entity.FieldsPresent {
+					if isWorkspaceScalarIdentity(entity.ID) {
+						n.known[entity.Name] = true
+						if previous := n.canonical[entity.ID]; previous == "" || entity.Name < previous {
+							n.canonical[entity.ID] = entity.Name
+						}
+					}
 					continue
 				}
 				if entity.Name == "Integer" || entity.Name == "Boolean" || entity.Name == "Text" {
@@ -49,6 +58,7 @@ func scopeWorkspaceRecords(ordered []packageruntime.PackageSpec, files map[strin
 					return n, fmt.Errorf("stable record ID %q has conflicting field declarations", entity.ID)
 				}
 				byID[entity.ID], n.known[entity.Name] = entity, true
+				n.recordIDs[entity.ID] = true
 				if previous := n.canonical[entity.ID]; previous == "" || entity.Name < previous {
 					n.canonical[entity.ID] = entity.Name
 				}
@@ -121,6 +131,7 @@ func (n *workspaceRecordNames) rewriteFiles(ordered []packageruntime.PackageSpec
 					}
 				case *syntax.ActivityDecl:
 					if ref, ok := active[value.Name]; ok {
+						n.constructors[packageActivityKey(ref.PackagePath, ref.Activity)] = n.constructorScope(file, value, image)
 						if err := n.rewriteActivity(ref, value, image); err != nil {
 							return err
 						}
@@ -149,24 +160,51 @@ func (n workspaceRecordNames) rewriteActivity(ref ActivityRef, activity *syntax.
 				continue
 			}
 			for i, id := range export.InputTypes {
-				if lowered := n.canonical[id]; lowered != "" {
+				lowered, err := n.signatureTypeName(activity.Inputs[i].Name, id, image)
+				if err != nil {
+					return err
+				}
+				if lowered != "" {
 					activity.Inputs[i].Name = lowered
 					if i < len(activity.Parameters) {
 						activity.Parameters[i].Name = lowered
 					}
 				}
 			}
-			if lowered := n.canonical[export.OutputType]; lowered != "" {
+			lowered, err := n.signatureTypeName(activity.Output, export.OutputType, image)
+			if err != nil {
+				return err
+			}
+			if lowered != "" {
 				activity.Output, activity.Result.Name = lowered, lowered
 			}
 		}
 	}
-	body, err := n.rewriteConstructors(ref.PackagePath, activity.ValueProgram, true)
+	scope := n.constructors[packageActivityKey(ref.PackagePath, ref.Activity)]
+	body, err := n.rewriteConstructors(ref.PackagePath, activity.ValueProgram, true, scope)
 	if err != nil {
 		return fmt.Errorf("package %s activity %s: %w", ref.PackagePath, ref.Activity, err)
 	}
 	activity.ValueProgram = body
-	return n.rewriteAssembly(ref.PackagePath, activity.Assembly)
+	return n.rewriteAssembly(ref.PackagePath, activity.Assembly, scope)
+}
+
+func (n workspaceRecordNames) signatureTypeName(spelling, id string, image packageruntime.Image) (string, error) {
+	if lowered := n.canonical[id]; lowered != "" {
+		return lowered, nil
+	}
+	_, member, qualified := strings.Cut(spelling, ".")
+	if !qualified {
+		return "", nil
+	}
+	for _, pkg := range image.Packages {
+		for _, export := range pkg.Exports {
+			if export.Kind == "entity" && export.ID == id && export.Name == member {
+				return member, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("qualified signature type %q has no prepared entity for stable ID %q", spelling, id)
 }
 
 func collectWorkspaceEntities(ordered []packageruntime.PackageSpec, files map[string][]*syntax.File) ([]syntax.Declaration, error) {

@@ -35,6 +35,9 @@ func ExportRecordAssemblyModelContext(ctx context.Context, filename string, sour
 		return RecordAssemblyContextExport{}, err
 	}
 	info := g.Info()
+	if g.criteria != nil {
+		return exportScalarCriteriaModelContext(ctx, filename, source, activity, g.Info(), options)
+	}
 	if !recordContextModelFeature(info.FeatureVersion) || g.three == nil {
 		return RecordAssemblyContextExport{}, fmt.Errorf("record context requires a record-field model feature; got %q", info.FeatureVersion)
 	}

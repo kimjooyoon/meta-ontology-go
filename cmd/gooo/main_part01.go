@@ -22,7 +22,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	return runWithInput(args, os.Stdin, stdout, stderr)
 }
 
-const initUsage = "usage: gooo init [--template app|library|diagnostic] [--module <path>] <new-directory>"
+const initUsage = "usage: gooo init [--template app|library|diagnostic|origins] [--module <path>] <new-directory>"
 
 var libraryModulePathPattern = regexp.MustCompile(`^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*(?:/[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*)*$`)
 
@@ -187,6 +187,8 @@ func runWithInputCommandsOne(args []string, stdout, stderr io.Writer) (int, bool
 		return runDiscover(args[1:], OSFileReader{}, stdout, stderr), true
 	case "generate":
 		return runGenerate(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
+	case "body-origins":
+		return runBodyOrigins(args[1:], OSFileReader{}, stdout, stderr), true
 	case "body-context":
 		return runBodyContext(args[1:], OSFileReader{}, stdout, stderr), true
 	case "body-plan":
@@ -211,11 +213,15 @@ func runWithInputCommandsTwo(args []string, input io.Reader, stdout, stderr io.W
 	case "adopt":
 		return runAdoption(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
 	case "roundtrip":
-		return runRoundTrip(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr), true
+		return runRoundTrip(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
 	case "query":
 		return runQuery(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr), true
 	case "inspect":
 		return runInspect(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr), true
+	case "impact":
+		return runSourceImpact(args[1:], OSFileReader{}, stdout, stderr), true
+	case "context":
+		return runSemanticContext(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr), true
 	case "graph":
 		return runPublicGraph(args[1:], OSFileReader{}, stdout, stderr), true
 	case "claim":

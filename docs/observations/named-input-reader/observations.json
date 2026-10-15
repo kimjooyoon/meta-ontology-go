@@ -1,0 +1,134 @@
+{
+  "schema": "gooo/named-input-reader-observation/v1",
+  "consumer_source_sha256": "e23580c3a009237e7b602ece7b93078fd2f61429954416f7299722c337051d29",
+  "observed_files": {
+    "examples/source-control-reader/inspect.gooo": "e23580c3a009237e7b602ece7b93078fd2f61429954416f7299722c337051d29",
+    "examples/source-control-reader/named-inputs.workspace.json": "9ec63ede0bb0a6b15c5ba6e1d909d1ef945993bb081896ef85fc0236b529f6b9",
+    "examples/source-control-reader/named-inputs.cases.json": "87bed2fbde19f9cb45382a6b8afc06a2ed790ec09aeaedeeda37f626a819fc9e",
+    "examples/named-inputs/main.gooo": "261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd"
+  },
+  "native_cases": {
+    "prototype": {
+      "total": 16,
+      "passed": 16,
+      "real_source_exports": 1,
+      "controlled_cases": 15,
+      "model_calls": 0
+    },
+    "compiler_transport": {
+      "input_only_traces": 2,
+      "external_comparisons": 2,
+      "matched": 2,
+      "finite_total": 0,
+      "model_calls": 0
+    }
+  },
+  "failures": [
+    {
+      "cohort": "prototype-native-first",
+      "stage": "call resolution",
+      "reason": "append unsupported",
+      "native_executions": 0
+    },
+    {
+      "cohort": "prototype-text-repair-first",
+      "stage": "body generation",
+      "reason": "compound assignment only accepts direct locals",
+      "native_executions": 0
+    }
+  ],
+  "limits": [
+    "Name presence is a descriptive ratio, not semantic completeness or quality.",
+    "Display names do not create stable PROV role IDs.",
+    "Sixteen cases and two input-only signatures are finite scoped observations.",
+    "Unsupported initial source snapshots were not retained; failure outputs and commands are retained."
+  ],
+  "archive": {
+    "path": "first-observations.tar.gz",
+    "sha256": "3560a5ac546c182735344bbd84d62e3d66c72c0369b8b398f0bbfa027228b8ef",
+    "bytes": 184327,
+    "members": {
+      "case-labels.json": "2b059a4af8c81f04a37b5b68615b68ba1f5c557b6766f117f4a5a19d2854cad6",
+      "identity-layout-first/command.json": "db36cbfd9560ddaf7816dc344278ea2360de0dd784b8401bf9c7e8b616d726b7",
+      "identity-layout-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "identity-layout-first/stdout": "9fc5c61bc30a7f0df85984adf04960c45662b4c5943aeac48eeec9f5f5a6a4a3",
+      "native-transport-first/command.json": "38d4f770978dd153f4299fa4a256cf8fcaaac9fb9d312c497c76cfb2178127b7",
+      "native-transport-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "native-transport-first/stdout": "f2308cbc6eb8977e78ace130b8e8948f362c774e17ef52d045799edbbf0236f0",
+      "native-transport-outputs/export-Credit.json": "089fbce1273dbad30333aa71a5fd8cd653dae914f37bdd3d517ab99000fcb4ec",
+      "native-transport-outputs/export-Net.json": "4a0c39a78412a8e3a3356d6d5322673abeaafe81442c315817adf82bec6123e8",
+      "native-transport-outputs/native-receipt.json": "e8ffd4279349c1dc4360f822607e358c3950d086dc6567f5e82b6e37dbf4d56d",
+      "prototype-field-assignment-repair-first/command.json": "5370b66f5d0c1de0b5959237ee6fbddfa6b6faa08ada3823e22a843f7811e898",
+      "prototype-field-assignment-repair-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prototype-field-assignment-repair-first/stdout": "e340175a134183046026e29f07d69254ebe569be68bffa33eb683ca67537f76d",
+      "prototype-native-first/command.json": "23ae60b028d4364899d7cb927109b616db63c7ec1f960be8acf8637fa777b8a9",
+      "prototype-native-first/stderr": "bf05a2ed1e6ff1ca52a9863bab4a8833d5068953dd57362001f6462ff43f7cfc",
+      "prototype-native-first/stdout": "67cd32e598253f52e9b8012380ff379280eb867ba396853b1e22b20c5e6d4801",
+      "prototype-text-repair-first/command.json": "b1137e62bde71afecb042b25ed982daabc11e2e9d64c874ec6f31c618a70bfcf",
+      "prototype-text-repair-first/stderr": "bf05a2ed1e6ff1ca52a9863bab4a8833d5068953dd57362001f6462ff43f7cfc",
+      "prototype-text-repair-first/stdout": "e7aeaf77aee16480cd6cde479c8d85fc8a41a846aa4595271df6718cd5fcd4e0",
+      "source-facts-first/command.json": "db5479f5d10a6690bc91a6ec621c4ebb7fb7e132b2b38043f51fa01b8b837887",
+      "source-facts-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source-facts-first/stdout": "94b4510c30a0946d971b6faa5dfefdc5db3e8800ef3999855782cf9746e5aa31",
+      "source-transport-first/command.json": "ed2723396bab599065fc8263ff03f5b18ec761e1d143b4852173bd3b240551b1",
+      "source-transport-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source-transport-first/stdout": "df25b0c9c831dabf5946a2098c75aaefbc77967d6b424c064b916d8340931188",
+      "sources/examples/named-inputs/main.gooo": "261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+      "sources/examples/source-control-reader/inspect.gooo": "e23580c3a009237e7b602ece7b93078fd2f61429954416f7299722c337051d29",
+      "sources/examples/source-control-reader/named-inputs.cases.json": "87bed2fbde19f9cb45382a6b8afc06a2ed790ec09aeaedeeda37f626a819fc9e",
+      "sources/examples/source-control-reader/named-inputs.workspace.json": "9ec63ede0bb0a6b15c5ba6e1d909d1ef945993bb081896ef85fc0236b529f6b9"
+    }
+  },
+  "path_redactions": [
+    {
+      "path": "source-facts-first/command.json",
+      "original_sha256": "706e70376b7001874fa1ae1672bc1d3a7577d28e0ecf1fe919af3ea044c524e7",
+      "scope": "local command or manifest/input path only"
+    },
+    {
+      "path": "prototype-native-first/command.json",
+      "original_sha256": "ee69d8039b5af81672369cdc72962e1b3e8d1dea268f8f5311a6c26e35d8f9dc",
+      "scope": "local command or manifest/input path only"
+    },
+    {
+      "path": "prototype-native-first/stdout",
+      "original_sha256": "4aaeaff4bc8482cc6822830091e92239756636d5216169adf9020764c8da8790",
+      "scope": "local command or manifest/input path only"
+    },
+    {
+      "path": "prototype-text-repair-first/command.json",
+      "original_sha256": "50c89dbf7e1172fa990e71815223dba8f1e5990b91c58009fc5f78726fa91519",
+      "scope": "local command or manifest/input path only"
+    },
+    {
+      "path": "prototype-text-repair-first/stdout",
+      "original_sha256": "aa474cf5e1a41df0ff3c77705fcd91dd9c98548c976ab23ad4acea60564a250d",
+      "scope": "local command or manifest/input path only"
+    },
+    {
+      "path": "prototype-field-assignment-repair-first/command.json",
+      "original_sha256": "89cc443f495c072513b0d283e55f1c09b7a644b58294bceccce4c501ec22f6bb",
+      "scope": "local command or manifest/input path only"
+    },
+    {
+      "path": "prototype-field-assignment-repair-first/stdout",
+      "original_sha256": "a4446e6b8a9c3edc0f672915735b801db227a290f91d6946cbfb3579ae009519",
+      "scope": "local command or manifest/input path only"
+    },
+    {
+      "path": "source-transport-first/command.json",
+      "original_sha256": "492941173763a2344436c28a2b495c979dfdff1a0df83f2b1d2238761ba98751",
+      "scope": "local command or manifest/input path only"
+    },
+    {
+      "path": "native-transport-first/command.json",
+      "original_sha256": "fd929ab7563fe0ed76c6964e35d8b58766ca65135cd6fc83898220e2fe37c26a",
+      "scope": "local command or manifest/input path only"
+    },
+    {
+      "path": "identity-layout-first/command.json",
+      "original_sha256": "dc7beb0ecbd85532850a89548f0ce6414e47320e35bd12c128a96f3fa11b1919",
+      "scope": "local command or manifest/input path only"
+    }
+  ]
+}

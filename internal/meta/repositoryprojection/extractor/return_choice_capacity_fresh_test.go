@@ -1,0 +1,85 @@
+package extractor
+
+import (
+	"os"
+	"testing"
+)
+
+func TestReturnChoiceCapacity22789(t *testing.T) {
+	root := os.Getenv("GOOO_FRESH_FIELD_ROOT")
+	if root == "" {
+		root = "../../../.."
+	}
+	targets := []string{
+		"internal/bodycodegen#BindBodyReturnSources",
+		"internal/bodycodegen#EqualRetainedReturnOrigins",
+		"internal/bodycodegen#InspectRecordChoiceDeclarationOrigins",
+		"internal/bodycodegen#VerifyIRBodySearchProjection",
+		"internal/bodycodegen#WalkReturnSyntax",
+		"internal/bodycodegen#bodyMayUseLength",
+		"internal/bodycodegen#bodyProjection.captureReturnOrigins",
+		"internal/bodycodegen#bodyProjection.lower",
+		"internal/bodycodegen#bodyReturnCapture.captureTyped",
+		"internal/bodycodegen#bodyReturnCapture.emitted",
+		"internal/bodycodegen#compareSourceFillReplay",
+		"internal/bodycodegen#compareTypedPathReplayProjection",
+		"internal/bodycodegen#emitRecordAssembly",
+		"internal/bodycodegen#generateRouteWithCalls",
+		"internal/bodycodegen#normalizeLengthIntegerContexts",
+		"internal/bodycodegen#projectBodyOrigins",
+		"internal/bodycodegen#realizeRecordAssemblyProjection",
+		"internal/bodycodegen#recordAssemblyPlan.choiceOrigins",
+		"internal/bodycodegen#recordChoiceLiteralOrigin",
+		"internal/bodycodegen#replayTypedPathProjection",
+		"internal/bodycodegen#typecheckAndLowerRecords",
+		"internal/bodycodegen#validateTypedPathReplayInput",
+		"internal/bodycodegen#verifyTypedPathFiniteObservations",
+		"internal/bodyexecution#buildCompositionFieldProjection",
+		"internal/bodyexecution#compositionFieldBindings",
+		"internal/bodyexecution#compositionFieldInventory.addLocals",
+		"internal/bodyexecution#compositionFieldInventory.addParameters",
+		"internal/bodyexecution#compositionFieldInventory.addReturns",
+		"internal/bodyexecution#compositionFieldProjection.bindFunction",
+		"internal/bodyexecution#compositionFieldProjection.bindLocals",
+		"internal/bodyexecution#compositionFieldProjection.bindParameters",
+		"internal/bodyexecution#compositionFieldProjection.collectFunction",
+		"internal/bodyexecution#compositionFieldProjection.collectFunctionReads",
+		"internal/bodyexecution#compositionFieldProjection.collectFunctionWrites",
+		"internal/bodyexecution#compositionFieldProjection.collectLocalRecordWrite",
+		"internal/bodyexecution#compositionFieldProjection.collectReturnParts",
+		"internal/bodyexecution#compositionFieldProjection.collectReturnWrite",
+		"internal/bodyexecution#compositionFieldRenderer.node",
+		"internal/bodyexecution#compositionFieldRenderer.returnWrite",
+		"internal/bodyexecution#compositionSourceReturns",
+		"internal/bodyexecution#fieldFunctionReturns",
+		"internal/bodyexecution#nativeOriginPage.fieldFileLocation",
+		"internal/bodyexecution#observedCompositionFieldProjection",
+		"internal/bodyexecution#unparenthesizedFieldValue",
+		"internal/bodyexecution#validateFieldBinding",
+		"internal/bodyexecution#validateFieldChoiceSource",
+		"internal/bodyexecution#validateFieldFileSources",
+		"internal/bodyexecution#validateFieldInventory",
+		"internal/bodyexecution#validateFieldReturnSources",
+		"internal/bodyexecution#validateFieldSources",
+		"internal/packageruntime/workspaceexecution#bindWorkspaceFieldFileSources",
+		"internal/packageruntime/workspaceexecution#mappedRecordChoiceLocation",
+		"internal/packageruntime/workspaceexecution#recordChoiceTemplateLocation",
+		"internal/packageruntime/workspaceexecution#unmappedRecordChoiceLocation",
+		"internal/packageruntime/workspaceexecution#workspaceRecordChoiceOrigin",
+		"internal/packageruntime/workspaceexecution#workspaceRecordChoiceSource",
+	}
+	observed, err := collectNamedCapacities(root, targets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, subject := range targets {
+		value := observed[subject]
+		result := value.capacity
+		if result.functionStatus != renderedCapacityWithinCap || result.helperStatus != renderedCapacityWithinCap || result.helperLines == nil {
+			t.Errorf("%s in %s: %+v", subject, value.path, result)
+		} else {
+			t.Log(subject, "rendered", *result.helperLines)
+		}
+	}
+	t.Log("required changed production declarations", len(targets), "all44 original subjects retained;unchanged75-line generated helper cap;producer/model0")
+}

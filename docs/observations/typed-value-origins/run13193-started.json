@@ -1,0 +1,18 @@
+{
+  "at": 1791945531.9415941,
+  "command": [
+    "<go1.27.2>",
+    "test",
+    "-overlay",
+    "<study-root>/overlay13193.json",
+    "-p=1",
+    "./internal/bodycodegen",
+    "./cmd/gooo",
+    "-run",
+    "^(TestTypedOriginBounds13193|TestTypedAncestryBounds13201)$",
+    "-count=1",
+    "-v"
+  ],
+  "base": "7d073be7cc3bd5b65d749928b27902436212cc85",
+  "historical_cohorts_executed": 0
+}

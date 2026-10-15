@@ -1,0 +1,70 @@
+{
+  "schema": "gooo/fault-display-observations/v1",
+  "scope": "Read saved runtime and render CLI diagnostics; producer and model executions zero",
+  "source_execution_archive": "../local-division-origins/first-observations.tar.gz",
+  "source_execution_archive_sha256": "f924dbf8e1f3a0556339c12c0da1b6da58055c56371d2bf4a09f483548b43d89",
+  "terminal_views": 1,
+  "unmapped_binding_variants": 12,
+  "public_input_rows_compared": 3,
+  "extraction_declarations": 7,
+  "native_cases_added": 0,
+  "finite_correctness_denominator_added": 0,
+  "runtime_mutated": false,
+  "diagnostic_sha256": "b20882b4568076a27befb64eec094e0e4e16ec85fb89d730d7729f7a6e680e20",
+  "commands": {
+    "display-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "./internal/meta/repositoryprojection/extractor",
+        "-run",
+        "^(TestPackageFaultContextUsesSavedGoooOrigins|TestPackageFaultContextKeepsUnmappedOriginsExplicit|TestFaultDiagnosticDeclarationCapacity)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 5.963117416,
+      "scope": "readonly fault display; producer execution zero"
+    },
+    "inputs-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "-run",
+        "^TestFaultDiagnosticInputExampleMatchesSavedInputs$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.760709209,
+      "scope": "readonly fault display; producer execution zero"
+    },
+    "normalization-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "fix",
+        "-diff",
+        "./cmd/gooo",
+        "./internal/meta/repositoryprojection/extractor"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.58274775,
+      "scope": "readonly fault display; producer execution zero"
+    },
+    "vet-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "vet",
+        "./cmd/gooo",
+        "./internal/meta/repositoryprojection/extractor"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.512193916,
+      "scope": "readonly fault display; producer execution zero"
+    }
+  }
+}

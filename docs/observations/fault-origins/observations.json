@@ -1,0 +1,124 @@
+{
+  "schema": "gooo/fault-origin-reader-observations/v1",
+  "source": "examples/fault-origins/describe.gooo",
+  "source_sha256": "ca0898abf7c125a0c631c7839ceb670a69185281381cdac715d76f1ebc7561b3",
+  "archive": {
+    "path": "first-observations.tar.gz",
+    "sha256": "8a771f94d667e3da82b9ee35215d4888550801a83ca29c46d8b9b00c75738f78",
+    "bytes": 152210,
+    "members": 74
+  },
+  "producer_executions": 0,
+  "producer_model_calls": 0,
+  "consumer_model_calls": 0,
+  "consumer_rows": 4,
+  "consumer_finite_total": 0,
+  "consumer_comparisons": {
+    "helper_and_nested": {
+      "rows": 2,
+      "checked": [
+        "form",
+        "source_view",
+        "case_index",
+        "activity_id",
+        "root_activity_id",
+        "no supplied expectations"
+      ]
+    },
+    "mixed_field_local": {
+      "rows": 2,
+      "checked": [
+        "form",
+        "case_index"
+      ]
+    }
+  },
+  "readonly_contract_variants": 11,
+  "operand_scope": "Recorded values are transported, not recomputed or re-attested; a separate modified-operand read verifies this boundary.",
+  "source_scope": "Local compound RHS can map to the selected Gooo carrier. Binary/field fault sources retain their pure Go projection. Original workspace file locations remain separate.",
+  "extraction_declarations": 20,
+  "registration": {
+    "version": 87,
+    "cases": 125,
+    "source_paths": 143,
+    "generated_members": 9,
+    "missing": 0,
+    "unregistered": 0,
+    "all_before_after_hashes_verified": true
+  },
+  "first_failure": "The pre-registration inventory binary retained compiled v86 registry constants after v87 source application. A newly built read-only inventory confirmed all 143 current paths; no native cohort was replayed.",
+  "commands": {
+    "selector-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "./internal/meta/repositoryprojection/extractor",
+        "-run",
+        "^(TestFaultOriginSelectionPreservesRecordedOperations|TestFaultOriginSelectionRetainsMixedAndEmptyTables|TestFaultOriginRecordedContractRejectsBrokenLinks|TestFaultOriginReadIsNotAProducerReexecution|TestFaultOriginDeclarationCapacity)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 7.528855083,
+      "scope": "fault-origin metaprogramming; producer execution zero"
+    },
+    "consumer-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "-run",
+        "^TestGoooFaultOriginReaderUsesSavedFaults$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 5.066218416,
+      "scope": "fault-origin metaprogramming; producer execution zero"
+    },
+    "mixed-consumer-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "./internal/meta/repositoryprojection/extractor",
+        "-run",
+        "^(TestGoooFaultOriginReaderDistinguishesFieldUpdates|TestFaultOriginPublicFixtureRetainsArchivedRuntime|TestFaultReaderDeclarationCapacity)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.826398333,
+      "scope": "fault-origin metaprogramming; producer execution zero"
+    },
+    "normalization-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "fix",
+        "-diff",
+        "./cmd/gooo",
+        "./internal/bodyexecution",
+        "./internal/meta/repositoryprojection/extractor"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.114534375,
+      "scope": "fault-origin metaprogramming; producer execution zero"
+    },
+    "source-vet-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "vet",
+        "./cmd/gooo",
+        "./internal/bodyexecution",
+        "./internal/meta/repositoryprojection/extractor"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.363654625,
+      "scope": "fault-origin metaprogramming; producer execution zero"
+    }
+  }
+}

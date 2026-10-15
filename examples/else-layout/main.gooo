@@ -1,0 +1,23 @@
+package else_readability
+namespace else_readability
+entity Integer id "urn:gooo:type:integer"
+entity Request id "urn:gooo:else-layout-example:request" fields {
+    field amount id "urn:gooo:else-layout-example:amount" type integer required one
+    field enabled id "urn:gooo:else-layout-example:enabled" type boolean required one
+}
+
+activity Adjust(Request) -> Integer id "urn:gooo:else-layout-example:adjust" computes `
+let 조정값 = input.amount
+if input.enabled {
+    조정값 = 조정값 + 7
+}
+else {
+    조정값 = 조정값 - 5
+}
+if 조정값 > 41 {
+    return 조정값 * 2
+}
+else {
+    return 조정값 + 11
+}
+`

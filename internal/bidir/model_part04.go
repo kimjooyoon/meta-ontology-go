@@ -60,6 +60,18 @@ func (m Model) ValidateWithTypes(registry semantic.TypeRegistry) error {
 	if err := validateInputSequences(m); err != nil {
 		return err
 	}
+	for _, node := range m.Nodes {
+		if len(node.InputNames) == 0 {
+			continue
+		}
+		arity := len(node.InputSequence)
+		if arity == 0 {
+			arity = modelRuntimePortArity(m, node.ID, PredicateUsed, true)
+		}
+		if err := validateInputNames(node.Kind, arity, node.InputNames); err != nil {
+			return err
+		}
+	}
 	if err := validateModelRuntimeBindings(m); err != nil {
 		return err
 	}

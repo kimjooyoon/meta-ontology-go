@@ -1,0 +1,108 @@
+{
+  "id": 116050321356,
+  "run_id": 38621624025,
+  "workflow_name": "Transformation effect ledger",
+  "head_branch": "agent/continuity-producer-order-20261015",
+  "run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/runs/38621624025",
+  "run_attempt": 1,
+  "node_id": "CR_kwDOT1omE88AAAAbBSNfzA",
+  "head_sha": "8d057a805d284653cf68c5dcf4efc8cc415d1d5a",
+  "url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/jobs/116050321356",
+  "html_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38621624025/job/116050321356",
+  "status": "completed",
+  "conclusion": "failure",
+  "created_at": "2026-10-14T19:11:56Z",
+  "started_at": "2026-10-14T19:13:39Z",
+  "completed_at": "2026-10-14T19:14:23Z",
+  "name": "language syntax scope partition",
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1,
+      "started_at": "2026-10-14T19:13:40Z",
+      "completed_at": "2026-10-14T19:13:41Z"
+    },
+    {
+      "name": "Check out exact head",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2,
+      "started_at": "2026-10-14T19:13:41Z",
+      "completed_at": "2026-10-14T19:13:47Z"
+    },
+    {
+      "name": "Set up Go 1.27",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3,
+      "started_at": "2026-10-14T19:13:47Z",
+      "completed_at": "2026-10-14T19:14:00Z"
+    },
+    {
+      "name": "Build and observe language syntax scope partition",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 4,
+      "started_at": "2026-10-14T19:14:00Z",
+      "completed_at": "2026-10-14T19:14:17Z"
+    },
+    {
+      "name": "Preserve detailed syntax outcomes without changing the gate",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 5,
+      "started_at": "2026-10-14T19:14:17Z",
+      "completed_at": "2026-10-14T19:14:18Z"
+    },
+    {
+      "name": "Upload language syntax scope partition evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 6,
+      "started_at": "2026-10-14T19:14:18Z",
+      "completed_at": "2026-10-14T19:14:19Z"
+    },
+    {
+      "name": "Require language syntax scope partition",
+      "status": "completed",
+      "conclusion": "failure",
+      "number": 7,
+      "started_at": "2026-10-14T19:14:19Z",
+      "completed_at": "2026-10-14T19:14:19Z"
+    },
+    {
+      "name": "Post Set up Go 1.27",
+      "status": "completed",
+      "conclusion": "skipped",
+      "number": 13,
+      "started_at": "2026-10-14T19:14:19Z",
+      "completed_at": "2026-10-14T19:14:19Z"
+    },
+    {
+      "name": "Post Check out exact head",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 14,
+      "started_at": "2026-10-14T19:14:19Z",
+      "completed_at": "2026-10-14T19:14:20Z"
+    },
+    {
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 15,
+      "started_at": "2026-10-14T19:14:20Z",
+      "completed_at": "2026-10-14T19:14:20Z"
+    }
+  ],
+  "check_run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/check-runs/116050321356",
+  "labels": [
+    "ubuntu-24.04"
+  ],
+  "runner_id": 1000370098,
+  "runner_name": "GitHub Actions 1000370098",
+  "runner_group_id": 0,
+  "runner_group_name": "GitHub Actions"
+}

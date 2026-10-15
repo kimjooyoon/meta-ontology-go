@@ -1,0 +1,1 @@
+{"schema":"gooo/package-workspace-manifest/v1","entry":{"package_path":"source/control","activity":"Inspect"},"packages":[{"path":"source/control","sources":["inspect.gooo"]}]}

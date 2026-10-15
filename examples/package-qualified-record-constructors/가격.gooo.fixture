@@ -1,0 +1,7 @@
+package money
+namespace constructor716_money
+entity Value id "urn:constructor716:money" fields {
+ field value id "urn:constructor716:money-value" type "urn:gooo:type:integer" required one
+ field note id "urn:constructor716:money-note" type "urn:gooo:type:string" required one
+}
+activity Keep(Value) -> Value id "urn:constructor716:keep-money" computes "return input"

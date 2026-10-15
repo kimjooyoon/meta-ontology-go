@@ -1,0 +1,20 @@
+package namedinputs
+namespace namedinputs
+
+entity Integer id "urn:gooo:type:integer"
+
+# 같은 타입이어도 이름으로 계산의 방향을 읽을 수 있다.
+activity Difference(minuend Integer, subtrahend Integer) -> Integer id "urn:gooo:example:named-inputs:difference" computes `
+return minuend - subtrahend
+`
+
+activity Credit(원금 Integer) -> Integer id "urn:gooo:example:named-inputs:credit" computes `
+return 원금 + 23
+`
+
+activity Net(원금 Integer, 공제 Integer) -> Integer id "urn:gooo:example:named-inputs:net" computes `
+return Difference(원금, 공제)
+`
+
+# 활동 사이의 연결과 외부 입력은 선언 순서를 따른다.
+bind Credit.result -> Net.input0

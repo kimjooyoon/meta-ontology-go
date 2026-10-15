@@ -1,0 +1,35 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "field376/app",
+    "activity": "Decide"
+  },
+  "packages": [
+    {
+      "path": "field376/counts",
+      "name": "counts",
+      "sources": [
+        "계수.gooo.fixture"
+      ]
+    },
+    {
+      "path": "field376/flags",
+      "name": "flags",
+      "sources": [
+        "상태.gooo.fixture"
+      ]
+    },
+    {
+      "path": "field376/app",
+      "name": "app",
+      "imports": [
+        "field376/counts",
+        "field376/flags"
+      ],
+      "sources": [
+        "원장.gooo.fixture",
+        "판정.gooo.fixture"
+      ]
+    }
+  ]
+}

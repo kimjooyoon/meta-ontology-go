@@ -1,0 +1,4 @@
+=== RUN   TestConstructionSourceFill9661
+--- PASS: TestConstructionSourceFill9661 (0.69s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.192s

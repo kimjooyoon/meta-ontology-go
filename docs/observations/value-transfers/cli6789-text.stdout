@@ -1,0 +1,53 @@
+Recorded candidate origins: 1 uses; 1 matching constructions; 1 recorded value graphs
+
+urn:transfer6373:bump / candidate plus6373 / hole delta
+  return: "input + 19" [direct; MAPPED]
+  source assembly_input: workspace.gooo bytes 383..385 (sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895)
+  source workspace_input_file: 보정.gooo bytes 323..325 (sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4)
+  path from use to origin:
+     return : "input + 19"
+
+Selected program value origins: urn:transfer6373:main [MAPPED]
+
+  return -> candidate in urn:transfer6373:bump / candidate plus6373 / hole delta
+    root urn:transfer6373:main return: "first + second"
+    input urn:transfer6373:main declaration: "GoooPackage1ActivitySelectLeft(input0, input1)"
+    input urn:transfer6373:main call_result: "GoooPackage1ActivitySelectLeft(input0, input1)"
+    call_return urn:transfer6373:first return: "input0"
+    input urn:transfer6373:first input_reference: "input0"
+    call_argument urn:transfer6373:main call_argument: "input0"
+    input urn:transfer6373:main input_reference: "input0"
+    bind urn:transfer6373:start return: "GoooPackage0ActivityOffset(input)"
+    input urn:transfer6373:start call_result: "GoooPackage0ActivityOffset(input)"
+    call_return urn:transfer6373:bump return: "input + 19"
+    source assembly_input: workspace.gooo bytes 383..385 (sha256:089c801ddec0b6713ba119a6e98cf8119065788a621f4768e00fd48869001895)
+    source workspace_input_file: 보정.gooo bytes 323..325 (sha256:9cbbaf4749f28a6c9813274024dda8802472b6a764cd2174084f9dbbb31ccbe4)
+
+  return -> external_input in urn:transfer6373:main
+    root urn:transfer6373:main return: "first + second"
+    input urn:transfer6373:main declaration: "GoooPackage1ActivitySelectLeft(input1, input0)"
+    input urn:transfer6373:main call_result: "GoooPackage1ActivitySelectLeft(input1, input0)"
+    call_return urn:transfer6373:first return: "input0"
+    input urn:transfer6373:first input_reference: "input0"
+    call_argument urn:transfer6373:main call_argument: "input1"
+    input urn:transfer6373:main input_reference: "input1"
+    source workspace_input_declaration: 계산.gooo bytes 170..362 (sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936)
+
+  return -> external_input in urn:transfer6373:start
+    root urn:transfer6373:main return: "first + second"
+    input urn:transfer6373:main declaration: "GoooPackage1ActivitySelectLeft(input0, input1)"
+    input urn:transfer6373:main call_result: "GoooPackage1ActivitySelectLeft(input0, input1)"
+    call_return urn:transfer6373:first return: "input0"
+    input urn:transfer6373:first input_reference: "input0"
+    call_argument urn:transfer6373:main call_argument: "input0"
+    input urn:transfer6373:main input_reference: "input0"
+    bind urn:transfer6373:start return: "GoooPackage0ActivityOffset(input)"
+    input urn:transfer6373:start call_result: "GoooPackage0ActivityOffset(input)"
+    call_return urn:transfer6373:bump return: "input + 19"
+    input urn:transfer6373:bump input_reference: "input"
+    call_argument urn:transfer6373:start call_argument: "input"
+    input urn:transfer6373:start input_reference: "input"
+    source workspace_input_declaration: 계산.gooo bytes 70..169 (sha256:0e8c785f624fdfd3583b41b4ca63531364fe27dcf7a4d2d4f683c47b97a1b936)
+  current static analysis of retained selected source; use-to-origin paths across pure calls and binds; one shortest path per root and origin; branch alternatives are joined; zero program or model execution
+
+one shortest recorded static path per condition/return root and filled hole; selected construction only; no body, candidate or model execution

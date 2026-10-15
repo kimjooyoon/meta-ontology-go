@@ -1,0 +1,3891 @@
+{
+  "schema": "gooo/workspace-body-execution-receipt/v1",
+  "result": {
+    "fill_origins": [
+      {
+        "lowered_activity_id": "urn:access8887:at",
+        "assembly_source_sha256": "sha256:6de32cc1533ba2eb23a39228fba63aa5f4d1efdb2d56ff902ec694209500705d",
+        "selected_body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+        "candidate_id": "requested8887",
+        "input_source": {
+          "schema": "gooo/source-fill-input-origin/v1",
+          "status": "MAPPED",
+          "view": "workspace_input_file",
+          "package_path": "access8887",
+          "filename": "측정구간.gooo",
+          "source_sha256": "sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45",
+          "activity_id": "urn:access8887:at",
+          "activity_source": {
+            "start_byte": 810,
+            "end_byte": 1426
+          },
+          "assembly_source": {
+            "start_byte": 1003,
+            "end_byte": 1426
+          },
+          "intent": "선택한 구간에서 요청한 위치의 측정값을 읽는다",
+          "intent_source": {
+            "start_byte": 1037,
+            "end_byte": 1102
+          },
+          "candidate_id": "requested8887",
+          "candidate_source": {
+            "start_byte": 1185,
+            "end_byte": 1198
+          },
+          "fragments": [
+            {
+              "status": "MAPPED",
+              "kind": "retained_template",
+              "selected_decoded": {
+                "start_byte": 0,
+                "end_byte": 99
+              },
+              "template_source": {
+                "start_byte": 874,
+                "end_byte": 973
+              }
+            },
+            {
+              "status": "MAPPED",
+              "kind": "declared_candidate",
+              "hole_id": "position",
+              "expression": "input.pick",
+              "selected_decoded": {
+                "start_byte": 99,
+                "end_byte": 109
+              },
+              "template_source": {
+                "start_byte": 973,
+                "end_byte": 1000
+              },
+              "hole_declaration": {
+                "start_byte": 1108,
+                "end_byte": 1123
+              },
+              "expression_source": {
+                "start_byte": 1219,
+                "end_byte": 1229
+              }
+            },
+            {
+              "status": "MAPPED",
+              "kind": "retained_template",
+              "selected_decoded": {
+                "start_byte": 109,
+                "end_byte": 110
+              },
+              "template_source": {
+                "start_byte": 1000,
+                "end_byte": 1001
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "schema": "gooo/workspace-body-execution/v1",
+    "program": {
+      "activity_origins": [
+        {
+          "lowered_activity_id": "urn:access8887:at",
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:access8887:at",
+              "name": "At",
+              "source_sha256": "sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45",
+              "start_byte": 810,
+              "end_byte": 1426
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "access8887",
+            "filename": "측정구간.gooo",
+            "activity_id": "urn:access8887:at",
+            "source_sha256": "sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45",
+            "start_byte": 874,
+            "end_byte": 1001
+          }
+        },
+        {
+          "lowered_activity_id": "urn:access8887:read",
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:access8887:read",
+              "name": "Read",
+              "source_sha256": "sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45",
+              "start_byte": 1427,
+              "end_byte": 1512
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "access8887",
+            "filename": "측정구간.gooo",
+            "activity_id": "urn:access8887:read",
+            "source_sha256": "sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45",
+            "start_byte": 1495,
+            "end_byte": 1511
+          }
+        },
+        {
+          "lowered_activity_id": "urn:access8887:take",
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:access8887:take",
+              "name": "TakeWindow",
+              "source_sha256": "sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45",
+              "start_byte": 616,
+              "end_byte": 809
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "access8887",
+            "filename": "측정구간.gooo",
+            "activity_id": "urn:access8887:take",
+            "source_sha256": "sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45",
+            "start_byte": 690,
+            "end_byte": 808
+          }
+        }
+      ],
+      "condition_origins": [
+        {
+          "lowered_activity_id": "urn:access8887:at",
+          "lowered_body_sha256": "sha256:7c3b1c9e6dde73e007690ab647b18d29b9af289a8512606260a6704d3dc70f24",
+          "lowered_decoded_start": 3,
+          "lowered_decoded_end": 61,
+          "input_source": {
+            "declaration": {
+              "status": "MAPPED",
+              "view": "workspace_input_file",
+              "kind": "activity",
+              "stable_id": "urn:access8887:at",
+              "name": "At",
+              "source_sha256": "sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45",
+              "start_byte": 810,
+              "end_byte": 1426
+            },
+            "status": "MAPPED",
+            "view": "workspace_input_file",
+            "package_path": "access8887",
+            "filename": "측정구간.gooo",
+            "activity_id": "urn:access8887:at",
+            "source_sha256": "sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45",
+            "start_byte": 877,
+            "end_byte": 935,
+            "expression": "input.pick < 0 || input.pick >= int64(len(input.readings))"
+          }
+        }
+      ],
+      "schema": "gooo/workspace-body-program/v1",
+      "workspace_image": {
+        "schema": "gooo/package-runtime-image/v1",
+        "init_order": [
+          "access8887"
+        ],
+        "packages": [
+          {
+            "path": "access8887",
+            "name": "readings",
+            "namespace": "access8887",
+            "imports": null,
+            "exports": [
+              {
+                "name": "At",
+                "kind": "activity",
+                "id": "urn:access8887:at",
+                "input_types": [
+                  "urn:access8887:window"
+                ],
+                "output_type": "urn:gooo:type:integer"
+              },
+              {
+                "name": "Read",
+                "kind": "activity",
+                "id": "urn:access8887:read",
+                "input_types": [
+                  "urn:access8887:window"
+                ],
+                "output_type": "urn:gooo:type:integer"
+              },
+              {
+                "name": "TakeWindow",
+                "kind": "activity",
+                "id": "urn:access8887:take",
+                "input_types": [
+                  "urn:access8887:request"
+                ],
+                "output_type": "urn:access8887:window"
+              },
+              {
+                "name": "Integer",
+                "kind": "entity",
+                "id": "urn:gooo:type:integer"
+              },
+              {
+                "name": "Request",
+                "kind": "entity",
+                "id": "urn:access8887:request"
+              },
+              {
+                "name": "Window",
+                "kind": "entity",
+                "id": "urn:access8887:window"
+              }
+            ],
+            "sources": [
+              {
+                "filename": "측정구간.gooo",
+                "source_digest": "sha256:d9fa330371febffe59fb10c74752a23f362cc0a9879428580b29a848135291b2",
+                "semantic_digest": "sha256:9dae9ba6fe109915a04414ab6737815fbf98501538e557f659d0985713058d26",
+                "declarations": 6
+              }
+            ],
+            "declarations": 6,
+            "semantic_digest": "sha256:2ee3678843e50ef7f58e8f7dfd766c211bf28c33b33345d1b1882d63b0eefd66"
+          }
+        ],
+        "entry": {
+          "package_path": "access8887",
+          "source": "측정구간.gooo",
+          "activity": "Read",
+          "inputs": [
+            "Window"
+          ],
+          "output": "Integer"
+        },
+        "digest": "sha256:19eea1077df5910ec431c3ddf9db36a345d6a1be6b917eb26bb8480948d7216f"
+      },
+      "entry": {
+        "package_path": "access8887",
+        "activity": "Read",
+        "lowered_name": "GoooPackage2ActivityRead"
+      },
+      "activities": [
+        {
+          "package_path": "access8887",
+          "activity": "TakeWindow",
+          "lowered_name": "GoooPackage0ActivityTakeWindow"
+        },
+        {
+          "package_path": "access8887",
+          "activity": "Read",
+          "lowered_name": "GoooPackage2ActivityRead"
+        }
+      ],
+      "lowered_gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nentity Request id \"urn:access8887:request\" fields {\n    field readings id \"urn:access8887:request-readings\" type integer required many\n    field lower id \"urn:access8887:lower\" type integer required one\n    field upper id \"urn:access8887:upper\" type integer required one\n    field pick id \"urn:access8887:request-pick\" type integer required one\n}\nentity Window id \"urn:access8887:window\" fields {\n    field readings id \"urn:access8887:window-readings\" type integer required many\n    field pick id \"urn:access8887:window-pick\" type integer required one\n}\nactivity GoooPackage0ActivityTakeWindow(Request) -> Window id \"urn:access8887:take\" computes \"let 시작 = input.lower; let 끝 = input.upper; return Window{readings: input.readings[시작:끝], pick: input.pick}\"\nactivity GoooPackage1ActivityAt(Window) -> Integer id \"urn:access8887:at\" computes \"if input.pick < 0 || input.pick >= int64(len(input.readings)) { return -1 }; return input.readings[__GOOO_BODY_HOLE_position__]\" assembling {\n    source_fill intent \"선택한 구간에서 요청한 위치의 측정값을 읽는다\" {\n        hole \"position\"\n        candidate \"first8887\" {\n            fill \"position\" \"0\"\n        }\n        candidate \"requested8887\" {\n            fill \"position\" \"input.pick\"\n        }\n    }\n    value_case \"[{\\\"pick\\\":1,\\\"readings\\\":[31,47,73]}]\" -> \"47\"\n    value_case \"[{\\\"pick\\\":1,\\\"readings\\\":[97,41]}]\" -> \"41\"\n    holdout_value_case \"[{\\\"pick\\\":2,\\\"readings\\\":[67,103,53]}]\" -> \"53\"\n}\nactivity GoooPackage2ActivityRead(Window) -> Integer id \"urn:access8887:read\" computes \"return GoooPackage1ActivityAt(input)\"\nbind GoooPackage0ActivityTakeWindow.result -> GoooPackage2ActivityRead.input\n",
+      "scope": "entry and explicit bind producers with source-resolved pure activity calls; original package identities map to lowered names; finite native observations",
+      "pure_calls": {
+        "schema": "gooo/workspace-pure-calls/v1",
+        "activities": [
+          {
+            "activity": {
+              "package_path": "access8887",
+              "activity": "At",
+              "lowered_name": "GoooPackage1ActivityAt"
+            },
+            "activity_id": "urn:access8887:at",
+            "lowered_activity_id": "urn:access8887:at",
+            "source": "측정구간.gooo",
+            "source_body_sha256": "sha256:7c3b1c9e6dde73e007690ab647b18d29b9af289a8512606260a6704d3dc70f24"
+          },
+          {
+            "activity": {
+              "package_path": "access8887",
+              "activity": "Read",
+              "lowered_name": "GoooPackage2ActivityRead"
+            },
+            "activity_id": "urn:access8887:read",
+            "lowered_activity_id": "urn:access8887:read",
+            "source": "측정구간.gooo",
+            "source_body_sha256": "sha256:9d5601188853ffe161bf55157dff6fcbd8d0b669b80845763d3f044dc431aee2"
+          }
+        ],
+        "sites": [
+          {
+            "caller": "access8887:Read",
+            "callee": "access8887:At",
+            "surface": "computes",
+            "start_byte": 7,
+            "end_byte": 9
+          }
+        ]
+      }
+    },
+    "execution_source_sha256": "sha256:6de32cc1533ba2eb23a39228fba63aa5f4d1efdb2d56ff902ec694209500705d",
+    "composition": {
+      "schema": "gooo/body-composition/v1",
+      "stage": "COMPLETE",
+      "original_source_sha256": "sha256:6de32cc1533ba2eb23a39228fba63aa5f4d1efdb2d56ff902ec694209500705d",
+      "selected_source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+      "generated_sha256": "sha256:5eec233d5b4c1c3a8b48fea56f4d01ec424693c16a047f37c85c4cd2cb9c3321",
+      "driver_sha256": "sha256:1880922f0dc1c1b167c8afc836a13a72f18ad738fa3b5b1237128f55000c6681",
+      "plan": {
+        "schema": "gooo/body-composition-plan/v1",
+        "entry_activity": "GoooPackage2ActivityRead",
+        "typed_plan_sha256": "sha256:1720f1e15d159b6135cd692634ca366180a0cdfbba024e2b6b7ef1903d8b2429",
+        "semantic_fingerprint": "6fb0f898a7ea3906fe65960f1fa4278ae55e2839e78871bcc3df1049b07b46d0",
+        "activities": [
+          {
+            "name": "GoooPackage0ActivityTakeWindow",
+            "id": "urn:access8887:take",
+            "input_type": "Request",
+            "output_type": "Window",
+            "input_entity_id": "urn:access8887:request",
+            "output_entity_id": "urn:access8887:window",
+            "go_function": "GoooComposedActivity0",
+            "input_from": -1,
+            "assembling": false
+          },
+          {
+            "name": "GoooPackage2ActivityRead",
+            "id": "urn:access8887:read",
+            "input_type": "Window",
+            "output_type": "Integer",
+            "input_entity_id": "urn:access8887:window",
+            "output_entity_id": "urn:gooo:type:integer",
+            "go_function": "GoooComposedActivity1",
+            "input_from": 0,
+            "assembling": false
+          }
+        ],
+        "edges": [
+          {
+            "producer": "urn:access8887:take",
+            "consumer": "urn:access8887:read",
+            "producer_port": "result",
+            "consumer_port": "input",
+            "entity": "urn:access8887:window"
+          }
+        ],
+        "record_types": [
+          {
+            "name": "Request",
+            "id": "urn:access8887:request",
+            "go_name": "GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333",
+            "fields": [
+              {
+                "name": "readings",
+                "id": "urn:access8887:request-readings",
+                "type_id": "urn:gooo:type:integer",
+                "go_name": "GoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b",
+                "cardinality": "many"
+              },
+              {
+                "name": "lower",
+                "id": "urn:access8887:lower",
+                "type_id": "urn:gooo:type:integer",
+                "go_name": "GoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a"
+              },
+              {
+                "name": "upper",
+                "id": "urn:access8887:upper",
+                "type_id": "urn:gooo:type:integer",
+                "go_name": "GoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df"
+              },
+              {
+                "name": "pick",
+                "id": "urn:access8887:request-pick",
+                "type_id": "urn:gooo:type:integer",
+                "go_name": "GoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6"
+              }
+            ]
+          },
+          {
+            "name": "Window",
+            "id": "urn:access8887:window",
+            "go_name": "GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70",
+            "fields": [
+              {
+                "name": "readings",
+                "id": "urn:access8887:window-readings",
+                "type_id": "urn:gooo:type:integer",
+                "go_name": "GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269",
+                "cardinality": "many"
+              },
+              {
+                "name": "pick",
+                "id": "urn:access8887:window-pick",
+                "type_id": "urn:gooo:type:integer",
+                "go_name": "GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6"
+              }
+            ]
+          }
+        ],
+        "preparations": [
+          {
+            "name": "GoooPackage1ActivityAt",
+            "id": "urn:access8887:at"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "input_source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+          "generation": {
+            "report": {
+              "schema": "gooo/body-codegen-report/v3",
+              "decision": "PASS",
+              "activity": "GoooPackage0ActivityTakeWindow",
+              "activity_id": "urn:access8887:take",
+              "input_type": "Request",
+              "record_types": [
+                {
+                  "name": "Request",
+                  "id": "urn:access8887:request",
+                  "go_name": "GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333",
+                  "fields": [
+                    {
+                      "name": "readings",
+                      "id": "urn:access8887:request-readings",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b",
+                      "cardinality": "many"
+                    },
+                    {
+                      "name": "lower",
+                      "id": "urn:access8887:lower",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a"
+                    },
+                    {
+                      "name": "upper",
+                      "id": "urn:access8887:upper",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df"
+                    },
+                    {
+                      "name": "pick",
+                      "id": "urn:access8887:request-pick",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6"
+                    }
+                  ]
+                },
+                {
+                  "name": "Window",
+                  "id": "urn:access8887:window",
+                  "go_name": "GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70",
+                  "fields": [
+                    {
+                      "name": "readings",
+                      "id": "urn:access8887:window-readings",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269",
+                      "cardinality": "many"
+                    },
+                    {
+                      "name": "pick",
+                      "id": "urn:access8887:window-pick",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6"
+                    }
+                  ]
+                }
+              ],
+              "output_type": "Window",
+              "plan_sha256": "sha256:f3d4957c07f7b29a45428f8f76ae2ec110398a6aab7488109dd31018292ba93c",
+              "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+              "source_digest": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+              "program_digest": "sha256:97017b2e75457440b34f5a14e9b9bb7e03d88d53853ea6e0a8c8adb41e4b8921",
+              "generated_digest": "sha256:2047ba159de0240ea187475fbeb410e9b3f949b3ae387a5ea2aac3f617aa9f0d",
+              "replay_digest": "sha256:2047ba159de0240ea187475fbeb410e9b3f949b3ae387a5ea2aac3f617aa9f0d",
+              "route": "preserve",
+              "route_decision": {
+                "schema": "gooo/typed-decision-receipt/v1",
+                "mode": "deterministic_fallback",
+                "selected": "preserve",
+                "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+                "provider": "deterministic",
+                "request_sha256": ""
+              },
+              "route_selection": {
+                "method": "single_eligible_route",
+                "proposed_route": "preserve",
+                "final_route": "preserve"
+              },
+              "route_decision_latency_ms": 0,
+              "candidate_routes": [
+                "preserve"
+              ],
+              "equivalence_rule": "source-shape-preserving-v1",
+              "source_constructs": 3,
+              "lowered_constructs": 3,
+              "source_semantic_units": 26,
+              "lowered_semantic_units": 26,
+              "completeness_percent": 100,
+              "route_equivalence": {
+                "schema": "gooo/body-codegen-route-equivalence/v1",
+                "decision": "PASS",
+                "method": "canonical_control_flow_form/v2",
+                "rule": "source-shape-preserving-v1",
+                "source_semantic_digest": "sha256:2636951a4e376e2123c0ad8f7bfa34df80cca50cda72173ca915e8c02e93c0c6",
+                "generated_semantic_digest": "sha256:2636951a4e376e2123c0ad8f7bfa34df80cca50cda72173ca915e8c02e93c0c6",
+                "equivalent": true,
+                "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+              },
+              "typecheck_passed": true,
+              "deterministic_replay": true,
+              "repository_writes": 0,
+              "unsupported_constructs": "calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
+              "completeness_receipt": {
+                "schema": "gooo/metaprogramming-completeness-receipt/v2",
+                "profile_id": "gooo/body-codegen-pure-v1",
+                "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+                "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+                "scope": {
+                  "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                  "boundary": {
+                    "excluded_effects": [
+                      "generated code execution",
+                      "repository mutation",
+                      "external authority"
+                    ],
+                    "non_authorizing": true,
+                    "non_executing": true
+                  },
+                  "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                  "decision_mode": "deterministic_fallback",
+                  "decision_provider": "deterministic",
+                  "domain_scope": "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
+                  "excluded_scope": [
+                    "unstated natural-language intent",
+                    "independently sourced production workflows",
+                    "generated runtime behavior",
+                    "unrestricted Gooo body syntax",
+                    "route clarity or utility"
+                  ],
+                  "execution_environment": "darwin/arm64",
+                  "input_type": "Request",
+                  "laya_mode": "deterministic_fallback",
+                  "laya_provider": "deterministic",
+                  "observed_system_cost": {
+                    "human_actions": 0,
+                    "repository_writes": 0
+                  },
+                  "output_type": "Window",
+                  "plan_sha256": "sha256:f3d4957c07f7b29a45428f8f76ae2ec110398a6aab7488109dd31018292ba93c",
+                  "receipt_declaration": {
+                    "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile": "gooo/receipt-structure-projection/v1",
+                    "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                  },
+                  "record_types": [
+                    {
+                      "name": "Request",
+                      "id": "urn:access8887:request",
+                      "go_name": "GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333",
+                      "fields": [
+                        {
+                          "name": "readings",
+                          "id": "urn:access8887:request-readings",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b",
+                          "cardinality": "many"
+                        },
+                        {
+                          "name": "lower",
+                          "id": "urn:access8887:lower",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a"
+                        },
+                        {
+                          "name": "upper",
+                          "id": "urn:access8887:upper",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df"
+                        },
+                        {
+                          "name": "pick",
+                          "id": "urn:access8887:request-pick",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Window",
+                      "id": "urn:access8887:window",
+                      "go_name": "GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70",
+                      "fields": [
+                        {
+                          "name": "readings",
+                          "id": "urn:access8887:window-readings",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269",
+                          "cardinality": "many"
+                        },
+                        {
+                          "name": "pick",
+                          "id": "urn:access8887:window-pick",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6"
+                        }
+                      ]
+                    }
+                  ],
+                  "system_budget": {
+                    "maximum_human_actions": 0,
+                    "maximum_repository_writes": 0
+                  },
+                  "toolchain": "go1.27.2"
+                },
+                "core_dimensions": [
+                  "declaration_coverage",
+                  "generation_coverage",
+                  "internal_replay_coverage",
+                  "provenance_integrity",
+                  "receipt_schema_binding",
+                  "repository_write_boundary",
+                  "route_choice_protocol",
+                  "route_semantic_equivalence",
+                  "source_ast_coverage",
+                  "typecheck_coverage"
+                ],
+                "dimensions": [
+                  {
+                    "id": "declaration_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "stable activity declarations",
+                    "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                    "evidence": [
+                      "source_digest:sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+                      "activity_id:urn:access8887:take"
+                    ]
+                  },
+                  {
+                    "id": "generation_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated Go functions",
+                    "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                    "evidence": [
+                      "generated_digest:sha256:2047ba159de0240ea187475fbeb410e9b3f949b3ae387a5ea2aac3f617aa9f0d",
+                      "report decision:PASS"
+                    ]
+                  },
+                  {
+                    "id": "source_ast_coverage",
+                    "status": "PASS",
+                    "numerator": 26,
+                    "denominator": 26,
+                    "unit": "source semantic units lowered",
+                    "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                    "evidence": [
+                      "source_semantic_units",
+                      "lowered_semantic_units"
+                    ]
+                  },
+                  {
+                    "id": "route_semantic_equivalence",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source/generated route pairs",
+                    "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                    "evidence": [
+                      "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                      "route_equivalence.rule:source-shape-preserving-v1",
+                      "source_semantic_digest:sha256:2636951a4e376e2123c0ad8f7bfa34df80cca50cda72173ca915e8c02e93c0c6",
+                      "generated_semantic_digest:sha256:2636951a4e376e2123c0ad8f7bfa34df80cca50cda72173ca915e8c02e93c0c6"
+                    ]
+                  },
+                  {
+                    "id": "typecheck_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated functions accepted by Go type checking",
+                    "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                    "evidence": [
+                      "typecheck_passed"
+                    ]
+                  },
+                  {
+                    "id": "internal_replay_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "deterministic compiler emission replays",
+                    "reason": "Requires replayed generated bytes to match the selected output digest.",
+                    "evidence": [
+                      "generated_digest:sha256:2047ba159de0240ea187475fbeb410e9b3f949b3ae387a5ea2aac3f617aa9f0d",
+                      "replay_digest:sha256:2047ba159de0240ea187475fbeb410e9b3f949b3ae387a5ea2aac3f617aa9f0d"
+                    ]
+                  },
+                  {
+                    "id": "route_choice_protocol",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "selected routes in the compiler-declared candidate set",
+                    "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                    "evidence": [
+                      "candidate_routes",
+                      "selected_route:preserve"
+                    ]
+                  },
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "numerator": 7,
+                    "denominator": 8,
+                    "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "evidence": [
+                      "source_digest:sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+                      "program_digest:sha256:97017b2e75457440b34f5a14e9b9bb7e03d88d53853ea6e0a8c8adb41e4b8921",
+                      "generated_digest:sha256:2047ba159de0240ea187475fbeb410e9b3f949b3ae387a5ea2aac3f617aa9f0d",
+                      "replay_digest:sha256:2047ba159de0240ea187475fbeb410e9b3f949b3ae387a5ea2aac3f617aa9f0d",
+                      "activity_id:urn:access8887:take",
+                      "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                      "route_equivalence semantic digests"
+                    ]
+                  },
+                  {
+                    "id": "receipt_schema_binding",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source-owned receipt schema and generated structure bindings",
+                    "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                    "evidence": [
+                      "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                      "projection_profile:gooo/receipt-structure-projection/v1"
+                    ]
+                  },
+                  {
+                    "id": "repository_write_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "repository writes",
+                    "reason": "The command emits generated source without mutating the repository.",
+                    "evidence": [
+                      "repository_writes:0"
+                    ]
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated package runtime executions",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "evidence": [
+                      "body-codegen does not run generated Go"
+                    ]
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "observed host permission profiles",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "evidence": [
+                      "host permission profile is not observed"
+                    ]
+                  },
+                  {
+                    "id": "external_network_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "runs with no Laya provider request",
+                    "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                    "evidence": [
+                      "decision.mode:deterministic_fallback",
+                      "decision.provider:deterministic",
+                      "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                    ]
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 0,
+                    "unit": "eligible multi-route Laya decisions",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "evidence": [
+                      "candidate_routes",
+                      "route_decision.mode:deterministic_fallback",
+                      "route_decision.request_sha256:",
+                      "route_decision.model_revision:"
+                    ]
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independently sourced real workflows",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "evidence": [
+                      "no independent workflow corpus is bound"
+                    ]
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated runtime observations mapped back to source",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "evidence": [
+                      "no source-bound reverse-observation trace"
+                    ]
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete input-domain behavior proofs",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "evidence": [
+                      "generated package execution and an independent domain oracle are not part of this command"
+                    ]
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independent route-clarity or utility criteria",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "evidence": [
+                      "no independent route-quality oracle"
+                    ]
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete process resource profiles",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "evidence": [
+                      "route_decision_latency_ms is recorded",
+                      "CPU and peak RSS are not captured"
+                    ]
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible prior resource receipts",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "evidence": [
+                      "no compatible prior resource receipt"
+                    ]
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible before/after semantic receipts",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "evidence": [
+                      "no comparable prior semantic receipt"
+                    ]
+                  }
+                ],
+                "status_counts": {
+                  "FAIL_CLOSED": 0,
+                  "PASS": 10,
+                  "PROGRESS": 1,
+                  "UNKNOWN": 10
+                },
+                "aggregate_completeness_score": null,
+                "first_unresolved": {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                "unresolved_claims": [
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                  }
+                ],
+                "not_claimed": [
+                  "user-intent completeness",
+                  "real-workflow coverage",
+                  "generated runtime behavior",
+                  "full-domain semantics",
+                  "route quality",
+                  "universal language completeness"
+                ],
+                "fail_closed_reason": null
+              }
+            },
+            "source": "package gooo_workspace\n\n//gooo:generated:start id=\"urn:access8887:request\" kind=\"entity\"\ntype GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333 struct {\n\tGoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b []int64 `json:\"readings\"`\n\tGoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a int64   `json:\"lower\"`\n\tGoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df int64   `json:\"upper\"`\n\tGoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:access8887:request\" kind=\"entity\"\n//gooo:generated:start id=\"urn:access8887:window\" kind=\"entity\"\ntype GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70 struct {\n\tGoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269 []int64 `json:\"readings\"`\n\tGoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:access8887:window\" kind=\"entity\"\n//gooo:generated:start id=\"urn:access8887:take\" kind=\"activity\"\nfunc GoooPackage0ActivityTakeWindow(input GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333) GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70 {\n\tvar 시작 = input.GoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a\n\tvar 끝 = input.GoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df\n\treturn GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70{GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269: input.GoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b[시작:끝], GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6: input.GoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6}\n}\n\n//gooo:generated:end id=\"urn:access8887:take\" kind=\"activity\"\n"
+          }
+        },
+        {
+          "input_source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+          "generation": {
+            "report": {
+              "schema": "gooo/body-codegen-report/v3",
+              "decision": "PASS",
+              "activity": "GoooPackage2ActivityRead",
+              "activity_id": "urn:access8887:read",
+              "input_type": "Window",
+              "record_types": [
+                {
+                  "name": "Request",
+                  "id": "urn:access8887:request",
+                  "go_name": "GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333",
+                  "fields": [
+                    {
+                      "name": "readings",
+                      "id": "urn:access8887:request-readings",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b",
+                      "cardinality": "many"
+                    },
+                    {
+                      "name": "lower",
+                      "id": "urn:access8887:lower",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a"
+                    },
+                    {
+                      "name": "upper",
+                      "id": "urn:access8887:upper",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df"
+                    },
+                    {
+                      "name": "pick",
+                      "id": "urn:access8887:request-pick",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6"
+                    }
+                  ]
+                },
+                {
+                  "name": "Window",
+                  "id": "urn:access8887:window",
+                  "go_name": "GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70",
+                  "fields": [
+                    {
+                      "name": "readings",
+                      "id": "urn:access8887:window-readings",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269",
+                      "cardinality": "many"
+                    },
+                    {
+                      "name": "pick",
+                      "id": "urn:access8887:window-pick",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6"
+                    }
+                  ]
+                }
+              ],
+              "output_type": "int64",
+              "plan_sha256": "sha256:ffe09b8b3b2f90aed6cabc369a870b2bf3c0340b6051c89934250f0e6618db8b",
+              "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+              "source_digest": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+              "program_digest": "sha256:b72d28ae9ac00d4ef7a0afe57bce49cf0e186a60ba87fd11b59e4caca165b1b3",
+              "generated_digest": "sha256:c8818cc1207466f429ea6ab28bd1c5cef55604a18bdf7c2313fe065a22c8f53b",
+              "replay_digest": "sha256:c8818cc1207466f429ea6ab28bd1c5cef55604a18bdf7c2313fe065a22c8f53b",
+              "route": "preserve",
+              "route_decision": {
+                "schema": "gooo/typed-decision-receipt/v1",
+                "mode": "deterministic_fallback",
+                "selected": "preserve",
+                "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+                "provider": "deterministic",
+                "request_sha256": ""
+              },
+              "route_selection": {
+                "method": "single_eligible_route",
+                "proposed_route": "preserve",
+                "final_route": "preserve"
+              },
+              "route_decision_latency_ms": 0,
+              "body_conditions": [
+                {
+                  "activity_id": "urn:access8887:at",
+                  "native_ordinal": 0,
+                  "source_ordinal": 0,
+                  "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+                  "decoded_start": 3,
+                  "decoded_end": 61,
+                  "expression": "input.pick < 0 || input.pick >= int64(len(input.readings))",
+                  "relation": "retained_condition_node",
+                  "fields": [
+                    {
+                      "entity_id": "urn:access8887:window",
+                      "field_id": "urn:access8887:window-pick",
+                      "name": "pick"
+                    },
+                    {
+                      "entity_id": "urn:access8887:window",
+                      "field_id": "urn:access8887:window-pick",
+                      "name": "pick"
+                    },
+                    {
+                      "entity_id": "urn:access8887:window",
+                      "field_id": "urn:access8887:window-readings",
+                      "name": "readings"
+                    }
+                  ]
+                }
+              ],
+              "call_closure": {
+                "schema": "gooo/pure-activity-call-closure/v1",
+                "activities": [
+                  {
+                    "name": "GoooPackage1ActivityAt",
+                    "activity_id": "urn:access8887:at",
+                    "program_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768"
+                  }
+                ],
+                "edges": [
+                  {
+                    "caller_id": "urn:access8887:read",
+                    "callee_id": "urn:access8887:at",
+                    "ordinal": 0
+                  }
+                ],
+                "max_calls_per_invocation": 1
+              },
+              "candidate_routes": [
+                "preserve"
+              ],
+              "equivalence_rule": "source-shape-preserving-v1",
+              "source_constructs": 4,
+              "lowered_constructs": 4,
+              "source_semantic_units": 33,
+              "lowered_semantic_units": 33,
+              "completeness_percent": 100,
+              "route_equivalence": {
+                "schema": "gooo/body-codegen-route-equivalence/v1",
+                "decision": "PASS",
+                "method": "canonical_control_flow_form/v2",
+                "rule": "source-shape-preserving-v1",
+                "source_semantic_digest": "sha256:e703336951ea14ea9e85f9282892d57e60929f85f9fb757bc5f8398ead1eee92",
+                "generated_semantic_digest": "sha256:e703336951ea14ea9e85f9282892d57e60929f85f9fb757bc5f8398ead1eee92",
+                "equivalent": true,
+                "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+              },
+              "typecheck_passed": true,
+              "deterministic_replay": true,
+              "repository_writes": 0,
+              "unsupported_constructs": "recursive, indirect, external and assembling-callee calls; loops, imports, external effects, optional-field synthesis and repeated record fields",
+              "completeness_receipt": {
+                "schema": "gooo/metaprogramming-completeness-receipt/v2",
+                "profile_id": "gooo/body-codegen-pure-v1",
+                "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+                "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+                "scope": {
+                  "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                  "boundary": {
+                    "excluded_effects": [
+                      "generated code execution",
+                      "repository mutation",
+                      "external authority"
+                    ],
+                    "non_authorizing": true,
+                    "non_executing": true
+                  },
+                  "call_closure": {
+                    "schema": "gooo/pure-activity-call-closure/v1",
+                    "activities": [
+                      {
+                        "name": "GoooPackage1ActivityAt",
+                        "activity_id": "urn:access8887:at",
+                        "program_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768"
+                      }
+                    ],
+                    "edges": [
+                      {
+                        "caller_id": "urn:access8887:read",
+                        "callee_id": "urn:access8887:at",
+                        "ordinal": 0
+                      }
+                    ],
+                    "max_calls_per_invocation": 1
+                  },
+                  "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                  "decision_mode": "deterministic_fallback",
+                  "decision_provider": "deterministic",
+                  "domain_scope": "one pure typed Gooo activity with source-declared fixed callees; bounded acyclic call closure",
+                  "excluded_scope": [
+                    "unstated natural-language intent",
+                    "independently sourced production workflows",
+                    "generated runtime behavior",
+                    "unrestricted Gooo body syntax",
+                    "route clarity or utility"
+                  ],
+                  "execution_environment": "darwin/arm64",
+                  "input_type": "Window",
+                  "laya_mode": "deterministic_fallback",
+                  "laya_provider": "deterministic",
+                  "observed_system_cost": {
+                    "human_actions": 0,
+                    "repository_writes": 0
+                  },
+                  "output_type": "int64",
+                  "plan_sha256": "sha256:ffe09b8b3b2f90aed6cabc369a870b2bf3c0340b6051c89934250f0e6618db8b",
+                  "receipt_declaration": {
+                    "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile": "gooo/receipt-structure-projection/v1",
+                    "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                  },
+                  "record_types": [
+                    {
+                      "name": "Request",
+                      "id": "urn:access8887:request",
+                      "go_name": "GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333",
+                      "fields": [
+                        {
+                          "name": "readings",
+                          "id": "urn:access8887:request-readings",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b",
+                          "cardinality": "many"
+                        },
+                        {
+                          "name": "lower",
+                          "id": "urn:access8887:lower",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a"
+                        },
+                        {
+                          "name": "upper",
+                          "id": "urn:access8887:upper",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df"
+                        },
+                        {
+                          "name": "pick",
+                          "id": "urn:access8887:request-pick",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Window",
+                      "id": "urn:access8887:window",
+                      "go_name": "GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70",
+                      "fields": [
+                        {
+                          "name": "readings",
+                          "id": "urn:access8887:window-readings",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269",
+                          "cardinality": "many"
+                        },
+                        {
+                          "name": "pick",
+                          "id": "urn:access8887:window-pick",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6"
+                        }
+                      ]
+                    }
+                  ],
+                  "system_budget": {
+                    "maximum_human_actions": 0,
+                    "maximum_repository_writes": 0
+                  },
+                  "toolchain": "go1.27.2"
+                },
+                "core_dimensions": [
+                  "declaration_coverage",
+                  "generation_coverage",
+                  "internal_replay_coverage",
+                  "provenance_integrity",
+                  "receipt_schema_binding",
+                  "repository_write_boundary",
+                  "route_choice_protocol",
+                  "route_semantic_equivalence",
+                  "source_ast_coverage",
+                  "typecheck_coverage"
+                ],
+                "dimensions": [
+                  {
+                    "id": "declaration_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "stable activity declarations",
+                    "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                    "evidence": [
+                      "source_digest:sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+                      "activity_id:urn:access8887:read"
+                    ]
+                  },
+                  {
+                    "id": "generation_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated Go functions",
+                    "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                    "evidence": [
+                      "generated_digest:sha256:c8818cc1207466f429ea6ab28bd1c5cef55604a18bdf7c2313fe065a22c8f53b",
+                      "report decision:PASS"
+                    ]
+                  },
+                  {
+                    "id": "source_ast_coverage",
+                    "status": "PASS",
+                    "numerator": 33,
+                    "denominator": 33,
+                    "unit": "source semantic units lowered",
+                    "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                    "evidence": [
+                      "source_semantic_units",
+                      "lowered_semantic_units"
+                    ]
+                  },
+                  {
+                    "id": "route_semantic_equivalence",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source/generated route pairs",
+                    "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                    "evidence": [
+                      "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                      "route_equivalence.rule:source-shape-preserving-v1",
+                      "source_semantic_digest:sha256:e703336951ea14ea9e85f9282892d57e60929f85f9fb757bc5f8398ead1eee92",
+                      "generated_semantic_digest:sha256:e703336951ea14ea9e85f9282892d57e60929f85f9fb757bc5f8398ead1eee92"
+                    ]
+                  },
+                  {
+                    "id": "typecheck_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated functions accepted by Go type checking",
+                    "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                    "evidence": [
+                      "typecheck_passed"
+                    ]
+                  },
+                  {
+                    "id": "internal_replay_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "deterministic compiler emission replays",
+                    "reason": "Requires replayed generated bytes to match the selected output digest.",
+                    "evidence": [
+                      "generated_digest:sha256:c8818cc1207466f429ea6ab28bd1c5cef55604a18bdf7c2313fe065a22c8f53b",
+                      "replay_digest:sha256:c8818cc1207466f429ea6ab28bd1c5cef55604a18bdf7c2313fe065a22c8f53b"
+                    ]
+                  },
+                  {
+                    "id": "route_choice_protocol",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "selected routes in the compiler-declared candidate set",
+                    "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                    "evidence": [
+                      "candidate_routes",
+                      "selected_route:preserve"
+                    ]
+                  },
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "numerator": 7,
+                    "denominator": 8,
+                    "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "evidence": [
+                      "source_digest:sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+                      "program_digest:sha256:b72d28ae9ac00d4ef7a0afe57bce49cf0e186a60ba87fd11b59e4caca165b1b3",
+                      "generated_digest:sha256:c8818cc1207466f429ea6ab28bd1c5cef55604a18bdf7c2313fe065a22c8f53b",
+                      "replay_digest:sha256:c8818cc1207466f429ea6ab28bd1c5cef55604a18bdf7c2313fe065a22c8f53b",
+                      "activity_id:urn:access8887:read",
+                      "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                      "route_equivalence semantic digests"
+                    ]
+                  },
+                  {
+                    "id": "receipt_schema_binding",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source-owned receipt schema and generated structure bindings",
+                    "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                    "evidence": [
+                      "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                      "projection_profile:gooo/receipt-structure-projection/v1"
+                    ]
+                  },
+                  {
+                    "id": "repository_write_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "repository writes",
+                    "reason": "The command emits generated source without mutating the repository.",
+                    "evidence": [
+                      "repository_writes:0"
+                    ]
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated package runtime executions",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "evidence": [
+                      "body-codegen does not run generated Go"
+                    ]
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "observed host permission profiles",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "evidence": [
+                      "host permission profile is not observed"
+                    ]
+                  },
+                  {
+                    "id": "external_network_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "runs with no Laya provider request",
+                    "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                    "evidence": [
+                      "decision.mode:deterministic_fallback",
+                      "decision.provider:deterministic",
+                      "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                    ]
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 0,
+                    "unit": "eligible multi-route Laya decisions",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "evidence": [
+                      "candidate_routes",
+                      "route_decision.mode:deterministic_fallback",
+                      "route_decision.request_sha256:",
+                      "route_decision.model_revision:"
+                    ]
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independently sourced real workflows",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "evidence": [
+                      "no independent workflow corpus is bound"
+                    ]
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated runtime observations mapped back to source",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "evidence": [
+                      "no source-bound reverse-observation trace"
+                    ]
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete input-domain behavior proofs",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "evidence": [
+                      "generated package execution and an independent domain oracle are not part of this command"
+                    ]
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independent route-clarity or utility criteria",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "evidence": [
+                      "no independent route-quality oracle"
+                    ]
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete process resource profiles",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "evidence": [
+                      "route_decision_latency_ms is recorded",
+                      "CPU and peak RSS are not captured"
+                    ]
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible prior resource receipts",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "evidence": [
+                      "no compatible prior resource receipt"
+                    ]
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible before/after semantic receipts",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "evidence": [
+                      "no comparable prior semantic receipt"
+                    ]
+                  }
+                ],
+                "status_counts": {
+                  "FAIL_CLOSED": 0,
+                  "PASS": 10,
+                  "PROGRESS": 1,
+                  "UNKNOWN": 10
+                },
+                "aggregate_completeness_score": null,
+                "first_unresolved": {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                "unresolved_claims": [
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                  }
+                ],
+                "not_claimed": [
+                  "user-intent completeness",
+                  "real-workflow coverage",
+                  "generated runtime behavior",
+                  "full-domain semantics",
+                  "route quality",
+                  "universal language completeness"
+                ],
+                "fail_closed_reason": null
+              }
+            },
+            "source": "package gooo_workspace\n\n//gooo:generated:start id=\"urn:access8887:request\" kind=\"entity\"\ntype GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333 struct {\n\tGoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b []int64 `json:\"readings\"`\n\tGoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a int64   `json:\"lower\"`\n\tGoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df int64   `json:\"upper\"`\n\tGoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:access8887:request\" kind=\"entity\"\n//gooo:generated:start id=\"urn:access8887:window\" kind=\"entity\"\ntype GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70 struct {\n\tGoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269 []int64 `json:\"readings\"`\n\tGoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:access8887:window\" kind=\"entity\"\n//gooo:generated:start id=\"urn:access8887:read\" kind=\"activity\"\nfunc GoooPackage2ActivityRead(input GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70) int64 {\n\treturn GoooPackage1ActivityAt(input)\n}\n\n//gooo:generated:end id=\"urn:access8887:read\" kind=\"activity\"\n//gooo:generated:start id=\"urn:access8887:at\" kind=\"activity\"\nfunc GoooPackage1ActivityAt(input GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70) int64 {\n\tif input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 < 0 || input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 >= int64(len(input.GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269)) {\n\t\treturn -1\n\t}\n\treturn input.GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269[input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6]\n}\n\n//gooo:generated:end id=\"urn:access8887:at\" kind=\"activity\"\n"
+          }
+        }
+      ],
+      "preparations": [
+        {
+          "input_source_sha256": "sha256:6de32cc1533ba2eb23a39228fba63aa5f4d1efdb2d56ff902ec694209500705d",
+          "generation": {
+            "report": {
+              "schema": "gooo/body-codegen-report/v3",
+              "decision": "PASS",
+              "activity": "GoooPackage1ActivityAt",
+              "activity_id": "urn:access8887:at",
+              "input_type": "Window",
+              "record_types": [
+                {
+                  "name": "Request",
+                  "id": "urn:access8887:request",
+                  "go_name": "GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333",
+                  "fields": [
+                    {
+                      "name": "readings",
+                      "id": "urn:access8887:request-readings",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b",
+                      "cardinality": "many"
+                    },
+                    {
+                      "name": "lower",
+                      "id": "urn:access8887:lower",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a"
+                    },
+                    {
+                      "name": "upper",
+                      "id": "urn:access8887:upper",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df"
+                    },
+                    {
+                      "name": "pick",
+                      "id": "urn:access8887:request-pick",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6"
+                    }
+                  ]
+                },
+                {
+                  "name": "Window",
+                  "id": "urn:access8887:window",
+                  "go_name": "GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70",
+                  "fields": [
+                    {
+                      "name": "readings",
+                      "id": "urn:access8887:window-readings",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269",
+                      "cardinality": "many"
+                    },
+                    {
+                      "name": "pick",
+                      "id": "urn:access8887:window-pick",
+                      "type_id": "urn:gooo:type:integer",
+                      "go_name": "GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6"
+                    }
+                  ]
+                }
+              ],
+              "output_type": "int64",
+              "plan_sha256": "sha256:f707f5b36a0bb0f8c73ce5c537085813ac184a5547e7850b66c494daeec8fee4",
+              "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+              "source_digest": "sha256:b5346faede2b23e458a545a3d42372bed3c8dec591ea2a29d70b1a0c861186f9",
+              "program_digest": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+              "generated_digest": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+              "replay_digest": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+              "route": "preserve",
+              "route_decision": {
+                "schema": "gooo/typed-decision-receipt/v1",
+                "mode": "deterministic_fallback",
+                "selected": "preserve",
+                "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+                "provider": "deterministic",
+                "request_sha256": ""
+              },
+              "route_selection": {
+                "method": "single_eligible_route",
+                "proposed_route": "preserve",
+                "final_route": "preserve"
+              },
+              "route_decision_latency_ms": 0,
+              "body_fill": {
+                "source_origin": {
+                  "schema": "gooo/source-fill-origin/v1",
+                  "filename": "workspace.gooo",
+                  "view": "assembly_input",
+                  "source_sha256": "sha256:6de32cc1533ba2eb23a39228fba63aa5f4d1efdb2d56ff902ec694209500705d",
+                  "selected_source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+                  "selected_body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+                  "activity_id": "urn:access8887:at",
+                  "activity_source": {
+                    "start_byte": 859,
+                    "end_byte": 1568
+                  },
+                  "assembly_source": {
+                    "start_byte": 1072,
+                    "end_byte": 1568
+                  },
+                  "intent": "선택한 구간에서 요청한 위치의 측정값을 읽는다",
+                  "intent_source": {
+                    "start_byte": 1109,
+                    "end_byte": 1174
+                  },
+                  "candidate_id": "requested8887",
+                  "candidate_source": {
+                    "start_byte": 1295,
+                    "end_byte": 1308
+                  },
+                  "plan_sha256": "sha256:a70cca97416791cf6a7344b13398ba910b0b2997fb8e454f70c235599897876a",
+                  "fragments": [
+                    {
+                      "kind": "retained_template",
+                      "template_decoded": {
+                        "start_byte": 0,
+                        "end_byte": 99
+                      },
+                      "selected_decoded": {
+                        "start_byte": 0,
+                        "end_byte": 99
+                      },
+                      "template_source": {
+                        "start_byte": 943,
+                        "end_byte": 1042
+                      },
+                      "selected_source": {
+                        "start_byte": 943,
+                        "end_byte": 1042
+                      },
+                      "expression_source": {
+                        "start_byte": 943,
+                        "end_byte": 1042
+                      }
+                    },
+                    {
+                      "kind": "declared_candidate",
+                      "hole_id": "position",
+                      "expression": "input.pick",
+                      "template_decoded": {
+                        "start_byte": 99,
+                        "end_byte": 126
+                      },
+                      "selected_decoded": {
+                        "start_byte": 99,
+                        "end_byte": 109
+                      },
+                      "template_source": {
+                        "start_byte": 1042,
+                        "end_byte": 1069
+                      },
+                      "selected_source": {
+                        "start_byte": 1042,
+                        "end_byte": 1052
+                      },
+                      "hole_declaration": {
+                        "start_byte": 1186,
+                        "end_byte": 1201
+                      },
+                      "expression_source": {
+                        "start_byte": 1341,
+                        "end_byte": 1351
+                      }
+                    },
+                    {
+                      "kind": "retained_template",
+                      "template_decoded": {
+                        "start_byte": 126,
+                        "end_byte": 127
+                      },
+                      "selected_decoded": {
+                        "start_byte": 109,
+                        "end_byte": 110
+                      },
+                      "template_source": {
+                        "start_byte": 1069,
+                        "end_byte": 1070
+                      },
+                      "selected_source": {
+                        "start_byte": 1052,
+                        "end_byte": 1053
+                      },
+                      "expression_source": {
+                        "start_byte": 1069,
+                        "end_byte": 1070
+                      }
+                    }
+                  ],
+                  "data_flow": {
+                    "schema": "gooo/body-value-origins/v1",
+                    "status": "PARTIAL",
+                    "reasons": [
+                      "CALLEE_BODY_NOT_EXPANDED",
+                      "EARLY_EXIT_CONTROLS_NOT_EXPANDED"
+                    ],
+                    "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+                    "nodes": [
+                      {
+                        "id": "call_result:35:61:",
+                        "kind": "call_result",
+                        "decoded": {
+                          "start_byte": 35,
+                          "end_byte": 61
+                        },
+                        "inputs": [
+                          "call_result:41:60:"
+                        ]
+                      },
+                      {
+                        "id": "call_result:41:60:",
+                        "kind": "call_result",
+                        "decoded": {
+                          "start_byte": 41,
+                          "end_byte": 60
+                        },
+                        "inputs": [
+                          "input_reference:45:50:input"
+                        ]
+                      },
+                      {
+                        "id": "condition:3:61:",
+                        "kind": "condition",
+                        "decoded": {
+                          "start_byte": 3,
+                          "end_byte": 61
+                        },
+                        "inputs": [
+                          "call_result:35:61:",
+                          "input_reference:21:26:input",
+                          "input_reference:3:8:input"
+                        ]
+                      },
+                      {
+                        "id": "input_reference:21:26:input",
+                        "kind": "input_reference",
+                        "name": "input",
+                        "decoded": {
+                          "start_byte": 21,
+                          "end_byte": 26
+                        }
+                      },
+                      {
+                        "id": "input_reference:3:8:input",
+                        "kind": "input_reference",
+                        "name": "input",
+                        "decoded": {
+                          "start_byte": 3,
+                          "end_byte": 8
+                        }
+                      },
+                      {
+                        "id": "input_reference:45:50:input",
+                        "kind": "input_reference",
+                        "name": "input",
+                        "decoded": {
+                          "start_byte": 45,
+                          "end_byte": 50
+                        }
+                      },
+                      {
+                        "id": "input_reference:84:89:input",
+                        "kind": "input_reference",
+                        "name": "input",
+                        "decoded": {
+                          "start_byte": 84,
+                          "end_byte": 89
+                        }
+                      },
+                      {
+                        "id": "input_reference:99:104:input",
+                        "kind": "input_reference",
+                        "name": "input",
+                        "decoded": {
+                          "start_byte": 99,
+                          "end_byte": 104
+                        }
+                      },
+                      {
+                        "id": "return:71:73:",
+                        "kind": "return",
+                        "decoded": {
+                          "start_byte": 71,
+                          "end_byte": 73
+                        },
+                        "controls": [
+                          "condition:3:61:"
+                        ]
+                      },
+                      {
+                        "id": "return:84:110:",
+                        "kind": "return",
+                        "decoded": {
+                          "start_byte": 84,
+                          "end_byte": 110
+                        },
+                        "inputs": [
+                          "input_reference:84:89:input",
+                          "input_reference:99:104:input"
+                        ]
+                      }
+                    ],
+                    "roots": [
+                      "condition:3:61:",
+                      "return:71:73:",
+                      "return:84:110:"
+                    ]
+                  }
+                },
+                "schema": "gooo/body-codegen-ir-fill-plan/v3-record",
+                "original_source_digest": "sha256:6de32cc1533ba2eb23a39228fba63aa5f4d1efdb2d56ff902ec694209500705d",
+                "intent": "선택한 구간에서 요청한 위치의 측정값을 읽는다",
+                "hole_id": "position",
+                "hole_token": "__GOOO_BODY_HOLE_position__",
+                "ir_plan_sha256": "sha256:a70cca97416791cf6a7344b13398ba910b0b2997fb8e454f70c235599897876a",
+                "proposed_candidate_id": "first8887",
+                "proposed_accuracy_percent": 0,
+                "selected_candidate_id": "requested8887",
+                "selected_expression": "position=input.pick",
+                "hole_fills": [
+                  {
+                    "hole_id": "position",
+                    "expression": "input.pick"
+                  }
+                ],
+                "best_candidate_id": "requested8887",
+                "best_candidate_accuracy_percent": 100,
+                "selection_regret_percentage_points": 100,
+                "selection_adjustment": "replaced_with_best_scoring_candidate",
+                "decision": {
+                  "schema": "gooo/typed-decision-receipt/v1",
+                  "mode": "deterministic_fallback",
+                  "selected": "first8887",
+                  "fallback_reason": "NOT_CONFIGURED",
+                  "provider": "deterministic",
+                  "request_sha256": "sha256:2eeeee0bd0e3162f8aa50ff5c6e523eb716a5bfe58b74c0c5de80e98f9905e3f"
+                },
+                "candidate_scores": [
+                  {
+                    "id": "first8887",
+                    "expression": "position=0",
+                    "typecheck_passed": true,
+                    "test_cases_passed": 0,
+                    "test_cases_total": 2,
+                    "accuracy_percent": 0
+                  },
+                  {
+                    "id": "requested8887",
+                    "expression": "position=input.pick",
+                    "typecheck_passed": true,
+                    "test_cases_passed": 2,
+                    "test_cases_total": 2,
+                    "accuracy_percent": 100
+                  }
+                ],
+                "test_suite_sha256": "sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                "test_cases_passed": 2,
+                "test_cases_total": 2,
+                "functional_accuracy_percent": 100,
+                "holdout_suite_sha256": "sha256:ea92f1e99df8d2a5e1556aa801294d6de7ea1ae135789f8ca48dff1faee89eb8",
+                "holdout_cases_passed": 1,
+                "holdout_cases_total": 1,
+                "holdout_accuracy_percent": 100,
+                "local_model_predictions": 0,
+                "external_provider_calls": 0,
+                "external_provider_calls_known": true,
+                "evaluator": "gooo/bodycodegen-typed-value-interpreter/v1",
+                "selected_case_results": null,
+                "selected_value_case_results": [
+                  {
+                    "inputs": [
+                      {
+                        "pick": 1,
+                        "readings": [
+                          31,
+                          47,
+                          73
+                        ]
+                      }
+                    ],
+                    "expected": 47,
+                    "actual": 47,
+                    "passed": true,
+                    "fields": null
+                  },
+                  {
+                    "inputs": [
+                      {
+                        "pick": 1,
+                        "readings": [
+                          97,
+                          41
+                        ]
+                      }
+                    ],
+                    "expected": 41,
+                    "actual": 41,
+                    "passed": true,
+                    "fields": null
+                  }
+                ],
+                "selected_value_holdout_case_results": [
+                  {
+                    "inputs": [
+                      {
+                        "pick": 2,
+                        "readings": [
+                          67,
+                          103,
+                          53
+                        ]
+                      }
+                    ],
+                    "expected": 53,
+                    "actual": 53,
+                    "passed": true,
+                    "fields": null
+                  }
+                ],
+                "accuracy_scope": "exact observed scalar equality over typed training value cases; holdout value cases are measured separately when present; neither is a full-domain proof",
+                "timing": {
+                  "ir_plan_build_ms": 1.184167,
+                  "behavioral_probe_ms": 0,
+                  "provider_decision_ms": 0.006667,
+                  "laya_decision_ms": 0,
+                  "tiny_decision_ms": 0,
+                  "final_emission_ms": 0.755083,
+                  "total_ms": 2.097208,
+                  "execution_model": "synchronous_sequential_no_background_codegen_goroutines",
+                  "decision_stage": "after_typed_ir_plan_training_scores_before_final_emission"
+                },
+                "local_calls": {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "status": "RECORDED",
+                  "evaluations": [
+                    {
+                      "schema": "gooo/local-call-inputs/v1",
+                      "generated_sha256": "sha256:88322428096c35ad890fb3bc71e3d55b5f3ec30e25999a531ce537af83915d34",
+                      "activity_id": "urn:access8887:at",
+                      "suite_sha256": "sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                      "phase": "fill-training",
+                      "candidate_id": "first8887",
+                      "status": "RECORDED",
+                      "evaluation_completed": true,
+                      "cases_started": 2,
+                      "cases_completed": 2,
+                      "calls": []
+                    },
+                    {
+                      "schema": "gooo/local-call-inputs/v1",
+                      "generated_sha256": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                      "activity_id": "urn:access8887:at",
+                      "suite_sha256": "sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                      "phase": "fill-training",
+                      "candidate_id": "requested8887",
+                      "status": "RECORDED",
+                      "evaluation_completed": true,
+                      "cases_started": 2,
+                      "cases_completed": 2,
+                      "calls": []
+                    },
+                    {
+                      "schema": "gooo/local-call-inputs/v1",
+                      "generated_sha256": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                      "activity_id": "urn:access8887:at",
+                      "suite_sha256": "sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                      "phase": "fill-selected-training",
+                      "candidate_id": "requested8887",
+                      "status": "RECORDED",
+                      "evaluation_completed": true,
+                      "cases_started": 2,
+                      "cases_completed": 2,
+                      "calls": []
+                    },
+                    {
+                      "schema": "gooo/local-call-inputs/v1",
+                      "generated_sha256": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                      "activity_id": "urn:access8887:at",
+                      "suite_sha256": "sha256:ea92f1e99df8d2a5e1556aa801294d6de7ea1ae135789f8ca48dff1faee89eb8",
+                      "phase": "fill-selected-holdout",
+                      "candidate_id": "requested8887",
+                      "status": "RECORDED",
+                      "evaluation_completed": true,
+                      "cases_started": 1,
+                      "cases_completed": 1,
+                      "calls": []
+                    }
+                  ]
+                }
+              },
+              "body_conditions": [
+                {
+                  "activity_id": "urn:access8887:at",
+                  "native_ordinal": 0,
+                  "source_ordinal": 0,
+                  "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+                  "decoded_start": 3,
+                  "decoded_end": 61,
+                  "expression": "input.pick < 0 || input.pick >= int64(len(input.readings))",
+                  "relation": "retained_condition_node",
+                  "fields": [
+                    {
+                      "entity_id": "urn:access8887:window",
+                      "field_id": "urn:access8887:window-pick",
+                      "name": "pick"
+                    },
+                    {
+                      "entity_id": "urn:access8887:window",
+                      "field_id": "urn:access8887:window-pick",
+                      "name": "pick"
+                    },
+                    {
+                      "entity_id": "urn:access8887:window",
+                      "field_id": "urn:access8887:window-readings",
+                      "name": "readings"
+                    }
+                  ]
+                }
+              ],
+              "candidate_routes": [
+                "preserve"
+              ],
+              "equivalence_rule": "source-shape-preserving-v1",
+              "source_constructs": 3,
+              "lowered_constructs": 3,
+              "source_semantic_units": 29,
+              "lowered_semantic_units": 29,
+              "completeness_percent": 100,
+              "route_equivalence": {
+                "schema": "gooo/body-codegen-route-equivalence/v1",
+                "decision": "PASS",
+                "method": "canonical_control_flow_form/v2",
+                "rule": "source-shape-preserving-v1",
+                "source_semantic_digest": "sha256:1db88d667cf51e500d066fe6b1e8fc678ac45b5b4cc5fefd60b47b2b33c308e4",
+                "generated_semantic_digest": "sha256:1db88d667cf51e500d066fe6b1e8fc678ac45b5b4cc5fefd60b47b2b33c308e4",
+                "equivalent": true,
+                "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+              },
+              "typecheck_passed": true,
+              "deterministic_replay": true,
+              "repository_writes": 0,
+              "unsupported_constructs": "calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
+              "completeness_receipt": {
+                "schema": "gooo/metaprogramming-completeness-receipt/v2",
+                "profile_id": "gooo/body-codegen-pure-v1",
+                "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+                "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+                "scope": {
+                  "allowed_investment": "compiler-controlled assembly from declared expression candidates, measured finite-suite scores, and an optional Laya proposal; no human approval or authorization is required",
+                  "boundary": {
+                    "excluded_effects": [
+                      "generated code execution",
+                      "repository mutation",
+                      "external authority"
+                    ],
+                    "non_authorizing": true,
+                    "non_executing": true
+                  },
+                  "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                  "decision_mode": "deterministic_fallback",
+                  "decision_provider": "deterministic",
+                  "domain_scope": "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
+                  "excluded_scope": [
+                    "unstated natural-language intent",
+                    "independently sourced production workflows",
+                    "generated runtime behavior",
+                    "unrestricted Gooo body syntax",
+                    "route clarity or utility"
+                  ],
+                  "execution_environment": "darwin/arm64",
+                  "input_type": "Window",
+                  "laya_mode": "deterministic_fallback",
+                  "laya_provider": "deterministic",
+                  "observed_system_cost": {
+                    "human_actions": 0,
+                    "repository_writes": 0
+                  },
+                  "output_type": "int64",
+                  "plan_sha256": "sha256:f707f5b36a0bb0f8c73ce5c537085813ac184a5547e7850b66c494daeec8fee4",
+                  "receipt_declaration": {
+                    "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile": "gooo/receipt-structure-projection/v1",
+                    "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                  },
+                  "record_types": [
+                    {
+                      "name": "Request",
+                      "id": "urn:access8887:request",
+                      "go_name": "GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333",
+                      "fields": [
+                        {
+                          "name": "readings",
+                          "id": "urn:access8887:request-readings",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b",
+                          "cardinality": "many"
+                        },
+                        {
+                          "name": "lower",
+                          "id": "urn:access8887:lower",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a"
+                        },
+                        {
+                          "name": "upper",
+                          "id": "urn:access8887:upper",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df"
+                        },
+                        {
+                          "name": "pick",
+                          "id": "urn:access8887:request-pick",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Window",
+                      "id": "urn:access8887:window",
+                      "go_name": "GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70",
+                      "fields": [
+                        {
+                          "name": "readings",
+                          "id": "urn:access8887:window-readings",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269",
+                          "cardinality": "many"
+                        },
+                        {
+                          "name": "pick",
+                          "id": "urn:access8887:window-pick",
+                          "type_id": "urn:gooo:type:integer",
+                          "go_name": "GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6"
+                        }
+                      ]
+                    }
+                  ],
+                  "system_budget": {
+                    "maximum_human_actions": 0,
+                    "maximum_repository_writes": 0
+                  },
+                  "toolchain": "go1.27.2"
+                },
+                "core_dimensions": [
+                  "body_fill_holdout_accuracy",
+                  "declaration_coverage",
+                  "declared_suite_functional_accuracy",
+                  "generation_coverage",
+                  "internal_replay_coverage",
+                  "provenance_integrity",
+                  "receipt_schema_binding",
+                  "repository_write_boundary",
+                  "route_choice_protocol",
+                  "route_semantic_equivalence",
+                  "source_ast_coverage",
+                  "typecheck_coverage"
+                ],
+                "dimensions": [
+                  {
+                    "id": "declaration_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "stable activity declarations",
+                    "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                    "evidence": [
+                      "source_digest:sha256:b5346faede2b23e458a545a3d42372bed3c8dec591ea2a29d70b1a0c861186f9",
+                      "activity_id:urn:access8887:at"
+                    ]
+                  },
+                  {
+                    "id": "generation_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated Go functions",
+                    "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                    "evidence": [
+                      "generated_digest:sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                      "report decision:PASS"
+                    ]
+                  },
+                  {
+                    "id": "source_ast_coverage",
+                    "status": "PASS",
+                    "numerator": 29,
+                    "denominator": 29,
+                    "unit": "source semantic units lowered",
+                    "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                    "evidence": [
+                      "source_semantic_units",
+                      "lowered_semantic_units"
+                    ]
+                  },
+                  {
+                    "id": "route_semantic_equivalence",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source/generated route pairs",
+                    "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                    "evidence": [
+                      "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                      "route_equivalence.rule:source-shape-preserving-v1",
+                      "source_semantic_digest:sha256:1db88d667cf51e500d066fe6b1e8fc678ac45b5b4cc5fefd60b47b2b33c308e4",
+                      "generated_semantic_digest:sha256:1db88d667cf51e500d066fe6b1e8fc678ac45b5b4cc5fefd60b47b2b33c308e4"
+                    ]
+                  },
+                  {
+                    "id": "typecheck_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "generated functions accepted by Go type checking",
+                    "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                    "evidence": [
+                      "typecheck_passed"
+                    ]
+                  },
+                  {
+                    "id": "internal_replay_coverage",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "deterministic compiler emission replays",
+                    "reason": "Requires replayed generated bytes to match the selected output digest.",
+                    "evidence": [
+                      "generated_digest:sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                      "replay_digest:sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c"
+                    ]
+                  },
+                  {
+                    "id": "route_choice_protocol",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "selected routes in the compiler-declared candidate set",
+                    "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                    "evidence": [
+                      "candidate_routes",
+                      "selected_route:preserve"
+                    ]
+                  },
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "numerator": 7,
+                    "denominator": 8,
+                    "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "evidence": [
+                      "source_digest:sha256:b5346faede2b23e458a545a3d42372bed3c8dec591ea2a29d70b1a0c861186f9",
+                      "program_digest:sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+                      "generated_digest:sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                      "replay_digest:sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                      "activity_id:urn:access8887:at",
+                      "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                      "route_equivalence semantic digests"
+                    ]
+                  },
+                  {
+                    "id": "receipt_schema_binding",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "source-owned receipt schema and generated structure bindings",
+                    "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                    "evidence": [
+                      "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                      "projection_profile:gooo/receipt-structure-projection/v1"
+                    ]
+                  },
+                  {
+                    "id": "repository_write_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "repository writes",
+                    "reason": "The command emits generated source without mutating the repository.",
+                    "evidence": [
+                      "repository_writes:0"
+                    ]
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated package runtime executions",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "evidence": [
+                      "body-codegen does not run generated Go"
+                    ]
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "observed host permission profiles",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "evidence": [
+                      "host permission profile is not observed"
+                    ]
+                  },
+                  {
+                    "id": "external_network_boundary",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "runs with no Laya provider request",
+                    "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                    "evidence": [
+                      "decision.mode:deterministic_fallback",
+                      "decision.provider:deterministic",
+                      "decision.fallback_reason:NOT_CONFIGURED"
+                    ]
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "eligible IR body-fill decisions",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "evidence": [
+                      "body_fill.candidate_scores",
+                      "body_fill.decision.mode:deterministic_fallback",
+                      "body_fill.decision.request_sha256:sha256:2eeeee0bd0e3162f8aa50ff5c6e523eb716a5bfe58b74c0c5de80e98f9905e3f",
+                      "body_fill.decision.model_revision:"
+                    ]
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independently sourced real workflows",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "evidence": [
+                      "no independent workflow corpus is bound"
+                    ]
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "generated runtime observations mapped back to source",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "evidence": [
+                      "no source-bound reverse-observation trace"
+                    ]
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete input-domain behavior proofs",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "evidence": [
+                      "generated package execution and an independent domain oracle are not part of this command"
+                    ]
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "independent route-clarity or utility criteria",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "evidence": [
+                      "no independent route-quality oracle"
+                    ]
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "complete process resource profiles",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "evidence": [
+                      "route_decision_latency_ms is recorded",
+                      "CPU and peak RSS are not captured"
+                    ]
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible prior resource receipts",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "evidence": [
+                      "no compatible prior resource receipt"
+                    ]
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "numerator": 0,
+                    "denominator": 1,
+                    "unit": "compatible before/after semantic receipts",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "evidence": [
+                      "no comparable prior semantic receipt"
+                    ]
+                  },
+                  {
+                    "id": "declared_suite_functional_accuracy",
+                    "status": "PASS",
+                    "numerator": 2,
+                    "denominator": 2,
+                    "unit": "declared test cases matched by the emitted body in the bounded AST evaluator",
+                    "reason": "Measures the declared selection suite only; held-out behavior, generated-package execution, and full-domain correctness require separate evidence.",
+                    "evidence": [
+                      "body_fill.evaluator:gooo/bodycodegen-typed-value-interpreter/v1",
+                      "body_fill.test_suite_sha256:sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                      "body_fill.ir_plan_sha256:sha256:a70cca97416791cf6a7344b13398ba910b0b2997fb8e454f70c235599897876a",
+                      "generated_digest:sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c"
+                    ]
+                  },
+                  {
+                    "id": "body_fill_holdout_accuracy",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "held-out cases matched by the final emitted body after candidate selection",
+                    "reason": "Held-out cases are withheld from the chooser and training score; this is an observed finite check, not an all-domain proof.",
+                    "evidence": [
+                      "body_fill.holdout_suite_sha256:sha256:ea92f1e99df8d2a5e1556aa801294d6de7ea1ae135789f8ca48dff1faee89eb8",
+                      "body_fill.ir_plan_sha256:sha256:a70cca97416791cf6a7344b13398ba910b0b2997fb8e454f70c235599897876a",
+                      "generated_digest:sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c"
+                    ]
+                  },
+                  {
+                    "id": "provider_execution_accounting",
+                    "status": "PASS",
+                    "numerator": 1,
+                    "denominator": 1,
+                    "unit": "body-fill provider executions classified as local predictions or external calls",
+                    "reason": "Counts local model predictions separately from external provider calls; unknown failed request outcomes remain unknown.",
+                    "evidence": [
+                      "body_fill.local_model_predictions:0",
+                      "body_fill.external_provider_calls:0",
+                      "body_fill.external_provider_calls_known:true"
+                    ]
+                  }
+                ],
+                "status_counts": {
+                  "FAIL_CLOSED": 0,
+                  "PASS": 13,
+                  "PROGRESS": 1,
+                  "UNKNOWN": 10
+                },
+                "aggregate_completeness_score": null,
+                "first_unresolved": {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                "unresolved_claims": [
+                  {
+                    "id": "provenance_integrity",
+                    "status": "PROGRESS",
+                    "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                    "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                  },
+                  {
+                    "id": "execution_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                    "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                  },
+                  {
+                    "id": "permission_boundary",
+                    "status": "UNKNOWN",
+                    "reason": "The report does not capture the caller's operating-system permission profile.",
+                    "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                  },
+                  {
+                    "id": "laya_decision_observation",
+                    "status": "UNKNOWN",
+                    "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                    "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                  },
+                  {
+                    "id": "use_case_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                    "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                  },
+                  {
+                    "id": "reverse_observation_coverage",
+                    "status": "UNKNOWN",
+                    "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                    "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                  },
+                  {
+                    "id": "full_domain_semantics",
+                    "status": "UNKNOWN",
+                    "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                    "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                  },
+                  {
+                    "id": "route_quality",
+                    "status": "UNKNOWN",
+                    "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                    "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                  },
+                  {
+                    "id": "resource_observation",
+                    "status": "UNKNOWN",
+                    "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                    "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                  },
+                  {
+                    "id": "resource_baseline_comparison",
+                    "status": "UNKNOWN",
+                    "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                    "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                  },
+                  {
+                    "id": "semantic_profile_delta",
+                    "status": "UNKNOWN",
+                    "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                    "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                  }
+                ],
+                "not_claimed": [
+                  "user-intent completeness",
+                  "real-workflow coverage",
+                  "generated runtime behavior",
+                  "full-domain semantics",
+                  "route quality",
+                  "universal language completeness"
+                ],
+                "fail_closed_reason": null
+              }
+            },
+            "source": "package gooo_workspace\n\n//gooo:generated:start id=\"urn:access8887:request\" kind=\"entity\"\ntype GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333 struct {\n\tGoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b []int64 `json:\"readings\"`\n\tGoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a int64   `json:\"lower\"`\n\tGoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df int64   `json:\"upper\"`\n\tGoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:access8887:request\" kind=\"entity\"\n//gooo:generated:start id=\"urn:access8887:window\" kind=\"entity\"\ntype GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70 struct {\n\tGoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269 []int64 `json:\"readings\"`\n\tGoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:access8887:window\" kind=\"entity\"\n//gooo:generated:start id=\"urn:access8887:at\" kind=\"activity\"\nfunc GoooPackage1ActivityAt(input GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70) int64 {\n\tif input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 < 0 || input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 >= int64(len(input.GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269)) {\n\t\treturn -1\n\t}\n\treturn input.GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269[input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6]\n}\n\n//gooo:generated:end id=\"urn:access8887:at\" kind=\"activity\"\n",
+            "gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nentity Request id \"urn:access8887:request\" fields {\n    field readings id \"urn:access8887:request-readings\" type integer required many\n    field lower id \"urn:access8887:lower\" type integer required one\n    field upper id \"urn:access8887:upper\" type integer required one\n    field pick id \"urn:access8887:request-pick\" type integer required one\n}\nentity Window id \"urn:access8887:window\" fields {\n    field readings id \"urn:access8887:window-readings\" type integer required many\n    field pick id \"urn:access8887:window-pick\" type integer required one\n}\nactivity GoooPackage0ActivityTakeWindow(Request) -> Window id \"urn:access8887:take\" computes \"let 시작 = input.lower; let 끝 = input.upper; return Window{readings: input.readings[시작:끝], pick: input.pick}\"\nactivity GoooPackage1ActivityAt(Window) -> Integer id \"urn:access8887:at\" computes \"if input.pick < 0 || input.pick >= int64(len(input.readings)) { return -1 }; return input.readings[input.pick]\"\nactivity GoooPackage2ActivityRead(Window) -> Integer id \"urn:access8887:read\" computes \"return GoooPackage1ActivityAt(input)\"\nbind GoooPackage0ActivityTakeWindow.result -> GoooPackage2ActivityRead.input\n"
+          }
+        }
+      ],
+      "fill_validations": [
+        {
+          "stage": "BODY_PREFLIGHT",
+          "observation": {
+            "schema": "gooo/source-fill-validation/v1",
+            "source_sha256": "sha256:6de32cc1533ba2eb23a39228fba63aa5f4d1efdb2d56ff902ec694209500705d",
+            "activity": "GoooPackage1ActivityAt",
+            "activity_id": "urn:access8887:at",
+            "completed": true,
+            "local_calls": {
+              "schema": "gooo/local-call-inputs/v1",
+              "status": "RECORDED",
+              "evaluations": [
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:88322428096c35ad890fb3bc71e3d55b5f3ec30e25999a531ce537af83915d34",
+                  "activity_id": "urn:access8887:at",
+                  "suite_sha256": "sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                  "phase": "fill-training",
+                  "candidate_id": "first8887",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                  "activity_id": "urn:access8887:at",
+                  "suite_sha256": "sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                  "phase": "fill-training",
+                  "candidate_id": "requested8887",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                  "activity_id": "urn:access8887:at",
+                  "suite_sha256": "sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                  "phase": "fill-selected-training",
+                  "candidate_id": "requested8887",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                  "activity_id": "urn:access8887:at",
+                  "suite_sha256": "sha256:ea92f1e99df8d2a5e1556aa801294d6de7ea1ae135789f8ca48dff1faee89eb8",
+                  "phase": "fill-selected-holdout",
+                  "candidate_id": "requested8887",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 1,
+                  "cases_completed": 1,
+                  "calls": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "stage": "ACTIVITY_GENERATION",
+          "observation": {
+            "schema": "gooo/source-fill-validation/v1",
+            "source_sha256": "sha256:6de32cc1533ba2eb23a39228fba63aa5f4d1efdb2d56ff902ec694209500705d",
+            "activity": "GoooPackage1ActivityAt",
+            "activity_id": "urn:access8887:at",
+            "completed": true,
+            "local_calls": {
+              "schema": "gooo/local-call-inputs/v1",
+              "status": "RECORDED",
+              "evaluations": [
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:88322428096c35ad890fb3bc71e3d55b5f3ec30e25999a531ce537af83915d34",
+                  "activity_id": "urn:access8887:at",
+                  "suite_sha256": "sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                  "phase": "fill-training",
+                  "candidate_id": "first8887",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                  "activity_id": "urn:access8887:at",
+                  "suite_sha256": "sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                  "phase": "fill-training",
+                  "candidate_id": "requested8887",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                  "activity_id": "urn:access8887:at",
+                  "suite_sha256": "sha256:b21e4bc73333439147a5fb233e5f23329c2a243f8d301e447c30da77042ebe91",
+                  "phase": "fill-selected-training",
+                  "candidate_id": "requested8887",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 2,
+                  "cases_completed": 2,
+                  "calls": []
+                },
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:7f9c0608b37c2aa05c47079872401c021e8b7249ce16b85f8e3d7b4073ce184c",
+                  "activity_id": "urn:access8887:at",
+                  "suite_sha256": "sha256:ea92f1e99df8d2a5e1556aa801294d6de7ea1ae135789f8ca48dff1faee89eb8",
+                  "phase": "fill-selected-holdout",
+                  "candidate_id": "requested8887",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 1,
+                  "cases_completed": 1,
+                  "calls": []
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "gooo_source": "package gooo_workspace\nnamespace gooo_workspace\n\nentity Integer id \"urn:gooo:type:integer\"\nentity Request id \"urn:access8887:request\" fields {\n    field readings id \"urn:access8887:request-readings\" type integer required many\n    field lower id \"urn:access8887:lower\" type integer required one\n    field upper id \"urn:access8887:upper\" type integer required one\n    field pick id \"urn:access8887:request-pick\" type integer required one\n}\nentity Window id \"urn:access8887:window\" fields {\n    field readings id \"urn:access8887:window-readings\" type integer required many\n    field pick id \"urn:access8887:window-pick\" type integer required one\n}\nactivity GoooPackage0ActivityTakeWindow(Request) -> Window id \"urn:access8887:take\" computes \"let 시작 = input.lower; let 끝 = input.upper; return Window{readings: input.readings[시작:끝], pick: input.pick}\"\nactivity GoooPackage1ActivityAt(Window) -> Integer id \"urn:access8887:at\" computes \"if input.pick < 0 || input.pick >= int64(len(input.readings)) { return -1 }; return input.readings[input.pick]\"\nactivity GoooPackage2ActivityRead(Window) -> Integer id \"urn:access8887:read\" computes \"return GoooPackage1ActivityAt(input)\"\nbind GoooPackage0ActivityTakeWindow.result -> GoooPackage2ActivityRead.input\n",
+      "source": "package main\n\n//gooo:generated:start id=\"urn:access8887:request\" kind=\"entity\"\ntype GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333 struct {\n\tGoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b []int64 `json:\"readings\"`\n\tGoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a int64   `json:\"lower\"`\n\tGoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df int64   `json:\"upper\"`\n\tGoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:access8887:request\" kind=\"entity\"\n//gooo:generated:start id=\"urn:access8887:window\" kind=\"entity\"\ntype GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70 struct {\n\tGoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269 []int64 `json:\"readings\"`\n\tGoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 int64   `json:\"pick\"`\n}\n\n//gooo:generated:end id=\"urn:access8887:window\" kind=\"entity\"\n\n//gooo:generated:start id=\"urn:access8887:take\" kind=\"activity\"\nfunc GoooComposedActivity0(input GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333) GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70 {\n\tvar 시작 = input.GoooField49a6f25760b55821153175eab0472659c625b180b6db4fe2f173146c71ac801a\n\tvar 끝 = input.GoooField4e2df137a88bfbd6b14025337d8cb143507706cd45c637b728921fe70fe589df\n\treturn GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70{GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269: input.GoooField1e962dc7c95411580ece7a7338877e9e9750271af89c69dcbc05120e8df5133b[시작:끝], GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6: input.GoooField079a6ac7ba4b14c2460e283cca25eacc65e729f66696644fa6e3902005e34ce6}\n}\n\n//gooo:generated:end id=\"urn:access8887:take\" kind=\"activity\"\n\n//gooo:generated:start id=\"urn:access8887:read\" kind=\"activity\"\nfunc GoooComposedActivity1(input GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70) int64 {\n\treturn GoooComposedActivity1Call0(input)\n}\nfunc GoooComposedActivity1Call0(input GoooRecordc114ede2bec0d421221003e935a6197a15a41478cf09606f24d37d8d84a10d70) int64 {\n\tif input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 < 0 || input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 >= int64(len(input.GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269)) {\n\t\treturn -1\n\t}\n\treturn input.GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269[input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6]\n}\n\n//gooo:generated:end id=\"urn:access8887:read\" kind=\"activity\"\n",
+      "driver_source": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc main() {\n\tvar in [][1]json.RawMessage\n\tif json.NewDecoder(os.Stdin).Decode(&in) != nil || len(in) > 128 {\n\t\tos.Exit(2)\n\t}\n\tout := make([][2]json.RawMessage, len(in))\n\tfor c, row := range in {\n\t\tvar input0 GoooRecord1b0ee53f9aad7c41c55b887972ef7911e7c5baa90098015e297b9d882d32e333\n\t\tif json.Unmarshal(row[0], &input0) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv0 := GoooComposedActivity0(input0)\n\t\tout[c][0], _ = json.Marshal(v0)\n\t\tv1 := GoooComposedActivity1(v0)\n\t\tout[c][1], _ = json.Marshal(v1)\n\t}\n\tif json.NewEncoder(os.Stdout).Encode(out) != nil {\n\t\tos.Exit(3)\n\t}\n}\n",
+      "elapsed_ns": 20747291,
+      "scope": "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"
+    },
+    "runtime": {
+      "schema": "gooo/body-composition-runtime/v1",
+      "stage": "COMPLETE",
+      "composition_sha256": "sha256:04a5e73632f2e88bfd02d3c81e1bc280cf0de81edfb886d7150d2133bfa5898a",
+      "original_source_sha256": "sha256:6de32cc1533ba2eb23a39228fba63aa5f4d1efdb2d56ff902ec694209500705d",
+      "selected_source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+      "typed_plan_sha256": "sha256:1720f1e15d159b6135cd692634ca366180a0cdfbba024e2b6b7ef1903d8b2429",
+      "generated_sha256": "sha256:5eec233d5b4c1c3a8b48fea56f4d01ec424693c16a047f37c85c4cd2cb9c3321",
+      "driver_sha256": "sha256:1880922f0dc1c1b167c8afc836a13a72f18ad738fa3b5b1237128f55000c6681",
+      "observed_projection_sha256": "sha256:62a30b7d36ad45cd3bd643fea6fcf8638d3d8a1a61be50db7423246ff2742d31",
+      "observed_driver_sha256": "sha256:be09db9ecd837b40949654379a8cd19e07d04dd783a837a9136b4de47dfc0f57",
+      "runtime_suite_sha256": "sha256:bfbbc9f4145cf1bd3b2dbdc77f5732804dcc619c323bce201d74ea0822ea23b8",
+      "executable_sha256": "sha256:4e4385e6974100b7490bf87c712b2dd0cd714e7c1de33beb3277026b80b9e46a",
+      "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+      "go_tool_selection": "path",
+      "go_version": "go version go1.27.2 darwin/arm64",
+      "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+      "producer_module": {
+        "path": "github.com/kimjooyoon/meta-ontology-go",
+        "version": "(devel)"
+      },
+      "toolchain": {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 7425750,
+        "user_ns": 3256000,
+        "system_ns": 2442000,
+        "peak_rss_bytes": 14532608,
+        "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 996042,
+          "wait_ns": 6429708,
+          "deadline_remaining_ns": 59979080042,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      "build": {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 104218833,
+        "user_ns": 120003000,
+        "system_ns": 74365000,
+        "peak_rss_bytes": 86949888,
+        "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 733750,
+          "wait_ns": 103485083,
+          "deadline_remaining_ns": 59970100250,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      "runs": [
+        {
+          "started": true,
+          "completed": true,
+          "canceled": false,
+          "timed_out": false,
+          "diagnostics_bytes": 0,
+          "output_truncated": false,
+          "exit_code": 0,
+          "wall_ns": 359058250,
+          "user_ns": 3554000,
+          "system_ns": 6288000,
+          "peak_rss_bytes": 4964352,
+          "stdout_sha256": "sha256:0a9a5c7a554fb96c2a120dbecf336896efb80c727388fa8687df7698c945b387",
+          "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "timing": {
+            "start_ns": 815916,
+            "wait_ns": 358242334,
+            "wait_limit_ns": 2000000000,
+            "deadline_remaining_ns": 59864343500,
+            "context_at_start_return": "ACTIVE"
+          }
+        },
+        {
+          "started": true,
+          "completed": true,
+          "canceled": false,
+          "timed_out": false,
+          "diagnostics_bytes": 0,
+          "output_truncated": false,
+          "exit_code": 0,
+          "wall_ns": 7486875,
+          "user_ns": 2793000,
+          "system_ns": 3349000,
+          "peak_rss_bytes": 4997120,
+          "stdout_sha256": "sha256:0a9a5c7a554fb96c2a120dbecf336896efb80c727388fa8687df7698c945b387",
+          "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "timing": {
+            "start_ns": 2193917,
+            "wait_ns": 5292958,
+            "wait_limit_ns": 2000000000,
+            "deadline_remaining_ns": 59504127667,
+            "context_at_start_return": "ACTIVE"
+          }
+        }
+      ],
+      "traces": [
+        {
+          "case_index": 0,
+          "deliveries": [
+            {
+              "activity_id": "urn:access8887:take",
+              "input": {
+                "lower": 1,
+                "pick": 1,
+                "readings": [
+                  193,
+                  197,
+                  199,
+                  211
+                ],
+                "upper": 4
+              },
+              "input_fields": [
+                {
+                  "id": "urn:access8887:request-readings",
+                  "name": "readings",
+                  "value": [
+                    193,
+                    197,
+                    199,
+                    211
+                  ]
+                },
+                {
+                  "id": "urn:access8887:lower",
+                  "name": "lower",
+                  "value": 1
+                },
+                {
+                  "id": "urn:access8887:upper",
+                  "name": "upper",
+                  "value": 4
+                },
+                {
+                  "id": "urn:access8887:request-pick",
+                  "name": "pick",
+                  "value": 1
+                }
+              ],
+              "actual": {
+                "pick": 1,
+                "readings": [
+                  197,
+                  199,
+                  211
+                ]
+              },
+              "actual_fields": [
+                {
+                  "id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "value": [
+                    197,
+                    199,
+                    211
+                  ]
+                },
+                {
+                  "id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "value": 1
+                }
+              ],
+              "expected": {
+                "pick": 1,
+                "readings": [
+                  197,
+                  199,
+                  211
+                ]
+              },
+              "passed": true
+            },
+            {
+              "activity_id": "urn:access8887:read",
+              "producer_id": "urn:access8887:take",
+              "input": {
+                "pick": 1,
+                "readings": [
+                  197,
+                  199,
+                  211
+                ]
+              },
+              "input_fields": [
+                {
+                  "id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "value": [
+                    197,
+                    199,
+                    211
+                  ]
+                },
+                {
+                  "id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "value": 1
+                }
+              ],
+              "actual": 199,
+              "expected": 199,
+              "passed": true
+            }
+          ],
+          "called_inputs_observed": true,
+          "calls": [
+            {
+              "root_activity_id": "urn:access8887:read",
+              "activity_id": "urn:access8887:at",
+              "inputs": [
+                {
+                  "pick": 1,
+                  "readings": [
+                    197,
+                    199,
+                    211
+                  ]
+                }
+              ]
+            }
+          ],
+          "conditions_observed": true,
+          "conditions": [
+            {
+              "site_index": 0,
+              "value": false
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "deliveries": [
+            {
+              "activity_id": "urn:access8887:take",
+              "input": {
+                "lower": 0,
+                "pick": 0,
+                "readings": [
+                  223,
+                  227,
+                  229,
+                  233
+                ],
+                "upper": 3
+              },
+              "input_fields": [
+                {
+                  "id": "urn:access8887:request-readings",
+                  "name": "readings",
+                  "value": [
+                    223,
+                    227,
+                    229,
+                    233
+                  ]
+                },
+                {
+                  "id": "urn:access8887:lower",
+                  "name": "lower",
+                  "value": 0
+                },
+                {
+                  "id": "urn:access8887:upper",
+                  "name": "upper",
+                  "value": 3
+                },
+                {
+                  "id": "urn:access8887:request-pick",
+                  "name": "pick",
+                  "value": 0
+                }
+              ],
+              "actual": {
+                "pick": 0,
+                "readings": [
+                  223,
+                  227,
+                  229
+                ]
+              },
+              "actual_fields": [
+                {
+                  "id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "value": [
+                    223,
+                    227,
+                    229
+                  ]
+                },
+                {
+                  "id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "value": 0
+                }
+              ],
+              "expected": {
+                "pick": 0,
+                "readings": [
+                  223,
+                  227,
+                  229
+                ]
+              },
+              "passed": true
+            },
+            {
+              "activity_id": "urn:access8887:read",
+              "producer_id": "urn:access8887:take",
+              "input": {
+                "pick": 0,
+                "readings": [
+                  223,
+                  227,
+                  229
+                ]
+              },
+              "input_fields": [
+                {
+                  "id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "value": [
+                    223,
+                    227,
+                    229
+                  ]
+                },
+                {
+                  "id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "value": 0
+                }
+              ],
+              "actual": 223,
+              "expected": 223,
+              "passed": true
+            }
+          ],
+          "called_inputs_observed": true,
+          "calls": [
+            {
+              "root_activity_id": "urn:access8887:read",
+              "activity_id": "urn:access8887:at",
+              "inputs": [
+                {
+                  "pick": 0,
+                  "readings": [
+                    223,
+                    227,
+                    229
+                  ]
+                }
+              ]
+            }
+          ],
+          "conditions_observed": true,
+          "conditions": [
+            {
+              "site_index": 0,
+              "value": false
+            }
+          ]
+        },
+        {
+          "case_index": 2,
+          "deliveries": [
+            {
+              "activity_id": "urn:access8887:take",
+              "input": {
+                "lower": 1,
+                "pick": 3,
+                "readings": [
+                  -41,
+                  23,
+                  31,
+                  61,
+                  71
+                ],
+                "upper": 5
+              },
+              "input_fields": [
+                {
+                  "id": "urn:access8887:request-readings",
+                  "name": "readings",
+                  "value": [
+                    -41,
+                    23,
+                    31,
+                    61,
+                    71
+                  ]
+                },
+                {
+                  "id": "urn:access8887:lower",
+                  "name": "lower",
+                  "value": 1
+                },
+                {
+                  "id": "urn:access8887:upper",
+                  "name": "upper",
+                  "value": 5
+                },
+                {
+                  "id": "urn:access8887:request-pick",
+                  "name": "pick",
+                  "value": 3
+                }
+              ],
+              "actual": {
+                "pick": 3,
+                "readings": [
+                  23,
+                  31,
+                  61,
+                  71
+                ]
+              },
+              "actual_fields": [
+                {
+                  "id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "value": [
+                    23,
+                    31,
+                    61,
+                    71
+                  ]
+                },
+                {
+                  "id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "value": 3
+                }
+              ],
+              "expected": {
+                "pick": 3,
+                "readings": [
+                  23,
+                  31,
+                  61,
+                  71
+                ]
+              },
+              "passed": true
+            },
+            {
+              "activity_id": "urn:access8887:read",
+              "producer_id": "urn:access8887:take",
+              "input": {
+                "pick": 3,
+                "readings": [
+                  23,
+                  31,
+                  61,
+                  71
+                ]
+              },
+              "input_fields": [
+                {
+                  "id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "value": [
+                    23,
+                    31,
+                    61,
+                    71
+                  ]
+                },
+                {
+                  "id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "value": 3
+                }
+              ],
+              "actual": 71,
+              "expected": 71,
+              "passed": true
+            }
+          ],
+          "called_inputs_observed": true,
+          "calls": [
+            {
+              "root_activity_id": "urn:access8887:read",
+              "activity_id": "urn:access8887:at",
+              "inputs": [
+                {
+                  "pick": 3,
+                  "readings": [
+                    23,
+                    31,
+                    61,
+                    71
+                  ]
+                }
+              ]
+            }
+          ],
+          "conditions_observed": true,
+          "conditions": [
+            {
+              "site_index": 0,
+              "value": false
+            }
+          ]
+        },
+        {
+          "case_index": 3,
+          "deliveries": [
+            {
+              "activity_id": "urn:access8887:take",
+              "input": {
+                "lower": 0,
+                "pick": 2,
+                "readings": [
+                  79,
+                  79,
+                  79
+                ],
+                "upper": 3
+              },
+              "input_fields": [
+                {
+                  "id": "urn:access8887:request-readings",
+                  "name": "readings",
+                  "value": [
+                    79,
+                    79,
+                    79
+                  ]
+                },
+                {
+                  "id": "urn:access8887:lower",
+                  "name": "lower",
+                  "value": 0
+                },
+                {
+                  "id": "urn:access8887:upper",
+                  "name": "upper",
+                  "value": 3
+                },
+                {
+                  "id": "urn:access8887:request-pick",
+                  "name": "pick",
+                  "value": 2
+                }
+              ],
+              "actual": {
+                "pick": 2,
+                "readings": [
+                  79,
+                  79,
+                  79
+                ]
+              },
+              "actual_fields": [
+                {
+                  "id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "value": [
+                    79,
+                    79,
+                    79
+                  ]
+                },
+                {
+                  "id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "value": 2
+                }
+              ],
+              "expected": {
+                "pick": 2,
+                "readings": [
+                  79,
+                  79,
+                  79
+                ]
+              },
+              "passed": true
+            },
+            {
+              "activity_id": "urn:access8887:read",
+              "producer_id": "urn:access8887:take",
+              "input": {
+                "pick": 2,
+                "readings": [
+                  79,
+                  79,
+                  79
+                ]
+              },
+              "input_fields": [
+                {
+                  "id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "value": [
+                    79,
+                    79,
+                    79
+                  ]
+                },
+                {
+                  "id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "value": 2
+                }
+              ],
+              "actual": 79,
+              "expected": 79,
+              "passed": true
+            }
+          ],
+          "called_inputs_observed": true,
+          "calls": [
+            {
+              "root_activity_id": "urn:access8887:read",
+              "activity_id": "urn:access8887:at",
+              "inputs": [
+                {
+                  "pick": 2,
+                  "readings": [
+                    79,
+                    79,
+                    79
+                  ]
+                }
+              ]
+            }
+          ],
+          "conditions_observed": true,
+          "conditions": [
+            {
+              "site_index": 0,
+              "value": false
+            }
+          ]
+        },
+        {
+          "case_index": 4,
+          "deliveries": [
+            {
+              "activity_id": "urn:access8887:take",
+              "input": {
+                "lower": 2,
+                "pick": 0,
+                "readings": [
+                  101,
+                  103,
+                  107
+                ],
+                "upper": 2
+              },
+              "input_fields": [
+                {
+                  "id": "urn:access8887:request-readings",
+                  "name": "readings",
+                  "value": [
+                    101,
+                    103,
+                    107
+                  ]
+                },
+                {
+                  "id": "urn:access8887:lower",
+                  "name": "lower",
+                  "value": 2
+                },
+                {
+                  "id": "urn:access8887:upper",
+                  "name": "upper",
+                  "value": 2
+                },
+                {
+                  "id": "urn:access8887:request-pick",
+                  "name": "pick",
+                  "value": 0
+                }
+              ],
+              "actual": {
+                "pick": 0,
+                "readings": []
+              },
+              "actual_fields": [
+                {
+                  "id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "value": []
+                },
+                {
+                  "id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "value": 0
+                }
+              ],
+              "expected": {
+                "pick": 0,
+                "readings": []
+              },
+              "passed": true
+            },
+            {
+              "activity_id": "urn:access8887:read",
+              "producer_id": "urn:access8887:take",
+              "input": {
+                "pick": 0,
+                "readings": []
+              },
+              "input_fields": [
+                {
+                  "id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "value": []
+                },
+                {
+                  "id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "value": 0
+                }
+              ],
+              "actual": -1,
+              "expected": -1,
+              "passed": true
+            }
+          ],
+          "called_inputs_observed": true,
+          "calls": [
+            {
+              "root_activity_id": "urn:access8887:read",
+              "activity_id": "urn:access8887:at",
+              "inputs": [
+                {
+                  "pick": 0,
+                  "readings": []
+                }
+              ]
+            }
+          ],
+          "conditions_observed": true,
+          "conditions": [
+            {
+              "site_index": 0,
+              "value": true
+            }
+          ]
+        }
+      ],
+      "projection_replayed": true,
+      "runtime_replayed": true,
+      "finite_passed": 10,
+      "finite_total": 10,
+      "condition_sites": [
+        {
+          "expression_id": "sha256:350f42c242e032c46213b44afa646c6cdadb18078fd887a66fc01dea526b9dfa",
+          "root_activity_id": "urn:access8887:read",
+          "activity_id": "urn:access8887:at",
+          "expression": "input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 < 0 || input.GoooFieldad2c3890caf571eaa3a5aeb5911335f81720cd4762a72d0f02c46e001fd938e6 >= int64(len(input.GoooField17771b03fe4e51f53b01971d36c0a21df9bc1fde9e1f06dea876af54d231a269))",
+          "projection_sha256": "sha256:5eec233d5b4c1c3a8b48fea56f4d01ec424693c16a047f37c85c4cd2cb9c3321",
+          "start": 2304,
+          "end": 2565,
+          "source": {
+            "construction": {
+              "schema": "gooo/source-fill-condition-origin/v1",
+              "filename": "workspace.gooo",
+              "view": "assembly_input",
+              "source_sha256": "sha256:6de32cc1533ba2eb23a39228fba63aa5f4d1efdb2d56ff902ec694209500705d",
+              "selected_source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+              "selected_body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+              "activity_id": "urn:access8887:at",
+              "activity_source": {
+                "start_byte": 859,
+                "end_byte": 1568
+              },
+              "assembly_source": {
+                "start_byte": 1072,
+                "end_byte": 1568
+              },
+              "intent": "선택한 구간에서 요청한 위치의 측정값을 읽는다",
+              "intent_source": {
+                "start_byte": 1109,
+                "end_byte": 1174
+              },
+              "candidate_id": "requested8887",
+              "candidate_source": {
+                "start_byte": 1295,
+                "end_byte": 1308
+              },
+              "plan_sha256": "sha256:a70cca97416791cf6a7344b13398ba910b0b2997fb8e454f70c235599897876a",
+              "fragments": [
+                {
+                  "relation": "direct_and_static_dependency",
+                  "kind": "retained_template",
+                  "template_decoded": {
+                    "start_byte": 0,
+                    "end_byte": 99
+                  },
+                  "selected_decoded": {
+                    "start_byte": 0,
+                    "end_byte": 99
+                  },
+                  "template_source": {
+                    "start_byte": 943,
+                    "end_byte": 1042
+                  },
+                  "selected_source": {
+                    "start_byte": 943,
+                    "end_byte": 1042
+                  },
+                  "expression_source": {
+                    "start_byte": 943,
+                    "end_byte": 1042
+                  }
+                }
+              ],
+              "condition_decoded": {
+                "start_byte": 3,
+                "end_byte": 61
+              },
+              "input_source": {
+                "schema": "gooo/source-fill-input-origin/v1",
+                "status": "MAPPED",
+                "view": "workspace_input_file",
+                "package_path": "access8887",
+                "filename": "측정구간.gooo",
+                "source_sha256": "sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45",
+                "activity_id": "urn:access8887:at",
+                "activity_source": {
+                  "start_byte": 810,
+                  "end_byte": 1426
+                },
+                "assembly_source": {
+                  "start_byte": 1003,
+                  "end_byte": 1426
+                },
+                "intent": "선택한 구간에서 요청한 위치의 측정값을 읽는다",
+                "intent_source": {
+                  "start_byte": 1037,
+                  "end_byte": 1102
+                },
+                "candidate_id": "requested8887",
+                "candidate_source": {
+                  "start_byte": 1185,
+                  "end_byte": 1198
+                },
+                "fragments": [
+                  {
+                    "relation": "direct_and_static_dependency",
+                    "status": "MAPPED",
+                    "kind": "retained_template",
+                    "selected_decoded": {
+                      "start_byte": 0,
+                      "end_byte": 99
+                    },
+                    "template_source": {
+                      "start_byte": 874,
+                      "end_byte": 973
+                    }
+                  }
+                ]
+              },
+              "data_flow": {
+                "schema": "gooo/body-value-origins/v1",
+                "status": "PARTIAL",
+                "reasons": [
+                  "CALLEE_BODY_NOT_EXPANDED",
+                  "EARLY_EXIT_CONTROLS_NOT_EXPANDED"
+                ],
+                "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+                "nodes": [
+                  {
+                    "id": "call_result:35:61:",
+                    "kind": "call_result",
+                    "decoded": {
+                      "start_byte": 35,
+                      "end_byte": 61
+                    },
+                    "inputs": [
+                      "call_result:41:60:"
+                    ]
+                  },
+                  {
+                    "id": "call_result:41:60:",
+                    "kind": "call_result",
+                    "decoded": {
+                      "start_byte": 41,
+                      "end_byte": 60
+                    },
+                    "inputs": [
+                      "input_reference:45:50:input"
+                    ]
+                  },
+                  {
+                    "id": "condition:3:61:",
+                    "kind": "condition",
+                    "decoded": {
+                      "start_byte": 3,
+                      "end_byte": 61
+                    },
+                    "inputs": [
+                      "call_result:35:61:",
+                      "input_reference:21:26:input",
+                      "input_reference:3:8:input"
+                    ]
+                  },
+                  {
+                    "id": "input_reference:21:26:input",
+                    "kind": "input_reference",
+                    "name": "input",
+                    "decoded": {
+                      "start_byte": 21,
+                      "end_byte": 26
+                    }
+                  },
+                  {
+                    "id": "input_reference:3:8:input",
+                    "kind": "input_reference",
+                    "name": "input",
+                    "decoded": {
+                      "start_byte": 3,
+                      "end_byte": 8
+                    }
+                  },
+                  {
+                    "id": "input_reference:45:50:input",
+                    "kind": "input_reference",
+                    "name": "input",
+                    "decoded": {
+                      "start_byte": 45,
+                      "end_byte": 50
+                    }
+                  }
+                ],
+                "roots": [
+                  "condition:3:61:"
+                ]
+              }
+            },
+            "declaration": {
+              "status": "MAPPED",
+              "view": "selected_gooo_source",
+              "kind": "activity",
+              "stable_id": "urn:access8887:at",
+              "name": "GoooPackage1ActivityAt",
+              "source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+              "start_byte": 859,
+              "end_byte": 1054
+            },
+            "input_source": {
+              "status": "UNMAPPED",
+              "reason": "SELECTED_BODY_DIFFERS",
+              "view": "workspace_input_file",
+              "start_byte": 0,
+              "end_byte": 0
+            },
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+            "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+            "start_byte": 946,
+            "end_byte": 1004,
+            "decoded_start": 3,
+            "decoded_end": 61,
+            "source_ordinal": 0,
+            "expression": "input.pick < 0 || input.pick >= int64(len(input.readings))",
+            "relation": "retained_condition_node",
+            "fields": [
+              {
+                "declaration": {
+                  "status": "MAPPED",
+                  "view": "selected_gooo_source",
+                  "kind": "field",
+                  "stable_id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+                  "start_byte": 574,
+                  "end_byte": 642
+                },
+                "entity_id": "urn:access8887:window",
+                "field_id": "urn:access8887:window-pick",
+                "name": "pick"
+              },
+              {
+                "declaration": {
+                  "status": "MAPPED",
+                  "view": "selected_gooo_source",
+                  "kind": "field",
+                  "stable_id": "urn:access8887:window-pick",
+                  "name": "pick",
+                  "source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+                  "start_byte": 574,
+                  "end_byte": 642
+                },
+                "entity_id": "urn:access8887:window",
+                "field_id": "urn:access8887:window-pick",
+                "name": "pick"
+              },
+              {
+                "declaration": {
+                  "status": "MAPPED",
+                  "view": "selected_gooo_source",
+                  "kind": "field",
+                  "stable_id": "urn:access8887:window-readings",
+                  "name": "readings",
+                  "source_sha256": "sha256:c2be311f284947d3a6bd28911ddd4da6d4cd0edb205b9d7c43b5d0c0a76fca0f",
+                  "start_byte": 492,
+                  "end_byte": 569
+                },
+                "entity_id": "urn:access8887:window",
+                "field_id": "urn:access8887:window-readings",
+                "name": "readings"
+              }
+            ]
+          }
+        }
+      ],
+      "condition_observation": {
+        "schema": "gooo/native-condition-summary/v1",
+        "status": "COMPLETE",
+        "recorded_events": 5,
+        "dropped_events": 0,
+        "sha256": "sha256:1809dabee93815071303e50ee3cddef5010f596c043f1a94c1ffefb185110325"
+      },
+      "input_separation": {
+        "status": "PASS",
+        "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+        "unique_inputs": 5,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 5,
+        "disjoint_cases_passed": 5,
+        "unknown_inputs": 0,
+        "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+      },
+      "model_calls": 0,
+      "elapsed_ns": 505036625,
+      "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+    },
+    "scope": "typed imported activity bindings; generated Go compiled and run twice; finite named expectations only"
+  }
+}

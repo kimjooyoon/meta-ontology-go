@@ -1,0 +1,26 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "units1067/app",
+    "activity": "Authorize"
+  },
+  "packages": [
+    {
+      "path": "units1067/contract",
+      "name": "contract",
+      "sources": [
+        "계약.gooo.fixture"
+      ]
+    },
+    {
+      "path": "units1067/app",
+      "name": "app",
+      "imports": [
+        "units1067/contract"
+      ],
+      "sources": [
+        "승인.gooo.fixture"
+      ]
+    }
+  ]
+}

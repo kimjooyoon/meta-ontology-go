@@ -8,7 +8,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-// IsSourceIRBodyFill reports whether the activity owns a complete multi-hole
+// IsSourceIRBodyFill reports whether the activity owns a complete source-declared
 // body-fill plan in its Gooo assembling block.
 func IsSourceIRBodyFill(spec *assemblyspec.Spec) bool {
 	return spec != nil && spec.FillPlan != nil
@@ -39,6 +39,9 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 		return Result{}, err
 	}
 	result.GoooSource = string(output)
+	if err := retainSourceFillOrigin(filename, source, activity, &result); err != nil {
+		return Result{}, err
+	}
 	if generationReceipt != nil && result.Report.BodyFill != nil {
 		result.Report.BodyFill.CandidateGeneration = generationReceipt
 		populateCompletenessReceipt(&result.Report, "")
@@ -47,6 +50,13 @@ func GenerateWithSourceIRBodyFill(ctx context.Context, filename string, source [
 }
 
 func sourceIRBodyFillPlan(filename string, source []byte, activity string, spec *assemblyspec.Spec) (IRBodyFillPlan, *IRBodyFillCandidateGenerationReceipt, error) {
+	tupleCases, tupleHoldout, integerTuples, tupleErr := sourceIntegerTupleCases(filename, source, activity, spec)
+	if tupleErr != nil {
+		return IRBodyFillPlan{}, nil, tupleErr
+	}
+	if integerTuples && spec.FillPlan.Generation != nil {
+		return IRBodyFillPlan{}, nil, fmt.Errorf("Integer tuple source_fill requires explicit candidates; derived tuple grammar is not implemented")
+	}
 	candidates := make([]IRBodyFillCandidate, len(spec.FillPlan.Candidates))
 	var receipt *IRBodyFillCandidateGenerationReceipt
 	if spec.FillPlan.Generation != nil {
@@ -74,7 +84,7 @@ func sourceIRBodyFillPlan(filename string, source []byte, activity string, spec 
 		TestCases:        make([]IRBodyFillTestCase, len(spec.Cases)),
 		HoldoutTestCases: make([]IRBodyFillTestCase, len(spec.HoldoutCases)),
 	}
-	if len(spec.ValueCases) > 0 {
+	if len(spec.ValueCases) > 0 && !integerTuples {
 		plan.Schema = bodyFillRecordPlanSchema
 		plan.ValueCases = append([]assemblyspec.ValueCase(nil), spec.ValueCases...)
 		plan.ValueHoldoutCases = append([]assemblyspec.ValueCase(nil), spec.ValueHoldoutCases...)
@@ -87,6 +97,9 @@ func sourceIRBodyFillPlan(filename string, source []byte, activity string, spec 
 	}
 	for index, testCase := range spec.HoldoutCases {
 		plan.HoldoutTestCases[index] = IRBodyFillTestCase{Input: testCase.Input, Expected: testCase.Expected}
+	}
+	if integerTuples {
+		plan.TestCases, plan.HoldoutTestCases = tupleCases, tupleHoldout
 	}
 	return plan, receipt, nil
 }

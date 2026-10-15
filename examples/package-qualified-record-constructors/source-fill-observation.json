@@ -1,0 +1,64 @@
+{
+  "schema": "gooo/qualified-record-fill-observation/v1",
+  "outcome": "PASS",
+  "producer": {
+    "compiler_base": "45439469b8cd9e788298ace488b8b01611f9eafd",
+    "overlays": [
+      {
+        "path": "internal/packageruntime/workspaceexecution/body_fill.go",
+        "sha256": "854224cf00b5bb981fa1309338e6ec9c86096a7c035e5251390620ecdcbda7e3"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_record_constructor_fill_test.go",
+        "sha256": "dda3b2ff76daefac9c7cc3c99ab7faef699f67f01c47f389431616763a2cdc4b"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_record_constructor_scope_test.go",
+        "sha256": "a946d7b3d818ee1df8995f1fc9301365b44d2d4b5ea4e5d937d4c5eb9a1ac8e3"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_record_constructor_test.go",
+        "sha256": "2d1dc0e47841e098c5be838ade5c0f87dbcdd7fc828e5a63cd26ff22efb9312c"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_constructor_fill_scope.go",
+        "sha256": "3641103c98b286e18d00219d146814a71b9b88c2341488b898be967378f4342c"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_constructor_names.go",
+        "sha256": "1707f3e96dc8b721f91317f0a61d4fce13a8a62c5f82ec187ad609dfce1c98d1"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_constructor_scope.go",
+        "sha256": "223fbbe01d41c85a0ffd0619eea8aaa6595f6f99e345494d04d2b7d5185b4a25"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_namespaces.go",
+        "sha256": "811cd772229bf73d04c770c65c4acae824c4a957208c2e4e0b11b46ad8de1b19"
+      }
+    ],
+    "scope": "fresh constructor687 source-fill actual-hole lexical scope, source/external alias-shadow declines, selection1 heldout1 and two separate native inputs",
+    "created_at": "2026-10-13T07:30:11.732936+00:00"
+  },
+  "observation": {
+    "holdout_passed": 1,
+    "holdout_total": 1,
+    "model_calls": 0,
+    "native_input_cases": 2,
+    "native_passed": 2,
+    "native_total": 2,
+    "partial_results_accepted": 0,
+    "runtime_replayed": true,
+    "selected_candidate": "up",
+    "selection_passed": 1,
+    "selection_total": 1,
+    "source_and_external_plan_unchanged": true,
+    "source_and_external_shadow_declines": 2,
+    "source_fill_candidates": 2,
+    "source_sha256": "sha256:83084a9c16a47905340016d2c914ff112ffe79360ef8b64cd1283cbefed40136",
+    "unrelated_block_shadow_preserved": true
+  },
+  "scope": "fresh constructor687 source plan, actual slot scope, source/external shadow declines; selection, held-out and native cases use their own denominators",
+  "historical_local_replays": 0,
+  "training_runs": 0
+}

@@ -1,0 +1,30 @@
+{
+  "compiler_source": "4ca8181d28f4051e255fdc3841a52193793977e1",
+  "overlays": [
+    {
+      "path": "internal/meta/languagereadiness/toolchainrelease/platform_package_construct_validate.go",
+      "sha256": "15661cb903d6334b3fd972b4335c097e45c9faed244c759d77ef14b2bd2d3b51"
+    },
+    {
+      "path": "internal/meta/languagereadiness/toolchainrelease/platform_package_profile_program.go",
+      "sha256": "4b23135e9edfc0ec70b15bb72269cd3e027448bfcf7401be1f29b08cb4c2392f"
+    },
+    {
+      "path": "internal/meta/languagereadiness/toolchainrelease/platform_package_profile_validate.go",
+      "sha256": "17ef12bd3f60961485d0a3c4e6bd2250da7251ec5135aca8427c06eda0490807"
+    },
+    {
+      "path": "internal/meta/languagereadiness/toolchainrelease/platform_package_program_origin.go",
+      "sha256": "ba50503ac1fc01f15eff703350772c09a1e08aa7f71deb796a17400f09ce9ca7"
+    },
+    {
+      "path": "internal/bidir/fields_part03.go",
+      "sha256": "349c864c29c3f212f69c15359a193ca244f119fbe92d98556f4847eaf28958e2"
+    },
+    {
+      "path": "internal/meta/languagereadiness/toolchainrelease/platform_package_receipt_origin_test.go",
+      "sha256": "53aecd7554bbf7548b0f9f47a13e2450cdd490947a45a305dfb1ce5f023ad30e"
+    }
+  ],
+  "scope": "new source ticket3233 only; static Prepare and raw receipt program comparison; native/model0; no historical fixtures"
+}

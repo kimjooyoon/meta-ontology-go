@@ -1,0 +1,7 @@
+{
+  "result": "source-fill selection1/1 and native2/2 reached;original increment file mapping assertion failed",
+  "cause": "retained template mapper only accepted equal-length original/selected fragments;for-let normalization changes token width",
+  "repair": "align unequal fragments through token normalization coordinates, then original expression validation and existing file edit reversal",
+  "historical_local_reruns": 0,
+  "next": "new18717 source/candidates/cases;save full result before metadata assertions"
+}

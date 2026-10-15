@@ -1,0 +1,16 @@
+package relationcodec
+namespace relationcodec
+entity Integer id "relation-codec://integer"
+entity Boolean id "relation-codec://boolean"
+activity Encode(Integer) -> Integer id "relation-codec://encode" computes "let plus=input+7; let minus=input-7; return plus" assembling {
+ choice "direction" local_reference at "0" alternative "minus" intent "Choose the encoding direction consistently with decoding."
+ criteria { predicate "offset" activity "OffsetAtZero" input "[0]" }
+ attempts "2"
+}
+activity Decode(Integer) -> Integer id "relation-codec://decode" computes "let plus=input+7; let minus=input-7; return plus" assembling {
+ choice "direction" local_reference at "0" alternative "minus" intent "Undo the encoding direction."
+ criteria { predicate "offset" activity "OffsetAtZero" input "[0]" }
+ attempts "2"
+}
+activity OffsetAtZero(Integer,Integer) -> Boolean computes "return input1 == 7 || input1 == -7"
+activity RoundTrip(Integer) -> Boolean id "relation-codec://roundtrip" computes "return Decode(Encode(input)) == input"

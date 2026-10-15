@@ -1,0 +1,896 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            10
+          ],
+          "ends": [
+            7,
+            17
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "SHARED_TYPE_DISTINCT_POSITIONS",
+          "reason": "",
+          "inputs": 2,
+          "same_type_pairs": 1
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 3,
+          "indices": [
+            0,
+            1,
+            2
+          ],
+          "ports": [
+            "input0",
+            "input1",
+            "input2"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            10,
+            20
+          ],
+          "ends": [
+            7,
+            17,
+            27
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "SHARED_TYPE_DISTINCT_POSITIONS",
+          "reason": "",
+          "inputs": 3,
+          "same_type_pairs": 3
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Count"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:domain:count"
+          ],
+          "starts": [
+            0,
+            10
+          ],
+          "ends": [
+            7,
+            17
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "DECLARED_INPUTS",
+          "reason": "",
+          "inputs": 2,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "WholeNumber"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            10
+          ],
+          "ends": [
+            7,
+            17
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "SHARED_TYPE_DISTINCT_POSITIONS",
+          "reason": "",
+          "inputs": 2,
+          "same_type_pairs": 1
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 1,
+          "indices": [
+            0
+          ],
+          "ports": [
+            "input0"
+          ],
+          "type_names": [
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0
+          ],
+          "ends": [
+            7
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "DECLARED_INPUTS",
+          "reason": "",
+          "inputs": 1,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 16,
+          "indices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "ports": [
+            "input0",
+            "input1",
+            "input2",
+            "input3",
+            "input4",
+            "input5",
+            "input6",
+            "input7",
+            "input8",
+            "input9",
+            "input10",
+            "input11",
+            "input12",
+            "input13",
+            "input14",
+            "input15"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            10,
+            20,
+            30,
+            40,
+            50,
+            60,
+            70,
+            80,
+            90,
+            100,
+            110,
+            120,
+            130,
+            140,
+            150
+          ],
+          "ends": [
+            7,
+            17,
+            27,
+            37,
+            47,
+            57,
+            67,
+            77,
+            87,
+            97,
+            107,
+            117,
+            127,
+            137,
+            147,
+            157
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "SHARED_TYPE_DISTINCT_POSITIONS",
+          "reason": "",
+          "inputs": 16,
+          "same_type_pairs": 120
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            ""
+          ],
+          "starts": [
+            0,
+            10
+          ],
+          "ends": [
+            7,
+            17
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_TYPE_ID_MISSING",
+          "inputs": 0,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            6
+          ],
+          "ends": [
+            7,
+            17
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_POSITION_INVALID",
+          "inputs": 0,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 2,
+          "indices": [
+            0,
+            0
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            10
+          ],
+          "ends": [
+            7,
+            17
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_POSITION_INVALID",
+          "inputs": 0,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input",
+            "input"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            10
+          ],
+          "ends": [
+            7,
+            17
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_PORT_REPEATED",
+          "inputs": 0,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            10
+          ],
+          "ends": [
+            7
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_COLUMNS_MISMATCH",
+          "inputs": 0,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "other",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            10
+          ],
+          "ends": [
+            7,
+            17
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "INVALID_INPUT",
+          "reason": "SOURCE_SCHEMA_MISMATCH",
+          "inputs": 0,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            10
+          ],
+          "ends": [
+            7,
+            17
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "",
+          "scope": "activity_signature",
+          "status": "INVALID_INPUT",
+          "reason": "SOURCE_IDENTITY_MISSING",
+          "inputs": 0,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            -1,
+            10
+          ],
+          "ends": [
+            7,
+            17
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_POSITION_INVALID",
+          "inputs": 0,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 17,
+          "indices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "ports": [
+            "input0",
+            "input1",
+            "input2",
+            "input3",
+            "input4",
+            "input5",
+            "input6",
+            "input7",
+            "input8",
+            "input9",
+            "input10",
+            "input11",
+            "input12",
+            "input13",
+            "input14",
+            "input15",
+            "input16"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            0,
+            10,
+            20,
+            30,
+            40,
+            50,
+            60,
+            70,
+            80,
+            90,
+            100,
+            110,
+            120,
+            130,
+            140,
+            150,
+            160
+          ],
+          "ends": [
+            7,
+            17,
+            27,
+            37,
+            47,
+            57,
+            67,
+            77,
+            87,
+            97,
+            107,
+            117,
+            127,
+            137,
+            147,
+            157,
+            167
+          ]
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_COLUMNS_MISMATCH",
+          "inputs": 0,
+          "same_type_pairs": 0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:InspectInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "count": 0,
+          "indices": [],
+          "ports": [],
+          "type_names": [],
+          "type_ids": [],
+          "starts": [],
+          "ends": []
+        }
+      },
+      "expected": {
+        "source/control:InspectInputs": {
+          "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "activity_id": "urn:signature:controlled-fixture",
+          "scope": "activity_signature",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_COLUMNS_MISMATCH",
+          "inputs": 0,
+          "same_type_pairs": 0
+        }
+      }
+    }
+  ]
+}

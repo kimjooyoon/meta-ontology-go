@@ -1,0 +1,419 @@
+{
+  "schema": "gooo/record-field-update-observations/v1",
+  "date": "2026-10-15",
+  "source_sha256": "2cbe5bd860286739da0eafdaf67a8c5121864108a2a5a22da1c185742c9d25e1",
+  "archive": {
+    "path": "first-observations.tar.gz",
+    "sha256": "255332a1adc53eb55b13dbb782d707aa36cff5b0cafd76acc59aed348cf5280c",
+    "bytes": 482810,
+    "members": 82
+  },
+  "deterministic_evaluator": {
+    "cases": 3,
+    "matched": 3
+  },
+  "native_record_updates": {
+    "distinct_cases": 4,
+    "matched_after_port_repair": 4,
+    "compound_writes": 16,
+    "first_revision": "numeric results and old-value windows passed; later Gooo consumer exposed wrong authored-name InputPort",
+    "repair": "same four cases; canonical input0 restored; not four additional cases"
+  },
+  "native_dynamic_division": {
+    "distinct_cases": 2,
+    "matched": 1,
+    "faulted": 1,
+    "first_failure": "bounded child panic: field /= bypassed arithmetic observer",
+    "repair": "source-bound checked quotient inside field write window",
+    "recording_failure": "first repaired test completed semantic assertions but failed saving the optional observation directory; repaired run preserves full receipt"
+  },
+  "native_nested_division": {
+    "distinct_cases": 3,
+    "matched": 1,
+    "faulted": 2,
+    "roots": "called helper; distinguish inner binary / from outer /="
+  },
+  "gooo_consumers": {
+    "bridge_comparisons": 4,
+    "bridge_matched": 4,
+    "field_title_comparisons": 1,
+    "field_title_matched": 1,
+    "finite_total": 0,
+    "producer_executions": 0,
+    "first_failure": "expected canonical input0, observed authored name 기록; expectation retained"
+  },
+  "model_calls": 0,
+  "cpu_utilization_measured": false,
+  "performance_claim": "command wall times only; no broad speed or correctness claim",
+  "source_coherence": {
+    "paths": 3,
+    "checks": "public semantic check and record-aware roundtrip/GetPut/PutGet; source bytes unchanged",
+    "first_failure": "public roundtrip used deferred record parser; fixed public dispatch and profile-aware BX",
+    "repair_build_failure": "initial helper API name did not exist; corrected to actual contextual lower API"
+  },
+  "source_inventory": {
+    "registered_paths": 141,
+    "missing": 0,
+    "unregistered": 0,
+    "new_denominator_added": false
+  },
+  "predecessor_repairs": [
+    "InputPort uses canonical position independently of authored name",
+    "Go 1.27.2 slices.Contains normalization",
+    "missing-comma fixtures now use three identifiers because two form a valid named input"
+  ],
+  "scope_limits": [
+    "field observation: flat required scalar records",
+    "direct scalar local /= dynamic zero observation remains separate",
+    "no indexed compound targets or %=",
+    "finite cases and input-only reader comparisons have separate denominators"
+  ],
+  "commands": {
+    "additional-capacity-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/repositoryprojection/extractor",
+        "-run",
+        "^TestRecordCompoundAdditionalDeclarationCapacity$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.677498542,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "capacity-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/repositoryprojection/extractor",
+        "-run",
+        "^TestRecordCompoundDeclarationCapacity$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.769618,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "changed-normalization-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "fix",
+        "-diff",
+        "./internal/bodyexecution",
+        "./internal/bodycodegen",
+        "./internal/packageruntime/workspaceexecution",
+        "./internal/syntax",
+        "./cmd/gooo"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 1.3924867079999999,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "changed-normalization-repair": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "fix",
+        "-diff",
+        "./internal/bodyexecution",
+        "./internal/bodycodegen",
+        "./internal/packageruntime/workspaceexecution",
+        "./internal/syntax",
+        "./cmd/gooo"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.45120387500000003,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "fault-and-port-contract-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^Test(RecordCompoundDivisionFaultOrigin|NamedRecordPortsRetainPositions)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 2.625282334,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "fault-binding-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^TestCompoundFieldFaultBindingRequiresCompleteOriginSet$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.521591167,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "fault-repair-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^TestRecordCompoundDivisionFaultOrigin$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 3.788658291,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "fault-repair-recorded": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^TestRecordCompoundDivisionFaultOrigin$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.534501,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "gooo-consumer-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "-run",
+        "^TestGoooReadsCompoundFieldOrigins$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 7.204505,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "gooo-consumer-port-repair-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "-run",
+        "^TestGoooReadsCompoundFieldOrigins$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 6.822308667,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "named-port-contract-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^TestNamedRecordPortsRetainPositions$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 2.0264680409999998,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "native-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^Test(RecordCompoundNativeOrigins|CompoundFieldWindowRequiresPreviousValue)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.86881,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "native-port-repair-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^TestRecordCompoundNativeOrigins$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.972294166,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "nested-fault-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^TestRecordCompoundNestedFaults$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.480684459,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "predecessor-diagnostics-repair": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/syntax",
+        "-run",
+        "^Test(Stage0SyntaxContractDiagnosticsAreDeterministic|ParseDiagnosticsTable)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.18868875,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "scoped-vet-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "vet",
+        "./cmd/gooo",
+        "./internal/bodyexecution",
+        "./internal/bodycodegen",
+        "./internal/packageruntime/workspaceexecution",
+        "./internal/syntax",
+        "./internal/meta/repositoryprojection/extractor"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.0954995840000001,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "source-coherence-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "-run",
+        "^TestRecordCompoundExample(SourceCoherence|WorkspaceResolution)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 4.007401667,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "source-coherence-profile-repair": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "-run",
+        "^TestRecordCompoundExampleSourceCoherence$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.0911585830000003,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "source-coherence-repair": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "-run",
+        "^TestRecordCompoundExampleSourceCoherence$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 0.542637375,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "source-evaluator-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodycodegen",
+        "-run",
+        "^TestRecordCompound",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.230302667,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "source-inventory-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "run",
+        "./cmd/syntax-registration-candidate",
+        "--root",
+        ".",
+        "--inventory"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.893097042,
+      "scope": "first new Gooo record-field update cohort"
+    },
+    "title-lineage-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "-run",
+        "^TestGoooReadsCompoundTitleOrigin$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 6.458301458999999,
+      "scope": "first new Gooo record-field update cohort"
+    }
+  },
+  "source_scope": "historical source captured before separate record example registration",
+  "current_source": {
+    "path": "examples/compound-updates/fields.gooo",
+    "sha256": "d798a28a823947151184c51d03b7ba944c727c56899cbc8283361a74fa241b42",
+    "selected_go_matches_historical": true,
+    "native_replay_after_move": false
+  },
+  "current_registration": {
+    "version": 86,
+    "cases": 124,
+    "source_paths": 142,
+    "missing": 0,
+    "unregistered": 0,
+    "members_generated_and_applied": 9,
+    "prior_cases_and_denominators_preserved": true,
+    "archive": "registration-observations.tar.gz",
+    "archive_sha256": "a8b1587cea0fe4329d5e34de6019e3e8d275825abf181cda82d6634500336061"
+  }
+}

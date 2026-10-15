@@ -1,0 +1,86 @@
+{
+  "saved-source-binding-first": {
+    "argv": [
+      "<go1.27.2>",
+      "test",
+      "-p=1",
+      "./cmd/gooo",
+      "-run",
+      "^TestNamedReaderSavedSourceBinding$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.928078458,
+    "scope": "first new Gooo input-name metaprogramming cohort",
+    "stdout": "=== RUN   TestNamedReaderSavedSourceBinding\n    named_reader_observations_test.go:27: two new compiler-exported signatures, two external output comparisons; finite denominator 0, model calls 0\n--- PASS: TestNamedReaderSavedSourceBinding (0.02s)\nPASS\nok  \tgithub.com/kimjooyoon/meta-ontology-go/cmd/gooo\t0.581s\n",
+    "stderr": ""
+  },
+  "changed-vet-first": {
+    "argv": [
+      "<go1.27.2>",
+      "vet",
+      "./cmd/gooo",
+      "./internal/bodycodegen",
+      "./internal/meta/repositoryprojection/extractor"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.0263584159999999,
+    "scope": "first new Gooo input-name metaprogramming cohort",
+    "stdout": "",
+    "stderr": ""
+  },
+  "source-inventory-first": {
+    "argv": [
+      "<go1.27.2>",
+      "run",
+      "./cmd/syntax-registration-candidate",
+      "--root",
+      ".",
+      "--inventory"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.693121709,
+    "scope": "first new Gooo input-name metaprogramming cohort",
+    "summary": {
+      "sources": 141,
+      "missing": [],
+      "unregistered": [],
+      "raw_sha256": "d97756479fad126066fa343863ae1fbc63dddc858f62701b3e8cdc6d87bc98ab"
+    }
+  },
+  "consumer-coherence-first": {
+    "argv": [
+      "<go1.27.2>",
+      "test",
+      "-p=1",
+      "./internal/meta/languagereadiness/languagesyntax/replay",
+      "-run",
+      "^TestInputDeclarationsSourceCoherence$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.619895583,
+    "scope": "first new Gooo input-name metaprogramming cohort",
+    "stdout": "=== RUN   TestInputDeclarationsSourceCoherence\n--- PASS: TestInputDeclarationsSourceCoherence (0.02s)\nPASS\nok  \tgithub.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay\t0.385s\n",
+    "stderr": ""
+  },
+  "named-reader-capacity-first": {
+    "argv": [
+      "<go1.27.2>",
+      "test",
+      "-p=1",
+      "./internal/meta/repositoryprojection/extractor",
+      "-run",
+      "^TestNamedReaderDeclarationCapacity$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.5580795829999998,
+    "scope": "first new Gooo input-name metaprogramming cohort",
+    "stdout": "=== RUN   TestNamedReaderDeclarationCapacity\n    named_reader_capacity_test.go:26: internal/bodycodegen#TypedNamedInputDeclarationInputs rendered 38\n    named_reader_capacity_test.go:26: internal/bodycodegen#inputColumnsFromRows rendered 19\n    named_reader_capacity_test.go:26: internal/bodycodegen#marshalDeclarationInputs rendered 21\n    named_reader_capacity_test.go:26: internal/bodycodegen#TestNamedColumnsSourceTransport rendered 32\n    named_reader_capacity_test.go:26: internal/bodycodegen#TestNamedColumnsRejectSourceDisagreement rendered 38\n    named_reader_capacity_test.go:26: cmd/gooo#TestNamedSignatureExportCLI rendered 38\n    named_reader_capacity_test.go:26: cmd/gooo#TestNamedInputReaderFromCompilerFacts rendered 34\n    named_reader_capacity_test.go:26: cmd/gooo#namedReaderCommand rendered 20\n    named_reader_capacity_test.go:26: cmd/gooo#assertNamedReaderResults rendered 44\n    named_reader_capacity_test.go:26: cmd/gooo#TestNamedReaderSavedSourceBinding rendered 32\n    named_reader_capacity_test.go:26: cmd/gooo#readNamedReaderObservation rendered 34\n    named_reader_capacity_test.go:26: internal/meta/repositoryprojection/extractor#collectNamedCapacityFiles rendered 37\n    named_reader_capacity_test.go:26: internal/meta/repositoryprojection/extractor#requireObservedCapacities rendered 18\n    named_reader_capacity_test.go:26: internal/meta/repositoryprojection/extractor#TestNamedCapacityIdentityAfterFileMove rendered 44\n--- PASS: TestNamedReaderDeclarationCapacity (0.10s)\nPASS\nok  \tgithub.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor\t0.566s\n",
+    "stderr": ""
+  }
+}

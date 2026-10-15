@@ -1,0 +1,86 @@
+[
+  {
+    "path": "cmd/gooo/package_derived_origin_fresh_test.go",
+    "sha256": "e2523f8e570ee5f689e510ce6689425e4a4cb6b7d3096da3576b16008a69bbea"
+  },
+  {
+    "path": "cmd/gooo/package_origin_coverage_fresh_test.go",
+    "sha256": "911bc5e29a26b597f4a625a69a67de2a0609a9af7ac0b48f90f4d4f3aed5056e"
+  },
+  {
+    "path": "examples/derived-origin/README.md",
+    "sha256": "4b93bcb77514ea0c86e568f13fe2a1ebb8292edd83e488a5df6f7a1a8177d7bf"
+  },
+  {
+    "path": "examples/derived-origin/cases.json",
+    "sha256": "720e29e1119340a1287c5955d87d6adad7b192a546ddc0bf5339ffc40a6bd9b7"
+  },
+  {
+    "path": "examples/derived-origin/coverage-cases.json",
+    "sha256": "d6d62bc08a2389cc861d383a661009640002a42441a92c6f37b4a55e08603c9b"
+  },
+  {
+    "path": "examples/derived-origin/coverage.gooo",
+    "sha256": "0af184bdf76c6f6195aabc21aef70b2d1c31087654757cd2f79cb1fc20ec4d1b"
+  },
+  {
+    "path": "examples/derived-origin/coverage.workspace.json",
+    "sha256": "0c44aa6aa77b2b9036e38dfd2da29d368c41333d29acd78b3304e9c71dbc1377"
+  },
+  {
+    "path": "examples/derived-origin/gooo.workspace.json",
+    "sha256": "d48ce95b4f7888e2b9901e2b6c8e910b2fe3bc00e876d008b3f419decf534c63"
+  },
+  {
+    "path": "examples/derived-origin/main.gooo",
+    "sha256": "2cb6491ac1960c382fd2fe03334138818f18239955406ad225ecaedefe944263"
+  },
+  {
+    "path": "examples/language-syntax-roundtrip/corpus.json",
+    "sha256": "b1329955d3789f2b5d631be7a22291529cad59a8867ae8df50d36ec9fb761cbe"
+  },
+  {
+    "path": "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+    "sha256": "0c7d1dd5c638aa282c5d01f4937bf816c0e6430937711c86ab67315b32e55197"
+  },
+  {
+    "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+    "sha256": "748eb38163e5ff0404973118308259ea55b08a218dca7bdbfb220b1f5e46730d"
+  },
+  {
+    "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+    "sha256": "583a88a45a000bbd5679d47688261f9704d8945667ff10a9571f09c49fffcb27"
+  },
+  {
+    "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v56.json",
+    "sha256": "7d943a9f8f804b2fb765dc462cba20e320a382f54dccaaf6432a9acd88681262"
+  },
+  {
+    "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v57.json",
+    "sha256": "d5fd5b6bf8203b4d1466c03d2d6f4112881002e6a281791564bf689bbe93f6c2"
+  },
+  {
+    "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+    "sha256": "b01e648449b52de446a64363c52f64d4ed6d9a062d55d355ea7468476470649f"
+  },
+  {
+    "path": "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+    "sha256": "50d94d56eef0ede14f774cb2715ba6d3b3c5427f5cbda4303e56509a1105a89a"
+  },
+  {
+    "path": "internal/meta/languagereadiness/languagesyntax/model.go",
+    "sha256": "96fd818850706bcfb4a9a324c9e5ad35a4bd1d56d56caf94b095a4e92a27a264"
+  },
+  {
+    "path": "internal/meta/languagereadiness/languagesyntax/registry.go",
+    "sha256": "fbe51e5e05c51112e7b2b5fdc5a0969b3fde7f80fcb22850ce9bb6535cdb8dac"
+  },
+  {
+    "path": "scripts/source-splitter/registered_selection_fresh_test.go",
+    "sha256": "d613e440dd7eccdee4ffb53ad0ff6ee364ec7e0e0b07e046652597b09ed60bfa"
+  },
+  {
+    "path": "scripts/source-splitter/selection_small_unit_fresh_test.go",
+    "sha256": "3012c8499b98220286e7c2aecb7947d07160f67b321dbf65d44eb418aad10a41"
+  }
+]

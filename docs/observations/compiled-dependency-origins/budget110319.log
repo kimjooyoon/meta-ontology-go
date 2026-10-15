@@ -1,0 +1,4 @@
+=== RUN   TestCompilationInputBudgetIsStageOwned110319
+--- PASS: TestCompilationInputBudgetIsStageOwned110319 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	1.450s

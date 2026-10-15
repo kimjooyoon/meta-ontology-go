@@ -1,0 +1,82 @@
+package assemblyspec
+
+import (
+	"fmt"
+	"go/token"
+	"strings"
+)
+
+// Observation declares source questions and their finite budget. Answers come
+// from a fixed oracle or from fixed criteria applied after input acquisition.
+type Observation struct {
+	CriteriaStrategy       string   `json:"criteria_strategy,omitempty"`
+	CriteriaInputs         []string `json:"criteria_inputs,omitempty"`
+	Inputs                 []int64  `json:"inputs"`
+	ValueInputs            []string `json:"value_inputs,omitempty"`
+	MaxCandidates          int      `json:"max_candidates"`
+	MaxRounds              int      `json:"max_rounds"`
+	OracleActivity         string   `json:"oracle_activity,omitempty"`
+	ReuseProbeOutputs      bool     `json:"reuse_probe_outputs,omitempty"`
+	ResolveUniqueCandidate bool     `json:"resolve_unique_candidate,omitempty"`
+}
+
+func (s Spec) validateObservation() error {
+	o := s.Observation
+	if o == nil {
+		return nil
+	}
+	if s.Search != nil || s.FillPlan != nil || len(s.Cases)+len(s.ValueCases) == 0 && s.Criteria == nil {
+		return fmt.Errorf("observe requires typed choices and initial case or value_case declarations")
+	}
+	if len(o.Inputs)+len(o.ValueInputs)+len(o.CriteriaInputs) == 0 || len(o.Inputs)+len(o.ValueInputs)+len(o.CriteriaInputs) > 32 || o.MaxCandidates < 1 || o.MaxCandidates > 64 ||
+		o.MaxRounds < 1 || o.MaxRounds > 8 {
+		return fmt.Errorf("observe requires 1..32 inputs, max_candidates 1..64 and max_rounds 1..8")
+	}
+	if o.OracleActivity != "" && !validOracleActivityReference(o.OracleActivity) {
+		return fmt.Errorf("observe oracle must name a Gooo activity or alias.activity")
+	}
+	if o.CriteriaStrategy != "" && len(o.CriteriaInputs) == 0 {
+		return fmt.Errorf("criteria_strategy requires criteria_input declarations")
+	}
+	if len(o.CriteriaInputs) > 0 {
+		return s.validateCriteriaQuestions()
+	}
+	if s.Criteria != nil && len(s.ValueCases) == 0 {
+		return fmt.Errorf("criteria-only observe requires criteria_input")
+	}
+	if len(s.ValueCases) > 0 {
+		return s.validateRecordObservationInputs()
+	}
+	if len(o.ValueInputs) != 0 {
+		return fmt.Errorf("Integer observe uses input declarations")
+	}
+	seen := make(map[int64]bool, len(o.Inputs))
+	for _, input := range o.Inputs {
+		if seen[input] {
+			return fmt.Errorf("duplicate observe input %d", input)
+		}
+		seen[input] = true
+		for _, held := range s.HoldoutCases {
+			if input == held.Input {
+				return fmt.Errorf("observe input %d is reserved by holdout_case", input)
+			}
+		}
+	}
+	return nil
+}
+
+func validOracleActivityReference(name string) bool {
+	if len(name) > 128 {
+		return false
+	}
+	parts := strings.Split(name, ".")
+	if len(parts) > 2 {
+		return false
+	}
+	for _, part := range parts {
+		if !token.IsIdentifier(part) {
+			return false
+		}
+	}
+	return true
+}

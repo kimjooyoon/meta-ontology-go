@@ -1,0 +1,3 @@
+package core
+namespace reward
+activity Display(Integer) -> Integer computes `return Credit(input)+1`

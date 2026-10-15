@@ -1,0 +1,24 @@
+=== RUN   TestReturnChoiceCapacity22373
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#BindBodyReturnSources rendered 29
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#EqualRetainedReturnOrigins rendered 7
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#InspectRecordChoiceDeclarationOrigins rendered 47
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#VerifyIRBodySearchProjection rendered 57
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#WalkReturnSyntax rendered 15
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#bodyMayUseLength rendered 16
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#bodyProjection.captureReturnOrigins rendered 25
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#bodyProjection.lower rendered 37
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#bodyReturnCapture.captureTyped rendered 34
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#bodyReturnCapture.emitted rendered 28
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#compareSourceFillReplay rendered 59
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#emitRecordAssembly rendered 29
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#generateRouteWithCalls rendered 40
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#normalizeLengthIntegerContexts rendered 40
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#projectBodyOrigins rendered 23
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#realizeRecordAssemblyProjection rendered 43
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#recordAssemblyPlan.choiceOrigins rendered 42
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#recordChoiceLiteralOrigin rendered 26
+    return_choice_capacity_fresh_test.go:59: internal/bodycodegen#replayTypedPathProjection in /private/tmp/gooo-length-assembly-origin-20261014/capacity22373/source/internal/bodycodegen/body_paths_replay.go: {declaration:0x61de22fe2270 subject:func:replayTypedPathProjection receiver: functionStart:/private/tmp/gooo-length-assembly-origin-20261014/capacity22373/source/internal/bodycodegen/body_paths_replay.go:22:1 functionEnd:/private/tmp/gooo-length-assembly-origin-20261014/capacity22373/source/internal/bodycodegen/body_paths_replay.go:142:2 declarationStart:/private/tmp/gooo-length-assembly-origin-20261014/capacity22373/source/internal/bodycodegen/body_paths_replay.go:22:1 declarationEnd:/private/tmp/gooo-length-assembly-origin-20261014/capacity22373/source/internal/bodycodegen/body_paths_replay.go:142:2 sourceDigest:sha256:5fda1dfac2acdcda3b3165853190bdf76e2542e7d4a69c6800a75a7ecefe0461 functionLines:121 functionOverage:46 functionStatus:OVER_CAP helperLines:0x61de23019560 helperOverage:0x61de23019568 helperStatus:OVER_CAP helperFailure:<nil>}
+--- FAIL: TestReturnChoiceCapacity22373 (0.02s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.422s
+FAIL

@@ -1,0 +1,20 @@
+{
+  "producer_head": "10067b26de6d3fa75040173a610fdc522b5da62a",
+  "files": [
+    {
+      "path": "cases.json",
+      "bytes": 651,
+      "sha256": "d1c85bb50232137fd2913a09dc8442fd501092eac9721d7dda819b36defeadeb"
+    },
+    {
+      "path": "gooo.workspace.json",
+      "bytes": 294,
+      "sha256": "74f103e6af0a47309d079bc182c2e94bb36a6874905a15f819247a0fc129b440"
+    },
+    {
+      "path": "main.gooo",
+      "bytes": 265,
+      "sha256": "1114fceac6b56e38791cc87b91bed9e4ad2fae033665e5527dc21774201a1a6b"
+    }
+  ]
+}

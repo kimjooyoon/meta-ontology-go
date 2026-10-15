@@ -7,6 +7,8 @@ import (
 
 func runExtensionCommand(args []string, stdout, stderr io.Writer) int {
 	switch args[0] {
+	case "refactor":
+		return runSourceRefactor(args[1:], stdout, stderr)
 	case "compare":
 		return runCompareReplay(args[1:], OSFileReader{}, stdout, stderr)
 	case "propose-repair":

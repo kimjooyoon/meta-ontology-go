@@ -1,0 +1,5 @@
+=== RUN   TestGoooFieldLineageBoundaries14203
+    package_field_lineage_boundary_fresh_test.go:114: 10 fresh synthetic journals->Gooo joins2 roots, exposes shared/unknown/dropped scope, rejects5 structural contradictions;original producer executions0;models0;input-only finite0
+--- PASS: TestGoooFieldLineageBoundaries14203 (0.62s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.175s

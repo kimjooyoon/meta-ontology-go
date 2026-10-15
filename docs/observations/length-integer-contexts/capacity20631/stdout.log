@@ -1,0 +1,14 @@
+=== RUN   TestLengthIntegerCapacity20631
+    length_integer_promotion_capacity_fresh_test.go:41: internal/bodycodegen/length_integer_context.go normalizeLengthIntegerContexts rendered 37
+    length_integer_promotion_capacity_fresh_test.go:41: internal/bodycodegen/length_integer_context.go widen rendered 16
+    length_integer_promotion_capacity_fresh_test.go:41: internal/bodycodegen/length_integer_context.go isImplicitLengthConversion rendered 10
+    length_integer_promotion_capacity_fresh_test.go:41: internal/bodycodegen/length_integer_bindings.go runtimeLengthBindings rendered 40
+    length_integer_promotion_capacity_fresh_test.go:41: internal/bodycodegen/length_integer_visit.go visit rendered 30
+    length_integer_promotion_capacity_fresh_test.go:41: internal/bodycodegen/length_integer_arguments.go arguments rendered 14
+    length_integer_promotion_capacity_fresh_test.go:41: internal/bodycodegen/length_integer_promote.go promoteLengthIntegerLocals rendered 21
+    length_integer_promotion_capacity_fresh_test.go:41: internal/bodycodegen/bodycodegen.go normalizeIntegerLocalInitializers rendered 44
+    length_integer_promotion_capacity_fresh_test.go:41: internal/bodycodegen/record_flow_expressions.go expression rendered 53
+    length_integer_promotion_capacity_fresh_test.go:47: new length-context source functions;actual generated helper capacity within unchanged75-line cap;producer/model0
+--- PASS: TestLengthIntegerCapacity20631 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.371s

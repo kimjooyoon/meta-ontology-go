@@ -31,6 +31,11 @@ func recordedInputTuples(report bodycodegen.Report) [][]json.RawMessage {
 	}
 	if paths := report.BodyPaths; paths != nil {
 		tuples = append(tuples, integerCaseTuples(paths.NativeCases)...)
+		if paths.Holdout != nil {
+			for _, c := range paths.Holdout.Cases {
+				tuples = append(tuples, scalarInputTuple(c.Input))
+			}
+		}
 		if observation := paths.Observation; observation != nil {
 			for _, c := range observation.InitialCases {
 				tuples = append(tuples, scalarInputTuple(c.Input))

@@ -1,0 +1,6 @@
+=== RUN   TestRacePackageOrderRetainsFullScope57213
+--- PASS: TestRacePackageOrderRetainsFullScope57213 (0.00s)
+=== RUN   TestRacePackageOrderRejectsNarrowedCommands57213
+--- PASS: TestRacePackageOrderRejectsNarrowedCommands57213 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/verify	0.539s

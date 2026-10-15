@@ -1,0 +1,74 @@
+{
+  "schema": "gooo/qualified-record-constructor-cli-observation/v1",
+  "decision": "PASS",
+  "producer": {
+    "compiler_base": "45439469b8cd9e788298ace488b8b01611f9eafd",
+    "overlays": [
+      {
+        "path": "internal/packageruntime/workspaceexecution/body_fill.go",
+        "sha256": "854224cf00b5bb981fa1309338e6ec9c86096a7c035e5251390620ecdcbda7e3"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_record_constructor_fill_test.go",
+        "sha256": "dda3b2ff76daefac9c7cc3c99ab7faef699f67f01c47f389431616763a2cdc4b"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_record_constructor_scope_test.go",
+        "sha256": "a946d7b3d818ee1df8995f1fc9301365b44d2d4b5ea4e5d937d4c5eb9a1ac8e3"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_record_constructor_test.go",
+        "sha256": "2d1dc0e47841e098c5be838ade5c0f87dbcdd7fc828e5a63cd26ff22efb9312c"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_constructor_fill_scope.go",
+        "sha256": "3641103c98b286e18d00219d146814a71b9b88c2341488b898be967378f4342c"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_constructor_names.go",
+        "sha256": "1707f3e96dc8b721f91317f0a61d4fce13a8a62c5f82ec187ad609dfce1c98d1"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_constructor_scope.go",
+        "sha256": "223fbbe01d41c85a0ffd0619eea8aaa6595f6f99e345494d04d2b7d5185b4a25"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_namespaces.go",
+        "sha256": "811cd772229bf73d04c770c65c4acae824c4a957208c2e4e0b11b46ad8de1b19"
+      }
+    ],
+    "scope": "fresh constructor687 source-fill actual-hole lexical scope, source/external alias-shadow declines, selection1 heldout1 and two separate native inputs",
+    "created_at": "2026-10-13T07:30:11.732936+00:00"
+  },
+  "cli_processes": 1,
+  "selected_candidate": "product",
+  "selection_passed": 1,
+  "selection_total": 1,
+  "holdout_passed": 1,
+  "holdout_total": 1,
+  "native_input_cases": 2,
+  "native_passed": 8,
+  "native_total": 8,
+  "runtime_replayed": true,
+  "model_predictions": 0,
+  "external_provider_calls": 0,
+  "input_files_unchanged": true,
+  "binary_removed_after_observation": true,
+  "binary": {
+    "sha256": "945c37a308f8846cc1315fa208ba4a56b58e3d54697b5f8a52c9148a290e022b",
+    "bytes": 25709506
+  },
+  "wall_ns": 1500878000,
+  "children_user_seconds": 0.17686,
+  "children_system_seconds": 0.171698,
+  "input_files": {
+    "cases.json": "a821d9eed727eedfe26db200c48492ba852014918102f2f50c17db6f8432684e",
+    "workspace.json": "d35ce32e6b2fcf2fa425fe5675828e016ce8ca6026284598b7ad3b544ddb1a62",
+    "가격.gooo.fixture": "78f0759e5a0f71081d59494fac90a6791b4c765e32fdc9d137b4282dadbd20e2",
+    "개수.gooo.fixture": "4ce21ce59accc06be48d1f34c67db06ea8c0e0c1360a68ff4cbc56b98a6c9245",
+    "견적.gooo.fixture": "9e7d1092715665f4c4eb402b78d2d2159bea6572c93ce2a7e6e3f180e8be01da",
+    "보정.gooo.fixture": "926a93bc27a31187403af66adda0ce4de32cee0300169666ff432225216fd61d"
+  },
+  "source_sha256": "sha256:2e837b1e08f2ce20875289e8678652aa8b94634615cbd336b850cb05cb19577e",
+  "scope": "one fresh constructor716 CLI observation; startup, preparation, generation, build and two executions included; finite cases and process costs have separate denominators; embedded VCS metadata identifies the base, overlay source producer is recorded separately"
+}

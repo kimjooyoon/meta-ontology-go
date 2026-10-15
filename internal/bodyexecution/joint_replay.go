@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"time"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 func DecodeJointConstruction(raw []byte) (JointConstruction, error) {
@@ -33,6 +35,15 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 	}
 	kinds := jointCandidateKinds(slots)
 	schema := jointObservationSchema(slots, prior.Attempts)
+	if len(prior.FinalPathHoldouts) > 0 {
+		schema = jointPathHoldoutSchema
+	}
+	if len(prior.FinalRecordHoldouts) > 0 {
+		schema = jointRecordHoldoutSchema
+	}
+	if jointHasCriteria(prior) {
+		schema = jointCriteriaSchema
+	}
 	if prior.Schema != schema || !slices.Equal(prior.CandidateKinds, kinds) {
 		return result, fmt.Errorf("joint candidate kinds or schema differ")
 	}
@@ -47,7 +58,22 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 		return result, err
 	}
 	result.ConstructionReplayed = true
-	result.Runtime, err = executor.ExecuteComposition(ctx, filename, []byte(prior.SelectedSource), prior.Selected, cases, goBinary)
+	holdouts, err := evaluateJointPathHoldouts(ctx, filename, source, prior)
+	if err != nil || compositionDigest(holdouts) != compositionDigest(prior.FinalPathHoldouts) {
+		result.ConstructionReplayed = false
+		return result, fmt.Errorf("final selected path holdouts or caller exposure differ: %v", err)
+	}
+	records, err := evaluateJointRecordHoldouts(ctx, filename, source, prior)
+	if err != nil || !equalJointRecordHoldouts(records, prior.FinalRecordHoldouts) {
+		result.ConstructionReplayed = false
+		return result, fmt.Errorf("final selected record holdouts or caller exposure differ: %v", err)
+	}
+	criteria, err := evaluateJointCriteriaHoldouts(ctx, filename, source, prior)
+	if err != nil || !equalJointCriteriaHoldouts(criteria, prior.FinalCriteriaHoldouts) {
+		result.ConstructionReplayed = false
+		return result, fmt.Errorf("final criteria holdouts or caller exposure differ: %v", err)
+	}
+	result.Runtime, err = evaluateJointInputs(ctx, filename, source, prior, cases, goBinary, executor)
 	if err == nil {
 		result.InputSeparation, err = measureJointInputs(ctx, filename, []byte(prior.SelectedSource), prior, cases)
 	}
@@ -55,7 +81,10 @@ func ReplayJointComposition(ctx context.Context, filename string, source []byte,
 }
 
 func verifyJointHeader(ctx context.Context, filename string, source []byte, r JointConstruction) error {
-	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema && r.Schema != jointFaultSchema && r.Schema != jointPathSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
+	if r.InputObservation != "" && r.InputObservation != jointInputObservation {
+		return fmt.Errorf("joint input observation contract differs")
+	}
+	if r.Schema != jointSchema && r.Schema != jointMixedSchema && r.Schema != jointRejectionSchema && r.Schema != jointFillSchema && r.Schema != jointFillRejectionSchema && r.Schema != jointFaultSchema && r.Schema != jointPathSchema && r.Schema != jointPathHoldoutSchema && r.Schema != jointRecordHoldoutSchema && r.Schema != jointCriteriaSchema || r.Stage != "COMPLETE" || r.Failure != "" ||
 		r.OriginalSourceSHA256 != digest(source) || r.ConstructionSHA256 != compositionDigest(r.ConstructionCases) ||
 		r.ProgramBudget < 1 || r.ProgramBudget > 64 || r.SelectedAttempt < 0 || r.SelectedAttempt >= len(r.Attempts) {
 		return fmt.Errorf("joint construction identity, stage or budget differs")
@@ -71,6 +100,10 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 	best := -1
 	var bestSource []byte
 	var bestProgram Composition
+	calls, err := prepareJointCallContext(ctx, filename, source, prior)
+	if err != nil {
+		return nil, err
+	}
 	for i, recorded := range prior.Attempts {
 		if !slices.Equal(recorded.Masks, order[i]) {
 			return nil, fmt.Errorf("joint attempt %d differs from bounded source order", i)
@@ -80,12 +113,14 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 		if err != nil {
 			return nil, err
 		}
-		if compositionDigest(attempt.Candidates) != compositionDigest(recorded.Candidates) ||
-			compositionDigest(attempt.SearchCandidates) != compositionDigest(recorded.SearchCandidates) ||
-			compositionDigest(attempt.FillCandidates) != compositionDigest(recorded.FillCandidates) ||
+		if !bodycodegen.EqualRecordCandidateHistory(recorded.Candidates, attempt.Candidates) ||
+			!bodycodegen.EqualSearchCandidateHistory(recorded.SearchCandidates, attempt.SearchCandidates) ||
+			!bodycodegen.EqualFillCandidateHistory(recorded.FillCandidates, attempt.FillCandidates) ||
 			compositionDigest(attempt.PathCandidates) != compositionDigest(recorded.PathCandidates) ||
 			compositionDigest(attempt.Rejection) != compositionDigest(recorded.Rejection) ||
-			attempt.LocalPassed != recorded.LocalPassed || attempt.LocalTotal != recorded.LocalTotal {
+			attempt.LocalPassed != recorded.LocalPassed || attempt.LocalTotal != recorded.LocalTotal ||
+			attempt.CriteriaPassed != recorded.CriteriaPassed || attempt.CriteriaFailed != recorded.CriteriaFailed ||
+			attempt.CriteriaUnknown != recorded.CriteriaUnknown || attempt.CriteriaTotal != recorded.CriteriaTotal {
 			return nil, fmt.Errorf("joint attempt %d local obligations differ", i)
 		}
 		if attempt.Rejection != nil {
@@ -94,7 +129,7 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 			}
 			continue
 		}
-		attempt.Runtime, err = executor.ExecuteComposition(ctx, filename, selected, program, prior.ConstructionCases, goBinary)
+		attempt.Runtime, err = executor.executeWithJointCalls(ctx, filename, selected, program, prior.ConstructionCases, goBinary, calls)
 		if err != nil {
 			return &JointReplayFailure{i, "CALLER_EXECUTION", attempt.Runtime}, fmt.Errorf("joint replay attempt %d: %w", i, err)
 		}
@@ -121,6 +156,21 @@ func verifyJointAttempts(ctx context.Context, filename string, source []byte, pr
 }
 
 func sameJointRuntime(a, b CompositionRuntime) bool {
+	// The second argument is the retained claim. Historical absence cannot
+	// acquire an authored source annotation during comparison.
+	if b.FieldSources == nil {
+		a.FieldSources = nil
+	}
+	if b.FieldFileSources == nil {
+		a.FieldFileSources = nil
+	}
+	if !equalRetainedLocalSites(a.LocalSites, b.LocalSites) {
+		return false
+	}
+	if a.CallContextSHA256 != b.CallContextSHA256 || a.ConstructionInputHistorySHA256 != b.ConstructionInputHistorySHA256 ||
+		a.ObservedProjectionSHA256 != b.ObservedProjectionSHA256 || a.ObservedDriverSHA256 != b.ObservedDriverSHA256 {
+		return false
+	}
 	if (hasCompositionFault(a) || hasCompositionFault(b)) &&
 		(a.Schema != compositionFaultRuntimeSchema || b.Schema != compositionFaultRuntimeSchema) {
 		return false
@@ -134,9 +184,13 @@ func sameJointRuntime(a, b CompositionRuntime) bool {
 		}
 	}
 	semantic := func(r CompositionRuntime) any {
+		// Scope is explanatory prose, like the runtime's own Scope. Counts,
+		// statuses, reasons and source/history identities remain comparison inputs.
+		r.InputSeparation.Scope = ""
 		return []any{r.Stage, r.Failure, r.OriginalSourceSHA256, r.SelectedSourceSHA256,
 			r.TypedPlanSHA256, r.GeneratedSHA256, r.DriverSHA256, r.RuntimeSuiteSHA256,
-			r.Traces, r.FinitePassed, r.FiniteTotal, r.ModelCalls, r.ProjectionReplayed, r.RuntimeReplayed,
+			r.FieldBindings, r.FieldSites, r.FieldUseSites, r.FieldProjectionSHA256, r.FieldObservation, r.BridgeObservation, r.FieldSources, r.FieldFileSources,
+			comparableConditionSites(r), r.ConditionObservation, r.ReadSites, r.ReadInputs, r.ReadObservation, r.ConstructionSites, r.LocalUseSites, r.LocalObservation, r.Traces, r.FinitePassed, r.FiniteTotal, r.ModelCalls, r.ProjectionReplayed, r.RuntimeReplayed,
 			r.InputSeparation}
 	}
 	return compositionDigest(semantic(a)) == compositionDigest(semantic(b))

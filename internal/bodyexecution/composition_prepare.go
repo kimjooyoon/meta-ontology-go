@@ -124,13 +124,14 @@ func (node *CompositionActivity) bindEntityIDs(model bidir.Model) {
 
 // Check independent bodies before loading an optional model. Dependent bodies
 // are checked again when their called assembly prerequisites have been realized.
-func (graph compositionGraph) preflight(ctx context.Context, filename string, source []byte) error {
+func (graph compositionGraph) preflight(ctx context.Context, filename string, source []byte,
+	checks *[]CompositionSearchValidation, fills *[]CompositionFillValidation) error {
 	for _, node := range graph.nodes[:graph.count] {
 		if graph.deferred[node.Name] {
 			continue
 		}
 		if node.Assembling {
-			if err := bodycodegen.ValidateSourceAssembly(ctx, filename, source, node.Name); err != nil {
+			if err := validateCompositionAssembly(ctx, filename, source, node.Name, "BODY_PREFLIGHT", checks, fills); err != nil {
 				return fmt.Errorf("activity %q plan: %w", node.Name, err)
 			}
 			continue
@@ -141,7 +142,7 @@ func (graph compositionGraph) preflight(ctx context.Context, filename string, so
 	}
 	for _, helper := range graph.plan.Preparations {
 		if !graph.deferred[helper.Name] {
-			if err := bodycodegen.ValidateSourceAssembly(ctx, filename, source, helper.Name); err != nil {
+			if err := validateCompositionAssembly(ctx, filename, source, helper.Name, "BODY_PREFLIGHT", checks, fills); err != nil {
 				return fmt.Errorf("called activity %q plan: %w", helper.Name, err)
 			}
 		}

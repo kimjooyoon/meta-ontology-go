@@ -1,0 +1,15 @@
+{
+  "pr": 1561,
+  "head": "0dc9c3747db2f0e24eb1515cc44789faa88bdc02",
+  "run": 38539249227,
+  "darwin_amd64_job": 115769640430,
+  "native_step": "success",
+  "upload_step": "failure",
+  "reported_error": "Failed to CreateArtifact: Unable to make request: ENOTFOUND",
+  "four_platform_witness_steps": "success",
+  "eligibility_job": 115772129291,
+  "eligibility": "failure",
+  "aggregate": "skipped",
+  "scope": "original network/name-resolution upload failure;no source defect identified;required artifact missing;predecessor not accepted;no reruns or exceptions",
+  "originals_still_pending": true
+}

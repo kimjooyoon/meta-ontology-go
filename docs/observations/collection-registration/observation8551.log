@@ -1,0 +1,28 @@
+=== RUN   TestOrderedCollectionRegistration8551
+=== RUN   TestOrderedCollectionRegistration8551/integer
+    collections_registration_test.go:114: 8551: integer many; nine source-bound roles; syntax denominator +1; three conflicting profiles rejected; model calls=0
+=== RUN   TestOrderedCollectionRegistration8551/string
+    collections_registration_test.go:114: 8551: string many; nine source-bound roles; syntax denominator +1; three conflicting profiles rejected; model calls=0
+=== RUN   TestOrderedCollectionRegistration8551/boolean
+    collections_registration_test.go:114: 8551: boolean many; nine source-bound roles; syntax denominator +1; three conflicting profiles rejected; model calls=0
+--- PASS: TestOrderedCollectionRegistration8551 (0.56s)
+    --- PASS: TestOrderedCollectionRegistration8551/integer (0.20s)
+    --- PASS: TestOrderedCollectionRegistration8551/string (0.18s)
+    --- PASS: TestOrderedCollectionRegistration8551/boolean (0.18s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	1.115s
+=== RUN   TestCollectionDenominatorMigration8553
+    denominator_collections_test.go:32: 8553: v49 records two new syntax capabilities; prior bytes, other boundaries and all dependency counts preserved
+--- PASS: TestCollectionDenominatorMigration8553 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow	0.415s
+=== RUN   TestDisposableSnapshotCleanup8557
+    snapshot_cleanup_test.go:52: 8557: read-only nested snapshot removed; external origin permission retained; repeated cleanup is empty
+--- PASS: TestDisposableSnapshotCleanup8557 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/scripts/meta-execution	0.461s
+=== RUN   TestCollectionRegistryRecipeRetirement8559
+    collection_retirement_test.go:32: 8559: stale helper move retired with source and recipe digests; generic extraction remains available
+--- PASS: TestCollectionRegistryRecipeRetirement8559 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe	0.414s

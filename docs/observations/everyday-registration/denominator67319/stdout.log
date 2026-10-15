@@ -1,0 +1,6 @@
+=== RUN   TestEverydayDenominator73RetainsHistorical72Target67319
+    everyday_denominator_fresh67319_test.go:13: current registered-source target {gooo/vertical-slice-boundary-denominator/v1 gooo.denominator.capability.vertical-slice-closure.v72 72 [{syntax gooo/language-syntax-roundtrip/v1 prove-language-syntax-roundtrip 108 1} {semantics gooo/language-semantic-model/v1 prove-staged-semantic-model 46 2} {binding gooo/language-semantic-readiness-binding/v2 bind-semantic-readiness-evidence 12 2} {use-cases gooo/toolchain-executable-use-cases/v1 execute-versioned-use-cases 3 1} {toolchain gooo/toolchain-conformance-report/v1 close-toolchain-conformance-ledger 181 3} {release gooo/toolchain-cross-platform-release-report/v1 assemble-exact-cross-platform-release 26 4}]} <nil>
+--- FAIL: TestEverydayDenominator73RetainsHistorical72Target67319 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureshadow	0.460s
+FAIL

@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/body-composition-inputs/v1",
+  "inputs": [
+    {"examples/compound:Divide.input0": 137, "examples/compound:Divide.input1": 7},
+    {"examples/compound:Divide.input0": -139, "examples/compound:Divide.input1": 7},
+    {"examples/compound:Divide.input0": 149, "examples/compound:Divide.input1": 0}
+  ]
+}

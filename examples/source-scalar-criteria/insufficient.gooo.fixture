@@ -1,0 +1,20 @@
+package feecriteria
+namespace feecriteria
+entity Integer id "fee-criteria://integer"
+entity Boolean id "fee-criteria://boolean"
+activity Fee(Integer) -> Integer id "fee-criteria://fee" computes "return (11-input)+0" assembling {
+ choice "direction" operand_order at "0" intent "입력에서 11을 뺀다. Subtract eleven from the input."
+ criteria {
+  predicate "difference" activity "Difference"
+  input "[11]"
+  holdout_input "[20]"
+ }
+ observe {
+  criteria_strategy "distinguish_then_check"
+  criteria_input "[17]"
+  max_candidates "2"
+  max_rounds "1"
+ }
+ attempts "2"
+}
+activity Difference(Integer,Integer) -> Boolean computes "return input1 == input0 - 11"

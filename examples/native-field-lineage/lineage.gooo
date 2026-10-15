@@ -1,0 +1,139 @@
+package fieldlineage
+namespace fieldlineage
+entity Text id "urn:gooo:type:string"
+entity Columns id "urn:gooo:field-lineage:columns" fields {
+    field source_sha256 id "urn:gooo:field-lineage:source" type string required one
+    field journal_sha256 id "urn:gooo:field-lineage:journal" type string required one
+    field case_index id "urn:gooo:field-lineage:case" type integer required one
+    field selected_use id "urn:gooo:field-lineage:use" type integer required one
+    field root_assignment id "urn:gooo:field-lineage:root" type integer required one
+    field root_clock id "urn:gooo:field-lineage:clock" type integer required one
+    field write_count id "urn:gooo:field-lineage:write-count" type integer required one
+    field use_count id "urn:gooo:field-lineage:use-count" type integer required one
+    field recording_complete id "urn:gooo:field-lineage:complete" type boolean required one
+    field bits id "urn:gooo:field-lineage:bits" type integer required many
+    field completion_order id "urn:gooo:field-lineage:order" type integer required many
+    field completions id "urn:gooo:field-lineage:completions" type integer required many
+    field parents id "urn:gooo:field-lineage:parents" type integer required many
+    field use_starts id "urn:gooo:field-lineage:starts" type integer required many
+    field use_ends id "urn:gooo:field-lineage:ends" type integer required many
+    field write_completed id "urn:gooo:field-lineage:done" type boolean required many
+    field write_drops id "urn:gooo:field-lineage:drops" type integer required many
+    field modes id "urn:gooo:field-lineage:modes" type string required many
+    field kinds id "urn:gooo:field-lineage:kinds" type string required many
+    field input_kinds id "urn:gooo:field-lineage:input-kinds" type string required many
+    field activities id "urn:gooo:field-lineage:activities" type string required many
+    field ports id "urn:gooo:field-lineage:ports" type string required many
+    field record_ids id "urn:gooo:field-lineage:records" type string required many
+    field field_ids id "urn:gooo:field-lineage:fields" type string required many
+    field use_assignments id "urn:gooo:field-lineage:assignments" type integer required many
+    field use_clocks id "urn:gooo:field-lineage:use-clocks" type integer required many
+}
+entity Result id "urn:gooo:field-lineage:result" fields {
+    field source_sha256 id "urn:gooo:field-lineage:result-source" type string required one
+    field case_index id "urn:gooo:field-lineage:result-case" type integer required one
+    field selected_use id "urn:gooo:field-lineage:result-use" type integer required one
+    field status id "urn:gooo:field-lineage:status" type string required one
+    field roots id "urn:gooo:field-lineage:roots" type string required one
+    field root_count id "urn:gooo:field-lineage:root-count" type integer required one
+    field reachable_writes id "urn:gooo:field-lineage:reachable" type integer required one
+    field parent_links id "urn:gooo:field-lineage:parent-links" type integer required one
+    field field_read_edges id "urn:gooo:field-lineage:read-edges" type integer required one
+    field unresolved_links id "urn:gooo:field-lineage:unresolved" type integer required one
+    field shared_rhs_writes id "urn:gooo:field-lineage:shared" type integer required one
+    field scalar_rhs_writes id "urn:gooo:field-lineage:scalar" type integer required one
+    field recording_complete id "urn:gooo:field-lineage:result-complete" type boolean required one
+}
+activity Empty(Columns,Text)->Result id "urn:gooo:field-lineage:empty" computes `return Result{source_sha256:input0.source_sha256,case_index:input0.case_index,selected_use:input0.selected_use,status:input1,roots:"",root_count:0,reachable_writes:0,parent_links:0,field_read_edges:0,unresolved_links:0,shared_rhs_writes:0,scalar_rhs_writes:0,recording_complete:input0.recording_complete}`
+
+activity Trace(Columns)->Result id "urn:gooo:field-lineage:trace" computes `if input.write_count<0 || input.write_count>60 || input.use_count<1 || input.use_count>128 || input.selected_use<0 || input.selected_use>=input.use_count || int64(len(input.bits))!=input.write_count || len(input.completion_order)!=len(input.bits) || len(input.completions)!=len(input.bits) || len(input.parents)!=len(input.bits) || len(input.use_starts)!=len(input.bits) || len(input.use_ends)!=len(input.bits) || len(input.write_completed)!=len(input.bits) || len(input.write_drops)!=len(input.bits) || len(input.modes)!=len(input.bits) || len(input.kinds)!=len(input.bits) || len(input.input_kinds)!=len(input.bits) || len(input.activities)!=len(input.bits) || len(input.ports)!=len(input.bits) || len(input.record_ids)!=len(input.bits) || len(input.field_ids)!=len(input.bits) || int64(len(input.use_assignments))!=input.use_count || len(input.use_clocks)!=len(input.use_assignments) {return Empty(input,"INVALID_INPUT")}
+if input.use_assignments[input.selected_use]!=input.root_assignment || input.use_clocks[input.selected_use]!=input.root_clock {return Empty(input,"INVALID_INPUT")}
+let position=0
+let bit=1
+let gap=false
+for weight in input.bits {
+    if weight!=bit || input.parents[position]< -2 || input.parents[position]>=input.write_count || input.use_starts[position]<0 || input.use_ends[position]<input.use_starts[position] || input.use_ends[position]>input.use_count || input.write_drops[position]<0 {return Empty(input,"INVALID_INPUT")}
+    if input.write_completed[position] {
+        let completion=input.completions[position]
+        if completion<0 || completion>=input.write_count || input.completion_order[completion]!=position {return Empty(input,"INVALID_INPUT")}
+    }else{if input.completions[position]!=-1 {return Empty(input,"INVALID_INPUT")}}
+    let ordered=input.completion_order[position]
+    if ordered<0 {gap=true}else{if gap || ordered>=input.write_count || !input.write_completed[ordered] || input.completions[ordered]!=position {return Empty(input,"INVALID_INPUT")}}
+    let parent=input.parents[position]
+    if parent>=0 {if !input.write_completed[parent] || input.record_ids[parent]!=input.record_ids[position] || input.field_ids[parent]!=input.field_ids[position] || (input.write_completed[position] && input.completions[parent]>=input.completions[position]) {return Empty(input,"INVALID_INPUT")}}
+    position=position+1
+    bit=bit*2
+}
+let use_row=0
+let previous_clock=0
+for assignment in input.use_assignments {
+    let clock=input.use_clocks[use_row]
+    if assignment< -2 || assignment>=input.write_count || clock<previous_clock || clock>input.write_count {return Empty(input,"INVALID_INPUT")}
+    if assignment>=0 {if !input.write_completed[assignment] || input.completions[assignment]>=clock {return Empty(input,"INVALID_INPUT")}}
+    previous_clock=clock
+    use_row=use_row+1
+}
+if input.root_assignment<0 {return Empty(input,"UNRESOLVED_READ")}
+if input.root_assignment>=input.write_count || !input.write_completed[input.root_assignment] || input.completions[input.root_assignment]>=input.root_clock {return Empty(input,"INVALID_INPUT")}
+let mask=input.bits[input.root_assignment]
+let reachable=0
+let parents=0
+let reads=0
+let unresolved=0
+let shared=0
+let scalar=0
+position=0
+for ignored in input.completion_order {
+    let assignment=input.completion_order[input.write_count-1-position]
+    if assignment>=0 {
+        let weight=input.bits[assignment]
+        if (mask/weight)%2==1 {
+            reachable=reachable+1
+            let parent=input.parents[assignment]
+            if parent>=0 {
+                let parent_bit=input.bits[parent]
+                if (mask/parent_bit)%2==0 {mask=mask+parent_bit}
+                parents=parents+1
+            }else{
+                if input.kinds[assignment]=="parameter" && input.input_kinds[assignment]=="root_input" {
+                    if input.activities[assignment]=="" || input.ports[assignment]=="" || input.field_ids[assignment]=="" {unresolved=unresolved+1}
+                }else{
+                    if input.modes[assignment]=="scalar_rhs" || input.modes[assignment]=="compound_update" {
+                        scalar=scalar+1
+                        use_row=0
+                        for prior in input.use_assignments {
+                            if use_row>=input.use_starts[assignment] && use_row<input.use_ends[assignment] {
+                                if prior>=0 {
+                                    if input.completions[prior]>=input.completions[assignment] {return Empty(input,"INVALID_INPUT")}
+                                    let prior_bit=input.bits[prior]
+                                    if (mask/prior_bit)%2==0 {mask=mask+prior_bit}
+                                    reads=reads+1
+                                }else{unresolved=unresolved+1}
+                            }
+                            use_row=use_row+1
+                        }
+                        if input.write_drops[assignment]>0 || (input.modes[assignment]=="compound_update" && input.use_starts[assignment]==input.use_ends[assignment]) {unresolved=unresolved+1}
+                    }else{
+                        unresolved=unresolved+1
+                        if input.modes[assignment]=="shared_rhs" {shared=shared+1}
+                    }
+                }
+            }
+        }
+    }
+    position=position+1
+}
+let roots=""
+let root_count=0
+position=0
+for weight in input.bits {
+    if (mask/weight)%2==1 && input.kinds[position]=="parameter" && input.input_kinds[position]=="root_input" {
+        roots=roots+input.activities[position]+"|"+input.ports[position]+"|"+input.field_ids[position]+";"
+        root_count=root_count+1
+    }
+    position=position+1
+}
+let status="SCOPED_FIELD_ORIGINS"
+if unresolved>0 || shared>0 {status="PARTIAL_LINKS"}
+if !input.recording_complete {status="PARTIAL_RECORDING"}
+return Result{source_sha256:input.source_sha256,case_index:input.case_index,selected_use:input.selected_use,status:status,roots:roots,root_count:root_count,reachable_writes:reachable,parent_links:parents,field_read_edges:reads,unresolved_links:unresolved,shared_rhs_writes:shared,scalar_rhs_writes:scalar,recording_complete:input.recording_complete}`

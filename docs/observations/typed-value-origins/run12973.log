@@ -1,0 +1,27 @@
+=== RUN   TestFreshTypedOrigins12973
+=== RUN   TestFreshTypedOrigins12973/Copieddata
+=== RUN   TestFreshTypedOrigins12973/Originaldata
+=== RUN   TestFreshTypedOrigins12973/Updatedurn:typed12973:leftdata
+=== RUN   TestFreshTypedOrigins12973/Updatedurn:typed12973:rightdata
+=== RUN   TestFreshTypedOrigins12973/Choicedata
+=== RUN   TestFreshTypedOrigins12973/Choicecontrol
+=== RUN   TestFreshTypedOrigins12973/Constantcontrol
+=== NAME  TestFreshTypedOrigins12973
+    typed_value_origins_fresh_test.go:86: unsupported loop must not publish a resolved prefix <nil> {gooo/typed-value-origins/v1 UNRESOLVED explicit local types are reserved for compiler-generated result joins loop12973.gooo sha256:513ca42ade8805de41e00237a54b65ad273c462ffb1956e7b17d98785b35e964 urn:typed12973:loop 0x3447af124840 [] [] [] source may-dependence; no input values, runtime path, candidate selection or model call; flat scalar record fields; 512 nodes, 64 live bindings, branch/helper depth 16}
+--- FAIL: TestFreshTypedOrigins12973 (0.01s)
+    --- PASS: TestFreshTypedOrigins12973/Copieddata (0.00s)
+    --- PASS: TestFreshTypedOrigins12973/Originaldata (0.00s)
+    --- PASS: TestFreshTypedOrigins12973/Updatedurn:typed12973:leftdata (0.00s)
+    --- PASS: TestFreshTypedOrigins12973/Updatedurn:typed12973:rightdata (0.00s)
+    --- PASS: TestFreshTypedOrigins12973/Choicedata (0.00s)
+    --- PASS: TestFreshTypedOrigins12973/Choicecontrol (0.00s)
+    --- PASS: TestFreshTypedOrigins12973/Constantcontrol (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.526s
+=== RUN   TestTypedOriginExample13013
+    body_origins_fresh_test.go:66: consumer13013 1  {"schema":"gooo/workspace-body-execution-receipt/v1","decision":"FAIL_CLOSED","manifest":"<local-study-root>/producer12973/examples/typed-value-origins/ancestry.workspace.json","manifest_digest":"sha256:b3db891a4ebd07a97a5dad47710e3eb890955b1e0c0e57d35b858a877482764f","inputs_digest":"sha256:a5935f1d255f2d944134029cf6baa8243cb2184a246edbd7723c8d1c5904c582","error":"generate workspace activity bodies: activity \"GoooPackage3ActivityInputs\": pure activity closure exceeds 4096 calls per invocation"}
+        
+--- FAIL: TestTypedOriginExample13013 (0.73s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.203s
+FAIL

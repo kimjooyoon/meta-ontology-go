@@ -17,6 +17,12 @@ func (g *TypedPathGenerator) GenerateSourceAssembly(ctx context.Context, filenam
 	if err != nil {
 		return Result{}, err
 	}
+	if IsSourceIRBodyFill(spec) {
+		return Result{}, fmt.Errorf("source_fill requires GenerateWithSourceIRBodyFill; typed path models rank scalar or record choices")
+	}
+	if IsSourceIRSearch(spec) {
+		return Result{}, fmt.Errorf("search requires GenerateWithSourceIRSearch; typed path models rank scalar or record choices")
+	}
 	if IsRecordAssembly(spec) {
 		return g.generateRecordAssembly(ctx, filename, source, activity)
 	}
@@ -62,13 +68,16 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 		}
 		r.Control = controller.receipt
 	}
-	if err = g.rankRecordAssembly(plan, r); err != nil {
-		return Result{}, err
+	if err = observeRecordAssembly(ctx, filename, source, &plan, r); err != nil {
+		return Result{}, &RecordAssemblyError{Receipt: r, Cause: err}
+	}
+	if err = g.rankRecordAssemblyContext(ctx, plan, r); err != nil {
+		return Result{}, &RecordAssemblyError{Receipt: r, Cause: err}
 	}
 	if err = searchRecordAssemblyWithPolicy(ctx, plan, r, controller); err != nil {
-		return Result{}, err
+		return Result{}, &RecordAssemblyError{Receipt: r, Cause: err}
 	}
-	result, err := emitRecordAssembly(ctx, filename, source, plan, r)
+	result, err := emitSelectedRecordAssembly(ctx, filename, source, plan, r)
 	r.GenerationNS = time.Since(started).Nanoseconds()
 	if err == nil {
 		populateCompletenessReceipt(&result.Report, "")
@@ -77,12 +86,26 @@ func (g *TypedPathGenerator) generateRecordAssemblyWithPolicy(ctx context.Contex
 }
 
 func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *RecordAssemblyReceipt) error {
+	return g.rankRecordAssemblyContext(context.Background(), plan, r)
+}
+
+func (g *TypedPathGenerator) rankRecordAssemblyContext(ctx context.Context, plan recordAssemblyPlan, r *RecordAssemblyReceipt) error {
 	r.ModelRequested = g.info.Loaded
+	if resolveRecordObservationRanking(r) {
+		if g.info.Loaded {
+			info := g.Info()
+			r.Model = &info
+		}
+		return nil
+	}
+	if g.criteria != nil {
+		return g.rankScalarCriteria(ctx, plan, r)
+	}
 	if g.info.Loaded {
 		info := g.Info()
 		r.Model = &info
 		r.Context = recordPlanModelContext(plan, info.FeatureVersion)
-		if g.three == nil {
+		if g.three == nil && plan.scalar == nil {
 			r.Context.Status, r.Context.Reason = "DECLINED_TO_DETERMINISTIC", "THREE_CHOICE_MODEL_REQUIRED"
 		}
 		if r.Context.Status == "ENCODED" {
@@ -123,12 +146,16 @@ func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *Reco
 
 func newRecordAssemblyReceipt(source []byte, p recordAssemblyPlan) *RecordAssemblyReceipt {
 	contract, _ := p.spec.Canonical()
-	cases, _ := json.Marshal(p.spec.ValueCases)
+	cases, _ := json.Marshal(criteriaValueCases(p.spec, false))
 	budget := p.spec.MaxAttempts
 	r := &RecordAssemblyReceipt{Schema: recordAssemblySchema, OriginalSourceSHA256: digest(source),
 		ContractSHA256: digest([]byte(contract)), TestSuiteSHA256: digest(cases), AttemptBudget: &budget,
 		Choices: append([]RecordValueChoice(nil), p.choices...),
 		Scope:   "source-declared record field alternatives; finite case and field coverage; candidate interpretation followed by ordinary typed Go emission; no model updates"}
+	if p.scalar != nil {
+		r.Schema = scalarCriteriaAssemblySchema
+		r.Scope = "source-declared Integer path choices with actual scalar results and fixed Gooo predicates; finite source inputs; record_assembly is the legacy receipt container; no record fields or model predicate understanding are implied"
+	}
 	for mask := 0; mask < 1<<len(p.choices); mask++ {
 		r.Ranking = append(r.Ranking, uint16(mask))
 	}
@@ -150,7 +177,7 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 		if err != nil {
 			return err
 		}
-		if policyCases != nil {
+		if usableRecordAttempt(policyBest) {
 			best = 0
 		}
 	}
@@ -163,20 +190,21 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 		}
 		attempt, cases, err := evaluateRecordMask(ctx, p, mask)
 		if err != nil {
+			if attempt.LocalCalls != nil {
+				r.Attempts = append(r.Attempts, attempt)
+			}
 			return err
 		}
 		r.Attempts = append(r.Attempts, attempt)
-		if attempt.Total == 0 {
+		if !usableRecordAttempt(attempt) {
 			continue
 		}
-		if policy != nil && (policyCases == nil || attempt.Passed > policyBest.Passed ||
-			(attempt.Passed == policyBest.Passed && attempt.FieldsPassed > policyBest.FieldsPassed)) {
+		if policy != nil && (!usableRecordAttempt(policyBest) || betterRecordAttempt(attempt, policyBest, true)) {
 			policyBest, policyCases = attempt, cases
 		}
-		if best < 0 || attempt.FieldsPassed > r.FieldsPassed || (attempt.FieldsPassed == r.FieldsPassed && attempt.Passed > r.Passed) {
+		if best < 0 || betterRecordAttempt(attempt, selectedRecordAttempt(r), false) {
 			best = len(r.Attempts) - 1
-			r.SelectedMask, r.Cases = mask, cases
-			r.Passed, r.Total, r.FieldsPassed, r.FieldsTotal = attempt.Passed, attempt.Total, attempt.FieldsPassed, attempt.FieldsTotal
+			selectRecordAttempt(r, attempt, cases)
 		}
 		keepGoing := true
 		if policy != nil {
@@ -187,17 +215,15 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 			if r.Control.Decisions[len(r.Control.Decisions)-1].Operation == "USE_OBSERVED_CANDIDATE" {
 				// The policy's best count refers to whole cases. Preserve that
 				// meaning even when another candidate matches more individual fields.
-				r.SelectedMask, r.Cases = policyBest.Mask, policyCases
-				r.Passed, r.Total = policyBest.Passed, policyBest.Total
-				r.FieldsPassed, r.FieldsTotal = policyBest.FieldsPassed, policyBest.FieldsTotal
+				selectRecordAttempt(r, policyBest, policyCases)
 			}
 		}
-		if !keepGoing || attempt.Passed == attempt.Total {
+		if !keepGoing || completeRecordAttempt(attempt) {
 			break
 		}
 	}
 	if best < 0 {
-		return fmt.Errorf("record assembly has no valid typed candidate within the attempt budget")
+		return fmt.Errorf("record assembly has no valid typed candidate that completed evaluation within the attempt budget")
 	}
 	finishRecordAssemblySearch(r)
 	return nil
@@ -205,13 +231,14 @@ func searchRecordAssemblyWithPolicy(ctx context.Context, p recordAssemblyPlan, r
 
 func finishRecordAssemblySearch(r *RecordAssemblyReceipt) {
 	r.Status = "PARTIAL_FINITE"
-	if r.Passed == r.Total {
+	if completeRecordAttempt(selectedRecordAttempt(r)) {
 		r.Status = "COMPLETE_FINITE"
 	}
 	for i := range r.Choices {
-		r.Choices[i].Picked = "value_first"
+		first, second := assemblyChoiceLabels(r.Choices[i].Kind)
+		r.Choices[i].Picked = first
 		if r.SelectedMask&(1<<i) != 0 {
-			r.Choices[i].Picked = "value_second"
+			r.Choices[i].Picked = second
 		}
 	}
 }
@@ -246,6 +273,10 @@ func emitRecordAssembly(ctx context.Context, filename string, source []byte, p r
 		return Result{}, err
 	}
 	result, err := GenerateWithPlanner(ctx, filename, completed, p.body.activity.Name, "", "")
+	if err != nil {
+		return Result{}, err
+	}
+	r.ChoiceOrigins, err = p.choiceOrigins(r.SelectedMask, body)
 	if err != nil {
 		return Result{}, err
 	}

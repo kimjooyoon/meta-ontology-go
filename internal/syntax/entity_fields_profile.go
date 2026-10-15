@@ -23,6 +23,9 @@ const (
 	EntityFieldsV4ProfileID      = "gooo.entityfields.go-projection.v4"
 	EntityFieldsV4ProfileVersion = 4
 	EntityFieldsV4ProfileDigest  = "6afca055a3f1abaff71810e2dcb7db4ef1b98331415e0994066d358da42839bd"
+	EntityFieldsV5ProfileID      = "gooo.entityfields.go-projection.v5"
+	EntityFieldsV5ProfileVersion = 5
+	EntityFieldsV5ProfileDigest  = "edac62212632b1f61390c95e624d0671c718b357cd5aa42ff0eef86358d90899"
 )
 
 var ErrEntityFieldsProfileMismatch = errors.New("syntax: EntityFields profile mismatch")
@@ -43,6 +46,10 @@ func (p EntityFieldsProfile) Validate() error {
 		}
 	case EntityFieldsV4ProfileID:
 		if p.Version == EntityFieldsV4ProfileVersion && p.Digest == EntityFieldsV4ProfileDigest {
+			return nil
+		}
+	case EntityFieldsV5ProfileID:
+		if p.Version == EntityFieldsV5ProfileVersion && p.Digest == EntityFieldsV5ProfileDigest {
 			return nil
 		}
 	}

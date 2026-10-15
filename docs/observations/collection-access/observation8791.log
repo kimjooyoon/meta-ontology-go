@@ -1,0 +1,14 @@
+=== RUN   TestSourceAccessOccurrences8753
+    body_value_access_test.go:64: 8753: four fresh static bodies retain fields, literal/dynamic indices, explicit bounds and Korean byte offsets; legacy graph shape unchanged; native0/model0
+--- PASS: TestSourceAccessOccurrences8753 (0.00s)
+=== RUN   TestAccessNodeBudget8761
+    body_value_access_test.go:80: 8761: 351 fresh indexed source occurrences stop at 256 graph nodes with PARTIAL/NODE_LIMIT
+--- PASS: TestAccessNodeBudget8761 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.615s
+=== RUN   TestWorkspaceCollectionAccess8791
+    value_access_native_test.go:62: fresh collection source generate workspace activity bodies: called activity "GoooPackage1ActivityAt" plan: record IR body fill currently requires a declared record output
+--- FAIL: TestWorkspaceCollectionAccess8791 (0.01s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	0.503s
+FAIL

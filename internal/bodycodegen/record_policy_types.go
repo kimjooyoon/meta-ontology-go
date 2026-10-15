@@ -44,6 +44,7 @@ type RecordPolicyCounts struct {
 }
 
 type RecordPolicyDecision struct {
+	CountUnit    string             `json:"count_unit,omitempty"`
 	AttemptIndex int                `json:"attempt_index"`
 	Mask         uint16             `json:"mask"`
 	Input        RecordPolicyCounts `json:"input"`

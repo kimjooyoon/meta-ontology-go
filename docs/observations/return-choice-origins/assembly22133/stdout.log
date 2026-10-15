@@ -1,0 +1,5 @@
+=== RUN   TestLengthAssemblyOrigins22133
+    length_assembly_origin_fresh_test.go:108: three source-owned record field choices;selection1/1,held-out1/1,separate native3/3;original choice declarations retained;two-run native;model0
+--- PASS: TestLengthAssemblyOrigins22133 (0.73s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.248s

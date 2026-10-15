@@ -1,0 +1,37 @@
+{
+  "GOMAXPROCS": 1,
+  "cpu": "Apple M4",
+  "logical_cpus": 10,
+  "memory_bytes": 17179869184,
+  "processes": {
+    "context": {
+      "average_one_core_cpu_percent": 50,
+      "maximum_rss_bytes": 23658496,
+      "real_seconds": 0.02,
+      "sys_seconds": 0,
+      "user_seconds": 0.01
+    },
+    "fixed": {
+      "average_one_core_cpu_percent": 65.43209876543209,
+      "maximum_rss_bytes": 86376448,
+      "real_seconds": 0.81,
+      "sys_seconds": 0.22,
+      "user_seconds": 0.31
+    },
+    "model": {
+      "average_one_core_cpu_percent": 81.25,
+      "maximum_rss_bytes": 85540864,
+      "real_seconds": 0.64,
+      "sys_seconds": 0.2,
+      "user_seconds": 0.32
+    },
+    "replay": {
+      "average_one_core_cpu_percent": 88.23529411764706,
+      "maximum_rss_bytes": 87048192,
+      "real_seconds": 0.34,
+      "sys_seconds": 0.12,
+      "user_seconds": 0.18
+    }
+  },
+  "scope": "One original sequence, normal Go cache, fixed order and shared host. CPU/wall is an average relative to one core, not instantaneous host utilization or a causal speedup."
+}

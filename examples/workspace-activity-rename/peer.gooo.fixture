@@ -1,0 +1,5 @@
+package peer
+namespace review_peer
+entity Integer id "urn:review:integer"
+entity Boolean id "urn:review:boolean"
+activity Review(Integer,Integer) -> Boolean id "urn:review:peer" computes `return input1 == input0+12`

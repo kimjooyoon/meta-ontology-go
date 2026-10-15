@@ -1,0 +1,34 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "domain438/app",
+    "activity": "Multiply"
+  },
+  "packages": [
+    {
+      "path": "domain438/money",
+      "name": "money",
+      "sources": [
+        "money.gooo.fixture"
+      ]
+    },
+    {
+      "path": "domain438/count",
+      "name": "count",
+      "sources": [
+        "count.gooo.fixture"
+      ]
+    },
+    {
+      "path": "domain438/app",
+      "name": "app",
+      "imports": [
+        "domain438/money",
+        "domain438/count"
+      ],
+      "sources": [
+        "invoice.gooo.fixture"
+      ]
+    }
+  ]
+}

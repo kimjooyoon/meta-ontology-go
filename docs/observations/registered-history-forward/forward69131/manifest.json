@@ -1,0 +1,20 @@
+{
+  "base": "cd5ed4381e1800952632ddf72c4ce55ecfe63a25",
+  "files": [
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/everyday_denominator_fresh67471_test.go",
+      "bytes": 1824,
+      "sha256": "c508552b58ec6fe4747b727f21b96a27d4de3c3ac82386be653cdaa314a8c594"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/registered_history_forward_fresh69131_test.go",
+      "bytes": 1040,
+      "sha256": "969367073d4df815692fc4af772ba486b888d4f566c0024f8adcc0844da50aa8"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/everyday_registration_fresh67143_test.go",
+      "bytes": 2868,
+      "sha256": "36e0362bdd80d1f2d66ef698e739f81d942d216603431e45f4dce5411db7652f"
+    }
+  ]
+}

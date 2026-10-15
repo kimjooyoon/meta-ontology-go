@@ -1,0 +1,12 @@
+package final
+namespace final4393
+import 앞 "chain4393/step"
+activity Check(앞.Integer) -> 앞.Integer id "urn:final4393:check" computes "if input > __GOOO_BODY_HOLE_limit__ { return input + 13 }; return input - 3" assembling {
+ source_fill intent "두 번째 금액 기준" {
+  hole "limit"
+  candidate "final4393" { fill "limit" "67" }
+  candidate "other4393" { fill "limit" "167" }
+ }
+ case "71" -> "84"
+}
+bind 앞.Check.result -> Check.input

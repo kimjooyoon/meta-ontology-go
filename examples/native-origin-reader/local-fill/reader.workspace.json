@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "gooo/tools/origin-reader/local-fill",
+    "activity": "Describe"
+  },
+  "packages": [
+    {
+      "path": "gooo/tools/origin-reader/local-fill",
+      "name": "reader11213",
+      "imports": [],
+      "sources": [
+        "reader.gooo"
+      ]
+    }
+  ]
+}

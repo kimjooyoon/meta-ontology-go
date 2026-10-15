@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "examples/compound",
+    "activity": "Summarize"
+  },
+  "packages": [
+    {
+      "path": "examples/compound",
+      "name": "compound",
+      "imports": [],
+      "sources": [
+        "fields.gooo"
+      ]
+    }
+  ]
+}

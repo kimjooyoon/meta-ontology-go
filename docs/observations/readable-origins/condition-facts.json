@@ -1,0 +1,36 @@
+{
+  "schema": "gooo/source-origin-view-observation/v1",
+  "scope": "new typed source graphs and original text facts; no candidate evaluation",
+  "parent_head": "3ab0910f1b641510400ff25233852afc7893afd8",
+  "source_state": "UNBOUND_LOCAL_SOURCE",
+  "changed_source_sha256": {
+    "internal/bodycodegen/typed_origin_text.go": "4edbbcfc8fa0ce25c067d1903e4918da8a240447e6e82d5ce4e6463f0be1780e",
+    "internal/bodycodegen/typed_origin_condition_text_test.go": "bb89b247184a3f4110f371a4e9c96771611aa25e4a762b5d58001d55c52cc111"
+  },
+  "command": [
+    "go",
+    "test",
+    "-p=1",
+    "./internal/bodycodegen",
+    "-run",
+    "^TestOriginTextConditionFacts$",
+    "-count=1",
+    "-v"
+  ],
+  "exit_code": 0,
+  "command_wall_seconds": 4.744689541,
+  "timing_scope": "one original local invocation including cached compilation; not a speed comparison",
+  "native_candidate_executions": 0,
+  "model_calls": 0,
+  "observations": [
+    "true and false source guards retain their distinct polarity",
+    "arithmetic operators remain visible",
+    "constant conditions are explicitly static",
+    "source report is byte-identical before and after text projection",
+    "operator output errors reach the caller"
+  ],
+  "case_source": "internal/bodycodegen/typed_origin_condition_text_test.go",
+  "test_output": "condition-facts.log",
+  "test_output_sha256": "572f5cd34e5468e62e2bc4edc27df0ed075866cd339fc477a9843754955c4143",
+  "compiler_merge_authority": false
+}

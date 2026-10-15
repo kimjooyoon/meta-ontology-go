@@ -1,0 +1,6 @@
+package left
+namespace qualified_left
+entity Amount id "urn:qualified:left:amount" fields {
+    field value id "urn:qualified:left:value" type integer required one
+}
+activity 요금(Amount) -> Amount id "urn:qualified:left:charge" computes "return input"

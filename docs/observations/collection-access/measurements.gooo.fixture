@@ -1,0 +1,26 @@
+package readings
+namespace access8887
+entity Integer id "urn:gooo:type:integer"
+entity Request id "urn:access8887:request" fields {
+ field readings id "urn:access8887:request-readings" type integer required many
+ field lower id "urn:access8887:lower" type integer required one
+ field upper id "urn:access8887:upper" type integer required one
+ field pick id "urn:access8887:request-pick" type integer required one
+}
+entity Window id "urn:access8887:window" fields {
+ field readings id "urn:access8887:window-readings" type integer required many
+ field pick id "urn:access8887:window-pick" type integer required one
+}
+activity TakeWindow(Request) -> Window id "urn:access8887:take" computes "let 시작 = input.lower; let 끝 = input.upper; return Window{readings: input.readings[시작:끝], pick: input.pick}"
+activity At(Window) -> Integer id "urn:access8887:at" computes "if input.pick < 0 || input.pick >= int64(len(input.readings)) { return -1 }; return input.readings[__GOOO_BODY_HOLE_position__]" assembling {
+ source_fill intent "선택한 구간에서 요청한 위치의 측정값을 읽는다" {
+  hole "position"
+  candidate "first8887" { fill "position" "0" }
+  candidate "requested8887" { fill "position" "input.pick" }
+ }
+ value_case "[{\"readings\":[31,47,73],\"pick\":1}]" -> "47"
+ value_case "[{\"readings\":[97,41],\"pick\":1}]" -> "41"
+ holdout_value_case "[{\"readings\":[67,103,53],\"pick\":2}]" -> "53"
+}
+activity Read(Window) -> Integer id "urn:access8887:read" computes "return At(input)"
+bind TakeWindow.result -> Read.input

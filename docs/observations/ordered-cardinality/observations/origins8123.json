@@ -1,0 +1,663 @@
+[
+  {
+    "body": "let result = 0; if input \u003e= 59 { result = input + 61 } else { result = input - 67 }; if result \u003e 991 { return result }; return input",
+    "condition": {
+      "schema": "gooo/body-value-origins/v1",
+      "status": "PARTIAL",
+      "reasons": [
+        "EARLY_EXIT_CONTROLS_NOT_EXPANDED"
+      ],
+      "body_sha256": "sha256:3f385830ecd3f0edb2e4a893e5148e0539109cdc1e32ce7fd45a10e29a243cdb",
+      "nodes": [
+        {
+          "id": "assignment:42:52:result",
+          "kind": "assignment",
+          "name": "result",
+          "decoded": {
+            "start_byte": 42,
+            "end_byte": 52
+          },
+          "inputs": [
+            "input_reference:42:47:input"
+          ],
+          "controls": [
+            "condition:19:30:"
+          ]
+        },
+        {
+          "id": "assignment:71:81:result",
+          "kind": "assignment",
+          "name": "result",
+          "decoded": {
+            "start_byte": 71,
+            "end_byte": 81
+          },
+          "inputs": [
+            "input_reference:71:76:input"
+          ],
+          "controls": [
+            "condition:19:30:"
+          ]
+        },
+        {
+          "id": "condition:19:30:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 19,
+            "end_byte": 30
+          },
+          "inputs": [
+            "input_reference:19:24:input"
+          ]
+        },
+        {
+          "id": "condition:88:100:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 88,
+            "end_byte": 100
+          },
+          "inputs": [
+            "assignment:42:52:result",
+            "assignment:71:81:result"
+          ]
+        },
+        {
+          "id": "input_reference:19:24:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 19,
+            "end_byte": 24
+          }
+        },
+        {
+          "id": "input_reference:42:47:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 42,
+            "end_byte": 47
+          }
+        },
+        {
+          "id": "input_reference:71:76:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 71,
+            "end_byte": 76
+          }
+        }
+      ],
+      "roots": [
+        "condition:88:100:"
+      ]
+    },
+    "flow": {
+      "schema": "gooo/body-value-origins/v1",
+      "status": "PARTIAL",
+      "reasons": [
+        "EARLY_EXIT_CONTROLS_NOT_EXPANDED"
+      ],
+      "body_sha256": "sha256:3f385830ecd3f0edb2e4a893e5148e0539109cdc1e32ce7fd45a10e29a243cdb",
+      "nodes": [
+        {
+          "id": "assignment:42:52:result",
+          "kind": "assignment",
+          "name": "result",
+          "decoded": {
+            "start_byte": 42,
+            "end_byte": 52
+          },
+          "inputs": [
+            "input_reference:42:47:input"
+          ],
+          "controls": [
+            "condition:19:30:"
+          ]
+        },
+        {
+          "id": "assignment:71:81:result",
+          "kind": "assignment",
+          "name": "result",
+          "decoded": {
+            "start_byte": 71,
+            "end_byte": 81
+          },
+          "inputs": [
+            "input_reference:71:76:input"
+          ],
+          "controls": [
+            "condition:19:30:"
+          ]
+        },
+        {
+          "id": "condition:19:30:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 19,
+            "end_byte": 30
+          },
+          "inputs": [
+            "input_reference:19:24:input"
+          ]
+        },
+        {
+          "id": "condition:88:100:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 88,
+            "end_byte": 100
+          },
+          "inputs": [
+            "assignment:42:52:result",
+            "assignment:71:81:result"
+          ]
+        },
+        {
+          "id": "declaration:13:14:result",
+          "kind": "declaration",
+          "name": "result",
+          "decoded": {
+            "start_byte": 13,
+            "end_byte": 14
+          }
+        },
+        {
+          "id": "input_reference:127:132:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 127,
+            "end_byte": 132
+          }
+        },
+        {
+          "id": "input_reference:19:24:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 19,
+            "end_byte": 24
+          }
+        },
+        {
+          "id": "input_reference:42:47:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 42,
+            "end_byte": 47
+          }
+        },
+        {
+          "id": "input_reference:71:76:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 71,
+            "end_byte": 76
+          }
+        },
+        {
+          "id": "return:110:116:",
+          "kind": "return",
+          "decoded": {
+            "start_byte": 110,
+            "end_byte": 116
+          },
+          "inputs": [
+            "assignment:42:52:result",
+            "assignment:71:81:result"
+          ],
+          "controls": [
+            "condition:88:100:"
+          ]
+        },
+        {
+          "id": "return:127:132:",
+          "kind": "return",
+          "decoded": {
+            "start_byte": 127,
+            "end_byte": 132
+          },
+          "inputs": [
+            "input_reference:127:132:input"
+          ]
+        }
+      ],
+      "roots": [
+        "condition:19:30:",
+        "condition:88:100:",
+        "return:110:116:",
+        "return:127:132:"
+      ]
+    },
+    "name": "branch"
+  },
+  {
+    "body": "let 합계 = input + 71; if input \u003e 73 { let 합계 = input + 79; if 합계 \u003e 83 { return 합계 } }; if 합계 \u003e 89 { return 합계 }; return 0",
+    "condition": {
+      "schema": "gooo/body-value-origins/v1",
+      "status": "PARTIAL",
+      "reasons": [
+        "EARLY_EXIT_CONTROLS_NOT_EXPANDED"
+      ],
+      "body_sha256": "sha256:5d665ab33c29a5157344605dc84b3ca18d7b1894be6d747a71c0e4faf75ebf02",
+      "nodes": [
+        {
+          "id": "condition:105:116:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 105,
+            "end_byte": 116
+          },
+          "inputs": [
+            "declaration:13:23:합계"
+          ]
+        },
+        {
+          "id": "declaration:13:23:합계",
+          "kind": "declaration",
+          "name": "합계",
+          "decoded": {
+            "start_byte": 13,
+            "end_byte": 23
+          },
+          "inputs": [
+            "input_reference:13:18:input"
+          ]
+        },
+        {
+          "id": "input_reference:13:18:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 13,
+            "end_byte": 18
+          }
+        }
+      ],
+      "roots": [
+        "condition:105:116:"
+      ]
+    },
+    "flow": {
+      "schema": "gooo/body-value-origins/v1",
+      "status": "PARTIAL",
+      "reasons": [
+        "EARLY_EXIT_CONTROLS_NOT_EXPANDED"
+      ],
+      "body_sha256": "sha256:5d665ab33c29a5157344605dc84b3ca18d7b1894be6d747a71c0e4faf75ebf02",
+      "nodes": [
+        {
+          "id": "condition:105:116:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 105,
+            "end_byte": 116
+          },
+          "inputs": [
+            "declaration:13:23:합계"
+          ]
+        },
+        {
+          "id": "condition:28:38:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 28,
+            "end_byte": 38
+          },
+          "inputs": [
+            "input_reference:28:33:input"
+          ]
+        },
+        {
+          "id": "condition:69:80:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 69,
+            "end_byte": 80
+          },
+          "inputs": [
+            "declaration:54:64:합계"
+          ],
+          "controls": [
+            "condition:28:38:"
+          ]
+        },
+        {
+          "id": "declaration:13:23:합계",
+          "kind": "declaration",
+          "name": "합계",
+          "decoded": {
+            "start_byte": 13,
+            "end_byte": 23
+          },
+          "inputs": [
+            "input_reference:13:18:input"
+          ]
+        },
+        {
+          "id": "declaration:54:64:합계",
+          "kind": "declaration",
+          "name": "합계",
+          "decoded": {
+            "start_byte": 54,
+            "end_byte": 64
+          },
+          "inputs": [
+            "input_reference:54:59:input"
+          ],
+          "controls": [
+            "condition:28:38:"
+          ]
+        },
+        {
+          "id": "input_reference:13:18:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 13,
+            "end_byte": 18
+          }
+        },
+        {
+          "id": "input_reference:28:33:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 28,
+            "end_byte": 33
+          }
+        },
+        {
+          "id": "input_reference:54:59:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 54,
+            "end_byte": 59
+          }
+        },
+        {
+          "id": "return:126:132:",
+          "kind": "return",
+          "decoded": {
+            "start_byte": 126,
+            "end_byte": 132
+          },
+          "inputs": [
+            "declaration:13:23:합계"
+          ],
+          "controls": [
+            "condition:105:116:"
+          ]
+        },
+        {
+          "id": "return:143:144:",
+          "kind": "return",
+          "decoded": {
+            "start_byte": 143,
+            "end_byte": 144
+          }
+        },
+        {
+          "id": "return:90:96:",
+          "kind": "return",
+          "decoded": {
+            "start_byte": 90,
+            "end_byte": 96
+          },
+          "inputs": [
+            "declaration:54:64:합계"
+          ],
+          "controls": [
+            "condition:28:38:",
+            "condition:69:80:"
+          ]
+        }
+      ],
+      "roots": [
+        "condition:105:116:",
+        "condition:28:38:",
+        "condition:69:80:",
+        "return:126:132:",
+        "return:143:144:",
+        "return:90:96:"
+      ]
+    },
+    "name": "shadow"
+  },
+  {
+    "body": "let 합계 = 0; for 항목 in input.amounts { if 항목 \u003e 97 { 합계 = 합계 + 항목 } }; if 합계 \u003e 101 { return 합계 }; return 0",
+    "condition": {
+      "schema": "gooo/body-value-origins/v1",
+      "status": "PARTIAL",
+      "reasons": [
+        "COLLECTION_ELEMENTS_JOINED",
+        "EARLY_EXIT_CONTROLS_NOT_EXPANDED",
+        "LOOP_EXIT_PATHS_NOT_EXPANDED"
+      ],
+      "body_sha256": "sha256:80a79da15b7ac7f9ed1347c214cceed583667cfc37121f1bd3965afc76ec760b",
+      "nodes": [
+        {
+          "id": "assignment:72:87:합계",
+          "kind": "assignment",
+          "name": "합계",
+          "decoded": {
+            "start_byte": 72,
+            "end_byte": 87
+          },
+          "inputs": [
+            "assignment:72:87:합계",
+            "collection_element:20:26:항목",
+            "declaration:13:14:합계"
+          ],
+          "controls": [
+            "collection:30:43:",
+            "condition:49:60:"
+          ]
+        },
+        {
+          "id": "collection:30:43:",
+          "kind": "collection",
+          "decoded": {
+            "start_byte": 30,
+            "end_byte": 43
+          },
+          "inputs": [
+            "input_reference:30:35:input"
+          ]
+        },
+        {
+          "id": "collection_element:20:26:항목",
+          "kind": "collection_element",
+          "name": "항목",
+          "decoded": {
+            "start_byte": 20,
+            "end_byte": 26
+          },
+          "inputs": [
+            "collection:30:43:"
+          ]
+        },
+        {
+          "id": "condition:49:60:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 49,
+            "end_byte": 60
+          },
+          "inputs": [
+            "collection_element:20:26:항목"
+          ],
+          "controls": [
+            "collection:30:43:"
+          ]
+        },
+        {
+          "id": "condition:96:108:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 96,
+            "end_byte": 108
+          },
+          "inputs": [
+            "assignment:72:87:합계",
+            "declaration:13:14:합계"
+          ]
+        },
+        {
+          "id": "declaration:13:14:합계",
+          "kind": "declaration",
+          "name": "합계",
+          "decoded": {
+            "start_byte": 13,
+            "end_byte": 14
+          }
+        },
+        {
+          "id": "input_reference:30:35:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 30,
+            "end_byte": 35
+          }
+        }
+      ],
+      "roots": [
+        "condition:96:108:"
+      ]
+    },
+    "flow": {
+      "schema": "gooo/body-value-origins/v1",
+      "status": "PARTIAL",
+      "reasons": [
+        "COLLECTION_ELEMENTS_JOINED",
+        "EARLY_EXIT_CONTROLS_NOT_EXPANDED",
+        "LOOP_EXIT_PATHS_NOT_EXPANDED"
+      ],
+      "body_sha256": "sha256:80a79da15b7ac7f9ed1347c214cceed583667cfc37121f1bd3965afc76ec760b",
+      "nodes": [
+        {
+          "id": "assignment:72:87:합계",
+          "kind": "assignment",
+          "name": "합계",
+          "decoded": {
+            "start_byte": 72,
+            "end_byte": 87
+          },
+          "inputs": [
+            "assignment:72:87:합계",
+            "collection_element:20:26:항목",
+            "declaration:13:14:합계"
+          ],
+          "controls": [
+            "collection:30:43:",
+            "condition:49:60:"
+          ]
+        },
+        {
+          "id": "collection:30:43:",
+          "kind": "collection",
+          "decoded": {
+            "start_byte": 30,
+            "end_byte": 43
+          },
+          "inputs": [
+            "input_reference:30:35:input"
+          ]
+        },
+        {
+          "id": "collection_element:20:26:항목",
+          "kind": "collection_element",
+          "name": "항목",
+          "decoded": {
+            "start_byte": 20,
+            "end_byte": 26
+          },
+          "inputs": [
+            "collection:30:43:"
+          ]
+        },
+        {
+          "id": "condition:49:60:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 49,
+            "end_byte": 60
+          },
+          "inputs": [
+            "collection_element:20:26:항목"
+          ],
+          "controls": [
+            "collection:30:43:"
+          ]
+        },
+        {
+          "id": "condition:96:108:",
+          "kind": "condition",
+          "decoded": {
+            "start_byte": 96,
+            "end_byte": 108
+          },
+          "inputs": [
+            "assignment:72:87:합계",
+            "declaration:13:14:합계"
+          ]
+        },
+        {
+          "id": "declaration:13:14:합계",
+          "kind": "declaration",
+          "name": "합계",
+          "decoded": {
+            "start_byte": 13,
+            "end_byte": 14
+          }
+        },
+        {
+          "id": "input_reference:30:35:input",
+          "kind": "input_reference",
+          "name": "input",
+          "decoded": {
+            "start_byte": 30,
+            "end_byte": 35
+          }
+        },
+        {
+          "id": "return:118:124:",
+          "kind": "return",
+          "decoded": {
+            "start_byte": 118,
+            "end_byte": 124
+          },
+          "inputs": [
+            "assignment:72:87:합계",
+            "declaration:13:14:합계"
+          ],
+          "controls": [
+            "condition:96:108:"
+          ]
+        },
+        {
+          "id": "return:135:136:",
+          "kind": "return",
+          "decoded": {
+            "start_byte": 135,
+            "end_byte": 136
+          }
+        }
+      ],
+      "roots": [
+        "condition:49:60:",
+        "condition:96:108:",
+        "return:118:124:",
+        "return:135:136:"
+      ]
+    },
+    "name": "collection"
+  }
+]

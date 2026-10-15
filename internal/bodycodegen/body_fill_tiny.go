@@ -22,6 +22,7 @@ type IRBodyFillOptions struct {
 	TinyGoProvider   *decisionroute.TinyGoProvider
 	TinyModelLoadMS  *float64
 	recordedDecision *decisionroute.Receipt
+	localCalls       **LocalCallHistory // Retain an observed preflight even on an error return.
 }
 
 func tinyGoBodyFillOptions(candidates []IRBodyFillCandidate) ([]decisionroute.Option, error) {

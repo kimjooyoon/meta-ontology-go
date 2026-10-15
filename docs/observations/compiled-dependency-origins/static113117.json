@@ -1,0 +1,11 @@
+{
+  "code_paths": 29,
+  "format_differences": 0,
+  "retained_predecessor_paths": 765,
+  "historical_denominators_byte_identical": 52,
+  "vet_exit": 0,
+  "wall_seconds": 2.991990089416504,
+  "old_test_executions": 0,
+  "new_source_files": 55,
+  "changed_source_bytes": 287691
+}

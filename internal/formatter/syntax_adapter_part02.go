@@ -31,6 +31,9 @@ func (SyntaxAdapter) Adapt(ast any) (*Document, Diagnostics) {
 	if declarations == nil {
 		declarations = file.Declarations
 	}
+	if len(file.Imports) > 0 || len(file.Bindings) > 0 {
+		return nil, unsupportedDeclarationDiagnostic("imports and bindings require the complete source formatter", file.Span)
+	}
 	document := &Document{}
 	if file.Package != nil {
 		document.Package = file.Package.Name
@@ -52,6 +55,9 @@ func (SyntaxAdapter) Adapt(ast any) (*Document, Diagnostics) {
 		case *syntax.ActivityDecl:
 			if value == nil {
 				return nil, unsupportedDeclarationDiagnostic("nil activity declaration", file.Span)
+			}
+			if value.ValueProgramPresent || value.ValueProgram != "" || value.Assembly != nil {
+				return nil, unsupportedDeclarationDiagnostic("activity bodies require the complete source formatter", value.Span)
 			}
 			inputs, diagnostic := syntaxActivityInputs(value)
 			if diagnostic != nil {

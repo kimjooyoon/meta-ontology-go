@@ -1,0 +1,23 @@
+package compound
+namespace compound
+
+entity Integer id "urn:gooo:type:integer"
+entity Boolean id "urn:gooo:type:boolean"
+
+activity Adjust(Integer, Integer, Boolean) -> Integer id "urn:gooo:compound:adjust" computes `
+let amount = input0
+amount += input1
+if input2 {
+ amount *= 2
+} else {
+ amount -= 3
+}
+amount /= 2
+return amount
+`
+
+activity Divide(금액 Integer, 분모 Integer) -> Integer id "urn:gooo:compound:divide" computes `
+let amount = 금액
+amount /= 분모
+return amount
+`

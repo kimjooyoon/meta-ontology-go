@@ -1,0 +1,84 @@
+{
+  "repository": "https://github.com/google/agentmesh",
+  "commit": "9fd1a41a15174df0aaef601c942410c2116bff91",
+  "reviewed_at": "2026-10-13T12:25:32.315584+00:00",
+  "scope": "static documentation and code inspection; no installation or execution",
+  "files": [
+    {
+      "path": "ROADMAP.md",
+      "sha256": "777ebe14ddbae421baf960c0c3eb0b653f4a663c3cefedbc00100b81a4d3ff9f"
+    },
+    {
+      "path": "api/agentmesh.proto",
+      "sha256": "0c45bc8600ea16bb7eb9fa4f4660d57d650448a7c86c0fca6dd420e7cd151ad9"
+    },
+    {
+      "path": "api/datalog.go",
+      "sha256": "ab8ff6e2cc1e24cd9e2e319f9a9c5f09109a25be572cb1015bca262f71c1fd6e"
+    },
+    {
+      "path": "api/labels.go",
+      "sha256": "bcc398684820af8a5910af497b5acbae516fcda1cb1589b6389f681bfaed66c2"
+    },
+    {
+      "path": "api/names.go",
+      "sha256": "1d0818384673591e0779f57167638fc098bcd13a49910df25136091d874528f4"
+    },
+    {
+      "path": "go.mod",
+      "sha256": "1bdaa8a1e58b6841dc86c87e61d0568d003a59f990c0b7441128fdc06b3deedd"
+    },
+    {
+      "path": "internal/node/backend_target.go",
+      "sha256": "489223f1d2a3d2118b7d19d624335f9583c34a5f47aa346d54da628393dcd01f"
+    },
+    {
+      "path": "internal/node/discovery/discovery.go",
+      "sha256": "027b331249c9a3ef10c0e8971e596807fe8e3affa667e25b09c139dac671e677"
+    },
+    {
+      "path": "internal/node/discovery/view.go",
+      "sha256": "1d836b6895b159df491ecf309cbed7007064843041782dab7e111508dfe94ed6"
+    },
+    {
+      "path": "internal/node/discovery_source.go",
+      "sha256": "98623e052c723d0114f6a456942da88261c77eab45e58053991034634ac7033f"
+    },
+    {
+      "path": "internal/node/inference_engine.go",
+      "sha256": "e095698595a1adfd273bc9ef663c4827d14cd60b53182db1abd57319c975d8d7"
+    },
+    {
+      "path": "internal/node/inference_service.go",
+      "sha256": "506c8401a2623c58eb670b027d2aff03dfad5c4ba833326069d4e5baa71c3e10"
+    },
+    {
+      "path": "site/content/docs/concepts/architecture.md",
+      "sha256": "a3040a458a5951c95af864c252ca87c7e559fe423c4eb79f171ebaf0d7cd97b9"
+    },
+    {
+      "path": "site/content/docs/concepts/boundaries.md",
+      "sha256": "e5bc3761cbc76089ae9d0414f2af5734b7a93552211b5e283d65150bf25e5931"
+    },
+    {
+      "path": "site/content/docs/concepts/identity.md",
+      "sha256": "fa766e0387a021fc492dfb49af36fb99ea9dde6891a28518eff6d650d9a97d71"
+    },
+    {
+      "path": "site/content/docs/guides/exposing-services.md",
+      "sha256": "f4089b7f527b10c8a3b7be1668b2b20cdc6b17d2ee4fcbe8a4eaa1149d7dd337"
+    },
+    {
+      "path": "site/content/docs/guides/native-sdks.md",
+      "sha256": "488243f871952814cc4153ce834939bb0ba6362fabb810a3251faefb901aaf99"
+    },
+    {
+      "path": "site/content/docs/reference/node-api.md",
+      "sha256": "2d1fc3b381348c1f317f0e93e4739923ade291d78d55314ca676508d3f8e6647"
+    },
+    {
+      "path": "site/content/docs/reference/node-config.md",
+      "sha256": "0755c5981cc1f02a601b4638c763759205793d474f805e42e4a736c65c703c33"
+    }
+  ]
+}

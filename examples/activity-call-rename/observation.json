@@ -1,0 +1,91 @@
+{
+  "schema": "gooo/activity-call-source-observation/v1",
+  "command": "gooo refactor rename-activity --at-byte 289 --to 요금 --json main.gooo.fixture",
+  "source": {
+    "exit_code": 0,
+    "source_offset": 289,
+    "binary_sha256": "6dcf4b7c4decf3316989ea46187725c28f7cad57989e28bede2c6d82b6015b9c",
+    "input_unchanged": true,
+    "program_executions": 0,
+    "model_predictions": 0,
+    "training_runs": 0,
+    "source_transformations": 1,
+    "activity_id": "urn:cursor:charge",
+    "from": "Charge",
+    "to": "요금",
+    "source_calls": 2,
+    "edits": 3,
+    "literal_spelling_retained": true,
+    "comment_spelling_retained": true,
+    "raw_body_retained": true,
+    "input_sha256": "sha256:e4af29234bc8db822df2202b4abdb84463b8c60624c2e4b8d32b1fa487be7d7a",
+    "output_sha256": "sha256:44628cd4047bc82695ebb69d3d0b8cd20122f06efda17cf1da13608f2b5349a2"
+  },
+  "producer": {
+    "schema": "gooo/development-source-identity/v1",
+    "compiler_base": "84fa3e09658bd881816dda867eda32e88c623883",
+    "source_overlays": [
+      {
+        "path": "cmd/gooo/emit_dispatch.go",
+        "sha256": "cf0529d10b610c9d7d0e50716e69a4297866d4486f42b3ed676fb9cdd2ed12dd"
+      },
+      {
+        "path": "cmd/gooo/source_refactor.go",
+        "sha256": "d19cca5acc99344b527bff5257a9b3c07db5479749e00870c454fb9300f57cc9"
+      },
+      {
+        "path": "cmd/gooo/usage.go",
+        "sha256": "d4f6c35d0982bea2d28c03d0b99758dbc78533974f6b9314dd1a7a016008c024"
+      },
+      {
+        "path": "cmd/gooo/usage_topics_4.go",
+        "sha256": "0fadc07b9087523f693cfb07551ef021b57d0a2948f263fbf447a9dc916617ab"
+      },
+      {
+        "path": "internal/bodycodegen/rename_assembly.go",
+        "sha256": "785f8a96ef4f4529e7c0d2985b8e115bfc93b23246bb5ada6e8752704512d08b"
+      },
+      {
+        "path": "internal/bodycodegen/rename_body.go",
+        "sha256": "cd0ffe69d678a4b5ca4a22e081c3e37d63a06e2f9e39eefb206ea0f8aa5266b2"
+      },
+      {
+        "path": "internal/bodycodegen/rename_body_parse.go",
+        "sha256": "11e295e45ec14864e39f88f6a3184e44f392bd72c205de53bc74af95d25a148a"
+      },
+      {
+        "path": "internal/bodycodegen/source_activity_reference.go",
+        "sha256": "253ab04310a7f141513ab466ef4df263ad9585c2ec87a78cc018f8da1612edb0"
+      },
+      {
+        "path": "internal/bodycodegen/source_literal_position.go",
+        "sha256": "3442c58ae14b904be64a092c2134d26db2e3e06c22c6338a2523a248218e83bb"
+      },
+      {
+        "path": "internal/bodycodegen/source_rename.go",
+        "sha256": "1e06eeafca52bad32e1a38c53fc4888260d23b8f6f178cd44614c9785d3862cc"
+      },
+      {
+        "path": "internal/lsp/activity_rename.go",
+        "sha256": "e56152bfd639eb4277dd7d1f2ffc2f8180948628964081492957ccf8a8605b9c"
+      },
+      {
+        "path": "internal/lsp/prepare_rename_part02.go",
+        "sha256": "dad11e34cf2629b0206bc76a3caf7f74c703a0ebe093c96d7ba81d8c909a6f15"
+      },
+      {
+        "path": "internal/lsp/rename_part01.go",
+        "sha256": "134dde7630048fdae3673b4d8551ba19d6f5c0616cb2339ff579c7084bfb55e0"
+      }
+    ],
+    "module_overlay": {
+      "go_mod_sha256": "a8e14a07811a86dce0296b1877b435bf05cbf92ac7b0e3817b65c3e2f154c168",
+      "go_sum_sha256": "b0129fe5ad2fb415c25f4abe2ad31ba55f612f85431dfbe24b7c752ff01a0219",
+      "sdk_version": "v0.2.48-experimental"
+    },
+    "binary_sha256": "6dcf4b7c4decf3316989ea46187725c28f7cad57989e28bede2c6d82b6015b9c",
+    "toolchain": "go1.27.2",
+    "scope": "composite development build; source identity retained separately from a future submitted commit; no published compiler binary claim"
+  },
+  "scope": "one source transformation from a quoted Unicode-escaped free call; editor paths compiled but not exercised by this observation; no program execution or model evaluation"
+}

@@ -1,0 +1,87 @@
+{
+  "compiler_source": "de8b2b67688b253e9033c557a741927549416b02",
+  "overlays": [
+    {
+      "path": "internal/packageruntime/workspaceexecution/resume.go",
+      "sha256": "0604fef14b4d5f9c64a2d69c0d8e5e57726be155af007df5fee0fb6a8e5bd843"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/condition_source.go",
+      "sha256": "3bace9c7b0c8b09fd378461aa6381cbd4263ac0ca61d210924f8b54616b28cb3"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/execute.go",
+      "sha256": "a7441a090899ac4ccd634adb6e8d8911a479115cdaaa1265047425b4bb715a72"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/fill_condition_source.go",
+      "sha256": "f0fd4a0e19226b39f6a147558520dae43024e277a5e48c1df13d0a15140b1ae4"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/replay.go",
+      "sha256": "421b0e0826ce7958c2abcb17c6cb31cb4f5a6878d5af0978f36b2fbd306ed861"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/fill_condition_source_test.go",
+      "sha256": "fd99ead4a3ca9506a6329b1d83f06e39c6ab5dddd8c97a6ca198960eafa5b8e6"
+    },
+    {
+      "path": "internal/bodyexecution/condition_fill_origin_facts.go",
+      "sha256": "80b440723df00189f22514dd0cc72e9ad27d7a9f1192f6843b9d0fc144c077f3"
+    },
+    {
+      "path": "internal/bodyexecution/composition_condition_source.go",
+      "sha256": "6d3e81082bf0b9e154e6ade506c74c3341273e3fa361853c333347e771f407df"
+    },
+    {
+      "path": "internal/bodyexecution/composition_fill_origin_test.go",
+      "sha256": "ea3afee0f0a1a8b88ee13a4543413f6803179aa0cf689fa0605967d49a079c04"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin_record_test.go",
+      "sha256": "dc060d81f2fcac9fae8738f3f6305012280aa434edb994bdcc0eb3fb3365766e"
+    },
+    {
+      "path": "internal/bodycodegen/body_fill.go",
+      "sha256": "157ba3bd096e5e8b116864d92f96f75cb8e7ba9c9c719950a7912e5ce9080eb4"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin_fragments.go",
+      "sha256": "b0a91a61226627c7ca995f2c9bac45d18cde31671a4aec6eaf21008ed77216f9"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin_test.go",
+      "sha256": "9cf8c88cfbbf2864045302388de600f159c80263edf73ad319813735320f490a"
+    },
+    {
+      "path": "internal/bodycodegen/body_condition_source.go",
+      "sha256": "4bd6731d8f81b263e4eb3a1fa62b50ad53581951ed1329d9f2bf239ee69846e3"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_replay.go",
+      "sha256": "1727b0bc44dc2c835a29e88458e4413d4d7dc5bd5a44a98854cb0c5b8897b118"
+    },
+    {
+      "path": "internal/bodycodegen/source_ir_fill.go",
+      "sha256": "bff9579a262dabdf6280c2468017df4ca026fbb8af881e4999d92c35b2b618cc"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin_literals.go",
+      "sha256": "07d4f7d5b1ef175826b694a977130dc4039a2e2db54a528ea61310b501c4b556"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin.go",
+      "sha256": "3a75c098d298cd87aa4f8f463b0d84a617de4a766eabb077a15413ed1b5c0d2f"
+    }
+  ],
+  "fresh_sources": [
+    "discount3937_cli"
+  ],
+  "historical_replays": 0,
+  "interface": "gooo package execute --json --cases cases.json workspace.json",
+  "sources": {
+    "discount.gooo.fixture": "3f521584fc56526896dff7b9122e4b60f6541fd9995ce402e4f34da5741fd8f2",
+    "workspace.json": "79c14508ac3bc1f1f4006e5fa48cf75bb121ccea27559701371053ac584cfbab",
+    "cases.json": "56fa21c92c925ee51082564f6941740656c151c44220a2336062d278b0407537"
+  }
+}

@@ -1,0 +1,1 @@
+{"session_id":39017,"exit_code":1,"status":"consumed_closed","passed_tests":[5527,5581,5689,5719],"failed_test":5663,"reason":"multi-word registered help reached old single-word runHelp arity check after native and query assertions passed","old_tests_reexecuted":false}

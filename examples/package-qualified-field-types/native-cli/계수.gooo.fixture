@@ -1,0 +1,4 @@
+package counts
+namespace field376_counts
+entity 값 id "urn:gooo:type:integer"
+entity 문장 id "urn:gooo:type:string"

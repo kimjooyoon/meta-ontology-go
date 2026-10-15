@@ -1,0 +1,90 @@
+{
+  "base": "3aac47d7134b352669e6b114e636a0e9b7a8127a",
+  "files": [
+    {
+      "path": "internal/bodycodegen/body_local_use_capture.go",
+      "bytes": 2896,
+      "sha256": "e57e458cf619cec53eef45e70dde7d7aa3310e10a586b627e1fc5b323f129dca"
+    },
+    {
+      "path": "internal/bodycodegen/body_surface.go",
+      "bytes": 4306,
+      "sha256": "14cd9c0b74699f0fc5ed7b9b64e96b9ec26e5c176524a58238d62000b68f5a46"
+    },
+    {
+      "path": "internal/bodycodegen/bodycodegen.go",
+      "bytes": 20848,
+      "sha256": "ec38eb80f783b2f3830da9e013e944df53a91610e860790d980a0e370d5808a0"
+    },
+    {
+      "path": "internal/bodycodegen/counted_loop.go",
+      "bytes": 4124,
+      "sha256": "4fc16960c87627ef7e6e784286541575ed14dd7f78167272c2c96228180c9bf1"
+    },
+    {
+      "path": "internal/bodycodegen/counted_loop_bindings.go",
+      "bytes": 1415,
+      "sha256": "4ac38ef8ed1359a3e0e95cecb0ffb6a0cc8dba699044aca5cd57272fdfa36be8"
+    },
+    {
+      "path": "internal/bodycodegen/counted_loop_eval.go",
+      "bytes": 1085,
+      "sha256": "58922ce31544071b0ebe8c5d92bd205290ab72053232ab6d065ab9251e98de04"
+    },
+    {
+      "path": "internal/bodycodegen/counted_loop_inference.go",
+      "bytes": 681,
+      "sha256": "1c7e08bd61434cf006661c05c8541a3d4c2911fef3bc059a9c69202c8cf16ffb"
+    },
+    {
+      "path": "internal/bodycodegen/counted_receipt_fresh_test.go",
+      "bytes": 1538,
+      "sha256": "4b0201439bd1485555dc1be374238af561f9f54b67037d66cf2f7d30e00125a4"
+    },
+    {
+      "path": "internal/bodycodegen/counted_surface_bounds_fresh_test.go",
+      "bytes": 1899,
+      "sha256": "f912d93fb4580f301c9900960996a556e8a950fd6721d4be4a64635ce94b35c7"
+    },
+    {
+      "path": "internal/bodycodegen/counted_surface_fresh_test.go",
+      "bytes": 2226,
+      "sha256": "117606778203a7a272d701fd89880ed86bb780ccb8833b0695fccc0eba3f9e1c"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_replay.go",
+      "bytes": 5869,
+      "sha256": "9dcb31d91685c4b70dbed48165ab5957076029a72d5c1f324f9b8ad356ac8e14"
+    },
+    {
+      "path": "internal/bodycodegen/testdata/counterfill18717.json.gz",
+      "bytes": 13330,
+      "sha256": "66d94800891425114e41c0d1ef5e9149b827029a9301b47ad4bf137d05a13422"
+    },
+    {
+      "path": "internal/bodyexecution/composition_local_projection_render.go",
+      "bytes": 1554,
+      "sha256": "3b308972bd4e5887ee3530c951a522b3e43f047b98ee04c0ca4e07937272cb6f"
+    },
+    {
+      "path": "internal/meta/repositoryprojection/extractor/counted_replay_capacity_fresh_test.go",
+      "bytes": 1264,
+      "sha256": "e9a031541f1a4b65644c3192f11af5f1855276b0b0266ef39586c29cb4245636"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/counted_fill_fresh_test.go",
+      "bytes": 3086,
+      "sha256": "fd76981a9f6788a050cb63de94cf1c934bf6dcf7e15299b7343d901cd0b91b4d"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/counted_surface_fresh_test.go",
+      "bytes": 3554,
+      "sha256": "7e9dcb427aab6201b91393a279a8e3eb79f3dd646d16c97ebff2dc962df16289"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/local_file_ranges.go",
+      "bytes": 4487,
+      "sha256": "df005ce6c2cb9a0ace5bdebed51bca1fbb406b59efc94f59d996291e0604f610"
+    }
+  ]
+}

@@ -1,11 +1,9 @@
 package valueexecution
 
-import "maps"
-
 // RecordFields is data only. Field names and required or optional presence are checked
 // against the entity schema compiled from the Gooo source.
-// RecordFields carries scalar values admitted by the compiled Gooo schema.
-// Current record transport supports string, Boolean and integer fields.
+// RecordFields carries scalar values and ordered scalar arrays admitted by the compiled Gooo schema.
+// Repeated fields use []any with homogeneous string, bool or int64 elements.
 type RecordFields map[string]any
 
 type RecordEvidence struct {
@@ -44,7 +42,7 @@ func (result *ProducedRecord) UnmarshalJSON(_ []byte) error {
 }
 
 func issueProducedRecord(authority resultAuthority, fields RecordFields, rootActivity, rootDigest, parentDigest string) ProducedRecord {
-	result := ProducedRecord{authority: authority, fields: maps.Clone(fields),
+	result := ProducedRecord{authority: authority, fields: cloneRecordFields(fields),
 		rootActivity: rootActivity, rootDigest: rootDigest, parentDigest: parentDigest}
 	result.digest = digestValue(result.detachedEvidence())
 	return result
@@ -56,7 +54,7 @@ func (result ProducedRecord) detachedEvidence() RecordEvidence {
 		OutputEntityID: result.authority.outputEntityID, SourceDigest: result.authority.sourceDigest,
 		SemanticFingerprint: result.authority.semanticFingerprint, OperationSpecDigest: result.authority.operationSpecDigest,
 		RootActivity: result.rootActivity, RootInputDigest: result.rootDigest, ParentResultDigest: result.parentDigest,
-		InputOrigin: "CALLER_SUPPLIED_DATA", Scope: RecordTransportScope, Fields: maps.Clone(result.fields),
+		InputOrigin: "CALLER_SUPPLIED_DATA", Scope: RecordTransportScope, Fields: cloneRecordFields(result.fields),
 	}
 }
 

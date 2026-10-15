@@ -1,0 +1,1 @@
+{"at": 1791950875.048126, "command": ["/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go", "test", "-overlay", "/private/tmp/gooo-field-lineage-20261014/overlay14611.json", "-p=1", "./cmd/gooo", "-run", "^TestGoooFieldLineageCapacity14611$", "-count=1", "-v"], "historical_cohorts_executed": 0}

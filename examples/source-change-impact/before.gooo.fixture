@@ -1,0 +1,13 @@
+package changed
+namespace changed
+entity Integer id "changed://integer"
+activity Reference(Integer) -> Integer id "changed://reference" computes "return 31 - input"
+activity Fee(Integer) -> Integer id "changed://fee" computes "return input - 31" assembling {
+ choice "direction" operand_order at "0" intent "31에서 입력을 뺀다. Subtract input from thirty one."
+ case "31" -> "0"
+ observe { input "43" oracle "Reference" max_candidates "2" max_rounds "1" resolve_unique "true" }
+ holdout_case "59" -> "-28"
+ attempts "2"
+}
+activity Main(Integer) -> Integer id "changed://main" computes "return Fee(input + 5)"
+activity Unrelated(Integer) -> Integer id "changed://unrelated" computes "return input * 2"

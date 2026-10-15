@@ -60,7 +60,8 @@ func generateCalledBodies(ctx context.Context, filename string, source []byte, g
 	return current, nil
 }
 
-func replayCalledBodies(ctx context.Context, filename string, source []byte, graph compositionGraph, prior Composition) ([]byte, error) {
+func replayCalledBodies(ctx context.Context, filename string, source []byte, graph compositionGraph, prior Composition,
+	validations *compositionValidationReplay) ([]byte, error) {
 	if len(prior.Preparations) != len(graph.plan.Preparations) {
 		return nil, fmt.Errorf("called activity construction count differs")
 	}
@@ -70,6 +71,9 @@ func replayCalledBodies(ctx context.Context, filename string, source []byte, gra
 		if step.InputSourceSHA256 != digest(current) || step.Generation.Report.Activity != helper.Name ||
 			step.Generation.Report.ActivityID != helper.ID {
 			return nil, fmt.Errorf("called activity construction %d source, identity or order differs", i)
+		}
+		if err := validations.check(ctx, filename, current, helper.Name, "ACTIVITY_GENERATION"); err != nil {
+			return nil, err
 		}
 		realized, err := bodycodegen.RealizeCalledAssembly(ctx, filename, current, step.Generation)
 		if err != nil {

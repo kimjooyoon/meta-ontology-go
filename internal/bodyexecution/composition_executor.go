@@ -15,6 +15,11 @@ import (
 // scalar and graph methods share the bounded workspace and cancellation gate.
 func (e *Executor) ExecuteComposition(ctx context.Context, filename string, source []byte,
 	prior Composition, suite CompositionCases, goBinary string) (CompositionRuntime, error) {
+	return e.executeWithJointCalls(ctx, filename, source, prior, suite, goBinary, nil)
+}
+
+func (e *Executor) executeWithJointCalls(ctx context.Context, filename string, source []byte,
+	prior Composition, suite CompositionCases, goBinary string, calls *jointCallContext) (CompositionRuntime, error) {
 	started := time.Now()
 	reject := func(err error) (CompositionRuntime, error) {
 		r := initialCompositionRuntime(source, prior, suite)
@@ -44,7 +49,7 @@ func (e *Executor) ExecuteComposition(ctx context.Context, filename string, sour
 	wait := time.Since(started).Nanoseconds()
 	stop := context.AfterFunc(e.lifetime, cancel)
 	defer stop()
-	r, err := executeComposition(ctx, filename, source, prior, suite, goBinary, e)
+	r, err := executeComposition(ctx, filename, source, prior, suite, goBinary, e, calls)
 	if ctx.Err() != nil {
 		err = errors.Join(err, ctx.Err(), e.drop())
 	}
@@ -70,11 +75,22 @@ func compositionArtifactKey(prior Composition, r *CompositionRuntime, goBinary s
 func compositionExecutableFor(ctx context.Context, prior Composition, goBinary string,
 	r *CompositionRuntime, owner *Executor) (root, executable string, release func(), err error) {
 	release = func() {}
-	projection, driver, sites, err := observedCompositionArtifacts(prior)
+	observed, err := observedCompositionLocalEvidence(prior)
+	projection, driver := observed.projection, observed.driver
 	if err != nil {
 		return "", "", release, err
 	}
-	r.FaultSites = sites
+	r.FaultSites = observed.faults
+	r.ConditionSites = observed.conditions
+	r.ReadSites, r.ReadInputs = observed.reads, observed.inputs
+	r.ConstructionSites = observed.constructions
+	r.LocalSites, r.LocalUseSites = observed.locals, observed.uses
+	if observed.fields != nil {
+		r.FieldBindings = observed.fields.inventory.bindings
+		r.FieldSources = observed.fields.sources
+		r.FieldSites, r.FieldUseSites = observed.fields.sites, observed.fields.uses
+		r.FieldProjectionSHA256 = observed.fields.sourceSHA256
+	}
 	if projection != prior.Source || driver != prior.Driver {
 		r.ObservedProjectionSHA256, r.ObservedDriverSHA256 = digest([]byte(projection)), digest([]byte(driver))
 	}

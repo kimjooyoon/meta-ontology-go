@@ -36,14 +36,16 @@ func ReplayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prio
 	if err != nil {
 		return Result{}, err
 	}
-	result := Result{Schema: prior.Schema, Program: program, BodyFills: prior.BodyFills,
+	result := Result{Schema: prior.Schema, Program: program, BodyFills: prior.BodyFills, FillOrigins: prior.FillOrigins,
 		SourceSHA256: prior.SourceSHA256, Composition: prior.Composition, AssemblyPolicy: prior.AssemblyPolicy,
-		PolicyHistory: prior.PolicyHistory, Continuation: prior.Continuation,
+		PolicyHistory: prior.PolicyHistory, Continuation: prior.Continuation, FillOriginIssue: prior.FillOriginIssue,
 		Replay: &ReplayEvidence{Schema: "gooo/workspace-body-replay/v1", PriorResultSHA256: sourceSHA256(encoded),
 			BodyFillsReplayed: len(prior.BodyFills), Scope: "saved decisions and source-bound candidates reconstructed without inference; old runtime observations are not reused"},
 		Scope: "saved workspace construction with two fresh native executions; current finite expectations or input-only observations"}
 	result.Runtime, err = bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, prior.Composition, translated, goBinary)
 	if err == nil {
+		bindWorkspaceConditionSources(program, &result.Runtime, result.BodyFills)
+		bindWorkspaceLocalFileSources(program, &result.Runtime, prior.Composition, result.BodyFills)
 		result.Runtime.InputSeparation = measureWorkspaceInputs(ctx, current, result, translated)
 	}
 	return result, err
@@ -65,7 +67,14 @@ func reconstructWorkspace(ctx context.Context, manifest packageruntime.Manifest,
 	if err != nil {
 		return Program{}, nil, err
 	}
-	currentProgram, _ := json.Marshal(program)
+	comparisonProgram := program
+	if prior.Program.ActivityOrigins == nil {
+		comparisonProgram.ActivityOrigins = nil
+	}
+	if prior.Program.ConditionOrigins == nil {
+		comparisonProgram.ConditionOrigins = nil
+	}
+	currentProgram, _ := json.Marshal(comparisonProgram)
 	savedProgram, _ := json.Marshal(prior.Program)
 	if !bytes.Equal(currentProgram, savedProgram) {
 		return Program{}, nil, fmt.Errorf("saved workspace differs from current sources, dependencies, entry or lowered graph")
@@ -76,6 +85,9 @@ func reconstructWorkspace(ctx context.Context, manifest packageruntime.Manifest,
 	}
 	if sourceSHA256(current) != prior.SourceSHA256 {
 		return Program{}, nil, fmt.Errorf("saved workspace execution source differs")
+	}
+	if err := checkWorkspaceFillOrigins(program, prior); err != nil {
+		return Program{}, nil, err
 	}
 	if err := verifyWorkspacePolicy(ctx, prior); err != nil {
 		return Program{}, nil, err

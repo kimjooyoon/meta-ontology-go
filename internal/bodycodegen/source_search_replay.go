@@ -35,6 +35,10 @@ func replaySourceIRSearchPlan(ctx context.Context, filename string, source []byt
 		search.CandidateCount != len(plan.Candidates) || !reflect.DeepEqual(search.CandidateGeneration, generated) {
 		return plan, fmt.Errorf("IR search plan or candidate space differs from the Gooo source")
 	}
+	if search.CandidateSet != nil && !equalLocalCallEvidence(search.CandidateSet,
+		retainedSearchCandidateSet(plan, digest(encoded), generated)) {
+		return plan, fmt.Errorf("IR search retained candidate set differs from its source checkpoint")
+	}
 	candidate, found := candidateByID(plan.Candidates, search.SelectedCandidateID)
 	if !found || candidate.Expression != search.SelectedExpression {
 		return plan, fmt.Errorf("IR search selection is outside the source-declared candidate set")
@@ -65,7 +69,9 @@ func replayIRSearchFiniteEvidence(ctx context.Context, prior Result, plan IRBody
 			encoded, _ := json.Marshal(suite.cases)
 			suiteDigest = digest(encoded)
 			var err error
-			results, passed, err = evaluateIntegerCasesContext(ctx, []byte(prior.Source), prior.Report.Activity, suite.cases)
+			results, passed, err = evaluateIntegerCasesContext(
+				localCallPhase(ctx, "selected-"+suite.name, s.SelectedCandidateID),
+				[]byte(prior.Source), prior.Report.Activity, suite.cases)
 			if err != nil {
 				failure = err.Error()
 			} else {

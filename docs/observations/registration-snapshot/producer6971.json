@@ -1,0 +1,14 @@
+{
+  "baseline": "b87072bef6017b8c04af7c8c4af17adce6361e35",
+  "overlays": [
+    {
+      "path": "internal/meta/languagereadiness/toolchainrelease/platform_package_program_origin.go",
+      "sha256": "517ef598e713cf96defd0202903abc442e3ab1339fb11289de47abf31f4c45d2"
+    },
+    {
+      "path": "internal/meta/languagereadiness/toolchainrelease/platform_package_activity_origin_test.go",
+      "sha256": "70ba7ebee69205fdbaf5bdf0ee9f88b6336761726f045200332b63246ad9d43d"
+    }
+  ],
+  "scope": "new static source preparation and ten raw receipt forms; no historical source/native/model execution"
+}

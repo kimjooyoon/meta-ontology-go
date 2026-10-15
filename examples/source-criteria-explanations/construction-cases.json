@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Price": 10
+      },
+      "expected": {
+        "Price": {
+          "price": 20
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+=== RUN   TestWorkspaceFilledConditionOrigin3889
+    fill_condition_source_test.go:62: workspace3889: native2/2; pre-filled threshold -> final condition, retained template and selected candidate fragments, assembly input offsets; fresh saved construction read; model0
+--- PASS: TestWorkspaceFilledConditionOrigin3889 (0.70s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.221s

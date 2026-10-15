@@ -56,6 +56,9 @@ func RecordDeclarations(records []RecordType, native bool) string {
 				name = field.GoName
 			}
 			fieldType := recordGoType(field.TypeID)
+			if field.Cardinality == "many" {
+				fieldType = "[]" + fieldType
+			}
 			jsonOptions := ""
 			if field.Presence == "optional" {
 				fieldType = "*" + fieldType
@@ -133,7 +136,7 @@ func restoreRecordNames(file *ast.File, records []RecordType) {
 	})
 }
 
-func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.FileSet, records []RecordType) error {
+func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.FileSet, records []RecordType, fieldOrigins map[ast.Node]BodyFieldOrigin, returnOrigins *bodyReturnCapture, origins ...map[ast.Expr]BodyConditionOrigin) error {
 	if len(records) == 0 {
 		return nil
 	}
@@ -141,6 +144,11 @@ func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.Fi
 	if _, err := checkBodyTypes(packageName, file, fset, information); err != nil {
 		return fmt.Errorf("typecheck record bodies: %w", err)
 	}
+	for _, conditions := range origins {
+		captureConditionFields(file, information, records, conditions)
+	}
+	captureTypedFieldOrigins(file, information, records, fieldOrigins)
+	returnOrigins.captureTyped(file, information, records)
 	if err := lowerRecordNames(file, information, records); err != nil {
 		return err
 	}

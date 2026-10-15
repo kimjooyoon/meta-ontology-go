@@ -13,7 +13,7 @@ func validateFailureJob(job failureJob, binding failureBinding) error {
 	return nil
 }
 func isFailureJobName(name string) bool {
-	if name == "CI proof bundle" {
+	if name == "CI proof bundle" || name == "CI evidence" {
 		return true
 	}
 	return slices.Contains(proofJobs, name)

@@ -1,0 +1,5 @@
+=== RUN   TestGoooFieldLocalBridge15317
+    package_local_field_bridge_consumer_fresh_test.go:114: 12 saved mixed-journal queries->real32-column Gooo traversal12/12;integer/bool/string historical scalar carriers;equal-zero paths;original producer executions0;models0;input-only finite0
+--- PASS: TestGoooFieldLocalBridge15317 (6.77s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	7.325s

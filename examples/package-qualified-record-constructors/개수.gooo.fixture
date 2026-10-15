@@ -1,0 +1,6 @@
+package count
+namespace constructor716_count
+entity Value id "urn:constructor716:quantity" fields {
+ field value id "urn:constructor716:quantity-value" type "urn:gooo:type:integer" required one
+}
+activity Keep(Value) -> Value id "urn:constructor716:keep-quantity" computes "return input"

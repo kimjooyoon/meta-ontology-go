@@ -1,0 +1,61 @@
+=== RUN   TestReturnChoiceCapacity22789
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#BindBodyReturnSources rendered 29
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#EqualRetainedReturnOrigins rendered 7
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#InspectRecordChoiceDeclarationOrigins rendered 47
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#VerifyIRBodySearchProjection rendered 57
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#WalkReturnSyntax rendered 15
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#bodyMayUseLength rendered 16
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#bodyProjection.captureReturnOrigins rendered 25
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#bodyProjection.lower rendered 37
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#bodyReturnCapture.captureTyped rendered 34
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#bodyReturnCapture.emitted rendered 28
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#compareSourceFillReplay rendered 59
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#compareTypedPathReplayProjection rendered 21
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#emitRecordAssembly rendered 29
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#generateRouteWithCalls rendered 40
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#normalizeLengthIntegerContexts rendered 40
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#projectBodyOrigins rendered 23
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#realizeRecordAssemblyProjection rendered 43
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#recordAssemblyPlan.choiceOrigins rendered 42
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#recordChoiceLiteralOrigin rendered 26
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#replayTypedPathProjection rendered 75
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#typecheckAndLowerRecords rendered 25
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#validateTypedPathReplayInput rendered 42
+    return_choice_capacity_fresh_test.go:81: internal/bodycodegen#verifyTypedPathFiniteObservations rendered 30
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#buildCompositionFieldProjection rendered 53
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldBindings rendered 61
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldInventory.addLocals rendered 36
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldInventory.addParameters rendered 24
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldInventory.addReturns rendered 44
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldProjection.bindFunction rendered 30
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldProjection.bindLocals rendered 30
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldProjection.bindParameters rendered 21
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldProjection.collectFunction rendered 28
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldProjection.collectFunctionReads rendered 58
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldProjection.collectFunctionWrites rendered 53
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldProjection.collectLocalRecordWrite rendered 31
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldProjection.collectReturnParts rendered 31
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldProjection.collectReturnWrite rendered 32
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldRenderer.node rendered 29
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionFieldRenderer.returnWrite rendered 8
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#compositionSourceReturns rendered 26
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#fieldFunctionReturns rendered 10
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#nativeOriginPage.fieldFileLocation rendered 34
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#observedCompositionFieldProjection rendered 42
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#unparenthesizedFieldValue rendered 13
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#validateFieldBinding rendered 49
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#validateFieldChoiceSource rendered 44
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#validateFieldFileSources rendered 39
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#validateFieldInventory rendered 47
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#validateFieldReturnSources rendered 29
+    return_choice_capacity_fresh_test.go:81: internal/bodyexecution#validateFieldSources rendered 69
+    return_choice_capacity_fresh_test.go:81: internal/packageruntime/workspaceexecution#bindWorkspaceFieldFileSources rendered 34
+    return_choice_capacity_fresh_test.go:81: internal/packageruntime/workspaceexecution#mappedRecordChoiceLocation rendered 12
+    return_choice_capacity_fresh_test.go:81: internal/packageruntime/workspaceexecution#recordChoiceTemplateLocation rendered 32
+    return_choice_capacity_fresh_test.go:81: internal/packageruntime/workspaceexecution#unmappedRecordChoiceLocation rendered 8
+    return_choice_capacity_fresh_test.go:81: internal/packageruntime/workspaceexecution#workspaceRecordChoiceOrigin rendered 30
+    return_choice_capacity_fresh_test.go:81: internal/packageruntime/workspaceexecution#workspaceRecordChoiceSource rendered 29
+    return_choice_capacity_fresh_test.go:84: required changed production declarations 56 all44 original subjects retained;unchanged75-line generated helper cap;producer/model0
+--- PASS: TestReturnChoiceCapacity22789 (0.02s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.452s

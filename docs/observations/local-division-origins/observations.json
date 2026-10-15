@@ -1,0 +1,158 @@
+{
+  "schema": "gooo/local-division-origin-observations/v1",
+  "source": "examples/compound-updates/main.gooo",
+  "source_sha256": "b3ee9706ee459e50b38de73bb487af2bae0732b488e07e78ef9c67236bd1ea5b",
+  "archive": {
+    "path": "first-observations.tar.gz",
+    "sha256": "f924dbf8e1f3a0556339c12c0da1b6da58055c56371d2bf4a09f483548b43d89",
+    "members": 31,
+    "bytes": 45071
+  },
+  "native_population": {
+    "distinct_cases": 12,
+    "normal": 7,
+    "faulted": 5,
+    "model_calls": 0
+  },
+  "cohorts": {
+    "helper_and_branch": {
+      "distinct_cases": 5,
+      "matched": 3,
+      "faulted": 2,
+      "revisions": "first unobserved panic, then repaired same five cases; not ten cases"
+    },
+    "mixed_local_field": {
+      "distinct_cases": 4,
+      "matched": 2,
+      "faulted": 2
+    },
+    "public_example": {
+      "distinct_cases": 3,
+      "matched": 2,
+      "faulted": 1
+    }
+  },
+  "fault_semantics": "Division by zero retains the original expectation, source operation and unfinished write. The normal-match denominator and fault count remain separate.",
+  "source_binding": "Original assignment text and pure projection byte span; local variable name; source activity/root; nested binary operation remains distinct.",
+  "native_runtime_replay": "Each observation includes the execution API's bounded replay; this is not an additional case population.",
+  "schema_compatibility": "Optional variable field is omitted for binary/field faults. Existing field-operation metadata is unchanged.",
+  "source_profile": "Original scalar syntax registry profile remains valid; no new registration denominator.",
+  "capacity_declarations": 16,
+  "performance_scope": "Command wall times only; CPU utilization and comparative performance not measured.",
+  "commands": {
+    "public-and-contract-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^Test(AuthoredLocalDivisionExample|LocalDivisionFaultBindingRequiresExactVariable)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 2.6114556660000003,
+      "scope": "new source-bound local division fault cohort"
+    },
+    "native-repair": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^TestLocalDivisionPreservesFaultOrigins$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 2.6036240410000002,
+      "scope": "new source-bound local division fault cohort"
+    },
+    "native-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^TestLocalDivisionPreservesFaultOrigins$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 3.7719094170000003,
+      "scope": "new source-bound local division fault cohort"
+    },
+    "public-source-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./cmd/gooo",
+        "-run",
+        "^TestLocalDivisionPublicRegistryProfile$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.464650625,
+      "scope": "new source-bound local division fault cohort"
+    },
+    "source-normalization-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "fix",
+        "-diff",
+        "./internal/bodyexecution",
+        "./internal/meta/repositoryprojection/extractor"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.9142890419999999,
+      "scope": "new source-bound local division fault cohort"
+    },
+    "mixed-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/bodyexecution",
+        "-run",
+        "^TestMixedLocalFieldDivisionsRetainSeparateOrigins$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.186216334,
+      "scope": "new source-bound local division fault cohort"
+    },
+    "capacity-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/repositoryprojection/extractor",
+        "-run",
+        "^TestLocalDivisionDeclarationCapacity$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.840212291,
+      "scope": "new source-bound local division fault cohort"
+    },
+    "source-vet-first": {
+      "argv": [
+        "<go-toolchain>/bin/go",
+        "vet",
+        "./internal/bodyexecution",
+        "./cmd/gooo",
+        "./internal/meta/repositoryprojection/extractor"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.820550167,
+      "scope": "new source-bound local division fault cohort"
+    }
+  }
+}

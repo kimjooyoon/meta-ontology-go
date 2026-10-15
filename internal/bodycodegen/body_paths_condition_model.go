@@ -72,6 +72,21 @@ func prepareConditionModelContext(ctx context.Context, document pathplan.Documen
 }
 
 func exportedConditionInputs(document pathplan.Document, prepared *pathplan.PreparedPlan, model *conditionPathModel) ([]ExportedPathInput, error) {
+	if model.sourceRelativeV4Contract() {
+		return exportedSourceRelativeV4Inputs(document, prepared)
+	}
+	if model.sourceRelativeV3ProseNeutralContract() {
+		return exportedSourceRelativeV3Inputs(document, prepared, true)
+	}
+	if model.sourceRelativeV3Contract() {
+		return exportedSourceRelativeV3ContractInputs(document, prepared)
+	}
+	if model.sourceRelativeV2Contract() {
+		return exportedSourceRelativeV2ContractInputs(document, prepared)
+	}
+	if model.sourceRelativeContract() {
+		return exportedSourceRelativeContractInputs(document, prepared)
+	}
 	if model.canonicalContract() {
 		return exportedCanonicalContractInputs(document, prepared)
 	}

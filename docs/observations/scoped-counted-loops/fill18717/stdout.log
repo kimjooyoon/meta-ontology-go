@@ -1,0 +1,5 @@
+=== RUN   TestScopedCounterAssembly18717
+    counted_fill_fresh_test.go:76: new Gooo source-fill with for-let/++:typed interpreter chooses seventeen against1 declared case;separate native2/2;original increment location retained;two-run native replay;model0
+--- PASS: TestScopedCounterAssembly18717 (0.68s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.193s

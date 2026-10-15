@@ -107,6 +107,8 @@ func recipeOperation(op token.Token) string {
 		return "subtract"
 	case token.MUL:
 		return "multiply"
+	case token.QUO:
+		return "divide"
 	case token.LSS:
 		return "less_than"
 	case token.LEQ:
@@ -145,7 +147,8 @@ func (b *recipeArena) statement(node ast.Stmt, depth int) (int, error) {
 		}
 		value.Kind, value.Name, expression = bodyplan.StmtLet, spec.Names[0].Name, spec.Values[0]
 	case *ast.AssignStmt:
-		if s.Tok != token.ASSIGN || len(s.Lhs) != 1 || len(s.Rhs) != 1 {
+		operation, compound := CompoundAssignmentOperator(s.Tok)
+		if s.Tok != token.ASSIGN && !compound || len(s.Lhs) != 1 || len(s.Rhs) != 1 {
 			return 0, fmt.Errorf("recipe requires a single existing-local assignment")
 		}
 		name, ok := s.Lhs[0].(*ast.Ident)
@@ -153,6 +156,10 @@ func (b *recipeArena) statement(node ast.Stmt, depth int) (int, error) {
 			return 0, fmt.Errorf("recipe assignment requires a local name")
 		}
 		value.Kind, value.Name, expression = bodyplan.StmtAssign, name.Name, s.Rhs[0]
+		if compound {
+			b.normalizedCompound = true
+			expression = &ast.BinaryExpr{X: s.Lhs[0], OpPos: s.TokPos, Op: operation, Y: s.Rhs[0]}
+		}
 	case *ast.ReturnStmt:
 		if len(s.Results) != 1 {
 			return 0, fmt.Errorf("recipe requires one return value")

@@ -1,0 +1,19 @@
+=== RUN   TestCompilationCaptureEmbeddedOrigin144617
+--- PASS: TestCompilationCaptureEmbeddedOrigin144617 (0.23s)
+=== RUN   TestRefactoredCurrentDeclarationCapacity144617
+    refactor_capture_fresh144617_test.go:56: cmd/gooo#runBodyOrigins rendered 24
+    refactor_capture_fresh144617_test.go:56: cmd/gooo#writeTypedBodyOrigins rendered 30
+    refactor_capture_fresh144617_test.go:56: cmd/gooo#parseBodyOriginOptions rendered 29
+    refactor_capture_fresh144617_test.go:56: cmd/gooo#validateBodyOriginOptions rendered 20
+    refactor_capture_fresh144617_test.go:56: internal/meta/repositoryprojection/extractor#moduleImporter.captureCompilationSources rendered 15
+    refactor_capture_fresh144617_test.go:56: internal/meta/repositoryprojection/extractor#compilationCapture.packageInput rendered 33
+    refactor_capture_fresh144617_test.go:56: internal/meta/repositoryprojection/extractor#compilationCapture.directory rendered 25
+    refactor_capture_fresh144617_test.go:56: internal/meta/repositoryprojection/extractor#compilationCapture.reserveFiles rendered 11
+    refactor_capture_fresh144617_test.go:56: internal/meta/repositoryprojection/extractor#compilationCapture.sourceInput rendered 26
+--- PASS: TestRefactoredCurrentDeclarationCapacity144617 (0.16s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	1.946s
+=== RUN   TestOriginOptionsAndHelperText144617
+--- PASS: TestOriginOptionsAndHelperText144617 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.560s

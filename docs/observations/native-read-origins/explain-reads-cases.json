@@ -1,0 +1,465 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "range_value",
+          "index": 0,
+          "length": 3,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-values",
+          "origin_index": 1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1302,
+          "source_end": 1316,
+          "expression": "input.readings"
+        }
+      },
+      "expected": {
+        "Explain": "슬라이스 위치 이동"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "range_value",
+          "index": 1,
+          "length": 3,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-values",
+          "origin_index": 2,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1302,
+          "source_end": 1316,
+          "expression": "input.readings"
+        }
+      },
+      "expected": {
+        "Explain": "슬라이스 위치 이동"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "range_value",
+          "index": 2,
+          "length": 3,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-values",
+          "origin_index": 3,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1302,
+          "source_end": 1316,
+          "expression": "input.readings"
+        }
+      },
+      "expected": {
+        "Explain": "슬라이스 위치 이동"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 1,
+          "length": 3,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-flags",
+          "origin_index": 2,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1345,
+          "source_end": 1368,
+          "expression": "input.flags[input.pick]"
+        }
+      },
+      "expected": {
+        "Explain": "슬라이스 위치 이동"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 1,
+          "length": 3,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-labels",
+          "origin_index": 2,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1372,
+          "source_end": 1396,
+          "expression": "input.labels[input.pick]"
+        }
+      },
+      "expected": {
+        "Explain": "슬라이스 위치 이동"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 1,
+          "length": 3,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-labels",
+          "origin_index": 2,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1414,
+          "source_end": 1438,
+          "expression": "input.labels[input.pick]"
+        }
+      },
+      "expected": {
+        "Explain": "슬라이스 위치 이동"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 1,
+          "length": 3,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-values",
+          "origin_index": 2,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1529,
+          "source_end": 1555,
+          "expression": "input.readings[input.pick]"
+        }
+      },
+      "expected": {
+        "Explain": "슬라이스 위치 이동"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "range_value",
+          "index": 0,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-values",
+          "origin_index": 1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1302,
+          "source_end": 1316,
+          "expression": "input.readings"
+        }
+      },
+      "expected": {
+        "Explain": "슬라이스 위치 이동"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "range_value",
+          "index": 1,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-values",
+          "origin_index": 2,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1302,
+          "source_end": 1316,
+          "expression": "input.readings"
+        }
+      },
+      "expected": {
+        "Explain": "슬라이스 위치 이동"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 0,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-flags",
+          "origin_index": 1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1345,
+          "source_end": 1368,
+          "expression": "input.flags[input.pick]"
+        }
+      },
+      "expected": {
+        "Explain": "슬라이스 위치 이동"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 4,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "range_value",
+          "index": 0,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-values",
+          "origin_index": 0,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1302,
+          "source_end": 1316,
+          "expression": "input.readings"
+        }
+      },
+      "expected": {
+        "Explain": "입력 위치 유지"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 4,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "range_value",
+          "index": 1,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-values",
+          "origin_index": 1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1302,
+          "source_end": 1316,
+          "expression": "input.readings"
+        }
+      },
+      "expected": {
+        "Explain": "입력 위치 유지"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 4,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 1,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-flags",
+          "origin_index": 1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1345,
+          "source_end": 1368,
+          "expression": "input.flags[input.pick]"
+        }
+      },
+      "expected": {
+        "Explain": "입력 위치 유지"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 4,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 1,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-labels",
+          "origin_index": 1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1372,
+          "source_end": 1396,
+          "expression": "input.labels[input.pick]"
+        }
+      },
+      "expected": {
+        "Explain": "입력 위치 유지"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 6,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "range_value",
+          "index": 0,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-values",
+          "origin_index": 0,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1302,
+          "source_end": 1316,
+          "expression": "input.readings"
+        }
+      },
+      "expected": {
+        "Explain": "입력 위치 유지"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 6,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "range_value",
+          "index": 1,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-values",
+          "origin_index": 1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1302,
+          "source_end": 1316,
+          "expression": "input.readings"
+        }
+      },
+      "expected": {
+        "Explain": "입력 위치 유지"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 6,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 1,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-flags",
+          "origin_index": 1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1345,
+          "source_end": 1368,
+          "expression": "input.flags[input.pick]"
+        }
+      },
+      "expected": {
+        "Explain": "입력 위치 유지"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 6,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 1,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-labels",
+          "origin_index": 1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1372,
+          "source_end": 1396,
+          "expression": "input.labels[input.pick]"
+        }
+      },
+      "expected": {
+        "Explain": "입력 위치 유지"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 6,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 1,
+          "length": 2,
+          "status": "RESOLVED",
+          "input_key": "Clip",
+          "field_id": "urn:read9059:request-labels",
+          "origin_index": 1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1414,
+          "source_end": 1438,
+          "expression": "input.labels[input.pick]"
+        }
+      },
+      "expected": {
+        "Explain": "입력 위치 유지"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 6,
+          "root_activity_id": "urn:read9059:run",
+          "activity_id": "urn:read9059:at",
+          "kind": "index",
+          "index": 1,
+          "length": 2,
+          "status": "UNRESOLVED",
+          "input_key": "",
+          "field_id": "",
+          "origin_index": -1,
+          "source_sha256": "sha256:635edeb901ef92653cd5b75aafb0c34dc27c802bc00eb4629c8ddfbdedc33eb0",
+          "source_start": 1461,
+          "source_end": 1491,
+          "expression": "[]int64{37,37}[input.pick % 2]"
+        }
+      },
+      "expected": {
+        "Explain": "입력 기원 미연결"
+      }
+    }
+  ]
+}

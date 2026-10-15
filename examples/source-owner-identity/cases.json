@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "owner3001:Price": {
+          "units": 13,
+          "active": true
+        }
+      },
+      "expected": {
+        "owner3001:Price": 20
+      }
+    },
+    {
+      "inputs": {
+        "owner3001:Price": {
+          "units": 109,
+          "active": false
+        }
+      },
+      "expected": {
+        "owner3001:Price": 102
+      }
+    }
+  ]
+}

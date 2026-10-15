@@ -1,0 +1,5 @@
+=== RUN   TestOriginalGrammarFiles12547
+    package_local_grammar_files_fresh_test.go:41: different grammar source/inputs producer2/2;original grammar/file and retained declaration/use facts24;no invented authored expression/candidate range;Gooo reader24outputs matched;original producer/model calls during reads0
+--- PASS: TestOriginalGrammarFiles12547 (0.99s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.545s

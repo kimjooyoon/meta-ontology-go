@@ -1,0 +1,72 @@
+{
+  "head": "e1c2938de8fc588c63210eea3ebe3df848abc2c5",
+  "run_id": 38495999162,
+  "job_id": 115631779009,
+  "artifact_id": 11864411008,
+  "artifact_digest": "sha256:f1558b4931b00117f56ea27a1ddc2c65942840c96c5b00b9c619347beaed3292",
+  "decision": "LOWER_RESOLUTION",
+  "reason": "INTEGRATION_PROGRESS_EVIDENCE_UNKNOWN",
+  "summary": {
+    "pull_requests_total": 30,
+    "pull_requests_observed": 30,
+    "cells_total": 150,
+    "closed_cells": 56,
+    "open_cells": 88,
+    "unknown_cells": 6,
+    "refuted_cells": 0,
+    "denominator_conflicts": 0,
+    "terminal_runs": 24,
+    "evidence_reachable": 0,
+    "merged_pull_requests": 2,
+    "evidenced_merges": 0,
+    "timing_samples": 24,
+    "evidence_latency_samples": 0,
+    "merge_delay_samples": 0,
+    "progress_basis_points": 3733,
+    "merge_basis_points": 666,
+    "evidence_basis_points": 0,
+    "queue_observation_unknown": 0,
+    "queued_runs_snapshot": 47,
+    "in_progress_runs_snapshot": 14,
+    "queue_pressure_basis_points": 7704,
+    "run_start_delay_seconds_total": 0,
+    "execution_seconds_total": 438443,
+    "evidence_latency_seconds_total": 0,
+    "merge_after_evidence_seconds_total": 0
+  },
+  "unknown_cells": [
+    {
+      "pr": 546,
+      "stage": "authoritative-run-terminal",
+      "reason": "GITHUB_API_STATUS_500"
+    },
+    {
+      "pr": 546,
+      "stage": "evidence-artifact-reachable",
+      "reason": "UPSTREAM_UNKNOWN"
+    },
+    {
+      "pr": 562,
+      "stage": "authoritative-run-terminal",
+      "reason": "GITHUB_API_STATUS_500"
+    },
+    {
+      "pr": 562,
+      "stage": "evidence-artifact-reachable",
+      "reason": "UPSTREAM_UNKNOWN"
+    },
+    {
+      "pr": 569,
+      "stage": "authoritative-run-terminal",
+      "reason": "GITHUB_API_STATUS_500"
+    },
+    {
+      "pr": 569,
+      "stage": "evidence-artifact-reachable",
+      "reason": "UPSTREAM_UNKNOWN"
+    }
+  ],
+  "cause": "three original fixed-cohort run-list queries returned HTTP500, propagating six UNKNOWN cells; report replay and Gooo parsing completed; original jq progress gate rejected LOWER_RESOLUTION",
+  "repair": "bounded at most3 current read attempts for HTTP500/502/503/504 only; no permissions/resource/quota status retry; original cohort, witness/classification and jq gate unchanged",
+  "original_workflow_reruns": 0
+}

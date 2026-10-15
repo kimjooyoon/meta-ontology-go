@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "derive129/app",
+    "activity": "Builder"
+  },
+  "packages": [
+    {
+      "path": "derive129/helpers",
+      "name": "helpers",
+      "sources": [
+        "base.gooo.fixture"
+      ]
+    },
+    {
+      "path": "derive129/app",
+      "name": "app",
+      "imports": [
+        "derive129/helpers"
+      ],
+      "sources": [
+        "builder.gooo.fixture",
+        "dormant.gooo.fixture"
+      ]
+    }
+  ]
+}

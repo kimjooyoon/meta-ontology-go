@@ -1,0 +1,25 @@
+package lengthsummary
+namespace lengthsummary20809
+entity Integer id "urn:gooo:type:integer"
+entity Input id "urn:lengthsummary20809:input" fields {
+ field labels id "urn:lengthsummary20809:input/labels" type string required many
+ field offset id "urn:lengthsummary20809:input/offset" type integer required one
+}
+entity Summary id "urn:lengthsummary20809:summary" fields {
+ field rows id "urn:lengthsummary20809:summary/rows" type integer required one
+ field total id "urn:lengthsummary20809:summary/total" type integer required one
+ field bytes id "urn:lengthsummary20809:summary/bytes" type integer required one
+ field complete id "urn:lengthsummary20809:summary/complete" type boolean required one
+ field first id "urn:lengthsummary20809:summary/first" type string required one
+}
+activity Offset(Integer)->Integer id "urn:lengthsummary20809:offset" computes `return input+20809`
+activity Measure(Input)->Summary id "urn:lengthsummary20809:measure" computes `let count=len(input.labels)
+let bytes=0
+for let row=0;row<8;row++ {
+ if row<count {bytes=bytes+len(input.labels[row])}
+}
+let first=""
+if count>0 {first=input.labels[0]}
+let out=Summary{rows:0,total:Offset(count)+input.offset,bytes:bytes,complete:count<=8,first:first}
+out.rows=count
+return out`

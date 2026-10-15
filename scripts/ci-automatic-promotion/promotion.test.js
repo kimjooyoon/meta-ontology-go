@@ -532,7 +532,7 @@ test('workflow helper is checked out from trusted workflow_run github.sha', () =
   assert.match(workflow, /ci-automatic-promotion-\$\{\{ github\.event\.workflow_run\.event \}\}/);
   assert.match(workflow, /successfulRequiredJobs\(\s*github, owner, repo, run, process\.env\.GITHUB_API_URL/);
   assert.doesNotMatch(workflow, /listJobsForWorkflowRun\(/);
-  assert.match(workflow, /actions\/create-github-app-token\@bcd2ba49218906704ab6c1aa796996da409d3eb1/);
+  assert.match(workflow, /actions\/create-github-app-token\@64ab729a6294000f5aa4a4bc0b73d1f32bc45510/);
   assert.match(workflow, /permission-pull-requests: write/);
   assert.match(workflow, /PROMOTION_APP_TOKEN: \$\{\{ steps\.promotion-app-token\.outputs\.token \}\}/);
   assert.match(workflow, /github-token: \$\{\{ github\.token \}\}/);

@@ -57,3 +57,19 @@ func TestLanguageSmokeRetainsSuccessfulJSONPath(t *testing.T) {
 		t.Fatal(err, readErr, string(retained))
 	}
 }
+
+func TestLanguageSmokeRequiresExplicitOutputDirectory(t *testing.T) {
+	work := t.TempDir()
+	t.Chdir(work)
+	for _, cause := range []error{nil, errors.New("original command failure")} {
+		raw := []byte("retained command output")
+		got, err := retainLanguageCommandOutput(BuildInput{Target: Target{ID: "fixture"}}, "example", raw, cause)
+		if err == nil || !bytes.Equal(got, raw) || (cause != nil && !errors.Is(err, cause)) {
+			t.Fatalf("missing destination lost output or failure: %q, %v", got, err)
+		}
+	}
+	entries, err := os.ReadDir(work)
+	if err != nil || len(entries) != 0 {
+		t.Fatalf("implicit working-directory output: %v, %v", entries, err)
+	}
+}

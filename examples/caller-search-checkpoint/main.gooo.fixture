@@ -1,0 +1,20 @@
+package searchcheckpoint
+namespace searchcheckpoint
+
+entity Integer id "searchcheckpoint://integer"
+entity Box id "searchcheckpoint://box" fields {
+  field value id "searchcheckpoint://value" type integer required one
+}
+
+activity Seed(Integer) -> Box computes "return Box{value:input}" assembling {
+  choice "value" field_value at "0" alternative "input * 2" intent "Double the seed."
+  value_case "[3]" -> "{\"value\":6}"
+  attempts "2"
+}
+
+activity Build(Integer) -> Integer computes "let box = Seed(input + __GOOO_BODY_HOLE_offset__); return box.value" assembling {
+  search hole "offset" grammar "integer-hole-residual/v1" intent "Add one before doubling." max_candidates "8"
+  case "2" -> "6" attempts "8"
+}
+
+activity Main(Integer) -> Integer computes "return Build(input)"

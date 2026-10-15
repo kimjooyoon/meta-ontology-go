@@ -1,0 +1,15 @@
+package app
+namespace derive129_app
+import fees "derive129/helpers"
+activity Builder(Integer) -> Integer id "urn:derive129:builder" computes "if __GOOO_BODY_HOLE_condition__ { return fees.Base(__GOOO_BODY_HOLE_value__) }; return 0" assembling {
+ source_fill intent "Derive slots through the dedicated fill API with a separate reserved input." {
+  hole "condition"
+  hole "value"
+  derive assignments max_candidates "4" {
+   hole "condition" grammar "integer-predicate/v1" max_expressions "2"
+   hole "value" grammar "integer-offset-constant/v1" max_expressions "2"
+  }
+ }
+ case "4" -> "87"
+ holdout_case "-3" -> "80"
+}

@@ -1,0 +1,22 @@
+package reader11213
+namespace reader11213
+entity Text id "urn:gooo:type:string"
+entity Fragment id "urn:reader11213:fragment" fields {
+ field case_index id "urn:reader11213:case" type integer required one
+ field assignment_index id "urn:reader11213:write" type integer required one
+ field frame id "urn:reader11213:frame" type integer required one
+ field completed id "urn:reader11213:completed" type boolean required one
+ field site_id id "urn:reader11213:site" type string required one
+ field variable_name id "urn:reader11213:variable" type string required one
+ field activity_id id "urn:reader11213:activity" type string required one
+ field candidate_id id "urn:reader11213:candidate" type string required one
+ field hole_id id "urn:reader11213:hole" type string required one
+ field category id "urn:reader11213:category" type string required one
+ field filename id "urn:reader11213:filename" type string required one
+ field source_sha id "urn:reader11213:sha" type string required one
+ field source_start id "urn:reader11213:start" type integer required one
+ field source_end id "urn:reader11213:end" type integer required one
+ field selected_decoded_start id "urn:reader11213:decoded-start" type integer required one
+ field selected_decoded_end id "urn:reader11213:decoded-end" type integer required one
+}
+activity Describe(Fragment) -> Text id "urn:reader11213:describe" computes "if input.category==\"declared_candidate\" {return \"candidate\"};if input.category==\"derived_grammar\" {return \"grammar\"};if input.category==\"retained_template\" {return \"template\"};return \"unknown\""
