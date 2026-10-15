@@ -18,13 +18,13 @@ jobs:
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     env:
-      SUBJECT_SHA: ${{ github.event.workflow_run.head_sha }}
       CANDIDATE_RUN_ID: ${{ github.event.workflow_run.id }}
+      CANDIDATE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ env.SUBJECT_SHA }}
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - uses: actions/setup-go@v7.0.0
@@ -32,25 +32,33 @@ jobs:
           go-version: '1.27.2'
           cache: false
 
-      - name: Download exact candidate transport receipt
-        uses: actions/download-artifact@v8
-        with:
-          name: self-improvement-nonexecuting-candidate-${{ env.SUBJECT_SHA }}
-          path: ${{ runner.temp }}/attestation-resolution/input
-          github-token: ${{ github.token }}
-          run-id: ${{ env.CANDIDATE_RUN_ID }}
-
-      - name: Download immutable producer archive
+      - name: Bind candidate delivery and logical subject
+        id: delivery
         shell: bash
         run: |
           set -euo pipefail
-          receipt="$RUNNER_TEMP/attestation-resolution/input/transport/receipt.json"
+          root="$RUNNER_TEMP/attestation-resolution"
+          mkdir -p "$root/output"
+          go run ./scripts/candidate-delivery -mode fetch -repository "$GITHUB_REPOSITORY" \
+            -run "$CANDIDATE_RUN_ID" -attempt "$CANDIDATE_RUN_ATTEMPT" -output "$root/input"
+          cp "$root/input/delivery.json" "$root/output/delivery.json"
+          jq -r '"bound=\(.state == "CLOSED")"' "$root/input/delivery.json" >> "$GITHUB_OUTPUT"
+          jq -r '"delivery: \(.state)/\(.reason), subject \(.subject_sha // "UNKNOWN")"' \
+            "$root/input/delivery.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Download immutable producer archive
+        if: steps.delivery.outputs.bound == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/attestation-resolution/input/transport.json"
           artifact_id="$(jq -er '.transport.artifact_id | select(type == "number" and . > 0)' "$receipt")"
           mkdir -p "$RUNNER_TEMP/attestation-resolution/source"
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
             > "$RUNNER_TEMP/attestation-resolution/source/archive.zip"
 
       - name: Verify Sigstore producer identity and resolve EHT-8
+        if: steps.delivery.outputs.bound == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -67,7 +75,7 @@ jobs:
           mkdir -p "$root/output"
           for pass in first second; do
             go run ./scripts/self-improvement-attestation \
-              -transport-receipt "$root/input/transport/receipt.json" \
+              -transport-receipt "$root/input/transport.json" \
               -source-archive "$archive" -verification "$verification" \
               -verifier-exit-code "$verifier_exit" -verifier-version "$verifier_version" \
               -output "$root/output/$pass.json" -summary "$root/output/$pass.md" -check
@@ -76,11 +84,21 @@ jobs:
           cmp "$root/output/first.md" "$root/output/second.md"
           cat "$root/output/first.md" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Retain delivery diagnostic
+        if: always()
+        shell: bash
+        run: |
+          root="$RUNNER_TEMP/attestation-resolution"
+          if test -f "$root/input/delivery.json"; then
+            mkdir -p "$root/output"
+            cp "$root/input/delivery.json" "$root/output/delivery.json"
+          fi
+
       - name: Upload producer attestation resolution
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: self-improvement-attestation-resolution-${{ env.SUBJECT_SHA }}
+          name: self-improvement-attestation-resolution-${{ env.CANDIDATE_RUN_ID }}-${{ env.CANDIDATE_RUN_ATTEMPT }}
           path: ${{ runner.temp }}/attestation-resolution/output
           if-no-files-found: error
           retention-days: 14

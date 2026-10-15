@@ -43,6 +43,10 @@ on:
         description: Exact source head SHA
         required: true
         type: string
+      subject_sha:
+        description: Logical candidate subject, distinct from the source workflow head
+        required: false
+        type: string
       source_run_id:
         description: Exact source workflow run ID
         required: true
@@ -100,7 +104,9 @@ jobs:
   execution-grant:
     runs-on: ubuntu-latest
     env:
-      SUBJECT_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.source_head_sha || github.event.pull_request.head.sha }}
+      SUBJECT_SHA: ${{ github.event_name == 'workflow_dispatch' && (inputs.subject_sha || inputs.source_head_sha) || github.event.pull_request.head.sha }}
+      SOURCE_HEAD_SHA: ${{ inputs.source_head_sha }}
+      TOOLING_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       SOURCE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.source_ref || '' }}
       SOURCE_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.source_run_id || '' }}
       SOURCE_RUN_ATTEMPT: ${{ github.event_name == 'workflow_dispatch' && inputs.source_run_attempt || '' }}
@@ -122,10 +128,10 @@ jobs:
       GOFLAGS: -mod=readonly
 
     steps:
-      - name: Check out the exact v25 subject
+      - name: Check out the workflow authority
         uses: actions/checkout@v7
         with:
-          ref: ${{ env.SUBJECT_SHA }}
+          ref: ${{ env.TOOLING_SHA }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -140,7 +146,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(go env GOVERSION)" = "go1.27.2"
-          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test "$(git rev-parse HEAD)" = "$TOOLING_SHA"
           test "$(git status --porcelain)" = ""
 
       - name: Locate and verify exact v25 source artifact
@@ -185,7 +191,7 @@ jobs:
             gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$work/source-run.json"
             jq -e --argjson id "$SOURCE_RUN_ID" --argjson attempt "$SOURCE_RUN_ATTEMPT" \
               --arg name "$SOURCE_WORKFLOW_NAME" --arg path "$SOURCE_WORKFLOW_PATH" \
-              --arg repository "$GITHUB_REPOSITORY" --arg sha "$SUBJECT_SHA" \
+              --arg repository "$GITHUB_REPOSITORY" --arg sha "$SOURCE_HEAD_SHA" \
               '.id == $id and .run_attempt == $attempt and .name == $name and .path == $path and
                .event == "workflow_dispatch" and .head_branch == "dev" and .head_sha == $sha and
                .head_repository.full_name == $repository and .repository.full_name == $repository' \

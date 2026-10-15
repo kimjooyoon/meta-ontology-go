@@ -1,6 +1,9 @@
 package selfimprovementcontinuation
 
-import "errors"
+import (
+	"errors"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport/originpolicy"
+)
 
 const (
 	ReasonExact             = "EXACT_CONTINUATION_IDENTITY"
@@ -111,6 +114,9 @@ func inspectInput(input ContinuationInput) ([]string, []string) {
 	if input.TargetWorkflowName != "" && input.TargetWorkflowPath != "" && !targetPairMatches(input.TargetWorkflowName, input.TargetWorkflowPath) {
 		add("target_workflow_identity")
 	}
+	if input.SubjectSHA != "" && !validSHA(input.SubjectSHA) {
+		add("subject_sha")
+	}
 	if input.SourceHeadSHA != "" && !validSHA(input.SourceHeadSHA) {
 		add("source_head_sha")
 	}
@@ -178,17 +184,15 @@ func requiredMissing(input ContinuationInput) []string {
 	return missing
 }
 
+func SubjectSHA(input ContinuationInput) string {
+	return originpolicy.ContinuationSubject(input.SourceHeadSHA, input.SubjectSHA)
+}
+
 func artifactNameMatches(input ContinuationInput) bool {
 	if input.SourceHeadSHA == "" {
 		return true
 	}
-	if input.TargetWorkflowPath == V25WorkflowPath {
-		return input.SourceArtifactName == "self-improvement-candidate-authorization-"+input.SourceHeadSHA
-	}
-	if input.TargetWorkflowPath == V26WorkflowPath {
-		return input.SourceArtifactName == "self-improvement-execution-contract-"+input.SourceHeadSHA
-	}
-	return false
+	return input.SourceArtifactName == originpolicy.ContinuationArtifactName(input.TargetWorkflowPath, input.SourceHeadSHA, SubjectSHA(input))
 }
 
 func expectedSource(input ContinuationInput) (string, string, string) {
