@@ -15,8 +15,8 @@ func TestCompoundSourceRegistration105341(t *testing.T) {
 		t.Fatal(err)
 	}
 	registry, err := decodeRegistry(raw)
-	if err != nil || FixedTotal != 112 || FixedCapabilityTotal != 110 || FixedGovernanceTotal != 2 {
-		t.Fatal("source-selected current population", registry, err)
+	if err != nil || len(registry.Cases) != FixedTotal || FixedCapabilityTotal+FixedGovernanceTotal != FixedTotal || FixedGovernanceTotal != 2 {
+		t.Fatalf("current registry: cases=%d language=%d governance=%d: %v", len(registry.Cases), FixedCapabilityTotal, FixedGovernanceTotal, err)
 	}
 	previous, err := os.ReadFile("../../../../docs/observations/compound-updates/prior-corpus.json")
 	if err != nil {
@@ -25,6 +25,10 @@ func TestCompoundSourceRegistration105341(t *testing.T) {
 	var prior Registry
 	if err = json.Unmarshal(previous, &prior); err != nil {
 		t.Fatal(err)
+	}
+	// The v74 population is historical; later registrations may append cases.
+	if len(registry.Cases) <= len(prior.Cases) {
+		t.Fatalf("compound registration missing after %d prior cases", len(prior.Cases))
 	}
 	a, _ := json.Marshal(prior.Cases)
 	b, _ := json.Marshal(registry.Cases[:len(prior.Cases)])
