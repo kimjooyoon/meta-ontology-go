@@ -142,5 +142,8 @@
     "sha256": "2cb5a4ddb17805a69c83e1cc1124d6d28886fba6ad3389d3d48b96c3a397dcbc",
     "bytes": 10170978
   },
-  "scope": "New Gooo reader and adapter cohorts. Original producer, previous native/model/experiment cohorts were not rerun. Readonly binding checks perform no program or model execution. Command timings include build/test overhead; current exact-source acceptance belongs to future original PR CI."
+  "scope": "New Gooo reader and adapter cohorts. Original producer, previous native/model/experiment cohorts were not rerun. Readonly binding checks perform no program or model execution. Command timings include build/test overhead; current exact-source acceptance belongs to future original PR CI.",
+  "follow_up_observations": [
+    "command-origin.json"
+  ]
 }

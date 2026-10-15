@@ -1,0 +1,62 @@
+{
+  "exit_code": 0,
+  "wall_seconds": 1.757930084,
+  "source_state": "UNBOUND_LOCAL_SOURCE",
+  "parent_revision": "60ae38060d0eee2bfac8841b4b600b22216ea1f5",
+  "source_sha256": {
+    "examples/ci-effort-observation/operations.json": "443f9d12ad66b7480850fcd2108b0b9abe2f1ab041ec9742a070b25008ed383d",
+    "scripts/ci-effort-observation/current_command_origin_test.go": "c7f24de26399795ac8e2071b92a0aae3709ca8d34ac3af809d14ed99fd807353",
+    ".github/workflows/ci.yml": "014bfd62cd79fb0628a4ae8ba858ad8aa6350348ae57480c77fc46a51dbd96a7"
+  },
+  "scope": "new readonly current manifest/workflow binding for 7 operations in PR/push; stale race spec rejected and changed source context distinguished; no command, native, model or cost experiment execution",
+  "archive": {
+    "path": "command-origin-first.tar.gz",
+    "bytes": 22301,
+    "sha256": "d7e9eaacad8f61a52c942387e4efdc9e9d847b296f16530d1576ca5592b13f82",
+    "members": [
+      {
+        "path": "ended.json",
+        "bytes": 754,
+        "sha256": "90b4c89fb767ea9c089617f10abe840f5793937104dbd2006f337de336c96870"
+      },
+      {
+        "path": "source/.github/workflows/ci.yml",
+        "bytes": 128815,
+        "sha256": "014bfd62cd79fb0628a4ae8ba858ad8aa6350348ae57480c77fc46a51dbd96a7"
+      },
+      {
+        "path": "source/examples/ci-effort-observation/operations.json",
+        "bytes": 2287,
+        "sha256": "443f9d12ad66b7480850fcd2108b0b9abe2f1ab041ec9742a070b25008ed383d"
+      },
+      {
+        "path": "source/scripts/ci-effort-observation/current_command_origin_test.go",
+        "bytes": 1641,
+        "sha256": "c7f24de26399795ac8e2071b92a0aae3709ca8d34ac3af809d14ed99fd807353"
+      },
+      {
+        "path": "stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "stdout.log",
+        "bytes": 194,
+        "sha256": "bc5e2558e3626e5843163a767ac5445a4954dbb0b7579023a8ebccd413e5acb6"
+      }
+    ]
+  },
+  "prior_observation": {
+    "source_head": "56f2d701f1b8fd9ed0d5349017f4faa322ebed20",
+    "source_run_id": 38673133472,
+    "decision": "UNKNOWN",
+    "reason": "OBSERVATION_EVIDENCE_UNAVAILABLE",
+    "manifest_digest": "sha256:fe7b1c307f263e853f5852c9339eeac23cb07c917e87fae32aa527fda86319e7",
+    "report_digest": "sha256:e632c91db7d077aaab40c0ec0aa0570a9a4e11ef6cc8a7b514f3f41929498b92",
+    "unknown_operations": 1,
+    "race_reason": "COMMAND_CONTEXT_MISSING",
+    "artifact": "prior-ci-effort-report.json.gz",
+    "raw_sha256": "f949a5d4b8f01dc6bce7cb52c6262d3ac7c823be3604fbd7c3e8ed3ad9302af3",
+    "archive_sha256": "de091cf87bd25082b85c299a30502920c24b8968af752f36bea70b06d9ecacc0"
+  }
+}
