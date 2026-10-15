@@ -1,0 +1,5 @@
+gooo package: input row 2 has no entry value; fault=ZERO_DIVISOR blocked_by=[]; use --json for the execution record
+  activity="urn:gooo:compound:divide" operator="/" left=149 right=0
+  Go projection [169:185]: "amount /= 분모"
+  local="amount" assignment="/="
+  selected Gooo RHS [462:468]: "분모" (source sha256:b3ee9706ee459e50b38de73bb487af2bae0732b488e07e78ef9c67236bd1ea5b)

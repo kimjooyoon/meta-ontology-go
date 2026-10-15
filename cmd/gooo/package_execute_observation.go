@@ -38,6 +38,9 @@ func writePackageEntryValues(stdout, stderr io.Writer, entryName string,
 				}
 				fmt.Fprintf(stderr, "gooo package: input row %d has no entry value; fault=%s blocked_by=%v; use --json for the execution record\n",
 					trace.CaseIndex, kind, delivery.BlockedBy)
+				if delivery.Fault != nil {
+					writePackageFaultContext(stderr, runtime, *delivery.Fault)
+				}
 				return exitFailure
 			}
 			if err := encoder.Encode(delivery.Actual); err != nil {
