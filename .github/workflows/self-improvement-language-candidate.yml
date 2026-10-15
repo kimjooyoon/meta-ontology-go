@@ -232,6 +232,16 @@ jobs:
           echo "subject_sha=$subject_sha" >> "$GITHUB_OUTPUT"
           jq -r '"transport: \(.decision) \(.metrics.verified_total)/\(.metrics.fixed_obligation_total) (\(.metrics.coverage_basis_points) bps), unknown \(.open_obligation_ids | join(","))"' \
             "$transport/receipt.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve transport diagnosis
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: self-improvement-transport-diagnosis-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/candidate/transport/receipt-*.json
+            ${{ runner.temp }}/candidate/transport/metadata.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Checkout verified producer subject
         uses: actions/checkout@v7
         with:
