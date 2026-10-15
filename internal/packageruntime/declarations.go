@@ -31,7 +31,7 @@ func sourceDeclarations(packagePath, filename string, declarations []syntax.Decl
 			if id, err := semantic.ParseIdentity(identity); err == nil {
 				identity = id.String()
 			}
-			exports = append(exports, Export{Name: value.Name, Kind: "activity", ID: identity, InputTypes: inputTypes, OutputType: outputType})
+			exports = append(exports, Export{Name: value.Name, Kind: "activity", ID: identity, InputTypes: inputTypes, InputNames: syntax.ActivityDeclaredInputNames(value), OutputType: outputType})
 		}
 	}
 	return names, exports, activities
@@ -52,6 +52,6 @@ func activityPlan(packagePath, filename string, activity *syntax.ActivityDecl) E
 	}
 	return EntryPlan{
 		PackagePath: packagePath, Source: filename, Activity: activity.Name,
-		Inputs: inputs, Output: output,
+		Inputs: inputs, InputNames: syntax.ActivityDeclaredInputNames(activity), Output: output,
 	}
 }

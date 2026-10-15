@@ -16,6 +16,7 @@ type preparedBody struct {
 	file                                      *syntax.File
 	allRecords                                []RecordType
 	activityIDs                               map[string]string
+	entityIDs                                 map[string]string
 }
 
 func prepareActivityBody(filename string, source []byte, activityName string) (preparedBody, error) {
@@ -56,9 +57,13 @@ func prepareActivityBodySource(filename string, source []byte, activityName stri
 	}
 	p.records = activityRecords(records, p.parameters, p.outputType, p.activity.ValueProgram)
 	p.file, p.allRecords, p.activityIDs = file, records, map[string]string{}
+	p.entityIDs = map[string]string{}
 	for _, node := range model.Nodes {
 		if node.Kind == bidir.ActivityKind {
 			p.activityIDs[node.Name] = string(node.ID)
+		}
+		if node.Kind == bidir.EntityKind {
+			p.entityIDs[node.Name] = string(node.ID)
 		}
 	}
 	p.activityID = p.activityIDs[activityName]
@@ -89,16 +94,16 @@ func sourceBodyParameters(activity *syntax.ActivityDecl, records []RecordType, f
 		return nil, fmt.Errorf("activity %q requires 1..16 inputs, got %d", activity.Name, len(activity.Inputs))
 	}
 	parameters := make([]InputParameter, len(activity.Inputs))
+	names, err := syntax.ActivityInputNames(activity)
+	if err != nil {
+		return nil, err
+	}
 	for i, input := range activity.Inputs {
 		inputType, ok := bodyEntityType(input.Name, records, files...)
 		if !ok {
 			return nil, fmt.Errorf("activity %q input entity %q is outside the pure value profile", activity.Name, input.Name)
 		}
-		name := "input"
-		if len(activity.Inputs) > 1 {
-			name = fmt.Sprintf("input%d", i)
-		}
-		parameters[i] = InputParameter{Name: name, Type: inputType}
+		parameters[i] = InputParameter{Name: names[i], Type: inputType}
 	}
 	return parameters, nil
 }

@@ -1,0 +1,25 @@
+package compound
+namespace compound
+
+entity Boolean id "urn:gooo:type:boolean"
+
+entity Summary id "urn:gooo:compound:summary" fields {
+ field count id "urn:gooo:compound:count" type integer required one
+ field step id "urn:gooo:compound:step" type integer required one
+ field title id "urn:gooo:compound:title" type string required one
+ field untouched id "urn:gooo:compound:untouched" type integer required one
+}
+
+activity Summarize(기록 Summary, 더하기 Boolean) -> Summary id "urn:gooo:compound:summarize" computes `
+let summary = 기록
+let delta = 기록.step + 1
+if 더하기 {
+ summary.count += delta
+} else {
+ summary.count -= delta
+}
+summary.count *= 2
+summary.count /= 3
+summary.title += "✓"
+return summary
+`

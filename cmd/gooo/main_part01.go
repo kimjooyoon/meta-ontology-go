@@ -213,7 +213,7 @@ func runWithInputCommandsTwo(args []string, input io.Reader, stdout, stderr io.W
 	case "adopt":
 		return runAdoption(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
 	case "roundtrip":
-		return runRoundTrip(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr), true
+		return runRoundTrip(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
 	case "query":
 		return runQuery(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr), true
 	case "inspect":

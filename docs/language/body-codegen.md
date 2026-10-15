@@ -14,8 +14,11 @@ all selected checkpoints and records actual intermediate values across Integer,
 Boolean and Text bodies. Optional local ranking is retained across integer
 assembly activities; saved composition replay needs no model calls.
 Ordinary bodies accept 1..16 scalar or declared record inputs in source order. Use
-`input` for one input and `input0`, `input1`, ... for several; each parameter is
-read-only while local `let` values may be assigned. See the
+`input` for one unnamed input and `input0`, `input1`, ... for several. The
+development source also accepts `Difference(minuend Integer, subtrahend Integer)`
+and uses those [authored names](named-inputs.ko.md) in the body. Wire ports keep
+their source positions. Each parameter is read-only while local `let` values
+may be assigned. See the
 [multiple-input example and case keys](../native-body-composition.md) and
 [record construction and actual value delivery](../native-record-values.md).
 

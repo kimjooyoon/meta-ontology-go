@@ -1,0 +1,227 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "origin/recordeduse:ExportNTriples": {
+          "receipt_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "source_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "journal_sha256": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "offset": 4,
+          "total_rows": 9,
+          "frames_dropped": 0,
+          "writes_dropped": 0,
+          "uses_dropped": 0,
+          "cases": [
+            5
+          ],
+          "use_indices": [
+            13
+          ],
+          "frames": [
+            2
+          ],
+          "assignments": [
+            8
+          ],
+          "roots": [
+            "urn:root"
+          ],
+          "activities": [
+            "urn:helper:한글"
+          ],
+          "resolved": [
+            true
+          ],
+          "reasons": [
+            ""
+          ],
+          "version_frames": [
+            2
+          ],
+          "version_activities": [
+            "urn:helper:한글"
+          ],
+          "version_completed": [
+            true
+          ],
+          "read_sha256": [
+            "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+          ],
+          "read_starts": [
+            0
+          ],
+          "read_ends": [
+            5
+          ],
+          "read_mappings": [
+            "MAPPED"
+          ],
+          "names": [
+            "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          ],
+          "ordinals": [
+            0
+          ],
+          "scalar_types": [
+            "int64"
+          ]
+        }
+      },
+      "expected": {
+        "origin/recordeduse:ExportNTriples": {
+          "schema": "gooo/recorded-use-rdf/v1",
+          "scope": "saved_json_bytes",
+          "status": "RDF_READY",
+          "reason": "",
+          "receipt_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "source_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "journal_sha256": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "call_iri": "urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2",
+          "value_iri": "urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8",
+          "usage_iri": "urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13",
+          "records_dropped": false,
+          "lines": [
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Activity> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Entity> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Usage> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <http://www.w3.org/ns/prov#qualifiedUsage> <urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <http://www.w3.org/ns/prov#entity> <urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <http://www.w3.org/ns/prov#used> <urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <http://www.w3.org/ns/prov#wasGeneratedBy> <urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <urn:gooo:recorded-use:receiptSha256> \"sha256:1111111111111111111111111111111111111111111111111111111111111111\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <urn:gooo:recorded-use:receiptSha256> \"sha256:1111111111111111111111111111111111111111111111111111111111111111\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:receiptSha256> \"sha256:1111111111111111111111111111111111111111111111111111111111111111\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <urn:gooo:recorded-use:caseIndex> \"5\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <urn:gooo:recorded-use:frame> \"2\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <urn:gooo:recorded-use:assignmentIndex> \"8\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:useIndex> \"13\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <urn:gooo:recorded-use:activityDefinitionId> \"urn:helper:한글\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <urn:gooo:recorded-use:rootDefinitionId> \"urn:root\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:sourceSha256> \"sha256:2222222222222222222222222222222222222222222222222222222222222222\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:journalSha256> \"sha256:3333333333333333333333333333333333333333333333333333333333333333\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:readMapping> \"MAPPED\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:selectedSourceSha256> \"sha256:4444444444444444444444444444444444444444444444444444444444444444\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:selectedStart> \"0\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:selectedEnd> \"5\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:localRecordsDropped> \"false\"^^<http://www.w3.org/2001/XMLSchema#boolean> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <urn:gooo:recorded-use:variableName> \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <urn:gooo:recorded-use:variableOrdinal> \"0\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <urn:gooo:recorded-use:scalarType> \"int64\" ."
+          ]
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:ExportNTriples": {
+          "receipt_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "source_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "journal_sha256": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "offset": 4,
+          "total_rows": 9,
+          "frames_dropped": 0,
+          "writes_dropped": 0,
+          "uses_dropped": 0,
+          "cases": [
+            5
+          ],
+          "use_indices": [
+            13
+          ],
+          "frames": [
+            2
+          ],
+          "assignments": [
+            8
+          ],
+          "roots": [
+            "urn:root"
+          ],
+          "activities": [
+            "urn:helper:한글"
+          ],
+          "resolved": [
+            true
+          ],
+          "reasons": [
+            ""
+          ],
+          "version_frames": [
+            2
+          ],
+          "version_activities": [
+            "urn:helper:한글"
+          ],
+          "version_completed": [
+            true
+          ],
+          "read_sha256": [
+            "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+          ],
+          "read_starts": [
+            0
+          ],
+          "read_ends": [
+            5
+          ],
+          "read_mappings": [
+            "MAPPED"
+          ],
+          "names": [
+            "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001"
+          ],
+          "ordinals": [
+            0
+          ],
+          "scalar_types": [
+            "int64"
+          ]
+        }
+      },
+      "expected": {
+        "origin/recordeduse:ExportNTriples": {
+          "schema": "gooo/recorded-use-rdf/v1",
+          "scope": "saved_json_bytes",
+          "status": "RDF_READY",
+          "reason": "",
+          "receipt_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "source_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "journal_sha256": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "call_iri": "urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2",
+          "value_iri": "urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8",
+          "usage_iri": "urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13",
+          "records_dropped": false,
+          "lines": [
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Activity> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Entity> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Usage> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <http://www.w3.org/ns/prov#qualifiedUsage> <urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <http://www.w3.org/ns/prov#entity> <urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <http://www.w3.org/ns/prov#used> <urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <http://www.w3.org/ns/prov#wasGeneratedBy> <urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <urn:gooo:recorded-use:receiptSha256> \"sha256:1111111111111111111111111111111111111111111111111111111111111111\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <urn:gooo:recorded-use:receiptSha256> \"sha256:1111111111111111111111111111111111111111111111111111111111111111\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:receiptSha256> \"sha256:1111111111111111111111111111111111111111111111111111111111111111\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <urn:gooo:recorded-use:caseIndex> \"5\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <urn:gooo:recorded-use:frame> \"2\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <urn:gooo:recorded-use:assignmentIndex> \"8\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:useIndex> \"13\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <urn:gooo:recorded-use:activityDefinitionId> \"urn:helper:한글\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:frame:2> <urn:gooo:recorded-use:rootDefinitionId> \"urn:root\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:sourceSha256> \"sha256:2222222222222222222222222222222222222222222222222222222222222222\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:journalSha256> \"sha256:3333333333333333333333333333333333333333333333333333333333333333\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:readMapping> \"MAPPED\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:selectedSourceSha256> \"sha256:4444444444444444444444444444444444444444444444444444444444444444\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:selectedStart> \"0\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:selectedEnd> \"5\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:use:13> <urn:gooo:recorded-use:localRecordsDropped> \"false\"^^<http://www.w3.org/2001/XMLSchema#boolean> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <urn:gooo:recorded-use:variableName> \"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\" .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <urn:gooo:recorded-use:variableOrdinal> \"0\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+            "<urn:gooo:saved:sha256:1111111111111111111111111111111111111111111111111111111111111111:case:5:version:8> <urn:gooo:recorded-use:scalarType> \"int64\" ."
+          ]
+        }
+      }
+    }
+  ]
+}

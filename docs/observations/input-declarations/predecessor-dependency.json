@@ -1,0 +1,20 @@
+{
+  "schema": "gooo/local-publication-dependency-observation/v1",
+  "failed_pr": 1589,
+  "source_head": "a9c55f4438db3253b1d5159740aee00b064bbb94",
+  "failed_original_run": 38713273967,
+  "failed_job": 116352932388,
+  "failed_step_completed_at": "2026-10-15T09:42:43Z",
+  "predecessor_run": 38713221898,
+  "predecessor_sha": "b9fe299f885d7764ecc40563390b87448058956f",
+  "predecessor_terminal_observed_at": "2026-10-15T09:43:05Z",
+  "predecessor_conclusion": "success",
+  "observation_attempts": 13,
+  "pending_class": "DEPENDENCY_BLOCKED",
+  "selected": null,
+  "proofs_passed": 0,
+  "proofs_total": 5,
+  "readonly_archive_sha256": "85b20092f42ebf2c977518bdefe48f9ab32f72f586c6156fdbf366694bbf3e2c",
+  "publication_rule": "Before publishing a successor, observe the exact base dev metric predecessor original workflow terminal and its strategy job successful. Preserve failure records; do not replay the old source workflow.",
+  "limitation": "This moves dependency waiting before publication. It does not establish lower end-to-end latency or change CI selection proofs."
+}

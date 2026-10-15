@@ -16,6 +16,11 @@ func formatActivity(output *strings.Builder, activity *ActivityDecl) error {
 	if err != nil {
 		return err
 	}
+	if len(activity.InputNames) > 0 {
+		if _, err := ActivityInputNames(activity); err != nil {
+			return err
+		}
+	}
 	result, err := activityResult(activity)
 	if err != nil {
 		return err
@@ -26,6 +31,10 @@ func formatActivity(output *strings.Builder, activity *ActivityDecl) error {
 	for index, parameter := range parameters {
 		if index > 0 {
 			output.WriteString(", ")
+		}
+		if len(activity.InputNames) > 0 && activity.InputNames[index].Name != "" {
+			output.WriteString(activity.InputNames[index].Name)
+			output.WriteByte(' ')
 		}
 		output.WriteString(parameter.Name)
 	}

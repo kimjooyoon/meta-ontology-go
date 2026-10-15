@@ -70,7 +70,7 @@ func compareNode(id string, left, right snapshot) Change {
 		r.Facets = append(r.Facets, "removed")
 		return r
 	}
-	for _, facet := range []string{"source_scope", "identity_role", "presentation", "fields", "body", "input_sequence", "assembly", "dependencies"} {
+	for _, facet := range []string{"source_scope", "identity_role", "presentation", "fields", "body", "input_sequence", "input_names", "assembly", "dependencies"} {
 		if left.facets[id][facet] != right.facets[id][facet] {
 			r.Facets = append(r.Facets, facet)
 		}

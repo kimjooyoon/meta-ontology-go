@@ -5,9 +5,12 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"slices"
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/inputbinding"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, source, surface string, body bool, edits ...*[]BodySourceEdit) (string, []WorkspaceCallSite, error) {
@@ -39,7 +42,7 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 		if !ok || err != nil {
 			return err == nil
 		}
-		if name, plain := call.Fun.(*ast.Ident); plain && name.Obj == nil && bodycodegen.IsBodyPrimitiveName(name.Name) {
+		if name, plain := call.Fun.(*ast.Ident); plain && name.Obj == nil && !isActivityInput(name.Name, len(d.activity.Inputs), syntax.ActivityDeclaredInputNames(d.activity)...) && bodycodegen.IsBodyPrimitiveName(name.Name) {
 			if _, declared := c[packageActivityKey(d.ref.PackagePath, name.Name)]; !declared {
 				// Keep the primitive text and descend into its arguments so that
 				// nested source activity calls still enter the dependency graph.
@@ -98,7 +101,7 @@ func (c workspaceCalls) resolveCall(d workspaceCallDeclaration, call *ast.CallEx
 	default:
 		return "", fmt.Errorf("call requires a source-declared named activity")
 	}
-	if reference.Obj != nil || isActivityInput(reference.Name, len(d.activity.Inputs)) {
+	if reference.Obj != nil || isActivityInput(reference.Name, len(d.activity.Inputs), syntax.ActivityDeclaredInputNames(d.activity)...) {
 		return "", fmt.Errorf("call name %q is shadowed by a local value", reference.Name)
 	}
 	key := packageActivityKey(pkg, name)
@@ -109,14 +112,10 @@ func (c workspaceCalls) resolveCall(d workspaceCallDeclaration, call *ast.CallEx
 	return key, nil
 }
 
-func isActivityInput(name string, count int) bool {
-	if count == 1 {
-		return name == "input"
+func isActivityInput(name string, count int, declared ...string) bool {
+	names, err := inputbinding.Resolve(count, declared)
+	if err != nil {
+		return false
 	}
-	for i := range count {
-		if name == fmt.Sprintf("input%d", i) {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(names, name)
 }

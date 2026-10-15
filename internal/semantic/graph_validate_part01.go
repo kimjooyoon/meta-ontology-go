@@ -48,6 +48,10 @@ func validateNodes(g Graph, issues *ValidationErrors) {
 		for _, field := range normalized.Fields {
 			registerGraphIdentity(identityOwners, field.ID, graphIdentityOwner{kind: "field", parent: normalized.ID}, issues)
 		}
+		if len(normalized.InputNames) > 0 && len(normalized.InputSequence) == 0 &&
+			len(runtimePortEntities(g, normalized.ID, Used)) != 1 {
+			issues.add("input-names", "a named single input requires one used Entity", normalized.ID, "")
+		}
 		if len(normalized.InputSequence) > 0 {
 			declared := make(map[ID]bool, len(normalized.InputSequence))
 			for _, input := range normalized.InputSequence {

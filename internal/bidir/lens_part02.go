@@ -34,7 +34,7 @@ func collectDeclarations(model *Model, declarations []Declaration, allowImplicit
 			model.activityInputArity[id] = len(declaration.Inputs)
 			model.activityOutputArity[id] = len(declaration.Outputs)
 		}
-		model.Nodes = append(model.Nodes, Node{ID: id, Kind: declaration.Kind, Name: declaration.Name, Namespace: model.Namespace, Fields: cloneFields(declaration.Fields), Attributes: cloneStringMap(declaration.Attributes), Span: declaration.Span})
+		model.Nodes = append(model.Nodes, Node{ID: id, Kind: declaration.Kind, Name: declaration.Name, Namespace: model.Namespace, Fields: cloneFields(declaration.Fields), Attributes: cloneStringMap(declaration.Attributes), InputNames: append([]Reference(nil), declaration.InputNames...), Span: declaration.Span})
 	}
 	return names, ids, nil
 }

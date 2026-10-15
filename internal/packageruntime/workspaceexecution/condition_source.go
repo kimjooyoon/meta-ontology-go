@@ -4,6 +4,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 	"sort"
 )
 
@@ -38,7 +39,7 @@ func prepareWorkspaceConditionSources(manifest packageruntime.Manifest, calls wo
 		if d.body == "" {
 			continue
 		}
-		ranges, err := bodycodegen.BodyConditionSourceRanges(d.body, len(d.activity.Inputs))
+		ranges, err := bodycodegen.BodyConditionSourceRanges(d.body, len(d.activity.Inputs), syntax.ActivityDeclaredInputNames(d.activity)...)
 		if err != nil {
 			return nil, err
 		}

@@ -40,7 +40,7 @@ func validateFieldSources(r CompositionRuntime) error {
 			default:
 				return fmt.Errorf("field source syntax kind differs")
 			}
-			if o.ActivityID != identity.ActivityID || o.Kind != site.Kind || o.RecordID != identity.Record.ID || o.FieldID != identity.Record.Fields[site.Field].ID || o.NativeOrdinal < 0 || o.NativeOrdinal >= o.NativePopulation || o.BodySHA256 == "" {
+			if o.ActivityID != identity.ActivityID || o.Kind != site.Kind || o.Operation != site.Operation || o.RecordID != identity.Record.ID || o.FieldID != identity.Record.Fields[site.Field].ID || o.NativeOrdinal < 0 || o.NativeOrdinal >= o.NativePopulation || o.BodySHA256 == "" {
 				return fmt.Errorf("field source typed identity differs")
 			}
 			for _, span := range []bodycodegen.BodyElementOrigin{o.Value, o.Target} {

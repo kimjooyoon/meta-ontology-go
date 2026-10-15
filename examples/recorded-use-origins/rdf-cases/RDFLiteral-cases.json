@@ -1,0 +1,85 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "origin/recordeduse:RDFLiteral": ""
+      },
+      "expected": {
+        "origin/recordeduse:RDFLiteral": "\"\""
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:RDFLiteral": "plain"
+      },
+      "expected": {
+        "origin/recordeduse:RDFLiteral": "\"plain\""
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:RDFLiteral": "한국어 출처"
+      },
+      "expected": {
+        "origin/recordeduse:RDFLiteral": "\"한국어 출처\""
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:RDFLiteral": "quote\"slash\\"
+      },
+      "expected": {
+        "origin/recordeduse:RDFLiteral": "\"quote\\\"slash\\\\\""
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:RDFLiteral": "line\nnext\r\t"
+      },
+      "expected": {
+        "origin/recordeduse:RDFLiteral": "\"line\\u000Anext\\u000D\\u0009\""
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:RDFLiteral": "\u0000\u0001\u001f"
+      },
+      "expected": {
+        "origin/recordeduse:RDFLiteral": "\"\\u0000\\u0001\\u001F\\u007F\""
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:RDFLiteral": "😀"
+      },
+      "expected": {
+        "origin/recordeduse:RDFLiteral": "\"😀\""
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:RDFLiteral": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "expected": {
+        "origin/recordeduse:RDFLiteral": "\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\""
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:RDFLiteral": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "expected": {
+        "origin/recordeduse:RDFLiteral": ""
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:RDFLiteral": "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001"
+      },
+      "expected": {
+        "origin/recordeduse:RDFLiteral": "\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\""
+      }
+    }
+  ]
+}

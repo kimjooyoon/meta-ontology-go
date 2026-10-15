@@ -1,0 +1,72 @@
+{
+  "saved-origin-binding-first": {
+    "argv": [
+      "<go-toolchain>/bin/go",
+      "test",
+      "-p=1",
+      "./cmd/gooo",
+      "-run",
+      "^TestRecordCompoundSavedOrigins$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.023228292000001,
+    "scope": "first new Gooo record-field update cohort"
+  },
+  "record-example-relocation-first": {
+    "argv": [
+      "<go-toolchain>/bin/go",
+      "test",
+      "-p=1",
+      "./cmd/gooo",
+      "-run",
+      "^TestRegisteredRecordExamplePreservesProjection$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.86804875,
+    "scope": "first new Gooo record-field update cohort"
+  },
+  "relocation-capacity-first": {
+    "argv": [
+      "<go-toolchain>/bin/go",
+      "test",
+      "-p=1",
+      "./internal/meta/repositoryprojection/extractor",
+      "-run",
+      "^TestRecordExampleRelocationCapacity$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.717734625,
+    "scope": "first new Gooo record-field update cohort"
+  },
+  "registered-source-inventory-first": {
+    "argv": [
+      "<go-toolchain>/bin/go",
+      "run",
+      "./cmd/syntax-registration-candidate",
+      "--root",
+      ".",
+      "--inventory"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.346415416,
+    "scope": "first new Gooo record-field update cohort"
+  },
+  "final-source-vet": {
+    "argv": [
+      "<go-toolchain>/bin/go",
+      "vet",
+      "./cmd/gooo",
+      "./internal/bodyexecution",
+      "./internal/meta/repositoryprojection/extractor"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.9773945,
+    "scope": "first new Gooo record-field update cohort"
+  }
+}

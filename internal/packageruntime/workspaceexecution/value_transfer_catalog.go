@@ -18,6 +18,28 @@ func prepareValueTransferCatalog(ctx context.Context, result Result) (valueTrans
 	if len(plan.Activities)+len(plan.Preparations) > 128 || len(plan.Edges) > 256 {
 		return c, fmt.Errorf("selected plan exceeds value-origin query bounds")
 	}
+	names, err := selectedValueActivityNames(result)
+	if err != nil {
+		return c, err
+	}
+	file, diagnostics := bodycodegen.ParseBodyFile("workspace.gooo", []byte(source))
+	if diagnostics.HasErrors() {
+		return c, diagnostics.Error()
+	}
+	if err := addSelectedValueActivities(ctx, &c, file, names); err != nil {
+		return c, err
+	}
+	if err := bindSelectedValueActivities(&c, file, result); err != nil {
+		return c, err
+	}
+	if err := retainSelectedValueFragments(&c, result); err != nil {
+		return c, err
+	}
+	return c, nil
+}
+
+func selectedValueActivityNames(result Result) (map[string]string, error) {
+	plan := result.Composition.Plan
 	names := map[string]string{}
 	register := func(name, id string) error {
 		if name == "" || id == "" || names[name] != "" {
@@ -28,38 +50,38 @@ func prepareValueTransferCatalog(ctx context.Context, result Result) (valueTrans
 	}
 	for _, a := range plan.Activities {
 		if err := register(a.Name, a.ID); err != nil {
-			return c, err
+			return nil, err
 		}
 	}
 	for _, a := range plan.Preparations {
 		if err := register(a.Name, a.ID); err != nil {
-			return c, err
+			return nil, err
 		}
 	}
 	if result.Program.PureCalls != nil {
 		for _, a := range result.Program.PureCalls.Activities {
 			if previous := names[a.Activity.LoweredName]; previous != "" {
 				if previous != a.LoweredID {
-					return c, fmt.Errorf("pure-call identity differs from selected plan")
+					return nil, fmt.Errorf("pure-call identity differs from selected plan")
 				}
 				continue
 			}
 			if err := register(a.Activity.LoweredName, a.LoweredID); err != nil {
-				return c, err
+				return nil, err
 			}
 		}
 	}
 	if len(names) > 128 {
-		return c, fmt.Errorf("selected call closure exceeds 128 activities")
+		return nil, fmt.Errorf("selected call closure exceeds 128 activities")
 	}
-	file, diagnostics := bodycodegen.ParseBodyFile("workspace.gooo", []byte(source))
-	if diagnostics.HasErrors() {
-		return c, diagnostics.Error()
-	}
+	return names, nil
+}
+
+func addSelectedValueActivities(ctx context.Context, c *valueTransferCatalog, file *syntax.File, names map[string]string) error {
 	nodeCount := 0
 	for _, decl := range file.Declarations {
 		if err := ctx.Err(); err != nil {
-			return c, err
+			return err
 		}
 		d, ok := decl.(*syntax.ActivityDecl)
 		if !ok || names[d.Name] == "" {
@@ -68,13 +90,13 @@ func prepareValueTransferCatalog(ctx context.Context, result Result) (valueTrans
 		id := names[d.Name]
 		actual, err := workspaceActivityIdentity(file.Namespace.Name, d.Name, d.ID)
 		if err != nil || actual != id {
-			return c, fmt.Errorf("selected plan activity identity differs from its source")
+			return fmt.Errorf("selected plan activity identity differs from its source")
 		}
 		if c.byID[id] != nil {
-			return c, fmt.Errorf("selected activity identity is duplicated")
+			return fmt.Errorf("selected activity identity is duplicated")
 		}
-		transfer := bodycodegen.InspectBodyValueTransfers(d.ValueProgram, len(d.Inputs))
-		a := &valueTransferActivity{id: id, name: d.Name, body: d.ValueProgram, arity: len(d.Inputs), graph: transfer.Graph, nodes: map[string]bodycodegen.BodyValueOrigin{}, calls: map[string]bodycodegen.BodyValueCall{}}
+		transfer := bodycodegen.InspectBodyValueTransfers(d.ValueProgram, len(d.Inputs), syntax.ActivityDeclaredInputNames(d)...)
+		a := &valueTransferActivity{id: id, name: d.Name, body: d.ValueProgram, arity: len(d.Inputs), inputNames: syntax.ActivityDeclaredInputNames(d), graph: transfer.Graph, nodes: map[string]bodycodegen.BodyValueOrigin{}, calls: map[string]bodycodegen.BodyValueCall{}}
 		for _, node := range a.graph.Nodes {
 			a.nodes[node.ID] = node
 		}
@@ -84,12 +106,17 @@ func prepareValueTransferCatalog(ctx context.Context, result Result) (valueTrans
 		c.byID[id], c.byName[d.Name] = a, a
 		nodeCount += len(a.nodes)
 		if nodeCount > 8192 {
-			return c, fmt.Errorf("selected value graph exceeds 8192 nodes")
+			return fmt.Errorf("selected value graph exceeds 8192 nodes")
 		}
 	}
 	if len(c.byName) != len(names) {
-		return c, fmt.Errorf("selected source omits an activity from its plan")
+		return fmt.Errorf("selected source omits an activity from its plan")
 	}
+	return nil
+}
+
+func bindSelectedValueActivities(c *valueTransferCatalog, file *syntax.File, result Result) error {
+	plan := result.Composition.Plan
 	sourceEdges := map[string]bool{}
 	for _, edge := range file.Bindings {
 		p := c.byName[edge.Producer.Activity.Name]
@@ -101,19 +128,23 @@ func prepareValueTransferCatalog(ctx context.Context, result Result) (valueTrans
 	for _, edge := range plan.Edges {
 		key := edge.Consumer + "\x00" + edge.ConsumerPort
 		if !sourceEdges[edge.Producer+"\x00"+edge.ProducerPort+"\x00"+edge.Consumer+"\x00"+edge.ConsumerPort] {
-			return c, fmt.Errorf("selected bind differs from its source")
+			return fmt.Errorf("selected bind differs from its source")
 		}
 		if c.byID[edge.Producer] == nil || c.byID[edge.Consumer] == nil || c.binds[key] != "" || edge.ProducerPort != "result" {
-			return c, fmt.Errorf("selected bind cannot be resolved uniquely")
+			return fmt.Errorf("selected bind cannot be resolved uniquely")
 		}
 		c.binds[key] = edge.Producer
 	}
 	if len(sourceEdges) != len(plan.Edges) {
-		return c, fmt.Errorf("selected plan omits a source bind")
+		return fmt.Errorf("selected plan omits a source bind")
 	}
+	return nil
+}
+
+func retainSelectedValueFragments(c *valueTransferCatalog, result Result) error {
 	generations, err := originQueryGenerations(result)
 	if err != nil {
-		return c, err
+		return err
 	}
 	seen := map[string]bool{}
 	for _, g := range generations {
@@ -126,7 +157,7 @@ func prepareValueTransferCatalog(ctx context.Context, result Result) (valueTrans
 			continue
 		}
 		if len(o.Fragments) > 256 {
-			return c, fmt.Errorf("candidate origin exceeds fragment bounds")
+			return fmt.Errorf("candidate origin exceeds fragment bounds")
 		}
 		key := o.ActivityID + "\x00" + o.SelectedBodySHA256 + "\x00" + o.CandidateID
 		if !seen[key] {
@@ -134,5 +165,5 @@ func prepareValueTransferCatalog(ctx context.Context, result Result) (valueTrans
 			seen[key] = true
 		}
 	}
-	return c, nil
+	return nil
 }

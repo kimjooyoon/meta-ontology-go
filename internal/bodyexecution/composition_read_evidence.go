@@ -47,12 +47,12 @@ func observedCompositionLocalEvidence(prior Composition) (o compositionObservedS
 	}
 	o.inputs = compositionReadInputs(prior)
 	prefix := readObservationPrefix(prior.Source)
-	o.projection, err = observedReadProjectionWithLocals(o.projection, prefix, prior, o.reads, o.constructions, o.locals, o.uses)
+	o.projection, err = observedReadProjectionWithLocals(o.projection, prefix, prior, o.reads, o.constructions, o.locals, o.uses, o.faults)
 	if err != nil {
 		return o, err
 	}
 	if len(fieldBindings.bindings) > 0 {
-		o.projection, o.fields, err = observedCompositionFieldProjection(o.projection, prefix, prior)
+		o.projection, o.fields, err = observedCompositionFieldProjectionWithFaults(o.projection, prefix, prior, o.faults)
 		if err != nil {
 			return o, err
 		}

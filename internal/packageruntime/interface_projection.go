@@ -56,6 +56,7 @@ func (compiled compiledPackage) publicInterface() (InterfacePackage, error) {
 		identities[item.ID] = true
 		if item.Kind == "activity" {
 			export := exports[item.Name]
+			item.InputNames = append([]string(nil), export.InputNames...)
 			item.Inputs, item.Output = append([]string(nil), export.InputTypes...), export.OutputType
 		}
 	}

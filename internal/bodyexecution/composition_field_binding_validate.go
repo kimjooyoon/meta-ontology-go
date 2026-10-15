@@ -14,6 +14,10 @@ func validateFieldBinding(binding CompositionFieldBinding) error {
 		if binding.InputPort == "" {
 			return fmt.Errorf("field input binding has no port")
 		}
+		position := -binding.VariableOrdinal - 1
+		if binding.InputPort != fmt.Sprintf("input%d", position) && !(position == 0 && binding.InputPort == "input") {
+			return fmt.Errorf("field input port differs from its canonical position")
+		}
 		switch binding.InputKind {
 		case "root_input":
 			if binding.ActivityID != binding.RootActivityID || binding.InputFrom != "" {

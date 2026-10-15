@@ -3,7 +3,8 @@ package workspaceexecution
 import (
 	"context"
 	"fmt"
-	"strconv"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/inputbinding"
 	"strings"
 )
 
@@ -69,114 +70,8 @@ func (w *valueTransferWalker) walk(root *valueTransferActivity, rootID string) e
 			w.out.Truncated = true
 			return nil
 		}
-		v := queue[i]
-		a := w.catalog.byID[v.activity]
-		node, ok := a.nodes[v.id]
-		if !ok {
-			w.issue(a.id, "VALUE_NODE_UNAVAILABLE")
-			continue
-		}
-		w.recordAccess(rootID, a, node)
-		for _, reason := range a.graph.Reasons {
-			if reason != "CALLEE_BODY_NOT_EXPANDED" {
-				w.issue(a.id, reason)
-			}
-		}
-		for _, origin := range a.origins {
-			if w.query.CandidateID != "" && origin.CandidateID != w.query.CandidateID {
-				continue
-			}
-			for _, fragment := range origin.Fragments {
-				span := fragment.SelectedDecoded
-				if fragment.HoleID == "" || node.Decoded.Start >= span.End || span.Start >= node.Decoded.End {
-					continue
-				}
-				insideArgument := false
-				for callID, call := range a.calls {
-					callSpan := a.nodes[callID].Decoded
-					if w.catalog.byName[call.Callee] != nil && callSpan.Start >= node.Decoded.Start && callSpan.End <= node.Decoded.End && span.Start > callSpan.Start && span.End < callSpan.End {
-						insideArgument = true
-					}
-				}
-				if insideArgument {
-					continue
-				}
-				if err := w.emit(root, rootID, "candidate", origin.CandidateID, fragment.HoleID, originUseLocations(w.result, *origin, fragment.HoleID), queue, i); err != nil {
-					return err
-				}
-			}
-		}
-		crossed := false
-		if node.Kind == "call_result" {
-			call, found := a.calls[node.ID]
-			callee := w.catalog.byName[call.Callee]
-			if found && callee != nil && len(call.Arguments) == callee.arity {
-				crossed = true
-				if len(v.frames) >= 16 {
-					w.issue(a.id, "CALL_DEPTH_LIMIT")
-					continue
-				}
-				recursive := callee.id == a.id
-				for _, frame := range v.frames {
-					recursive = recursive || frame.caller == callee.id
-				}
-				if recursive {
-					w.issue(a.id, "RECURSIVE_VALUE_PATH")
-					continue
-				}
-				frames := append(append([]valueCallFrame(nil), v.frames...), valueCallFrame{a.id, callee.id, call.NodeID, call.Arguments})
-				returns := 0
-				for _, id := range callee.graph.Roots {
-					if callee.nodes[id].Kind == "return" {
-						appendVisit(valueVisit{callee.id, id, "call_return", frames, i})
-						returns++
-					}
-				}
-				if returns == 0 {
-					w.issue(callee.id, "CALLEE_RETURN_UNAVAILABLE")
-				}
-			} else {
-				w.issue(a.id, "CALLEE_BODY_NOT_EXPANDED")
-			}
-		}
-		if node.Kind == "input_reference" {
-			port, index := valueInputPort(node.Name, a.arity)
-			if len(v.frames) > 0 {
-				frame := v.frames[len(v.frames)-1]
-				if frame.callee != a.id || index < 0 || index >= len(frame.arguments) {
-					w.issue(a.id, "CALL_ARGUMENT_UNAVAILABLE")
-				} else {
-					appendVisit(valueVisit{frame.caller, frame.arguments[index], "call_argument", v.frames[:len(v.frames)-1], i})
-					crossed = true
-				}
-			} else if producer := w.catalog.byID[w.catalog.binds[a.id+"\x00"+port]]; producer != nil {
-				for _, id := range producer.graph.Roots {
-					if producer.nodes[id].Kind == "return" {
-						appendVisit(valueVisit{producer.id, id, "bind", nil, i})
-					}
-				}
-				crossed = true
-			}
-		}
-		if !crossed {
-			for _, id := range node.Inputs {
-				appendVisit(valueVisit{a.id, id, "input", v.frames, i})
-			}
-			if len(node.Inputs) == 0 && w.query.CandidateID == "" {
-				kind := "source_expression"
-				if node.Kind == "input_reference" {
-					kind = "external_input"
-				}
-				if node.Kind == "unresolved_reference" {
-					kind = "unresolved"
-				}
-				if err := w.emit(root, rootID, kind, "", "", valueActivityLocations(w.result, a.id), queue, i); err != nil {
-					return err
-				}
-			}
-		}
-		for _, id := range node.Controls {
-			appendVisit(valueVisit{a.id, id, "control", v.frames, i})
+		if err := w.walkValueVisit(root, rootID, queue, i, appendVisit); err != nil {
+			return err
 		}
 		if w.out.Truncated {
 			return nil
@@ -185,13 +80,147 @@ func (w *valueTransferWalker) walk(root *valueTransferActivity, rootID string) e
 	return nil
 }
 
-func valueInputPort(name string, arity int) (string, int) {
-	if arity == 1 && (name == "input" || name == "input0") {
-		return "input", 0
+func (w *valueTransferWalker) walkValueVisit(root *valueTransferActivity, rootID string, queue []valueVisit, i int, appendVisit func(valueVisit)) error {
+	v := queue[i]
+	a := w.catalog.byID[v.activity]
+	node, ok := a.nodes[v.id]
+	if !ok {
+		w.issue(a.id, "VALUE_NODE_UNAVAILABLE")
+		return nil
 	}
-	if after, ok := strings.CutPrefix(name, "input"); ok {
-		if n, err := strconv.Atoi(after); err == nil && n >= 0 && n < arity {
-			return "input" + strconv.Itoa(n), n
+	w.recordAccess(rootID, a, node)
+	for _, reason := range a.graph.Reasons {
+		if reason != "CALLEE_BODY_NOT_EXPANDED" {
+			w.issue(a.id, reason)
+		}
+	}
+	if err := w.emitValueCandidates(root, rootID, a, node, queue, i); err != nil {
+		return err
+	}
+	crossed, skip := w.followValueCall(a, node, v, i, appendVisit)
+	if skip {
+		return nil
+	}
+	if node.Kind == "input_reference" {
+		crossed = w.followValueInput(a, node, v, i, appendVisit)
+	}
+	if !crossed {
+		for _, id := range node.Inputs {
+			appendVisit(valueVisit{a.id, id, "input", v.frames, i})
+		}
+		if len(node.Inputs) == 0 && w.query.CandidateID == "" {
+			kind := "source_expression"
+			if node.Kind == "input_reference" {
+				kind = "external_input"
+			}
+			if node.Kind == "unresolved_reference" {
+				kind = "unresolved"
+			}
+			if err := w.emit(root, rootID, kind, "", "", valueActivityLocations(w.result, a.id), queue, i); err != nil {
+				return err
+			}
+		}
+	}
+	for _, id := range node.Controls {
+		appendVisit(valueVisit{a.id, id, "control", v.frames, i})
+	}
+	return nil
+}
+
+func (w *valueTransferWalker) emitValueCandidates(root *valueTransferActivity, rootID string, a *valueTransferActivity, node bodycodegen.BodyValueOrigin, queue []valueVisit, i int) error {
+	for _, origin := range a.origins {
+		if w.query.CandidateID != "" && origin.CandidateID != w.query.CandidateID {
+			continue
+		}
+		for _, fragment := range origin.Fragments {
+			span := fragment.SelectedDecoded
+			if fragment.HoleID == "" || node.Decoded.Start >= span.End || span.Start >= node.Decoded.End {
+				continue
+			}
+			insideArgument := false
+			for callID, call := range a.calls {
+				callSpan := a.nodes[callID].Decoded
+				if w.catalog.byName[call.Callee] != nil && callSpan.Start >= node.Decoded.Start && callSpan.End <= node.Decoded.End && span.Start > callSpan.Start && span.End < callSpan.End {
+					insideArgument = true
+				}
+			}
+			if insideArgument {
+				continue
+			}
+			if err := w.emit(root, rootID, "candidate", origin.CandidateID, fragment.HoleID, originUseLocations(w.result, *origin, fragment.HoleID), queue, i); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (w *valueTransferWalker) followValueCall(a *valueTransferActivity, node bodycodegen.BodyValueOrigin, v valueVisit, i int, appendVisit func(valueVisit)) (bool, bool) {
+	if node.Kind == "call_result" {
+		call, found := a.calls[node.ID]
+		callee := w.catalog.byName[call.Callee]
+		if found && callee != nil && len(call.Arguments) == callee.arity {
+			if len(v.frames) >= 16 {
+				w.issue(a.id, "CALL_DEPTH_LIMIT")
+				return true, true
+			}
+			recursive := callee.id == a.id
+			for _, frame := range v.frames {
+				recursive = recursive || frame.caller == callee.id
+			}
+			if recursive {
+				w.issue(a.id, "RECURSIVE_VALUE_PATH")
+				return true, true
+			}
+			frames := append(append([]valueCallFrame(nil), v.frames...), valueCallFrame{a.id, callee.id, call.NodeID, call.Arguments})
+			returns := 0
+			for _, id := range callee.graph.Roots {
+				if callee.nodes[id].Kind == "return" {
+					appendVisit(valueVisit{callee.id, id, "call_return", frames, i})
+					returns++
+				}
+			}
+			if returns == 0 {
+				w.issue(callee.id, "CALLEE_RETURN_UNAVAILABLE")
+			}
+			return true, false
+		} else {
+			w.issue(a.id, "CALLEE_BODY_NOT_EXPANDED")
+		}
+	}
+	return false, false
+}
+
+func (w *valueTransferWalker) followValueInput(a *valueTransferActivity, node bodycodegen.BodyValueOrigin, v valueVisit, i int, appendVisit func(valueVisit)) bool {
+	if node.Kind == "input_reference" {
+		port, index := valueInputPort(node.Name, a.arity, a.inputNames...)
+		if len(v.frames) > 0 {
+			frame := v.frames[len(v.frames)-1]
+			if frame.callee != a.id || index < 0 || index >= len(frame.arguments) {
+				w.issue(a.id, "CALL_ARGUMENT_UNAVAILABLE")
+			} else {
+				appendVisit(valueVisit{frame.caller, frame.arguments[index], "call_argument", v.frames[:len(v.frames)-1], i})
+				return true
+			}
+		} else if producer := w.catalog.byID[w.catalog.binds[a.id+"\x00"+port]]; producer != nil {
+			for _, id := range producer.graph.Roots {
+				if producer.nodes[id].Kind == "return" {
+					appendVisit(valueVisit{producer.id, id, "bind", nil, i})
+				}
+			}
+			return true
+		}
+	}
+	return false
+}
+
+func valueInputPort(name string, arity int, declared ...string) (string, int) {
+	names, err := inputbinding.Resolve(arity, declared)
+	if err == nil {
+		for i, binding := range names {
+			if name == binding {
+				return inputbinding.PositionName(arity, i), i
+			}
 		}
 	}
 	return name, -1

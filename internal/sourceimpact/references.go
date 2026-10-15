@@ -17,16 +17,20 @@ func inspectActivityReferences(s *snapshot, node semantic.Node, names map[string
 		s.addUnknown(revision, string(node.ID), "computes", "", "source body unavailable; implementation calls were not inspected")
 	}
 	inspectAssemblyDependencies(s, node, names, revision)
+	inputNames := make([]string, len(node.InputNames))
+	for i, name := range node.InputNames {
+		inputNames[i] = name.Name
+	}
 	for _, surface := range activityBodySurfaces(node) {
-		inspectBodySurface(s, string(node.ID), surface, names, inputCount, revision)
+		inspectBodySurface(s, string(node.ID), surface, names, inputCount, revision, inputNames)
 	}
 }
 
-func inspectBodySurface(s *snapshot, id string, surface bodySurface, names map[string]string, inputCount int, revision string) {
+func inspectBodySurface(s *snapshot, id string, surface bodySurface, names map[string]string, inputCount int, revision string, inputNames []string) {
 	if surface.body == "" {
 		return
 	}
-	refs, err := bodycodegen.InspectBodySourceReferences(surface.body, inputCount, surface.enclosing...)
+	refs, err := bodycodegen.InspectNamedBodySourceReferences(surface.body, inputCount, inputNames, surface.enclosing...)
 	if err != nil {
 		s.addUnknown(revision, id, surface.label, "", "body reference syntax unavailable: "+err.Error())
 		return

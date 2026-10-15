@@ -39,9 +39,12 @@ func validateFieldInventory(p *compositionFieldProjection) error {
 				return fmt.Errorf("field write kind differs")
 			}
 			switch site.DependencyMode {
-			case "call_parameter_or_input", "shared_rhs", "field_copy", "record_return", "scalar_rhs":
+			case "call_parameter_or_input", "shared_rhs", "field_copy", "record_return", "scalar_rhs", "compound_update":
 			default:
 				return fmt.Errorf("field dependency mode differs")
+			}
+			if err := validateFieldOperation(site); err != nil {
+				return err
 			}
 		}
 	}

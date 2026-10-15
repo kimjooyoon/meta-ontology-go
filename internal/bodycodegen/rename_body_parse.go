@@ -2,6 +2,7 @@ package bodycodegen
 
 import (
 	"fmt"
+	"github.com/kimjooyoon/meta-ontology-go/internal/inputbinding"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -9,16 +10,16 @@ import (
 )
 
 // Both reference lookup and renaming use identical parameter scopes and offsets.
-func parseRenameBody(body string, arity int) (*ast.File, *token.FileSet, int, error) {
+func parseRenameBody(body string, arity int, declared ...string) (*ast.File, *token.FileSet, int, error) {
 	if arity < 0 || arity > 16 {
 		return nil, nil, 0, fmt.Errorf("rename supports bodies with 0..16 inputs")
 	}
+	names, err := inputbinding.Resolve(arity, declared)
+	if err != nil {
+		return nil, nil, 0, err
+	}
 	parameters := make([]string, arity)
-	for i := range parameters {
-		name := "input"
-		if arity > 1 {
-			name = fmt.Sprintf("input%d", i)
-		}
+	for i, name := range names {
 		parameters[i] = name + " any"
 	}
 	header := "package p\nvar _ = func(" + strings.Join(parameters, ",") + "){\n"

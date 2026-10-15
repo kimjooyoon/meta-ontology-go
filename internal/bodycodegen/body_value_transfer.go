@@ -18,7 +18,7 @@ type BodyValueTransfers struct {
 // origin receipts keep their original shape; argument and access nodes belong
 // to this current static view. Indices and bounds describe source expressions,
 // without claiming which runtime collection element produced a returned value.
-func InspectBodyValueTransfers(body string, arity int) BodyValueTransfers {
-	graph, calls := inspectBodyValueOrigins(body, arity, true)
+func InspectBodyValueTransfers(body string, arity int, declared ...string) BodyValueTransfers {
+	graph, calls := inspectBodyValueOrigins(body, arity, true, declared...)
 	return BodyValueTransfers{Graph: graph, Calls: calls}
 }

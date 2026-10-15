@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "source/control",
+    "activity": "DescribeInputs"
+  },
+  "packages": [
+    {
+      "path": "source/control",
+      "sources": [
+        "inspect.gooo"
+      ]
+    }
+  ]
+}

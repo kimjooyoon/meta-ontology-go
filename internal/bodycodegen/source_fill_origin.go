@@ -156,7 +156,7 @@ func retainSourceFillOrigin(filename string, source []byte, activity string, res
 	if err != nil {
 		return err
 	}
-	flow := InspectBodyValueOrigins(output.ValueProgram, len(output.Inputs))
+	flow := InspectBodyValueOrigins(output.ValueProgram, len(output.Inputs), syntax.ActivityDeclaredInputNames(output)...)
 	r := result.Report.BodyFill
 	r.SourceOrigin = &SourceFillOrigin{Schema: "gooo/source-fill-origin/v1", Filename: filename,
 		View: "assembly_input", SourceSHA256: digest(source), SelectedSourceSHA256: digest(selected),

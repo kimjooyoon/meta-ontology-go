@@ -19,7 +19,7 @@ func assignmentLocalName(target ast.Expr) (string, bool) {
 	return name.Name, true
 }
 
-func (e *integerBodyEvaluator) evaluateRecordUpdate(target *ast.SelectorExpr, expression ast.Expr) error {
+func (e *integerBodyEvaluator) assignRecordField(target *ast.SelectorExpr, assigned any) error {
 	name, ok := ast.Unparen(target.X).(*ast.Ident)
 	if !ok {
 		return fmt.Errorf("field assignment requires a local record")
@@ -28,10 +28,6 @@ func (e *integerBodyEvaluator) evaluateRecordUpdate(target *ast.SelectorExpr, ex
 	value, ok := e.environment[object].(recordBodyValue)
 	if object == nil || !ok {
 		return fmt.Errorf("field assignment has no record binding")
-	}
-	assigned, err := e.evaluateExpression(expression)
-	if err != nil {
-		return err
 	}
 	structure, ok := object.Type().Underlying().(*types.Struct)
 	if !ok || structure.NumFields() != value.Count {

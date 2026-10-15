@@ -11,7 +11,7 @@
 | `source_sha256`, `filename` | 조회한 파일 내용과 이름 |
 | `flow.nodes` | 형식이 확인된 값 정의, 읽기, 필드 쓰기, 호출, 합류 |
 | `outputs` | 스칼라 반환 또는 반환 레코드의 각 필드 ID와 루트 |
-| `inputs` | 입력 노드와 포트, 필드 ID |
+| `inputs` | 입력 노드와 포트, 필드 ID 및 원래 시그니처의 `declaration` |
 | `node_sources` | 노드 순서대로 원래 리터럴의 바이트 범위 또는 매핑 불가 이유 |
 | `status`, `reason` | 분석 완료 여부와 지원 범위 밖인 이유 |
 
@@ -41,6 +41,18 @@ Gooo 탐색기의 입력은 60노드·32KiB까지이며 초과 시 거절합니�
 `ancestry-columns` 형식을 유지합니다. 새 형식에서는 `--field`로 그래프를
 자르지 않습니다. [Gooo 조건 분기 판독기](../../examples/source-control-reader/README.md)는
 이 사실을 받아 참·거짓·알 수 없음과 그 분모를 직접 구성합니다.
+
+`inputs[].declaration`은 활동 ID, 원본 파일 해시, 입력 순서, 타입 이름과
+타입 ID, 원래 타입 참조의 바이트 범위를 보관합니다. 같은 타입을 여러 번
+사용해도 선언 위치가 유지됩니다. 레코드의 각 입력 필드는 같은 선언을
+가리키면서 자신의 필드 ID를 유지합니다. 텍스트 출력에서는 시그니처의
+행·열을 보여 줍니다. 기존 기록에 선언 정보가 없으면 해당 줄을 생략합니다.
+
+`--inputs-shape input-declaration-columns`로 이 사실을 Gooo에 전달할 수
+있습니다. 내보내기는 입력 1~16개, 32KiB 범위이며 각 시그니처 위치마다
+행 하나를 구성합니다. `--field`, `--include-control`은 이 형식에 적용되지
+않습니다. [입력 선언 예제](../../examples/source-control-reader/README.md#같은-타입의-입력을-선언-위치로-구분하기)에서
+Gooo가 같은 타입의 입력 쌍을 판독하는 과정을 볼 수 있습니다.
 
 기존 `gooo/body-value-origins/v1` 및 조립용
 `gooo/record-value-flow/v1`의 생성 결과와 저장된 기록은 유지합니다.

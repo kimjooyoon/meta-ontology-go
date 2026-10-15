@@ -1,0 +1,113 @@
+{
+  "schema": "gooo/input-declaration-collection-observations/v1",
+  "scope": "first observations of a materially changed Gooo reader using nested collection iteration",
+  "consumer_source_sha256": "f5943f3382f60b8d5bfbcfdfe14f528d20134aaef71a08920ed233d3b5fc4f30",
+  "controlled": {
+    "passed": 16,
+    "total": 16,
+    "model_calls": 0,
+    "native_runs": 2
+  },
+  "source_query": {
+    "decision": "OBSERVED",
+    "inputs": 2,
+    "same_type_pairs": 1,
+    "model_calls": 0,
+    "native_runs": 2
+  },
+  "revision_comparison": {
+    "compared": 16,
+    "identical": 16,
+    "previous_source_reexecuted": false,
+    "denominator": "same sixteen cases across two source revisions; not thirty-two independent cases"
+  },
+  "commands": {
+    "collection-consumer-cases-first": {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "examples/source-control-reader/input-cases.json",
+        "examples/source-control-reader/inputs.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.522702958,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "collection-consumer-codegen-first": {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "run",
+        "./cmd/gooo",
+        "body-codegen",
+        "--json",
+        "--activity",
+        "InspectInputs",
+        "examples/source-control-reader/inspect.gooo"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.778238292,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "collection-source-coherence-first": {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/languagereadiness/languagesyntax/replay",
+        "-run",
+        "^TestInputDeclarationsSourceCoherence$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.198453084,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "collection-source-consumer-first": {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--inputs",
+        "examples/source-control-reader/signature-inputs.json",
+        "examples/source-control-reader/inputs.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.5007569590000001,
+      "scope": "first new declaration transport/source/input cohort"
+    }
+  },
+  "archive": {
+    "path": "collection-observations.tar.gz",
+    "sha256": "0a3d155a290cbb6e458db52f104450d89615fcae9a0fb6d5bbfe9b3a91563371",
+    "bytes": 107237,
+    "members": {
+      "collection-source.gooo": "f5943f3382f60b8d5bfbcfdfe14f528d20134aaef71a08920ed233d3b5fc4f30",
+      "collection-consumer-cases-first/command.json": "2e755dd182a8d7941b8f6b5fb9953e04f106d4568170182278ef89f4eeadb861",
+      "collection-consumer-cases-first/stdout": "ec43c268c6c0a57bcf2c7570a0d8613ae5c520679f709374bea69efbd21ee02d",
+      "collection-consumer-cases-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "collection-consumer-codegen-first/command.json": "a16fa72daee5b92a531ff8d767009c0ec7d621fe3fe5236f16ac7657b8eca071",
+      "collection-consumer-codegen-first/stdout": "cf48a84a8e392f1bb7277b6f23b81df7a679785f53ab6adf5058977ba8942074",
+      "collection-consumer-codegen-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "collection-source-coherence-first/command.json": "90017187b20e9d394f9ea19adab462684412c7fcb08a12527f38bf59f9675874",
+      "collection-source-coherence-first/stdout": "dd1f76d524f3b6049bc6e6955b86046e185567bbd2d02a037f0fb1c2ca574307",
+      "collection-source-coherence-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "collection-source-consumer-first/command.json": "761bdc4489992d3afab3544a10f01a1f33b52062bcab53ffadb33a483e1eb364",
+      "collection-source-consumer-first/stdout": "90be9d076633754fccdb395526521710246e11e60288e91f60ead72132d1daed",
+      "collection-source-consumer-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limits": [
+    "Nested collection iteration already existed; no loop admission policy was changed.",
+    "Counted-loop nesting is still outside its current source profile.",
+    "One local run per new source/input cohort; concurrent source analysis during the controlled command means timings are not an isolated performance comparison."
+  ]
+}

@@ -44,8 +44,11 @@ func validateBodyOriginOptions(options bodyOriginOptions) error {
 	if flags["--inputs-shape"] != "" && (flags["--inputs-for"] == "" || options.list || flags["--fill-candidate"] != "") {
 		return fmt.Errorf("--inputs-shape requires a typed source input export with --inputs-for")
 	}
-	if shape := flags["--inputs-shape"]; shape != "" && shape != "ancestry-columns" && shape != "source-control-columns" {
+	if shape := flags["--inputs-shape"]; shape != "" && shape != "ancestry-columns" && shape != "source-control-columns" && shape != "input-declaration-columns" && shape != "named-input-declaration-columns" {
 		return fmt.Errorf("unknown --inputs-shape %q", shape)
+	}
+	if (flags["--inputs-shape"] == "input-declaration-columns" || flags["--inputs-shape"] == "named-input-declaration-columns") && (flags["--field"] != "" || options.control) {
+		return fmt.Errorf("input-declaration-columns describes signature positions; --field and --include-control select graph ancestry")
 	}
 	if flags["--inputs-shape"] == "source-control-columns" && flags["--field"] != "" {
 		return fmt.Errorf("source-control-columns contains the retained activity graph; --field selects ancestry inputs")

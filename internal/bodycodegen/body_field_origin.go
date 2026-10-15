@@ -10,6 +10,7 @@ import (
 type BodyFieldOrigin struct {
 	ActivityID       string            `json:"activity_id"`
 	Kind             string            `json:"kind"`
+	Operation        string            `json:"operation,omitempty"`
 	NativeOrdinal    int               `json:"native_ordinal"`
 	NativePopulation int               `json:"native_population"`
 	RecordID         string            `json:"record_id"`
@@ -22,11 +23,12 @@ type BodyFieldOrigin struct {
 // FieldSyntax is a syntactic slot, not a claim of record/field identity.
 // Only a successful typed capture may associate it with a Gooo stable ID.
 type FieldSyntax struct {
-	Node   ast.Node
-	Field  *ast.Ident
-	Value  ast.Node
-	Target ast.Node
-	Kind   string
+	Node      ast.Node
+	Field     *ast.Ident
+	Value     ast.Node
+	Target    ast.Node
+	Kind      string
+	Operation string
 }
 
 // WalkFieldSyntax is shared by source retention and native observation. Compiler
@@ -41,17 +43,22 @@ func WalkFieldSyntax(body *ast.BlockStmt, visit func(FieldSyntax)) {
 					return false
 				}
 				if field, ok := v.Lhs[0].(*ast.SelectorExpr); ok {
-					writes[field] = true
-					visit(FieldSyntax{n, field.Sel, v.Rhs[0], field, "field_assignment"})
+					_, compound := CompoundAssignmentOperator(v.Tok)
+					writes[field] = !compound
+					slot := FieldSyntax{Node: n, Field: field.Sel, Value: v.Rhs[0], Target: field, Kind: "field_assignment"}
+					if compound {
+						slot.Operation = v.Tok.String()
+					}
+					visit(slot)
 				}
 			}
 		case *ast.KeyValueExpr:
 			if key, ok := v.Key.(*ast.Ident); ok {
-				visit(FieldSyntax{n, key, v.Value, key, "record_constructor"})
+				visit(FieldSyntax{Node: n, Field: key, Value: v.Value, Target: key, Kind: "record_constructor"})
 			}
 		case *ast.SelectorExpr:
 			if !writes[v] {
-				visit(FieldSyntax{n, v.Sel, v, v, "field_read"})
+				visit(FieldSyntax{Node: n, Field: v.Sel, Value: v, Target: v, Kind: "field_read"})
 			}
 		}
 		return true

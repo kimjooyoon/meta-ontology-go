@@ -47,11 +47,17 @@ own the classification, grouping and bounded ancestry walks; Go transports the
 observations. This lets a program inspect how another Gooo program was assembled
 and where retained values came from.
 
+The development [recorded-use RDF example](examples/recorded-use-origins/README.md#읽기-사건을-rdf로-내보내기)
+constructs PROV-O qualified usage and N-Triples in Gooo. Calls, retained value
+versions and individual reads get identities scoped to the exact saved document.
+This offers a small interoperability path from a Gooo metaprogram to RDF tools.
+
 | Task | Development examples |
 | --- | --- |
 | Trace authored conditions and selected fragments | [Condition origins](examples/condition-origins/README.md), [original fill files](examples/workspace-fill-origins/README.md) |
 | Inspect source dependencies and local declarations | [Typed value origins](examples/typed-value-origins/README.md), [workspace local origins](examples/workspace-local-origins/README.md) |
 | Read constant and input-dependent branch scopes in Gooo | [Source control reader](examples/source-control-reader/README.md) |
+| Distinguish same-type inputs by their original signature positions | [Input declaration reader](examples/source-control-reader/README.md#같은-타입의-입력을-선언-위치로-구분하기) |
 | Put `else` on the next line and retain original condition locations | [Readable branches and a Gooo syntax policy](examples/else-layout/README.md) |
 | Follow observed field/local relationships | [Field histories](examples/native-record-fields/README.md), [field ancestry](examples/native-field-lineage/README.md), [field/local bridge](examples/local-field-bridge/README.md) |
 | Read original field and choice locations | [Field locations](examples/field-source-map/README.md), [record-choice reader](examples/record-choice-origins/README.md), [return/choice contract](docs/language/return-choice-origins.ko.md) |
@@ -261,6 +267,11 @@ types and presence from the validated workspace, including imported packages.
 Activities may declare an [explicit stable ID](docs/language/activity-identity.md)
 after the result type, so a display rename retains that identity in interfaces,
 generated markers and native delivery traces.
+Development source also supports [named activity inputs](docs/language/named-inputs.ko.md),
+such as `Difference(minuend Integer, subtrahend Integer)`. The body uses those
+names, while input wiring keeps its source positions and the origin view retains
+the original name and type locations. A [runnable example](examples/named-inputs/README.md)
+shows the same-type inputs, Korean names and package input keys.
 The development [activity refactoring command](docs/language/activity-refactoring.md)
 ([한국어](docs/language/activity-refactoring.ko.md))
 renames an activity and its file-local calls, conditions and bindings while

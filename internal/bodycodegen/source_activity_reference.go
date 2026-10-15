@@ -86,7 +86,7 @@ func bodyActivityReference(source []byte, activity *syntax.ActivityDecl, offset 
 	if err != nil {
 		return "", 0, 0, err
 	}
-	file, set, header, err := parseRenameBody(activity.ValueProgram, len(activity.Inputs))
+	file, set, header, err := parseRenameBody(activity.ValueProgram, len(activity.Inputs), syntax.ActivityDeclaredInputNames(activity)...)
 	if err != nil {
 		return "", 0, 0, err
 	}

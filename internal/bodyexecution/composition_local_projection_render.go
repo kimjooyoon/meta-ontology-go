@@ -2,6 +2,7 @@ package bodyexecution
 
 import (
 	"go/ast"
+	"go/token"
 	"strconv"
 	"strings"
 
@@ -45,8 +46,12 @@ func (p readProjection) renderLocal(item readProjectionNode) string {
 		operation, _ := bodycodegen.CompoundAssignmentOperator(assignment.Tok)
 		previous := p.render(p.offset(assignment.Lhs[0].Pos()), p.offset(assignment.Lhs[0].End()))
 		operand := p.render(p.offset(assignment.Rhs[0].Pos()), p.offset(assignment.Rhs[0].End()))
+		expression := previous + " " + operation.String() + " (" + operand + ")"
+		if operation == token.QUO {
+			expression = p.faultPrefix + "Quotient(" + previous + "," + operand + "," + strconv.Itoa(item.fault) + ")"
+		}
 		return p.localSites[item.localWrite].Name + " = " +
-			p.localAssignment(item.localWrite, previous+" "+operation.String()+" ("+operand+")")
+			p.localAssignment(item.localWrite, expression)
 	}
 	return p.source[item.start:item.end]
 }
