@@ -1,0 +1,32 @@
+{
+  "saved-source-first": {
+    "argv": [
+      "<go-toolchain>/bin/go",
+      "test",
+      "-p=1",
+      "./cmd/gooo",
+      "-run",
+      "^TestLocalDivisionSavedProvenance$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.027137875,
+    "scope": "new source-bound local division fault cohort"
+  },
+  "observation-capacity-first": {
+    "argv": [
+      "<go-toolchain>/bin/go",
+      "test",
+      "-p=1",
+      "./internal/meta/repositoryprojection/extractor",
+      "-run",
+      "^TestLocalDivisionObservationCapacity$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.907249416,
+    "scope": "new source-bound local division fault cohort"
+  }
+}

@@ -44,7 +44,7 @@ func arithmeticCompositionProjection(prior Composition) (string, []CompositionFa
 	if err != nil {
 		return "", nil, err
 	}
-	info := &types.Info{Types: map[ast.Expr]types.TypeAndValue{}}
+	info := &types.Info{Types: map[ast.Expr]types.TypeAndValue{}, Defs: map[*ast.Ident]types.Object{}, Uses: map[*ast.Ident]types.Object{}}
 	if _, err := new(types.Config).Check("gooo.observed.arithmetic", p.fset, []*ast.File{file}, info); err != nil {
 		return "", nil, err
 	}
@@ -78,6 +78,7 @@ func (p *arithmeticProjection) collect(function *ast.FuncDecl, ids [2]string, in
 	ast.Inspect(function.Body, func(node ast.Node) bool {
 		if assignment, ok := node.(*ast.AssignStmt); ok {
 			p.collectFieldDivision(assignment, ids, info)
+			p.collectLocalDivision(assignment, ids, info)
 		}
 		expression, ok := node.(*ast.BinaryExpr)
 		if !ok || expression.Op != token.QUO && expression.Op != token.REM {

@@ -17,10 +17,12 @@ type readProjectionNode struct {
 	start, end  int
 	localKind   string
 	localWrite  int
+	fault       int
 	variables   []int
 }
 type readProjection struct {
 	source, prefix string
+	faultPrefix    string
 	fset           *token.FileSet
 	nodes          []readProjectionNode
 	localSites     []CompositionLocalSite
@@ -40,11 +42,12 @@ func observedReadProjection(source, prefix string, prior Composition, sites []Co
 	if len(constructed) > 0 {
 		constructions = constructed[0]
 	}
-	return observedReadProjectionWithLocals(source, prefix, prior, sites, constructions, nil, nil)
+	return observedReadProjectionWithLocals(source, prefix, prior, sites, constructions, nil, nil, nil)
 }
 
-func observedReadProjectionWithLocals(source, prefix string, prior Composition, sites []CompositionReadSite, constructionSites []CompositionConstructionSite, locals []CompositionLocalSite, uses []CompositionLocalUseSite) (string, error) {
+func observedReadProjectionWithLocals(source, prefix string, prior Composition, sites []CompositionReadSite, constructionSites []CompositionConstructionSite, locals []CompositionLocalSite, uses []CompositionLocalUseSite, faults []CompositionFaultSite) (string, error) {
 	p := readProjection{source: source, prefix: prefix, fset: token.NewFileSet()}
+	p.faultPrefix = arithmeticObservationPrefix(prior.Source)
 	p.localSites, p.localUseSites = locals, uses
 	file, err := parser.ParseFile(p.fset, "read.go", source, 0)
 	if err != nil {
@@ -75,6 +78,9 @@ func observedReadProjectionWithLocals(source, prefix string, prior Composition, 
 	localRanges := p.collectLocalReadNodes(file, bindings, local, lookup, constructs, sites, constructionSites)
 	if len(p.nodes) != len(sites)+len(constructionSites)+len(locals)-localRanges+len(uses)+len(local.scopes) {
 		return "", fmt.Errorf("collection read projection differs from retained sites")
+	}
+	if err := p.bindLocalFaults(faults); err != nil {
+		return "", err
 	}
 	raw, err := format.Source([]byte(p.render(0, len(source))))
 	return string(raw), err

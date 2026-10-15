@@ -16,7 +16,7 @@ return amount
 
 Each compound update has two value origins: the preceding local value and the right-hand expression. Native execution records the old-value read before the new write, with source coordinates for the authored left-hand variable. The path recipe expands the update into a binary assignment while retaining a normalization receipt.
 
-Supported operators are `+=`, `-=`, `*=`, `/=` on initialized direct integer locals and integer fields of local records. String fields support `+=`. Division truncates toward zero. Update a local copy of an input; input parameters remain readonly. The native fault-origin extension below covers field division. Dynamic zero division on a direct scalar local still needs a separate observation repair.
+Supported operators are `+=`, `-=`, `*=`, `/=` on initialized direct integer locals and integer fields of local records. String fields support `+=`. Division truncates toward zero. Update a local copy of an input; input parameters remain readonly. Native fault observation covers both local and field division.
 
 Multi-input case keys name the ports individually:
 
@@ -71,3 +71,23 @@ The first four native cases matched their expected records and retained 16 compo
 The saved four-case runtime belongs to the archived first source, where the record example followed `Adjust` in one file. The public record example now has its own registered file and profile. A readonly comparison confirms identical generated Go for `Summarize`; the saved runtime keeps its original source hash. Registration v86 adds one case and one source path (124 cases / 142 paths), preserving the earlier registry entries and denominator files.
 
 Field observation currently covers flat records with required integer, boolean and string fields. A dynamic zero divisor in this profile records `ZERO_DIVISOR`, the operation's source identity, and an unfinished write. An explicit constant zero denominator is rejected during generation. Indexed targets and other compound operators remain outside the update syntax.
+
+## A divisor supplied at execution time
+
+`Divide` in `main.gooo` uses `amount /= 분모`. Both operands are read before the
+write can complete. A zero divisor retains `ZERO_DIVISOR`, `assignment: "/="`,
+`variable: "amount"`, the original source expression and its byte range. The
+interrupted local write remains incomplete. A division inside the RHS has its
+own source site, so its failure is distinct from the enclosing update.
+
+```sh
+gooo package execute --json --cases examples/compound-updates/division.cases.json \
+  examples/compound-updates/division.workspace.json
+```
+
+The two runnable cases produce `19` and `-19`. A separate recorded case with
+`149 / 0` records a fault instead of completing the expected numeric output.
+The new helper/branch and mixed local/field cohorts bring this observation to
+12 distinct cases: 7 normal outcomes and 5 faults. The first revision failed
+with an unobserved panic; its five-case repair retains the same denominator.
+Model calls are zero. [Original attempts and results](../../docs/observations/local-division-origins/observations.json).

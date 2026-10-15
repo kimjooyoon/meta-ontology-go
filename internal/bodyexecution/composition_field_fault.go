@@ -28,7 +28,7 @@ func (p *arithmeticProjection) collectFieldDivision(assign *ast.AssignStmt, ids 
 func (p *compositionFieldProjection) bindFieldFaults(faults []CompositionFaultSite) error {
 	byActivity := map[[2]string][]int{}
 	for index, site := range faults {
-		if site.Assignment == "/=" {
+		if site.Assignment == "/=" && site.Variable == "" {
 			key := [2]string{site.RootActivityID, site.ActivityID}
 			byActivity[key] = append(byActivity[key], index)
 		}
