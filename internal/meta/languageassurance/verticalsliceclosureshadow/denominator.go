@@ -91,73 +91,8 @@ func expectedBoundarySpecsForVersion(version int) []boundarySpec {
 		expected[5].Target = 20
 		expected[5].LinkTarget = 3
 	}
-	switch version {
-	case 45:
-		expected[0].Target = 77
-	case 46, 47:
-		expected[0].Target = 79
-	case 48:
-		expected[0].Target = 80
-	case 49:
-		expected[0].Target = 82
-	case 65:
-		expected[0].Target = 98
-	case 66:
-		expected[0].Target = 99
-	case 67:
-		expected[0].Target = 100
-	case 68:
-		expected[0].Target = 101
-	case 69:
-		expected[0].Target = 102
-	case 70:
-		expected[0].Target = 103
-	case 71:
-		expected[0].Target = 104
-	case 72:
-		expected[0].Target = 108
-
-	case 73:
-		expected[0].Target = 109
-
-	case 74:
-		expected[0].Target = 110
-
-	case 75:
-		expected[0].Target = 111
-
-	case 76:
-		expected[0].Target = 112
-
-	case 77:
-		expected[0].Target = 113
-
-	case 78:
-		expected[0].Target = 114
-
-	case 79:
-		expected[0].Target = 115
-
-	case 80:
-		expected[0].Target = 116
-
-	case 81:
-		expected[0].Target = 117
-
-	case 82:
-		expected[0].Target = 118
-
-	case 83:
-		expected[0].Target = 119
-
-	case 84:
-		expected[0].Target = 120
-
-	case 85:
-		expected[0].Target = 121
-
-	case 86:
-		expected[0].Target = 122
+	if target, known := historicalSyntaxTargetChunk0(version); known {
+		expected[0].Target = target
 	}
 	return expected
 }
@@ -181,4 +116,70 @@ func codeMetaOperation(id string) string {
 		}
 	}
 	return ""
+}
+
+func historicalSyntaxTargetChunk0(version int) (int, bool) {
+	switch version {
+	case 45:
+		return 77, true
+	case 46:
+		return 79, true
+	case 47:
+		return 79, true
+	case 48:
+		return 80, true
+	case 49:
+		return 82, true
+	case 65:
+		return 98, true
+	case 66:
+		return 99, true
+	case 67:
+		return 100, true
+	case 68:
+		return 101, true
+	case 69:
+		return 102, true
+	case 70:
+		return 103, true
+	case 71:
+		return 104, true
+	case 72:
+		return 108, true
+	case 73:
+		return 109, true
+	case 74:
+		return 110, true
+	case 75:
+		return 111, true
+	case 76:
+		return 112, true
+	case 77:
+		return 113, true
+	case 78:
+		return 114, true
+	case 79:
+		return 115, true
+	case 80:
+		return 116, true
+	case 81:
+		return 117, true
+	case 82:
+		return 118, true
+	case 83:
+		return 119, true
+	}
+	return historicalSyntaxTargetChunk1(version)
+}
+
+func historicalSyntaxTargetChunk1(version int) (int, bool) {
+	switch version {
+	case 84:
+		return 120, true
+	case 85:
+		return 121, true
+	case 86:
+		return 122, true
+	}
+	return 0, false
 }

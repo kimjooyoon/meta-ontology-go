@@ -3,64 +3,72 @@ package syntaxregistration
 import (
 	"fmt"
 	"go/ast"
-	"go/token"
+	"slices"
+	"strings"
 )
 
-// Freeze the prior source-selected target before the next corpus grows. The
-// historical observation is exact; it does not inherit today's denominator.
+type historyOrigins struct {
+	root     *ast.FuncDecl
+	selector ast.Stmt
+	helpers  []*ast.FuncDecl
+	targets  map[int]int
+}
+
+// Freeze the prior source-selected target before the next corpus grows.
+// Physical helper partitioning never changes a historical observation.
 func pinPreviousSyntaxTarget(source *goSource, version, capability int) error {
-	function, err := source.function("expectedBoundarySpecsForVersion")
+	history, err := readHistoryOrigins(source)
 	if err != nil {
 		return err
 	}
-	var selection *ast.SwitchStmt
-	count := 0
-	ast.Inspect(function.Body, func(node ast.Node) bool {
-		candidate, ok := node.(*ast.SwitchStmt)
-		if ok && candidate.Init == nil && candidate.Tag != nil && source.text(candidate.Tag) == "version" {
-			selection = candidate
-			count++
-			return false
-		}
-		return true
-	})
-	if count != 1 {
-		return fmt.Errorf("historical syntax target switch is missing or ambiguous")
+	if target, exists := history.targets[version]; exists && target != capability {
+		return fmt.Errorf("historical syntax target differs from its pinned source corpus")
 	}
-	seen := 0
-	for _, statement := range selection.Body.List {
-		clause, ok := statement.(*ast.CaseClause)
-		if !ok {
-			return fmt.Errorf("historical syntax target has an unsupported clause")
-		}
-		for _, expression := range clause.List {
-			value, literal := integer(expression)
-			if !literal {
-				return fmt.Errorf("historical syntax version is not a literal")
-			}
-			if value != version {
-				continue
-			}
-			seen++
-			if len(clause.Body) != 1 {
-				return fmt.Errorf("historical syntax target is not one source assignment")
-			}
-			assignment, ok := clause.Body[0].(*ast.AssignStmt)
-			if !ok || assignment.Tok != token.ASSIGN || len(assignment.Lhs) != 1 || len(assignment.Rhs) != 1 ||
-				source.text(assignment.Lhs[0]) != "expected[0].Target" {
-				return fmt.Errorf("historical syntax target ownership differs")
-			}
-			target, literal := integer(assignment.Rhs[0])
-			if !literal || target != capability {
-				return fmt.Errorf("historical syntax target differs from its pinned source corpus")
-			}
-		}
-	}
-	if seen > 1 {
-		return fmt.Errorf("historical syntax version is repeated")
-	}
-	if seen == 0 {
-		source.insert(selection.Body.Rbrace, fmt.Sprintf("\ncase %d: expected[0].Target = %d\n", version, capability))
-	}
+	history.targets[version] = capability
+	writeHistoryOrigins(source, history)
 	return nil
+}
+
+func readHistoryOrigins(source *goSource) (historyOrigins, error) {
+	root, err := source.function("expectedBoundarySpecsForVersion")
+	if err != nil {
+		return historyOrigins{}, err
+	}
+	history := historyOrigins{root: root, targets: map[int]int{}}
+	for _, statement := range root.Body.List {
+		if selection, ok := statement.(*ast.SwitchStmt); ok && historySwitch(source, selection) {
+			if history.selector != nil {
+				return history, fmt.Errorf("historical syntax target switch is ambiguous")
+			}
+			history.selector = selection
+			err = readHistoryCases(source, selection, history.targets, false)
+		} else if isHistorySelector(source, statement) {
+			if history.selector != nil {
+				return history, fmt.Errorf("historical syntax selector is ambiguous")
+			}
+			history.selector = statement
+			history.helpers, err = readHistoryChunks(source, history.targets)
+		}
+		if err != nil {
+			return history, err
+		}
+	}
+	if history.selector == nil {
+		return history, fmt.Errorf("historical syntax target selector is missing")
+	}
+	for _, declaration := range source.file.Decls {
+		function, ok := declaration.(*ast.FuncDecl)
+		if ok && strings.HasPrefix(function.Name.Name, historyChunkPrefix) && !historyOwnsHelper(history, function) {
+			return history, fmt.Errorf("historical syntax target has an orphan helper")
+		}
+	}
+	return history, nil
+}
+
+func historyOwnsHelper(history historyOrigins, function *ast.FuncDecl) bool {
+	return slices.Contains(history.helpers, function)
+}
+
+func historySwitch(source *goSource, selection *ast.SwitchStmt) bool {
+	return selection.Init == nil && selection.Tag != nil && source.text(selection.Tag) == "version"
 }

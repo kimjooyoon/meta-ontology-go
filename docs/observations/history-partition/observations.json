@@ -1,0 +1,142 @@
+{
+  "schema": "gooo/history-partition-observation/v1",
+  "source_parent": "44162c987b5ab1f0cd77287575308c2e5a8bc09e",
+  "predecessor_pr": 1598,
+  "original_failure_run": 38736301731,
+  "failed_subject": "internal/meta/languageassurance/verticalsliceclosureshadow#expectedBoundarySpecsForVersion",
+  "before_rendered_lines": 76,
+  "after_rendered_lines": 13,
+  "maximum_current_helper_lines": 55,
+  "unchanged_cap": 75,
+  "declared_historical_targets_preserved": 27,
+  "synthetic_append_steps": 53,
+  "synthetic_final_targets": 126,
+  "registration_roles": 9,
+  "normalization_proposal_sha256": "318a28cb676855ab381425d4a69386ca2c6b5dc94a10ced7020e1b17630a6cc9",
+  "source_sha256": {
+    "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go": "5c7ee56f122fbe7e2535d3da2ab3c25932d6d0ee53206280cbde5bd7ffdd00c9",
+    "internal/meta/syntaxregistration/history_growth_fresh32403_test.go": "88c073c10ca9dc038fdc7d947d2bfdef85f397c6c2f5df6ab207dca99e2875e4",
+    "internal/meta/syntaxregistration/history_origins.go": "0d5975dc606687ec5f197dc61641f9328afe0ace17c4d23a0f98c351da62e259",
+    "internal/meta/repositoryprojection/extractor/history_shape_capacity_test.go": "ad12836d46be24c3f912c19667c3b3190fb5d41cabbd17586568e149be7aab27",
+    "internal/meta/repositoryprojection/extractor/history_source_capacity_test.go": "a76b2fb14bf0caaf40a465a91a9e3f1b596c50efcb2bc2351428d90aa7fb0ed6",
+    "internal/meta/syntaxregistration/history_capacity_repair_test.go": "f4f7165aac1960f61ff74dfb1c542ab2f4842baec971449fb9b7899e3cbcaae6",
+    "internal/meta/syntaxregistration/history_cases.go": "a088a122a840e7d0c32068cc1e20e990ee6bd178eb90a7c6abe17b7bd057afe7",
+    "internal/meta/syntaxregistration/history_chunks.go": "1b447fc1aec405fc19c249bb9c875d1931565bbdf63e7f963fc717b0f67ebb03",
+    "internal/meta/syntaxregistration/history_registration_continuation_test.go": "c8ee8d76b4bf56d5b389e31ef4cc375fe19163abf6809b091c693da6178dc4d2",
+    "internal/meta/syntaxregistration/history_selector.go": "f955abfb273254861460b42710ccf597a20eaee037b8b1829014c34ac74e70fc",
+    "internal/meta/syntaxregistration/history_shape_fresh_test.go": "be39287901d7f27fc4863a392d353df30cd51af5f1a84775fff06a2adff394e9"
+  },
+  "commands": [
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/syntaxregistration",
+        "-run",
+        "^TestHistoryCapacity",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 5.033502041,
+      "name": "history-capacity-first",
+      "log": "history-capacity-first.log",
+      "log_sha256": "00a9177105f99bde488693b3f9332f0d6c4c22f80704c6c59a4009a52a727096"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/repositoryprojection/extractor",
+        "-run",
+        "^(TestHistorySourceDeclarationCapacity|TestDerivedCandidateCapacity27593)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 3.2284865419999997,
+      "name": "history-rendered-capacity-first",
+      "log": "history-rendered-capacity-first.log",
+      "log_sha256": "12db9d93bd939d32572e2fbf97920213654d9409bc5ce6271e5513318fae3e0a"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/syntaxregistration",
+        "-run",
+        "^TestPartitionedHistoryContinuesNineRegistrationRoles$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 1.152625416,
+      "name": "history-registration-first",
+      "log": "history-registration-first.log",
+      "log_sha256": "fdab152fb3862633b87e1a356aad87b5aa5a6ca4172344dba19ab1854e65b0bc"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/syntaxregistration",
+        "./internal/meta/repositoryprojection/extractor",
+        "-run",
+        "^(TestHistorySelectorUsesSyntaxInsteadOfLineLayout|TestHistoryShapeDeclarationCapacity)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 2.8650425,
+      "name": "history-shape-first",
+      "log": "history-shape-first.log",
+      "log_sha256": "f77b1968115e8fbf79ca8f9e216e52dfadbc5a1cc285012f4ae3a35fbfc368d2"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "fix",
+        "-diff",
+        "./internal/meta/syntaxregistration"
+      ],
+      "exit_code": 1,
+      "seconds": 0.5243113749999999,
+      "name": "history-normalization-first",
+      "log": "history-normalization-first.log",
+      "log_sha256": "1aafffeeb36f436346e0ad9883913dd1f0da29150df20b92019a63c06a74d632"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "fix",
+        "-diff",
+        "./internal/meta/syntaxregistration"
+      ],
+      "exit_code": 0,
+      "seconds": 0.6333176250000001,
+      "name": "history-normalization-repair",
+      "log": "history-normalization-repair.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "vet",
+        "-p=1",
+        "./internal/meta/syntaxregistration"
+      ],
+      "exit_code": 0,
+      "seconds": 0.7864019590000001,
+      "name": "history-vet-first",
+      "log": "history-vet-first.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "producer_execution_count": 0,
+  "model_call_count": 0,
+  "scope": "Physical partition of explicit source-owned history; denominator evidence bytes, corpus and version population unchanged. First normalization failure and its repair retained."
+}
