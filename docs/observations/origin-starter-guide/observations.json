@@ -1,0 +1,117 @@
+{
+  "schema": "gooo/origin-starter-guide-observations/v1",
+  "date": "2026-10-15",
+  "source_state": "UNBOUND_LOCAL_SOURCE",
+  "parent_revision": "c3f8d755940558cffae43858086117b35c0bb7ba",
+  "initializer_first": {
+    "exit_code": 0,
+    "wall_seconds": 3.738409209,
+    "argv": [
+      "<go1.27.2>/bin/go",
+      "test",
+      "-p=1",
+      "./cmd/gooo",
+      "-run",
+      "^TestOriginStarterGuideShowsValuesAndReceipts$",
+      "-count=1"
+    ],
+    "compiler_parent_revision": "c3f8d755940558cffae43858086117b35c0bb7ba",
+    "source_state": "UNBOUND_LOCAL_SOURCE",
+    "scope": "readonly modernization or first new initializer guide test; Gooo programs/model calls not executed and historical native/test cohorts not replayed",
+    "source_sha256": {
+      "cmd/gooo/templates/origins/README.md": "b9272f350d6fd05398e07f10a29a371e7034cb9857b7e3ce45ca2f57f5b2b6e4",
+      "cmd/gooo/usage_package.go": "a30d9bd42f5f270a78751b6b1a0f678ed2ad7566a5b28af40a4b439b49b27ab1",
+      "cmd/gooo/origin_starter_guide_test.go": "db52a581ac24fb43916bbf86353285eba38a608fbfa0fa097223cc16b3b7f69b",
+      "docs/language/project-starters.md": "8b6ba49d170e9466c904b1d8be6d081064abc6eca9448d9eb1566e073668ac1d"
+    }
+  },
+  "modernization_first": {
+    "exit_code": 0,
+    "wall_seconds": 1.69351825,
+    "argv": [
+      "<go1.27.2>/bin/go",
+      "fix",
+      "-p=1",
+      "-diff",
+      "./cmd/gooo"
+    ],
+    "compiler_parent_revision": "c3f8d755940558cffae43858086117b35c0bb7ba",
+    "source_state": "UNBOUND_LOCAL_SOURCE",
+    "scope": "readonly modernization or first new initializer guide test; Gooo programs/model calls not executed and historical native/test cohorts not replayed",
+    "source_sha256": {
+      "cmd/gooo/templates/origins/README.md": "b9272f350d6fd05398e07f10a29a371e7034cb9857b7e3ce45ca2f57f5b2b6e4",
+      "cmd/gooo/usage_package.go": "a30d9bd42f5f270a78751b6b1a0f678ed2ad7566a5b28af40a4b439b49b27ab1",
+      "cmd/gooo/origin_starter_guide_test.go": "db52a581ac24fb43916bbf86353285eba38a608fbfa0fa097223cc16b3b7f69b",
+      "docs/language/project-starters.md": "8b6ba49d170e9466c904b1d8be6d081064abc6eca9448d9eb1566e073668ac1d"
+    }
+  },
+  "documentation_followup": {
+    "scope": "readonly check of the corrected origin section; no compiler/native/model execution",
+    "source_sha256": "7d7dca5700598f7c14cb706750b0d2bcea832c934c0ed7b4a11aa5162fc1f5e2",
+    "result": "PASS",
+    "first_initializer_scope": "generated template README, module/entry identity and help; the repository guide received a separate documentation-only correction afterward"
+  },
+  "archive": {
+    "path": "first-checks.tar.gz",
+    "sha256": "6aba701362286c1f50ce9a47e1cc654207de4783b7ecd45ba97308d179d7efe0",
+    "bytes": 7980,
+    "members": [
+      {
+        "path": "documentation-check-first/observation.json",
+        "bytes": 379,
+        "sha256": "114ba93711a08066a5148381dd7b1d7fb2428782fccc63394e57cd25e1d1bcf7"
+      },
+      {
+        "path": "first-source/cmd/gooo/origin_starter_guide_test.go",
+        "bytes": 1947,
+        "sha256": "db52a581ac24fb43916bbf86353285eba38a608fbfa0fa097223cc16b3b7f69b"
+      },
+      {
+        "path": "first-source/cmd/gooo/templates/origins/README.md",
+        "bytes": 3141,
+        "sha256": "b9272f350d6fd05398e07f10a29a371e7034cb9857b7e3ce45ca2f57f5b2b6e4"
+      },
+      {
+        "path": "first-source/cmd/gooo/usage_package.go",
+        "bytes": 4306,
+        "sha256": "a30d9bd42f5f270a78751b6b1a0f678ed2ad7566a5b28af40a4b439b49b27ab1"
+      },
+      {
+        "path": "first-source/docs/language/project-starters.md",
+        "bytes": 9581,
+        "sha256": "8b6ba49d170e9466c904b1d8be6d081064abc6eca9448d9eb1566e073668ac1d"
+      },
+      {
+        "path": "initializer-guide-first/command.json",
+        "bytes": 954,
+        "sha256": "63dd2482c7e53e79de12ee0c6c177b8eed6ad7bb60693583908c6a6dfcd7729d"
+      },
+      {
+        "path": "initializer-guide-first/stderr",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "initializer-guide-first/stdout",
+        "bytes": 60,
+        "sha256": "46ca3d763723cb15ae1f4fc67e9885715aa11587f42d7f3466466848c1be9480"
+      },
+      {
+        "path": "modernization-first/command.json",
+        "bytes": 883,
+        "sha256": "ba27a29ffc973b23a9fab0b7eca51b1efb7fc01ed02d0dae196a975bbe174624"
+      },
+      {
+        "path": "modernization-first/stderr",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "modernization-first/stdout",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "scope": "Two newly created initializer projects test default and explicit module guide/entry identity. No Gooo program or model executed; historical cohorts not replayed. This follow-up is not part of frozen PR1585 and will be integrated after its accepted dev source."
+}
