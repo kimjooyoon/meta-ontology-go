@@ -150,5 +150,9 @@
       "bytes": 10170914
     }
   ],
-  "retired_bytes": 30545830
+  "retired_bytes": 30545830,
+  "follow_up_observations": [
+    "early-policy.json"
+  ],
+  "current_acceptance": "First seven-test cohort and the later two-test early-policy cohort retain their own source hashes. Exact final-source acceptance belongs to original PR CI."
 }

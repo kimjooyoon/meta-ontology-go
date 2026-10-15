@@ -10,20 +10,26 @@ import (
 // Composition text is checked against the original JSON before accepting its
 // decoded value. Syntax, byte limits and duplicate-field checks stay in decode.
 func decodeCompositionTextData(raw []byte, output any, limit int) error {
-	if err := decode(raw, output, limit); err != nil {
+	if len(raw) == 0 || len(raw) > limit || !utf8.Valid(raw) || !json.Valid(raw) {
+		return decode(raw, output, limit)
+	}
+	if err := validateJSONTextEscapes(raw); err != nil {
 		return err
 	}
-	return validateJSONTextEscapes(raw)
+	return decode(raw, output, limit)
 }
 
 func decodeTextScalar(raw []byte) (string, error) {
 	var text string
 	trimmed := bytes.TrimSpace(raw)
-	if len(trimmed) == 0 || trimmed[0] != '"' || !utf8.Valid(raw) || json.Unmarshal(raw, &text) != nil || len(text) > 1024 {
+	if len(trimmed) == 0 || trimmed[0] != '"' || !utf8.Valid(raw) || !json.Valid(raw) {
 		return "", fmt.Errorf("Text requires a string of at most 1024 UTF-8 bytes")
 	}
 	if err := validateJSONTextEscapes(raw); err != nil {
 		return "", err
+	}
+	if json.Unmarshal(raw, &text) != nil || len(text) > 1024 {
+		return "", fmt.Errorf("Text requires a string of at most 1024 UTF-8 bytes")
 	}
 	return text, nil
 }

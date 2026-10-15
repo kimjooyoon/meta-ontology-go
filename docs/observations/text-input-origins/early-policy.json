@@ -1,0 +1,50 @@
+{
+  "exit_code": 0,
+  "wall_seconds": 3.5824114999999996,
+  "source_state": "UNBOUND_LOCAL_SOURCE",
+  "parent_revision": "0a08949fd6716963715ea9d2a65c6c236d918afc",
+  "source_sha256": {
+    "internal/bodyexecution/text_json.go": "400101f584ec56d692c7316ae45deb5c5bc581e854e453422c7c3e6512452bee",
+    "internal/bodyexecution/text_json_early_test.go": "5ab55af5139d59cce6807bf7147109bc8ac07de300d50c0847b0c1735cc38a5a"
+  },
+  "scope": "new original-key collision and explicit replacement/size priority inputs; previous seven-test cohort not rerun",
+  "archive": {
+    "path": "early-policy.tar.gz",
+    "sha256": "5f9db6f5f4e8789d71710013c7f22611180e62d395943df843839216a4654f16",
+    "bytes": 2123,
+    "members": [
+      {
+        "path": "ended.json",
+        "sha256": "0070f3027af19881f456de75dfabfd16fcd9e63497b45719ba46c83a137abf95",
+        "bytes": 549
+      },
+      {
+        "path": "source/internal/bodyexecution/text_json.go",
+        "sha256": "400101f584ec56d692c7316ae45deb5c5bc581e854e453422c7c3e6512452bee",
+        "bytes": 2108
+      },
+      {
+        "path": "source/internal/bodyexecution/text_json_early_test.go",
+        "sha256": "5ab55af5139d59cce6807bf7147109bc8ac07de300d50c0847b0c1735cc38a5a",
+        "bytes": 1451
+      },
+      {
+        "path": "stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "stdout.log",
+        "sha256": "ba0d098757839117a438ceb18d2eab931e8ef246b40fc3894b625da10392a762",
+        "bytes": 353
+      }
+    ]
+  },
+  "observed": {
+    "test_functions": 2,
+    "native_program_executions": 0,
+    "model_calls": 0,
+    "original_key_escape_precedes_typed_decoding": true,
+    "rejected_text_leaves_typed_output_unchanged": true
+  }
+}

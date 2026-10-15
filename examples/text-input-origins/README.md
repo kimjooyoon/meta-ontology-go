@@ -45,6 +45,11 @@ Go 스캐너는 문법 검사를 통과한 JSON에서 16비트 단위와 인접�
 문자 값 검사를 거칩니다. 패키지 실행에서 거부된 입력은 원문 `inputs_digest`를
 남기고 실행 결과를 만들기 전에 멈춥니다.
 
+원문 UTF-8과 JSON 문법을 확인한 뒤 이스케이프 규칙을 먼저 적용합니다.
+그다음 타입 있는 필드와 키를 읽으므로, 단독 surrogate가 다른 키와 같은 문자로
+바뀌어 원래 문제를 가리는 순서를 피합니다. 해당 후속 검사는
+[별도 관찰](../../docs/observations/text-input-origins/early-policy.json)에 보존했습니다.
+
 [#1580](https://github.com/kimjooyoon/meta-ontology-go/issues/1580)은 이전 버전에서
 단독 surrogate가 U+FFFD로 바뀌는 동작을 관찰했습니다. 이번 개발 소스는 그 입력을
 명시적으로 거부합니다. 이전 버전으로 만든 기록은 당시의 관찰로 보존합니다.
