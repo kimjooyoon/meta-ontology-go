@@ -34,6 +34,9 @@ func readHistoryOrigins(source *goSource) (historyOrigins, error) {
 	if err != nil {
 		return historyOrigins{}, err
 	}
+	if root.Body == nil {
+		return historyOrigins{}, fmt.Errorf("historical syntax target function has no body")
+	}
 	history := historyOrigins{root: root, targets: map[int]int{}}
 	for _, statement := range root.Body.List {
 		if selection, ok := statement.(*ast.SwitchStmt); ok && historySwitch(source, selection) {
