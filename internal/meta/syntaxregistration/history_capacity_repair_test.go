@@ -135,10 +135,11 @@ func TestHistoryCapacityCurrentSourceNormalizationProposal(t *testing.T) {
 	}
 	writeHistoryOrigins(source, history)
 	changes, err := source.finish()
-	if err != nil || len(changes) != 1 {
-		t.Fatal("normalization source ownership", len(changes), err)
+	if err != nil {
+		t.Fatal(err)
 	}
-	after, err := parseSourceUnits(changes, closureRoot, "verticalsliceclosureshadow", false)
+	updated := historyNormalizationUnits(t, source, history, changes)
+	after, err := parseSourceUnits(updated, closureRoot, "verticalsliceclosureshadow", false)
 	if err != nil {
 		t.Fatal(err)
 	}
