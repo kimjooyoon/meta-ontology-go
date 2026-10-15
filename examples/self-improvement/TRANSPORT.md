@@ -60,6 +60,14 @@ fails. Future failures can be traced from the observed event and source relation
 Regenerate the projection from `internal/meta/selfimprovementtransport/originpolicy`
 with `go generate`; generated regions are checked against their Gooo source.
 
+The first PR's full CI also found a missing syntax-registry entry for this new
+policy source. The registration metaprogram generated all nine coordinated
+members, including denominator v88. A fresh check confirms this source's five
+preservation laws and an inventory with zero missing or unregistered files.
+The [registration observation](../../docs/observations/transport-origin-registration/observations.json)
+retains the exact request, generating activities and before/after member digests.
+The new syntax case records an exercised use of existing language features.
+
 GitHub documents the event-dependent commit semantics in
 [workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run)
 and the workflow definition identity in
