@@ -37,6 +37,7 @@ func ObserveArtifactLifecycle(repository fs.FS, contractPath string, runRaw, art
 	verifyLifecycleStep(&receipt, 0, digestJSON([]string{digestBytes(runRaw), digestBytes(artifactsRaw)}))
 	receipt.OrchestrationHeadSHA = run.HeadSHA
 	receipt.WorkflowPath = run.Path
+	receipt.ProducerEvent = run.Event
 	receipt.ArtifactInstanceCount, receipt.ArtifactTypeCount = artifactStats(list.Artifacts, input.Selection.ArtifactName)
 	if err := validateSelectionRun(run, input.Selection); err != nil {
 		failLifecycleAt(&receipt, 1, lifecycleSelectionReason(err), "", "", "")
@@ -58,7 +59,7 @@ func ObserveArtifactLifecycle(repository fs.FS, contractPath string, runRaw, art
 	metadata := TransportMetadata{
 		Schema: MetadataSchema, Repository: input.Selection.Repository,
 		ProducerRunID: run.ID, ProducerRunAttempt: run.RunAttempt,
-		OrchestrationHeadSHA: run.HeadSHA, WorkflowPath: run.Path,
+		OrchestrationHeadSHA: run.HeadSHA, WorkflowPath: run.Path, ProducerEvent: run.Event,
 		ArtifactID: artifact.ID, ArtifactName: artifact.Name,
 		ArtifactDigest: artifact.Digest, ArtifactSizeBytes: artifact.SizeInBytes,
 	}

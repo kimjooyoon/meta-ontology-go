@@ -1,0 +1,145 @@
+{
+  "schema": "gooo/transport-origin-registration-observation/v1",
+  "source_commit": "3812e9924d494d7cf083ef37d667b92af71b9841",
+  "source_path": "internal/meta/selfimprovementtransport/originpolicy/source.gooo",
+  "source_digest": "sha256:3cb07767dbe8f84e6ef5d64c282ffbb803f887ff0993529875c61d408ec37710",
+  "predecessor_pr": 1602,
+  "original_failure_run": 38761580419,
+  "cause": "New policy source was absent from the executed syntax registry; transport tests passed but whole-repository source inventory rejected the unregistered file.",
+  "request": {
+    "case": {
+      "id": "transport-run-origin-binding",
+      "path": "internal/meta/selfimprovementtransport/originpolicy/source.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    "base_version": 87,
+    "snapshot_digest": "sha256:1cf63de14ef1aa0cd76f039163b0173d8f0e176c2c93c33ceb4f0361ed82ef38",
+    "source_digest": "sha256:3cb07767dbe8f84e6ef5d64c282ffbb803f887ff0993529875c61d408ec37710",
+    "toolchain": "go1.27.2",
+    "execution_identity": {
+      "go_version": "go1.27.2",
+      "goos": "darwin",
+      "goarch": "arm64",
+      "executable_sha256": "sha256:3b0ad9800a54a5991923fd93843c11082e974770dba0ef3db62be48fa194a1b3",
+      "go_command_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+      "compiler_sha256": "sha256:8a3add4030b0f724c535afe946a4fcd27ca235ba869d4d4b91091e0ef8a611e2"
+    }
+  },
+  "candidate": {
+    "operation": "RegisterSyntaxCapability",
+    "activity_id": "syntaxregistration://activity/register-syntax-capability",
+    "contract_digest": "sha256:c54d34e3857ec9b41bc50051658d5a76e0394ad25460984924a9840768503186",
+    "semantic_digest": "e675918550160473f5ee393369c21dd9b9e9742104a3e243beb31e73d6c58caa",
+    "input_digest": "sha256:1cf63de14ef1aa0cd76f039163b0173d8f0e176c2c93c33ceb4f0361ed82ef38",
+    "request_digest": "sha256:25cddc59d76076890ee6b74a10fecdccffe53320760924c3bcb3b8f4d7989ba4",
+    "state": "PROPOSAL_ONLY",
+    "semantic_admission": "UNASSESSED",
+    "required_members": 9,
+    "emitted_members": 9,
+    "required_artifacts": 9,
+    "repository_writes": 0,
+    "apply_authorized": false,
+    "promotion_authorized": false
+  },
+  "members": [
+    {
+      "path": "examples/language-syntax-roundtrip/corpus.json",
+      "before_digest": "sha256:eef3c676c519ce27786016f25ef3aa3d4a676afbe3fe5811a5842df4a0aba022",
+      "after_digest": "sha256:901b719bb6964c758ff08f8c18f2923ae8416880e295771a23e7d8131c7e6060",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-syntax-corpus"
+      ]
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+      "before_digest": "sha256:eb98609ad9b2a84388fd9408482a4c8dab5f2177b43bd34e7c26edddf9effe37",
+      "after_digest": "sha256:bb7eee401af839bcd2c3200ac513b8fe3a3d163ba713cc5a0e399e0d5e6f1b61",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-digest"
+      ]
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+      "before_digest": "sha256:5c7ee56f122fbe7e2535d3da2ab3c25932d6d0ee53206280cbde5bd7ffdd00c9",
+      "after_digest": "sha256:d0e2de170e193acfdfa87af4c0cfc3f9cefc3975504091df1e0a0c2df3b1a86d",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-admission"
+      ]
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+      "before_digest": "sha256:8d97efad49f999e7527804ba2d404890e2e0d22ff711e0c8c56e82c379b1d316",
+      "after_digest": "sha256:5c0c242ce84b1dc195d3bd327e9b17a047d3f8cc5638291c45e1defe415f346a",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-migration-conformance"
+      ]
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+      "before_digest": "sha256:842aab7a0c4e8bae4ef3885293d8c399e76401c6d60e4c4789a5d98b6d6a911c",
+      "after_digest": "sha256:2912d726fbe32786fbc6b2412732f03c98f45b278bab819b72ebedc13b9c5ce7",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-selection"
+      ]
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v88.json",
+      "before_digest": "ABSENT",
+      "after_digest": "sha256:c08229ea827f03eb0b5120b604d53f2ae1de4c45008f0cb589a7fe2ac78dba61",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-evidence"
+      ]
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+      "before_digest": "sha256:65d6ab5d6ef98d79cfe0c7acab52dda0fb9ff14fae9371116ff4e51861853906",
+      "after_digest": "sha256:09246673e3c4587f9e3b5df5d3ecc2c81f8c46b2ed374dc0fcaf28a405c6ace3",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-syntax-conformance"
+      ]
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/model.go",
+      "before_digest": "sha256:c9ec903b78c56ca474dacff635468bef6cb698adfeadce6322637043c65bfbfe",
+      "after_digest": "sha256:a6a0f738fe233842040af968283dc76c3cc1f6b9a265597dfbbf3290d648ee72",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-syntax-denominator"
+      ]
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go",
+      "before_digest": "sha256:119443ed179022f700249a9d931c416392f0235e38e4a6e609c50b2fbeadad3e",
+      "after_digest": "sha256:63648aa5f2806702f51621b3346fa1ce1c102b9d11302481980b22748a0f6960",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-native-registry"
+      ]
+    }
+  ],
+  "application": {
+    "generated_member_follow_up_edits": 0,
+    "historical_denominators_modified": 0,
+    "new_denominator_version": 88
+  },
+  "fresh_check": {
+    "name": "TestTransportOriginRegistrationFresh1612",
+    "decision": "PASS",
+    "source_cases_executed": 1,
+    "preservation_laws": [
+      "AST replay",
+      "byte replay",
+      "semantic replay",
+      "Get-Put",
+      "Put-Get"
+    ],
+    "inventory_unregistered": 0,
+    "inventory_missing": 0,
+    "full_corpus_replayed_locally": false,
+    "log_digest": "sha256:a97896ebafadbe0d479cfbd8deb30d28b1b1e0e73b1c4ca3a56c5c498249f291"
+  },
+  "integration": "Original successor CI must verify the complete candidate before normal merge."
+}

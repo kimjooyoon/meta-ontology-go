@@ -15,6 +15,12 @@ func ValidateReport(report Report) error {
 	if report.Provenance.Stage == "" || report.Provenance.Step == "" || report.Provenance.Reason == "" {
 		return fmt.Errorf("transport provenance coordinate is incomplete")
 	}
+	if report.Provenance.RunOrigin != resolveRunOrigin(evaluationInput{producer: report.Producer, metadata: report.Transport}) {
+		return fmt.Errorf("transport run origin does not match source policy")
+	}
+	if report.Provenance.State == ResolutionClosed && report.Provenance.RunOrigin.State != ResolutionClosed {
+		return fmt.Errorf("transport CLOSED provenance has an unresolved run origin")
+	}
 	if err := report.Contract.ResolutionPolicy.Validate(); err != nil {
 		return err
 	}
