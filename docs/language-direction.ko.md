@@ -26,6 +26,37 @@ Gooo는 계산의 의미, 허용한 구현 선택, 그 결과의 출처를 함�
 | 반환값까지 이어지는 소스 | [읽기 쉬운 기원 조회](language/readable-source-origins.ko.md) |
 | 실행 기록을 해석하는 메타프로그램 | [기원 읽기 프로젝트](language/project-starters.md#start-an-origin-reader) |
 
+같은 정수 타입이라도 역할을 이름과 ID로 구분할 수 있습니다. 다음 계산은
+요청의 금액에 조정액을 더하고, 지정한 경우 두 배로 만듭니다.
+
+```gooo
+package adjustment
+namespace adjustment
+
+entity Integer id "urn:gooo:type:integer"
+entity Request id "urn:adjustment:request" fields {
+    field amount id "urn:adjustment:amount" type integer required one
+    field adjustment id "urn:adjustment:delta" type integer required one
+    field doubled id "urn:adjustment:doubled" type boolean required one
+}
+
+activity Apply(Request) -> Integer id "urn:adjustment:apply" computes `
+let amount = input.amount
+amount += input.adjustment
+if input.doubled {
+    amount *= 2
+}
+return amount
+`
+```
+
+`amount`와 `adjustment`는 같은 타입을 쓰면서 서로 다른 필드 기원을 갖습니다.
+이처럼 지금 있는 표현으로 읽기 쉬운 프로그램을 만들고, 반복되는 불편을
+확인한 뒤 문법을 넓힙니다.
+[이 예제의 소스 조회](observations/readable-origins/input-role-source-view.txt)에서 세
+필드와 갱신·조건의 연결을 읽을 수 있습니다. [관찰 기록](observations/readable-origins/input-role-source-observation.json)은
+소스 분석의 범위와 시간을 남깁니다.
+
 ## 한 번의 조립을 따라가 보면
 
 1. 작성자가 `.gooo`에 개념 ID, 함수, 허용할 후보와 판단 조건을 적습니다.

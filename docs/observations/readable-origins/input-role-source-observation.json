@@ -1,0 +1,25 @@
+{
+  "schema": "gooo/documentation-source-observation/v1",
+  "source_document": "docs/language-direction.ko.md",
+  "source_block_sha256": "32b2d1e7ac85d3e11abe609e24ed7445d4e788942fd0ee6ec02e888d1cb6e097",
+  "source_block_start": 2132,
+  "source_block_end": 2663,
+  "compiler_revision": "69b060326c61b2f8c2e617b49209d26ca56550e0",
+  "compiler_source_state": "UNBOUND_LOCAL_SOURCE",
+  "status": "RESOLVED",
+  "exit_code": 0,
+  "command_wall_seconds": 2.707536041,
+  "timing_scope": "one original local go run invocation, including cached build/startup; not a comparative performance measurement",
+  "raw_view": "input-role-source-view.txt",
+  "raw_view_sha256": "3886e4cac42ceeec88185b205d07a8756386fc7d8132af2453e6dd008261e76c",
+  "scope": "possible source dependencies; no input values or observed execution path",
+  "native_executions": 0,
+  "model_calls": 0,
+  "input_field_ids": [
+    "urn:adjustment:amount",
+    "urn:adjustment:delta",
+    "urn:adjustment:doubled"
+  ],
+  "semantic_admission": "UNASSESSED",
+  "compiler_merge_authority": false
+}
