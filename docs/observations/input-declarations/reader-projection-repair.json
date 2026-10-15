@@ -1,0 +1,59 @@
+{
+  "schema": "gooo/input-declaration-reader-projection-repair/v1",
+  "predecessor_pr": 1590,
+  "original_run": 38717290874,
+  "original_failure": "derive-recipe/select-safe-suffix/NO_SAFE_DECLARATION_CAPACITY",
+  "affected_source": "cmd/gooo/input_declaration_observations_test.go",
+  "repair": "separate manifest/archive loading, tar member verification and source binding assertions into complete functions",
+  "required_assertions": [
+    "archive SHA256",
+    "every member SHA256 and full size",
+    "duplicate/missing members",
+    "original consumer source SHA256",
+    "signature fixture SHA256",
+    "exact source-only exported positions"
+  ],
+  "scope": "read-only assertions on the repaired reader and its complete-declaration projections; no native program/model execution",
+  "source_sha256": "6d214abbe48735196d1e7c38f1a833cdb5308d82029f9eef9deba577f577e69c",
+  "observations": {
+    "predecessor-binding-refactor-first": {
+      "command": {
+        "argv": [
+          "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+          "test",
+          "-p=1",
+          "./cmd/gooo",
+          "-run",
+          "^TestInputDeclarationSavedSourceBinding$",
+          "-count=1",
+          "-v"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 8.709642291,
+        "scope": "first new named-input source/semantic cohort"
+      },
+      "stdout": "=== RUN   TestInputDeclarationSavedSourceBinding\n--- PASS: TestInputDeclarationSavedSourceBinding (0.01s)\nPASS\nok  \tgithub.com/kimjooyoon/meta-ontology-go/cmd/gooo\t0.576s\n",
+      "stderr": ""
+    },
+    "predecessor-extraction-repair-first": {
+      "command": {
+        "argv": [
+          "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+          "test",
+          "-p=1",
+          "./internal/meta/repositoryprojection/extractor",
+          "-run",
+          "^TestInputDeclarationReaderExtractionFirst$",
+          "-count=1",
+          "-v"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 2.726293041,
+        "scope": "first new named-input source/semantic cohort"
+      },
+      "stdout": "=== RUN   TestInputDeclarationReaderExtractionFirst\n--- PASS: TestInputDeclarationReaderExtractionFirst (0.01s)\nPASS\nok  \tgithub.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor\t0.479s\n",
+      "stderr": ""
+    }
+  },
+  "revision_limit": "Local checks ran while separate named-input language work was in progress. The successor PR contains only this repair and owns fresh exact-revision CI."
+}
