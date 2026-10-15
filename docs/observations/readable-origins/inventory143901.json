@@ -1,0 +1,9 @@
+{
+  "cohort": "inventory143901",
+  "scope": "source membership facts only; no replay/native cases",
+  "original_local_execution": true,
+  "local_reruns": 0,
+  "exit_code": 0,
+  "wall_seconds": 6.134266138076782,
+  "producer_manifest_sha256": "d4ca036f3900ec72812bcbb4a47e45a7bf4985a0895d18a45649be989eae932e"
+}

@@ -7,77 +7,110 @@ import (
 	"slices"
 )
 
+type compilationCapture struct {
+	imports         *moduleImporter
+	inputs          map[string]moduleCompiledInput
+	bytes           int64
+	files, external int
+}
+
 func (imports *moduleImporter) captureCompilationSources(packages []moduleCompiledPackage) (map[string]moduleCompiledInput, error) {
-	result := map[string]moduleCompiledInput{}
-	sourceBytes := imports.compilationSourceBytes
-	sourceFiles := imports.compilationSourceFiles
-	external := imports.externalPackages
+	capture := compilationCapture{imports: imports, inputs: map[string]moduleCompiledInput{},
+		bytes: imports.compilationSourceBytes, files: imports.compilationSourceFiles, external: imports.externalPackages}
 	for _, pkg := range packages {
 		if pkg.Goroot {
 			continue
 		}
-		if pkg.ImportPath == "" || pkg.Incomplete || len(pkg.CgoFiles) != 0 || len(pkg.GoFiles) == 0 {
-			return nil, errModuleDependency
-		}
-		if _, exists := result[pkg.ImportPath]; exists {
-			return nil, errModuleDependency
-		}
-		directory, err := normalizedPackageDirectory(pkg.Dir)
-		if err != nil {
+		if err := capture.packageInput(pkg); err != nil {
 			return nil, err
 		}
-		if imports.local(pkg.ImportPath) {
-			root, err := filepath.EvalSymlinks(imports.absoluteRoot())
-			if err != nil {
-				return nil, errModuleDependency
-			}
-			if _, inside := canonicalContainedPath(root, directory); !inside {
-				return nil, errModuleDependency
-			}
-		} else {
-			if _, known := imports.compilationInputs[pkg.ImportPath]; !known && external >= modulePackageMax {
-				return nil, moduleFailure(moduleCausePackageLimit)
-			}
-			if _, known := imports.compilationInputs[pkg.ImportPath]; !known {
-				external++
-			}
-		}
-		pkg.Dir = directory
-		input := moduleCompiledInput{Package: pkg}
-		names := compilationFileNames(pkg)
-		if _, retained := imports.compilationInputs[pkg.ImportPath]; !retained {
-			if len(names) > moduleStageFilesMax-sourceFiles {
-				return nil, moduleFailure(moduleCauseFileLimit)
-			}
-			sourceFiles += len(names)
-		}
-		for _, name := range names {
-			if !fs.ValidPath(filepath.ToSlash(name)) || filepath.IsAbs(name) {
-				return nil, errModuleDependency
-			}
-			full, contained := canonicalContainedPath(directory, filepath.Join(directory, filepath.FromSlash(name)))
-			if !contained {
-				return nil, errModuleDependency
-			}
-			data, err := readBoundedModuleSource(full)
-			if err != nil {
-				return nil, err
-			}
-			if _, retained := imports.compilationInputs[pkg.ImportPath]; !retained {
-				if int64(len(data)) > moduleSourceMax-sourceBytes {
-					return nil, moduleFailure(moduleCauseSourceLimit)
-				}
-				sourceBytes += int64(len(data))
-			}
-			input.Inputs = append(input.Inputs, moduleSourceInput{Name: full, Bytes: data, Go: slices.Contains(pkg.GoFiles, name)})
-		}
-		input.Digest = sourceInputDigest(input.Inputs)
-		if previous, exists := imports.compilationInputs[pkg.ImportPath]; exists && previous.Digest != input.Digest {
-			return nil, errModuleDependency
-		}
-		result[pkg.ImportPath] = input
 	}
-	return result, nil
+	return capture.inputs, nil
+}
+
+func (capture *compilationCapture) packageInput(pkg moduleCompiledPackage) error {
+	if pkg.ImportPath == "" || pkg.Incomplete || len(pkg.CgoFiles) != 0 || len(pkg.GoFiles) == 0 {
+		return errModuleDependency
+	}
+	if _, exists := capture.inputs[pkg.ImportPath]; exists {
+		return errModuleDependency
+	}
+	directory, err := capture.directory(pkg)
+	if err != nil {
+		return err
+	}
+	pkg.Dir = directory
+	input := moduleCompiledInput{Package: pkg}
+	names := compilationFileNames(pkg)
+	if err := capture.reserveFiles(pkg.ImportPath, len(names)); err != nil {
+		return err
+	}
+	for _, name := range names {
+		source, err := capture.sourceInput(pkg, name)
+		if err != nil {
+			return err
+		}
+		input.Inputs = append(input.Inputs, source)
+	}
+	input.Digest = sourceInputDigest(input.Inputs)
+	if previous, exists := capture.imports.compilationInputs[pkg.ImportPath]; exists && previous.Digest != input.Digest {
+		return errModuleDependency
+	}
+	capture.inputs[pkg.ImportPath] = input
+	return nil
+}
+
+func (capture *compilationCapture) directory(pkg moduleCompiledPackage) (string, error) {
+	directory, err := normalizedPackageDirectory(pkg.Dir)
+	if err != nil {
+		return "", err
+	}
+	if capture.imports.local(pkg.ImportPath) {
+		root, err := filepath.EvalSymlinks(capture.imports.absoluteRoot())
+		if err != nil {
+			return "", errModuleDependency
+		}
+		if _, inside := canonicalContainedPath(root, directory); !inside {
+			return "", errModuleDependency
+		}
+	} else if _, retained := capture.imports.compilationInputs[pkg.ImportPath]; !retained {
+		if capture.external >= modulePackageMax {
+			return "", moduleFailure(moduleCausePackageLimit)
+		}
+		capture.external++
+	}
+	return directory, nil
+}
+
+func (capture *compilationCapture) reserveFiles(path string, count int) error {
+	if _, retained := capture.imports.compilationInputs[path]; !retained {
+		if count > moduleStageFilesMax-capture.files {
+			return moduleFailure(moduleCauseFileLimit)
+		}
+		capture.files += count
+	}
+	return nil
+}
+
+func (capture *compilationCapture) sourceInput(pkg moduleCompiledPackage, name string) (moduleSourceInput, error) {
+	if !fs.ValidPath(filepath.ToSlash(name)) || filepath.IsAbs(name) {
+		return moduleSourceInput{}, errModuleDependency
+	}
+	full, inside := canonicalContainedPath(pkg.Dir, filepath.Join(pkg.Dir, filepath.FromSlash(name)))
+	if !inside {
+		return moduleSourceInput{}, errModuleDependency
+	}
+	data, err := readBoundedModuleSource(full)
+	if err != nil {
+		return moduleSourceInput{}, err
+	}
+	if _, retained := capture.imports.compilationInputs[pkg.ImportPath]; !retained {
+		if int64(len(data)) > moduleSourceMax-capture.bytes {
+			return moduleSourceInput{}, moduleFailure(moduleCauseSourceLimit)
+		}
+		capture.bytes += int64(len(data))
+	}
+	return moduleSourceInput{Name: full, Bytes: data, Go: slices.Contains(pkg.GoFiles, name)}, nil
 }
 
 func sameCompilationInputs(left, right map[string]moduleCompiledInput) bool {

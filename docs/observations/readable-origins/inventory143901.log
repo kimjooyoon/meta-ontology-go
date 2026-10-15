@@ -1,0 +1,8 @@
+=== RUN   TestSourceInventoryWithoutReplay143901
+--- PASS: TestSourceInventoryWithoutReplay143901 (0.27s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax	1.787s
+=== RUN   TestReadOnlyRegistrationInventoryCLI143901
+--- PASS: TestReadOnlyRegistrationInventoryCLI143901 (0.10s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/syntax-registration-candidate	1.512s

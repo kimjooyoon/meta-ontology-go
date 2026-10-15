@@ -19,9 +19,9 @@ gooo body-origins --activity Adjust --format text examples/compound-updates/main
 ## Gooo가 설명 규칙도 갖는다
 
 입력, 지역 정의, 갱신, 반환, 합류 등의 표시 이름은
-[Gooo 프로그램](../../internal/bodycodegen/readable_origins/roles.gooo)이 정합니다.
+[Gooo 프로그램](../../internal/meta/originview/roles.gooo)이 정합니다.
 컴파일러가 이 프로그램을 Go로 생성하고, 생성 파일의 해시와 원본 출처를
-[생성 기록](../../internal/bodycodegen/readable_origins/generation-origin.json)에 연결합니다.
+[생성 기록](../../internal/meta/originview/generation-origin.json)에 연결합니다.
 새 종류를 해석하지 못하면 원래 종류와 미분류 상태를 표시합니다.
 
 JSON은 기존 기본 형식입니다. `--format text`는 같은 그래프를 읽는 보기이며,
@@ -42,3 +42,18 @@ JSON은 기존 기본 형식입니다. `--format text`는 같은 그래프를 �
 
 [현재 소스 보기](../observations/readable-origins/compound-source-view.txt)와
 [새 입력 관찰](../observations/readable-origins/readable133613.json)을 함께 제공합니다.
+
+## 컴파일러 저장소의 등록 누락을 먼저 확인하기
+
+컴파일러 저장소에서 새 `.gooo` 프로그램을 추가할 때는 다음 조회를 먼저 사용합니다.
+
+```sh
+go run ./cmd/syntax-registration-candidate --root . --inventory > /tmp/gooo-source-inventory.json
+jq -e '(.unregistered | length) == 0 and (.missing | length) == 0' /tmp/gooo-source-inventory.json
+```
+
+각 파일의 기원 해시와 등록 목록의 차이를 읽습니다. 문법 사례 재생, 네이티브 실행,
+저장소 쓰기는 수행하지 않습니다. 문법과 의미 판정은 정식 검사에서 이어갑니다.
+표시 규칙 소스는 메타 프로그램 영역으로 옮겼습니다. 내용과 생성된 Go 바이트를
+유지하고 [위치 변경 출처](../../internal/meta/originview/source-relocation.json)를 남겼습니다.
+등록은 기존 프로토콜의 아홉 산출물로 수행했고 과거 분모를 보존했습니다.

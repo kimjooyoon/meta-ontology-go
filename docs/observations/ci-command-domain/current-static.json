@@ -4,7 +4,7 @@
   "old_jobs": 12,
   "current_jobs": 13,
   "canonical_checks": 6,
-  "scope_budget_ms": 1200000,
+  "scope_budget_ms": 2400000,
   "default_target_ms": 180000,
   "source_tool_revision": "aa0e33f2e5ec36f319232080361e5fc967d6c442",
   "historical_denominators_unchanged": 52,

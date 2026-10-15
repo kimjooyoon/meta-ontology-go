@@ -44,13 +44,13 @@ env:
   GOTOOLCHAIN: go1.27.2
   GOWORK: off
   GOMAXPROCS: 2
-  GOOO_CI_BUDGET_MS: 1200000
+  GOOO_CI_BUDGET_MS: 2400000
 
 jobs:
   work-domain:
     name: Work domain preparation
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - name: Bind the original shared work clock
         shell: bash
@@ -101,7 +101,7 @@ jobs:
     name: gofmt
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -320,7 +320,7 @@ jobs:
     name: go vet
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -360,7 +360,7 @@ jobs:
     name: go test
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -400,7 +400,7 @@ jobs:
     name: go test -race
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -440,7 +440,7 @@ jobs:
     name: Semantic conformance
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -487,7 +487,7 @@ jobs:
     needs: [format, vet, test, race, semantic]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -538,7 +538,7 @@ jobs:
           git rev-parse --verify "$EXPECTED_BASE^{commit}" >/dev/null
       - name: Preflight exact source identity before meta execution
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev' }}
-        timeout-minutes: 10
+        timeout-minutes: 5
         env:
           GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}
           GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
@@ -547,7 +547,7 @@ jobs:
         # ownership or making an early PR-route decision.
         run: go run ./scripts/verify --skip-caps --head= --base=
       - name: Emit source metrics (go/gooo + folders/files)
-        timeout-minutes: 10
+        timeout-minutes: 15
         env:
           METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
@@ -581,10 +581,10 @@ jobs:
       # The exact-head focused run for PR #739 took 23m54s; do not put both
       # complete executions under the inventory step's 15-minute budget.
       - name: Build diagnostic boundary cost reporter
-        timeout-minutes: 10
+        timeout-minutes: 5
         run: go build -o "$RUNNER_TEMP/meta-cost-report" ./scripts/meta-cost-report
       - name: Execute declared meta-operation plan
-        timeout-minutes: 10
+        timeout-minutes: 30
         env:
           METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
@@ -592,7 +592,7 @@ jobs:
         run: |
           go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution.json"
       - name: Replay declared meta-operation plan
-        timeout-minutes: 10
+        timeout-minutes: 30
         env:
           METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
@@ -601,7 +601,7 @@ jobs:
           go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution-replay.json"
           cmp -s "$METRICS_DIR/self-improvement-execution.json" "$METRICS_DIR/self-improvement-execution-replay.json"
       - name: Emit source metric receipts and feedback
-        timeout-minutes: 10
+        timeout-minutes: 15
         env:
           METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
@@ -840,7 +840,7 @@ jobs:
     needs: [format, vet, test, race, semantic, policy]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -984,7 +984,7 @@ jobs:
     needs: [format, vet, test, race, semantic, policy, evidence, feedback-predecessor]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1307,7 +1307,7 @@ jobs:
     needs: [format, vet, test, race, semantic, policy, proof]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1634,7 +1634,7 @@ jobs:
     name: Feedback predecessor
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1768,7 +1768,7 @@ jobs:
     name: Language package execution
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1813,7 +1813,7 @@ jobs:
     needs: [feedback-predecessor]
     if: ${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && needs.feedback-predecessor.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:

@@ -45,7 +45,7 @@ func TestReadableSourceOrigins133613(t *testing.T) {
 
 func TestGoooRoleProjection133613(t *testing.T) {
 	var origin struct{ Source, Generated string }
-	raw, err := os.ReadFile("readable_origins/generation-origin.json")
+	raw, err := os.ReadFile("../meta/originview/generation-origin.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func TestGoooRoleProjection133613(t *testing.T) {
 		t.Fatal(err)
 	}
 	origin.Source, origin.Generated = fields["source_sha256"], fields["generated_sha256"]
-	for name, wanted := range map[string]string{"readable_origins/roles.gooo": origin.Source, "origin_role_generated.go": origin.Generated} {
+	for name, wanted := range map[string]string{"../meta/originview/roles.gooo": origin.Source, "origin_role_generated.go": origin.Generated} {
 		data, err := os.ReadFile(name)
 		if err != nil {
 			t.Fatal(err)

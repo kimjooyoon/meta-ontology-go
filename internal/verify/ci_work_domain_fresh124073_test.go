@@ -38,7 +38,7 @@ func TestSharedWorkClockRetainsCommandPopulation124073(t *testing.T) {
 		if end := regexp.MustCompile(`(?m)^  [a-z][a-z0-9_-]*:\n`).FindStringIndex(body); end != nil {
 			body = body[:end[0]]
 		}
-		if !strings.Contains(body, "    timeout-minutes: 20\n") ||
+		if !strings.Contains(body, "    timeout-minutes: 40\n") ||
 			!strings.Contains(body, "uses: ./.github/actions/work-domain") ||
 			!strings.Contains(body, "uses: actions/cache/save@v5") ||
 			!strings.Contains(body, "Preserve original command work origins") {
