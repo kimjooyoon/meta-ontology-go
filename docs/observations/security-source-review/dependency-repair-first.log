@@ -1,0 +1,8 @@
+=== RUN   TestSetupGoSourceAvailabilityBinding
+--- PASS: TestSetupGoSourceAvailabilityBinding (0.02s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/scripts/action-runtime	0.447s
+=== RUN   TestSharedWorkClockRetainsCommandPopulation124073
+--- PASS: TestSharedWorkClockRetainsCommandPopulation124073 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/verify	0.384s

@@ -41,7 +41,7 @@ func TestSharedWorkClockRetainsCommandPopulation124073(t *testing.T) {
 		}
 		if !strings.Contains(body, "    timeout-minutes: 40\n") ||
 			!strings.Contains(body, "uses: ./.github/actions/work-domain") ||
-			!strings.Contains(body, "uses: actions/cache/save@v5") ||
+			!strings.Contains(body, "uses: actions/cache/save@v6") ||
 			!strings.Contains(body, "Preserve original command work origins") {
 			t.Fatal("work clock or origin transport missing", job.Job)
 		}

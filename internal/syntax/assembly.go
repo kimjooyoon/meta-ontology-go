@@ -129,8 +129,10 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 			value := p.assemblyInteger("attempt budget")
 			if seenAttempts || value < 1 || value > 64 {
 				p.error(DiagUnexpectedDeclaration, field.Span, "assembly needs one attempts field in 1..64")
+			} else {
+				d.Spec.MaxAttempts = int(value)
 			}
-			seenAttempts, d.Spec.MaxAttempts = true, int(value)
+			seenAttempts = true
 		case "seed":
 			if seenSeed {
 				p.error(DiagUnexpectedDeclaration, field.Span, "duplicate assembly seed")
@@ -313,8 +315,9 @@ func (p *Parser) parseAssemblyChoice() assemblyspec.Choice {
 	occurrence := p.assemblyInteger("choice occurrence")
 	if occurrence < 0 || occurrence > 127 {
 		p.error(DiagUnexpectedDeclaration, p.peek().Span, "assembly occurrence must be 0..127")
+	} else {
+		c.Occurrence = int(occurrence)
 	}
-	c.Occurrence = int(occurrence)
 	if p.at(TokenIdentifier) && p.peek().Value == "alternative" {
 		p.advance()
 		c.Alternative = p.expectString().Name

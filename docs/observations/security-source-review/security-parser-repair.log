@@ -1,0 +1,4 @@
+=== RUN   TestAssemblyIntegerBoundsRetainOnlyValidValues
+--- PASS: TestAssemblyIntegerBoundsRetainOnlyValidValues (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/syntax	0.445s

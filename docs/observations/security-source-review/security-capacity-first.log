@@ -1,0 +1,20 @@
+=== RUN   TestSecuritySourceDeclarationCapacity
+    security_source_capacity_test.go:28: internal/syntax#ReplaceStringLiteral rendered 23
+    security_source_capacity_test.go:28: internal/syntax#replacementSourceSize rendered 15
+    security_source_capacity_test.go:28: internal/syntax#TestLiteralEditPreservesSourceAndEscapesReplacement rendered 20
+    security_source_capacity_test.go:28: internal/syntax#TestLiteralEditRejectsInvalidRangesAndTokens rendered 13
+    security_source_capacity_test.go:28: internal/syntax#TestLiteralReplacementSizeChecksBeforeAllocation rendered 18
+    security_source_capacity_test.go:28: internal/syntax#TestAssemblyIntegerBoundsRetainOnlyValidValues rendered 32
+    security_source_capacity_test.go:28: internal/bodycodegen#replaceActivityProgram rendered 7
+    security_source_capacity_test.go:28: internal/bodycodegen#coerceBodyValue rendered 48
+    security_source_capacity_test.go:28: internal/bodycodegen#coerceBodyInteger rendered 18
+    security_source_capacity_test.go:28: internal/bodycodegen#TestIntegerWidthKeepsTypedWrapSemantics rendered 30
+    security_source_capacity_test.go:28: internal/valueexecution#measure rendered 16
+    security_source_capacity_test.go:28: internal/valueexecution#measurementSources rendered 36
+    security_source_capacity_test.go:28: internal/valueexecution#ProposeSourceRevision rendered 65
+    security_source_capacity_test.go:28: internal/valueexecution#TestMeasurementEditsSelectedLiteralWithRepeatedAndEscapedText rendered 30
+    security_source_capacity_test.go:28: internal/valueexecution#TestMeasurementRejectsStaleAmbiguousAndUnmatchedSources rendered 26
+    security_source_capacity_test.go:28: internal/meta/repositoryprojection/extractor#TestSecuritySourceDeclarationCapacity rendered 29
+--- PASS: TestSecuritySourceDeclarationCapacity (0.10s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.512s
