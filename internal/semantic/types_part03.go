@@ -50,6 +50,11 @@ func (n Node) Normalized() (Node, error) {
 			n.InputSequence[i] = id
 		}
 	}
+	inputNames, err := normalizeInputNames(n.Kind, n.InputSequence, n.InputNames)
+	if err != nil {
+		return Node{}, err
+	}
+	n.InputNames = inputNames
 	if n.Assembly != nil {
 		if n.Kind != Activity || valueProgram == "" {
 			return Node{}, fmt.Errorf("%w: assembly requires an Activity value program", ErrInvalidNode)

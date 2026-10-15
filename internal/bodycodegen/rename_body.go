@@ -9,8 +9,8 @@ import (
 
 // renameBodyCalls edits resolved free call names, retaining every other byte.
 // Parser objects distinguish parameters and local declarations from activities.
-func renameBodyCalls(body string, arity int, from, to string) (string, int, error) {
-	file, set, header, err := parseRenameBody(body, arity)
+func renameBodyCalls(body string, arity int, from, to string, declared ...string) (string, int, error) {
+	file, set, header, err := parseRenameBody(body, arity, declared...)
 	if err != nil {
 		return "", 0, err
 	}
@@ -57,7 +57,7 @@ func renameBodyCalls(body string, arity int, from, to string) (string, int, erro
 	for _, offset := range slices.Backward(offsets) {
 		updated = updated[:offset] + to + updated[offset+len(from):]
 	}
-	after, _, _, err := parseRenameBody(updated, arity)
+	after, _, _, err := parseRenameBody(updated, arity, declared...)
 	if err != nil {
 		return "", 0, err
 	}

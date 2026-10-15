@@ -267,6 +267,11 @@ types and presence from the validated workspace, including imported packages.
 Activities may declare an [explicit stable ID](docs/language/activity-identity.md)
 after the result type, so a display rename retains that identity in interfaces,
 generated markers and native delivery traces.
+Development source also supports [named activity inputs](docs/language/named-inputs.ko.md),
+such as `Difference(minuend Integer, subtrahend Integer)`. The body uses those
+names, while input wiring keeps its source positions and the origin view retains
+the original name and type locations. A [runnable example](examples/named-inputs/README.md)
+shows the same-type inputs, Korean names and package input keys.
 The development [activity refactoring command](docs/language/activity-refactoring.md)
 ([한국어](docs/language/activity-refactoring.ko.md))
 renames an activity and its file-local calls, conditions and bindings while

@@ -40,19 +40,19 @@ type valueOriginReader struct {
 	mapping        bodySurfaceMap
 }
 
-func InspectBodyValueOrigins(body string, arity int) BodyValueOrigins {
-	out, _ := inspectBodyValueOrigins(body, arity, false)
+func InspectBodyValueOrigins(body string, arity int, declared ...string) BodyValueOrigins {
+	out, _ := inspectBodyValueOrigins(body, arity, false, declared...)
 	return out
 }
 
-func inspectBodyValueOrigins(body string, arity int, captureCalls bool) (BodyValueOrigins, []BodyValueCall) {
+func inspectBodyValueOrigins(body string, arity int, captureCalls bool, declared ...string) (BodyValueOrigins, []BodyValueCall) {
 	out := BodyValueOrigins{Schema: "gooo/body-value-origins/v1", Status: "UNMAPPED"}
 	if len(body) > 128<<10 {
 		out.Reasons = []string{"BODY_SIZE_LIMIT"}
 		return out, nil
 	}
 	out.BodySHA256, _ = NormalizedConditionBodySHA256(body)
-	file, set, header, err := parseRenameBody(body, arity)
+	file, set, header, err := parseRenameBody(body, arity, declared...)
 	if err != nil {
 		out.Reasons = []string{"BODY_SYNTAX_UNAVAILABLE"}
 		return out, nil

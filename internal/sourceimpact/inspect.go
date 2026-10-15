@@ -117,8 +117,16 @@ func nodeFacets(n semantic.Node) map[string]string {
 	for _, f := range n.Fields {
 		fields = append(fields, []any{f.ID, f.Parent, f.Name, f.Aliases, f.TypeRef, f.Presence, f.Cardinality})
 	}
-	return map[string]string{"identity_role": encoded([]any{n.Kind, n.Namespace}), "presentation": encoded([]any{n.Name, n.Aliases}),
+	result := map[string]string{"identity_role": encoded([]any{n.Kind, n.Namespace}), "presentation": encoded([]any{n.Name, n.Aliases}),
 		"fields": encoded(fields), "body": n.ValueProgram, "input_sequence": encoded(n.InputSequence), "assembly": encoded(n.Assembly)}
+	if len(n.InputNames) > 0 {
+		names := make([]string, len(n.InputNames))
+		for i, name := range n.InputNames {
+			names[i] = name.Name
+		}
+		result["input_names"] = encoded(names)
+	}
+	return result
 }
 
 func compareStrings(a, b string) int {

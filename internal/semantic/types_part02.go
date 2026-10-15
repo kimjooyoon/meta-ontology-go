@@ -17,6 +17,7 @@ type Node struct {
 	Fields        []Field            `json:"fields,omitempty"`
 	ValueProgram  string             `json:"value_program,omitempty"`
 	InputSequence []ID               `json:"input_sequence,omitempty"`
+	InputNames    []InputName        `json:"input_names,omitempty"`
 	Assembly      *assemblyspec.Spec `json:"assembly,omitempty"`
 	Span          Span
 }

@@ -13,12 +13,13 @@ import (
 type recordConstructorScope struct {
 	types      map[string]string
 	inputCount int
+	inputNames []string
 	body       string
 }
 
 func (n workspaceRecordNames) constructorScope(file *syntax.File, activity *syntax.ActivityDecl,
 	image packageruntime.Image) recordConstructorScope {
-	scope := recordConstructorScope{types: map[string]string{}, inputCount: len(activity.Inputs), body: activity.ValueProgram}
+	scope := recordConstructorScope{types: map[string]string{}, inputCount: len(activity.Inputs), inputNames: syntax.ActivityDeclaredInputNames(activity), body: activity.ValueProgram}
 	if scope.body == "" && activity.Assembly != nil {
 		scope.body = activity.Assembly.Spec.Baseline
 	}
@@ -65,7 +66,7 @@ func qualifiedConstructorName(expression *ast.SelectorExpr, scope recordConstruc
 	if !ok {
 		return "", fmt.Errorf("record constructor requires one source import alias and entity member")
 	}
-	if alias.Obj != nil || isActivityInput(alias.Name, scope.inputCount) {
+	if alias.Obj != nil || isActivityInput(alias.Name, scope.inputCount, scope.inputNames...) {
 		return "", fmt.Errorf("record constructor alias %q is shadowed by a local value", alias.Name)
 	}
 	spelling := alias.Name + "." + expression.Sel.Name

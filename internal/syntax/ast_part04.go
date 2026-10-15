@@ -48,6 +48,7 @@ func cloneDeclaration(declaration Declaration) Declaration {
 		}
 		clone := *value
 		clone.Inputs = append([]NameRef(nil), value.Inputs...)
+		clone.InputNames = append([]NameRef(nil), value.InputNames...)
 		clone.Parameters = append([]NameRef(nil), value.Parameters...)
 		if value.Assembly != nil {
 			assembly := *value.Assembly

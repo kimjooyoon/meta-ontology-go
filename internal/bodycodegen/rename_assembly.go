@@ -22,7 +22,7 @@ func renameAssemblyReferences(a *syntax.ActivityDecl, source []byte, from, to st
 		return diagnostics.Error()
 	}
 	choiceIndex := -1
-	bindings, err := enclosingReferenceBindings([]string{a.ValueProgram, spec.Baseline}, len(a.Inputs))
+	bindings, err := enclosingReferenceBindings([]string{a.ValueProgram, spec.Baseline}, len(a.Inputs), syntax.ActivityDeclaredInputNames(a)...)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func renameAssemblyReferences(a *syntax.ActivityDecl, source []byte, from, to st
 				updated = to
 			}
 		case previous.Kind == syntax.TokenIdentifier && previous.Value == "baseline":
-			updated, count, err = renameBodyCalls(t.Value, len(a.Inputs), from, to)
+			updated, count, err = renameBodyCalls(t.Value, len(a.Inputs), from, to, syntax.ActivityDeclaredInputNames(a)...)
 		case previous.Kind == syntax.TokenIdentifier && previous.Value == "alternative":
 			if choiceIndex < 0 || choiceIndex >= len(spec.Choices) {
 				return fmt.Errorf("unresolved choice span")
@@ -50,7 +50,7 @@ func renameAssemblyReferences(a *syntax.ActivityDecl, source []byte, from, to st
 			if kind != "field_value" && kind != "field_update" {
 				continue
 			}
-			updated, count, err = renameBodyCalls("return "+t.Value, len(a.Inputs), from, to)
+			updated, count, err = renameBodyCalls("return "+t.Value, len(a.Inputs), from, to, syntax.ActivityDeclaredInputNames(a)...)
 			updated = strings.TrimPrefix(updated, "return ")
 			if count > 0 && (bindings[from] || bindings[to]) {
 				return fmt.Errorf("activity %s: alternative requires precise enclosing scope for rename", a.Name)

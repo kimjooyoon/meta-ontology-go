@@ -51,30 +51,11 @@ func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document,
 		if err := bindSemanticValueProgram(declaration, &node); err != nil {
 			return nil, nil, err
 		}
-		if kind == semantic.Activity && len(declaration.Inputs) >= 2 {
-			for _, input := range declaration.Inputs {
-				entity, err := resolveSemanticReference(input, namespace, ids, names)
-				if err != nil {
-					return nil, nil, err
-				}
-				node.InputSequence = append(node.InputSequence, entity)
-			}
+		if err := bindSemanticInputs(declaration, &node, namespace, ids, names); err != nil {
+			return nil, nil, err
 		}
-		if len(declaration.Fields) > 0 {
-			if kind != semantic.Entity {
-				return nil, nil, fmt.Errorf("declaration %q: fields are only valid on Entity nodes", declaration.Name)
-			}
-			node.Fields = make([]semantic.Field, len(declaration.Fields))
-			for index, field := range declaration.Fields {
-				semanticField, err := field.semantic()
-				if err != nil {
-					return nil, nil, fmt.Errorf("declaration %q field %d: %w", declaration.Name, index, err)
-				}
-				if semanticField.Parent != semanticID {
-					return nil, nil, fmt.Errorf("declaration %q field %d: %w: field %s parent is %s, want %s", declaration.Name, index, ErrInvalidField, semanticField.ID, semanticField.Parent, semanticID)
-				}
-				node.Fields[index] = semanticField
-			}
+		if err := bindSemanticFields(declaration, &node, semanticID); err != nil {
+			return nil, nil, err
 		}
 		node.Span = toSemanticSpan(declaration.Span)
 		if err := ir.AddNode(node); err != nil {
@@ -90,4 +71,40 @@ func semanticIRHasFields(ir semantic.IR) bool {
 		}
 	}
 	return false
+}
+
+func bindSemanticInputs(declaration Declaration, node *semantic.Node, namespace semantic.Namespace, ids map[ID]semantic.ID, names map[string]semantic.ID) error {
+	if node.Kind == semantic.Activity && len(declaration.Inputs) >= 2 {
+		for _, input := range declaration.Inputs {
+			entity, err := resolveSemanticReference(input, namespace, ids, names)
+			if err != nil {
+				return err
+			}
+			node.InputSequence = append(node.InputSequence, entity)
+		}
+	}
+	for _, name := range declaration.InputNames {
+		node.InputNames = append(node.InputNames, semantic.InputName{Name: name.Name, Span: toSemanticSpan(name.Span)})
+	}
+	return nil
+}
+
+func bindSemanticFields(declaration Declaration, node *semantic.Node, semanticID semantic.ID) error {
+	if len(declaration.Fields) > 0 {
+		if node.Kind != semantic.Entity {
+			return fmt.Errorf("declaration %q: fields are only valid on Entity nodes", declaration.Name)
+		}
+		node.Fields = make([]semantic.Field, len(declaration.Fields))
+		for index, field := range declaration.Fields {
+			semanticField, err := field.semantic()
+			if err != nil {
+				return fmt.Errorf("declaration %q field %d: %w", declaration.Name, index, err)
+			}
+			if semanticField.Parent != semanticID {
+				return fmt.Errorf("declaration %q field %d: %w: field %s parent is %s, want %s", declaration.Name, index, ErrInvalidField, semanticField.ID, semanticField.Parent, semanticID)
+			}
+			node.Fields[index] = semanticField
+		}
+	}
+	return nil
 }

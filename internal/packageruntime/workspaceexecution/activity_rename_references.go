@@ -78,7 +78,7 @@ func (index workspaceRenameIndex) literalReferences(key string, d workspaceCallD
 
 func checkRenameFragmentScope(d workspaceCallDeclaration, spelling string) error {
 	name, _, _ := strings.Cut(spelling, ".")
-	refs, err := bodycodegen.InspectBodySourceReferences("return "+name+"()", len(d.activity.Inputs),
+	refs, err := bodycodegen.InspectNamedBodySourceReferences("return "+name+"()", len(d.activity.Inputs), syntax.ActivityDeclaredInputNames(d.activity),
 		d.body, d.activity.Assembly.Spec.Baseline)
 	if err != nil {
 		return err

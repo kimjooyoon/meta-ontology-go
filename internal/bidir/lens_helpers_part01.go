@@ -49,6 +49,9 @@ func implicitEntityDeclarations(declarations []Declaration, namespace string) []
 }
 func validateDocumentSpans(document Document) error {
 	for index, declaration := range document.Declarations {
+		if err := validateInputNames(declaration.Kind, len(declaration.Inputs), declaration.InputNames); err != nil {
+			return err
+		}
 		if err := declaration.Span.Validate(); err != nil {
 			return fmt.Errorf("declaration %d %q: %w", index, declaration.Name, err)
 		}

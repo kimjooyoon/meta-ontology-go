@@ -36,6 +36,12 @@ func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (De
 	if len(activity.Inputs) == 0 && len(activity.Parameters) != 0 {
 		return Declaration{}, fmt.Errorf("activity %q uses unsupported legacy-only Parameters; canonical Inputs is required", activity.Name)
 	}
+	if _, err := syntax.ActivityInputNames(activity); err != nil {
+		return Declaration{}, err
+	}
+	for _, name := range activity.InputNames {
+		declaration.InputNames = append(declaration.InputNames, Reference{Name: name.Name, Span: toSourceSpan(name.Span)})
+	}
 	for _, input := range activity.Inputs {
 		if err := checkLowerContext(ctx); err != nil {
 			return Declaration{}, err

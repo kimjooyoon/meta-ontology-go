@@ -9,6 +9,10 @@ import (
 // Resolution belongs to the package layer; parsing retains the complete spelling.
 func (p *Parser) parseActivityTypeReference(subject string, code DiagnosticCode) NameRef {
 	first := p.expectIdentifier(subject, code)
+	return p.finishActivityTypeReference(first, subject, code)
+}
+
+func (p *Parser) finishActivityTypeReference(first NameRef, subject string, code DiagnosticCode) NameRef {
 	if !p.at(TokenDot) {
 		return first
 	}

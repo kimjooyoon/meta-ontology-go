@@ -21,14 +21,15 @@ type InterfacePackage struct {
 }
 
 type InterfaceDeclaration struct {
-	Kind   string           `json:"kind"`
-	Name   string           `json:"name"`
-	ID     string           `json:"id"`
-	Source string           `json:"source"`
-	Shape  string           `json:"shape,omitempty"`
-	Fields []InterfaceField `json:"fields,omitempty"`
-	Inputs []string         `json:"inputs,omitempty"`
-	Output string           `json:"output,omitempty"`
+	Kind       string           `json:"kind"`
+	Name       string           `json:"name"`
+	ID         string           `json:"id"`
+	Source     string           `json:"source"`
+	Shape      string           `json:"shape,omitempty"`
+	Fields     []InterfaceField `json:"fields,omitempty"`
+	Inputs     []string         `json:"inputs,omitempty"`
+	InputNames []string         `json:"input_names,omitempty"`
+	Output     string           `json:"output,omitempty"`
 }
 
 type InterfaceField struct {

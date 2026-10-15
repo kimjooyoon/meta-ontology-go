@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/named-input-predecessor-ci/v1",
+  "predecessor_pr": 1591,
+  "source_head": "d6ae2d8ab6ba4dda6b02059dd6b79f2c3091c21a",
+  "original_run": 38721165445,
+  "attempt": 1,
+  "workflow": "Transformation effect ledger",
+  "job": "cross-platform release (darwin-amd64)",
+  "step": "Upload exact platform release receipt",
+  "failure": "Failed to CreateArtifact: Unable to make request: ENOTFOUND",
+  "classification": "artifact service DNS/network failure; upload did not complete",
+  "original_failed_log_sha256": "6f31c52ebd156e8045708ded7ec5e164d58a3bd14bd6c841e140c17715f8ff80",
+  "publication_rule": "wait all original predecessor source workflows terminal; preserve all source in a new named-input feature revision; original failure is never rerun or treated as success",
+  "claim_limit": "this observation alone does not establish success of the entire original CI run"
+}

@@ -94,16 +94,16 @@ func sourceBodyParameters(activity *syntax.ActivityDecl, records []RecordType, f
 		return nil, fmt.Errorf("activity %q requires 1..16 inputs, got %d", activity.Name, len(activity.Inputs))
 	}
 	parameters := make([]InputParameter, len(activity.Inputs))
+	names, err := syntax.ActivityInputNames(activity)
+	if err != nil {
+		return nil, err
+	}
 	for i, input := range activity.Inputs {
 		inputType, ok := bodyEntityType(input.Name, records, files...)
 		if !ok {
 			return nil, fmt.Errorf("activity %q input entity %q is outside the pure value profile", activity.Name, input.Name)
 		}
-		name := "input"
-		if len(activity.Inputs) > 1 {
-			name = fmt.Sprintf("input%d", i)
-		}
-		parameters[i] = InputParameter{Name: name, Type: inputType}
+		parameters[i] = InputParameter{Name: names[i], Type: inputType}
 	}
 	return parameters, nil
 }

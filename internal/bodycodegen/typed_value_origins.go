@@ -2,6 +2,7 @@ package bodycodegen
 
 import (
 	"fmt"
+	"github.com/kimjooyoon/meta-ontology-go/internal/inputbinding"
 	"go/ast"
 	"go/token"
 	"go/types"
@@ -85,7 +86,7 @@ func InspectTypedValueOrigins(filename string, source []byte, activity string) (
 	for _, node := range flow.Nodes {
 		if node.Kind == "input" {
 			index := int(node.Local) - 1
-			r.Inputs = append(r.Inputs, TypedValueInput{Node: node.ID, Port: p.parameters[index].Name,
+			r.Inputs = append(r.Inputs, TypedValueInput{Node: node.ID, Port: inputbinding.PositionName(len(p.parameters), index),
 				FieldID: node.FieldID, Declaration: inputDeclarationSource(p, source, index)})
 		}
 	}

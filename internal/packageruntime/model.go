@@ -80,6 +80,7 @@ type Export struct {
 	Kind       string   `json:"kind"`
 	ID         string   `json:"id,omitempty"`
 	InputTypes []string `json:"input_types,omitempty"`
+	InputNames []string `json:"input_names,omitempty"`
 	OutputType string   `json:"output_type,omitempty"`
 }
 
@@ -88,6 +89,7 @@ type EntryPlan struct {
 	Source      string   `json:"source"`
 	Activity    string   `json:"activity"`
 	Inputs      []string `json:"inputs"`
+	InputNames  []string `json:"input_names,omitempty"`
 	Output      string   `json:"output"`
 }
 

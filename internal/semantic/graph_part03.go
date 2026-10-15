@@ -32,6 +32,7 @@ func copyNode(node Node) Node {
 	node.Aliases = append([]string(nil), node.Aliases...)
 	node.Fields = copyFields(node.Fields)
 	node.InputSequence = append([]ID(nil), node.InputSequence...)
+	node.InputNames = append([]InputName(nil), node.InputNames...)
 	if node.Assembly != nil {
 		node.Assembly = node.Assembly.Clone()
 	}

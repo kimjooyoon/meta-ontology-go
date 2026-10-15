@@ -8,6 +8,9 @@ import (
 )
 
 func nodeSemanticEqual(left, right Node) bool {
+	if !equalInputNames(left.InputNames, right.InputNames) {
+		return false
+	}
 	if left.ID != right.ID || left.Kind != right.Kind || !stringMapEqual(left.Attributes, right.Attributes) || len(left.Fields) != len(right.Fields) || len(left.InputSequence) != len(right.InputSequence) {
 		return false
 	}
@@ -65,6 +68,12 @@ func SemanticFingerprint(model Model) string {
 		writeFingerprintPart(&canonical, string(node.ID))
 		writeFingerprintPart(&canonical, string(node.Kind))
 		writeMapFingerprint(&canonical, node.Attributes)
+		if len(node.InputNames) > 0 {
+			writeFingerprintPart(&canonical, fmt.Sprintf("input-names/%d", len(node.InputNames)))
+			for _, name := range node.InputNames {
+				writeFingerprintPart(&canonical, name.Name)
+			}
+		}
 		if len(node.InputSequence) > 0 {
 			writeFingerprintPart(&canonical, fmt.Sprintf("input-sequence/%d", len(node.InputSequence)))
 			for _, input := range node.InputSequence {

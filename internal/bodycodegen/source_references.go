@@ -3,9 +3,6 @@ package bodycodegen
 import (
 	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/token"
-	"strings"
 )
 
 // BodySourceReference records syntax, including calls through local values.
@@ -23,11 +20,16 @@ type BodySourceReference struct {
 // declared anywhere in those bodies makes that fragment call's scope ambiguous;
 // candidate materialization must locate the precise enclosing lexical scope.
 func InspectBodySourceReferences(body string, inputCount int, enclosing ...string) ([]BodySourceReference, error) {
-	file, err := parseBodyReferenceFile(body, inputCount)
+	return InspectNamedBodySourceReferences(body, inputCount, nil, enclosing...)
+}
+
+// InspectNamedBodySourceReferences binds authored inputs before resolving calls.
+func InspectNamedBodySourceReferences(body string, inputCount int, declared []string, enclosing ...string) ([]BodySourceReference, error) {
+	file, err := parseBodyReferenceFile(body, inputCount, declared...)
 	if err != nil {
 		return nil, err
 	}
-	bound, err := enclosingReferenceBindings(enclosing, inputCount)
+	bound, err := enclosingReferenceBindings(enclosing, inputCount, declared...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,33 +52,18 @@ func InspectBodySourceReferences(body string, inputCount int, enclosing ...strin
 	return refs, nil
 }
 
-func parseBodyReferenceFile(body string, inputCount int) (*ast.File, error) {
-	if inputCount < 0 || inputCount > 16 {
-		return nil, fmt.Errorf("body input count %d is outside 0..16", inputCount)
-	}
-	parameters := make([]string, inputCount)
-	for i := range parameters {
-		name := "input"
-		if inputCount > 1 {
-			name = fmt.Sprintf("input%d", i)
-		}
-		parameters[i] = name + " any"
-	}
-	lowered, err := rewriteLetDeclarations(body)
-	if err != nil {
-		return nil, err
-	}
-	header := "package p\nvar _ = func(" + strings.Join(parameters, ",") + "){\n"
-	return parser.ParseFile(token.NewFileSet(), "references.go", header+lowered+"\n}", 0)
+func parseBodyReferenceFile(body string, inputCount int, declared ...string) (*ast.File, error) {
+	file, _, _, err := parseRenameBody(body, inputCount, declared...)
+	return file, err
 }
 
-func enclosingReferenceBindings(bodies []string, inputCount int) (map[string]bool, error) {
+func enclosingReferenceBindings(bodies []string, inputCount int, declared ...string) (map[string]bool, error) {
 	bound := map[string]bool{}
 	for _, body := range bodies {
 		if body == "" {
 			continue
 		}
-		file, err := parseBodyReferenceFile(body, inputCount)
+		file, err := parseBodyReferenceFile(body, inputCount, declared...)
 		if err != nil {
 			return nil, fmt.Errorf("enclosing body: %w", err)
 		}

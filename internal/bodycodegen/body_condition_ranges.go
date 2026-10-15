@@ -3,8 +3,8 @@ package bodycodegen
 import "go/ast"
 
 // BodyConditionRanges reads source positions without evaluating a body or model.
-func BodyConditionRanges(body string, arity int) ([]BodyConditionOrigin, error) {
-	file, set, header, err := parseRenameBody(body, arity)
+func BodyConditionRanges(body string, arity int, declared ...string) ([]BodyConditionOrigin, error) {
+	file, set, header, err := parseRenameBody(body, arity, declared...)
 	if err != nil {
 		return nil, err
 	}
@@ -32,8 +32,8 @@ func NormalizedConditionBodySHA256(body string) (string, error) {
 
 // BodyConditionSourceRanges returns positions in the original decoded Gooo body.
 // Projection reports use BodyConditionRanges and normalized offsets instead.
-func BodyConditionSourceRanges(body string, arity int) ([]BodyConditionOrigin, error) {
-	ranges, err := BodyConditionRanges(body, arity)
+func BodyConditionSourceRanges(body string, arity int, declared ...string) ([]BodyConditionOrigin, error) {
+	ranges, err := BodyConditionRanges(body, arity, declared...)
 	if err != nil {
 		return nil, err
 	}

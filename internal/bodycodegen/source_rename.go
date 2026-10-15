@@ -72,6 +72,11 @@ func RenameActivitySource(ctx context.Context, filename string, source []byte, f
 	if target == nil {
 		return empty, fmt.Errorf("activity %q was not found", from)
 	}
+	return renameLoadedActivity(ctx, filename, source, file, model, target, from, to)
+}
+
+func renameLoadedActivity(ctx context.Context, filename string, source []byte, file *syntax.File, model bidir.Model, target *syntax.ActivityDecl, from, to string) (SourceRenameResult, error) {
+	var empty SourceRenameResult
 	result := SourceRenameResult{Schema: "gooo/activity-rename/v1", Scope: "single_source_file",
 		From: from, To: to, InputSHA256: digest(source)}
 	for _, n := range model.Nodes {
@@ -96,38 +101,51 @@ func RenameActivitySource(ctx context.Context, filename string, source []byte, f
 		add(span, "pin_identity", " id "+renameString(result.ActivityID, ""))
 		result.IdentityPinned = true
 	}
+	if err := collectActivityRenameReferences(ctx, source, file, from, to, &result, add); err != nil {
+		return empty, err
+	}
+	return finishActivityRename(ctx, filename, source, model, result)
+}
+
+func collectActivityRenameReferences(ctx context.Context, source []byte, file *syntax.File, from, to string, result *SourceRenameResult, add func(syntax.Span, string, string)) error {
 	for _, d := range file.Declarations {
 		if err := ctx.Err(); err != nil {
-			return empty, err
+			return err
 		}
 		a, ok := d.(*syntax.ActivityDecl)
 		if !ok {
 			continue
 		}
 		if a.ValueProgramPresent {
-			updated, count, err := renameBodyCalls(a.ValueProgram, len(a.Inputs), from, to)
+			updated, count, err := renameBodyCalls(a.ValueProgram, len(a.Inputs), from, to, syntax.ActivityDeclaredInputNames(a)...)
 			if err != nil {
-				return empty, fmt.Errorf("activity %s: %w", a.Name, err)
+				return fmt.Errorf("activity %s: %w", a.Name, err)
 			}
 			result.CallSites += count
 			if count != 0 {
 				add(a.ValueProgramSpan, "body_calls", renameString(updated, string(source[a.ValueProgramSpan.Start.Offset:a.ValueProgramSpan.End.Offset])))
 			}
 		}
-		if err := renameAssemblyReferences(a, source, from, to, &result, add); err != nil {
-			return empty, err
+		if err := renameAssemblyReferences(a, source, from, to, result, add); err != nil {
+			return err
 		}
 	}
 	for _, binding := range file.Bindings {
 		for _, endpoint := range []syntax.BindingEndpoint{binding.Producer, binding.Consumer} {
 			if endpoint.PackageAlias != "" {
-				return empty, fmt.Errorf("qualified bindings need a workspace rename")
+				return fmt.Errorf("qualified bindings need a workspace rename")
 			}
 			if endpoint.Activity.Name == from {
 				add(endpoint.Activity.Span, "binding", to)
 			}
 		}
 	}
+	return nil
+}
+
+func finishActivityRename(ctx context.Context, filename string, source []byte, model bidir.Model, result SourceRenameResult) (SourceRenameResult, error) {
+	var empty SourceRenameResult
+	from, to := result.From, result.To
 	slices.SortFunc(result.Edits, func(a, b SourceRenameEdit) int { return a.Start - b.Start })
 	var out strings.Builder
 	previous := 0

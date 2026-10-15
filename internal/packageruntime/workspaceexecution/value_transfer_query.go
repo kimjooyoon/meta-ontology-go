@@ -47,6 +47,7 @@ type ProgramOriginStep struct {
 type valueTransferActivity struct {
 	id, name, body string
 	arity          int
+	inputNames     []string
 	graph          bodycodegen.BodyValueOrigins
 	nodes          map[string]bodycodegen.BodyValueOrigin
 	calls          map[string]bodycodegen.BodyValueCall
