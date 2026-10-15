@@ -28,7 +28,16 @@ func producerIdentityObligation(input evaluationInput) Obligation {
 		RunID    int64
 		Attempt  int
 		Workflow string
-	}{input.metadata.ProducerRunID, input.metadata.ProducerRunAttempt, input.metadata.WorkflowPath}
-	return knownObligation("producer-run-identity", "FOUNDATION", "PRODUCE", "bind-run-identity",
+		Origin   RunOrigin
+	}{input.metadata.ProducerRunID, input.metadata.ProducerRunAttempt, input.metadata.WorkflowPath, resolveRunOrigin(input)}
+	obligation := knownObligation("producer-run-identity", "FOUNDATION", "PRODUCE", "bind-run-identity",
 		passed, "PRODUCER_RUN_IDENTITY_BOUND", "PRODUCER_RUN_IDENTITY_MISMATCH", evidence)
+	if passed && evidence.Origin.State != ResolutionClosed {
+		obligation.Status, obligation.Reason = StatusFalse, evidence.Origin.Reason
+		obligation.EvidenceDigest = ""
+		if evidence.Origin.State == ResolutionUnknown {
+			obligation.Status = StatusUnknown
+		}
+	}
+	return obligation
 }

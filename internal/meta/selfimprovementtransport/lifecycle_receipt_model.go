@@ -52,6 +52,7 @@ type LifecycleReceipt struct {
 	ExpectedRunID         int64                `json:"expected_run_id"`
 	ExpectedRunAttempt    int                  `json:"expected_run_attempt"`
 	OrchestrationHeadSHA  string               `json:"orchestration_head_sha,omitempty"`
+	ProducerEvent         string               `json:"producer_event,omitempty"`
 	WorkflowPath          string               `json:"workflow_path,omitempty"`
 	ArtifactID            int64                `json:"artifact_id,omitempty"`
 	ArtifactName          string               `json:"artifact_name"`

@@ -31,6 +31,7 @@ type TransportMetadata struct {
 	ProducerRunID             int64       `json:"producer_run_id"`
 	ProducerRunAttempt        int         `json:"producer_run_attempt"`
 	OrchestrationHeadSHA      string      `json:"orchestration_head_sha"`
+	ProducerEvent             string      `json:"producer_event,omitempty"`
 	WorkflowPath              string      `json:"workflow_path"`
 	ArtifactID                int64       `json:"artifact_id"`
 	ArtifactName              string      `json:"artifact_name"`
@@ -87,6 +88,7 @@ type ResolutionMetrics struct {
 }
 
 type ProvenanceResolution struct {
+	RunOrigin                 RunOrigin      `json:"run_origin"`
 	State                     string         `json:"state"`
 	Stage                     string         `json:"stage"`
 	Step                      string         `json:"step"`

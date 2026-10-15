@@ -15,7 +15,8 @@ func BindTransportMetadata(receipt LifecycleReceipt, archiveRaw []byte) (Transpo
 		Schema: MetadataSchema, Repository: receipt.Repository,
 		ProducerRunID: receipt.ExpectedRunID, ProducerRunAttempt: receipt.ExpectedRunAttempt,
 		OrchestrationHeadSHA: receipt.OrchestrationHeadSHA, WorkflowPath: receipt.WorkflowPath,
-		ArtifactID: receipt.ArtifactID, ArtifactName: receipt.ArtifactName,
+		ProducerEvent: receipt.ProducerEvent,
+		ArtifactID:    receipt.ArtifactID, ArtifactName: receipt.ArtifactName,
 		ArtifactDigest: receipt.ArtifactDigest, ArtifactSizeBytes: receipt.ArtifactSizeBytes,
 		ArtifactInstanceCount: receipt.ArtifactInstanceCount, ArtifactTypeCount: receipt.ArtifactTypeCount,
 	}
@@ -79,8 +80,9 @@ func readArchiveFiles(archiveRaw []byte) (map[string][][]byte, error) {
 func evaluateProvenance(input evaluationInput) ProvenanceResolution {
 	resolution := ProvenanceResolution{
 		State: ResolutionUnknown, Stage: "CONSUME", Step: "resolve-producer-declaration",
-		Reason: "PRODUCER_DECLARATION_MISSING", ArtifactInstances: input.metadata.ArtifactInstanceCount,
-		ArtifactTypes: input.metadata.ArtifactTypeCount,
+		Reason: "PRODUCER_DECLARATION_MISSING", RunOrigin: resolveRunOrigin(input),
+		ArtifactInstances: input.metadata.ArtifactInstanceCount,
+		ArtifactTypes:     input.metadata.ArtifactTypeCount,
 	}
 	if input.producerErr != nil && len(input.producerRaw) > 0 {
 		return refutedResolution(resolution, "PRODUCER_DECLARATION_INVALID")
@@ -107,6 +109,9 @@ func evaluateProvenance(input evaluationInput) ProvenanceResolution {
 	if reason := producerIdentityContradiction(input, producer); reason != "" {
 		return refutedResolution(resolution, reason)
 	}
+	if resolution.RunOrigin.State == ResolutionRefuted {
+		return applyRunOrigin(resolution, resolution.RunOrigin)
+	}
 	if input.metadata.ProducerPayloadCount == 0 || input.sourceErr != nil || len(input.observationRaw) == 0 {
 		return unknownResolution(resolution, "CONSUME", "resolve-payload", "PRODUCER_PAYLOAD_MISSING", "DIRECT_MISSING", []string{"payload", "producer-declaration"})
 	}
@@ -118,6 +123,9 @@ func evaluateProvenance(input evaluationInput) ProvenanceResolution {
 	}
 	if !validDigest(input.actualArchiveDigest) || input.metadata.ArtifactDigest != input.actualArchiveDigest {
 		return refutedResolution(resolution, "PRODUCER_ARTIFACT_DIGEST_MISMATCH")
+	}
+	if resolution.RunOrigin.State != ResolutionClosed {
+		return applyRunOrigin(resolution, resolution.RunOrigin)
 	}
 	resolution.State = ResolutionClosed
 	resolution.Stage = "CONSUME"
@@ -139,9 +147,6 @@ func producerIdentityContradiction(input evaluationInput, producer ProducerRecei
 	}
 	if producer.RunID != input.expectedRunID || producer.RunAttempt != input.metadata.ProducerRunAttempt || producer.RunAttempt <= 0 || input.metadata.ProducerRunID != input.expectedRunID {
 		return "PRODUCER_RUN_ATTEMPT_MISMATCH"
-	}
-	if input.metadata.OrchestrationHeadSHA == "" || producer.SubjectSHA != input.metadata.OrchestrationHeadSHA {
-		return "PRODUCER_SUBJECT_RUN_MISMATCH"
 	}
 	if input.metadata.WorkflowPath == "" || workflowPath(producer.WorkflowRef) != input.metadata.WorkflowPath {
 		return "PRODUCER_REPOSITORY_WORKFLOW_MISMATCH"
@@ -187,6 +192,9 @@ func refutedResolution(resolution ProvenanceResolution, reason string) Provenanc
 }
 
 func nextResolutionOperation(stage, step string) string {
+	if step == "bind-producer-run-origin" {
+		return "read_exact_producer_run_origin"
+	}
 	if stage == "LOCATE" {
 		return "retry_exact_producer_artifact_lookup"
 	}
