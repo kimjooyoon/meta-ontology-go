@@ -1,0 +1,68 @@
+{
+  "schema": "gooo/ci-command-evolution/v1",
+  "baseline_file": "docs/observations/ci-command-domain/predecessor-command-population.json",
+  "baseline_sha256": "8f25e279421b3268df6d73641755ab37f06d1af7311bc62a3c88a520300fc97e",
+  "changed_workflow_source_head": "16f8f7655c0381dd2ddc59eecd0aace401b9f878",
+  "workflow_sha256": "b5e2b6350e2cc5cb9e8f1c90dbf57be5e6b7e13db495871fc3dbc33f1b8a07a0",
+  "jobs": {
+    "evidence": [
+      {
+        "original_index": 0,
+        "before_sha256": "74520b64bbadcd0407812cd72046b8b86f98559bd5be541cf3415d41c49c7f9e",
+        "after_sha256": "2ac5529e270e39d04d7965f1a383808dc9d972ae2f821936bf2953ff78c3dca4",
+        "operation": "extend_origin_contracts"
+      },
+      {
+        "original_index": 1,
+        "before_sha256": "bde27edf15b872fec1e34dac96644289f1a1b24b60a30f7cbaf6d96e8149c5df",
+        "after_sha256": "bde27edf15b872fec1e34dac96644289f1a1b24b60a30f7cbaf6d96e8149c5df",
+        "operation": "retain_fresh_two_generations"
+      },
+      {
+        "original_index": 2,
+        "before_sha256": "287881104cd86d3b275d7490e1f0b2559e0fa7decbdc7f2a84c0d8f4f0c4c060",
+        "after_sha256": "287881104cd86d3b275d7490e1f0b2559e0fa7decbdc7f2a84c0d8f4f0c4c060",
+        "operation": "retain_cli_check"
+      },
+      {
+        "original_index": 3,
+        "before_sha256": "82f2cc1d08541c1bc35542c3356a6c93ac1f7a4cb93025512cfdc6dbe3254c9c",
+        "after_sha256": "82f2cc1d08541c1bc35542c3356a6c93ac1f7a4cb93025512cfdc6dbe3254c9c",
+        "operation": "retain_fresh_evidence"
+      },
+      {
+        "original_index": -1,
+        "before_sha256": "",
+        "after_sha256": "f4bc19f25e03a312c484bfed64ed2fe485793c0bcb2220fa2b27863eee9152b7",
+        "operation": "build_same_source_tools"
+      }
+    ],
+    "proof": [
+      {
+        "original_index": -1,
+        "before_sha256": "",
+        "after_sha256": "57a06b682c1962083e0bf3446f3b620ee86f0f0fdaecd47338e6d84b31a51849",
+        "operation": "bind_same_source_tool_bytes"
+      },
+      {
+        "original_index": 0,
+        "before_sha256": "10bfb70280c172b8f4ed28a494f8b2872a90db42f2e13093f8e7b50802d7d8f7",
+        "after_sha256": "ea621eda11b192b1d5c7bd06baae26616166130853778765e3d57aa0f002ee9d",
+        "operation": "fresh_generation_with_bound_tool"
+      },
+      {
+        "original_index": 1,
+        "before_sha256": "f1b1d8c3927d3643ce14bc75e6bd32278009222a1be3eff6c9db73df6e02c500",
+        "after_sha256": "a33cf6ba377cbd8f8f1fc4f5df850cd18a872cbb635bdfddb14ad1ba72c64551",
+        "operation": "fresh_proof_with_bound_tool"
+      },
+      {
+        "original_index": 2,
+        "before_sha256": "3c519162212f6e6e0d6f1aa35222f17339d63709dd03ddc7def119565023a1f3",
+        "after_sha256": "5ffb6e4f403f51be11a9652e1a319102a8281f422c42109509e38d11d081de79",
+        "operation": "verify_fresh_proof_with_bound_tool"
+      }
+    ]
+  },
+  "scope": "raw run-source extents under the existing recognizer; each original command retains exactly one descendant, additions are explicit; actual expanded commands retain their own work-shell receipts"
+}

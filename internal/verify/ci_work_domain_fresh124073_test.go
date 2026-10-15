@@ -25,6 +25,7 @@ func TestSharedWorkClockRetainsCommandPopulation124073(t *testing.T) {
 	if err = json.Unmarshal(raw, &source); err != nil {
 		t.Fatal(err)
 	}
+	evolution := readCommandEvolution(t, raw)
 	raw, err = os.ReadFile("../../.github/workflows/ci.yml")
 	if err != nil {
 		t.Fatal(err)
@@ -45,6 +46,12 @@ func TestSharedWorkClockRetainsCommandPopulation124073(t *testing.T) {
 			t.Fatal("work clock or origin transport missing", job.Job)
 		}
 		commands := workCommands124073(body)
+		if rows, changed := evolution.Jobs[job.Job]; changed {
+			if err := bindCommandEvolution(commands, job.Digests, rows); err != nil {
+				t.Fatal("required command evolution differs", job.Job, err)
+			}
+			continue
+		}
 		if len(commands) != len(job.Digests) {
 			t.Fatal("required command population differs", job.Job, len(commands), len(job.Digests))
 		}

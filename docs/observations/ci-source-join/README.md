@@ -22,3 +22,7 @@ artifacts.
 `observations.json` records new contract checks using mocked API rows, a minimal
 temporary Go binary and shell-source syntax checks. They do not measure CI time
 savings. The new original source run owns that measurement and merge eligibility.
+
+The first source run exposed two stale regression assertions. Their
+[source-contract correction](../ci-command-evolution/README.md) retains the
+original command inventory and adds explicit descendant bindings.
