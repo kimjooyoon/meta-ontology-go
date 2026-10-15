@@ -1,0 +1,17 @@
+package textorigin
+namespace textorigin
+
+entity Message id "urn:gooo:type:string"
+entity Description id "urn:gooo:text-input:description" fields {
+    field text id "urn:gooo:text-input:description:text" type string required one
+    field utf8_bytes id "urn:gooo:text-input:description:bytes" type integer required one
+}
+
+# The decoded value retains its exact UTF-8 bytes. Input receipt identity refers
+# to the original JSON document, including escape spelling and whitespace.
+activity Describe(Message) -> Description id "urn:gooo:text-input:describe" computes `
+return Description{
+    text: input,
+    utf8_bytes: int64(len(input)),
+}
+`

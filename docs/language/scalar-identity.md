@@ -23,6 +23,13 @@ edited source, so each edited version needs fresh receipts. Supplied integer
 values remain exact through validation and native delivery. Boolean inputs
 require JSON booleans, and Text values retain the profile's 1,024-byte limit.
 
+In development source, composition JSON uses explicit Unicode scalar-pair rules.
+Valid pairs decode to their characters; unpaired high/low surrogate escapes are
+rejected with a byte offset into the original JSON. Literal U+FFFD remains valid.
+The raw input digest and decoded Text equality keep separate meanings. See the
+[runnable input-origin example](../../examples/text-input-origins/README.md) for
+the source-owned rule, scope and change from earlier decoder behavior.
+
 Existing `Integer`, `Boolean` and `Text` declarations with other nominal IDs
 retain their legacy representations. A recognized canonical ID takes precedence
 over its display spelling. Other names with unknown nominal IDs require a

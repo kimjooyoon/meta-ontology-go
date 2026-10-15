@@ -26,6 +26,7 @@ Gooo는 계산의 의미, 허용한 구현 선택, 그 결과의 출처를 함�
 | 반환값까지 이어지는 소스 | [읽기 쉬운 기원 조회](language/readable-source-origins.ko.md) |
 | 실행 기록을 해석하는 메타프로그램 | [기원 읽기 프로젝트](language/project-starters.md#start-an-origin-reader) |
 | 선언·호출·값 버전을 구분하는 메타프로그램 | [지역 값 버전과 생성 관계](../examples/local-version-origins/README.md) |
+| 받은 바이트와 해석한 문자열의 기원 | [Text 입력 규칙](../examples/text-input-origins/README.md) |
 
 같은 정수 타입이라도 역할을 이름과 ID로 구분할 수 있습니다. 다음 계산은
 요청의 금액에 조정액을 더하고, 지정한 경우 두 배로 만듭니다.

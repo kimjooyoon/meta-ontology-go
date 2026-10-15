@@ -63,6 +63,11 @@ URI의 의미가 같은 ID를 서로 다른 대소문자로 쓴 경우에는 같
 
 ## Gooo가 자신의 출처를 읽기
 
+출처는 입력 경계에서도 시작한다. [Text 입력 예제](../../examples/text-input-origins/README.md)는
+같은 문자열을 나타내는 서로 다른 JSON 표기와 원문 입력 해시를 구분한다.
+문자 해석의 규칙은 Gooo 활동에 두며, 해석할 수 없는 단독 surrogate는 원래
+바이트 위치를 보고한다. 값의 동등성과 입력의 기원을 따로 보존한다.
+
 [작은 메타프로그램](../../examples/condition-origins/README.md)은 실행 위치별 출처를
 typed record로 받고, 다음 문자열을 반환한다.
 

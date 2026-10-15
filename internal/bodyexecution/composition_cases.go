@@ -19,7 +19,7 @@ type CompositionCases struct {
 
 func DecodeCompositionCases(raw []byte) (CompositionCases, error) {
 	var suite CompositionCases
-	if err := decode(raw, &suite, 32<<10); err != nil {
+	if err := decodeCompositionTextData(raw, &suite, 32<<10); err != nil {
 		return suite, err
 	}
 	if suite.Schema != "gooo/body-composition-cases/v1" || len(suite.Cases) < 1 || len(suite.Cases) > 128 {
@@ -113,9 +113,9 @@ func canonicalScalar(raw []byte, entity string) (json.RawMessage, error) {
 		}
 		value = boolean
 	case "Text":
-		var text string
-		if err := json.Unmarshal(raw, &text); err != nil || len(text) > 1024 {
-			return nil, fmt.Errorf("Text requires a string of at most 1024 UTF-8 bytes")
+		text, err := decodeTextScalar(raw)
+		if err != nil {
+			return nil, err
 		}
 		value = text
 	default:
