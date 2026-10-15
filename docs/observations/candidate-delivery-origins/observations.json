@@ -1,0 +1,361 @@
+{
+  "schema": "gooo/candidate-delivery-origin-observation/v1",
+  "base_dev": "21725f7dbca6e2eb6f8df44fd7f24dbcc5321eda",
+  "source_path": "internal/meta/selfimprovementtransport/originpolicy/source.gooo",
+  "source_digest": "sha256:bc64c0df0b35a1c9bb27360a3a2658f8181815341f09d5002508554ebb8dc506",
+  "original_runs": {
+    "candidate": 38768968110,
+    "attestation_reader_failed": 38769139902,
+    "authorization_continuation_failed": 38769139814
+  },
+  "cause": "Downstream readers treated workflow_run.head_sha as the logical candidate subject; UNKNOWN authorization did not stop a later job.",
+  "source_owned_activities": [
+    "CandidateArtifactRole",
+    "BindCandidateSubject",
+    "ContinuationEligible",
+    "ContinuationSubject",
+    "ContinuationArtifactName"
+  ],
+  "local_results": {
+    "final_leaf_cases": 50,
+    "passed": 50,
+    "failed": 0,
+    "source_preservation_laws": 5,
+    "workflow_files_parsed": 5,
+    "bash_blocks_parsed": 33,
+    "source_inventory_unregistered": [],
+    "source_inventory_missing": []
+  },
+  "repair_history": "First local delivery binding failed before its table cases: a semantic observation digest was compared to a source-file digest. The four failed tests passed after comparing candidate.SourceFileDigest to transport.SourceObservationDigest. Completed passing cohorts were not replayed locally.",
+  "records": [
+    {
+      "record": "fresh-1613.jsonl",
+      "sha256": "9a63c6d7bd7d1155fc4c26e7a82afd41654f3ee02e98f67d0289e033d03539d5",
+      "package_results": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+          "action": "fail",
+          "elapsed_seconds": 0.476
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport/originpolicy",
+          "action": "pass",
+          "elapsed_seconds": 0.414
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcontinuation",
+          "action": "pass",
+          "elapsed_seconds": 2.089
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/scripts/candidate-delivery",
+          "action": "pass",
+          "elapsed_seconds": 0.426
+        }
+      ]
+    },
+    {
+      "record": "repair-1613.jsonl",
+      "sha256": "cac26737121943770ba807abe6058ada8dc7393f7e8994c1ea6ab88e760caa17",
+      "package_results": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+          "action": "pass",
+          "elapsed_seconds": 0.481
+        }
+      ]
+    },
+    {
+      "record": "fresh-1614.jsonl",
+      "sha256": "d351200eea25a8a7fd27cdb9ef1a0ec4a275f1b03837203d2684b452f19e65e4",
+      "package_results": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+          "action": "pass",
+          "elapsed_seconds": 0.413
+        }
+      ]
+    },
+    {
+      "record": "fresh-1615.jsonl",
+      "sha256": "e5f6660ecd84d023949c60005e40b7e010956ffefced8a07b60dff6a29cb298f",
+      "package_results": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "action": "pass",
+          "elapsed_seconds": 0.465
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryArchiveTamperFresh1613",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestEligibilityPreservesUnknownFresh1613",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport/originpolicy",
+      "test": "TestDeliverySourceProjectionFresh1613/CandidateArtifactRole",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport/originpolicy",
+      "test": "TestDeliverySourceProjectionFresh1613/BindCandidateSubject",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport/originpolicy",
+      "test": "TestDeliverySourceProjectionFresh1613/ContinuationEligible",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport/originpolicy",
+      "test": "TestDeliverySourceProjectionFresh1613/ContinuationSubject",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport/originpolicy",
+      "test": "TestDeliverySourceProjectionFresh1613/ContinuationArtifactName",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport/originpolicy",
+      "test": "TestDeliverySourceDecisionsFresh1613",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcontinuation",
+      "test": "TestSeparateContinuationOriginsFresh1613",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcontinuation",
+      "test": "TestMalformedContinuationSubjectFresh1613",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/candidate-delivery",
+      "test": "TestFetchDiagnosticsFresh1613/missing-role",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/candidate-delivery",
+      "test": "TestFetchDiagnosticsFresh1613/duplicate-role",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/candidate-delivery",
+      "test": "TestFetchDiagnosticsFresh1613/wrong-attempt",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/candidate-delivery",
+      "test": "TestFetchDiagnosticsFresh1613/missing-members",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/candidate-delivery",
+      "test": "TestFetchDiagnosticsFresh1613/api-unavailable",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/candidate-delivery",
+      "test": "TestFetchDiagnosticsFresh1613/pagination-incomplete",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/candidate-delivery",
+      "test": "TestFetchRejectsStaleDirectoryFresh1613",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/candidate-delivery",
+      "test": "TestFetchCancellationFresh1613",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliverySelectionFresh1613/exact-run",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliverySelectionFresh1613/missing-role",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliverySelectionFresh1613/duplicate-role",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliverySelectionFresh1613/wrong-run",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliverySelectionFresh1613/missing-attempt",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliverySelectionFresh1613/wrong-attempt",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliverySelectionFresh1613/expired",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliverySelectionFresh1613/incomplete-population",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliverySelectionFresh1613/missing-event",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliverySelectionFresh1613/artifact-run-mismatch",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryArchiveBindingFresh1613/cross-origin",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryArchiveBindingFresh1613/same-origin-push",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryArchiveBindingFresh1613/subject-contradiction",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryArchiveBindingFresh1613/workflow-contradiction",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryArchiveBindingFresh1613/workflow-missing",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryArchiveBindingFresh1613/candidate-missing",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryArchiveBindingFresh1613/manifest-missing",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryArchiveBindingFresh1613/transport-origin-missing",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryArchiveBindingFresh1613/payload-bytes-changed",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestEligibilityVerificationFresh1613/verified",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestEligibilityVerificationFresh1613/changed-value-retained-digest",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestEligibilityVerificationFresh1613/changed-digest",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryPartialMetadataFresh1614/expired",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryPartialMetadataFresh1614/digest",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryPartialMetadataFresh1614/size_in_bytes",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryPartialMetadataFresh1614/workflow_run",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryZipBoundariesFresh1614/duplicate-member",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryZipBoundariesFresh1614/member-count",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryZipBoundariesFresh1614/member-size",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryZipBoundariesFresh1614/invalid-zip",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/candidatedelivery",
+      "test": "TestDeliveryLabelIsNotSubjectFresh1614",
+      "result": "pass"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestDeliveryOriginSourceLawsFresh1615",
+      "result": "pass"
+    }
+  ],
+  "limits": {
+    "api_pages": 8,
+    "deadline_seconds": 120,
+    "archive_bytes": 16777216,
+    "archive_members": 128,
+    "selected_member_bytes": 8388608,
+    "performance_comparison": "UNASSESSED",
+    "whole_language_completeness": "UNASSESSED",
+    "original_ci": "PENDING_PUBLICATION",
+    "model_calls": 0,
+    "model_training": 0,
+    "repository_writes_by_delivery_reader": 0
+  },
+  "notes": [
+    "A missing delivery manifest stays UNKNOWN.",
+    "Continuation eligibility does not grant execution.",
+    "Network tests use a local HTTP transport; real downstream callback results remain unobserved until normal workflows run."
+  ]
+}

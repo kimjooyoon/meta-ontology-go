@@ -82,6 +82,7 @@ type ContinuationInput struct {
 	SourceEvent                  string   `json:"source_event"`
 	SourceRef                    string   `json:"source_ref"`
 	SourceHeadSHA                string   `json:"source_head_sha"`
+	SubjectSHA                   string   `json:"subject_sha,omitempty"`
 	SourceRunID                  int64    `json:"source_run_id"`
 	SourceRunAttempt             int      `json:"source_run_attempt"`
 	SourceArtifactName           string   `json:"source_artifact_name"`
@@ -121,6 +122,7 @@ func (input *ContinuationInput) UnmarshalJSON(data []byte) error {
 		SourceEvent                  string          `json:"source_event"`
 		SourceRef                    string          `json:"source_ref"`
 		SourceHeadSHA                string          `json:"source_head_sha"`
+		SubjectSHA                   string          `json:"subject_sha,omitempty"`
 		SourceRunID                  json.RawMessage `json:"source_run_id"`
 		SourceRunAttempt             json.RawMessage `json:"source_run_attempt"`
 		SourceArtifactName           string          `json:"source_artifact_name"`
@@ -162,7 +164,7 @@ func (input *ContinuationInput) UnmarshalJSON(data []byte) error {
 	*input = ContinuationInput{
 		SourceWorkflowName: value.SourceWorkflowName, SourceWorkflowPath: value.SourceWorkflowPath,
 		SourceRepository: value.SourceRepository, SourceEvent: value.SourceEvent, SourceRef: value.SourceRef,
-		SourceHeadSHA: value.SourceHeadSHA, SourceRunID: int64(runID), SourceRunAttempt: int(runAttempt),
+		SourceHeadSHA: value.SourceHeadSHA, SubjectSHA: value.SubjectSHA, SourceRunID: int64(runID), SourceRunAttempt: int(runAttempt),
 		SourceArtifactName: value.SourceArtifactName, SourceArtifactID: int64(artifactID),
 		SourceArtifactArchiveDigest: value.SourceArtifactArchiveDigest, SourceArtifactObservedDigest: value.SourceArtifactObservedDigest,
 		SourceReceiptDigest: value.SourceReceiptDigest, TargetWorkflowName: value.TargetWorkflowName,

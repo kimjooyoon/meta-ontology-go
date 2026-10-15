@@ -79,6 +79,9 @@ func independentFields(input ContinuationInput) ([]string, []string) {
 	if input.TargetWorkflowName != "" && input.TargetWorkflowPath != "" && !targetPairMatches(input.TargetWorkflowName, input.TargetWorkflowPath) {
 		add("target_workflow_identity")
 	}
+	if input.SubjectSHA != "" && !validSHA(input.SubjectSHA) {
+		add("subject_sha")
+	}
 	if input.SourceHeadSHA != "" && !validSHA(input.SourceHeadSHA) {
 		add("source_head_sha")
 	}

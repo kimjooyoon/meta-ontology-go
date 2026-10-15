@@ -72,3 +72,56 @@ GitHub documents the event-dependent commit semantics in
 [workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run)
 and the workflow definition identity in
 [contexts](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#github-context).
+
+## Carrying a candidate through later workflows
+
+The next failure occurred after transport had correctly bound the origins.
+Candidate run [38768968110](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38768968110)
+inspected subject `de821899…` using workflow `21725f7d…`. Two downstream readers
+looked for a candidate named after the workflow commit. The attestation reader
+failed to download it; the authorization bridge recorded `UNKNOWN`, then a later
+job tried to continue without a verified authorization.
+
+Delivery now carries a small `output/delivery.json` manifest alongside the
+candidate and transport receipt. It declares the producer run, attempt, event,
+workflow commit and logical subject, with hashes of the two payload files.
+The shared Go reader checks the exact run and complete artifact population,
+downloads one role by immutable ID, verifies its archive hash, and checks the
+manifest against both payloads. A filename locates a role; its suffix supplies
+no subject identity. The candidate's source-file hash binds the transport's
+source-file hash. Its semantic observation hash remains a separate value.
+
+The decisions are executable activities in the same registered Gooo source:
+
+```gooo
+activity BindCandidateSubject(candidate Text, transport Text, declared Text) -> Text
+    id "gooo://self-improvement/transport/bind-candidate-subject" computes `
+if candidate == "" || transport == "" || declared == "" {
+    return "CANDIDATE_SUBJECT_UNKNOWN"
+}
+if candidate != transport || candidate != declared {
+    return "CANDIDATE_SUBJECT_MISMATCH"
+}
+return "CANDIDATE_SUBJECT_BOUND"
+`
+```
+
+The source also chooses delivery roles, continuation eligibility and which
+origin names each continuation artifact. The Go projection executes those
+choices; Go handles HTTP, bounded archives and typed receipt validation.
+
+Authorization continuation requires an independently verified
+`CLOSED/AUTHORIZED` result. An unavailable delivery keeps its causal `UNKNOWN`
+and diagnostic artifact. It schedules no continuation. Continuation envelopes
+carry `source_head_sha` for the workflow and `subject_sha` for the candidate.
+Older envelopes with one origin retain their original interpretation.
+The v25/v26 readers use their own workflow code while retaining the candidate's
+subject in the payload. These records authorize scheduling; execution and grants
+keep their existing separate contracts.
+
+Fetches own a fresh directory, have a two-minute overall deadline and at most
+eight metadata pages, and bound archives to 16 MiB, 128 members and 8 MiB per
+selected member. Old candidate bundles without a delivery manifest remain
+`UNKNOWN`; readers do not reconstruct missing provenance from a filename.
+Fresh observations and their bounded case counts are recorded
+[here](../../docs/observations/candidate-delivery-origins/observations.json).
