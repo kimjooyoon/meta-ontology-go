@@ -18,7 +18,7 @@ func TestDiagnosticRequestOwnsHistoricalSubject(t *testing.T) {
 	if len(diagnostic) != 2 || !strings.HasPrefix(diagnostic[1], "    name: Diagnose function extractor process boundary\n    if: github.event_name == 'workflow_dispatch'\n") {
 		t.Fatal("historical execution needs an explicit diagnostic request")
 	}
-	request := strings.SplitN(source, "permissions:", 2)[0]
+	request, _, _ := strings.Cut(source, "permissions:")
 	if strings.Contains(request, "default:") || strings.Count(request, "required: true") != 4 {
 		t.Fatal("the caller must supply the complete subject/run/artifact/digest tuple")
 	}

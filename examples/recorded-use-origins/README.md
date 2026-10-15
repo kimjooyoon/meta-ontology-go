@@ -90,3 +90,36 @@ Gooo는 완료 여부와 프레임·활동 일치도 다시 확인해 두 관계
 해시 `a15f33ca…`를 결과에 보존했습니다. 이 명령은 3.55초였으며 생산자와 모델은
 실행하지 않았습니다. 추가 정적 어댑터 검사는 같은 전체 문서의 해시가 내부 runtime
 해시로 바뀌지 않는지를 확인했습니다. 앞선 프로그램 조회를 로컬에서 반복하지 않았습니다.
+
+## 짧은 설명이 필요할 때
+
+같은 소스의 `Explain`은 `Inspect`를 한 번 호출하고 그 판정을 한국어로 설명합니다.
+생성과 사용이 연결된 경우, 대입이 보관되지 않은 경우, 기록 한도와 모순된 입력을
+구분합니다. 소스 위치가 미확정이거나 다른 기록이 한도에 걸린 경우도 설명에 남깁니다.
+
+```sh
+saved=$(mktemp)
+gzip -dc examples/recorded-use-origins/full-producer-receipt.json.gz > "$saved"
+go run ./cmd/gooo package execute \
+  --origin-receipt "$saved" --origin-shape local-use-columns \
+  --origin-offset 0 \
+  examples/recorded-use-origins/explanation.workspace.json
+rm "$saved"
+```
+
+기본 출력은 입력 기원과 선택한 결과를 보여 줍니다. `--json`을 더하면 전체 실행 기록을
+받습니다. 첫 저장 기록 조회에서는 다음 설명을 관찰했습니다.
+
+> 호출이 'value'의 기록된 값 버전을 읽었습니다. 같은 기록에서 이 버전의 대입 완료를 확인했습니다.
+
+이 조회의 원래 좌표는 `case=0, use=0, frame=1, assignment=1`입니다. 원문 JSON의
+해시는 `a15f33ca…`로 보존됐습니다. 변수 이름은 128바이트까지 설명에 표시하며,
+더 긴 이름에는 일반적인 문장을 사용합니다. 구조화된 값 버전과 관계 조회는 `Inspect`로
+계속 읽을 수 있습니다.
+
+첫 설명 프로그램은 통제 사례 **10/10**을 1.75초에 통과했고, 저장된 읽기 한 건의
+별도 조회는 1.55초에 `OBSERVED`로 끝났습니다. 생산자 실행과 모델 호출은 모두 0회입니다.
+이 값은 각 원본 명령의 준비·빌드를 포함합니다. 소스 바이트는 공개 예제와 같으며,
+첫 실행의 원래 경로·입력·컴파일러와 현재 소스의 CI 검증은 각자의 범위를 가집니다.
+[첫 실행과 소스 일관성 기록](../../docs/observations/recorded-use-explanation/observations.json)에
+소스 해시와 분모를 보존했습니다.

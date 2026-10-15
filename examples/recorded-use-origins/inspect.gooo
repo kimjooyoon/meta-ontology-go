@@ -168,3 +168,40 @@ claim.local_records_dropped = input.frames_dropped > 0 || input.writes_dropped >
 claim.reason = input.reasons[0]
 return claim
 `
+
+entity Text id "urn:gooo:type:text"
+
+# The saved-record policy decides the relation; this activity explains its result.
+activity Explain(Columns) -> Text id "urn:gooo:recorded-use:explain" computes `
+let claim = Inspect(input)
+if claim.status == "SELECT_ONE_USE" {
+    return "읽기 한 건을 선택해 조회해 주세요."
+}
+if claim.status == "INVALID_INPUT" {
+    return "기록을 연결하는 입력이 서로 맞지 않습니다."
+}
+if claim.status == "UNRESOLVED_LOCAL_USE" {
+    if claim.reason == "NO_RECORDED_ASSIGNMENT" {
+        return "이 읽기에 연결된 대입이 보관되어 있지 않습니다."
+    }
+    if claim.reason == "WRITE_LIMIT" {
+        return "대입 기록 한도로 값 버전의 기원을 확인하지 못했습니다."
+    }
+    return "보관된 기록에서 읽기의 기원을 확인하지 못했습니다."
+}
+if claim.status == "RECORDED_GENERATION_AND_USAGE" {
+    let message = "호출이 기록된 값 버전을 읽었습니다."
+    if len(claim.variable_name) <= 128 {
+        message = "호출이 '" + claim.variable_name + "'의 기록된 값 버전을 읽었습니다."
+    }
+    message = message + " 같은 기록에서 이 버전의 대입 완료를 확인했습니다."
+    if claim.read_mapping == "UNMAPPED" {
+        message = message + " 기록된 읽기의 소스 위치는 미확정입니다."
+    }
+    if claim.local_records_dropped {
+        message = message + " 기록 한도에 걸린 부분이 있습니다."
+    }
+    return message
+}
+return "이 판정 상태의 설명이 아직 정의되지 않았습니다."
+`
