@@ -1050,6 +1050,74 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "local-version-identity-reader",
+      "path": "examples/local-version-origins/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "same-value-local-version-producer",
+      "path": "examples/local-version-origins/producer/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "json-text-escape-policy",
+      "path": "internal/meta/textinput/escapes.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "json-text-raw-and-decoded-origins",
+      "path": "examples/text-input-origins/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "recorded-local-use-relations",
+      "path": "examples/recorded-use-origins/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "source-control-source",
+      "path": "examples/source-control-reader/source.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "source-control-reader",
+      "path": "examples/source-control-reader/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
     }
   ],
   "package_units": [

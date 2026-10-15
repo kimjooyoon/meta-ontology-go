@@ -3,9 +3,14 @@
 Start by running the four practice cases:
 
 ```sh
-gooo package execute --json --cases cases.json gooo.workspace.json
-gooo package execute --json --inputs inputs.json gooo.workspace.json
+gooo package execute --cases cases.json gooo.workspace.json
+gooo package execute --inputs inputs.json gooo.workspace.json
 ```
+
+The first command reports the four finite checks. When input-only execution
+succeeds, the second command prints one JSON entry value per input row. Edit
+`inputs.json`, run it again, and read the returned `status` and source fields.
+Add `--json` when you need the complete generation, execution and origin record.
 
 `inspect.gooo` owns the classification. It receives the same 25 primitive fields
 as `field-input-locations` and returns the stable activity/record/field IDs,
@@ -22,7 +27,7 @@ invalid range. They are practice inputs, with four explicit expected outputs.
 Use a JSON execution receipt produced by a compatible Gooo development compiler:
 
 ```sh
-gooo package execute --json \
+gooo package execute \
   --origin-receipt /path/to/saved-execution.json \
   --origin-kind field-input-locations --origin-limit 9 \
   gooo.workspace.json
@@ -32,7 +37,8 @@ The consumer reads recorded rows without running their original producer or its
 decision model. Inspect the origin-input report for total/returned rows, page
 truncation and observation gaps. Use `--origin-offset 9` for the next page.
 
-The result is in `result.runtime.traces[].deliveries[0].actual`:
+The default output shows the input origin and returned values. With `--json`,
+each result is in `result.runtime.traces[].deliveries[0].actual`:
 
 | status | Meaning |
 | --- | --- |

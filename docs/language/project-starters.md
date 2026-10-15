@@ -32,7 +32,7 @@ where recorded fields and choices came from:
 ```sh
 gooo init --template origins --module example.org/team/origins my-origins
 cd my-origins
-gooo package execute --json --cases cases.json gooo.workspace.json
+gooo package execute --cases cases.json gooo.workspace.json
 ```
 
 Six local files include a Gooo reader, workspace, four practice cases, an editable
@@ -46,13 +46,17 @@ Their four expected results cover a declared alternative, a field name, a
 missing template and an invalid range. After editing the input-only example:
 
 ```sh
-gooo package execute --json --inputs inputs.json gooo.workspace.json
+gooo package execute --inputs inputs.json gooo.workspace.json
 ```
+
+Successful input-only execution prints one entry value per input row. Start with
+the returned status, source field and location. Add `--json` to either command
+when you need the complete source, generation and execution record.
 
 To inspect an actual saved execution instead:
 
 ```sh
-gooo package execute --json \
+gooo package execute \
   --origin-receipt /path/to/execution.json \
   --origin-kind field-input-locations --origin-limit 9 \
   gooo.workspace.json

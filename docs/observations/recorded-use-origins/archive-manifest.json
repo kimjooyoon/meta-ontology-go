@@ -1,0 +1,396 @@
+{
+  "members": [
+    {
+      "path": "envelope-binding-first/ended.json",
+      "original_sha256": "ca06da17c875c254fdf632ec1e529346254a073388377ef9dc16f33ceceaad05",
+      "published_sha256": "ca06da17c875c254fdf632ec1e529346254a073388377ef9dc16f33ceceaad05",
+      "bytes": 588,
+      "path_normalized": false
+    },
+    {
+      "path": "envelope-binding-first/stderr.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "path_normalized": false
+    },
+    {
+      "path": "envelope-binding-first/stdout.log",
+      "original_sha256": "d133cac75006304c2c9f1be76856c6df3df879db3424e31bc9dbb1f09e884dbc",
+      "published_sha256": "d133cac75006304c2c9f1be76856c6df3df879db3424e31bc9dbb1f09e884dbc",
+      "bytes": 169,
+      "path_normalized": false
+    },
+    {
+      "path": "envelope-first/claim.json",
+      "original_sha256": "54212ac77efeb7a00bbe895c46c0a96e9b010846b5b46cac59a86803d691054f",
+      "published_sha256": "54212ac77efeb7a00bbe895c46c0a96e9b010846b5b46cac59a86803d691054f",
+      "bytes": 1062,
+      "path_normalized": false
+    },
+    {
+      "path": "envelope-first/ended.json",
+      "original_sha256": "e672dd04ca46a0788945070b010d172e7850c60d20943a74f681ebe3e81598a8",
+      "published_sha256": "26969383db925e0251a3760e82d51affbc7375ded9a77d52803ec5b475146eef",
+      "bytes": 1089,
+      "path_normalized": true
+    },
+    {
+      "path": "envelope-first/stderr.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "path_normalized": false
+    },
+    {
+      "path": "envelope-first/stdout.json",
+      "original_sha256": "bc6024d75335c3687e8dc69df2393d682c972a5dacb7a51fca2283742d367db8",
+      "published_sha256": "bc6024d75335c3687e8dc69df2393d682c972a5dacb7a51fca2283742d367db8",
+      "bytes": 807650,
+      "path_normalized": false
+    },
+    {
+      "path": "inventory.json",
+      "original_sha256": "b95243d00f063a38828f476c16ddf37c3a912851bdaeed6208612cade9553d69",
+      "published_sha256": "b95243d00f063a38828f476c16ddf37c3a912851bdaeed6208612cade9553d69",
+      "bytes": 118,
+      "path_normalized": false
+    },
+    {
+      "path": "inventory.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "path_normalized": false
+    },
+    {
+      "path": "inventory.stdout",
+      "original_sha256": "96919fd6269688aaacb929a0e1fcaa1178837c3a23e80552831ec7cfefcff2dd",
+      "published_sha256": "96919fd6269688aaacb929a0e1fcaa1178837c3a23e80552831ec7cfefcff2dd",
+      "bytes": 22345,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/application.json",
+      "original_sha256": "edb7212bd7fbf4fb375cbb3d6ba8476663065de84950d678802fe82d8589cca4",
+      "published_sha256": "edb7212bd7fbf4fb375cbb3d6ba8476663065de84950d678802fe82d8589cca4",
+      "bytes": 10962,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/before/examples/language-syntax-roundtrip/corpus.json",
+      "original_sha256": "950b20cf9c674ea71ce2dc59abe70e0c1c5e5c5664893013e6d439ab3e9912cb",
+      "published_sha256": "950b20cf9c674ea71ce2dc59abe70e0c1c5e5c5664893013e6d439ab3e9912cb",
+      "bytes": 39883,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/before/internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+      "original_sha256": "71b72d05f0677136bc623dd4785fab92ae8bd47f1375d56bb440af1ab60af8b3",
+      "published_sha256": "71b72d05f0677136bc623dd4785fab92ae8bd47f1375d56bb440af1ab60af8b3",
+      "bytes": 10739,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/before/internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+      "original_sha256": "ae42bd060e207e407b73564e693ac27d4f2081ffd301d8bf513a98ebe4a75bc4",
+      "published_sha256": "ae42bd060e207e407b73564e693ac27d4f2081ffd301d8bf513a98ebe4a75bc4",
+      "bytes": 12735,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/before/internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+      "original_sha256": "15d8ebb3d99306cab7f739f9db7be583fa46f80ae264f22adb8a7a6236d090f6",
+      "published_sha256": "15d8ebb3d99306cab7f739f9db7be583fa46f80ae264f22adb8a7a6236d090f6",
+      "bytes": 27590,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/before/internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+      "original_sha256": "b834c70d8aa4f164cd5eada328e73b9c99fcefaeba5839882a326df8ca3c8bbc",
+      "published_sha256": "b834c70d8aa4f164cd5eada328e73b9c99fcefaeba5839882a326df8ca3c8bbc",
+      "bytes": 12917,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/before/internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+      "original_sha256": "5404837602c91b6f0c10d3198a5852d76634a85a8fc629164aa623845829cbcd",
+      "published_sha256": "5404837602c91b6f0c10d3198a5852d76634a85a8fc629164aa623845829cbcd",
+      "bytes": 12650,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/before/internal/meta/languagereadiness/languagesyntax/model.go",
+      "original_sha256": "eef38825f2e1469b9a3e185125fcddebee60b1f2a3e01e7574330b4f79f4ce23",
+      "published_sha256": "eef38825f2e1469b9a3e185125fcddebee60b1f2a3e01e7574330b4f79f4ce23",
+      "bytes": 3529,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/before/internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go",
+      "original_sha256": "09bb018ad7f2da955ee141ec1a9f7e221dc24e01d9114b5d99d5e801a6415c0c",
+      "published_sha256": "09bb018ad7f2da955ee141ec1a9f7e221dc24e01d9114b5d99d5e801a6415c0c",
+      "bytes": 4984,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/build.json",
+      "original_sha256": "0e672875d8358bb28f83e8b89103a4700b2ce16484eef84bcc24e6d98a3d297c",
+      "published_sha256": "d78267eb9fe32dc168420999348d00331bbe95ecdffe3c0459f6e79533df4918",
+      "bytes": 245,
+      "path_normalized": true
+    },
+    {
+      "path": "registration-usage/build.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/build.stdout",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/candidate.json",
+      "original_sha256": "d5ce8347752566dbd33416d3dc7ddfd3f50ae435e126b284528b88235c208491",
+      "published_sha256": "d5ce8347752566dbd33416d3dc7ddfd3f50ae435e126b284528b88235c208491",
+      "bytes": 179436,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/execution.json",
+      "original_sha256": "355a953f299c5d60c52e89ae3dbc6d5b4f80007711ec6c726a20d6e1898324ba",
+      "published_sha256": "355a953f299c5d60c52e89ae3dbc6d5b4f80007711ec6c726a20d6e1898324ba",
+      "bytes": 954,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/members/examples/language-syntax-roundtrip/corpus.json",
+      "original_sha256": "2801310104e5a2d2e9e2aeb23233819c723dc13c53b5983ace31e23bac4e78b4",
+      "published_sha256": "2801310104e5a2d2e9e2aeb23233819c723dc13c53b5983ace31e23bac4e78b4",
+      "bytes": 40215,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/members/internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+      "original_sha256": "524f5a55ee85eda87299d011f93b374bcc41d10ca0d76a58a5931cd62d3020c9",
+      "published_sha256": "524f5a55ee85eda87299d011f93b374bcc41d10ca0d76a58a5931cd62d3020c9",
+      "bytes": 10852,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/members/internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+      "original_sha256": "8506265fee56f6934dc067ef6d0dda6b4b078270f397fd3b66ea95702a2d0cbb",
+      "published_sha256": "8506265fee56f6934dc067ef6d0dda6b4b078270f397fd3b66ea95702a2d0cbb",
+      "bytes": 12928,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/members/internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+      "original_sha256": "7f0bfcf86f73bef3afb212f1ab07d46e4c81489c618c2744f0e14eb985595f59",
+      "published_sha256": "7f0bfcf86f73bef3afb212f1ab07d46e4c81489c618c2744f0e14eb985595f59",
+      "bytes": 28375,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/members/internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v80.json",
+      "original_sha256": "d3c410815e67e063e3ac504ba601c24fec05a127349432f6255dd5b2bdb342e4",
+      "published_sha256": "d3c410815e67e063e3ac504ba601c24fec05a127349432f6255dd5b2bdb342e4",
+      "bytes": 1363,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/members/internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+      "original_sha256": "a0bff54a31dfbefe7f1ace43b5de89da691ae475546a87eddb511653cab9714a",
+      "published_sha256": "a0bff54a31dfbefe7f1ace43b5de89da691ae475546a87eddb511653cab9714a",
+      "bytes": 13086,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/members/internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+      "original_sha256": "9e275d8d55ce0c6f224b512fbf976abfb4455297e83e3c52a3b836e24b94429f",
+      "published_sha256": "9e275d8d55ce0c6f224b512fbf976abfb4455297e83e3c52a3b836e24b94429f",
+      "bytes": 12650,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/members/internal/meta/languagereadiness/languagesyntax/model.go",
+      "original_sha256": "396e184d00a05ab1cfa9c2b1edbee990c71b38cc4872ad828cf260e13918daef",
+      "published_sha256": "396e184d00a05ab1cfa9c2b1edbee990c71b38cc4872ad828cf260e13918daef",
+      "bytes": 3529,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/candidate/members/internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go",
+      "original_sha256": "696813347a1606a4742b026c8b1d83d7b61a727979fdde5b2e781b7fe98d4d38",
+      "published_sha256": "696813347a1606a4742b026c8b1d83d7b61a727979fdde5b2e781b7fe98d4d38",
+      "bytes": 5302,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/generate.json",
+      "original_sha256": "f8f9df1d68a3e6c30cf8ef46fbd733afe84a09e7a78b08c147269d266d4a58df",
+      "published_sha256": "f60016dbebb475a547e5cb3f3fbd3fc04b2a7ec06f58f6eebd5b7e0072304b7a",
+      "bytes": 314,
+      "path_normalized": true
+    },
+    {
+      "path": "registration-usage/generate.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/generate.stdout",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/generator-identity.json",
+      "original_sha256": "ea38d81607006115ca51c08ef0b54a37e995828e038293f4b28e8bc343d34c1b",
+      "published_sha256": "ea38d81607006115ca51c08ef0b54a37e995828e038293f4b28e8bc343d34c1b",
+      "bytes": 111,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/inspect.json",
+      "original_sha256": "5acdeb67e7959374448a6c156dd1aeab82a11c66c51ed0dcc7473a18d28fbeb5",
+      "published_sha256": "10c64c79c0a4d39be5d91322959a3ae3a611c30368a2568c7e885e1dbb3901d8",
+      "bytes": 250,
+      "path_normalized": true
+    },
+    {
+      "path": "registration-usage/inspect.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/inspect.stdout",
+      "original_sha256": "4364e1f035c7bb2e14679eabae42653bdd18cbdfd6282541a0704ad0fa079691",
+      "published_sha256": "4364e1f035c7bb2e14679eabae42653bdd18cbdfd6282541a0704ad0fa079691",
+      "bytes": 601,
+      "path_normalized": false
+    },
+    {
+      "path": "registration-usage/request.json",
+      "original_sha256": "2568ece640243897207849117d06a051025cf51115a49ae23fc382a05b152fab",
+      "published_sha256": "2568ece640243897207849117d06a051025cf51115a49ae23fc382a05b152fab",
+      "bytes": 965,
+      "path_normalized": false
+    },
+    {
+      "path": "source-check.json",
+      "original_sha256": "f80a284c3422bacb4bd49547cc88109ce56cb2c0f7c2893c6b6bebc6348d56c4",
+      "published_sha256": "f80a284c3422bacb4bd49547cc88109ce56cb2c0f7c2893c6b6bebc6348d56c4",
+      "bytes": 125,
+      "path_normalized": false
+    },
+    {
+      "path": "source-check.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "path_normalized": false
+    },
+    {
+      "path": "source-check.stdout",
+      "original_sha256": "2039e5f0d55c33bb1b79b329caaadad72be6da5e28e0c9b1cd75127e2b9e2329",
+      "published_sha256": "2039e5f0d55c33bb1b79b329caaadad72be6da5e28e0c9b1cd75127e2b9e2329",
+      "bytes": 47,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/ended.json",
+      "original_sha256": "c739c0d8734f956ac8283fa98665fa38610f5660bc7a0713c0ac722940347abb",
+      "published_sha256": "c739c0d8734f956ac8283fa98665fa38610f5660bc7a0713c0ac722940347abb",
+      "bytes": 1494,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/source/cmd/gooo/package_execute.go",
+      "original_sha256": "ac7eed425447ba6accc152ce97a76df0cf957750ca82c67fea8b768c76022d5f",
+      "published_sha256": "ac7eed425447ba6accc152ce97a76df0cf957750ca82c67fea8b768c76022d5f",
+      "bytes": 10401,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/source/cmd/gooo/package_origin_input.go",
+      "original_sha256": "e3f83ed8b512efede8cee37ca18e24fbce3bc2466007abe0f640ef027d38918c",
+      "published_sha256": "e3f83ed8b512efede8cee37ca18e24fbce3bc2466007abe0f640ef027d38918c",
+      "bytes": 8608,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/source/cmd/gooo/package_origin_use_relations_test.go",
+      "original_sha256": "ff0d40fec36370b3b7ed551a1b461b1e9369787c526279a915ea8d76aa060fbf",
+      "published_sha256": "ff0d40fec36370b3b7ed551a1b461b1e9369787c526279a915ea8d76aa060fbf",
+      "bytes": 3734,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/source/examples/recorded-use-origins/gooo.workspace.json",
+      "original_sha256": "001aa733bce220ba990891d60a1bcd25416c402e28bb4373efc57997c3bb2b46",
+      "published_sha256": "001aa733bce220ba990891d60a1bcd25416c402e28bb4373efc57997c3bb2b46",
+      "bytes": 258,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/source/examples/recorded-use-origins/inspect.gooo",
+      "original_sha256": "4685165894012ec27834f5a0c0fadb7f578cc2cfb3a49f9e934980bd12f14c34",
+      "published_sha256": "4685165894012ec27834f5a0c0fadb7f578cc2cfb3a49f9e934980bd12f14c34",
+      "bytes": 9448,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/source/examples/recorded-use-origins/policy-cases.json",
+      "original_sha256": "d04f3908a45bff64557877c34f400fd36a2597c1080591c4dd6da9f9f72ebc71",
+      "published_sha256": "d04f3908a45bff64557877c34f400fd36a2597c1080591c4dd6da9f9f72ebc71",
+      "bytes": 27168,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/source/internal/bodyexecution/native_local_use_columns.go",
+      "original_sha256": "8e50e9a39b02316e609b71eda3cdcc9d5c88a8884bf8d0a80e751945abf7679a",
+      "published_sha256": "8e50e9a39b02316e609b71eda3cdcc9d5c88a8884bf8d0a80e751945abf7679a",
+      "bytes": 5164,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/source/internal/bodyexecution/native_local_use_columns_test.go",
+      "original_sha256": "201aa3135f32cad5b8ac61c67c0114a085f0e9de13cf0849a27af092294a719d",
+      "published_sha256": "201aa3135f32cad5b8ac61c67c0114a085f0e9de13cf0849a27af092294a719d",
+      "bytes": 1916,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/source/internal/meta/repositoryprojection/extractor/recorded_usage_capacity_test.go",
+      "original_sha256": "b137ac40ada6fa9beb72971debc95005f321ab04b7c67c2d1a47cd1263e6ea20",
+      "published_sha256": "b137ac40ada6fa9beb72971debc95005f321ab04b7c67c2d1a47cd1263e6ea20",
+      "bytes": 473,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/stderr.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "path_normalized": false
+    },
+    {
+      "path": "usage-first/stdout.log",
+      "original_sha256": "b80dceaf15a78134956897c250284e912056c55b1e11010ab29cadef5a2e3e35",
+      "published_sha256": "b80dceaf15a78134956897c250284e912056c55b1e11010ab29cadef5a2e3e35",
+      "bytes": 1407,
+      "path_normalized": false
+    }
+  ]
+}

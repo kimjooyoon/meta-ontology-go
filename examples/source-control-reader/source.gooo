@@ -1,0 +1,19 @@
+package guardmetadata
+namespace guardmetadata
+entity Integer id "urn:gooo:type:integer"
+entity Request id "urn:guardmetadata:request" fields {
+ field amount id "urn:guardmetadata:amount" type integer required one
+ field enabled id "urn:guardmetadata:enabled" type boolean required one
+}
+activity Adjust(Request) -> Integer id "urn:guardmetadata:adjust" computes `
+let amount = input.amount
+if false {
+    amount += 100
+} else {
+    amount += 1
+}
+if input.enabled {
+    amount *= 2
+}
+return amount
+`

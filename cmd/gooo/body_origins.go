@@ -8,7 +8,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyOriginsUsage = "usage: gooo body-origins --activity <name> [--format json|text] [--fill-candidates | --fill-candidate <id>] [--inputs-for <package/path:Activity> [--field <stable-field-id>] [--include-control]] <file.gooo>"
+const bodyOriginsUsage = "usage: gooo body-origins --activity <name> [--format json|text] [--fill-candidates | --fill-candidate <id>] [--inputs-for <package/path:Activity> [--inputs-shape ancestry-columns|source-control-columns] [--field <stable-field-id>] [--include-control]] <file.gooo>"
 
 func runBodyOrigins(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	options, err := parseBodyOriginOptions(args)
@@ -35,7 +35,11 @@ func writeTypedBodyOrigins(options bodyOriginOptions, source []byte, stdout, std
 	report, err := bodycodegen.InspectTypedValueOrigins(options.file, source, flags["--activity"])
 	if err == nil && flags["--inputs-for"] != "" {
 		var raw []byte
-		raw, err = bodycodegen.TypedValueOriginInputs(report, flags["--inputs-for"], flags["--field"], options.control)
+		if flags["--inputs-shape"] == "source-control-columns" {
+			raw, err = bodycodegen.TypedSourceControlInputs(report, flags["--inputs-for"])
+		} else {
+			raw, err = bodycodegen.TypedValueOriginInputs(report, flags["--inputs-for"], flags["--field"], options.control)
+		}
 		if err == nil {
 			_, err = fmt.Fprintln(stdout, string(raw))
 		}

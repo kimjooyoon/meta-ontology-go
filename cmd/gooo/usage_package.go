@@ -2,6 +2,15 @@ package main
 
 const packageTopicHelp = `Work with a multi-file Gooo workspace
 
+Start an origin reader and inspect its editable input:
+  gooo init --template origins my-origins
+  cd my-origins
+  gooo package execute --inputs inputs.json gooo.workspace.json
+
+Successful input-only execution prints one JSON value per input row.
+Add --json for the complete generation, execution and origin record.
+See docs/language/project-starters.md for the practice checks and source editing.
+
 Read recorded candidate paths:
   gooo package origins --receipt execution.json [--candidate <id>] [--json]
 See gooo help package origins for source scope and limits.

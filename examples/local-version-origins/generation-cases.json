@@ -1,0 +1,157 @@
+{
+ "schema": "gooo/body-composition-cases/v1",
+ "cases": [
+  {
+   "inputs": {
+    "origin/localversions:Generation": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 1,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4
+     ],
+     "frames": [
+      9
+     ],
+     "assignments": [
+      7
+     ],
+     "roots": [
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11
+     ],
+     "declaration_ends": [
+      19
+     ],
+     "declaration_mapped": [
+      true
+     ],
+     "completed": [
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Generation": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "file_sources_sha256": "controlled-file-annotations",
+     "relation_iri": "http://www.w3.org/ns/prov#wasGeneratedBy",
+     "case_index": 4,
+     "assignment_index": 7,
+     "frame": 9,
+     "root_activity_id": "urn:controlled:root",
+     "activity_id": "urn:controlled:activity",
+     "original_activity_id": "urn:controlled:original",
+     "package_path": "controlled/pkg",
+     "filename": "main.gooo",
+     "declaration_sha256": "controlled-declaration",
+     "declaration_start": 11,
+     "declaration_end": 19,
+     "completed": true,
+     "source_mapped": true,
+     "identity_recording_complete": true,
+     "status": "RECORDED_GENERATION_CLAIM"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Generation": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 1,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4
+     ],
+     "frames": [
+      9
+     ],
+     "assignments": [
+      7
+     ],
+     "roots": [
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11
+     ],
+     "declaration_ends": [
+      19
+     ],
+     "declaration_mapped": [
+      true
+     ],
+     "completed": [
+      false
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Generation": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "file_sources_sha256": "controlled-file-annotations",
+     "relation_iri": "",
+     "case_index": 4,
+     "assignment_index": 7,
+     "frame": 9,
+     "root_activity_id": "urn:controlled:root",
+     "activity_id": "urn:controlled:activity",
+     "original_activity_id": "urn:controlled:original",
+     "package_path": "controlled/pkg",
+     "filename": "main.gooo",
+     "declaration_sha256": "controlled-declaration",
+     "declaration_start": 11,
+     "declaration_end": 19,
+     "completed": false,
+     "source_mapped": true,
+     "identity_recording_complete": true,
+     "status": "INCOMPLETE_WRITE"
+    }
+   }
+  }
+ ]
+}

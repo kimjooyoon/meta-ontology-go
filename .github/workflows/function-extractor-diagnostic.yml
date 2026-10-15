@@ -5,28 +5,25 @@ on:
     branches: [dev]
     paths:
       - '.github/workflows/function-extractor-diagnostic.yml'
+      - 'scripts/action-runtime/diagnostic_request_test.go'
   workflow_dispatch:
     inputs:
       subject_sha:
         description: Exact source commit to diagnose, not a branch or tag
         required: true
         type: string
-        default: 'e86c8183a6afde47cee848fb567ece317345dd23'
       source_run_id:
         description: Workflow run that produced the source artifact
         required: true
         type: string
-        default: '33969275768'
       source_artifact_id:
         description: Immutable source artifact ID from the same repository
         required: true
         type: string
-        default: '9970866969'
       source_artifact_digest:
         description: SHA-256 digest of that exact source artifact archive
         required: true
         type: string
-        default: 'sha256:424339c5ed6e20b37cf67612775cd291ed086156c41d880c4708718d70dd3d99'
 
 permissions:
   contents: read
@@ -37,23 +34,39 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  SUBJECT_SHA: ${{ inputs.subject_sha || 'e86c8183a6afde47cee848fb567ece317345dd23' }}
-  SOURCE_RUN_ID: ${{ inputs.source_run_id || '33969275768' }}
-  SOURCE_ARTIFACT_ID: ${{ inputs.source_artifact_id || '9970866969' }}
-  SOURCE_ARTIFACT_NAME: ${{ format('transformation-effect-focused-{0}', inputs.subject_sha || 'e86c8183a6afde47cee848fb567ece317345dd23') }}
-  SOURCE_ARTIFACT_DIGEST: ${{ inputs.source_artifact_digest || 'sha256:424339c5ed6e20b37cf67612775cd291ed086156c41d880c4708718d70dd3d99' }}
+  SUBJECT_SHA: ${{ inputs.subject_sha }}
+  SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+  SOURCE_ARTIFACT_ID: ${{ inputs.source_artifact_id }}
+  SOURCE_ARTIFACT_NAME: ${{ format('transformation-effect-focused-{0}', inputs.subject_sha) }}
+  SOURCE_ARTIFACT_DIGEST: ${{ inputs.source_artifact_digest }}
   MAX_CAPTURE_BYTES: '262144'
   HELPER_TIMEOUT_SECONDS: '45'
   META_EXECUTION_TIMEOUT_SECONDS: '180'
   META_EXECUTION_DISPATCH_MODE: direct-prebuilt-native
 
 jobs:
+  request-contract:
+    name: Check diagnostic request and shell contracts
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: '1.27.2'
+          cache: false
+      - name: Validate request binding and every diagnostic shell body
+        env:
+          GOTOOLCHAIN: go1.27.2
+          GOWORK: 'off'
+        run: go test ./scripts/action-runtime -run '^TestDiagnosticRequestOwnsHistoricalSubject$' -count=1
   diagnose:
     name: Diagnose function extractor process boundary
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name == github.repository)
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -80,7 +93,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Go 1.27
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version: '1.27.2'
           cache: false

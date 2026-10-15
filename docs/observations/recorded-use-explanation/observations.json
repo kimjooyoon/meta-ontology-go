@@ -1,0 +1,131 @@
+{
+  "schema": "gooo/recorded-use-explanation-first/v1",
+  "source_state": "UNBOUND_PRIVATE_DRAFT",
+  "compiler_parent_revision": "f6926347dc17b07ed23a2dd6c6aad71e9a315214",
+  "codegen_wall_seconds": 1.498204542,
+  "execution_wall_seconds": 1.746047375,
+  "finite_passed": 10,
+  "finite_total": 10,
+  "model_calls": 0,
+  "original_producer_executions": 0,
+  "source_sha256": {
+    "combined-draft.gooo": "6442a77e7676eb7b912b445895cfc6bfd57c1e319654a8e736aa175e9a193947",
+    "explain.gooo": "eb06b444d34ae90a6b2207107bac78e50fc036e09de281a9345fc28fb5576c3b",
+    "explanation-cases.json": "064b69baba54f1e2aaadb6c365d2d3f6e96bdf2e72db34b7232f53eaeb91013a",
+    "gooo.workspace.json": "1958115a28ec3c0a7e34b384437232059d484f71fe9606d56e6c1920d5658f12",
+    "case-origins.json": "5eba9166b1142da8c07a8468230c78877625eb16efeca4899724d60501c04def"
+  },
+  "scope": "Finite first-source observations and new source-coherence/modernization analysis. Timings include local preparation/build. No producer replay/model training or historical local cohort rerun. Current source acceptance is pending original CI.",
+  "private_stdout_bytes": 1151321,
+  "private_stdout_sha256": "6140d38cd27094df90f65031dd7ceca9d6b3f9522a640469619609849df9fa45",
+  "saved_read_first": {
+    "decision": "OBSERVED",
+    "wall_seconds": 1.55392625,
+    "input_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+    "original_coordinates": {
+      "cases": [
+        0
+      ],
+      "use_indices": [
+        0
+      ],
+      "frames": [
+        1
+      ],
+      "assignments": [
+        1
+      ],
+      "names": [
+        "value"
+      ]
+    },
+    "text": "호출이 'value'의 기록된 값 버전을 읽었습니다. 같은 기록에서 이 버전의 대입 완료를 확인했습니다.",
+    "model_calls": 0,
+    "producer_executions": 0,
+    "scope": "one selected saved read, not a full journal or producer replay; no expected-value suite"
+  },
+  "date": "2026-10-15",
+  "archive": {
+    "file": "first-cohorts.tar.gz",
+    "bytes": 162913,
+    "sha256": "a118d9a063523421cd61e1e3e9ce69b57a3bc012b5983b83475d8682a738e9cd",
+    "normalization": "none; byte-exact source, cases, receipts and first observations; original paths name their original execution scope"
+  },
+  "publication_source": {
+    "path": "examples/recorded-use-origins/inspect.gooo",
+    "sha256": "6442a77e7676eb7b912b445895cfc6bfd57c1e319654a8e736aa175e9a193947",
+    "byte_identical_to_first_program": true,
+    "workspace_difference": "published manifest names inspect.gooo; first manifest names combined-draft.gooo. Current exact-source acceptance belongs to original future CI."
+  },
+  "coherence_first": {
+    "exit_code": 0,
+    "wall_seconds": 1.668699291,
+    "argv": [
+      "<go1.27.2>/bin/go",
+      "test",
+      "-p=1",
+      "./internal/meta/languagereadiness/languagesyntax/replay",
+      "-run",
+      "^TestRecordedExplanationSourceCoherence$",
+      "-count=1"
+    ],
+    "compiler_parent_revision": "f6926347dc17b07ed23a2dd6c6aad71e9a315214",
+    "source_state": "UNBOUND_LOCAL_SOURCE",
+    "scope": "new source-coherence test only or readonly modernization analysis; controlled/saved native cohorts not replayed",
+    "source_sha256": {
+      "examples/recorded-use-origins/inspect.gooo": "6442a77e7676eb7b912b445895cfc6bfd57c1e319654a8e736aa175e9a193947",
+      "cmd/gooo/package_origin_explanation_test.go": "b5f71465cd64b3003735bff41ae1785f767b66067ad44de192c6ea337becd0ae",
+      "scripts/action-runtime/diagnostic_request_test.go": "1e9bdde7d5747b3e030458f8d4e97e7194f75230e20cae59f5d18cbb7946ff2c",
+      "internal/meta/languagereadiness/languagesyntax/replay/recorded_explanation_test.go": "8a989bfbe7557b3ecfbea3c6d66f13cdf65c00e3ca41fe5b4630d40fca9df967"
+    }
+  },
+  "modernization_first": {
+    "exit_code": 0,
+    "wall_seconds": 1.7511717919999998,
+    "argv": [
+      "<go1.27.2>/bin/go",
+      "fix",
+      "-p=1",
+      "-diff",
+      "./cmd/gooo",
+      "./scripts/action-runtime",
+      "./internal/meta/languagereadiness/languagesyntax/replay"
+    ],
+    "compiler_parent_revision": "f6926347dc17b07ed23a2dd6c6aad71e9a315214",
+    "source_state": "UNBOUND_LOCAL_SOURCE",
+    "scope": "new source-coherence test only or readonly modernization analysis; controlled/saved native cohorts not replayed",
+    "source_sha256": {
+      "examples/recorded-use-origins/inspect.gooo": "6442a77e7676eb7b912b445895cfc6bfd57c1e319654a8e736aa175e9a193947",
+      "cmd/gooo/package_origin_explanation_test.go": "b5f71465cd64b3003735bff41ae1785f767b66067ad44de192c6ea337becd0ae",
+      "scripts/action-runtime/diagnostic_request_test.go": "1e9bdde7d5747b3e030458f8d4e97e7194f75230e20cae59f5d18cbb7946ff2c",
+      "internal/meta/languagereadiness/languagesyntax/replay/recorded_explanation_test.go": "8a989bfbe7557b3ecfbea3c6d66f13cdf65c00e3ca41fe5b4630d40fca9df967"
+    }
+  },
+  "registry": {
+    "case_count": 118,
+    "source_file_count": 136,
+    "case_records_changed": 0,
+    "denominator_files_changed": 0,
+    "profile": "existing ordered_collections V5; source extension at its already registered path"
+  },
+  "modernization_origin": {
+    "pr": 1584,
+    "source_head": "f6926347dc17b07ed23a2dd6c6aad71e9a315214",
+    "original_failed_run": 38690491248,
+    "original_failed_job": 116275000648,
+    "change": "strings.SplitN(source, separator, 2)[0] -> strings.Cut prefix; no other diagnostic contract change",
+    "scope": "known original failed job; other source workflows were still live at capture"
+  },
+  "tests": {
+    "native_example_cohorts": "first private controlled and saved-read observations retained; not rerun locally",
+    "new_source_coherence": "one new V5 test, five source/BX laws; no native program/model execution",
+    "new_cli_regressions": "written and type-checked through modernization analysis; original CI will execute them"
+  },
+  "historical_preservation": {
+    "parent_revision": "f6926347dc17b07ed23a2dd6c6aad71e9a315214",
+    "prior_registry_byte_identical": true,
+    "historical_denominator_files_byte_identical": 59,
+    "case_count": 118,
+    "source_paths_added": 0
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "schema": "gooo/local-version-first-observations/v1",
+  "date": "2026-10-15",
+  "source_state": "UNBOUND_LOCAL_SOURCE",
+  "accepted_base": "56f2d701f1b8fd9ed0d5349017f4faa322ebed20",
+  "source_parent": "ab8cf83ab995748ea606317eb070a69ab5e98ba1",
+  "cohorts": [
+    {
+      "id": "producer-first",
+      "scope": "first original producer, four inputs",
+      "observed": {
+        "finite_passed": 4,
+        "finite_total": 4,
+        "retained_writes": 32,
+        "retained_frames": 12,
+        "model_calls": 0
+      },
+      "exit_code": 0,
+      "wall_seconds": 6.449303667,
+      "parent_head": "ab8cf83ab995748ea606317eb070a69ab5e98ba1",
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "source_sha256": {
+        "examples/local-version-origins/producer/main.gooo": "0addfadda13462325fa9f69625a1e0c11a50449405d723dafff6f6101435b79f",
+        "examples/local-version-origins/producer/gooo.workspace.json": "bd081080cc18c620989124e2893afeb20cf0fdb8366aa9216906ed3d2580301e",
+        "examples/local-version-origins/producer/cases.json": "0a3a1803437fe1f5da8bef53e53cc657fcde9fdc97c1db56414797b5f977d5cc",
+        "internal/bodyexecution/native_local_version_columns.go": "3175328b0f115d0c67eaa3b4e4fe03cc59604fc6e49778f886f3087c555964c9",
+        "cmd/gooo/package_origin_input.go": "0bf47b3f0d0f9577c6a2fc3b8bf792d5a03e6733a734c027076715f12199b815"
+      },
+      "cohort": "new four-input producer; same-value calls and reassignment; first invocation"
+    },
+    {
+      "id": "reader-full-first",
+      "scope": "v1 selected-source prototype; not current original-file source",
+      "observed": {
+        "page_rows": 32,
+        "declarations": 4,
+        "write_calls": 12,
+        "completed_versions": 32,
+        "decision": "OBSERVED",
+        "producer_executions": 0,
+        "model_calls": 0
+      },
+      "exit_code": 0,
+      "wall_seconds": 2.481225708,
+      "source_sha256": {
+        "examples/local-version-origins/inspect.gooo": "dbd25642fa686e0e4fdaccf0514e3cd620c5d3e811a08f4c3c50f40a7cada044",
+        "examples/local-version-origins/gooo.workspace.json": "cd6d030232b88cfed31fb6c28faa6b7ed26e26209c78102df45021d41567a1cb",
+        "internal/bodyexecution/native_local_version_columns.go": "3175328b0f115d0c67eaa3b4e4fe03cc59604fc6e49778f886f3087c555964c9",
+        "cmd/gooo/package_origin_input.go": "0bf47b3f0d0f9577c6a2fc3b8bf792d5a03e6733a734c027076715f12199b815"
+      },
+      "parent_head": "ab8cf83ab995748ea606317eb070a69ab5e98ba1",
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "cohort": "new Gooo reader; one full page of 32 writes; no producer re-execution"
+    },
+    {
+      "id": "versions-cases-first",
+      "scope": "v1 shape+13 controlled cases+tail page; fixtures later extended to v2, not rerun locally",
+      "observed": {
+        "controlled_passed": 13,
+        "controlled_total": 13
+      },
+      "exit_code": 0,
+      "wall_seconds": 8.614419333,
+      "source_sha256": {
+        "examples/local-version-origins/inspect.gooo": "dbd25642fa686e0e4fdaccf0514e3cd620c5d3e811a08f4c3c50f40a7cada044",
+        "examples/local-version-origins/policy-cases.json": "dcaa91e8334a46d4596186311581be6c06f9c3f6cd08f29acf8588d7fdc73231",
+        "internal/bodyexecution/native_local_version_columns.go": "3175328b0f115d0c67eaa3b4e4fe03cc59604fc6e49778f886f3087c555964c9",
+        "internal/bodyexecution/native_local_version_columns_test.go": "3eb452a5ea2483a1d959f846ee50de335b1d95a67e35dc8da61d2fe0dc23193e",
+        "cmd/gooo/package_origin_input.go": "0bf47b3f0d0f9577c6a2fc3b8bf792d5a03e6733a734c027076715f12199b815",
+        "cmd/gooo/package_origin_versions_test.go": "5cbe14bfd54c77098735982593a00b59c4e9970ea165c3a0c4635d7b3a0b6637"
+      },
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "cohort": "first offset5/limit3 transport, 13 controlled Gooo policy inputs and offset16/limit16 reader; full32 observation and producer not replayed"
+    },
+    {
+      "id": "original-file-scope-first",
+      "scope": "v2 original-file scope; before Generation activity",
+      "observed": {
+        "controlled_passed": 7,
+        "controlled_total": 7,
+        "page_rows": 8,
+        "declarations": 4,
+        "write_calls": 3,
+        "completed_versions": 8,
+        "producer_executions": 0,
+        "model_calls": 0
+      },
+      "exit_code": 0,
+      "wall_seconds": 10.001451458,
+      "source_sha256": {
+        "examples/local-version-origins/inspect.gooo": "5c6da0e4e787fc3ffeb4e43fc48245d5c32db6dd5fa7eb741e9cf829cdc0ed33",
+        "examples/local-version-origins/original-file-policy-cases.json": "fe3f636959323cf48feeaed270542fd297a1996cc588da8d4ff8ad392296a812",
+        "internal/bodyexecution/native_local_version_columns.go": "6cf55bd118e0b6a5750b9dd415c99cefd02af8febc1f64476dd02498efbb77c2",
+        "internal/bodyexecution/native_local_version_columns_test.go": "3b62b0b49d653e10594d6886620c0c24949900eb7e9d73f72c067bd11e25cccf",
+        "cmd/gooo/package_origin_versions_test.go": "af995a8150cb0be1bcf26f608397f17c5f5f9db1ca1e1e894ca509e26debc4b0"
+      },
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "cohort": "original workspace-file scope; seven new controlled cases, offset17/limit2 transport and offset8/limit8 zero-valued real case; prior full/tail and policy13 cohorts not replayed"
+    },
+    {
+      "id": "generation-claims-first",
+      "scope": "Generation: original write31 and two controlled completion inputs, before presentation-only wrapping",
+      "observed": {
+        "controlled_passed": 2,
+        "controlled_total": 2,
+        "producer_executions": 0,
+        "model_calls": 0
+      },
+      "exit_code": 0,
+      "wall_seconds": 6.30279,
+      "source_sha256": {
+        "examples/local-version-origins/inspect.gooo": "1c26fc2f2715161afa2ec4fb2c7b55f74a6d422662ad18db0169f84497a64c11",
+        "examples/local-version-origins/generation-cases.json": "3acd457756e4f86d30a947a60e2383707ee3feffc2340a41e28a069d0a2322fd",
+        "examples/local-version-origins/generation.workspace.json": "fe47c851add7c10037676e28e70c831625695be0725490bd034b1b87e7b88bd5",
+        "cmd/gooo/package_origin_versions_test.go": "a8256ba946d96f4aa0e7c396aa89b32ff431cbb5e8c7743cd56fbad01806a407"
+      },
+      "source_state": "UNBOUND_LOCAL_SOURCE",
+      "cohort": "new Generation activity; original write31 plus two controlled completion claims; no producer or previous reader cohort re-execution"
+    }
+  ],
+  "interpretation": "Separate first local cohorts. Timings include command/test/build overhead; not a latency benchmark, fitted model result, language-completeness score or acceptance of a later source. No historical local cohort was rerun. Current exact-source acceptance belongs to original PR CI.",
+  "registrations": [
+    {
+      "id": "registration-reader",
+      "generation_exit_code": 1,
+      "generation_wall_seconds": 0.03357791699999968,
+      "outcome": "REFUTED/REGISTRATION_CASE_CONTRACT_MISMATCH",
+      "physical_members": 0,
+      "candidate_apply_authorized": false,
+      "candidate_promotion_authorized": false,
+      "applied_under": null,
+      "prior_cases": null,
+      "current_cases": null
+    },
+    {
+      "id": "registration-reader-original",
+      "generation_exit_code": 0,
+      "generation_wall_seconds": 0.10938912499999986,
+      "outcome": "PROPOSAL_ONLY/UNASSESSED",
+      "physical_members": 9,
+      "candidate_apply_authorized": false,
+      "candidate_promotion_authorized": false,
+      "applied_under": "user-authorized development",
+      "prior_cases": 113,
+      "current_cases": 114
+    },
+    {
+      "id": "registration-producer",
+      "generation_exit_code": 0,
+      "generation_wall_seconds": 0.11530662500000011,
+      "outcome": "PROPOSAL_ONLY/UNASSESSED",
+      "physical_members": 9,
+      "candidate_apply_authorized": false,
+      "candidate_promotion_authorized": false,
+      "applied_under": "user-authorized development",
+      "prior_cases": 114,
+      "current_cases": 115
+    }
+  ],
+  "readability": {
+    "operation": "presentation-only line wrapping and multiline record literals",
+    "before_sha256": "1c26fc2f2715161afa2ec4fb2c7b55f74a6d422662ad18db0169f84497a64c11",
+    "after_sha256": "d5900f535b5aaabe13b5ad0d3696da4e1572472bd4ab206bd2362b80f2829522",
+    "prior_cohorts": "preserved at original source hashes; current source acceptance belongs to its first original PR CI",
+    "no_program_execution": true
+  },
+  "static_readonly_inventory": {
+    "sources": 133,
+    "unregistered": [],
+    "missing": [],
+    "native_executions": 0,
+    "semantic_admission": "UNASSESSED",
+    "registry_digest": "sha256:e2c45dc1c28d745eba2687f453ad8db2005bd1a4fcc25ee0e30b4db4a2110f04"
+  },
+  "historical_preservation": {
+    "prior_cases_unchanged": 113,
+    "prior_denominator_files_byte_identical": 54
+  },
+  "archive": {
+    "path": "local-firsts.tar.gz",
+    "sha256": "7e60263bd819120c3105ba193850cd995eb1ebdf520470ed55483aa47d656327",
+    "bytes": 274632,
+    "path_normalization": "Only local command metadata paths replaced with symbolic repository/tool/observation roots; source and output bytes are otherwise retained. Per-member original/published digests are in archive-manifest.json."
+  },
+  "retired_local_generators": [
+    {
+      "path": "registration-producer/generator",
+      "sha256": "2faf871cdff026f974238442b76086cfc87c91d41ce235feafa5a05d028baf4d",
+      "bytes": 10253474
+    },
+    {
+      "path": "registration-reader/generator",
+      "sha256": "81aa8e186c3be175c3520f2aed132004823f8f3335f774b94d585e003a2fdb02",
+      "bytes": 10253442
+    },
+    {
+      "path": "registration-reader-original/generator",
+      "sha256": "6b99ac2c5c155be1f57720b5e5bc18bc30a38c1b94c5593d4be132e52ed5a052",
+      "bytes": 10253442
+    }
+  ],
+  "retired_bytes": 30760358,
+  "current_source_sha256": {
+    "cmd/gooo/package_origin_input.go": "0bf47b3f0d0f9577c6a2fc3b8bf792d5a03e6733a734c027076715f12199b815",
+    "cmd/gooo/package_origin_versions_test.go": "a8256ba946d96f4aa0e7c396aa89b32ff431cbb5e8c7743cd56fbad01806a407",
+    "examples/local-version-origins/README.md": "214b93bfe035890d669f1fb003e2939f74aeb1791fe002a9b051319f6bba2983",
+    "examples/local-version-origins/generation-cases.json": "3acd457756e4f86d30a947a60e2383707ee3feffc2340a41e28a069d0a2322fd",
+    "examples/local-version-origins/generation.workspace.json": "fe47c851add7c10037676e28e70c831625695be0725490bd034b1b87e7b88bd5",
+    "examples/local-version-origins/gooo.workspace.json": "cd6d030232b88cfed31fb6c28faa6b7ed26e26209c78102df45021d41567a1cb",
+    "examples/local-version-origins/inspect.gooo": "d5900f535b5aaabe13b5ad0d3696da4e1572472bd4ab206bd2362b80f2829522",
+    "examples/local-version-origins/original-file-policy-cases.json": "fe3f636959323cf48feeaed270542fd297a1996cc588da8d4ff8ad392296a812",
+    "examples/local-version-origins/policy-cases.json": "a01e838e453f035013fb393a890c7cfb8d667a2af5df6148edb48e2a0d651d5e",
+    "examples/local-version-origins/producer/cases.json": "0a3a1803437fe1f5da8bef53e53cc657fcde9fdc97c1db56414797b5f977d5cc",
+    "examples/local-version-origins/producer/gooo.workspace.json": "bd081080cc18c620989124e2893afeb20cf0fdb8366aa9216906ed3d2580301e",
+    "examples/local-version-origins/producer/main.gooo": "0addfadda13462325fa9f69625a1e0c11a50449405d723dafff6f6101435b79f",
+    "examples/local-version-origins/recorded-runtime.json.gz": "d5e6ab228fba588c4566f4da98a3c1f2c63f4058e91c83bd09b8d93d257113be",
+    "internal/bodyexecution/native_local_version_columns.go": "6cf55bd118e0b6a5750b9dd415c99cefd02af8febc1f64476dd02498efbb77c2",
+    "internal/bodyexecution/native_local_version_columns_test.go": "3b62b0b49d653e10594d6886620c0c24949900eb7e9d73f72c067bd11e25cccf",
+    "internal/meta/repositoryprojection/extractor/local_version_capacity_test.go": "6f7c14c94d2d8dbf8f3e9533620284b3349f263bd4b835100f9515f02b5684d3"
+  },
+  "static_capacity": {
+    "new_subjects": 8,
+    "rendered_helper_lines": [
+      40,
+      28,
+      17,
+      58,
+      22,
+      28,
+      14,
+      10
+    ],
+    "limit": 75,
+    "decision": "PASS",
+    "native_program_executions": 0
+  }
+}

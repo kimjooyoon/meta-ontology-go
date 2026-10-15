@@ -12,7 +12,7 @@ type bodyOriginOptions struct {
 }
 
 func parseBodyOriginOptions(args []string) (bodyOriginOptions, error) {
-	options := bodyOriginOptions{flags: map[string]string{"--activity": "", "--inputs-for": "", "--field": "", "--fill-candidate": "", "--format": ""}}
+	options := bodyOriginOptions{flags: map[string]string{"--activity": "", "--inputs-for": "", "--inputs-shape": "", "--field": "", "--fill-candidate": "", "--format": ""}}
 	for i := 0; i < len(args); i++ {
 		old, known := options.flags[args[i]]
 		value := i+1 < len(args) && strings.TrimSpace(args[i+1]) != "" && !strings.HasPrefix(args[i+1], "-")
@@ -40,6 +40,15 @@ func validateBodyOriginOptions(options bodyOriginOptions) error {
 	flags := options.flags
 	if options.file == "" || flags["--activity"] == "" || (options.control || flags["--field"] != "") && flags["--inputs-for"] == "" {
 		return fmt.Errorf(bodyOriginsUsage)
+	}
+	if flags["--inputs-shape"] != "" && (flags["--inputs-for"] == "" || options.list || flags["--fill-candidate"] != "") {
+		return fmt.Errorf("--inputs-shape requires a typed source input export with --inputs-for")
+	}
+	if shape := flags["--inputs-shape"]; shape != "" && shape != "ancestry-columns" && shape != "source-control-columns" {
+		return fmt.Errorf("unknown --inputs-shape %q", shape)
+	}
+	if flags["--inputs-shape"] == "source-control-columns" && flags["--field"] != "" {
+		return fmt.Errorf("source-control-columns contains the retained activity graph; --field selects ancestry inputs")
 	}
 	if options.format != "json" && options.format != "text" || options.format == "text" && (options.list || flags["--fill-candidate"] != "" || flags["--inputs-for"] != "") {
 		return fmt.Errorf("--format text displays typed source origins; use --format json for candidate or input exports")

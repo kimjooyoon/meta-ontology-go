@@ -96,6 +96,31 @@ Request example, with observed values filled by the caller:
 
 ## Internal meta source registration
 
+### Canonical capability profiles
+
+The request selects one canonical profile. `ordered_collections: true` already
+includes record fields; combining it with `entity_fields: true` is rejected by
+the existing case contract before any candidate member is written.
+
+| Required surface | Case flags |
+| --- | --- |
+| Ordinary body | Neither flag |
+| V1 required single Text record fields | `entity_fields: true` |
+| V5 Text/Boolean/Integer, optional fields or ordered collections | `ordered_collections: true` only |
+
+The local-version reader's first request recorded this combination error. Its
+corrected source-bound request generated the complete nine-member proposal.
+Both attempts and their separate authority boundaries are retained in the
+[observation record](observations/local-version-origins/observations.json).
+
+The flag names are historical profile selectors. V1 covers required single Text
+fields; an Integer field needs the V5 selector even if the program uses no
+collections. The Text-origin example retained its original V1 rejection and
+subsequent V5 request. Source fields were preserved throughout. Use the exact
+profile table before pinning an execution request.
+
+### Register an internal source
+
 An explicit request may also name an existing `internal/meta/**/*.gooo`
 source. This is the same VALID LANGUAGE_CAPABILITY registration operation,
 not a meta-source exemption or a smaller denominator. Lexical traversal,

@@ -45,6 +45,10 @@ The export contains up to 8 primitive rows for a Gooo consumer. For derived gram
 the grammar location. No direct candidate or expression literal location is invented.
 Grammar coverage measures enumeration; type and functional outcomes are separate.
 The --field and --include-control options apply to typed value origins only.
+Use --inputs-shape source-control-columns with --inputs-for to export retained
+branch polarity, constant truth and node activity IDs for a Gooo reader. The
+default ancestry-columns shape is unchanged. The control shape keeps the whole
+retained activity graph and refuses --field. See examples/source-control-reader.
 See examples/fill-candidate-origins/README.md and
 examples/derived-candidate-origins/README.md.
 `

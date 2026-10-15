@@ -63,7 +63,7 @@ jobs:
             printf 'GOOO_CI_STARTED_AT=%s\n' "$started"
             printf 'GOOO_CI_PREP_STARTED_AT=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           } >> "$GITHUB_ENV"
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -108,7 +108,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -327,7 +327,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -367,7 +367,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -407,7 +407,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -447,7 +447,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -484,7 +484,7 @@ jobs:
 
   policy:
     name: CI policy
-    needs: [format, vet, test, race, semantic]
+    needs: [work-domain]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -494,7 +494,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -801,6 +801,15 @@ jobs:
         env:
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
+      - name: Join original canonical checks before route admission
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const {joinCanonicalChecks} = require('./scripts/ci-proof/canonical_join');
+            const receipt = await joinCanonicalChecks(github, context, process.env);
+            fs.writeFileSync(`${process.env.GOOO_CI_ORIGIN_ROOT}/canonical-join.json`, JSON.stringify(receipt, null, 2) + '\n');
+            core.exportVariable('GOOO_NON_ROUTE_RESULTS', receipt.results);
       - name: Verify exact PR route and protected target
         if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
         env:
@@ -813,7 +822,6 @@ jobs:
           GOOO_REPOSITORY: ${{ github.repository }}
           GOOO_PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.promotion_pr_number || 0 }}
           GOOO_PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.inputs.promotion_base_sha || github.event.before }}
-          GOOO_NON_ROUTE_RESULTS: "format=${{ needs.format.result }},vet=${{ needs.vet.result }},test=${{ needs.test.result }},race=${{ needs.race.result }},semantic=${{ needs.semantic.result }}"
         run: go run ./scripts/verify --skip-caps
       - name: Validate source metric and meta evidence on protected push
         if: github.event_name == 'push'
@@ -847,7 +855,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -872,6 +880,8 @@ jobs:
           node scripts/ci-proof/concurrency_test.js
           node scripts/ci-proof/time_causality_v011_test.js
           node scripts/ci-proof/failure_capture_test.js
+          node scripts/ci-proof/tool_origin_test.js
+          node scripts/ci-proof/canonical_join_test.js
       - name: Collect terminal canonical job evidence
         uses: actions/github-script@v9.0.0
         with:
@@ -955,6 +965,20 @@ jobs:
             const domainPayload = {...domain, digests: {...domain.digests, domain_sha256: ''}};
             domain.digests.domain_sha256 = crypto.createHash('sha256').update(JSON.stringify(domainPayload)).digest('hex');
             fs.writeFileSync('ci-domain-evidence.json', JSON.stringify(domain, null, 2) + '\n');
+      - name: Retain source-bound execution tools from the warm build
+        run: |
+          root="$RUNNER_TEMP/ci-execution-tools"
+          mkdir -p "$root"
+          go build -buildvcs=false -o "$root/gooo" ./cmd/gooo
+          go build -buildvcs=false -o "$root/ci-proof" ./scripts/ci-proof
+          node scripts/ci-proof/tool_origin.js write "$root"
+      - name: Publish current source execution tools
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-execution-tools-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-execution-tools
+          if-no-files-found: error
+          retention-days: 1
       - name: Upload CI evidence bundle
         uses: actions/upload-artifact@v7
         with:
@@ -991,7 +1015,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -1076,6 +1100,30 @@ jobs:
         with:
           name: ${{ steps.evidence-lineage.outputs.artifact-name }}
           path: ci-evidence-input
+      - name: Resolve execution tool lineage
+        id: tool-lineage
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const {listWorkflowArtifacts, selectArtifactLineage} = require('./scripts/ci-proof/artifacts');
+            const rows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
+            const report = selectArtifactLineage(rows, 'ci-execution-tools', context.runId, Number(process.env.GITHUB_RUN_ATTEMPT));
+            if (report.decision !== 'EXACT' || !report.exact_consumption_authorized) {
+              throw new Error(`${report.decision}: ${report.reason}`);
+            }
+            require('fs').writeFileSync('ci-execution-tool-lineage.json', JSON.stringify(report, null, 2) + '\n');
+            core.setOutput('artifact-name', report.selected.name);
+      - name: Download current source execution tools
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ steps.tool-lineage.outputs.artifact-name }}
+          path: ${{ runner.temp }}/ci-execution-tools
+      - name: Bind tool bytes to the original source and attempt
+        run: |
+          root="$RUNNER_TEMP/ci-execution-tools"
+          node scripts/ci-proof/tool_origin.js verify "$root"
+          chmod u+x "$root/gooo" "$root/ci-proof"
+          cp "$root/origin.json" ci-execution-tool-origin.json
       - name: Collect terminal canonical jobs
         uses: actions/github-script@v9.0.0
         env:
@@ -1116,7 +1164,7 @@ jobs:
       - name: Reproduce proof fixture
         run: |
           mkdir -p ci-generated/first
-          go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated/first
+          "$RUNNER_TEMP/ci-execution-tools/gooo" generate examples/billing/main.gooo --out ci-generated/first
           test -s ci-generated/first/semantic.gooo.go
           test -z "$(gofmt -l ci-generated/first/semantic.gooo.go)"
           test -z "$(git diff --name-only)"
@@ -1266,12 +1314,12 @@ jobs:
             fs.writeFileSync('ci-proof-context.json', JSON.stringify(contextData));
       - name: Build deterministic proof and append receipt
         run: |
-          go run ./scripts/ci-proof \
+          "$RUNNER_TEMP/ci-execution-tools/ci-proof" \
             --root . --governance .github/ci-governance.json --evidence ci-evidence-input/ci-evidence.json \
             --jobs ci-final-jobs.json --context ci-proof-context.json --generated ci-generated/first \
             --output ci-proof.json --receipt provenance-receipt.jsonl
       - name: Verify promotion proof fail closed
-        run: go run ./scripts/ci-proof --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass
+        run: '"$RUNNER_TEMP/ci-execution-tools/ci-proof" --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass'
       - name: Upload proof and provenance receipt
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -1284,6 +1332,8 @@ jobs:
             ci-proof-route.json
             ci-concurrency-lane.json
             ci-artifact-lineage.json
+            ci-execution-tool-lineage.json
+            ci-execution-tool-origin.json
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
@@ -1305,7 +1355,14 @@ jobs:
   failure-report:
     name: CI failure summary
     needs: [format, vet, test, race, semantic, policy, proof]
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: >-
+      ${{ !cancelled() &&
+          (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' ||
+           github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') &&
+          !(needs.format.result == 'success' && needs.vet.result == 'success' &&
+            needs.test.result == 'success' && needs.race.result == 'success' &&
+            needs.semantic.result == 'success' && needs.policy.result == 'success' &&
+            needs.proof.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -1314,7 +1371,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -1641,7 +1698,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false
@@ -1775,7 +1832,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: true
@@ -1820,7 +1877,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.27.2
           cache: false

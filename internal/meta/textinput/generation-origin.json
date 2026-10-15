@@ -1,0 +1,11 @@
+{
+  "source_sha256": "cda61a1c0c83b0c7fc244c072751049a6054128e86bd86b3fec3cf2d10f00433",
+  "generated_sha256": "35efb503fa90abbdd081d720be604dabbf0cfa120cd2b0b611c264b04bf577fc",
+  "projection_source_sha256": "35efb503fa90abbdd081d720be604dabbf0cfa120cd2b0b611c264b04bf577fc",
+  "raw_generation_receipt_sha256": "9537dd292bda879a11a0b9a89a57eacfa03e41e2fd94ba6e8a82733add9ece2e",
+  "compiler_revision": "02ecfb6773e5d4aa93d5238e25ecd9c7dcf882ab",
+  "compiler_source_state": "UNBOUND_LOCAL_SOURCE",
+  "decision": "PASS",
+  "projection_operation": "body-codegen TextEscapePolicy; standard gofmt serialization",
+  "scope": "Unicode escape classification; scalar/pair acceptance and distinct unpaired high/low reasons"
+}

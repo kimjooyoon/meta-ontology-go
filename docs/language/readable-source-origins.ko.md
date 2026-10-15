@@ -29,6 +29,17 @@ JSON은 기존 기본 형식입니다. `--format text`는 같은 그래프를 �
 `…`로 줄여 표시합니다. 전체 식과 바이트 범위는 JSON에서 확인할 수 있습니다.
 후보 목록과 입력 내보내기는 JSON 형식을 사용합니다.
 
+### 조건의 두 방향을 읽기
+
+후속 개발 소스의 `when="true"`, `when="false"`는 해당 가지가 요구하는 조건값입니다.
+`operator="*"` 같은 표시는 기존 IR에 기록된 연산자를 보여줍니다.
+`constant-condition="false"`는 컴파일러가 소스에서 상수로 확인한 조건값입니다.
+세 표시는 소스의 가능한 연결을 읽기 위한 정보이며, 실제 실행 경로는 실행 기록에서
+확인합니다. JSON 그래프와 Gooo가 정하는 표시 역할은 그대로 유지됩니다.
+
+[새 조건 소스의 관찰](../observations/readable-origins/condition-facts.json)은
+참·거짓 가지, 연산자, 상수 조건, 그래프 보존과 출력 오류 전달을 확인합니다.
+
 ## PROV-O와 이어갈 방향
 
 [PROV-O](https://www.w3.org/TR/prov-o/)의 Entity·Activity와 생성·파생 관계는

@@ -25,6 +25,9 @@ Gooo는 계산의 의미, 허용한 구현 선택, 그 결과의 출처를 함�
 | 확인할 입력과 별도 평가 | [추가 관측](../examples/source-record-observation/README.md), [별도 평가](../examples/record-field-holdouts/README.md) |
 | 반환값까지 이어지는 소스 | [읽기 쉬운 기원 조회](language/readable-source-origins.ko.md) |
 | 실행 기록을 해석하는 메타프로그램 | [기원 읽기 프로젝트](language/project-starters.md#start-an-origin-reader) |
+| 선언·호출·값 버전을 구분하는 메타프로그램 | [지역 값 버전과 생성 관계](../examples/local-version-origins/README.md) |
+| 값 버전의 생성·읽기와 짧은 설명 | [기록된 사용 관계](../examples/recorded-use-origins/README.md) |
+| 받은 바이트와 해석한 문자열의 기원 | [Text 입력 규칙](../examples/text-input-origins/README.md) |
 
 같은 정수 타입이라도 역할을 이름과 ID로 구분할 수 있습니다. 다음 계산은
 요청의 금액에 조정액을 더하고, 지정한 경우 두 배로 만듭니다.
@@ -97,6 +100,12 @@ Gooo의 가치는 개념의 출처가 구현과 실행을 거쳐서도 읽힌다
 최근 개발 소스에는 정수 지역 변수의 `+=`, `-=`, `*=`, `/=`와 텍스트 기원 조회를
 추가했습니다. 표시 이름을 정하는 정책도 Gooo로 작성했습니다. 이 기능의 병합과
 배포 상태는 [개발 릴리스 안내](releases/0.6.35-dev.md)와 해당 PR에서 확인합니다.
+
+이어진 [조건 분기 판독기](../examples/source-control-reader/README.md)는
+소스에 보관된 상수 조건과 실행 입력에 달린 조건을 Gooo의 조건식으로 읽습니다.
+출처 식별자는 그대로 전달하고, 참·거짓·알 수 없음과 집계 범위를 Gooo가
+구성합니다. [기록된 읽기의 설명](../examples/recorded-use-origins/README.md)과
+함께, 언어가 자신의 구성 과정과 값의 기원을 읽는 작은 프로그램을 늘려갑니다.
 
 ## 다음 개발의 우선순위
 

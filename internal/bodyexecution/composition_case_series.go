@@ -13,7 +13,7 @@ type CompositionCaseSeries struct {
 
 func DecodeCompositionCaseSeries(raw []byte) (CompositionCaseSeries, error) {
 	var series CompositionCaseSeries
-	if err := decode(raw, &series, 512<<10); err != nil {
+	if err := decodeCompositionTextData(raw, &series, 512<<10); err != nil {
 		return series, err
 	}
 	if series.Schema != "gooo/body-composition-case-series/v1" || len(series.Suites) < 1 || len(series.Suites) > 16 {

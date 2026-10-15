@@ -14,7 +14,7 @@ func DecodeCompositionInputs(raw []byte) (CompositionCases, error) {
 		Schema string                       `json:"schema"`
 		Inputs []map[string]json.RawMessage `json:"inputs"`
 	}
-	if err := decode(raw, &input, 32<<10); err != nil {
+	if err := decodeCompositionTextData(raw, &input, 32<<10); err != nil {
 		return CompositionCases{}, err
 	}
 	if input.Schema != CompositionInputsSchema || len(input.Inputs) < 1 || len(input.Inputs) > 128 {
