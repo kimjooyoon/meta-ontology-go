@@ -16,6 +16,8 @@ on:
       - internal/meta/selfimprovementvaluewitnessinput/**
       - internal/valueexecution/**
       - internal/meta/selfimprovementtransport/**
+      - internal/meta/candidatedelivery/**
+      - scripts/candidate-delivery/**
       - internal/meta/languagereadiness/languagesyntax/**
       - scripts/self-improvement-candidate/**
       - scripts/self-improvement-transport/**
@@ -42,6 +44,7 @@ jobs:
       SOURCE_RUN_ATTEMPT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.run_attempt || github.run_attempt }}
       SOURCE_ARTIFACT_NAME: self-improvement-language-observation
       EVENT_NAME: ${{ github.event_name }}
+      CANDIDATE_RUN_HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -80,6 +83,8 @@ jobs:
           jq -r '"runtime observation: build \(.build_wall_ms) ms / \(.build_peak_rss_kib) KiB; test \(.test_wall_ms) ms / \(.test_peak_rss_kib) KiB; comparison UNKNOWN (\(.runtime_unknown))"' \
             "$RUNNER_TEMP/candidate/runtime-measurements.json" >> "$GITHUB_STEP_SUMMARY"
           cp examples/self-improvement/transport.gooo "$tool/transport.gooo"
+      - name: Compile candidate delivery binder from workflow authority
+        run: go build -o "$RUNNER_TEMP/candidate/transport-tool/candidate-delivery" ./scripts/candidate-delivery
       - name: Reproduce exact observation for PR
         if: github.event_name == 'pull_request'
         shell: bash
@@ -278,12 +283,24 @@ jobs:
             then .execution_input else error("execution input binding is not exact") end
           ' "$output/first.json" > "$output/execution-input.json"
           jq -r '"candidate: \(.decision) \(.summary.candidate_count), achieved \(.summary.achieved_delta)/1, target \(.summary.target_delta)/1"' "$output/first.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Declare candidate delivery origins
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/candidate/transport-tool/candidate-delivery" -mode produce \
+            -candidate "$RUNNER_TEMP/candidate/output/first.json" \
+            -transport "$RUNNER_TEMP/candidate/transport/receipt.json" \
+            -event "$EVENT_NAME" -subject "$HEAD_SHA" -workflow "$GITHUB_WORKFLOW_SHA" \
+            -head "$CANDIDATE_RUN_HEAD" -run "$GITHUB_RUN_ID" -attempt "$GITHUB_RUN_ATTEMPT" \
+            -name "self-improvement-nonexecuting-candidate-$HEAD_SHA" \
+            -output "$RUNNER_TEMP/candidate/output/delivery.json"
       - name: Upload exact-head non-executing candidate
         uses: actions/upload-artifact@v7
         with:
           name: self-improvement-nonexecuting-candidate-${{ github.event_name == 'workflow_run' && steps.verify-transport.outputs.subject_sha || env.HEAD_SHA }}
           path: |
             ${{ runner.temp }}/candidate/output/first.json
+            ${{ runner.temp }}/candidate/output/delivery.json
             ${{ runner.temp }}/candidate/output/execution-input.json
             ${{ runner.temp }}/candidate/transport/receipt.json
             ${{ runner.temp }}/candidate/transport/receipt-first.json
