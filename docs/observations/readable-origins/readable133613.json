@@ -1,0 +1,11 @@
+{
+  "cohort": "readable133613",
+  "scope": "new authored inputs only",
+  "original_local_execution": true,
+  "local_reruns": 0,
+  "exit_code": 0,
+  "wall_seconds": 20.63858699798584,
+  "producer_manifest_sha256": "e300b300708b5410b1e4b5f8a51e99db047169393f117cdbbc57162ef89fc54e",
+  "stdout_sha256": "a659c308ca4ae66559ba7f18a70c1d6ea31b0a84f01dca21e070096cc13a67b6",
+  "whole_compiler_ci": false
+}

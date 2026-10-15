@@ -1,0 +1,23 @@
+# Readable source origins and partitioned inputs
+
+`readable133613` is a fresh authored source/CLI cohort. It checks source expressions,
+original locations, separate data/control edges, an unchanged underlying graph,
+source mismatch rejection, generated Gooo role origins and the existing JSON mode.
+The recorded wall time includes compilation. It is not a CLI latency benchmark.
+
+`partition134117` compiles the same 257 public constants in one file and in 257
+files, compares all declared values and retains actual compiler origins. It also
+checks the cumulative file population and atomic rejection. Both original local
+cohorts completed once; historical local cohorts were not rerun.
+
+`predecessor-originals.json` retains the failed original PR #1576 family: 37
+successful workflows and two failures. Three canonical commands were interrupted
+by their creation-clock ceiling; those incomplete costs remain censored.
+The separate projected-source run exposed a package-file limit: its authorized
+representation contained 556 non-test bodycodegen paths against a 256-file import
+limit. The original artifact and logs remain locally archived. No original run was
+retried, and that PR was closed unmerged after all 39 workflows were terminal.
+
+`compound-source-view.txt` is a static read of the authored compound example using
+the new text projection. It executes no program cases and chooses no model paths.
+The displayed source digest and original locations remain in the output.

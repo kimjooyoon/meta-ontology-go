@@ -10,12 +10,13 @@ import (
 func (imports *moduleImporter) captureCompilationSources(packages []moduleCompiledPackage) (map[string]moduleCompiledInput, error) {
 	result := map[string]moduleCompiledInput{}
 	sourceBytes := imports.compilationSourceBytes
+	sourceFiles := imports.compilationSourceFiles
 	external := imports.externalPackages
 	for _, pkg := range packages {
 		if pkg.Goroot {
 			continue
 		}
-		if pkg.ImportPath == "" || pkg.Incomplete || len(pkg.CgoFiles) != 0 || len(pkg.GoFiles) == 0 || len(pkg.GoFiles) > moduleFilesMax {
+		if pkg.ImportPath == "" || pkg.Incomplete || len(pkg.CgoFiles) != 0 || len(pkg.GoFiles) == 0 {
 			return nil, errModuleDependency
 		}
 		if _, exists := result[pkg.ImportPath]; exists {
@@ -44,8 +45,11 @@ func (imports *moduleImporter) captureCompilationSources(packages []moduleCompil
 		pkg.Dir = directory
 		input := moduleCompiledInput{Package: pkg}
 		names := compilationFileNames(pkg)
-		if len(names) > moduleFilesMax {
-			return nil, moduleFailure(moduleCausePackageLimit)
+		if _, retained := imports.compilationInputs[pkg.ImportPath]; !retained {
+			if len(names) > moduleStageFilesMax-sourceFiles {
+				return nil, moduleFailure(moduleCauseFileLimit)
+			}
+			sourceFiles += len(names)
 		}
 		for _, name := range names {
 			if !fs.ValidPath(filepath.ToSlash(name)) || filepath.IsAbs(name) {
@@ -120,6 +124,7 @@ func (imports *moduleImporter) retainCompilationOrigins(inputs map[string]module
 		for _, source := range input.Inputs {
 			imports.compilationSourceBytes += int64(len(source.Bytes))
 		}
+		imports.compilationSourceFiles += len(input.Inputs)
 		imports.compilationInputs[path] = input
 		imports.compilationOrigins[path] = origins[path]
 		if !imports.local(path) {

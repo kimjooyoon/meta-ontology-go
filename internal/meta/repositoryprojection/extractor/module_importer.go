@@ -30,6 +30,7 @@ const (
 	moduleFileMax          = 1 << 20
 	moduleExportMax        = 64 << 20
 	moduleFilesMax         = 256
+	moduleStageFilesMax    = 4096
 	modulePackageMax       = 64
 )
 
@@ -46,6 +47,7 @@ const (
 	moduleCauseSubprocess   moduleDependencyCauseCode = "GO_LIST_SUBPROCESS_FAILURE"
 	moduleCausePackageLimit moduleDependencyCauseCode = "MODULE_PACKAGE_LIMIT"
 	moduleCauseSourceLimit  moduleDependencyCauseCode = "MODULE_SOURCE_LIMIT"
+	moduleCauseFileLimit    moduleDependencyCauseCode = "MODULE_STAGE_FILE_LIMIT"
 )
 
 type moduleDependencyFailure struct {
@@ -85,6 +87,7 @@ type moduleImporter struct {
 	compilationInputs      map[string]moduleCompiledInput
 	compilationOrigins     map[string]moduleCompilationOrigin
 	compilationSourceBytes int64
+	compilationSourceFiles int
 }
 
 func newModuleImporter(root string) *moduleImporter {

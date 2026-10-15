@@ -9,10 +9,10 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-const bodyOriginsUsage = "usage: gooo body-origins --activity <name> [--fill-candidates | --fill-candidate <id>] [--inputs-for <package/path:Activity> [--field <stable-field-id>] [--include-control]] <file.gooo>"
+const bodyOriginsUsage = "usage: gooo body-origins --activity <name> [--format json|text] [--fill-candidates | --fill-candidate <id>] [--inputs-for <package/path:Activity> [--field <stable-field-id>] [--include-control]] <file.gooo>"
 
 func runBodyOrigins(args []string, reader SourceReader, stdout, stderr io.Writer) int {
-	flags := map[string]string{"--activity": "", "--inputs-for": "", "--field": "", "--fill-candidate": ""}
+	flags := map[string]string{"--activity": "", "--inputs-for": "", "--field": "", "--fill-candidate": "", "--format": ""}
 	file, control, list := "", false, false
 	for i := 0; i < len(args); i++ {
 		if args[i] == "--include-control" && !control {
@@ -31,6 +31,14 @@ func runBodyOrigins(args []string, reader SourceReader, stdout, stderr io.Writer
 	}
 	if file == "" || flags["--activity"] == "" || (control || flags["--field"] != "") && flags["--inputs-for"] == "" {
 		fmt.Fprintln(stderr, bodyOriginsUsage)
+		return exitUsage
+	}
+	format := flags["--format"]
+	if format == "" {
+		format = "json"
+	}
+	if format != "json" && format != "text" || format == "text" && (list || flags["--fill-candidate"] != "" || flags["--inputs-for"] != "") {
+		fmt.Fprintln(stderr, "--format text displays typed source origins; use --format json for candidate or input exports")
 		return exitUsage
 	}
 	if list && (flags["--fill-candidate"] != "" || flags["--inputs-for"] != "" || flags["--field"] != "" || control) {
@@ -59,6 +67,8 @@ func runBodyOrigins(args []string, reader SourceReader, stdout, stderr io.Writer
 		if err == nil {
 			_, err = fmt.Fprintln(stdout, string(raw))
 		}
+	} else if err == nil && format == "text" {
+		err = bodycodegen.WriteTypedOriginText(stdout, r, source)
 	} else if err == nil {
 		err = json.NewEncoder(stdout).Encode(r)
 	}

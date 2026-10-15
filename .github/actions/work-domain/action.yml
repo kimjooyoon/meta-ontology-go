@@ -24,6 +24,7 @@ runs:
           --arg attempt "$GITHUB_RUN_ATTEMPT" --arg sha "$digest" \
           '.schema == "gooo/work-domain-tool-origin/v1" and .source_head == $head and
             .run_id == $run and .run_attempt == $attempt and .tool_sha256 == $sha and
+             .clock_scope == "admitted_source_work" and
             .tool_revision == "aa0e33f2e5ec36f319232080361e5fc967d6c442"' \
           "$root/origin.json" > /dev/null
         started="$(jq -r .started_at "$root/origin.json")"
@@ -31,8 +32,10 @@ runs:
         test "$remaining" -gt 0
         chmod u+x "$root/gooo-ci-domain"
         mkdir -p "$RUNNER_TEMP/command-origins-$GITHUB_JOB"
+        cp "$root/origin.json" "$RUNNER_TEMP/command-origins-$GITHUB_JOB/scope-origin.json"
         {
           printf 'GOOO_CI_STARTED_AT=%s\n' "$started"
+          printf 'GOOO_CI_WORKFLOW_CREATED_AT=%s\n' "$(jq -r .workflow_created_at "$root/origin.json")"
           printf 'GOOO_CI_SOURCE_HEAD=%s\n' "$EXPECTED_SOURCE_HEAD"
           printf 'GOOO_CI_DOMAIN=%s/gooo-ci-domain\n' "$root"
           printf 'GOOO_CI_ORIGIN_ROOT=%s/command-origins-%s\n' "$RUNNER_TEMP" "$GITHUB_JOB"

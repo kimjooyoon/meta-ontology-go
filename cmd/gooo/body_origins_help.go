@@ -5,6 +5,7 @@ const bodyOriginsHelp = `Inspect the typed source origins of an ordinary compute
 ` + bodyOriginsUsage + `
 
   gooo body-origins --activity Compute examples/typed-value-origins/main.gooo
+  gooo body-origins --activity Adjust --format text examples/compound-updates/main.gooo
   gooo body-origins --activity Choose --fill-candidate wrong_type \
     examples/fill-candidate-origins/source.gooo
   gooo body-origins --activity Choose --fill-candidate wrong_type \
@@ -16,6 +17,10 @@ const bodyOriginsHelp = `Inspect the typed source origins of an ordinary compute
     --inputs-for typed/ancestry:Inputs examples/typed-value-origins/main.gooo > origins.json
   gooo package execute --json --inputs origins.json \
     examples/typed-value-origins/ancestry.workspace.json
+
+Text output connects return roots, named source expressions, original line/column
+locations and separate data/control edges. Gooo source defines the displayed role
+labels. Both output modes describe possible source dependencies. JSON is the default.
 
 The JSON report contains field-sensitive value definitions, return roots, input
 ports and original literal byte ranges. Fixed same-source helpers retain their

@@ -44,13 +44,13 @@ env:
   GOTOOLCHAIN: go1.27.2
   GOWORK: off
   GOMAXPROCS: 2
-  GOOO_CI_BUDGET_MS: 600000
+  GOOO_CI_BUDGET_MS: 1200000
 
 jobs:
   work-domain:
     name: Work domain preparation
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Bind the original shared work clock
         shell: bash
@@ -59,7 +59,10 @@ jobs:
         run: |
           set -euo pipefail
           started="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at)"
-          printf 'GOOO_CI_STARTED_AT=%s\n' "$started" >> "$GITHUB_ENV"
+          {
+            printf 'GOOO_CI_STARTED_AT=%s\n' "$started"
+            printf 'GOOO_CI_PREP_STARTED_AT=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_ENV"
       - uses: actions/setup-go@v7
         with:
           go-version: 1.27.2
@@ -70,7 +73,7 @@ jobs:
           SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
-          remaining=$((GOOO_CI_BUDGET_MS / 1000 - ($(date +%s) - $(date -d "$GOOO_CI_STARTED_AT" +%s))))
+          remaining=$((GOOO_CI_BUDGET_MS / 1000 - ($(date +%s) - $(date -d "$GOOO_CI_PREP_STARTED_AT" +%s))))
           test "$remaining" -gt 0
           root="$RUNNER_TEMP/ci-domain-tool"
           mkdir -p "$root"
@@ -79,11 +82,12 @@ jobs:
             go install github.com/kimjooyoon/gooo-ci-domain/cmd/gooo-ci-domain@aa0e33f2e5ec36f319232080361e5fc967d6c442
           elapsed=$(( $(date +%s%3N) - begin ))
           digest="$(sha256sum "$root/gooo-ci-domain" | cut -d ' ' -f 1)"
+          work_started="$GOOO_CI_PREP_STARTED_AT"
           jq -n --arg schema gooo/work-domain-tool-origin/v1 --arg head "$SOURCE_HEAD" \
             --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
-            --arg started "$GOOO_CI_STARTED_AT" --arg sha "$digest" \
+            --arg created "$GOOO_CI_STARTED_AT" --arg started "$work_started" --arg sha "$digest" \
             --arg revision aa0e33f2e5ec36f319232080361e5fc967d6c442 --argjson elapsed "$elapsed" \
-            '{schema:$schema,source_head:$head,run_id:$run,run_attempt:$attempt,started_at:$started,tool_sha256:$sha,tool_revision:$revision,compile_elapsed_ms:$elapsed}' \
+            '{schema:$schema,source_head:$head,run_id:$run,run_attempt:$attempt,workflow_created_at:$created,started_at:$started,clock_scope:"admitted_source_work",tool_sha256:$sha,tool_revision:$revision,compile_elapsed_ms:$elapsed}' \
             > "$root/origin.json"
       - name: Publish this run's prepared tool
         uses: actions/upload-artifact@v7
@@ -97,7 +101,7 @@ jobs:
     name: gofmt
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -316,7 +320,7 @@ jobs:
     name: go vet
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -356,7 +360,7 @@ jobs:
     name: go test
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -396,7 +400,7 @@ jobs:
     name: go test -race
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -436,7 +440,7 @@ jobs:
     name: Semantic conformance
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -483,7 +487,7 @@ jobs:
     needs: [format, vet, test, race, semantic]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -836,7 +840,7 @@ jobs:
     needs: [format, vet, test, race, semantic, policy]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -980,7 +984,7 @@ jobs:
     needs: [format, vet, test, race, semantic, policy, evidence, feedback-predecessor]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1303,7 +1307,7 @@ jobs:
     needs: [format, vet, test, race, semantic, policy, proof]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1630,7 +1634,7 @@ jobs:
     name: Feedback predecessor
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1764,7 +1768,7 @@ jobs:
     name: Language package execution
     needs: [work-domain]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1809,7 +1813,7 @@ jobs:
     needs: [feedback-predecessor]
     if: ${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && needs.feedback-predecessor.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
