@@ -29,9 +29,10 @@ type TypedValueOutput struct {
 }
 
 type TypedValueInput struct {
-	Node    uint16 `json:"node"`
-	Port    string `json:"port"`
-	FieldID string `json:"field_id,omitempty"`
+	Node        uint16                 `json:"node"`
+	Port        string                 `json:"port"`
+	FieldID     string                 `json:"field_id,omitempty"`
+	Declaration *TypedInputDeclaration `json:"declaration,omitempty"`
 }
 
 // InspectTypedValueOrigins reads ordinary computes bodies without generating
@@ -83,7 +84,9 @@ func InspectTypedValueOrigins(filename string, source []byte, activity string) (
 	}
 	for _, node := range flow.Nodes {
 		if node.Kind == "input" {
-			r.Inputs = append(r.Inputs, TypedValueInput{Node: node.ID, Port: p.parameters[int(node.Local)-1].Name, FieldID: node.FieldID})
+			index := int(node.Local) - 1
+			r.Inputs = append(r.Inputs, TypedValueInput{Node: node.ID, Port: p.parameters[index].Name,
+				FieldID: node.FieldID, Declaration: inputDeclarationSource(p, source, index)})
 		}
 	}
 	r.Sources, err = typedOriginSources(source, flow.Nodes)

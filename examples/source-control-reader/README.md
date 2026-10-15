@@ -57,3 +57,43 @@ gooo package execute --cases examples/source-control-reader/cases.json \
 PROV-O의 [사용](https://www.w3.org/TR/prov-o/#used)과
 [파생](https://www.w3.org/TR/prov-o/#wasDerivedFrom)을 구분하면서,
 보관한 사실이 표현하는 관계만 Gooo에서 조립하는 방향입니다.
+
+## 같은 타입의 입력을 선언 위치로 구분하기
+
+`Difference(Integer, Integer)`에서는 두 입력의 타입 ID가 같습니다.
+원래 파일의 해시, 활동 ID, 입력 순서와 바이트 범위를 함께 보관하면
+각각 어느 자리에 선언됐는지 다시 찾을 수 있습니다.
+
+```sh
+gooo body-origins --activity Difference --format text \
+  examples/source-control-reader/input-positions.gooo.fixture
+gooo body-origins --activity Difference \
+  --inputs-for source/control:InspectInputs --inputs-shape input-declaration-columns \
+  examples/source-control-reader/input-positions.gooo.fixture > /tmp/gooo-signature-inputs.json
+gooo package execute --inputs /tmp/gooo-signature-inputs.json \
+  examples/source-control-reader/inputs.workspace.json
+```
+
+첫 명령은 `input0`과 `input1`을 각각 원본 6행과 7행의 `Integer`에 연결합니다.
+마지막 명령의 결과는 `SHARED_TYPE_DISTINCT_POSITIONS`, 입력 2개,
+같은 타입 쌍 1개입니다. Go는 선언 사실을 옮기고, Gooo의 `InspectInputs`가
+열의 길이·순서·위치를 확인한 뒤 타입 ID를 비교합니다. 표시 이름이 달라도
+타입 ID가 같으면 같은 타입으로 읽습니다.
+
+레코드의 여러 필드가 한 입력에서 왔다면 선언 행은 하나입니다.
+본문의 필드별 기원은 계속 각 필드 ID로 구분합니다. 선언 좌표와
+본문 표현 좌표는 각각 보관하므로, 본문 위치가 없는 입력 노드에도
+원래 시그니처 위치를 표시할 수 있습니다.
+
+현재 범위는 입력 1~16개, 내보내기 32KiB입니다. 위치는 이번 소스 안의
+순서를 뜻합니다. 작성자가 붙이는 입력 이름과 안정적인 역할 ID는
+후속 언어 설계에서 다룹니다. 입력 칸을 바꾸면 그 위치의 의미도 바뀝니다.
+직접 만든 열의 해시는 받은 식별자로 보관하므로, 파일과 연결하려면
+위의 소스 조회 명령으로 입력을 만듭니다.
+
+첫 로컬 관찰에서 새 통제 사례 16개가 모두 기대 결과와 일치했습니다.
+16개 입력의 같은 타입 쌍 120개, 표시 이름 변경, 서로 다른 타입,
+겹치는 위치, 중복 포트, 누락 열과 범위 초과를 포함합니다.
+별도의 실제 소스 내보내기에서도 두 입력의 선언 위치를 유지했습니다.
+모델 호출은 0회입니다. [실행 기록](../../docs/observations/input-declarations/observations.json)에
+실패한 초안과 수정 후 첫 실행의 원본 기록을 함께 보관합니다.

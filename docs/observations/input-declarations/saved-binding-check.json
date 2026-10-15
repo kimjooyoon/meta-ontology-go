@@ -1,0 +1,20 @@
+{
+  "command": {
+    "argv": [
+      "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+      "test",
+      "-p=1",
+      "./cmd/gooo",
+      "-run",
+      "^TestInputDeclarationSavedSourceBinding$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.66422425,
+    "scope": "first new declaration transport/source/input cohort"
+  },
+  "stdout": "=== RUN   TestInputDeclarationSavedSourceBinding\n--- PASS: TestInputDeclarationSavedSourceBinding (0.01s)\nPASS\nok  \tgithub.com/kimjooyoon/meta-ontology-go/cmd/gooo\t0.564s\n",
+  "stderr": "",
+  "scope": "readonly saved source/input/archive assertion; no native program replay"
+}

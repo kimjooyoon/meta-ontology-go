@@ -63,6 +63,9 @@ func writeOriginTextNode(w io.Writer, report TypedValueOrigins, node RecordFlowN
 	if err := writeOriginTextLocation(w, location, source); err != nil {
 		return err
 	}
+	if err := writeOriginInputDeclaration(w, report, node.ID, source); err != nil {
+		return err
+	}
 	for _, parent := range node.Parents {
 		if parent != 0 {
 			if _, err := fmt.Fprintf(w, "  data <- #%d\n", parent); err != nil {

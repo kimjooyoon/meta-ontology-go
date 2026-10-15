@@ -16,6 +16,7 @@ type preparedBody struct {
 	file                                      *syntax.File
 	allRecords                                []RecordType
 	activityIDs                               map[string]string
+	entityIDs                                 map[string]string
 }
 
 func prepareActivityBody(filename string, source []byte, activityName string) (preparedBody, error) {
@@ -56,9 +57,13 @@ func prepareActivityBodySource(filename string, source []byte, activityName stri
 	}
 	p.records = activityRecords(records, p.parameters, p.outputType, p.activity.ValueProgram)
 	p.file, p.allRecords, p.activityIDs = file, records, map[string]string{}
+	p.entityIDs = map[string]string{}
 	for _, node := range model.Nodes {
 		if node.Kind == bidir.ActivityKind {
 			p.activityIDs[node.Name] = string(node.ID)
+		}
+		if node.Kind == bidir.EntityKind {
+			p.entityIDs[node.Name] = string(node.ID)
 		}
 	}
 	p.activityID = p.activityIDs[activityName]

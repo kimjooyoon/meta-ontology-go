@@ -1,0 +1,239 @@
+{
+  "schema": "gooo/input-declaration-first-observations/v1",
+  "date": "2026-10-15",
+  "scope": "new source/input declaration cohorts; deterministic source inspection and Gooo consumer",
+  "consumer_source_sha256": "561dd6bb6d963b67ed1dc85d795ac17dacb3e959ab1f0408b729ae2dfcb510d8",
+  "observed_files": {
+    "examples/source-control-reader/inspect.gooo": "561dd6bb6d963b67ed1dc85d795ac17dacb3e959ab1f0408b729ae2dfcb510d8",
+    "examples/source-control-reader/input-cases.json": "b363740806c8eabf70f570df4d5a9716dd6a3b1c3d2b3a6a6e1982e423ac758d",
+    "examples/source-control-reader/inputs.workspace.json": "fac93184cfc830249199023740380c60473c056521794c49439d1741df6be626",
+    "examples/source-control-reader/input-positions.gooo.fixture": "2180f1b3a5eb314c69188ca23dab206358a870166393992f7227e480fb40c6af",
+    "examples/source-control-reader/signature-inputs.json": "2589d90e086a2f4a49e4d3ba8568daa4408624f5381157828f96aedbbd5c167e"
+  },
+  "controlled": {
+    "passed": 16,
+    "total": 16,
+    "model_calls": 0,
+    "native_runs": 2
+  },
+  "source_query": {
+    "input_count": 2,
+    "same_type_pairs": 1,
+    "source_sha256": "sha256:2180f1b3a5eb314c69188ca23dab206358a870166393992f7227e480fb40c6af",
+    "decision": "OBSERVED",
+    "declared_cases": 0,
+    "model_calls": 0,
+    "native_runs": 2
+  },
+  "commands": {
+    "source-coherence-first": {
+      "argv": [
+        "go",
+        "test",
+        "-p=1",
+        "./internal/meta/languagereadiness/languagesyntax/replay",
+        "-run",
+        "^TestInputDeclarationsSourceCoherence$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.332206042,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "source-first": {
+      "argv": [
+        "go",
+        "test",
+        "-p=1",
+        "./internal/bodycodegen",
+        "-run",
+        "^TestInputDeclaration",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.453507458,
+      "scope": "new source-only signature origin regressions; no model/native program/historical cohort replay"
+    },
+    "transport-first": {
+      "argv": [
+        "go",
+        "test",
+        "-p=1",
+        "./internal/bodycodegen",
+        "./cmd/gooo",
+        "-run",
+        "^(TestDeclarationTransport|TestInputSignatureExportOptions)",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 9.825737499999999,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "source-input-consumer-first": {
+      "argv": [
+        "go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--inputs",
+        "examples/source-control-reader/signature-inputs.json",
+        "examples/source-control-reader/inputs.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.509802834,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "signature-export-first": {
+      "argv": [
+        "go",
+        "run",
+        "./cmd/gooo",
+        "body-origins",
+        "--activity",
+        "Difference",
+        "--inputs-for",
+        "source/control:InspectInputs",
+        "--inputs-shape",
+        "input-declaration-columns",
+        "examples/source-control-reader/input-positions.gooo.fixture"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.898144375,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "consumer-codegen-comment-first": {
+      "argv": [
+        "go",
+        "run",
+        "./cmd/gooo",
+        "body-codegen",
+        "--json",
+        "--activity",
+        "InspectInputs",
+        "examples/source-control-reader/inspect.gooo"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.41695204199999997,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "consumer-codegen-first": {
+      "argv": [
+        "go",
+        "run",
+        "./cmd/gooo",
+        "body-codegen",
+        "--json",
+        "--activity",
+        "InspectInputs",
+        "examples/source-control-reader/inspect.gooo"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 2.966163333,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "consumer-cases-first": {
+      "argv": [
+        "go",
+        "run",
+        "./cmd/gooo",
+        "package",
+        "execute",
+        "--json",
+        "--cases",
+        "examples/source-control-reader/input-cases.json",
+        "examples/source-control-reader/inputs.workspace.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.029561333,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "consumer-codegen-flat-first": {
+      "argv": [
+        "go",
+        "run",
+        "./cmd/gooo",
+        "body-codegen",
+        "--json",
+        "--activity",
+        "InspectInputs",
+        "examples/source-control-reader/inspect.gooo"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 0.5356445000000001,
+      "scope": "first new declaration transport/source/input cohort"
+    },
+    "targeted-vet-first": {
+      "argv": [
+        "go",
+        "vet",
+        "./internal/bodycodegen",
+        "./cmd/gooo",
+        "./internal/meta/languagereadiness/languagesyntax/replay"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.556282083,
+      "scope": "first new declaration transport/source/input cohort"
+    }
+  },
+  "archive": {
+    "path": "first-observations.tar.gz",
+    "sha256": "91d1f303c48a9cd71a0266d76c3b5d5cbe90ee29b92e283c54f93cfe54b880ec",
+    "bytes": 217603,
+    "uncompressed_bytes": 2838955,
+    "members": {
+      "case-labels.json": "0f9f76beae23e5bd2f344a8f02fb6cbd3878590d4bbbe154c5ef860ab2735245",
+      "consumer-cases-first/command.json": "6eab84e8d2e32ca1f94381cda306340e0e14da1e3cdf6a219e5fb2826831b654",
+      "consumer-cases-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "consumer-cases-first/stdout": "db5120b275c08c9b41e344c5f62aa7924c39928841c6d765af717964bdea8110",
+      "consumer-codegen-comment-first/command.json": "9a5ee6b66afa729b1022754edd970521c47334f2e7e65366d02f2a8e61644c4c",
+      "consumer-codegen-comment-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "consumer-codegen-comment-first/stdout": "73b6fc91e5587bc11e3a9dd2fdb7a098b4674a18b03ffb6e3f09cc02b1d6059b",
+      "consumer-codegen-first/command.json": "761e634feb6096d37eec5e7ba8e9ce345d9064d3cad71abfa19d67b3d62a0572",
+      "consumer-codegen-first/input.gooo": "5f262080fb751e76bf204659d0c345f89f33e16ad49b015d663335d6fc97d368",
+      "consumer-codegen-first/stderr": "bf05a2ed1e6ff1ca52a9863bab4a8833d5068953dd57362001f6462ff43f7cfc",
+      "consumer-codegen-first/stdout": "a099e26363bed1c0bc7ae08a60541ca8a9e3c0ee8c36430803e81c1a553fe6dc",
+      "consumer-codegen-flat-first/command.json": "6a15888ce9a667cc2dea5863bebc4fdf9a9a11e97509f8504c99b5c6c62b61d1",
+      "consumer-codegen-flat-first/input.gooo": "091e1c3a8b7d68aa044f289167200f0ad352bddae5afa831b87428c1f65ecbc0",
+      "consumer-codegen-flat-first/stderr": "bf05a2ed1e6ff1ca52a9863bab4a8833d5068953dd57362001f6462ff43f7cfc",
+      "consumer-codegen-flat-first/stdout": "a23f612a0b2af8056ac59c7265993fb34d608a66a39deff7c8008ed6f2ebcdbf",
+      "prepare-cases.py": "5094fa0a66b63c392d04a8f87ac8cf854ffeef213cddd31de7ecd98303c254db",
+      "run-first.py": "85c205507ed64b3ab697031a1d8800e465b4e2ea1fe8018c642f389526151330",
+      "saved-source-assertions.json": "f67ea1fedcdd4aca9afd31ed97f3c627b7d382fa4bd63c0ae96c825bb8e1af7f",
+      "signature-export-first/command.json": "0cb3dd9c02b9bd0fac99b67618324e129f9d5c900330c1807bd089aa4b4732e0",
+      "signature-export-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "signature-export-first/stdout": "2589d90e086a2f4a49e4d3ba8568daa4408624f5381157828f96aedbbd5c167e",
+      "source-coherence-first/command.json": "2faa37583079eb38f68ba1319cf1f1efbff4ac5ead87478d4739dc73e8cd43d7",
+      "source-coherence-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source-coherence-first/stdout": "a5f38189b3c08539e8773912ed4c2119baad3a0f6c6bdeaf36311a2dd86cb6e6",
+      "source-first/command.json": "e76c632f820eef8605ebedb8e4e830db6aacf7a66bae5e8e2558ba3617c6df77",
+      "source-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source-first/stdout": "cf17ac621e8a013b802c959fc75827dd3c93b40e7cbba5dc0cfd181e618ee2f6",
+      "source-input-consumer-first/command.json": "fc04d7a048df6e4e20f9480a3e445d227baf36620f50e7eb6248f2a56a0eb6d8",
+      "source-input-consumer-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source-input-consumer-first/stdout": "93e2dacffa3c4a800356fa1016e30fbef3829197751c3722ae9b53b551c404a1",
+      "sources/examples/source-control-reader/input-cases.json": "b363740806c8eabf70f570df4d5a9716dd6a3b1c3d2b3a6a6e1982e423ac758d",
+      "sources/examples/source-control-reader/input-positions.gooo.fixture": "2180f1b3a5eb314c69188ca23dab206358a870166393992f7227e480fb40c6af",
+      "sources/examples/source-control-reader/inputs.workspace.json": "fac93184cfc830249199023740380c60473c056521794c49439d1741df6be626",
+      "sources/examples/source-control-reader/inspect.gooo": "561dd6bb6d963b67ed1dc85d795ac17dacb3e959ab1f0408b729ae2dfcb510d8",
+      "sources/examples/source-control-reader/signature-inputs.json": "2589d90e086a2f4a49e4d3ba8568daa4408624f5381157828f96aedbbd5c167e",
+      "targeted-vet-first/command.json": "1cef800f1b08af1a11922e02e0b1aaba38514c9463f36cc6ff8f39402d69c938",
+      "targeted-vet-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "targeted-vet-first/stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport-first/command.json": "26d288afbe2a95f9bd393eb6586f2b2304022d48d4de7a3a4dc5e6f307fd4114",
+      "transport-first/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport-first/stdout": "0a0c20cc3de2c2f7cdd2669c98a2054fdbb4d3bf58c1017fb95e31b84c817090"
+    }
+  },
+  "limitations": [
+    "Input indices are source-scoped positions; authored parameter names and role IDs remain future language work.",
+    "Current counted-loop profile refuses nested loops. The final consumer traverses a bounded 16-by-16 table with one loop.",
+    "The first flat draft used a declaration comment inside a computes body; the corrected body uses // comments.",
+    "Wall times are one local command observation on darwin/arm64, including Go startup; no latency distribution or model benchmark is claimed.",
+    "Source bytes are bound by the compiler inspection; a caller-supplied columns document is only supplied facts."
+  ]
+}

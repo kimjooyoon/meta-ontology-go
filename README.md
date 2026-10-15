@@ -57,6 +57,7 @@ This offers a small interoperability path from a Gooo metaprogram to RDF tools.
 | Trace authored conditions and selected fragments | [Condition origins](examples/condition-origins/README.md), [original fill files](examples/workspace-fill-origins/README.md) |
 | Inspect source dependencies and local declarations | [Typed value origins](examples/typed-value-origins/README.md), [workspace local origins](examples/workspace-local-origins/README.md) |
 | Read constant and input-dependent branch scopes in Gooo | [Source control reader](examples/source-control-reader/README.md) |
+| Distinguish same-type inputs by their original signature positions | [Input declaration reader](examples/source-control-reader/README.md#같은-타입의-입력을-선언-위치로-구분하기) |
 | Put `else` on the next line and retain original condition locations | [Readable branches and a Gooo syntax policy](examples/else-layout/README.md) |
 | Follow observed field/local relationships | [Field histories](examples/native-record-fields/README.md), [field ancestry](examples/native-field-lineage/README.md), [field/local bridge](examples/local-field-bridge/README.md) |
 | Read original field and choice locations | [Field locations](examples/field-source-map/README.md), [record-choice reader](examples/record-choice-origins/README.md), [return/choice contract](docs/language/return-choice-origins.ko.md) |

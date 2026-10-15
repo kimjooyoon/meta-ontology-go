@@ -164,3 +164,83 @@ if result.guard_count == 0 { result.status = "NO_RETAINED_GUARDS" } else {
 }
 return result
 `
+
+entity InputDeclarations id "urn:gooo:source-control:input-declarations" fields {
+    field schema id "urn:gooo:input-declarations:schema" type string required one
+    field scope id "urn:gooo:input-declarations:scope" type string required one
+    field source_sha256 id "urn:gooo:input-declarations:source" type string required one
+    field activity_id id "urn:gooo:input-declarations:activity" type string required one
+    field count id "urn:gooo:input-declarations:count" type integer required one
+    field indices id "urn:gooo:input-declarations:indices" type integer required many
+    field ports id "urn:gooo:input-declarations:ports" type string required many
+    field type_names id "urn:gooo:input-declarations:type-names" type string required many
+    field type_ids id "urn:gooo:input-declarations:type-ids" type string required many
+    field starts id "urn:gooo:input-declarations:starts" type integer required many
+    field ends id "urn:gooo:input-declarations:ends" type integer required many
+}
+
+entity InputSummary id "urn:gooo:source-control:input-summary" fields {
+    field source_sha256 id "urn:gooo:input-summary:source" type string required one
+    field activity_id id "urn:gooo:input-summary:activity" type string required one
+    field scope id "urn:gooo:input-summary:scope" type string required one
+    field status id "urn:gooo:input-summary:status" type string required one
+    field reason id "urn:gooo:input-summary:reason" type string required one
+    field inputs id "urn:gooo:input-summary:inputs" type integer required one
+    field same_type_pairs id "urn:gooo:input-summary:same-type-pairs" type integer required one
+}
+
+# Type identity can repeat while each authored signature position remains distinct.
+activity InspectInputs(InputDeclarations) -> InputSummary id "urn:gooo:source-control:inspect-inputs" computes `
+let result = InputSummary{
+    source_sha256: input.source_sha256, activity_id: input.activity_id, scope: "activity_signature",
+    status: "INVALID_INPUT", reason: "", inputs: 0, same_type_pairs: 0,
+}
+if input.schema != "gooo/input-declaration-columns/v1" || input.scope != "activity_signature" {
+    result.reason = "SOURCE_SCHEMA_MISMATCH"
+    return result
+}
+if input.source_sha256 == "" || input.activity_id == "" {
+    result.reason = "SOURCE_IDENTITY_MISSING"
+    return result
+}
+if input.count < 1 || input.count > 16 || int64(len(input.indices)) != input.count ||
+   len(input.ports) != len(input.indices) || len(input.type_names) != len(input.indices) ||
+   len(input.type_ids) != len(input.indices) || len(input.starts) != len(input.indices) ||
+   len(input.ends) != len(input.indices) {
+    result.reason = "SIGNATURE_COLUMNS_MISMATCH"
+    return result
+}
+let index = 0
+let previous_end = 0
+for position in input.indices {
+    if position != index || input.ports[index] == "" || input.type_names[index] == "" ||
+       input.starts[index] < previous_end || input.ends[index] <= input.starts[index] {
+        result.reason = "SIGNATURE_POSITION_INVALID"
+        return result
+    }
+    if input.type_ids[index] == "" {
+        result.reason = "SIGNATURE_TYPE_ID_MISSING"
+        return result
+    }
+    previous_end = input.ends[index]
+    index += 1
+}
+let pairs = 0
+// Read the lower triangle of the bounded 16-by-16 signature-position table.
+for let pair = 0; pair < 256; pair = pair + 1 {
+    let left = pair / 16
+    let right = pair % 16
+    if left < input.count && right < left {
+        if input.ports[left] == input.ports[right] {
+            result.reason = "SIGNATURE_PORT_REPEATED"
+            return result
+        }
+        if input.type_ids[left] == input.type_ids[right] { pairs += 1 }
+    }
+}
+result.status = "DECLARED_INPUTS"
+if pairs > 0 { result.status = "SHARED_TYPE_DISTINCT_POSITIONS" }
+result.inputs = input.count
+result.same_type_pairs = pairs
+return result
+`
