@@ -4,6 +4,8 @@
 assembling programs, and preserving where their concepts and choices come from.
 This repository contains its Go compiler. Source files use the `.gooo` extension.
 
+[한국어: 언어의 방향과 현재 기능](docs/language-direction.ko.md)
+
 ## What you can build
 
 Gooo source declares calculations, stable concept identities and permitted
